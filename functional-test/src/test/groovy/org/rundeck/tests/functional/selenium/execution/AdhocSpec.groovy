@@ -22,7 +22,8 @@ class AdhocSpec extends SeleniumBase {
     def "page loads and displays correctly in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.validatePage()
             adhocPage.nodeFilterInput.isDisplayed()
@@ -36,7 +37,8 @@ class AdhocSpec extends SeleniumBase {
     def "node filter input works in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.enterNodeFilter(".*")
             adhocPage.submitNodeFilter()
@@ -51,7 +53,8 @@ class AdhocSpec extends SeleniumBase {
     def "empty state message shows when no nodes matched in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.enterNodeFilter("name: nonexistent-node-12345")
             adhocPage.submitNodeFilter()
@@ -66,7 +69,8 @@ class AdhocSpec extends SeleniumBase {
     def "command input is disabled when no nodes matched in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.enterNodeFilter("name: nonexistent-node-12345")
             adhocPage.submitNodeFilter()
@@ -85,10 +89,11 @@ class AdhocSpec extends SeleniumBase {
     def "command input is enabled when nodes matched in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.filterNodes(".*")
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
+            adhocPage.waitForElementVisible adhocPage.nodeFilterResultsBy
         expect:
             adhocPage.commandInput.getAttribute("disabled") == null
             adhocPage.runButton.enabled
@@ -100,10 +105,11 @@ class AdhocSpec extends SeleniumBase {
     def "run button shows correct text based on node count in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.filterNodes(".*")
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
+            adhocPage.waitForElementVisible adhocPage.nodeFilterResultsBy
         expect:
             def buttonText = adhocPage.runButton.getText()
             buttonText.contains("Run on") || buttonText.contains("Node")
@@ -115,10 +121,11 @@ class AdhocSpec extends SeleniumBase {
     def "recent commands dropdown loads in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.filterNodes(".*")
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
+            adhocPage.waitForElementVisible adhocPage.nodeFilterResultsBy
             adhocPage.clickRecentCommands()
             adhocPage.waitForElementVisible adhocPage.recentCommandsMenuBy
         expect:
@@ -131,7 +138,8 @@ class AdhocSpec extends SeleniumBase {
     def "settings panel toggles in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.openSettings()
         expect:
@@ -144,7 +152,8 @@ class AdhocSpec extends SeleniumBase {
     def "thread count can be set in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.setThreadCount(3)
         expect:
@@ -157,7 +166,8 @@ class AdhocSpec extends SeleniumBase {
     def "node keepgoing setting can be changed in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.setNodeKeepgoing(false)
         expect:
@@ -170,7 +180,8 @@ class AdhocSpec extends SeleniumBase {
     def "command execution works in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.runCommandAndWaitToBe("echo test command", null)
             adhocPage.waitForElementVisible adhocPage.runContentBy
@@ -184,7 +195,8 @@ class AdhocSpec extends SeleniumBase {
     def "execution output displays in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.runCommandAndWaitToBe("echo test output", null)
             adhocPage.waitForElementVisible adhocPage.runContentBy
@@ -198,7 +210,8 @@ class AdhocSpec extends SeleniumBase {
     def "command execution with settings works in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.runCommandWithSettings("echo test", 2, true)
         expect:
@@ -211,10 +224,11 @@ class AdhocSpec extends SeleniumBase {
     def "view in nodes page link works in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.filterNodes(".*")
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
+            adhocPage.waitForElementVisible adhocPage.nodeFilterResultsBy
         expect:
             if (adhocPage.viewInNodesPageLink.displayed) {
                 def href = adhocPage.viewInNodesPageLink.getAttribute("href")
@@ -229,7 +243,8 @@ class AdhocSpec extends SeleniumBase {
     def "activity section displays when authorized in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.validatePage()
         expect:
@@ -250,7 +265,8 @@ class AdhocSpec extends SeleniumBase {
     def "error message displays on execution failure in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             // Try to run command without nodes filtered
             try {
@@ -272,7 +288,8 @@ class AdhocSpec extends SeleniumBase {
         // Skipping for now as it requires admin permissions
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.validatePage()
         expect:
@@ -287,10 +304,11 @@ class AdhocSpec extends SeleniumBase {
     def "command input updates store in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.filterNodes(".*")
-            adhocPage.waitForElementToBeVisible adhocPage.nodeFilterResultsBy
+            adhocPage.waitForElementVisible adhocPage.nodeFilterResultsBy
             adhocPage.enterCommand("echo test command")
         expect:
             adhocPage.commandInput.getAttribute("value").contains("echo test command")
@@ -302,7 +320,8 @@ class AdhocSpec extends SeleniumBase {
     def "run button disabled during execution in #uiVersion UI"() {
         when:
             def params = uiVersion == 'next' ? [nextUi: true] : [:]
-            def adhocPage = go AdhocPage, SELENIUM_BASIC_PROJECT, params
+            def adhocPage = new AdhocPage(this, SELENIUM_BASIC_PROJECT, params)
+            adhocPage.go()
         then:
             adhocPage.runCommandAndWaitToBe("sleep 5", null)
             adhocPage.waitForElementVisible adhocPage.runContentBy
