@@ -32,6 +32,18 @@ tasks.withType(GroovyCompile).configureEach {
         forkOptions.jvmArgs = opts
     }
 }
+
+// Disable Micronaut AST processing for GSP compilation (JavaExec tasks)
+// Prevents "Cannot load from object array because ClassNode.getGenericsTypes() is null" error
+// This is a known Groovy 4.0.29 + Micronaut AST transformation compatibility issue
+// GSP compilation uses JavaExec, not GroovyCompile, so we need to configure it separately
+tasks.withType(JavaExec).configureEach {
+    if (name == 'compileGroovyPages') {
+        // Disable Micronaut OpenAPI processing to prevent AST transformation conflicts
+        // This prevents Micronaut's AST visitor from processing class nodes during GSP compilation
+        jvmArgs += ['-Dmicronaut.openapi.enabled=false']
+    }
+}
 artifacts{
     //note: both builtBy tasks seem to declare outputs which include the openapi spec file, so we include both otherwise
     //gradle warns about implicit dependencies
