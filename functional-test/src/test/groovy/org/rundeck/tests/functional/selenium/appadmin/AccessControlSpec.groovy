@@ -63,7 +63,7 @@ class AccessControlSpec extends SeleniumBase {
             aclPage.waitForPoliciesCountToBeAtLeast 1
         then:
             aclPage.policiesTitleList.size() == 1
-            aclPage.policiesTitleList.any { it.getText() == validPolicyName }
+            aclPage.policiesTitleList.get 0 getText() equals validPolicyName
     }
 
     def "upload form warns of duplicate name"() {
