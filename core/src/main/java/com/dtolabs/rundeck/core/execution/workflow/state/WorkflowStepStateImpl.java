@@ -92,6 +92,12 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
         this.nodeStep = nodeStep;
     }
 
+
+    /**
+     * Returns the name of the node that ran this step.
+     * @return runner node name
+     */
+    @Override
     public String getRunnerNode() {
         return runnerNode;
     }

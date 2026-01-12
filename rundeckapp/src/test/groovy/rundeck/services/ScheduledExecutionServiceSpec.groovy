@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.JobReferenceItem
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
@@ -6758,6 +6759,256 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             dbJob.user == 'creating_admin'
             dbJob.lastModifiedBy == 'creating_admin'
             dbJob.description == 'new job with audit'
+    }
+
+    def "findJobFromJobReference should find job by UUID when useName is false"() {
+        given: "a job with a specific UUID"
+            def testUuid = UUID.randomUUID().toString()
+            def job = new ScheduledExecution(
+                jobName: 'testJob',
+                project: 'testProject',
+                description: 'a job',
+                uuid: testUuid,
+                groupPath: 'testGroup',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])
+            ).save(flush: true)
+
+        and: "a JobReferenceItem configured to use UUID"
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> false
+                getUuid() >> testUuid
+            }
+
+        when: "findJobFromJobReference is called"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "the job is found by UUID"
+            result != null
+            result.uuid == testUuid
+            result.jobName == 'testJob'
+            result.groupPath == 'testGroup'
+    }
+
+    def "findJobFromJobReference should find job by name and group when useName is true"() {
+        given: "a job with specific name and group"
+            def job = new ScheduledExecution(
+                jobName: 'myJobName',
+                project: 'testProject',
+                description: 'a job',
+                uuid: UUID.randomUUID().toString(),
+                groupPath: 'myGroup',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])
+            ).save(flush: true)
+
+        and: "a JobReferenceItem configured to use name"
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> true
+                getUuid() >> null
+                getJobIdentifier() >> 'myGroup/myJobName'
+                getProject() >> null
+            }
+
+        when: "findJobFromJobReference is called"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "the job is found by name and group"
+            result != null
+            result.jobName == 'myJobName'
+            result.groupPath == 'myGroup'
+    }
+
+    def "findJobFromJobReference should find job without group when jobIdentifier has no slash"() {
+        given: "a job without a group path"
+            def job = new ScheduledExecution(
+                jobName: 'standaloneJob',
+                project: 'testProject',
+                description: 'a job',
+                uuid: UUID.randomUUID().toString(),
+                groupPath: null,
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])
+            ).save(flush: true)
+
+        and: "a JobReferenceItem with no group in identifier"
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> true
+                getUuid() >> null
+                getJobIdentifier() >> 'standaloneJob'
+                getProject() >> null
+            }
+
+        when: "findJobFromJobReference is called"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "the job is found without group"
+            result != null
+            result.jobName == 'standaloneJob'
+            result.groupPath == null
+    }
+
+    def "findJobFromJobReference should handle nested group paths correctly"() {
+        given: "a job with nested group path"
+            def job = new ScheduledExecution(
+                jobName: 'nestedJob',
+                project: 'testProject',
+                description: 'a job',
+                uuid: UUID.randomUUID().toString(),
+                groupPath: 'level1/level2/level3',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])
+            ).save(flush: true)
+
+        and: "a JobReferenceItem with nested group path"
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> true
+                getUuid() >> null
+                getJobIdentifier() >> 'level1/level2/level3/nestedJob'
+                getProject() >> null
+            }
+
+        when: "findJobFromJobReference is called"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "the job is found with correct nested group"
+            result != null
+            result.jobName == 'nestedJob'
+            result.groupPath == 'level1/level2/level3'
+    }
+
+    def "findJobFromJobReference should use jobRef project when specified"() {
+        given: "a job in a different project"
+            def job = new ScheduledExecution(
+                jobName: 'crossProjectJob',
+                project: 'otherProject',
+                description: 'a job',
+                uuid: UUID.randomUUID().toString(),
+                groupPath: 'testGroup',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])
+            ).save(flush: true)
+
+        and: "a JobReferenceItem with explicit project"
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> true
+                getUuid() >> null
+                getJobIdentifier() >> 'testGroup/crossProjectJob'
+                getProject() >> 'otherProject'
+            }
+
+        when: "findJobFromJobReference is called with different project parameter"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "the job is found using jobRef's project"
+            result != null
+            result.project == 'otherProject'
+    }
+
+    def "findJobFromJobReference should fall back to parameter project when jobRef project is null"() {
+        given: "a job in testProject"
+            def job = new ScheduledExecution(
+                jobName: 'localJob',
+                project: 'testProject',
+                description: 'a job',
+                uuid: UUID.randomUUID().toString(),
+                groupPath: 'testGroup',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])
+            ).save(flush: true)
+
+        and: "a JobReferenceItem without project specified"
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> true
+                getUuid() >> null
+                getJobIdentifier() >> 'testGroup/localJob'
+                getProject() >> null
+            }
+
+        when: "findJobFromJobReference is called"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "the job is found using the parameter project"
+            result != null
+            result.project == 'testProject'
+    }
+
+    def "findJobFromJobReference should return null when job UUID not found"() {
+        given: "a JobReferenceItem with non-existent UUID"
+            def nonExistentUuid = UUID.randomUUID().toString()
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> false
+                getUuid() >> nonExistentUuid
+            }
+
+        when: "findJobFromJobReference is called"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "null is returned"
+            result == null
+    }
+
+    def "findJobFromJobReference should return null when job name not found"() {
+        given: "a JobReferenceItem with non-existent name"
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> true
+                getUuid() >> null
+                getJobIdentifier() >> 'nonExistentGroup/nonExistentJob'
+                getProject() >> null
+            }
+
+        when: "findJobFromJobReference is called"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "null is returned"
+            result == null
+    }
+
+    def "findJobFromJobReference should handle null jobIdentifier gracefully"() {
+        given: "a JobReferenceItem with null jobIdentifier"
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> true
+                getUuid() >> null
+                getJobIdentifier() >> null
+                getProject() >> null
+            }
+
+        when: "findJobFromJobReference is called"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "null is returned without exception"
+            result == null
+    }
+
+
+    def "findJobFromJobReference should prioritize UUID over name when useName is false"() {
+        given: "two jobs: one matched by UUID, another by name"
+            def job1 = new ScheduledExecution(
+                jobName: 'job1',
+                project: 'testProject',
+                description: 'job found by UUID',
+                uuid: UUID.randomUUID().toString(),
+                groupPath: 'group1',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])
+            ).save(flush: true)
+
+            def job2 = new ScheduledExecution(
+                jobName: 'job1',
+                project: 'testProject',
+                description: 'different job with same name',
+                uuid: UUID.randomUUID().toString(),
+                groupPath: 'group1',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])
+            ).save(flush: true)
+
+        and: "a JobReferenceItem configured to use UUID"
+            def jobRef = Mock(JobReferenceItem) {
+                getUseName() >> false
+                getUuid() >> job1.uuid
+                getJobIdentifier() >> 'group1/job1'
+            }
+
+        when: "findJobFromJobReference is called"
+            def result = service.findJobFromJobReference(jobRef, 'testProject')
+
+        then: "the first job is found by UUID, not by name"
+            result != null
+            result.uuid == job1.uuid
+            result.description == 'job found by UUID'
     }
 
 

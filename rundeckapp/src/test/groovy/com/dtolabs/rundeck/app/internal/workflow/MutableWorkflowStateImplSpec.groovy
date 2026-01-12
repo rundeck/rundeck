@@ -255,4 +255,141 @@ class MutableWorkflowStateImplSpec extends Specification {
         '1/2@node=anode' | null               | ["nodeA"]
 
     }
+
+    @Unroll
+    def "getRunnerNode returns #expectedDescription when runnerNode is #runnerNodeDescription"() {
+        given: "a workflow state with a server node"
+        def serverNode = 'server1'
+        def mutableStep = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        def wf = new MutableWorkflowStateImpl(['nodeA'], 1, [0: mutableStep], null, serverNode)
+
+        and: "the step has a specific runnerNode value"
+        mutableStep.runnerNode = runnerNodeValue
+
+        when: "getRunnerNode is called"
+        def result = wf.getRunnerNode(mutableStep)
+
+        then: "it returns the expected value"
+        result == expectedResult
+
+        where:
+        runnerNodeValue | expectedResult | runnerNodeDescription    | expectedDescription
+        'runner1'       | 'runner1'      | 'set to runner1'         | "step's runnerNode"
+        'runner-node-2' | 'runner-node-2'| 'set to runner-node-2'   | "step's runnerNode"
+        null            | 'server1'      | 'null'                   | 'serverNode as fallback'
+        ''              | 'server1'      | 'empty string'           | 'serverNode as fallback'
+    }
+
+
+    def "getRunnerNode is used correctly during initialization"() {
+        given: "a workflow state with a server node and a non-node step without subworkflow"
+        def serverNode = 'server1'
+        def mutableStep = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep.nodeStep = false
+        mutableStep.runnerNode = 'runner1'
+
+        when: "a new workflow state is initialized"
+        def wf = new MutableWorkflowStateImpl(['nodeA'], 1, [0: mutableStep], null, serverNode)
+
+        then: "the step's node state map contains an entry for the runnerNode"
+        mutableStep.nodeStateMap != null
+        mutableStep.nodeStateMap.containsKey('runner1')
+    }
+
+    def "getRunnerNode is used correctly when updating step state for workflow step"() {
+        given: "a workflow state with a server node"
+        def serverNode = 'server1'
+        def runnerNode = 'runner1'
+        def mutableStep = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep.nodeStep = false
+        mutableStep.runnerNode = runnerNode
+        def wf = new MutableWorkflowStateImpl(['nodeA'], 1, [0: mutableStep], null, serverNode)
+        def date = new Date()
+
+        when: "step state is updated to RUNNING"
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.RUNNING)), date)
+
+        then: "the runner node state is updated"
+        mutableStep.nodeStateMap.containsKey(runnerNode)
+        mutableStep.nodeStateMap[runnerNode].executionState == ExecutionState.RUNNING
+    }
+
+    def "getRunnerNode is used correctly when updating step state with serverNode fallback"() {
+        given: "a workflow state with a server node"
+        def serverNode = 'server1'
+        def mutableStep = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep.nodeStep = false
+        mutableStep.runnerNode = null // Will fall back to serverNode
+        def wf = new MutableWorkflowStateImpl(['nodeA'], 1, [0: mutableStep], null, serverNode)
+        def date = new Date()
+
+        when: "step state is updated to RUNNING"
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.RUNNING)), date)
+
+        then: "the server node state is updated"
+        mutableStep.nodeStateMap.containsKey(serverNode)
+        mutableStep.nodeStateMap[serverNode].executionState == ExecutionState.RUNNING
+    }
+
+
+    def "getRunnerNode is used in initializeWFState for non-node steps"() {
+        given: "a workflow with a non-node step configured with a runner node"
+        def serverNode = 'server1'
+        def runnerNode = 'runner1'
+        def mutableStep = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep.nodeStep = false
+        mutableStep.runnerNode = runnerNode
+
+        when: "workflow state is initialized"
+        def wf = new MutableWorkflowStateImpl(['nodeA'], 1, [0: mutableStep], null, serverNode)
+
+        then: "the runner node is correctly associated with the step"
+        wf.getRunnerNode(mutableStep) == runnerNode
+        mutableStep.nodeStateMap.containsKey(runnerNode)
+    }
+
+    def "getRunnerNode is used in updateStateForStep for non-node steps"() {
+        given: "a workflow state with a step that has a runnerNode"
+        def serverNode = 'server1'
+        def runnerNode = 'runner1'
+        def mutableStep = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep.nodeStep = false
+        mutableStep.runnerNode = runnerNode
+        def wf = new MutableWorkflowStateImpl(['nodeA'], 1, [0: mutableStep], null, serverNode)
+        def date = new Date()
+
+        when: "workflow and step are updated to RUNNING then SUCCEEDED"
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, ['nodeA'])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.RUNNING)), date)
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED)), date)
+
+        then: "the runnerNode is correctly associated in the step's nodeStateMap"
+        mutableStep.nodeStateMap.containsKey(runnerNode)
+        mutableStep.nodeStateMap[runnerNode].executionState == ExecutionState.SUCCEEDED
+    }
+
+    def "getRunnerNode returns correct value for steps with and without runnerNode in same workflow"() {
+        given: "a workflow with multiple steps, some with runnerNode and some without"
+        def serverNode = 'server1'
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = false
+        mutableStep1.runnerNode = 'runner1'
+
+        def mutableStep2 = new MutableWorkflowStepStateImpl(stepIdentifier(2))
+        mutableStep2.nodeStep = false
+        mutableStep2.runnerNode = null
+
+        def mutableStep3 = new MutableWorkflowStepStateImpl(stepIdentifier(3))
+        mutableStep3.nodeStep = false
+        mutableStep3.runnerNode = 'runner2'
+
+        def wf = new MutableWorkflowStateImpl(['nodeA'], 3, [0: mutableStep1, 1: mutableStep2, 2: mutableStep3], null, serverNode)
+
+        expect: "each step returns the correct runnerNode or serverNode"
+        wf.getRunnerNode(mutableStep1) == 'runner1'
+        wf.getRunnerNode(mutableStep2) == serverNode
+        wf.getRunnerNode(mutableStep3) == 'runner2'
+    }
 }
+
+

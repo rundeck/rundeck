@@ -33,7 +33,7 @@ public interface ExecutionLifecycleComponentHandler {
 
 
     /**
-     * Job start event
+     * Workflow configuration event triggered before the workflow execution items are configured for the execution.
      *
      * @param executionContext input execution context
      * @throws ExecutionLifecycleComponentException

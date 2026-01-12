@@ -786,7 +786,14 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
     }
 
-
+    /**
+     * Returns the runner node configured for the given workflow step. If the step's runner node is not set,
+     * this method falls back to returning the server node.
+     *
+     * @param currentStep the current workflow step state
+     * @return the name of the runner node for the step, or the server node if not specified
+     */
+    @Override
     String getRunnerNode(WorkflowStepState currentStep){
         return currentStep.runnerNode?:serverNode
     }
