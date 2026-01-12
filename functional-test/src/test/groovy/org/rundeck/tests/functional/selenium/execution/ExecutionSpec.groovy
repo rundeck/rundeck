@@ -15,6 +15,7 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import org.rundeck.util.gui.pages.project.SideBarPage
 import spock.lang.Shared
+import spock.lang.Unroll
 
 @SeleniumCoreTest
 class ExecutionSpec extends SeleniumBase {
@@ -111,9 +112,11 @@ class ExecutionSpec extends SeleniumBase {
      * - Executes the command 'echo 'Hello world'' and waits for it to succeed.
      * - Validates various elements on the command page, such as the execution content and log gutters.
      */
-    def "viewer execution check adhoc page"() {
+    @Unroll
+    def "viewer execution check adhoc page (nextUi: #nextUi)"() {
         when:
         def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
+        commandPage.nextUi = nextUi
         commandPage.runCommandAndWaitToBe("echo 'Hello world'", "SUCCEEDED")
         then:
         commandPage.runContent.isDisplayed()
@@ -121,6 +124,8 @@ class ExecutionSpec extends SeleniumBase {
         commandPage.getExecLogGutters().size() == 2
         commandPage.execLogContent.text == "Hello world"
         commandPage.runningExecState == "SUCCEEDED"
+        where:
+            nextUi << [false, true]
     }
 
     /**
@@ -225,9 +230,11 @@ class ExecutionSpec extends SeleniumBase {
      * - Executes a command with a long echo statement.
      * - Verifies the presence of line wrapping in the log view.
      */
-    def "check line wrap"() {
+    @Unroll
+    def "check line wrap (nextUi: #nextUi)"() {
         setup:
         def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
+        commandPage.nextUi = nextUi
         def sideBarPage = page SideBarPage
         def executionShowPage = page ExecutionShowPage
         when:
@@ -245,6 +252,8 @@ class ExecutionSpec extends SeleniumBase {
         then:
         executionShowPage.waitForNumberOfElementsToBe executionShowPage.maskSettingsOptionsBy, 0
         executionShowPage.waitForNumberOfElementsToBe executionShowPage.logContentTextBy, 1
+        where:
+            nextUi << [false, true]
     }
 
     /**
@@ -562,9 +571,11 @@ class ExecutionSpec extends SeleniumBase {
      * - Executes an adhoc command and navigates to the log output.
      * - Changes log view settings while the command is running and verifies their effects.
      */
-    def "change options while running"() {
+    @Unroll
+    def "change options while running (nextUi: #nextUi)"() {
         setup:
         def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
+        commandPage.nextUi = nextUi
         def sideBarPage = page SideBarPage
         def activityPage = page ActivityPage
         def executionShowPage = page ExecutionShowPage
@@ -619,6 +630,8 @@ class ExecutionSpec extends SeleniumBase {
         executionShowPage.execLogGutters.size() == 0
         executionShowPage.gutterLineNumbers.size() == 0
         executionShowPage.logNodeSettings.size() == 0
+        where:
+            nextUi << [false, true]
     }
 
     def cleanup() {
