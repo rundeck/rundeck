@@ -1,6 +1,5 @@
 <template>
   <div class="group-detail-view">
-    <!-- PrimeVue Breadcrumb -->
     <Breadcrumb :model="breadcrumbItems" class="group-breadcrumb">
       <template #item="{ item }">
         <a v-if="item.command" @click="item.command" class="breadcrumb-link">
@@ -10,7 +9,6 @@
       </template>
     </Breadcrumb>
 
-    <!-- Group header -->
     <div class="group-header">
       <PluginIcon
         v-if="group"
@@ -18,17 +16,13 @@
         icon-class="group-icon"
       />
       <h3 class="group-title">{{ groupName }}</h3>
-      <span class="group-count">
-        ({{ filteredProviders.length }}
-      </span>
+      <Badge :value="filteredProviders.length" />
     </div>
 
-    <!-- No results message -->
     <div v-if="filteredProviders.length === 0" class="no-results">
       <p>{{ $t("noResultsFound") }}</p>
     </div>
 
-    <!-- Provider list -->
     <Accordion
       v-else
       :value="[]"
@@ -58,6 +52,8 @@ import Breadcrumb from "primevue/breadcrumb";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
 import AccordionHeader from "primevue/accordionheader";
+import Badge from "primevue/badge";
+import "@/library/components/primeVue/Badge/badge.scss";
 
 export default defineComponent({
   name: "GroupedProviderDetail",
@@ -67,6 +63,7 @@ export default defineComponent({
     Accordion,
     AccordionPanel,
     AccordionHeader,
+    Badge
   },
   props: {
     group: {
@@ -142,12 +139,13 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-.group-detail-view {
-  padding-top: 16px;
+.group-breadcrumb {
+  margin-bottom: 16px;
+  padding: 0;
 }
 
-.group-breadcrumb {
-  margin-bottom: 24px;
+.p-breadcrumb-list {
+  margin-bottom: 0;
 }
 
 .breadcrumb-link {
@@ -172,14 +170,12 @@ export default defineComponent({
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--colors-gray-300);
 }
 
 .group-icon {
-  width: 24px;
   height: 24px;
+  text-align: center;
+  width: 24px;
 }
 
 .group-title {

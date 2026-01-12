@@ -5,7 +5,6 @@
     size="lg"
   >
     <div class="modal-content-wrapper">
-      <!-- Search and Service Toggle - ALWAYS VISIBLE -->
       <p class="text-heading--sm">{{ $t("searchForStep") }}</p>
       <p class="text-body--sm text-body--muted">
         <a
@@ -20,6 +19,7 @@
       <plugin-search
         v-if="showSearch"
         :ea="true"
+        class="plugin-search-container"
         @search="filterLoadedServices"
         @searching="handleSearching"
       />
@@ -30,7 +30,6 @@
         option-value="value"
       />
 
-      <!-- Section Heading/Description - ALWAYS VISIBLE -->
       <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>
       <p class="text-body--lg">
         {{ sectionDescription }}
@@ -39,9 +38,7 @@
         </a>
       </p>
 
-      <!-- Transition between views -->
       <transition name="view-transition" mode="out-in">
-        <!-- Main Accordion View -->
         <PluginAccordionList
           v-if="!showGroup"
           key="accordion-list"
@@ -52,7 +49,6 @@
           @select="handleAccordionSelect"
         />
 
-        <!-- Group Detail View -->
         <GroupedProviderDetail
           v-else
           key="group-detail"
@@ -279,7 +275,6 @@ export default defineComponent({
   watch: {
     modelValue(val) {
       this.modalShown = val;
-      // Reset state when modal is opened
       if (val === true) {
         this.backToAllPlugins();
       }
@@ -288,7 +283,6 @@ export default defineComponent({
       this.$emit("update:modelValue", val);
     },
     selectedService(newVal, oldVal) {
-      // When service type changes while in group view, return to main view
       if (this.showGroup && newVal !== oldVal) {
         this.backToAllPlugins();
       }
@@ -362,12 +356,10 @@ export default defineComponent({
     },
     handleAccordionSelect({ group, key }) {
       if (group.isGroup) {
-        // Show group detail view
         this.showGroup = true;
         this.selectedGroup = group;
         this.selectedGroupName = key;
       } else {
-        // For single providers: emit selected event
         const provider = group.providers[0];
         this.chooseProviderAdd(this.selectedService, provider.name);
       }
@@ -400,18 +392,20 @@ span:not(.glyphicon, .fa, .pi) {
   font-size: 24px !important;
 }
 
-.text-heading--sm {
-  margin-bottom: 4px;
+.text-heading--sm,
+.form-group {
+  margin-bottom: 0px;
 }
 
 .text-body--sm {
-  margin-bottom: 10px;
+  margin-bottom: 4px;
 }
 
 .plugin-search {
   margin-bottom: 18px;
 }
 
+.plugin-search-container,
 .p-selectbutton {
   margin-bottom: 24px;
 }
