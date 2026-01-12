@@ -1,28 +1,56 @@
 <template>
-  <modal v-model="modalShown" :title="title || $t('plugin.choose.title')" size="lg">
+  <modal
+    v-model="modalShown"
+    :title="title || $t('plugin.choose.title')"
+    size="lg"
+  >
     <div class="modal-content-wrapper">
-      <p class="text-heading--sm">{{ $t('searchForStep') }}</p>
+      <p class="text-heading--sm">{{ $t("searchForStep") }}</p>
       <p class="text-body--sm text-body--muted">
-        <a :href="searchPatternsLearnMoreUrl" target="_blank" rel="noopener noreferrer">{{ $t('learnMore') }}</a> {{ $t('learnMoreSearchPatterns') }}
+        <a
+          :href="searchPatternsLearnMoreUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          >{{ $t("learnMore") }}</a
+        >
+        {{ $t("learnMoreSearchPatterns") }}
       </p>
       <plugin-search
-          v-if="showSearch"
-          :ea="true"
-          @search="filterLoadedServices"
+        v-if="showSearch"
+        :ea="true"
+        @search="filterLoadedServices"
       ></plugin-search>
-      <pt-select-button v-model="selectedService" :options="serviceOptions" option-label="name" option-value="value"/>
+      <pt-select-button
+        v-model="selectedService"
+        :options="serviceOptions"
+        option-label="name"
+        option-value="value"
+      />
       <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>
       <p class="text-body--lg">
         {{ sectionDescription }}
-        <a :href="sectionLearnMoreUrl" target="_blank" rel="noopener noreferrer">{{ $t('learnMore') }}</a>
+        <a
+          :href="sectionLearnMoreUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          >{{ $t("learnMore") }}</a
+        >
       </p>
-      <p class="text-heading--md subsection-heading">{{ commonStepsHeading }}</p>
+      <p class="text-heading--md subsection-heading">
+        {{ commonStepsHeading }}
+      </p>
       <div v-if="loading" class="placeholder">
         <skeleton height="1.25rem" width="1.25rem" shape="rectangle" />
         <skeleton />
       </div>
     </div>
-    <Accordion v-if="Object.keys(groupedProviders.highlighted).length > 0" :value="[]" multiple>
+    <Accordion
+      v-if="Object.keys(groupedProviders.highlighted).length > 0"
+      :value="[]"
+      multiple
+      expandIcon="pi pi-chevron-down"
+      collapseIcon="pi pi-chevron-up"
+    >
       <AccordionPanel
         v-for="(group, key) in groupedProviders.highlighted"
         :key="key"
@@ -33,7 +61,7 @@
             <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
             <span class="accordion-title">{{ key }}</span>
             <span v-if="group.isGroup" class="provider-count">
-              ({{ group.providers.length }} {{ $t('plugins') }})
+              ({{ group.providers.length }} {{ $t("plugins") }})
             </span>
           </div>
         </AccordionHeader>
@@ -41,12 +69,21 @@
     </Accordion>
 
     <!-- Divider title -->
-    <p v-if="dividerTitle" class="text-heading--md subsection-heading divider-title">
+    <p
+      v-if="dividerTitle"
+      class="text-heading--md subsection-heading divider-title"
+    >
       {{ dividerTitle }}
     </p>
 
     <!-- Non-highlighted providers accordion -->
-    <Accordion v-if="Object.keys(groupedProviders.nonHighlighted).length > 0" :value="[]" multiple>
+    <Accordion
+      v-if="Object.keys(groupedProviders.nonHighlighted).length > 0"
+      :value="[]"
+      multiple
+      expandIcon="pi pi-chevron-down"
+      collapseIcon="pi pi-chevron-up"
+    >
       <AccordionPanel
         v-for="(group, key) in groupedProviders.nonHighlighted"
         :key="key"
@@ -57,17 +94,23 @@
             <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
             <span class="accordion-title">{{ key }}</span>
             <span v-if="group.isGroup" class="provider-count">
-              ({{ group.providers.length }} {{ $t('plugins') }})
+              ({{ group.providers.length }} {{ $t("plugins") }})
             </span>
           </div>
         </AccordionHeader>
         <AccordionContent v-if="group.isGroup">
-          <p class="text-body--sm">Grouped provider layout (to be implemented)</p>
+          <p class="text-body--sm">
+            Grouped provider layout (to be implemented)
+          </p>
         </AccordionContent>
       </AccordionPanel>
     </Accordion>
     <template #footer>
-      <btn data-testid="cancel-button" class="text-button" @click="$emit('cancel')">
+      <btn
+        data-testid="cancel-button"
+        class="text-button"
+        @click="$emit('cancel')"
+      >
         {{ $t("Cancel") }}
       </btn>
     </template>
@@ -91,7 +134,17 @@ const context = getRundeckContext();
 
 export default defineComponent({
   name: "ChoosePluginsEAModal",
-  components: { PluginSearch, PluginInfo, PluginIcon, PtSelectButton, Skeleton, Accordion, AccordionPanel, AccordionHeader, AccordionContent },
+  components: {
+    PluginSearch,
+    PluginInfo,
+    PluginIcon,
+    PtSelectButton,
+    Skeleton,
+    Accordion,
+    AccordionPanel,
+    AccordionHeader,
+    AccordionContent,
+  },
   props: {
     title: {
       type: String,
@@ -135,39 +188,37 @@ export default defineComponent({
     serviceOptions() {
       return [
         {
-          name: this.$t('nodeSteps'),
+          name: this.$t("nodeSteps"),
           value: ServiceType.WorkflowNodeStep,
         },
         {
-          name: this.$t('workflowSteps'),
+          name: this.$t("workflowSteps"),
           value: ServiceType.WorkflowStep,
-        }
+        },
       ];
     },
     sectionHeading() {
       return this.selectedService === ServiceType.WorkflowStep
-        ? this.$t('workflowSteps')
-        : this.$t('nodeSteps');
+        ? this.$t("workflowSteps")
+        : this.$t("nodeSteps");
     },
     sectionDescription() {
       return this.selectedService === ServiceType.WorkflowStep
-        ? this.$t('workflowStepsDescription')
-        : this.$t('nodeStepsDescription');
+        ? this.$t("workflowStepsDescription")
+        : this.$t("nodeStepsDescription");
     },
     sectionLearnMoreUrl() {
       // URLs will be populated later
-      return this.selectedService === ServiceType.WorkflowStep
-        ? ''
-        : '';
+      return this.selectedService === ServiceType.WorkflowStep ? "" : "";
     },
     searchPatternsLearnMoreUrl() {
       // URL will be populated later
-      return '';
+      return "";
     },
     commonStepsHeading() {
       return this.selectedService === ServiceType.WorkflowStep
-        ? this.$t('commonWorkflowSteps')
-        : this.$t('commonNodeSteps');
+        ? this.$t("commonWorkflowSteps")
+        : this.$t("commonNodeSteps");
     },
     filteredServices() {
       return this.loadedServices.map((service) => {
@@ -188,18 +239,25 @@ export default defineComponent({
       const highlightedResult = {};
       const nonHighlightedResult = {};
       const activeService = this.filteredServices?.find(
-        service => service.service === this.selectedService
+        (service) => service.service === this.selectedService,
       );
 
       if (!activeService) {
-        return { highlighted: highlightedResult, nonHighlighted: nonHighlightedResult };
+        return {
+          highlighted: highlightedResult,
+          nonHighlighted: nonHighlightedResult,
+        };
       }
 
       // First, add highlighted providers (rendered individually)
-      const highlighted = activeService.providers.filter(p => p.isHighlighted);
-      const nonHighlighted = activeService.providers.filter(p => !p.isHighlighted);
+      const highlighted = activeService.providers.filter(
+        (p) => p.isHighlighted,
+      );
+      const nonHighlighted = activeService.providers.filter(
+        (p) => !p.isHighlighted,
+      );
 
-      highlighted.forEach(provider => {
+      highlighted.forEach((provider) => {
         highlightedResult[provider.title] = {
           isGroup: false,
           iconDetail: provider,
@@ -208,7 +266,7 @@ export default defineComponent({
       });
 
       // Then, process non-highlighted providers in order
-      nonHighlighted.forEach(provider => {
+      nonHighlighted.forEach((provider) => {
         const groupBy = provider.providerMetadata?.groupBy;
 
         if (groupBy) {
@@ -234,14 +292,19 @@ export default defineComponent({
         }
       });
 
-      return { highlighted: highlightedResult, nonHighlighted: nonHighlightedResult };
+      return {
+        highlighted: highlightedResult,
+        nonHighlighted: nonHighlightedResult,
+      };
     },
     dividerTitle(): string {
       // Count total providers, not accordion items
       let totalProviders = 0;
-      Object.values(this.groupedProviders.nonHighlighted).forEach((group: any) => {
-        totalProviders += group.providers.length;
-      });
+      Object.values(this.groupedProviders.nonHighlighted).forEach(
+        (group: any) => {
+          totalProviders += group.providers.length;
+        },
+      );
 
       if (totalProviders === 0) {
         return "";
@@ -252,7 +315,7 @@ export default defineComponent({
         titleString = "workflow.step.plugin.plural";
       }
       return this.$t(titleString, [totalProviders]);
-    }
+    },
   },
   watch: {
     modelValue(val) {
@@ -339,48 +402,51 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-.modal-dialog {
+.modal-dialog,
+.modal-dialog p,
+.modal-dialog h4,
+.modal-dialog button,
+span:not(.glyphicon, .fa, .pi) {
   font-family: Inter, var(--fonts-body) !important;
 }
 .modal-body {
   padding-top: 0 !important;
 }
-</style>
 
-<style scoped lang="scss">
+.modal-title {
+  font-size: 24px !important;
+}
 
-.modal-content-wrapper {
-  .text-heading--sm {
-    margin-bottom: 4px;
-  }
+.text-heading--sm {
+  margin-bottom: 4px;
+}
 
-  .text-body--sm {
-    margin-bottom: 10px;
-  }
+.text-body--sm {
+  margin-bottom: 10px;
+}
 
-  .plugin-search {
-    margin-bottom: 18px;
-  }
+.plugin-search {
+  margin-bottom: 18px;
+}
 
-  .p-selectbutton {
-    margin-bottom: 24px;
-  }
+.p-selectbutton {
+  margin-bottom: 24px;
+}
 
-  .section-heading {
-    margin-bottom: 8px;
-  }
+.section-heading {
+  margin-bottom: 8px;
+}
 
-  .text-body--lg {
-    margin-bottom: 14px;
-  }
+.text-body--lg {
+  margin-bottom: 14px;
+}
 
-  .subsection-heading {
-    margin-bottom: 12px;
-  }
+.subsection-heading {
+  margin-bottom: 12px;
+}
 
-  .divider-title {
-    margin-top: 16px;
-  }
+.divider-title {
+  margin-top: 16px;
 }
 
 .placeholder {
@@ -411,5 +477,29 @@ export default defineComponent({
 .provider-count {
   color: var(--colors-gray-600);
   margin-left: 0.25rem;
+}
+</style>
+<style scoped lang="scss">
+:deep(.p-accordion) {
+  .p-accordionpanel {
+    border: none;
+    box-shadow: none;
+
+    &:last-child .p-accordionheader {
+      border-bottom: none !important;
+    }
+  }
+
+  .p-accordionheader {
+    background: var(--colors-white);
+    border: none;
+    border-bottom: 1px solid var(--colors-gray-300);
+    padding-left: 0;
+
+    .p-accordionheader-toggle-icon {
+      order: 2;
+      margin-left: auto;
+    }
+  }
 }
 </style>
