@@ -19,6 +19,7 @@
         v-if="showSearch"
         :ea="true"
         @search="filterLoadedServices"
+        @searching="handleSearching"
       ></plugin-search>
       <pt-select-button
         v-model="selectedService"
@@ -36,16 +37,19 @@
           >{{ $t("learnMore") }}</a
         >
       </p>
-      <p class="text-heading--md subsection-heading">
-        {{ commonStepsHeading }}
-      </p>
       <div v-if="loading" class="placeholder">
         <skeleton height="1.25rem" width="1.25rem" shape="rectangle" />
         <skeleton />
       </div>
     </div>
+    <p
+      v-if="!loading && Object.keys(groupedProviders.highlighted).length > 0"
+      class="text-heading--md subsection-heading"
+    >
+      {{ commonStepsHeading }}
+    </p>
     <Accordion
-      v-if="Object.keys(groupedProviders.highlighted).length > 0"
+      v-if="!loading && Object.keys(groupedProviders.highlighted).length > 0"
       :value="[]"
       multiple
       expandIcon="pi pi-chevron-down"
@@ -70,7 +74,7 @@
 
     <!-- Divider title -->
     <p
-      v-if="dividerTitle"
+      v-if="!loading && dividerTitle"
       class="text-heading--md subsection-heading divider-title"
     >
       {{ dividerTitle }}
@@ -78,7 +82,7 @@
 
     <!-- Non-highlighted providers accordion -->
     <Accordion
-      v-if="Object.keys(groupedProviders.nonHighlighted).length > 0"
+      v-if="!loading && Object.keys(groupedProviders.nonHighlighted).length > 0"
       :value="[]"
       multiple
       expandIcon="pi pi-chevron-down"
@@ -384,6 +388,9 @@ export default defineComponent({
       return providers.findIndex(
         (provider) => provider.isHighlighted === false,
       );
+    },
+    handleSearching(isSearching: boolean) {
+      this.loading = isSearching;
     },
     handleAccordionClick(group: any, key: string) {
       if (group.isGroup) {

@@ -104,16 +104,44 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["search"],
+  emits: ["search", "searching"],
   data() {
     return {
       filterValue: "",
+      debounceTimer: null as number | null,
     };
+  },
+  watch: {
+    filterValue(newValue: string) {
+      // Only apply live search with debounce in EA mode
+      if (!this.ea) {
+        return;
+      }
+
+      // Emit searching state immediately
+      this.$emit("searching", true);
+
+      // Clear existing timer
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer);
+      }
+
+      // Set new timer for debounced search
+      this.debounceTimer = window.setTimeout(() => {
+        this.filterStepDescriptions();
+        this.$emit("searching", false);
+      }, 300);
+    },
   },
   methods: {
     filterStepDescriptions() {
       this.$emit("search", this.filterValue);
     },
+  },
+  beforeUnmount() {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
   },
 });
 </script>
