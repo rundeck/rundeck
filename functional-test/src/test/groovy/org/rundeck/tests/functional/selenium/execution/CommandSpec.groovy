@@ -95,7 +95,7 @@ class CommandSpec extends SeleniumBase {
     }
 
     @Unroll
-    def "fragment #output page load shows output view (nextUi: #nextUi)"() {
+    def "output fragment page load shows output view (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
             commandPage.nextUi = nextUi
