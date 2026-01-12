@@ -89,7 +89,7 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-.plugin-icon {
+:deep(.plugin-icon) {
   width: 16px;
   height: 16px;
   border-radius: 2px;

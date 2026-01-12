@@ -21,6 +21,7 @@ import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
 import PrimeVue from "primevue/config";
 import Lara from "@primeuix/themes/lara";
+import "primeicons/primeicons.css";
 import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
 
 const locale = window._rundeck.locale || "en_US";

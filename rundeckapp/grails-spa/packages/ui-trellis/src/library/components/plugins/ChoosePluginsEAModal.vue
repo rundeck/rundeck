@@ -37,9 +37,26 @@
           >{{ $t("learnMore") }}</a
         >
       </p>
-      <div v-if="loading" class="placeholder">
-        <skeleton height="1.25rem" width="1.25rem" shape="rectangle" />
-        <skeleton />
+      <div v-if="loading">
+        <!-- Common Steps placeholders -->
+        <p class="text-heading--md subsection-heading">{{ commonStepsHeading }}</p>
+        <div class="placeholder-group">
+          <div v-for="n in 4" :key="'common-' + n" class="placeholder">
+            <skeleton height="20px" width="20px" shape="rectangle" />
+            <skeleton height="20px" width="435px" shape="rectangle" />
+          </div>
+        </div>
+
+        <!-- Divider title placeholders -->
+        <p class="text-heading--md subsection-heading divider-title">
+          {{ sectionHeading }}
+        </p>
+        <div class="placeholder-group">
+          <div v-for="n in 3" :key="'other-' + n" class="placeholder">
+            <skeleton height="20px" width="20px" shape="rectangle" />
+            <skeleton height="20px" width="435px" shape="rectangle" />
+          </div>
+        </div>
       </div>
     </div>
     <p
@@ -52,8 +69,7 @@
       v-if="!loading && Object.keys(groupedProviders.highlighted).length > 0"
       :value="[]"
       multiple
-      expandIcon="pi pi-chevron-down"
-      collapseIcon="pi pi-chevron-up"
+      expandIcon="pi pi-chevron-right"
     >
       <AccordionPanel
         v-for="(group, key) in groupedProviders.highlighted"
@@ -85,8 +101,7 @@
       v-if="!loading && Object.keys(groupedProviders.nonHighlighted).length > 0"
       :value="[]"
       multiple
-      expandIcon="pi pi-chevron-down"
-      collapseIcon="pi pi-chevron-up"
+      expandIcon="pi pi-chevron-right"
     >
       <AccordionPanel
         v-for="(group, key) in groupedProviders.nonHighlighted"
@@ -110,13 +125,15 @@
       </AccordionPanel>
     </Accordion>
     <template #footer>
-      <btn
-        data-testid="cancel-button"
-        class="text-button"
-        @click="$emit('cancel')"
-      >
-        {{ $t("Cancel") }}
-      </btn>
+      <div class="text-right">
+        <btn
+          data-testid="cancel-button"
+          class="text-button"
+          @click="$emit('cancel')"
+        >
+          {{ $t("Cancel") }}
+        </btn>
+      </div>
     </template>
   </modal>
 </template>
@@ -456,10 +473,18 @@ span:not(.glyphicon, .fa, .pi) {
   margin-top: 16px;
 }
 
-.placeholder {
-  align-items: center;
-  display: flex;
-  gap: 0.5rem;
+.placeholder-group {
+  .placeholder {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--colors-gray-300);
+    padding: 16px 0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
 }
 
 .img-icon {
