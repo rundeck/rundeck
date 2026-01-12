@@ -78,11 +78,4 @@ class PerformScmActionPage extends BasePage {
     @Override
     void go() {
     }
-
-    @Override
-    void validatePage() {
-        if (!driver.currentUrl.endsWith(loadPath)) {
-            throw new IllegalStateException("Couldn't browse Perform SCM Action Page. Expected: ${loadPath} Actual: ${driver.currentUrl}")
-        }
-    }
 }

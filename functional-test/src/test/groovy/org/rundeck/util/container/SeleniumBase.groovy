@@ -37,11 +37,12 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     @Delegate
     WebDriver getDriver() {
         if (null == _driver) {
-            def prefs = ["download.default_directory": downloadFolder]
+            def prefs = ["download.default_directory": downloadFolder, "profile.password_manager_leak_detection": false]
             LoggingPreferences logPrefs = new LoggingPreferences()
             logPrefs.enable(LogType.BROWSER, Level.ALL)
 
-            ChromeOptions options = new ChromeOptions()
+            ChromeOptions options = new ChromeOptions();
+            options.setBrowserVersion("140"); // Pinned to Chrome 140 major version (uses latest stable 140.x)
             options.setCapability("goog:loggingPrefs", logPrefs);
             options.setImplicitWaitTimeout(Duration.ofSeconds(5))
             options.setExperimentalOption("prefs", prefs)

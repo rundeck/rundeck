@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.project
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
@@ -27,17 +28,22 @@ class SideBarPage extends BasePage {
     void goTo(NavLinkTypes navLink) {
         def navIdBy = By.id(navLink.id)
         if (navLink.projectConfig) {
-            // Use retry logic for projectSettings click to handle Vue.js re-rendering
-            waitIgnoringForElementToBeClickable(projectSettings).click()
+            byAndWaitClickable(projectSettings).click()
             waitForNavVisible()
-        } else if (!isElementDisplayedIgnoringStale(navIdBy) && overflowFields.size() == 1) {
-            // Use retry logic for overflow click to handle Vue.js re-rendering
-            // If nav link is not displayed (hidden in overflow menu), click overflow button
-            waitIgnoringForElementToBeClickable(isOverflow).click()
-            waitForAttributeContains overflowField, 'class', 'active'
+        } else if (overflowFields.size() == 1) {
+            // Check if element is visible using a try-catch to handle staleness
+            try {
+                if (!(el navIdBy).isDisplayed()) {
+                    byAndWaitClickable(isOverflow).click()
+                    waitForAttributeContains overflowField, 'class', 'active'
+                }
+            } catch (StaleElementReferenceException e) {
+                // Element is stale, click overflow anyway
+                byAndWaitClickable(isOverflow).click()
+                waitForAttributeContains overflowField, 'class', 'active'
+            }
         }
-        // Use retry logic for nav link click to handle Vue.js re-rendering
-        waitIgnoringForElementToBeClickable(navIdBy).click()
+        byAndWaitClickable(navIdBy).click()
     }
 
     WebElement waitForNavVisible() {

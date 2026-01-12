@@ -13,7 +13,6 @@ orbs:
   node: circleci/node@6.3.0
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
-  browser-tools: circleci/browser-tools@1.4.8
   snyk: snyk/snyk@2.2 # https://circleci.com/developer/orbs/orb/snyk/snyk
   git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
 
@@ -91,7 +90,7 @@ executors:
   # Machine executor
   machine-builder:
     machine:
-      image: ubuntu-2204:2024.11.1
+      image: ubuntu-2204:2025.09.1
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:

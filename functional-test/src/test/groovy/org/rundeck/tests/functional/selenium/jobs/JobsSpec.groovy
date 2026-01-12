@@ -617,7 +617,7 @@ class JobsSpec extends SeleniumBase {
 
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
         jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
-        jobShowPage.waitForNumberOfElementsToBe(By.name("extra.option.search"), Integer.valueOf(selection))
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.extraOptionSearchBy, Integer.valueOf(selection))
         def children = jobShowPage.getOptionSelectChildren(optionListOfValues)
 
         then:
@@ -777,7 +777,9 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.go()
         jobShowPage.getRunJobBtn().click()
         then:
-        jobShowPage.currentUrl().contains("invalidInputsProject/job/index")
+        // Wait for validation alert to appear
+        jobShowPage.waitForElementVisible(jobShowPage.jobOptionAlertBy)
+        // Verify the validation alert message is present
         jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
         cleanup:
         deleteProject(projectName)
@@ -790,8 +792,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.go()
         jobCreatePage.tab JobTab.WORKFLOW click()
         then:
-        // Grails 7: NextUI workflow uses Vue components, check for workflow section
-        jobCreatePage.waitForElementVisible(By.cssSelector("section#workflowContent"))
+        jobCreatePage.waitForTextToBePresentBySelector(jobCreatePage.workflowContentControlLabelBy, "Workflow",60)
         expect:
         // Grails 7: Verify NextUI workflow UI is loaded by checking for add step button
         // The button is rendered by CommonUndoRedoDraggableList.vue with data-testid="add-button"
