@@ -30,14 +30,20 @@ public interface ExecutionLifecycleStatus extends LifecycleStatus{
 
 
     /**
-     * @return true indicates values returned by this status result should be used (types of values depends on event
-     *         context)
+     * Indicates whether workflow data values should be updated for this lifecycle status.
+     *
+     * @return {@code true} if workflow data values should be updated; {@code false} otherwise
      */
     default boolean isUpdateWorkflowDataValues() {
         return false;
     }
 
 
+    /**
+     * Returns the workflow associated with this execution lifecycle status.
+     *
+     * @return the workflow as an {@link WorkflowExecutionItem} instance
+     */
     default WorkflowExecutionItem getWorkflow() {
         return null;
     }

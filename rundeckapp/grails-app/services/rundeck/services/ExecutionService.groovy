@@ -4064,7 +4064,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Execute a subworkflow from the Step (just for Workflow Steps)
+     * Execute a subworkflow from the Step (only for Workflow Steps)
      * @param executionContext the execution context
      * @param runnerExecutionItem the runner execution item containing the subworkflow
      * @return StepExecutionResult

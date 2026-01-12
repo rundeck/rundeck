@@ -173,7 +173,7 @@ class WorkflowService implements ApplicationContextAware{
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
                         createStateForWorkflow(item.workflow, project,frameworkNodeName,newContext,secureOptions))
             } else if (step instanceof SubWorkflowExecutionItem) {
-                // this just apply for Workflow Step
+                // this only applies to Workflow Steps
                 SubWorkflowExecutionItem rstep = (SubWorkflowExecutionItem) step
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
                         createStateForWorkflow(rstep.subWorkflow.workflow, project,frameworkNodeName,parent,secureOptions))

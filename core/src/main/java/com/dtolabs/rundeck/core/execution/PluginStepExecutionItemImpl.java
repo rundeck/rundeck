@@ -123,6 +123,8 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
     @Override
     public INodeEntry getRunner() {
         if(runnerNode!=null){
+            // return a node entry with the runner node name
+            // just used for workflow steps that are executed in a remote runner
             return new NodeEntryImpl(runnerNode);
         }
         return null;
