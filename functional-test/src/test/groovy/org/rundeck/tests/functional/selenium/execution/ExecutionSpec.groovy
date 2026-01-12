@@ -23,7 +23,7 @@ class ExecutionSpec extends SeleniumBase {
     @Shared String SELENIUM_EXEC_PROJECT
 
     def setup() {
-        SELENIUM_EXEC_PROJECT = specificationContext.currentIteration.name.tokenize().collect { it.capitalize() }.join()
+        SELENIUM_EXEC_PROJECT = specificationContext.currentIteration.name.tokenize().collect { it.capitalize() }.join().replaceAll(/[^a-zA-Z0-9_\-+.]/, '_')
         setupProject(SELENIUM_EXEC_PROJECT)
         def loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
