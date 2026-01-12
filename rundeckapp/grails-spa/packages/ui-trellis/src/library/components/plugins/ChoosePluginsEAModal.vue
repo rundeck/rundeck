@@ -5,14 +5,16 @@
     size="lg"
   >
     <div class="modal-content-wrapper">
+      <!-- Search and Service Toggle - ALWAYS VISIBLE -->
       <p class="text-heading--sm">{{ $t("searchForStep") }}</p>
       <p class="text-body--sm text-body--muted">
         <a
           :href="searchPatternsLearnMoreUrl"
           target="_blank"
           rel="noopener noreferrer"
-          >{{ $t("learnMore") }}</a
         >
+          {{ $t("learnMore") }}
+        </a>
         {{ $t("learnMoreSearchPatterns") }}
       </p>
       <plugin-search
@@ -20,110 +22,49 @@
         :ea="true"
         @search="filterLoadedServices"
         @searching="handleSearching"
-      ></plugin-search>
+      />
       <pt-select-button
         v-model="selectedService"
         :options="serviceOptions"
         option-label="name"
         option-value="value"
       />
+
+      <!-- Section Heading/Description - ALWAYS VISIBLE -->
       <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>
       <p class="text-body--lg">
         {{ sectionDescription }}
-        <a
-          :href="sectionLearnMoreUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          >{{ $t("learnMore") }}</a
-        >
+        <a :href="sectionLearnMoreUrl" target="_blank" rel="noopener noreferrer">
+          {{ $t("learnMore") }}
+        </a>
       </p>
-      <div v-if="loading">
-        <!-- Common Steps placeholders -->
-        <p class="text-heading--md subsection-heading">{{ commonStepsHeading }}</p>
-        <div class="placeholder-group">
-          <div v-for="n in 4" :key="'common-' + n" class="placeholder">
-            <skeleton height="20px" width="20px" shape="rectangle" />
-            <skeleton height="20px" width="435px" shape="rectangle" />
-          </div>
-        </div>
 
-        <!-- Divider title placeholders -->
-        <p class="text-heading--md subsection-heading divider-title">
-          {{ sectionHeading }}
-        </p>
-        <div class="placeholder-group">
-          <div v-for="n in 3" :key="'other-' + n" class="placeholder">
-            <skeleton height="20px" width="20px" shape="rectangle" />
-            <skeleton height="20px" width="435px" shape="rectangle" />
-          </div>
-        </div>
-      </div>
+      <!-- Transition between views -->
+      <transition name="view-transition" mode="out-in">
+        <!-- Main Accordion View -->
+        <PluginAccordionList
+          v-if="!showGroup"
+          key="accordion-list"
+          :grouped-providers="groupedProviders"
+          :loading="loading"
+          :common-steps-heading="commonStepsHeading"
+          :divider-title="dividerTitle"
+          @select="handleAccordionSelect"
+        />
+
+        <!-- Group Detail View -->
+        <GroupedProviderDetail
+          v-else
+          key="group-detail"
+          :group="selectedGroup"
+          :group-name="selectedGroupName"
+          :service-type-label="sectionHeading"
+          :search-query="searchQuery"
+          @select="handleGroupProviderSelect"
+          @back="backToAllPlugins"
+        />
+      </transition>
     </div>
-    <p
-      v-if="!loading && Object.keys(groupedProviders.highlighted).length > 0"
-      class="text-heading--md subsection-heading"
-    >
-      {{ commonStepsHeading }}
-    </p>
-    <Accordion
-      v-if="!loading && Object.keys(groupedProviders.highlighted).length > 0"
-      :value="[]"
-      multiple
-      expandIcon="pi pi-chevron-right"
-    >
-      <AccordionPanel
-        v-for="(group, key) in groupedProviders.highlighted"
-        :key="key"
-        :value="key"
-      >
-        <AccordionHeader @click="handleAccordionClick(group, key)">
-          <div class="accordion-header-content">
-            <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
-            <span class="accordion-title">{{ key }}</span>
-            <span v-if="group.isGroup" class="provider-count">
-              ({{ group.providers.length }} {{ $t("plugins") }})
-            </span>
-          </div>
-        </AccordionHeader>
-      </AccordionPanel>
-    </Accordion>
-
-    <!-- Divider title -->
-    <p
-      v-if="!loading && dividerTitle"
-      class="text-heading--md subsection-heading divider-title"
-    >
-      {{ dividerTitle }}
-    </p>
-
-    <!-- Non-highlighted providers accordion -->
-    <Accordion
-      v-if="!loading && Object.keys(groupedProviders.nonHighlighted).length > 0"
-      :value="[]"
-      multiple
-      expandIcon="pi pi-chevron-right"
-    >
-      <AccordionPanel
-        v-for="(group, key) in groupedProviders.nonHighlighted"
-        :key="key"
-        :value="key"
-      >
-        <AccordionHeader @click="handleAccordionClick(group, key)">
-          <div class="accordion-header-content">
-            <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
-            <span class="accordion-title">{{ key }}</span>
-            <span v-if="group.isGroup" class="provider-count">
-              ({{ group.providers.length }} {{ $t("plugins") }})
-            </span>
-          </div>
-        </AccordionHeader>
-        <AccordionContent v-if="group.isGroup">
-          <p class="text-body--sm">
-            Grouped provider layout (to be implemented)
-          </p>
-        </AccordionContent>
-      </AccordionPanel>
-    </Accordion>
     <template #footer>
       <div class="text-right">
         <btn
@@ -143,13 +84,10 @@ import { defineComponent } from "vue";
 import PluginSearch from "@/library/components/plugins/PluginSearch.vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import PluginIcon from "@/library/components/plugins/PluginIcon.vue";
+import PluginAccordionList from "@/library/components/plugins/PluginAccordionList.vue";
+import GroupedProviderDetail from "@/library/components/plugins/GroupedProviderDetail.vue";
 import { ServiceType } from "@/library/stores/Plugins";
 import { PtSelectButton } from "@/library/components/primeVue";
-import Skeleton from "primevue/skeleton";
-import Accordion from "primevue/accordion";
-import AccordionPanel from "primevue/accordionpanel";
-import AccordionHeader from "primevue/accordionheader";
-import AccordionContent from "primevue/accordioncontent";
 
 const context = getRundeckContext();
 
@@ -160,11 +98,8 @@ export default defineComponent({
     PluginInfo,
     PluginIcon,
     PtSelectButton,
-    Skeleton,
-    Accordion,
-    AccordionPanel,
-    AccordionHeader,
-    AccordionContent,
+    PluginAccordionList,
+    GroupedProviderDetail,
   },
   props: {
     title: {
@@ -203,6 +138,9 @@ export default defineComponent({
       searchQuery: "",
       selectedService: ServiceType.WorkflowNodeStep,
       groupExpanded: false,
+      showGroup: false,
+      selectedGroup: null,
+      selectedGroupName: '',
     };
   },
   computed: {
@@ -341,9 +279,19 @@ export default defineComponent({
   watch: {
     modelValue(val) {
       this.modalShown = val;
+      // Reset state when modal is opened
+      if (val === true) {
+        this.backToAllPlugins();
+      }
     },
     modalShown(val) {
       this.$emit("update:modelValue", val);
+    },
+    selectedService(newVal, oldVal) {
+      // When service type changes while in group view, return to main view
+      if (this.showGroup && newVal !== oldVal) {
+        this.backToAllPlugins();
+      }
     },
   },
   async mounted() {
@@ -410,16 +358,27 @@ export default defineComponent({
       this.loading = isSearching;
     },
     handleAccordionClick(group: any, key: string) {
+      this.handleAccordionSelect({ group, key });
+    },
+    handleAccordionSelect({ group, key }) {
       if (group.isGroup) {
-        // For grouped providers: set flag for future layout
-        this.groupExpanded = true;
-        // Future: show different layout for group selection
+        // Show group detail view
+        this.showGroup = true;
+        this.selectedGroup = group;
+        this.selectedGroupName = key;
       } else {
         // For single providers: emit selected event
         const provider = group.providers[0];
         this.chooseProviderAdd(this.selectedService, provider.name);
-        // Note: chooseProviderAdd already emits 'selected' which closes the modal
       }
+    },
+    backToAllPlugins() {
+      this.showGroup = false;
+      this.selectedGroup = null;
+      this.selectedGroupName = '';
+    },
+    handleGroupProviderSelect(provider: any) {
+      this.chooseProviderAdd(this.selectedService, provider.name);
     },
   },
 });
@@ -473,42 +432,20 @@ span:not(.glyphicon, .fa, .pi) {
   margin-top: 16px;
 }
 
-.placeholder-group {
-  .placeholder {
-    align-items: center;
-    display: flex;
-    gap: 0.5rem;
-    border-bottom: 1px solid var(--colors-gray-300);
-    padding: 16px 0;
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
+// View transition animation
+.view-transition-enter-active,
+.view-transition-leave-active {
+  transition: all 0.25s ease-out;
 }
 
-.img-icon {
-  align-items: center;
-  display: inline-flex;
-  justify-content: center;
-  height: 20px;
-  width: 20px;
+.view-transition-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
 }
 
-.accordion-header-content {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-.accordion-title {
-  font-weight: var(--fontWeights-medium);
-}
-
-.provider-count {
-  color: var(--colors-gray-600);
-  margin-left: 0.25rem;
+.view-transition-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
 }
 </style>
 <style scoped lang="scss">
