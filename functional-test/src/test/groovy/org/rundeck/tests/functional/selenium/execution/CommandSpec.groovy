@@ -7,6 +7,7 @@ import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import spock.lang.Unroll
 
 @SeleniumCoreTest
 class CommandSpec extends SeleniumBase {
@@ -20,9 +21,11 @@ class CommandSpec extends SeleniumBase {
         loginPage.login(TEST_USER, TEST_PASS)
     }
 
-    def "abort button in commands page"() {
+    @Unroll
+    def "abort button in commands page (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
         then:
             commandPage.nodeFilterTextField.click()
             commandPage.nodeFilterTextField.sendKeys".*"
@@ -36,11 +39,15 @@ class CommandSpec extends SeleniumBase {
         expect:
             commandPage.abortButton.click()
             commandPage.waitForElementAttributeToChange commandPage.runningExecutionStateButton, 'data-execstate', 'ABORTED'
+        where:
+            nextUi << [false, true]
     }
 
-    def "abort button in show page"() {
+    @Unroll
+    def "abort button in show page (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
@@ -56,11 +63,15 @@ class CommandSpec extends SeleniumBase {
             executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'RUNNING'
             executionShowPage.abortButton.click()
             executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'ABORTED'
+        where:
+            nextUi << [false, true]
     }
 
-    def "default page load shows nodes view"() {
+    @Unroll
+    def "default page load shows nodes view (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
@@ -79,11 +90,15 @@ class CommandSpec extends SeleniumBase {
             executionShowPage.viewContentNodes.isDisplayed()
             !executionShowPage.viewButtonNodes.isDisplayed()
             executionShowPage.viewButtonOutput.isDisplayed()
+        where:
+            nextUi << [false, true]
     }
 
-    def "fragment #output page load shows output view"() {
+    @Unroll
+    def "fragment #output page load shows output view (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
@@ -102,11 +117,15 @@ class CommandSpec extends SeleniumBase {
             executionShowPage.viewContentOutput.isDisplayed()
             executionShowPage.viewButtonNodes.isDisplayed()
             !executionShowPage.viewButtonOutput.isDisplayed()
+        where:
+            nextUi << [false, true]
     }
 
-    def "output view toggle to nodes view with button"() {
+    @Unroll
+    def "output view toggle to nodes view with button (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
@@ -127,11 +146,15 @@ class CommandSpec extends SeleniumBase {
             executionShowPage.viewContentNodes.isDisplayed()
             !executionShowPage.viewButtonNodes.isDisplayed()
             executionShowPage.viewButtonOutput.isDisplayed()
+        where:
+            nextUi << [false, true]
     }
 
-    def "nodes view toggle to output view with button"() {
+    @Unroll
+    def "nodes view toggle to output view with button (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
@@ -152,11 +175,15 @@ class CommandSpec extends SeleniumBase {
             executionShowPage.viewContentOutput.isDisplayed()
             !executionShowPage.viewButtonOutput.isDisplayed()
             executionShowPage.viewButtonNodes.isDisplayed()
+        where:
+            nextUi << [false, true]
     }
 
-    def "save as job button saves the command as a job"() {
+    @Unroll
+    def "save as job button saves the command as a job (nextUi: #nextUi)"() {
         when:
         def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+        commandPage.nextUi = nextUi
         def jobCreatePage = page JobCreatePage
         def jobShowPage = page  JobShowPage
         then:
@@ -173,6 +200,8 @@ class CommandSpec extends SeleniumBase {
         jobCreatePage.saveJob()
         expect:
         jobShowPage.validatePage()
+        where:
+            nextUi << [false, true]
     }
 
 }

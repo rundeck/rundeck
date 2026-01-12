@@ -13,6 +13,8 @@ import org.rundeck.util.gui.pages.BasePage
 class CommandPage extends BasePage {
 
     String loadPath = ""
+    boolean nextUi = false
+    String projectName
 
     By nodeFilterTextBy = By.xpath("//*[@id=\"schedJobNodeFilter\"]")
     By filterNodeBy = By.xpath("//button[contains(@class, 'node_filter__dosearch')]")
@@ -34,7 +36,17 @@ class CommandPage extends BasePage {
 
     CommandPage(final SeleniumContext context, String project) {
         super(context)
+        this.projectName = project
         this.loadPath = "/project/${project}/command/run"
+    }
+
+    @Override
+    void go() {
+        // Rebuild loadPath with current nextUi value before navigating
+        if (projectName) {
+            this.loadPath = "/project/${projectName}/command/run${nextUi ? '?nextUi=true' : ''}"
+        }
+        super.go()
     }
 
     WebElement getNodeFilterTextField() {
