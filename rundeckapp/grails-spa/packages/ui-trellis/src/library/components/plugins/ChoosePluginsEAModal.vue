@@ -280,6 +280,7 @@ export default defineComponent({
     modelValue(val) {
       this.modalShown = val;
       if (val === true) {
+        this.searchQuery = "";
         this.backToAllPlugins();
       }
     },
@@ -289,6 +290,19 @@ export default defineComponent({
     selectedService(newVal, oldVal) {
       if (this.showGroup && newVal !== oldVal) {
         this.backToAllPlugins();
+      }
+    },
+    searchQuery(newVal) {
+      // If user is viewing a group and searches, check if search matches the group
+      if (this.showGroup && this.selectedGroup && newVal) {
+        const hasMatch = this.selectedGroup.providers?.some((provider) =>
+          this.matchesSearchQuery(provider),
+        );
+        
+        // If search doesn't match any providers in the current group, fallback to all plugins
+        if (!hasMatch) {
+          this.backToAllPlugins();
+        }
       }
     },
   },
