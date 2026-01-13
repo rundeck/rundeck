@@ -107,7 +107,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .stepCard {
   box-shadow: none;
   overflow: hidden;
@@ -120,9 +120,8 @@ export default defineComponent({
     font-family: Inter, var(--fonts-body) !important;
   }
 
-  :deep(.p-card-body) {
+  .p-card-body {
     padding: var(--sizes-4);
   }
-
 }
 </style>

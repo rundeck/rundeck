@@ -138,6 +138,18 @@ export default defineComponent({
     border-bottom: none;
     padding-bottom: 0;
   }
+
+  .link-button {
+    all: unset;
+    color: #0052CC;
+    cursor: pointer;
+    font-weight: 400;
+    font-size: 12px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 // Transition animations

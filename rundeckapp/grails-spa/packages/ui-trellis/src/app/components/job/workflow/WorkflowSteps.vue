@@ -1,5 +1,7 @@
 <template>
-  //todo: add job steps title here, visible only when conditionalEnabled = true
+  <h2 v-if="conditionalEnabled" class="text-heading--lg">
+    {{ $t("Workflow.jobSteps.label") }}
+  </h2>
   <common-undo-redo-draggable-list
     ref="historyControls"
     v-model="model.commands"
@@ -681,6 +683,10 @@ export default defineComponent({
 });
 </script>
 <style lang="scss">
+h2.text-heading--lg {
+  margin: 0 0 24px 0;
+}
+
 @media (min-width: 1280px) {
   .modal-dialog {
     min-width: 1024px;

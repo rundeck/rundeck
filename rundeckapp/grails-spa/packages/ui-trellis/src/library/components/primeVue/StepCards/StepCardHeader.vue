@@ -84,28 +84,29 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .stepCardHeader {
-  background-color: var(--colors-secondaryBackgroundOnLight);
-  border-bottom: 2px solid var(--colors-gray-300);
-  display: flex;
-  justify-content: space-between;
-  padding: var(--sizes-4);
-
   p,
   a,
   span:not(.glyphicon, .fa, .pi) {
     font-family: Inter, var(--fonts-body) !important;
   }
 
-  :deep(.plugin-info) {
-    display: flex;
-    align-items: center;
+  .plugin {
+    &-info {
+      display: flex;
+      align-items: center;
+    }
+    &-icon {
+      height: 16px !important;
+    }
   }
 
-  :deep(.plugin-icon) {
-    height: 16px !important;
-  }
+  background-color: var(--colors-secondaryBackgroundOnLight);
+  border-bottom: 2px solid var(--colors-gray-300);
+  display: flex;
+  justify-content: space-between;
+  padding: var(--sizes-4);
 
   &-description {
     align-items: baseline;
@@ -125,6 +126,50 @@ export default defineComponent({
     align-items: flex-start;
     display: flex;
     gap: var(--sizes-2);
+  }
+}
+
+/* Tag styling for Node Step and Workflow Step badges */
+.stepCardHeader .p-tag {
+  font-family: Inter, var(--fonts-body) !important;
+  font-size: 12px;
+  font-weight: var(--fontWeights-regular);
+  line-height: normal;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.stepCardHeader .tag-node {
+  background-color: var(--colors-blue-100);
+  color: var(--colors-gray-900);
+}
+
+.stepCardHeader .tag-workflow {
+  background-color: var(--colors-green-100);
+  color: var(--colors-gray-900);
+}
+
+/* Link title styles with hover behavior for pencil icon */
+.link-title {
+  all: unset;
+  color: #0052CC;
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 16px;
+
+  + .pi,
+  .pi {
+    color: #0052CC;
+    display: none;
+    margin-left: 5px;
+  }
+
+  &:hover {
+    text-decoration: underline;
+
+    + .pi {
+      display: inline;
+    }
   }
 }
 </style>

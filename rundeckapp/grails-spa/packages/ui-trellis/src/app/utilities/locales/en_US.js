@@ -922,6 +922,9 @@ const messages = {
       },
     },
     addStep: "Add a step",
+    jobSteps: {
+      label: "Job Steps",
+    },
     logFilters: "Log Filters",
     logFiltersTooltip: "Filters that will affect the logs produces by these steps",
     addLogFilter: "Add Log Filter",

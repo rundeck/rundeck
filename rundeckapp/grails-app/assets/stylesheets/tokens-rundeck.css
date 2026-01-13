@@ -15,6 +15,9 @@
     --colors-red-500: #DE3434;
     --colors-red-600: #C12121;
 
+    /* Background colors */
+    --colors-secondaryBackgroundOnLight: #f7fafc;
+
     /* Typography line-heights */
     --lineHeights-heading-lg: 1.3125rem;  /* 21px */
     --lineHeights-body-compact: 0.875rem; /* 14px */
