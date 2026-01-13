@@ -13,7 +13,25 @@
       <li>
         <div class="step-list-item">
           <div class="step-item-display">
-            <div class="step-item-row">
+            <StepCard
+              v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic'"
+              :plugin-details="getPluginDetails(element)"
+              :config="element"
+              :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
+              :log-filters="element.filters || []"
+              :error-handler="element.errorhandler ? [element.errorhandler] : []"
+              :log-filters-title="$t('Workflow.logFilters')"
+              :log-filters-tooltip="'Filters that will affect the logs produces by these steps'"
+              :error-handler-title="$t('Workflow.addErrorHandler')"
+              :error-handler-tooltip="'In case of error, the following step will be run'"
+              :delete-button-label="$t('Workflow.deleteThisStep')"
+              :delete-button-tooltip="$t('Workflow.deleteThisStep')"
+              :menu-items="[{ label: $t('Workflow.duplicateStep') }]"
+              @add-log-filter="addLogFilterForIndex(element.id)"
+              @add-error-handler="toggleAddErrorHandlerModal(index)"
+              @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
+            />
+            <div v-else class="step-item-row">
               <div
                 :id="`wfitem_${index}`"
                 class="step-item-config"
@@ -264,6 +282,7 @@ import { validatePluginConfig } from "@/library/modules/pluginService";
 import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 import ConditionalLogicStep from "@/app/components/job/workflow/ConditionalLogicStep.vue";
+import StepCard from "@/library/components/primeVue/StepCards/StepCard.vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
@@ -280,6 +299,7 @@ export default defineComponent({
     ChoosePluginsEAModal,
     JobRefStep,
     LogFilters,
+    StepCard,
   },
   props: {
     modelValue: {
@@ -374,6 +394,26 @@ export default defineComponent({
   methods: {
     notify() {
       eventBus.emit("workflow-editor-workflowsteps-updated", this.model);
+    },
+    getPluginDetails(element) {
+      const plugins = element.nodeStep ? this.workflowNodeStepPlugins : this.workflowStepPlugins;
+      const plugin = plugins.find(p => p.name === element.type);
+
+      if (plugin) {
+        return {
+          title: plugin.title || element.description || element.type,
+          description: plugin.description || '',
+          iconUrl: plugin.iconUrl || '',
+          tooltip: plugin.description || '',
+        };
+      }
+
+      return {
+        title: element.description || element.type,
+        description: '',
+        iconUrl: '',
+        tooltip: '',
+      };
     },
     async chooseProviderAdd({
       service,

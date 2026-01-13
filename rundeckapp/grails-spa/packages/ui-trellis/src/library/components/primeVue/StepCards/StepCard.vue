@@ -1,10 +1,33 @@
 <template>
   <Card class="stepCard">
     <template #header>
-      <StepCardHeader :plugin-details="pluginDetails" :config="pdStep" />
+      <StepCardHeader
+        :plugin-details="pluginDetails"
+        :config="config"
+        :delete-button-label="deleteButtonLabel"
+        :delete-button-tooltip="deleteButtonTooltip"
+        :menu-items="menuItems"
+        :node-step-label="nodeStepLabel"
+        :workflow-step-label="workflowStepLabel"
+      />
     </template>
     <template #content>
-      <StepCardContent />
+      <StepCardContent
+        :config="config"
+        :service-name="computedServiceName"
+        v-model:log-filters="logFiltersModel"
+        v-model:error-handler="errorHandlerModel"
+        :log-filters-title="logFiltersTitle"
+        :log-filters-tooltip="logFiltersTooltip"
+        :error-handler-title="errorHandlerTitle"
+        :error-handler-tooltip="errorHandlerTooltip"
+        :error-handler-plugin-info="errorHandlerPluginInfo"
+        :error-handler-config="errorHandlerConfig"
+        :error-handler-service-name="errorHandlerServiceName"
+        :error-handler-provider="errorHandlerProvider"
+        @add-log-filter="handleAddLogFilter"
+        @add-error-handler="handleAddErrorHandler"
+      />
     </template>
   </Card>
 </template>
@@ -22,36 +45,114 @@ export default defineComponent({
     StepCardHeader,
     StepCardContent,
   },
-  props: {},
-  data() {
-    return {
-      pluginDetails: {
-        title: "PagerDuty / User / Create",
-        description: "Create a user",
-        iconUrl: "./public/library/theme/images/icon-pagerduty.png",
+  props: {
+    pluginDetails: {
+      type: Object,
+      required: true,
+    },
+    config: {
+      type: Object,
+      required: true,
+    },
+    serviceName: {
+      type: String,
+      default: "WorkflowStep",
+    },
+    logFilters: {
+      type: Array,
+      default: () => [],
+    },
+    errorHandler: {
+      type: Array,
+      default: () => [],
+    },
+    logFiltersTitle: {
+      type: String,
+      default: "Log Filters",
+    },
+    logFiltersTooltip: {
+      type: String,
+      default: "Filters that will affect the logs produces by these steps",
+    },
+    errorHandlerTitle: {
+      type: String,
+      default: "Error Handler",
+    },
+    errorHandlerTooltip: {
+      type: String,
+      default: "In case of error, the following step will be run",
+    },
+    errorHandlerPluginInfo: {
+      type: Object,
+      default: () => ({ title: "Command" }),
+    },
+    errorHandlerConfig: {
+      type: Object,
+      default: () => ({ adhocRemoteString: "echo error happened" }),
+    },
+    errorHandlerServiceName: {
+      type: String,
+      default: "WorkflowNodeStep",
+    },
+    errorHandlerProvider: {
+      type: String,
+      default: "exec-command",
+    },
+    deleteButtonLabel: {
+      type: String,
+      default: "Delete",
+    },
+    deleteButtonTooltip: {
+      type: String,
+      default: "Delete this step",
+    },
+    menuItems: {
+      type: Array,
+      default: () => [{ label: "Duplicate" }],
+    },
+    nodeStepLabel: {
+      type: String,
+      default: "Node Step",
+    },
+    workflowStepLabel: {
+      type: String,
+      default: "Workflow Step",
+    },
+  },
+  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler"],
+  computed: {
+    computedServiceName() {
+      return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
+    },
+    logFiltersModel: {
+      get() {
+        return this.logFilters;
       },
-      pdStep: {
-        description: "Add new responder in PD",
-        nodeStep: false,
-        jobref: undefined,
-        type: "pagerduty-create-user",
-        config: {
-          email: "janedoe@pagerduty.com",
-          name: "Jane Doe",
-          color: "green",
-          role: "admin",
-          title: "Responder",
-          description:
-            "Loves uneventful days, but always ready to hop on a call to help the team. On their free time, they like to spend as much time as possible in the nature with family.",
-          apiKey: "keys/example/exampleKey.key",
-        },
+      set(value) {
+        this.$emit("update:logFilters", value);
       },
-    };
+    },
+    errorHandlerModel: {
+      get() {
+        return this.errorHandler;
+      },
+      set(value) {
+        this.$emit("update:errorHandler", value);
+      },
+    },
+  },
+  methods: {
+    handleAddLogFilter() {
+      this.$emit("add-log-filter");
+    },
+    handleAddErrorHandler() {
+      this.$emit("add-error-handler");
+    },
   },
 });
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .stepCard {
   box-shadow: none;
   overflow: hidden;
@@ -64,7 +165,7 @@ export default defineComponent({
     font-family: Inter, var(--fonts-body) !important;
   }
 
-  .p-card-body {
+  :deep(.p-card-body) {
     padding: var(--sizes-4);
   }
 

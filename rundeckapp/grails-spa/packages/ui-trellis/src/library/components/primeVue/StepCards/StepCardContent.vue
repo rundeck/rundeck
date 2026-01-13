@@ -2,9 +2,9 @@
   <div class="step-card-content">
     <plugin-config
       class="plugin-config-section"
-      serviceName="WorkflowStep"
-      provider="pagerduty-create-user"
-      :config="pdStep.config"
+      :serviceName="serviceName"
+      :provider="config.type"
+      :config="config.config"
       :readOnly="true"
       :showTitle="false"
       :showIcon="false"
@@ -13,22 +13,22 @@
       allowCopy
     />
     <ConfigSection
-      title="Log Filters"
-      tooltip="Filters that will affect the logs produces by these steps"
-      v-model="logFilters"
+      :title="logFiltersTitle"
+      :tooltip="logFiltersTooltip"
+      v-model="logFiltersModel"
       @addElement="handleAddElement"
     />
     <ConfigSection
-      title="Error Handler"
-      tooltip="In case of error, the following step will be run"
-      v-model="errorHandler"
+      :title="errorHandlerTitle"
+      :tooltip="errorHandlerTooltip"
+      v-model="errorHandlerModel"
       @addElement="handleAddErrorHandler"
       hideWhenSingle
       class="error-handler"
     >
       <template #header v-if="errorHandler.length >= 1">
         <plugin-info
-          :detail="{ title: 'Command' }"
+          :detail="errorHandlerPluginInfo"
           :show-description="false"
           :show-extended="false"
           :show-icon="false"
@@ -38,9 +38,9 @@
       <template #extra v-if="errorHandler.length >= 1">
         <plugin-config
           class="plugin-config-section"
-          serviceName="WorkflowNodeStep"
-          provider="exec-command"
-          :config="{ adhocRemoteString: 'echo error happened' }"
+          :serviceName="errorHandlerServiceName"
+          :provider="errorHandlerProvider"
+          :config="errorHandlerConfig"
           :readOnly="true"
           :showTitle="false"
           :showIcon="false"
@@ -66,55 +66,81 @@ export default defineComponent({
     PluginConfig,
     ConfigSection,
   },
-  props: {},
-  data() {
-    return {
-      logFilters: [],
-      errorHandler: [],
-      pdStep: {
-        description: "Add new responder in PD",
-        nodeStep: false,
-        jobref: undefined,
-        type: "pagerduty-create-user",
-        config: {
-          email: "janedoe@pagerduty.com",
-          name: "Jane Doe",
-          color: "green",
-          role: "admin",
-          title: "Responder",
-          description:
-            "Loves uneventful days, but always ready to hop on a call to help the team. On their free time, they like to spend as much time as possible in the nature with family.",
-          apiKey: "keys/example/exampleKey.key",
-        },
+  props: {
+    config: {
+      type: Object,
+      required: true,
+    },
+    serviceName: {
+      type: String,
+      default: "WorkflowStep",
+    },
+    logFilters: {
+      type: Array,
+      default: () => [],
+    },
+    errorHandler: {
+      type: Array,
+      default: () => [],
+    },
+    logFiltersTitle: {
+      type: String,
+      default: "Log Filters",
+    },
+    logFiltersTooltip: {
+      type: String,
+      default: "Filters that will affect the logs produces by these steps",
+    },
+    errorHandlerTitle: {
+      type: String,
+      default: "Error Handler",
+    },
+    errorHandlerTooltip: {
+      type: String,
+      default: "In case of error, the following step will be run",
+    },
+    errorHandlerPluginInfo: {
+      type: Object,
+      default: () => ({ title: "Command" }),
+    },
+    errorHandlerConfig: {
+      type: Object,
+      default: () => ({ adhocRemoteString: "echo error happened" }),
+    },
+    errorHandlerServiceName: {
+      type: String,
+      default: "WorkflowNodeStep",
+    },
+    errorHandlerProvider: {
+      type: String,
+      default: "exec-command",
+    },
+  },
+  emits: ["add-log-filter", "add-error-handler", "update:logFilters", "update:errorHandler"],
+  computed: {
+    logFiltersModel: {
+      get() {
+        return this.logFilters;
       },
-    };
+      set(value) {
+        this.$emit("update:logFilters", value);
+      },
+    },
+    errorHandlerModel: {
+      get() {
+        return this.errorHandler;
+      },
+      set(value) {
+        this.$emit("update:errorHandler", value);
+      },
+    },
   },
   methods: {
     handleAddErrorHandler() {
-      this.errorHandler.push({
-        config: {
-          dedupe_key: "test",
-          event_action: "trigger",
-          images:
-            "https://www.rundeck.com/hubfs/rundeck-app-assets/rundeck-by-pagerduty-icon.png",
-          payload_severity: "info",
-          payload_source: "${job.name}",
-          payload_summary:
-            "${job.name} [${job.project}] run by ${job.username} (type: ${job.executionType}) ",
-          service_key: "keys/pagerduty-integration-key",
-        },
-        nodeStep: false,
-        type: "pd-sent-event-step",
-      });
+      this.$emit("add-error-handler");
     },
     handleAddElement() {
-      this.logFilters.push({
-        name: "quiet-output",
-        title: "Quiet Output",
-        description:
-          "Quiets all output which does or does not match a certain pattern by changing its log level.",
-        providerMetadata: { faicon: "volume-off" },
-      });
+      this.$emit("add-log-filter");
     },
   },
 });

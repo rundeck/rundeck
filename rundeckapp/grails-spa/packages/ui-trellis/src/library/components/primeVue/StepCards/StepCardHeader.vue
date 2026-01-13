@@ -17,10 +17,10 @@
           </template>
         </plugin-info>
       </div>
-      <div class="conditionalCard--header-description">
+      <div class="stepCardHeader-description">
         <Tag
           :class="[config.nodeStep ? 'tag-node' : 'tag-workflow']"
-          :value="`${config.nodeStep ? 'Node' : 'Workflow'} Step`"
+          :value="config.nodeStep ? nodeStepLabel : workflowStepLabel"
         />
         <p>{{ pluginDetails.title }}</p>
         <i
@@ -36,8 +36,8 @@
         outlined
         severity="secondary"
         icon="pi pi-trash"
-        aria-label="Delete"
-        v-tooltip.top="'Delete this step'"
+        :aria-label="deleteButtonLabel"
+        v-tooltip.top="deleteButtonTooltip"
       />
       <PtButton
         outlined
@@ -50,67 +50,82 @@
       <Menu
         ref="menu"
         id="overlay_menu"
-        :model="[{ label: 'Duplicate' }]"
+        :model="menuItems"
         popup
       />
     </div>
   </div>
 </template>
 <script lang="ts">
+import { defineComponent } from "vue";
 import Menu from "primevue/menu";
 import PluginInfo from "../../plugins/PluginInfo.vue";
 import PtButton from "../PtButton/PtButton.vue";
 import Tag from "primevue/tag";
 
-export default {
+export default defineComponent({
   name: "StepCardHeader",
   components: { Menu, PluginInfo, PtButton, Tag },
   props: {
     pluginDetails: {
       type: Object,
-      default: () => ({
-        iconUrl: "./public/library/theme/images/icon-condition.png",
-        title: "For each Linux node",
-        description: "Conditional Logic on Node Step",
-        tooltip: "Only linux nodes will execute the following steps",
-      }),
+      required: true,
     },
     config: {
       type: Object,
       required: true,
     },
-  },
-  methods: {
-    handleMoreActions(event) {
-      this.$refs.menu.toggle(event);
+    deleteButtonLabel: {
+      type: String,
+      default: "Delete",
+    },
+    deleteButtonTooltip: {
+      type: String,
+      default: "Delete this step",
+    },
+    menuItems: {
+      type: Array,
+      default: () => [{ label: "Duplicate" }],
+    },
+    nodeStepLabel: {
+      type: String,
+      default: "Node Step",
+    },
+    workflowStepLabel: {
+      type: String,
+      default: "Workflow Step",
     },
   },
-};
+  methods: {
+    handleMoreActions(event: Event) {
+      (this.$refs.menu as any).toggle(event);
+    },
+  },
+});
 </script>
 
 <style scoped lang="scss">
 .stepCardHeader {
-  p,
-  a,
-  span:not(.glyphicon, .fa) {
-    font-family: Inter, var(--fonts-body) !important;
-  }
-
-  .plugin {
-    &-info {
-      display: flex;
-      align-items: center;
-    }
-    &-icon {
-      height: 16px !important;
-    }
-  }
-
   background-color: var(--colors-secondaryBackgroundOnLight);
   border-bottom: 2px solid var(--colors-gray-300);
   display: flex;
   justify-content: space-between;
   padding: var(--sizes-4);
+
+  p,
+  a,
+  span:not(.glyphicon, .fa, .pi) {
+    font-family: Inter, var(--fonts-body) !important;
+  }
+
+  :deep(.plugin-info) {
+    display: flex;
+    align-items: center;
+  }
+
+  :deep(.plugin-icon) {
+    height: 16px !important;
+  }
 
   &-description {
     align-items: baseline;
