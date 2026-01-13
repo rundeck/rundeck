@@ -20,7 +20,7 @@
       <div class="stepCardHeader-description">
         <Tag
           :class="[config.nodeStep ? 'tag-node' : 'tag-workflow']"
-          :value="config.nodeStep ? nodeStepLabel : workflowStepLabel"
+          :value="config.nodeStep ? $t('Workflow.nodeStep') : $t('Workflow.workflowStep')"
         />
         <p>{{ pluginDetails.title }}</p>
         <i
@@ -36,8 +36,8 @@
         outlined
         severity="secondary"
         icon="pi pi-trash"
-        :aria-label="deleteButtonLabel"
-        v-tooltip.top="deleteButtonTooltip"
+        :aria-label="$t('Workflow.deleteThisStep')"
+        v-tooltip.top="$t('Workflow.deleteThisStep')"
       />
       <PtButton
         outlined
@@ -50,7 +50,7 @@
       <Menu
         ref="menu"
         id="overlay_menu"
-        :model="menuItems"
+        :model="[{ label: $t('Workflow.duplicateStep') }]"
         popup
       />
     </div>
@@ -74,26 +74,6 @@ export default defineComponent({
     config: {
       type: Object,
       required: true,
-    },
-    deleteButtonLabel: {
-      type: String,
-      default: "Delete",
-    },
-    deleteButtonTooltip: {
-      type: String,
-      default: "Delete this step",
-    },
-    menuItems: {
-      type: Array,
-      default: () => [{ label: "Duplicate" }],
-    },
-    nodeStepLabel: {
-      type: String,
-      default: "Node Step",
-    },
-    workflowStepLabel: {
-      type: String,
-      default: "Workflow Step",
     },
   },
   methods: {

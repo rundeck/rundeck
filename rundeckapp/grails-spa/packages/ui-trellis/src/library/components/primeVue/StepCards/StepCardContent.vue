@@ -13,14 +13,14 @@
       allowCopy
     />
     <ConfigSection
-      :title="logFiltersTitle"
-      :tooltip="logFiltersTooltip"
+      :title="$t('Workflow.logFilters')"
+      :tooltip="$t('Workflow.logFiltersTooltip')"
       v-model="logFiltersModel"
       @addElement="handleAddElement"
     />
     <ConfigSection
-      :title="errorHandlerTitle"
-      :tooltip="errorHandlerTooltip"
+      :title="$t('Workflow.addErrorHandler')"
+      :tooltip="$t('Workflow.errorHandlerDescription')"
       v-model="errorHandlerModel"
       @addElement="handleAddErrorHandler"
       hideWhenSingle
@@ -82,22 +82,6 @@ export default defineComponent({
     errorHandler: {
       type: Array,
       default: () => [],
-    },
-    logFiltersTitle: {
-      type: String,
-      default: "Log Filters",
-    },
-    logFiltersTooltip: {
-      type: String,
-      default: "Filters that will affect the logs produces by these steps",
-    },
-    errorHandlerTitle: {
-      type: String,
-      default: "Error Handler",
-    },
-    errorHandlerTooltip: {
-      type: String,
-      default: "In case of error, the following step will be run",
     },
     errorHandlerPluginInfo: {
       type: Object,

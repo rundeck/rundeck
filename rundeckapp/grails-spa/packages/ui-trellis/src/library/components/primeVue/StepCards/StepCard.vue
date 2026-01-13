@@ -4,11 +4,6 @@
       <StepCardHeader
         :plugin-details="pluginDetails"
         :config="config"
-        :delete-button-label="deleteButtonLabel"
-        :delete-button-tooltip="deleteButtonTooltip"
-        :menu-items="menuItems"
-        :node-step-label="nodeStepLabel"
-        :workflow-step-label="workflowStepLabel"
       />
     </template>
     <template #content>
@@ -17,10 +12,6 @@
         :service-name="computedServiceName"
         v-model:log-filters="logFiltersModel"
         v-model:error-handler="errorHandlerModel"
-        :log-filters-title="logFiltersTitle"
-        :log-filters-tooltip="logFiltersTooltip"
-        :error-handler-title="errorHandlerTitle"
-        :error-handler-tooltip="errorHandlerTooltip"
         :error-handler-plugin-info="errorHandlerPluginInfo"
         :error-handler-config="errorHandlerConfig"
         :error-handler-service-name="errorHandlerServiceName"
@@ -66,22 +57,6 @@ export default defineComponent({
       type: Array,
       default: () => [],
     },
-    logFiltersTitle: {
-      type: String,
-      default: "Log Filters",
-    },
-    logFiltersTooltip: {
-      type: String,
-      default: "Filters that will affect the logs produces by these steps",
-    },
-    errorHandlerTitle: {
-      type: String,
-      default: "Error Handler",
-    },
-    errorHandlerTooltip: {
-      type: String,
-      default: "In case of error, the following step will be run",
-    },
     errorHandlerPluginInfo: {
       type: Object,
       default: () => ({ title: "Command" }),
@@ -97,26 +72,6 @@ export default defineComponent({
     errorHandlerProvider: {
       type: String,
       default: "exec-command",
-    },
-    deleteButtonLabel: {
-      type: String,
-      default: "Delete",
-    },
-    deleteButtonTooltip: {
-      type: String,
-      default: "Delete this step",
-    },
-    menuItems: {
-      type: Array,
-      default: () => [{ label: "Duplicate" }],
-    },
-    nodeStepLabel: {
-      type: String,
-      default: "Node Step",
-    },
-    workflowStepLabel: {
-      type: String,
-      default: "Workflow Step",
     },
   },
   emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler"],
