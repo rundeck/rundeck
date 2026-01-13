@@ -20,7 +20,7 @@
     </div>
 
     <div v-if="filteredProviders.length === 0" class="no-results">
-      <p>{{ $t("noResultsFound") }}</p>
+      <p>{{ emptyMessage || $t("noResultsFound") }}</p>
     </div>
 
     <Accordion
@@ -80,6 +80,10 @@ export default defineComponent({
       required: true,
     },
     searchQuery: {
+      type: String,
+      default: "",
+    },
+    emptyMessage: {
       type: String,
       default: "",
     },

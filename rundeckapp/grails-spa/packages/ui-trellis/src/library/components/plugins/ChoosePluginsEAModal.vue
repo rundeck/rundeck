@@ -52,10 +52,11 @@
         <GroupedProviderDetail
           v-else
           key="group-detail"
-          :group="selectedGroup"
+          :group="currentGroupForService"
           :group-name="selectedGroupName"
           :service-type-label="sectionHeading"
           :search-query="searchQuery"
+          :empty-message="emptyGroupMessage"
           @select="handleGroupProviderSelect"
           @back="backToAllPlugins"
         />
@@ -275,6 +276,36 @@ export default defineComponent({
       }
       return this.$t(titleString, [totalProviders]);
     },
+    currentGroupForService() {
+      // When viewing a group, find the group with the same name in the current service
+      if (!this.showGroup || !this.selectedGroupName) {
+        return this.selectedGroup;
+      }
+
+      // Look for the group in both highlighted and non-highlighted providers
+      const allGroups = {
+        ...this.groupedProviders.highlighted,
+        ...this.groupedProviders.nonHighlighted,
+      };
+
+      const group = allGroups[this.selectedGroupName];
+      
+      // If group exists, return it; otherwise return empty group structure
+      if (group) {
+        return group;
+      }
+
+      // Return empty group structure to show empty message
+      return {
+        isGroup: true,
+        iconDetail: this.selectedGroup?.iconDetail || {},
+        providers: [],
+      };
+    },
+    emptyGroupMessage(): string {
+      // Return localized message for no steps available
+      return `No ${this.sectionHeading} available`;
+    },
   },
   watch: {
     modelValue(val) {
@@ -286,11 +317,6 @@ export default defineComponent({
     },
     modalShown(val) {
       this.$emit("update:modelValue", val);
-    },
-    selectedService(newVal, oldVal) {
-      if (this.showGroup && newVal !== oldVal) {
-        this.backToAllPlugins();
-      }
     },
     searchQuery(newVal) {
       // If user is viewing a group and searches, check if search matches the group
