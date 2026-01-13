@@ -220,7 +220,7 @@ export default defineComponent({
         };
       });
 
-      // Check if we should disable grouping based on query length or space
+      // Check if we should disable grouping when there's a search query
       const shouldDisableGrouping = this.shouldDisableGrouping();
 
       // Then, process non-highlighted providers in order
@@ -391,15 +391,9 @@ export default defineComponent({
       this.chooseProviderAdd(this.selectedService, provider.name);
     },
     shouldDisableGrouping(): boolean {
-      // Only disable grouping when there's an active search query
-      if (!this.searchQuery) {
-        return false;
-      }
-
-      const query = this.searchQuery.trim();
-      
-      // Disable grouping if query has 5 or more characters OR contains a space
-      return query.length >= 5 || query.includes(" ");
+      // Disable grouping whenever there's an active search query
+      // Show all search results not grouped
+      return !!this.searchQuery?.trim();
     },
   },
 });

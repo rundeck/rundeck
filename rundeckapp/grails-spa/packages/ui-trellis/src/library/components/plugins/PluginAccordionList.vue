@@ -20,8 +20,7 @@
       </div>
     </div>
 
-    <transition name="view-transition" mode="out-in">
-      <div v-if="!loading" :key="providersKey">
+    <div v-if="!loading" :key="providersKey">
         <!-- Highlighted providers accordion -->
         <p
           v-if="Object.keys(groupedProviders.highlighted).length > 0"
@@ -91,7 +90,6 @@
           </AccordionPanel>
         </Accordion>
       </div>
-    </transition>
   </div>
 </template>
 
@@ -186,21 +184,5 @@ export default defineComponent({
 .provider-count {
   color: var(--colors-gray-600);
   margin-left: 0.25rem;
-}
-
-// View transition animation
-.view-transition-enter-active,
-.view-transition-leave-active {
-  transition: all 0.25s ease-out;
-}
-
-.view-transition-enter-from {
-  opacity: 0;
-  transform: translateX(20px);
-}
-
-.view-transition-leave-to {
-  opacity: 0;
-  transform: translateX(-20px);
 }
 </style>

@@ -953,7 +953,7 @@ const messages = {
   "plugin.type.WorkflowNodeStep.title": "Node Step",
   "JobExec.nodeStep.true.label": "Node Step",
   "step.plugins.filter.prompt": "Search step",
-  "enter.a.step.filter.override": "Enter a step filter string.",
+  "enter.a.step.filter.override": "Search",
   "workflow.search.help.string1": "Basic search:",
   "workflow.search.help.string2": "mystep1",
   "workflow.search.help.string3":
