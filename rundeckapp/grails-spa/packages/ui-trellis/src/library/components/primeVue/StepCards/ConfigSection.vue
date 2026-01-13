@@ -30,6 +30,7 @@
               :icon="`fa fa-${element.providerMetadata.faicon}`"
               removable
               @remove="handleRemove(index)"
+              @click="handleEdit(index)"
             />
           </transition-group>
           <button
@@ -72,7 +73,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["addElement", "removeElement", "update:modelValue"],
+  emits: ["addElement", "removeElement", "editElement", "update:modelValue"],
   methods: {
     handleAdd() {
       this.$emit("addElement");
@@ -81,6 +82,9 @@ export default defineComponent({
       const updatedArray = [...this.modelValue];
       updatedArray.splice(index, 1);
       this.$emit("update:modelValue", updatedArray);
+    },
+    handleEdit(index: number) {
+      this.$emit("editElement", index);
     },
   },
 });
@@ -130,6 +134,11 @@ export default defineComponent({
     height: 26px;
     padding-top: 6px;
     padding-bottom: 6px;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
   }
 
   &.has-chips .header-row {

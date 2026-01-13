@@ -17,6 +17,7 @@
       :tooltip="$t('Workflow.logFiltersTooltip')"
       v-model="logFiltersModel"
       @addElement="handleAddElement"
+      @editElement="handleEditLogFilter"
     />
     <ConfigSection
       :title="$t('Workflow.addErrorHandler')"
@@ -28,7 +29,7 @@
     >
       <template #header v-if="errorHandler.length >= 1">
         <plugin-info
-          :detail="errorHandlerPluginInfo"
+          :detail="errorHandlerData"
           :show-description="false"
           :show-extended="false"
           :show-icon="false"
@@ -58,6 +59,9 @@ import { defineComponent } from "vue";
 import ConfigSection from "@/library/components/primeVue/StepCards/ConfigSection.vue";
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import { getRundeckContext } from "@/library";
+import { PluginConfig as PluginConfigType } from "@/library/interfaces/PluginConfig";
+import { getPluginProvidersForService } from "@/library/modules/pluginService";
 
 export default defineComponent({
   name: "StepCardContent",
@@ -75,6 +79,10 @@ export default defineComponent({
       type: String,
       default: "WorkflowStep",
     },
+    elementId: {
+      type: String,
+      default: "",
+    },
     logFilters: {
       type: Array,
       default: () => [],
@@ -83,13 +91,9 @@ export default defineComponent({
       type: Array,
       default: () => [],
     },
-    errorHandlerPluginInfo: {
-      type: Object,
-      default: () => ({ title: "Command" }),
-    },
     errorHandlerConfig: {
       type: Object,
-      default: () => ({ adhocRemoteString: "echo error happened" }),
+      default: () => ({}),
     },
     errorHandlerServiceName: {
       type: String,
@@ -97,11 +101,20 @@ export default defineComponent({
     },
     errorHandlerProvider: {
       type: String,
-      default: "exec-command",
+      default: "",
     },
   },
-  emits: ["add-log-filter", "add-error-handler", "update:logFilters", "update:errorHandler"],
+  emits: ["add-log-filter", "add-error-handler", "edit-log-filter", "update:logFilters", "update:errorHandler"],
+  data() {
+    return {
+      logFilterPluginProviders: [] as any[],
+      globalEventBus: getRundeckContext()?.eventBus,
+    };
+  },
   computed: {
+    errorHandlerData() {
+      return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] : null;
+    },
     logFiltersModel: {
       get() {
         return this.logFilters;
@@ -124,6 +137,7 @@ export default defineComponent({
       this.$emit("add-error-handler");
     },
     handleAddElement() {
+      // Emit to parent - parent will handle opening modal
       this.$emit("add-log-filter");
     },
   },
