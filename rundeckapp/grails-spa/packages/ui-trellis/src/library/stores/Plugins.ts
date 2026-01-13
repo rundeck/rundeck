@@ -4,6 +4,7 @@ import { getPluginDetail } from "../services/plugins";
 import { Serial } from "../utilities/Async";
 import { RootStore } from "./RootStore";
 import { apiClient } from "../services/api";
+// @ts-ignore
 import iconConditionImage from "../theme/images/icon-condition.png";
 
 export class PluginStore {
