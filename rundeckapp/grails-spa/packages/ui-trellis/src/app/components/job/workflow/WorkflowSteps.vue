@@ -71,7 +71,6 @@
                     </template>
                   </plugin-config>
                   <job-ref-step v-else-if="element.jobref" :step="element"></job-ref-step>
-                  <conditional-logic-step v-else ></conditional-logic-step>
 
                   <div v-if="element.description" class="wfstep-description">
                     {{ element.description }}

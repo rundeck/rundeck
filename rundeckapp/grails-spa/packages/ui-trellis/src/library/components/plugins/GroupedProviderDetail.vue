@@ -38,7 +38,19 @@
         <AccordionHeader @click="selectProvider(provider)">
           <div class="accordion-header-content">
             <PluginIcon :detail="provider" icon-class="img-icon" />
-            <span class="accordion-title">{{ provider.title }}</span>
+            <PluginInfo
+              :detail="provider"
+              :show-icon="false"
+              :show-description="true"
+              :show-extended="false"
+              description-css="accordion-description"
+              title-css="accordion-title"
+              class="accordion-title-text"
+            >
+              <template #descriptionprefix>
+                <span class="accordion-description-separator"> - </span>
+              </template>
+            </PluginInfo>
           </div>
         </AccordionHeader>
       </AccordionPanel>
@@ -49,6 +61,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import PluginIcon from "@/library/components/plugins/PluginIcon.vue";
+import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import Breadcrumb from "primevue/breadcrumb";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
@@ -60,6 +73,7 @@ export default defineComponent({
   name: "GroupedProviderDetail",
   components: {
     PluginIcon,
+    PluginInfo,
     Breadcrumb,
     Accordion,
     AccordionPanel,
@@ -211,12 +225,35 @@ export default defineComponent({
 .accordion-header-content {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
   width: 100%;
+}
+
+.accordion-title-text {
+  font-family: Inter, var(--fonts-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 14px;
+  color: #27272a;
+  margin: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .accordion-title {
   font-weight: var(--fontWeights-medium);
+  color: #27272a;
+}
+
+.accordion-description {
+  color: #71717a;
+  font-weight: 400;
+}
+
+.accordion-description-separator {
+  color: #71717a;
 }
 
 :deep(.p-accordion) {

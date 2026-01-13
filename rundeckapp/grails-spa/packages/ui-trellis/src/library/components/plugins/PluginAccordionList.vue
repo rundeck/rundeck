@@ -43,10 +43,26 @@
             <AccordionHeader @click="handleAccordionClick(group, key)">
               <div class="accordion-header-content">
                 <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
-                <span class="accordion-title">{{ key }}</span>
-                <span v-if="group.isGroup" class="provider-count">
-                  ({{ group.providers.length }} {{ $t("plugins") }})
-                </span>
+                <div v-if="group.isGroup" class="accordion-title-text">
+                  <span class="accordion-title">{{ key }}</span>
+                  <span class="provider-count">
+                    ({{ group.providers.length }} {{ $t("plugins") }})
+                  </span>
+                </div>
+                <PluginInfo
+                  v-else-if="group.providers && group.providers.length > 0"
+                  :detail="group.providers[0]"
+                  :show-icon="false"
+                  :show-description="true"
+                  :show-extended="false"
+                  description-css="accordion-description"
+                  title-css="accordion-title"
+                  class="accordion-title-text"
+                >
+                  <template #descriptionprefix>
+                    <span class="accordion-description-separator"> - </span>
+                  </template>
+                </PluginInfo>
               </div>
             </AccordionHeader>
           </AccordionPanel>
@@ -76,10 +92,26 @@
             <AccordionHeader @click="handleAccordionClick(group, key)">
               <div class="accordion-header-content">
                 <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
-                <span class="accordion-title">{{ key }}</span>
-                <span v-if="group.isGroup" class="provider-count">
-                  ({{ group.providers.length }} {{ $t("plugins") }})
-                </span>
+                <div v-if="group.isGroup" class="accordion-title-text">
+                  <span class="accordion-title">{{ key }}</span>
+                  <span class="provider-count">
+                    ({{ group.providers.length }} {{ $t("plugins") }})
+                  </span>
+                </div>
+                <PluginInfo
+                  v-else-if="group.providers && group.providers.length > 0"
+                  :detail="group.providers[0]"
+                  :show-icon="false"
+                  :show-description="true"
+                  :show-extended="false"
+                  description-css="accordion-description"
+                  title-css="accordion-title"
+                  class="accordion-title-text"
+                >
+                  <template #descriptionprefix>
+                    <span class="accordion-description-separator"> - </span>
+                  </template>
+                </PluginInfo>
               </div>
             </AccordionHeader>
             <AccordionContent v-if="group.isGroup">
@@ -96,6 +128,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import PluginIcon from "@/library/components/plugins/PluginIcon.vue";
+import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import Skeleton from "primevue/skeleton";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
@@ -106,6 +139,7 @@ export default defineComponent({
   name: "PluginAccordionList",
   components: {
     PluginIcon,
+    PluginInfo,
     Skeleton,
     Accordion,
     AccordionPanel,
@@ -168,17 +202,41 @@ export default defineComponent({
   justify-content: center;
   height: 20px;
   width: 20px;
+  flex-shrink: 0;
 }
 
 .accordion-header-content {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
   width: 100%;
+}
+
+.accordion-title-text {
+  font-family: Inter, var(--fonts-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 14px;
+  color: #27272a;
+  margin: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .accordion-title {
   font-weight: var(--fontWeights-medium);
+  color: #27272a;
+}
+
+.accordion-description {
+  color: #71717a;
+  font-weight: 400;
+}
+
+.accordion-description-separator {
+  color: #71717a;
 }
 
 .provider-count {
