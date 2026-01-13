@@ -4,6 +4,7 @@ import { getPluginDetail } from "../services/plugins";
 import { Serial } from "../utilities/Async";
 import { RootStore } from "./RootStore";
 import { apiClient } from "../services/api";
+import iconConditionImage from "../theme/images/icon-condition.png";
 
 export class PluginStore {
   plugins: Plugin[] = [];
@@ -68,9 +69,8 @@ export class PluginStore {
             service: service,
             description: `Define steps that will be executed ${service === ServiceType.WorkflowNodeStep? 'per-node ': ''}under specific conditions`,
             title: `Conditional Logic ${service === ServiceType.WorkflowNodeStep? 'Node': 'Workflow'} Step`,
-            providerMetadata: {
-                glyphicon: "book",
-            },
+            iconUrl: iconConditionImage,
+            providerMetadata: {},
             isHighlighted: true,
             highlightedOrder: 6,
         };
