@@ -20,72 +20,76 @@
       </div>
     </div>
 
-    <!-- Highlighted providers accordion -->
-    <p
-      v-if="!loading && Object.keys(groupedProviders.highlighted).length > 0"
-      class="text-heading--md subsection-heading"
-    >
-      {{ commonStepsHeading }}
-    </p>
-    <Accordion
-      v-if="!loading && Object.keys(groupedProviders.highlighted).length > 0"
-      :value="[]"
-      multiple
-      expandIcon="pi pi-chevron-right"
-    >
-      <AccordionPanel
-        v-for="(group, key) in groupedProviders.highlighted"
-        :key="key"
-        :value="key"
-      >
-        <AccordionHeader @click="handleAccordionClick(group, key)">
-          <div class="accordion-header-content">
-            <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
-            <span class="accordion-title">{{ key }}</span>
-            <span v-if="group.isGroup" class="provider-count">
-              ({{ group.providers.length }} {{ $t("plugins") }})
-            </span>
-          </div>
-        </AccordionHeader>
-      </AccordionPanel>
-    </Accordion>
+    <transition name="view-transition" mode="out-in">
+      <div v-if="!loading" :key="providersKey">
+        <!-- Highlighted providers accordion -->
+        <p
+          v-if="Object.keys(groupedProviders.highlighted).length > 0"
+          class="text-heading--md subsection-heading"
+        >
+          {{ commonStepsHeading }}
+        </p>
+        <Accordion
+          v-if="Object.keys(groupedProviders.highlighted).length > 0"
+          :value="[]"
+          multiple
+          expandIcon="pi pi-chevron-right"
+        >
+          <AccordionPanel
+            v-for="(group, key) in groupedProviders.highlighted"
+            :key="key"
+            :value="key"
+          >
+            <AccordionHeader @click="handleAccordionClick(group, key)">
+              <div class="accordion-header-content">
+                <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
+                <span class="accordion-title">{{ key }}</span>
+                <span v-if="group.isGroup" class="provider-count">
+                  ({{ group.providers.length }} {{ $t("plugins") }})
+                </span>
+              </div>
+            </AccordionHeader>
+          </AccordionPanel>
+        </Accordion>
 
-    <!-- Divider title -->
-    <p
-      v-if="!loading && dividerTitle"
-      class="text-heading--md subsection-heading divider-title"
-    >
-      {{ dividerTitle }}
-    </p>
+        <!-- Divider title -->
+        <p
+          v-if="dividerTitle"
+          class="text-heading--md subsection-heading divider-title"
+        >
+          {{ dividerTitle }}
+        </p>
 
-    <!-- Non-highlighted providers accordion -->
-    <Accordion
-      v-if="!loading && Object.keys(groupedProviders.nonHighlighted).length > 0"
-      :value="[]"
-      multiple
-      expandIcon="pi pi-chevron-right"
-    >
-      <AccordionPanel
-        v-for="(group, key) in groupedProviders.nonHighlighted"
-        :key="key"
-        :value="key"
-      >
-        <AccordionHeader @click="handleAccordionClick(group, key)">
-          <div class="accordion-header-content">
-            <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
-            <span class="accordion-title">{{ key }}</span>
-            <span v-if="group.isGroup" class="provider-count">
-              ({{ group.providers.length }} {{ $t("plugins") }})
-            </span>
-          </div>
-        </AccordionHeader>
-        <AccordionContent v-if="group.isGroup">
-          <p class="text-body--sm">
-            Grouped provider layout (to be implemented)
-          </p>
-        </AccordionContent>
-      </AccordionPanel>
-    </Accordion>
+        <!-- Non-highlighted providers accordion -->
+        <Accordion
+          v-if="Object.keys(groupedProviders.nonHighlighted).length > 0"
+          :value="[]"
+          multiple
+          expandIcon="pi pi-chevron-right"
+        >
+          <AccordionPanel
+            v-for="(group, key) in groupedProviders.nonHighlighted"
+            :key="key"
+            :value="key"
+          >
+            <AccordionHeader @click="handleAccordionClick(group, key)">
+              <div class="accordion-header-content">
+                <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
+                <span class="accordion-title">{{ key }}</span>
+                <span v-if="group.isGroup" class="provider-count">
+                  ({{ group.providers.length }} {{ $t("plugins") }})
+                </span>
+              </div>
+            </AccordionHeader>
+            <AccordionContent v-if="group.isGroup">
+              <p class="text-body--sm">
+                Grouped provider layout (to be implemented)
+              </p>
+            </AccordionContent>
+          </AccordionPanel>
+        </Accordion>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -127,6 +131,14 @@ export default defineComponent({
     },
   },
   emits: ["select"],
+  computed: {
+    providersKey() {
+      // Create a unique key based on the groupedProviders to trigger transition
+      const highlightedKeys = Object.keys(this.groupedProviders.highlighted || {}).sort().join(",");
+      const nonHighlightedKeys = Object.keys(this.groupedProviders.nonHighlighted || {}).sort().join(",");
+      return `${highlightedKeys}|${nonHighlightedKeys}`;
+    },
+  },
   methods: {
     handleAccordionClick(group: any, key: string) {
       this.$emit("select", { group, key });
@@ -172,5 +184,21 @@ export default defineComponent({
 .provider-count {
   color: var(--colors-gray-600);
   margin-left: 0.25rem;
+}
+
+// View transition animation
+.view-transition-enter-active,
+.view-transition-leave-active {
+  transition: all 0.25s ease-out;
+}
+
+.view-transition-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.view-transition-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
 }
 </style>
