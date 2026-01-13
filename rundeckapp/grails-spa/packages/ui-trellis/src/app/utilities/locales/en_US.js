@@ -129,6 +129,7 @@ const messages = {
     "Clear all {0} selected items, or only items shown on this page?",
   "bulk.selected.count": "{0} selected",
   "results.empty.text": "No results for the query",
+  "noResultsFound": "No results found",
   "Only shown executions": "Only shown executions",
   "Clear bulk selection": "Clear Bulk Selection",
   "Click to edit Search Query": "Click to edit Search Query",

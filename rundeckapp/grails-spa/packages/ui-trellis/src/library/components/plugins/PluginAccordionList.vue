@@ -21,6 +21,14 @@
     </div>
 
     <div v-if="!loading" :key="providersKey">
+        <!-- No results message when searching -->
+        <div
+          v-if="hasSearchQuery && hasNoResults"
+          class="no-results"
+        >
+          <p>{{ $t("noResultsFound") }}</p>
+        </div>
+
         <!-- Highlighted providers accordion -->
         <p
           v-if="Object.keys(groupedProviders.highlighted).length > 0"
@@ -163,6 +171,10 @@ export default defineComponent({
       type: String,
       default: "",
     },
+    searchQuery: {
+      type: String,
+      default: "",
+    },
   },
   emits: ["select"],
   computed: {
@@ -171,6 +183,14 @@ export default defineComponent({
       const highlightedKeys = Object.keys(this.groupedProviders.highlighted || {}).sort().join(",");
       const nonHighlightedKeys = Object.keys(this.groupedProviders.nonHighlighted || {}).sort().join(",");
       return `${highlightedKeys}|${nonHighlightedKeys}`;
+    },
+    hasSearchQuery(): boolean {
+      return !!this.searchQuery?.trim();
+    },
+    hasNoResults(): boolean {
+      const highlightedCount = Object.keys(this.groupedProviders.highlighted || {}).length;
+      const nonHighlightedCount = Object.keys(this.groupedProviders.nonHighlighted || {}).length;
+      return highlightedCount === 0 && nonHighlightedCount === 0;
     },
   },
   methods: {
@@ -242,5 +262,11 @@ export default defineComponent({
 .provider-count {
   color: var(--colors-gray-600);
   margin-left: 0.25rem;
+}
+
+.no-results {
+  padding: 32px;
+  text-align: center;
+  color: var(--colors-gray-600);
 }
 </style>

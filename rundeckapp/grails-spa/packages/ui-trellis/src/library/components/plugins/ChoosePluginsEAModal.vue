@@ -46,6 +46,7 @@
           :loading="loading"
           :common-steps-heading="commonStepsHeading"
           :divider-title="dividerTitle"
+          :search-query="searchQuery"
           @select="handleAccordionSelect"
         />
 
