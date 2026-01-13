@@ -28,6 +28,7 @@
       :value="[]"
       multiple
       expandIcon="pi pi-chevron-right"
+      collapseIcon="pi pi-chevron-right"
     >
       <AccordionPanel
         v-for="provider in filteredProviders"

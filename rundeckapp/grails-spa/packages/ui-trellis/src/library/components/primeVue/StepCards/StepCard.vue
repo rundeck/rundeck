@@ -4,6 +4,8 @@
       <StepCardHeader
         :plugin-details="pluginDetails"
         :config="config"
+        @delete="handleDelete"
+        @duplicate="handleDuplicate"
       />
     </template>
     <template #content>
@@ -59,7 +61,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler"],
+  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate"],
   computed: {
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
@@ -110,6 +112,12 @@ export default defineComponent({
     handleAddErrorHandler() {
       // Emit component event - parent template will call handler with index
       this.$emit("add-error-handler");
+    },
+    handleDelete() {
+      this.$emit("delete");
+    },
+    handleDuplicate() {
+      this.$emit("duplicate");
     },
   },
 });

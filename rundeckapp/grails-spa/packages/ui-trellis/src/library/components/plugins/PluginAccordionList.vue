@@ -34,6 +34,7 @@
           :value="[]"
           multiple
           expandIcon="pi pi-chevron-right"
+          collapseIcon="pi pi-chevron-right"
         >
           <AccordionPanel
             v-for="(group, key) in groupedProviders.highlighted"
@@ -66,6 +67,7 @@
           :value="[]"
           multiple
           expandIcon="pi pi-chevron-right"
+          collapseIcon="pi pi-chevron-right"
         >
           <AccordionPanel
             v-for="(group, key) in groupedProviders.nonHighlighted"

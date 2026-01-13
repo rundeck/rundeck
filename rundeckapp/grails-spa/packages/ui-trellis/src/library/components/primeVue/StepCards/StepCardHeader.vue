@@ -38,6 +38,7 @@
         icon="pi pi-trash"
         :aria-label="$t('Workflow.deleteThisStep')"
         v-tooltip.top="$t('Workflow.deleteThisStep')"
+        @click="handleDelete"
       />
       <PtButton
         outlined
@@ -50,7 +51,7 @@
       <Menu
         ref="menu"
         id="overlay_menu"
-        :model="[{ label: $t('Workflow.duplicateStep') }]"
+        :model="menuItems"
         popup
       />
     </div>
@@ -77,9 +78,28 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ["delete", "duplicate"],
+  computed: {
+    menuItems() {
+      return [
+        {
+          label: this.$t('Workflow.duplicateStep'),
+          command: () => {
+            this.handleDuplicate();
+          },
+        },
+      ];
+    },
+  },
   methods: {
     handleMoreActions(event: Event) {
       (this.$refs.menu as any).toggle(event);
+    },
+    handleDelete() {
+      this.$emit("delete");
+    },
+    handleDuplicate() {
+      this.$emit("duplicate");
     },
   },
 });

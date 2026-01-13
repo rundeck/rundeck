@@ -26,6 +26,8 @@
               @add-log-filter="addLogFilterForIndex(element.id)"
               @add-error-handler="toggleAddErrorHandlerModal(index)"
               @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
+              @delete="removeStep(index)"
+              @duplicate="duplicateStep(index)"
             />
             <template v-else>
               <div class="step-item-row">
