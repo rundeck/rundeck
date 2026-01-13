@@ -15,8 +15,8 @@
         {{ $t("Workflow.label") }}
       </div>
       <div v-if="loaded" :class="[conditionalEnabled? 'col-sm-12': 'col-sm-10']" style="padding-top: 1em">
-        <workflow-basic v-model="basicData" />
-        <workflow-strategy v-model="strategyData" />
+        <workflow-basic v-model="basicData" :conditional-enabled="conditionalEnabled"  />
+        <workflow-strategy v-model="strategyData" :conditional-enabled="conditionalEnabled" />
         <hr />
         <workflow-global-log-filters v-model="logFiltersData" />
         <hr />

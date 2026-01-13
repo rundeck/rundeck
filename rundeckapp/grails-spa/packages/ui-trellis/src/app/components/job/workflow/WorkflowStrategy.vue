@@ -64,6 +64,10 @@ export default defineComponent({
       required: true,
       default: () => ({}) as PluginConfig,
     },
+    conditionalEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["update:modelValue"],
   data() {

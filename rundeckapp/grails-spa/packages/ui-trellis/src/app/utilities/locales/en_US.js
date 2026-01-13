@@ -904,6 +904,12 @@ const messages = {
   Workflow: {
     label: "Workflow",
     property: {
+      executionBehavior: {
+        label: "Execution Behavior",
+      },
+      stepFailureBehavior: {
+        label: "Step Failure Behavior",
+      },
       keepgoing: {
         true: { description: "Run remaining steps before failing." },
         false: { description: "Stop at the failed step." },
@@ -915,6 +921,7 @@ const messages = {
     },
     addStep: "Add a step",
     logFilters: "Log Filters",
+    logFiltersTooltip: "Filters that will affect the logs produces by these steps",
     addLogFilter: "Add Log Filter",
     clickToEdit: "Click to edit",
     edit: "Edit",
@@ -931,6 +938,8 @@ const messages = {
     errorHandlerDescription:
       "The error handler will execute if the step fails.",
     editErrorHandler: "Edit error handler",
+    nodeStep: "Node Step",
+    workflowStep: "Workflow Step",
   },
   "plugin.choose.title": "Choose a Plugin",
   "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
