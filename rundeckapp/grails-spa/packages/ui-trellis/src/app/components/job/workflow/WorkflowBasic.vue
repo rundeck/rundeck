@@ -7,7 +7,7 @@
       <h3 class="text-heading--md">
         {{ $t("Workflow.property.stepFailureBehavior.label") }}
       </h3>
-      <p class="text-body workflow-prompt">
+      <p class="text-body--lg workflow-prompt">
         {{ $t("Workflow.property.keepgoing.prompt") }}
       </p>
     </div>

@@ -1,48 +1,73 @@
 <template>
-  <div v-if="loaded" class="form-inline">
-    <div class="form-group" :class="{ 'has-error': false }">
-      <label class="col-sm-12" title="Strategy for iteration">
-        {{ $t("Workflow.property.strategy.label") }}:
+  <div :class="conditionalEnabled ? 'conditional-enabled' : ''">
+    <div v-if="loaded">
+      <h3 v-if="conditionalEnabled" class="text-heading--md">
+        {{ $t("Workflow.property.strategy.label") }}
+      </h3>
+      <p v-if="conditionalEnabled" class="text-body--lg strategy-description">
+        {{ $t("Workflow.property.strategy.description") }}
+        <a href="#" class="text-body--primary">{{ $t("Workflow.property.strategy.learnMore") }}</a>
+      </p>
+      <div :class="conditionalEnabled ? 'col-xs-12' : 'form-inline'">
+        <div class="form-group" :class="{ 'has-error': false }">
+          <label v-if="!conditionalEnabled" :class="conditionalEnabled ? '' : 'col-sm-12'" title="Strategy for iteration">
+            {{ $t("Workflow.property.strategy.label") }}:
 
-        <select
-          v-if="pluginProviders && pluginProviders.length > 0"
-          v-model="model.type"
-          class="form-control"
-          name="workflow.strategy"
-        >
-          <option
-            v-for="plugin in pluginProviders"
-            :key="plugin.name"
-            :value="plugin.name"
+            <select
+              v-if="pluginProviders && pluginProviders.length > 0"
+              v-model="model.type"
+              class="form-control"
+              name="workflow.strategy"
+            >
+              <option
+                v-for="plugin in pluginProviders"
+                :key="plugin.name"
+                :value="plugin.name"
+              >
+                {{ plugin.title }}
+              </option>
+            </select>
+          </label>
+          <select
+            v-else-if="conditionalEnabled && pluginProviders && pluginProviders.length > 0"
+            v-model="model.type"
+            class="form-control strategy-select"
+            name="workflow.strategy"
           >
-            {{ plugin.title }}
-          </option>
-        </select>
-      </label>
+            <option
+              v-for="plugin in pluginProviders"
+              :key="plugin.name"
+              :value="plugin.name"
+            >
+              {{ plugin.title }}
+            </option>
+          </select>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div v-if="selectedPlugin" :id="`strategyPlugin${selectedPlugin.name}`">
-    <PluginDetails
-      :description="selectedPlugin.description"
-      :description-css="'text-info'"
-    />
-  </div>
+    <div v-if="selectedPlugin && !conditionalEnabled" :id="`strategyPlugin${selectedPlugin.name}`">
+      <PluginDetails
+        :description="selectedPlugin.description"
+        :description-css="'text-info'"
+      />
+    </div>
 
-  <plugin-config
-    v-if="selectedPlugin"
-    :key="selectedPlugin.name"
-    v-model="editStrategyPlugin"
-    :mode="mode"
-    :service-name="'WorkflowStrategy'"
-    :show-title="false"
-    :show-description="false"
-    :context-autocomplete="true"
-    :validation="editValidation"
-    scope="Instance"
-    default-scope="Instance"
-    group-css=""
-  ></plugin-config>
+    <plugin-config
+      v-if="selectedPlugin"
+      :key="selectedPlugin.name"
+      v-model="editStrategyPlugin"
+      :mode="mode"
+      :service-name="'WorkflowStrategy'"
+      :show-title="false"
+      :show-description="false"
+      :context-autocomplete="true"
+      :validation="editValidation"
+      scope="Instance"
+      default-scope="Instance"
+      group-css=""
+    ></plugin-config>
+  </div>
 </template>
 <script lang="ts">
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
@@ -141,3 +166,23 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped lang="scss">
+.conditional-enabled {
+  margin-top:35px;
+  margin-bottom: 35px;
+
+  h3 {
+    margin: 0 0 16px 0;
+  }
+
+  .strategy-description {
+    // margin-top: 35px;
+    margin-bottom: 12px;
+  }
+
+  .strategy-select {
+    // margin-top: 29px;
+  }
+}
+</style>

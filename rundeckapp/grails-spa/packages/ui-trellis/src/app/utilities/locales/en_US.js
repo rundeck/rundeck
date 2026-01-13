@@ -917,6 +917,8 @@ const messages = {
       },
       strategy: {
         label: "Strategy",
+        description: "Select the chronology strategy of steps in the workflow.",
+        learnMore: "Learn more",
       },
     },
     addStep: "Add a step",
