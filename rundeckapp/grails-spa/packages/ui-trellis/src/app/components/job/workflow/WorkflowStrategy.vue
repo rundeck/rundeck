@@ -31,7 +31,7 @@
           <select
             v-else-if="conditionalEnabled && pluginProviders && pluginProviders.length > 0"
             v-model="model.type"
-            class="form-control strategy-select"
+            :class="['form-control', 'strategy-select', { 'strategy-select-with-config': conditionalEnabled && selectedPlugin && selectedPlugin.name === 'ruleset' }]"
             name="workflow.strategy"
           >
             <option
@@ -54,7 +54,7 @@
     </div>
 
     <plugin-config
-      v-if="selectedPlugin"
+      v-if="conditionalEnabled ? (selectedPlugin && selectedPlugin.name === 'ruleset') : selectedPlugin"
       :key="selectedPlugin.name"
       v-model="editStrategyPlugin"
       :mode="mode"
@@ -171,18 +171,23 @@ export default defineComponent({
 .conditional-enabled {
   margin-top:35px;
   margin-bottom: 35px;
+  overflow: hidden;
 
   h3 {
     margin: 0 0 16px 0;
   }
 
   .strategy-description {
-    // margin-top: 35px;
     margin-bottom: 12px;
   }
 
   .strategy-select {
-    // margin-top: 29px;
+    max-width: 700px;
+  }
+
+  .strategy-select-with-config {
+    max-width: 700px;
+    margin-bottom: 36px;
   }
 }
 </style>
