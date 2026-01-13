@@ -220,11 +220,22 @@ export default defineComponent({
         };
       });
 
+      // Check if we should disable grouping based on query length or space
+      const shouldDisableGrouping = this.shouldDisableGrouping();
+
       // Then, process non-highlighted providers in order
       nonHighlighted.forEach((provider) => {
         const groupBy = provider.providerMetadata?.groupBy;
 
-        if (groupBy) {
+        // If grouping should be disabled, don't group providers
+        if (shouldDisableGrouping || !groupBy) {
+          // Ungrouped provider - render individually
+          nonHighlightedResult[provider.title] = {
+            isGroup: false,
+            iconDetail: provider,
+            providers: [provider],
+          };
+        } else {
           // Provider belongs to a group
           if (!nonHighlightedResult[groupBy]) {
             nonHighlightedResult[groupBy] = {
@@ -237,13 +248,6 @@ export default defineComponent({
             };
           }
           nonHighlightedResult[groupBy].providers.push(provider);
-        } else {
-          // Ungrouped provider - render individually
-          nonHighlightedResult[provider.title] = {
-            isGroup: false,
-            iconDetail: provider,
-            providers: [provider],
-          };
         }
       });
 
@@ -371,6 +375,17 @@ export default defineComponent({
     },
     handleGroupProviderSelect(provider: any) {
       this.chooseProviderAdd(this.selectedService, provider.name);
+    },
+    shouldDisableGrouping(): boolean {
+      // Only disable grouping when there's an active search query
+      if (!this.searchQuery) {
+        return false;
+      }
+
+      const query = this.searchQuery.trim();
+      
+      // Disable grouping if query has 5 or more characters OR contains a space
+      return query.length >= 5 || query.includes(" ");
     },
   },
 });
