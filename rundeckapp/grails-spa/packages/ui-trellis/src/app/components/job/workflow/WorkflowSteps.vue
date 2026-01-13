@@ -1,4 +1,5 @@
 <template>
+  //todo: add job steps title here, visible only when conditionalEnabled = true
   <common-undo-redo-draggable-list
     ref="historyControls"
     v-model="model.commands"
@@ -11,7 +12,7 @@
   >
     <template #item="{ item: { element, index } }">
       <li>
-        <div class="step-list-item">
+        <div class="step-list-item" :class="{'ea': conditionalEnabled}">
           <div class="step-item-display">
             <StepCard
               v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic'"
@@ -31,129 +32,132 @@
               @add-error-handler="toggleAddErrorHandlerModal(index)"
               @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
             />
-            <div v-else class="step-item-row">
-              <div
-                :id="`wfitem_${index}`"
-                class="step-item-config"
-                data-test="edit-step-item"
-                :title="$t('Workflow.clickToEdit')"
-                @click="editStepByIndex(index)"
-              >
-                <plugin-config
-                  v-if="!element.jobref && element.type !== 'conditional.logic'"
-                  :service-name="
+            <template v-else>
+              <div class="step-item-row">
+                <div
+                    :id="`wfitem_${index}`"
+                    class="step-item-config"
+                    data-test="edit-step-item"
+                    :title="$t('Workflow.clickToEdit')"
+                    @click="editStepByIndex(index)"
+                >
+                  <plugin-config
+                      v-if="!element.jobref && element.type !== 'conditional.logic'"
+                      :service-name="
                     element.nodeStep
                       ? ServiceType.WorkflowNodeStep
                       : ServiceType.WorkflowStep
                   "
-                  :provider="element.type"
-                  :config="element.config"
-                  :read-only="true"
-                  :show-title="true"
-                  :show-icon="true"
-                  :show-description="true"
-                  mode="show"
-                >
-                  <template v-if="element.nodeStep" #iconSuffix>
-                    <i class="fas fa-hdd node-icon"></i>
-                  </template>
-                </plugin-config>
-                <job-ref-step v-else-if="element.jobref" :step="element"></job-ref-step>
-                <conditional-logic-step v-else ></conditional-logic-step>
-
-                <div v-if="element.description" class="wfstep-description">
-                  {{ element.description }}
-                </div>
-              </div>
-              <div class="step-item-controls">
-                <div
-                  class="btn-group"
-                  role="group"
-                  :aria-label="$t('Workflow.itemControls')"
-                >
-                  <btn
-                    size="xs"
-                    style="min-height: 21px"
-                    @click.stop="editStepByIndex(index)"
+                      :provider="element.type"
+                      :config="element.config"
+                      :read-only="true"
+                      :show-title="true"
+                      :show-icon="true"
+                      :show-description="true"
+                      mode="show"
                   >
-                    <i class="fas fa-edit"></i>
-                    {{ $t("Workflow.edit") }}
-                  </btn>
-                  <btn
-                    size="xs"
-                    :title="$t('Workflow.duplicateStep')"
-                    @click.stop="duplicateStep(index)"
-                  >
-                    <i class="glyphicon glyphicon-duplicate"></i>
-                  </btn>
-                  <dropdown menu-right>
-                    <btn size="xs" data-role="trigger" :disabled="!!(element.errorhandler && element.jobref)">
-                      <i class="glyphicon glyphicon-cog"></i>
-                      <span class="caret"></span>
-                    </btn>
-                    <template #dropdown>
-                      <li v-if="!element.errorhandler">
-                        <a
-                          role="button"
-                          data-test="add-error-handler"
-                          @click="toggleAddErrorHandlerModal(index)"
-                        >
-                          {{ $t("Workflow.addErrorHandler") }}
-                        </a>
-                      </li>
-                      <li v-if="!element.jobref">
-                        <a
-                          role="button"
-                          data-test="add-log-filter"
-                          @click="addLogFilterForIndex(element.id)"
-                        >
-                          {{ $t("Workflow.addLogFilter") }}
-                        </a>
-                      </li>
+                    <template v-if="element.nodeStep" #iconSuffix>
+                      <i class="fas fa-hdd node-icon"></i>
                     </template>
-                  </dropdown>
-                  <btn
-                    size="xs"
-                    type="danger"
-                    :title="$t('Workflow.deleteThisStep')"
-                    data-test="remove-step"
-                    @click.prevent="removeStep(index)"
-                  >
-                    <i class="glyphicon glyphicon-remove"></i>
-                  </btn>
-                </div>
+                  </plugin-config>
+                  <job-ref-step v-else-if="element.jobref" :step="element"></job-ref-step>
+                  <conditional-logic-step v-else ></conditional-logic-step>
 
-                <span
-                  class="btn btn-xs dragHandle"
-                  :title="$t('Workflow.dragToReorder')"
-                >
+                  <div v-if="element.description" class="wfstep-description">
+                    {{ element.description }}
+                  </div>
+                </div>
+                <div class="step-item-controls">
+                  <div
+                      class="btn-group"
+                      role="group"
+                      :aria-label="$t('Workflow.itemControls')"
+                  >
+                    <btn
+                        size="xs"
+                        style="min-height: 21px"
+                        @click.stop="editStepByIndex(index)"
+                    >
+                      <i class="fas fa-edit"></i>
+                      {{ $t("Workflow.edit") }}
+                    </btn>
+                    <btn
+                        size="xs"
+                        :title="$t('Workflow.duplicateStep')"
+                        @click.stop="duplicateStep(index)"
+                    >
+                      <i class="glyphicon glyphicon-duplicate"></i>
+                    </btn>
+                    <dropdown menu-right>
+                      <btn size="xs" data-role="trigger" :disabled="!!(element.errorhandler && element.jobref)">
+                        <i class="glyphicon glyphicon-cog"></i>
+                        <span class="caret"></span>
+                      </btn>
+                      <template #dropdown>
+                        <li v-if="!element.errorhandler">
+                          <a
+                              role="button"
+                              data-test="add-error-handler"
+                              @click="toggleAddErrorHandlerModal(index)"
+                          >
+                            {{ $t("Workflow.addErrorHandler") }}
+                          </a>
+                        </li>
+                        <li v-if="!element.jobref">
+                          <a
+                              role="button"
+                              data-test="add-log-filter"
+                              @click="addLogFilterForIndex(element.id)"
+                          >
+                            {{ $t("Workflow.addLogFilter") }}
+                          </a>
+                        </li>
+                      </template>
+                    </dropdown>
+                    <btn
+                        size="xs"
+                        type="danger"
+                        :title="$t('Workflow.deleteThisStep')"
+                        data-test="remove-step"
+                        @click.prevent="removeStep(index)"
+                    >
+                      <i class="glyphicon glyphicon-remove"></i>
+                    </btn>
+                  </div>
+
+                  <span
+                      class="btn btn-xs dragHandle"
+                      :title="$t('Workflow.dragToReorder')"
+                  >
                   <i class="glyphicon glyphicon-resize-vertical" />
                 </span>
+                </div>
               </div>
-            </div>
 
-            <div
-              v-if="!element.jobref"
-              :class="{'step-item-logfilters': element.filters?.length > 0 }"
-            >
-              <log-filters
-                :model-value="element.filters"
-                :title="$t('Workflow.logFilters')"
-                :subtitle="stepTitle(element, index)"
-                :add-event="'step-action:add-logfilter:' + element.id"
-                mode="inline"
-                @update:model-value="
+              <div
+                  v-if="!element.jobref"
+                  :class="{'step-item-logfilters': element.filters?.length > 0 }"
+              >
+                <log-filters
+                    :model-value="element.filters"
+                    :title="$t('Workflow.logFilters')"
+                    :subtitle="stepTitle(element, index)"
+                    :add-event="'step-action:add-logfilter:' + element.id"
+                    mode="inline"
+                    @update:model-value="
                   updateHistoryWithLogFiltersData(index, $event)
                 "
+                />
+              </div>
+              <error-handler-step
+                  v-if="element.errorhandler"
+                  :step="element"
+                  @edit="editStepByIndex(index, true)"
+                  @removeHandler="removeStep(index, true)"
+                  data-test="error-handler-step"
               />
-            </div>
-            <error-handler-step
-              v-if="element.errorhandler"
-              :step="element"
-              @edit="editStepByIndex(index, true)"
-              @removeHandler="removeStep(index, true)"
-              data-test="error-handler-step"
-            />
+            </template>
+
           </div>
         </div>
       </li>
@@ -706,6 +710,11 @@ export default defineComponent({
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
+
+  &.ea {
+    padding: 0 !important;
+    border: none;
+  }
   //overflow: hidden;
 
   .step-item-display {

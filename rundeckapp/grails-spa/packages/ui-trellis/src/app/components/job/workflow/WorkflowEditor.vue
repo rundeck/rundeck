@@ -11,10 +11,10 @@
   </section>
   <section id="workflowContent" class="section-separator section-space-lg">
     <div class="form-group">
-      <div class="col-sm-2 control-label text-form-label">
+      <div v-if="!conditionalEnabled" class="col-sm-2 control-label text-form-label">
         {{ $t("Workflow.label") }}
       </div>
-      <div v-if="loaded" class="col-sm-10" style="padding-top: 1em">
+      <div v-if="loaded" :class="[conditionalEnabled? 'col-sm-12': 'col-sm-10']" style="padding-top: 1em">
         <workflow-basic v-model="basicData" />
         <workflow-strategy v-model="strategyData" />
         <hr />
