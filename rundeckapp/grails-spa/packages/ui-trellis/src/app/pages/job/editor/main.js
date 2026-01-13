@@ -21,6 +21,7 @@ import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
 import PrimeVue from "primevue/config";
 import Lara from "@primeuix/themes/lara";
+import Tooltip from "primevue/tooltip";
 import "primeicons/primeicons.css";
 import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
 
@@ -142,6 +143,7 @@ const mountSection = (section) => {
           },
         },
       });
+      app.directive("tooltip", Tooltip);
       app.use(pinia);
       app.mount(element);
     });

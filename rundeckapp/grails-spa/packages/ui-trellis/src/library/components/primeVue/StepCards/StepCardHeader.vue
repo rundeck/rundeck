@@ -62,6 +62,7 @@ import Menu from "primevue/menu";
 import PluginInfo from "../../plugins/PluginInfo.vue";
 import PtButton from "../PtButton/PtButton.vue";
 import Tag from "primevue/tag";
+import "../Tooltip/tooltip.scss";
 
 export default defineComponent({
   name: "StepCardHeader",
@@ -170,6 +171,16 @@ export default defineComponent({
     + .pi {
       display: inline;
     }
+  }
+}
+
+/* Menu item styling for dropdown menus */
+.p-menu-item {
+  color: var(--colors-menuitem-color);
+  background: transparent;
+
+  &-link {
+    color: inherit !important;
   }
 }
 </style>

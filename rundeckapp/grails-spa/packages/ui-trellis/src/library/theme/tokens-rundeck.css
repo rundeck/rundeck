@@ -4,8 +4,10 @@
     --colors-blue-600:  #1248BD;
     --colors-gray-100: #FAFAFA;
     --colors-gray-300: #E4E4E7;
+    --colors-gray-400: #D4D4D8;
     --colors-gray-500: #A1A1AA;
     --colors-gray-600: #71717A;
+    --colors-gray-800: #27272A;
     --colors-gray-900:  #18181B;
     --colors-green-100: #D6E4DB;
     --colors-green-600: #149343;
@@ -17,6 +19,11 @@
 
     /* Background colors */
     --colors-secondaryBackgroundOnLight: #f7fafc;
+    --colors-cardNumber: #EDF2F7;
+    --colors-surface-200: #EEEEEE;
+
+    /* Menu colors */
+    --colors-menuitem-color: #495057;
 
     /* Typography line-heights */
     --lineHeights-heading-lg: 1.3125rem;  /* 21px */
