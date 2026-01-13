@@ -2,8 +2,10 @@
   <Card class="conditionalCard" :class="{'complex': complex}">
     <template #header>
       <StepCardHeader
-        :plugin-details="conditionalHeaderConfig"
-        :config="jiraStep"
+        :plugin-details="pluginDetails"
+        :config="config"
+        @delete="handleDelete"
+        @duplicate="handleDuplicate"
       />
     </template>
     <template #content>
@@ -26,9 +28,6 @@
                 </template>
               </plugin-info>
             </AccordionHeader>
-            <AccordionContent>
-              <StepCardContent />
-            </AccordionContent>
           </AccordionPanel>
           <AccordionPanel value="2">
             <AccordionHeader>
@@ -124,6 +123,7 @@ import LogFilters from "@/app/components/job/workflow/LogFilters.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import StepCardContent from "@/library/components/primeVue/StepCards/StepCardContent.vue";
+import { getRundeckContext } from "@/library";
 
 import "../Tag/tag.scss";
 import "../Tooltip/tooltip.scss";
@@ -149,20 +149,71 @@ export default defineComponent({
     Tag,
   },
   props: {
+    pluginDetails: {
+      type: Object,
+      required: true,
+    },
+    config: {
+      type: Object,
+      required: true,
+    },
+    serviceName: {
+      type: String,
+      default: "WorkflowStep",
+    },
+    logFilters: {
+      type: Array,
+      default: () => [],
+    },
+    errorHandler: {
+      type: Array,
+      default: () => [],
+    },
     complex: {
       type: Boolean,
       default: false
     }
   },
+  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate"],
+  computed: {
+    computedServiceName() {
+      return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
+    },
+    eventBus() {
+      return getRundeckContext()?.eventBus;
+    },
+    errorHandlerData() {
+      // Extract error handler from array (it's passed as [element.errorhandler])
+      return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] : null;
+    },
+    computedErrorHandlerConfig() {
+      return this.errorHandlerData?.config || {};
+    },
+    computedErrorHandlerServiceName() {
+      return this.errorHandlerData?.nodeStep ? "WorkflowNodeStep" : "WorkflowStep";
+    },
+    computedErrorHandlerProvider() {
+      return this.errorHandlerData?.type || "";
+    },
+    logFiltersModel: {
+      get() {
+        return this.logFilters;
+      },
+      set(value) {
+        this.$emit("update:logFilters", value);
+      },
+    },
+    errorHandlerModel: {
+      get() {
+        return this.errorHandler;
+      },
+      set(value) {
+        this.$emit("update:errorHandler", value);
+      },
+    },
+  },
   data() {
     return {
-      conditionalHeaderConfig: {
-        nodeStep: true,
-        description: "For each Linux node",
-        title: "Conditional Logic on Node Step",
-        tooltip: "Only linux nodes will execute the following steps",
-        iconUrl: "./public/library/theme/images/icon-condition.png",
-      },
       test: {
         iconUrl: "./public/library/theme/images/icon-shell.png",
         title: "Command",
@@ -178,41 +229,28 @@ export default defineComponent({
         name: "exec-command",
         author: "Rundeck, Inc.",
       },
-      jiraStep: {
-        description: null,
-        id: "4wy1dg",
-        filters: [],
-        type: "jira-create-issue",
-        config: {
-          customFieldsUserInput: "[]",
-          description:
-            "${option.jira-description}  GitHub Link: ${option.github-url}",
-          project: "${option.jira-project}",
-          summary: "${option.jira-summary}",
-          type: "Task",
-        },
-        nodeStep: true,
-        errorhandler: {
-          description: null,
-          jobref: null,
-          id: "s6jvwa",
-          filters: [],
-          type: "jira-create-issue",
-          nodeStep: true,
-          keepgoingOnSuccess: true,
-          config: {
-            customFieldsUserInput: "[]",
-            description:
-              "${option.jira-description}  GitHub Link: ${option.github-url}",
-            project: "${option.jira-project}",
-            summary: "${option.jira-summary}",
-            type: "Task",
-          },
-        },
-      },
     };
   },
   methods: {
+    handleAddLogFilter() {
+      // Emit eventBus event like WorkflowSteps.addLogFilterForIndex does
+      const elementId = this.config.id || "";
+      if (this.eventBus && elementId) {
+        this.eventBus.emit("step-action:add-logfilter:" + elementId);
+      }
+      // Emit component event - parent template will call handler with element.id
+      this.$emit("add-log-filter");
+    },
+    handleAddErrorHandler() {
+      // Emit component event - parent template will call handler with index
+      this.$emit("add-error-handler");
+    },
+    handleDelete() {
+      this.$emit("delete");
+    },
+    handleDuplicate() {
+      this.$emit("duplicate");
+    },
     yolo() {
       alert("edit mode");
     },

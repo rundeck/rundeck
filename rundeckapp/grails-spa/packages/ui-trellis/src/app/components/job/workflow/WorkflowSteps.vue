@@ -29,6 +29,19 @@
               @delete="removeStep(index)"
               @duplicate="duplicateStep(index)"
             />
+            <ConditionalCard
+              v-else-if="conditionalEnabled && element.type === 'conditional.logic'"
+              :plugin-details="getPluginDetails(element)"
+              :config="element"
+              :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
+              :log-filters="element.filters || []"
+              :error-handler="element.errorhandler ? [element.errorhandler] : []"
+              @add-log-filter="addLogFilterForIndex(element.id)"
+              @add-error-handler="toggleAddErrorHandlerModal(index)"
+              @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
+              @delete="removeStep(index)"
+              @duplicate="duplicateStep(index)"
+            />
             <template v-else>
               <div class="step-item-row">
                 <div
@@ -282,7 +295,7 @@ import { Operation } from "@/app/components/job/options/model/ChangeEvents";
 import { validatePluginConfig } from "@/library/modules/pluginService";
 import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
-import ConditionalLogicStep from "@/app/components/job/workflow/ConditionalLogicStep.vue";
+import ConditionalCard from "@/library/components/primeVue/StepCards/ConditionalCard.vue";
 import StepCard from "@/library/components/primeVue/StepCards/StepCard.vue";
 
 const context = getRundeckContext();
@@ -290,7 +303,7 @@ const eventBus = context.eventBus;
 export default defineComponent({
   name: "WorkflowSteps",
   components: {
-    ConditionalLogicStep,
+    ConditionalCard,
     ErrorHandlerStep,
     JobRefForm,
     CommonUndoRedoDraggableList,
