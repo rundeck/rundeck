@@ -9,8 +9,9 @@
         <transition name="inline-button-fade">
           <button
             v-if="modelValue.length === 0"
-            @click="handleAdd"
+            @click.prevent="handleAdd"
             class="inline-button link-button"
+            type="button"
           >
             + Add
           </button>
@@ -34,8 +35,9 @@
           <button
             v-if="!hideWhenSingle"
             v-show="!hideWhenSingle || modelValue.length !== 1"
-            @click="handleAdd"
+            @click.prevent="handleAdd"
             class="link-button"
+            type="button"
           >
             + Add
           </button>

@@ -10,12 +10,12 @@
       <StepCardContent
         :config="config"
         :service-name="computedServiceName"
+        :element-id="config.id || ''"
         v-model:log-filters="logFiltersModel"
         v-model:error-handler="errorHandlerModel"
-        :error-handler-plugin-info="errorHandlerPluginInfo"
-        :error-handler-config="errorHandlerConfig"
-        :error-handler-service-name="errorHandlerServiceName"
-        :error-handler-provider="errorHandlerProvider"
+        :error-handler-config="computedErrorHandlerConfig"
+        :error-handler-service-name="computedErrorHandlerServiceName"
+        :error-handler-provider="computedErrorHandlerProvider"
         @add-log-filter="handleAddLogFilter"
         @add-error-handler="handleAddErrorHandler"
       />
@@ -28,6 +28,7 @@ import { defineComponent } from "vue";
 import Card from "primevue/card";
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import StepCardContent from "@/library/components/primeVue/StepCards/StepCardContent.vue";
+import { getRundeckContext } from "@/library";
 
 export default defineComponent({
   name: "StepCard",
@@ -57,27 +58,27 @@ export default defineComponent({
       type: Array,
       default: () => [],
     },
-    errorHandlerPluginInfo: {
-      type: Object,
-      default: () => ({ title: "Command" }),
-    },
-    errorHandlerConfig: {
-      type: Object,
-      default: () => ({ adhocRemoteString: "echo error happened" }),
-    },
-    errorHandlerServiceName: {
-      type: String,
-      default: "WorkflowNodeStep",
-    },
-    errorHandlerProvider: {
-      type: String,
-      default: "exec-command",
-    },
   },
   emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler"],
   computed: {
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
+    },
+    eventBus() {
+      return getRundeckContext()?.eventBus;
+    },
+    errorHandlerData() {
+      // Extract error handler from array (it's passed as [element.errorhandler])
+      return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] : null;
+    },
+    computedErrorHandlerConfig() {
+      return this.errorHandlerData?.config || {};
+    },
+    computedErrorHandlerServiceName() {
+      return this.errorHandlerData?.nodeStep ? "WorkflowNodeStep" : "WorkflowStep";
+    },
+    computedErrorHandlerProvider() {
+      return this.errorHandlerData?.type || "";
     },
     logFiltersModel: {
       get() {
@@ -98,9 +99,16 @@ export default defineComponent({
   },
   methods: {
     handleAddLogFilter() {
+      // Emit eventBus event like WorkflowSteps.addLogFilterForIndex does
+      const elementId = this.config.id || "";
+      if (this.eventBus && elementId) {
+        this.eventBus.emit("step-action:add-logfilter:" + elementId);
+      }
+      // Emit component event - parent template will call handler with element.id
       this.$emit("add-log-filter");
     },
     handleAddErrorHandler() {
+      // Emit component event - parent template will call handler with index
       this.$emit("add-error-handler");
     },
   },
