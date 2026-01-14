@@ -173,14 +173,14 @@ export default defineComponent({
 /* Link title styles with hover behavior for pencil icon */
 .link-title {
   all: unset;
-  color: #0052CC;
+  color: var(--colors-blue-500);
   cursor: pointer;
   font-weight: 400;
   font-size: 16px;
 
   + .pi,
   .pi {
-    color: #0052CC;
+    color: var(--colors-blue-500);
     display: none;
     margin-left: 5px;
   }

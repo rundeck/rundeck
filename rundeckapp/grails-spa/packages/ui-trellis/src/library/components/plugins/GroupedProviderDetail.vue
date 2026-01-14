@@ -234,26 +234,26 @@ export default defineComponent({
   font-size: 14px;
   font-weight: 400;
   line-height: 14px;
-  color: #27272a;
+  color: var(--colors-gray-800);
   margin: 0;
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .accordion-title {
   font-weight: var(--fontWeights-medium);
-  color: #27272a;
+  color: var(--colors-gray-800);
 }
 
 .accordion-description {
-  color: #71717a;
+  color: var(--colors-gray-600);
   font-weight: 400;
 }
 
 .accordion-description-separator {
-  color: #71717a;
+  color: var(--colors-gray-600);
 }
 
 :deep(.p-accordion) {

@@ -206,9 +206,9 @@ export default defineComponent({
   .placeholder {
     align-items: center;
     display: flex;
-    gap: 0.5rem;
     border-bottom: 1px solid var(--colors-gray-300);
     padding: 16px 0;
+    gap: var(--space-2);
 
     &:last-child {
       border-bottom: none;
@@ -237,35 +237,35 @@ export default defineComponent({
   font-size: 14px;
   font-weight: 400;
   line-height: 14px;
-  color: #27272a;
+  color: var(--colors-gray-800);
   margin: 0;
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .accordion-title {
   font-weight: var(--fontWeights-medium);
-  color: #27272a;
+  color: var(--colors-gray-800);
 }
 
 .accordion-description {
-  color: #71717a;
+  color: var(--colors-gray-600);
   font-weight: 400;
 }
 
 .accordion-description-separator {
-  color: #71717a;
+  color: var(--colors-gray-600);
 }
 
 .provider-count {
   color: var(--colors-gray-600);
-  margin-left: 0.25rem;
+  margin-left: var(--space-1);
 }
 
 .no-results {
-  padding: 32px;
+  padding: var(--space-8);
   text-align: center;
   color: var(--colors-gray-600);
 }

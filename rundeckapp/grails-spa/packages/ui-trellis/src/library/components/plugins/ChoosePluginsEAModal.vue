@@ -444,7 +444,7 @@ span:not(.glyphicon, .fa, .pi) {
 
 .text-heading--sm,
 .form-group {
-  margin-bottom: 0px;
+  margin-bottom: var(--space-none);
 }
 
 .text-body--sm {

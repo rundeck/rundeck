@@ -323,6 +323,6 @@ export default defineComponent({
 
 .p-menu-list {
   margin: 0;
-  padding: 0.25rem 0.25rem;
+  padding: var(--space-1) var(--space-1);
 }
 </style>
