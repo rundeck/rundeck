@@ -50,6 +50,7 @@
               data-trigger="click"
               data-popover-key="${enc(attr:rkey)}"
               id="revertall_${enc(attr:rkey)}"
+              data-sanitize="false"
         >
             <i class="glyphicon glyphicon-fast-backward"></i>
             <g:message code="revert.all.changes" /></span>

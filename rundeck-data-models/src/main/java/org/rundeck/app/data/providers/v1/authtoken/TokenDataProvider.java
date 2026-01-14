@@ -91,6 +91,15 @@ public interface TokenDataProvider extends DataProvider {
     List<AuthenticationToken> findAllByUser(String userId);
 
     /**
+     * Retrieves a List of AuthenticationToken for the user and type.
+     *
+     * @param userId of the AuthenticationTokens, format String
+     * @param type of the AuthenticationToken, format AuthTokenType
+     * @return list of AuthenticationTokens
+     */
+    default List<AuthenticationToken> findAllByUserAndType(String userId, AuthTokenType type){ return null; }
+
+    /**
      * Retrieves a List of AuthenticationTokens for the creator that are expired.
      *
      * @param creator of the AuthenticationTokens, format String

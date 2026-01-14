@@ -96,6 +96,7 @@ class ProjectEditPage extends BasePage {
     }
 
     def clickEditConfigurationFile(){
+        waitForElementToBeClickable(editConfigurationFile)
         (el editConfigurationFile).click()
     }
 
@@ -211,15 +212,35 @@ class ProjectEditPage extends BasePage {
     }
 
     /**
+     * Escapes a string for safe use in JavaScript single-quoted string literals
+     * @param str The string to escape
+     * @return The escaped string safe for use in JavaScript
+     */
+    private String escapeJavaScriptString(String str) {
+        if (str == null) {
+            return "''"
+        }
+        // Escape backslashes first, then single quotes, then handle newlines
+        return "'" + str.replace('\\', '\\\\')
+                       .replace("'", "\\'")
+                       .replace('\n', '\\n')
+                       .replace('\r', '\\r')
+                       .replace('\t', '\\t') + "'"
+    }
+
+    /**
      * It replaces the @original string by the @replacement string and it must be in edit configuration file screen
      * @param original
      * @param replacement
      */
     def replaceConfiguration(String original, String replacement){
+        String escapedOriginal = escapeJavaScriptString(original)
+        String escapedReplacement = escapeJavaScriptString(replacement)
         try {
-            ((JavascriptExecutor) context.driver).executeScript("ace.edit('_id0').session.replace(ace.edit('_id0').find('${original}',{wrap: true, wholeWord: true }), '${replacement}');")
+            ((JavascriptExecutor) context.driver).executeScript("ace.edit('_id0').session.replace(ace.edit('_id0').find(${escapedOriginal},{wrap: true, wholeWord: true }), ${escapedReplacement});")
         } catch (e) {
-            ((JavascriptExecutor) context.driver).executeScript("ace.edit('_id0').session.insert({row: ace.edit('_id0').session.getLength(), column: 0}, '\n' + '${replacement}'")
+            String escapedNewline = escapeJavaScriptString('\n')
+            ((JavascriptExecutor) context.driver).executeScript("ace.edit('_id0').session.insert({row: ace.edit('_id0').session.getLength(), column: 0}, ${escapedNewline} + ${escapedReplacement});")
         }
     }
 

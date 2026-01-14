@@ -111,7 +111,8 @@
 
         </g:if>
 
-      <ul id="navbar-menu" class="mainbar__group mainbar__menu">
+      <ul id="navbar-menu" class="mainbar__group mainbar__menu vue-ui-socket">
+        <ui-socket section="navbar-main-menu" location="before"></ui-socket>
         <g:set var="userDefinedInstanceName" value="${cfg.getString(config: "gui.instanceName")}"/>
         <g:if test="${userDefinedInstanceName}">
           <li>
@@ -127,7 +128,7 @@
           <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
             <g:set var="clusterIdentityInHeader" value="${cfg.getBoolean(config: "gui.clusterIdentityInHeader", default:false)}"/>
             <g:if test="${clusterIdentityInHeader}">
-              <li class="vue-ui-socket">
+              <li>
                   <ui-socket
                           section="server-info-display"
                           location="main"
@@ -169,7 +170,11 @@
             </div>
           </li>
         </g:if>
+        <ui-socket section="navbar-main-menu" location="after"></ui-socket>
       </ul>
+      <g:if test="${session?.user && request.subject}">
+        <g:render template="/menu/sysConfigNavMenuScripts"/>
+      </g:if>
     </div>
   </nav>
 %{--  <g:javascript>--}%

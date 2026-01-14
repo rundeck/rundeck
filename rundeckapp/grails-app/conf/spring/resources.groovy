@@ -121,6 +121,7 @@ import org.rundeck.app.config.FeatureFlagConfigurable
 import org.rundeck.app.data.job.metadata.JobAuthorizationMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScheduleMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScmMetadataComponent
+import org.rundeck.app.data.job.metadata.JobStatsMetadataComponent
 import org.rundeck.app.data.project.ProjectAuthorizationMetadataComponent
 import org.rundeck.app.data.project.ProjectConfigMetadataComponent
 import org.rundeck.app.data.project.ProjectMessageMetadataComponent
@@ -1001,6 +1002,7 @@ beans={
     jobScheduleMetadataComponent(JobScheduleMetadataComponent)
     jobAuthorizationMetadataComponent(JobAuthorizationMetadataComponent)
     jobScmMetadataComponent(JobScmMetadataComponent)
+    jobStatsMetadataComponent(JobStatsMetadataComponent)
     projectAuthorizationMetadataComponent(ProjectAuthorizationMetadataComponent)
     projectConfigMetadataComponent(ProjectConfigMetadataComponent)
     projectScmMetadataComponent(ProjectScmMetadataComponent)

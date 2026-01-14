@@ -303,29 +303,6 @@ class ScheduledExecutionController  extends ControllerBase{
          offset               : params.offset ? params.offset : 0
         ]
     }
-    def detailFragment () {
-        log.debug("ScheduledExecutionController: detailFragment : params: " + params)
-        Framework framework = frameworkService.getRundeckFramework()
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if(notFoundResponse(scheduledExecution,'Job',params.id)){
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeProjectJobAny(
-                authContext, scheduledExecution,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
-                scheduledExecution.project
-            ),
-            AuthConstants.ACTION_VIEW,
-            'Job', params.id
-        )) {
-            return
-        }
-        def model=jobDetailData()
-
-        return render(view:'jobDetailFragment',model: model)
-    }
     def detailFragmentAjax () {
         if (requireAjax(action: 'show', controller: 'scheduledExecution', params: params)) {
             return
@@ -583,7 +560,9 @@ Since: v53''',
 
         withFormat{
             html{
-                dataMap
+                def stats = scheduledExecutionService.calculateJobStats(scheduledExecution)
+                def statsMap = [successrate: stats.successRate, execCount: stats.execCount, avgduration: stats.averageDuration]
+                statsMap + dataMap
             }
             yaml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.yaml\"")
@@ -3822,7 +3801,6 @@ Each job entry contains:
             )
         ]
     )
-    @Tag(name = "Jobs")
     /**
      * API: /api/14/project/NAME/jobs/import
      */
@@ -5101,6 +5079,10 @@ Authorization required: `delete` for the job.''',
         summary='Run Adhoc Command',
         description='''Run a command string.
 
+This endpoint accepts parameters either as query parameters or as a JSON request body. Query parameters are recommended for simplicity.
+
+Example using query parameters: `POST /api/56/project/myproject/run/command?exec=echo+test&filter=.*`
+
 Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
 
 Since: v14''',
@@ -5236,6 +5218,10 @@ Since: v14''',
         method='POST',
         summary='Run Adhoc Script',
         description='''Run a script.
+
+This endpoint accepts parameters as query parameters, with the script content submitted in the request body. The script can be submitted as multipart/form-data, application/x-www-form-urlencoded (with `scriptFile` parameter), or as a JSON document.
+
+Example using query parameters: `POST /api/56/project/myproject/run/script?filter=.*` with script content in body
 
 Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
 

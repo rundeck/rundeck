@@ -21,12 +21,6 @@ class UserSummaryPage extends BasePage{
         super(context)
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on user summary page: " + driver.currentUrl)
-        }
-    }
-
     WebElement getUserCountField() {
         el userCountFieldBy
     }
