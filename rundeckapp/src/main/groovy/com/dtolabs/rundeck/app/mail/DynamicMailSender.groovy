@@ -70,6 +70,8 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
             return
         }
         if (keys.any { it.startsWith('grails.mail') }) {
+            def mailKeys = keys.findAll { it.startsWith('grails.mail') }
+            log.info("Mail configuration changed for keys: {} - updating mail sender", mailKeys)
             updateMailSender()
         }
     }
@@ -185,7 +187,7 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
             def value = map.get(key)
             if (value instanceof Map) {
                 flattenMapToProperties(value, prefix + key + '.', properties)
-            } else {
+            } else if (value != null) {
                 properties.put(prefix + key, value.toString())
             }
         }

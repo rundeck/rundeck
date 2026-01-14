@@ -23,6 +23,19 @@ class DynamicMailSenderSpec extends Specification implements AutowiredTest {
             [a: [c: 'd'], b: [e: [f: 'g']]] | ['a.c': 'd', 'b.e.f': 'g']
     }
 
+    def "flatten props should skip null values"() {
+        given:
+            def input = [a: 'b', c: null, d: [e: 'f', g: null]]
+
+        when:
+            def result = DynamicMailSender.flattenMapToProperties(input)
+
+        then:
+            result == [a: 'b', 'd.e': 'f']
+            !result.containsKey('c')
+            !result.containsKey('d.g')
+    }
+
     def "init should initialize delegate"() {
         given:
             def sender = new DynamicMailSender()
