@@ -26,7 +26,7 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig;
 import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import lombok.Data;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
