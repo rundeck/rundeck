@@ -208,10 +208,14 @@ class ExecutionUtilService {
                     createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
             )
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
-            final JobExec jobcmditem = step as JobExec;
+            final JobExec jobcmditem = step as JobExec
 
+            // get the workflow item for the referenced job, if the job refers is found, otherwise set it to null
+            WorkflowExecutionItem jobReferenceWorkflow = null
             ScheduledExecution se = scheduledExecutionService.findJobFromJobExec(jobcmditem, jobcmditem.jobProject ?: parentProject)
-            WorkflowExecutionItem jobReferenceWorkflow = createExecutionItemForWorkflow(se?.workflow, parentProject)
+            if(se){
+                jobReferenceWorkflow = createExecutionItemForWorkflow(se?.workflow, parentProject)
+            }
 
             final String[] args
             if (null != jobcmditem.getArgString()) {
