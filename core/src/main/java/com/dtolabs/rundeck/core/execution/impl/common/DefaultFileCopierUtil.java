@@ -31,7 +31,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.utils.Streams;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.*;
 import java.util.concurrent.atomic.AtomicLong;
