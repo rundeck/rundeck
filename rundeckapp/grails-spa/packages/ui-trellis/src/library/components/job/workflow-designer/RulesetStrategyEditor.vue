@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import { getRundeckContext } from "@/library";
+import { getRundeckContext } from "../../../";
 import { defineComponent } from "vue";
 import WorkflowGraph from "./WorkflowGraph.vue";
 import messages from "./i18n";
