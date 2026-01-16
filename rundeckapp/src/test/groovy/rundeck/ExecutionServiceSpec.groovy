@@ -6346,7 +6346,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getProjectProperties(_) >> [:]
         }
         service.executionUtilService = Mock(ExecutionUtilService) {
-            createExecutionItemForWorkflow(_) >> Mock(WorkflowExecutionItem) {
+            createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
                 getWorkflow() >> Mock(IWorkflow)
             }
         }
@@ -6453,7 +6453,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getProjectProperties(_) >> [:]
         }
         service.executionUtilService = Mock(ExecutionUtilService) {
-            createExecutionItemForWorkflow(_) >> Mock(WorkflowExecutionItem) {
+            createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
                 getWorkflow() >> Mock(IWorkflow)
             }
         }
@@ -6549,7 +6549,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getProjectProperties(_) >> [:]
         }
         service.executionUtilService = Mock(ExecutionUtilService) {
-            createExecutionItemForWorkflow(_) >> originalWorkflowItem
+            createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
         }
         service.workflowService = Mock(WorkflowService) {
             createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
@@ -6646,7 +6646,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getProjectProperties(_) >> [:]
         }
         service.executionUtilService = Mock(ExecutionUtilService) {
-            createExecutionItemForWorkflow(_) >> originalWorkflowItem
+            createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
         }
         service.workflowService = Mock(WorkflowService) {
             createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
@@ -6738,7 +6738,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
 
         service.executionUtilService = Mock(ExecutionUtilService) {
-            createExecutionItemForWorkflow(_) >> originalWorkflowItem
+            createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
         }
         service.workflowService = Mock(WorkflowService) {
             createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)

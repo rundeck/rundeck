@@ -136,9 +136,68 @@ public class ExecutionItemFactory {
             final String uuid,
             final Boolean useName,
             final Boolean ignoreNotifications,
+            final Boolean childNodes
+            )
+    {
+
+        return new JobReferenceItem(
+                label,
+                jobIdentifier,
+                args,
+                nodeStep,
+                handler,
+                keepgoingOnSuccess,
+                nodeKeepgoing,
+                nodeFilter,
+                nodeThreadcount,
+                nodeRankAttribute,
+                nodeRankOrderAscending,
+                nodeIntersect,
+                project,
+                failOnDisable,
+                importOptions,
+                uuid,
+                useName,
+                ignoreNotifications,
+                childNodes,
+                null
+        );
+    }
+
+
+    /**
+     * Create step execution item for a job reference with workflow
+     *
+     * @param jobIdentifier
+     * @param args
+     * @param nodeStep
+     * @param handler
+     * @param keepgoingOnSuccess
+     *
+     * @return
+     */
+    public static StepExecutionItem createJobRef(
+            final String jobIdentifier,
+            final String[] args,
+            final boolean nodeStep,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String nodeFilter,
+            final Integer nodeThreadcount,
+            final Boolean nodeKeepgoing,
+            final String nodeRankAttribute,
+            final Boolean nodeRankOrderAscending,
+            final String label,
+            final Boolean nodeIntersect,
+            final String project,
+            final Boolean failOnDisable,
+            final Boolean importOptions,
+            final String uuid,
+            final Boolean useName,
+            final Boolean ignoreNotifications,
             final Boolean childNodes,
             final WorkflowExecutionItem workflow
-            )
+    )
     {
 
         return new JobReferenceItem(

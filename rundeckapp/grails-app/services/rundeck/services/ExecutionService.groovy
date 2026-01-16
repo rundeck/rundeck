@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.JobReferenceItem
 import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
@@ -3767,6 +3768,48 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
         }
         return newContext
+    }
+
+
+    /**
+     * Create a step execution context for a Job Reference step
+     * @param se the job
+     * @param exec the execution, or null if not known
+     * @param executionContext the original step context
+     * @param newargs argument strings for the job, which will have data context references expanded
+     * @param nodeFilter overriding node filter
+     * @param nodeKeepgoing overriding keepgoing
+     * @param nodeThreadcount overriding threadcount
+     * @param dovalidate if true, validate the input arguments to the job
+     * @return
+     * @throws ExecutionServiceValidationException if input argument validation fails
+     */
+    StepExecutionContext createJobReferenceContext(
+            JobReferenceItem jobReferenceItem,
+            StepExecutionContext executionContext
+    )
+            throws ExecutionServiceValidationException
+    {
+        def se = scheduledExecutionService.findJobFromJobReference(jobReferenceItem, jobReferenceItem.project ?: event.projectName)
+        def jobArgs = jobReferenceItem.args
+
+        return createJobReferenceContext(
+                se,
+                null,
+                executionContext,
+                jobArgs,
+                jobReferenceItem.nodeFilter,
+                jobReferenceItem.nodeKeepgoing,
+                jobReferenceItem.nodeThreadcount,
+                jobReferenceItem.nodeRankAttribute,
+                jobReferenceItem.nodeRankOrderAscending,
+                null,
+                jobReferenceItem.nodeIntersect,
+                jobReferenceItem.importOptions,
+                false,
+                jobReferenceItem.childNodes
+        )
+
     }
     /**
      * Execute a job reference workflow with a particular context, optionally overriding the target node set,
