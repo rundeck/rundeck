@@ -5038,7 +5038,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     ScheduledExecution findJobFromJobReference(JobReferenceItem jobRef, String project) {
         return findJobByIdentifier(
-                jobRef.useName,
+                jobRef.useName?:false,
                 jobRef.uuid,
                 jobRef.jobIdentifier,
                 jobRef.project,
