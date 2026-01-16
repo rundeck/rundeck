@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts">
-import { getRundeckContext } from "@rundeck/ui-trellis";
+import { getRundeckContext } from "@/library";
 import { defineComponent } from "vue";
 import WorkflowGraph from "./WorkflowGraph.vue";
 import messages from "./i18n";

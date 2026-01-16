@@ -88,8 +88,8 @@
 </template>
 
 <script lang="ts">
-import {Tab, Tabs} from '@rundeck/ui-trellis/lib/components/containers/tabs'
-import AceEditor from '@rundeck/ui-trellis/lib/components/utils/AceEditor.vue'
+import {Tab, Tabs} from '../../containers/tabs'
+import AceEditor from '../../utils/AceEditor.vue'
 
 import * as Ace from 'ace-builds'
 
