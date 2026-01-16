@@ -2,6 +2,7 @@
   <h2 v-if="conditionalEnabled" class="text-heading--lg">
     {{ $t("Workflow.jobSteps.label") }}
   </h2>
+
   <common-undo-redo-draggable-list
     ref="historyControls"
     v-model="model.commands"

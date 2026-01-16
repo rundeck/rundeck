@@ -1,7 +1,9 @@
 <template>
   <Select
-    v-model="modelValue"
+    v-model="internalValue"
     :options="options"
+    :option-label="optionLabel"
+    :option-value="optionValue"
     :placeholder="placeholder"
     :disabled="disabled"
     :invalid="invalid"
@@ -13,9 +15,9 @@
     :show-clear="showClear"
     :reset-filter-on-hide="resetFilterOnHide"
     :scroll-height="scrollHeight"
-    :auto-filter-focus="autoFilterFocus"
-    :select-on-focus="selectOnFocus"
-    :focus-on-hover="focusOnHover"
+    :auto-filter-focus="false"
+    :select-on-focus="false"
+    :focus-on-hover="false"
     :name="name"
     :input-id="inputId"
     :data-key="dataKey"
@@ -25,7 +27,6 @@
     :loading-icon="loadingIcon"
     :dropdown-icon="dropdownIcon"
     :append-to="appendTo"
-    @update:model-value="onUpdateModelValue"
     @focus="onFocus"
     @blur="onBlur"
     @show="onShow"
@@ -82,6 +83,14 @@ export default defineComponent({
       type: Array as PropType<any[]>,
       default: () => [],
     },
+    optionLabel: {
+      type: [String, Function] as PropType<string | ((option: any) => string)>,
+      default: undefined,
+    },
+    optionValue: {
+      type: [String, Function] as PropType<string | ((option: any) => any)>,
+      default: undefined,
+    },
     placeholder: {
       type: String,
       default: undefined,
@@ -130,18 +139,6 @@ export default defineComponent({
       type: String,
       default: "200px",
     },
-    autoFilterFocus: {
-      type: Boolean,
-      default: true,
-    },
-    selectOnFocus: {
-      type: Boolean,
-      default: false,
-    },
-    focusOnHover: {
-      type: Boolean,
-      default: true,
-    },
     name: {
       type: String,
       default: undefined,
@@ -187,10 +184,17 @@ export default defineComponent({
     "hide",
     "filter",
   ],
-  methods: {
-    onUpdateModelValue(value: any) {
-      this.$emit("update:modelValue", value);
+  computed: {
+    internalValue: {
+      get(): any {
+        return this.modelValue;
+      },
+      set(value: any) {
+        this.$emit("update:modelValue", value);
+      },
     },
+  },
+  methods: {
     onFocus(event: FocusEvent) {
       this.$emit("focus", event);
     },
@@ -211,53 +215,78 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-// Root element styles
+
 .p-select {
   width: 100%;
+  border: 1px solid var(--dropdown-natural-border);
+  border-radius: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  overflow: visible;
+  position: relative;
+
+
+  // Focus state - Blue border with shadow
+  &:focus,
+  &:focus-visible,
+  &:not(.p-disabled):hover,
+  &.p-inputwrapper-focus {
+    border-color: var(--colors-blue-500);
+    box-shadow: 0px 0px 0px 2.8px var(--colors-blue-100);
+    outline: none;
+  }
+
+  // Invalid state - Red border
+  &.p-invalid,
+  &.p-select-invalid {
+    border-color: var(--colors-red-500);
+  }
+
+  // Disabled state
+  &.p-disabled {
+    border-color: var(--colors-gray-200);
+    opacity: 0.6;
+  }
 
   // Input field styles - Default state
   .p-select-label {
-    background: var(--colors-white);
-    border: 1px solid var(--colors-gray-300);
-    border-radius: 6px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
     color: var(--colors-gray-800);
     font-size: 14px;
     font-weight: 400;
     line-height: normal;
     padding: 10px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: none;
+    display: block;
+    width: 100%;
 
     // Placeholder text
     &::placeholder {
       color: var(--colors-gray-500);
     }
+  }
 
-    // Hover state
-    &:hover:not(:disabled) {
-      border-color: var(--colors-gray-300);
-    }
+  // Dropdown trigger button (contains the dropdown icon)
+  .p-select-dropdown {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    box-shadow: none;
 
-    // Focus state - Blue border with shadow
     &:focus,
-    &:focus-visible {
-      border-color: var(--colors-blue-500);
-      box-shadow: 0px 0px 0px 2.8px var(--colors-blue-100);
+    &:focus-visible,
+    &:active,
+    &:hover {
+      background: transparent;
+      border: none;
       outline: none;
-    }
-
-    // Invalid state - Red border
-    &.p-invalid,
-    &.p-select-invalid {
-      border-color: var(--colors-red-500);
-    }
-
-    // Disabled state
-    &:disabled {
-      background: var(--colors-white);
-      border-color: var(--colors-gray-200);
-      color: var(--colors-gray-400);
-      cursor: not-allowed;
-      opacity: 0.6;
+      box-shadow: none;
     }
   }
 
@@ -334,24 +363,29 @@ export default defineComponent({
 
     // Hover state
     &:hover:not(.p-disabled):not(.p-select-option-selected) {
-      background: var(--colors-gray-100);
+      background: var(--colors-cardNumber);
       color: var(--colors-gray-800);
     }
 
     // Focus state
     &.p-focus:not(.p-disabled) {
-      background: var(--colors-gray-100);
+      background: var(--colors-cardNumber);
       color: var(--colors-gray-800);
     }
 
     // Selected state
     &.p-select-option-selected {
-      background: var(--colors-gray-50);
+      background: var(--colors-blue-50);
       color: var(--colors-blue-500);
 
       // Selected + Focus state
       &.p-focus {
-        background: var(--colors-gray-50);
+        background: var(--colors-blue-50);
+        color: var(--colors-blue-500);
+      }
+
+      // Ensure nested elements also get blue color when selected
+      * {
         color: var(--colors-blue-500);
       }
     }

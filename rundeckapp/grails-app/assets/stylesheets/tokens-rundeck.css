@@ -25,6 +25,8 @@
     /* Menu colors */
     --colors-menuitem-color: #495057;
 
+    --dropdown-natural-border: #CBD5E0;
+
     /* Typography line-heights */
     --lineHeights-heading-lg: 1.3125rem;  /* 21px */
     --lineHeights-body-compact: 0.875rem; /* 14px */

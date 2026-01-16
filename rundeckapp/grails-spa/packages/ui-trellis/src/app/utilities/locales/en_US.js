@@ -920,6 +920,7 @@ const messages = {
         label: "Strategy",
         description: "Select the chronology strategy of steps in the workflow.",
         learnMore: "Learn more",
+        selectPlaceholder: "Select a strategy",
       },
     },
     addStep: "Add a step",

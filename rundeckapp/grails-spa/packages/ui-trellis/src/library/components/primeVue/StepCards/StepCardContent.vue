@@ -60,8 +60,6 @@ import ConfigSection from "@/library/components/primeVue/StepCards/ConfigSection
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import { getRundeckContext } from "@/library";
-import { PluginConfig as PluginConfigType } from "@/library/interfaces/PluginConfig";
-import { getPluginProvidersForService } from "@/library/modules/pluginService";
 
 export default defineComponent({
   name: "StepCardContent",

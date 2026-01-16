@@ -28,20 +28,28 @@
               </option>
             </select>
           </label>
-          <select
+          <div
             v-else-if="conditionalEnabled && pluginProviders && pluginProviders.length > 0"
-            v-model="model.type"
-            :class="['form-control', 'strategy-select', { 'strategy-select-with-config': conditionalEnabled && selectedPlugin && selectedPlugin.name === 'ruleset' }]"
-            name="workflow.strategy"
+            :class="['strategy-select-wrapper', { 'strategy-select-with-config': conditionalEnabled && selectedPlugin && selectedPlugin.name === 'ruleset' }]"
           >
-            <option
-              v-for="plugin in pluginProviders"
-              :key="plugin.name"
-              :value="plugin.name"
+            <PtSelect
+              v-model="model.type"
+              :options="strategyOptions"
+              :placeholder="$t('Workflow.property.strategy.selectPlaceholder')"
+              name="workflow.strategy"
+              option-label="title"
+              option-value="name"
             >
-              {{ plugin.title }}
-            </option>
-          </select>
+              <template #option="slotProps">
+                <div class="strategy-option">
+                  <div class="strategy-option-title">{{ slotProps.option.title }}</div>
+                  <div v-if="slotProps.option.description" class="strategy-option-description">
+                    {{ slotProps.option.description }}
+                  </div>
+                </div>
+              </template>
+            </PtSelect>
+          </div>
         </div>
       </div>
     </div>
@@ -73,6 +81,7 @@
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import PtSelect from "@/library/components/primeVue/PtSelect/PtSelect.vue";
 import { getPluginProvidersForService } from "@/library/modules/pluginService";
 import { defineComponent } from "vue";
 
@@ -82,6 +91,7 @@ export default defineComponent({
     PluginConfig,
     PluginDetails,
     PluginInfo,
+    PtSelect,
   },
   props: {
     modelValue: {
@@ -112,6 +122,9 @@ export default defineComponent({
         return null;
       }
       return this.pluginProviders.find((p: any) => p.name === this.model.type);
+    },
+    strategyOptions() {
+      return this.pluginProviders || [];
     },
   },
   watch: {
@@ -171,7 +184,13 @@ export default defineComponent({
 .conditional-enabled {
   margin-top:35px;
   margin-bottom: 35px;
-  overflow: hidden;
+  overflow: visible;
+
+  &:after {
+    content: " ";
+    clear: both;
+    display: block;
+  }
 
   h3 {
     margin: 0 0 16px 0;
@@ -181,7 +200,7 @@ export default defineComponent({
     margin-bottom: 12px;
   }
 
-  .strategy-select {
+  .strategy-select-wrapper {
     max-width: 700px;
   }
 
@@ -189,5 +208,22 @@ export default defineComponent({
     max-width: 700px;
     margin-bottom: 36px;
   }
+}
+</style>
+<style>
+.strategy-option {
+  padding: 0;
+}
+
+.strategy-option-title {
+  font-size: 14px;
+  font-weight: 700 !important;
+  line-height: 1.5;
+}
+
+.strategy-option-description {
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 4px;
 }
 </style>
