@@ -1,6 +1,6 @@
 {
   "name": "@rundeck/ui-trellis",
-  "version": "3.3.10",
+  "version": "3.3.8",
   "description": "A collection of utilities used across various javascript applications and components.",
   "engines": {
     "npm": "10.9.4"
