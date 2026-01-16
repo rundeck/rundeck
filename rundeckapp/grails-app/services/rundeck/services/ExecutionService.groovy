@@ -1147,7 +1147,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     null
             def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
 
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow, execution.project)
 
             StepExecutionContext createInitContext = createContext(
                     execution,

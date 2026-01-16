@@ -166,7 +166,7 @@ class WorkflowService implements ApplicationContextAware{
                     //invalid arguments
                 }
 
-                WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(se.workflow)
+                WorkflowExecutionItem item = jexec.getWorkflow()
 
                 isNodeStep = jexec.nodeStep
 
@@ -179,7 +179,7 @@ class WorkflowService implements ApplicationContextAware{
                         createStateForWorkflow(rstep.subWorkflow.workflow, project,frameworkNodeName,parent,secureOptions))
             }else{
                 def mutableStep = new MutableWorkflowStepStateImpl(stepId)
-                if(step.getRunner()){
+                if(step.getRunner() && parentId == null){
                     mutableStep.runnerNode = step.getRunner().nodename
                 }
                 substeps[ndx] = mutableStep
