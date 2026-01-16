@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.execution;
 import com.dtolabs.rundeck.core.execution.PluginNodeStepExecutionItemImpl;
 import com.dtolabs.rundeck.core.execution.PluginStepExecutionItemImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 
@@ -100,7 +101,8 @@ public class ExecutionItemFactory {
                 null,
                 false,
                 false,
-                false
+                false,
+                null
         );
     }
 
@@ -134,8 +136,9 @@ public class ExecutionItemFactory {
             final String uuid,
             final Boolean useName,
             final Boolean ignoreNotifications,
-            final Boolean childNodes
-    )
+            final Boolean childNodes,
+            final WorkflowExecutionItem workflow
+            )
     {
 
         return new JobReferenceItem(
@@ -157,7 +160,8 @@ public class ExecutionItemFactory {
                 uuid,
                 useName,
                 ignoreNotifications,
-                childNodes
+                childNodes,
+                workflow
         );
     }
 
