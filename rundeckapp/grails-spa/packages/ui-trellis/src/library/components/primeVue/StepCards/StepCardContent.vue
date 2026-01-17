@@ -138,6 +138,9 @@ export default defineComponent({
       // Emit to parent - parent will handle opening modal
       this.$emit("add-log-filter");
     },
+    handleEditLogFilter(filter) {
+      this.$emit("edit-log-filter", filter);
+    },
   },
 });
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <h2 v-if="conditionalEnabled" class="text-heading--lg">
+  <h2 v-if="conditionalEnabled" class="text-heading--lg smaller-margin">
     {{ $t("Workflow.jobSteps.label") }}
   </h2>
 
@@ -11,10 +11,12 @@
     item-key="id"
     :button-label="$t('Workflow.addStep')"
     :loading="loadingWorflowSteps"
+    :conditional-enabled="conditionalEnabled"
     @add-button-click="toggleAddStepModal"
   >
     <template #item="{ item: { element, index } }">
       <li>
+        <i v-if="conditionalEnabled" class="pi pi-bars dragHandle"></i>
         <div class="step-list-item" :class="{'ea': conditionalEnabled}">
           <div class="step-item-display">
             <StepCard
@@ -700,6 +702,10 @@ export default defineComponent({
 <style lang="scss">
 h2.text-heading--lg {
   margin: 0 0 24px 0;
+
+  &.smaller-margin {
+    margin: 0 0 12px 0;
+  }
 }
 
 @media (min-width: 1280px) {
@@ -729,7 +735,6 @@ h2.text-heading--lg {
     padding: 0 !important;
     border: none;
   }
-  //overflow: hidden;
 
   .step-item-display {
     width: 100%;
@@ -819,6 +824,44 @@ h2.text-heading--lg {
 
   .error-handler-section {
     margin-top: 10px;
+  }
+}
+
+.ea-mode {
+
+  ol[data-testid='draggable-container'] {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    list-style: none;
+    position: relative;
+    counter-reset: list;
+
+    li {
+      position: relative;
+
+      &:before {
+        counter-increment: list;
+        content: counter(list)'.';
+        display: block;
+        font-size: 16px;
+        font-family: Inter, var(--fonts-body) !important;
+        left: -18px;
+        position: absolute;
+        top: 1rem;
+      }
+
+      i.pi-bars {
+        position: absolute;
+        cursor: grab;
+        left: -40px;
+        top: 17px !important;
+      }
+    }
+  }
+
+  .dragging * {
+    cursor: grabbing !important;
   }
 }
 </style>

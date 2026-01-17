@@ -9,8 +9,13 @@
           </div>
         </slot>
       </div>
-      <div v-else class="list-container">
+      <div
+        v-else
+        class="list-container"
+        :class="{ 'ea-mode': conditionalEnabled }"
+      >
         <undo-redo
+          :class="{ right: conditionalEnabled }"
           data-test="options_undo_redo"
           :event-bus="localEB"
           :revert-all-enabled="revertAllEnabled"
@@ -70,7 +75,6 @@ import { cloneDeep } from "lodash";
 const emitter = mitt();
 const localEB: Emitter<Record<EventType, any>> = emitter;
 
-
 export default defineComponent({
   name: "CommonUndoRedoDraggableList",
   components: { UndoRedo, draggable },
@@ -104,6 +108,10 @@ export default defineComponent({
       default: "div",
     },
     loading: {
+      type: Boolean,
+      default: false,
+    },
+    conditionalEnabled: {
       type: Boolean,
       default: false,
     },
@@ -204,7 +212,7 @@ export default defineComponent({
       this.wasChanged();
     },
     wasChanged() {
-      if(this.eventBus) {
+      if (this.eventBus) {
         this.eventBus.emit("job-edit:edited", true);
       } else {
         this.localEB.emit("job-edit:edited", true);
@@ -228,6 +236,10 @@ export default defineComponent({
   align-items: flex-start;
   gap: 10px;
   height: auto;
+
+  .right {
+    align-self: flex-end;
+  }
 }
 
 .loader {
