@@ -19,6 +19,7 @@
       </div>
       <div class="stepCardHeader-description">
         <Tag
+          v-if="!hideStepType"
           :class="[config.nodeStep ? 'tag-node' : 'tag-workflow']"
           :value="config.nodeStep ? $t('Workflow.nodeStep') : $t('Workflow.workflowStep')"
         />
@@ -40,20 +41,28 @@
         v-tooltip.top="$t('Workflow.deleteThisStep')"
         @click="handleDelete"
       />
-      <PtButton
-        outlined
-        severity="secondary"
-        icon="pi pi-ellipsis-h"
-        aria-haspopup="true"
-        aria-controls="overlay_menu"
-        @click="handleMoreActions"
-      />
-      <Menu
-        ref="menu"
-        id="overlay_menu"
-        :model="menuItems"
-        popup
-      />
+      <template v-if="showToggle">
+        <PtButton
+          text
+          icon="pi pi-chevron-down"
+        />
+      </template>
+      <template v-else>
+        <PtButton
+          outlined
+          severity="secondary"
+          icon="pi pi-ellipsis-h"
+          aria-haspopup="true"
+          aria-controls="overlay_menu"
+          @click="handleMoreActions"
+        />
+        <Menu
+          ref="menu"
+          id="overlay_menu"
+          :model="menuItems"
+          popup
+        />
+      </template>
     </div>
   </div>
 </template>
@@ -76,6 +85,14 @@ export default defineComponent({
     config: {
       type: Object,
       required: true,
+    },
+    hideStepType: {
+      type: Boolean,
+      default: false,
+    },
+    showToggle: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ["delete", "duplicate"],
