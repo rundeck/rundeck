@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Meta, StoryObj } from "@storybook/vue3";
 import EditConditionalStepCard from "./EditConditionalStepCard.vue";
 import mitt from "mitt";

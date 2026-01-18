@@ -132,13 +132,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import PtSelect from "@/library/components/primeVue/PtSelect/PtSelect.vue";
 import ConditionRow from "./ConditionRow.vue";
-import { contextVariables } from "@/library/stores/contextVariables";
+import { contextVariables, type ContextVariable } from "@/library/stores/contextVariables";
+import { cloneDeep } from "lodash";
 import {
   type Condition,
   type ConditionSet,
@@ -149,6 +150,7 @@ import {
   createEmptyCondition,
   createEmptyConditionSet,
 } from "./types/conditionalStepTypes";
+import type { EditStepData } from "./types/workflowTypes";
 
 export default defineComponent({
   name: "EditConditionalStepCard",
@@ -159,12 +161,52 @@ export default defineComponent({
     PtSelect,
     ConditionRow,
   },
-  emits: ["cancel", "save"],
+  props: {
+    modelValue: {
+      type: Object as PropType<EditStepData>,
+      required: true,
+      default: () => ({}) as EditStepData,
+    },
+    serviceName: {
+      type: String,
+      required: true,
+    },
+    validation: {
+      type: Object,
+      required: false,
+      default: () => ({}),
+    },
+    extraAutocompleteVars: {
+      type: Array as PropType<ContextVariable[]>,
+      required: false,
+      default: () => [],
+    },
+  },
+  emits: ["cancel", "save", "update:modelValue"],
   data() {
     return {
+      editModel: {} as EditStepData,
       stepName: "",
       conditionSets: [createEmptyConditionSet()] as ConditionSet[],
     };
+  },
+  watch: {
+    modelValue: {
+      handler(val) {
+        if (val && Object.keys(val).length > 0) {
+          this.editModel = cloneDeep(val);
+          this.stepName = val.description || "";
+          this.conditionSets = val.config?.conditionSets || [createEmptyConditionSet()];
+        }
+      },
+      immediate: true,
+      deep: true,
+    },
+  },
+  mounted() {
+    this.editModel = cloneDeep(this.modelValue);
+    this.stepName = this.modelValue.description || "";
+    this.conditionSets = this.modelValue.config?.conditionSets || [createEmptyConditionSet()];
   },
   computed: {
     canAddConditionSet(): boolean {
@@ -213,10 +255,16 @@ export default defineComponent({
       }
     },
     handleSave() {
-      this.$emit("save", {
-        stepName: this.stepName,
-        conditionSets: this.conditionSets,
-      });
+      const updatedModel = {
+        ...this.editModel,
+        description: this.stepName,
+        config: {
+          ...this.editModel.config,
+          conditionSets: this.conditionSets,
+        },
+      };
+      this.$emit("update:modelValue", updatedModel);
+      this.$emit("save");
     },
     handleCancel() {
       this.$emit("cancel");

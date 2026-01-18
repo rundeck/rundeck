@@ -2,20 +2,22 @@
   <div class="stepCardHeader">
     <div>
       <div>
-        <plugin-info
-          :detail="{
-            ...config,
-            ...pluginDetails,
-            title: config.description || pluginDetails.description,
-          }"
-          :show-description="false"
-          :show-extended="false"
-          titleCss="link-title"
-        >
-          <template #descriptionprefix>
-            <i class="pi pi-pencil"/>
-          </template>
-        </plugin-info>
+        <div class="plugin-info-wrapper" @click="handleEdit">
+          <plugin-info
+            :detail="{
+              ...config,
+              ...pluginDetails,
+              title: config.description || pluginDetails.description,
+            }"
+            :show-description="false"
+            :show-extended="false"
+            titleCss="link-title"
+          >
+            <template #descriptionprefix>
+              <i class="pi pi-pencil"/>
+            </template>
+          </plugin-info>
+        </div>
       </div>
       <div class="stepCardHeader-description">
         <Tag
@@ -95,7 +97,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["delete", "duplicate"],
+  emits: ["delete", "duplicate", "edit"],
   computed: {
     menuItems() {
       return [
@@ -118,6 +120,9 @@ export default defineComponent({
     handleDuplicate() {
       this.$emit("duplicate");
     },
+    handleEdit() {
+      this.$emit("edit");
+    },
   },
 });
 </script>
@@ -128,6 +133,10 @@ export default defineComponent({
   a,
   span:not(.glyphicon, .fa, .pi) {
     font-family: Inter, var(--fonts-body) !important;
+  }
+
+  .plugin-info-wrapper {
+    cursor: pointer;
   }
 
   .plugin {

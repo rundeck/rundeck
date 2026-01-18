@@ -20,7 +20,7 @@
         <div class="step-list-item" :class="{'ea': conditionalEnabled}">
           <div class="step-item-display">
             <StepCard
-              v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic'"
+              v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId !== element.id"
               :plugin-details="getPluginDetails(element)"
               :config="element"
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
@@ -31,19 +31,25 @@
               @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
               @delete="removeStep(index)"
               @duplicate="duplicateStep(index)"
+              @edit="editStepByIndex(index)"
             />
-            <ConditionalCard
-              v-else-if="conditionalEnabled && element.type === 'conditional.logic'"
-              :plugin-details="getPluginDetails(element)"
-              :config="element"
+            <EditStepCard
+              v-else-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId === element.id"
+              :model-value="element"
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
-              :log-filters="element.filters || []"
-              :error-handler="element.errorhandler ? [element.errorhandler] : []"
-              @add-log-filter="addLogFilterForIndex(element.id)"
-              @add-error-handler="toggleAddErrorHandlerModal(index)"
-              @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
-              @delete="removeStep(index)"
-              @duplicate="duplicateStep(index)"
+              :validation="editModelValidation"
+              :extra-autocomplete-vars="extraAutocompleteVars"
+              @save="handleSaveStep(index)"
+              @cancel="handleCancelEdit"
+            />
+            <EditConditionalStepCard
+              v-else-if="conditionalEnabled && element.type === 'conditional.logic'"
+              :model-value="element"
+              :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
+              :validation="editModelValidation"
+              :extra-autocomplete-vars="extraAutocompleteVars"
+              @save="handleSaveConditionalStep(index)"
+              @cancel="handleCancelEdit"
             />
             <template v-else>
               <div class="step-item-row">
@@ -299,6 +305,8 @@ import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 import ConditionalCard from "@/library/components/primeVue/StepCards/ConditionalCard.vue";
 import StepCard from "@/library/components/primeVue/StepCards/StepCard.vue";
+import EditStepCard from "./EditStepCard.vue";
+import EditConditionalStepCard from "./EditConditionalStepCard.vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
@@ -316,6 +324,8 @@ export default defineComponent({
     JobRefStep,
     LogFilters,
     StepCard,
+    EditStepCard,
+    EditConditionalStepCard,
   },
   props: {
     modelValue: {
@@ -346,6 +356,7 @@ export default defineComponent({
       editService: null,
       editIndex: -1,
       loadingWorflowSteps: false,
+      editingStepId: null as string | null,
     };
   },
   computed: {
@@ -386,6 +397,9 @@ export default defineComponent({
       return this.editStepModal ? "edit-plugin-modal" : "job-ref-form";
     },
     ...mapState(useJobStore, ["jobDefinition"]),
+    extraAutocompleteVars() {
+      return createOptionVariables(this.jobDefinition?.options || []);
+    },
   },
   watch: {
     model: {
@@ -464,21 +478,30 @@ export default defineComponent({
         };
         this.editJobRefModal = true;
       } else if (provider === "conditional.logic") {
-        this.editModel = {
+        const newStep = {
           type: provider,
           config: {},
           nodeStep: service === ServiceType.WorkflowNodeStep,
-          description: ""
-        }
-        await this.saveEditStep();
-      } else {
-        this.editModel = {
-          type: provider,
-          config: {},
-          nodeStep: service === ServiceType.WorkflowNodeStep,
+          description: "",
+          id: mkid(),
         };
-
-        this.editStepModal = true;
+        this.editModel = newStep;
+        this.editIndex = this.model.commands.length;
+        this.editingStepId = newStep.id;
+        // Add the step to the list immediately so EditConditionalStepCard shows
+        this.model.commands.push(newStep);
+      } else {
+        const newStep = {
+          type: provider,
+          config: {},
+          nodeStep: service === ServiceType.WorkflowNodeStep,
+          id: mkid(),
+        };
+        this.editModel = newStep;
+        this.editIndex = this.model.commands.length;
+        this.editingStepId = newStep.id;
+        // Add the step to the list immediately so EditStepCard shows
+        this.model.commands.push(newStep);
       }
     },
     cancelProviderAdd() {
@@ -493,6 +516,19 @@ export default defineComponent({
       this.editModelValidation = null;
       this.editIndex = -1;
       this.isErrorHandler = false;
+      this.editingStepId = null;
+    },
+    handleCancelEdit() {
+      // If we're canceling a new step that was just added, remove it
+      if (this.editIndex >= 0 && this.editIndex >= this.model.commands.length - 1) {
+        // Check if this is a newly added step (at the end of the list)
+        const lastStep = this.model.commands[this.editIndex];
+        if (lastStep && lastStep.id === this.editingStepId && (!lastStep.config || Object.keys(lastStep.config || {}).length === 0)) {
+          // Remove the newly added step
+          this.model.commands.splice(this.editIndex, 1);
+        }
+      }
+      this.cancelEditStep();
     },
     removeStep(index: number, removeErrorHandler: boolean = false) {
       const originalData = cloneDeep(this.model.commands[index]);
@@ -537,30 +573,35 @@ export default defineComponent({
       });
     },
     editStepByIndex(index: number, isErrorHandler: boolean = false) {
-      this.editIndex = index;
-
-      const command = this.model.commands[index];
-      this.editExtra = cloneDeep(command);
-      let nodeStep = command.nodeStep;
-      this.isErrorHandler = isErrorHandler;
-      if(!isErrorHandler) {
-        this.editModel = cloneDeep(command);
-      } else {
+      if (isErrorHandler) {
+        this.editIndex = index;
+        const command = this.model.commands[index];
+        this.editExtra = cloneDeep(command);
+        this.isErrorHandler = true;
         this.editModel = cloneDeep(command.errorhandler);
-        nodeStep = command.errorhandler.nodeStep;
-        if(command.errorhandler.jobref) {
-          nodeStep = command.errorhandler.jobref.nodeStep;
-        }
-      }
-
-      this.editService = nodeStep
+        const nodeStep = command.errorhandler.nodeStep || (command.errorhandler.jobref?.nodeStep);
+        this.editService = nodeStep
           ? ServiceType.WorkflowNodeStep
           : ServiceType.WorkflowStep;
+        if (command.errorhandler.jobref) {
+          this.editJobRefModal = true;
+        } else {
+          this.editStepModal = true;
+        }
+        return;
+      }
 
-      if ((!isErrorHandler && command.jobref) || (isErrorHandler && command.errorhandler.jobref)) {
+      const command = this.model.commands[index];
+      this.editIndex = index;
+      this.editingStepId = command.id;
+      this.editExtra = cloneDeep(command);
+      this.editModel = cloneDeep(command);
+      this.editService = command.nodeStep
+        ? ServiceType.WorkflowNodeStep
+        : ServiceType.WorkflowStep;
+
+      if (command.jobref) {
         this.editJobRefModal = true;
-      } else {
-        this.editStepModal = true;
       }
     },
     async saveEditStep() {
@@ -695,6 +736,71 @@ export default defineComponent({
       this.editExtra = {};
       this.editModelValidation = null;
       this.editIndex = -1;
+      this.editingStepId = null;
+    },
+    async handleSaveStep(index: number) {
+      try {
+        const saveData = cloneDeep(this.editModel);
+        if (!saveData.id) {
+          saveData.id = this.model.commands[index]?.id || mkid();
+        }
+        if (saveData.nodeStep === undefined) {
+          saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
+        }
+
+        if (!saveData.jobref && saveData.type !== "conditional.logic") {
+          if (!saveData.filters) {
+            saveData.filters = [];
+          }
+
+          const response = await validatePluginConfig(
+            this.editService!,
+            saveData.type,
+            saveData.config || {},
+          );
+
+          if (
+            response.valid &&
+            Object.keys(response.errors || {}).length === 0
+          ) {
+            this.handleSuccessOnValidation(saveData);
+          } else {
+            this.editModelValidation = response;
+          }
+        } else {
+          this.handleSuccessOnValidation(saveData);
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    },
+    async handleSaveConditionalStep(index: number) {
+      try {
+        const saveData = cloneDeep(this.editModel);
+        if (!saveData.id) {
+          saveData.id = this.model.commands[index]?.id || mkid();
+        }
+        if (saveData.nodeStep === undefined) {
+          saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
+        }
+
+        const response = await validatePluginConfig(
+          this.editService!,
+          saveData.type,
+          saveData.config || {},
+        );
+
+        if (
+          response.valid &&
+          Object.keys(response.errors || {}).length === 0
+        ) {
+          this.handleSuccessOnValidation(saveData);
+        } else {
+          this.editModelValidation = response;
+        }
+      } catch (e) {
+        console.log(e);
+      }
     },
   },
 });

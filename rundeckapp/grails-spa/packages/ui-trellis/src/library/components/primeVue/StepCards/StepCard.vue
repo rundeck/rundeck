@@ -6,6 +6,7 @@
         :config="config"
         @delete="handleDelete"
         @duplicate="handleDuplicate"
+        @edit="handleEdit"
       />
     </template>
     <template #content>
@@ -61,7 +62,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate"],
+  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate", "edit"],
   computed: {
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
@@ -118,6 +119,9 @@ export default defineComponent({
     },
     handleDuplicate() {
       this.$emit("duplicate");
+    },
+    handleEdit() {
+      this.$emit("edit");
     },
   },
 });
