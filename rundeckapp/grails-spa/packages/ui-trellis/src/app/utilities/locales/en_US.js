@@ -1191,7 +1191,9 @@ const messages = {
   plugins: "plugins",
   editConditionalStep: {
     title: "Conditional Logic Node Step",
+    titleWorkflow: "Conditional Logic Workflow Step",
     description: "Define steps that will be executed per-node under specified conditions.",
+    descriptionWorkflow: "Define steps that will be executed under specified conditions.",
     stepName: "Step Name",
     stepNameHelper: "Name for this step",
     stepNamePlaceholder: "e.g. Restart Server",

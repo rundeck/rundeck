@@ -10,10 +10,10 @@
                 alt="Condition"
                 class="condition-icon"
               />
-              <h2 class="text-heading--lg card-title">{{ $t("editConditionalStep.title") }}</h2>
+              <h2 class="text-heading--lg card-title">{{ cardTitle }}</h2>
             </div>
             <p class="text-body text-body--secondary card-description">
-              {{ $t("editConditionalStep.description") }}
+              {{ cardDescription }}
             </p>
           </div>
           <PtButton
@@ -136,9 +136,9 @@ import { defineComponent, type PropType } from "vue";
 import Card from "primevue/card";
 import InputText from "primevue/inputtext";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
-import PtSelect from "@/library/components/primeVue/PtSelect/PtSelect.vue";
 import ConditionRow from "./ConditionRow.vue";
 import { contextVariables, type ContextVariable } from "@/library/stores/contextVariables";
+import { ServiceType } from "@/library/stores/Plugins";
 import { cloneDeep } from "lodash";
 import {
   type Condition,
@@ -158,7 +158,6 @@ export default defineComponent({
     Card,
     InputText,
     PtButton,
-    PtSelect,
     ConditionRow,
   },
   props: {
@@ -209,6 +208,16 @@ export default defineComponent({
     this.conditionSets = this.modelValue.config?.conditionSets || [createEmptyConditionSet()];
   },
   computed: {
+    cardTitle(): string {
+      return this.serviceName === ServiceType.WorkflowStep
+        ? this.$t("editConditionalStep.titleWorkflow")
+        : this.$t("editConditionalStep.title");
+    },
+    cardDescription(): string {
+      return this.serviceName === ServiceType.WorkflowStep
+        ? this.$t("editConditionalStep.descriptionWorkflow")
+        : this.$t("editConditionalStep.description");
+    },
     canAddConditionSet(): boolean {
       return this.conditionSets.length < MAX_CONDITION_SETS;
     },
