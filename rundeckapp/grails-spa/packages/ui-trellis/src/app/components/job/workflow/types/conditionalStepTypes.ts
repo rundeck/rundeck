@@ -27,7 +27,7 @@ export function createEmptyCondition(): Condition {
   return {
     id: crypto.randomUUID(),
     field: null,
-    operator: "equal",
+    operator: "equals",
     value: "",
   };
 }

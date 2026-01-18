@@ -138,6 +138,7 @@ import InputText from "primevue/inputtext";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import PtSelect from "@/library/components/primeVue/PtSelect/PtSelect.vue";
 import ConditionRow from "./ConditionRow.vue";
+import { contextVariables } from "@/library/stores/contextVariables";
 import {
   type Condition,
   type ConditionSet,
@@ -163,19 +164,27 @@ export default defineComponent({
     return {
       stepName: "",
       conditionSets: [createEmptyConditionSet()] as ConditionSet[],
-      fieldOptions: [] as FieldOption[],
-      operatorOptions: [
-        { label: "Equal", value: "equal" },
-        { label: "Not Equal", value: "notEqual" },
-        { label: "Contains", value: "contains" },
-        { label: "Starts With", value: "startsWith" },
-        { label: "Ends With", value: "endsWith" },
-      ] as OperatorOption[],
     };
   },
   computed: {
     canAddConditionSet(): boolean {
       return this.conditionSets.length < MAX_CONDITION_SETS;
+    },
+    fieldOptions(): FieldOption[] {
+      const nodeAttrs = contextVariables().node || [];
+      return nodeAttrs.map((attr) => ({
+        value: `node.${attr.name}`,
+        label: `${attr.title} [node.${attr.name}]`,
+      }));
+    },
+    operatorOptions(): OperatorOption[] {
+      return [
+        { label: this.$t("Workflow.conditional.operator.equals"), value: "equals" },
+        { label: this.$t("Workflow.conditional.operator.notEquals"), value: "notEquals" },
+        { label: this.$t("Workflow.conditional.operator.contains"), value: "contains" },
+        { label: this.$t("Workflow.conditional.operator.notContains"), value: "notContains" },
+        { label: this.$t("Workflow.conditional.operator.regex"), value: "regex" },
+      ];
     },
   },
   methods: {

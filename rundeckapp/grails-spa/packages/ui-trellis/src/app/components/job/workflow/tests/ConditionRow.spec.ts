@@ -11,8 +11,8 @@ jest.mock("@/library/rundeckService.ts", () => ({
 }));
 
 const operatorOptions: OperatorOption[] = [
-  { label: "Equal", value: "equal" },
-  { label: "Not Equal", value: "notEqual" },
+  { label: "Equal", value: "equals" },
+  { label: "Not Equal", value: "notEquals" },
   { label: "Contains", value: "contains" },
 ];
 
@@ -99,11 +99,11 @@ describe("ConditionRow", () => {
     const wrapper = createWrapper({ condition });
     
     const select = wrapper.find(".operator-column select");
-    await select.setValue("notEqual");
+    await select.setValue("notEquals");
     
     expect(wrapper.emitted("update:condition")).toBeTruthy();
     const emittedCondition = wrapper.emitted("update:condition")?.[0]?.[0] as Condition;
-    expect(emittedCondition.operator).toBe("notEqual");
+    expect(emittedCondition.operator).toBe("notEquals");
   });
 
   it("emits update:condition when value is changed", async () => {
@@ -132,7 +132,7 @@ describe("ConditionRow", () => {
     const condition: Condition = {
       id: "test-id",
       field: "os-name",
-      operator: "equal",
+      operator: "equals",
       value: "Linux",
     };
     const wrapper = createWrapper({ condition });
