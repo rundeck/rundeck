@@ -1,79 +1,79 @@
 <template>
   <div class="edit-conditional-step-card">
-    <div class="card-container">
-      <div class="card-header">
-        <div class="title-section">
-          <div class="title-with-icon">
-            <img
+    <Card>
+      <template #header>
+        <div class="card-header">
+          <div class="title-section">
+            <div class="title-with-icon">
+              <img
                 src="@/library/theme/images/icon-condition.png"
                 alt="Condition"
                 class="condition-icon"
-            />
-            <h2 class="text-heading--lg card-title">Conditional Logic Node Step</h2>
+              />
+              <h2 class="text-heading--lg card-title">{{ $t("editConditionalStep.title") }}</h2>
+            </div>
+            <p class="text-body text-body--secondary card-description">
+              {{ $t("editConditionalStep.description") }}
+            </p>
           </div>
-          <p class="text-body text-body--secondary card-description">
-            Define steps that will be executed per-node under specified conditions.
-          </p>
-        </div>
-        <PtButton
+          <PtButton
             text
             severity="secondary"
             icon="pi pi-times"
             class="close-button"
             @click="handleCancel"
-        />
-      </div>
-      <div class="card-content">
-
-
+          />
+        </div>
+      </template>
+      <template #content>
         <div class="step-name-section">
-          <label class="text-heading--sm form-label">Step Name</label>
-          <p class="text-body--sm helper-text">Name for this step</p>
+          <label class="text-heading--sm form-label">{{ $t("editConditionalStep.stepName") }}</label>
+          <p class="text-body--sm helper-text">{{ $t("editConditionalStep.stepNameHelper") }}</p>
           <InputText
             v-model="stepName"
-            placeholder="e.g. Restart Server"
+            :placeholder="$t('editConditionalStep.stepNamePlaceholder')"
             class="step-name-input"
           />
         </div>
 
         <div class="condition-section">
-          <h3 class="text-heading--md section-title">Define the Condition</h3>
+          <h3 class="text-heading--md section-title">{{ $t("editConditionalStep.defineCondition") }}</h3>
           <p class="text-body text-body--secondary section-description">
-            All of the following conditions must be met. Add a Condition Set to incorporate OR logic.
+            {{ $t("editConditionalStep.defineConditionHelper") }}
           </p>
 
           <div class="criteria-fields">
             <div class="field-group field-column">
               <label class="text-heading--sm form-label">
-                Field <span class="required-indicator">*</span>
+                {{ $t("editConditionalStep.field") }} <span class="required-indicator">*</span>
               </label>
               <PtSelect
                 v-model="selectedField"
                 :options="fieldOptions"
-                placeholder="Select..."
+                :placeholder="$t('editConditionalStep.selectPlaceholder')"
                 class="field-select"
               />
             </div>
 
             <div class="field-group operator-column">
-              <label class="text-heading--sm form-label">Operator</label>
+              <label class="text-heading--sm form-label">{{ $t("editConditionalStep.operator") }}</label>
               <PtSelect
                 v-model="selectedOperator"
                 :options="operatorOptions"
                 option-label="label"
                 option-value="value"
-                placeholder="Equal"
+                :placeholder="$t('editConditionalStep.operatorPlaceholder')"
                 class="operator-select"
               />
             </div>
 
             <div class="field-group value-column">
               <label class="text-heading--sm form-label">
-                Value <span class="required-indicator">*</span>
+                {{ $t("editConditionalStep.value") }} <span class="required-indicator">*</span>
               </label>
               <InputText
                 v-model="conditionValue"
-                placeholder="Enter value or type $ to optionally select context variables..."
+                :placeholder="$t('editConditionalStep.valuePlaceholder')"
                 class="value-input"
               />
             </div>
@@ -82,14 +82,14 @@
           <div class="condition-actions">
             <button type="button" class="btn-add-link" @click="handleAddCondition">
               <i class="fas fa-plus"></i>
-              <span>Add</span>
+              <span>{{ $t("editConditionalStep.add") }}</span>
             </button>
           </div>
 
           <div class="condition-set-actions">
             <button type="button" class="btn-outline-secondary" @click="handleAddConditionSet">
               <i class="fas fa-plus"></i>
-              <span>Add Condition Set</span>
+              <span>{{ $t("editConditionalStep.addConditionSet") }}</span>
             </button>
           </div>
         </div>
@@ -97,35 +97,37 @@
         <div class="divider"></div>
 
         <div class="steps-section">
-          <h3 class="text-heading--md section-title">Set the Steps</h3>
+          <h3 class="text-heading--md section-title">{{ $t("editConditionalStep.setSteps") }}</h3>
           <button type="button" class="btn-outline-secondary" @click="handleAddConditionStep">
             <i class="fas fa-plus"></i>
-            <span>Add Condition Step</span>
+            <span>{{ $t("editConditionalStep.addConditionStep") }}</span>
           </button>
         </div>
-
+      </template>
+      <template #footer>
         <div class="card-footer">
           <PtButton
             outlined
             severity="secondary"
-            label="Cancel"
+            :label="$t('editConditionalStep.cancel')"
             class="btn-cancel"
             @click="handleCancel"
           />
           <PtButton
             outlined
-            label="Save Step"
+            :label="$t('editConditionalStep.saveStep')"
             class="btn-save"
             @click="handleSave"
           />
         </div>
-      </div>
-    </div>
+      </template>
+    </Card>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import Card from "primevue/card";
 import InputText from "primevue/inputtext";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import PtSelect from "@/library/components/primeVue/PtSelect/PtSelect.vue";
@@ -133,6 +135,7 @@ import PtSelect from "@/library/components/primeVue/PtSelect/PtSelect.vue";
 export default defineComponent({
   name: "EditConditionalStepCard",
   components: {
+    Card,
     InputText,
     PtButton,
     PtSelect,
@@ -182,19 +185,31 @@ export default defineComponent({
   position: relative;
   width: 100%;
 
-  .card-container {
+  .p-card {
     flex: 1;
-    background: var(--colors-white);
+    box-shadow: none;
     border: 1px solid var(--colors-gray-200);
     border-radius: var(--radii-md);
     overflow: hidden;
-  }
 
-  .card-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sizes-6);
-    padding: var(--sizes-6);
+    .p-card-body {
+      padding: 0;
+    }
+
+    .p-card-header {
+      padding-bottom: 0;
+    }
+
+    .p-card-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sizes-6);
+      padding: var(--sizes-6);
+    }
+
+    .p-card-footer {
+      padding: 0 var(--sizes-6) var(--sizes-6);
+    }
   }
 
   .card-header {

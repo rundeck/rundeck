@@ -1168,6 +1168,27 @@ const messages = {
   commonWorkflowSteps: "Common Workflow Steps",
   learnMore: "Learn more",
   plugins: "plugins",
+  editConditionalStep: {
+    title: "Conditional Logic Node Step",
+    description: "Define steps that will be executed per-node under specified conditions.",
+    stepName: "Step Name",
+    stepNameHelper: "Name for this step",
+    stepNamePlaceholder: "e.g. Restart Server",
+    defineCondition: "Define the Condition",
+    defineConditionHelper: "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
+    field: "Field",
+    selectPlaceholder: "Select...",
+    operator: "Operator",
+    operatorPlaceholder: "Equal",
+    value: "Value",
+    valuePlaceholder: "Enter value or type $ to optionally select context variables...",
+    add: "Add",
+    addConditionSet: "Add Condition Set",
+    setSteps: "Set the Steps",
+    addConditionStep: "Add Condition Step",
+    cancel: "Cancel",
+    saveStep: "Save Step",
+  },
 };
 
 export default messages;
