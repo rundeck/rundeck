@@ -42,55 +42,57 @@
             {{ $t("editConditionalStep.defineConditionHelper") }}
           </p>
 
-          <div class="criteria-fields">
-            <div class="field-group field-column">
-              <label class="text-heading--sm form-label">
-                {{ $t("editConditionalStep.field") }} <span class="required-indicator">*</span>
-              </label>
-              <PtSelect
-                v-model="selectedField"
-                :options="fieldOptions"
-                :placeholder="$t('editConditionalStep.selectPlaceholder')"
-                class="field-select"
-              />
+          <div
+            v-for="(conditionSet, setIndex) in conditionSets"
+            :key="conditionSet.id"
+            class="condition-set-container"
+          >
+            <div v-if="setIndex > 0" class="or-separator">
+              <span class="or-label">{{ $t("editConditionalStep.or") }}</span>
             </div>
 
-            <div class="field-group operator-column">
-              <label class="text-heading--sm form-label">{{ $t("editConditionalStep.operator") }}</label>
-              <PtSelect
-                v-model="selectedOperator"
-                :options="operatorOptions"
-                option-label="label"
-                option-value="value"
-                :placeholder="$t('editConditionalStep.operatorPlaceholder')"
-                class="operator-select"
-              />
-            </div>
+            <div class="condition-set">
+              <h4 class="condition-set-title">
+                {{ $t("editConditionalStep.conditionNumber", { number: setIndex + 1 }) }}
+              </h4>
 
-            <div class="field-group value-column">
-              <label class="text-heading--sm form-label">
-                {{ $t("editConditionalStep.value") }} <span class="required-indicator">*</span>
-              </label>
-              <InputText
-                v-model="conditionValue"
-                :placeholder="$t('editConditionalStep.valuePlaceholder')"
-                class="value-input"
-              />
+              <div class="conditions-list">
+                <div class="conditions-connector" :class="{ 'has-multiple': conditionSet.conditions.length > 1 }">
+                  <template v-for="(condition, condIndex) in conditionSet.conditions" :key="condition.id">
+                    <div v-if="condIndex > 0" class="and-separator">
+                      <span class="and-label">{{ $t("editConditionalStep.and") }}</span>
+                    </div>
+                    <ConditionRow
+                      :condition="condition"
+                      :field-options="fieldOptions"
+                      :operator-options="operatorOptions"
+                      :show-labels="condIndex === 0"
+                      :show-delete-button="conditionSet.conditions.length > 1 || conditionSets.length > 1"
+                      @update:condition="(updated) => updateCondition(setIndex, condIndex, updated)"
+                      @delete="() => removeCondition(setIndex, condIndex)"
+                    />
+                  </template>
+                </div>
+              </div>
+
+              <div v-if="canAddCondition(setIndex)" class="condition-actions">
+                <button type="button" class="btn-add-link" @click="addCondition(setIndex)">
+                  <i class="pi pi-plus"></i>
+                  <span>{{ $t("editConditionalStep.add") }}</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <div class="condition-actions">
-            <button type="button" class="btn-add-link" @click="handleAddCondition">
-              <i class="fas fa-plus"></i>
-              <span>{{ $t("editConditionalStep.add") }}</span>
-            </button>
-          </div>
-
-          <div class="condition-set-actions">
-            <button type="button" class="btn-outline-secondary" @click="handleAddConditionSet">
-              <i class="fas fa-plus"></i>
-              <span>{{ $t("editConditionalStep.addConditionSet") }}</span>
-            </button>
+          <div v-if="canAddConditionSet" class="condition-set-actions">
+            <PtButton
+              outlined
+              severity="secondary"
+              icon="pi pi-plus"
+              :label="$t('editConditionalStep.addConditionSet')"
+              class="btn-add-condition-set"
+              @click="addConditionSet"
+            />
           </div>
         </div>
 
@@ -98,10 +100,14 @@
 
         <div class="steps-section">
           <h3 class="text-heading--md section-title">{{ $t("editConditionalStep.setSteps") }}</h3>
-          <button type="button" class="btn-outline-secondary" @click="handleAddConditionStep">
-            <i class="fas fa-plus"></i>
-            <span>{{ $t("editConditionalStep.addConditionStep") }}</span>
-          </button>
+          <PtButton
+            outlined
+            severity="secondary"
+            icon="pi pi-plus"
+            :label="$t('editConditionalStep.addConditionStep')"
+            class="btn-add-condition-step"
+            @click="handleAddConditionStep"
+          />
         </div>
       </template>
       <template #footer>
@@ -131,6 +137,17 @@ import Card from "primevue/card";
 import InputText from "primevue/inputtext";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import PtSelect from "@/library/components/primeVue/PtSelect/PtSelect.vue";
+import ConditionRow from "./ConditionRow.vue";
+import {
+  type Condition,
+  type ConditionSet,
+  type OperatorOption,
+  type FieldOption,
+  MAX_CONDITIONS_PER_SET,
+  MAX_CONDITION_SETS,
+  createEmptyCondition,
+  createEmptyConditionSet,
+} from "./types/conditionalStepTypes";
 
 export default defineComponent({
   name: "EditConditionalStepCard",
@@ -139,39 +156,64 @@ export default defineComponent({
     InputText,
     PtButton,
     PtSelect,
+    ConditionRow,
   },
   emits: ["cancel", "save"],
   data() {
     return {
       stepName: "",
-      selectedField: null as string | null,
-      selectedOperator: "equal",
-      conditionValue: "",
-      fieldOptions: [] as string[],
+      conditionSets: [createEmptyConditionSet()] as ConditionSet[],
+      fieldOptions: [] as FieldOption[],
       operatorOptions: [
         { label: "Equal", value: "equal" },
         { label: "Not Equal", value: "notEqual" },
         { label: "Contains", value: "contains" },
         { label: "Starts With", value: "startsWith" },
         { label: "Ends With", value: "endsWith" },
-      ],
+      ] as OperatorOption[],
     };
   },
+  computed: {
+    canAddConditionSet(): boolean {
+      return this.conditionSets.length < MAX_CONDITION_SETS;
+    },
+  },
   methods: {
+    canAddCondition(setIndex: number): boolean {
+      return this.conditionSets[setIndex].conditions.length < MAX_CONDITIONS_PER_SET;
+    },
+    addCondition(setIndex: number) {
+      if (this.canAddCondition(setIndex)) {
+        this.conditionSets[setIndex].conditions.push(createEmptyCondition());
+      }
+    },
+    removeCondition(setIndex: number, conditionIndex: number) {
+      const set = this.conditionSets[setIndex];
+      if (set.conditions.length > 1) {
+        set.conditions.splice(conditionIndex, 1);
+      } else if (this.conditionSets.length > 1) {
+        this.conditionSets.splice(setIndex, 1);
+      }
+    },
+    updateCondition(setIndex: number, conditionIndex: number, updatedCondition: Condition) {
+      this.conditionSets[setIndex].conditions[conditionIndex] = updatedCondition;
+    },
+    addConditionSet() {
+      if (this.canAddConditionSet) {
+        this.conditionSets.push(createEmptyConditionSet());
+      }
+    },
     handleSave() {
-      this.$emit("save");
+      this.$emit("save", {
+        stepName: this.stepName,
+        conditionSets: this.conditionSets,
+      });
     },
     handleCancel() {
       this.$emit("cancel");
     },
-    handleAddCondition() {
-      // Add condition logic
-    },
-    handleAddConditionSet() {
-      // Add condition set logic
-    },
     handleAddConditionStep() {
-      // Add condition step logic
+      // Add condition step logic - to be implemented
     },
   },
 });
@@ -204,7 +246,7 @@ export default defineComponent({
       display: flex;
       flex-direction: column;
       gap: var(--sizes-6);
-      padding: var(--sizes-6);
+      padding: 24px;
     }
 
     .p-card-footer {
@@ -216,6 +258,7 @@ export default defineComponent({
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    padding: 24px 24px 0 24px;
 
     .title-section {
       display: flex;
@@ -285,58 +328,100 @@ export default defineComponent({
     }
   }
 
-  .criteria-fields {
+  .condition-set-container {
     display: flex;
+    flex-direction: column;
+    gap: var(--sizes-4);
+  }
+
+  .or-separator {
+    display: flex;
+    align-items: center;
+    padding: var(--sizes-2) 0;
+
+    .or-label {
+      font-family: Inter, var(--fonts-body);
+      font-size: 16px;
+      font-weight: var(--fontWeights-medium);
+      color: var(--colors-gray-500);
+    }
+  }
+
+  .condition-set {
+    display: flex;
+    flex-direction: column;
     gap: var(--sizes-3);
-    align-items: flex-end;
 
-    .field-group {
-      display: flex;
-      flex-direction: column;
-      gap: var(--sizes-1);
+    .condition-set-title {
+      margin: 0;
+      font-family: Inter, var(--fonts-body);
+      font-size: 16px;
+      font-weight: var(--fontWeights-medium);
+      color: var(--colors-gray-800);
+    }
+  }
 
-      .form-label {
-        margin: 0;
-        color: var(--colors-gray-800);
+  .conditions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .conditions-connector {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sizes-3);
+    position: relative;
+    padding-left: 22px;
+
+    &.has-multiple {
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 40px;
+        bottom: 20px;
+        width: 14px;
+        border-left: 1px solid var(--colors-gray-300);
+        border-top: 1px solid var(--colors-gray-300);
+        border-bottom: 1px solid var(--colors-gray-300);
+        border-right: none;
+        border-radius: 6px 0 0 6px;
       }
-
-      .required-indicator {
-        color: var(--colors-red-500);
-      }
     }
+  }
 
-    .field-column {
-      flex: 2;
-      max-width: 474px;
-    }
+  .and-separator {
+    display: flex;
+    align-items: center;
+    position: relative;
 
-    .operator-column {
-      width: 175px;
-      flex-shrink: 0;
-    }
-
-    .value-column {
-      flex: 2;
-      max-width: 474px;
+    .and-label {
+      font-family: Inter, var(--fonts-body);
+      font-size: 14px;
+      font-weight: var(--fontWeights-semibold);
+      color: var(--colors-gray-600);
     }
   }
 
   .condition-actions {
     display: flex;
     align-items: center;
+    padding-left: var(--sizes-5);
   }
 
   .condition-set-actions {
     display: flex;
     align-items: center;
+    margin-top: var(--sizes-2);
   }
 
   .btn-add-link {
     display: inline-flex;
     align-items: center;
     gap: var(--sizes-1);
-    background: var(--colors-blue-100);
-    color: var(--colors-blue-500);
+    background: var(--colors-blue-50, #f5f9ff);
+    color: var(--colors-blue-600, #0052cc);
     border: none;
     border-radius: var(--radii-md);
     padding: 5px 9px;
@@ -348,7 +433,7 @@ export default defineComponent({
     transition: background-color 0.2s;
 
     &:hover {
-      background: var(--colors-blue-200);
+      background: var(--colors-blue-100);
     }
 
     i {
@@ -356,28 +441,19 @@ export default defineComponent({
     }
   }
 
-  .btn-outline-secondary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sizes-1);
-    background: var(--colors-white);
-    color: var(--colors-gray-800);
-    border: 1px solid var(--colors-gray-600);
-    border-radius: var(--radii-md);
+  .btn-add-condition-set,
+  .btn-add-condition-step {
     padding: 5px 9px;
-    font-family: Inter, var(--fonts-body);
     font-size: 12px;
-    font-weight: var(--fontWeights-medium);
-    line-height: 16px;
-    cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s;
+    border-color: var(--colors-gray-600);
+    color: var(--colors-gray-800);
 
     &:hover {
       background: var(--colors-gray-100);
       border-color: var(--colors-gray-800);
     }
 
-    i {
+    :deep(.pi) {
       font-size: 12px;
     }
   }

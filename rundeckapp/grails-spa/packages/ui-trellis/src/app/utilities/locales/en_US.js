@@ -1188,6 +1188,9 @@ const messages = {
     addConditionStep: "Add Condition Step",
     cancel: "Cancel",
     saveStep: "Save Step",
+    conditionNumber: "Condition {number}",
+    and: "And",
+    or: "OR",
   },
 };
 
