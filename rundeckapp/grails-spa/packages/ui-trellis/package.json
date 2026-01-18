@@ -88,6 +88,7 @@
     "@storybook/test": "^8.4.5",
     "@storybook/vue3": "^8.4.5",
     "@storybook/vue3-webpack5": "^8.4.5",
+    "@swc/core": "^1.15.8",
     "@testing-library/dom": "^9.3.4",
     "@types/jest": "^29.5.12",
     "@types/node": "^14.0.13",
