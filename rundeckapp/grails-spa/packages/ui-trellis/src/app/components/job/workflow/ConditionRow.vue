@@ -6,13 +6,30 @@
       </label>
       <PtSelect
         :modelValue="condition.field"
-        :options="fieldOptions"
+        :options="fieldOptionsWithNote"
         option-label="label"
         option-value="value"
         :placeholder="$t('editConditionalStep.selectPlaceholder')"
         class="field-select"
         @update:modelValue="updateField"
-      />
+      >
+        <template #option="slotProps">
+          <div
+            v-if="slotProps.option.isNote"
+            class="note-option"
+          >
+            <span class="note-text">{{ $t("editConditionalStep.switchStepTypeNote") }}</span>
+            <button
+              type="button"
+              class="note-link"
+              @click.stop="handleNoteClick"
+            >
+              {{ $t("editConditionalStep.switchStepTypeLink", { stepType: oppositeStepType }) }}
+            </button>
+          </div>
+          <div v-else class="regular-option">{{ slotProps.option.label }}</div>
+        </template>
+      </PtSelect>
     </div>
 
     <div class="field-group operator-column">
@@ -88,10 +105,32 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    serviceName: {
+      type: String,
+      required: true,
+    },
   },
-  emits: ["update:condition", "delete"],
+  emits: ["update:condition", "delete", "switch-step-type"],
+  computed: {
+    oppositeStepType(): string {
+      // If serviceName is "WorkflowStep", return "node", otherwise return "workflow"
+      return this.serviceName === "WorkflowStep" ? "node" : "workflow";
+    },
+    fieldOptionsWithNote(): FieldOption[] {
+      const noteOption: FieldOption = {
+        value: "__NOTE__",
+        label: "",
+        isNote: true,
+      };
+      return [noteOption, ...this.fieldOptions];
+    },
+  },
   methods: {
     updateField(value: string | null) {
+      // Don't allow selecting the note option
+      if (value === "__NOTE__") {
+        return;
+      }
       this.$emit("update:condition", {
         ...this.condition,
         field: value,
@@ -111,6 +150,9 @@ export default defineComponent({
     },
     handleDelete() {
       this.$emit("delete", this.condition.id);
+    },
+    handleNoteClick() {
+      this.$emit("switch-step-type");
     },
   },
 });
@@ -139,7 +181,7 @@ export default defineComponent({
 
   .field-column {
     flex: 2;
-    max-width: 474px;
+    max-width: 520px;
   }
 
   .operator-column {
@@ -171,5 +213,49 @@ export default defineComponent({
       font-size: 14px;
     }
   }
+}
+</style>
+<style>
+.note-option {
+  padding: 0;
+  cursor: default;
+  font-size: 14px;
+  color: var(--colors-gray-800);
+  line-height: 1.5;
+  pointer-events: auto;
+}
+
+.note-text {
+  color: var(--colors-gray-800);
+}
+
+.note-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: var(--colors-blue-600);
+  text-decoration: underline;
+  cursor: pointer;
+  pointer-events: auto;
+  display: inline;
+}
+
+.note-link:hover {
+  color: var(--colors-blue-700);
+  text-decoration: underline;
+}
+
+.note-link:focus {
+  outline: 1px solid var(--colors-blue-600);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.note-link:active {
+  color: var(--colors-blue-700);
 }
 </style>

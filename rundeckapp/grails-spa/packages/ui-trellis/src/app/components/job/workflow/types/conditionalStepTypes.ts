@@ -18,6 +18,7 @@ export interface OperatorOption {
 export interface FieldOption {
   label: string;
   value: string;
+  isNote?: boolean;
 }
 
 export const MAX_CONDITIONS_PER_SET = 5;

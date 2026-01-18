@@ -68,8 +68,10 @@
                       :operator-options="operatorOptions"
                       :show-labels="condIndex === 0"
                       :show-delete-button="conditionSet.conditions.length > 1 || conditionSets.length > 1"
+                      :service-name="serviceName"
                       @update:condition="(updated) => updateCondition(setIndex, condIndex, updated)"
                       @delete="() => removeCondition(setIndex, condIndex)"
+                      @switch-step-type="handleSwitchStepType"
                     />
                   </template>
                 </div>
@@ -181,7 +183,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-  emits: ["cancel", "save", "update:modelValue"],
+  emits: ["cancel", "save", "update:modelValue", "switch-step-type"],
   data() {
     return {
       editModel: {} as EditStepData,
@@ -280,6 +282,9 @@ export default defineComponent({
     },
     handleAddConditionStep() {
       // Add condition step logic - to be implemented
+    },
+    handleSwitchStepType() {
+      this.$emit("switch-step-type");
     },
   },
 });

@@ -1214,6 +1214,8 @@ const messages = {
     conditionNumber: "Condition {number}",
     and: "And",
     or: "OR",
+    switchStepTypeNote: "Note: Can't find a prior node step? Switch to a ",
+    switchStepTypeLink: "conditional {stepType} step.",
   },
 };
 

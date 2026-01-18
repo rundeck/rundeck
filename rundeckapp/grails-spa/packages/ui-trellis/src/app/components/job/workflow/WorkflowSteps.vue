@@ -50,6 +50,7 @@
               :extra-autocomplete-vars="extraAutocompleteVars"
               @save="handleSaveConditionalStep(index)"
               @cancel="handleCancelEdit"
+              @switch-step-type="handleSwitchStepType(index)"
             />
             <template v-else>
               <div class="step-item-row">
@@ -800,6 +801,35 @@ export default defineComponent({
         }
       } catch (e) {
         console.log(e);
+      }
+    },
+    handleSwitchStepType(index: number) {
+      const command = this.model.commands[index];
+      if (command && command.type === "conditional.logic") {
+        // Toggle nodeStep property
+        const updatedCommand = {
+          ...command,
+          nodeStep: !command.nodeStep,
+        };
+        
+        // Update the command in the model
+        this.$refs.historyControls.operationModify(index, updatedCommand);
+        
+        // Update editModel and editService to reflect the change
+        this.editModel = cloneDeep(updatedCommand);
+        this.editService = updatedCommand.nodeStep
+          ? ServiceType.WorkflowNodeStep
+          : ServiceType.WorkflowStep;
+        
+        // Emit change event for history tracking
+        this.$refs.historyControls.changeEvent({
+          index,
+          dest: -1,
+          orig: command,
+          value: updatedCommand,
+          operation: Operation.Modify,
+          undo: Operation.Modify,
+        });
       }
     },
   },
