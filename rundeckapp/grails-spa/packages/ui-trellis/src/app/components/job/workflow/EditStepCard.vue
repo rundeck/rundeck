@@ -25,6 +25,16 @@
     </template>
     <template #content>
       <div v-if="provider">
+        <div class="step-name-section">
+          <PtInput
+            input-id="stepDescription"
+            data-testid="step-description"
+            v-model="editModel.description"
+            type="text"
+            label="Step Name"
+            help-text="Name for this step"
+          />
+        </div>
         <plugin-config
           v-model="editModel"
           :mode="pluginConfigMode"
@@ -41,7 +51,6 @@
           :service-name="serviceName"
           :extra-autocomplete-vars="extraAutocompleteVars"
         />
-        <slot name="extra"></slot>
       </div>
       <div v-else-if="loading" class="loading-container">
         <i class="fas fa-spinner fa-spin"></i>
@@ -74,6 +83,7 @@ import Card from "primevue/card";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
+import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { getServiceProviderDescription } from "@/library/modules/pluginService";
 import { ContextVariable } from "@/library/stores/contextVariables";
@@ -86,6 +96,7 @@ export default defineComponent({
     pluginInfo,
     pluginConfig,
     PtButton,
+    PtInput,
   },
   props: {
     modelValue: {
@@ -210,5 +221,12 @@ export default defineComponent({
   align-items: center;
   gap: var(--sizes-2);
   padding: var(--sizes-4);
+}
+
+.step-name-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sizes-1);
+  margin-bottom: var(--sizes-4);
 }
 </style>
