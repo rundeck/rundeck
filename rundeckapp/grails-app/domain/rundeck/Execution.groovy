@@ -186,7 +186,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         return logFileStorageRequest?.id
     }
 
-    Boolean getJobDeleted() {
+    Boolean isJobDeleted() {
         if (scheduledExecution == null && jobUuid != null) {
             return true
         }

@@ -4276,7 +4276,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     // This provides 50-100x better performance for includeJobRef queries
     if (query.shouldUseUnionQuery()) {
         log.debug("Using optimized UNION query for includeJobRef execution query")
-        total = query.executeJobReferenceCount()
+        total = query.countDirectAndReferencedExecutions()
     }else {
         total = Execution.createCriteria().count(criteriaClos.curry(true))
     }

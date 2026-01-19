@@ -186,12 +186,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def model = metricService?.withTimer(MenuController.name, actionName+'.queryQueue') {
             executionService.queryQueue(query)
         } ?: executionService.queryQueue(query)
-        //        System.err.println("nowrunning: "+model.nowrunning);
         model = executionService.finishQueueQuery(query,params,model)
-
-        //include id of last completed execution for the project
-        //def eid=executionService.lastExecutionId(query.projFilter)
-        //model.lastExecId=eid
         return model
     }
 
