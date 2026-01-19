@@ -25,9 +25,9 @@
           <transition-group name="chip-list" tag="div" class="chips-container">
             <Chip
               v-for="(element, index) in modelValue"
-              :key="element.name || index"
-              :label="element.title"
-              :icon="`fa fa-${element.providerMetadata.faicon}`"
+              :key="element.name || element.type || index"
+              :label="getElementLabel(element)"
+              :icon="getElementIcon(element)"
               removable
               @remove="handleRemove(index)"
               @click="handleEdit(index)"
@@ -85,6 +85,15 @@ export default defineComponent({
     },
     handleEdit(index: number) {
       this.$emit("editElement", index);
+    },
+    getElementLabel(element: any): string {
+      // Support both enriched data (title) and raw filter data (type)
+      return element.title || element.type || "Unknown";
+    },
+    getElementIcon(element: any): string {
+      // Support both enriched data (providerMetadata.faicon) and raw data (default icon)
+      const icon = element.providerMetadata?.faicon || "filter";
+      return `fa fa-${icon}`;
     },
   },
 });
@@ -206,7 +215,7 @@ export default defineComponent({
 </style>
 
 <style>
-.p-chip-icon.fa.fa-volume-off {
+.p-chip-icon.fa {
   width: auto !important;
   height: auto !important;
 }

@@ -105,7 +105,6 @@ export default defineComponent({
   emits: ["add-log-filter", "add-error-handler", "edit-log-filter", "update:logFilters", "update:errorHandler"],
   data() {
     return {
-      logFilterPluginProviders: [] as any[],
       globalEventBus: getRundeckContext()?.eventBus,
     };
   },

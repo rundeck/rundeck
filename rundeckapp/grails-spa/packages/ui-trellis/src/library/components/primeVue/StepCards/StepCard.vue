@@ -102,12 +102,7 @@ export default defineComponent({
   },
   methods: {
     handleAddLogFilter() {
-      // Emit eventBus event like WorkflowSteps.addLogFilterForIndex does
-      const elementId = this.config.id || "";
-      if (this.eventBus && elementId) {
-        this.eventBus.emit("step-action:add-logfilter:" + elementId);
-      }
-      // Emit component event - parent template will call handler with element.id
+      // Emit component event - parent will call addLogFilterForIndex
       this.$emit("add-log-filter");
     },
     handleAddErrorHandler() {

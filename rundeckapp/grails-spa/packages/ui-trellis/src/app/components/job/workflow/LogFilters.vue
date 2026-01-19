@@ -1,11 +1,12 @@
 <template>
   <div
+    v-if="!conditionalEnabled"
     class="log-filters-container"
     :class="{ inline: mode === 'inline' }"
     data-testid="log-filters-container"
   >
     <template v-if="showIfEmpty || model.length > 0">{{ title }}</template>
-    <div v-if="model.length > 0 && mode === 'inline'" class="add-gap" :id="id">
+    <div v-if="model.length > 0 && mode === 'inline' && !conditionalEnabled" class="add-gap" :id="id">
       <template v-for="(entry, i) in model">
         <LogFilterButton
           v-if="findProvider(entry.type)"
@@ -16,19 +17,9 @@
         ></LogFilterButton>
       </template>
     </div>
-    <log-filter-controls
-      v-if="filtersEb"
-      v-model="editModel"
-      :title="title"
-      :subtitle="subtitle"
-      :event-bus="filtersEb"
-      :show-button="showIfEmpty || model.length > 0"
-      @update:model-value="saveEditFilter"
-      @cancel="clearEdit"
-    />
   </div>
   <div
-    v-if="model.length > 0 && mode !== 'inline'"
+    v-if="model.length > 0 && mode !== 'inline' && !conditionalEnabled"
     class="log-filters-container"
     data-testid="log-filters-button-container"
     :id="id"
@@ -43,6 +34,16 @@
       ></LogFilterButton>
     </template>
   </div>
+  <log-filter-controls
+    v-if="filtersEb"
+    v-model="editModel"
+    :title="title"
+    :subtitle="subtitle"
+    :event-bus="filtersEb"
+    :show-button="conditionalEnabled ? false : (showIfEmpty || model.length > 0)"
+    @update:model-value="saveEditFilter"
+    @cancel="clearEdit"
+  />
 </template>
 
 <script lang="ts">
@@ -90,6 +91,10 @@ export default defineComponent({
     id: {
       type: String,
       default: "logFilters",
+    },
+    conditionalEnabled: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ["update:modelValue"],

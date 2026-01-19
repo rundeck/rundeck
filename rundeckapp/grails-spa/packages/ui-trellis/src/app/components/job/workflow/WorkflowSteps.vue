@@ -33,6 +33,16 @@
               @duplicate="duplicateStep(index)"
               @edit="editStepByIndex(index)"
             />
+            <!-- LogFilters component for EA mode - provides the modal for adding/editing filters -->
+            <log-filters
+              v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic'"
+              :model-value="element.filters"
+              :title="$t('Workflow.logFilters')"
+              :subtitle="stepTitle(element, index)"
+              :add-event="'step-action:add-logfilter:' + element.id"
+              :conditional-enabled="true"
+              @update:model-value="updateHistoryWithLogFiltersData(index, $event)"
+            />
             <EditStepCard
               v-else-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId === element.id"
               :model-value="element"
