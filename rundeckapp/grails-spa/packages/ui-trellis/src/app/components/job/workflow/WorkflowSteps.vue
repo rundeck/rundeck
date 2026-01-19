@@ -492,6 +492,18 @@ export default defineComponent({
         // Add the step to the list immediately so EditConditionalStepCard shows
         this.model.commands.push(newStep);
       } else {
+        // Check if this is an error handler - use modal flow
+        if (this.isErrorHandler) {
+          this.editModel = {
+            type: provider,
+            config: {},
+            nodeStep: service === ServiceType.WorkflowNodeStep,
+          };
+          this.editStepModal = true;
+          return;
+        }
+
+        // Regular new step - use inline EditStepCard flow
         const newStep = {
           type: provider,
           config: {},
