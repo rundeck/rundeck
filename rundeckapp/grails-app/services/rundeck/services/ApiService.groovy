@@ -764,7 +764,6 @@ class ApiService implements WebUtilService{
                 def href=execdata.href
                 def status=execdata.status
                 def summary=execdata.summary
-                //Execution e = Execution.get(execdata.execution.id)
                 Execution e = execdata.execution as Execution
                 def execMap=[
                         /** attributes   **/
@@ -821,7 +820,7 @@ class ApiService implements WebUtilService{
                 if(execdata.retryExecution){
                     execMap.retriedExecution=execdata.retryExecution
                 }
-                execMap.jobDeleted = e.getJobDeleted()
+                execMap.jobDeleted = e.isJobDeleted()
                 execMap
             }
 
