@@ -141,6 +141,8 @@ export default defineComponent({
   },
   methods: {
     handleSave() {
+      // Emit the updated model first, then save event
+      // This ensures parent's editModel is updated before save handler runs
       this.$emit("update:modelValue", this.editModel);
       this.$emit("save");
     },

@@ -49,7 +49,7 @@
             />
             <EditStepCard
               v-else-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId === element.id"
-              :model-value="element"
+              v-model="editModel"
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
               :validation="editModelValidation"
               :extra-autocomplete-vars="extraAutocompleteVars"
@@ -636,11 +636,12 @@ export default defineComponent({
       this.editService = command.nodeStep
         ? ServiceType.WorkflowNodeStep
         : ServiceType.WorkflowStep;
+      // Clear any previous validation errors when starting to edit
+      this.editModelValidation = { errors: [], valid: true };
 
       // In EA mode, show EditStepCard for regular steps (not jobref, not conditional.logic)
       // Error handlers and log filters always use modals (handled separately)
       if (this.conditionalEnabled && !command.jobref && command.type !== 'conditional.logic') {
-        this.editingStepId = command.id;
         // Ensure modals are closed when showing EditStepCard
         this.editStepModal = false;
         this.editJobRefModal = false;
