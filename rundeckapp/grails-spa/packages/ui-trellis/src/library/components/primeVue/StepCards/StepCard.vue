@@ -14,7 +14,7 @@
         :config="config"
         :service-name="computedServiceName"
         :element-id="config.id || ''"
-        v-model:log-filters="logFiltersModel"
+        :log-filters="logFilters"
         :error-handler="errorHandler"
         :error-handler-config="computedErrorHandlerConfig"
         :error-handler-service-name="computedErrorHandlerServiceName"
@@ -24,6 +24,7 @@
         @edit-log-filter="handleEditLogFilter"
         @edit-error-handler="handleEditErrorHandler"
         @remove-error-handler="handleRemoveErrorHandler"
+        @update:log-filters="$emit('update:logFilters', $event)"
       />
     </template>
   </Card>
@@ -85,14 +86,6 @@ export default defineComponent({
     },
     computedErrorHandlerProvider() {
       return this.errorHandlerData?.type || "";
-    },
-    logFiltersModel: {
-      get() {
-        return this.logFilters;
-      },
-      set(value) {
-        this.$emit("update:logFilters", value);
-      },
     },
   },
   methods: {

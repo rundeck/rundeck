@@ -15,7 +15,8 @@
     <ConfigSection
       :title="$t('Workflow.logFilters')"
       :tooltip="$t('Workflow.logFiltersTooltip')"
-      v-model="logFiltersModel"
+      :model-value="logFilters"
+      @update:model-value="$emit('update:logFilters', $event)"
       @addElement="handleAddElement"
       @editElement="handleEditLogFilter"
     />
@@ -114,14 +115,6 @@ export default defineComponent({
   computed: {
     errorHandlerData() {
       return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] : null;
-    },
-    logFiltersModel: {
-      get() {
-        return this.logFilters;
-      },
-      set(value) {
-        this.$emit("update:logFilters", value);
-      },
     },
   },
   methods: {
