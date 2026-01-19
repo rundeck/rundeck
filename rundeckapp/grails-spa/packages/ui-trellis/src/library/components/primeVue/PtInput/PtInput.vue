@@ -199,21 +199,21 @@ export default defineComponent({
 
   .p-inputtext {
     // When icons present, add padding for icon space (icon 14px + gap 10px + padding 10px = 34px)
-    padding-left: calc(var(--space-3\.5) + var(--space-2\.5) + var(--space-2\.5));
-    padding-right: calc(var(--space-3\.5) + var(--space-2\.5) + var(--space-2\.5));
+    padding-left: calc(14px + 10px + 10px);
+    padding-right: calc(14px + 10px + 10px);
   }
 
   // When only left icon
   &:has(.p-inputicon:first-child):not(:has(.p-inputicon:last-child)) {
     .p-inputtext {
-      padding-right: var(--space-2\.5);
+      padding-right: 10px;
     }
   }
 
   // When only right icon
   &:has(.p-inputicon:last-child):not(:has(.p-inputicon:first-child)) {
     .p-inputtext {
-      padding-left: var(--space-2\.5);
+      padding-left: 10px;
     }
   }
 }
@@ -224,8 +224,8 @@ export default defineComponent({
   top: 50%;
   transform: translateY(-50%);
   color: var(--colors-gray-500);
-  width: var(--space-3\.5);
-  height: var(--space-3\.5);
+  width: 14px;
+  height: 14px;
   font-size: 14px;
   z-index: 1;
   display: flex;
@@ -234,18 +234,18 @@ export default defineComponent({
 
   // Left icon positioning
   &:first-child {
-    left: var(--space-2\.5);
+    left: 10px;
   }
 
   // Right icon positioning
   &:last-child:not(:first-child) {
-    right: var(--space-2\.5);
+    right: 10px;
     left: auto;
   }
 
   // Only one icon (right position)
   &:only-child {
-    right: var(--space-2\.5);
+    right: 10px;
     left: auto;
   }
 }
@@ -260,7 +260,7 @@ export default defineComponent({
   width: 100%;
   border: var(--borders-1px) var(--colors-gray-300);
   border-radius: var(--radii-md);
-  padding: var(--space-2\.5);
+  padding: 10px;
   font-family: Inter, var(--fonts-body);
   font-size: 14px;
   font-weight: var(--fontWeights-regular);
@@ -281,7 +281,7 @@ export default defineComponent({
   // Focus state
   &:focus {
     border-color: var(--colors-blue-500);
-    box-shadow: 0 0 0 var(--space-0\.5) var(--colors-blue-100);
+    box-shadow: 0 0 0 2px var(--colors-blue-100);
     outline: none;
   }
 
