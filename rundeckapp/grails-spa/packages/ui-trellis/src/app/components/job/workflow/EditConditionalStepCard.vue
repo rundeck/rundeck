@@ -29,7 +29,7 @@
         <div class="step-name-section">
           <label class="text-heading--sm form-label">{{ $t("editConditionalStep.stepName") }}</label>
           <p class="text-body--sm helper-text">{{ $t("editConditionalStep.stepNameHelper") }}</p>
-          <InputText
+          <PtInput
             v-model="stepName"
             :placeholder="$t('editConditionalStep.stepNamePlaceholder')"
             class="step-name-input"
@@ -136,7 +136,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
 import Card from "primevue/card";
-import InputText from "primevue/inputtext";
+import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import ConditionRow from "./ConditionRow.vue";
 import { contextVariables, type ContextVariable } from "@/library/stores/contextVariables";
@@ -158,7 +158,7 @@ export default defineComponent({
   name: "EditConditionalStepCard",
   components: {
     Card,
-    InputText,
+    PtInput,
     PtButton,
     ConditionRow,
   },

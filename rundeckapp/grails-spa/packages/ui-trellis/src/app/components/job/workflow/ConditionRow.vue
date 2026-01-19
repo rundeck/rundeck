@@ -51,7 +51,7 @@
       <label v-if="showLabels" class="text-heading--sm form-label">
         {{ $t("editConditionalStep.value") }} <span class="required-indicator">*</span>
       </label>
-      <InputText
+      <PtInput
         :modelValue="condition.value"
         :placeholder="$t('editConditionalStep.valuePlaceholder')"
         class="value-input"
@@ -72,7 +72,7 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
-import InputText from "primevue/inputtext";
+import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import PtSelect from "@/library/components/primeVue/PtSelect/PtSelect.vue";
 import type { Condition, OperatorOption, FieldOption } from "./types/conditionalStepTypes";
@@ -80,7 +80,7 @@ import type { Condition, OperatorOption, FieldOption } from "./types/conditional
 export default defineComponent({
   name: "ConditionRow",
   components: {
-    InputText,
+    PtInput,
     PtButton,
     PtSelect,
   },
