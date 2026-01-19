@@ -26,14 +26,27 @@
     <template #content>
       <div v-if="provider">
         <div class="step-name-section">
-          <PtInput
-            input-id="stepDescription"
-            data-testid="step-description"
-            v-model="editModel.description"
-            type="text"
-            label="Step Name"
-            help-text="Name for this step"
-          />
+          <div class="form-group">
+            <label
+              class="col-sm-2 control-label input-sm"
+              for="stepDescription"
+              >Step Name</label
+            >
+            <div class="col-sm-10">
+              <input
+                id="stepDescription"
+                data-testid="step-description"
+                v-model="editModel.description"
+                type="text"
+                name="stepDescription"
+                size="100"
+                class="form-control input-sm"
+              />
+            </div>
+            <div class="col-sm-10 col-sm-offset-2 help-block">
+              Name for this step
+            </div>
+          </div>
         </div>
         <plugin-config
           v-model="editModel"
@@ -83,7 +96,6 @@ import Card from "primevue/card";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
-import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { getServiceProviderDescription } from "@/library/modules/pluginService";
 import { ContextVariable } from "@/library/stores/contextVariables";
@@ -96,7 +108,6 @@ export default defineComponent({
     pluginInfo,
     pluginConfig,
     PtButton,
-    PtInput,
   },
   props: {
     modelValue: {
