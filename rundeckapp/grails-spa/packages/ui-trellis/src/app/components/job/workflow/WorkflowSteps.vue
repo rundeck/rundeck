@@ -38,7 +38,7 @@
             />
             <!-- LogFilters component for EA mode - provides the modal for adding/editing filters -->
             <log-filters
-              v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic'"
+              v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId !== element.id"
               :model-value="element.filters"
               :title="$t('Workflow.logFilters')"
               :subtitle="stepTitle(element, index)"
@@ -637,8 +637,24 @@ export default defineComponent({
         ? ServiceType.WorkflowNodeStep
         : ServiceType.WorkflowStep;
 
+      // In EA mode, show EditStepCard for regular steps (not jobref, not conditional.logic)
+      // Error handlers and log filters always use modals (handled separately)
+      if (this.conditionalEnabled && !command.jobref && command.type !== 'conditional.logic') {
+        this.editingStepId = command.id;
+        // Ensure modals are closed when showing EditStepCard
+        this.editStepModal = false;
+        this.editJobRefModal = false;
+        // Don't open modal - EditStepCard will render based on editingStepId
+        return;
+      }
+
+      // For jobref steps or non-EA mode, use modal
+      // Ensure editingStepId is cleared when using modal
+      this.editingStepId = null;
       if (command.jobref) {
         this.editJobRefModal = true;
+      } else {
+        this.editStepModal = true;
       }
     },
     async saveEditStep() {
