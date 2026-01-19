@@ -169,6 +169,8 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+@import "../_form-inputs.scss";
+
 .pt-input-wrapper {
   display: flex;
   flex-direction: column;
@@ -258,42 +260,36 @@ export default defineComponent({
 // InputText styles
 .p-inputtext {
   width: 100%;
-  border: var(--borders-1px) var(--colors-gray-300);
-  border-radius: var(--radii-md);
+  @include form-input-base;
   padding: 10px;
   font-family: Inter, var(--fonts-body);
   font-size: 14px;
   font-weight: var(--fontWeights-regular);
   line-height: normal;
   color: var(--colors-gray-800);
-  transition: border-color 0.2s, box-shadow 0.2s;
   background: var(--colors-white);
 
-  &::placeholder {
-    color: var(--colors-gray-500);
-  }
+  @include form-input-placeholder;
 
   // Hover state
   &:hover:not(:focus):not(:disabled):not(.p-invalid) {
-    border-color: var(--colors-blue-500);
+    @include form-input-hover;
   }
 
   // Focus state
   &:focus {
-    border-color: var(--colors-blue-500);
-    box-shadow: 0 0 0 2px var(--colors-blue-100);
-    outline: none;
+    @include form-input-focus;
   }
 
   // Invalid state
   &.p-invalid {
-    border-color: var(--colors-red-500);
+    @include form-input-invalid;
   }
 
   // Disabled state
   &:disabled {
+    @include form-input-disabled;
     background: var(--colors-gray-50);
-    border-color: var(--colors-gray-200);
     color: var(--colors-gray-500);
     cursor: not-allowed;
   }

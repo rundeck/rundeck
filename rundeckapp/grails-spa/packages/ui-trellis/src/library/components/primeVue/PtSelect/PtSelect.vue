@@ -215,36 +215,31 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+@import "../_form-inputs.scss";
 
 .p-select {
   width: 100%;
-  border: 1px solid var(--dropdown-natural-border);
-  border-radius: 6px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  @include form-input-base;
   overflow: visible;
   position: relative;
-
 
   // Focus state - Blue border with shadow
   &:focus,
   &:focus-visible,
   &:not(.p-disabled):hover,
   &.p-inputwrapper-focus {
-    border-color: var(--colors-blue-500);
-    box-shadow: 0px 0px 0px 2.8px var(--colors-blue-100);
-    outline: none;
+    @include form-input-focus;
   }
 
   // Invalid state - Red border
   &.p-invalid,
   &.p-select-invalid {
-    border-color: var(--colors-red-500);
+    @include form-input-invalid;
   }
 
   // Disabled state
   &.p-disabled {
-    border-color: var(--colors-gray-200);
-    opacity: 0.6;
+    @include form-input-disabled;
   }
 
   // Input field styles - Default state
