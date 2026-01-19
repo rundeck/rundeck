@@ -302,7 +302,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
 
             txtfilters.each { key, val ->
               if (query["${key}Filter"]) {
-                like(val, '%' + query["${key}Filter"] + '%')
+                ilike(val, '%' + query["${key}Filter"] + '%')
               }
             }
 
@@ -319,7 +319,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
             excludeTxtFilters.each { key, val ->
               if (query["${key}Filter"]) {
                 not {
-                  like(val, '%' + query["${key}Filter"] + '%')
+                  ilike(val, '%' + query["${key}Filter"] + '%')
                 }
               }
             }
@@ -339,7 +339,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
               }
             } else if (query["groupPath"] && '*' != query["groupPath"]) {
               or {
-                like("groupPath", query["groupPath"] + "/%")
+                ilike("groupPath", query["groupPath"] + "/%")
                 eq("groupPath", query['groupPath'])
               }
             }
@@ -353,7 +353,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
             } else if (query["excludeGroupPath"]) {
               not {
                 or {
-                  like("groupPath", query["excludeGroupPath"] + "/%")
+                  ilike("groupPath", query["excludeGroupPath"] + "/%")
                   eq("groupPath", query['excludeGroupPath'])
                 }
               }
@@ -460,24 +460,24 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
               projections { property 'er.executionId' }
               eqProperty('er.executionId', 'this.id')
               eqProperty('er.project', 'this.project')
-              like('er.title', '%' + query.adhocStringFilter + '%')
+              ilike('er.title', '%' + query.adhocStringFilter + '%')
           })
         }
         if(query.nodeFilter){
           if(query.nodeFilter.startsWith('name:') || !(query.nodeFilter.contains(":") || query.nodeFilter.contains(".*"))){
               def node = query.nodeFilter.startsWith('name:')?(query.nodeFilter.split("name:")[1]).stripIndent():query.nodeFilter;
               or {
-                  like("failedNodeList", '%' + node + '%')
-                  like("succeededNodeList", '%' + node + '%')
+                  ilike("failedNodeList", '%' + node + '%')
+                  ilike("succeededNodeList", '%' + node + '%')
               }
 
           }else{
-              like("filter", '%' + query.nodeFilter + '%')
+              ilike("filter", '%' + query.nodeFilter + '%')
           }
         }
 
         if(query.optionFilter){
-          like('argString', "%${query.optionFilter}%")
+          ilike('argString', "%${query.optionFilter}%")
         }
 
         def critDelegate = delegate
@@ -496,10 +496,11 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     }
 
     /**
-     * Execute count query using dual-query approach for includeJobRef scenarios
-     * Executes two separate COUNT queries and sums them (database-agnostic)
+     * Count all executions for a job, including both direct executions and referenced executions
+     * Uses a dual-query approach: counts direct executions separately from referenced executions
+     * @return total count of direct executions + referenced executions (database-agnostic)
      */
-    def executeJobReferenceCount() {
+    def countDirectAndReferencedExecutions() {
         def query = this
         def count = 0
 
@@ -507,7 +508,10 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
             //this apply when only one job UUID is specified (execution show page or job page)
             String jobUuid = query.jobIdListFilter[0]
 
-            // Use HQL with INNER JOIN instead of EXISTS for better performance (1900x faster)
+            // COUNT QUERY 1: Executions with ReferencedExecution entries (cross-project job references)
+            // Uses HQL with INNER JOIN instead of EXISTS for better performance (1900x faster)
+            // Counts executions in projects that have referenced this job (via workflow job reference steps)
+            // execProjects contains all projects where this job has been referenced, including projFilter
             def hql = """
                         SELECT COUNT(e.id)
                         FROM Execution e
@@ -518,13 +522,22 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                     """
             def count1 = Execution.executeQuery(hql, [jobUuid: jobUuid, projects: query.execProjects])[0] ?: 0
 
-            // COUNT QUERY 2: Executions matching via scheduled_execution.uuid
-            // This finds executions that are direct instances of the job
-            def count2 = Execution.createCriteria().count {
-                eq('project', query.projFilter)
-                isNotNull('scheduledExecution')
-                eq("jobUuid", jobUuid)
-            }
+            // COUNT QUERY 2: Direct executions in the job's own project (without ReferencedExecution)
+            // This counts executions that were directly triggered (not via a parent job's workflow step)
+            // Note: projFilter may be in execProjects if the job references itself, but such executions
+            // will have a ReferencedExecution entry and thus only be counted in COUNT QUERY 1
+            def hql2 = """
+                        SELECT COUNT(e.id)
+                        FROM Execution e
+                        WHERE e.project = :project
+                        AND e.scheduledExecution IS NOT NULL
+                        AND e.jobUuid = :jobUuid
+                        AND NOT EXISTS (
+                            SELECT 1 FROM ReferencedExecution re
+                            WHERE re.execution.id = e.id
+                        )
+                    """
+            def count2 = Execution.executeQuery(hql2, [project: query.projFilter, jobUuid: jobUuid])[0] ?: 0
 
             count += (count1 as Long) + (count2 as Long)
         }
