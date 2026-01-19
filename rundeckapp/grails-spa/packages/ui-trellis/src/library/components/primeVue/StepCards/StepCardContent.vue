@@ -137,8 +137,17 @@ export default defineComponent({
       // Emit to parent - parent will handle opening modal
       this.$emit("add-log-filter");
     },
-    handleEditLogFilter(filter) {
-      this.$emit("edit-log-filter", filter);
+    handleEditLogFilter(filter: any, index: number) {
+      // Find the index in the logFilters array if not provided
+      let filterIndex = index;
+      if (filterIndex === undefined || filterIndex === null) {
+        filterIndex = this.logFilters.findIndex((f: any) => {
+          // Match by type or by object reference
+          return f === filter || (f.type && filter.type && f.type === filter.type);
+        });
+      }
+      // Emit with both filter and index for parent to use
+      this.$emit("edit-log-filter", { filter, index: filterIndex });
     },
   },
 });

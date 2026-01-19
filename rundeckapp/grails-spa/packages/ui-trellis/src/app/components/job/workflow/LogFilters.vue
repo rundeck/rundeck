@@ -83,6 +83,10 @@ export default defineComponent({
       type: String,
       required: false,
     },
+    editEvent: {
+      type: String,
+      required: false,
+    },
     mode: {
       type: String,
       required: false,
@@ -137,10 +141,21 @@ export default defineComponent({
         this.addFilter();
       });
     }
+    if (this.editEvent) {
+      eventBus.on(this.editEvent, (filterIndex: number) => {
+        // Validate index is within bounds
+        if (typeof filterIndex === 'number' && filterIndex >= 0 && filterIndex < this.model.length) {
+          this.editFilterByIndex(filterIndex);
+        }
+      });
+    }
   },
   beforeUnmount() {
     if (this.addEvent) {
       eventBus.off(this.addEvent);
+    }
+    if (this.editEvent) {
+      eventBus.off(this.editEvent);
     }
   },
   methods: {

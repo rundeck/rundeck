@@ -29,6 +29,7 @@
               @add-log-filter="addLogFilterForIndex(element.id)"
               @add-error-handler="toggleAddErrorHandlerModal(index)"
               @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
+              @edit-log-filter="handleEditLogFilterFromChip(element.id, $event)"
               @delete="removeStep(index)"
               @duplicate="duplicateStep(index)"
               @edit="editStepByIndex(index)"
@@ -40,6 +41,7 @@
               :title="$t('Workflow.logFilters')"
               :subtitle="stepTitle(element, index)"
               :add-event="'step-action:add-logfilter:' + element.id"
+              :edit-event="'step-action:edit-logfilter:' + element.id"
               :conditional-enabled="true"
               @update:model-value="updateHistoryWithLogFiltersData(index, $event)"
             />
@@ -582,6 +584,11 @@ export default defineComponent({
     },
     async addLogFilterForIndex(id: string) {
       eventBus.emit("step-action:add-logfilter:" + id);
+    },
+    handleEditLogFilterFromChip(stepId: string, data: { filter: any; index: number }) {
+      // Emit event on global eventBus to trigger LogFilters editFilterByIndex
+      // The event data should include the filter index
+      eventBus.emit("step-action:edit-logfilter:" + stepId, data.index);
     },
     duplicateStep(index: number) {
       const command = cloneDeep(this.model.commands[index]);

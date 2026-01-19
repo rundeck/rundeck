@@ -84,7 +84,9 @@ export default defineComponent({
       this.$emit("update:modelValue", updatedArray);
     },
     handleEdit(index: number) {
-      this.$emit("editElement", index);
+      // Emit both the filter object and index so parent can use either
+      const element = this.modelValue[index];
+      this.$emit("editElement", element, index);
     },
     getElementLabel(element: any): string {
       // Support both enriched data (title) and raw filter data (type)

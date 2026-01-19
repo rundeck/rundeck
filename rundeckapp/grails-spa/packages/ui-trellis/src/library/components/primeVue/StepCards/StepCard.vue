@@ -21,6 +21,7 @@
         :error-handler-provider="computedErrorHandlerProvider"
         @add-log-filter="handleAddLogFilter"
         @add-error-handler="handleAddErrorHandler"
+        @edit-log-filter="handleEditLogFilter"
       />
     </template>
   </Card>
@@ -62,7 +63,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate", "edit"],
+  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "edit-log-filter", "delete", "duplicate", "edit"],
   computed: {
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
@@ -117,6 +118,10 @@ export default defineComponent({
     },
     handleEdit() {
       this.$emit("edit");
+    },
+    handleEditLogFilter(data: { filter: any; index: number }) {
+      // Forward the edit-log-filter event to parent
+      this.$emit("edit-log-filter", data);
     },
   },
 });
