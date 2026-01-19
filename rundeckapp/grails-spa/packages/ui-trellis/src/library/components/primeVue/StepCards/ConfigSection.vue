@@ -27,7 +27,7 @@
               v-for="(element, index) in modelValue"
               :key="element.name || element.type || index"
               :label="getElementLabel(element)"
-              :icon="getElementIcon(element)"
+              :icon="hideIcon ? undefined : getElementIcon(element)"
               removable
               @remove="handleRemove(index)"
               @click="handleEdit(index)"
@@ -45,6 +45,7 @@
         </div>
       </slot>
     </transition>
+    <slot name="content" />
   </div>
 </template>
 
@@ -69,6 +70,10 @@ export default defineComponent({
       default: () => [],
     },
     hideWhenSingle: {
+      type: Boolean,
+      default: false,
+    },
+    hideIcon: {
       type: Boolean,
       default: false,
     },

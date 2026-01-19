@@ -24,7 +24,9 @@
       :tooltip="$t('Workflow.errorHandlerDescription')"
       v-model="errorHandlerModel"
       @addElement="handleAddErrorHandler"
+      @editElement="handleEditErrorHandler"
       hideWhenSingle
+      :hideIcon="true"
       class="error-handler"
     >
       <template #header v-if="errorHandler.length >= 1">
@@ -36,7 +38,7 @@
           titleCss="link-step-plugin"
         />
       </template>
-      <template #extra v-if="errorHandler.length >= 1">
+      <template #content v-if="errorHandler.length >= 1">
         <plugin-config
           class="plugin-config-section"
           :serviceName="errorHandlerServiceName"
