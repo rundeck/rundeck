@@ -15,13 +15,15 @@
         :service-name="computedServiceName"
         :element-id="config.id || ''"
         v-model:log-filters="logFiltersModel"
-        v-model:error-handler="errorHandlerModel"
+        :error-handler="errorHandler"
         :error-handler-config="computedErrorHandlerConfig"
         :error-handler-service-name="computedErrorHandlerServiceName"
         :error-handler-provider="computedErrorHandlerProvider"
         @add-log-filter="handleAddLogFilter"
         @add-error-handler="handleAddErrorHandler"
         @edit-log-filter="handleEditLogFilter"
+        @edit-error-handler="handleEditErrorHandler"
+        @remove-error-handler="handleRemoveErrorHandler"
       />
     </template>
   </Card>
@@ -63,7 +65,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "edit-log-filter", "delete", "duplicate", "edit"],
+  emits: ["update:logFilters", "add-log-filter", "add-error-handler", "edit-log-filter", "edit-error-handler", "remove-error-handler", "delete", "duplicate", "edit"],
   computed: {
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
@@ -92,14 +94,6 @@ export default defineComponent({
         this.$emit("update:logFilters", value);
       },
     },
-    errorHandlerModel: {
-      get() {
-        return this.errorHandler;
-      },
-      set(value) {
-        this.$emit("update:errorHandler", value);
-      },
-    },
   },
   methods: {
     handleAddLogFilter() {
@@ -122,6 +116,14 @@ export default defineComponent({
     handleEditLogFilter(data: { filter: any; index: number }) {
       // Forward the edit-log-filter event to parent
       this.$emit("edit-log-filter", data);
+    },
+    handleEditErrorHandler() {
+      // Forward the edit-error-handler event to parent - WorkflowSteps will handle it
+      this.$emit("edit-error-handler");
+    },
+    handleRemoveErrorHandler() {
+      // Forward the remove-error-handler event to parent - WorkflowSteps will handle it
+      this.$emit("remove-error-handler");
     },
   },
 });

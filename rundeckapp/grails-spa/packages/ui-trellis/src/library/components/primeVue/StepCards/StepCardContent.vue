@@ -22,9 +22,10 @@
     <ConfigSection
       :title="$t('Workflow.addErrorHandler')"
       :tooltip="$t('Workflow.errorHandlerDescription')"
-      v-model="errorHandlerModel"
+      :model-value="errorHandler"
       @addElement="handleAddErrorHandler"
       @editElement="handleEditErrorHandler"
+      @removeElement="handleRemoveErrorHandler"
       hideWhenSingle
       :hideIcon="true"
       class="error-handler"
@@ -104,7 +105,7 @@ export default defineComponent({
       default: "",
     },
   },
-  emits: ["add-log-filter", "add-error-handler", "edit-log-filter", "update:logFilters", "update:errorHandler"],
+  emits: ["add-log-filter", "add-error-handler", "edit-log-filter", "edit-error-handler", "remove-error-handler", "update:logFilters"],
   data() {
     return {
       globalEventBus: getRundeckContext()?.eventBus,
@@ -120,14 +121,6 @@ export default defineComponent({
       },
       set(value) {
         this.$emit("update:logFilters", value);
-      },
-    },
-    errorHandlerModel: {
-      get() {
-        return this.errorHandler;
-      },
-      set(value) {
-        this.$emit("update:errorHandler", value);
       },
     },
   },
@@ -150,6 +143,16 @@ export default defineComponent({
       }
       // Emit with both filter and index for parent to use
       this.$emit("edit-log-filter", { filter, index: filterIndex });
+    },
+    handleEditErrorHandler() {
+      // Guard: only emit if error handler exists
+      if (!this.errorHandlerData) {
+        return;
+      }
+      this.$emit("edit-error-handler");
+    },
+    handleRemoveErrorHandler() {
+      this.$emit("remove-error-handler");
     },
   },
 });

@@ -87,8 +87,13 @@ export default defineComponent({
       const updatedArray = [...this.modelValue];
       updatedArray.splice(index, 1);
       this.$emit("update:modelValue", updatedArray);
+      this.$emit("removeElement", index);
     },
     handleEdit(index: number) {
+      // Guard: check if element exists
+      if (!this.modelValue[index]) {
+        return;
+      }
       // Emit both the filter object and index so parent can use either
       const element = this.modelValue[index];
       this.$emit("editElement", element, index);

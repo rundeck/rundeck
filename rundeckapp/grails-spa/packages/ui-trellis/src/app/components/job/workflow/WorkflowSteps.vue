@@ -30,6 +30,8 @@
               @add-error-handler="toggleAddErrorHandlerModal(index)"
               @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
               @edit-log-filter="handleEditLogFilterFromChip(element.id, $event)"
+              @edit-error-handler="editStepByIndex(index, true)"
+              @remove-error-handler="removeStep(index, true)"
               @delete="removeStep(index)"
               @duplicate="duplicateStep(index)"
               @edit="editStepByIndex(index)"
@@ -606,6 +608,11 @@ export default defineComponent({
       if (isErrorHandler) {
         this.editIndex = index;
         const command = this.model.commands[index];
+        // Guard: check if error handler exists
+        if (!command.errorhandler) {
+          console.warn("Cannot edit error handler: error handler does not exist");
+          return;
+        }
         this.editExtra = cloneDeep(command);
         this.isErrorHandler = true;
         this.editModel = cloneDeep(command.errorhandler);
@@ -654,15 +661,24 @@ export default defineComponent({
           saveData.jobref = this.editModel.jobref;
         }
 
-        if (!saveData.jobref && !this.editModel.jobref && this.editModel.type !== 'conditional.logic' ) {
-          if(!this.isErrorHandler) {
+        if (!saveData.jobref && !this.editModel.jobref) {
+          if (!this.isErrorHandler) {
             saveData.filters = [];
           }
 
+          // For error handlers, use editModel.type/config (what user edited in modal); for regular steps, use step.type/config
+          // The original pattern uses || but that would use step.type for error handlers, which is incorrect
+          const typeToValidate = this.isErrorHandler 
+            ? this.editModel.type  // Use editModel directly since that's what was edited in the modal
+            : saveData.type;
+          const configToValidate = this.isErrorHandler 
+            ? this.editModel.config  // Use editModel directly since that's what was edited in the modal
+            : saveData.config;
+
           const response = await validatePluginConfig(
             this.editService,
-            saveData.type || saveData.errorhandler.type,
-            saveData.config || saveData.errorhandler.config,
+            typeToValidate,
+            configToValidate || {},
           );
 
           if (
