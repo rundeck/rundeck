@@ -339,7 +339,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
               }
             } else if (query["groupPath"] && '*' != query["groupPath"]) {
               or {
-                ilike("groupPath", query["groupPath"] + "/%")
+                like("groupPath", query["groupPath"] + "/%")
                 eq("groupPath", query['groupPath'])
               }
             }
@@ -353,7 +353,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
             } else if (query["excludeGroupPath"]) {
               not {
                 or {
-                  ilike("groupPath", query["excludeGroupPath"] + "/%")
+                  like("groupPath", query["excludeGroupPath"] + "/%")
                   eq("groupPath", query['excludeGroupPath'])
                 }
               }
