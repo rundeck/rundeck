@@ -998,6 +998,9 @@ public class NotificationService implements ApplicationContextAware{
                         storageTree(storageService.storageTreeWithContext(evt.authContext))
                         framework(frameworkService.rundeckFramework)
                         frameworkProject(job.project)
+                        if(job.getWorkflowData()) {
+                            workflowData(job.getWorkflowData())
+                        }
                     }
                     contextBuilder.authContext(evt.authContext)
                     triggerJobNotification(
