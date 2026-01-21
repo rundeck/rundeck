@@ -17,6 +17,7 @@
 package org.grails.plugins.metricsweb
 
 import com.codahale.metrics.Counter
+import com.codahale.metrics.Histogram
 import com.codahale.metrics.Meter
 import com.codahale.metrics.Metric
 import com.codahale.metrics.MetricRegistry
@@ -42,6 +43,10 @@ class MetricService {
 
     def Counter counter(String classname, String metricName) {
         metricRegistry.counter(MetricRegistry.name(classname, metricName))
+    }
+
+    def Histogram histogram(String classname, String metricName) {
+        metricRegistry.histogram(MetricRegistry.name(classname, metricName))
     }
 
     def markMeter(String classname, String metricName) {
