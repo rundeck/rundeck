@@ -21,7 +21,7 @@ class KeyStorageSpec extends SeleniumBase {
             keyStoragePage.waitForElementVisible keyStoragePage.addUploadKeyField
             keyStoragePage.addUploadKeyField.click()
         then:
-            keyStoragePage.waitForModal 1, By.cssSelector(".modal.in")
+            keyStoragePage.waitForModal 1, keyStoragePage.modalInBy
             keyStoragePage.addPasswordType 'root', 'git', 'git.pass'
             sleep WaitingTime.MODERATE.toMillis()
             keyStoragePage.checkKeyExists 'git.pass', 'git'
@@ -35,7 +35,7 @@ class KeyStorageSpec extends SeleniumBase {
         when:
             keyStoragePage.refresh()
             keyStoragePage.clickOverwriteKey 'git', 'git.pass'
-            keyStoragePage.waitForModal 1 , By.cssSelector(".modal.in")
+            keyStoragePage.waitForModal 1, keyStoragePage.modalInBy
         then:
             keyStoragePage.overwriteKey 'new-root'
     }

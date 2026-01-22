@@ -468,8 +468,6 @@ public class YamlParsePolicy implements Policy {
         }
         if (!environment.isValid()) {
             throw new AclPolicySyntaxException(
-                    "Context section is not valid: " +
-                    context +
                     environment.getValidation()
             );
         }
@@ -617,15 +615,22 @@ public class YamlParsePolicy implements Policy {
             try {
                 uri = new URI(uriPrefix + key);
                 matcher.put(uri, value);
-                Pattern compile = Pattern.compile(value);
-                matcherRegex.put(uri, compile);
+                if(ctx.getProject()!=null) {
+                    try {
+                        Pattern compile = Pattern.compile(value);
+                        matcherRegex.put(uri, compile);
+                    } catch (PatternSyntaxException e) {
+                        errors.add("Context section: " + key + ": invalid regex: " + e.getMessage());
+                        invalidentry = true;
+                    }
+                }
             } catch (URISyntaxException e) {
                 errors.add("Context section: " + key + ": invalid URI: " + e.getMessage());
                 invalidentry = true;
             }
 
-            if (errors.size() > 0) {
-                final StringBuffer sb = new StringBuffer();
+            if (!errors.isEmpty()) {
+                final StringBuilder sb = new StringBuilder();
                 for (final String error : errors) {
                     if (sb.length() > 0) {
                         sb.append("; ");
@@ -635,7 +640,7 @@ public class YamlParsePolicy implements Policy {
                 validation = sb.toString();
             }
 
-            valid = !invalidentry && matcher.size() >= 1;
+            valid = !invalidentry && !matcher.isEmpty();
 
             description = "YamlEnvironmentalContext{" +
                           (valid ?

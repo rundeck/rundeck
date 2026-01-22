@@ -4,6 +4,7 @@ import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
+import org.rundeck.util.gui.pages.project.DashboardPage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import spock.lang.Stepwise
 
@@ -35,15 +36,17 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         when:
         // Edit Project Configuration to expand the job groups by default
         ProjectEditPage projectEditPage = page ProjectEditPage
+        DashboardPage dashboardPage = page DashboardPage
         projectEditPage.loadProjectEditForProject(projectName)
-        projectEditPage.go()
+        projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}-1")
         projectEditPage.save()
+        projectEditPage.waitForElementVisible(projectEditPage.successMessageDiv)
 
         JobListPage jobListPage = page JobListPage
         jobListPage.loadJobListForProject(projectName)
-        jobListPage.go()
+        jobListPage.go(jobListPage.loadPath)
         jobListPage.waitForElementToBeClickable(jobListPage.getExpandedJobGroupsContainer())
         //def jobGroupsExpanded = jobListPage.getExpandedJobGroupsContainer().text
 
@@ -55,34 +58,37 @@ class ExpandedJobGroupsSpec extends SeleniumBase {
         jobGroupsExpanded == "ParentGroup/Level1/Child/Level2/SubChild/Level3"
 
         when: "We change the expand level to 0"
-        projectEditPage.go()
+        projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}-1","${expandedGroupsProp}0")
         projectEditPage.save()
+        projectEditPage.waitForElementVisible(projectEditPage.successMessageDiv)
 
-        jobListPage.go()
+        jobListPage.go(jobListPage.loadPath)
 
         then: "Job groups aren't expanded"
         jobListPage.getExpandedJobGroupsContainerChildren().size() < 1
 
         when: "We change teh expand level to 1"
-        projectEditPage.go()
+        projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}0","${expandedGroupsProp}1")
         projectEditPage.save()
+        projectEditPage.waitForElementVisible(projectEditPage.successMessageDiv)
 
-        jobListPage.go()
+        jobListPage.go(jobListPage.loadPath)
 
         then: "Job groups expanded"
         jobListPage.getExpandedJobGroupsContainerChildren().size() < 2
 
         when: "We change teh expand level to 2"
-        projectEditPage.go()
+        projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("${expandedGroupsProp}1","${expandedGroupsProp}2")
         projectEditPage.save()
+        projectEditPage.waitForElementVisible(projectEditPage.successMessageDiv)
 
-        jobListPage.go()
+        jobListPage.go(jobListPage.loadPath)
 
         then: "Job groups expanded"
         jobListPage.getExpandedJobGroupsContainerChildren().size() < 3

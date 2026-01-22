@@ -3003,29 +3003,75 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                         commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
                 ).save(),
                 ).save(flush: true)
-        service.frameworkService = Mock(FrameworkService)
-            service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        service.reportService = Mock(ReportService) {
-            1 * reportExecutionResult(_) >> [:]
+
+        def spyService = Spy(ExecutionService) {
+            // Stub out all internal methods we don't want to execute
+            triggerJobCompleteNotifications(_, _) >> { }
+            reportExecutionResult(_) >> [:]
+            logExecution(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) >> { }
+            logExecutionLog4j(_, _, _) >> { }
         }
-        service.notificationService = Mock(NotificationService) {
-            1 * asyncTriggerJobNotification(_, _, _)
-        }
-        service.metricService = Mock(MetricService)
-        service.workflowService = Mock(WorkflowService)
+        spyService.jobStatsDataProvider = Mock(GormJobStatsDataProvider)
+
         when:
-        service.cleanupExecution(e, status)
+        spyService.cleanupExecution(e, status)
+
         then:
         e.refresh()
         e.id != null
         e.status == result
         e.cancelled == (status == null)
+        // No stats collected for adhoc executions (no scheduledExecution)
+        0 * spyService.jobStatsDataProvider.updateJobStats(_, _, _, _, _)
 
         where:
         status      | result
         'testvalue' | 'testvalue'
         null        | 'false'
+    }
 
+    def "updateScheduledExecStatistics should collect stats for failed executions"() {
+        given: "a job UUID, execution ID, and execution time"
+        def jobUuid = UUID.randomUUID().toString()
+        def executionId = 123L
+        def executionTime = 5000L
+        def dateCompleted = new Date()
+        def mockConfigService = Mock(ConfigurationService)
+        mockConfigService.getBoolean("executionDailyMetrics.enabled", false) >> true
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        service.jobStatsDataProvider.configurationService = mockConfigService
+
+        when: "updateScheduledExecStatistics is called with failed status"
+        def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, 'failed', dateCompleted)
+
+        then: "stats are collected"
+        result == true
+        def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+        stats != null
+    }
+
+    def "updateScheduledExecStatistics should collect stats for all status types"() {
+        given: "a job UUID and execution details"
+        def jobUuid = UUID.randomUUID().toString()
+        def dateCompleted = new Date()
+        def mockConfigService = Mock(ConfigurationService)
+        mockConfigService.getBoolean("executionDailyMetrics.enabled", false) >> true
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        service.jobStatsDataProvider.configurationService = mockConfigService
+
+        when: "multiple executions with different statuses are tracked"
+        service.updateScheduledExecStatistics(jobUuid, 1L, 1000L, 'succeeded', dateCompleted)
+        service.updateScheduledExecStatistics(jobUuid, 2L, 2000L, 'failed', dateCompleted)
+        service.updateScheduledExecStatistics(jobUuid, 3L, 3000L, 'aborted', dateCompleted)
+        service.updateScheduledExecStatistics(jobUuid, 4L, 4000L, 'timedout', dateCompleted)
+
+        then: "all executions are tracked"
+        def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+        stats != null
+        def content = stats.getContentMap()
+        // Rolling-10 should only count succeeded (our fix)
+        content.execCount == 1
+        content.totalTime == 1000
     }
 
     def "get NodeService from origContext only if exists for referenced from another projects jobs"() {
@@ -6203,5 +6249,40 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
             result.size() == 2
             result.containsAll(initialListeners)
+    }
+
+    def "updateScheduledExecStatistics calls jobStatsDataProvider with correct parameters"() {
+        given: "a job UUID and execution details"
+            def jobUuid = UUID.randomUUID().toString()
+            def executionId = 123L
+            def executionTime = 5000L
+            def status = "succeeded"
+            def dateCompleted = new Date()
+            def mockJobStatsDataProvider = Mock(GormJobStatsDataProvider)
+            service.jobStatsDataProvider = mockJobStatsDataProvider
+
+        when: "updateScheduledExecStatistics is called"
+            def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, status, dateCompleted)
+
+        then: "jobStatsDataProvider is called with correct parameters"
+            1 * mockJobStatsDataProvider.updateJobStats(jobUuid, executionId, executionTime, status, dateCompleted) >> true
+            result == true
+    }
+
+    def "updateScheduledExecStatistics passes status and dateCompleted correctly"() {
+        given: "different execution statuses"
+            def jobUuid = UUID.randomUUID().toString()
+            def executionId = 456L
+            def executionTime = 3000L
+            def dateCompleted = new Date()
+            def mockJobStatsDataProvider = Mock(GormJobStatsDataProvider)
+            service.jobStatsDataProvider = mockJobStatsDataProvider
+
+        when: "updateScheduledExecStatistics is called with failed status"
+            def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, "failed", dateCompleted)
+
+        then: "status and dateCompleted are passed correctly"
+            1 * mockJobStatsDataProvider.updateJobStats(jobUuid, executionId, executionTime, "failed", dateCompleted) >> true
+            result == true
     }
 }

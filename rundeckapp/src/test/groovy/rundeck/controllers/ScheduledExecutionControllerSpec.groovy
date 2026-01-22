@@ -47,6 +47,7 @@ import org.rundeck.app.authorization.domain.job.AuthorizingJob
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
+import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.gui.UISection
@@ -740,7 +741,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
-            getByIDorUUID(_)>>se
+            _*getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         controller.notificationService=Mock(NotificationService)
@@ -829,6 +831,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
@@ -892,6 +895,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(_) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService = Mock(NotificationService)
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
@@ -951,6 +955,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1013,6 +1018,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1079,6 +1085,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1151,6 +1158,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1224,6 +1232,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1310,6 +1319,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1381,6 +1391,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1468,6 +1479,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1530,6 +1542,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             0 * getByIDorUUID(_) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1594,6 +1607,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             2 * getByIDorUUID(_) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1666,6 +1680,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(se.extid) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
@@ -1722,6 +1737,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(se.extid) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
@@ -1780,6 +1796,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             1 * prepareCreateEditJob(params, _, _,_) >> {
                 [scheduledExecution: it[1]]
             }
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         response.status == 200
         model.scheduledExecution != null
@@ -1829,6 +1846,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             2 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> false
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1941,6 +1959,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
             getRefExecCountStats(_)>>refTotal
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
@@ -2041,6 +2060,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
@@ -2145,6 +2165,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
@@ -2391,6 +2412,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
@@ -2470,6 +2492,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
@@ -2553,6 +2576,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
@@ -2641,6 +2665,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(_) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService = Mock(NotificationService)
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
@@ -2684,6 +2709,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 1 * issueJobChangeEvents(_)
                 1 * isScheduled(job)>>true
                 1 * nextExecutionTimes([job])>>[(job.id):new Date()]
+                _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
                 0 * _(*_)
             }
             controller.frameworkService = Mock(FrameworkService) {
@@ -2739,6 +2765,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                         ]
                 ]
                 1 * prepareCreateEditJob(_, job , AuthConstants.ACTION_CREATE, authContext)>>[:]
+                _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
                 0 * _(*_)
             }
             controller.frameworkService = Mock(FrameworkService) {
@@ -2790,6 +2817,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 ]
                 0 * loadImportedJobs(_,_,_,_,_,false)
                 0 * issueJobChangeEvents(_)
+                _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
             }
             controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
@@ -3004,6 +3032,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         sec.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> sec
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3091,6 +3120,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         sec.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> sec
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3177,6 +3207,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         sec.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> sec
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3262,6 +3293,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         sec.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> sec
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3362,6 +3394,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> job
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3446,6 +3479,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         job.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> job
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3520,6 +3554,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         job.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> job
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'

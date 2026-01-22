@@ -416,7 +416,7 @@
 </template>
 <script lang="ts">
 import { ContextVariable } from "@/library/stores/contextVariables";
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import JobConfigPicker from "./JobConfigPicker.vue";
 import KeyStorageSelector from "./KeyStorageSelector.vue";
 
@@ -424,7 +424,6 @@ import AceEditorVue from "../utils/AceEditorVue.vue";
 import PluginPropVal from "./pluginPropVal.vue";
 import { client } from "../../modules/rundeckClient";
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
-import type { PropType } from "vue";
 import { getRundeckContext } from "../../rundeckService";
 import { EventBus } from "@/library";
 import UiSocket from "../utils/UiSocket.vue";
@@ -448,7 +447,6 @@ interface Prop {
   desc: string;
   staticTextDefaultValue: string;
 }
-
 export default defineComponent({
   components: {
     PluginDetails,
@@ -673,7 +671,7 @@ export default defineComponent({
 });
 </script>
 <style scoped lang="scss">
-@import "~vue3-markdown/dist/style.css";
+@import "~vue3-markdown/dist/vue3-markdown.css";
 
 .longlist {
   max-height: 500px;

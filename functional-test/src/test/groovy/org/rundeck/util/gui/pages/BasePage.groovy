@@ -21,6 +21,7 @@ import java.util.concurrent.TimeoutException
 abstract class BasePage {
     final SeleniumContext context
     By modalField = By.cssSelector(".modal.fade.in")
+    By modalInBy = By.cssSelector(".modal.in")
 
     /**
      * Create a new page
@@ -48,13 +49,23 @@ abstract class BasePage {
         if (loadPath && !loadPath.empty) {
             implicitlyWait 2000
             driver.get(context.client.baseUrl + loadPath)
-            validatePage()
+            validatePage(loadPath)
         }
     }
     /**
      * Validate the page is loaded
      */
     void validatePage() {
+        if (loadPath && !loadPath.empty) {
+            waitForUrlToContain(loadPath)
+        }
+    }
+
+    /**
+     * Validate the page is loaded by checking the URL contains the specified path
+     * @param loadPath The path that should be present in the current URL
+     */
+    void validatePage(String loadPath) {
         if (loadPath && !loadPath.empty) {
             waitForUrlToContain(loadPath)
         }
@@ -96,6 +107,46 @@ abstract class BasePage {
     void waitForTextToBePresentInElement(WebElement locator, String text) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
         wait.until { ExpectedConditions.textToBePresentInElement(locator, text) }
+    }
+
+    /**
+     * Wait for element to have non-empty text content.
+     * Re-finds the element on each check to avoid stale element references.
+     *
+     * @param locator The By locator to find the element
+     */
+    void waitForTextToBeNonEmpty(By locator) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
+        wait.until { WebDriver d ->
+            def element = d.findElement(locator)
+            def text = element.getText()
+            text != null && !text.trim().isEmpty()
+        }
+    }
+
+    /**
+     * Wait for element to have non-empty text content and return the text.
+     * This method atomically waits and retrieves the text, handling stale element
+     * references by re-finding the element immediately before reading the text.
+     * This prevents StaleElementReferenceException that can occur when the DOM
+     * updates between waiting and reading the text.
+     *
+     * @param locator The By locator to find the element
+     * @return The non-empty text content of the element
+     */
+    String waitForTextToBeNonEmptyAndGet(By locator) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
+        // Wait for element to have non-empty text, then immediately retrieve it
+        // Use a wait that ignores StaleElementReferenceException to handle DOM updates
+        return wait.ignoring(StaleElementReferenceException.class)
+                .until { WebDriver d ->
+                    def element = d.findElement(locator)
+                    def text = element.getText()
+                    if (text != null && !text.trim().isEmpty()) {
+                        return text
+                    }
+                    return null
+                }
     }
 
     /**
@@ -150,6 +201,16 @@ abstract class BasePage {
                 .until(ExpectedConditions.urlContains(text))
     }
 
+    /**
+     * Wait for the current URL to not contain the specified text
+     * @param text The text that should not be present in the URL
+     * @return true if the URL does not contain the text within the timeout period
+     */
+    boolean waitForUrlToNotContain(String text) {
+        new WebDriverWait(context.driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.not(ExpectedConditions.urlContains(text)))
+    }
+
     boolean waitForAttributeContains(WebElement locator, String attribute, String value) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))
@@ -170,6 +231,24 @@ abstract class BasePage {
     WebElement byAndWaitClickable(By locator) {
         waitForElementToBeClickable locator
         el locator
+    }
+
+    /**
+     * Safely clicks an element by re-finding it immediately before clicking.
+     * This prevents StaleElementReferenceException by ensuring we always use
+     * a fresh element reference.
+     *
+     * @param locator The By locator to find and click the element
+     */
+    void clickElementSafely(By locator) {
+        waitForElementToBeClickable(locator)
+        try {
+            el(locator).click()
+        } catch (StaleElementReferenceException e) {
+            // Re-find and click if element became stale
+            waitForElementToBeClickable(locator)
+            el(locator).click()
+        }
     }
 
     WebDriver getDriver() {

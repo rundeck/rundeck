@@ -99,17 +99,45 @@ project.ext.artifactDir = "$projectDir/artifacts"
 def versionProps = new Properties()
 file("version.properties").withInputStream { versionProps.load(it) }
 
-def vVersion = versionProps.getProperty('version.version')
-def vNum = ext.vNum = versionProps.getProperty('version.number')
-def vTag = ext.vTag = project.environment == 'release'? versionProps.getProperty('version.tag') : 'SNAPSHOT'
-def vDate = ext.vDate = versionProps.getProperty('version.date')
-def vRevision = ext.vRevision = versionProps.getProperty('version.release.number')
+// Check if building from a tag
+def gitTag = System.getenv('CIRCLE_TAG') ?: ''
+def isTagBuild = gitTag && gitTag.startsWith('v')
+
+def vVersion, vNum, vTag, vDate
+
+if (isTagBuild) {
+    // Parse version from git tag
+    def matcher = gitTag =~ /^v(?<vNum>\d+\.\d+\.\d+)(-(?<vTag>[a-z]+[0-9]+))?$/
+
+    if (matcher.matches()) {
+        vNum = ext.vNum = matcher.group('vNum')
+        vTag = ext.vTag = matcher.group('vTag') ?: 'GA'
+        vDate = ext.vDate = new Date().format('yyyyMMdd')
+
+        // Generate version string based on tag
+        if (vTag == 'GA') {
+            vVersion = "${vNum}-${vDate}".toString()
+        } else {
+            vVersion = "${vNum}-${vTag}-${vDate}".toString()
+        }
+
+        logger.lifecycle("Building from tag ${gitTag}: version=${vVersion}")
+    } else {
+        throw new GradleException("Unable to parse version from tag [${gitTag}]!")
+    }
+} else {
+    // Use version.properties as before
+    vVersion = versionProps.getProperty('version.version')
+    vNum = ext.vNum = versionProps.getProperty('version.number')
+    vTag = ext.vTag = project.environment == 'release'? versionProps.getProperty('version.tag') : 'SNAPSHOT'
+    vDate = ext.vDate = versionProps.getProperty('version.date')
+}
 
 /** Determine if incremental build is enabled */
 def enableIncremental = project.hasProperty('rundeck.proj.incremental.enabled') ? findProperty('rundeck.proj.incremental.enabled').toBoolean() : true
 
 
-if (ext.environment == 'release') {
+if (isTagBuild || ext.environment == 'release') {
     project.ext.resolvedVersion = vVersion
 } else {
     project.ext.resolvedVersion = "${vNum}-SNAPSHOT".toString()
@@ -127,7 +155,7 @@ allprojects {
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
     ext.enableIncremental = enableIncremental
-    if(project.environment == 'release'){
+    if(isTagBuild || project.environment == 'release'){
         ext.isReleaseBuild=true
     } else {
         ext.isDevBuild=true
@@ -267,8 +295,7 @@ task bashVersionInfo {
         |VERSION_FULL=${project.resolvedVersion}
         |VERSION_NUMBER=${project.vNum}
         |VERSION_TAG=${project.vTag}
-        |VERSION_DATE=${project.vDate}
-        |VERSION_REVISION=${project.vRevision}""".stripMargin()
+        |VERSION_DATE=${project.vDate}""".stripMargin()
     }
 }
 
@@ -305,7 +332,11 @@ tasks.register('verifyBuild', JavaExec) {
     classpath = configurations.groovyScript
     mainClass = 'groovy.ui.GroovyMain'
     boolean debug = project.hasProperty('debug')
-    def scriptArgs = ["testbuild.groovy", "--buildType=${project.ext.environment}"]
+    def scriptArgs = [
+        "testbuild.groovy",
+        "--buildType=${project.ext.environment}",
+        "--version",
+        project.resolvedVersion]
     if (debug) {
         scriptArgs << "-debug"
     }

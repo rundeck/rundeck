@@ -18,13 +18,9 @@ class LoggedOutPage extends BasePage {
     }
 
     WebElement getLoginAgainField() {
+        // Wait for the element to be present after logout
+        waitForElementVisible(loginAgainFieldBy)
         el loginAgainFieldBy
-    }
-
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on logged out  page: " + driver.currentUrl)
-        }
     }
 
 }

@@ -27,6 +27,13 @@ class CommandPage extends BasePage {
     By execLogContentBy = By.className("execution-log__content-text")
     By runningExecStateBy = By.cssSelector(".execstate.execstatedisplay.overall")
     By activityRowAdhocBy = By.cssSelector(".link.activity_row.autoclickable.succeed.adhoc")
+    
+    // Node popover selectors
+    By nodeElementsBy = By.cssSelector(".node_ident.embedded_node.tight")
+    By popoverContainerBy = By.cssSelector(".popover")
+    By popoverContentBy = By.cssSelector(".popover-content")
+    By nodeDetailsTableBy = By.cssSelector(".popover-content .node-details-simple")
+    By parameterKeyBy = By.cssSelector(".key")
 
     CommandPage(final SeleniumContext context) {
         super(context)
@@ -111,6 +118,50 @@ class CommandPage extends BasePage {
         commandTextField.sendKeys command
         runButton.click()
         waitForElementAttributeToChange runningExecutionStateButton, 'data-execstate', state
+    }
+
+    List<WebElement> getNodeElements() {
+        waitForNumberOfElementsToBeMoreThan(nodeElementsBy, 0)
+        els nodeElementsBy
+    }
+
+    void clickNode(int index) {
+        def nodes = getNodeElements()
+        if (nodes.size() <= index) {
+            throw new IndexOutOfBoundsException("Node index ${index} is out of bounds. Only ${nodes.size()} nodes available.")
+        }
+        waitForElementToBeClickable nodes[index]
+        nodes[index].click()
+        // Wait for popover container to start appearing (popover animation)
+        waitForElementVisible popoverContainerBy
+    }
+
+    void waitForPopoverToAppear() {
+        waitForElementVisible popoverContainerBy
+        waitForElementVisible popoverContentBy
+    }
+
+    /**
+     * Gets the node details table element from the popover.
+     * Waits for the popover to appear and for the table to be visible.
+     * @return The node details table WebElement
+     */
+    WebElement getNodeDetailsTable() {
+        waitForPopoverToAppear()
+        waitForElementVisible nodeDetailsTableBy
+        el nodeDetailsTableBy
+    }
+
+    /**
+     * Gets all visible key cells from the node details table.
+     * Key cells contain labels like "Operating System", "User & Host", etc.
+     * @return List of visible key cell WebElements
+     */
+    List<WebElement> getNodeDetailsKeyCells() {
+        def table = getNodeDetailsTable()
+        def keyCells = table.findElements(parameterKeyBy)
+        // Filter to only visible cells
+        keyCells.findAll { it.isDisplayed() }
     }
 
 }

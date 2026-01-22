@@ -41,7 +41,6 @@ export interface AppLinks {
   scheduledExecutionActionMenuFragment: string;
   scheduledExecutionRunJobInline: string;
   scheduledExecutionScheduleJobInline: string;
-  scheduledExecutionDetailFragment: string;
   scheduledExecutionDetailFragmentAjax: string;
   scheduledExecutionJobExecutionsAjax: string;
   scheduledExecutionSanitizeHtml: string;

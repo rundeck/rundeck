@@ -26,6 +26,9 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobDefinitionModalBy = By.cssSelector('a[href="#job-definition-modal"]')
     By jobDefinitionModalButtonBy = By.cssSelector('a[href="#job-definition-modal"][data-toggle="modal"]')
     By jobDefinitionModalContentBy = By.id("job-definition-modal")
+    By createdByBy = By.cssSelector("[data-testid='created-by']")
+    By lastModifiedByBy = By.cssSelector("[data-testid='last-modified-by']")
+    By detailTableBy = By.id("detailtable")
     By notificationDefinitionBy = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
     By jobInfoGroupBy = By.cssSelector('div.jobInfoSection a.text-secondary')
@@ -76,6 +79,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobStatusBarBy = By.className("job-stats-value")
     By jobOptionValuesBy = By.cssSelector(".optionvalues")
     By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
+    By extraOptionSearchBy = By.name("extra.option.search")
+    By datetimepickerWidgetBy = By.cssSelector(".bootstrap-datetimepicker-widget.dropdown-menu.timepicker-sbs.bottom")
     By jobDisableScheduleButtonBy = By.linkText("Disable Schedule")
     By jobEnableScheduleButtonBy = By.linkText("Enable Schedule")
     By jobInfoSectionBy = By.id("jobInfo_")
@@ -141,12 +146,6 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         driver.findElements(By.xpath("//input[contains(@name, 'extra.option.')]"))
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on job show selected page: " + driver.currentUrl)
-        }
-    }
-
     WebElement getJobExecutionDisabledIcon(){
         el jobExecutionDisabledIconBy
     }
@@ -162,6 +161,35 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     WebElement getJobDefinitionModalContent(){
         waitForElementVisible jobDefinitionModalContentBy
         el jobDefinitionModalContentBy
+    }
+
+    /**
+     * Get the 'Created By' element from the job definition modal
+     * @return WebElement containing the created by information
+     */
+    WebElement getCreatedByElement() {
+        def modalContent = getJobDefinitionModalContent()
+        modalContent.findElement(createdByBy)
+    }
+
+    /**
+     * Get the 'Last Modified By' element from the job definition modal
+     * @return WebElement containing the last modified by information
+     */
+    WebElement getLastModifiedByElement() {
+        def modalContent = getJobDefinitionModalContent()
+        modalContent.findElement(lastModifiedByBy)
+    }
+
+    /**
+     * Get the calendar button for an option input field
+     * Finds the parent of the option input and then locates the calendar button
+     * @param optionInputField The option input WebElement
+     * @return WebElement representing the calendar button
+     */
+    WebElement getCalendarButtonForOption(WebElement optionInputField) {
+        WebElement optionParent = optionInputField.findElement(By.xpath("./.."))
+        optionParent.findElement(By.cssSelector(".glyphicon.glyphicon-calendar"))
     }
 
     WebElement getNotificationDefinition(){

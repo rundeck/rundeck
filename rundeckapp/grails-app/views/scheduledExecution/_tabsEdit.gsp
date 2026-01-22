@@ -33,7 +33,7 @@
                 <li>
                     <a href="#tab_workflow" data-toggle="tab">
                         <g:message code="job.edit.page.tab.workflow.title"/>
-                        <g:if test="${feature.isDisabled(name:'alphaUi') && uiType=='current'}">
+                        <g:if test="${uiType=='current'}">
                             <!-- ko if: inPageError() -->
                             <b class="text-warning fas fa-exclamation-circle"></b>
                             <!-- /ko -->
@@ -85,7 +85,7 @@
                             <a href="#tab_execution_plugins" data-toggle="tab">
                                 <g:message code="job.edit.page.tab.execution.plugins.title" default="Execution Plugins"/>
 
-                                <g:if test="${feature.isDisabled(name:'alphaUi') && uiType=='current'}">
+                                <g:if test="${uiType=='current'}">
                                     <!-- ko if: pluginsError() -->
                                     <b class="text-warning fas fa-exclamation-circle"></b>
                                     <!-- /ko -->
