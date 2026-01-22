@@ -62,6 +62,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     String optionFilter
 
     boolean excludeRunning = false
+    boolean executionSummary = false
 
 
     static constraints={
