@@ -145,9 +145,13 @@ class JobListPage extends BasePage implements ActivityListTrait {
     }
 
     /**
-     * It validates this by looking for the run job button to be disabled
+     * It validates this by looking for the run job button to be disabled.
+     * First waits for the job list to be visible to ensure the page is fully loaded.
      */
     def expectScheduleDisabled(){
+        // Wait for job list to be visible first, ensuring page is loaded
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.visibilityOfElementLocated(jobListGroupTree))
         new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.numberOfElementsToBe(runJobButtonDisabled, 0))
         new WebDriverWait(context.driver, Duration.ofSeconds(5))
