@@ -167,7 +167,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
-        respondJson * controller.executionService.respondExecutionsJson(_, _, [], [total: 1, offset: 0, max: 20])
+        respondJson * controller.executionService.respondExecutionsJson(_, _, [], [total: 1, offset: 0, max: 20],_)
         respondXml * controller.executionService.respondExecutionsXml(_, _, [], [total: 1, offset: 0, max: 20])
 
         where:
