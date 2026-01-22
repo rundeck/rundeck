@@ -590,10 +590,9 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
         jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
         jobShowPage.waitForNumberOfElementsToBe(By.name("extra.option.search"), Integer.valueOf(selection))
-        def children = jobShowPage.getOptionSelectChildren(optionListOfValues)
 
         then:
-        children.every{it.isSelected()}
+        jobShowPage.waitForAllOptionsToBeSelected(optionListOfValues)
 
         cleanup:
         deleteProject(projectName)
