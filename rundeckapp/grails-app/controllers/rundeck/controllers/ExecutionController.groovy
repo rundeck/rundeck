@@ -3157,7 +3157,7 @@ if executed in cluster mode.""",
         def controller = this
         withFormat {
             '*' {
-                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax])
+                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax], query)
             }
             if (controller.isAllowXml()) {
                 xml {

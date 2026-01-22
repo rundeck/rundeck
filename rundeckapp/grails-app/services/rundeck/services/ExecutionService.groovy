@@ -277,18 +277,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             data
         }, paging)
     }
-    public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
+    public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:], ExecutionQuery query  = null) {
         return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
                         permalink: apiService.guiHrefForExecution(e),
                         href: apiService.apiHrefForExecution(e),
-                        status: getExecutionState(e),
-                        summary: ExecReportUtil.summarizeJob(e)
+                        status: getExecutionState(e)
                 ]
-            if(e.customStatusString){
-                data.customStatus=e.customStatusString
-            }
+
+                //check if query is set and executionSummary is defined¡
+                if (!query || query?.executionSummary) {
+                    data.summary = ExecReportUtil.summarizeJob(e)
+                }
+
+                if(e.customStatusString){
+                    data.customStatus=e.customStatusString
+                }
                 if(e.retryExecution){
                     data.retryExecution=[
                             id:e.retryExecution.id,
