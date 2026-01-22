@@ -285,6 +285,10 @@ class PluginApiService {
         long appEpoch = VersionConstants.DATE.time
         String appVer = VersionConstants.VERSION
         def pluginList = listPluginsDetailed()
+        
+        // Cache for group icons: group name -> iconUrl
+        Map<String, String> groupIconCache = [:]
+
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
             def providers = it.value.collect { provider ->
@@ -313,6 +317,9 @@ class PluginApiService {
                  pluginDate   : meta?.pluginDate?.time?:appEpoch,
                  enabled      : true] as LinkedHashMap<Object, Object>
 
+                // Get groupBy from provider metadata
+                def groupBy = provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY)
+
                 if(service != ServiceNameConstants.UI) {
                     def uiDesc = uiPluginService.getProfileFor(service, provider.name)
                     if (uiDesc.icon)
@@ -323,7 +330,45 @@ class PluginApiService {
                                 absolute: true)
 
                     if (uiDesc.providerMetadata) {
-                        pluginDesc.providerMetadata = uiDesc.providerMetadata
+                        pluginDesc.providerMetadata = new LinkedHashMap<>(uiDesc.providerMetadata)
+                    } else {
+                        pluginDesc.providerMetadata = new LinkedHashMap<>()
+                    }
+                } else {
+                    pluginDesc.providerMetadata = new LinkedHashMap<>()
+                }
+
+                if (groupBy) {
+                    pluginDesc.providerMetadata[com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY] = groupBy
+
+                    String groupIconUrl = null
+
+                    if (groupIconCache.containsKey(groupBy)) {
+                        groupIconUrl = groupIconCache[groupBy]
+                    } else {
+                        def pluginGroupType = provider.pluginGroupType
+                        if (pluginGroupType) {
+                            try {
+                                def method = pluginGroupType.getMethod('getGroupIconUrl', String.class)
+                                String explicitIconUrl = method.invoke(null, groupBy) as String
+                                if (explicitIconUrl) {
+                                    groupIconCache[groupBy] = explicitIconUrl
+                                    groupIconUrl = explicitIconUrl
+                                }
+                            } catch (NoSuchMethodException | Exception ignored) {
+                                // No getGroupIconUrl method or error calling it, continue to fallback
+                            }
+                        }
+
+                        // 3. Fallback to first plugin's icon in the group
+                        if (!groupIconUrl && pluginDesc.iconUrl) {
+                            groupIconCache[groupBy] = pluginDesc.iconUrl
+                            groupIconUrl = pluginDesc.iconUrl
+                        }
+                    }
+
+                    if (groupIconUrl) {
+                        pluginDesc.providerMetadata['groupIconUrl'] = groupIconUrl
                     }
                 }
 

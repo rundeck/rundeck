@@ -19,7 +19,7 @@ class ApiPluginListProvider {
     @Schema(description = 'URL to icon file for the plugin if present. Since: v40')
     String iconUrl
     @ApiVersion(40)
-    @Schema(description = 'Map of metadata about the plugin if present. Since: v40')
+    @Schema(description = 'Map of metadata about the plugin if present. Includes groupBy and groupIconUrl in v57+. Since: v40')
     Map<String, String> providerMetadata
 
     @ApiVersion(51)
