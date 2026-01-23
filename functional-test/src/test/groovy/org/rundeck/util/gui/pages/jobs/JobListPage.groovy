@@ -136,14 +136,17 @@ class JobListPage extends BasePage implements ActivityListTrait {
 
     /**
      * It validates this by looking for the run job button to be disabled.
-     * First waits for navigation to complete and job row items to render before checking for icons.
+     * First waits for navigation to complete, refreshes the page to ensure fresh data,
+     * then waits for job row items to render before checking for icons.
      */
     def expectExecutionsDisabled(){
         // Wait for navigation to complete - URL should contain /jobs
         new WebDriverWait(context.driver, Duration.ofSeconds(10))
                 .until(ExpectedConditions.urlContains("/jobs"))
-        // Wait for job list container to be visible
-        new WebDriverWait(context.driver, Duration.ofSeconds(10))
+        // Refresh the page to ensure job list data is loaded fresh after navigation
+        context.driver.navigate().refresh()
+        // Wait for job list container to be visible after refresh
+        new WebDriverWait(context.driver, Duration.ofSeconds(15))
                 .until(ExpectedConditions.visibilityOfElementLocated(jobListGroupTree))
         // Wait for at least one job row item to be present, ensuring job items are rendered
         new WebDriverWait(context.driver, Duration.ofSeconds(15))
@@ -155,15 +158,18 @@ class JobListPage extends BasePage implements ActivityListTrait {
     }
 
     /**
-     * It validates this by looking for the run job button to be disabled.
-     * First waits for navigation to complete and job row items to render before checking for icons.
+     * It validates this by looking for the schedule disabled icon.
+     * First waits for navigation to complete, refreshes the page to ensure fresh data,
+     * then waits for job row items to render before checking for icons.
      */
     def expectScheduleDisabled(){
         // Wait for navigation to complete - URL should contain /jobs
         new WebDriverWait(context.driver, Duration.ofSeconds(10))
                 .until(ExpectedConditions.urlContains("/jobs"))
-        // Wait for job list container to be visible
-        new WebDriverWait(context.driver, Duration.ofSeconds(10))
+        // Refresh the page to ensure job list data is loaded fresh after navigation
+        context.driver.navigate().refresh()
+        // Wait for job list container to be visible after refresh
+        new WebDriverWait(context.driver, Duration.ofSeconds(15))
                 .until(ExpectedConditions.visibilityOfElementLocated(jobListGroupTree))
         // Wait for at least one job row item to be present, ensuring job items are rendered
         new WebDriverWait(context.driver, Duration.ofSeconds(15))
