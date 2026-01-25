@@ -149,6 +149,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
      */
     def expectScheduleDisabled(){
         waitForElementVisible(jobListGroupTree)
+        waitForNumberOfElementsToBeMoreThan(bulkJobRowItemsBy, 0)
         waitForNumberOfElementsToBe(runJobButtonDisabled, 0)
         waitForNumberOfElementsToBe(executionPausedIcon, 1)
         waitForNumberOfElementsToBe(scheduleDisabledIcon, 1)
