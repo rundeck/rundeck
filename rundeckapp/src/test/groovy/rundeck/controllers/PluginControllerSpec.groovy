@@ -256,7 +256,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         when:
             def result = controller.listPlugins()
         then:
-            1 * controller.pluginApiService.listPlugins() >> plugins
+            1 * controller.pluginApiService.listPlugins(_) >> plugins
             response.json.size() == b
 
         where:
@@ -294,7 +294,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         when:
         controller.listPlugins()
         then:
-        1 * controller.pluginApiService.listPlugins() >> plugins
+        1 * controller.pluginApiService.listPlugins(_) >> plugins
         response.json.size() == 3
 
         response.json[0].isHighlighted == true
