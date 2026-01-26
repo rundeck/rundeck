@@ -357,7 +357,7 @@ class PluginApiService {
                                     groupIconCache[groupBy] = explicitIconUrl
                                     groupIconUrl = explicitIconUrl
                                 }
-                            } catch (NoSuchMethodException | Exception ignored) {
+                            } catch (Exception ignored) {
                                 // No getGroupIconUrl method or error calling it, continue to fallback
                             }
                         }
