@@ -617,7 +617,6 @@ class JobsSpec extends SeleniumBase {
 
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
         jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
-        jobShowPage.waitForNumberOfElementsToBe(By.name("extra.option.search"), Integer.valueOf(selection))
         jobShowPage.waitForNumberOfElementsToBe(jobShowPage.extraOptionSearchBy, Integer.valueOf(selection))
         then:
         jobShowPage.waitForAllOptionsToBeSelected(optionListOfValues)
