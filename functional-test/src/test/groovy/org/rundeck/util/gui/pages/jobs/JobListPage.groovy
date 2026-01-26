@@ -104,7 +104,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
     }
 
     List<WebElement> getActivityRows() {
-        return new WebDriverWait(driver, Duration.ofSeconds(10))
+        return new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(ACTIVITY_ROWS))
     }
 
@@ -141,7 +141,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
      */
     def expectExecutionsDisabled(){
         // Wait for navigation to complete - URL should contain /jobs
-        new WebDriverWait(context.driver, Duration.ofSeconds(10))
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.urlContains("/jobs"))
         // Refresh the page to ensure job list data is loaded fresh after navigation
         context.driver.navigate().refresh()
