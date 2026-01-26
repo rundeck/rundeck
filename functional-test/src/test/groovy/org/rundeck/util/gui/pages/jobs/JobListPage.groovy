@@ -39,6 +39,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
     By bulkConfirmActionNoButtonBy = By.cssSelector('#bulk_confirm_action_no_button')
 
     By bulkJobRowItemsBy = By.className("job-list-row-item")
+    By jobItemBy = By.cssSelector("[data-job-id]")
     By executeJobModalRunJobNowButtonBy = By.cssSelector('[name="_action_runJobNow"][id="execFormRunButton"]')
     Closure<By> executeJobInModalButtonBy = { By.cssSelector(".act_execute_job[data-job-id=\"$it\"]") }
 
@@ -148,8 +149,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
      * It validates this by looking for the run job button to be disabled
      */
     def expectScheduleDisabled(){
-        waitForElementVisible(jobListGroupTree)
-        executeScript("window.scrollTo(0, 0);")
+        waitForNumberOfElementsToBeMoreThan(jobItemBy, 0)
         waitForNumberOfElementsToBe(runJobButtonDisabled, 0)
         waitForNumberOfElementsToBe(executionPausedIcon, 1)
         waitForNumberOfElementsToBe(scheduleDisabledIcon, 1)
