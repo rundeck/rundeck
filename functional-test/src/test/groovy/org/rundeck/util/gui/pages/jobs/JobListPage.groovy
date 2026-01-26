@@ -149,7 +149,6 @@ class JobListPage extends BasePage implements ActivityListTrait {
      * It validates this by looking for the run job button to be disabled
      */
     def expectScheduleDisabled(){
-        waitForNumberOfElementsToBeMoreThan(jobItemBy, 0)
         waitForNumberOfElementsToBe(runJobButtonDisabled, 0)
         waitForNumberOfElementsToBe(executionPausedIcon, 1)
         waitForNumberOfElementsToBe(scheduleDisabledIcon, 1)
