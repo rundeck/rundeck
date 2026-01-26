@@ -183,9 +183,10 @@ Since: v33
     )
     def listPlugins() {
         String service = params.service
+        boolean includeGroupMetadata = request.api_version >= ApiVersions.V57
 
         def providers = []
-        pluginApiService.listPlugins().each { svc ->
+        pluginApiService.listPlugins(includeGroupMetadata).each { svc ->
             if (service && service != svc.service)
                 return
 
@@ -216,8 +217,9 @@ Since: v33
     }
 
     def listPluginsByService() {
+        boolean includeGroupMetadata = request.api_version >= ApiVersions.V57
         def services = []
-        pluginApiService.listPlugins().each { svc ->
+        pluginApiService.listPlugins(includeGroupMetadata).each { svc ->
             def providers = []
             svc.providers.each { p ->
                 def provider = [:]

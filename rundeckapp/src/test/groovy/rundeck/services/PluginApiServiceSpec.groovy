@@ -528,7 +528,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         2 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
         2 * service.uiPluginService.getProfileFor(_, _) >> [icon: 'foo']
         2 * service.grailsLinkGenerator.link(_) >>> ['http://localhost:8080/icon1', 'http://localhost:8080/icon2']
-        def response = service.listPlugins()
+        def response = service.listPlugins(true)
         def serviceEntry = response[0]
         def provider1 = serviceEntry.providers[0]
         def provider2 = serviceEntry.providers[1]
@@ -578,7 +578,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         when:
         1 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
         1 * service.uiPluginService.getProfileFor(_, _) >> [:] // No icon
-        def response = service.listPlugins()
+        def response = service.listPlugins(true)
         def serviceEntry = response[0]
         def provider1 = serviceEntry.providers[0]
 
@@ -630,7 +630,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         when:
         2 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
         2 * service.uiPluginService.getProfileFor(_, _) >> [icon: 'foo'] // Has icon but should be ignored
-        def response = service.listPlugins()
+        def response = service.listPlugins(true)
         def serviceEntry = response[0]
         def provider1 = serviceEntry.providers[0]
         def provider2 = serviceEntry.providers[1]
