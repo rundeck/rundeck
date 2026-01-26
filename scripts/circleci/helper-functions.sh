@@ -116,11 +116,19 @@ wizcli_scan() {
     return $wizexitcode
 }
 
+# Extract OpenAPI spec from WAR file to the specified folder
+# Usage: extract_openapi_spec_from_war [target_folder]
+# Default: enterprise/build/war-contents/WEB-INF/classes/META-INF/swagger
+extract_openapi_spec_from_war() {
+    local targetDir="${1:-enterprise/build/war-contents/WEB-INF/classes/META-INF/swagger}"
+    mkdir -p "${targetDir}"
+    find "${RUNDECK_WAR_DIR}" -name '*.war' -exec jar xvf \{\} WEB-INF/classes/META-INF/swagger/rundeck-api.yml \;
+    mv WEB-INF/classes/META-INF/swagger/rundeck-api.yml "${targetDir}/"
+}
+
 openapi_tests() {
     # Extract openapi spec
-    mkdir -p openapi
-    find "${RUNDECK_WAR_DIR}" -name '*.war' -exec jar xvf \{\} WEB-INF/classes/META-INF/swagger/rundeck-api.yml \;
-    mv WEB-INF/classes/META-INF/swagger/rundeck-api.yml openapi/
+    extract_openapi_spec_from_war openapi
 
     # Redocly OpenAPI Linting
     npx -y @redocly/cli lint \
