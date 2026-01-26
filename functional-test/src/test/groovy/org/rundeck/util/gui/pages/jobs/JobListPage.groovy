@@ -152,6 +152,7 @@ class JobListPage extends BasePage implements ActivityListTrait {
         waitForNumberOfElementsToBe(runJobButtonDisabled, 0)
         waitForNumberOfElementsToBe(executionPausedIcon, 1)
         waitForNumberOfElementsToBe(scheduleDisabledIcon, 1)
+        return true
     }
 
     void loadPathToNextUI(String projectName) {
