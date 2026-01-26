@@ -280,14 +280,14 @@ class PluginApiService {
         ]
     }
 
-    def listPlugins() {
+    def listPlugins(boolean includeGroupMetadata = false) {
         Locale locale = getLocale()
         long appEpoch = VersionConstants.DATE.time
         String appVer = VersionConstants.VERSION
         def pluginList = listPluginsDetailed()
-        
-        // Cache for group icons: group name -> iconUrl
-        Map<String, String> groupIconCache = [:]
+
+        // Cache for group icons: group name -> iconUrl (v57+ feature)
+        Map<String, String> groupIconCache = includeGroupMetadata ? [:] : null
 
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
@@ -317,8 +317,9 @@ class PluginApiService {
                  pluginDate   : meta?.pluginDate?.time?:appEpoch,
                  enabled      : true] as LinkedHashMap<Object, Object>
 
-                // Get groupBy from provider metadata
-                def groupBy = provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY)
+                // Get groupBy from provider metadata (v57+ feature)
+                def groupBy = includeGroupMetadata ?
+                    provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY) : null
 
                 if(service != ServiceNameConstants.UI) {
                     def uiDesc = uiPluginService.getProfileFor(service, provider.name)
@@ -338,7 +339,8 @@ class PluginApiService {
                     pluginDesc.providerMetadata = new LinkedHashMap<>()
                 }
 
-                if (groupBy) {
+                // Group icon resolution (v57+ feature)
+                if (includeGroupMetadata && groupBy) {
                     pluginDesc.providerMetadata[com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY] = groupBy
 
                     String groupIconUrl = null
