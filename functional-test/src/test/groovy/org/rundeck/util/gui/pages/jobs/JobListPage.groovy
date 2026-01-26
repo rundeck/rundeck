@@ -146,10 +146,10 @@ class JobListPage extends BasePage implements ActivityListTrait {
         // Refresh the page to ensure job list data is loaded fresh after navigation
         context.driver.navigate().refresh()
         // Wait for job list container to be visible after refresh
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.visibilityOfElementLocated(jobListGroupTree))
         // Wait for at least one job row item to be present, ensuring job items are rendered
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.numberOfElementsToBeMoreThan(bulkJobRowItemsBy, 0))
         new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.numberOfElementsToBeMoreThan(runJobButtonDisabled, 0))
@@ -164,15 +164,15 @@ class JobListPage extends BasePage implements ActivityListTrait {
      */
     def expectScheduleDisabled(){
         // Wait for navigation to complete - URL should contain /jobs
-        new WebDriverWait(context.driver, Duration.ofSeconds(10))
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.urlContains("/jobs"))
         // Refresh the page to ensure job list data is loaded fresh after navigation
         context.driver.navigate().refresh()
         // Wait for job list container to be visible after refresh
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.visibilityOfElementLocated(jobListGroupTree))
         // Wait for at least one job row item to be present, ensuring job items are rendered
-        new WebDriverWait(context.driver, Duration.ofSeconds(15))
+        new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.numberOfElementsToBeMoreThan(bulkJobRowItemsBy, 0))
         new WebDriverWait(context.driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.numberOfElementsToBe(runJobButtonDisabled, 0))
