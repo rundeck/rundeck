@@ -282,13 +282,14 @@ class ExecutionModeSpec extends SeleniumBase{
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickScheduleMode()
         projectEditPage.save()
+        // Wait for all executions to finish before checking schedule status
+        // This ensures the schedule change has propagated and any pending executions are cancelled
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         sideBarPage.goTo NavLinkTypes.JOBS
         then:
         jobListPage.expectScheduleDisabled()
         when:
-        // Waits for all executions to finish
-        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         sideBarPage.goTo NavLinkTypes.ACTIVITY
         def executions = activityPage.getActivityRowsByJobName(jobName).size()
         projectEditPage.go("/project/${projectName}/configure")
