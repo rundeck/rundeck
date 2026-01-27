@@ -961,6 +961,7 @@ const messages = {
     },
     stepLabel: "Step label",
     noSteps: "No workflow steps",
+    clickAddStep: "Add steps to define what this job will do. Click “Add Step” to get started.",
     addErrorHandler: "Add Error Handler",
     errorHandler: "Error handler",
     errorHandlerDescription:

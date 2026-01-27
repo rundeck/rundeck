@@ -196,7 +196,10 @@
       </li>
     </template>
     <template #empty>
-      <p data-testid="no-steps">{{ $t("Workflow.noSteps") }}</p>
+      <div class="w-full flex flex--direction-col items-center">
+        <p data-testid="no-steps">{{ $t("Workflow.noSteps") }}</p>
+        <p> {{ $t("Workflow.clickAddStep") }}</p>
+      </div>
     </template>
     <template #extra>
       <component
