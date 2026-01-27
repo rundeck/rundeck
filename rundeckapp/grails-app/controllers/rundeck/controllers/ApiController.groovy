@@ -72,6 +72,7 @@ class ApiController extends ControllerBase{
     def frameworkService
     ConfigurationService configurationService
     LinkGenerator grailsLinkGenerator
+    def dataSource
 
     static allowedMethods = [
             info                 : ['GET'],
@@ -343,6 +344,184 @@ Use this endpoint to verify API connectivity and determine the correct API versi
     @Tag(name = "Metrics")
     def apiMetricsHealthcheck() {
         apiMetrics('healthcheck')
+    }
+
+    @Get(
+        uri= "/health/instance",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Get instance health status",
+        description = "Returns aggregated health status for the instance. Accessible by any authenticated user. Requires API token authentication."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Health status response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            examples = @ExampleObject(value = '''{"status":"healthy","timestamp":"2025-01-26T10:30:00.000Z","checks":{"database":{"healthy":true,"message":"Database connection healthy","duration":5},"scheduler":{"healthy":true,"message":"Scheduler operational"},"executionMode":{"healthy":true,"mode":"active","message":"Instance is in active execution mode"}}}''')
+        )
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized - API token required",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse),
+            examples = @ExampleObject('{"error":true,"errorCode":"api.error.unauthorized","message":"API token required","apiversion":57}')
+        )
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "API version not supported",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse),
+            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":57}')
+        )
+    )
+    @Tag(name = "Health")
+    def apiHealthInstance() {
+        // API version check
+        if (!apiService.requireVersion(request, response, ApiVersions.V57)) {
+            return
+        }
+
+        // Authentication: Any authenticated user (no admin required)
+        // API token authentication is handled by SetUserInterceptor
+        // Verify we have a subject (authenticated user)
+        if (!request.subject) {
+            return apiService.renderErrorFormat(response, [
+                status: HttpServletResponse.SC_UNAUTHORIZED,
+                code: 'api.error.unauthorized',
+                args: ['API token required']
+            ])
+        }
+
+        // Aggregate health checks with timeout protection
+        def checks = [:]
+        def overallStatus = "healthy"
+        def startTime = System.currentTimeMillis()
+        def maxDuration = 10000 // 10 second overall timeout
+
+        try {
+            // Check database connectivity
+            try {
+                def dbStart = System.currentTimeMillis()
+                def connection = dataSource.connection
+                def valid = connection.isValid(5) // 5 second timeout
+                def dbDuration = System.currentTimeMillis() - dbStart
+                connection.close()
+
+                def dbHealthy = valid && dbDuration < 5000
+
+                checks.database = [
+                    healthy: dbHealthy,
+                    message: dbHealthy ? "Database connection healthy" : "Database connection failed or slow",
+                    duration: dbDuration
+                ]
+
+                if (!dbHealthy) {
+                    overallStatus = "unhealthy"
+                }
+            } catch (Exception e) {
+                log.warn("Database health check failed: ${e.message}")
+                checks.database = [
+                    healthy: false,
+                    message: "Database check failed" // Generic message, no exception details
+                ]
+                overallStatus = "unhealthy"
+            }
+
+            // Check execution mode
+            try {
+                def executionModeActive = configurationService.executionModeActive
+                def execMode = executionModeActive ? "active" : "passive"
+
+                checks.executionMode = [
+                    healthy: executionModeActive,
+                    mode: execMode,
+                    message: executionModeActive ?
+                        "Instance is in active execution mode" :
+                        "Instance is in passive mode"
+                ]
+
+                // Passive mode is degraded, not unhealthy
+                if (!executionModeActive && overallStatus == "healthy") {
+                    overallStatus = "degraded"
+                }
+            } catch (Exception e) {
+                log.warn("Execution mode check failed: ${e.message}")
+                checks.executionMode = [
+                    healthy: false,
+                    message: "Execution mode check failed"
+                ]
+                if (overallStatus == "healthy") {
+                    overallStatus = "unhealthy"
+                }
+            }
+
+            // Check scheduler (non-critical)
+            try {
+                if (quartzScheduler) {
+                    def schedulerHealthy = quartzScheduler.isStarted() &&
+                                           !quartzScheduler.isInStandbyMode()
+                    checks.scheduler = [
+                        healthy: schedulerHealthy,
+                        message: schedulerHealthy ?
+                            "Scheduler operational" :
+                            "Scheduler not running"
+                    ]
+
+                    if (!schedulerHealthy && overallStatus == "healthy") {
+                        overallStatus = "degraded" // Non-critical, so degraded
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Scheduler check failed: ${e.message}")
+                checks.scheduler = [
+                    healthy: false,
+                    message: "Scheduler check failed"
+                ]
+                if (overallStatus == "healthy") {
+                    overallStatus = "degraded"
+                }
+            }
+
+            // Check overall timeout
+            def totalDuration = System.currentTimeMillis() - startTime
+            if (totalDuration > maxDuration) {
+                log.warn("Health check exceeded timeout: ${totalDuration}ms")
+                overallStatus = "degraded"
+            }
+
+            // Render response
+            def healthChecks = checks
+            return apiService.renderSuccessJson(response) {
+                status = overallStatus
+                timestamp = new Date().toInstant().toString()
+                checks {
+                    healthChecks.each { key, value ->
+                        delegate."${key}" {
+                            healthy = value.healthy
+                            if (value.message) message = value.message
+                            if (value.mode) mode = value.mode
+                            if (value.duration != null) duration = value.duration
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Health check endpoint error: ${e.message}", e)
+            // Return generic error, don't expose exception details
+            return apiService.renderErrorFormat(response, [
+                status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                code: 'api.error.unknown',
+                args: ['Health check failed']
+            ])
+        }
     }
 
     def apiMetrics(String name) {
