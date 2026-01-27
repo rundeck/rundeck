@@ -69,7 +69,9 @@ class DuplicateOptionsSpec extends SeleniumBase {
         optionInputs.each {optionsValues << clickCalendarButtonTwice(jobShowPage, it) }
 
         then:
-        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
+        // When dateFormat is empty, the UI uses Moment.js format 'MM/DD/YYYY hh:mm a' (matches placeholder).
+        // The actual value is parsed using the equivalent Java SimpleDateFormat pattern 'MM/dd/yyyy hh:mm a'.
+        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm a")
 
         optionsValues.size() == 2
         expectedDateFormat.parse(optionsValues[0])
