@@ -125,6 +125,31 @@ abstract class BasePage {
     }
 
     /**
+     * Wait for element to have non-empty text content and return the text.
+     * This method atomically waits and retrieves the text, handling stale element
+     * references by re-finding the element immediately before reading the text.
+     * This prevents StaleElementReferenceException that can occur when the DOM
+     * updates between waiting and reading the text.
+     *
+     * @param locator The By locator to find the element
+     * @return The non-empty text content of the element
+     */
+    String waitForTextToBeNonEmptyAndGet(By locator) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
+        // Wait for element to have non-empty text, then immediately retrieve it
+        // Use a wait that ignores StaleElementReferenceException to handle DOM updates
+        return wait.ignoring(StaleElementReferenceException.class)
+                .until { WebDriver d ->
+                    def element = d.findElement(locator)
+                    def text = element.getText()
+                    if (text != null && !text.trim().isEmpty()) {
+                        return text
+                    }
+                    return null
+                }
+    }
+
+    /**
      * Waits for the specified text to be present within the element located by the given selector.
      *
      * @param selector The selector used to locate the element.

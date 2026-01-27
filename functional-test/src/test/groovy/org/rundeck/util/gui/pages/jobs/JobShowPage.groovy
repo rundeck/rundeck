@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.jobs
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.Select
@@ -410,6 +411,24 @@ class JobShowPage extends BasePage implements ActivityListTrait {
 
         waitForElementVisible(optionSelector)
         driver.findElements(optionSelector)
+    }
+
+    /**
+     * Waits for all option checkboxes to be selected, handling StaleElementReferenceException
+     * that can occur when the DOM is updated between fetching elements and checking their state.
+     *
+     * @param name The option name
+     * @param timeoutSeconds Timeout in seconds (default 30)
+     * @return true if all options are selected within the timeout
+     */
+    boolean waitForAllOptionsToBeSelected(String name, int timeoutSeconds = 30) {
+        final By optionSelector = By.name("extra.option.${name}")
+        new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds))
+                .ignoring(StaleElementReferenceException.class)
+                .until { drv ->
+                    def elements = drv.findElements(optionSelector)
+                    elements.size() > 0 && elements.every { it.isSelected() }
+                }
     }
 
     void waitForLogOutput (By logOutput, Integer number, Integer seconds){
