@@ -26,7 +26,7 @@
           v-if="hasSearchQuery && hasNoResults"
           class="no-results"
         >
-          <p>{{ $t("noResultsFound") }}</p>
+          <p>{{ $t("noMatchesFound") }}</p>
         </div>
 
         <!-- Highlighted providers accordion -->

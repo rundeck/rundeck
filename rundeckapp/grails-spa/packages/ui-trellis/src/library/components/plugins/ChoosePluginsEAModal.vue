@@ -18,6 +18,7 @@
       </p>
       <plugin-search
         v-if="showSearch"
+        :key="pluginSearchKey"
         :ea="true"
         class="plugin-search-container"
         @search="filterLoadedServices"
@@ -26,21 +27,54 @@
       <pt-select-button
         v-model="selectedService"
         :options="serviceOptions"
-        option-label="name"
+        :option-label="getServiceOptionLabel"
         option-value="value"
       />
 
-      <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>
-      <p class="text-body--lg">
-        {{ sectionDescription }}
-        <a :href="sectionLearnMoreUrl" target="_blank" rel="noopener noreferrer">
-          {{ $t("learnMore") }}
-        </a>
-      </p>
+      <template v-if="!(hasSearchQuery && hasNoResults && !showGroup)">
+        <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>
+        <p class="text-body--lg">
+          {{ sectionDescription }}
+          <a
+            :href="sectionLearnMoreUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ $t("learnMore") }}
+          </a>
+        </p>
+      </template>
+
+      <div
+        v-if="!showGroup && hasSearchQuery && hasNoResults"
+        class="no-matches-found"
+      >
+        <svg
+          class="no-matches-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          width="64"
+          height="64"
+          viewBox="0 0 64 64"
+          fill="none"
+        >
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M42.6667 25.3333C42.6667 15.7604 34.9063 8 25.3333 8C15.7604 8 8 15.7604 8 25.3333C8 34.9063 15.7604 42.6667 25.3333 42.6667C29.6267 42.6667 33.5733 41.0933 36.6133 38.5067L37.3333 39.2267V41.3333L50.6667 54.6667L54.6667 50.6667L41.3333 37.3333H39.2267L38.5067 36.6133C41.0933 33.5733 42.6667 29.6267 42.6667 25.3333ZM13.3333 25.3333C13.3333 18.6667 18.6667 13.3333 25.3333 13.3333C32 13.3333 37.3333 18.6667 37.3333 25.3333C37.3333 32 32 37.3333 25.3333 37.3333C18.6667 37.3333 13.3333 32 13.3333 25.3333Z"
+            fill="#A1A1AA"
+          />
+        </svg>
+        <p class="text-body--lg text-body--medium no-matches-text">
+          {{ $t("noMatchesFound") }}
+        </p>
+        <p class="text-body--sm text-body--secondary">
+          {{ $t("noMatchesFoundSecondary") }}
+        </p>
+      </div>
 
       <transition name="view-transition" mode="out-in">
         <PluginAccordionList
-          v-if="!showGroup"
+          v-if="!showGroup && !(hasSearchQuery && hasNoResults)"
           key="accordion-list"
           :grouped-providers="groupedProviders"
           :loading="loading"
@@ -51,7 +85,7 @@
         />
 
         <GroupedProviderDetail
-          v-else
+          v-else-if="showGroup"
           key="group-detail"
           :group="currentGroupForService"
           :group-name="selectedGroupName"
@@ -138,7 +172,8 @@ export default defineComponent({
       groupExpanded: false,
       showGroup: false,
       selectedGroup: null,
-      selectedGroupName: '',
+      selectedGroupName: "",
+      pluginSearchKey: 0,
     };
   },
   computed: {
@@ -153,6 +188,22 @@ export default defineComponent({
           value: ServiceType.WorkflowStep,
         },
       ];
+    },
+    serviceCounts() {
+      const counts: Record<string, number> = {};
+      this.filteredServices.forEach((service) => {
+        counts[service.service] = service.providers?.length || 0;
+      });
+      return counts;
+    },
+    hasSearchQuery(): boolean {
+      return !!this.searchQuery?.trim();
+    },
+    hasNoResults(): boolean {
+      const activeService = this.filteredServices?.find(
+        (service) => service.service === this.selectedService,
+      );
+      return !activeService || (activeService.providers?.length || 0) === 0;
     },
     sectionHeading() {
       return this.selectedService === ServiceType.WorkflowStep
@@ -314,6 +365,8 @@ export default defineComponent({
       if (val === true) {
         this.searchQuery = "";
         this.backToAllPlugins();
+        // Reset PluginSearch component by incrementing key
+        this.pluginSearchKey += 1;
       }
     },
     modalShown(val) {
@@ -381,9 +434,7 @@ export default defineComponent({
 
       return filterByProps
         ? this.checkMatch(provider, propertyFilterValue[1], value)
-        : this.checkMatch(provider, "title", value) ||
-            this.checkMatch(provider, "name", value) ||
-            this.checkMatch(provider, "description", value);
+        : this.checkMatch(provider, "title", value);
     },
     checkMatch(obj, field: string, val: string) {
       return obj[field] && val && obj[field].toLowerCase().indexOf(val) >= 0;
@@ -412,7 +463,7 @@ export default defineComponent({
     backToAllPlugins() {
       this.showGroup = false;
       this.selectedGroup = null;
-      this.selectedGroupName = '';
+      this.selectedGroupName = "";
     },
     handleGroupProviderSelect(provider: any) {
       this.chooseProviderAdd(this.selectedService, provider.name);
@@ -421,6 +472,14 @@ export default defineComponent({
       // Disable grouping whenever there's an active search query
       // Show all search results not grouped
       return !!this.searchQuery?.trim();
+    },
+    getServiceOptionLabel(option: any): string {
+      // Only show count when there's an active search query
+      if (!this.hasSearchQuery) {
+        return option.name;
+      }
+      const count = this.serviceCounts[option.value] || 0;
+      return `${option.name} (${count})`;
     },
   },
 });
@@ -440,6 +499,12 @@ span:not(.glyphicon, .fa, .pi) {
 
 .modal-title {
   font-size: 24px !important;
+  font-weight: 500 !important;
+  line-height: var(--line-height-sm) !important;
+}
+
+.text-heading--sm {
+  color: var(--colors-gray-800-original) !important;
 }
 
 .text-heading--sm,
@@ -490,6 +555,30 @@ span:not(.glyphicon, .fa, .pi) {
 .view-transition-leave-to {
   opacity: 0;
   transform: translateX(-20px);
+}
+
+.no-matches-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16) var(--space-8);
+  text-align: center;
+}
+
+.no-matches-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--space-4);
+}
+
+.no-matches-text {
+  color: var(--colors-gray-800);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.no-matches-found .text-body--sm {
+  margin: 0;
 }
 </style>
 <style scoped lang="scss">
