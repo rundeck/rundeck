@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.JobLifecyclePluginProviderService
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -37,7 +38,7 @@ import rundeck.services.feature.FeatureService
  */
 @CompileStatic
 @Slf4j
-class JobLifecycleComponentService implements ProjectConfigurable, ApplicationContextAware {
+class JobLifecycleComponentService implements ProjectConfigurable, ApplicationContextAware, EventBusAware {
     private static final Logger LOG = LoggerFactory.getLogger(JobLifecycleComponentService)
 
     @Autowired

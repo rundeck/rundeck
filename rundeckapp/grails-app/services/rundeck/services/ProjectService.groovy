@@ -46,6 +46,7 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.transform.TypeCheckingMode
+import groovy.xml.XmlParser
 import groovy.xml.MarkupBuilder
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
@@ -1152,8 +1153,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 authContext,
                 project.name
         )
+        log.debug("[DIAG] ProjectService.importToProject(): Found ${projectImporters.size()} authorized import components: ${projectImporters.keySet()}")
+        projectImporters.each { name, component ->
+            log.debug("[DIAG] ProjectService.importToProject(): Component '${name}' (bean: ${component.class.name}), enabled: ${component.componentEnabled}, importFiles: ${component.importFilePatterns}")
+        }
+        log.debug("[DIAG] ProjectService.importToProject(): Import options: ${options.importComponents}")
         def baseRunBefore = [(BuiltinImportComponents.jobs.name()): [BuiltinImportComponents.executions.name()]]
         def sortOrder = BuiltinImportComponents.names() + (projectImporters?.keySet()?.toSorted() ?: [])
+        log.debug("[DIAG] ProjectService.importToProject(): Import sort order: ${sortOrder}")
 
         def sortResult = Toposort.toposort(sortOrder, { String name ->
             if (baseRunBefore[name]) {
@@ -1421,7 +1428,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 } else {
                     if (projectImporters && projectImporters[sortKey] && options.importComponents && options.importComponents[sortKey]) {
                         ProjectComponent importer = projectImporters[sortKey]
+                        log.debug("[DIAG] ProjectService: Processing component import for '${sortKey}', component name: '${importer.name}', enabled: ${importer.componentEnabled}")
                         if (importerstemp[importer.name]) {
+                            log.debug("[DIAG] ProjectService: Import files found for '${importer.name}': ${importerstemp[importer.name].keySet()}")
                             try {
                                 def result = importer.doImport(
                                         authContext,
@@ -1430,15 +1439,24 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                         options.importOpts ? options.importOpts[importer.name] : [:]
                                 )
                                 if (result) {
+                                    log.debug("[DIAG] ProjectService: Component '${importer.name}' import returned errors: ${result}")
                                     importerErrors[importer.name] = result
+                                } else {
+                                    log.debug("[DIAG] ProjectService: Component '${importer.name}' import completed successfully")
                                 }
                             } catch (Throwable e) {
+                                log.error("[DIAG] ProjectService: Error during project import for ${importer.name}: $e.message", e)
                                 log.warn("Error during project import for ${importer.name}: $e.message")
                                 log.debug("Error during project import for ${importer.name}: $e.message", e)
                                 importerErrors[importer.name] = [e.message]
                             }
+                        } else {
+                            log.debug("[DIAG] ProjectService: No import files found for component '${importer.name}' (expected files: ${importer.importFilePatterns})")
                         }
-
+                    } else {
+                        if (sortKey == 'project-runner') {
+                            log.debug("[DIAG] ProjectService: Component 'project-runner' not processed. projectImporters contains it: ${projectImporters?.containsKey(sortKey)}, options.importComponents contains it: ${options.importComponents?.containsKey(sortKey)}, enabled: ${projectImporters?[sortKey]?.componentEnabled}")
+                        }
                     }
                 }
             }
@@ -1479,12 +1497,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     public Map<String, ProjectComponent> getProjectComponents() {
         def some = null
         def types = componentBeanProvider.getBeans()
+        log.debug("[DIAG] ProjectService.getProjectComponents(): Found ${types.size()} ProjectComponent beans: ${types.keySet()}")
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->
-            if(v.componentEnabled){
+            boolean enabled = v.componentEnabled
+            log.debug("[DIAG] ProjectService.getProjectComponents(): Bean '${k}' -> component name '${v.name}', enabled: ${enabled}")
+            if(enabled){
                 values[v.name] = v
+            } else {
+                log.debug("[DIAG] ProjectService.getProjectComponents(): Bean '${k}' (component '${v.name}') is disabled, skipping")
             }
         }
+        log.debug("[DIAG] ProjectService.getProjectComponents(): Returning ${values.size()} enabled components: ${values.keySet()}")
         values
     }
 
@@ -1495,7 +1519,28 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             try{
                 component.afterProjectCreate(project)
             }catch (Exception e){
-                log.error("error afterProjectCreate component ${key}: ${e.message}")
+                // Provide specific guidance for storage/encryption errors
+                def errorMessage = e.message ?: "Unknown error"
+                def exceptionName = e.class.simpleName
+                
+                if (exceptionName.contains("Encryption") || 
+                    exceptionName.contains("Storage") ||
+                    errorMessage.contains("encryption") ||
+                    errorMessage.contains("Encryption")) {
+                    
+                    log.error("Storage/encryption error for component ${key}: ${errorMessage}. " +
+                             "This often indicates encryption configuration issues. " +
+                             "Check rundeck-config.properties for storage encryption settings.", e)
+                    
+                    throw new RuntimeException(
+                        "Failed to initialize storage for new project. ${errorMessage} " +
+                        "If using encryption, verify your encryption passwords are configured correctly in rundeck-config.properties.",
+                        e
+                    )
+                } else {
+                    log.error("Error afterProjectCreate component ${key}: ${errorMessage}", e)
+                    throw new RuntimeException("Failed to initialize ${key}: ${errorMessage}", e)
+                }
             }
         }
     }
@@ -1505,7 +1550,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         //filter import components based on authorization
         def projectAuthResource = rundeckAuthContextEvaluator.authResourceForProject(project)
         Map<String, ProjectComponent> authorized = new HashMap<>()
-        getProjectComponents()?.each { k, v ->
+        def allComponents = getProjectComponents()
+        allComponents?.each { k, v ->
             if (!v.importAuthRequiredActions
                     || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.importAuthRequiredActions)) {
                 authorized[k] = v

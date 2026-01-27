@@ -6,7 +6,6 @@ import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
-import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 

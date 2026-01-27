@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.jetty.jaas;
 
-import org.eclipse.jetty.jaas.spi.UserInfo;
+import org.rundeck.jaas.UserInfo;
 import org.junit.Test;
 
 import javax.naming.NamingEnumeration;

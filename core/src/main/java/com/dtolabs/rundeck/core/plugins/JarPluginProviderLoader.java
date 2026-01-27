@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
@@ -103,6 +104,7 @@ public class JarPluginProviderLoader implements ProviderLoader,
     @SuppressWarnings("rawtypes")
     private Map<ProviderIdent, Class> pluginProviderDefs = new HashMap<ProviderIdent, Class>();
     private AtomicInteger loadCount = new AtomicInteger();
+    private final Set<String> brokenClasses = new HashSet<>();
 
     public JarPluginProviderLoader(final File pluginJar, final File pluginJarCacheDirectory, final File cachedir) {
         this(pluginJar, pluginJarCacheDirectory, cachedir, true);
@@ -570,17 +572,46 @@ public class JarPluginProviderLoader implements ProviderLoader,
     }
 
     /**
+     * Check if a class file exists in the JAR before attempting to load it.
+     */
+    private boolean classExistsInJar(final String classname) {
+        String classPath = classname.replace('.', '/') + ".class";
+        try (JarFile jarFile = new JarFile(pluginJar)) {
+            return jarFile.getEntry(classPath) != null;
+        } catch (IOException e) {
+            log.debug("Error checking for class {} in JAR {}: {}", classname, pluginJar.getName(), e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Return true if the file has a class that provides the ident.
      */
     public synchronized boolean isLoaderFor(final ProviderIdent ident) {
         final String[] strings = getClassnames();
         for (final String classname : strings) {
+            // Skip if we already know this class is broken
+            if (brokenClasses.contains(classname)) {
+                continue;
+            }
+            
+            // Check if class file exists in JAR before attempting to load
+            if (!classExistsInJar(classname)) {
+                brokenClasses.add(classname);
+                log.error("Plugin {} declares class {} in manifest but class file is missing from JAR. Plugin may be broken or incorrectly packaged.", 
+                    pluginJar.getName(), classname);
+                continue;
+            }
+            
             try {
                 if (matchesProviderDeclaration(ident, loadClass(classname))) {
                     return true;
                 }
             } catch (PluginException e) {
-                e.printStackTrace();
+                // Class file exists but failed to load - mark as broken and log
+                brokenClasses.add(classname);
+                log.error("Error loading plugin class {} from {} for provider {}: {}", 
+                    classname, pluginJar.getName(), ident, e.getMessage(), e);
             }
         }
         return false;

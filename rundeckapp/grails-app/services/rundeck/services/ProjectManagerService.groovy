@@ -41,7 +41,6 @@ import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
-import com.sun.org.apache.xpath.internal.operations.Bool
 import grails.compiler.GrailsCompileStatic
 import grails.events.annotation.Subscriber
 import grails.events.bus.EventBusAware

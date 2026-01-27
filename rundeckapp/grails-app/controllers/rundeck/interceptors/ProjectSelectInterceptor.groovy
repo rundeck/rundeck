@@ -25,7 +25,7 @@ import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import rundeck.services.feature.FeatureService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 /**
  * This filter checks whether a user has selected a valid project to use, stored in session.project.  If none is stored in

@@ -23,7 +23,12 @@ class AppProjectAdhocResourceAuthorizingProvider
             rundeckAuthContextProcessor,
             subject,
             namedAuthProvider,
-            project
+            new ProjectIdentifier() {
+                @Override
+                String getProject() {
+                    return project
+                }
+            }
         )
     }
 

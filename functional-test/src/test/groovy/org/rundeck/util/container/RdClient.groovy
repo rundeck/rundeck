@@ -207,6 +207,8 @@ class RdClient {
         def builder = new Request.Builder()
                 .url(apiUrl(path))
                 .header('Accept', 'application/json')
+                // Grails 7: Explicitly set Content-Type for JSON requests
+                .header('Content-Type', 'application/json')
                 .method(method, requestBuilder)
 
         httpClient.newCall(

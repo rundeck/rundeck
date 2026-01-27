@@ -41,7 +41,7 @@ import rundeck.services.feature.FeatureService
 import rundeckapp.cli.CommandLineSetup
 import webhooks.Webhook
 
-import javax.servlet.ServletContext
+import jakarta.servlet.ServletContext
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 
@@ -70,6 +70,7 @@ class BootStrap {
     def EventBus grailsEventBus
     def configStorageService
     FeatureService featureService
+    ServletContext servletContext  // Injected in Grails 7 instead of passed as parameter
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -79,9 +80,44 @@ class BootStrap {
         return res
     }
 
-    def init = { ServletContext servletContext ->
+    def init = {
         // Marshal enums to "STRING" instead of {"enumType":"com.package.MyEnum", "name":"OBJECT"}
         JSON.registerObjectMarshaller(Enum, { Enum e -> e.toString() })
+
+        // Grails 7: Register custom JSON marshallers for Plugin configuration objects
+        // Property and Description objects from core module cannot be serialized by default 
+        // JSON converter due to Java module encapsulation. These marshallers extract public 
+        // interface fields and handle recursive serialization.
+        // See Pattern #25 in GRAILS7_MIGRATION_NOTES.md
+        
+        // Property marshaller (used by Description marshaller for properties array)
+        JSON.registerObjectMarshaller(com.dtolabs.rundeck.core.plugins.configuration.Property) { 
+            com.dtolabs.rundeck.core.plugins.configuration.Property prop ->
+            return [
+                name: prop.name,
+                title: prop.title,
+                description: prop.description,
+                type: prop.type?.toString(),
+                required: prop.required,
+                defaultValue: prop.defaultValue,
+                selectValues: prop.selectValues,
+                selectLabels: prop.selectLabels,
+                scope: prop.scope?.toString(),
+                renderingOptions: prop.renderingOptions,
+                blankIfUnexpandable: prop.blankIfUnexpandable
+            ]
+        }
+        
+        // Description marshaller (automatically uses Property marshaller for nested properties)
+        JSON.registerObjectMarshaller(com.dtolabs.rundeck.core.plugins.configuration.Description) {
+            com.dtolabs.rundeck.core.plugins.configuration.Description desc ->
+            return [
+                name: desc.name,
+                title: desc.title,
+                description: desc.description,
+                properties: desc.properties  // Property marshaller handles this automatically
+            ]
+        }
 
         //setup profiler logging
         if(!(grailsApplication.config.getProperty("grails.profiler.disable", Boolean.class, false)) && grailsApplication.mainContext.profilerLog) {
@@ -256,9 +292,42 @@ class BootStrap {
             servletContext.setAttribute("LOGLEVEL_DEFAULT", "INFO")
         }
 
-        if(grailsApplication.config.getProperty("rss.enabled",Boolean.class, false)){
+        // Check for deprecated rss.enabled flag
+        def oldRssEnabled = grailsApplication.config.getProperty("rss.enabled", Boolean.class, false)
+        def legacyRssEnabled = grailsApplication.config.getProperty("rundeck.feature.legacyRSS.enabled", Boolean.class, false)
+        
+        if(oldRssEnabled && !legacyRssEnabled){
+            // Customer has old flag but not new flag - show error and don't enable
+            log.error("=" * 80)
+            log.error("RSS FEED FEATURE CONFIGURATION ERROR")
+            log.error("The 'rss.enabled' property is DEPRECATED and no longer works by itself.")
+            log.error("")
+            log.error("To continue using RSS feeds (NOT RECOMMENDED), you must set:")
+            log.error("  rundeck.feature.legacyRSS.enabled=true")
+            log.error("")
+            log.error("Security Risk: RSS feeds provide UNAUTHENTICATED public access to:")
+            log.error("  - Execution history and timing")
+            log.error("  - Job names and structure")
+            log.error("  - User activity patterns")
+            log.error("")
+            log.error("This feature will be REMOVED in a future Rundeck version.")
+            log.error("Please migrate to authenticated alternatives:")
+            log.error("  - API: /api/14/project/[PROJECT]/executions")
+            log.error("  - Webhooks: Real-time execution notifications")
+            log.error("")
+            log.error("For assistance, contact support at: https://support.pagerduty.com")
+            log.error("=" * 80)
+            log.info("RSS feeds disabled")
+        }else if(legacyRssEnabled){
+            // Customer explicitly enabled legacy RSS - enable but warn
             servletContext.setAttribute("RSS_ENABLED", 'true')
-            log.info("RSS feeds enabled")
+            log.warn("=" * 80)
+            log.warn("RSS FEED FEATURE IS DEPRECATED AND WILL BE REMOVED IN A FUTURE RUNDECK VERSION")
+            log.warn("This feature provides unauthenticated public access to execution history")
+            log.warn("Security Risk: Job names, execution timing, and user activity may be exposed")
+            log.warn("Please migrate to authenticated alternatives: API endpoints or Webhooks")
+            log.warn("For assistance, contact support at: https://support.pagerduty.com")
+            log.warn("=" * 80)
         }else{
             log.info("RSS feeds disabled")
         }
@@ -266,7 +335,8 @@ class BootStrap {
         //Setup the correct authentication provider for the configured authentication mechanism
         if(grailsApplication.config.getProperty("rundeck.useJaas",Boolean.class, false)) {
             log.info("Using jaas authentication")
-            SpringSecurityUtils.clientRegisterFilter("jaasApiIntegrationFilter", SecurityFilterPosition.OPENID_FILTER.order + 150)
+            // Grails 7/Spring Security 6: OPENID_FILTER removed (OpenID 2.0 deprecated), using FORM_LOGIN_FILTER as reference
+            SpringSecurityUtils.clientRegisterFilter("jaasApiIntegrationFilter", SecurityFilterPosition.FORM_LOGIN_FILTER.order + 150)
             authenticationManager.providers.add(grailsApplication.mainContext.getBean("jaasAuthProvider"))
         } else {
             log.info("Using builtin realm authentication")

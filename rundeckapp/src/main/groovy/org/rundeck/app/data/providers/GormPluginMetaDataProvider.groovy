@@ -34,8 +34,11 @@ class GormPluginMetaDataProvider implements PluginMetaDataProvider{
 
     @Override
     Integer deleteAllByProject(String project) {
-        return PluginMeta.executeUpdate('delete PluginMeta where project=:project', [project: project], [flush: true])
-
+        // Grails 7: DataTest trait doesn't support HQL executeUpdate, use criteria instead
+        def found = PluginMeta.findAllByProject(project)
+        def count = found.size()
+        found*.delete(flush: true)
+        return count
     }
 
     @Override

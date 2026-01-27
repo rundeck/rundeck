@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.util
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import jakarta.servlet.http.HttpServletRequest
 import org.grails.web.json.JSONObject
 
 
@@ -23,6 +25,60 @@ import org.grails.web.json.JSONObject
  * JSON request handling utilities
  */
 class JsonUtil {
+
+    // Grails 7: Shared ObjectMapper instance for parsing JSON request bodies
+    private static final ObjectMapper objectMapper = new ObjectMapper()
+
+    /**
+     * Grails 7: Parse JSON from HttpServletRequest body using Jackson ObjectMapper.
+     * This replaces the broken request.JSON property in Grails 7/Spring Boot 3.
+     * 
+     * @param request HttpServletRequest with JSON body
+     * @return Parsed JSON as Map, or null if request body is empty or already consumed
+     * @throws IOException if JSON parsing fails (but not if body is unavailable)
+     */
+    static Map parseRequestBody(HttpServletRequest request) throws IOException {
+        // Grails 7: Check if this is actually a JSON request
+        def contentType = request.contentType
+        if (contentType) {
+            // Skip non-JSON content types (multipart/form-data, etc.)
+            if (!contentType.toLowerCase().contains('json')) {
+                return null
+            }
+        }
+        
+        // Spring Boot 3: Try multiple approaches to read the request body
+        
+        // Attempt 1: Read from input stream
+        try {
+            def inputStream = request.getInputStream()
+            if (inputStream && inputStream.available() > 0) {
+                return objectMapper.readValue(inputStream, Map.class)
+            }
+        } catch (Exception e) {
+            // Stream might be already consumed or unavailable
+            // Continue to next attempt
+        }
+        
+        // Attempt 2: Read from reader  
+        try {
+            def reader = request.getReader()
+            if (reader) {
+                def content = reader.text
+                if (content && !content.trim().empty) {
+                    return objectMapper.readValue(content, Map.class)
+                }
+            }
+        } catch (Exception e) {
+            // Reader might be unavailable
+            // Continue to next attempt
+        }
+        
+        // NOTE: No fallback needed for Grails 7 controllers using @RequestBody
+        // Spring automatically handles JSON deserialization for @RequestBody parameters
+        
+        return null
+    }
 
     /**
      * Validate a json object

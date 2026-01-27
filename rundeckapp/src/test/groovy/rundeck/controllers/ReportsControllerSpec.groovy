@@ -18,8 +18,9 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
+import spock.lang.Specification
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -30,14 +31,16 @@ import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 import rundeck.services.UserService
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 9/22/16.
  */
-class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ReportsController> {
+// Grails 7: Use DataTest + ControllerUnitTest instead of RundeckHibernateSpec
+class ReportsControllerSpec extends Specification implements ControllerUnitTest<ReportsController>, DataTest {
 
-    List<Class> getDomainClasses() { [Execution, ScheduledExecution, ReferencedExecution, CommandExec] }
+    void setupSpec() {
+        mockDomains(Execution, ScheduledExecution, ReferencedExecution, CommandExec)
+    }
 
     Closure doWithConfig() {{ config ->
         config.grails.databinding.dateFormats = [

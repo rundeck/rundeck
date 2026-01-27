@@ -179,6 +179,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         serverNodeUUID(type: 'string')
         pluginConfig(type: 'text')
         lastModifiedBy(type: 'string')
+        // Escape SQL reserved words with backticks for H2 compatibility
+        minute column: "`MINUTE`"
+        hour column: "`HOUR`"
+        month column: "`MONTH`"
+        seconds column: "`SECONDS`"
+        year column: "`YEAR`"
 
         DomainIndexHelper.generate(delegate) {
             index 'JOB_IDX_PROJECT', ['project']

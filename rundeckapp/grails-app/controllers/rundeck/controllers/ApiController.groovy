@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.ConfigurationService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.app.api.ApiVersions
@@ -84,7 +84,7 @@ class ApiController extends ControllerBase{
             featureQueryAll      : ['GET']
     ]
 
-    @Get('/')
+    @Get(uri='/', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get API Information',
@@ -93,18 +93,24 @@ class ApiController extends ControllerBase{
 This endpoint provides essential API metadata that clients can use to determine available functionality and construct properly formatted API requests. The response includes the highest supported API version number and the base URL for making subsequent API calls.
 
 Use this endpoint to verify API connectivity and determine the correct API version to use for your integration.''',
-        tags = ['API'],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'API Information',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{
+        tags = ['API']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'API Information',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = [
+                @ExampleObject(
+                    name = 'api-info',
+                    description = 'API Information response example',
+                    value = '''{
   "apiversion": 44,
   "href": "http://localhost:4441/api/44"
-}''')
-            )
+}'''
+                )
+            ]
         )
     )
     def info () {
@@ -153,212 +159,138 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
         description = 'Read System Metrics'
     )
-
-    @Get(
-        uri= "/metrics",
-        produces = MediaType.APPLICATION_JSON
-    )
+    
+    @Get('/metrics')
     @Operation(
-        method = "GET",
-        summary = "List available metrics",
-        description = "Return list of available metrics endpoints"
+        method = 'GET',
+        summary = 'List available metrics',
+        description = 'Return list of available metrics endpoints',
+        tags = ['Metrics']
     )
     @ApiResponse(
-        responseCode = "200",
-        description = "List of metrics available",
+        responseCode = '200',
+        description = 'List of metrics available',
         content = @Content(
-            mediaType = "application/json",
-            schema = @Schema(implementation = LinkListResponse),
-            examples = @ExampleObject(value = '''{"_links":{"metrics":{"href":"http://localhost:4440/api/56/metrics/metrics"},"ping":{"href":"http://localhost:4440/api/56/metrics/ping"},"threads":{"href":"http://localhost:4440/api/56/metrics/threads"},"healthcheck":{"href":"http://localhost:4440/api/56/metrics/healthcheck"}}}''')
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = LinkListResponse)
         )
     )
-    @Tag(name = "Metrics")
-    def apiMetricsList() {
-        apiMetrics(null)
-    }
-
+    protected def apiMetricsList_docs() {}
+    
+    @Get('/metrics/healthcheck')
+    @Operation(
+        method = 'GET',
+        summary = 'Get healthcheck results',
+        description = 'Return results of health checks',
+        tags = ['Metrics']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Healthcheck results',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON
+        )
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Error response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiMetricsHealthcheck_docs() {}
+    
+    @Get('/metrics/metrics')
+    @Operation(
+        method = 'GET',
+        summary = 'Get metrics data',
+        description = 'Return metrics data including gauges, counters, histograms, meters, and timers',
+        tags = ['Metrics']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Metrics data',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON
+        )
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Error response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiMetricsMetrics_docs() {}
+    
+    @Get('/metrics/ping')
+    @Operation(
+        method = 'GET',
+        summary = 'Ping metrics endpoint',
+        description = 'Simple ping endpoint that returns a text response',
+        tags = ['Metrics']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Ping response',
+        content = @Content(
+            mediaType = MediaType.TEXT_PLAIN
+        )
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Error response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiMetricsPing_docs() {}
+    
+    @Get('/metrics/threads')
+    @Operation(
+        method = 'GET',
+        summary = 'Get thread dump',
+        description = 'Return a dump of running JVM threads',
+        tags = ['Metrics']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Thread dump',
+        content = @Content(
+            mediaType = MediaType.TEXT_PLAIN
+        )
+    )
+    @ApiResponse(
+        responseCode = '404',
+        description = 'Error response',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiMetricsThreads_docs() {}
+    
     @RdAuthorizeSystem(
         value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
         description = 'Read System Metrics'
     )
-
-    @Get(
-        uri= "/metrics/metrics",
-        produces = MediaType.APPLICATION_JSON
-    )
-    @Operation(
-        method = "GET",
-        summary = "Get metrics data",
-        description = "Return metrics data including gauges, counters, histograms, meters, and timers"
-    )
-    @ApiResponse(
-        responseCode = "200",
-        description = "Metrics data",
-        content = @Content(
-            mediaType = "application/json",
-            examples = @ExampleObject(value = '''{"version":"4.0.0","gauges":{"dataSource.connection.pingTime":{"value":1},"rundeck.scheduler.quartz.runningExecutions":{"value":0},"rundeck.scheduler.quartz.threadPoolSize":{"value":10}},"counters":{"rundeck.scheduler.quartz.scheduledJobs":{"count":0},"userLogin.success":{"count":11}},"histograms":{},"meters":{"rundeck.services.AuthorizationService.systemAuthorization.evaluateMeter":{"count":0,"m15_rate":0.0,"m1_rate":0.0,"m5_rate":0.0,"mean_rate":0.0,"units":"events/second"}},"timers":{"rundeck.api.requests.requestTimer":{"count":60,"max":6.317398919,"mean":0.026001214274461268,"min":0.0023142080000000003,"p50":0.026092959000000002,"p75":0.030003541,"p95":0.038119417,"p98":0.040306041,"p99":0.044510167,"p999":0.044510167,"stddev":0.01834652011881323,"m15_rate":0.03909615395387536,"m1_rate":0.0397593563491449,"m5_rate":0.054026440399837165,"mean_rate":0.07388108803406175,"duration_units":"seconds","rate_units":"calls/second"}}}''')
-        )
-    )
-    @ApiResponse(
-        responseCode = "404",
-        description = "Error response",
-        content = @Content(
-            mediaType = MediaType.APPLICATION_JSON,
-            schema = @Schema(implementation = ApiErrorResponse),
-            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
-        )
-    )
-    @Tag(name = "Metrics")
-    def apiMetricsData() {
-        apiMetrics('metrics')
-    }
-
-    @RdAuthorizeSystem(
-        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
-        description = 'Read System Metrics'
-    )
-
-    @Get(
-        uri= "/metrics/ping",
-        produces = MediaType.APPLICATION_JSON
-    )
-    @Operation(
-        method = "GET",
-        summary = "Ping metrics endpoint",
-        description = "Simple ping endpoint that returns a text response"
-    )
-    @ApiResponse(
-        responseCode = "200",
-        description = "Ping response",
-        content = @Content(
-            mediaType = "text/plain",
-            examples = @ExampleObject(value = 'pong')
-        )
-    )
-    @ApiResponse(
-        responseCode = "404",
-        description = "Error response",
-        content = @Content(
-            mediaType = MediaType.APPLICATION_JSON,
-            schema = @Schema(implementation = ApiErrorResponse),
-            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
-        )
-    )
-    @Tag(name = "Metrics")
-    def apiMetricsPing() {
-        apiMetrics('ping')
-    }
-
-    @RdAuthorizeSystem(
-        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
-        description = 'Read System Metrics'
-    )
-
-    @Get(
-        uri= "/metrics/threads",
-        produces = MediaType.APPLICATION_JSON
-    )
-    @Operation(
-        method = "GET",
-        summary = "Get thread dump",
-        description = "Return a dump of running JVM threads"
-    )
-    @ApiResponse(
-        responseCode = "200",
-        description = "Thread dump",
-        content = @Content(
-            mediaType = "text/plain",
-            examples = @ExampleObject(value = '''"qtp646391393-124" id=124 state=TIMED_WAITING
-    - waiting on <0x05c9b4f9> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
-    - locked <0x05c9b4f9> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
-    at java.base@11.0.28/jdk.internal.misc.Unsafe.park(Native Method)
-    at java.base@11.0.28/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:234)
-    at java.base@11.0.28/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2123)
-    at org.eclipse.jetty.util.BlockingArrayQueue.poll(BlockingArrayQueue.java:382)
-    at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.idleJobPoll(QueuedThreadPool.java:974)
-    at org.eclipse.jetty.util.thread.QueuedThreadPool$Runner.run(QueuedThreadPool.java:1018)
-    at java.base@11.0.28/java.lang.Thread.run(Thread.java:829)
-
-"pool-3-thread-13" id=120 state=TIMED_WAITING
-    - waiting on <0x569b5d5c> (a java.util.concurrent.SynchronousQueue$TransferStack)
-    - locked <0x569b5d5c> (a java.util.concurrent.SynchronousQueue$TransferStack)
-    at java.base@11.0.28/jdk.internal.misc.Unsafe.park(Native Method)
-    at java.base@11.0.28/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:234)
-    at java.base@11.0.28/java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue.java:462)
-    at java.base@11.0.28/java.util.concurrent.SynchronousQueue$TransferStack.transfer(SynchronousQueue.java:361)
-    at java.base@11.0.28/java.util.concurrent.SynchronousQueue.poll(SynchronousQueue.java:937)
-    at java.base@11.0.28/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1053)
-    at java.base@11.0.28/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1114)
-    at java.base@11.0.28/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)
-    at java.base@11.0.28/java.lang.Thread.run(Thread.java:829)
-
-... (additional threads omitted for brevity)''')
-        )
-    )
-    @ApiResponse(
-        responseCode = "404",
-        description = "Error response",
-        content = @Content(
-            mediaType = MediaType.APPLICATION_JSON,
-            schema = @Schema(implementation = ApiErrorResponse),
-            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
-        )
-    )
-    @Tag(name = "Metrics")
-    def apiMetricsThreads() {
-        apiMetrics('threads')
-    }
-
-    @RdAuthorizeSystem(
-        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
-        description = 'Read System Metrics'
-    )
-
-    @Get(
-        uri= "/metrics/healthcheck",
-        produces = MediaType.APPLICATION_JSON
-    )
-    @Operation(
-        method = "GET",
-        summary = "Get healthcheck results",
-        description = "Return results of health checks"
-    )
-    @ApiResponse(
-        responseCode = "200",
-        description = "Healthcheck results",
-        content = @Content(
-            mediaType = "application/json",
-            examples = @ExampleObject(value = '''{"dataSource.connection.time":{"healthy":true,"message":"Datasource connection healthy with timeout 5 seconds","duration":5,"timestamp":"2025-11-20T16:31:54.697Z"},"quartz.scheduler.threadPool":{"healthy":true,"duration":0,"timestamp":"2025-11-20T16:31:54.691Z"}}''')
-        )
-    )
-    @ApiResponse(
-        responseCode = "404",
-        description = "Error response",
-        content = @Content(
-            mediaType = MediaType.APPLICATION_JSON,
-            schema = @Schema(implementation = ApiErrorResponse),
-            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
-        )
-    )
-    @Tag(name = "Metrics")
-    def apiMetricsHealthcheck() {
-        apiMetrics('healthcheck')
-    }
-
     def apiMetrics(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
         }
 
-
+        // All /api/*/metrics/* endpoints controlled by rundeck.metrics.legacy.enabled
+        // Individual .api.*.enabled configs removed in Rundeck 6.0
+        def legacyEnabled = configurationService.getBoolean("metrics.legacy.enabled", false)
+        
         def names = ['metrics', 'ping', 'threads', 'healthcheck']
-        def globalEnabled=configurationService.getBoolean("metrics.enabled", true) &&
-                          configurationService.getBoolean("metrics.api.enabled", true)
-        Map<String,Boolean> enabled = new HashMap<>()
         LinkListResponse links = new LinkListResponse()
-        names.each { mname ->
-            enabled[mname] = globalEnabled && configurationService.getBoolean("metrics.api.${mname}.enabled", true)
-            if (enabled[mname]) {
+        
+        if (legacyEnabled) {
+            names.each { mname ->
                 links.addLink(
                     mname,
                     grailsLinkGenerator
@@ -366,11 +298,13 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                 )
             }
         }
+        
         if (!name) {
             //list enabled endpoints
             return respond(links, formats: ['json'])
         }
-        if (!enabled[name]) {
+        
+        if (!legacyEnabled || !names.contains(name)) {
             return apiService.renderErrorFormat(
                 response,
                 [
@@ -383,15 +317,57 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                 ]
             )
         }
+        
         def servletPath = configurationService.getString('metrics.servletUrlPattern', '/metrics/*')
         forward(uri: servletPath.replace('/*', "/$name"))
     }
+    
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
+        description = 'Read System Monitoring Metrics'
+    )
+    def apiMonitoring(String name) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
+            return
+        }
 
-
-
-
-
-    @Tag(name = "System")
+        // Modern monitoring endpoints - always available (unless explicitly disabled)
+        def monitoringEnabled = configurationService.getBoolean("metrics.monitoring.enabled", true)
+        
+        def names = ['prometheus', 'metrics', 'health', 'info', 'threaddump']
+        
+        if (!name || !names.contains(name)) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    format: 'json',
+                    code  : 'api.error.invalid.request',
+                    args  : [
+                        request.forwardURI,
+                    ],
+                    status: HttpServletResponse.SC_NOT_FOUND
+                ]
+            )
+        }
+        
+        if (!monitoringEnabled) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    format: 'json',
+                    code  : 'api.error.monitoring.disabled',
+                    args  : [
+                        request.forwardURI,
+                    ],
+                    status: HttpServletResponse.SC_NOT_FOUND
+                ]
+            )
+        }
+        
+        // Forward to monitoring controller
+        forward(uri: "/monitoring/$name")
+    }
+    
     /**
      * API endpoint to query system features' toggle status: True/False for On/Off
      *
@@ -405,6 +381,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         produces = MediaType.APPLICATION_JSON
     )
     @Operation(
+        tags = ['System'],
         method = "GET",
         summary = "Get Rundeck System Feature Status",
         description = "Return whether a feature is enabled or disabled.",
@@ -419,17 +396,15 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                             type='string'
                     )
             )
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = "200",
-                description = "On/off status of the feature",
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = FeatureEnabledResult)
-                )
-            )
         ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "On/off status of the feature",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = FeatureEnabledResult)
+        )
     )
     @CompileStatic
     def featureQuery(@PathVariable(name = "featureName") String featureName) {
@@ -441,8 +416,6 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         return respond(result, formats: ['json'])
 
     }
-
-    @Tag(name = "System")
     /**
      * API endpoint to query all system features' toggle status: True/False for On/Off
      *
@@ -453,20 +426,19 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             produces = MediaType.APPLICATION_JSON
     )
     @Operation(
+            tags = ['System'],
             method = "GET",
             summary = "List all System Feature on/off Status",
             description = "The query will return all system features' status",
-            parameters = [],
-            responses = [
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "List of features' on/off status",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    array = @ArraySchema(schema = @Schema(implementation = FeatureEnabledResult))
-                            )
-                    )
-            ]
+            parameters = []
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "List of features' on/off status",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    array = @ArraySchema(schema = @Schema(implementation = FeatureEnabledResult))
+            )
     )
     @CompileStatic
     def featureQueryAll() {
@@ -510,6 +482,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         produces = MediaType.APPLICATION_JSON
     )
     @Operation(
+        tags = ['Tokens'],
         method = "GET",
         summary = "Get a specified auth token metadata",
         description = "API Token information",
@@ -523,28 +496,24 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                     format='uuid'
                 )
             )
-        ],
-        responses=[
-            @ApiResponse(
-                responseCode = "200",
-                description = '''The token includes the `creator` of the token, as well as the `user` (the effective username) of the token.''',
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = Token)
-                )
-            ),
-            @ApiResponse(
-                responseCode = "404",
-                description = "Not Found",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
-            )
-
         ]
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(
+        responseCode = "200",
+        description = '''The token includes the `creator` of the token, as well as the `user` (the effective username) of the token.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Token)
+        )
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
     @CompileStatic
     def apiTokenGet(String tokenid) {
         AuthenticationToken oldtoken = validateTokenRequest(tokenid)
@@ -587,6 +556,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
 
     @Delete(uri= "/token/{tokenid}")
     @Operation(
+        tags = ['Tokens'],
         method = "DELETE",
         summary = "Delete a specified auth token.",
         parameters = [
@@ -599,21 +569,25 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                     format='uuid'
                 )
             )
-        ],
-        responses=[
-            @ApiResponse(responseCode = "204", description = "No Content (DELETE successful)"),
-
-            @ApiResponse(
-                responseCode = "404",
-                description = "Not Found",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
-            )
         ]
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(
+        responseCode = "200",
+        description = "apiTokenDelete 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(responseCode = "204", description = "No Content (DELETE successful)")
+    @ApiResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
     @CompileStatic
     def apiTokenDelete(String tokenid) {
         AuthenticationToken oldtoken = validateTokenRequest(tokenid)
@@ -626,9 +600,9 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         return render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
-
     @Get(uri= "/tokens/{user}")
     @Operation(
+        tags = ['Tokens'],
         method = "GET",
         summary = "List all tokens or all tokens for a specific user.",
         parameters = [
@@ -641,21 +615,16 @@ Use this endpoint to verify API connectivity and determine the correct API versi
                     type='string'
                 )
             )
-        ],
-        responses=[
-            @ApiResponse(
-                responseCode = "200",
-                description = "Token List Response",
-
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    array = @ArraySchema(schema = @Schema(implementation = Token))
-                )
-            ),
-
         ]
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Token List Response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(implementation = Token))
+        )
+    )
     /**
      * GET /api/11/tokens/$user?
      */
@@ -675,7 +644,6 @@ Use this endpoint to verify API connectivity and determine the correct API versi
 
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
-
         if (!adminAuth && user && user != authContext.username) {
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'User', user])
         }
@@ -688,7 +656,6 @@ Use this endpoint to verify API connectivity and determine the correct API versi
             tokenlist = apiService.listTokens()
         }
 
-
         def data = new ListTokens(user, !user, tokenlist.findAll {tkn->
             tkn.getType() != AuthTokenType.WEBHOOK
         }.collect {
@@ -698,8 +665,7 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         respond(data, [formats: responseFormats])
     }
 
-
-    @Post(uri= "/tokens/{user}", processes = MediaType.APPLICATION_JSON)
+    @Post(uri= "/tokens/{user}", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Create API Token",
@@ -715,6 +681,7 @@ then the generated token will have all roles as the authenticated user.
 
 Since: v11
 ''',
+        tags = ['Tokens'],
         parameters = [
             @Parameter(
                 name = 'user',
@@ -757,19 +724,24 @@ Since: v11
                     )
                 ]
             )
-        ),
-        responses=[
-            @ApiResponse(
-                responseCode = "201",
-                description = "Token Created",
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = Token)
-                )
-            )
-        ]
+        )
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(
+        responseCode = "200",
+        description = "apiTokenCreate 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "Token Created",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Token)
+        )
+    )
     /**
      * POST /api/11/tokens/$user?
      * @return
@@ -826,8 +798,7 @@ Since: v11
                             tokenName = xml.'@name'.text()
                         }
                     }
-            ]
-            )
+            ])
             if (!parsed) {
                 return
             }
@@ -886,8 +857,9 @@ Since: v11
         respond(new Token(token, false, apiVersion < ApiVersions.V19), [formats: responseFormats])
     }
 
-    @Post(uri= "/tokens/{user}/removeExpired", processes = MediaType.APPLICATION_JSON)
+    @Post(uri= "/tokens/{user}/removeExpired", produces = MediaType.APPLICATION_JSON)
     @Operation(
+        tags = ['Tokens'],
         method = "POST",
         summary = "Remove Expired Tokens",
         description = 'Remove expired tokens for the specified User. Since: v19',
@@ -900,21 +872,16 @@ Since: v11
                     type = 'string'
                 )
             )
-        ],
-        responses=[
-            @ApiResponse(
-                responseCode = "200",
-                description = "Remove expired tokens result",
-
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = RemoveExpiredTokens)
-                )
-            ),
-
         ]
     )
-    @Tag(name = "Tokens")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Remove expired tokens result",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = RemoveExpiredTokens)
+        )
+    )
     /**
      * /api/19/tokens/$user/removeExpired
      */
@@ -961,12 +928,12 @@ Since: v11
      * /api/1/system/info: display stats and info about the server
      */
     @Get(uri="/system/info", produces = MediaType.APPLICATION_JSON)
-    @Operation(method = "GET", summary = "Get Rundeck server information and stats",
+    @Operation(method = "GET", summary = "Get Rundeck server information and stats", 
+            tags = ['System'],
             description = "Display stats and info about the rundeck server"
     )
-    @ApiResponse(responseCode = "200", description = "System info response", content = @Content(mediaType = "application/json",
+    @ApiResponse(responseCode = "200", description = "System info response", content = @Content(mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation= SystemInfoModel.class)))
-    @Tag(name = "System")
     def apiSystemInfo(){
         if (!apiService.requireApi(request, response)) {
             return
