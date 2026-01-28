@@ -132,6 +132,10 @@ public class ContextManager extends NoopWorkflowExecutionListener implements Con
 
     public void beginWorkflowItem(final int step, final StepExecutionItem item) {
         stepContext.beginStepContext(StateUtils.stepContextId(step, false));
+        if(item.getRunner()!=null){
+            //node step, begin node context as well
+            stepContext.beginNodeContext(item.getRunner());
+        }
     }
 
     @Override
