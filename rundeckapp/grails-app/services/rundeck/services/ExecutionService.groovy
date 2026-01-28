@@ -4251,7 +4251,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
    * @param max paging max
    * @return result map [total: int, result: List<Execution>]
    */
-    @Transactional(propagation = Propagation.SUPPORTS)
     def queryExecutions(ExecutionQuery query, int offset = 0, int max = -1) {
 
     // Standard Criteria-based query (original implementation)
