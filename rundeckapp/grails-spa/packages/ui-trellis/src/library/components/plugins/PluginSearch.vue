@@ -79,13 +79,13 @@
         </div>
       </div>
       <div v-else>
-        <input
-            id="stepFilter"
+        <PtInput
             v-model="filterValue"
             type="search"
             name="nodeFilter"
-            class="schedJobStepFilter form-control allowenter"
             :placeholder="$t('enter.a.step.filter.override')"
+            left-icon="pi pi-search"
+            input-id="stepFilter"
             @keydown.enter.prevent="filterStepDescriptions"
         />
       </div>
@@ -95,9 +95,13 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { PtInput } from "@/library/components/primeVue";
 
 export default defineComponent({
   name: "PluginSearch",
+  components: {
+    PtInput,
+  },
   props: {
     ea: {
       type: Boolean,

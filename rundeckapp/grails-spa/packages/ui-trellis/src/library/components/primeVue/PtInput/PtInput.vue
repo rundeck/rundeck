@@ -224,7 +224,7 @@ export default defineComponent({
 .p-inputicon {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-25%);
   color: var(--colors-gray-500);
   width: 14px;
   height: 14px;

@@ -514,6 +514,7 @@ export default defineComponent({
 
   .btn-add-condition-set,
   .btn-add-condition-step {
+    align-self: flex-start;
     padding: 5px 9px;
     font-size: 12px;
     border-color: var(--colors-gray-600);
@@ -558,6 +559,7 @@ export default defineComponent({
     }
 
     .btn-save {
+      background: none;
       border-color: var(--colors-blue-600);
       color: var(--colors-blue-600);
 

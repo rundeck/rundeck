@@ -101,11 +101,11 @@ export default defineComponent({
   background: var(--colors-white);
   border-color: var(--colors-gray-300);
   color: var(--colors-gray-600);
+  padding: 10px 17px;
 
   &:hover {
     background: var(--colors-gray-100);
     border-color: var(--colors-gray-300);
-    color: var(--colors-gray-600);
   }
 
   &:focus-visible,

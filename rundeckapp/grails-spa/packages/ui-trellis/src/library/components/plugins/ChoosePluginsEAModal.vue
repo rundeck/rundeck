@@ -6,7 +6,7 @@
   >
     <div class="modal-content-wrapper">
       <p class="text-heading--sm">{{ $t("searchForStep") }}</p>
-      <p class="text-body--sm text-body--muted">
+      <p class="text-body--sm">
         <a
           :href="searchPatternsLearnMoreUrl"
           target="_blank"
@@ -490,6 +490,7 @@ export default defineComponent({
 .modal-dialog p,
 .modal-dialog h4,
 .modal-dialog button,
+.modal-dialog a,
 span:not(.glyphicon, .fa, .pi) {
   font-family: Inter, var(--fonts-body) !important;
 }
@@ -526,15 +527,15 @@ span:not(.glyphicon, .fa, .pi) {
 }
 
 .section-heading {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .text-body--lg {
-  margin-bottom: 14px;
+  margin-bottom: 24px;
 }
 
 .subsection-heading {
-  margin-bottom: 12px;
+  margin-bottom: 0px;
 }
 
 .divider-title {
