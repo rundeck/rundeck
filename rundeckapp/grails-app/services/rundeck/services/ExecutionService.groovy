@@ -19,6 +19,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import org.hibernate.sql.JoinType
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
