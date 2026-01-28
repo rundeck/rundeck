@@ -121,6 +121,8 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         serverNodeUUID(type: 'string')
         extraMetadata(type: 'text')
 
+        logFileStorageRequest(lazy: true)
+
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_IDX_1', ['id', 'project', 'dateCompleted']
             index 'EXEC_IDX_2', ['dateStarted', 'status']
@@ -184,6 +186,13 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     @Override
     Serializable getLogFileStorageRequestId() {
         return logFileStorageRequest?.id
+    }
+
+    Boolean isJobDeleted() {
+        if (scheduledExecution == null && jobUuid != null) {
+            return true
+        }
+        return false
     }
 
     RdNodeConfig getNodeConfig() {
