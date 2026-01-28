@@ -38,7 +38,7 @@ import spock.lang.Specification
  */
 class ExecutionServiceTests extends Specification implements DataTest {
 
-    def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec }
+    def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec, Execution }
 
     private getAppCtxtMock(){
         def mockAppCtxt = new MockFor(ApplicationContext)

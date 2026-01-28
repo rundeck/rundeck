@@ -19,8 +19,6 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
-import org.hibernate.FetchMode
-import org.hibernate.sql.JoinType
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
@@ -4096,7 +4094,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
    * @param max paging max
    * @return result map [total: int, result: List<Execution>]
    */
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.SUPPORTS)
     def queryExecutions(ExecutionQuery query, int offset = 0, int max = -1) {
 
     // Standard Criteria-based query (original implementation)
@@ -4107,7 +4105,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
       def queryCriteria = query.createCriteria(delegate, jobQueryComponents)
       queryCriteria()
 
-      fetchMode 'logFileStorageRequest', FetchMode.SELECT
       if (!isCount) {
         if (offset) {
           firstResult(offset)
