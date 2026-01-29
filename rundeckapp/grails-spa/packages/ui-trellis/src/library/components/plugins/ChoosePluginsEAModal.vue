@@ -29,6 +29,7 @@
         :options="serviceOptions"
         :option-label="getServiceOptionLabel"
         option-value="value"
+        :allow-empty="false"
       />
 
       <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>

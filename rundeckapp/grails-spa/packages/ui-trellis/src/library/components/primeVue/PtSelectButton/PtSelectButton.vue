@@ -6,7 +6,6 @@
     :option-value="optionValue"
     :option-disabled="optionDisabled"
     :multiple="multiple"
-    :size="size"
     :fluid="fluid"
     :disabled="disabled"
     :invalid="invalid"
