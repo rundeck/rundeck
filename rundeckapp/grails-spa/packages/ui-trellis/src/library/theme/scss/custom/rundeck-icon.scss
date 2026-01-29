@@ -49,6 +49,10 @@
     height: 16px;
     background-size: 16px;
 
+    &.conditional {
+      background-image: url("../images/icon-condition@2x.png");
+    }
+
     &.command,
     &.shell {
       background-image: url("../images/icon-small-shell@2x.png");
@@ -81,6 +85,10 @@
     width: 32px;
     height: 32px;
     background-size: 32x;
+
+    &.conditional {
+      background-image: url("../images/icon-condition@2x.png");
+    }
 
     &.command,
     &.shell {

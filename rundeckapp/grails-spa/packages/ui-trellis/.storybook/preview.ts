@@ -7,6 +7,7 @@ import "../src/library/theme/tokens.css";
 import "../src/library/theme/primeVue.css";
 import "../src/library/theme/tokens-rundeck.css";
 import "./storybook.css";
+import 'primeicons/primeicons.css';
 import {initI18n} from "../src/app/utilities/i18n";
 
 import Tooltip from "primevue/tooltip";
