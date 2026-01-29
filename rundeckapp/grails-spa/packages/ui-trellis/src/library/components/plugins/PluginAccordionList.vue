@@ -248,6 +248,7 @@ export default defineComponent({
 .accordion-title {
   color: var(--colors-gray-800);
   margin-left: 0 !important;
+  flex-shrink: 0;
 }
 
 .accordion-description {

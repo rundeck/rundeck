@@ -352,10 +352,19 @@ class PluginApiService {
                         if (pluginGroupType) {
                             try {
                                 def method = pluginGroupType.getMethod('getGroupIconUrl', String.class)
-                                String explicitIconUrl = method.invoke(null, groupBy) as String
-                                if (explicitIconUrl) {
-                                    groupIconCache[groupBy] = explicitIconUrl
-                                    groupIconUrl = explicitIconUrl
+                                String explicitIconPath = method.invoke(null, groupBy) as String
+                                if (explicitIconPath) {
+                                    // Extract icon filename from path like "/images/plugins/datadog-icon.svg"
+                                    String iconName = explicitIconPath.substring(explicitIconPath.lastIndexOf('/') + 1)
+                                    // Generate controller URL to serve the group icon
+                                    String absoluteUrl = grailsLinkGenerator.link(
+                                        controller: 'plugin',
+                                        action: 'groupIcon',
+                                        params: [iconName: iconName],
+                                        absolute: true
+                                    )
+                                    groupIconCache[groupBy] = absoluteUrl
+                                    groupIconUrl = absoluteUrl
                                 }
                             } catch (NoSuchMethodException | Exception ignored) {
                                 // No getGroupIconUrl method or error calling it, continue to fallback
