@@ -1194,10 +1194,13 @@ class WorkflowController extends ControllerBase {
                 ScheduledExecution sched = ScheduledExecution.getByIdOrUUID(params.scheduledExecutionId)
                 if (!sched) {
                     session.editWF[wfid] = new Workflow()
-                }
-
-                if (sched.workflow) {
-                    session.editWF[wfid] = new Workflow(sched.workflow)
+                } else {
+                    def workflowData = sched.getWorkflowData()
+                    if (workflowData) {
+                        session.editWF[wfid] = new Workflow(workflowData as Workflow)
+                    } else {
+                        session.editWF[wfid] = new Workflow()
+                    }
                 }
             }
         } else if (usedwf) {

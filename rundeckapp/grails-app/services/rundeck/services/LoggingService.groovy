@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import rundeck.Execution
+import rundeck.Workflow
 import rundeck.WorkflowStep
 import rundeck.services.logging.DisablingLogWriter
 import org.rundeck.app.services.ExecutionFile
@@ -117,7 +118,8 @@ class LoggingService implements ExecutionFileProducer {
                 ExecutionService.exportContextForExecution(execution, grailsLinkGenerator)
             )
             def labels = [:]
-            execution.workflow?.commands?.eachWithIndex { WorkflowStep entry, int index ->
+            def workflowData = execution.getWorkflowData() as Workflow
+            workflowData?.commands?.eachWithIndex { WorkflowStep entry, int index ->
                 if (entry.description) {
                     labels["${index + 1}"] = entry.description
                 }
