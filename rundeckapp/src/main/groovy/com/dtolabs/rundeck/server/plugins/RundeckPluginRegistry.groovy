@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.CorePluginProviderServices
+import com.dtolabs.rundeck.plugins.ExecutionEnvironmentConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.config.ConfiguredBy
@@ -689,6 +690,17 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                         desc = ((Describable) bean).description
                     } else if (rundeckPluginAdapter.canBuildDescription(bean)) {
                         desc = rundeckPluginAdapter.buildDescription(bean, DescriptionBuilder.builder())
+                    }
+
+                    Map<String, String> describedMeta = desc?.metadata ?: [:]
+
+                    boolean exclude = false
+                    if(describedMeta?.containsKey(ExecutionEnvironmentConstants.INTERNAL_USE_ONLY) ) {
+                        exclude = Boolean.parseBoolean(describedMeta[ExecutionEnvironmentConstants.INTERNAL_USE_ONLY])
+                    }
+
+                    if(exclude) {
+                        return
                     }
 
                     list[pluginName] = new DescribedPlugin(
