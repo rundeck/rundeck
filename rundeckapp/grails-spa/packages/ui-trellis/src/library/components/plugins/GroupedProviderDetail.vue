@@ -16,7 +16,7 @@
         icon-class="group-icon"
       />
       <h3 class="group-title">{{ groupName }}</h3>
-      <Badge :value="filteredProviders.length" />
+      <Badge :value="filteredProviders.length" severity="secondary"/>
     </div>
 
     <div v-if="filteredProviders.length === 0" class="no-results">
@@ -37,7 +37,6 @@
       >
         <AccordionHeader @click="selectProvider(provider)">
           <div class="accordion-header-content">
-            <PluginIcon :detail="provider" icon-class="img-icon" />
             <PluginInfo
               :detail="provider"
               :show-icon="false"
@@ -180,9 +179,11 @@ export default defineComponent({
   }
 }
 
+.breadcrumb-separator {
+  color: var(--colors-blue-600);
+}
 .breadcrumb-current {
-  color: var(--colors-gray-700);
-  font-weight: var(--fontWeights-medium);
+  color: var(--colors-gray-800-original);
 }
 
 .group-header {
@@ -227,6 +228,7 @@ export default defineComponent({
   align-items: center;
   gap: 8px;
   width: 100%;
+  min-height: 24px;
 }
 
 .accordion-title-text {
@@ -277,5 +279,12 @@ export default defineComponent({
       margin-left: auto;
     }
   }
+}
+
+.p-badge {
+  width: 21px;
+  height: 21px;
+  font-size: 10.5px !important;
+  line-height: var(--line-height-sm);
 }
 </style>

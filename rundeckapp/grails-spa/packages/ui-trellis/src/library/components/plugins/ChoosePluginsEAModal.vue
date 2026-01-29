@@ -31,7 +31,6 @@
         option-value="value"
       />
 
-      <template v-if="!(hasSearchQuery && hasNoResults && !showGroup)">
         <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>
         <p class="text-body--lg">
           {{ sectionDescription }}
@@ -43,7 +42,6 @@
             {{ $t("learnMore") }}
           </a>
         </p>
-      </template>
 
       <div
         v-if="!showGroup && hasSearchQuery && hasNoResults"
@@ -494,6 +492,10 @@ export default defineComponent({
 span:not(.glyphicon, .fa, .pi) {
   font-family: Inter, var(--fonts-body) !important;
 }
+.modal-dialog a {
+  font-weight: var(--fontWeights-normal);
+}
+
 .modal-body {
   padding-top: 0 !important;
 }
@@ -522,16 +524,13 @@ span:not(.glyphicon, .fa, .pi) {
 }
 
 .plugin-search-container,
-.p-selectbutton {
+.p-selectbutton,
+.text-body--lg {
   margin-bottom: 24px;
 }
 
 .section-heading {
   margin-bottom: 12px;
-}
-
-.text-body--lg {
-  margin-bottom: 24px;
 }
 
 .subsection-heading {

@@ -21,7 +21,6 @@
     </div>
 
     <div v-if="!loading" :key="providersKey">
-        <!-- No results message when searching -->
         <div
           v-if="hasSearchQuery && hasNoResults"
           class="no-results"
@@ -29,7 +28,6 @@
           <p>{{ $t("noMatchesFound") }}</p>
         </div>
 
-        <!-- Highlighted providers accordion -->
         <p
           v-if="Object.keys(groupedProviders.highlighted).length > 0"
           class="text-heading--md subsection-heading"
@@ -230,6 +228,7 @@ export default defineComponent({
   align-items: center;
   gap: 8px;
   width: 100%;
+  min-height: 24px;
 }
 
 .accordion-title-text {
