@@ -280,11 +280,15 @@ class PluginApiService {
         ]
     }
 
-    def listPlugins() {
+    def listPlugins(boolean includeGroupMetadata = false) {
         Locale locale = getLocale()
         long appEpoch = VersionConstants.DATE.time
         String appVer = VersionConstants.VERSION
         def pluginList = listPluginsDetailed()
+
+        // Cache for group icons: group name -> iconUrl (v57+ feature)
+        Map<String, String> groupIconCache = includeGroupMetadata ? [:] : null
+
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
             def providers = it.value.collect { provider ->
@@ -313,6 +317,10 @@ class PluginApiService {
                  pluginDate   : meta?.pluginDate?.time?:appEpoch,
                  enabled      : true] as LinkedHashMap<Object, Object>
 
+                // Get groupBy from provider metadata (v57+ feature)
+                def groupBy = includeGroupMetadata ?
+                    provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY) : null
+
                 if(service != ServiceNameConstants.UI) {
                     def uiDesc = uiPluginService.getProfileFor(service, provider.name)
                     if (uiDesc.icon)
@@ -323,7 +331,46 @@ class PluginApiService {
                                 absolute: true)
 
                     if (uiDesc.providerMetadata) {
-                        pluginDesc.providerMetadata = uiDesc.providerMetadata
+                        pluginDesc.providerMetadata = new LinkedHashMap<>(uiDesc.providerMetadata)
+                    } else {
+                        pluginDesc.providerMetadata = new LinkedHashMap<>()
+                    }
+                } else {
+                    pluginDesc.providerMetadata = new LinkedHashMap<>()
+                }
+
+                // Group icon resolution (v57+ feature)
+                if (includeGroupMetadata && groupBy) {
+                    pluginDesc.providerMetadata[com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY] = groupBy
+
+                    String groupIconUrl = null
+
+                    if (groupIconCache.containsKey(groupBy)) {
+                        groupIconUrl = groupIconCache[groupBy]
+                    } else {
+                        def pluginGroupType = provider.pluginGroupType
+                        if (pluginGroupType) {
+                            try {
+                                def method = pluginGroupType.getMethod('getGroupIconUrl', String.class)
+                                String explicitIconUrl = method.invoke(null, groupBy) as String
+                                if (explicitIconUrl) {
+                                    groupIconCache[groupBy] = explicitIconUrl
+                                    groupIconUrl = explicitIconUrl
+                                }
+                            } catch (Exception ignored) {
+                                // No getGroupIconUrl method or error calling it, continue to fallback
+                            }
+                        }
+
+                        // 3. Fallback to first plugin's icon in the group
+                        if (!groupIconUrl && pluginDesc.iconUrl) {
+                            groupIconCache[groupBy] = pluginDesc.iconUrl
+                            groupIconUrl = pluginDesc.iconUrl
+                        }
+                    }
+
+                    if (groupIconUrl) {
+                        pluginDesc.providerMetadata['groupIconUrl'] = groupIconUrl
                     }
                 }
 
