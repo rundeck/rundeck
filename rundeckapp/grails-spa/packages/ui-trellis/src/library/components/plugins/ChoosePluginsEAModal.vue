@@ -43,33 +43,6 @@
         </a>
       </p>
 
-      <div
-        v-if="!showGroup && hasSearchQuery && hasNoResults"
-        class="no-matches-found"
-      >
-        <svg
-          class="no-matches-icon"
-          xmlns="http://www.w3.org/2000/svg"
-          width="64"
-          height="64"
-          viewBox="0 0 64 64"
-          fill="none"
-        >
-          <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M42.6667 25.3333C42.6667 15.7604 34.9063 8 25.3333 8C15.7604 8 8 15.7604 8 25.3333C8 34.9063 15.7604 42.6667 25.3333 42.6667C29.6267 42.6667 33.5733 41.0933 36.6133 38.5067L37.3333 39.2267V41.3333L50.6667 54.6667L54.6667 50.6667L41.3333 37.3333H39.2267L38.5067 36.6133C41.0933 33.5733 42.6667 29.6267 42.6667 25.3333ZM13.3333 25.3333C13.3333 18.6667 18.6667 13.3333 25.3333 13.3333C32 13.3333 37.3333 18.6667 37.3333 25.3333C37.3333 32 32 37.3333 25.3333 37.3333C18.6667 37.3333 13.3333 32 13.3333 25.3333Z"
-            fill="#A1A1AA"
-          />
-        </svg>
-        <p class="text-body--lg text-body--medium no-matches-text">
-          {{ $t("noMatchesFound") }}
-        </p>
-        <p class="text-body--sm text-body--secondary">
-          {{ $t("noMatchesFoundSecondary") }}
-        </p>
-      </div>
-
       <transition name="view-transition" mode="out-in">
         <PluginAccordionList
           v-if="!showGroup && !(hasSearchQuery && hasNoResults)"
@@ -82,7 +55,7 @@
           @select="handleAccordionSelect"
         />
         <GroupedProviderDetail
-          v-else-if="showGroup"
+          v-else-if="showGroup && !(hasSearchQuery && hasNoResults)"
           key="group-detail"
           :group="currentGroupForService"
           :group-name="selectedGroupName"
@@ -92,6 +65,33 @@
           @select="handleGroupProviderSelect"
           @back="backToAllPlugins"
         />
+        <div
+          v-else-if="hasSearchQuery && hasNoResults"
+          key="no-matches"
+          class="no-matches-found"
+        >
+          <svg
+            class="no-matches-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            width="64"
+            height="64"
+            viewBox="0 0 64 64"
+            fill="none"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M42.6667 25.3333C42.6667 15.7604 34.9063 8 25.3333 8C15.7604 8 8 15.7604 8 25.3333C8 34.9063 15.7604 42.6667 25.3333 42.6667C29.6267 42.6667 33.5733 41.0933 36.6133 38.5067L37.3333 39.2267V41.3333L50.6667 54.6667L54.6667 50.6667L41.3333 37.3333H39.2267L38.5067 36.6133C41.0933 33.5733 42.6667 29.6267 42.6667 25.3333ZM13.3333 25.3333C13.3333 18.6667 18.6667 13.3333 25.3333 13.3333C32 13.3333 37.3333 18.6667 37.3333 25.3333C37.3333 32 32 37.3333 25.3333 37.3333C18.6667 37.3333 13.3333 32 13.3333 25.3333Z"
+              fill="#A1A1AA"
+            />
+          </svg>
+          <p class="text-body--lg text-body--medium no-matches-text">
+            {{ $t("noMatchesFound") }}
+          </p>
+          <p class="text-body--sm text-body--secondary">
+            {{ $t("noMatchesFoundSecondary") }}
+          </p>
+        </div>
       </transition>
     </div>
     <template #footer>
