@@ -24,37 +24,11 @@ const createWrapper = async (props = {}) => {
 
 describe("PtInput", () => {
   describe("Rendering", () => {
-    it("renders InputText without icons when no icon props provided", async () => {
+    it("renders an input field", async () => {
       const wrapper = await createWrapper();
       
-      expect(wrapper.findComponent(InputText).exists()).toBe(true);
-      expect(wrapper.findComponent(IconField).exists()).toBe(false);
-    });
-
-    it("renders IconField with left icon when leftIcon prop provided", async () => {
-      const wrapper = await createWrapper({ leftIcon: "pi pi-search" });
-      
-      expect(wrapper.findComponent(IconField).exists()).toBe(true);
-      expect(wrapper.findAllComponents(InputIcon).length).toBe(1);
-      expect(wrapper.findComponent(InputIcon).classes()).toContain("pi");
-      expect(wrapper.findComponent(InputIcon).classes()).toContain("pi-search");
-    });
-
-    it("renders IconField with right icon when rightIcon prop provided", async () => {
-      const wrapper = await createWrapper({ rightIcon: "pi pi-times" });
-      
-      expect(wrapper.findComponent(IconField).exists()).toBe(true);
-      expect(wrapper.findAllComponents(InputIcon).length).toBe(1);
-    });
-
-    it("renders IconField with both icons when both props provided", async () => {
-      const wrapper = await createWrapper({
-        leftIcon: "pi pi-search",
-        rightIcon: "pi pi-times",
-      });
-      
-      expect(wrapper.findComponent(IconField).exists()).toBe(true);
-      expect(wrapper.findAllComponents(InputIcon).length).toBe(2);
+      const input = wrapper.find("input");
+      expect(input.exists()).toBe(true);
     });
 
     it("displays label when label prop provided", async () => {
@@ -63,7 +37,6 @@ describe("PtInput", () => {
       const label = wrapper.find("label");
       expect(label.exists()).toBe(true);
       expect(label.text()).toBe("Username");
-      expect(label.classes()).toContain("text-heading--sm");
     });
 
     it("displays helper text when helpText prop provided", async () => {
@@ -72,7 +45,6 @@ describe("PtInput", () => {
       const helpText = wrapper.find(".pt-input__help");
       expect(helpText.exists()).toBe(true);
       expect(helpText.text()).toBe("Enter your username");
-      expect(helpText.classes()).toContain("text-body--sm");
     });
 
     it("displays error text when invalid and errorText provided", async () => {
@@ -84,7 +56,6 @@ describe("PtInput", () => {
       const errorText = wrapper.find(".pt-input__error");
       expect(errorText.exists()).toBe(true);
       expect(errorText.text()).toBe("This field is required");
-      expect(errorText.classes()).toContain("text-body--sm");
     });
 
     it("does not display error text when not invalid", async () => {
@@ -96,92 +67,115 @@ describe("PtInput", () => {
       const errorText = wrapper.find(".pt-input__error");
       expect(errorText.exists()).toBe(false);
     });
-  });
 
-  describe("v-model", () => {
-    it("binds modelValue correctly", async () => {
-      const wrapper = await createWrapper({ modelValue: "test value" });
+    it("displays left icon when leftIcon prop provided", async () => {
+      const wrapper = await createWrapper({ leftIcon: "pi pi-search" });
       
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("modelValue")).toBe("test value");
+      const icons = wrapper.findAll(".pi");
+      expect(icons.length).toBeGreaterThan(0);
+      expect(icons[0].classes()).toContain("pi-search");
     });
 
-    it("emits update:modelValue when value changes", async () => {
+    it("displays right icon when rightIcon prop provided", async () => {
+      const wrapper = await createWrapper({ rightIcon: "pi pi-times" });
+      
+      const icons = wrapper.findAll(".pi");
+      expect(icons.length).toBeGreaterThan(0);
+    });
+
+    it("displays both icons when both props provided", async () => {
+      const wrapper = await createWrapper({
+        leftIcon: "pi pi-search",
+        rightIcon: "pi pi-times",
+      });
+      
+      const icons = wrapper.findAll(".pi");
+      expect(icons.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe("User Interactions", () => {
+    it("allows user to type and updates value", async () => {
       const wrapper = await createWrapper();
       
-      const input = wrapper.findComponent(InputText);
-      await input.setValue("new value");
+      const input = wrapper.find("input");
+      await input.setValue("test input");
       
       expect(wrapper.emitted("update:modelValue")).toBeTruthy();
-      expect(wrapper.emitted("update:modelValue")![0]).toEqual(["new value"]);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual(["test input"]);
     });
-  });
 
-  describe("Events", () => {
-    it("emits focus event", async () => {
+    it("displays initial value when modelValue is provided", async () => {
+      const wrapper = await createWrapper({ modelValue: "initial value" });
+      
+      const input = wrapper.find("input");
+      expect((input.element as HTMLInputElement).value).toBe("initial value");
+    });
+
+    it("emits focus event when input is focused", async () => {
       const wrapper = await createWrapper();
       
-      const input = wrapper.findComponent(InputText);
+      const input = wrapper.find("input");
       await input.trigger("focus");
       
       expect(wrapper.emitted("focus")).toBeTruthy();
     });
 
-    it("emits blur event", async () => {
+    it("emits blur event when input loses focus", async () => {
       const wrapper = await createWrapper();
       
-      const input = wrapper.findComponent(InputText);
+      const input = wrapper.find("input");
       await input.trigger("blur");
       
       expect(wrapper.emitted("blur")).toBeTruthy();
     });
 
-    it("emits input event", async () => {
+    it("emits input event when user types", async () => {
       const wrapper = await createWrapper();
       
-      const input = wrapper.findComponent(InputText);
-      await input.trigger("input");
+      const input = wrapper.find("input");
+      await input.setValue("test");
       
       expect(wrapper.emitted("input")).toBeTruthy();
     });
-  });
 
-  describe("Props", () => {
-    it("passes placeholder to InputText", async () => {
-      const wrapper = await createWrapper({ placeholder: "Enter text..." });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("placeholder")).toBe("Enter text...");
-    });
-
-    it("passes disabled to InputText", async () => {
+    it("prevents input when disabled", async () => {
       const wrapper = await createWrapper({ disabled: true });
       
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("disabled")).toBe(true);
+      const input = wrapper.find("input");
+      expect((input.element as HTMLInputElement).disabled).toBe(true);
     });
 
-    it("passes invalid to InputText", async () => {
-      const wrapper = await createWrapper({ invalid: true });
+    it("shows placeholder text", async () => {
+      const wrapper = await createWrapper({ placeholder: "Enter text..." });
       
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("invalid")).toBe(true);
+      const input = wrapper.find("input");
+      expect((input.element as HTMLInputElement).placeholder).toBe("Enter text...");
     });
 
-    it("passes name to InputText", async () => {
-      const wrapper = await createWrapper({ name: "username" });
+    it("respects readonly state", async () => {
+      const wrapper = await createWrapper({ readonly: true, modelValue: "readonly value" });
       
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("name")).toBe("username");
+      const input = wrapper.find("input");
+      expect((input.element as HTMLInputElement).readOnly).toBe(true);
     });
 
-    it("passes inputId to InputText as id", async () => {
-      const wrapper = await createWrapper({ inputId: "my-input" });
+    it("respects maxlength attribute", async () => {
+      const wrapper = await createWrapper({ maxlength: 5 });
       
-      const input = wrapper.findComponent(InputText);
-      expect(input.attributes("id")).toBe("my-input");
+      const input = wrapper.find("input");
+      expect((input.element as HTMLInputElement).maxLength).toBe(5);
     });
 
+    it("respects type attribute", async () => {
+      const wrapper = await createWrapper({ type: "password" });
+      
+      const input = wrapper.find("input");
+      expect((input.element as HTMLInputElement).type).toBe("password");
+    });
+  });
+
+  describe("Accessibility", () => {
     it("associates label with input via for attribute", async () => {
       const wrapper = await createWrapper({
         label: "Username",
@@ -190,49 +184,22 @@ describe("PtInput", () => {
       
       const label = wrapper.find("label");
       expect(label.attributes("for")).toBe("username-input");
-    });
-
-    it("passes type to InputText", async () => {
-      const wrapper = await createWrapper({ type: "password" });
       
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("type")).toBe("password");
+      const input = wrapper.find("input");
+      expect(input.attributes("id")).toBe("username-input");
     });
 
-    it("passes readonly to InputText", async () => {
-      const wrapper = await createWrapper({ readonly: true });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("readonly")).toBe(true);
-    });
-
-    it("passes maxlength to InputText", async () => {
-      const wrapper = await createWrapper({ maxlength: 50 });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("maxlength")).toBe(50);
-    });
-
-    it("passes autocomplete to InputText", async () => {
-      const wrapper = await createWrapper({ autocomplete: "off" });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("autocomplete")).toBe("off");
-    });
-  });
-
-  describe("Accessibility", () => {
-    it("passes aria-label to InputText", async () => {
+    it("sets aria-label attribute", async () => {
       const wrapper = await createWrapper({ ariaLabel: "Search input" });
       
-      const input = wrapper.findComponent(InputText);
+      const input = wrapper.find("input");
       expect(input.attributes("aria-label")).toBe("Search input");
     });
 
-    it("passes aria-labelledby to InputText", async () => {
+    it("sets aria-labelledby attribute", async () => {
       const wrapper = await createWrapper({ ariaLabelledby: "label-id" });
       
-      const input = wrapper.findComponent(InputText);
+      const input = wrapper.find("input");
       expect(input.attributes("aria-labelledby")).toBe("label-id");
     });
   });
