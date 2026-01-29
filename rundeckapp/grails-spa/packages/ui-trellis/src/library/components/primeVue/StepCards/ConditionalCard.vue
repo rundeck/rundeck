@@ -263,7 +263,7 @@ export default defineComponent({
   box-shadow: none;
   overflow: hidden;
   border-radius: var(--radii-md);
-  border: 1px solid var(--colors-gray-300);
+  border: 1px solid var(--colors-gray-300-original);
 
   p,
   a,
@@ -273,7 +273,7 @@ export default defineComponent({
 
   &--header {
     background-color: var(--colors-secondaryBackgroundOnLight);
-    border-bottom: 2px solid var(--colors-gray-300);
+    border-bottom: 2px solid var(--colors-gray-300-original);
     display: flex;
     justify-content: space-between;
     padding: var(--sizes-4);

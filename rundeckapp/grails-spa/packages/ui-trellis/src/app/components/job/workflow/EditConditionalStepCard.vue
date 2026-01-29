@@ -453,9 +453,9 @@ export default defineComponent({
         top: 40px;
         bottom: 20px;
         width: 14px;
-        border-left: 1px solid var(--colors-gray-300);
-        border-top: 1px solid var(--colors-gray-300);
-        border-bottom: 1px solid var(--colors-gray-300);
+        border-left: 1px solid var(--colors-gray-300-original);
+        border-top: 1px solid var(--colors-gray-300-original);
+        border-bottom: 1px solid var(--colors-gray-300-original);
         border-right: none;
         border-radius: 6px 0 0 6px;
       }

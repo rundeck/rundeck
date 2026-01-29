@@ -204,7 +204,7 @@ export default defineComponent({
   .placeholder {
     align-items: center;
     display: flex;
-    border-bottom: 1px solid var(--colors-gray-300);
+    border-bottom: 1px solid var(--colors-gray-200);
     padding: 16px 0;
     gap: var(--space-2);
 

@@ -186,7 +186,7 @@ export default defineComponent({
   --input-bg-color: var(--colors-white);
   --font-color: var(--colors-gray-900);
   --input-outline-color: var(--colors-gray-500);
-  --input-focus-color: var(--colors-gray-300);
+  --input-focus-color: var(--colors-gray-300-original);
 }
 
 .p-autocomplete-overlay {

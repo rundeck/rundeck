@@ -595,7 +595,7 @@ span:not(.glyphicon, .fa, .pi) {
   .p-accordionheader {
     background: var(--colors-white);
     border: none;
-    border-bottom: 1px solid var(--colors-gray-300);
+    border-bottom: 1px solid var(--colors-gray-200);
     padding-left: 0;
 
     .p-accordionheader-toggle-icon {

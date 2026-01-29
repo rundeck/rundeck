@@ -254,7 +254,7 @@ export default defineComponent({
 
 // Disabled icon state
 .p-iconfield:has(.p-inputtext:disabled) .p-inputicon {
-  color: var(--colors-gray-300);
+  color: var(--colors-gray-300-original);
 }
 
 // InputText styles

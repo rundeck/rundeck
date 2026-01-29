@@ -293,7 +293,7 @@ export default defineComponent({
 
     // Disabled icon color
     .p-select-label:disabled ~ & {
-      color: var(--colors-gray-300);
+      color: var(--colors-gray-300-original);
     }
   }
 
@@ -326,7 +326,7 @@ export default defineComponent({
     // Filter input
     .p-select-filter {
       background: var(--colors-white);
-      border: 1px solid var(--colors-gray-300);
+      border: 1px solid var(--colors-gray-300-original);
       border-radius: 6px;
       padding: 10px;
       width: 100%;
