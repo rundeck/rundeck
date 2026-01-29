@@ -5,4 +5,5 @@ package org.rundeck.app.grails.events;
  */
 public class AppEvents {
     public static final String PROJECT_CONFIG_CHANGED = "project.config.changed";
+    public static final String APP_CONFIG_CHANGED = "rundeck.configuration.change";
 }
