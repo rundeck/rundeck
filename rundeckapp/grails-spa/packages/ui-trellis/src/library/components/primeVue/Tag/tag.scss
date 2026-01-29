@@ -12,4 +12,28 @@
   &.p-tag-danger {
     background: var(--colors-red-500);
   }
+
+  &.tag-node {
+    background: var(--colors-blue-100);
+    color: var(--grey-800);
+    font-size: 12px; // to do check with Liza
+    font-weight: var(--fontWeights-normal);
+    line-height: var(--lineHeights-short);
+  }
+
+  &.tag-workflow {
+    background: var(--colors-orange-100);
+    color: var(--grey-800);
+    font-size: 12px; // to do check with Liza
+    font-weight: var(--fontWeights-normal);
+    line-height: var(--lineHeights-short);
+  }
+
+  &.tag-code {
+    background: #E9ECEF;
+    color: var(--grey-800);
+    font-family: var(--fonts-mono), monospace !important;
+    font-weight: var(--fontWeights-normal);
+    line-height: var(--lineHeights-short);
+  }
 }
