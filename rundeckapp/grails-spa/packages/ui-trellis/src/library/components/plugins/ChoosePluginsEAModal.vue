@@ -97,13 +97,13 @@
     </div>
     <template #footer>
       <div class="text-right">
-        <btn
+        <PtButton
+          outlined
+          severity="secondary"
+          :label="$t('Cancel')"
           data-testid="cancel-button"
-          class="text-button"
           @click="$emit('cancel')"
-        >
-          {{ $t("Cancel") }}
-        </btn>
+        />
       </div>
     </template>
   </modal>
@@ -118,6 +118,7 @@ import PluginAccordionList from "@/library/components/plugins/PluginAccordionLis
 import GroupedProviderDetail from "@/library/components/plugins/GroupedProviderDetail.vue";
 import { ServiceType } from "@/library/stores/Plugins";
 import { PtSelectButton } from "@/library/components/primeVue";
+import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 
 const context = getRundeckContext();
 
@@ -128,6 +129,7 @@ export default defineComponent({
     PluginInfo,
     PluginIcon,
     PtSelectButton,
+    PtButton,
     PluginAccordionList,
     GroupedProviderDetail,
   },

@@ -179,7 +179,7 @@ export default defineComponent({
   }
 }
 
-.breadcrumb-separator {
+.p-breadcrumb-separator {
   color: var(--colors-blue-600);
 }
 .breadcrumb-current {
