@@ -31,17 +31,17 @@
         option-value="value"
       />
 
-        <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>
-        <p class="text-body--lg">
-          {{ sectionDescription }}
-          <a
-            :href="sectionLearnMoreUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {{ $t("learnMore") }}
-          </a>
-        </p>
+      <p class="text-heading--lg section-heading">{{ sectionHeading }}</p>
+      <p class="text-body--lg">
+        {{ sectionDescription }}
+        <a
+          :href="sectionLearnMoreUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ $t("learnMore") }}
+        </a>
+      </p>
 
       <div
         v-if="!showGroup && hasSearchQuery && hasNoResults"
@@ -81,7 +81,6 @@
           :search-query="searchQuery"
           @select="handleAccordionSelect"
         />
-
         <GroupedProviderDetail
           v-else-if="showGroup"
           key="group-detail"
@@ -508,10 +507,6 @@ span:not(.glyphicon, .fa, .pi) {
   line-height: var(--line-height-sm) !important;
 }
 
-.text-heading--sm {
-  color: var(--colors-gray-800-original) !important;
-}
-
 .text-heading--sm,
 .form-group {
   margin-bottom: var(--space-none);
@@ -584,26 +579,62 @@ span:not(.glyphicon, .fa, .pi) {
 }
 </style>
 <style scoped lang="scss">
-:deep(.p-accordion) {
-  .p-accordionpanel {
-    border: none;
-    box-shadow: none;
+.modal-content-wrapper {
+  :deep(.p-accordion) {
+    .p-accordionpanel {
+      border: none;
+      box-shadow: none;
 
-    &:last-child .p-accordionheader {
-      border-bottom: none !important;
+      &:last-child .p-accordionheader {
+        border-bottom: none !important;
+      }
+    }
+
+    .p-accordionheader {
+      background: var(--colors-white);
+      border: none;
+      border-bottom: 1px solid var(--colors-gray-200);
+      padding-left: 0;
+
+      .p-accordionheader-toggle-icon {
+        order: 2;
+        margin-left: auto;
+      }
     }
   }
 
-  .p-accordionheader {
-    background: var(--colors-white);
-    border: none;
-    border-bottom: 1px solid var(--colors-gray-200);
-    padding-left: 0;
+  // Common accordion content styles shared by child components
+  :deep(.accordion-header-content) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 98%;
+    min-height: 24px;
+  }
 
-    .p-accordionheader-toggle-icon {
-      order: 2;
-      margin-left: auto;
-    }
+  // Layout-only styles for accordion text containers (typography handled by typography.css classes)
+  :deep(.accordion-title-text) {
+    margin: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 0; // Allows flex item to shrink below content size for ellipsis
+    overflow: hidden; // Ensures child elements respect overflow
+  }
+
+  :deep(.accordion-title) {
+    margin-left: 0 !important;
+    flex-shrink: 0;
+  }
+
+  :deep(.img-icon) {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    height: 20px;
+    width: 20px;
+    flex-shrink: 0;
   }
 }
 </style>

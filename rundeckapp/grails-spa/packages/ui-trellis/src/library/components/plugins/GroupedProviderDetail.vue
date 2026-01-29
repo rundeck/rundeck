@@ -15,7 +15,7 @@
         :detail="group.iconDetail"
         icon-class="group-icon"
       />
-      <h3 class="group-title">{{ groupName }}</h3>
+      <h3 class="group-title text-heading--lg">{{ groupName }}</h3>
       <Badge :value="filteredProviders.length" severity="secondary"/>
     </div>
 
@@ -42,12 +42,12 @@
               :show-icon="false"
               :show-description="true"
               :show-extended="false"
-              description-css="accordion-description"
-              title-css="accordion-title"
-              class="accordion-title-text"
+              description-css="accordion-description text-body--secondary"
+              title-css="accordion-title text-body"
+              class="accordion-title-text text-body"
             >
               <template #descriptionprefix>
-                <span class="accordion-description-separator"> - </span>
+                <span class="accordion-description-separator text-body--secondary"> - </span>
               </template>
             </PluginInfo>
           </div>
@@ -179,11 +179,12 @@ export default defineComponent({
   }
 }
 
-.p-breadcrumb-separator {
+:deep(.p-breadcrumb-separator) {
   color: var(--colors-blue-600);
 }
 .breadcrumb-current {
   color: var(--colors-gray-800-original);
+  text-transform: uppercase;
 }
 
 .group-header {
@@ -199,8 +200,6 @@ export default defineComponent({
 }
 
 .group-title {
-  font-size: 20px;
-  font-weight: var(--fontWeights-medium);
   margin: 0;
 }
 
@@ -215,76 +214,25 @@ export default defineComponent({
   color: var(--colors-gray-600);
 }
 
-.img-icon {
-  align-items: center;
-  display: inline-flex;
-  justify-content: center;
-  height: 20px;
-  width: 20px;
-}
-
-.accordion-header-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 24px;
-}
-
-.accordion-title-text {
-  font-family: Inter, var(--fonts-body);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 14px;
-  color: var(--colors-gray-800);
-  margin: 0;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.accordion-title {
-  font-weight: var(--fontWeights-medium);
-  color: var(--colors-gray-800);
-}
-
-.accordion-description {
-  color: var(--colors-gray-600);
-  font-weight: 400;
-}
-
-.accordion-description-separator {
-  color: var(--colors-gray-600);
-}
-
-:deep(.p-accordion) {
-  .p-accordionpanel {
-    border: none;
-    box-shadow: none;
-
-    &:last-child .p-accordionheader {
-      border-bottom: none !important;
-    }
-  }
-
-  .p-accordionheader {
-    background: var(--colors-white);
-    border: none;
-    border-bottom: 1px solid var(--colors-gray-200);
-    padding-left: 0;
-
-    .p-accordionheader-toggle-icon {
-      order: 2;
-      margin-left: auto;
-    }
-  }
-}
-
 .p-badge {
   width: 21px;
   height: 21px;
   font-size: 10.5px !important;
   line-height: var(--line-height-sm);
+}
+
+// Ensure description text truncates with ellipsis when it exceeds one line
+:deep(.accordion-description) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0; // Allows flex item to shrink below content size
+}
+
+// Ensure the accordion title text container allows description to shrink
+:deep(.accordion-title-text) {
+  min-width: 0; // Allows flex item to shrink below content size
+  overflow: hidden; // Ensures child elements respect overflow
 }
 </style>

@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Loading placeholders -->
     <div v-if="loading">
       <p class="text-heading--md subsection-heading">{{ commonStepsHeading }}</p>
       <div class="placeholder-group">
@@ -20,7 +19,7 @@
       </div>
     </div>
 
-    <div v-if="!loading" :key="providersKey">
+    <div v-else :key="providersKey">
         <div
           v-if="hasSearchQuery && hasNoResults"
           class="no-results"
@@ -49,8 +48,8 @@
             <AccordionHeader @click="handleAccordionClick(group, key)">
               <div class="accordion-header-content">
                 <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
-                <div v-if="group.isGroup" class="accordion-title-text">
-                  <span class="accordion-title">{{ key }}</span>
+                <div v-if="group.isGroup" class="accordion-title-text text-body">
+                  <span class="accordion-title text-body">{{ key }}</span>
                   <span class="provider-count">
                     ({{ group.providers.length }} {{ $t("plugins") }})
                   </span>
@@ -61,12 +60,12 @@
                   :show-icon="false"
                   :show-description="true"
                   :show-extended="false"
-                  description-css="accordion-description"
-                  title-css="accordion-title"
-                  class="accordion-title-text"
+                  description-css="accordion-description text-body--secondary"
+                  title-css="accordion-title text-body"
+                  class="accordion-title-text text-body"
                 >
                   <template #descriptionprefix>
-                    <span class="accordion-description-separator"> - </span>
+                    <span class="accordion-description-separator text-body--secondary"> - </span>
                   </template>
                 </PluginInfo>
               </div>
@@ -98,8 +97,8 @@
             <AccordionHeader @click="handleAccordionClick(group, key)">
               <div class="accordion-header-content">
                 <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
-                <div v-if="group.isGroup" class="accordion-title-text">
-                  <span class="accordion-title">{{ key }}</span>
+                <div v-if="group.isGroup" class="accordion-title-text text-body">
+                  <span class="accordion-title text-body">{{ key }}</span>
                   <span class="provider-count">
                     ({{ group.providers.length }} {{ $t("plugins") }})
                   </span>
@@ -110,12 +109,12 @@
                   :show-icon="false"
                   :show-description="true"
                   :show-extended="false"
-                  description-css="accordion-description"
-                  title-css="accordion-title"
-                  class="accordion-title-text"
+                  description-css="accordion-description text-body--secondary"
+                  title-css="accordion-title text-body"
+                  class="accordion-title-text text-body"
                 >
                   <template #descriptionprefix>
-                    <span class="accordion-description-separator"> - </span>
+                    <span class="accordion-description-separator text-body--secondary"> - </span>
                   </template>
                 </PluginInfo>
               </div>
@@ -212,51 +211,6 @@ export default defineComponent({
       border-bottom: none;
     }
   }
-}
-
-.img-icon {
-  align-items: center;
-  display: inline-flex;
-  justify-content: center;
-  height: 20px;
-  width: 20px;
-  flex-shrink: 0;
-}
-
-.accordion-header-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 24px;
-}
-
-.accordion-title-text {
-  font-family: Inter, var(--fonts-body);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 14px;
-  color: var(--colors-gray-800);
-  margin: 0;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.accordion-title {
-  color: var(--colors-gray-800);
-  margin-left: 0 !important;
-  flex-shrink: 0;
-}
-
-.accordion-description {
-  color: var(--colors-gray-600);
-  font-weight: 400;
-}
-
-.accordion-description-separator {
-  color: var(--colors-gray-600);
 }
 
 .provider-count {
