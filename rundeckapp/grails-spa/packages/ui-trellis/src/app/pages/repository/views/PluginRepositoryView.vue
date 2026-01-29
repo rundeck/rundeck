@@ -92,12 +92,13 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, computed } from "vue";
 import _ from "lodash";
 import axios from "axios";
 import Fuse from "fuse.js";
 import RepositoryRow from "../components/Repository.vue";
-import { mapState, mapActions } from "vuex";
+import { useRepositoriesStore } from "../stores/repositories.store";
+import { useOverlayStore } from "../stores/overlay.store";
 import { getRundeckContext } from "@/library";
 
 const FuseSearchOptions = {
@@ -115,8 +116,16 @@ export default defineComponent({
   components: {
     RepositoryRow,
   },
-  computed: {
-    ...mapState("repositories", ["repositories"]),
+  setup() {
+    const repositoriesStore = useRepositoriesStore();
+    const overlayStore = useOverlayStore();
+    return {
+      repositories: computed(() => repositoriesStore.repositories),
+      initData: () => repositoriesStore.initData(),
+      setInstallStatusOfPluginsVisibility: (value) =>
+        repositoriesStore.setInstallStatusOfPluginsVisibility(value),
+      openOverlay: (properties) => overlayStore.openOverlay(properties),
+    };
   },
   data() {
     return {
@@ -133,11 +142,6 @@ export default defineComponent({
     },
   },
   methods: {
-    ...mapActions("repositories", [
-      "initData",
-      "setInstallStatusOfPluginsVisibility",
-    ]),
-    ...mapActions("overlay", ["openOverlay"]),
     clearSearch() {
       this.searchResults = [];
     },

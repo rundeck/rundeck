@@ -391,9 +391,10 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, computed } from "vue";
 import Fuse from "fuse.js";
-import { mapState, mapActions } from "vuex";
+import { usePluginsStore } from "../stores/plugins.store";
+import { useModalStore } from "../stores/modal.store";
 
 import * as StringFormatters from "../../../utilities/StringFormatters";
 import ProviderCard from "../components/ProviderCard.vue";
@@ -413,16 +414,28 @@ const FuseSearchOptions = {
 export default defineComponent({
   name: "PluginConfigurationView",
   components: { ProviderCard, ProviderCardRow, ConfigureFrameworkString },
+  setup() {
+    const pluginsStore = usePluginsStore();
+    const modalStore = useModalStore();
+    return {
+      plugins: computed(() => pluginsStore.plugins),
+      searchResultPlugins: computed(() => pluginsStore.searchResultPlugins),
+      provider: computed(() => pluginsStore.provider),
+      serviceName: computed(() => pluginsStore.serviceName),
+      services: computed(() => pluginsStore.services),
+      pluginsByService: computed(() => pluginsStore.pluginsByService),
+      providersDetails: computed(() => pluginsStore.providersDetails),
+      modalOpen: computed(() => modalStore.modalOpen),
+      initData: () => pluginsStore.initData(),
+      setServiceFacet: (serviceName) => pluginsStore.setServiceFacet(serviceName),
+      getServices: () => pluginsStore.fetchServices(),
+      getProvidersListByService: () => pluginsStore.getProvidersListByService(),
+      getProvidersInfo: (providers) => pluginsStore.getProvidersInfo(providers),
+      setSearchResultPlugins: (plugins) => pluginsStore.setSearchResultPlugins(plugins),
+      closeModal: () => modalStore.closeModal(),
+    };
+  },
   methods: {
-    ...mapActions("plugins", [
-      "initData",
-      "setServiceFacet",
-      "getServices",
-      "getProvidersListByService",
-      "getProvidersInfo",
-      "setSearchResultPlugins",
-    ]),
-    ...mapActions("modal", ["closeModal"]),
     handleModalClose() {
       this.closeModal();
     },
@@ -451,16 +464,6 @@ export default defineComponent({
     StringFormatters() {
       return StringFormatters;
     },
-    ...mapState("modal", ["modalOpen"]),
-    ...mapState("plugins", [
-      "plugins",
-      "searchResultPlugins",
-      "provider",
-      "serviceName",
-      "services",
-      "pluginsByService",
-      "providersDetails",
-    ]),
     isModalOpen: {
       get: function () {
         return this.modalOpen;
