@@ -204,7 +204,7 @@ export const Fluid: Story = {
   },
 };
 
-export const PreventDeselection: Story = {
+export const PreventEmpty: Story = {
   render: args => ({
     props: Object.keys(args),
     components: { PtSelectButton },

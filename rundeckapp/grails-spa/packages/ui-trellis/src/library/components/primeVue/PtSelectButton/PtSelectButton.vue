@@ -107,57 +107,33 @@ export default defineComponent({
     border-color: var(--colors-gray-300-original);
   }
 
-  &:focus-visible,
-  &:focus {
-    box-shadow: none;
-    outline: 1px solid var(--colors-blue-600);
-    outline-offset: 2px;
-  }
-
   &:active {
     background: var(--colors-gray-200);
     border-color: var(--colors-gray-300-original);
+  }
 
-    &:focus-visible,
-    &:focus {
-      outline: 1px solid var(--colors-blue-600);
+  &-checked {
+    background: var(--colors-primaryButtonOnLight);
+    border-color: var(--colors-primaryButtonOnLight);
+    color: var(--colors-white);
+
+    &:hover {
+      background: var(--colors-blue-600);
+      border-color: var(--colors-blue-600);
+    }
+
+
+    &:active {
+      background: var(--colors-blue-700);
+      border-color: var(--colors-blue-700);
+
     }
   }
-}
 
-// Selected state - based on Figma design
-.p-selectbutton .p-togglebutton-checked {
-  background: var(--colors-primaryButtonOnLight);
-  border-color: var(--colors-primaryButtonOnLight);
-  color: var(--colors-white);
-
-  &:hover {
-    background: var(--colors-blue-600);
-    border-color: var(--colors-blue-600);
+  &-label {
+    font-weight: var(--fontWeights-bold);
+    font-size: 14px;
+    line-height: 17px;
   }
-
-  &:focus-visible,
-  &:focus {
-    box-shadow: none;
-    outline: 1px solid var(--colors-blue-600);
-    outline-offset: 2px;
-  }
-
-  &:active {
-    background: var(--colors-blue-700);
-    border-color: var(--colors-blue-700);
-
-    &:focus-visible,
-    &:focus {
-      outline: 1px solid var(--colors-blue-700);
-    }
-  }
-}
-
-.p-selectbutton .p-togglebutton-label {
-  font-weight: var(--fontWeights-bold);
-  //font-size: var(--fontSizes-sm);
-  font-size: 14px;
-  line-height: 17px;
 }
 </style>

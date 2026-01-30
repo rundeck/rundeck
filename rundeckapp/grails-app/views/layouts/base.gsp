@@ -42,9 +42,6 @@
     <g:render template="/common/navData"/>
 
     %{-- css variables for primeVue  --}%
-    <asset:stylesheet href="tokens.css"/>
-    <asset:stylesheet href="tokens-rundeck.css"/>
-    <asset:stylesheet href="typography.css"/>
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
 
