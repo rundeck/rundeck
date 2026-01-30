@@ -630,6 +630,10 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         when:
         2 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
         2 * service.uiPluginService.getProfileFor(_, _) >> [icon: 'foo'] // Has icon but should be ignored
+        // Mock grailsLinkGenerator: 
+        // Execution order: pluginIcon (provider1) -> groupIcon (provider1) -> pluginIcon (provider2)
+        // The groupIcon call extracts 'icon.svg' from '/explicit/group/icon.svg' and calls link() with action='groupIcon'
+        3 * service.grailsLinkGenerator.link(_) >>> ['http://localhost:8080/plugin-icon', '/explicit/group/icon.svg', 'http://localhost:8080/plugin-icon']
         def response = service.listPlugins(true)
         def serviceEntry = response[0]
         def provider1 = serviceEntry.providers[0]
