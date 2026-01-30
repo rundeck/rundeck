@@ -48,6 +48,7 @@ import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
 import rundeck.codecs.HTMLElementCodec
@@ -66,7 +67,7 @@ import java.text.SimpleDateFormat
  */
 class ExecutionControllerSpec extends Specification implements ControllerUnitTest<ExecutionController>, DataTest {
 
-    def setupSpec() { mockDomain Execution }
+    def setupSpec() { mockDomains(Execution, LogFileStorageRequest) }
 
     def setup() {
         mockCodec(AnsiColorCodec)
