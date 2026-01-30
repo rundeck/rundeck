@@ -182,18 +182,11 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-:root[data-color-theme="light"] {
-  --input-bg-color: var(--colors-white);
-  --font-color: var(--colors-gray-900);
-  --input-outline-color: var(--colors-gray-500);
-  --input-focus-color: var(--colors-gray-300-original);
-}
+@import "../_form-inputs.scss";
 
 .p-autocomplete-overlay {
   z-index: 1200 !important;
-  color: var(--font-color);
-  border: none !important;
-  border: 1px solid var(--gray-input-outline);
+  color: var(--colors-gray-800);
 }
 
 .p-autocomplete-list {
@@ -209,47 +202,51 @@ export default defineComponent({
 }
 
 .p-autocomplete-option {
-  color: var(--font-color);
+  color: var(--colors-gray-800);
 }
 
+.p-autocomplete-option-selected,
 .p-autocomplete-option:not(.p-autocomplete-option-selected):not(.p-disabled).p-focus {
-  background-color: var(--input-focus-color);
-}
-
-.p-autocomplete-option-selected {
-  background-color: var(--input-focus-color);
+  background-color: var(--colors-gray-300-original);
 }
 
 .p-autocomplete-list-container {
-  background-color: var(--input-bg-color);
-  border: 1px solid var(--gray-input-outline);
-  border-radius: var(--p-autocomplete-overlay-border-radius);
+  background-color: var(--colors-white);
+  border: 1px solid var(--colors-gray-300-original);
+  border-radius: var(--radii-base);
 }
 
 .p-autocomplete {
   width: 100%;
 
   .p-inputtext {
-    background-color: var(--input-bg-color);
-    border: 1px solid var(--input-outline-color);
-    border-radius: 4px;
+    @include form-input-base;
+    padding: 10px;
     font-size: 14px;
-    color: var(--font-color);
-    width: inherit;
-    height: 40px;
+    font-weight: var(--fontWeights-regular);
+    line-height: normal;
+    color: var(--colors-gray-800);
+    background: var(--colors-white);
 
-    &::placeholder {
-      color: var(--colors-gray-600);
+    @include form-input-placeholder;
+
+    &:hover:not(:focus):not(:disabled):not(.p-invalid) {
+      @include form-input-hover;
     }
 
-    &:enabled:focus {
-      background-color: var(--input-bg-color);
-      border-color: var(--gray-input-outline);
-      box-shadow: none;
+    &:focus {
+      @include form-input-focus;
     }
 
     &.p-invalid {
-      border-color: var(--colors-red-500);
+      @include form-input-invalid;
+    }
+
+    &:disabled {
+      @include form-input-disabled;
+      background: var(--colors-gray-50);
+      color: var(--colors-gray-500);
+      cursor: not-allowed;
     }
   }
 }
