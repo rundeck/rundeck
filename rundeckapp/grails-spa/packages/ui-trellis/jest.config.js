@@ -21,7 +21,6 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^primevue/(.*)": "<rootDir>/node_modules/primevue/$1",
     "^@primevue/(.*)": "<rootDir>/node_modules/@primevue/$1",
-    "^@primeuix/(.*)": "<rootDir>/node_modules/@primeuix/$1",
   },
   modulePathIgnorePatterns: ["<rootDir>/public"],
   testMatch: ["**/*.test.ts", "**/*.spec.ts"],
