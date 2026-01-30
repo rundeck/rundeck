@@ -17,6 +17,7 @@ import org.grails.web.util.WebUtils
 import org.rundeck.app.acl.ACLFileManagerListener
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.grails.events.AppEvents
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -84,7 +85,7 @@ class AuditEventsService
             .addListenerMap(buildACLFileListeners())
     }
 
-    @Subscriber('rundeck.configuration.change')
+    @Subscriber(AppEvents.APP_CONFIG_CHANGED)
     def onRundeckConfigurationChange(Set<String> keys){
         if (!keys.any { it.startsWith('framework.plugin.AuditEventListener.') }) {
             return

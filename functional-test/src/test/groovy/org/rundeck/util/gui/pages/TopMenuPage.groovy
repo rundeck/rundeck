@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
 
 /**
@@ -14,9 +15,9 @@ class TopMenuPage extends BasePage {
 
     By settingsButtonBy = By.id("appAdmin")
     By systemConfigurationMenuBy = By.linkText("System Configuration")
-    By appUserButtonBy = By.id("appUser")
+    By appUserDropdownBy = By.id("userLabel")
     By logOutMenuBy = By.linkText("Logout")
-    By divHome = By.id("nav-rd-home")
+    By divHomeIconTag = By.cssSelector("#nav-rd-home i")
 
     TopMenuPage(final SeleniumContext context) {
         super(context)
@@ -33,20 +34,28 @@ class TopMenuPage extends BasePage {
     }
 
     void openAppUserMenu() {
-        byAndWaitClickable appUserButtonBy click()
+        clickElementSafely(appUserDropdownBy)
+        waitForElementVisible(logOutMenuBy)
     }
 
     void logOut() {
         openAppUserMenu()
-        byAndWait logOutMenuBy click()
+        clickElementSafely(logOutMenuBy)
+        waitForElementVisible(By.partialLinkText("Log In Again"))
+        waitForUrlToContain("/user/loggedout")
     }
 
     void clickHomeButton(){
-        (el divHome).findElement(By.tagName("i")).click()
+        clickElementSafely(divHomeIconTag)
     }
 
     void navigateToUserProfile() {
         openAppUserMenu()
-        byAndWaitClickable(By.linkText("Profile")) click()
+        By profileLinkBy = By.linkText("Profile")
+        // Get element first, then use waitIgnoring to handle stale elements
+        WebElement profileLink = waitForElementVisible(profileLinkBy)
+        waitIgnoringForElementToBeClickable(profileLink).click()
+        // Wait for navigation to complete
+        waitForUrlToContain("/user/profile")
     }
 }

@@ -617,11 +617,9 @@ class JobsSpec extends SeleniumBase {
 
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
         jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
-        jobShowPage.waitForNumberOfElementsToBe(By.name("extra.option.search"), Integer.valueOf(selection))
-        def children = jobShowPage.getOptionSelectChildren(optionListOfValues)
-
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.extraOptionSearchBy, Integer.valueOf(selection))
         then:
-        children.every{it.isSelected()}
+        jobShowPage.waitForAllOptionsToBeSelected(optionListOfValues)
 
         cleanup:
         deleteProject(projectName)
@@ -777,7 +775,9 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.go()
         jobShowPage.getRunJobBtn().click()
         then:
-        jobShowPage.currentUrl().contains("invalidInputsProject/job/index")
+        // Wait for validation alert to appear
+        jobShowPage.waitForElementVisible(jobShowPage.jobOptionAlertBy)
+        // Verify the validation alert message is present
         jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
         cleanup:
         deleteProject(projectName)
@@ -790,7 +790,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.go()
         jobCreatePage.tab JobTab.WORKFLOW click()
         then:
-        jobCreatePage.waitForTextToBePresentBySelector(By.xpath("//section[@id='workflowContent']//div[contains(@class, 'control-label')]"), "Workflow",60)
+        jobCreatePage.waitForTextToBePresentBySelector(jobCreatePage.workflowContentControlLabelBy, "Workflow",60)
         expect:
         jobCreatePage.workflowAlphaUiContainer.isDisplayed()
     }

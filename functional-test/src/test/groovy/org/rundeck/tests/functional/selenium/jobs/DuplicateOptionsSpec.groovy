@@ -69,7 +69,9 @@ class DuplicateOptionsSpec extends SeleniumBase {
         optionInputs.each {optionsValues << clickCalendarButtonTwice(jobShowPage, it) }
 
         then:
-        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
+        // When dateFormat is empty, the UI uses Moment.js format 'MM/DD/YYYY hh:mm a' (matches placeholder).
+        // The actual value is parsed using the equivalent Java SimpleDateFormat pattern 'MM/dd/yyyy hh:mm a'.
+        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm a")
 
         optionsValues.size() == 2
         expectedDateFormat.parse(optionsValues[0])
@@ -84,11 +86,10 @@ class DuplicateOptionsSpec extends SeleniumBase {
      * @return the inserted date
      */
     String clickCalendarButtonTwice(JobShowPage jobShowPage, WebElement optionInputField){
-        WebElement optionParent = optionInputField.findElement(By.xpath("./.."))
-        WebElement calendarButton = optionParent.findElement(By.cssSelector(".glyphicon.glyphicon-calendar"))
+        WebElement calendarButton = jobShowPage.getCalendarButtonForOption(optionInputField)
         calendarButton.click()
 
-        jobShowPage.waitForElementVisible(By.cssSelector(".bootstrap-datetimepicker-widget.dropdown-menu.timepicker-sbs.bottom"))
+        jobShowPage.waitForElementVisible(jobShowPage.datetimepickerWidgetBy)
         calendarButton.click()
 
         return optionInputField.getAttribute("value")
