@@ -4262,52 +4262,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
       queryCriteria()
 
       if (!isCount) {
-
-        projections {
-            property("id", "id")
-            property("uuid", "uuid")
-            property("jobUuid", "jobUuid")
-            property("dateStarted","dateStarted")
-            property("dateCompleted","dateCompleted")
-            property("status", "status")
-            property("cancelled", "cancelled")
-            property("timedOut", "timedOut")
-            property("abortedby", "abortedby")
-            property("willRetry", "willRetry")
-            property("user", "user")
-            property("project", "project")
-            property("serverNodeUUID", "serverNodeUUID")
-            property("outputfilepath", "outputfilepath")
-            property("failedNodeList", "failedNodeList")
-            property("succeededNodeList", "succeededNodeList")
-            property("loglevel", "loglevel")
-            property("doNodedispatch", "doNodedispatch")
-            property("argString", "argString")
-            property("timeout", "timeout")
-            property("retry", "retry")
-            property("retryAttempt", "retryAttempt")
-            property("retryOriginalId", "retryOriginalId")
-            property("retryPrevId", "retryPrevId")
-            property("executionType", "executionType")
-            property("filter", "filter")
-            property("nodeThreadcount", "nodeThreadcount")
-            property("nodeKeepgoing", "nodeKeepgoing")
-            property("nodeRankAttribute", "nodeRankAttribute")
-            property("nodeRankOrderAscending", "nodeRankOrderAscending")
-            property("nodeFilterEditable", "nodeFilterEditable")
-            property("nodeExcludeName", "nodeExcludeName")
-            property("nodeExcludeTags", "nodeExcludeTags")
-            property("nodeExcludeOsName", "nodeExcludeOsName")
-            property("nodeExcludeOsFamily", "nodeExcludeOsFamily")
-            property("nodeExcludeOsArch", "nodeExcludeOsArch")
-            property("nodeExcludeOsVersion", "nodeExcludeOsVersion")
-            property("nodeExcludePrecedence", "nodeExcludePrecedence")
-            property("scheduledExecution", "scheduledExecution")
-        }
-
-        // Use ALIAS_TO_ENTITY_MAP to get results as maps with named keys
-        resultTransformer(org.hibernate.criterion.CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
-
         if (offset) {
           firstResult(offset)
         }
@@ -4320,16 +4274,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
       }
     }
     def result = Execution.createCriteria().list(criteriaClos.curry(false))
-
-
-    def executions = result.collect { row ->
-        def exec = Execution.fromMap(
-                row,
-                row.scheduledExecution as ScheduledExecution
-        )
-        exec
-    }
-
     def total = 0
 
     // Check if we should use the optimized query approach
@@ -4341,7 +4285,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         total = Execution.createCriteria().count(criteriaClos.curry(true))
     }
 
-    return [result: executions, total: total]
+    return [result: result, total: total]
   }
 
 

@@ -1024,7 +1024,7 @@ class LogFileStorageService
         incomplete.each { LogFileStorageRequestData request ->
             failedRequests.remove(request.id)
             failures.remove(request.id)
-            Execution.get(request.executionId).logFileStorageRequest = null
+            // No need to set execution.logFileStorageRequest = null after removing hasOne
             logFileStorageRequestProvider.delete(request.executionUuid)
         }
         incomplete.size()
