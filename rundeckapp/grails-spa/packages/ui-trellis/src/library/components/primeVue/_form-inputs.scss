@@ -1,0 +1,35 @@
+// Common form input styles for PrimeVue wrapper components
+// Used by PtInput, PtSelect, and other form input components
+
+@mixin form-input-base {
+  border: 1px solid var(--colors-gray-300-original);
+  border-radius: 6px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+@mixin form-input-hover {
+  border-color: var(--colors-blue-500);
+  box-shadow: 0px 0px 0px 2.8px var(--colors-blue-100);
+  outline: none;
+}
+
+@mixin form-input-focus {
+  border-color: var(--colors-blue-500);
+  box-shadow: 0px 0px 0px 2.8px var(--colors-blue-100);
+  outline: none;
+}
+
+@mixin form-input-invalid {
+  border-color: var(--colors-red-500);
+}
+
+@mixin form-input-disabled {
+  border-color: var(--colors-gray-200);
+  opacity: 0.6;
+}
+
+@mixin form-input-placeholder {
+  &::placeholder {
+    color: var(--colors-gray-500);
+  }
+}

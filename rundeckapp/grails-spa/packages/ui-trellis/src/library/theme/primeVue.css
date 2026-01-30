@@ -1,4 +1,46 @@
 /*To do review inter font */
 .p-component {
+    font-family: Inter, var(--fonts-body) !important;
+}
+
+.p-link {
+    color: var(--colors-blue-500);
+    font-weight: var(--fontWeights-medium);
+}
+
+/* InputText styling */
+.p-inputtext {
+    width: 100%;
+    border: 1px solid var(--colors-gray-300);
+    border-radius: 6px;
+    padding: 10.5px;
     font-family: Inter, var(--fonts-body);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--colors-gray-800);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: var(--colors-white);
+}
+
+.p-inputtext::placeholder {
+    color: var(--colors-gray-500);
+}
+
+.p-inputtext:focus {
+    border-color: var(--colors-blue-500);
+    box-shadow: 0 0 0 2.8px var(--colors-blue-100);
+    outline: none;
+}
+
+.p-inputtext:hover:not(:focus) {
+    border-color: var(--colors-blue-500);
+}
+
+.p-inputtext.p-invalid {
+    border-color: var(--colors-red-500);
+}
+
+.p-inputtext:disabled {
+    border-color: var(--colors-gray-200);
+    opacity: 0.6;
 }
