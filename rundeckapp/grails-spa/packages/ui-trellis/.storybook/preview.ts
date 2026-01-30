@@ -4,8 +4,9 @@ import PrimeVue from "primevue/config";
 import Lara from "@primeuix/themes/lara";
 
 import "../src/library/theme/tokens.css";
-import "../src/library/theme/primeVue.css";
 import "../src/library/theme/tokens-rundeck.css";
+import "../src/library/theme/typography.css";
+import "../src/library/theme/primeVue.css";
 import "./storybook.css";
 import 'primeicons/primeicons.css';
 import {initI18n} from "../src/app/utilities/i18n";
