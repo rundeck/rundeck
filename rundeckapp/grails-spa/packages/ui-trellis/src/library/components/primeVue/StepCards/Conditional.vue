@@ -115,7 +115,7 @@ export default defineComponent({
     }
 
     .conditional--divider{
-      background: var(--colors-gray-300);
+      background: var(--colors-gray-300-original);
       display: flex;
       height: 1px;
       width: 100%;

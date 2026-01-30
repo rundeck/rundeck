@@ -6,7 +6,6 @@
     :option-value="optionValue"
     :option-disabled="optionDisabled"
     :multiple="multiple"
-    :size="size"
     :fluid="fluid"
     :disabled="disabled"
     :invalid="invalid"
@@ -99,13 +98,13 @@ export default defineComponent({
 .p-selectbutton .p-togglebutton {
   // Unselected state - based on Figma design
   background: var(--colors-white);
-  border-color: var(--colors-gray-300);
+  border-color: var(--colors-gray-300-original);
   color: var(--colors-gray-600);
   padding: 10px 17px;
 
   &:hover {
     background: var(--colors-gray-100);
-    border-color: var(--colors-gray-300);
+    border-color: var(--colors-gray-300-original);
   }
 
   &:focus-visible,
@@ -117,7 +116,7 @@ export default defineComponent({
 
   &:active {
     background: var(--colors-gray-200);
-    border-color: var(--colors-gray-300);
+    border-color: var(--colors-gray-300-original);
 
     &:focus-visible,
     &:focus {

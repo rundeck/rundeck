@@ -150,7 +150,7 @@ export default defineComponent({
   }
 
   background-color: var(--colors-secondaryBackgroundOnLight);
-  border-bottom: 2px solid var(--colors-gray-300);
+  border-bottom: 2px solid var(--colors-gray-300-original);
   display: flex;
   justify-content: space-between;
   padding: var(--sizes-4);

@@ -55,14 +55,6 @@ const meta: Meta<typeof PtSelectButton> = {
       type: "boolean",
       description: "When true, allows selecting multiple values.",
     },
-    size: {
-      options: [undefined, "small", "large"],
-      control: {
-        type: "select",
-      },
-      type: "string",
-      description: "Size of the select button. Options: 'small', 'large', or undefined for default.",
-    },
     fluid: {
       control: {
         type: "boolean",
@@ -120,7 +112,6 @@ const meta: Meta<typeof PtSelectButton> = {
     optionValue: undefined,
     optionDisabled: undefined,
     multiple: false,
-    size: undefined,
     fluid: false,
     disabled: false,
     invalid: false,
@@ -199,24 +190,6 @@ export const Multiple: Story = {
   },
 };
 
-export const Sizes: Story = {
-  render: args => ({
-    props: Object.keys(args),
-    components: { PtSelectButton },
-    setup() {
-      return { args };
-    },
-    template: `<div style="display: flex; flex-direction: column; gap: 1rem;">
-      <PtSelectButton v-bind="args" size="small" />
-      <PtSelectButton v-bind="args" />
-      <PtSelectButton v-bind="args" size="large" />
-    </div>`,
-  }),
-  args: {
-    options: ["Small", "Default", "Large"],
-  },
-};
-
 export const Fluid: Story = {
   render: args => ({
     props: Object.keys(args),
@@ -228,5 +201,21 @@ export const Fluid: Story = {
   }),
   args: {
     fluid: true,
+  },
+};
+
+export const PreventDeselection: Story = {
+  render: args => ({
+    props: Object.keys(args),
+    components: { PtSelectButton },
+    setup() {
+      return { args };
+    },
+    template: generateTemplate(args),
+  }),
+  args: {
+    modelValue: "Option 1",
+    options: ["Option 1", "Option 2", "Option 3"],
+    allowEmpty: false,
   },
 };

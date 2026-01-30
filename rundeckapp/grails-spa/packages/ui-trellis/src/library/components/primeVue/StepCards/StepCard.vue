@@ -127,7 +127,7 @@ export default defineComponent({
   box-shadow: none;
   overflow: hidden;
   border-radius: var(--radii-md);
-  border: 1px solid var(--colors-gray-300);
+  border: 1px solid var(--colors-gray-300-original);
 
   p,
   a,
