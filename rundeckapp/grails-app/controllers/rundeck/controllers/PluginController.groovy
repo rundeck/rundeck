@@ -73,6 +73,24 @@ class PluginController extends ControllerBase {
         pluginFile(resourceReq)
     }
 
+    def groupIcon(String iconName) {
+        if (!iconName) {
+            response.status = 400
+            return render(view: '/common/error')
+        }
+        // Serve group icons from app resources
+        def iconPath = "/images/plugins/${iconName}"
+        def resource = grailsApplication.mainContext.getResource("classpath:public${iconPath}")
+
+        if (!resource.exists()) {
+            response.status = 404
+            return render(view: '/404')
+        }
+
+        def format = servletContext.getMimeType(iconName)
+        sendResponse(format, resource.inputStream)
+    }
+
     def pluginFile(PluginResourceReq resourceReq) {
         if (!resourceReq.path) {
             resourceReq.errors.rejectValue('path', 'blank')
