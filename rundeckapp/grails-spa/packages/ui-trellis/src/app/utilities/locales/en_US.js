@@ -955,10 +955,10 @@ const messages = {
       enterValue: "Enter Value",
       operator: {
         equals: "Equal",
-        notEquals: "Not Equal",
+        notEquals: "Does not equal",
         contains: "Contains",
-        notContains: "Not Contains",
-        regex: "Regular Expression Match",
+        notContains: "Does not contain",
+        regex: "Matches",
       },
     },
     stepLabel: "Step label",

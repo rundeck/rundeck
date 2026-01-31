@@ -629,6 +629,15 @@ span:not(.glyphicon, .fa, .pi) {
     flex-shrink: 0;
   }
 
+  // Ensure description text truncates with ellipsis when it exceeds one line
+  :deep(.accordion-description) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0; // Allows flex item to shrink below content size
+  }
+
   :deep(.img-icon) {
     align-items: center;
     display: inline-flex;

@@ -291,8 +291,6 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-@import "@/library/theme/typography.css";
-
 .edit-conditional-step-card {
   display: flex;
   position: relative;
@@ -443,9 +441,9 @@ export default defineComponent({
     flex-direction: column;
     gap: var(--sizes-3);
     position: relative;
-    padding-left: 22px;
 
     &.has-multiple {
+      padding-left: 22px;
       &::before {
         content: "";
         position: absolute;

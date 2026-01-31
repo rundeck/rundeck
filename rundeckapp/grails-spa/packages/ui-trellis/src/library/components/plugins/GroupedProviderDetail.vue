@@ -220,19 +220,4 @@ export default defineComponent({
   font-size: 10.5px !important;
   line-height: var(--line-height-sm);
 }
-
-// Ensure description text truncates with ellipsis when it exceeds one line
-:deep(.accordion-description) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex-shrink: 1;
-  min-width: 0; // Allows flex item to shrink below content size
-}
-
-// Ensure the accordion title text container allows description to shrink
-:deep(.accordion-title-text) {
-  min-width: 0; // Allows flex item to shrink below content size
-  overflow: hidden; // Ensures child elements respect overflow
-}
 </style>

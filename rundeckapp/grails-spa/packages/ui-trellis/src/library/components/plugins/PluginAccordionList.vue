@@ -198,7 +198,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .placeholder-group {
   .placeholder {
     align-items: center;
