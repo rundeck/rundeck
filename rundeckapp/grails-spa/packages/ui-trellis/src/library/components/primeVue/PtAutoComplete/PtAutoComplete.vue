@@ -2,7 +2,7 @@
   <AutoComplete
     ref="autoInput"
     v-model="value"
-    :suggestions="filteredSuggestions"
+    :suggestions="tabFilteredSuggestions"
     :name="name"
     :placeholder="placeholder"
     :invalid="invalid"
@@ -12,27 +12,49 @@
     @option-select="replaceSelection"
     @keydown.enter.prevent
     @change="onChange"
-  ></AutoComplete>
+  >
+    <template v-if="tabMode && tabs && tabs.length > 0" #header>
+      <div class="autocomplete-tabs">
+        <button
+          v-for="(tab, index) in tabs"
+          :key="index"
+          type="button"
+          :class="['autocomplete-tab', { 'autocomplete-tab-active': selectedTabIndex === index }]"
+          @click="selectTab(index)"
+        >
+          <span class="autocomplete-tab-label">{{ tab.label }}</span>
+          <Badge
+            :value="tab.getCount(allSuggestions).toString()"
+            :severity="selectedTabIndex === index ? undefined : 'secondary'"
+            size="small"
+          />
+        </button>
+      </div>
+    </template>
+  </AutoComplete>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import AutoComplete, {
   AutoCompleteCompleteEvent,
   AutoCompleteChangeEvent,
 } from "primevue/autocomplete";
+import Badge from "primevue/badge";
+import "@/library/components/primeVue/Badge/badge.scss";
 import { ContextVariable } from "../../stores/contextVariables";
+import type { TabConfig } from "./PtAutoCompleteTypes";
 
 export default defineComponent({
   name: "PtAutoComplete",
-  components: { AutoComplete },
+  components: { AutoComplete, Badge },
   props: {
     modelValue: {
       type: String,
       required: true,
     },
     suggestions: {
-      type: Array as ContextVariable[],
+      type: Array as PropType<ContextVariable[]>,
       default: () => [],
     },
     defaultValue: {
@@ -59,18 +81,44 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    tabMode: {
+      type: Boolean,
+      default: false,
+    },
+    tabs: {
+      type: Array as PropType<TabConfig[]>,
+      default: undefined,
+    },
   },
   emits: ["update:modelValue", "onChange", "onComplete"],
   data() {
     return {
       value: (this.modelValue || this.defaultValue) as string,
-      filteredSuggestions: [] as string[],
+      filteredSuggestions: [] as ContextVariable[],
+      allSuggestions: [] as ContextVariable[],
       suggestion: null as string | null,
+      selectedTabIndex: 0,
     };
   },
   watch: {
     modelValue(newVal: string) {
       this.value = newVal;
+    },
+  },
+  computed: {
+    tabFilteredSuggestions(): string[] {
+      if (!this.tabMode || !this.tabs || this.tabs.length === 0) {
+        return this.filteredSuggestions.map((suggestion: ContextVariable) => suggestion.name);
+      }
+
+      const activeTab = this.tabs[this.selectedTabIndex];
+      if (!activeTab) {
+        return [];
+      }
+
+      return this.filteredSuggestions
+        .filter(activeTab.filter)
+        .map((suggestion: ContextVariable) => suggestion.name);
     },
   },
   methods: {
@@ -89,20 +137,24 @@ export default defineComponent({
 
     filterSuggestions(event: AutoCompleteCompleteEvent): void {
       const target = event?.originalEvent?.target as HTMLInputElement | null;
-      const cursorPos = target && "selectionStart" in target ? target.selectionStart : 0;
+      const cursorPos = target && "selectionStart" in target ? (target.selectionStart ?? 0) : 0;
       const currentWordRegex = /[^\s]*$/;
       const textToCursor = event.query?.slice(0, cursorPos) || "";
       const currentWord = textToCursor.match(currentWordRegex)?.[0] || "";
       try {
-        this.filteredSuggestions = this.suggestions
-          .filter((suggestion: ContextVariable) => {
-            const name = suggestion?.name;
-            return name && this.isPartialWordMatch(currentWord, name);
-          })
-          .map((suggestion: ContextVariable) => suggestion.name);
+        const filtered = this.suggestions.filter((suggestion: ContextVariable) => {
+          const name = suggestion?.name;
+          return name && this.isPartialWordMatch(currentWord, name);
+        });
+        this.filteredSuggestions = filtered;
+        this.allSuggestions = filtered;
       } catch (e) {
         console.error(e);
       }
+    },
+
+    selectTab(index: number): void {
+      this.selectedTabIndex = index;
     },
 
     isPartialWordMatch(textInput: string, suggestion: string): boolean {
@@ -116,7 +168,8 @@ export default defineComponent({
     replaceSelection(): void {
       const fullInputText = this.modelValue;
       const selectedSuggestion = this.value;
-      const autoCompleteInput = this.$refs.autoInput.$el.querySelector("input");
+      const autoCompleteInput = (this.$refs.autoInput as any)?.$el?.querySelector("input");
+      if (!autoCompleteInput) return;
       const cursorPosition = autoCompleteInput.selectionStart;
       const cursorOffset = this.findSuggestionStart(
         fullInputText,
@@ -215,6 +268,55 @@ export default defineComponent({
   border: 1px solid var(--colors-gray-300-original);
   border-radius: var(--radii-base);
 }
+
+.autocomplete-tabs {
+  display: flex;
+  gap: var(--sizes-4);
+  padding: var(--sizes-3) 0 0;
+  border-bottom: 1px solid var(--colors-gray-200);
+  width: 100%;
+
+  + .p-autocomplete-list-container {
+    border: none;
+  }
+}
+
+.autocomplete-tab {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sizes-1);
+  flex: 1;
+  padding: var(--sizes-2) var(--sizes-6);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--colors-gray-600);
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -1px;
+  position: relative;
+}
+
+.autocomplete-tab:not(.autocomplete-tab-active):hover {
+  color: var(--colors-gray-800);
+}
+
+.autocomplete-tab-active {
+  color: var(--colors-blue-600);
+  border-bottom-color: var(--colors-blue-600);
+}
+
+.autocomplete-tab-label {
+  font-weight: var(--fontWeights-regular);
+}
+
+.autocomplete-tab-active .autocomplete-tab-label {
+  font-weight: var(--fontWeights-semibold);
+}
+
 
 .p-autocomplete {
   width: 100%;

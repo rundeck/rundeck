@@ -1,6 +1,11 @@
 .p-badge {
   background: var(--colors-blue-500);
   color: var(--colors-white);
+  align-content: center;
+
+  &.p-component {
+    font-size: 10px !important;
+  }
 
   &.p-badge-success {
     background: var(--colors-green-500);
