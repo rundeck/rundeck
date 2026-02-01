@@ -69,6 +69,8 @@
                       :show-labels="condIndex === 0"
                       :show-delete-button="conditionSet.conditions.length > 1 || conditionSets.length > 1"
                       :service-name="serviceName"
+                      :suggestions="autocompleteSuggestions"
+                      :tab-mode="autocompleteSuggestions.length > 0"
                       @update:condition="(updated) => updateCondition(setIndex, condIndex, updated)"
                       @delete="() => removeCondition(setIndex, condIndex)"
                       @switch-step-type="handleSwitchStepType"
@@ -238,6 +240,19 @@ export default defineComponent({
         { label: this.$t("Workflow.conditional.operator.notContains"), value: "notContains" },
         { label: this.$t("Workflow.conditional.operator.regex"), value: "regex" },
       ];
+    },
+    autocompleteSuggestions(): ContextVariable[] {
+      const jobVars = (contextVariables().job || []).map((v) => ({
+        ...v,
+        name: `\${job.${v.name}}`,
+      }));
+      const optionVars = this.extraAutocompleteVars
+        .filter((v) => v.type === "option")
+        .map((v) => ({
+          ...v,
+          name: `\${option.${v.name}}`,
+        }));
+      return [...jobVars, ...optionVars];
     },
   },
   methods: {
@@ -441,6 +456,7 @@ export default defineComponent({
     flex-direction: column;
     gap: var(--sizes-3);
     position: relative;
+    transition: padding-left 0.2s ease;
 
     &.has-multiple {
       padding-left: 22px;

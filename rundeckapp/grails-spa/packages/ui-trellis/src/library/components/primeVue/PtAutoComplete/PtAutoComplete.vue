@@ -152,9 +152,27 @@ export default defineComponent({
       const currentWord = textToCursor.match(currentWordRegex)?.[0] || "";
       this.currentQuery = currentWord;
       try {
+        // If user types just "$", show all suggestions
+        if (currentWord === "$" || currentWord === "") {
+          this.filteredSuggestions = this.suggestions;
+          this.allSuggestions = this.suggestions;
+          return;
+        }
+
+        // Filter suggestions based on the current word
         const filtered = this.suggestions.filter((suggestion: ContextVariable) => {
           const name = suggestion?.name;
-          return name && this.isPartialWordMatch(currentWord, name);
+          if (!name) return false;
+          
+          // If currentWord starts with "${", match against the full suggestion name
+          if (currentWord.startsWith("${")) {
+            return this.isPartialWordMatch(currentWord, name);
+          }
+          
+          // Otherwise, match against the suggestion name without the ${} wrapper
+          // Extract the inner part (e.g., "job.id" from "${job.id}")
+          const innerName = name.replace(/^\$\{|\}$/g, "");
+          return this.isPartialWordMatch(currentWord, innerName) || this.isPartialWordMatch(currentWord, name);
         });
         this.filteredSuggestions = filtered;
         this.allSuggestions = filtered;
@@ -191,11 +209,25 @@ export default defineComponent({
     },
 
     isPartialWordMatch(textInput: string, suggestion: string): boolean {
-      const suggestionPrefixes = suggestion
+      // Normalize both strings to lowercase for case-insensitive matching
+      const normalizedInput = textInput.toLowerCase();
+      const normalizedSuggestion = suggestion.toLowerCase();
+      
+      // If input is empty, don't match
+      if (!normalizedInput) return false;
+      
+      // If input exactly matches the suggestion, return true
+      if (normalizedInput === normalizedSuggestion) return true;
+      
+      // Check if the suggestion starts with the input (for progressive typing)
+      if (normalizedSuggestion.startsWith(normalizedInput)) return true;
+      
+      // Check if input ends with any prefix of the suggestion (backwards matching)
+      const suggestionPrefixes = normalizedSuggestion
         .split("")
-        .map((_element, index) => suggestion.slice(0, suggestion.length - index));
+        .map((_element, index) => normalizedSuggestion.slice(0, normalizedSuggestion.length - index));
 
-      return suggestionPrefixes.some((prefix) => textInput.endsWith(prefix));
+      return suggestionPrefixes.some((prefix) => normalizedInput.endsWith(prefix));
     },
 
     replaceSelection(): void {
@@ -361,7 +393,7 @@ export default defineComponent({
   gap: var(--sizes-2);
   padding: 0;
   margin: 0;
-  border-bottom: 1px solid var(--colors-gray-200);
+  border-bottom: 2px solid var(--colors-gray-200);
   width: 100%;
 
   + .p-autocomplete-list-container {
@@ -373,7 +405,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: var(--sizes-1);
+  gap: 8px;
   flex: 1;
   height: 52px;
   padding: var(--sizes-2) var(--sizes-4);
@@ -385,7 +417,7 @@ export default defineComponent({
   line-height: 20px;
   color: var(--colors-gray-600);
   transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
-  margin-bottom: -1px;
+  margin-bottom: -2px;
   position: relative;
   outline: none;
 }

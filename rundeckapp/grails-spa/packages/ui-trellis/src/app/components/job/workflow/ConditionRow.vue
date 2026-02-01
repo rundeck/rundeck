@@ -51,9 +51,12 @@
       <label v-if="showLabels" class="text-heading--sm form-label">
         {{ $t("editConditionalStep.value") }} <span class="required-indicator">*</span>
       </label>
-      <PtInput
+      <PtAutoComplete
         :modelValue="condition.value"
+        :suggestions="hasSuggestions ? suggestions : undefined"
         :placeholder="$t('editConditionalStep.valuePlaceholder')"
+        :tab-mode="tabMode"
+        :tabs="tabs"
         class="value-input"
         @update:modelValue="updateValue"
       />
@@ -72,15 +75,17 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
-import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
+import PtAutoComplete from "@/library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import PtSelect from "@/library/components/primeVue/PtSelect/PtSelect.vue";
 import type { Condition, OperatorOption, FieldOption } from "./types/conditionalStepTypes";
+import type { ContextVariable } from "@/library/stores/contextVariables";
+import type { TabConfig } from "@/library/components/primeVue/PtAutoComplete/PtAutoCompleteTypes";
 
 export default defineComponent({
   name: "ConditionRow",
   components: {
-    PtInput,
+    PtAutoComplete,
     PtButton,
     PtSelect,
   },
@@ -109,6 +114,14 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    suggestions: {
+      type: Array as PropType<ContextVariable[]>,
+      default: () => [],
+    },
+    tabMode: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["update:condition", "delete", "switch-step-type"],
   computed: {
@@ -123,6 +136,29 @@ export default defineComponent({
         isNote: true,
       };
       return [noteOption, ...this.fieldOptions];
+    },
+    hasSuggestions(): boolean {
+      return this.suggestions && this.suggestions.length > 0;
+    },
+    tabs(): TabConfig[] | undefined {
+      if (!this.tabMode) {
+        return undefined;
+      }
+
+      return [
+        {
+          label: this.$t("editConditionalStep.tabJob") || "Job",
+          filter: (suggestion: ContextVariable) => suggestion.type === "job",
+          getCount: (suggestions: ContextVariable[]) =>
+            suggestions.filter((s) => s.type === "job").length,
+        },
+        {
+          label: this.$t("editConditionalStep.tabOptions") || "Options",
+          filter: (suggestion: ContextVariable) => suggestion.type === "option",
+          getCount: (suggestions: ContextVariable[]) =>
+            suggestions.filter((s) => s.type === "option").length,
+        },
+      ];
     },
   },
   methods: {
@@ -190,8 +226,8 @@ export default defineComponent({
   }
 
   .value-column {
-    flex: 2;
-    max-width: 474px;
+    flex: 2 1 0;
+    min-width: 200px;
 
     .value-input {
       width: 100%;
@@ -200,9 +236,14 @@ export default defineComponent({
 
   .delete-button {
     flex-shrink: 0;
-    padding: 12px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
     border-color: var(--colors-gray-600);
     color: var(--colors-gray-800);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
       background: var(--colors-gray-100);

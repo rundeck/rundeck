@@ -1219,6 +1219,8 @@ const messages = {
     or: "OR",
     switchStepTypeNote: "Note: Can't find a prior node step? Switch to a ",
     switchStepTypeLink: "conditional {stepType} step.",
+    tabJob: "Job",
+    tabOptions: "Options",
   },
 };
 
