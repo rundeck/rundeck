@@ -31,6 +31,14 @@
         </button>
       </div>
     </template>
+    <template #option="slotProps">
+      <div class="autocomplete-option-content">
+        <span v-if="getSuggestionTitle(slotProps.option)" class="autocomplete-option-title">
+          {{ getSuggestionTitle(slotProps.option) }}
+        </span>
+        <span class="autocomplete-option-name" v-html="highlightQueryMatch(slotProps.option)"></span>
+      </div>
+    </template>
   </AutoComplete>
 </template>
 
@@ -98,6 +106,7 @@ export default defineComponent({
       allSuggestions: [] as ContextVariable[],
       suggestion: null as string | null,
       selectedTabIndex: 0,
+      currentQuery: "",
     };
   },
   watch: {
@@ -141,6 +150,7 @@ export default defineComponent({
       const currentWordRegex = /[^\s]*$/;
       const textToCursor = event.query?.slice(0, cursorPos) || "";
       const currentWord = textToCursor.match(currentWordRegex)?.[0] || "";
+      this.currentQuery = currentWord;
       try {
         const filtered = this.suggestions.filter((suggestion: ContextVariable) => {
           const name = suggestion?.name;
@@ -151,6 +161,29 @@ export default defineComponent({
       } catch (e) {
         console.error(e);
       }
+    },
+
+    getSuggestionTitle(suggestionName: string): string | null {
+      const suggestion = this.filteredSuggestions.find((s: ContextVariable) => s.name === suggestionName);
+      return suggestion?.title || null;
+    },
+
+    highlightQueryMatch(suggestionName: string): string {
+      if (!this.currentQuery) {
+        return suggestionName;
+      }
+      // Extract the actual query part (remove special characters like {, $, etc.)
+      // This handles cases like "{job" or "${job" where we want to match "job"
+      const queryForMatch = this.currentQuery.replace(/^[^a-zA-Z0-9]*/, "").toLowerCase();
+      if (!queryForMatch) {
+        return suggestionName;
+      }
+      const regex = new RegExp(`(${this.escapeRegex(queryForMatch)})`, "gi");
+      return suggestionName.replace(regex, '<span class="autocomplete-query-match">$1</span>');
+    },
+
+    escapeRegex(str: string): string {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     },
 
     selectTab(index: number): void {
@@ -240,6 +273,13 @@ export default defineComponent({
 .p-autocomplete-overlay {
   z-index: 1200 !important;
   color: var(--colors-gray-800);
+  margin-top: 0;
+}
+
+// Remove any spacing from PrimeVue's header container
+.p-autocomplete-overlay .p-autocomplete-header {
+  padding: 0;
+  margin: 0;
 }
 
 .p-autocomplete-list {
@@ -256,11 +296,58 @@ export default defineComponent({
 
 .p-autocomplete-option {
   color: var(--colors-gray-800);
+  padding: 10px 17px;
+  transition: background-color 0.2s, color 0.2s;
 }
 
-.p-autocomplete-option-selected,
-.p-autocomplete-option:not(.p-autocomplete-option-selected):not(.p-disabled).p-focus {
-  background-color: var(--colors-gray-300-original);
+.p-autocomplete-option:hover:not(.p-disabled):not(.p-autocomplete-option-selected) {
+  background-color: var(--colors-cardNumber);
+  color: var(--colors-gray-800);
+}
+
+.p-autocomplete-option.p-focus:not(.p-disabled) {
+  background-color: var(--colors-cardNumber);
+  color: var(--colors-gray-800);
+}
+
+.p-autocomplete-option-selected {
+  background-color: var(--colors-blue-50);
+  color: var(--colors-blue-500);
+}
+
+.p-autocomplete-option-selected.p-focus {
+  background-color: var(--colors-blue-50);
+  color: var(--colors-blue-500);
+}
+
+.p-autocomplete-option .autocomplete-option-content {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: var(--sizes-2) !important;
+  width: 100%;
+  white-space: nowrap !important;
+}
+
+.p-autocomplete-option .autocomplete-option-title {
+  display: inline-block !important;
+  font-weight: var(--fontWeights-regular);
+  color: var(--colors-gray-800);
+  white-space: normal;
+}
+
+.p-autocomplete-option .autocomplete-option-name {
+  display: inline-block !important;
+  font-weight: var(--fontWeights-regular);
+  color: var(--colors-gray-600);
+  font-family: monospace;
+  white-space: normal;
+}
+
+.p-autocomplete-option .autocomplete-query-match {
+  background-color: var(--colors-yellow-200) !important;
+  color: var(--colors-blue-600) !important;
+  font-weight: var(--fontWeights-semibold);
 }
 
 .p-autocomplete-list-container {
@@ -271,8 +358,9 @@ export default defineComponent({
 
 .autocomplete-tabs {
   display: flex;
-  gap: var(--sizes-4);
-  padding: var(--sizes-3) 0 0;
+  gap: var(--sizes-2);
+  padding: 0;
+  margin: 0;
   border-bottom: 1px solid var(--colors-gray-200);
   width: 100%;
 
@@ -287,7 +375,8 @@ export default defineComponent({
   justify-content: flex-start;
   gap: var(--sizes-1);
   flex: 1;
-  padding: var(--sizes-2) var(--sizes-6);
+  height: 52px;
+  padding: var(--sizes-2) var(--sizes-4);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -295,18 +384,35 @@ export default defineComponent({
   font-size: 14px;
   line-height: 20px;
   color: var(--colors-gray-600);
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
   margin-bottom: -1px;
   position: relative;
+  outline: none;
 }
 
 .autocomplete-tab:not(.autocomplete-tab-active):hover {
   color: var(--colors-gray-800);
 }
 
+.autocomplete-tab:focus-visible {
+  box-shadow: 0px 0px 0px 2.8px var(--colors-blue-100);
+  outline: none;
+}
+
+.autocomplete-tab:disabled {
+  color: var(--colors-gray-500);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .autocomplete-tab-active {
   color: var(--colors-blue-600);
   border-bottom-color: var(--colors-blue-600);
+}
+
+.autocomplete-tab-active:focus-visible {
+  box-shadow: 0px 0px 0px 2.8px var(--colors-blue-100);
+  outline: none;
 }
 
 .autocomplete-tab-label {

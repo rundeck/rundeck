@@ -31,4 +31,7 @@
     --lineHeights-heading-lg: 1.3125rem;  /* 21px */
     --lineHeights-body-compact: 0.875rem; /* 14px */
     --lineHeights-button: 1.0625rem;      /* 17px */
+
+    /* Query match highlighting */
+    --colors-yellow-200: #FFF3B2;
 }
