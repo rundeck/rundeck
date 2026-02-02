@@ -57,6 +57,7 @@
         :placeholder="$t('editConditionalStep.valuePlaceholder')"
         :tab-mode="tabMode"
         :tabs="tabs"
+        :replace-on-select="true"
         class="value-input"
         @update:modelValue="updateValue"
       />

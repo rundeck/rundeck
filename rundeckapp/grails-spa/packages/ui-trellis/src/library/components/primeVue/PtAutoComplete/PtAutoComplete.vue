@@ -8,8 +8,9 @@
     :invalid="invalid"
     :auto-option-focus="true"
     :disabled="readOnly"
+    :show-empty-message="false"
     @complete="onComplete"
-    @option-select="replaceSelection"
+    @option-select="handleOptionSelect"
     @keydown.enter.prevent
     @change="onChange"
   >
@@ -97,6 +98,10 @@ export default defineComponent({
       type: Array as PropType<TabConfig[]>,
       default: undefined,
     },
+    replaceOnSelect: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["update:modelValue", "onChange", "onComplete"],
   data() {
@@ -115,19 +120,24 @@ export default defineComponent({
     },
   },
   computed: {
-    tabFilteredSuggestions(): string[] {
+    tabFilteredSuggestions(): string[] | undefined {
+      let suggestions: string[];
+      
       if (!this.tabMode || !this.tabs || this.tabs.length === 0) {
-        return this.filteredSuggestions.map((suggestion: ContextVariable) => suggestion.name);
-      }
+        suggestions = this.filteredSuggestions.map((suggestion: ContextVariable) => suggestion.name);
+      } else {
+        const activeTab = this.tabs[this.selectedTabIndex];
+        if (!activeTab) {
+          return undefined;
+        }
 
-      const activeTab = this.tabs[this.selectedTabIndex];
-      if (!activeTab) {
-        return [];
+        suggestions = this.filteredSuggestions
+          .filter(activeTab.filter)
+          .map((suggestion: ContextVariable) => suggestion.name);
       }
-
-      return this.filteredSuggestions
-        .filter(activeTab.filter)
-        .map((suggestion: ContextVariable) => suggestion.name);
+      
+      // Return undefined instead of empty array to prevent dropdown from showing
+      return suggestions.length > 0 ? suggestions : undefined;
     },
   },
   methods: {
@@ -190,12 +200,18 @@ export default defineComponent({
       if (!this.currentQuery) {
         return suggestionName;
       }
+      
       // Extract the actual query part (remove special characters like {, $, etc.)
       // This handles cases like "{job" or "${job" where we want to match "job"
       const queryForMatch = this.currentQuery.replace(/^[^a-zA-Z0-9]*/, "").toLowerCase();
       if (!queryForMatch) {
         return suggestionName;
       }
+      
+      // Use case-insensitive regex to find and highlight the match anywhere in the suggestion name
+      // This handles both cases:
+      // - User types "execid" → highlights "execid" in "${job.execid}"
+      // - User types "${job.execid" → highlights "${job.execid" in "${job.execid}"
       const regex = new RegExp(`(${this.escapeRegex(queryForMatch)})`, "gi");
       return suggestionName.replace(regex, '<span class="autocomplete-query-match">$1</span>');
     },
@@ -219,15 +235,32 @@ export default defineComponent({
       // If input exactly matches the suggestion, return true
       if (normalizedInput === normalizedSuggestion) return true;
       
-      // Check if the suggestion starts with the input (for progressive typing)
+      // Check if the suggestion starts with the input (for progressive typing like "${job" matching "${job.execid}")
       if (normalizedSuggestion.startsWith(normalizedInput)) return true;
       
+      // Check if the input is contained anywhere in the suggestion (for cases like "execid" matching "job.execid")
+      if (normalizedSuggestion.includes(normalizedInput)) return true;
+      
       // Check if input ends with any prefix of the suggestion (backwards matching)
+      // This handles cases like typing from the end of a variable name
       const suggestionPrefixes = normalizedSuggestion
         .split("")
         .map((_element, index) => normalizedSuggestion.slice(0, normalizedSuggestion.length - index));
 
       return suggestionPrefixes.some((prefix) => normalizedInput.endsWith(prefix));
+    },
+
+    handleOptionSelect(event: any): void {
+      // If replaceOnSelect is true, use default PrimeVue behavior (replace entire value)
+      // PrimeVue will automatically update the v-model value
+      if (this.replaceOnSelect) {
+        // Let PrimeVue handle it - it will replace the entire input value
+        this.updateValue();
+        return;
+      }
+      
+      // Otherwise, use custom replacement logic (partial replacement)
+      this.replaceSelection();
     },
 
     replaceSelection(): void {
