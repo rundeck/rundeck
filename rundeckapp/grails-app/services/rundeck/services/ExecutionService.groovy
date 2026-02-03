@@ -4487,7 +4487,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Avoids the expensive JOIN with scheduled_execution table
      */
     Long countExecutionsSimple(ExecutionQuery query) {
-        def hqlParts = ["SELECT COUNT(e.id) FROM Execution e WHERE 1=1"]
+        def hqlParts = ["SELECT COUNT(*) FROM Execution e WHERE 1=1"]
         def params = [:]
 
         // Project filter
