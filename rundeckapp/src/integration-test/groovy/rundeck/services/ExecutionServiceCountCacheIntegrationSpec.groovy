@@ -50,6 +50,7 @@ class ExecutionServiceCountCacheIntegrationSpec extends Specification {
         count.times { i ->
             def exec = new Execution(
                 scheduledExecution: job,
+                jobUuid: job.uuid,  // Set jobUuid for direct filtering without JOIN
                 project: project,
                 status: i % 2 == 0 ? "succeeded" : "failed",
                 dateStarted: new Date(),
@@ -282,12 +283,33 @@ class ExecutionServiceCountCacheIntegrationSpec extends Specification {
         executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", userFilter: "admin")) == true
     }
 
-    def "canUseSimpleCount returns false for job-related queries"() {
+    def "canUseSimpleCount returns true for job UUID queries"() {
         expect:
-        executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", jobIdListFilter: ["uuid"])) == false
+        // UUID job IDs can use execution.job_uuid column (no JOIN)
+        executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", jobIdListFilter: ["550e8400-e29b-41d4-a716-446655440000"])) == true
+        executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", jobIdListFilter: ["uuid-1", "uuid-2"])) == true
+    }
+
+    def "canUseSimpleCount returns false for queries requiring JOIN"() {
+        expect:
+        // These require JOIN with scheduled_execution
+        executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", jobIdListFilter: ["12345"])) == false // Long ID
         executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", groupPath: "path")) == false
         executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", jobFilter: "job")) == false
         executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", adhoc: true)) == false
+    }
+
+    def "countExecutionsSimple with job UUID filter"() {
+        given:
+        def executions = createTestExecutions("TestProject", 5)
+        def jobUuid = executions[0].scheduledExecution.uuid
+
+        when:
+        def query = new ExecutionQuery(projFilter: "TestProject", jobIdListFilter: [jobUuid])
+        def count = executionService.countExecutionsSimple(query)
+
+        then:
+        count == 5 // All executions were created with the same job
     }
 
     // ==================== Cache Key Tests ====================
@@ -337,6 +359,7 @@ class ExecutionServiceCountCacheIntegrationSpec extends Specification {
 
         Execution scheduledExec = new Execution(
             scheduledExecution: futureJob,
+            jobUuid: futureJob.uuid,
             project: "FutureProject",
             status: "scheduled",
             dateStarted: futureDate,
