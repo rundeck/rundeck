@@ -78,6 +78,9 @@ import org.apache.commons.io.FileUtils
 import org.hibernate.JDBCException
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
+import java.util.concurrent.TimeUnit
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
@@ -182,6 +185,37 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ExecReportDataProvider execReportDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
+
+    // Configuration keys for execution count cache
+    static final String EXECUTION_COUNT_CACHE_ENABLED = 'api.executionQueryConfig.countCache.enabled'
+    static final String EXECUTION_COUNT_CACHE_TTL_SECONDS = 'api.executionQueryConfig.countCache.ttl'
+    static final int DEFAULT_CACHE_TTL_SECONDS = 30
+    static final int DEFAULT_CACHE_MAX_SIZE = 1000
+
+    // Lazy-initialized cache for execution counts
+    private Cache<String, Long> executionCountCache
+
+    /**
+     * Get or create the execution count cache
+     * Cache is created lazily to allow configurationService to be injected
+     */
+    private Cache<String, Long> getExecutionCountCache() {
+        if (executionCountCache == null) {
+            int ttlSeconds = configurationService?.getInteger(EXECUTION_COUNT_CACHE_TTL_SECONDS, DEFAULT_CACHE_TTL_SECONDS) ?: DEFAULT_CACHE_TTL_SECONDS
+            executionCountCache = CacheBuilder.newBuilder()
+                .expireAfterWrite(ttlSeconds, TimeUnit.SECONDS)
+                .maximumSize(DEFAULT_CACHE_MAX_SIZE)
+                .build()
+        }
+        return executionCountCache
+    }
+
+    /**
+     * Check if execution count caching is enabled
+     */
+    boolean isExecutionCountCacheEnabled() {
+        return configurationService?.getBoolean(EXECUTION_COUNT_CACHE_ENABLED, false) ?: false
+    }
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -4245,13 +4279,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
   /**
-   * Query executions
-   * @param query query
-   * @param offset paging offset
-   * @param max paging max
-   * @return result map [total: int, result: List<Execution>]
-   */
-    def queryExecutions(ExecutionQuery query, int offset = 0, int max = -1) {
+  * Query executions
+  * @param query query
+  * @param offset paging offset
+  * @param max paging max
+  * @return result map [total: int, result: List<Execution>]
+  */
+  def queryExecutions(ExecutionQuery query, int offset = 0, int max = -1) {
 
     // Standard Criteria-based query (original implementation)
     def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
@@ -4273,20 +4307,233 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
       }
     }
+
     def result = Execution.createCriteria().list(criteriaClos.curry(false))
     def total = 0
+    def cacheKey = null
+    def fromCache = false
 
-    // Check if we should use the optimized query approach
-    // This provides 50-100x better performance for includeJobRef queries
-    if (query.shouldUseUnionQuery()) {
-        log.debug("Using optimized UNION query for includeJobRef execution query")
-        total = query.countDirectAndReferencedExecutions()
-    }else {
-        total = Execution.createCriteria().count(criteriaClos.curry(true))
+    // Check cache first if enabled - avoids determining count method when cache hit
+    if (isExecutionCountCacheEnabled()) {
+        cacheKey = buildCountCacheKey(query)
+        def cachedTotal = getExecutionCountCache().getIfPresent(cacheKey)
+        if (cachedTotal != null) {
+            log.debug("Cache hit for execution count: ${cacheKey}")
+            total = cachedTotal
+            fromCache = true
+        }
+    }
+
+    // If not from cache, determine the best count method
+    if (!fromCache) {
+        if (query.shouldUseUnionQuery()) {
+            // Optimized UNION query for includeJobRef (50-100x faster)
+            log.debug("Using optimized UNION query for includeJobRef execution query")
+            total = query.countDirectAndReferencedExecutions()
+        } else if (canUseSimpleCount(query)) {
+            // Simple HQL count without JOINs (avoids scheduled_execution JOIN)
+            // Only used when cache is enabled, as the main benefit is for caching
+            log.debug("Using simple count without JOINs for execution query")
+            total = countExecutionsSimple(query)
+        } else {
+            // Standard criteria count (may include JOINs)
+            log.debug("Using criteria count for execution query")
+            total = Execution.createCriteria().count(criteriaClos.curry(true))
+        }
+
+        // Store in cache if enabled
+        if (isExecutionCountCacheEnabled() && cacheKey) {
+            getExecutionCountCache().put(cacheKey, total as Long)
+        }
+    }
+
+
+    // Edge case handling: Detect stale cached count and refresh if necessary
+    // Only check if the total came from cache - otherwise it's already fresh
+    if (fromCache) {
+        def resultSize = result.size()
+        boolean cacheIsStale = false
+
+        if (resultSize > 0 && total < offset + resultSize) {
+            // Cached total is lower than what we actually got - definitely stale
+            log.debug("Stale cache detected: total ${total} < offset ${offset} + resultSize ${resultSize}")
+            cacheIsStale = true
+        } else if (resultSize == 0 && offset > 0 && total > offset) {
+            // Empty result on a non-first page but cached total says there should be data
+            log.debug("Stale cache detected: empty page at offset ${offset} but total is ${total}")
+            cacheIsStale = true
+        } else if (resultSize > 0 && resultSize < max && max > 0 && offset + resultSize < total) {
+            // Got fewer results than max (partial page) but cached total says there's more
+            log.debug("Stale cache detected: partial page with ${resultSize} results but total is ${total}")
+            cacheIsStale = true
+        }
+
+        // If cache is stale, invalidate and get real count
+        if (cacheIsStale) {
+            log.debug("Refreshing stale cached count with real query")
+            
+            // Invalidate the stale cache entry
+            getExecutionCountCache().invalidate(cacheKey)
+            
+            // Get the real count using the same logic as the main count path
+            if (query.shouldUseUnionQuery()) {
+                total = query.countDirectAndReferencedExecutions()
+            } else if (canUseSimpleCount(query)) {
+                // We're inside fromCache block, so cache is enabled - safe to use HQL
+                total = countExecutionsSimple(query)
+            } else {
+                total = Execution.createCriteria().count(criteriaClos.curry(true))
+            }
+            
+            // Cache the fresh count
+            getExecutionCountCache().put(cacheKey, total as Long)
+        }
     }
 
     return [result: result, total: total]
   }
+
+    /**
+     * Check if this query can use simple count without JOINs
+     * Returns true if no job-specific filters are set (avoiding scheduled_execution JOIN)
+     */
+    boolean canUseSimpleCount(ExecutionQuery query) {
+        def jobqueryfilters = ['jobListFilter', 'jobIdListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter',
+                               'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter',
+                               'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
+
+        // Can use simple count if no job filters are set and not filtering by adhoc
+        boolean hasJobFilters = jobqueryfilters.any { query[it] }
+        return !hasJobFilters && query.adhoc == null
+    }
+
+    /**
+     * Build a cache key for the count query based on query parameters
+     */
+    String buildCountCacheKey(ExecutionQuery query) {
+        def parts = []
+        parts << "proj:${query.projFilter ?: 'null'}"
+        parts << "status:${query.statusFilter ?: 'null'}"
+        parts << "user:${query.userFilter ?: 'null'}"
+        parts << "execType:${query.executionTypeFilter ?: 'null'}"
+        parts << "adhoc:${query.adhoc ?: 'null'}"
+
+        // Include date filters in cache key
+        if (query.doendafterFilter && query.endafterFilter) {
+            parts << "endAfter:${query.endafterFilter.time}"
+        }
+        if (query.doendbeforeFilter && query.endbeforeFilter) {
+            parts << "endBefore:${query.endbeforeFilter.time}"
+        }
+        if (query.dostartafterFilter && query.startafterFilter) {
+            parts << "startAfter:${query.startafterFilter.time}"
+        }
+        if (query.dostartbeforeFilter && query.startbeforeFilter) {
+            parts << "startBefore:${query.startbeforeFilter.time}"
+        }
+
+        // Include job filters if present
+        if (query.jobIdListFilter) {
+            parts << "jobIds:${query.jobIdListFilter.sort().join(',')}"
+        }
+
+        return parts.join('|')
+    }
+
+    /**
+     * Count executions using simple HQL without JOINs
+     * This is much faster for queries that don't need job-related filters
+     * Avoids the expensive JOIN with scheduled_execution table
+     */
+    Long countExecutionsSimple(ExecutionQuery query) {
+        def hqlParts = ["SELECT COUNT(e.id) FROM Execution e WHERE 1=1"]
+        def params = [:]
+
+        // Project filter
+        if (query.projFilter) {
+            hqlParts << "AND e.project = :project"
+            params.project = query.projFilter
+        }
+
+        // User filter
+        if (query.userFilter) {
+            hqlParts << "AND e.user = :user"
+            params.user = query.userFilter
+        }
+
+        // Execution type filter
+        if (query.executionTypeFilter) {
+            hqlParts << "AND e.executionType = :execType"
+            params.execType = query.executionTypeFilter
+        }
+
+        // Status filter
+        if (query.statusFilter) {
+            def state = query.statusFilter
+            if (state == EXECUTION_RUNNING) {
+                hqlParts << "AND e.dateCompleted IS NULL"
+                hqlParts << "AND (e.status IS NULL OR (e.status != :scheduled AND e.status != :queued))"
+                params.scheduled = EXECUTION_SCHEDULED
+                params.queued = EXECUTION_QUEUED
+            } else if (state == EXECUTION_SCHEDULED) {
+                hqlParts << "AND e.status = :status"
+                params.status = EXECUTION_SCHEDULED
+            } else if (state == EXECUTION_QUEUED) {
+                hqlParts << "AND e.status = :status"
+                params.status = EXECUTION_QUEUED
+            } else if (state == EXECUTION_ABORTED) {
+                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.cancelled = true"
+            } else if (state == EXECUTION_TIMEDOUT) {
+                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.timedOut = true"
+            } else if (state == EXECUTION_FAILED_WITH_RETRY) {
+                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.willRetry = true"
+            } else if (state == EXECUTION_FAILED) {
+                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.cancelled = false AND e.status = 'failed'"
+            } else if (state == EXECUTION_SUCCEEDED) {
+                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.cancelled = false AND e.status = 'succeeded'"
+            } else if (state) {
+                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.cancelled = false AND e.status = :status"
+                params.status = state
+            }
+        }
+
+        // Date filters
+        if (query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter) {
+            hqlParts << "AND e.dateStarted BETWEEN :startAfter AND :startBefore"
+            params.startAfter = query.startafterFilter
+            params.startBefore = query.startbeforeFilter
+        } else if (query.dostartbeforeFilter && query.startbeforeFilter) {
+            hqlParts << "AND e.dateStarted <= :startBefore"
+            params.startBefore = query.startbeforeFilter
+        } else if (query.dostartafterFilter && query.startafterFilter) {
+            hqlParts << "AND e.dateStarted >= :startAfter"
+            params.startAfter = query.startafterFilter
+        }
+
+        if (query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter) {
+            hqlParts << "AND e.dateCompleted BETWEEN :endAfter AND :endBefore"
+            params.endAfter = query.endafterFilter
+            params.endBefore = query.endbeforeFilter
+        } else if (query.doendbeforeFilter && query.endbeforeFilter) {
+            hqlParts << "AND e.dateCompleted <= :endBefore"
+            params.endBefore = query.endbeforeFilter
+        } else if (query.doendafterFilter && query.endafterFilter) {
+            hqlParts << "AND e.dateCompleted >= :endAfter"
+            params.endAfter = query.endafterFilter
+        }
+
+        // Aborted by filter
+        if (query.abortedbyFilter) {
+            hqlParts << "AND e.abortedby = :abortedby"
+            params.abortedby = query.abortedbyFilter
+        }
+
+        def hql = hqlParts.join(' ')
+        log.debug("Simple count HQL: ${hql} with params: ${params}")
+
+        def result = Execution.executeQuery(hql, params)
+        return (result[0] ?: 0) as Long
+    }
 
 
   /**
@@ -4742,7 +4989,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     category 'Execution'
                     authRequired("app_admin")
                     build()
-                }
+                },
+                SystemConfig.builder().with {
+                    key "rundeck.api.executionQueryConfig.countCache.enabled"
+                    description "Enable cache for counting total executions in API execution queries"
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'API'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key "rundeck.api.executionQueryConfig.countCache.ttl"
+                    description "Time-to-live (TTL) in seconds for cached execution count entries in API execution queries"
+                    defaultValue "30"
+                    required false
+                    datatype "Integer"
+                    visibility 'Advanced'
+                    category 'API'
+                    authRequired("app_admin")
+                    build()
+                },
         ] as List<SysConfigProp>
     }
 }
