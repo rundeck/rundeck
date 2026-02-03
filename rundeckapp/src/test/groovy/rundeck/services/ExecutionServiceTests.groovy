@@ -662,16 +662,52 @@ class ExecutionServiceTests extends Specification implements DataTest {
     }
 
     /**
-     * Test canUseSimpleCount returns false when jobIdListFilter present
+     * Test canUseSimpleCount returns true when jobIdListFilter has UUID strings
+     * (can use execution.job_uuid column without JOIN)
      */
-    void testCanUseSimpleCountWithJobIdFilter() {
+    void testCanUseSimpleCountWithJobUuidFilter() {
         given:
         def svc = new ExecutionService()
 
         when:
         def query = new ExecutionQuery(
             projFilter: "TestProject",
-            jobIdListFilter: ['job-uuid-1']
+            jobIdListFilter: ['550e8400-e29b-41d4-a716-446655440000']
+        )
+
+        then:
+        svc.canUseSimpleCount(query) == true
+    }
+
+    /**
+     * Test canUseSimpleCount returns true with multiple UUID job IDs
+     */
+    void testCanUseSimpleCountWithMultipleJobUuids() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['uuid-1', 'uuid-2', 'uuid-3']
+        )
+
+        then:
+        svc.canUseSimpleCount(query) == true
+    }
+
+    /**
+     * Test canUseSimpleCount returns false when jobIdListFilter has Long IDs (legacy)
+     * (requires JOIN with scheduled_execution)
+     */
+    void testCanUseSimpleCountWithLongJobId() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['12345']  // Numeric string = Long ID
         )
 
         then:

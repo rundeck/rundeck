@@ -4330,9 +4330,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // Optimized UNION query for includeJobRef (50-100x faster)
             log.debug("Using optimized UNION query for includeJobRef execution query")
             total = query.countDirectAndReferencedExecutions()
-        } else if (canUseSimpleCount(query)) {
+        } else if (isExecutionCountCacheEnabled() && canUseSimpleCount(query)) {
             // Simple HQL count without JOINs (avoids scheduled_execution JOIN)
-            // Only used when cache is enabled, as the main benefit is for caching
+            // Only used when cache is enabled, as HQL requires real database
             log.debug("Using simple count without JOINs for execution query")
             total = countExecutionsSimple(query)
         } else {
@@ -4395,16 +4395,57 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
      * Check if this query can use simple count without JOINs
-     * Returns true if no job-specific filters are set (avoiding scheduled_execution JOIN)
+     * Returns true if the query can be satisfied using only execution table columns
+     * 
+     * Filters that REQUIRE JOIN with scheduled_execution:
+     *   - jobListFilter (job names)
+     *   - jobFilter, jobExactFilter (job name patterns)
+     *   - groupPath, groupPathExact (job group paths)
+     *   - excludeJobListFilter, excludeJobIdListFilter (exclusions)
+     *   - excludeGroupPath, excludeGroupPathExact (group exclusions)
+     *   - excludeJobFilter, excludeJobExactFilter (job exclusions)
+     *   - descFilter (job description)
+     *   - adhoc=true/false (requires checking scheduledExecution IS NULL)
+     * 
+     * Filters that can use execution.job_uuid column (NO JOIN needed):
+     *   - jobIdListFilter with UUID strings (not Long IDs)
      */
     boolean canUseSimpleCount(ExecutionQuery query) {
-        def jobqueryfilters = ['jobListFilter', 'jobIdListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter',
-                               'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter',
-                               'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
+        // Filters that always require JOIN with scheduled_execution
+        def joinRequiredFilters = ['jobListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter',
+                                   'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter',
+                                   'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
 
-        // Can use simple count if no job filters are set and not filtering by adhoc
-        boolean hasJobFilters = jobqueryfilters.any { query[it] }
-        return !hasJobFilters && query.adhoc == null
+        // Check if any JOIN-required filters are set
+        boolean hasJoinRequiredFilters = joinRequiredFilters.any { query[it] }
+        if (hasJoinRequiredFilters) {
+            return false
+        }
+
+        // adhoc filter requires checking scheduledExecution IS NULL/NOT NULL
+        if (query.adhoc != null) {
+            return false
+        }
+
+        // jobIdListFilter can be handled without JOIN if all IDs are UUIDs (not Long IDs)
+        // because we can filter on execution.job_uuid column directly
+        if (query.jobIdListFilter) {
+            // Check if any ID is a Long (legacy format) - these require JOIN
+            boolean hasLongIds = query.jobIdListFilter.any { id ->
+                try {
+                    Long.valueOf(id.toString())
+                    return true // It's a Long
+                } catch (NumberFormatException e) {
+                    return false // It's a UUID string
+                }
+            }
+            if (hasLongIds) {
+                return false // Long IDs require JOIN to scheduled_execution
+            }
+            // All IDs are UUIDs - can use execution.job_uuid column
+        }
+
+        return true
     }
 
     /**
@@ -4526,6 +4567,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (query.abortedbyFilter) {
             hqlParts << "AND e.abortedby = :abortedby"
             params.abortedby = query.abortedbyFilter
+        }
+
+        // Job UUID filter - uses execution.job_uuid column directly (no JOIN needed)
+        if (query.jobIdListFilter) {
+            if (query.jobIdListFilter.size() == 1) {
+                hqlParts << "AND e.jobUuid = :jobUuid"
+                params.jobUuid = query.jobIdListFilter[0].toString()
+            } else {
+                hqlParts << "AND e.jobUuid IN (:jobUuids)"
+                params.jobUuids = query.jobIdListFilter.collect { it.toString() }
+            }
         }
 
         def hql = hqlParts.join(' ')
