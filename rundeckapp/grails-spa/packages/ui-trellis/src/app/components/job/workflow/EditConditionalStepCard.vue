@@ -37,10 +37,12 @@
         </div>
 
         <div class="condition-section">
-          <h3 class="text-heading--md section-title">{{ $t("editConditionalStep.defineCondition") }}</h3>
-          <p class="text-body text-body--secondary section-description">
-            {{ $t("editConditionalStep.defineConditionHelper") }}
-          </p>
+          <div>
+            <h3 class="text-heading--md section-title">{{ $t("editConditionalStep.defineCondition") }}</h3>
+            <p class="text-body text-body--secondary section-description">
+              {{ $t("editConditionalStep.defineConditionHelper") }}
+            </p>
+          </div>
 
           <div
             v-for="(conditionSet, setIndex) in conditionSets"
@@ -79,7 +81,7 @@
                 </div>
               </div>
 
-              <div v-if="canAddCondition(setIndex)" class="condition-actions">
+              <div v-if="canAddCondition(setIndex)" class="condition-actions" :class="{ 'has-multiple': conditionSet.conditions.length > 1 }">
                 <button type="button" class="btn-add-link" @click="addCondition(setIndex)">
                   <i class="pi pi-plus"></i>
                   <span>{{ $t("editConditionalStep.add") }}</span>
@@ -421,7 +423,6 @@ export default defineComponent({
   .or-separator {
     display: flex;
     align-items: center;
-    padding: var(--sizes-2) 0;
 
     .or-label {
       font-family: Inter, var(--fonts-body);
@@ -434,7 +435,7 @@ export default defineComponent({
   .condition-set {
     display: flex;
     flex-direction: column;
-    gap: var(--sizes-3);
+    gap: 12px;
 
     .condition-set-title {
       margin: 0;
@@ -492,7 +493,10 @@ export default defineComponent({
   .condition-actions {
     display: flex;
     align-items: center;
-    padding-left: var(--sizes-5);
+
+    &.has-multiple {
+      padding-left: 22px;
+    }
   }
 
   .condition-set-actions {

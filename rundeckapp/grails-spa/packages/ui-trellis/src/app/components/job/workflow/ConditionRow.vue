@@ -198,7 +198,7 @@ export default defineComponent({
 <style lang="scss" scoped>
 .condition-row {
   display: flex;
-  gap: var(--sizes-3);
+  gap: 12px;
   align-items: flex-end;
 
   .field-group {

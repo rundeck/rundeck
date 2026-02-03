@@ -21,6 +21,7 @@
           :key="index"
           type="button"
           :class="['autocomplete-tab', { 'autocomplete-tab-active': selectedTabIndex === index }]"
+          :disabled="tab.getCount(allSuggestions) === 0"
           @click="selectTab(index)"
         >
           <span class="autocomplete-tab-label">{{ tab.label }}</span>
