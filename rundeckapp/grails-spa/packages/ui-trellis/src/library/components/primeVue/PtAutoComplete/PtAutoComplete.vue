@@ -113,6 +113,7 @@ export default defineComponent({
       suggestion: null as string | null,
       selectedTabIndex: 0,
       currentQuery: "",
+      filterDebounceTimer: null as ReturnType<typeof setTimeout> | null,
     };
   },
   watch: {
@@ -141,10 +142,29 @@ export default defineComponent({
       return suggestions.length > 0 ? suggestions : undefined;
     },
   },
+  beforeUnmount() {
+    // Clear any pending debounce timer
+    if (this.filterDebounceTimer) {
+      clearTimeout(this.filterDebounceTimer);
+    }
+  },
   methods: {
     onComplete(event: AutoCompleteCompleteEvent): void {
       this.$emit("onComplete", event);
-      this.filterSuggestions(event);
+      this.debouncedFilterSuggestions(event);
+    },
+    
+    debouncedFilterSuggestions(event: AutoCompleteCompleteEvent): void {
+      // Clear any existing timer
+      if (this.filterDebounceTimer) {
+        clearTimeout(this.filterDebounceTimer);
+      }
+      
+      // Set a new timer to filter after a short delay
+      this.filterDebounceTimer = setTimeout(() => {
+        this.filterSuggestions(event);
+        this.filterDebounceTimer = null;
+      }, 200); // 200ms debounce delay
     },
     onChange(event: AutoCompleteChangeEvent): void {
       this.$emit("onChange", event);
@@ -164,9 +184,17 @@ export default defineComponent({
       this.currentQuery = currentWord;
       try {
         // If user types just "$", show all suggestions
-        if (currentWord === "$" || currentWord === "") {
+        if (currentWord === "$") {
           this.filteredSuggestions = this.suggestions;
           this.allSuggestions = this.suggestions;
+          this.autoSwitchToTabWithResults();
+          return;
+        }
+
+        // If empty input, don't show suggestions
+        if (currentWord === "") {
+          this.filteredSuggestions = [];
+          this.allSuggestions = [];
           return;
         }
 
@@ -187,8 +215,42 @@ export default defineComponent({
         });
         this.filteredSuggestions = filtered;
         this.allSuggestions = filtered;
+        
+        // Auto-switch to tab with results if current tab has no results
+        this.autoSwitchToTabWithResults();
       } catch (e) {
         console.error(e);
+      }
+    },
+
+    autoSwitchToTabWithResults(): void {
+      // Only auto-switch if in tab mode and tabs are configured
+      if (!this.tabMode || !this.tabs || this.tabs.length === 0) {
+        return;
+      }
+
+      const activeTab = this.tabs[this.selectedTabIndex];
+      if (!activeTab) {
+        return;
+      }
+
+      // Check if current tab has any matching suggestions
+      const currentTabHasResults = this.filteredSuggestions.filter(activeTab.filter).length > 0;
+
+      // If current tab has results, don't switch
+      if (currentTabHasResults) {
+        return;
+      }
+
+      // Current tab has no results, find first tab with results
+      for (let i = 0; i < this.tabs.length; i++) {
+        const tab = this.tabs[i];
+        const tabHasResults = this.filteredSuggestions.filter(tab.filter).length > 0;
+        
+        if (tabHasResults) {
+          this.selectedTabIndex = i;
+          return;
+        }
       }
     },
 

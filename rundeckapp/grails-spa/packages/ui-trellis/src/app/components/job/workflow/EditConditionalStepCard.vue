@@ -405,12 +405,12 @@ export default defineComponent({
     gap: var(--sizes-4);
 
     .section-title {
-      margin: 0;
+      margin: 0 0 8px 0;
       color: var(--colors-gray-800);
     }
 
     .section-description {
-      margin: 0;
+      margin: 0 0 12px 0;
     }
   }
 

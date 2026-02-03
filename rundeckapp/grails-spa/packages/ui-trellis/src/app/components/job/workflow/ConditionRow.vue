@@ -53,7 +53,7 @@
       </label>
       <PtAutoComplete
         :modelValue="condition.value"
-        :suggestions="hasSuggestions ? suggestions : undefined"
+        :suggestions="suggestions"
         :placeholder="$t('editConditionalStep.valuePlaceholder')"
         :tab-mode="tabMode"
         :tabs="tabs"
@@ -137,9 +137,6 @@ export default defineComponent({
         isNote: true,
       };
       return [noteOption, ...this.fieldOptions];
-    },
-    hasSuggestions(): boolean {
-      return this.suggestions && this.suggestions.length > 0;
     },
     tabs(): TabConfig[] | undefined {
       if (!this.tabMode) {
