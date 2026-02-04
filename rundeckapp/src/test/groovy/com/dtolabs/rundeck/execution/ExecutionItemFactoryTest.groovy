@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.execution
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem
 import com.dtolabs.rundeck.core.execution.HasFailureHandler
+import com.dtolabs.rundeck.core.execution.PluginNodeStepExecutionItemImpl
 import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem

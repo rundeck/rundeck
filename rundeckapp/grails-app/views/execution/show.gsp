@@ -1013,13 +1013,18 @@ search
   </script>
   <script type="text/html" id="step-info-simple-link">
     %{--wrap step-info-simple in tooltip --}%
-    <span data-bind="if: stepinfo.hasLink()">
+    <span data-bind="if: stepinfo.hasLink() && stepinfo.linkJobId()">
         <a data-bind="urlPathParam: stepinfo.linkJobId(), attr: {title: 'Click to view Job: '+stepinfo.linkTitle() }"
            href="${createLink(
                 controller: 'scheduledExecution',
                 action: 'show',
                 params: [project: execution.project, id: '<$>']
         )}">
+            <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+        </a>
+    </span>
+    <span data-bind="if: stepinfo.hasLink() && !stepinfo.linkJobId()">
+        <a href="#" data-bind="attr: {title: stepinfo.linkTitle() || 'Subworkflow' }">
             <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
         </a>
     </span>

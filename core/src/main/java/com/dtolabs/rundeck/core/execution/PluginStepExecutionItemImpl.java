@@ -21,9 +21,10 @@
 * Created: 11/13/12 2:30 PM
 * 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.execution;
 
-import com.dtolabs.rundeck.core.execution.*;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 
 import java.util.*;
@@ -44,6 +45,7 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
     private StepExecutionItem failureHandler;
     private String label;
     private List<PluginConfiguration> filterConfigurations;
+    private String runnerNode;
 
     public PluginStepExecutionItemImpl(
             final String type,
@@ -51,7 +53,8 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
             final boolean keepgoingOnSuccess,
             final StepExecutionItem failureHandler,
             final String label,
-            final List<PluginConfiguration> filterConfigurations
+            final List<PluginConfiguration> filterConfigurations,
+            final String runnerNode
     ) {
         this.type = type;
         this.stepConfiguration = stepConfiguration;
@@ -59,6 +62,7 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
         this.failureHandler = failureHandler;
         this.label= label;
         this.filterConfigurations=filterConfigurations;
+        this.runnerNode = runnerNode;
     }
 
     @Override
@@ -114,5 +118,15 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
 
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    @Override
+    public INodeEntry getRunner() {
+        if(runnerNode!=null){
+            // return a node entry with the runner node name
+            // just used for workflow steps that are executed in a remote runner
+            return new NodeEntryImpl(runnerNode);
+        }
+        return null;
     }
 }
