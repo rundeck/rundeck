@@ -3,7 +3,7 @@ import { createApp, markRaw } from "vue";
 import NavigationBar from "../../../library/components/navbar/NavBar.vue";
 import UtilityBar from "../../../library/components/utility-bar/UtilityBar.vue";
 import RundeckInfoWidget from "../../../library/components/widgets/rundeck-info/RundeckInfoWidget.vue";
-import ThemeSelectWidget from "../../../library/components/widgets/theme-select/ThemeSelect.vue";
+import SettingsBarWidget from "../../../library/components/widgets/settings-bar/SettingsBar.vue";
 
 import { UtilityActionItem } from "../../../library/stores/UtilityBar";
 import { getRundeckContext, getAppLinks } from "../../../library";
@@ -38,32 +38,23 @@ rootStore.utilityBar.addItems([
   },
   {
     type: "widget",
-    id: "utility-theme",
+    id: "utility-settings",
     container: "root",
     group: "right",
-    class: "fas fa-sun fas-xs",
-    // "label": "Theme",
     visible: true,
     widget: markRaw({
-      name: "ThemeSelectWidgetItem",
-      components: { ThemeSelectWidget },
-      template: `<ThemeSelectWidget/>`,
+      name: "SettingsBarWidgetItem",
+      components: { SettingsBarWidget },
+      template: `<SettingsBarWidget :help-url="helpUrl"/>`,
       provide: {
         rootStore,
       },
+      data() {
+        return {
+          helpUrl: appLinks.help,
+        };
+      },
     }),
-  },
-  {
-    type: "action",
-    id: "utility-help",
-    container: "root",
-    group: "right",
-    class: "fas fa-question-circle fas-xs",
-    label: "Help",
-    visible: true,
-    action: () => {
-      window.open(appLinks.help, "_blank");
-    },
   },
 ] as Array<UtilityActionItem>);
 
