@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.jobs.JobReferenceItem
 import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
+import groovy.transform.EqualsAndHashCode
 import org.hibernate.sql.JoinType
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
@@ -192,14 +193,43 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     static final int DEFAULT_CACHE_TTL_SECONDS = 30
     static final int DEFAULT_CACHE_MAX_SIZE = 1000
 
+    /**
+     * Cache key for execution count queries.
+     * All fields are immutable Strings/Boolean for reliable equals/hashCode.
+     * Only supports single job filter - queries with multiple jobs are not cached.
+     */
+    @ToString(includeNames = true)
+    @EqualsAndHashCode
+    static class ExecutionCountCacheKey {
+        final String project
+        final String status
+        final String user
+        final String execType
+        final Boolean adhoc
+        final String recentFilter
+        final String olderFilter
+        final String jobId  // Single job ID only
+        
+        ExecutionCountCacheKey(Map args) {
+            this.project = args.project
+            this.status = args.status
+            this.user = args.user
+            this.execType = args.execType
+            this.adhoc = args.adhoc
+            this.recentFilter = args.recentFilter
+            this.olderFilter = args.olderFilter
+            this.jobId = args.jobId
+        }
+    }
+
     // Lazy-initialized cache for execution counts
-    private Cache<String, Long> executionCountCache
+    private Cache<ExecutionCountCacheKey, Long> executionCountCache
 
     /**
      * Get or create the execution count cache
      * Cache is created lazily to allow configurationService to be injected
      */
-    private Cache<String, Long> getExecutionCountCache() {
+    private Cache<ExecutionCountCacheKey, Long> getExecutionCountCache() {
         if (executionCountCache == null) {
             int ttlSeconds = configurationService?.getInteger(EXECUTION_COUNT_CACHE_TTL_SECONDS, DEFAULT_CACHE_TTL_SECONDS) ?: DEFAULT_CACHE_TTL_SECONDS
             executionCountCache = CacheBuilder.newBuilder()
@@ -4313,37 +4343,52 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def cacheKey = null
     def fromCache = false
 
-    // Check cache first if enabled - avoids determining count method when cache hit
-    if (isExecutionCountCacheEnabled()) {
+    // Check cache first if enabled and query is cacheable
+    // Queries with absolute date filters (without relative filters) are not cached
+    def canCache = isExecutionCountCacheEnabled() && isCacheableQuery(query)
+    
+    if (canCache) {
         cacheKey = buildCountCacheKey(query)
-        def cachedTotal = getExecutionCountCache().getIfPresent(cacheKey)
+        def cache = getExecutionCountCache()
+        def cachedTotal = cache.getIfPresent(cacheKey)
         if (cachedTotal != null) {
-            log.debug("Cache hit for execution count: ${cacheKey}")
+            log.debug("ExecutionCount CACHE HIT: key=${cacheKey}, hash=${cacheKey.hashCode()}, count=${cachedTotal}, cacheSize=${cache.size()}")
             total = cachedTotal
             fromCache = true
+        } else {
+            log.debug("ExecutionCount CACHE MISS: key=${cacheKey}, hash=${cacheKey.hashCode()}, cacheSize=${cache.size()}")
         }
+    } else {
+        log.debug("ExecutionCount NOT CACHEABLE: cacheEnabled=${isExecutionCountCacheEnabled()}, isCacheable=${isCacheableQuery(query)}")
     }
 
     // If not from cache, determine the best count method
     if (!fromCache) {
+        def countMethod = 'unknown'
+        def startTime = System.currentTimeMillis()
+        
         if (query.shouldUseUnionQuery()) {
             // Optimized UNION query for includeJobRef (50-100x faster)
-            log.debug("Using optimized UNION query for includeJobRef execution query")
+            countMethod = 'UNION'
             total = query.countDirectAndReferencedExecutions()
         } else if (isExecutionCountCacheEnabled() && canUseSimpleCount(query)) {
             // Simple HQL count without JOINs (avoids scheduled_execution JOIN)
             // Only used when cache is enabled, as HQL requires real database
-            log.debug("Using simple count without JOINs for execution query")
+            countMethod = 'SIMPLE_HQL'
             total = countExecutionsSimple(query)
         } else {
             // Standard criteria count (may include JOINs)
-            log.debug("Using criteria count for execution query")
+            countMethod = 'CRITERIA'
             total = Execution.createCriteria().count(criteriaClos.curry(true))
         }
+        
+        def elapsedMs = System.currentTimeMillis() - startTime
+        log.debug("ExecutionCount QUERY: method=${countMethod}, count=${total}, elapsed=${elapsedMs}ms, canCache=${canCache}")
 
-        // Store in cache if enabled
-        if (isExecutionCountCacheEnabled() && cacheKey) {
+        // Store in cache if cacheable
+        if (canCache && cacheKey) {
             getExecutionCountCache().put(cacheKey, total as Long)
+            log.debug("ExecutionCount CACHED: key=${cacheKey}, count=${total}")
         }
     }
 
@@ -4449,36 +4494,65 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Build a cache key for the count query based on query parameters
+     * Check if a query result can be cached.
+     * 
+     * Returns FALSE for:
+     *   - Queries with absolute date filters not covered by relative filters
+     *   - Queries with multiple job IDs (only single job ID is supported)
+     * 
+     * Returns TRUE for:
+     *   - Queries with ONLY relative filters (recentFilter, olderFilter)
+     *   - Queries without any date filters
+     *   - Queries with 0 or 1 job ID filter
      */
-    String buildCountCacheKey(ExecutionQuery query) {
-        def parts = []
-        parts << "proj:${query.projFilter ?: 'null'}"
-        parts << "status:${query.statusFilter ?: 'null'}"
-        parts << "user:${query.userFilter ?: 'null'}"
-        parts << "execType:${query.executionTypeFilter ?: 'null'}"
-        parts << "adhoc:${query.adhoc ?: 'null'}"
+    boolean isCacheableQuery(ExecutionQuery query) {
+        // Check for multiple job IDs - not cacheable (cache key only supports single job)
+        if (query.jobIdListFilter && query.jobIdListFilter.size() > 1) {
+            log.debug("Query not cacheable: has multiple job IDs (${query.jobIdListFilter.size()})")
+            return false
+        }
+        
+        // Check for absolute date filters that are NOT covered by relative filters
+        // recentFilter sets doendafterFilter, olderFilter sets doendbeforeFilter
+        boolean hasUncoveredEndAfter = query.doendafterFilter && !query.recentFilter
+        boolean hasUncoveredEndBefore = query.doendbeforeFilter && !query.olderFilter
+        boolean hasStartFilters = query.dostartafterFilter || query.dostartbeforeFilter
+        
+        if (hasUncoveredEndAfter || hasUncoveredEndBefore || hasStartFilters) {
+            log.debug("Query not cacheable: has absolute date filters not covered by relative filters")
+            return false
+        }
+        
+        return true
+    }
 
-        // Include date filters in cache key
-        if (query.doendafterFilter && query.endafterFilter) {
-            parts << "endAfter:${query.endafterFilter.time}"
+    /**
+     * Build a cache key for the count query based on query parameters.
+     * 
+     * For RELATIVE time filters (recentFilter, olderFilter like "60d", "24h"):
+     *   - Uses the relative filter string directly
+     *   - This means all requests with same relative filter share the same cache entry
+     * 
+     * Only single job ID is supported in cache key. Multiple job IDs are handled by
+     * isCacheableQuery() returning false.
+     */
+    ExecutionCountCacheKey buildCountCacheKey(ExecutionQuery query) {
+        // Extract single job ID (isCacheableQuery ensures size <= 1)
+        String jobId = null
+        if (query.jobIdListFilter && query.jobIdListFilter.size() == 1) {
+            jobId = query.jobIdListFilter[0]?.toString()
         }
-        if (query.doendbeforeFilter && query.endbeforeFilter) {
-            parts << "endBefore:${query.endbeforeFilter.time}"
-        }
-        if (query.dostartafterFilter && query.startafterFilter) {
-            parts << "startAfter:${query.startafterFilter.time}"
-        }
-        if (query.dostartbeforeFilter && query.startbeforeFilter) {
-            parts << "startBefore:${query.startbeforeFilter.time}"
-        }
-
-        // Include job filters if present
-        if (query.jobIdListFilter) {
-            parts << "jobIds:${query.jobIdListFilter.sort().join(',')}"
-        }
-
-        return parts.join('|')
+        
+        new ExecutionCountCacheKey(
+            project: query.projFilter,
+            status: query.statusFilter,
+            user: query.userFilter,
+            execType: query.executionTypeFilter,
+            adhoc: query.adhoc,
+            recentFilter: query.recentFilter,
+            olderFilter: query.olderFilter,
+            jobId: jobId
+        )
     }
 
     /**

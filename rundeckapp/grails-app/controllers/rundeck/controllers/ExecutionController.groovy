@@ -3096,6 +3096,7 @@ if executed in cluster mode.""",
             if(null!=endDate){
                 query.endbeforeFilter = endDate
                 query.doendbeforeFilter = true
+                query.olderFilter = params.olderFilter
             } else {
                 return apiService.renderErrorFormat(
                         response,
@@ -3614,6 +3615,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
             if (null != endDate) {
                 query.endbeforeFilter = endDate
                 query.doendbeforeFilter = true
+                query.olderFilter = params.olderFilter
             } else {
                 return apiService.renderErrorFormat(
                     response,
