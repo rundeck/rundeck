@@ -383,4 +383,217 @@ class ExecutionServiceCountCacheIntegrationSpec extends Specification {
         result.result.size() == 1
         result.result[0].status == "scheduled"
     }
+
+    // ==================== queryJobExecutions Tests (migrated from ExecutionServiceTests) ====================
+
+    def "queryJobExecutions returns empty for job with no executions"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'emptyJob',
+                project: 'Test',
+                groupPath: 'test',
+                description: 'a job with no executions',
+                argString: '-a b',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        job.save(flush: true, failOnError: true)
+
+        when:
+        def result = executionService.queryJobExecutions(job, null)
+
+        then:
+        result.total == 0
+    }
+
+    def "queryJobExecutions returns execution for job with one execution"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'singleExecJob',
+                project: 'Test',
+                groupPath: 'test',
+                description: 'a job with one execution',
+                argString: '-a b',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        job.save(flush: true, failOnError: true)
+
+        Execution exec = new Execution(
+                scheduledExecution: job,
+                project: 'Test',
+                status: 'succeeded',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'testuser',
+                jobUuid: job.uuid,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        exec.save(flush: true, failOnError: true)
+
+        when:
+        def result = executionService.queryJobExecutions(job, null)
+
+        then:
+        result.total == 1
+    }
+
+    def "queryJobExecutions filters by succeeded status"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'statusFilterJob',
+                project: 'Test',
+                groupPath: 'test',
+                description: 'a job for status filtering',
+                argString: '-a b',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        job.save(flush: true, failOnError: true)
+
+        Execution exec = new Execution(
+                scheduledExecution: job,
+                project: 'Test',
+                status: 'succeeded',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'testuser',
+                jobUuid: job.uuid,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        exec.save(flush: true, failOnError: true)
+
+        when:
+        def result = executionService.queryJobExecutions(job, 'succeeded')
+
+        then:
+        result.total == 1
+    }
+
+    def "queryJobExecutions filters by failed status"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'failedStatusJob',
+                project: 'Test',
+                groupPath: 'test',
+                description: 'a job for failed status filtering',
+                argString: '-a b',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        job.save(flush: true, failOnError: true)
+
+        // Create succeeded execution first
+        Execution exec1 = new Execution(
+                scheduledExecution: job,
+                project: 'Test',
+                status: 'succeeded',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'testuser',
+                jobUuid: job.uuid,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        exec1.save(flush: true, failOnError: true)
+
+        // Create failed execution
+        Execution exec2 = new Execution(
+                scheduledExecution: job,
+                project: 'Test',
+                status: 'failed',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'testuser',
+                jobUuid: job.uuid,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        exec2.save(flush: true, failOnError: true)
+
+        when:
+        def result = executionService.queryJobExecutions(job, 'failed', 0, 20)
+
+        then:
+        result.total == 1
+    }
+
+    def "queryJobExecutions filters by custom status"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'customStatusJob',
+                project: 'Test',
+                groupPath: 'test',
+                description: 'a job for custom status filtering',
+                argString: '-a b',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        job.save(flush: true, failOnError: true)
+
+        // Create succeeded execution first
+        Execution exec1 = new Execution(
+                scheduledExecution: job,
+                project: 'Test',
+                status: 'succeeded',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'testuser',
+                jobUuid: job.uuid,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        exec1.save(flush: true, failOnError: true)
+
+        // Create custom status execution
+        Execution exec2 = new Execution(
+                scheduledExecution: job,
+                project: 'Test',
+                status: 'custom status',
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'testuser',
+                jobUuid: job.uuid,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'echo test')]
+                ).save()
+        )
+        exec2.save(flush: true, failOnError: true)
+
+        when:
+        def result = executionService.queryJobExecutions(job, 'custom status', 0, 20)
+
+        then:
+        result.total == 1
+    }
+
+
 }
