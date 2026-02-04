@@ -57,22 +57,9 @@
               </label>
             </div>
 
-            <div class="settings-panel__features">
-              <p class="settings-panel__features-title">{{ $t("settings.uiEarlyAccess.availableNow") }}</p>
-              <ul class="settings-panel__features-list">
-                <li>
-                  {{ $t("settings.uiEarlyAccess.feature1") }}
-                  <a :href="learnMoreUrl" target="_blank" class="settings-panel__link">
-                    {{ $t("settings.uiEarlyAccess.learnMore") }}
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <a :href="feedbackUrl" target="_blank" class="settings-panel__feedback-link">
-              {{ $t("settings.uiEarlyAccess.feedbackLink") }}
-              <i class="fas fa-external-link-alt"></i>
-            </a>
+            <p class="settings-panel__description">
+              {{ $t("settings.uiEarlyAccess.feature1") }}
+            </p>
           </div>
         </div>
       </div>
@@ -88,6 +75,7 @@ import type {
   ThemeOption,
   SettingsModalData,
 } from "./SettingsModalTypes";
+import { getPageUiMeta } from "./services/pageUiMetaService";
 
 const COOKIE_NAME = "nextUi";
 const LEARN_MORE_URL = "https://docs.rundeck.com";
@@ -109,6 +97,7 @@ export default defineComponent({
   data(): SettingsModalData {
     const rundeckContext = getRundeckContext();
     const themeStore = rundeckContext?.rootStore?.theme;
+    const pageUiMeta = getPageUiMeta();
 
     return {
       currentTab: this.activeTab,
@@ -116,7 +105,7 @@ export default defineComponent({
       theme: (themeStore?.userPreferences?.theme ||
         "system") as ThemeOption,
       themeStore,
-      nextUiEnabled: this.$cookies?.get(COOKIE_NAME) === "true",
+      nextUiEnabled: pageUiMeta.isNextUiPage,
       isLoading: false,
       learnMoreUrl: LEARN_MORE_URL,
       feedbackUrl: FEEDBACK_URL,

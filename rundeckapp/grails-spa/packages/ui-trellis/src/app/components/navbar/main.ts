@@ -7,7 +7,7 @@ import NextUIIndicator from "../../../library/components/widgets/settings-bar/Ne
 import SettingsCogButton from "../../../library/components/widgets/settings-bar/SettingsCogButton.vue";
 import SettingsModalWrapper from "../../../library/components/widgets/settings-bar/SettingsModalWrapper.vue";
 
-import { UtilityActionItem } from "../../../library/stores/UtilityBar";
+import { UtilityBarItem } from "../../../library/stores/UtilityBar";
 import { getRundeckContext, getAppLinks } from "../../../library";
 import { commonAddUiMessages, initI18n } from "../../utilities/i18n";
 import * as uiv from "uiv";
@@ -95,7 +95,7 @@ rootStore.utilityBar.addItems([
       }),
     ),
   },
-] as Array<UtilityActionItem>);
+] as Array<UtilityBarItem>);
 
 function initNav() {
   const elm = document.getElementById("section-navbar") as HTMLElement;

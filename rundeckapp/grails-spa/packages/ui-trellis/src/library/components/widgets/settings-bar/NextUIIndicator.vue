@@ -7,7 +7,7 @@
   >
     <span class="settings-bar__nextui-text">
       {{
-        nextUiEnabled
+        isNextUiPage
           ? $t("settings.nextUi.enabled")
           : $t("settings.nextUi.available")
       }}
@@ -18,46 +18,21 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import { getRundeckContext } from "../../../../library";
-import {
-  getPageUiMeta,
-  getNextUiCapable,
-  getNextUiSystemEnabled,
-  hasNextUiCookie,
-  isNextUiPage,
-} from "./services/pageUiMetaService";
-import type { NextUIIndicatorData } from "./NextUIIndicatorTypes";
+import { getPageUiMeta } from "./services/pageUiMetaService";
+import type { PageUiMeta } from "./NextUIIndicatorTypes";
 
 export default defineComponent({
   name: "NextUIIndicator",
-  data(): NextUIIndicatorData {
-    const pageUiMeta = getPageUiMeta();
-    const cookieValue = hasNextUiCookie(this.$cookies);
-    const isNextPage = isNextUiPage(pageUiMeta);
-
+  data(): PageUiMeta {
     return {
-      nextUiCapable: getNextUiCapable(pageUiMeta),
-      nextUiSystemEnabled: getNextUiSystemEnabled(
-        pageUiMeta,
-        cookieValue,
-        isNextPage,
-      ),
-      nextUiEnabled: cookieValue,
+      nextUiCapable: false,
+      isNextUiPage: false,
     };
   },
   mounted() {
     const pageUiMeta = getPageUiMeta();
-    if (pageUiMeta) {
-      const cookieValue = hasNextUiCookie(this.$cookies);
-      const isNextPage = isNextUiPage(pageUiMeta);
-
-      this.nextUiCapable = getNextUiCapable(pageUiMeta);
-      this.nextUiSystemEnabled = getNextUiSystemEnabled(
-        pageUiMeta,
-        cookieValue,
-        isNextPage,
-      );
-      this.nextUiEnabled = cookieValue;
-    }
+    this.nextUiCapable = pageUiMeta.nextUiCapable;
+    this.isNextUiPage = pageUiMeta.isNextUiPage;
   },
   methods: {
     handleOpenModal(): void {

@@ -165,8 +165,7 @@
     <asset:javascript src="static/components/project-picker.js"/>
     <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
     <g:set var="nextUiCapable" value="${request.getAttribute('nextUiCapable') ?: false}"/>
-    <g:set var="nextUiSystemEnabled" value="${feature.isEnabled(name: 'nextUiMode')}"/>
-    <g:embedJSON id="pageUiMeta" data="[uiType: uiType, nextUiCapable: nextUiCapable, nextUiSystemEnabled: nextUiSystemEnabled]"/>
+    <g:embedJSON id="pageUiMeta" data="[uiType: uiType, nextUiCapable: nextUiCapable]"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,

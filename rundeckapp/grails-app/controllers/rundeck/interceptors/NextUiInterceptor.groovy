@@ -28,16 +28,10 @@ class NextUiInterceptor {
         def systemEnabled = featureService.featurePresent('nextUiMode')
 
         if (cookieValue == 'false') {
-            // User explicitly disabled - respect their preference
             params.nextUi = false
-        } else if (cookieValue == 'true') {
-            // User explicitly enabled
-            params.nextUi = true
-        } else if (systemEnabled) {
-            // No cookie set, but system flag is enabled - default to true
+        } else if (cookieValue == 'true' || systemEnabled) {
             params.nextUi = true
         }
-        // Otherwise, params.nextUi stays unset (defaults to current UI)
 
         return true
     }
