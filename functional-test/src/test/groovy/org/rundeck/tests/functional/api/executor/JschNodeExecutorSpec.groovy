@@ -53,7 +53,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         def exec= JobUtils.waitForSuccess(
                 json.id as String,
                 client,
-                WaitingTime.EXCESSIVE
+                WaitingTime.XTRA_EXCESSIVE
         )
         exec.status==ExecutionStatus.SUCCEEDED.state
 
@@ -80,7 +80,7 @@ class JschNodeExecutorSpec extends BaseContainer{
                 ExecutionStatus.SUCCEEDED.state,
                 json.id as String,
                 client,
-                WaitingTime.EXCESSIVE
+                WaitingTime.XTRA_EXCESSIVE
         )
         then:
         exec.status==ExecutionStatus.SUCCEEDED.state
@@ -105,7 +105,7 @@ class JschNodeExecutorSpec extends BaseContainer{
             ExecutionStatus.SUCCEEDED.state,
             newExecId,
             client,
-            WaitingTime.EXCESSIVE
+            WaitingTime.XTRA_EXCESSIVE
         )
 
         then: "verify the execution succeeded"
@@ -137,7 +137,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         def exec = JobUtils.waitForSuccess(
             newExecId,
             client,
-            WaitingTime.EXCESSIVE
+            WaitingTime.XTRA_EXCESSIVE
         )
 
         then: "verify the execution succeeded"
@@ -179,7 +179,7 @@ class JschNodeExecutorSpec extends BaseContainer{
             def exec= JobUtils.waitForSuccess(
                 json.id as String,
                 client,
-                WaitingTime.EXCESSIVE
+                WaitingTime.XTRA_EXCESSIVE
             )
         then: "verify the number of successful nodes"
             exec.successfulNodes.size() == 1
@@ -215,7 +215,7 @@ class JschNodeExecutorSpec extends BaseContainer{
             def exec= JobUtils.waitForSuccess(
                 json.id as String,
                 client,
-                WaitingTime.EXCESSIVE
+                WaitingTime.XTRA_EXCESSIVE
             )
         then: "verify the number of successful nodes"
             exec.successfulNodes.size() == 1
@@ -244,7 +244,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         def exec = JobUtils.waitForSuccess(
             newExecId,
             client,
-            WaitingTime.EXCESSIVE
+            WaitingTime.XTRA_EXCESSIVE
         )
 
         then: "verify the execution succeeded"
@@ -290,7 +290,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         def exec = JobUtils.waitForSuccess(
             newExecId,
             client,
-            WaitingTime.EXCESSIVE
+            WaitingTime.XTRA_EXCESSIVE
         )
 
         then: "verify the execution succeeded"
@@ -332,7 +332,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         def exec = JobUtils.waitForSuccess(
             newExecId,
             client,
-            WaitingTime.EXCESSIVE
+            WaitingTime.XTRA_EXCESSIVE
         )
 
         then: "verify the execution succeeded"
@@ -371,7 +371,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         def exec = JobUtils.waitForSuccess(
             newExecId,
             client,
-            WaitingTime.EXCESSIVE
+            WaitingTime.XTRA_EXCESSIVE
         )
 
         then: "verify the execution succeeded despite DOS/Windows line endings"
@@ -412,7 +412,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         def exec = JobUtils.waitForSuccess(
             newExecId,
             client,
-            WaitingTime.EXCESSIVE
+            WaitingTime.XTRA_EXCESSIVE
         )
 
         then: "verify the execution succeeded with UTF-8 encoded content"
@@ -451,7 +451,7 @@ class JschNodeExecutorSpec extends BaseContainer{
         def exec = JobUtils.waitForSuccess(
             newExecId,
             client,
-            WaitingTime.EXCESSIVE
+            WaitingTime.XTRA_EXCESSIVE
         )
 
         then: "verify the execution succeeded"
