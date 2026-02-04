@@ -55,6 +55,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     boolean includeJobRef
     List<String> execProjects
     String recentFilter
+    String olderFilter
     String userFilter
     String executionTypeFilter
     String adhocStringFilter
@@ -71,6 +72,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         loglevelFilter(nullable:true)
         excludeJobIdListFilter(nullable:true)
         recentFilter(nullable:true)
+        olderFilter(nullable:true)
         jobListFilter(nullable:true)
         startafterFilter(nullable:true)
         jobFilter(nullable:true)

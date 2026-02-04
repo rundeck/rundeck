@@ -566,7 +566,7 @@ class ExecutionServiceTests extends Specification implements DataTest {
     }
 
     /**
-     * Test cache key generation includes query parameters
+     * Test cache key generation with ExecutionCountCacheKey class
      */
     void testBuildCountCacheKey() {
         given:
@@ -581,9 +581,9 @@ class ExecutionServiceTests extends Specification implements DataTest {
         def cacheKey = svc.buildCountCacheKey(query)
 
         then:
-        cacheKey.contains("proj:TestProject")
-        cacheKey.contains("status:succeeded")
-        cacheKey.contains("user:admin")
+        cacheKey.project == "TestProject"
+        cacheKey.status == "succeeded"
+        cacheKey.user == "admin"
     }
 
     /**
@@ -598,15 +598,303 @@ class ExecutionServiceTests extends Specification implements DataTest {
         def cacheKey = svc.buildCountCacheKey(query)
 
         then:
-        cacheKey.contains("proj:TestProject")
-        cacheKey.contains("status:null")
-        cacheKey.contains("user:null")
+        cacheKey.project == "TestProject"
+        cacheKey.status == null
+        cacheKey.user == null
     }
 
     /**
-     * Test cache key generation with date filters
+     * Test cache key uses relative filter string (recentFilter) when available
      */
-    void testBuildCountCacheKeyWithDates() {
+    void testBuildCountCacheKeyWithRecentFilter() {
+        given:
+        def svc = new ExecutionService()
+        def now = new Date()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            recentFilter: "60d",
+            endafterFilter: now,
+            doendafterFilter: true
+        )
+        def cacheKey = svc.buildCountCacheKey(query)
+
+        then:
+        cacheKey.project == "TestProject"
+        cacheKey.recentFilter == "60d"
+    }
+
+    /**
+     * Test cache key uses relative filter string (olderFilter) when available
+     */
+    void testBuildCountCacheKeyWithOlderFilter() {
+        given:
+        def svc = new ExecutionService()
+        def now = new Date()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            olderFilter: "30d",
+            endbeforeFilter: now,
+            doendbeforeFilter: true
+        )
+        def cacheKey = svc.buildCountCacheKey(query)
+
+        then:
+        cacheKey.project == "TestProject"
+        cacheKey.olderFilter == "30d"
+    }
+
+    /**
+     * Test that same relative filter produces same cache key regardless of timestamp
+     */
+    void testBuildCountCacheKeySameRelativeFilter() {
+        given:
+        def svc = new ExecutionService()
+        def time1 = new Date()
+        def time2 = new Date(time1.time + 3600000)  // 1 hour later
+
+        when:
+        // Two requests with same relative filter but different computed timestamps
+        def query1 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d", endbeforeFilter: time1, doendbeforeFilter: true)
+        def query2 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d", endbeforeFilter: time2, doendbeforeFilter: true)
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+
+        then:
+        // Keys should be the same because relative filter string is the same
+        key1 == key2
+    }
+
+    /**
+     * Test that different relative filters produce different cache keys
+     */
+    void testBuildCountCacheKeyDifferentRelativeFilters() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query1 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "30d")
+        def query2 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def query3 = new ExecutionQuery(projFilter: "TestProject", recentFilter: "24h")
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+        def key3 = svc.buildCountCacheKey(query3)
+
+        then:
+        key1 != key2
+        key1 != key3
+        key2 != key3
+    }
+
+    /**
+     * Test cache key generation with single job ID filter
+     */
+    void testBuildCountCacheKeyWithSingleJobId() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['uuid-123']
+        )
+        def cacheKey = svc.buildCountCacheKey(query)
+
+        then:
+        cacheKey.project == "TestProject"
+        cacheKey.jobId == 'uuid-123'
+    }
+
+    /**
+     * Test cache key with no job ID filter
+     */
+    void testBuildCountCacheKeyWithNoJobId() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(projFilter: "TestProject")
+        def cacheKey = svc.buildCountCacheKey(query)
+
+        then:
+        cacheKey.project == "TestProject"
+        cacheKey.jobId == null
+    }
+
+    /**
+     * Test isCacheableQuery returns false for multiple job IDs
+     */
+    void testIsCacheableQueryWithMultipleJobIds() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['uuid-1', 'uuid-2', 'uuid-3']
+        )
+
+        then:
+        svc.isCacheableQuery(query) == false
+    }
+
+    /**
+     * Test isCacheableQuery returns true for single job ID
+     */
+    void testIsCacheableQueryWithSingleJobId() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['uuid-123']
+        )
+
+        then:
+        svc.isCacheableQuery(query) == true
+    }
+
+    /**
+     * Test cache key equals() and hashCode() work correctly for HashMap/Cache lookups
+     */
+    void testCacheKeyEqualsAndHashCode() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        // Create two identical queries
+        def query1 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def query2 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+
+        then:
+        // equals() should return true
+        key1 == key2
+        key1.equals(key2)
+        // hashCode() should be the same
+        key1.hashCode() == key2.hashCode()
+        // toString() should be meaningful
+        key1.toString().contains("TestProject")
+        key1.toString().contains("60d")
+    }
+
+    /**
+     * Test cache key works correctly in a HashMap (simulates Guava Cache behavior)
+     */
+    void testCacheKeyWorksInHashMap() {
+        given:
+        def svc = new ExecutionService()
+        def map = new HashMap<ExecutionService.ExecutionCountCacheKey, Long>()
+
+        when:
+        def query1 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def query2 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+        
+        // Store with key1
+        map.put(key1, 12345L)
+        // Retrieve with key2 (should find it because equals/hashCode match)
+        def retrieved = map.get(key2)
+
+        then:
+        retrieved == 12345L
+    }
+
+    /**
+     * Test cache key with single jobId works correctly in HashMap
+     */
+    void testCacheKeyWithJobIdWorksInHashMap() {
+        given:
+        def svc = new ExecutionService()
+        def map = new HashMap<ExecutionService.ExecutionCountCacheKey, Long>()
+
+        when:
+        def query1 = new ExecutionQuery(projFilter: "TestProject", jobIdListFilter: ['uuid-123'])
+        def query2 = new ExecutionQuery(projFilter: "TestProject", jobIdListFilter: ['uuid-123'])
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+        
+        map.put(key1, 999L)
+        def retrieved = map.get(key2)
+
+        then:
+        key1.jobId == key2.jobId
+        key1.hashCode() == key2.hashCode()
+        key1 == key2
+        retrieved == 999L
+    }
+
+    /**
+     * Test isCacheableQuery returns true for queries without date filters
+     */
+    void testIsCacheableQueryNoDateFilters() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(projFilter: "TestProject", statusFilter: "succeeded")
+
+        then:
+        svc.isCacheableQuery(query) == true
+    }
+
+    /**
+     * Test isCacheableQuery returns true for queries with relative filters
+     * recentFilter covers doendafterFilter, olderFilter covers doendbeforeFilter
+     */
+    void testIsCacheableQueryWithRelativeFilters() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        // recentFilter sets doendafterFilter - this is covered
+        def queryRecent = new ExecutionQuery(projFilter: "TestProject", recentFilter: "60d", doendafterFilter: true)
+        // olderFilter sets doendbeforeFilter - this is covered
+        def queryOlder = new ExecutionQuery(projFilter: "TestProject", olderFilter: "30d", doendbeforeFilter: true)
+        // Both relative filters
+        def queryBoth = new ExecutionQuery(projFilter: "TestProject", recentFilter: "7d", olderFilter: "1d", 
+                                           doendafterFilter: true, doendbeforeFilter: true)
+
+        then:
+        svc.isCacheableQuery(queryRecent) == true
+        svc.isCacheableQuery(queryOlder) == true
+        svc.isCacheableQuery(queryBoth) == true
+    }
+
+    /**
+     * Test isCacheableQuery returns false when relative filter has additional absolute dates
+     */
+    void testIsCacheableQueryWithMixedFilters() {
+        given:
+        def svc = new ExecutionService()
+        def now = new Date()
+
+        when:
+        // olderFilter=60d with additional begin date - not cacheable
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            olderFilter: "60d",
+            doendbeforeFilter: true,
+            // Additional absolute date filter
+            endafterFilter: now,
+            doendafterFilter: true
+        )
+
+        then:
+        // Not cacheable because doendafterFilter is set but recentFilter is not
+        svc.isCacheableQuery(query) == false
+    }
+
+    /**
+     * Test isCacheableQuery returns false for queries with absolute dates but no relative filter
+     */
+    void testIsCacheableQueryWithAbsoluteDatesOnly() {
         given:
         def svc = new ExecutionService()
         def now = new Date()
@@ -616,32 +904,30 @@ class ExecutionServiceTests extends Specification implements DataTest {
             projFilter: "TestProject",
             endafterFilter: now,
             doendafterFilter: true
+            // No recentFilter or olderFilter
         )
-        def cacheKey = svc.buildCountCacheKey(query)
 
         then:
-        cacheKey.contains("proj:TestProject")
-        cacheKey.contains("endAfter:${now.time}")
+        svc.isCacheableQuery(query) == false
     }
 
     /**
-     * Test cache key generation with job ID filters
+     * Test isCacheableQuery returns false for queries with start date filters but no relative filter
      */
-    void testBuildCountCacheKeyWithJobIds() {
+    void testIsCacheableQueryWithStartDateFiltersOnly() {
         given:
         def svc = new ExecutionService()
+        def now = new Date()
 
         when:
         def query = new ExecutionQuery(
             projFilter: "TestProject",
-            jobIdListFilter: ['uuid-2', 'uuid-1', 'uuid-3']
+            startafterFilter: now,
+            dostartafterFilter: true
         )
-        def cacheKey = svc.buildCountCacheKey(query)
 
         then:
-        cacheKey.contains("proj:TestProject")
-        // Job IDs should be sorted for consistent cache keys
-        cacheKey.contains("jobIds:uuid-1,uuid-2,uuid-3")
+        svc.isCacheableQuery(query) == false
     }
 
     /**
