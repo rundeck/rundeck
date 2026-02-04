@@ -162,17 +162,17 @@ export default defineComponent({
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--colors-blackAlpha-500, rgba(0, 0, 0, 0.36));
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1050;
+  z-index: var(--zIndices-modal, 1400);
 }
 
 .settings-modal {
-  background: var(--background-color, #fff);
+  background: var(--colors-white, #ffffff);
   border-radius: var(--radii-md, 6px);
-  box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadows-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
   width: 600px;
   max-width: 90vw;
   max-height: 80vh;
@@ -187,13 +187,14 @@ export default defineComponent({
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--font-color);
+  color: var(--colors-gray-700, #374151);
   font-size: 16px;
   padding: var(--spacing-1, 4px);
   z-index: 1;
+  transition: color 0.2s;
 
   &:hover {
-    color: var(--colors-gray-600);
+    color: var(--colors-gray-900, #111827);
   }
 }
 
@@ -206,50 +207,53 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   width: 180px;
-  background-color: var(--background-color-lvl2, #f5f5f5);
+  background-color: var(--colors-white, #ffffff);
   border-right: 1px solid var(--colors-gray-200, #e5e7eb);
   padding: var(--spacing-4, 16px) 0;
 }
 
 .settings-modal__tab {
-  padding: var(--spacing-3, 12px) var(--spacing-4, 16px);
-  background: transparent;
+  padding: var(--spacing-4, 16px) var(--spacing-5, 20px);
+  background: var(--colors-white, #ffffff);
   border: none;
-  border-left: 3px solid transparent;
   text-align: left;
   cursor: pointer;
-  color: var(--font-color);
+  color: var(--colors-gray-700, #374151);
   font-size: 14px;
+  font-weight: var(--fontWeights-regular, 400);
+  transition: background-color 0.2s;
 
   &:hover {
-    background-color: var(--background-color-accent-lvl2);
+    background-color: #E9ECEF;
   }
 
   &--active {
-    border-left-color: var(--colors-blue-500, #3b82f6);
-    background-color: var(--background-color, #fff);
-    font-weight: 600;
+    background-color: #E9ECEF;
+    color: var(--colors-gray-900);
+    font-weight: var(--fontWeights-regular);
   }
 }
 
 .settings-modal__panel {
   flex: 1;
-  padding: var(--spacing-6, 24px);
+  padding: var(--spacing-10, 40px) var(--spacing-10, 40px);
   overflow-y: auto;
+  background-color: var(--colors-white, #ffffff);
 }
 
 .settings-panel__title {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: var(--fontWeights-bold, 700);
   margin: 0 0 var(--spacing-2, 8px) 0;
-  color: var(--font-color);
+  color: var(--colors-gray-900, #111827);
 }
 
 .settings-panel__description {
   font-size: 14px;
-  color: var(--font-color-muted, #6b7280);
-  margin: 0 0 var(--spacing-4, 16px) 0;
+  color: var(--colors-gray-700, #374151);
+  margin: 0 0 var(--spacing-6, 24px) 0;
   line-height: 1.5;
+  font-weight: var(--fontWeights-regular, 400);
 }
 
 .settings-panel__control {
@@ -257,12 +261,24 @@ export default defineComponent({
 
   select {
     width: 100%;
-    padding: var(--spacing-2, 8px) var(--spacing-3, 12px);
+    padding: var(--spacing-3, 12px) var(--spacing-4, 16px);
     border: 1px solid var(--colors-gray-300, #d1d5db);
-    border-radius: var(--radii-md, 6px);
+    border-radius: var(--radii-sm, 2px);
     font-size: 14px;
-    background-color: var(--background-color, #fff);
-    color: var(--font-color);
+    background-color: var(--colors-white, #ffffff);
+    color: var(--colors-gray-700, #374151);
+    font-weight: var(--fontWeights-regular, 400);
+    cursor: pointer;
+    appearance: none;
+    background-repeat: no-repeat;
+    background-position: right var(--spacing-3, 12px) center;
+    padding-right: var(--spacing-8, 32px);
+
+    &:focus {
+      outline: none;
+      border-color: var(--colors-blue-500, #3b82f6);
+      box-shadow: 0px 0px 0px 2.8px var(--colors-blue-100, #dbeafe);
+    }
   }
 }
 
@@ -279,7 +295,8 @@ export default defineComponent({
 
 .settings-toggle__label {
   font-size: 14px;
-  color: var(--font-color);
+  color: var(--colors-gray-700, #374151);
+  font-weight: var(--fontWeights-regular, 400);
 }
 
 .settings-toggle__input {
@@ -294,7 +311,7 @@ export default defineComponent({
   width: 44px;
   height: 24px;
   background-color: var(--colors-gray-300, #d1d5db);
-  border-radius: 12px;
+  border-radius: var(--radii-full, 9999px);
   transition: background-color 0.2s;
 
   &::after {
@@ -304,8 +321,8 @@ export default defineComponent({
     left: 2px;
     width: 20px;
     height: 20px;
-    background-color: white;
-    border-radius: 50%;
+    background-color: var(--colors-white, #ffffff);
+    border-radius: var(--radii-full, 9999px);
     transition: transform 0.2s;
   }
 }
