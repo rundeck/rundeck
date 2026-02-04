@@ -63,6 +63,10 @@ export default defineComponent({
   }
 }
 
+*[data-color-theme="dark"] .settings-bar__button {
+  color: var(--font-color);
+}
+
 .settings-bar__nextui-text {
   white-space: nowrap;
 }

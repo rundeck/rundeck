@@ -67,6 +67,7 @@ describe("SettingsModal", () => {
   });
 
   afterEach(() => {
+    eventBus.all.clear();
     jest.clearAllMocks();
   });
 

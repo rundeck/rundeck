@@ -30,7 +30,7 @@
               {{ $t("settings.theme.description") }}
             </p>
             <div class="settings-panel__control">
-              <select v-model="theme" class="form-control">
+              <select v-model="theme" class="form-control select">
                 <option v-for="themeOpt in themes" :key="themeOpt" :value="themeOpt">
                   {{ $t(`settings.theme.options.${themeOpt}`) }}
                 </option>
@@ -180,6 +180,10 @@ export default defineComponent({
   position: relative;
 }
 
+*[data-color-theme="dark"] .settings-modal {
+  background: var(--background-color-lvl2);
+}
+
 .settings-modal__close {
   position: absolute;
   top: var(--spacing-3, 12px);
@@ -198,6 +202,14 @@ export default defineComponent({
   }
 }
 
+*[data-color-theme="dark"] .settings-modal__close {
+  color: var(--font-color);
+  
+  &:hover {
+    color: var(--text-secondary-color);
+  }
+}
+
 .settings-modal__content {
   display: flex;
   min-height: 400px;
@@ -210,6 +222,11 @@ export default defineComponent({
   background-color: var(--colors-white, #ffffff);
   border-right: 1px solid var(--colors-gray-200, #e5e7eb);
   padding: var(--spacing-4, 16px) 0;
+}
+
+*[data-color-theme="dark"] .settings-modal__tabs {
+  background-color: var(--background-color-lvl2);
+  border-right-color: var(--border-color);
 }
 
 .settings-modal__tab {
@@ -234,6 +251,20 @@ export default defineComponent({
   }
 }
 
+*[data-color-theme="dark"] .settings-modal__tab {
+  background: var(--background-color-lvl2);
+  color: var(--font-color);
+
+  &:hover {
+    background-color: var(--background-color-accent-lvl2);
+  }
+
+  &--active {
+    background-color: var(--background-color-accent-lvl2);
+    color: var(--font-color);
+  }
+}
+
 .settings-modal__panel {
   flex: 1;
   padding: var(--spacing-10, 40px) var(--spacing-10, 40px);
@@ -241,11 +272,19 @@ export default defineComponent({
   background-color: var(--colors-white, #ffffff);
 }
 
+*[data-color-theme="dark"] .settings-modal__panel {
+  background-color: var(--background-color-lvl2);
+}
+
 .settings-panel__title {
   font-size: 18px;
   font-weight: var(--fontWeights-bold, 700);
   margin: 0 0 var(--spacing-2, 8px) 0;
   color: var(--colors-gray-900, #111827);
+}
+
+*[data-color-theme="dark"] .settings-panel__title {
+  color: var(--font-color);
 }
 
 .settings-panel__description {
@@ -256,30 +295,12 @@ export default defineComponent({
   font-weight: var(--fontWeights-regular, 400);
 }
 
+*[data-color-theme="dark"] .settings-panel__description {
+  color: var(--text-secondary-color);
+}
+
 .settings-panel__control {
   margin-bottom: var(--spacing-4, 16px);
-
-  select {
-    width: 100%;
-    padding: var(--spacing-3, 12px) var(--spacing-4, 16px);
-    border: 1px solid var(--colors-gray-300, #d1d5db);
-    border-radius: var(--radii-sm, 2px);
-    font-size: 14px;
-    background-color: var(--colors-white, #ffffff);
-    color: var(--colors-gray-700, #374151);
-    font-weight: var(--fontWeights-regular, 400);
-    cursor: pointer;
-    appearance: none;
-    background-repeat: no-repeat;
-    background-position: right var(--spacing-3, 12px) center;
-    padding-right: var(--spacing-8, 32px);
-
-    &:focus {
-      outline: none;
-      border-color: var(--colors-blue-500, #3b82f6);
-      box-shadow: 0px 0px 0px 2.8px var(--colors-blue-100, #dbeafe);
-    }
-  }
 }
 
 .settings-panel__toggle {
@@ -297,6 +318,10 @@ export default defineComponent({
   font-size: 14px;
   color: var(--colors-gray-700, #374151);
   font-weight: var(--fontWeights-regular, 400);
+}
+
+*[data-color-theme="dark"] .settings-toggle__label {
+  color: var(--font-color);
 }
 
 .settings-toggle__input {
