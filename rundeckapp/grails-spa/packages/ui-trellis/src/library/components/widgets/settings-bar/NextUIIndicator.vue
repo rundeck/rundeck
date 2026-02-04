@@ -17,79 +17,51 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { loadJsonData } from "../../../../app/utilities/loadJsonData";
-
-const COOKIE_NAME = "nextUi";
+import { getRundeckContext } from "../../../../library";
+import {
+  getPageUiMeta,
+  getNextUiCapable,
+  getNextUiSystemEnabled,
+  hasNextUiCookie,
+  isNextUiPage,
+} from "./services/pageUiMetaService";
+import type { NextUIIndicatorData } from "./NextUIIndicatorTypes";
 
 export default defineComponent({
   name: "NextUIIndicator",
-  data() {
-    const pageUiMeta = loadJsonData("pageUiMeta") || {};
-
-    // Ensure we have boolean values
-    const nextUiCapable =
-      pageUiMeta.nextUiCapable === true || pageUiMeta.nextUiCapable === "true";
-
-    // Check multiple sources for nextUiSystemEnabled
-    let systemEnabled =
-      pageUiMeta.nextUiSystemEnabled === true ||
-      pageUiMeta.nextUiSystemEnabled === "true";
-    const hasNextUiCookie = this.$cookies?.get(COOKIE_NAME) === "true";
-    const isNextUiPage = pageUiMeta.uiType === "next";
-
-    // If user has the cookie set or we're on a nextUi page, show the indicator
-    if (hasNextUiCookie || isNextUiPage) {
-      systemEnabled = true;
-    }
+  data(): NextUIIndicatorData {
+    const pageUiMeta = getPageUiMeta();
+    const cookieValue = hasNextUiCookie(this.$cookies);
+    const isNextPage = isNextUiPage(pageUiMeta);
 
     return {
-      nextUiCapable,
-      nextUiSystemEnabled: systemEnabled,
-      nextUiEnabled: hasNextUiCookie,
+      nextUiCapable: getNextUiCapable(pageUiMeta),
+      nextUiSystemEnabled: getNextUiSystemEnabled(
+        pageUiMeta,
+        cookieValue,
+        isNextPage,
+      ),
+      nextUiEnabled: cookieValue,
     };
   },
-  computed: {},
   mounted() {
-    // Re-check pageUiMeta after mount in case data wasn't available during data()
-    const pageUiMeta = loadJsonData("pageUiMeta");
+    const pageUiMeta = getPageUiMeta();
     if (pageUiMeta) {
-      this.nextUiCapable =
-        pageUiMeta.nextUiCapable === true ||
-        pageUiMeta.nextUiCapable === "true";
+      const cookieValue = hasNextUiCookie(this.$cookies);
+      const isNextPage = isNextUiPage(pageUiMeta);
 
-      // Check multiple sources for nextUiSystemEnabled
-      let systemEnabled =
-        pageUiMeta.nextUiSystemEnabled === true ||
-        pageUiMeta.nextUiSystemEnabled === "true";
-      const hasNextUiCookie = this.$cookies?.get(COOKIE_NAME) === "true";
-      const isNextUiPage = pageUiMeta.uiType === "next";
-
-      if (hasNextUiCookie || isNextUiPage) {
-        systemEnabled = true;
-      }
-
-      this.nextUiSystemEnabled = systemEnabled;
-
-      // Debug: log the values
-      console.log("[NextUIIndicator] pageUiMeta:", pageUiMeta);
-      console.log("[NextUIIndicator] hasNextUiCookie:", hasNextUiCookie);
-      console.log("[NextUIIndicator] isNextUiPage:", isNextUiPage);
-      console.log("[NextUIIndicator] nextUiCapable:", this.nextUiCapable);
-      console.log(
-        "[NextUIIndicator] nextUiSystemEnabled:",
-        this.nextUiSystemEnabled,
+      this.nextUiCapable = getNextUiCapable(pageUiMeta);
+      this.nextUiSystemEnabled = getNextUiSystemEnabled(
+        pageUiMeta,
+        cookieValue,
+        isNextPage,
       );
-      console.log(
-        "[NextUIIndicator] showNextUiIndicator:",
-        this.showNextUiIndicator,
-      );
-    } else {
-      console.warn("[NextUIIndicator] pageUiMeta not found");
+      this.nextUiEnabled = cookieValue;
     }
   },
   methods: {
-    handleOpenModal() {
-      const eventBus = (window._rundeck as any)?.eventBus;
+    handleOpenModal(): void {
+      const eventBus = getRundeckContext()?.eventBus;
       if (eventBus) {
         eventBus.emit("settings:open-modal", "ui-early-access");
       }
@@ -106,18 +78,14 @@ export default defineComponent({
   padding: var(--spacing-1, 4px) var(--spacing-2, 8px);
   background: transparent;
   border: none;
-  color: var(--font-color);
+  color: var(--grey-900);
   cursor: pointer;
   font-size: 14px;
+  font-weight: 700;
 
   &:hover {
     background-color: var(--background-color-accent-lvl2);
   }
-}
-
-.settings-bar__nextui-indicator {
-  color: var(--colors-blue-600, #2563eb);
-  font-size: 12px;
 }
 
 .settings-bar__nextui-text {

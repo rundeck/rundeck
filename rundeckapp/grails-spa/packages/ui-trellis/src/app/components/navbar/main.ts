@@ -1,5 +1,4 @@
-//@ts-nocheck
-import { createApp, markRaw } from "vue";
+import { createApp, markRaw, defineComponent } from "vue";
 
 import NavigationBar from "../../../library/components/navbar/NavBar.vue";
 import UtilityBar from "../../../library/components/utility-bar/UtilityBar.vue";
@@ -46,15 +45,17 @@ rootStore.utilityBar.addItems([
     group: "right",
     visible: true,
     inline: true,
-    order: 200, // Highest order = leftmost with row-reverse
-    widget: markRaw({
-      name: "NextUIIndicatorWidget",
-      components: { NextUIIndicator },
-      template: `<NextUIIndicator />`,
-      provide: {
-        rootStore,
-      },
-    }),
+    order: 200,
+    widget: markRaw(
+      defineComponent({
+        name: "NextUIIndicatorWidget",
+        components: { NextUIIndicator },
+        provide: {
+          rootStore,
+        },
+        template: `<NextUIIndicator />`,
+      }),
+    ),
   },
   {
     type: "widget",
@@ -63,15 +64,17 @@ rootStore.utilityBar.addItems([
     group: "right",
     visible: true,
     inline: true,
-    order: 100, // Lowest order = rightmost with row-reverse
-    widget: markRaw({
-      name: "SettingsCogButtonWidget",
-      components: { SettingsCogButton },
-      template: `<SettingsCogButton />`,
-      provide: {
-        rootStore,
-      },
-    }),
+    order: 100,
+    widget: markRaw(
+      defineComponent({
+        name: "SettingsCogButtonWidget",
+        components: { SettingsCogButton },
+        provide: {
+          rootStore,
+        },
+        template: `<SettingsCogButton />`,
+      }),
+    ),
   },
   {
     type: "widget",
@@ -81,14 +84,16 @@ rootStore.utilityBar.addItems([
     visible: true,
     inline: true,
     order: 300,
-    widget: markRaw({
-      name: "SettingsModalWrapperWidget",
-      components: { SettingsModalWrapper },
-      template: `<SettingsModalWrapper />`,
-      provide: {
-        rootStore,
-      },
-    }),
+    widget: markRaw(
+      defineComponent({
+        name: "SettingsModalWrapperWidget",
+        components: { SettingsModalWrapper },
+        provide: {
+          rootStore,
+        },
+        template: `<SettingsModalWrapper />`,
+      }),
+    ),
   },
 ] as Array<UtilityActionItem>);
 

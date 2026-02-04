@@ -82,9 +82,16 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { loadJsonData } from "../../../../app/utilities/loadJsonData";
+import { getRundeckContext } from "../../../../library";
+import type {
+  SettingsTab,
+  ThemeOption,
+  SettingsModalData,
+} from "./SettingsModalTypes";
 
 const COOKIE_NAME = "nextUi";
+const LEARN_MORE_URL = "https://docs.rundeck.com";
+const FEEDBACK_URL = "https://feedback.rundeck.com";
 
 export default defineComponent({
   name: "SettingsModal",
@@ -94,48 +101,58 @@ export default defineComponent({
       required: true,
     },
     activeTab: {
-      type: String as () => "theme" | "ui-early-access",
+      type: String as () => SettingsTab,
       required: true,
     },
   },
   emits: ["close", "change-tab"],
-  data() {
-    const themeStore = window._rundeck?.rootStore?.theme;
+  data(): SettingsModalData {
+    const rundeckContext = getRundeckContext();
+    const themeStore = rundeckContext?.rootStore?.theme;
 
     return {
       currentTab: this.activeTab,
-      themes: ["system", "light", "dark"],
-      theme: themeStore?.userPreferences?.theme || "system",
+      themes: ["system", "light", "dark"] as ThemeOption[],
+      theme: (themeStore?.userPreferences?.theme ||
+        "system") as ThemeOption,
       themeStore,
       nextUiEnabled: this.$cookies?.get(COOKIE_NAME) === "true",
       isLoading: false,
-      learnMoreUrl: "https://docs.rundeck.com",
-      feedbackUrl: "https://feedback.rundeck.com",
+      learnMoreUrl: LEARN_MORE_URL,
+      feedbackUrl: FEEDBACK_URL,
     };
   },
   watch: {
-    activeTab(newVal: "theme" | "ui-early-access") {
+    activeTab(newVal: SettingsTab) {
       this.currentTab = newVal;
     },
-    theme(newVal: string) {
+    theme(newVal: ThemeOption) {
       if (this.themeStore) {
         this.themeStore.setUserTheme(newVal);
       }
     },
   },
   methods: {
-    close() {
+    close(): void {
       this.$emit("close");
     },
-    changeTab(tab: "theme" | "ui-early-access") {
+    changeTab(tab: SettingsTab): void {
       this.currentTab = tab;
       this.$emit("change-tab", tab);
     },
-    handleNextUiToggle() {
+    handleNextUiToggle(): void {
       if (this.nextUiEnabled) {
         this.$cookies.set(COOKIE_NAME, "true", "1y", "/", "", false, "Strict");
       } else {
-        this.$cookies.set(COOKIE_NAME, "false", "1y", "/", "", false, "Strict");
+        this.$cookies.set(
+          COOKIE_NAME,
+          "false",
+          "1y",
+          "/",
+          "",
+          false,
+          "Strict",
+        );
       }
       this.isLoading = true;
       window.location.reload();

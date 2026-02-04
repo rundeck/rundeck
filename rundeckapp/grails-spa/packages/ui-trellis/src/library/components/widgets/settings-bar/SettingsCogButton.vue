@@ -10,12 +10,13 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { getRundeckContext } from "../../../../library";
 
 export default defineComponent({
   name: "SettingsCogButton",
   methods: {
-    handleOpenModal() {
-      const eventBus = (window._rundeck as any)?.eventBus;
+    handleOpenModal(): void {
+      const eventBus = getRundeckContext()?.eventBus;
       if (eventBus) {
         eventBus.emit("settings:open-modal", "theme");
       }

@@ -9,7 +9,9 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { getRundeckContext } from "../../../../library";
 import SettingsModal from "./SettingsModal.vue";
+import type { SettingsTab } from "./SettingsModalTypes";
 
 export default defineComponent({
   name: "SettingsModalWrapper",
@@ -19,31 +21,33 @@ export default defineComponent({
   data() {
     return {
       isModalOpen: false,
-      activeTab: "theme" as "theme" | "ui-early-access",
+      activeTab: "theme" as SettingsTab,
     };
   },
+  computed: {
+    eventBus() {
+      return getRundeckContext()?.eventBus;
+    },
+  },
   mounted() {
-    // Listen for modal open events from any button
-    const eventBus = (window._rundeck as any)?.eventBus;
-    if (eventBus) {
-      eventBus.on("settings:open-modal", this.handleOpenModal);
+    if (this.eventBus) {
+      this.eventBus.on("settings:open-modal", this.handleOpenModal);
     }
   },
   beforeUnmount() {
-    const eventBus = (window._rundeck as any)?.eventBus;
-    if (eventBus) {
-      eventBus.off("settings:open-modal", this.handleOpenModal);
+    if (this.eventBus) {
+      this.eventBus.off("settings:open-modal", this.handleOpenModal);
     }
   },
   methods: {
-    handleOpenModal(tab: "theme" | "ui-early-access") {
+    handleOpenModal(tab: SettingsTab): void {
       this.activeTab = tab;
       this.isModalOpen = true;
     },
-    handleCloseModal() {
+    handleCloseModal(): void {
       this.isModalOpen = false;
     },
-    handleChangeTab(tab: "theme" | "ui-early-access") {
+    handleChangeTab(tab: SettingsTab): void {
       this.activeTab = tab;
     },
   },
