@@ -83,45 +83,52 @@ describe("SettingsBar", () => {
     });
   };
 
-  it("renders help button with label", () => {
+  it("renders support button with label", () => {
     wrapper = createWrapper();
-    const helpButton = wrapper.find(".settings-bar__button");
-    expect(helpButton.exists()).toBe(true);
-    expect(helpButton.text()).toContain("settings.help.label");
+    const supportButton = wrapper.find(".settings-bar__button .fa-life-ring");
+    expect(supportButton.exists()).toBe(true);
+    const buttons = wrapper.findAll(".settings-bar__button");
+    // Find the button containing support label
+    const supportBtnWithLabel = buttons.find(b => b.text().includes("settings.support.label"));
+    expect(supportBtnWithLabel).toBeTruthy();
   });
 
   it("renders settings button with cog icon", () => {
     wrapper = createWrapper();
-    const buttons = wrapper.findAll(".settings-bar__button");
-    const settingsButton = buttons[1];
-    expect(settingsButton.find(".fa-cog").exists()).toBe(true);
+    const cogButton = wrapper.find(".settings-bar__button .fa-cog");
+    expect(cogButton.exists()).toBe(true);
   });
 
-  it("shows NextUI indicator when system enabled and page capable", () => {
+  it("shows NextUI indicator first when system enabled and page capable", () => {
     wrapper = createWrapper();
     const indicator = wrapper.find(".settings-bar__nextui-indicator");
     expect(indicator.exists()).toBe(true);
     expect(indicator.text()).toContain("settings.nextUi");
+    // NextUI indicator should be the first button
+    const buttons = wrapper.findAll(".settings-bar__button");
+    expect(buttons[0].classes()).toContain("settings-bar__nextui-indicator");
   });
 
-  it("opens modal when settings button is clicked", async () => {
+  it("opens modal when cog button is clicked", async () => {
     wrapper = createWrapper();
     
     // Modal should not exist initially
     expect(wrapper.find(".settings-modal").exists()).toBe(false);
     
-    // Click settings button
-    const settingsButton = wrapper.findAll(".settings-bar__button")[1];
-    await settingsButton.trigger("click");
+    // Click cog button (last button)
+    const cogButton = wrapper.find(".settings-bar__button .fa-cog").element.parentElement;
+    await wrapper.find(".settings-bar__button .fa-cog").trigger("click");
     
     // Modal should now be visible
     expect(wrapper.find(".settings-modal").exists()).toBe(true);
   });
 
-  it("shows Theme tab content when clicking settings button", async () => {
+  it("shows Theme tab content when clicking cog button", async () => {
     wrapper = createWrapper();
-    const settingsButton = wrapper.findAll(".settings-bar__button")[1];
-    await settingsButton.trigger("click");
+    // Find and click the cog button
+    const buttons = wrapper.findAll(".settings-bar__button");
+    const cogButton = buttons.find(b => b.find(".fa-cog").exists());
+    await cogButton!.trigger("click");
     
     // Theme tab should be active (has active class)
     const tabs = wrapper.findAll(".settings-modal__tab");
@@ -147,9 +154,10 @@ describe("SettingsBar", () => {
   it("closes modal when close button is clicked", async () => {
     wrapper = createWrapper();
     
-    // Open modal first
-    const settingsButton = wrapper.findAll(".settings-bar__button")[1];
-    await settingsButton.trigger("click");
+    // Open modal first - click cog button
+    const buttons = wrapper.findAll(".settings-bar__button");
+    const cogButton = buttons.find(b => b.find(".fa-cog").exists());
+    await cogButton!.trigger("click");
     expect(wrapper.find(".settings-modal").exists()).toBe(true);
 
     // Close modal
@@ -163,9 +171,10 @@ describe("SettingsBar", () => {
   it("switches to UI Early Access tab when tab button is clicked", async () => {
     wrapper = createWrapper();
     
-    // Open modal with Theme tab
-    const settingsButton = wrapper.findAll(".settings-bar__button")[1];
-    await settingsButton.trigger("click");
+    // Open modal with Theme tab - click cog button
+    const buttons = wrapper.findAll(".settings-bar__button");
+    const cogButton = buttons.find(b => b.find(".fa-cog").exists());
+    await cogButton!.trigger("click");
 
     // Click UI Early Access tab
     const tabs = wrapper.findAll(".settings-modal__tab");
@@ -179,9 +188,10 @@ describe("SettingsBar", () => {
   it("calls setUserTheme when theme dropdown is changed", async () => {
     wrapper = createWrapper();
     
-    // Open modal
-    const settingsButton = wrapper.findAll(".settings-bar__button")[1];
-    await settingsButton.trigger("click");
+    // Open modal - click cog button
+    const buttons = wrapper.findAll(".settings-bar__button");
+    const cogButton = buttons.find(b => b.find(".fa-cog").exists());
+    await cogButton!.trigger("click");
 
     // Find theme select and change value
     const themeSelect = wrapper.find("select");
@@ -190,13 +200,15 @@ describe("SettingsBar", () => {
     expect(mockSetUserTheme).toHaveBeenCalledWith("dark");
   });
 
-  it("opens help URL when help button is clicked", async () => {
+  it("opens help URL when support button is clicked", async () => {
     const mockOpen = jest.fn();
     window.open = mockOpen;
 
     wrapper = createWrapper({ helpUrl: "https://custom-help.com" });
-    const helpButton = wrapper.find(".settings-bar__button");
-    await helpButton.trigger("click");
+    // Find and click support button (has fa-life-ring icon)
+    const buttons = wrapper.findAll(".settings-bar__button");
+    const supportButton = buttons.find(b => b.find(".fa-life-ring").exists());
+    await supportButton!.trigger("click");
 
     expect(mockOpen).toHaveBeenCalledWith("https://custom-help.com", "_blank");
   });
@@ -235,9 +247,10 @@ describe("SettingsBar", () => {
   it("closes modal when clicking overlay background", async () => {
     wrapper = createWrapper();
     
-    // Open modal
-    const settingsButton = wrapper.findAll(".settings-bar__button")[1];
-    await settingsButton.trigger("click");
+    // Open modal - click cog button
+    const buttons = wrapper.findAll(".settings-bar__button");
+    const cogButton = buttons.find(b => b.find(".fa-cog").exists());
+    await cogButton!.trigger("click");
     expect(wrapper.find(".settings-modal").exists()).toBe(true);
 
     // Click overlay (outside modal)
@@ -246,5 +259,15 @@ describe("SettingsBar", () => {
     
     // Modal should be closed
     expect(wrapper.find(".settings-modal").exists()).toBe(false);
+  });
+
+  it("renders buttons in correct order: NextUI indicator, Support, Cog", () => {
+    wrapper = createWrapper();
+    const buttons = wrapper.findAll(".settings-bar__button");
+    
+    // Order should be: NextUI indicator (if visible), Support, Cog
+    expect(buttons[0].classes()).toContain("settings-bar__nextui-indicator");
+    expect(buttons[1].find(".fa-life-ring").exists()).toBe(true);
+    expect(buttons[2].find(".fa-cog").exists()).toBe(true);
   });
 });

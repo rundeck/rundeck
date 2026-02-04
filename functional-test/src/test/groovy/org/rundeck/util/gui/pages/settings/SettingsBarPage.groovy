@@ -23,8 +23,8 @@ class SettingsBarPage extends BasePage {
     // Settings bar selectors
     By settingsBarBy = By.cssSelector(".settings-bar")
     By settingsBarButtonBy = By.cssSelector(".settings-bar__button")
-    By helpButtonBy = By.cssSelector(".settings-bar__button[title*='Help']")
-    By settingsCogButtonBy = By.cssSelector(".settings-bar__button .fa-cog")
+    By supportButtonBy = By.xpath("//button[contains(@class, 'settings-bar__button')]/i[contains(@class, 'fa-life-ring')]/..")
+    By settingsCogButtonBy = By.xpath("//button[contains(@class, 'settings-bar__button')]/i[contains(@class, 'fa-cog')]/..")
     
     // Modal selectors
     By settingsModalBy = By.cssSelector(".settings-modal")
@@ -82,18 +82,18 @@ class SettingsBarPage extends BasePage {
     }
 
     /**
-     * Gets the help button
+     * Gets the support button
      */
-    WebElement getHelpButton() {
-        waitForElementToBeClickable(helpButtonBy)
-        el(helpButtonBy)
+    WebElement getSupportButton() {
+        waitForElementToBeClickable(supportButtonBy)
+        el(supportButtonBy)
     }
 
     /**
-     * Clicks the help button
+     * Clicks the support button
      */
-    void clickHelpButton() {
-        helpButton.click()
+    void clickSupportButton() {
+        supportButton.click()
     }
 
     /**

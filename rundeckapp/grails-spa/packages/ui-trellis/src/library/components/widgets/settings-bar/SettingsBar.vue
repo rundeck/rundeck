@@ -1,23 +1,6 @@
 <template>
   <div class="settings-bar">
     <button
-      class="settings-bar__button"
-      :title="$t('settings.help.title')"
-      @click="openHelp"
-    >
-      <i class="fas fa-question-circle"></i>
-      <span class="settings-bar__label">{{ $t("settings.help.label") }}</span>
-    </button>
-
-    <button
-      class="settings-bar__button"
-      :title="$t('settings.theme.title')"
-      @click="openModal('theme')"
-    >
-      <i class="fas fa-cog"></i>
-    </button>
-
-    <button
       v-if="showNextUiIndicator"
       class="settings-bar__button settings-bar__nextui-indicator"
       :title="$t('settings.nextUi.indicatorTitle')"
@@ -26,6 +9,23 @@
       <span class="settings-bar__nextui-text">
         {{ nextUiEnabled ? $t("settings.nextUi.enabled") : $t("settings.nextUi.available") }}
       </span>
+    </button>
+
+    <button
+      class="settings-bar__button"
+      :title="$t('settings.support.title')"
+      @click="openHelp"
+    >
+      <i class="fas fa-life-ring"></i>
+      <span class="settings-bar__label">{{ $t("settings.support.label") }}</span>
+    </button>
+
+    <button
+      class="settings-bar__button"
+      :title="$t('settings.theme.title')"
+      @click="openModal('theme')"
+    >
+      <i class="fas fa-cog"></i>
     </button>
 
     <div v-if="isModalOpen" class="settings-modal-overlay" @click.self="closeModal">
