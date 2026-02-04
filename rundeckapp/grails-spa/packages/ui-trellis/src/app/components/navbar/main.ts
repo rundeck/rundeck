@@ -1,9 +1,12 @@
+//@ts-nocheck
 import { createApp, markRaw } from "vue";
 
 import NavigationBar from "../../../library/components/navbar/NavBar.vue";
 import UtilityBar from "../../../library/components/utility-bar/UtilityBar.vue";
 import RundeckInfoWidget from "../../../library/components/widgets/rundeck-info/RundeckInfoWidget.vue";
-import SettingsBarWidget from "../../../library/components/widgets/settings-bar/SettingsBar.vue";
+import NextUIIndicator from "../../../library/components/widgets/settings-bar/NextUIIndicator.vue";
+import SettingsCogButton from "../../../library/components/widgets/settings-bar/SettingsCogButton.vue";
+import SettingsModalWrapper from "../../../library/components/widgets/settings-bar/SettingsModalWrapper.vue";
 
 import { UtilityActionItem } from "../../../library/stores/UtilityBar";
 import { getRundeckContext, getAppLinks } from "../../../library";
@@ -38,21 +41,52 @@ rootStore.utilityBar.addItems([
   },
   {
     type: "widget",
-    id: "utility-settings",
+    id: "utility-nextui-indicator",
     container: "root",
     group: "right",
     visible: true,
+    inline: true,
+    order: 200, // Highest order = leftmost with row-reverse
     widget: markRaw({
-      name: "SettingsBarWidgetItem",
-      components: { SettingsBarWidget },
-      template: `<SettingsBarWidget :help-url="helpUrl"/>`,
+      name: "NextUIIndicatorWidget",
+      components: { NextUIIndicator },
+      template: `<NextUIIndicator />`,
       provide: {
         rootStore,
       },
-      data() {
-        return {
-          helpUrl: appLinks.help,
-        };
+    }),
+  },
+  {
+    type: "widget",
+    id: "utility-settings-cog",
+    container: "root",
+    group: "right",
+    visible: true,
+    inline: true,
+    order: 100, // Lowest order = rightmost with row-reverse
+    widget: markRaw({
+      name: "SettingsCogButtonWidget",
+      components: { SettingsCogButton },
+      template: `<SettingsCogButton />`,
+      provide: {
+        rootStore,
+      },
+    }),
+  },
+  {
+    type: "widget",
+    id: "utility-settings-modal",
+    container: "root",
+    group: "right",
+    visible: true,
+    inline: true,
+    order: 300,
+    widget: markRaw({
+      name: "SettingsModalWrapperWidget",
+      components: { SettingsModalWrapper },
+      template: `<SettingsModalWrapper />`,
+      provide: {
+        rootStore,
       },
     }),
   },

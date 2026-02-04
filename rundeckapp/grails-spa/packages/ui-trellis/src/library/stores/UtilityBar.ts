@@ -1,9 +1,10 @@
 import { NavItem } from "./NavBar";
 import { RootStore } from "./RootStore";
 import { RundeckClient } from "@rundeck/client";
+import { reactive } from "vue";
 
 export class UtilityBar {
-  items: Array<UtilityItem> = [];
+  items: Array<UtilityItem> = reactive([]);
 
   overflow: Array<UtilityItem> = [];
 
@@ -44,7 +45,19 @@ export class UtilityBar {
     const items = this.items.filter(
       (i) => i.group == group && i.container == container,
     );
-    return items;
+    // Sort by order property if present, otherwise maintain insertion order
+    const sorted = items.sort((a, b) => {
+      const orderA = a.order ?? 999;
+      const orderB = b.order ?? 999;
+      return orderA - orderB;
+    });
+    
+    // Debug: log the sorted items
+    if (group === "right") {
+      console.log("[UtilityBar] Sorted right group items:", sorted.map(i => ({ id: i.id, order: i.order ?? 999 })));
+    }
+    
+    return sorted;
   }
 
   containerItems(container: string) {
@@ -70,6 +83,7 @@ export interface UtilityItem {
   visible: boolean;
   count?: number;
   type: string;
+  order?: number; // Optional order for sorting items
 }
 
 export interface UtilityActionItem extends UtilityItem {
@@ -80,4 +94,5 @@ export interface UtilityActionItem extends UtilityItem {
 export interface UtilityWidgetItem extends UtilityItem {
   type: "widget";
   widget: Object;
+  inline?: boolean; // If true, render widget directly without icon/popover
 }
