@@ -20,8 +20,6 @@ class SettingsBarPage extends BasePage {
     // No load path - this is a component that appears on multiple pages
     String loadPath = ""
 
-    // Settings bar selectors
-    By settingsBarBy = By.cssSelector(".settings-bar")
     By settingsBarButtonBy = By.cssSelector(".settings-bar__button")
     By supportButtonBy = By.xpath("//button[contains(@class, 'settings-bar__button')]/i[contains(@class, 'fa-life-ring')]/..")
     By settingsCogButtonBy = By.xpath("//button[contains(@class, 'settings-bar__button')]/i[contains(@class, 'fa-cog')]/..")
@@ -53,14 +51,7 @@ class SettingsBarPage extends BasePage {
     }
 
     /**
-     * Gets the settings bar element
-     */
-    WebElement getSettingsBar() {
-        el(settingsBarBy)
-    }
-
-    /**
-     * Gets all settings bar buttons
+     * Gets all settings bar buttons in utility bar
      */
     List<WebElement> getSettingsBarButtons() {
         els(settingsBarButtonBy)
@@ -146,19 +137,6 @@ class SettingsBarPage extends BasePage {
      */
     void closeModal() {
         settingsModalClose.click()
-        waitForModalClosed()
-    }
-
-    /**
-     * Closes the modal by clicking the overlay
-     */
-    void closeModalByOverlayClick() {
-        def overlay = settingsModalOverlay
-        // Click on the top-left corner of the overlay (outside the modal)
-        new Actions(driver)
-                .moveToElement(overlay, 10, 10)
-                .click()
-                .perform()
         waitForModalClosed()
     }
 

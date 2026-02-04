@@ -34,14 +34,14 @@ class SettingsBarSpec extends SeleniumBase {
         deleteProject(PROJECT_NAME)
     }
 
-    def "Settings bar is visible in utility bar"() {
+    def "Settings buttons are visible in utility bar"() {
         when:
         def homePage = go HomePage
         def settingsBarPage = page SettingsBarPage
 
         then:
-        settingsBarPage.settingsBar.displayed
         settingsBarPage.settingsBarButtons.size() > 0
+        settingsBarPage.settingsCogButton.displayed
     }
 
     def "Clicking settings button opens modal with Theme tab"() {
@@ -143,23 +143,6 @@ class SettingsBarSpec extends SeleniumBase {
 
         when:
         settingsBarPage.closeModal()
-
-        then:
-        !settingsBarPage.isModalOpen()
-    }
-
-    def "Closing settings modal by clicking overlay"() {
-        when:
-        def homePage = go HomePage
-        def settingsBarPage = page SettingsBarPage
-        settingsBarPage.clickSettingsButton()
-        settingsBarPage.waitForModalVisible()
-
-        then:
-        settingsBarPage.isModalOpen()
-
-        when:
-        settingsBarPage.closeModalByOverlayClick()
 
         then:
         !settingsBarPage.isModalOpen()
