@@ -1,27 +1,29 @@
 import { mount, flushPromises } from "@vue/test-utils";
-import SettingsModal from "../SettingsModal.vue";
 import mitt from "mitt";
 import type { EventType, Emitter } from "mitt";
 
+let eventBus: Emitter<Record<EventType, any>>;
 const mockSetUserTheme = jest.fn();
 const mockGetPageUiMeta = jest.fn();
+const mockNotificationNotify = jest.fn();
 const mockCookies = {
   get: jest.fn(),
   set: jest.fn(),
 };
-const mockNotificationNotify = jest.fn();
-
-let eventBus: Emitter<Record<EventType, any>>;
 
 jest.mock("../../../../rundeckService", () => ({
   getRundeckContext: jest.fn(() => ({
-    eventBus: eventBus,
+    get eventBus() {
+      return eventBus;
+    },
     rootStore: {
       theme: {
         userPreferences: {
           theme: "dark",
         },
-        setUserTheme: mockSetUserTheme,
+        get setUserTheme() {
+          return mockSetUserTheme;
+        },
       },
     },
   })),
@@ -33,9 +35,13 @@ jest.mock("../services/pageUiMetaService", () => ({
 
 jest.mock("uiv", () => ({
   Notification: {
-    notify: mockNotificationNotify,
+    get notify() {
+      return mockNotificationNotify;
+    },
   },
 }));
+
+import SettingsModal from "../SettingsModal.vue";
 
 const mountSettingsModal = async () => {
   const wrapper = mount(SettingsModal, {
@@ -247,7 +253,7 @@ describe("SettingsModal", () => {
     expect(mockNotificationNotify).toHaveBeenCalledWith({
       type: "info",
       title: "",
-      content: "Next UI early access enabled. You can switch back anytime.",
+      content: "settings.uiEarlyAccess.toast.enabled",
       dismissible: true,
     });
     expect(localStorage.getItem("nextUiToastMessage")).toBeNull();
@@ -262,7 +268,7 @@ describe("SettingsModal", () => {
     expect(mockNotificationNotify).toHaveBeenCalledWith({
       type: "info",
       title: "",
-      content: "Next UI has been turned off. You can switch back anytime.",
+      content: "settings.uiEarlyAccess.toast.disabled",
       dismissible: true,
     });
     expect(localStorage.getItem("nextUiToastMessage")).toBeNull();
