@@ -220,22 +220,87 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             this.olderFilter = args.olderFilter
             this.jobId = args.jobId
         }
+
+        /**
+         * Factory method to create a cache key from an ExecutionQuery.
+         * Only single job ID is supported in cache key. Multiple job IDs should be
+         * handled by isCacheableQuery() returning false.
+         */
+        static ExecutionCountCacheKey fromQuery(ExecutionQuery query) {
+            // Extract single job ID (isCacheableQuery ensures size <= 1)
+            String jobId = null
+            if (query.jobIdListFilter && query.jobIdListFilter.size() == 1) {
+                jobId = query.jobIdListFilter[0]?.toString()
+            }
+            
+            new ExecutionCountCacheKey(
+                project: query.projFilter,
+                status: query.statusFilter,
+                user: query.userFilter,
+                execType: query.executionTypeFilter,
+                adhoc: query.adhoc,
+                recentFilter: query.recentFilter,
+                olderFilter: query.olderFilter,
+                jobId: jobId
+            )
+        }
+
+        /**
+         * Invalidate a specific cache entry.
+         */
+        static void invalidate(Cache<ExecutionCountCacheKey, Long> cache, ExecutionCountCacheKey key) {
+            if (cache != null && key != null) {
+                cache.invalidate(key)
+            }
+        }
+
+        /**
+         * Invalidate all cache entries for a specific project.
+         */
+        static void invalidateForProject(Cache<ExecutionCountCacheKey, Long> cache, String project) {
+            if (cache != null && project != null) {
+                cache.asMap().keySet().removeIf { it.project == project }
+            }
+        }
+
+        /**
+         * Invalidate all cache entries for a specific job.
+         */
+        static void invalidateForJob(Cache<ExecutionCountCacheKey, Long> cache, String jobId) {
+            if (cache != null && jobId != null) {
+                cache.asMap().keySet().removeIf { it.jobId == jobId }
+            }
+        }
+
+        /**
+         * Invalidate all cache entries.
+         */
+        static void invalidateAll(Cache<ExecutionCountCacheKey, Long> cache) {
+            if (cache != null) {
+                cache.invalidateAll()
+            }
+        }
     }
 
-    // Lazy-initialized cache for execution counts
-    private Cache<ExecutionCountCacheKey, Long> executionCountCache
+    // Lazy-initialized cache for execution counts (volatile for thread-safe lazy init)
+    private volatile Cache<ExecutionCountCacheKey, Long> executionCountCache
 
     /**
      * Get or create the execution count cache
      * Cache is created lazily to allow configurationService to be injected
+     * Uses double-checked locking for thread-safety
      */
     private Cache<ExecutionCountCacheKey, Long> getExecutionCountCache() {
         if (executionCountCache == null) {
-            int ttlSeconds = configurationService?.getInteger(EXECUTION_COUNT_CACHE_TTL_SECONDS, DEFAULT_CACHE_TTL_SECONDS) ?: DEFAULT_CACHE_TTL_SECONDS
-            executionCountCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(ttlSeconds, TimeUnit.SECONDS)
-                .maximumSize(DEFAULT_CACHE_MAX_SIZE)
-                .build()
+            synchronized(this) {
+                if (executionCountCache == null) {
+                    int ttlSeconds = configurationService?.getInteger(EXECUTION_COUNT_CACHE_TTL_SECONDS, DEFAULT_CACHE_TTL_SECONDS) ?: DEFAULT_CACHE_TTL_SECONDS
+                    executionCountCache = CacheBuilder.newBuilder()
+                        .expireAfterWrite(ttlSeconds, TimeUnit.SECONDS)
+                        .maximumSize(DEFAULT_CACHE_MAX_SIZE)
+                        .build()
+                }
+            }
         }
         return executionCountCache
     }
@@ -4340,7 +4405,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     def result = Execution.createCriteria().list(criteriaClos.curry(false))
     def total = 0
-    def cacheKey = null
+    ExecutionCountCacheKey cacheKey = null
     def fromCache = false
 
     // Check cache first if enabled and query is cacheable
@@ -4364,18 +4429,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     // If not from cache, determine the best count method
     if (!fromCache) {
-        def countMethod = 'unknown'
+        String countMethod = 'unknown'
         def startTime = System.currentTimeMillis()
         
-        if (query.shouldUseUnionQuery()) {
-            // Optimized UNION query for includeJobRef (50-100x faster)
-            countMethod = 'UNION'
-            total = query.countDirectAndReferencedExecutions()
-        } else if (canUseSimpleCount(query)) {
-            // Simple HQL count without JOINs (avoids scheduled_execution JOIN)
-            // Only used when cache is enabled, as HQL requires real database
-            countMethod = 'SIMPLE_HQL'
-            total = countExecutionsSimple(query)
+        if (query.shouldUseUnionQuery() || canUseSimpleCount(query)) {
+            // Use optimized HQL count from ExecutionQuery (handles both UNION and simple cases)
+            countMethod = query.shouldUseUnionQuery() ? 'UNION' : 'SIMPLE_HQL'
+            total = query.countExecutions()
         } else {
             // Standard criteria count (may include JOINs)
             countMethod = 'CRITERIA'
@@ -4417,15 +4477,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (cacheIsStale) {
             log.debug("Refreshing stale cached count with real query")
             
-            // Invalidate the stale cache entry
-            getExecutionCountCache().invalidate(cacheKey)
+            // Invalidate the stale cache entry using static method
+            ExecutionCountCacheKey.invalidate(getExecutionCountCache(), cacheKey)
             
             // Get the real count using the same logic as the main count path
-            if (query.shouldUseUnionQuery()) {
-                total = query.countDirectAndReferencedExecutions()
-            } else if (canUseSimpleCount(query)) {
-                // We're inside fromCache block, so cache is enabled - safe to use HQL
-                total = countExecutionsSimple(query)
+            if (query.shouldUseUnionQuery() || canUseSimpleCount(query)) {
+                total = query.countExecutions()
             } else {
                 total = Execution.createCriteria().count(criteriaClos.curry(true))
             }
@@ -4469,6 +4526,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // adhoc filter requires checking scheduledExecution IS NULL/NOT NULL
         if (query.adhoc != null) {
+            return false
+        }
+
+        // These filters require ILIKE queries that are only supported in the criteria-based count
+        // (not yet implemented in the HQL countExecutions method)
+        if (query.nodeFilter || query.optionFilter || query.adhocStringFilter) {
             return false
         }
 
@@ -4528,6 +4591,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
      * Build a cache key for the count query based on query parameters.
+     * Delegates to the static factory method on ExecutionCountCacheKey.
      * 
      * For RELATIVE time filters (recentFilter, olderFilter like "60d", "24h"):
      *   - Uses the relative filter string directly
@@ -4537,130 +4601,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * isCacheableQuery() returning false.
      */
     ExecutionCountCacheKey buildCountCacheKey(ExecutionQuery query) {
-        // Extract single job ID (isCacheableQuery ensures size <= 1)
-        String jobId = null
-        if (query.jobIdListFilter && query.jobIdListFilter.size() == 1) {
-            jobId = query.jobIdListFilter[0]?.toString()
-        }
-        
-        new ExecutionCountCacheKey(
-            project: query.projFilter,
-            status: query.statusFilter,
-            user: query.userFilter,
-            execType: query.executionTypeFilter,
-            adhoc: query.adhoc,
-            recentFilter: query.recentFilter,
-            olderFilter: query.olderFilter,
-            jobId: jobId
-        )
+        ExecutionCountCacheKey.fromQuery(query)
     }
-
-    /**
-     * Count executions using simple HQL without JOINs
-     * This is much faster for queries that don't need job-related filters
-     * Avoids the expensive JOIN with scheduled_execution table
-     */
-    Long countExecutionsSimple(ExecutionQuery query) {
-        def hqlParts = ["SELECT COUNT(*) FROM Execution e WHERE 1=1"]
-        def params = [:]
-
-        // Project filter
-        if (query.projFilter) {
-            hqlParts << "AND e.project = :project"
-            params.project = query.projFilter
-        }
-
-        // User filter
-        if (query.userFilter) {
-            hqlParts << "AND e.user = :user"
-            params.user = query.userFilter
-        }
-
-        // Execution type filter
-        if (query.executionTypeFilter) {
-            hqlParts << "AND e.executionType = :execType"
-            params.execType = query.executionTypeFilter
-        }
-
-        // Status filter
-        if (query.statusFilter) {
-            def state = query.statusFilter
-            if (state == EXECUTION_RUNNING) {
-                hqlParts << "AND e.dateCompleted IS NULL"
-                hqlParts << "AND (e.status IS NULL OR (e.status != :scheduled AND e.status != :queued))"
-                params.scheduled = EXECUTION_SCHEDULED
-                params.queued = EXECUTION_QUEUED
-            } else if (state == EXECUTION_SCHEDULED) {
-                hqlParts << "AND e.status = :status"
-                params.status = EXECUTION_SCHEDULED
-            } else if (state == EXECUTION_QUEUED) {
-                hqlParts << "AND e.status = :status"
-                params.status = EXECUTION_QUEUED
-            } else if (state == EXECUTION_ABORTED) {
-                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.cancelled = true"
-            } else if (state == EXECUTION_TIMEDOUT) {
-                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.timedOut = true"
-            } else if (state == EXECUTION_FAILED_WITH_RETRY) {
-                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.willRetry = true"
-            } else if (state == EXECUTION_FAILED) {
-                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.cancelled = false AND e.status = 'failed'"
-            } else if (state == EXECUTION_SUCCEEDED) {
-                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.cancelled = false AND e.status = 'succeeded'"
-            } else if (state) {
-                hqlParts << "AND e.dateCompleted IS NOT NULL AND e.cancelled = false AND e.status = :status"
-                params.status = state
-            }
-        }
-
-        // Date filters
-        if (query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter) {
-            hqlParts << "AND e.dateStarted BETWEEN :startAfter AND :startBefore"
-            params.startAfter = query.startafterFilter
-            params.startBefore = query.startbeforeFilter
-        } else if (query.dostartbeforeFilter && query.startbeforeFilter) {
-            hqlParts << "AND e.dateStarted <= :startBefore"
-            params.startBefore = query.startbeforeFilter
-        } else if (query.dostartafterFilter && query.startafterFilter) {
-            hqlParts << "AND e.dateStarted >= :startAfter"
-            params.startAfter = query.startafterFilter
-        }
-
-        if (query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter) {
-            hqlParts << "AND e.dateCompleted BETWEEN :endAfter AND :endBefore"
-            params.endAfter = query.endafterFilter
-            params.endBefore = query.endbeforeFilter
-        } else if (query.doendbeforeFilter && query.endbeforeFilter) {
-            hqlParts << "AND e.dateCompleted <= :endBefore"
-            params.endBefore = query.endbeforeFilter
-        } else if (query.doendafterFilter && query.endafterFilter) {
-            hqlParts << "AND e.dateCompleted >= :endAfter"
-            params.endAfter = query.endafterFilter
-        }
-
-        // Aborted by filter
-        if (query.abortedbyFilter) {
-            hqlParts << "AND e.abortedby = :abortedby"
-            params.abortedby = query.abortedbyFilter
-        }
-
-        // Job UUID filter - uses execution.job_uuid column directly (no JOIN needed)
-        if (query.jobIdListFilter) {
-            if (query.jobIdListFilter.size() == 1) {
-                hqlParts << "AND e.jobUuid = :jobUuid"
-                params.jobUuid = query.jobIdListFilter[0].toString()
-            } else {
-                hqlParts << "AND e.jobUuid IN (:jobUuids)"
-                params.jobUuids = query.jobIdListFilter.collect { it.toString() }
-            }
-        }
-
-        def hql = hqlParts.join(' ')
-        log.debug("Simple count HQL: ${hql} with params: ${params}")
-
-        def result = Execution.executeQuery(hql, params)
-        return (result[0] ?: 0) as Long
-    }
-
 
   /**
      * Return statistics over a Query resultset.

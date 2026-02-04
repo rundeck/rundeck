@@ -1180,7 +1180,7 @@ export default defineComponent({
         xquery["nodeFilter"] = this.query.execnodeFilter;
       }
 
-      //exlude running executions from history list
+      //exclude running executions from history list
       xquery["excludeRunning"] = "true";
 
       Object.assign(xquery, this.query);
