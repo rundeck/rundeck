@@ -33,7 +33,7 @@ import spock.lang.Specification
  * Time: 3:07 PM
  *
  * The ExecutionServiceTests contains tests for the ExecutionService class, focusing on querying job executions
- * Cases that execute HQL directly (like countExecutionsSimple) should be covered in integration tests
+ * Cases that execute HQL directly (like ExecutionQuery.countExecutions) should be covered in integration tests
  */
 class ExecutionServiceTests extends Specification implements DataTest {
 
@@ -399,7 +399,7 @@ class ExecutionServiceTests extends Specification implements DataTest {
         assert 2 == result.total
     }
     // ==================== Execution Count Cache Tests ====================
-    // Note: Tests that require HQL (countExecutionsSimple) need integration tests
+    // Note: Tests that require HQL (ExecutionQuery.countExecutions) need integration tests
     // These unit tests focus on cache logic that can be tested with mocks
 
     /**
