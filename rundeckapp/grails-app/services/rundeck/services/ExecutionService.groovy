@@ -4371,7 +4371,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // Optimized UNION query for includeJobRef (50-100x faster)
             countMethod = 'UNION'
             total = query.countDirectAndReferencedExecutions()
-        } else if (isExecutionCountCacheEnabled() && canUseSimpleCount(query)) {
+        } else if (canUseSimpleCount(query)) {
             // Simple HQL count without JOINs (avoids scheduled_execution JOIN)
             // Only used when cache is enabled, as HQL requires real database
             countMethod = 'SIMPLE_HQL'
