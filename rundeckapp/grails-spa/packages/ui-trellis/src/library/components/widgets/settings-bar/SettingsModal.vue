@@ -83,24 +83,14 @@ const FEEDBACK_URL = "https://feedback.rundeck.com";
 
 export default defineComponent({
   name: "SettingsModal",
-  props: {
-    isOpen: {
-      type: Boolean,
-      required: true,
-    },
-    activeTab: {
-      type: String as () => SettingsTab,
-      required: true,
-    },
-  },
-  emits: ["close", "change-tab"],
   data(): SettingsModalData {
     const rundeckContext = getRundeckContext();
     const themeStore = rundeckContext?.rootStore?.theme;
     const pageUiMeta = getPageUiMeta();
 
     return {
-      currentTab: this.activeTab,
+      isOpen: false,
+      currentTab: "theme" as SettingsTab,
       themes: ["system", "light", "dark"] as ThemeOption[],
       theme: (themeStore?.userPreferences?.theme ||
         "system") as ThemeOption,
@@ -111,10 +101,22 @@ export default defineComponent({
       feedbackUrl: FEEDBACK_URL,
     };
   },
-  watch: {
-    activeTab(newVal: SettingsTab) {
-      this.currentTab = newVal;
+  computed: {
+    eventBus() {
+      return getRundeckContext()?.eventBus;
     },
+  },
+  mounted() {
+    if (this.eventBus) {
+      this.eventBus.on("settings:open-modal", this.handleOpenModal);
+    }
+  },
+  beforeUnmount() {
+    if (this.eventBus) {
+      this.eventBus.off("settings:open-modal", this.handleOpenModal);
+    }
+  },
+  watch: {
     theme(newVal: ThemeOption) {
       if (this.themeStore) {
         this.themeStore.setUserTheme(newVal);
@@ -122,12 +124,15 @@ export default defineComponent({
     },
   },
   methods: {
+    handleOpenModal(tab: SettingsTab): void {
+      this.currentTab = tab;
+      this.isOpen = true;
+    },
     close(): void {
-      this.$emit("close");
+      this.isOpen = false;
     },
     changeTab(tab: SettingsTab): void {
       this.currentTab = tab;
-      this.$emit("change-tab", tab);
     },
     handleNextUiToggle(): void {
       if (this.nextUiEnabled) {

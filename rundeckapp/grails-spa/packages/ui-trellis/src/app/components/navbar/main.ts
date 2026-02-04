@@ -5,7 +5,7 @@ import UtilityBar from "../../../library/components/utility-bar/UtilityBar.vue";
 import RundeckInfoWidget from "../../../library/components/widgets/rundeck-info/RundeckInfoWidget.vue";
 import NextUIIndicator from "../../../library/components/widgets/settings-bar/NextUIIndicator.vue";
 import SettingsCogButton from "../../../library/components/widgets/settings-bar/SettingsCogButton.vue";
-import SettingsModalWrapper from "../../../library/components/widgets/settings-bar/SettingsModalWrapper.vue";
+import SettingsModal from "../../../library/components/widgets/settings-bar/SettingsModal.vue";
 
 import { UtilityBarItem } from "../../../library/stores/UtilityBar";
 import { getRundeckContext, getAppLinks } from "../../../library";
@@ -86,12 +86,12 @@ rootStore.utilityBar.addItems([
     order: 300,
     widget: markRaw(
       defineComponent({
-        name: "SettingsModalWrapperWidget",
-        components: { SettingsModalWrapper },
+        name: "SettingsModalWidget",
+        components: { SettingsModal },
         provide: {
           rootStore,
         },
-        template: `<SettingsModalWrapper />`,
+        template: `<SettingsModal />`,
       }),
     ),
   },
