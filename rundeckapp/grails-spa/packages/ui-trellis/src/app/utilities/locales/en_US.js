@@ -633,6 +633,8 @@ const messages = {
   "settings.uiEarlyAccess.feature1": "When enabled, you'll see experimental UI updates throughout the product. A small indicator at the bottom of the page will show when you're viewing an early access feature.",
   "settings.uiEarlyAccess.learnMore": "Learn more",
   "settings.uiEarlyAccess.feedbackLink": "Give feedback on Early Access",
+  "settings.uiEarlyAccess.toast.enabled": "Next UI early access enabled. You can switch back anytime.",
+  "settings.uiEarlyAccess.toast.disabled": "Next UI has been turned off. You can switch back anytime.",
   "page.section.title.AllJobs": "All Jobs",
   "advanced.search": "Advanced",
   "jobs.advanced.search.title": "Click to modify filter",

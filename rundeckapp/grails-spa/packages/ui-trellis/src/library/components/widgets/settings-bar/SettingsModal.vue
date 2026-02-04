@@ -76,8 +76,10 @@ import type {
   SettingsModalData,
 } from "./SettingsModalTypes";
 import { getPageUiMeta } from "./services/pageUiMetaService";
+import { Notification } from "uiv";
 
 const COOKIE_NAME = "nextUi";
+const TOAST_MESSAGE_KEY = "nextUiToastMessage";
 const LEARN_MORE_URL = "https://docs.rundeck.com";
 const FEEDBACK_URL = "https://feedback.rundeck.com";
 
@@ -110,6 +112,7 @@ export default defineComponent({
     if (this.eventBus) {
       this.eventBus.on("settings:open-modal", this.handleOpenModal);
     }
+    this.checkAndShowToast();
   },
   beforeUnmount() {
     if (this.eventBus) {
@@ -137,6 +140,7 @@ export default defineComponent({
     handleNextUiToggle(): void {
       if (this.nextUiEnabled) {
         this.$cookies.set(COOKIE_NAME, "true", "1y", "/", "", false, "Strict");
+        localStorage.setItem(TOAST_MESSAGE_KEY, "enabled");
       } else {
         this.$cookies.set(
           COOKIE_NAME,
@@ -147,9 +151,26 @@ export default defineComponent({
           false,
           "Strict",
         );
+        localStorage.setItem(TOAST_MESSAGE_KEY, "disabled");
       }
       this.isLoading = true;
       window.location.reload();
+    },
+    checkAndShowToast(): void {
+      const toastMessage = localStorage.getItem(TOAST_MESSAGE_KEY);
+      if (toastMessage) {
+        localStorage.removeItem(TOAST_MESSAGE_KEY);
+        const message =
+          toastMessage === "enabled"
+            ? this.$t("settings.uiEarlyAccess.toast.enabled")
+            : this.$t("settings.uiEarlyAccess.toast.disabled");
+        Notification.notify({
+          type: "info",
+          title: "",
+          content: message,
+          dismissible: true,
+        });
+      }
     },
   },
 });

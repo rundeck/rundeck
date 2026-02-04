@@ -9,6 +9,7 @@ const mockCookies = {
   get: jest.fn(),
   set: jest.fn(),
 };
+const mockNotificationNotify = jest.fn();
 
 let eventBus: Emitter<Record<EventType, any>>;
 
@@ -28,6 +29,12 @@ jest.mock("../../../../rundeckService", () => ({
 
 jest.mock("../services/pageUiMetaService", () => ({
   getPageUiMeta: () => mockGetPageUiMeta(),
+}));
+
+jest.mock("uiv", () => ({
+  Notification: {
+    notify: mockNotificationNotify,
+  },
 }));
 
 const mountSettingsModal = async () => {
@@ -64,11 +71,13 @@ describe("SettingsModal", () => {
       nextUiCapable: true,
       isNextUiPage: false,
     });
+    localStorage.clear();
   });
 
   afterEach(() => {
     eventBus.all.clear();
     jest.clearAllMocks();
+    localStorage.clear();
   });
 
   it("does not render overlay initially", async () => {
@@ -196,5 +205,73 @@ describe("SettingsModal", () => {
       "Strict",
     );
     expect(window.location.reload).toHaveBeenCalled();
+  });
+
+  it("stores 'enabled' message in localStorage when nextUi is enabled", async () => {
+    const wrapper = await mountSettingsModal();
+
+    eventBus.emit("settings:open-modal", "ui-early-access");
+    await wrapper.vm.$nextTick();
+    await flushPromises();
+
+    await wrapper.find(".settings-toggle__input").setValue(true);
+    await flushPromises();
+
+    expect(localStorage.getItem("nextUiToastMessage")).toBe("enabled");
+  });
+
+  it("stores 'disabled' message in localStorage when nextUi is disabled", async () => {
+    mockGetPageUiMeta.mockReturnValue({
+      nextUiCapable: true,
+      isNextUiPage: true,
+    });
+
+    const wrapper = await mountSettingsModal();
+
+    eventBus.emit("settings:open-modal", "ui-early-access");
+    await wrapper.vm.$nextTick();
+    await flushPromises();
+
+    await wrapper.find(".settings-toggle__input").setValue(false);
+    await flushPromises();
+
+    expect(localStorage.getItem("nextUiToastMessage")).toBe("disabled");
+  });
+
+  it("shows toast notification with enabled message when localStorage has 'enabled'", async () => {
+    localStorage.setItem("nextUiToastMessage", "enabled");
+
+    await mountSettingsModal();
+    await flushPromises();
+
+    expect(mockNotificationNotify).toHaveBeenCalledWith({
+      type: "info",
+      title: "",
+      content: "Next UI early access enabled. You can switch back anytime.",
+      dismissible: true,
+    });
+    expect(localStorage.getItem("nextUiToastMessage")).toBeNull();
+  });
+
+  it("shows toast notification with disabled message when localStorage has 'disabled'", async () => {
+    localStorage.setItem("nextUiToastMessage", "disabled");
+
+    await mountSettingsModal();
+    await flushPromises();
+
+    expect(mockNotificationNotify).toHaveBeenCalledWith({
+      type: "info",
+      title: "",
+      content: "Next UI has been turned off. You can switch back anytime.",
+      dismissible: true,
+    });
+    expect(localStorage.getItem("nextUiToastMessage")).toBeNull();
+  });
+
+  it("does not show toast notification when localStorage has no message", async () => {
+    await mountSettingsModal();
+    await flushPromises();
+
+    expect(mockNotificationNotify).not.toHaveBeenCalled();
   });
 });
