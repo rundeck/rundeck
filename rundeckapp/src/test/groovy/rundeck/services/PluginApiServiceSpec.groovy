@@ -428,5 +428,227 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         Map<String, String> getFwkPropertiesMapping() {
             return [:]
         }
+
+        @Override
+        Map<String, String> getMetadata() {
+            return null
+        }
+    }
+
+    class FakePluginDescriptionWithMetadata implements Description {
+        String name
+        Map<String, String> metadata
+        Class pluginGroupType
+
+        @Override
+        String getTitle() {
+            return "Fake Plugin"
+        }
+
+        @Override
+        String getDescription() {
+            return "This is a fake plugin with metadata"
+        }
+
+        @Override
+        boolean isHighlighted() {
+            return false
+        }
+
+        @Override
+        int getOrder() {
+            return 0
+        }
+
+        @Override
+        List<Property> getProperties() {
+            return []
+        }
+
+        @Override
+        Map<String, String> getPropertiesMapping() {
+            return [:]
+        }
+
+        @Override
+        Map<String, String> getFwkPropertiesMapping() {
+            return [:]
+        }
+
+        @Override
+        Map<String, String> getMetadata() {
+            return metadata
+        }
+
+        @Override
+        <T> Class<T> getPluginGroupType() {
+            return pluginGroupType
+        }
+    }
+
+    def "list plugins with groupBy metadata auto-discovery"() {
+        given:
+        messageSource.addMessage("framework.service.WorkflowNodeStep.description",Locale.ENGLISH,"Node Step")
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework)
+        fwksvc.getRundeckFramework() >> fwk
+        fwk.getPluginManager() >> Mock(ServiceProviderLoader)
+        service.frameworkService = fwksvc
+        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.uiPluginService = Mock(UiPluginService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        def plugin1 = new FakePluginDescriptionWithMetadata(
+            name: 'aws-s3-cp',
+            metadata: ['groupBy': 'AWS S3']
+        )
+        def plugin2 = new FakePluginDescriptionWithMetadata(
+            name: 'aws-s3-ls',
+            metadata: ['groupBy': 'AWS S3']
+        )
+
+        def pluginDescs = [
+                "WorkflowNodeStep": [plugin1, plugin2]
+        ]
+        def pluginData = [
+                descriptions        : pluginDescs,
+                serviceDefaultScopes: [],
+                bundledPlugins      : [],
+                embeddedFilenames   : [],
+                specialConfiguration: [],
+                specialScoping      : [],
+                uiPluginProfiles    : []
+        ]
+        def fakeMeta = new FakePluginMetadata()
+
+        service.metaClass.listPluginsDetailed = { -> pluginData }
+        service.metaClass.getLocale = { -> Locale.ENGLISH }
+
+        when:
+        2 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
+        2 * service.uiPluginService.getProfileFor(_, _) >> [icon: 'foo']
+        2 * service.grailsLinkGenerator.link(_) >>> ['http://localhost:8080/icon1', 'http://localhost:8080/icon2']
+        def response = service.listPlugins(true)
+        def serviceEntry = response[0]
+        def provider1 = serviceEntry.providers[0]
+        def provider2 = serviceEntry.providers[1]
+
+        then:
+        serviceEntry.providers.size() == 2
+        provider1.providerMetadata.groupBy == 'AWS S3'
+        provider1.providerMetadata.groupIconUrl == 'http://localhost:8080/icon1'
+        provider2.providerMetadata.groupBy == 'AWS S3'
+        provider2.providerMetadata.groupIconUrl == 'http://localhost:8080/icon1' // Cached from first plugin
+    }
+
+    def "list plugins with groupBy metadata but no icon"() {
+        given:
+        messageSource.addMessage("framework.service.WorkflowNodeStep.description",Locale.ENGLISH,"Node Step")
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework)
+        fwksvc.getRundeckFramework() >> fwk
+        fwk.getPluginManager() >> Mock(ServiceProviderLoader)
+        service.frameworkService = fwksvc
+        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.uiPluginService = Mock(UiPluginService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        def plugin1 = new FakePluginDescriptionWithMetadata(
+            name: 'test-plugin',
+            metadata: ['groupBy': 'Test Group']
+        )
+
+        def pluginDescs = [
+                "WorkflowNodeStep": [plugin1]
+        ]
+        def pluginData = [
+                descriptions        : pluginDescs,
+                serviceDefaultScopes: [],
+                bundledPlugins      : [],
+                embeddedFilenames   : [],
+                specialConfiguration: [],
+                specialScoping      : [],
+                uiPluginProfiles    : []
+        ]
+        def fakeMeta = new FakePluginMetadata()
+
+        service.metaClass.listPluginsDetailed = { -> pluginData }
+        service.metaClass.getLocale = { -> Locale.ENGLISH }
+
+        when:
+        1 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
+        1 * service.uiPluginService.getProfileFor(_, _) >> [:] // No icon
+        def response = service.listPlugins(true)
+        def serviceEntry = response[0]
+        def provider1 = serviceEntry.providers[0]
+
+        then:
+        provider1.providerMetadata.groupBy == 'Test Group'
+        provider1.providerMetadata.groupIconUrl == null
+    }
+
+    def "list plugins with groupBy metadata and explicit PluginGroup icon URL"() {
+        given:
+        messageSource.addMessage("framework.service.WorkflowNodeStep.description",Locale.ENGLISH,"Node Step")
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework)
+        fwksvc.getRundeckFramework() >> fwk
+        fwk.getPluginManager() >> Mock(ServiceProviderLoader)
+        service.frameworkService = fwksvc
+        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.uiPluginService = Mock(UiPluginService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+
+        def plugin1 = new FakePluginDescriptionWithMetadata(
+            name: 'test-plugin-1',
+            metadata: ['groupBy': 'Test Group'],
+            pluginGroupType: FakePluginGroupWithIcon.class
+        )
+        def plugin2 = new FakePluginDescriptionWithMetadata(
+            name: 'test-plugin-2',
+            metadata: ['groupBy': 'Test Group'],
+            pluginGroupType: FakePluginGroupWithIcon.class
+        )
+
+        def pluginDescs = [
+                "WorkflowNodeStep": [plugin1, plugin2]
+        ]
+        def pluginData = [
+                descriptions        : pluginDescs,
+                serviceDefaultScopes: [],
+                bundledPlugins      : [],
+                embeddedFilenames   : [],
+                specialConfiguration: [],
+                specialScoping      : [],
+                uiPluginProfiles    : []
+        ]
+        def fakeMeta = new FakePluginMetadata()
+
+        service.metaClass.listPluginsDetailed = { -> pluginData }
+        service.metaClass.getLocale = { -> Locale.ENGLISH }
+
+        when:
+        2 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
+        2 * service.uiPluginService.getProfileFor(_, _) >> [icon: 'foo'] // Has icon but should be ignored
+        // Mock grailsLinkGenerator: 
+        // Execution order: pluginIcon (provider1) -> groupIcon (provider1) -> pluginIcon (provider2)
+        // The groupIcon call extracts 'icon.svg' from '/explicit/group/icon.svg' and calls link() with action='groupIcon'
+        3 * service.grailsLinkGenerator.link(_) >>> ['http://localhost:8080/plugin-icon', '/explicit/group/icon.svg', 'http://localhost:8080/plugin-icon']
+        def response = service.listPlugins(true)
+        def serviceEntry = response[0]
+        def provider1 = serviceEntry.providers[0]
+        def provider2 = serviceEntry.providers[1]
+
+        then:
+        provider1.providerMetadata.groupBy == 'Test Group'
+        provider1.providerMetadata.groupIconUrl == '/explicit/group/icon.svg' // From PluginGroup class
+        provider2.providerMetadata.groupBy == 'Test Group'
+        provider2.providerMetadata.groupIconUrl == '/explicit/group/icon.svg' // Cached from first lookup
+    }
+
+    static class FakePluginGroupWithIcon {
+        static String getGroupIconUrl(String groupName) {
+            return '/explicit/group/icon.svg'
+        }
     }
 }
