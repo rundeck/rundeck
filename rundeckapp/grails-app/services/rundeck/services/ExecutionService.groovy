@@ -16,7 +16,9 @@
 
 package rundeck.services
 
-
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.JobReferenceItem
+import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import org.hibernate.sql.JoinType
@@ -1117,6 +1119,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             globalConfig
             )
 
+            def secureOptionNodeDeferred = [:]
+            if(scheduledExecution) {
+                if(!extraParamsExposed){
+                    extraParamsExposed=[:]
+                }
+                if(!extraParams){
+                    extraParams=[:]
+                }
+                Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
+                ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
+                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
+                        args, jobcontext, secureOptionNodeDeferred)
+            }
+            String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
+
 
             NodeRecorder recorder = new NodeRecorder()
 
@@ -1124,10 +1141,46 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(
                     recorder,
                     workflowlogger
-            );
+            )
+
+            def executionLifecyclePluginConfigs = scheduledExecution ?
+                    executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
+                    null
+            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
+
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow, execution.project)
+
+            StepExecutionContext createInitContext = createContext(
+                    execution,
+                    null,
+                    framework,
+                    authContext,
+                    execution.user,
+                    jobcontext,
+                    null,
+                    null,
+                    null,
+                    extraParams,
+                    extraParamsExposed,
+                    inputCharset,
+                    workflowLogManager,
+                    secureOptionNodeDeferred
+            )
+
+            if (executionLifecyclePluginExecHandler != null) {
+                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeWorkflowIsSet(createInitContext, item).orElse(null)
+                if(executionLifecycleStatus?.useNewValues){
+                    createInitContext = executionLifecycleStatus.getExecutionContext()?:createInitContext
+
+                    if(executionLifecycleStatus?.isUpdateWorkflowDataValues()){
+                        item = executionLifecycleStatus.workflow
+                    }
+                }
+            }
 
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
                     execution,
+                    item.workflow,
                     framework,
                     authContext,
                     jobcontext,
@@ -1153,37 +1206,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     loadAdditionalListeners(listenersList)
             )
 
-            def secureOptionNodeDeferred = [:]
-            if(scheduledExecution) {
-                if(!extraParamsExposed){
-                    extraParamsExposed=[:]
-                }
-                if(!extraParams){
-                    extraParams=[:]
-                }
-                Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
-                ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
-                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
-                        args, jobcontext, secureOptionNodeDeferred)
-            }
-            String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
-
-            StepExecutionContext executioncontext = createContext(
-                    execution,
-                    null,
-                    framework,
-                    authContext,
-                    execution.user,
-                    jobcontext,
-                    multiListener,
-                    multiListener,
-                    null,
-                    extraParams,
-                    extraParamsExposed,
-                    inputCharset,
-                    workflowLogManager,
-                    secureOptionNodeDeferred
-            )
+            StepExecutionContext executioncontext = ExecutionContextImpl.builder(createInitContext)
+                    .executionListener(multiListener)
+                    .workflowExecutionListener(multiListener)
+                    .build()
 
             fileUploadService.executionBeforeStart(
                     new ExecutionPrepareEvent(
@@ -1222,13 +1248,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             )
             logsInstalled=true
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
 
 
-            def executionLifecyclePluginConfigs = scheduledExecution ?
-                                   executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
-                                   null
-            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),
@@ -3397,17 +3418,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem executionItem) throws StepException{
-        if (!(executionItem instanceof JobExecutionItem)) {
-            throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName());
-        }
+
         def createFailure = { FailureReason reason, String msg ->
             return new StepExecutionResultImpl(null, reason, msg)
         }
         def createSuccess = {
             return new StepExecutionResultImpl()
         }
-        JobExecutionItem jitem = (JobExecutionItem) executionItem
-        return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
+
+        if (executionItem instanceof JobExecutionItem) {
+            JobExecutionItem jitem = (JobExecutionItem) executionItem
+            return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
+        }
+
+        if (executionItem instanceof SubWorkflowExecutionItem) {
+            SubWorkflowExecutionItem runnerExecutionItem = (SubWorkflowExecutionItem) executionItem
+            return runSubworkflowExecutionItem(executionContext, runnerExecutionItem, createFailure, createSuccess)
+        }
+        throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName())
     }
 
     ///////////////
@@ -3741,6 +3769,48 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         return newContext
     }
+
+
+    /**
+     * Create a step execution context for a Job Reference step
+     * @param se the job
+     * @param exec the execution, or null if not known
+     * @param executionContext the original step context
+     * @param newargs argument strings for the job, which will have data context references expanded
+     * @param nodeFilter overriding node filter
+     * @param nodeKeepgoing overriding keepgoing
+     * @param nodeThreadcount overriding threadcount
+     * @param dovalidate if true, validate the input arguments to the job
+     * @return
+     * @throws ExecutionServiceValidationException if input argument validation fails
+     */
+    StepExecutionContext createJobReferenceContext(
+            JobReferenceItem jobReferenceItem,
+            StepExecutionContext executionContext
+    )
+            throws ExecutionServiceValidationException
+    {
+        def se = scheduledExecutionService.findJobFromJobReference(jobReferenceItem, jobReferenceItem.project ?: event.projectName)
+        def jobArgs = jobReferenceItem.args
+
+        return createJobReferenceContext(
+                se,
+                null,
+                executionContext,
+                jobArgs,
+                jobReferenceItem.nodeFilter,
+                jobReferenceItem.nodeKeepgoing,
+                jobReferenceItem.nodeThreadcount,
+                jobReferenceItem.nodeRankAttribute,
+                jobReferenceItem.nodeRankOrderAscending,
+                null,
+                jobReferenceItem.nodeIntersect,
+                jobReferenceItem.importOptions,
+                false,
+                jobReferenceItem.childNodes
+        )
+
+    }
     /**
      * Execute a job reference workflow with a particular context, optionally overriding the target node set,
      * and return the result based on the createFailure/createSuccess closures
@@ -3926,6 +3996,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                    executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) :
                                    null
             def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, executionReference)
+
+            //Execute beforeJobStarts lifecycle for the job reference step
+            if (executionLifecyclePluginExecHandler != null) {
+                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeWorkflowIsSet(newContext, newExecItem).orElse(null)
+                if(executionLifecycleStatus?.useNewValues){
+                    newContext = executionLifecycleStatus.getExecutionContext()?:newContext
+
+                    if(executionLifecycleStatus?.isUpdateWorkflowDataValues()){
+                        newExecItem = executionLifecycleStatus.workflow
+                    }
+                }
+
+            }
+
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
@@ -4020,6 +4104,78 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         return result
+    }
+
+    /**
+     * Execute a subworkflow from the Step (only for Workflow Steps)
+     * @param executionContext the execution context
+     * @param runnerExecutionItem the runner execution item containing the subworkflow
+     * @return StepExecutionResult
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    private def runSubworkflowExecutionItem(
+            StepExecutionContext executionContext,
+            SubWorkflowExecutionItem runnerExecutionItem,
+            Closure createFailure,
+            Closure createSuccess
+    ) {
+        def result
+
+        // Get the subworkflow from the runner execution item
+        WorkflowExecutionItem workflowItem = runnerExecutionItem.getSubWorkflow()
+
+        if (!workflowItem) {
+            def msg = "Runner execution item does not contain a subworkflow"
+            executionContext.getExecutionListener().log(0, msg)
+            return createFailure( StepFailureReason.ConfigurationFailure,msg)
+        }
+
+        try {
+
+            // Start timing before the execution
+            long startTime = System.currentTimeMillis()
+
+            def wresult = metricService.withTimer(this.class.name, 'runRunnerWorkflow') {
+                // Get the workflow execution service
+                WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
+
+                // Create and start the workflow execution thread
+                Thread thread = new WorkflowExecutionServiceThread(
+                        wservice,
+                        workflowItem,
+                        executionContext,
+                        null,
+                        null
+                )
+
+                thread.start()
+
+                // Wait for the thread to complete (no timeout for runner workflows)
+                return executionUtilService.runRefJobWithTimer(thread, startTime, false, 0)
+            }
+
+            // Process result after the workflow completes
+            if (!wresult.result || !wresult.result.success || wresult.interrupt) {
+                String errors = ""
+
+                wresult.result.stepFailures.each { step, failure ->
+                    errors += "Step ${step}: ${failure.failureMessage}\n"
+                }
+
+                result = createFailure(StepFailureReason.PluginFailed, errors)
+
+            } else {
+                result = createSuccess()
+            }
+
+            return result
+
+        } catch (Exception e) {
+            def msg = "Error executing runner workflow: ${e.message}"
+            executionContext.getExecutionListener().log(0, msg)
+            log.error(msg, e)
+            throw new StepException(msg,StepFailureReason.Unknown)
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
