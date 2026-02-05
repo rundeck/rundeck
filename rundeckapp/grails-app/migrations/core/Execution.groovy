@@ -208,21 +208,4 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "rundeckdev", id: "add-job-stat-canc-status-index") {
-        preConditions(onFail: "MARK_RAN") {
-            not {
-                indexExists(indexName: "EXEC_IDX_JOB_PROJ_DATE", tableName: "execution")
-            }
-        }
-
-        createIndex(indexName: "EXEC_IDX_JOB_PROJ_DATE", tableName: "execution", unique: false) {
-            column(name: "job_uuid")
-            column(name: "project")
-            column(name: "date_completed")
-            column(name: "status")
-            column(name: "cancelled")
-        }
-    }
-
-
 }
