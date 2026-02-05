@@ -187,10 +187,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
 
-    // Configuration keys for execution count cache and optimizations
+    // Configuration keys for execution count cache
     static final String EXECUTION_COUNT_CACHE_ENABLED = 'api.executionQueryConfig.countCache.enabled'
     static final String EXECUTION_COUNT_CACHE_TTL_SECONDS = 'api.executionQueryConfig.countCache.ttl'
-    static final String SIMPLE_COUNT_ENABLED = 'api.executionQueryConfig.countPerformance.enabled'
     static final int DEFAULT_CACHE_TTL_SECONDS = 30
     static final int DEFAULT_CACHE_MAX_SIZE = 1000
 
@@ -311,16 +310,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     boolean isExecutionCountCacheEnabled() {
         return configurationService?.getBoolean(EXECUTION_COUNT_CACHE_ENABLED, false) ?: false
-    }
-
-    /**
-     * Check if simple count optimization is enabled.
-     * When enabled, uses HQL count without JOINs for eligible queries.
-     * When disabled, always uses criteria-based count.
-     * Default: true (enabled)
-     */
-    boolean isSimpleCountEnabled() {
-        return configurationService?.getBoolean(SIMPLE_COUNT_ENABLED, false) ?: false
     }
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
@@ -4446,12 +4435,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         String countMethod = 'unknown'
         def startTime = System.currentTimeMillis()
         
-        if (query.shouldUseUnionQuery() || canUseSimpleCount(query)) {
-            // Use optimized HQL count from ExecutionQuery (handles both UNION and simple cases)
-            countMethod = query.shouldUseUnionQuery() ? 'UNION' : 'SIMPLE_HQL'
+        if (query.shouldUseUnionQuery()) {
+            // Use optimized HQL count for cross-project job references (UNION query)
+            countMethod = 'UNION'
             total = query.countExecutions()
         } else {
-            // Standard criteria count (may include JOINs)
+            // Standard criteria count
             countMethod = 'CRITERIA'
             total = Execution.createCriteria().count(criteriaClos.curry(true))
         }
@@ -4495,7 +4484,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ExecutionCountCacheKey.invalidate(getExecutionCountCache(), cacheKey)
             
             // Get the real count using the same logic as the main count path
-            if (query.shouldUseUnionQuery() || canUseSimpleCount(query)) {
+            if (query.shouldUseUnionQuery()) {
                 total = query.countExecutions()
             } else {
                 total = Execution.createCriteria().count(criteriaClos.curry(true))
@@ -4508,78 +4497,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     return [result: result, total: total]
   }
-
-    /**
-     * Check if this query can use simple count without JOINs.
-     * Returns true if the optimization is enabled AND the query can be satisfied 
-     * using only execution table columns.
-     * 
-     * Returns false if:
-     *   - simpleCount.enabled config is false
-     *   - Query has ILIKE filters (nodeFilter, optionFilter, adhocStringFilter)
-     *   - Query requires JOIN with scheduled_execution
-     * 
-     * Filters that REQUIRE JOIN with scheduled_execution:
-     *   - jobListFilter (job names)
-     *   - jobFilter, jobExactFilter (job name patterns)
-     *   - groupPath, groupPathExact (job group paths)
-     *   - excludeJobListFilter, excludeJobIdListFilter (exclusions)
-     *   - excludeGroupPath, excludeGroupPathExact (group exclusions)
-     *   - excludeJobFilter, excludeJobExactFilter (job exclusions)
-     *   - descFilter (job description)
-     *   - adhoc=true/false (requires checking scheduledExecution IS NULL)
-     * 
-     * Filters that can use execution.job_uuid column (NO JOIN needed):
-     *   - jobIdListFilter with UUID strings (not Long IDs)
-     */
-    boolean canUseSimpleCount(ExecutionQuery query) {
-        // Check if simple count optimization is enabled
-        if (!isSimpleCountEnabled()) {
-            return false
-        }
-
-        // Filters that always require JOIN with scheduled_execution
-        def joinRequiredFilters = ['jobListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter',
-                                   'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter',
-                                   'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
-
-        // Check if any JOIN-required filters are set
-        boolean hasJoinRequiredFilters = joinRequiredFilters.any { query[it] }
-        if (hasJoinRequiredFilters) {
-            return false
-        }
-
-        // adhoc filter requires checking scheduledExecution IS NULL/NOT NULL
-        if (query.adhoc != null) {
-            return false
-        }
-
-        // These filters require ILIKE queries that are only supported in the criteria-based count
-        // (not yet implemented in the HQL countExecutions method)
-        if (query.nodeFilter || query.optionFilter || query.adhocStringFilter) {
-            return false
-        }
-
-        // jobIdListFilter can be handled without JOIN if all IDs are UUIDs (not Long IDs)
-        // because we can filter on execution.job_uuid column directly
-        if (query.jobIdListFilter) {
-            // Check if any ID is a Long (legacy format) - these require JOIN
-            boolean hasLongIds = query.jobIdListFilter.any { id ->
-                try {
-                    Long.valueOf(id.toString())
-                    return true // It's a Long
-                } catch (NumberFormatException e) {
-                    return false // It's a UUID string
-                }
-            }
-            if (hasLongIds) {
-                return false // Long IDs require JOIN to scheduled_execution
-            }
-            // All IDs are UUIDs - can use execution.job_uuid column
-        }
-
-        return true
-    }
 
     /**
      * Check if a query result can be cached.
@@ -5080,17 +4997,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     datatype "Boolean"
                     visibility 'Advanced'
                     category 'Execution'
-                    authRequired("app_admin")
-                    build()
-                },
-                SystemConfig.builder().with {
-                    key "rundeck.api.executionQueryConfig.countPerformance.enabled"
-                    description "Enable query performance for counting total executions in API execution queries"
-                    defaultValue "false"
-                    required false
-                    datatype "Boolean"
-                    visibility 'Advanced'
-                    category 'API'
                     authRequired("app_admin")
                     build()
                 },

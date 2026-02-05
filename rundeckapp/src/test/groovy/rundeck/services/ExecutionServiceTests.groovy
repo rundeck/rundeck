@@ -141,6 +141,123 @@ class ExecutionServiceTests extends Specification implements DataTest {
     }
 
     /**
+     * Test jobExecutions empty
+     */
+    public void testApiJobExecutions_empty() {
+        when:
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+
+        ScheduledExecution se4 = new ScheduledExecution(
+                uuid: 'test5',
+                jobName: 'blah',
+                project: 'Test',
+                groupPath: 'some',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]).save(),
+        )
+        assert null != se4.save(failOnError: true)
+        svc.applicationContext = getAppCtxtMock()
+        def result = svc.queryJobExecutions(se4, null)
+
+        then:
+        assert 0 == result.total
+    }
+    /**
+     * Test jobExecutions simple
+     */
+    public void testApiJobExecutions_simple() {
+        when:
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+
+        ScheduledExecution se=execs[0].scheduledExecution
+        assert null != se
+        svc.applicationContext = getAppCtxtMock()
+        def result = svc.queryJobExecutions(se, null)
+
+        then:
+        assert 1 == result.total
+    }
+    /**
+     * Test jobExecutions succeeded
+     */
+    public void testApiJobExecutions_success() {
+        when:
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+
+        ScheduledExecution se=execs[0].scheduledExecution
+        assert null != se
+        svc.applicationContext = getAppCtxtMock()
+        def result = svc.queryJobExecutions(se, 'succeeded')
+
+        then:
+        assert 1 == result.total
+    }
+    /**
+     * Test jobExecutions failed
+     */
+    public void testApiJobExecutions_failed() {
+        when:
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+        Execution e1 = new Execution(
+                scheduledExecution: execs[0].scheduledExecution,
+                project: "Test",
+                status: "failed",
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'adam',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
+
+        )
+        assert null != e1.save()
+        execs[0].delete()
+
+        ScheduledExecution se=execs[0].scheduledExecution
+        assert null != se
+        svc.applicationContext = getAppCtxtMock()
+        def result = svc.queryJobExecutions(se, 'failed',0,20)
+
+        then:
+        assert 1 == result.total
+    }
+    /**
+     * Test jobExecutions failed
+     */
+    public void testApiJobExecutions_custom() {
+        when:
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+        Execution e1 = new Execution(
+                scheduledExecution: execs[0].scheduledExecution,
+                project: "Test",
+                status: "custom status",
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'adam',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
+
+        )
+        assert null != e1.save()
+        execs[0].delete()
+
+        ScheduledExecution se=execs[0].scheduledExecution
+        assert null != se
+        svc.applicationContext = getAppCtxtMock()
+        def result = svc.queryJobExecutions(se, 'custom status',0,20)
+
+        then:
+        assert 1 == result.total
+    }
+    /**
      * Test groupPath
      */
     public void testExecutionsQueryGroupPath() {
@@ -792,136 +909,6 @@ class ExecutionServiceTests extends Specification implements DataTest {
 
         then:
         svc.isCacheableQuery(query) == false
-    }
-
-    /**
-     * Test canUseSimpleCount returns true when no job filters
-     */
-    void testCanUseSimpleCountNoJobFilters() {
-        given:
-        def svc = new ExecutionService()
-        svc.configurationService = Mock(ConfigurationService){
-            getBoolean('api.executionQueryConfig.countPerformance.enabled', false) >> true
-        }
-
-        when:
-        def query = new ExecutionQuery(
-            projFilter: "TestProject",
-            statusFilter: "succeeded"
-        )
-
-        then:
-        svc.canUseSimpleCount(query) == true
-    }
-
-    /**
-     * Test canUseSimpleCount returns true when jobIdListFilter has UUID strings
-     * (can use execution.job_uuid column without JOIN)
-     */
-    void testCanUseSimpleCountWithJobUuidFilter() {
-        given:
-        def svc = new ExecutionService()
-        svc.configurationService = Mock(ConfigurationService){
-            getBoolean('api.executionQueryConfig.countPerformance.enabled', false) >> true
-        }
-
-        when:
-        def query = new ExecutionQuery(
-            projFilter: "TestProject",
-            jobIdListFilter: ['550e8400-e29b-41d4-a716-446655440000']
-        )
-
-        then:
-        svc.canUseSimpleCount(query) == true
-    }
-
-    /**
-     * Test canUseSimpleCount returns true with multiple UUID job IDs
-     */
-    void testCanUseSimpleCountWithMultipleJobUuids() {
-        given:
-        def svc = new ExecutionService()
-        svc.configurationService = Mock(ConfigurationService){
-            getBoolean('api.executionQueryConfig.countPerformance.enabled', false) >> true
-        }
-
-        when:
-        def query = new ExecutionQuery(
-            projFilter: "TestProject",
-            jobIdListFilter: ['uuid-1', 'uuid-2', 'uuid-3']
-        )
-
-        then:
-        svc.canUseSimpleCount(query) == true
-    }
-
-    /**
-     * Test canUseSimpleCount returns false when jobIdListFilter has Long IDs (legacy)
-     * (requires JOIN with scheduled_execution)
-     */
-    void testCanUseSimpleCountWithLongJobId() {
-        given:
-        def svc = new ExecutionService()
-
-        when:
-        def query = new ExecutionQuery(
-            projFilter: "TestProject",
-            jobIdListFilter: ['12345']  // Numeric string = Long ID
-        )
-
-        then:
-        svc.canUseSimpleCount(query) == false
-    }
-
-    /**
-     * Test canUseSimpleCount returns false when groupPath present
-     */
-    void testCanUseSimpleCountWithGroupPath() {
-        given:
-        def svc = new ExecutionService()
-
-        when:
-        def query = new ExecutionQuery(
-            projFilter: "TestProject",
-            groupPath: "some/path"
-        )
-
-        then:
-        svc.canUseSimpleCount(query) == false
-    }
-
-    /**
-     * Test canUseSimpleCount returns false when jobFilter present
-     */
-    void testCanUseSimpleCountWithJobFilter() {
-        given:
-        def svc = new ExecutionService()
-
-        when:
-        def query = new ExecutionQuery(
-            projFilter: "TestProject",
-            jobFilter: "myJob"
-        )
-
-        then:
-        svc.canUseSimpleCount(query) == false
-    }
-
-    /**
-     * Test canUseSimpleCount returns false when adhoc is set
-     */
-    void testCanUseSimpleCountWithAdhoc() {
-        given:
-        def svc = new ExecutionService()
-
-        when:
-        def query = new ExecutionQuery(
-            projFilter: "TestProject",
-            adhoc: true
-        )
-
-        then:
-        svc.canUseSimpleCount(query) == false
     }
 
     /**

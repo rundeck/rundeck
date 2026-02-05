@@ -137,18 +137,12 @@ public class RundeckConfigBase {
         @Data
         public static class ExecutionQueryConfig {
             CountCache countCache;
-            CountPerformance countPerformance;
         }
 
         @Data
         public static class CountCache {
             Boolean enabled;
             Long ttl;
-        }
-
-        @Data
-        public static class CountPerformance {
-            Boolean enabled;
         }
     }
 
