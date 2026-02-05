@@ -800,6 +800,9 @@ class ExecutionServiceTests extends Specification implements DataTest {
     void testCanUseSimpleCountNoJobFilters() {
         given:
         def svc = new ExecutionService()
+        svc.configurationService = Mock(ConfigurationService){
+            getBoolean('api.executionQueryConfig.countPerformance.enabled', false) >> true
+        }
 
         when:
         def query = new ExecutionQuery(
@@ -818,6 +821,9 @@ class ExecutionServiceTests extends Specification implements DataTest {
     void testCanUseSimpleCountWithJobUuidFilter() {
         given:
         def svc = new ExecutionService()
+        svc.configurationService = Mock(ConfigurationService){
+            getBoolean('api.executionQueryConfig.countPerformance.enabled', false) >> true
+        }
 
         when:
         def query = new ExecutionQuery(
@@ -835,6 +841,9 @@ class ExecutionServiceTests extends Specification implements DataTest {
     void testCanUseSimpleCountWithMultipleJobUuids() {
         given:
         def svc = new ExecutionService()
+        svc.configurationService = Mock(ConfigurationService){
+            getBoolean('api.executionQueryConfig.countPerformance.enabled', false) >> true
+        }
 
         when:
         def query = new ExecutionQuery(
