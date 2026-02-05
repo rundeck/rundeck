@@ -10,6 +10,4 @@ export interface SettingsModalData {
   themeStore: any;
   nextUiEnabled: boolean;
   isLoading: boolean;
-  learnMoreUrl: string;
-  feedbackUrl: string;
 }

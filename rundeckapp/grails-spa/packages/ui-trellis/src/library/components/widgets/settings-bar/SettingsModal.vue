@@ -80,8 +80,6 @@ import { Notification } from "uiv";
 
 const COOKIE_NAME = "nextUi";
 const TOAST_MESSAGE_KEY = "nextUiToastMessage";
-const LEARN_MORE_URL = "https://docs.rundeck.com";
-const FEEDBACK_URL = "https://feedback.rundeck.com";
 
 export default defineComponent({
   name: "SettingsModal",
@@ -98,9 +96,6 @@ export default defineComponent({
         "system") as ThemeOption,
       themeStore,
       nextUiEnabled: pageUiMeta.isNextUiPage,
-      isLoading: false,
-      learnMoreUrl: LEARN_MORE_URL,
-      feedbackUrl: FEEDBACK_URL,
     };
   },
   computed: {
@@ -153,7 +148,6 @@ export default defineComponent({
         );
         localStorage.setItem(TOAST_MESSAGE_KEY, "disabled");
       }
-      this.isLoading = true;
       window.location.reload();
     },
     checkAndShowToast(): void {

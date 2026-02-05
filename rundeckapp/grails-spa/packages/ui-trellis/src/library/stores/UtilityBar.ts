@@ -51,12 +51,7 @@ export class UtilityBar {
       const orderB = b.order ?? 999;
       return orderA - orderB;
     });
-    
-    // Debug: log the sorted items
-    if (group === "right") {
-      console.log("[UtilityBar] Sorted right group items:", sorted.map(i => ({ id: i.id, order: i.order ?? 999 })));
-    }
-    
+
     return sorted;
   }
 
