@@ -208,16 +208,21 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "rundeckdev", id: "update-execution-status-true-to-succeeded") {
+    changeSet(author: "rundeckdev", id: "add-job-stat-canc-status-index") {
         preConditions(onFail: "MARK_RAN") {
-            tableExists(tableName: "execution")
-            columnExists(tableName: "execution", columnName: "status")
+            not {
+                indexExists(indexName: "EXEC_IDX_JOB_PROJ_DATE", tableName: "execution")
+            }
         }
 
-        update(tableName: "execution") {
-            column(name: "status", value: "succeeded")
-            where("status = 'true'")
+        createIndex(indexName: "EXEC_IDX_JOB_PROJ_DATE", tableName: "execution", unique: false) {
+            column(name: "job_uuid")
+            column(name: "project")
+            column(name: "date_completed")
+            column(name: "status")
+            column(name: "cancelled")
         }
     }
+
 
 }
