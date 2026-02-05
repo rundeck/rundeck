@@ -146,12 +146,10 @@ public class RundeckConfigBase {
             Long ttl;
         }
 
+        @Data
         public static class CountPerformance {
             Boolean enabled;
         }
-
-
-
     }
 
     @Data
