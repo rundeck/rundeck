@@ -519,15 +519,15 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     }
 
     /**
-     * Count executions using HQL without expensive JOINs to scheduled_execution table.
-     * Handles both simple queries and cross-project job reference queries (includeJobRef).
+     * Count executions for cross-project job reference queries (includeJobRef).
      * 
-     * For includeJobRef queries: Uses dual-query approach to count direct executions 
-     * and referenced executions separately.
-     * 
-     * For simple queries: Uses single HQL count on execution table only.
+     * Uses dual-query approach to count direct executions and referenced executions separately,
+     * avoiding expensive JOINs to scheduled_execution table.
      * 
      * Applies all query filters (status, user, date range, etc.) to ensure accurate counts.
+     * 
+     * Note: This method should only be called when shouldUseUnionQuery() returns true.
+     * For other queries, the criteria-based count is used.
      * @return total execution count
      */
     Long countExecutions() {
@@ -627,49 +627,8 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         // Build the filter clause string
         def filterClause = filterConditions ? " AND " + filterConditions.join(" AND ") : ""
 
-        // Choose counting strategy based on query type
-        if (shouldUseUnionQuery()) {
-            // Cross-project job reference query: use dual-query approach
-            return countWithJobReferences(filterClause, filterParams)
-        } else {
-            // Simple query: use single HQL count
-            return countSimple(filterClause, filterParams)
-        }
-    }
-
-    /**
-     * Count executions using simple HQL without JOINs.
-     * Used for queries that don't need cross-project job references.
-     */
-    private Long countSimple(String filterClause, Map filterParams) {
-        def params = [:]
-        if (filterParams) {
-            params.putAll(filterParams)
-        }
-
-        // Build base HQL
-        def hqlParts = ["SELECT COUNT(*) FROM Execution e WHERE 1=1"]
-
-        // Project filter
-        if (this.projFilter) {
-            hqlParts << "AND e.project = :project"
-            params.project = this.projFilter
-        }
-
-        // Job UUID filter - uses execution.job_uuid column directly (no JOIN needed)
-        if (this.jobIdListFilter) {
-            if (this.jobIdListFilter.size() == 1) {
-                hqlParts << "AND e.jobUuid = :jobUuid"
-                params.jobUuid = this.jobIdListFilter[0].toString()
-            } else {
-                hqlParts << "AND e.jobUuid IN (:jobUuids)"
-                params.jobUuids = this.jobIdListFilter.collect { it.toString() }
-            }
-        }
-
-        def hql = hqlParts.join(' ') + filterClause
-        def result = Execution.executeQuery(hql, params)
-        return (result[0] ?: 0) as Long
+        // Cross-project job reference query: use dual-query approach
+        return countWithJobReferences(filterClause, filterParams)
     }
 
     /**
