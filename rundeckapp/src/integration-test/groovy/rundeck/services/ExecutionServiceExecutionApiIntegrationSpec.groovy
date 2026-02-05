@@ -30,6 +30,14 @@ class ExecutionServiceExecutionApiIntegrationSpec extends Specification {
         ExecutionService.ExecutionCountCacheKey.invalidateAll(executionService.executionCountCache)
     }
 
+    private void enableCountPerformance() {
+        configurationService.setBoolean('api.executionQueryConfig.countPerformance.enabled', true)
+    }
+
+    private void disableCountPerformance() {
+        configurationService.setBoolean('api.executionQueryConfig.countPerformance.enabled', false)
+    }
+
     private List<Execution> createTestExecutions(String project = "TestProject", int count = 5) {
         def executions = []
         
@@ -277,17 +285,26 @@ class ExecutionServiceExecutionApiIntegrationSpec extends Specification {
 
     def "canUseSimpleCount returns true for simple queries"() {
         expect:
+        enableCountPerformance()
+
         executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test")) == true
         executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", statusFilter: "succeeded")) == true
         executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", userFilter: "admin")) == true
+
+        disableCountPerformance()
     }
 
     def "canUseSimpleCount returns true for job UUID queries"() {
         expect:
+        enableCountPerformance()
+
         // UUID job IDs can use execution.job_uuid column (no JOIN)
         executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", jobIdListFilter: ["550e8400-e29b-41d4-a716-446655440000"])) == true
         executionService.canUseSimpleCount(new ExecutionQuery(projFilter: "Test", jobIdListFilter: ["uuid-1", "uuid-2"])) == true
+
+        disableCountPerformance()
     }
+
 
     def "canUseSimpleCount returns false for queries requiring JOIN"() {
         expect:
