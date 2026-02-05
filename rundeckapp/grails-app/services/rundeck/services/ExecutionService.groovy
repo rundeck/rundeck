@@ -187,9 +187,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
 
-    // Configuration keys for execution count cache
+    // Configuration keys for execution count cache and optimizations
     static final String EXECUTION_COUNT_CACHE_ENABLED = 'api.executionQueryConfig.countCache.enabled'
     static final String EXECUTION_COUNT_CACHE_TTL_SECONDS = 'api.executionQueryConfig.countCache.ttl'
+    static final String SIMPLE_COUNT_ENABLED = 'api.executionQueryConfig.countPerformance.enabled'
     static final int DEFAULT_CACHE_TTL_SECONDS = 30
     static final int DEFAULT_CACHE_MAX_SIZE = 1000
 
@@ -310,6 +311,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     boolean isExecutionCountCacheEnabled() {
         return configurationService?.getBoolean(EXECUTION_COUNT_CACHE_ENABLED, false) ?: false
+    }
+
+    /**
+     * Check if simple count optimization is enabled.
+     * When enabled, uses HQL count without JOINs for eligible queries.
+     * When disabled, always uses criteria-based count.
+     * Default: true (enabled)
+     */
+    boolean isSimpleCountEnabled() {
+        return configurationService?.getBoolean(SIMPLE_COUNT_ENABLED, true) ?: true
     }
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
@@ -4399,11 +4410,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         and {
           order('dateCompleted', 'desc')
+          order('id', 'desc')  // Secondary sort by id for consistent pagination (faster than dateStarted)
         }
       }
     }
 
     def result = Execution.createCriteria().list(criteriaClos.curry(false))
+
+    // Initialize total count
     def total = 0
     ExecutionCountCacheKey cacheKey = null
     def fromCache = false
@@ -4496,8 +4510,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
   }
 
     /**
-     * Check if this query can use simple count without JOINs
-     * Returns true if the query can be satisfied using only execution table columns
+     * Check if this query can use simple count without JOINs.
+     * Returns true if the optimization is enabled AND the query can be satisfied 
+     * using only execution table columns.
+     * 
+     * Returns false if:
+     *   - simpleCount.enabled config is false
+     *   - Query has ILIKE filters (nodeFilter, optionFilter, adhocStringFilter)
+     *   - Query requires JOIN with scheduled_execution
      * 
      * Filters that REQUIRE JOIN with scheduled_execution:
      *   - jobListFilter (job names)
@@ -4513,6 +4533,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      *   - jobIdListFilter with UUID strings (not Long IDs)
      */
     boolean canUseSimpleCount(ExecutionQuery query) {
+        // Check if simple count optimization is enabled
+        if (!isSimpleCountEnabled()) {
+            return false
+        }
+
         // Filters that always require JOIN with scheduled_execution
         def joinRequiredFilters = ['jobListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter',
                                    'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter',
@@ -5055,6 +5080,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     datatype "Boolean"
                     visibility 'Advanced'
                     category 'Execution'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key "rundeck.api.executionQueryConfig.countPerformance.enabled"
+                    description "Enable query qerformance for counting total executions in API execution queries"
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'API'
                     authRequired("app_admin")
                     build()
                 },
