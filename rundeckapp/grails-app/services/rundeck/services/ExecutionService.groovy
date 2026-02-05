@@ -320,7 +320,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Default: true (enabled)
      */
     boolean isSimpleCountEnabled() {
-        return configurationService?.getBoolean(SIMPLE_COUNT_ENABLED, true) ?: true
+        return configurationService?.getBoolean(SIMPLE_COUNT_ENABLED, false) ?: false
     }
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
@@ -5085,7 +5085,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 },
                 SystemConfig.builder().with {
                     key "rundeck.api.executionQueryConfig.countPerformance.enabled"
-                    description "Enable query qerformance for counting total executions in API execution queries"
+                    description "Enable query performance for counting total executions in API execution queries"
                     defaultValue "false"
                     required false
                     datatype "Boolean"
