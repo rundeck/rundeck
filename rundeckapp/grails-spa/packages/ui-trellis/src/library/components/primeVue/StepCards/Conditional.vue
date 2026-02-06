@@ -1,41 +1,35 @@
 <template>
   <div class="conditional">
-    <p class="conditional--if">
-      If
-      <Tag class="tag-code" value="node.os-family"></Tag>
-      <span class="conditional--equality">equals</span>
-      <span class="bold">Linux</span>
-      <span class="operator--and">and</span>
-      <Tag class="tag-code" value="node.os-family"></Tag>
-      <span class="conditional--equality">equals</span>
-      <span class="bold">Windows</span>
-    </p>
+    <template v-if="conditionSets && conditionSets.length > 0">
+      <template v-for="(conditionSet, setIndex) in conditionSets" :key="conditionSet.id">
+        <p v-if="setIndex === 0" class="conditional--if">
+          {{ $t("editConditionalStep.if") || "If" }}
+          <template v-for="(condition, condIndex) in conditionSet.conditions" :key="condition.id">
+            <Tag v-if="condition.field" class="tag-code" :value="condition.field" />
+            <span v-if="condition.field" class="conditional--equality">{{ getOperatorLabel(condition.operator) }}</span>
+            <span v-if="condition.field" class="bold">{{ condition.value }}</span>
+            <span v-if="condIndex < conditionSet.conditions.length - 1" class="operator--and">{{ $t("editConditionalStep.and") }}</span>
+          </template>
+        </p>
+      </template>
+    </template>
     <div class="conditional--do">
-      <div v-if="complex" class="conditional--complex">
-        <p class="conditional--or">
-          <span>OR</span><span class="conditional--divider" />
-        </p>
-        <p class="conditional--if">
-          <Tag class="tag-code" value="node.os-family"></Tag>
-          <span class="conditional--equality">equals</span>
-          <span class="bold">Linux</span>
-          <span class="operator--and">and</span>
-          <Tag class="tag-code" value="node.os-family"></Tag>
-          <span class="conditional--equality">equals</span>
-          <span class="bold">Linux</span>
-        </p>
-        <p class="conditional--or">
-          <span>OR</span><span class="conditional--divider" />
-        </p>
-        <p class="conditional--if">
-          <Tag class="tag-code" value="node.os-family"></Tag>
-          <span class="conditional--equality">equals</span>
-          <span class="bold">Linux</span>
-          <span class="operator--and">and</span>
-          <Tag class="tag-code" value="node.os-family"></Tag>
-          <span class="conditional--equality">equals</span>
-          <span class="bold">Linux</span>
-        </p>
+      <div v-if="complex && conditionSets && conditionSets.length > 1" class="conditional--complex">
+        <template v-for="(conditionSet, setIndex) in conditionSets" :key="conditionSet.id">
+          <template v-if="setIndex > 0">
+            <p class="conditional--or">
+              <span>{{ $t("editConditionalStep.or") }}</span><span class="conditional--divider" />
+            </p>
+            <p class="conditional--if">
+              <template v-for="(condition, condIndex) in conditionSet.conditions" :key="condition.id">
+                <Tag v-if="condition.field" class="tag-code" :value="condition.field" />
+                <span v-if="condition.field" class="conditional--equality">{{ getOperatorLabel(condition.operator) }}</span>
+                <span v-if="condition.field" class="bold">{{ condition.value }}</span>
+                <span v-if="condIndex < conditionSet.conditions.length - 1" class="operator--and">{{ $t("editConditionalStep.and") }}</span>
+              </template>
+            </p>
+          </template>
+        </template>
         <div class="conditional--connector"></div>
       </div>
       <div v-else class="conditional--connector"></div>
@@ -45,8 +39,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import Tag from "primevue/tag";
+import type { ConditionSet } from "@/app/components/job/workflow/types/conditionalStepTypes";
 
 export default defineComponent({
   name: "Conditional",
@@ -57,6 +52,22 @@ export default defineComponent({
     complex: {
       type: Boolean,
       default: false
+    },
+    conditionSets: {
+      type: Array as PropType<ConditionSet[]>,
+      default: () => []
+    },
+  },
+  methods: {
+    getOperatorLabel(operator: string): string {
+      const operatorMap: Record<string, string> = {
+        equals: this.$t("Workflow.conditional.operator.equals") as string,
+        notEquals: this.$t("Workflow.conditional.operator.notEquals") as string,
+        contains: this.$t("Workflow.conditional.operator.contains") as string,
+        notContains: this.$t("Workflow.conditional.operator.notContains") as string,
+        regex: this.$t("Workflow.conditional.operator.regex") as string,
+      };
+      return operatorMap[operator] || operator;
     },
   },
 });

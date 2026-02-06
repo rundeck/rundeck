@@ -1215,12 +1215,15 @@ const messages = {
     cancel: "Cancel",
     saveStep: "Save Step",
     conditionNumber: "Condition {number}",
+    if: "If",
     and: "And",
     or: "OR",
     switchStepTypeNote: "Note: Can't find a prior node step? Switch to a ",
     switchStepTypeLink: "conditional {stepType} step.",
     tabJob: "Job",
     tabOptions: "Options",
+    fieldRequired: '"Field" is required. Please select a field.',
+    valueRequired: '"Value" is required. Please enter a value.',
   },
 };
 

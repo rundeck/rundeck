@@ -10,104 +10,44 @@
       />
     </template>
     <template #content>
-      <Conditional :complex="complex">
-        <Accordion multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
-          <AccordionPanel value="1">
-            <AccordionHeader>
-              <plugin-info
-                class="conditionalCard--step-description"
-                :detail="test"
-                :show-description="false"
-                :show-title="false"
-                :show-extended="false"
-              >
-                <template #titleprefix>
-                  <span class="link-step-plugin" @click.stop="">
-                    Run command to stop crowdstrike agent
-                  </span>
-                  <i class="pi pi-pencil"/>
-                </template>
-              </plugin-info>
-            </AccordionHeader>
-          </AccordionPanel>
-          <AccordionPanel value="2">
-            <AccordionHeader>
-              <plugin-info
-                class="conditionalCard--step-description"
-                :detail="test"
-                :show-description="false"
-                :show-title="false"
-                :show-extended="false"
-              >
-                <template #titleprefix>
-                  <span class="link-step-plugin" @click.stop="yolo">
-                    Run command to delete crowdstrike agent
-                  </span>
-                  <i class="pi pi-pencil"/>
-                </template>
-              </plugin-info>
-            </AccordionHeader>
-            <AccordionContent>
-              <p class="m-0">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                enim ad minim veniam, quis nostrud exercitation ullamco laboris
-                nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-                in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-                nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-                sunt in culpa qui officia deserunt mollit anim id est laborum.
-              </p>
-            </AccordionContent>
-          </AccordionPanel>
-          <AccordionPanel v-if="!complex" value="3" class="align-start">
-            <AccordionHeader asChild>
-              <div class="p-accordionheader nested">
-                <Conditional>
-                  <Accordion multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
-                    <AccordionPanel value="1">
-                      <AccordionHeader>
-                        <plugin-info
-                          class="conditionalCard--step-description"
-                          :detail="test"
-                          :show-description="false"
-                          :show-title="false"
-                          :show-extended="false"
-                        >
-                          <template #titleprefix>
-                            <span class="link-step-plugin" @click.stop="yolo">
-                              Run command to install the crowdstrike agent
-                            </span>
-                            <i class="pi pi-pencil"/>
-                          </template>
-                        </plugin-info>
-                      </AccordionHeader>
-                      <AccordionContent>
-                        <div>
-                          Lorem ipsum dolor sit amet, consectetur adipiscing
-                          elit, sed do eiusmod tempor incididunt ut labore et
-                          dolore magna aliqua. Ut enim ad minim veniam, quis
-                          nostrud exercitation ullamco laboris nisi ut aliquip
-                          ex ea commodo consequat. Duis aute irure dolor in
-                          reprehenderit in voluptate velit esse cillum dolore eu
-                          fugiat nulla pariatur. Excepteur sint occaecat
-                          cupidatat non proident, sunt in culpa qui officia
-                          deserunt mollit anim id est laborum.
-                        </div>
-                      </AccordionContent>
-                    </AccordionPanel>
-                  </Accordion>
-                </Conditional>
-              </div>
-            </AccordionHeader>
-          </AccordionPanel>
-        </Accordion>
+      <Conditional :complex="complex" :condition-sets="conditionSets">
+        <slot name="steps">
+          <Accordion v-if="steps && steps.length > 0" multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
+            <AccordionPanel
+              v-for="(step, index) in steps"
+              :key="step.id || index"
+              :value="String(index + 1)"
+            >
+              <AccordionHeader>
+                <plugin-info
+                  v-if="step.pluginDetails"
+                  class="conditionalCard--step-description"
+                  :detail="step.pluginDetails"
+                  :show-description="false"
+                  :show-title="false"
+                  :show-extended="false"
+                >
+                  <template #titleprefix>
+                    <span class="link-step-plugin" @click.stop="handleStepClick(step, index)">
+                      {{ step.description || step.name || $t("Workflow.stepLabel") }}
+                    </span>
+                    <i class="pi pi-pencil"/>
+                  </template>
+                </plugin-info>
+              </AccordionHeader>
+              <AccordionContent v-if="step.content">
+                <div v-html="step.content"></div>
+              </AccordionContent>
+            </AccordionPanel>
+          </Accordion>
+        </slot>
       </Conditional>
     </template>
   </Card>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import Card from "primevue/card";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
@@ -125,6 +65,14 @@ import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import StepCardContent from "@/library/components/primeVue/StepCards/StepCardContent.vue";
 import { getRundeckContext } from "@/library";
+
+interface ConditionalStep {
+  id?: string;
+  name?: string;
+  description?: string;
+  pluginDetails?: any;
+  content?: string;
+}
 
 import "../Tag/tag.scss";
 import "../Tooltip/tooltip.scss";
@@ -170,18 +118,24 @@ export default defineComponent({
       type: Array,
       default: () => [],
     },
-    complex: {
-      type: Boolean,
-      default: false
-    }
+    steps: {
+      type: Array as PropType<ConditionalStep[]>,
+      default: () => [],
+    },
   },
-  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate", "edit"],
+  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate", "edit", "step-click"],
   computed: {
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
     },
     eventBus() {
       return getRundeckContext()?.eventBus;
+    },
+    conditionSets() {
+      return this.config?.config?.conditionSets || [];
+    },
+    complex() {
+      return this.conditionSets.length > 1;
     },
     errorHandlerData() {
       // Extract error handler from array (it's passed as [element.errorhandler])
@@ -213,25 +167,6 @@ export default defineComponent({
       },
     },
   },
-  data() {
-    return {
-      test: {
-        iconUrl: "./public/library/theme/images/icon-shell.png",
-        title: "Command",
-        builtin: false,
-        id: "4ca0a4eec11b",
-        providerMetadata: null,
-        service: "WorkflowNodeStep",
-        highlightedOrder: 0,
-        artifactName: "Script Node Step Plugin",
-        pluginVersion: "5.15.0-SNAPSHOT",
-        description: "Execute a remote command",
-        isHighlighted: true,
-        name: "exec-command",
-        author: "Rundeck, Inc.",
-      },
-    };
-  },
   methods: {
     handleAddLogFilter() {
       // Emit eventBus event like WorkflowSteps.addLogFilterForIndex does
@@ -254,6 +189,9 @@ export default defineComponent({
     },
     handleEdit() {
       this.$emit("edit");
+    },
+    handleStepClick(step: ConditionalStep, index: number) {
+      this.$emit("step-click", { step, index });
     },
   },
 });
