@@ -89,7 +89,7 @@
           <p class="text-body--lg text-body--medium no-matches-text">
             {{ $t("noMatchesFound") }}
           </p>
-          <p class="text-body--sm text-body--secondary">
+          <p class="text-body text-body--secondary">
             {{ $t("noMatchesFoundSecondary") }}
           </p>
         </div>
@@ -571,11 +571,11 @@ span:not(.glyphicon, .fa, .pi) {
 }
 
 .no-matches-text {
-  color: var(--colors-gray-800);
+  color: var(--colors-gray-700);
   margin: 0 0 var(--space-2) 0;
 }
 
-.no-matches-found .text-body--sm {
+.no-matches-found .text-body {
   margin: 0;
 }
 </style>

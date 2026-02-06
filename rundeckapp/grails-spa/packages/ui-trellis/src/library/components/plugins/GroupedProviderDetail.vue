@@ -184,7 +184,6 @@ export default defineComponent({
 }
 .breadcrumb-current {
   color: var(--colors-gray-800-original);
-  text-transform: uppercase;
 }
 
 .group-header {
