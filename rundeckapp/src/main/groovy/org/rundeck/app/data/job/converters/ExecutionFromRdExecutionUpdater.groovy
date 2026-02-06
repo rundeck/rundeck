@@ -33,8 +33,16 @@ class ExecutionFromRdExecutionUpdater {
         e.succeededNodeList = re.succeededNodeList
         e.serverNodeUUID = re.serverNodeUUID
         e.nodeThreadcount = re.nodeThreadcount
-        if(re.logFileStorageRequestId && e.logFileStorageRequestId != re.logFileStorageRequestId) {
-            e.logFileStorageRequest = LogFileStorageRequest.get(re.logFileStorageRequestId)
+        if(re.logFileStorageRequestId) {
+            def currentRequest = LogFileStorageRequest.findByExecution(e)
+            def newRequest = LogFileStorageRequest.get(re.logFileStorageRequestId)
+            if(currentRequest?.id != newRequest?.id) {
+                // Update the LogFileStorageRequest to point to this execution
+                if(newRequest && newRequest.execution?.id != e.id) {
+                    newRequest.execution = e
+                    newRequest.save(flush: true)
+                }
+            }
         }
         if(re.retryExecutionId && e.retryExecutionId != re.retryExecutionId) {
             e.retryExecution = Execution.get(re.retryExecutionId)
