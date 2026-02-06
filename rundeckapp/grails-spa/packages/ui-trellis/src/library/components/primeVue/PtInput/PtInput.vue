@@ -3,7 +3,7 @@
     <label
       v-if="label"
       :for="inputId"
-      class="text-heading--sm pt-input__label"
+      class="text-heading--sm pt-form-label"
     >
       {{ label }}
     </label>
@@ -175,10 +175,6 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   width: 100%;
-}
-
-.pt-input__label {
-  margin-bottom: 0;
 }
 
 .pt-input__help {

@@ -1,47 +1,60 @@
 <template>
-  <AutoComplete
-    ref="autoInput"
-    v-model="value"
-    :suggestions="tabFilteredSuggestions"
-    :name="name"
-    :placeholder="placeholder"
-    :invalid="invalid"
-    :auto-option-focus="true"
-    :disabled="readOnly"
-    :show-empty-message="false"
-    @complete="onComplete"
-    @option-select="handleOptionSelect"
-    @keydown.enter.prevent
-    @change="onChange"
-  >
-    <template v-if="tabMode && tabs && tabs.length > 0" #header>
-      <div class="autocomplete-tabs">
-        <button
-          v-for="(tab, index) in tabs"
-          :key="index"
-          type="button"
-          :class="['autocomplete-tab', { 'autocomplete-tab-active': selectedTabIndex === index }]"
-          :disabled="tab.getCount(allSuggestions) === 0"
-          @click="selectTab(index)"
-        >
-          <span class="autocomplete-tab-label">{{ tab.label }}</span>
-          <Badge
-            :value="tab.getCount(allSuggestions).toString()"
-            :severity="selectedTabIndex === index ? undefined : 'secondary'"
-            size="small"
-          />
-        </button>
-      </div>
-    </template>
-    <template #option="slotProps">
-      <div class="autocomplete-option-content">
-        <span v-if="getSuggestionTitle(slotProps.option)" class="autocomplete-option-title">
-          {{ getSuggestionTitle(slotProps.option) }}
-        </span>
-        <span class="autocomplete-option-name" v-html="highlightQueryMatch(slotProps.option)"></span>
-      </div>
-    </template>
-  </AutoComplete>
+  <div class="pt-autocomplete-wrapper">
+    <label
+      v-if="label"
+      :for="inputId"
+      class="text-heading--sm pt-form-label"
+    >
+      {{ label }}
+    </label>
+    <AutoComplete
+      ref="autoInput"
+      v-model="value"
+      :suggestions="tabFilteredSuggestions"
+      :name="name"
+      :input-id="inputId"
+      :placeholder="placeholder"
+      :invalid="invalid"
+      :auto-option-focus="true"
+      :disabled="readOnly"
+      :show-empty-message="false"
+      @complete="onComplete"
+      @option-select="handleOptionSelect"
+      @keydown.enter.prevent
+      @change="onChange"
+    >
+      <template v-if="tabMode && tabs && tabs.length > 0" #header>
+        <div class="autocomplete-tabs">
+          <button
+            v-for="(tab, index) in tabs"
+            :key="index"
+            type="button"
+            :class="['autocomplete-tab', { 'autocomplete-tab-active': selectedTabIndex === index }]"
+            :disabled="tab.getCount(allSuggestions) === 0"
+            @click="selectTab(index)"
+          >
+            <span class="autocomplete-tab-label">{{ tab.label }}</span>
+            <Badge
+              :value="tab.getCount(allSuggestions).toString()"
+              :severity="selectedTabIndex === index ? undefined : 'secondary'"
+              size="small"
+            />
+          </button>
+        </div>
+      </template>
+      <template #option="slotProps">
+        <div class="autocomplete-option-content">
+          <span v-if="getSuggestionTitle(slotProps.option)" class="autocomplete-option-title">
+            {{ getSuggestionTitle(slotProps.option) }}
+          </span>
+          <span class="autocomplete-option-name" v-html="highlightQueryMatch(slotProps.option)"></span>
+        </div>
+      </template>
+    </AutoComplete>
+    <p v-if="invalid && errorText" class="text-body--sm pt-autocomplete__error">
+      {{ errorText }}
+    </p>
+  </div>
 </template>
 
 <script lang="ts">
@@ -83,6 +96,18 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    errorText: {
+      type: String,
+      default: undefined,
+    },
+    label: {
+      type: String,
+      default: undefined,
+    },
+    inputId: {
+      type: String,
+      default: undefined,
+    },
     placeholder: {
       type: String,
       default: "",
@@ -103,6 +128,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    debounceMs: {
+      type: Number,
+      default: 0,
+    },
   },
   emits: ["update:modelValue", "onChange", "onComplete"],
   data() {
@@ -114,6 +143,7 @@ export default defineComponent({
       selectedTabIndex: 0,
       currentQuery: "",
       filterDebounceTimer: null as ReturnType<typeof setTimeout> | null,
+      debounceTimer: null as ReturnType<typeof setTimeout> | null,
     };
   },
   watch: {
@@ -143,9 +173,12 @@ export default defineComponent({
     },
   },
   beforeUnmount() {
-    // Clear any pending debounce timer
+    // Clear any pending debounce timers
     if (this.filterDebounceTimer) {
       clearTimeout(this.filterDebounceTimer);
+    }
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
     }
   },
   methods: {
@@ -172,7 +205,19 @@ export default defineComponent({
     },
 
     updateValue(): void {
-      this.$emit("update:modelValue", this.value);
+      if (this.debounceMs > 0) {
+        // Debounce the update
+        if (this.debounceTimer) {
+          clearTimeout(this.debounceTimer);
+        }
+        this.debounceTimer = setTimeout(() => {
+          this.$emit("update:modelValue", this.value);
+          this.debounceTimer = null;
+        }, this.debounceMs);
+      } else {
+        // Emit immediately if no debounce
+        this.$emit("update:modelValue", this.value);
+      }
     },
 
     filterSuggestions(event: AutoCompleteCompleteEvent): void {
@@ -304,13 +349,15 @@ export default defineComponent({
       // Check if the input is contained anywhere in the suggestion (for cases like "execid" matching "job.execid")
       if (normalizedSuggestion.includes(normalizedInput)) return true;
       
-      // Check if input ends with any prefix of the suggestion (backwards matching)
-      // This handles cases like typing from the end of a variable name
-      const suggestionPrefixes = normalizedSuggestion
-        .split("")
-        .map((_element, index) => normalizedSuggestion.slice(0, normalizedSuggestion.length - index));
+    // Check if input ends with any prefix of the suggestion (backwards matching)
+    // This handles cases like typing from the end of a variable name
+    // Require minimum prefix length of 2, except allow "$" as a single character match
+    const suggestionPrefixes = normalizedSuggestion
+      .split("")
+      .map((_element, index) => normalizedSuggestion.slice(0, normalizedSuggestion.length - index))
+      .filter((prefix) => prefix.length >= 2 || prefix === "$"); // Allow "$" or prefixes of 2+ characters
 
-      return suggestionPrefixes.some((prefix) => normalizedInput.endsWith(prefix));
+    return suggestionPrefixes.some((prefix) => normalizedInput.endsWith(prefix));
     },
 
     handleOptionSelect(event: any): void {
@@ -318,6 +365,7 @@ export default defineComponent({
       // PrimeVue will automatically update the v-model value
       if (this.replaceOnSelect) {
         // Let PrimeVue handle it - it will replace the entire input value
+        // Note: updateValue() will handle debouncing if needed
         this.updateValue();
         return;
       }
@@ -344,7 +392,8 @@ export default defineComponent({
         cursorPosition,
       );
       this.value = newFullText;
-      this.$emit("update:modelValue", newFullText);
+      // Use updateValue() to handle debouncing
+      this.updateValue();
       this.moveCursorBackToReplacedText(
         fullInputText,
         selectedSuggestion,
@@ -397,6 +446,18 @@ export default defineComponent({
 
 <style lang="scss">
 @import "../_form-inputs.scss";
+
+.pt-autocomplete-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.pt-autocomplete__error {
+  margin-top: var(--space-1);
+  margin-bottom: 0;
+  color: var(--colors-red-500);
+}
 
 .p-autocomplete-overlay {
   z-index: 1200 !important;

@@ -1,69 +1,81 @@
 <template>
-  <Select
-    v-model="internalValue"
-    :options="options"
-    :option-label="optionLabel"
-    :option-value="optionValue"
-    :placeholder="placeholder"
-    :disabled="disabled"
-    :invalid="invalid"
-    :filter="filter"
-    :filter-match-mode="filterMatchMode"
-    :filter-fields="filterFields"
-    :editable="editable"
-    :highlight-on-select="highlightOnSelect"
-    :show-clear="showClear"
-    :reset-filter-on-hide="resetFilterOnHide"
-    :scroll-height="scrollHeight"
-    :auto-filter-focus="false"
-    :select-on-focus="false"
-    :focus-on-hover="false"
-    :name="name"
-    :input-id="inputId"
-    :data-key="dataKey"
-    :aria-label="ariaLabel"
-    :aria-labelledby="ariaLabelledby"
-    :loading="loading"
-    :loading-icon="loadingIcon"
-    :dropdown-icon="dropdownIcon"
-    :append-to="appendTo"
-    @focus="onFocus"
-    @blur="onBlur"
-    @show="onShow"
-    @hide="onHide"
-    @filter="onFilter"
-  >
-    <template v-if="$slots.value" #value="slotProps">
-      <slot name="value" v-bind="slotProps" />
-    </template>
-    <template v-if="$slots.header" #header="slotProps">
-      <slot name="header" v-bind="slotProps" />
-    </template>
-    <template v-if="$slots.footer" #footer="slotProps">
-      <slot name="footer" v-bind="slotProps" />
-    </template>
-    <template v-if="$slots.option" #option="slotProps">
-      <slot name="option" v-bind="slotProps" />
-    </template>
-    <template v-if="$slots.optiongroup" #optiongroup="slotProps">
-      <slot name="optiongroup" v-bind="slotProps" />
-    </template>
-    <template v-if="$slots.emptyfilter">
-      <slot name="emptyfilter" />
-    </template>
-    <template v-if="$slots.empty">
-      <slot name="empty" />
-    </template>
-    <template v-if="$slots.loadingicon" #loadingicon="slotProps">
-      <slot name="loadingicon" v-bind="slotProps" />
-    </template>
-    <template v-if="$slots.dropdownicon" #dropdownicon="slotProps">
-      <slot name="dropdownicon" v-bind="slotProps" />
-    </template>
-    <template v-if="$slots.clearicon" #clearicon="slotProps">
-      <slot name="clearicon" v-bind="slotProps" />
-    </template>
-  </Select>
+  <div class="pt-select-wrapper">
+    <label
+      v-if="label"
+      :for="inputId"
+      class="text-heading--sm pt-form-label"
+    >
+      {{ label }}
+    </label>
+    <Select
+      v-model="internalValue"
+      :options="options"
+      :option-label="optionLabel"
+      :option-value="optionValue"
+      :placeholder="placeholder"
+      :disabled="disabled"
+      :invalid="invalid"
+      :filter="filter"
+      :filter-match-mode="filterMatchMode"
+      :filter-fields="filterFields"
+      :editable="editable"
+      :highlight-on-select="highlightOnSelect"
+      :show-clear="showClear"
+      :reset-filter-on-hide="resetFilterOnHide"
+      :scroll-height="scrollHeight"
+      :auto-filter-focus="false"
+      :select-on-focus="false"
+      :focus-on-hover="false"
+      :name="name"
+      :input-id="inputId"
+      :data-key="dataKey"
+      :aria-label="ariaLabel"
+      :aria-labelledby="ariaLabelledby"
+      :loading="loading"
+      :loading-icon="loadingIcon"
+      :dropdown-icon="dropdownIcon"
+      :append-to="appendTo"
+      @focus="onFocus"
+      @blur="onBlur"
+      @show="onShow"
+      @hide="onHide"
+      @filter="onFilter"
+    >
+      <template v-if="$slots.value" #value="slotProps">
+        <slot name="value" v-bind="slotProps" />
+      </template>
+      <template v-if="$slots.header" #header="slotProps">
+        <slot name="header" v-bind="slotProps" />
+      </template>
+      <template v-if="$slots.footer" #footer="slotProps">
+        <slot name="footer" v-bind="slotProps" />
+      </template>
+      <template v-if="$slots.option" #option="slotProps">
+        <slot name="option" v-bind="slotProps" />
+      </template>
+      <template v-if="$slots.optiongroup" #optiongroup="slotProps">
+        <slot name="optiongroup" v-bind="slotProps" />
+      </template>
+      <template v-if="$slots.emptyfilter">
+        <slot name="emptyfilter" />
+      </template>
+      <template v-if="$slots.empty">
+        <slot name="empty" />
+      </template>
+      <template v-if="$slots.loadingicon" #loadingicon="slotProps">
+        <slot name="loadingicon" v-bind="slotProps" />
+      </template>
+      <template v-if="$slots.dropdownicon" #dropdownicon="slotProps">
+        <slot name="dropdownicon" v-bind="slotProps" />
+      </template>
+      <template v-if="$slots.clearicon" #clearicon="slotProps">
+        <slot name="clearicon" v-bind="slotProps" />
+      </template>
+    </Select>
+    <p v-if="invalid && errorText" class="text-body--sm pt-select__error">
+      {{ errorText }}
+    </p>
+  </div>
 </template>
 
 <script lang="ts">
@@ -102,6 +114,14 @@ export default defineComponent({
     invalid: {
       type: Boolean,
       default: false,
+    },
+    errorText: {
+      type: String,
+      default: undefined,
+    },
+    label: {
+      type: String,
+      default: undefined,
     },
     filter: {
       type: Boolean,
@@ -175,6 +195,10 @@ export default defineComponent({
       type: [String, Object] as PropType<string | HTMLElement>,
       default: "body",
     },
+    debounceMs: {
+      type: Number,
+      default: 0,
+    },
   },
   emits: [
     "update:modelValue",
@@ -184,15 +208,37 @@ export default defineComponent({
     "hide",
     "filter",
   ],
+  data() {
+    return {
+      debounceTimer: null as ReturnType<typeof setTimeout> | null,
+    };
+  },
   computed: {
     internalValue: {
       get(): any {
         return this.modelValue;
       },
       set(value: any) {
-        this.$emit("update:modelValue", value);
+        if (this.debounceMs > 0) {
+          // Debounce the update
+          if (this.debounceTimer) {
+            clearTimeout(this.debounceTimer);
+          }
+          this.debounceTimer = setTimeout(() => {
+            this.$emit("update:modelValue", value);
+            this.debounceTimer = null;
+          }, this.debounceMs);
+        } else {
+          // Emit immediately if no debounce
+          this.$emit("update:modelValue", value);
+        }
       },
     },
+  },
+  beforeUnmount() {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
   },
   methods: {
     onFocus(event: FocusEvent) {
@@ -216,6 +262,18 @@ export default defineComponent({
 
 <style lang="scss">
 @import "../_form-inputs.scss";
+
+.pt-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.pt-select__error {
+  margin-top: var(--space-1);
+  margin-bottom: 0;
+  color: var(--colors-red-500);
+}
 
 .p-select {
   width: 100%;
