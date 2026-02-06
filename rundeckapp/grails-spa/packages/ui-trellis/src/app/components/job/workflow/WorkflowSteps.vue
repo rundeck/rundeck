@@ -877,6 +877,13 @@ export default defineComponent({
           saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
         }
 
+        // Skip validation endpoint call for conditional steps
+        if (saveData.type === "conditional.logic") {
+          this.handleSuccessOnValidation(saveData);
+          return;
+        }
+
+        // Validation logic for non-conditional steps (kept but not executed for conditional steps)
         const response = await validatePluginConfig(
           this.editService!,
           saveData.type,

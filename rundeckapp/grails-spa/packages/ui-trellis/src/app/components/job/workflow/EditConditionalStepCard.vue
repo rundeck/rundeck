@@ -73,7 +73,9 @@
                       :service-name="serviceName"
                       :suggestions="autocompleteSuggestions"
                       :tab-mode="autocompleteSuggestions.length > 0"
-                      @update:condition="(updated) => updateCondition(setIndex, condIndex, updated)"
+                      :field-error="fieldErrors[condition.id]"
+                      :value-error="valueErrors[condition.id]"
+                      @update:condition="(payload) => updateCondition(setIndex, condIndex, payload.condition, payload.fieldName)"
                       @delete="() => removeCondition(setIndex, condIndex)"
                       @switch-step-type="handleSwitchStepType"
                     />
@@ -193,6 +195,10 @@ export default defineComponent({
       editModel: {} as EditStepData,
       stepName: "",
       conditionSets: [createEmptyConditionSet()] as ConditionSet[],
+      fieldErrors: {} as Record<string, string>,
+      valueErrors: {} as Record<string, string>,
+      isInitialized: false,
+      touchedConditions: new Set<string>(),
     };
   },
   watch: {
@@ -202,16 +208,37 @@ export default defineComponent({
           this.editModel = cloneDeep(val);
           this.stepName = val.description || "";
           this.conditionSets = val.config?.conditionSets || [createEmptyConditionSet()];
+          // Clear errors and touched state when modelValue changes
+          this.fieldErrors = {};
+          this.valueErrors = {};
+          this.touchedConditions.clear();
+          // Reset initialization flag when modelValue changes (e.g., switching steps)
+          this.isInitialized = false;
+          this.$nextTick(() => {
+            this.isInitialized = true;
+          });
         }
       },
       immediate: true,
       deep: true,
+    },
+    conditionSets: {
+      handler() {
+        // Explicitly do nothing - validation happens individually in updateCondition
+        // This watcher exists only for Vue reactivity tracking, not for validation
+      },
+      deep: true,
+      immediate: false,
     },
   },
   mounted() {
     this.editModel = cloneDeep(this.modelValue);
     this.stepName = this.modelValue.description || "";
     this.conditionSets = this.modelValue.config?.conditionSets || [createEmptyConditionSet()];
+    // Mark as initialized after mount completes
+    this.$nextTick(() => {
+      this.isInitialized = true;
+    });
   },
   computed: {
     cardTitle(): string {
@@ -263,26 +290,120 @@ export default defineComponent({
     },
     addCondition(setIndex: number) {
       if (this.canAddCondition(setIndex)) {
-        this.conditionSets[setIndex].conditions.push(createEmptyCondition());
+        const newCondition = createEmptyCondition();
+        this.conditionSets[setIndex].conditions.push(newCondition);
+        // Don't mark new conditions as touched - they shouldn't show errors until user interacts
       }
     },
     removeCondition(setIndex: number, conditionIndex: number) {
       const set = this.conditionSets[setIndex];
+      const conditionToRemove = set.conditions[conditionIndex];
       if (set.conditions.length > 1) {
         set.conditions.splice(conditionIndex, 1);
       } else if (this.conditionSets.length > 1) {
         this.conditionSets.splice(setIndex, 1);
       }
+      // Clean up errors and touched state for removed condition
+      if (conditionToRemove) {
+        delete this.fieldErrors[conditionToRemove.id];
+        delete this.valueErrors[conditionToRemove.id];
+        this.touchedConditions.delete(conditionToRemove.id);
+      }
     },
-    updateCondition(setIndex: number, conditionIndex: number, updatedCondition: Condition) {
+    updateCondition(
+      setIndex: number,
+      conditionIndex: number,
+      updatedCondition: Condition,
+      fieldName?: "field" | "value" | "operator",
+    ) {
+      // Update the condition in the array
       this.conditionSets[setIndex].conditions[conditionIndex] = updatedCondition;
+
+      // Only validate and mark as touched for field/value changes
+      // Note: Components handle debouncing internally, so we validate immediately
+      if (fieldName === "field" || fieldName === "value") {
+        this.touchedConditions.add(updatedCondition.id);
+        if (this.isInitialized) {
+          this.validateField(updatedCondition.id, fieldName);
+        }
+      }
+      // Operator changes don't need validation
     },
     addConditionSet() {
       if (this.canAddConditionSet) {
-        this.conditionSets.push(createEmptyConditionSet());
+        const newSet = createEmptyConditionSet();
+        this.conditionSets.push(newSet);
+        // Don't mark new conditions as touched - they shouldn't show errors until user interacts
+      }
+    },
+    validateField(conditionId: string, fieldName: "field" | "value" | null = null) {
+      // Find the condition
+      let condition: Condition | null = null;
+      for (const conditionSet of this.conditionSets) {
+        const found = conditionSet.conditions.find((c) => c.id === conditionId);
+        if (found) {
+          condition = found;
+          break;
+        }
+      }
+
+      if (!condition) {
+        // Condition not found, clean up errors based on fieldName
+        if (!fieldName || fieldName === "field") {
+          delete this.fieldErrors[conditionId];
+        }
+        if (!fieldName || fieldName === "value") {
+          delete this.valueErrors[conditionId];
+        }
+        return;
+      }
+
+      // Validate based on fieldName
+      // fieldName = null means validate all fields (for save)
+      // fieldName = 'field' means validate only field
+      // fieldName = 'value' means validate only value
+
+      if (!fieldName || fieldName === "field") {
+        const fieldError = !condition.field || (condition.field && condition.field.trim() === "")
+          ? this.$t("editConditionalStep.fieldRequired")
+          : undefined;
+
+        if (fieldError) {
+          this.fieldErrors[conditionId] = fieldError;
+        } else {
+          delete this.fieldErrors[conditionId];
+        }
+      }
+
+      if (!fieldName || fieldName === "value") {
+        const valueError = !condition.value || condition.value.trim() === ""
+          ? this.$t("editConditionalStep.valueRequired")
+          : undefined;
+
+        if (valueError) {
+          this.valueErrors[conditionId] = valueError;
+        } else {
+          delete this.valueErrors[conditionId];
+        }
       }
     },
     handleSave() {
+      // Validate all conditions and all fields before saving
+      let isValid = true;
+      this.conditionSets.forEach((conditionSet) => {
+        conditionSet.conditions.forEach((condition) => {
+          // Validate all fields (fieldName = null means validate all)
+          this.validateField(condition.id, null);
+          if (this.fieldErrors[condition.id] || this.valueErrors[condition.id]) {
+            isValid = false;
+          }
+        });
+      });
+
+      if (!isValid) {
+        return;
+      }
+
       const updatedModel = {
         ...this.editModel,
         description: this.stepName,
@@ -455,7 +576,6 @@ export default defineComponent({
   .conditions-connector {
     display: flex;
     flex-direction: column;
-    gap: var(--sizes-3);
     position: relative;
     transition: padding-left 0.2s ease;
 
@@ -473,6 +593,7 @@ export default defineComponent({
         border-bottom: 1px solid var(--colors-gray-300-original);
         border-right: none;
         border-radius: 6px 0 0 6px;
+        margin-bottom: 20px;
       }
     }
   }

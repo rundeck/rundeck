@@ -1,8 +1,11 @@
 <template>
   <div class="condition-row">
     <div class="field-group field-column">
-      <label v-if="showLabels" class="text-heading--sm form-label">
-        {{ $t("editConditionalStep.field") }} <span class="required-indicator">*</span>
+      <label class="text-heading--sm form-label" :class="{ 'form-label-hidden': !showLabels }">
+        <template v-if="showLabels">
+          {{ $t("editConditionalStep.field") }} <span class="required-indicator">*</span>
+        </template>
+        <template v-else>&nbsp;</template>
       </label>
       <PtSelect
         :modelValue="condition.field"
@@ -10,6 +13,9 @@
         option-label="label"
         option-value="value"
         :placeholder="$t('editConditionalStep.selectPlaceholder')"
+        :invalid="!!fieldError"
+        :error-text="fieldError"
+        :debounce-ms="300"
         class="field-select"
         @update:modelValue="updateField"
       >
@@ -33,8 +39,9 @@
     </div>
 
     <div class="field-group operator-column">
-      <label v-if="showLabels" class="text-heading--sm form-label">
-        {{ $t("editConditionalStep.operator") }}
+      <label class="text-heading--sm form-label" :class="{ 'form-label-hidden': !showLabels }">
+        <template v-if="showLabels">{{ $t("editConditionalStep.operator") }}</template>
+        <template v-else>&nbsp;</template>
       </label>
       <PtSelect
         :modelValue="condition.operator"
@@ -48,8 +55,11 @@
     </div>
 
     <div class="field-group value-column">
-      <label v-if="showLabels" class="text-heading--sm form-label">
-        {{ $t("editConditionalStep.value") }} <span class="required-indicator">*</span>
+      <label class="text-heading--sm form-label" :class="{ 'form-label-hidden': !showLabels }">
+        <template v-if="showLabels">
+          {{ $t("editConditionalStep.value") }} <span class="required-indicator">*</span>
+        </template>
+        <template v-else>&nbsp;</template>
       </label>
       <PtAutoComplete
         :modelValue="condition.value"
@@ -58,6 +68,9 @@
         :tab-mode="tabMode"
         :tabs="tabs"
         :replace-on-select="true"
+        :invalid="!!valueError"
+        :error-text="valueError"
+        :debounce-ms="300"
         class="value-input"
         @update:modelValue="updateValue"
       />
@@ -123,6 +136,14 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    fieldError: {
+      type: String,
+      default: undefined,
+    },
+    valueError: {
+      type: String,
+      default: undefined,
+    },
   },
   emits: ["update:condition", "delete", "switch-step-type"],
   computed: {
@@ -165,21 +186,33 @@ export default defineComponent({
       if (value === "__NOTE__") {
         return;
       }
+      // Emit unified event with field identifier
       this.$emit("update:condition", {
-        ...this.condition,
-        field: value,
+        condition: {
+          ...this.condition,
+          field: value,
+        },
+        fieldName: "field" as const,
       });
     },
     updateOperator(value: string) {
+      // Emit unified event with field identifier
       this.$emit("update:condition", {
-        ...this.condition,
-        operator: value,
+        condition: {
+          ...this.condition,
+          operator: value,
+        },
+        fieldName: "operator" as const,
       });
     },
     updateValue(value: string) {
+      // Emit unified event with field identifier
       this.$emit("update:condition", {
-        ...this.condition,
-        value: value,
+        condition: {
+          ...this.condition,
+          value: value,
+        },
+        fieldName: "value" as const,
       });
     },
     handleDelete() {
@@ -193,22 +226,58 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-.condition-row {
+  .condition-row {
   display: flex;
   gap: 12px;
-  align-items: flex-end;
+  align-items: flex-start;
 
   .field-group {
     display: flex;
     flex-direction: column;
     gap: var(--sizes-1);
+    // Ensure consistent height regardless of error state
+    min-height: calc(20px + var(--sizes-1) + 38px + var(--space-1) + 20px);
 
     .form-label {
       margin: 0;
       color: var(--colors-gray-800);
+      // Reserve space for label even when not shown to maintain consistent height
+      min-height: 20px;
+      height: 20px;
+      line-height: 20px;
+      flex-shrink: 0;
+
+      &.form-label-hidden {
+        visibility: hidden;
+      }
     }
 
     .required-indicator {
+      color: var(--colors-red-500);
+    }
+
+    // Ensure error messages don't break alignment
+    :deep(.pt-select-wrapper),
+    :deep(.pt-autocomplete-wrapper) {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      position: relative;
+      flex-shrink: 0;
+      // Reserve space for error message to prevent layout shift
+      min-height: calc(38px + var(--space-1) + 20px);
+    }
+
+    // Error messages styling - use absolute positioning to prevent layout shift
+    :deep(.pt-select__error),
+    :deep(.pt-autocomplete__error) {
+      position: absolute;
+      top: calc(38px + var(--space-1));
+      left: 0;
+      width: 100%;
+      min-height: 20px;
+      margin: 0;
+      line-height: 20px;
       color: var(--colors-red-500);
     }
   }
@@ -242,6 +311,8 @@ export default defineComponent({
     display: flex;
     align-items: center;
     justify-content: center;
+    // Align with input fields - position at the same level as inputs (after label + gap)
+    margin-top: calc(20px + var(--sizes-1));
 
     &:hover {
       background: var(--colors-gray-100);
