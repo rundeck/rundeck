@@ -56,9 +56,26 @@
               @save="handleSaveStep(index)"
               @cancel="handleCancelEdit"
             />
+            <ConditionalCard
+              v-else-if="conditionalEnabled && element.type === 'conditional.logic' && editingStepId !== element.id"
+              :plugin-details="getPluginDetails(element)"
+              :config="element"
+              :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
+              :log-filters="element.filters || []"
+              :error-handler="element.errorhandler ? [element.errorhandler] : []"
+              @add-log-filter="addLogFilterForIndex(element.id)"
+              @add-error-handler="toggleAddErrorHandlerModal(index)"
+              @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
+              @edit-log-filter="handleEditLogFilterFromChip(element.id, $event)"
+              @edit-error-handler="editStepByIndex(index, true)"
+              @remove-error-handler="removeStep(index, true)"
+              @delete="removeStep(index)"
+              @duplicate="duplicateStep(index)"
+              @edit="editStepByIndex(index)"
+            />
             <EditConditionalStepCard
-              v-else-if="conditionalEnabled && element.type === 'conditional.logic'"
-              :model-value="element"
+              v-else-if="conditionalEnabled && element.type === 'conditional.logic' && editingStepId === element.id"
+              v-model="editModel"
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
               :validation="editModelValidation"
               :extra-autocomplete-vars="extraAutocompleteVars"
@@ -550,12 +567,22 @@ export default defineComponent({
     },
     handleCancelEdit() {
       // If we're canceling a new step that was just added, remove it
+      // Only remove if editExtra doesn't have an id matching the step (meaning it's a new step, not an existing one being edited)
       if (this.editIndex >= 0 && this.editIndex >= this.model.commands.length - 1) {
-        // Check if this is a newly added step (at the end of the list)
         const lastStep = this.model.commands[this.editIndex];
-        if (lastStep && lastStep.id === this.editingStepId && (!lastStep.config || Object.keys(lastStep.config || {}).length === 0)) {
-          // Remove the newly added step
-          this.model.commands.splice(this.editIndex, 1);
+        // Check if this is an existing step being edited (editExtra will have the original step data with matching id)
+        const isExistingStep = this.editExtra && this.editExtra.id && this.editExtra.id === lastStep?.id;
+        
+        if (!isExistingStep && lastStep && lastStep.id === this.editingStepId) {
+          // For conditional steps, check if conditionSets exist; for regular steps, check if config is empty
+          const isEmpty = lastStep.type === 'conditional.logic' 
+            ? (!lastStep.config || !lastStep.config.conditionSets || lastStep.config.conditionSets.length === 0)
+            : (!lastStep.config || Object.keys(lastStep.config || {}).length === 0);
+          
+          if (isEmpty) {
+            // Remove the newly added step
+            this.model.commands.splice(this.editIndex, 1);
+          }
         }
       }
       this.cancelEditStep();
@@ -642,13 +669,13 @@ export default defineComponent({
       // Clear any previous validation errors when starting to edit
       this.editModelValidation = { errors: [], valid: true };
 
-      // In EA mode, show EditStepCard for regular steps (not jobref, not conditional.logic)
+      // In EA mode, show EditStepCard/EditConditionalStepCard inline for regular steps and conditional steps (not jobref)
       // Error handlers and log filters always use modals (handled separately)
-      if (this.conditionalEnabled && !command.jobref && command.type !== 'conditional.logic') {
-        // Ensure modals are closed when showing EditStepCard
+      if (this.conditionalEnabled && !command.jobref) {
+        // Ensure modals are closed when showing inline edit cards
         this.editStepModal = false;
         this.editJobRefModal = false;
-        // Don't open modal - EditStepCard will render based on editingStepId
+        // Don't open modal - EditStepCard/EditConditionalStepCard will render based on editingStepId
         return;
       }
 

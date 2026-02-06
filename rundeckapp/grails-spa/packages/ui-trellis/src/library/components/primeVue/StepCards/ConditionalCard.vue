@@ -6,6 +6,7 @@
         :config="config"
         @delete="handleDelete"
         @duplicate="handleDuplicate"
+        @edit="handleEdit"
       />
     </template>
     <template #content>
@@ -21,7 +22,7 @@
                 :show-extended="false"
               >
                 <template #titleprefix>
-                  <span class="link-step-plugin" @click.stop="yolo">
+                  <span class="link-step-plugin" @click.stop="">
                     Run command to stop crowdstrike agent
                   </span>
                   <i class="pi pi-pencil"/>
@@ -174,7 +175,7 @@ export default defineComponent({
       default: false
     }
   },
-  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate"],
+  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate", "edit"],
   computed: {
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
@@ -251,8 +252,8 @@ export default defineComponent({
     handleDuplicate() {
       this.$emit("duplicate");
     },
-    yolo() {
-      alert("edit mode");
+    handleEdit() {
+      this.$emit("edit");
     },
   },
 });
