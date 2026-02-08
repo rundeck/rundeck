@@ -1001,6 +1001,8 @@ const messages = {
   "workflow.search.help.string17": "property:name=value",
   "node.step.plugin.plural": "{0} Node Step Plugins",
   "workflow.step.plugin.plural": "{0} Workflow Step Plugins",
+  "job.label": "Job",
+  "Project": "Project",
   "Workflow.Step.jobreference.title": "Select job by",
   "Workflow.Step.jobreference.name.label": "Name",
   "Workflow.Step.jobreference.name.description":
@@ -1060,6 +1062,8 @@ const messages = {
     "Enter UUID, e.g. 5910b723-2436-4497-96d5-49a08db95d2b",
   "select.an.existing.job.to.use": "Select an existing Job to use",
   "plugin.edit.title": "Edit step",
+  "Workflow.step.property.description.label": "Step Name",
+  "Workflow.step.property.description.help": "Name for this step",
   "Workflow.step.property.description.placeholder":
     "Label or description of this step",
   "enter.a.node.filter.override":

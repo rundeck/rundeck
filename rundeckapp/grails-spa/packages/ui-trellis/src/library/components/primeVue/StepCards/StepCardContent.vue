@@ -1,6 +1,16 @@
 <template>
   <div class="step-card-content">
+    <div v-if="config.jobref" class="plugin-config-section">
+      <span v-for="prop in jobRefProps" :key="prop.name" class="configprop">
+        <plugin-prop-view
+          :prop="prop"
+          :value="jobRefConfig[prop.name]"
+          :allow-copy="true"
+        />
+      </span>
+    </div>
     <plugin-config
+      v-else
       class="plugin-config-section"
       :serviceName="serviceName"
       :provider="config.type"
@@ -13,6 +23,7 @@
       allowCopy
     />
     <ConfigSection
+      v-if="!config.jobref"
       :title="$t('Workflow.logFilters')"
       :tooltip="$t('Workflow.logFiltersTooltip')"
       :model-value="logFilters"
@@ -63,11 +74,13 @@ import { defineComponent } from "vue";
 import ConfigSection from "@/library/components/primeVue/StepCards/ConfigSection.vue";
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import PluginPropView from "@/library/components/plugins/pluginPropView.vue";
 import { getRundeckContext } from "@/library";
 
 export default defineComponent({
   name: "StepCardContent",
   components: {
+    PluginPropView,
     PluginInfo,
     PluginConfig,
     ConfigSection,
@@ -106,7 +119,14 @@ export default defineComponent({
       default: "",
     },
   },
-  emits: ["add-log-filter", "add-error-handler", "edit-log-filter", "edit-error-handler", "remove-error-handler", "update:logFilters"],
+  emits: [
+    "add-log-filter",
+    "add-error-handler",
+    "edit-log-filter",
+    "edit-error-handler",
+    "remove-error-handler",
+    "update:logFilters",
+  ],
   data() {
     return {
       globalEventBus: getRundeckContext()?.eventBus,
@@ -114,7 +134,78 @@ export default defineComponent({
   },
   computed: {
     errorHandlerData() {
-      return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] : null;
+      return this.errorHandler && this.errorHandler.length > 0
+        ? this.errorHandler[0]
+        : null;
+    },
+    jobRefFullName(): string {
+      if (!this.config.jobref) return "";
+      if (this.config.jobref.name) {
+        return (
+          (this.config.jobref.group ? this.config.jobref.group + "/" : "") +
+          this.config.jobref.name
+        );
+      }
+      return this.config.jobref.uuid || "";
+    },
+    jobRefProps(): any[] {
+      if (!this.config.jobref) return [];
+      const props = [];
+
+      props.push({
+        name: "job",
+        title: this.$t("job.label"),
+        desc: "Job",
+        type: "String",
+      });
+
+      if (this.config.jobref.project) {
+        props.push({
+          name: "project",
+          title: this.$t("Project"),
+          desc: "Project",
+          type: "String",
+        });
+      }
+
+      if (this.config.jobref.args) {
+        props.push({
+          name: "args",
+          title: this.$t("Workflow.Step.argString.label"),
+          desc: "Arguments",
+          type: "String",
+        });
+      }
+
+      if (this.config.jobref.nodeStep) {
+        props.push({
+          name: "nodeStep",
+          title: this.$t("JobExec.nodeStep.true.label"),
+          desc: "Node Step",
+          type: "Boolean",
+        });
+      }
+
+      if (this.config.jobref.nodefilters?.filter) {
+        props.push({
+          name: "nodefilters",
+          title: this.$t("node.filter"),
+          desc: "Node Filter",
+          type: "String",
+        });
+      }
+
+      return props;
+    },
+    jobRefConfig(): any {
+      if (!this.config.jobref) return {};
+      return {
+        job: this.jobRefFullName,
+        project: this.config.jobref.project,
+        args: this.config.jobref.args,
+        nodeStep: this.config.jobref.nodeStep ? "true" : "false",
+        nodefilters: this.config.jobref.nodefilters?.filter,
+      };
     },
   },
   methods: {
@@ -131,7 +222,9 @@ export default defineComponent({
       if (filterIndex === undefined || filterIndex === null) {
         filterIndex = this.logFilters.findIndex((f: any) => {
           // Match by type or by object reference
-          return f === filter || (f.type && filter.type && f.type === filter.type);
+          return (
+            f === filter || (f.type && filter.type && f.type === filter.type)
+          );
         });
       }
       // Emit with both filter and index for parent to use
@@ -177,7 +270,7 @@ export default defineComponent({
   .copiable-text {
     color: var(--colors-gray-800);
 
-    &:hover{
+    &:hover {
       color: var(--colors-gray-800);
     }
   }

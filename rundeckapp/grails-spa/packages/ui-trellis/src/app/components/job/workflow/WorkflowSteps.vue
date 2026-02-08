@@ -20,16 +20,16 @@
         <div class="step-list-item" :class="{'ea': conditionalEnabled}">
           <div class="step-item-display">
             <StepCard
-              v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId !== element.id"
+              v-if="conditionalEnabled && element.type !== 'conditional.logic' && editingStepId !== element.id"
               :plugin-details="getPluginDetails(element)"
               :config="element"
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
-              :log-filters="element.filters || []"
+              :log-filters="element.jobref ? [] : (element.filters || [])"
               :error-handler="element.errorhandler ? [element.errorhandler] : []"
-              @add-log-filter="addLogFilterForIndex(element.id)"
+              @add-log-filter="!element.jobref && addLogFilterForIndex(element.id)"
               @add-error-handler="toggleAddErrorHandlerModal(index)"
-              @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
-              @edit-log-filter="handleEditLogFilterFromChip(element.id, $event)"
+              @update:log-filters="!element.jobref && updateHistoryWithLogFiltersData(index, $event)"
+              @edit-log-filter="!element.jobref && handleEditLogFilterFromChip(element.id, $event)"
               @edit-error-handler="editStepByIndex(index, true)"
               @remove-error-handler="removeStep(index, true)"
               @delete="removeStep(index)"
@@ -48,8 +48,9 @@
               @update:model-value="updateHistoryWithLogFiltersData(index, $event)"
             />
             <EditStepCard
-              v-else-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId === element.id"
+              v-else-if="conditionalEnabled && element.type !== 'conditional.logic' && editingStepId === element.id"
               v-model="editModel"
+              :plugin-details="getPluginDetails(editModel)"
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
               :validation="editModelValidation"
               :extra-autocomplete-vars="extraAutocompleteVars"
@@ -83,7 +84,7 @@
               @cancel="handleCancelEdit"
               @switch-step-type="handleSwitchStepType(index)"
             />
-            <template v-else>
+            <template v-else-if="!conditionalEnabled">
               <div class="step-item-row">
                 <div
                     :id="`wfitem_${index}`"
@@ -504,14 +505,34 @@ export default defineComponent({
       }
 
       if (provider === "job.reference") {
-        this.editModel = {
+        // Minimal initialization - EditStepCard/JobRefForm handle defaults
+        const jobRefData = {
           type: provider,
           description: "",
+          nodeStep: service === ServiceType.WorkflowNodeStep,  // Top-level for getPluginDetails
           jobref: {
             nodeStep: service === ServiceType.WorkflowNodeStep,
           },
         };
-        this.editJobRefModal = true;
+        
+        // Error handlers always use modal
+        if (this.isErrorHandler) {
+          this.editModel = jobRefData;
+          this.editJobRefModal = true;
+          return;
+        }
+        
+        // EA mode: inline editing (add id and push to array, same as regular steps)
+        if (this.conditionalEnabled) {
+          this.editModel = { ...jobRefData, id: mkid() };
+          this.editIndex = this.model.commands.length;
+          this.editingStepId = this.editModel.id;
+          this.model.commands.push(this.editModel);
+        } else {
+          // Non-EA mode: modal
+          this.editModel = jobRefData;
+          this.editJobRefModal = true;
+        }
       } else if (provider === "conditional.logic") {
         const newStep = {
           type: provider,
@@ -669,9 +690,9 @@ export default defineComponent({
       // Clear any previous validation errors when starting to edit
       this.editModelValidation = { errors: [], valid: true };
 
-      // In EA mode, show EditStepCard/EditConditionalStepCard inline for regular steps and conditional steps (not jobref)
-      // Error handlers and log filters always use modals (handled separately)
-      if (this.conditionalEnabled && !command.jobref) {
+      // In EA mode, show EditStepCard/EditConditionalStepCard inline for ALL steps (including jobref)
+      // Error handlers always use modals (handled separately above)
+      if (this.conditionalEnabled) {
         // Ensure modals are closed when showing inline edit cards
         this.editStepModal = false;
         this.editJobRefModal = false;
@@ -679,7 +700,7 @@ export default defineComponent({
         return;
       }
 
-      // For jobref steps or non-EA mode, use modal
+      // Non-EA mode: use modals
       // Ensure editingStepId is cleared when using modal
       this.editingStepId = null;
       if (command.jobref) {
@@ -841,7 +862,23 @@ export default defineComponent({
           saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
         }
 
-        if (!saveData.jobref && saveData.type !== "conditional.logic") {
+        // Handle jobref validation (EA mode inline only)
+        if (saveData.jobref) {
+          // Validate: name or UUID required
+          if (!saveData.jobref.name && !saveData.jobref.uuid) {
+            this.editModelValidation = {
+              valid: false,
+              errors: { jobref: this.$t("commandExec.jobName.blank.message") },
+            };
+            return;
+          }
+          // No plugin validation needed for jobrefs - skip to save
+          this.handleSuccessOnValidation(saveData);
+          return;
+        }
+
+        // Handle regular plugin steps (not jobref, not conditional)
+        if (saveData.type !== "conditional.logic") {
           if (!saveData.filters) {
             saveData.filters = [];
           }
@@ -861,6 +898,7 @@ export default defineComponent({
             this.editModelValidation = response;
           }
         } else {
+          // Conditional logic steps - no validation needed
           this.handleSuccessOnValidation(saveData);
         }
       } catch (e) {
