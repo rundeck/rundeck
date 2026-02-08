@@ -1,0 +1,427 @@
+import type { EditStepData } from "../types/workflowTypes";
+
+const mockValidatePluginConfig = jest.fn();
+const mockGetServicePlugins = jest.fn();
+
+jest.mock("@/library/modules/pluginService", () => ({
+  validatePluginConfig: (...args: any[]) => mockValidatePluginConfig(...args),
+  getServiceProviderDescription: jest.fn(),
+  getPluginProvidersForService: jest.fn(),
+}));
+
+jest.mock("@/library/modules/rundeckClient", () => ({
+  client: jest.fn(),
+}));
+
+jest.mock("@/library/rundeckService", () => ({
+  getRundeckContext: jest.fn().mockImplementation(() => ({
+    rootStore: {
+      plugins: {
+        getServicePlugins: (...args: any[]) => mockGetServicePlugins(...args),
+        load: jest.fn(),
+      },
+    },
+    projectName: "testProject",
+    eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
+  })),
+}));
+
+jest.mock("@/library/stores/Plugins", () => ({
+  ServiceType: {
+    WorkflowNodeStep: "WorkflowNodeStep",
+    WorkflowStep: "WorkflowStep",
+  },
+  PluginStore: jest.fn(),
+}));
+
+jest.mock("../../../../../library/services/projects");
+
+// Import after mocks are set up
+import {
+  createStepFromProvider,
+  getPluginDetailsForStep,
+  validateStepForSave,
+} from "../stepEditorUtils";
+
+// Use raw string values matching the mocked ServiceType enum
+const ServiceType = {
+  WorkflowNodeStep: "WorkflowNodeStep",
+  WorkflowStep: "WorkflowStep",
+};
+
+describe("stepEditorUtils", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("createStepFromProvider", () => {
+    it("creates a regular plugin step for WorkflowNodeStep service", () => {
+      const step = createStepFromProvider(
+        ServiceType.WorkflowNodeStep,
+        "script-inline",
+      );
+
+      expect(step.type).toBe("script-inline");
+      expect(step.config).toEqual({});
+      expect(step.nodeStep).toBe(true);
+      expect(step.id).toBeDefined();
+      expect(step.jobref).toBeUndefined();
+    });
+
+    it("creates a regular plugin step for WorkflowStep service", () => {
+      const step = createStepFromProvider(
+        ServiceType.WorkflowStep,
+        "some-workflow-step",
+      );
+
+      expect(step.type).toBe("some-workflow-step");
+      expect(step.config).toEqual({});
+      expect(step.nodeStep).toBe(false);
+      expect(step.id).toBeDefined();
+    });
+
+    it("creates a job reference step", () => {
+      const step = createStepFromProvider(
+        ServiceType.WorkflowNodeStep,
+        "job.reference",
+      );
+
+      expect(step.type).toBe("job.reference");
+      expect(step.nodeStep).toBe(true);
+      expect(step.description).toBe("");
+      expect(step.jobref).toBeDefined();
+      expect(step.jobref!.nodeStep).toBe(true);
+      expect(step.id).toBeDefined();
+    });
+
+    it("creates a job reference step with nodeStep=false for WorkflowStep", () => {
+      const step = createStepFromProvider(
+        ServiceType.WorkflowStep,
+        "job.reference",
+      );
+
+      expect(step.nodeStep).toBe(false);
+      expect(step.jobref!.nodeStep).toBe(false);
+    });
+
+    it("creates a conditional logic step", () => {
+      const step = createStepFromProvider(
+        ServiceType.WorkflowNodeStep,
+        "conditional.logic",
+      );
+
+      expect(step.type).toBe("conditional.logic");
+      expect(step.config).toEqual({});
+      expect(step.nodeStep).toBe(true);
+      expect(step.description).toBe("");
+      expect(step.id).toBeDefined();
+      expect(step.jobref).toBeUndefined();
+    });
+
+    it("generates unique ids for each call", () => {
+      const step1 = createStepFromProvider(
+        ServiceType.WorkflowNodeStep,
+        "script-inline",
+      );
+      const step2 = createStepFromProvider(
+        ServiceType.WorkflowNodeStep,
+        "script-inline",
+      );
+
+      expect(step1.id).not.toBe(step2.id);
+    });
+  });
+
+  describe("getPluginDetailsForStep", () => {
+    it("returns plugin details when plugin is found in rootStore", () => {
+      mockGetServicePlugins.mockReturnValue([
+        {
+          name: "script-inline",
+          title: "Inline Script",
+          description: "Execute an inline script",
+          iconUrl: "/icon/script.png",
+        },
+      ]);
+
+      const element = {
+        type: "script-inline",
+        nodeStep: true,
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(element);
+
+      expect(mockGetServicePlugins).toHaveBeenCalledWith(
+        ServiceType.WorkflowNodeStep,
+      );
+      expect(result).toEqual({
+        title: "Inline Script",
+        description: "Execute an inline script",
+        iconUrl: "/icon/script.png",
+        tooltip: "Execute an inline script",
+      });
+    });
+
+    it("uses WorkflowStep service when nodeStep is false", () => {
+      mockGetServicePlugins.mockReturnValue([]);
+
+      const element = {
+        type: "some-step",
+        nodeStep: false,
+        id: "test-id",
+      } as EditStepData;
+
+      getPluginDetailsForStep(element);
+
+      expect(mockGetServicePlugins).toHaveBeenCalledWith(
+        ServiceType.WorkflowStep,
+      );
+    });
+
+    it("falls back to element description when plugin not found", () => {
+      mockGetServicePlugins.mockReturnValue([]);
+
+      const element = {
+        type: "unknown-plugin",
+        nodeStep: true,
+        description: "My custom step",
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(element);
+
+      expect(result).toEqual({
+        title: "My custom step",
+        description: "",
+        iconUrl: "",
+        tooltip: "",
+      });
+    });
+
+    it("falls back to element type when neither plugin nor description exists", () => {
+      mockGetServicePlugins.mockReturnValue([]);
+
+      const element = {
+        type: "unknown-plugin",
+        nodeStep: true,
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(element);
+
+      expect(result).toEqual({
+        title: "unknown-plugin",
+        description: "",
+        iconUrl: "",
+        tooltip: "",
+      });
+    });
+
+    it("uses plugin title over element description when both exist", () => {
+      mockGetServicePlugins.mockReturnValue([
+        {
+          name: "script-inline",
+          title: "Inline Script",
+          description: "Execute an inline script",
+          iconUrl: "",
+        },
+      ]);
+
+      const element = {
+        type: "script-inline",
+        nodeStep: true,
+        description: "My custom description",
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(element);
+
+      expect(result.title).toBe("Inline Script");
+    });
+
+    it("uses element description as title fallback when plugin has no title", () => {
+      mockGetServicePlugins.mockReturnValue([
+        {
+          name: "script-inline",
+          title: "",
+          description: "",
+          iconUrl: "",
+        },
+      ]);
+
+      const element = {
+        type: "script-inline",
+        nodeStep: true,
+        description: "My custom step",
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(element);
+
+      expect(result.title).toBe("My custom step");
+    });
+  });
+
+  describe("validateStepForSave", () => {
+    it("returns valid for job reference with name", async () => {
+      const step = {
+        type: "job.reference",
+        jobref: { name: "My Job", uuid: "" },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual({});
+      expect(mockValidatePluginConfig).not.toHaveBeenCalled();
+    });
+
+    it("returns valid for job reference with uuid", async () => {
+      const step = {
+        type: "job.reference",
+        jobref: { name: "", uuid: "abc-123" },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual({});
+    });
+
+    it("returns invalid for job reference without name or uuid", async () => {
+      const step = {
+        type: "job.reference",
+        jobref: { name: "", uuid: "" },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.jobref).toBeDefined();
+    });
+
+    it("returns valid for conditional.logic without calling API", async () => {
+      const step = {
+        type: "conditional.logic",
+        config: {},
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual({});
+      expect(mockValidatePluginConfig).not.toHaveBeenCalled();
+    });
+
+    it("calls validatePluginConfig for regular plugins and returns valid", async () => {
+      mockValidatePluginConfig.mockResolvedValue({
+        valid: true,
+        errors: {},
+      });
+
+      const step = {
+        type: "script-inline",
+        config: { adhocLocalString: "echo hello" },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(mockValidatePluginConfig).toHaveBeenCalledWith(
+        ServiceType.WorkflowNodeStep,
+        "script-inline",
+        { adhocLocalString: "echo hello" },
+      );
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual({});
+    });
+
+    it("returns validation errors from API for regular plugins", async () => {
+      mockValidatePluginConfig.mockResolvedValue({
+        valid: false,
+        errors: { adhocLocalString: "Script is required" },
+      });
+
+      const step = {
+        type: "script-inline",
+        config: {},
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual({
+        adhocLocalString: "Script is required",
+      });
+    });
+
+    it("handles API errors gracefully", async () => {
+      mockValidatePluginConfig.mockRejectedValue(new Error("Network error"));
+
+      const step = {
+        type: "script-inline",
+        config: {},
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.errors._general).toBeDefined();
+    });
+
+    it("passes empty config when step config is undefined", async () => {
+      mockValidatePluginConfig.mockResolvedValue({
+        valid: true,
+        errors: {},
+      });
+
+      const step = {
+        type: "script-inline",
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      await validateStepForSave(step, ServiceType.WorkflowNodeStep);
+
+      expect(mockValidatePluginConfig).toHaveBeenCalledWith(
+        ServiceType.WorkflowNodeStep,
+        "script-inline",
+        {},
+      );
+    });
+  });
+});

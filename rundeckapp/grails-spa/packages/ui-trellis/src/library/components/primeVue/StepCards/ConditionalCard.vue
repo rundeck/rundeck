@@ -12,31 +12,69 @@
     <template #content>
       <Conditional :complex="complex" :condition-sets="conditionSets">
         <slot name="steps">
-          <Accordion v-if="steps && steps.length > 0" multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
+          <Accordion v-if="computedSteps && computedSteps.length > 0" multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
             <AccordionPanel
-              v-for="(step, index) in steps"
+              v-for="(step, index) in computedSteps"
               :key="step.id || index"
               :value="String(index + 1)"
+              :class="{ 'align-start': step.type === 'conditional.logic' }"
             >
-              <AccordionHeader>
+              <AccordionHeader v-if="step.type === 'conditional.logic'" as-child>
+                <div class="p-accordionheader nested">
+                  <Conditional
+                    :complex="((step.config?.conditionSets?.length) || 0) > 1"
+                    :condition-sets="step.config?.conditionSets || []"
+                  >
+                    <Accordion v-if="(step.config?.commands?.length || 0) > 0" multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
+                      <AccordionPanel
+                        v-for="(nestedStep, nestedIndex) in (step.config?.commands || [])"
+                        :key="nestedStep.id || nestedIndex"
+                        :value="String(nestedIndex + 1)"
+                      >
+                        <AccordionHeader>
+                          <plugin-info
+                            v-if="getStepPluginDetails(nestedStep)"
+                            class="conditionalCard--step-description"
+                            :detail="getStepPluginDetails(nestedStep)"
+                            :show-description="false"
+                            :show-title="false"
+                            :show-extended="false"
+                          >
+                            <template #titleprefix>
+                              <span class="link-step-plugin" @click.stop="handleNestedStepClick(nestedStep, nestedIndex)">
+                                {{ nestedStep.description || nestedStep.type || $t("Workflow.stepLabel") }}
+                              </span>
+                              <i class="pi pi-pencil"/>
+                            </template>
+                          </plugin-info>
+                        </AccordionHeader>
+                        <AccordionContent v-if="(nestedStep as any).content">
+                          <div v-html="(nestedStep as any).content"></div>
+                        </AccordionContent>
+                      </AccordionPanel>
+                    </Accordion>
+                  </Conditional>
+                </div>
+              </AccordionHeader>
+              <AccordionHeader v-else>
                 <plugin-info
-                  v-if="step.pluginDetails"
+                  v-if="getStepPluginDetails(step)"
                   class="conditionalCard--step-description"
-                  :detail="step.pluginDetails"
+                  :detail="getStepPluginDetails(step)"
                   :show-description="false"
                   :show-title="false"
                   :show-extended="false"
                 >
                   <template #titleprefix>
                     <span class="link-step-plugin" @click.stop="handleStepClick(step, index)">
-                      {{ step.description || step.name || $t("Workflow.stepLabel") }}
+                      {{ step.description || step.type || $t("Workflow.stepLabel") }}
                     </span>
                     <i class="pi pi-pencil"/>
                   </template>
                 </plugin-info>
               </AccordionHeader>
-              <AccordionContent v-if="step.content">
-                <div v-html="step.content"></div>
+              <AccordionContent v-if="step.type !== 'conditional.logic' && (step as any).content">
+                <div v-html="(step as any).content"></div>
               </AccordionContent>
             </AccordionPanel>
           </Accordion>
@@ -65,14 +103,9 @@ import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import StepCardContent from "@/library/components/primeVue/StepCards/StepCardContent.vue";
 import { getRundeckContext } from "@/library";
+import { getPluginDetailsForStep } from "@/app/components/job/workflow/stepEditorUtils";
+import type { EditStepData } from "@/app/components/job/workflow/types/workflowTypes";
 
-interface ConditionalStep {
-  id?: string;
-  name?: string;
-  description?: string;
-  pluginDetails?: any;
-  content?: string;
-}
 
 import "../Tag/tag.scss";
 import "../Tooltip/tooltip.scss";
@@ -119,7 +152,7 @@ export default defineComponent({
       default: () => [],
     },
     steps: {
-      type: Array as PropType<ConditionalStep[]>,
+      type: Array as PropType<EditStepData[]>,
       default: () => [],
     },
   },
@@ -133,6 +166,13 @@ export default defineComponent({
     },
     conditionSets() {
       return this.config?.config?.conditionSets || [];
+    },
+    computedSteps(): EditStepData[] {
+      const commands = this.config?.config?.commands || [];
+      if (commands.length === 0) {
+        return this.steps || [];
+      }
+      return commands;
     },
     complex() {
       return this.conditionSets.length > 1;
@@ -190,8 +230,17 @@ export default defineComponent({
     handleEdit() {
       this.$emit("edit");
     },
-    handleStepClick(step: ConditionalStep, index: number) {
+    getStepPluginDetails(step: EditStepData | { pluginDetails?: any }) {
+      if ((step as any).pluginDetails) {
+        return (step as any).pluginDetails;
+      }
+      return getPluginDetailsForStep(step as EditStepData);
+    },
+    handleStepClick(step: EditStepData, index: number) {
       this.$emit("step-click", { step, index });
+    },
+    handleNestedStepClick(step: EditStepData, index: number) {
+      this.$emit("step-click", { step, index, parentStepId: this.config.id });
     },
   },
 });

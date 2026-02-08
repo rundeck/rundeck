@@ -565,6 +565,50 @@
         </section>
       </div>
 
+      <div v-else-if="isConditionalLogic" class="conditional-logic-content">
+        <div class="step-name-section">
+          <div class="form-group">
+            <label class="col-sm-2 control-label input-sm" for="stepDescription">
+              {{ $t("Workflow.step.property.description.label") }}
+            </label>
+            <div class="col-sm-10">
+              <input
+                id="stepDescription"
+                data-testid="step-description"
+                v-model="stepDescription"
+                type="text"
+                name="stepDescription"
+                size="100"
+                class="form-control input-sm"
+              />
+            </div>
+            <div class="col-sm-10 col-sm-offset-2 help-block">
+              {{ $t("Workflow.step.property.description.help") }}
+            </div>
+          </div>
+        </div>
+
+        <div class="condition-section">
+          <ConditionsEditor
+            ref="conditionsEditor"
+            v-model="conditionSets"
+            :service-name="serviceName"
+            :extra-autocomplete-vars="extraAutocompleteVars"
+          />
+        </div>
+
+        <div class="conditional-divider"></div>
+
+        <div class="steps-section">
+          <InnerStepList
+            v-model="innerCommands"
+            :target-service="serviceName"
+            :depth="depth + 1"
+            :extra-autocomplete-vars="extraAutocompleteVars"
+          />
+        </div>
+      </div>
+
       <div v-else-if="provider">
         <div class="step-name-section">
           <div class="form-group">
@@ -658,7 +702,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from "vue";
+import { defineComponent, defineAsyncComponent, type PropType } from "vue";
 import Card from "primevue/card";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
@@ -675,6 +719,10 @@ import NodeListEmbed from "@/app/components/job/resources/NodeListEmbed.vue";
 import PtAutoComplete from "@/library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
 import UiSocket from "@/library/components/utils/UiSocket";
 import { getContextVariables, transformVariables } from "@/library/components/utils/contextVariableUtils";
+import ConditionsEditor from "./ConditionsEditor.vue";
+import type { ConditionSet } from "./types/conditionalStepTypes";
+import { createEmptyConditionSet } from "./types/conditionalStepTypes";
+import type { EditStepData } from "./types/workflowTypes";
 
 const rundeckContext = getRundeckContext();
 const eventBus = rundeckContext.eventBus;
@@ -690,6 +738,8 @@ export default defineComponent({
     NodeListEmbed,
     PtAutoComplete,
     UiSocket,
+    ConditionsEditor,
+    InnerStepList: defineAsyncComponent(() => import("./InnerStepList.vue")),
   },
   provide() {
     return {
@@ -725,6 +775,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    depth: {
+      type: Number,
+      default: 0,
+    },
   },
   emits: ["cancel", "save", "update:modelValue"],
   data() {
@@ -758,6 +812,9 @@ export default defineComponent({
       validationError: "",
       showRequired: false,
       eventBus: eventBus,
+      // Conditional logic specific data
+      conditionSets: [createEmptyConditionSet()] as ConditionSet[],
+      innerCommands: [] as EditStepData[],
       // Job reference defaults (matching JobRefForm)
       jobRefDefaults: {
         description: "",
@@ -789,6 +846,9 @@ export default defineComponent({
   computed: {
     isJobRef() {
       return Boolean(this.editModel?.jobref);
+    },
+    isConditionalLogic() {
+      return this.editModel?.type === "conditional.logic";
     },
     stepConfig() {
       // Computed config that includes description for StepCardHeader
@@ -822,13 +882,19 @@ export default defineComponent({
           this.stepDescription = val.description || "";
           
           // For jobref: merge with defaults (like JobRefForm does)
+          // For conditional.logic: extract conditionSets and commands
           // For regular steps: clone as-is
           if (val.jobref) {
-            // Use merge to overlay incoming data on top of defaults
             this.editModel = merge(cloneDeep(this.jobRefDefaults), val);
           } else {
             const { description, ...rest } = val;
             this.editModel = cloneDeep(rest);
+          }
+          
+          // Initialize conditional logic data
+          if (this.editModel.type === "conditional.logic") {
+            this.conditionSets = this.editModel.config?.conditionSets || [createEmptyConditionSet()];
+            this.innerCommands = this.editModel.config?.commands || [];
           }
           
           this.loadProvider();
@@ -863,6 +929,12 @@ export default defineComponent({
       this.editModel = cloneDeep(rest);
     }
     
+    // Initialize conditional logic data
+    if (this.editModel.type === "conditional.logic") {
+      this.conditionSets = this.editModel.config?.conditionSets || [createEmptyConditionSet()];
+      this.innerCommands = this.editModel.config?.commands || [];
+    }
+    
     if (
       this.modelValue.config &&
       Object.keys(this.modelValue.config).length === 0
@@ -895,6 +967,27 @@ export default defineComponent({
         }
         this.validationError = "";
         this.showRequired = false;
+      }
+      
+      // Validate conditional logic before saving
+      if (this.isConditionalLogic) {
+        const conditionsEditor = this.$refs.conditionsEditor as InstanceType<typeof ConditionsEditor>;
+        if (conditionsEditor && !conditionsEditor.validate()) {
+          return;
+        }
+        
+        const saveData = {
+          ...this.editModel,
+          description: this.stepDescription,
+          config: {
+            ...this.editModel.config,
+            conditionSets: this.conditionSets,
+            commands: this.innerCommands,
+          },
+        };
+        this.$emit("update:modelValue", saveData);
+        this.$emit("save");
+        return;
       }
       
       // Merge description back into editModel before emitting
@@ -1058,6 +1151,31 @@ export default defineComponent({
   flex-direction: column;
   gap: var(--sizes-1);
   margin-bottom: var(--sizes-4);
+}
+
+// Conditional logic specific styles
+.conditional-logic-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sizes-6);
+
+  .condition-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sizes-4);
+  }
+
+  .conditional-divider {
+    height: 1px;
+    background: var(--colors-gray-200);
+    margin: var(--sizes-2) 0;
+  }
+
+  .steps-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sizes-4);
+  }
 }
 
 // Job Reference specific styles

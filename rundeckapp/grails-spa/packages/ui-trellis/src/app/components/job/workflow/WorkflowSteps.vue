@@ -336,7 +336,11 @@ import { defineComponent } from "vue";
 import LogFilters from "./LogFilters.vue";
 import CommonUndoRedoDraggableList from "@/app/components/common/CommonUndoRedoDraggableList.vue";
 import { Operation } from "@/app/components/job/options/model/ChangeEvents";
-import { validatePluginConfig } from "@/library/modules/pluginService";
+import {
+  createStepFromProvider,
+  getPluginDetailsForStep,
+  validateStepForSave,
+} from "./stepEditorUtils";
 import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
 import ConditionalCard from "@/library/components/primeVue/StepCards/ConditionalCard.vue";
@@ -393,6 +397,7 @@ export default defineComponent({
       editIndex: -1,
       loadingWorflowSteps: false,
       editingStepId: null as string | null,
+      isNewInlineStep: false,
     };
   },
   computed: {
@@ -461,25 +466,8 @@ export default defineComponent({
     notify() {
       eventBus.emit("workflow-editor-workflowsteps-updated", this.model);
     },
-    getPluginDetails(element) {
-      const plugins = element.nodeStep ? this.workflowNodeStepPlugins : this.workflowStepPlugins;
-      const plugin = plugins.find(p => p.name === element.type);
-
-      if (plugin) {
-        return {
-          title: plugin.title || element.description || element.type,
-          description: plugin.description || '',
-          iconUrl: plugin.iconUrl || '',
-          tooltip: plugin.description || '',
-        };
-      }
-
-      return {
-        title: element.description || element.type,
-        description: '',
-        iconUrl: '',
-        tooltip: '',
-      };
+    getPluginDetails(element: EditStepData) {
+      return getPluginDetailsForStep(element);
     },
     async chooseProviderAdd({
       service,
@@ -504,70 +492,48 @@ export default defineComponent({
         };
       }
 
+      const newStep = createStepFromProvider(service, provider);
+
       if (provider === "job.reference") {
-        // Minimal initialization - EditStepCard/JobRefForm handle defaults
-        const jobRefData = {
-          type: provider,
-          description: "",
-          nodeStep: service === ServiceType.WorkflowNodeStep,  // Top-level for getPluginDetails
-          jobref: {
-            nodeStep: service === ServiceType.WorkflowNodeStep,
-          },
-        };
-        
         // Error handlers always use modal
         if (this.isErrorHandler) {
-          this.editModel = jobRefData;
+          this.editModel = newStep;
           this.editJobRefModal = true;
           return;
         }
-        
-        // EA mode: inline editing (add id and push to array, same as regular steps)
+
+        // EA mode: inline editing (add to array, same as regular steps)
         if (this.conditionalEnabled) {
-          this.editModel = { ...jobRefData, id: mkid() };
+          this.editModel = newStep;
           this.editIndex = this.model.commands.length;
           this.editingStepId = this.editModel.id;
+          this.isNewInlineStep = true;
           this.model.commands.push(this.editModel);
         } else {
           // Non-EA mode: modal
-          this.editModel = jobRefData;
+          this.editModel = newStep;
           this.editJobRefModal = true;
         }
       } else if (provider === "conditional.logic") {
-        const newStep = {
-          type: provider,
-          config: {},
-          nodeStep: service === ServiceType.WorkflowNodeStep,
-          description: "",
-          id: mkid(),
-        };
         this.editModel = newStep;
         this.editIndex = this.model.commands.length;
         this.editingStepId = newStep.id;
+        this.isNewInlineStep = true;
         // Add the step to the list immediately so EditConditionalStepCard shows
         this.model.commands.push(newStep);
       } else {
         // Check if this is an error handler - use modal flow
         if (this.isErrorHandler) {
-          this.editModel = {
-            type: provider,
-            config: {},
-            nodeStep: service === ServiceType.WorkflowNodeStep,
-          };
+          this.editModel = newStep;
           this.editStepModal = true;
           return;
         }
 
         // Regular new step - use inline EditStepCard flow
-        const newStep = {
-          type: provider,
-          config: {},
-          nodeStep: service === ServiceType.WorkflowNodeStep,
-          id: mkid(),
-        };
         this.editModel = newStep;
         this.editIndex = this.model.commands.length;
         this.editingStepId = newStep.id;
+        this.isNewInlineStep = true;
         // Add the step to the list immediately so EditStepCard shows
         this.model.commands.push(newStep);
       }
@@ -585,6 +551,7 @@ export default defineComponent({
       this.editIndex = -1;
       this.isErrorHandler = false;
       this.editingStepId = null;
+      this.isNewInlineStep = false;
     },
     handleCancelEdit() {
       // If we're canceling a new step that was just added, remove it
@@ -729,37 +696,25 @@ export default defineComponent({
           saveData.jobref = this.editModel.jobref;
         }
 
-        if (!saveData.jobref && !this.editModel.jobref) {
-          if (!this.isErrorHandler) {
+        // Build a step-like object for shared validation
+        // For error handlers, the type/config come from editModel (what user edited in the modal)
+        const stepForValidation = this.isErrorHandler
+          ? { type: this.editModel.type, config: this.editModel.config, jobref: this.editModel.jobref }
+          : { type: saveData.type, config: saveData.config, jobref: saveData.jobref };
+
+        const result = await validateStepForSave(stepForValidation as EditStepData, this.editService);
+
+        if (result.valid) {
+          // For jobrefs, carry over the description from editModel
+          if (stepForValidation.jobref) {
+            saveData.description = this.editModel.description;
+          }
+          if (!stepForValidation.jobref && !this.isErrorHandler) {
             saveData.filters = [];
           }
-
-          // For error handlers, use editModel.type/config (what user edited in modal); for regular steps, use step.type/config
-          // The original pattern uses || but that would use step.type for error handlers, which is incorrect
-          const typeToValidate = this.isErrorHandler 
-            ? this.editModel.type  // Use editModel directly since that's what was edited in the modal
-            : saveData.type;
-          const configToValidate = this.isErrorHandler 
-            ? this.editModel.config  // Use editModel directly since that's what was edited in the modal
-            : saveData.config;
-
-          const response = await validatePluginConfig(
-            this.editService,
-            typeToValidate,
-            configToValidate || {},
-          );
-
-          if (
-            response.valid &&
-            Object.keys(response.errors || {}).length === 0
-          ) {
-            this.handleSuccessOnValidation(saveData);
-          } else {
-            this.editModelValidation = response;
-          }
-        } else {
-          saveData.description = this.editModel.description;
           this.handleSuccessOnValidation(saveData);
+        } else {
+          this.editModelValidation = result;
         }
       } catch (e) {
         console.log(e);
@@ -820,7 +775,20 @@ export default defineComponent({
       };
       let newData = cloneDeep(saveData);
 
-      if (this.editIndex >= 0) {
+      if (this.editIndex >= 0 && this.isNewInlineStep) {
+        // New inline step: the step was pushed to the array at selection time
+        // without an undo entry. Use operationModify to update the data in place,
+        // but record as Insert/Remove so a single undo removes the entire step.
+        if (this.isErrorHandler) {
+          const originalData = this.model.commands[this.editIndex];
+          newData = { ...originalData, ...saveData };
+        }
+        this.$refs.historyControls.operationModify(this.editIndex, newData);
+        dataForUpdatingHistory.index = this.editIndex;
+        dataForUpdatingHistory.operation = Operation.Insert;
+        dataForUpdatingHistory.undo = Operation.Remove;
+      } else if (this.editIndex >= 0) {
+        // Existing step being modified
         const originalData = this.model.commands[this.editIndex];
         if (this.isErrorHandler) {
           newData = { ...originalData, ...saveData };
@@ -851,6 +819,7 @@ export default defineComponent({
       this.editModelValidation = null;
       this.editIndex = -1;
       this.editingStepId = null;
+      this.isNewInlineStep = false;
     },
     async handleSaveStep(index: number) {
       try {
@@ -862,44 +831,22 @@ export default defineComponent({
           saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
         }
 
-        // Handle jobref validation (EA mode inline only)
-        if (saveData.jobref) {
-          // Validate: name or UUID required
-          if (!saveData.jobref.name && !saveData.jobref.uuid) {
-            this.editModelValidation = {
-              valid: false,
-              errors: { jobref: this.$t("commandExec.jobName.blank.message") },
-            };
-            return;
-          }
-          // No plugin validation needed for jobrefs - skip to save
-          this.handleSuccessOnValidation(saveData);
-          return;
+        // Initialize filters for regular plugin steps
+        if (!saveData.jobref && saveData.type !== "conditional.logic" && !saveData.filters) {
+          saveData.filters = [];
         }
 
-        // Handle regular plugin steps (not jobref, not conditional)
-        if (saveData.type !== "conditional.logic") {
-          if (!saveData.filters) {
-            saveData.filters = [];
-          }
+        const serviceName = this.editService || (saveData.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep);
+        const result = await validateStepForSave(saveData, serviceName);
 
-          const response = await validatePluginConfig(
-            this.editService!,
-            saveData.type,
-            saveData.config || {},
-          );
-
-          if (
-            response.valid &&
-            Object.keys(response.errors || {}).length === 0
-          ) {
-            this.handleSuccessOnValidation(saveData);
-          } else {
-            this.editModelValidation = response;
-          }
-        } else {
-          // Conditional logic steps - no validation needed
+        if (result.valid) {
           this.handleSuccessOnValidation(saveData);
+        } else {
+          // Translate i18n key for jobref validation error
+          if (result.errors.jobref) {
+            result.errors.jobref = this.$t(result.errors.jobref);
+          }
+          this.editModelValidation = result;
         }
       } catch (e) {
         console.log(e);
@@ -915,26 +862,13 @@ export default defineComponent({
           saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
         }
 
-        // Skip validation endpoint call for conditional steps
-        if (saveData.type === "conditional.logic") {
-          this.handleSuccessOnValidation(saveData);
-          return;
-        }
+        const serviceName = this.editService || (saveData.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep);
+        const result = await validateStepForSave(saveData, serviceName);
 
-        // Validation logic for non-conditional steps (kept but not executed for conditional steps)
-        const response = await validatePluginConfig(
-          this.editService!,
-          saveData.type,
-          saveData.config || {},
-        );
-
-        if (
-          response.valid &&
-          Object.keys(response.errors || {}).length === 0
-        ) {
+        if (result.valid) {
           this.handleSuccessOnValidation(saveData);
         } else {
-          this.editModelValidation = response;
+          this.editModelValidation = result;
         }
       } catch (e) {
         console.log(e);
@@ -943,30 +877,16 @@ export default defineComponent({
     handleSwitchStepType(index: number) {
       const command = this.model.commands[index];
       if (command && command.type === "conditional.logic") {
-        // Toggle nodeStep property
-        const updatedCommand = {
-          ...command,
-          nodeStep: !command.nodeStep,
-        };
-        
-        // Update the command in the model
-        this.$refs.historyControls.operationModify(index, updatedCommand);
-        
+        // Toggle nodeStep property directly on the model command
+        // without creating an undo snapshot. The save handler will
+        // create the proper undo entry when the user saves.
+        command.nodeStep = !command.nodeStep;
+
         // Update editModel and editService to reflect the change
-        this.editModel = cloneDeep(updatedCommand);
-        this.editService = updatedCommand.nodeStep
+        this.editModel = cloneDeep(command);
+        this.editService = command.nodeStep
           ? ServiceType.WorkflowNodeStep
           : ServiceType.WorkflowStep;
-        
-        // Emit change event for history tracking
-        this.$refs.historyControls.changeEvent({
-          index,
-          dest: -1,
-          orig: command,
-          value: updatedCommand,
-          operation: Operation.Modify,
-          undo: Operation.Modify,
-        });
       }
     },
   },

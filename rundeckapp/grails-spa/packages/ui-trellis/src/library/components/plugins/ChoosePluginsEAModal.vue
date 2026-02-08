@@ -169,6 +169,10 @@ export default defineComponent({
       type: String,
       required: false,
     },
+    excludeProviders: {
+      type: Array as () => string[],
+      default: () => [],
+    },
   },
   emits: ["cancel", "selected", "update:modelValue"],
   data() {
@@ -249,8 +253,10 @@ export default defineComponent({
       
       return servicesToFilter.map((service) => {
         const filteredProviders =
-          service.providers?.filter((provider) =>
-            this.matchesSearchQuery(provider),
+          service.providers?.filter(
+            (provider) =>
+              this.matchesSearchQuery(provider) &&
+              !this.excludeProviders.includes(provider.name),
           ) || [];
         return {
           ...service,

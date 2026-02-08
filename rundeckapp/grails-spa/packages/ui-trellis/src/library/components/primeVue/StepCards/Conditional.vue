@@ -13,7 +13,7 @@
         </p>
       </template>
     </template>
-    <div class="conditional--do">
+    <div v-if="!headerOnly" class="conditional--do">
       <div v-if="complex && conditionSets && conditionSets.length > 1" class="conditional--complex">
         <template v-for="(conditionSet, setIndex) in conditionSets" :key="conditionSet.id">
           <template v-if="setIndex > 0">
@@ -56,6 +56,10 @@ export default defineComponent({
     conditionSets: {
       type: Array as PropType<ConditionSet[]>,
       default: () => []
+    },
+    headerOnly: {
+      type: Boolean,
+      default: false
     },
   },
   methods: {

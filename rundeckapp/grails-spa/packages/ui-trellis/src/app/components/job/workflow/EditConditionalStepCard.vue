@@ -44,77 +44,24 @@
             </p>
           </div>
 
-          <div
-            v-for="(conditionSet, setIndex) in conditionSets"
-            :key="conditionSet.id"
-            class="condition-set-container"
-          >
-            <div v-if="setIndex > 0" class="or-separator">
-              <span class="or-label">{{ $t("editConditionalStep.or") }}</span>
-            </div>
-
-            <div class="condition-set">
-              <h4 class="condition-set-title">
-                {{ $t("editConditionalStep.conditionNumber", { number: setIndex + 1 }) }}
-              </h4>
-
-              <div class="conditions-list">
-                <div class="conditions-connector" :class="{ 'has-multiple': conditionSet.conditions.length > 1 }">
-                  <template v-for="(condition, condIndex) in conditionSet.conditions" :key="condition.id">
-                    <div v-if="condIndex > 0" class="and-separator">
-                      <span class="and-label">{{ $t("editConditionalStep.and") }}</span>
-                    </div>
-                    <ConditionRow
-                      :condition="condition"
-                      :field-options="fieldOptions"
-                      :operator-options="operatorOptions"
-                      :show-labels="condIndex === 0"
-                      :show-delete-button="conditionSet.conditions.length > 1 || conditionSets.length > 1"
-                      :service-name="serviceName"
-                      :suggestions="autocompleteSuggestions"
-                      :tab-mode="autocompleteSuggestions.length > 0"
-                      :field-error="fieldErrors[condition.id]"
-                      :value-error="valueErrors[condition.id]"
-                      @update:condition="(payload) => updateCondition(setIndex, condIndex, payload.condition, payload.fieldName)"
-                      @delete="() => removeCondition(setIndex, condIndex)"
-                      @switch-step-type="handleSwitchStepType"
-                    />
-                  </template>
-                </div>
-              </div>
-
-              <div v-if="canAddCondition(setIndex)" class="condition-actions" :class="{ 'has-multiple': conditionSet.conditions.length > 1 }">
-                <button type="button" class="btn-add-link" @click="addCondition(setIndex)">
-                  <i class="pi pi-plus"></i>
-                  <span>{{ $t("editConditionalStep.add") }}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="canAddConditionSet" class="condition-set-actions">
-            <PtButton
-              outlined
-              severity="secondary"
-              icon="pi pi-plus"
-              :label="$t('editConditionalStep.addConditionSet')"
-              class="btn-add-condition-set"
-              @click="addConditionSet"
-            />
-          </div>
+          <ConditionsEditor
+            ref="conditionsEditor"
+            v-model="conditionSets"
+            :service-name="serviceName"
+            :extra-autocomplete-vars="extraAutocompleteVars"
+            @switch-step-type="handleSwitchStepType"
+          />
         </div>
 
         <div class="divider"></div>
 
         <div class="steps-section">
           <h3 class="text-heading--md section-title">{{ $t("editConditionalStep.setSteps") }}</h3>
-          <PtButton
-            outlined
-            severity="secondary"
-            icon="pi pi-plus"
-            :label="$t('editConditionalStep.addConditionStep')"
-            class="btn-add-condition-step"
-            @click="handleAddConditionStep"
+          <InnerStepList
+            v-model="innerCommands"
+            :target-service="serviceName"
+            :depth="1"
+            :extra-autocomplete-vars="extraAutocompleteVars"
           />
         </div>
       </template>
@@ -144,21 +91,16 @@ import { defineComponent, type PropType } from "vue";
 import Card from "primevue/card";
 import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
-import ConditionRow from "./ConditionRow.vue";
-import { contextVariables, type ContextVariable } from "@/library/stores/contextVariables";
+import ConditionsEditor from "./ConditionsEditor.vue";
+import InnerStepList from "./InnerStepList.vue";
 import { ServiceType } from "@/library/stores/Plugins";
 import { cloneDeep } from "lodash";
 import {
-  type Condition,
   type ConditionSet,
-  type OperatorOption,
-  type FieldOption,
-  MAX_CONDITIONS_PER_SET,
-  MAX_CONDITION_SETS,
-  createEmptyCondition,
   createEmptyConditionSet,
 } from "./types/conditionalStepTypes";
 import type { EditStepData } from "./types/workflowTypes";
+import type { ContextVariable } from "@/library/stores/contextVariables";
 
 export default defineComponent({
   name: "EditConditionalStepCard",
@@ -166,7 +108,8 @@ export default defineComponent({
     Card,
     PtInput,
     PtButton,
-    ConditionRow,
+    ConditionsEditor,
+    InnerStepList,
   },
   props: {
     modelValue: {
@@ -195,10 +138,7 @@ export default defineComponent({
       editModel: {} as EditStepData,
       stepName: "",
       conditionSets: [createEmptyConditionSet()] as ConditionSet[],
-      fieldErrors: {} as Record<string, string>,
-      valueErrors: {} as Record<string, string>,
-      isInitialized: false,
-      touchedConditions: new Set<string>(),
+      innerCommands: [] as EditStepData[],
     };
   },
   watch: {
@@ -208,37 +148,18 @@ export default defineComponent({
           this.editModel = cloneDeep(val);
           this.stepName = val.description || "";
           this.conditionSets = val.config?.conditionSets || [createEmptyConditionSet()];
-          // Clear errors and touched state when modelValue changes
-          this.fieldErrors = {};
-          this.valueErrors = {};
-          this.touchedConditions.clear();
-          // Reset initialization flag when modelValue changes (e.g., switching steps)
-          this.isInitialized = false;
-          this.$nextTick(() => {
-            this.isInitialized = true;
-          });
+          this.innerCommands = val.config?.commands || [];
         }
       },
       immediate: true,
       deep: true,
-    },
-    conditionSets: {
-      handler() {
-        // Explicitly do nothing - validation happens individually in updateCondition
-        // This watcher exists only for Vue reactivity tracking, not for validation
-      },
-      deep: true,
-      immediate: false,
     },
   },
   mounted() {
     this.editModel = cloneDeep(this.modelValue);
     this.stepName = this.modelValue.description || "";
     this.conditionSets = this.modelValue.config?.conditionSets || [createEmptyConditionSet()];
-    // Mark as initialized after mount completes
-    this.$nextTick(() => {
-      this.isInitialized = true;
-    });
+    this.innerCommands = this.modelValue.config?.commands || [];
   },
   computed: {
     cardTitle(): string {
@@ -251,156 +172,12 @@ export default defineComponent({
         ? this.$t("editConditionalStep.descriptionWorkflow")
         : this.$t("editConditionalStep.description");
     },
-    canAddConditionSet(): boolean {
-      return this.conditionSets.length < MAX_CONDITION_SETS;
-    },
-    fieldOptions(): FieldOption[] {
-      const nodeAttrs = contextVariables().node || [];
-      return nodeAttrs.map((attr) => ({
-        value: `node.${attr.name}`,
-        label: `${attr.title} [node.${attr.name}]`,
-      }));
-    },
-    operatorOptions(): OperatorOption[] {
-      return [
-        { label: this.$t("Workflow.conditional.operator.equals"), value: "equals" },
-        { label: this.$t("Workflow.conditional.operator.notEquals"), value: "notEquals" },
-        { label: this.$t("Workflow.conditional.operator.contains"), value: "contains" },
-        { label: this.$t("Workflow.conditional.operator.notContains"), value: "notContains" },
-        { label: this.$t("Workflow.conditional.operator.regex"), value: "regex" },
-      ];
-    },
-    autocompleteSuggestions(): ContextVariable[] {
-      const jobVars = (contextVariables().job || []).map((v) => ({
-        ...v,
-        name: `\${job.${v.name}}`,
-      }));
-      const optionVars = this.extraAutocompleteVars
-        .filter((v) => v.type === "option")
-        .map((v) => ({
-          ...v,
-          name: `\${option.${v.name}}`,
-        }));
-      return [...jobVars, ...optionVars];
-    },
   },
   methods: {
-    canAddCondition(setIndex: number): boolean {
-      return this.conditionSets[setIndex].conditions.length < MAX_CONDITIONS_PER_SET;
-    },
-    addCondition(setIndex: number) {
-      if (this.canAddCondition(setIndex)) {
-        const newCondition = createEmptyCondition();
-        this.conditionSets[setIndex].conditions.push(newCondition);
-        // Don't mark new conditions as touched - they shouldn't show errors until user interacts
-      }
-    },
-    removeCondition(setIndex: number, conditionIndex: number) {
-      const set = this.conditionSets[setIndex];
-      const conditionToRemove = set.conditions[conditionIndex];
-      if (set.conditions.length > 1) {
-        set.conditions.splice(conditionIndex, 1);
-      } else if (this.conditionSets.length > 1) {
-        this.conditionSets.splice(setIndex, 1);
-      }
-      // Clean up errors and touched state for removed condition
-      if (conditionToRemove) {
-        delete this.fieldErrors[conditionToRemove.id];
-        delete this.valueErrors[conditionToRemove.id];
-        this.touchedConditions.delete(conditionToRemove.id);
-      }
-    },
-    updateCondition(
-      setIndex: number,
-      conditionIndex: number,
-      updatedCondition: Condition,
-      fieldName?: "field" | "value" | "operator",
-    ) {
-      // Update the condition in the array
-      this.conditionSets[setIndex].conditions[conditionIndex] = updatedCondition;
-
-      // Only validate and mark as touched for field/value changes
-      // Note: Components handle debouncing internally, so we validate immediately
-      if (fieldName === "field" || fieldName === "value") {
-        this.touchedConditions.add(updatedCondition.id);
-        if (this.isInitialized) {
-          this.validateField(updatedCondition.id, fieldName);
-        }
-      }
-      // Operator changes don't need validation
-    },
-    addConditionSet() {
-      if (this.canAddConditionSet) {
-        const newSet = createEmptyConditionSet();
-        this.conditionSets.push(newSet);
-        // Don't mark new conditions as touched - they shouldn't show errors until user interacts
-      }
-    },
-    validateField(conditionId: string, fieldName: "field" | "value" | null = null) {
-      // Find the condition
-      let condition: Condition | null = null;
-      for (const conditionSet of this.conditionSets) {
-        const found = conditionSet.conditions.find((c) => c.id === conditionId);
-        if (found) {
-          condition = found;
-          break;
-        }
-      }
-
-      if (!condition) {
-        // Condition not found, clean up errors based on fieldName
-        if (!fieldName || fieldName === "field") {
-          delete this.fieldErrors[conditionId];
-        }
-        if (!fieldName || fieldName === "value") {
-          delete this.valueErrors[conditionId];
-        }
-        return;
-      }
-
-      // Validate based on fieldName
-      // fieldName = null means validate all fields (for save)
-      // fieldName = 'field' means validate only field
-      // fieldName = 'value' means validate only value
-
-      if (!fieldName || fieldName === "field") {
-        const fieldError = !condition.field || (condition.field && condition.field.trim() === "")
-          ? this.$t("editConditionalStep.fieldRequired")
-          : undefined;
-
-        if (fieldError) {
-          this.fieldErrors[conditionId] = fieldError;
-        } else {
-          delete this.fieldErrors[conditionId];
-        }
-      }
-
-      if (!fieldName || fieldName === "value") {
-        const valueError = !condition.value || condition.value.trim() === ""
-          ? this.$t("editConditionalStep.valueRequired")
-          : undefined;
-
-        if (valueError) {
-          this.valueErrors[conditionId] = valueError;
-        } else {
-          delete this.valueErrors[conditionId];
-        }
-      }
-    },
     handleSave() {
-      // Validate all conditions and all fields before saving
-      let isValid = true;
-      this.conditionSets.forEach((conditionSet) => {
-        conditionSet.conditions.forEach((condition) => {
-          // Validate all fields (fieldName = null means validate all)
-          this.validateField(condition.id, null);
-          if (this.fieldErrors[condition.id] || this.valueErrors[condition.id]) {
-            isValid = false;
-          }
-        });
-      });
-
-      if (!isValid) {
+      // Delegate conditions validation to ConditionsEditor
+      const conditionsEditor = this.$refs.conditionsEditor as InstanceType<typeof ConditionsEditor>;
+      if (conditionsEditor && !conditionsEditor.validate()) {
         return;
       }
 
@@ -410,6 +187,7 @@ export default defineComponent({
         config: {
           ...this.editModel.config,
           conditionSets: this.conditionSets,
+          commands: this.innerCommands,
         },
       };
       this.$emit("update:modelValue", updatedModel);
@@ -417,9 +195,6 @@ export default defineComponent({
     },
     handleCancel() {
       this.$emit("cancel");
-    },
-    handleAddConditionStep() {
-      // Add condition step logic - to be implemented
     },
     handleSwitchStepType() {
       this.$emit("switch-step-type");
@@ -532,140 +307,6 @@ export default defineComponent({
 
     .section-description {
       margin: 0 0 12px 0;
-    }
-  }
-
-  .condition-set-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sizes-4);
-  }
-
-  .or-separator {
-    display: flex;
-    align-items: center;
-
-    .or-label {
-      font-family: Inter, var(--fonts-body);
-      font-size: 16px;
-      font-weight: var(--fontWeights-medium);
-      color: var(--colors-gray-500);
-    }
-  }
-
-  .condition-set {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    .condition-set-title {
-      margin: 0;
-      font-family: Inter, var(--fonts-body);
-      font-size: 16px;
-      font-weight: var(--fontWeights-medium);
-      color: var(--colors-gray-800);
-    }
-  }
-
-  .conditions-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .conditions-connector {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    transition: padding-left 0.2s ease;
-
-    &.has-multiple {
-      padding-left: 22px;
-      &::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 40px;
-        bottom: 20px;
-        width: 14px;
-        border-left: 1px solid var(--colors-gray-300-original);
-        border-top: 1px solid var(--colors-gray-300-original);
-        border-bottom: 1px solid var(--colors-gray-300-original);
-        border-right: none;
-        border-radius: 6px 0 0 6px;
-        margin-bottom: 20px;
-      }
-    }
-  }
-
-  .and-separator {
-    display: flex;
-    align-items: center;
-    position: relative;
-
-    .and-label {
-      font-family: Inter, var(--fonts-body);
-      font-size: 14px;
-      font-weight: var(--fontWeights-semibold);
-      color: var(--colors-gray-600);
-    }
-  }
-
-  .condition-actions {
-    display: flex;
-    align-items: center;
-
-    &.has-multiple {
-      padding-left: 22px;
-    }
-  }
-
-  .condition-set-actions {
-    display: flex;
-    align-items: center;
-    margin-top: var(--sizes-2);
-  }
-
-  .btn-add-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sizes-1);
-    background: var(--colors-blue-50, #f5f9ff);
-    color: var(--colors-blue-600, #0052cc);
-    border: none;
-    border-radius: var(--radii-md);
-    padding: 5px 9px;
-    font-family: Inter, var(--fonts-body);
-    font-size: 12px;
-    font-weight: var(--fontWeights-medium);
-    line-height: 16px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-
-    &:hover {
-      background: var(--colors-blue-100);
-    }
-
-    i {
-      font-size: 12px;
-    }
-  }
-
-  .btn-add-condition-set,
-  .btn-add-condition-step {
-    align-self: flex-start;
-    padding: 5px 9px;
-    font-size: 12px;
-    border-color: var(--colors-gray-600);
-    color: var(--colors-gray-800);
-
-    &:hover {
-      background: var(--colors-gray-100);
-      border-color: var(--colors-gray-800);
-    }
-
-    :deep(.pi) {
-      font-size: 12px;
     }
   }
 
