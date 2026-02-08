@@ -25,6 +25,7 @@
         @searching="handleSearching"
       />
       <pt-select-button
+        v-if="!preventServiceSwap"
         v-model="selectedService"
         :options="serviceOptions"
         :option-label="getServiceOptionLabel"
@@ -160,6 +161,14 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    preventServiceSwap: {
+      type: Boolean,
+      default: false,
+    },
+    targetService: {
+      type: String,
+      required: false,
+    },
   },
   emits: ["cancel", "selected", "update:modelValue"],
   data() {
@@ -229,7 +238,16 @@ export default defineComponent({
         : this.$t("commonNodeSteps");
     },
     filteredServices() {
-      return this.loadedServices.map((service) => {
+      let servicesToFilter = this.loadedServices;
+      
+      // If preventServiceSwap is enabled, only show services matching targetService
+      if (this.preventServiceSwap && this.targetService) {
+        servicesToFilter = this.loadedServices.filter(
+          (service) => service.service === this.targetService,
+        );
+      }
+      
+      return servicesToFilter.map((service) => {
         const filteredProviders =
           service.providers?.filter((provider) =>
             this.matchesSearchQuery(provider),
@@ -367,6 +385,22 @@ export default defineComponent({
         this.backToAllPlugins();
         // Reset PluginSearch component by incrementing key
         this.pluginSearchKey += 1;
+        // If preventServiceSwap is enabled, set selectedService to targetService
+        if (this.preventServiceSwap && this.targetService) {
+          this.selectedService = this.targetService;
+        }
+      }
+    },
+    preventServiceSwap(newVal) {
+      // When preventServiceSwap changes, update selectedService if needed
+      if (newVal && this.targetService) {
+        this.selectedService = this.targetService;
+      }
+    },
+    targetService(newVal) {
+      // When targetService changes, update selectedService if preventServiceSwap is enabled
+      if (this.preventServiceSwap && newVal) {
+        this.selectedService = newVal;
       }
     },
     modalShown(val) {
@@ -400,6 +434,10 @@ export default defineComponent({
     });
     this.loading = false;
     this.modalShown = this.modelValue;
+    // If preventServiceSwap is enabled, set selectedService to targetService
+    if (this.preventServiceSwap && this.targetService) {
+      this.selectedService = this.targetService;
+    }
   },
   methods: {
     chooseProviderAdd(service: string, provider: string) {
