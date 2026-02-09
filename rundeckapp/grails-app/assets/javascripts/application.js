@@ -434,13 +434,15 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
   //add controls
   var addSoftWrapCheckbox = data.aceControlSoftWrap ? data.aceControlSoftWrap : false;
   if (addSoftWrapCheckbox) {
+    var locale = (window._rundeck && window._rundeck.locale) ? window._rundeck.locale : 'en_US';
+    var softWrapLabel = locale && locale.toLowerCase().indexOf('nl') === 0 ? 'Regelafbreking' : 'Soft Wrap';
     var _soft = jQuery('<input/>')
       .attr('type', 'checkbox')
       .on('change', function (e) {
         editor.getSession().setUseWrapMode(this.checked);
       });
     var _soft_label = jQuery('<label></label>')
-      .append('Soft Wrap');
+      .append(softWrapLabel);
     var _ctrls = jQuery('<div></div>')
       .addClass('checkbox ace_text_controls')
       .append(_soft)

@@ -155,12 +155,11 @@
                 <select
                   v-model="query.statFilter"
                   name="statFilter"
-                  noSelection="['': 'Any']"
                   valueMessagePrefix="status.label"
                   class="form-control"
                   data-test-id="stat-filter"
                 >
-                  <option value>Any</option>
+                  <option value>{{ $t("Any") }}</option>
                   <option>succeed</option>
                   <option>fail</option>
                   <option>cancel</option>
@@ -180,7 +179,7 @@
                     class="form-control"
                     data-test-id="recent-filter"
                   >
-                    <option value>Any Time</option>
+                    <option value>{{ $t("Any Time") }}</option>
                     <option
                       v-for="(key, val) in recentDateFilters"
                       :key="key"
@@ -188,7 +187,7 @@
                     >
                       {{ key }}
                     </option>
-                    <option value="-">Other...</option>
+                    <option value="-">{{ $t("Other...") }}</option>
                   </select>
                 </span>
               </div>
@@ -246,7 +245,7 @@
 
         <btn type="default" class="btn-default pull-right" @click="saveFilter">
           <i class="glyphicon glyphicon-plus"></i>
-          {{ $t("Save as a Filter...") }}
+          {{ $t("job.filter.save.button.title") }}
         </btn>
       </template>
     </modal>

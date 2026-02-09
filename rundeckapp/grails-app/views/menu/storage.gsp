@@ -145,7 +145,7 @@ implied. - See the License for the specific language governing permissions and -
                                                 <textarea class="form-control" rows="5" id="storageuploadtext" data-bind="value: upload.textArea, visible: upload.inputType() != 'file'" name="uploadText"></textarea>
                                             </div>
                                             <div data-bind="if: upload.inputType()=='text' && upload.keyType()=='password' ">
-                                                <input name="uploadPassword" type="password" placeholder="Enter a password" autocomplete="new-password" data-bind="value: upload.password" id="uploadpasswordfield" class="form-control"/>
+                                                <input name="uploadPassword" type="password" placeholder="${g.message(code:'storage.enter.password')}" autocomplete="new-password" data-bind="value: upload.password" id="uploadpasswordfield" class="form-control"/>
                                             </div>
                                         </div>
                                     </div>
@@ -160,7 +160,7 @@ implied. - See the License for the specific language governing permissions and -
                                                 <div class="input-group-addon" data-bind="if: staticRoot()">
                                                     <span data-bind="text: rootBasePath()"></span>
                                                 </div>
-                                                <input data-bind="value: inputPath, valueUpdate: 'keyup', attr: { disabled: upload.modifyMode() } " id="uploadResourcePath2" name="userInput" class="form-control" placeholder="Enter the directory name"/>
+                                                <input data-bind="value: inputPath, valueUpdate: 'keyup', attr: { disabled: upload.modifyMode() } " id="uploadResourcePath2" name="userInput" class="form-control" placeholder="${g.message(code:'storage.enter.directory.name')}"/>
                                                 <input id="uploadResourcePath4" type="hidden" data-bind="value: inputBasePath,  attr: { disabled: upload.modifyMode() } " name="relativePath"/>
                                                 <input id="uploadResourcePath3" type="hidden" data-bind="value: inputBasePath,  attr: { disabled: !upload.modifyMode() } " name="relativePath"/>
                                             </div>
@@ -173,7 +173,7 @@ implied. - See the License for the specific language governing permissions and -
                                         </label>
 
                                         <div class="col-sm-9">
-                                            <input id="uploadResourceName2" data-bind="value: upload.fileName, valueUpdate: 'keyup', attr: { disabled: upload.modifyMode() } " name="fileName" class="form-control" placeholder="Specify a name."/>
+                                            <input id="uploadResourceName2" data-bind="value: upload.fileName, valueUpdate: 'keyup', attr: { disabled: upload.modifyMode() } " name="fileName" class="form-control" placeholder="${g.message(code:'storage.specify.name')}"/>
                                             <div class="help-block" data-bind="if: upload.inputType() == 'file'">
                                                 <g:message code="storage.upload.file.name.description"/>
                                             </div>
@@ -231,4 +231,3 @@ implied. - See the License for the specific language governing permissions and -
         </div>
         </body>
     </feature:enabled>
-

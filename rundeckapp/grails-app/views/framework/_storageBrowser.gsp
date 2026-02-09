@@ -21,7 +21,7 @@ implied. - See the License for the specific language governing permissions and -
     
 
       </div>
-      <input type="text" class="form-control" style="padding-left:18px" data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath" placeholder="Enter a path"/>
+      <input type="text" class="form-control" style="padding-left:18px" data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath" placeholder="${g.message(code:'storage.enter.path')}"/>
 
       <!-- ko if: jumpLinks().length>0 -->
       <div class="input-group-btn">

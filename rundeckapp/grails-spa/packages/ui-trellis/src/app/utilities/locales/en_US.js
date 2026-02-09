@@ -4,6 +4,31 @@ const messages = {
   Delete: "Delete",
   Cancel: "Cancel",
   Revert: "Revert",
+  Configuration: "Configuration",
+  "Edit Node Sources": "Edit Node Sources",
+  "Add a new Node Source": "Add a new Node Source",
+  "Add a new Node Enhancer": "Add a new Node Enhancer",
+  "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)":
+    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)",
+  "Node Enhancers can modify the data loaded from Node Sources.":
+    "Node Enhancers can modify the data loaded from Node Sources.",
+  "None configured. Click NodeEnhancer to add a new plugin.":
+    "None configured. Click NodeEnhancer to add a new plugin.",
+  "Scans a directory and loads all resource document files":
+    "Scans a directory and loads all resource document files",
+  "Reads a file containing node definitions in a supported format":
+    "Reads a file containing node definitions in a supported format",
+  "Provides the local node as the single resource":
+    "Provides the local node as the single resource",
+  "Run a script to produce resource model data":
+    "Run a script to produce resource model data",
+  "Retrieves a URL containing node definitions in a supported format":
+    "Retrieves a URL containing node definitions in a supported format",
+  "storage.enter.path": "Enter a path",
+  "storage.enter.password": "Enter a password",
+  "storage.enter.directory.name": "Enter the directory name",
+  "storage.specify.name": "Specify a name.",
+  "soft.wrap": "Soft Wrap",
   jobAverageDurationPlaceholder: "leave blank for Job Average duration",
   resourcesEditor: {
     "Dispatch to Nodes": "Dispatch to Nodes",
@@ -70,6 +95,17 @@ const messages = {
   },
   message_userSummary: {
     desc: "This is a list of User Profiles which have logged in to Rundeck.",
+  },
+  notifications: {
+    helpText:
+      "Notifications can be triggered by different events during the Job Execution.",
+    emptyText:
+      "No Notifications are defined. Click an event below to add a Notification for that Trigger.",
+    addButton: "Add Notification",
+    triggerLabel: "Trigger",
+    selectTrigger: "Select a Trigger",
+    typeLabel: "Notification Type",
+    selectNotification: "Select a Notification",
   },
   message_webhookPageTitle: "Webhooks",
   message_webhookListTitle: "Webhooks",
