@@ -48,8 +48,23 @@
                             </template>
                           </plugin-info>
                         </AccordionHeader>
-                        <AccordionContent v-if="(nestedStep as any).content">
-                          <div v-html="(nestedStep as any).content"></div>
+                        <AccordionContent>
+                          <StepCardContent
+                            :config="nestedStep"
+                            :service-name="computedServiceName"
+                            :element-id="nestedStep.id || ''"
+                            :log-filters="nestedStep.filters || []"
+                            :error-handler="nestedStep.errorhandler ? [nestedStep.errorhandler] : []"
+                            :error-handler-config="getStepErrorHandlerConfig(nestedStep)"
+                            :error-handler-service-name="getStepErrorHandlerServiceName(nestedStep)"
+                            :error-handler-provider="getStepErrorHandlerProvider(nestedStep)"
+                            @add-log-filter="$emit('add-log-filter')"
+                            @add-error-handler="$emit('add-error-handler')"
+                            @edit-log-filter="$emit('edit-log-filter', $event)"
+                            @edit-error-handler="$emit('edit-error-handler')"
+                            @remove-error-handler="$emit('remove-error-handler')"
+                            @update:log-filters="$emit('update:logFilters', $event)"
+                          />
                         </AccordionContent>
                       </AccordionPanel>
                     </Accordion>
@@ -73,8 +88,23 @@
                   </template>
                 </plugin-info>
               </AccordionHeader>
-              <AccordionContent v-if="step.type !== 'conditional.logic' && (step as any).content">
-                <div v-html="(step as any).content"></div>
+              <AccordionContent v-if="step.type !== 'conditional.logic'">
+                <StepCardContent
+                  :config="step"
+                  :service-name="computedServiceName"
+                  :element-id="step.id || ''"
+                  :log-filters="step.filters || []"
+                  :error-handler="step.errorhandler ? [step.errorhandler] : []"
+                  :error-handler-config="getStepErrorHandlerConfig(step)"
+                  :error-handler-service-name="getStepErrorHandlerServiceName(step)"
+                  :error-handler-provider="getStepErrorHandlerProvider(step)"
+                  @add-log-filter="$emit('add-log-filter')"
+                  @add-error-handler="$emit('add-error-handler')"
+                  @edit-log-filter="$emit('edit-log-filter', $event)"
+                  @edit-error-handler="$emit('edit-error-handler')"
+                  @remove-error-handler="$emit('remove-error-handler')"
+                  @update:log-filters="$emit('update:logFilters', $event)"
+                />
               </AccordionContent>
             </AccordionPanel>
           </Accordion>
@@ -156,7 +186,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "delete", "duplicate", "edit", "step-click"],
+  emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "edit-log-filter", "edit-error-handler", "remove-error-handler", "delete", "duplicate", "edit", "step-click"],
   computed: {
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
@@ -235,6 +265,18 @@ export default defineComponent({
         return (step as any).pluginDetails;
       }
       return getPluginDetailsForStep(step as EditStepData);
+    },
+    getStepErrorHandlerConfig(step: EditStepData) {
+      const eh = step.errorhandler;
+      return eh?.config || {};
+    },
+    getStepErrorHandlerServiceName(step: EditStepData) {
+      const eh = step.errorhandler;
+      return eh?.nodeStep ? "WorkflowNodeStep" : "WorkflowStep";
+    },
+    getStepErrorHandlerProvider(step: EditStepData) {
+      const eh = step.errorhandler;
+      return eh?.type || "";
     },
     handleStepClick(step: EditStepData, index: number) {
       this.$emit("step-click", { step, index });

@@ -4,6 +4,7 @@
       <StepCardHeader
         :plugin-details="pluginDetails"
         :config="config"
+        :show-as-node-step="computedServiceName === 'WorkflowNodeStep'"
         @delete="handleDelete"
         @duplicate="handleDuplicate"
         @edit="handleEdit"

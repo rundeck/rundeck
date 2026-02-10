@@ -397,6 +397,16 @@ export default defineComponent({
         this.loadForMode();
       },
     },
+    serviceName: {
+      handler() {
+        this.loadForMode();
+      },
+    },
+    provider: {
+      handler() {
+        this.loadForMode();
+      },
+    },
   },
   beforeMount() {
     this.loadForMode();

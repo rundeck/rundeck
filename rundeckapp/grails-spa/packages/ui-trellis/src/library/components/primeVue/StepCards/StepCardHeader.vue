@@ -22,8 +22,8 @@
       <div class="stepCardHeader-description">
         <Tag
           v-if="!hideStepType"
-          :class="[config.nodeStep ? 'tag-node' : 'tag-workflow']"
-          :value="config.nodeStep ? $t('Workflow.nodeStep') : $t('Workflow.workflowStep')"
+          :class="[effectiveNodeStep ? 'tag-node' : 'tag-workflow']"
+          :value="effectiveNodeStep ? $t('Workflow.nodeStep') : $t('Workflow.workflowStep')"
         />
         <p>{{ pluginDetails.title }}</p>
         <i
@@ -92,6 +92,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    showAsNodeStep: {
+      type: Boolean,
+      default: undefined,
+    },
     showToggle: {
       type: Boolean,
       default: false,
@@ -99,6 +103,12 @@ export default defineComponent({
   },
   emits: ["delete", "duplicate", "edit"],
   computed: {
+    effectiveNodeStep(): boolean {
+      if (this.showAsNodeStep !== undefined) {
+        return this.showAsNodeStep;
+      }
+      return !!this.config?.nodeStep;
+    },
     menuItems() {
       return [
         {

@@ -39,7 +39,7 @@
             <!-- LogFilters component for EA mode - provides the modal for adding/editing filters -->
             <log-filters
               v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId !== element.id"
-              :model-value="element.filters"
+              :model-value="element.filters || []"
               :title="$t('Workflow.logFilters')"
               :subtitle="stepTitle(element, index)"
               :add-event="'step-action:add-logfilter:' + element.id"
@@ -190,7 +190,7 @@
                   :class="{'step-item-logfilters': element.filters?.length > 0 }"
               >
                 <log-filters
-                    :model-value="element.filters"
+                    :model-value="element.filters || []"
                     :title="$t('Workflow.logFilters')"
                     :subtitle="stepTitle(element, index)"
                     :add-event="'step-action:add-logfilter:' + element.id"

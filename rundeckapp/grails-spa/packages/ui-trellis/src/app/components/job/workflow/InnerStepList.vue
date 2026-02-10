@@ -30,7 +30,7 @@
             />
             <log-filters
               v-if="editingStepId !== element.id && !element.jobref && element.type !== 'conditional.logic'"
-              :model-value="element.filters"
+              :model-value="element.filters || []"
               :title="$t('Workflow.logFilters')"
               :subtitle="stepTitle(element, index)"
               :add-event="'inner-step-action:add-logfilter:' + element.id"
@@ -244,7 +244,7 @@ export default defineComponent({
         return;
       }
 
-      const newStep = createStepFromProvider(service, provider);
+      const newStep = createStepFromProvider(this.targetService, provider);
       this.editModel = newStep;
       this.editIndex = this.commands.length;
       this.editingStepId = newStep.id;
@@ -325,6 +325,7 @@ export default defineComponent({
     duplicateStep(index: number) {
       const command = cloneDeep(this.commands[index]);
       command.id = mkid();
+      command.nodeStep = this.targetService === ServiceType.WorkflowNodeStep;
       this.commands.splice(index + 1, 0, command);
       this.emitUpdate();
     },

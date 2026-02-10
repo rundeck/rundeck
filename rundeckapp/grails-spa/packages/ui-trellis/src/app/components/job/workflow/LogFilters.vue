@@ -64,7 +64,7 @@ export default defineComponent({
     modelValue: {
       type: Array,
       required: true,
-      default: () => ({}) as PluginConfig[],
+      default: () => [] as PluginConfig[],
     },
     showIfEmpty: {
       type: Boolean,

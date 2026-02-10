@@ -40,6 +40,14 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
     editData.type = cmd.type;
     editData.config = cmd.configuration || {};
     editData.nodeStep = cmd.nodeStep;
+    if (cmd.type === "conditional.logic" && editData.config?.commands) {
+      editData.config = {
+        ...editData.config,
+        commands: editData.config.commands.map((c: StepData) =>
+          commandToEditConfig(c),
+        ),
+      };
+    }
   } else {
     if (cmd.jobref) {
       editData.jobref = cmd.jobref;
@@ -112,6 +120,14 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
   } else if (plugin.type === "exec-command") {
     let commandExec = plugin.config as CommandExecPluginConfig;
     data.exec = commandExec.adhocRemoteString;
+  } else if (plugin.type === "conditional.logic" && plugin.config?.commands) {
+    data.type = plugin.type;
+    data.configuration = {
+      ...plugin.config,
+      commands: plugin.config.commands.map((c: EditStepData) =>
+        editToCommandConfig(c),
+      ),
+    };
   } else if (plugin.type) {
     data.type = plugin.type;
     data.configuration = plugin.config;
