@@ -1,13 +1,16 @@
 <template>
-  <Card class="edit-step-card">
+  <Card class="edit-step-card" :class="{'collapsed': !contentExpanded}">
     <template #header>
-        <StepCardHeader
-          v-if="provider"
-          :plugin-details="provider"
-          :config="stepConfig"
-          :hide-step-type="true"
-          @delete="handleCancel"
-        />
+      <StepCardHeader
+        v-if="provider"
+        :plugin-details="provider"
+        :config="stepConfig"
+        :hide-step-type="true"
+        :show-toggle="depth > 0"
+        :expanded="contentExpanded"
+        @delete="handleCancel"
+        @toggle="contentExpanded = !contentExpanded"
+      />
       <div v-else-if="loading" class="loading-container">
         <i class="fas fa-spinner fa-spin"></i>
         <span>{{ $t("loading.text") }}</span>
@@ -18,10 +21,13 @@
         <div v-if="validationError" class="alert alert-danger">
           {{ validationError }}
         </div>
-        
+
         <div class="step-name-section">
           <div class="form-group">
-            <label class="col-sm-2 control-label input-sm" for="stepDescription">
+            <label
+              class="col-sm-2 control-label input-sm"
+              for="stepDescription"
+            >
               {{ $t("Workflow.step.property.description.label") }}
             </label>
             <div class="col-sm-10">
@@ -57,7 +63,9 @@
                 />
                 <label for="useNameTrue">
                   {{ $t("Workflow.Step.jobreference.name.label") }}
-                  <span>{{ $t("Workflow.Step.jobreference.name.description") }}</span>
+                  <span>{{
+                    $t("Workflow.Step.jobreference.name.description")
+                  }}</span>
                 </label>
               </div>
               <div class="radio">
@@ -70,7 +78,9 @@
                 />
                 <label for="useNameFalse">
                   {{ $t("Workflow.Step.jobreference.uuid.label") }}
-                  <span>{{ $t("Workflow.Step.jobreference.uuid.description") }}</span>
+                  <span>{{
+                    $t("Workflow.Step.jobreference.uuid.description")
+                  }}</span>
                 </label>
               </div>
             </div>
@@ -95,7 +105,9 @@
                 >
                   {{
                     project.name === selectedProject
-                      ? $t("step.type.jobreference.project.label", [selectedProject])
+                      ? $t("step.type.jobreference.project.label", [
+                          selectedProject,
+                        ])
                       : project.name
                   }}
                 </option>
@@ -108,7 +120,9 @@
                 :title="$t('select.an.existing.job.to.use')"
                 @click="openJobBrowser"
               >
-                {{ $t(!jobBrowserLoading ? "choose.a.job..." : "loading.text") }}
+                {{
+                  $t(!jobBrowserLoading ? "choose.a.job..." : "loading.text")
+                }}
               </span>
             </div>
             <div class="col-sm-10 col-sm-offset-2" style="margin-top: 1em">
@@ -118,7 +132,10 @@
             </div>
           </div>
 
-          <div class="form-group" :class="{ 'has-error': showRequired && isUseName }">
+          <div
+            class="form-group"
+            :class="{ 'has-error': showRequired && isUseName }"
+          >
             <label class="col-sm-2 control-label"></label>
             <div class="col-sm-5">
               <input
@@ -148,7 +165,10 @@
             </div>
           </div>
 
-          <div class="form-group" :class="{ 'has-error': showRequired && !isUseName }">
+          <div
+            class="form-group"
+            :class="{ 'has-error': showRequired && !isUseName }"
+          >
             <label class="col-sm-2 control-label">
               {{ $t("Workflow.Step.uuid.label") }}
             </label>
@@ -183,7 +203,9 @@
                 v-model="editModel.jobref.args"
                 name="argString"
                 :suggestions="inputTypeContextVariables"
-                :placeholder="$t('Workflow.Step.jobreference.argString.placeholder')"
+                :placeholder="
+                  $t('Workflow.Step.jobreference.argString.placeholder')
+                "
               />
             </div>
           </div>
@@ -202,11 +224,13 @@
                 <label for="importOptionsCheck">
                   {{ $t("Workflow.Step.jobreference.import.options.label") }}
                 </label>
-                <span>{{ $t("Workflow.Step.jobreference.import.options.help") }}</span>
+                <span>{{
+                  $t("Workflow.Step.jobreference.import.options.help")
+                }}</span>
               </div>
             </div>
           </div>
-          
+
           <div class="form-group">
             <label class="col-sm-2 control-label"></label>
             <div class="col-sm-10">
@@ -219,9 +243,13 @@
                   :value="true"
                 />
                 <label for="ignoreNotificationsCheck">
-                  {{ $t("Workflow.Step.jobreference.ignore.notifications.label") }}
+                  {{
+                    $t("Workflow.Step.jobreference.ignore.notifications.label")
+                  }}
                 </label>
-                <span>{{ $t("Workflow.Step.jobreference.ignore.notifications.help") }}</span>
+                <span>{{
+                  $t("Workflow.Step.jobreference.ignore.notifications.help")
+                }}</span>
               </div>
             </div>
           </div>
@@ -240,7 +268,9 @@
                 <label for="failOnDisableCheck">
                   {{ $t("Workflow.Step.jobreference.fail.on.disabled.label") }}
                 </label>
-                <span>{{ $t("Workflow.Step.jobreference.fail.on.disabled.help") }}</span>
+                <span>{{
+                  $t("Workflow.Step.jobreference.fail.on.disabled.help")
+                }}</span>
               </div>
             </div>
           </div>
@@ -259,7 +289,9 @@
                 <label for="childNodesCheck">
                   {{ $t("Workflow.Step.jobreference.child.nodes.label") }}
                 </label>
-                <span>{{ $t("Workflow.Step.jobreference.child.nodes.help") }}</span>
+                <span>{{
+                  $t("Workflow.Step.jobreference.child.nodes.help")
+                }}</span>
               </div>
             </div>
           </div>
@@ -270,7 +302,9 @@
                 class="btn btn-sm"
                 data-testid="expandNodeFilterBtn"
                 :class="{ active: nodeFilterOverrideExpanded && filterLoaded }"
-                @click="nodeFilterOverrideExpanded = !nodeFilterOverrideExpanded"
+                @click="
+                  nodeFilterOverrideExpanded = !nodeFilterOverrideExpanded
+                "
               >
                 {{ $t("override.node.filters") }}
                 <i
@@ -329,7 +363,10 @@
           </div>
 
           <div class="form-group">
-            <label class="col-sm-2 control-label" :for="`nodeFilterField${rkey}`">
+            <label
+              class="col-sm-2 control-label"
+              :for="`nodeFilterField${rkey}`"
+            >
               {{ $t("node.filter.prompt") }}
             </label>
             <div class="col-sm-10 vue-ui-socket">
@@ -338,7 +375,9 @@
                 :project="currentProject"
                 filter-field-name="nodeFilter"
                 :filter-field-id="`nodeFilterField${rkey}`"
-                :query-field-placeholder-text="$t('enter.a.node.filter.override')"
+                :query-field-placeholder-text="
+                  $t('enter.a.node.filter.override')
+                "
                 emit-filter-on-blur
                 search-btn-type="cta"
                 class="nodefilters"
@@ -380,9 +419,14 @@
                     :id="`matchednodes${rkey}`"
                     class="clearfix"
                   >
-                    <node-list-embed :nodes="currentNodes" @filter="filterClicked">
+                    <node-list-embed
+                      :nodes="currentNodes"
+                      @filter="filterClicked"
+                    >
                       <p v-if="isResultsTruncated" class="text-info mb-0">
-                        {{ $t("results.truncated.count.results.shown", [total]) }}
+                        {{
+                          $t("results.truncated.count.results.shown", [total])
+                        }}
                       </p>
                     </node-list-embed>
                   </div>
@@ -393,7 +437,10 @@
           </div>
 
           <div class="form-group">
-            <label class="col-sm-2 control-label" :for="`nodeThreadcountField${rkey}`">
+            <label
+              class="col-sm-2 control-label"
+              :for="`nodeThreadcountField${rkey}`"
+            >
               {{ $t("scheduledExecution.property.nodeThreadcount.label") }}
             </label>
             <div class="col-sm-2">
@@ -463,7 +510,10 @@
           </div>
 
           <div class="form-group">
-            <label class="col-sm-2 control-label" :for="`nodeRankAttributeField${rkey}`">
+            <label
+              class="col-sm-2 control-label"
+              :for="`nodeRankAttributeField${rkey}`"
+            >
               {{ $t("scheduledExecution.property.nodeRankAttribute.label") }}
             </label>
             <div class="col-sm-10">
@@ -474,13 +524,20 @@
                 type="text"
                 name="nodeRankAttribute"
                 class="form-control"
-                :placeholder="$t('scheduledExecution.property.nodeRankAttribute.description')"
+                :placeholder="
+                  $t(
+                    'scheduledExecution.property.nodeRankAttribute.description',
+                  )
+                "
               />
             </div>
           </div>
 
           <div class="form-group">
-            <label class="col-sm-2 control-label" :for="`nodeRankOrderField${rkey}`">
+            <label
+              class="col-sm-2 control-label"
+              :for="`nodeRankOrderField${rkey}`"
+            >
               {{ $t("scheduledExecution.property.nodeRankOrder.label") }}
             </label>
             <div class="col-sm-10">
@@ -507,7 +564,11 @@
                   :disabled="!hasFilter"
                 />
                 <label for="nodeRankOrderAscending">
-                  {{ $t("scheduledExecution.property.nodeRankOrder.ascending.label") }}
+                  {{
+                    $t(
+                      "scheduledExecution.property.nodeRankOrder.ascending.label",
+                    )
+                  }}
                 </label>
               </div>
               <div class="radio">
@@ -520,7 +581,11 @@
                   :disabled="!hasFilter"
                 />
                 <label for="nodeRankOrderDescending">
-                  {{ $t("scheduledExecution.property.nodeRankOrder.descending.label") }}
+                  {{
+                    $t(
+                      "scheduledExecution.property.nodeRankOrder.descending.label",
+                    )
+                  }}
                 </label>
               </div>
             </div>
@@ -568,7 +633,10 @@
       <div v-else-if="isConditionalLogic" class="conditional-logic-content">
         <div class="step-name-section">
           <div class="form-group">
-            <label class="col-sm-2 control-label input-sm" for="stepDescription">
+            <label
+              class="col-sm-2 control-label input-sm"
+              for="stepDescription"
+            >
               {{ $t("Workflow.step.property.description.label") }}
             </label>
             <div class="col-sm-10">
@@ -650,14 +718,17 @@
           :extra-autocomplete-vars="extraAutocompleteVars"
         />
       </div>
-      
+
       <div v-else-if="loading" class="loading-container">
         <i class="fas fa-spinner fa-spin"></i>
         <span>{{ $t("loading.text") }}</span>
       </div>
     </template>
     <template #footer>
-      <div class="edit-step-card-footer">
+      <div
+        v-show="depth === 0 || contentExpanded"
+        class="edit-step-card-footer"
+      >
         <PtButton
           outlined
           severity="secondary"
@@ -674,8 +745,7 @@
       </div>
     </template>
   </Card>
-  
-  <!-- Job Selection Modal (for job references only) -->
+
   <modal
     v-if="isJobRef && openJobSelectionModal"
     v-model="openJobSelectionModal"
@@ -718,7 +788,10 @@ import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue"
 import NodeListEmbed from "@/app/components/job/resources/NodeListEmbed.vue";
 import PtAutoComplete from "@/library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
 import UiSocket from "@/library/components/utils/UiSocket";
-import { getContextVariables, transformVariables } from "@/library/components/utils/contextVariableUtils";
+import {
+  getContextVariables,
+  transformVariables,
+} from "@/library/components/utils/contextVariableUtils";
 import ConditionsEditor from "./ConditionsEditor.vue";
 import type { ConditionSet } from "./types/conditionalStepTypes";
 import { createEmptyConditionSet } from "./types/conditionalStepTypes";
@@ -783,6 +856,7 @@ export default defineComponent({
   emits: ["cancel", "save", "update:modelValue"],
   data() {
     return {
+      contentExpanded: true,
       editModel: {} as any,
       stepDescription: "",
       provider: null as any,
@@ -880,7 +954,7 @@ export default defineComponent({
         if (val && Object.keys(val).length > 0) {
           // Extract description separately
           this.stepDescription = val.description || "";
-          
+
           // For jobref: merge with defaults (like JobRefForm does)
           // For conditional.logic: extract conditionSets and commands
           // For regular steps: clone as-is
@@ -890,15 +964,17 @@ export default defineComponent({
             const { description, ...rest } = val;
             this.editModel = cloneDeep(rest);
           }
-          
+
           // Initialize conditional logic data
           if (this.editModel.type === "conditional.logic") {
-            this.conditionSets = this.editModel.config?.conditionSets || [createEmptyConditionSet()];
+            this.conditionSets = this.editModel.config?.conditionSets || [
+              createEmptyConditionSet(),
+            ];
             this.innerCommands = this.editModel.config?.commands || [];
           }
-          
+
           this.loadProvider();
-          
+
           // Job reference specific initialization
           if (this.isJobRef) {
             this.initializeJobRefState();
@@ -919,7 +995,7 @@ export default defineComponent({
   },
   async mounted() {
     this.stepDescription = this.modelValue.description || "";
-    
+
     // For jobref: merge with defaults (like JobRefForm does)
     // For regular steps: clone as-is
     if (this.modelValue.jobref) {
@@ -928,22 +1004,24 @@ export default defineComponent({
       const { description, ...rest } = this.modelValue;
       this.editModel = cloneDeep(rest);
     }
-    
+
     // Initialize conditional logic data
     if (this.editModel.type === "conditional.logic") {
-      this.conditionSets = this.editModel.config?.conditionSets || [createEmptyConditionSet()];
+      this.conditionSets = this.editModel.config?.conditionSets || [
+        createEmptyConditionSet(),
+      ];
       this.innerCommands = this.editModel.config?.commands || [];
     }
-    
+
     if (
       this.modelValue.config &&
       Object.keys(this.modelValue.config).length === 0
     ) {
       this.pluginConfigMode = "create";
     }
-    
+
     await this.loadProvider();
-    
+
     // Job reference specific mounting
     if (this.isJobRef) {
       await this.mountJobRef();
@@ -968,14 +1046,16 @@ export default defineComponent({
         this.validationError = "";
         this.showRequired = false;
       }
-      
+
       // Validate conditional logic before saving
       if (this.isConditionalLogic) {
-        const conditionsEditor = this.$refs.conditionsEditor as InstanceType<typeof ConditionsEditor>;
+        const conditionsEditor = this.$refs.conditionsEditor as InstanceType<
+          typeof ConditionsEditor
+        >;
         if (conditionsEditor && !conditionsEditor.validate()) {
           return;
         }
-        
+
         const saveData = {
           ...this.editModel,
           description: this.stepDescription,
@@ -989,7 +1069,7 @@ export default defineComponent({
         this.$emit("save");
         return;
       }
-      
+
       // Merge description back into editModel before emitting
       const saveData = {
         ...this.editModel,
@@ -1008,7 +1088,7 @@ export default defineComponent({
         this.loading = false;
         return;
       }
-      
+
       // Otherwise, fetch from API (existing behavior for backwards compatibility)
       if (this.editModel.type) {
         try {
@@ -1027,59 +1107,61 @@ export default defineComponent({
         this.provider = null;
       }
     },
-    
+
     // Job Reference specific methods
     initializeJobRefState() {
       // Initialize project store if needed
       if (!this.projectStore.loaded) {
         this.projectStore.load();
       }
-      
+
       // Set expanded state for node filter if there's a filter
-      if (this.editModel.jobref.nodefilters?.filter || 
-          this.editModel.jobref.nodefilters?.dispatch?.nodeIntersect) {
+      if (
+        this.editModel.jobref.nodefilters?.filter ||
+        this.editModel.jobref.nodefilters?.dispatch?.nodeIntersect
+      ) {
         this.nodeFilterOverrideExpanded = true;
       }
     },
-    
+
     async mountJobRef() {
       if (!this.projectStore.loaded) {
         await this.projectStore.load();
       }
-      
+
       // Initialize node filter if exists
       if (this.editModel.jobref.nodefilters.filter) {
         this.nodeFilterStore.setSelectedFilter(
           this.editModel.jobref.nodefilters.filter,
         );
-        
+
         if (rundeckContext.data) {
           this.queryParams = merge(
             this.queryParams,
             rundeckContext.data.nodeData,
           );
         }
-        
+
         this.nodeFilterOverrideExpanded = Boolean(
           this.editModel.jobref.nodefilters.filter.length ||
             this.editModel.jobref.nodefilters.dispatch.nodeIntersect,
         );
-        
+
         await this.triggerFetchNodes();
       }
-      
+
       this.filterLoaded = true;
-      
+
       // Set up event bus listeners for job browser
       this.eventBus.on(`browser-job-item-selection`, this.updateJobSelection);
       this.eventBus.on(`browser-jobs-empty`, this.handleFavoritesButton);
     },
-    
+
     openJobBrowser() {
       this.openJobSelectionModal = true;
       this.showFavoritesButton = true;
     },
-    
+
     updateJobSelection(job: any) {
       this.editModel.jobref.uuid = job.id;
       this.editModel.jobref.name = job.jobName;
@@ -1087,19 +1169,19 @@ export default defineComponent({
       this.jobBrowserLoading = false;
       this.openJobSelectionModal = false;
     },
-    
+
     handleFavoritesButton() {
       this.showFavoritesButton = false;
     },
-    
+
     updatedValue(val: string) {
       this.nodeFilterStore.setSelectedFilter(val);
     },
-    
+
     filterClicked(filter: any) {
       this.nodeFilterStore.setSelectedFilter(filter.filter);
     },
-    
+
     async triggerFetchNodes() {
       if (this.hasFilter) {
         try {
@@ -1112,13 +1194,13 @@ export default defineComponent({
         }
       }
     },
-    
+
     ...mapActions(useNodesStore, ["fetchNodes"]),
   },
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .edit-step-card {
   box-shadow: none;
   overflow: hidden;
@@ -1128,6 +1210,10 @@ export default defineComponent({
 
   .p-card-body {
     padding: var(--sizes-4);
+  }
+
+  &.collapsed .p-card-body {
+    display: none;
   }
 
   &-footer {
@@ -1183,11 +1269,11 @@ export default defineComponent({
   .mb-0 {
     margin-bottom: 0;
   }
-  
+
   .matchednodes {
     overflow: hidden;
   }
-  
+
   .checkbox,
   .radio {
     display: flex;
@@ -1198,17 +1284,17 @@ export default defineComponent({
       margin-top: 10px;
     }
   }
-  
+
   .collapse-expandable {
     &.collapse {
       display: none;
-      
+
       &.in {
         display: block;
       }
     }
   }
-  
+
   .section-separator-solo {
     margin-top: 1em;
   }

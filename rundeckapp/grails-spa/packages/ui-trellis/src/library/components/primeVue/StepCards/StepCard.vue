@@ -1,17 +1,21 @@
 <template>
-  <Card class="stepCard">
+  <Card class="stepCard" :class="{'collapsed': !contentExpanded}">
     <template #header>
       <StepCardHeader
         :plugin-details="pluginDetails"
         :config="config"
         :show-as-node-step="computedServiceName === 'WorkflowNodeStep'"
+        :show-toggle="showToggle"
+        :expanded="contentExpanded"
         @delete="handleDelete"
         @duplicate="handleDuplicate"
         @edit="handleEdit"
+        @toggle="contentExpanded = !contentExpanded"
       />
     </template>
     <template #content>
-      <StepCardContent
+      <div>
+        <StepCardContent
         :config="config"
         :service-name="computedServiceName"
         :element-id="config.id || ''"
@@ -27,6 +31,7 @@
         @remove-error-handler="handleRemoveErrorHandler"
         @update:log-filters="$emit('update:logFilters', $event)"
       />
+      </div>
     </template>
   </Card>
 </template>
@@ -66,8 +71,17 @@ export default defineComponent({
       type: Array,
       default: () => [],
     },
+    showToggle: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["update:logFilters", "add-log-filter", "add-error-handler", "edit-log-filter", "edit-error-handler", "remove-error-handler", "delete", "duplicate", "edit"],
+  data() {
+    return {
+      contentExpanded: true,
+    };
+  },
   computed: {
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
@@ -138,6 +152,10 @@ export default defineComponent({
 
   .p-card-body {
     padding: var(--sizes-4);
+  }
+
+  &.collapsed .p-card-body {
+    display: none;
   }
 }
 </style>

@@ -16,6 +16,7 @@
               :plugin-details="getPluginDetails(element)"
               :config="element"
               :service-name="targetService"
+              :show-toggle="true"
               :log-filters="element.jobref ? [] : (element.filters || [])"
               :error-handler="element.errorhandler ? [element.errorhandler] : []"
               @add-log-filter="!element.jobref && addLogFilter(element.id)"
@@ -199,7 +200,7 @@ export default defineComponent({
   },
   computed: {
     excludedProviders(): string[] {
-      if (this.depth >= 2) {
+      if (this.depth >= 2 || this.isErrorHandler) {
         return ["conditional.logic"];
       }
       return [];

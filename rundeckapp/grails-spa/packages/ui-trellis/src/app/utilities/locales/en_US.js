@@ -971,6 +971,8 @@ const messages = {
     editErrorHandler: "Edit error handler",
     nodeStep: "Node Step",
     workflowStep: "Workflow Step",
+    collapse: "Collapse",
+    expand: "Expand",
   },
   "plugin.choose.title": "Choose a Plugin",
   "plugin.type.WorkflowStep.title.plural": "Workflow Steps",

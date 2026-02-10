@@ -46,7 +46,10 @@
       <template v-if="showToggle">
         <PtButton
           text
-          icon="pi pi-chevron-down"
+          :icon="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-up'"
+          :aria-label="expanded ? $t('Workflow.collapse') : $t('Workflow.expand')"
+          :aria-expanded="expanded"
+          @click.stop="$emit('toggle')"
         />
       </template>
       <template v-else>
@@ -100,8 +103,12 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    expanded: {
+      type: Boolean,
+      default: true,
+    },
   },
-  emits: ["delete", "duplicate", "edit"],
+  emits: ["delete", "duplicate", "edit", "toggle"],
   computed: {
     effectiveNodeStep(): boolean {
       if (this.showAsNodeStep !== undefined) {
