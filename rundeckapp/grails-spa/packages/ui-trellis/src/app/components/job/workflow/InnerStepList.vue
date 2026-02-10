@@ -298,9 +298,11 @@ export default defineComponent({
         if (lastStep && lastStep.id === this.editingStepId) {
           const isEmpty = lastStep.type === "conditional.logic"
             ? (!lastStep.config || !lastStep.config.conditionSets || lastStep.config.conditionSets.length === 0)
-            : (!lastStep.config || Object.keys(lastStep.config || {}).length === 0);
+            : lastStep.jobref
+              ? !lastStep.jobref.name && !lastStep.jobref.uuid
+              : (!lastStep.config || Object.keys(lastStep.config || {}).length === 0);
 
-          if (isEmpty && !lastStep.jobref) {
+          if (isEmpty) {
             this.commands.splice(this.editIndex, 1);
             this.emitUpdate();
           }
