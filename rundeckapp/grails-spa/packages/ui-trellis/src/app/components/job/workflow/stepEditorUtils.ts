@@ -13,6 +13,7 @@ export interface PluginDetails {
   description: string;
   iconUrl: string;
   tooltip: string;
+  providerMetadata?: { glyphicon?: string; faicon?: string; fabicon?: string };
 }
 
 export interface ValidationResult {
@@ -72,11 +73,17 @@ export function createStepFromProvider(
  */
 export function getPluginDetailsForStep(element: EditStepData): PluginDetails {
   const context = getRundeckContext();
-  const plugins = element.nodeStep
+  const isJobRef = Boolean(element.jobref || element.type === "job.reference");
+  const nodeStep = element.nodeStep ?? element.jobref?.nodeStep ?? false;
+  const pluginName = isJobRef ? "job.reference" : element.type;
+
+  const plugins = nodeStep
     ? context.rootStore.plugins.getServicePlugins(ServiceType.WorkflowNodeStep)
     : context.rootStore.plugins.getServicePlugins(ServiceType.WorkflowStep);
 
-  const plugin = plugins.find((p: any) => p.name === element.type);
+  const plugin = pluginName
+    ? plugins.find((p: any) => p.name === pluginName)
+    : undefined;
 
   if (plugin) {
     return {
@@ -84,6 +91,19 @@ export function getPluginDetailsForStep(element: EditStepData): PluginDetails {
       description: plugin.description || "",
       iconUrl: plugin.iconUrl || "",
       tooltip: plugin.description || "",
+      ...(plugin.providerMetadata && {
+        providerMetadata: plugin.providerMetadata,
+      }),
+    };
+  }
+
+  if (isJobRef) {
+    return {
+      title: "Job reference",
+      description: "Execute another job",
+      iconUrl: "",
+      tooltip: "Execute another job",
+      providerMetadata: { glyphicon: "book" },
     };
   }
 

@@ -1,16 +1,18 @@
 <template>
-  <Card class="conditionalCard" :class="{'complex': complex}">
-    <template #header>
-      <StepCardHeader
-        :plugin-details="pluginDetails"
-        :config="config"
-        @delete="handleDelete"
-        @duplicate="handleDuplicate"
-        @edit="handleEdit"
-      />
-    </template>
+  <BaseStepCard
+    :plugin-details="pluginDetails"
+    :config="config"
+    :service-name="serviceName"
+    :show-toggle="showToggle"
+    :show-as-node-step="computedServiceName === 'WorkflowNodeStep'"
+    :card-class="complex ? 'complex' : ''"
+    @delete="handleDelete"
+    @duplicate="handleDuplicate"
+    @edit="handleEdit"
+  >
     <template #content>
-      <Conditional :complex="complex" :condition-sets="conditionSets">
+      <div class="conditionalCard">
+        <Conditional :complex="complex" :condition-sets="conditionSets">
         <slot name="steps">
           <Accordion v-if="computedSteps && computedSteps.length > 0" multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
             <AccordionPanel
@@ -110,13 +112,13 @@
           </Accordion>
         </slot>
       </Conditional>
+      </div>
     </template>
-  </Card>
+  </BaseStepCard>
 </template>
 
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
-import Card from "primevue/card";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";
 import AccordionHeader from "primevue/accordionheader";
@@ -124,18 +126,17 @@ import AccordionContent from "primevue/accordioncontent";
 import Tag from "primevue/tag";
 import Menu from "primevue/menu";
 import Button from "primevue/button";
+import BaseStepCard from "@/library/components/primeVue/StepCards/BaseStepCard.vue";
 import Conditional from "./Conditional.vue";
 import PluginInfo from "../../plugins/PluginInfo.vue";
 import PluginConfig from "../../plugins/pluginConfig.vue";
 import PtButton from "../PtButton/PtButton.vue";
 import LogFilters from "@/app/components/job/workflow/LogFilters.vue";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
-import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import StepCardContent from "@/library/components/primeVue/StepCards/StepCardContent.vue";
 import { getRundeckContext } from "@/library";
 import { getPluginDetailsForStep } from "@/app/components/job/workflow/stepEditorUtils";
 import type { EditStepData } from "@/app/components/job/workflow/types/workflowTypes";
-
 
 import "../Tag/tag.scss";
 import "../Tooltip/tooltip.scss";
@@ -143,8 +144,8 @@ import "../Tooltip/tooltip.scss";
 export default defineComponent({
   name: "ConditionalCard",
   components: {
+    BaseStepCard,
     StepCardContent,
-    StepCardHeader,
     ErrorHandlerStep,
     LogFilters,
     PluginConfig,
@@ -156,7 +157,6 @@ export default defineComponent({
     AccordionHeader,
     AccordionContent,
     Button,
-    Card,
     Menu,
     Tag,
   },
@@ -185,6 +185,10 @@ export default defineComponent({
       type: Array as PropType<EditStepData[]>,
       default: () => [],
     },
+    showToggle: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["update:logFilters", "update:errorHandler", "add-log-filter", "add-error-handler", "edit-log-filter", "edit-error-handler", "remove-error-handler", "delete", "duplicate", "edit", "step-click"],
   computed: {
@@ -208,7 +212,6 @@ export default defineComponent({
       return this.conditionSets.length > 1;
     },
     errorHandlerData() {
-      // Extract error handler from array (it's passed as [element.errorhandler])
       return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] : null;
     },
     computedErrorHandlerConfig() {
@@ -239,16 +242,13 @@ export default defineComponent({
   },
   methods: {
     handleAddLogFilter() {
-      // Emit eventBus event like WorkflowSteps.addLogFilterForIndex does
       const elementId = this.config.id || "";
       if (this.eventBus && elementId) {
         this.eventBus.emit("step-action:add-logfilter:" + elementId);
       }
-      // Emit component event - parent template will call handler with element.id
       this.$emit("add-log-filter");
     },
     handleAddErrorHandler() {
-      // Emit component event - parent template will call handler with index
       this.$emit("add-error-handler");
     },
     handleDelete() {
@@ -290,17 +290,6 @@ export default defineComponent({
 
 <style lang="scss">
 .conditionalCard {
-  box-shadow: none;
-  overflow: hidden;
-  border-radius: var(--radii-md);
-  border: 1px solid var(--colors-gray-300-original);
-
-  p,
-  a,
-  span:not(.glyphicon, .fa, .pi) {
-    font-family: Inter, var(--fonts-body) !important;
-  }
-
   &--header {
     background-color: var(--colors-secondaryBackgroundOnLight);
     border-bottom: 2px solid var(--colors-gray-300-original);
@@ -340,10 +329,6 @@ export default defineComponent({
       flex: 1 1 auto;
       gap: var(--sizes-2);
     }
-  }
-
-  .p-card-body {
-    padding: var(--sizes-4);
   }
 
   .p-accordioncontent-content {

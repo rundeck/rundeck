@@ -44,6 +44,7 @@
               :plugin-details="getPluginDetails(element)"
               :config="element"
               :service-name="targetService"
+              :show-toggle="true"
               @delete="removeStep(index)"
               @duplicate="duplicateStep(index)"
               @edit="editStep(index)"

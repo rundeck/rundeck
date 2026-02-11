@@ -1,5 +1,10 @@
 <template>
-  <Card class="edit-step-card" :class="{'collapsed': !contentExpanded}">
+  <BaseStepCard
+    :config="stepConfig"
+    :plugin-details="provider || {}"
+    :expanded="contentExpanded"
+    card-class="edit-step-card"
+  >
     <template #header>
       <StepCardHeader
         v-if="provider"
@@ -744,7 +749,7 @@
         />
       </div>
     </template>
-  </Card>
+  </BaseStepCard>
 
   <modal
     v-if="isJobRef && openJobSelectionModal"
@@ -773,7 +778,7 @@
 
 <script lang="ts">
 import { defineComponent, defineAsyncComponent, type PropType } from "vue";
-import Card from "primevue/card";
+import BaseStepCard from "@/library/components/primeVue/StepCards/BaseStepCard.vue";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
@@ -803,7 +808,7 @@ const eventBus = rundeckContext.eventBus;
 export default defineComponent({
   name: "EditStepCard",
   components: {
-    Card,
+    BaseStepCard,
     pluginConfig,
     PtButton,
     StepCardHeader,
@@ -1202,26 +1207,14 @@ export default defineComponent({
 
 <style lang="scss">
 .edit-step-card {
-  box-shadow: none;
-  overflow: hidden;
-  border-radius: var(--radii-md);
-  border: 1px solid var(--colors-gray-300);
   margin-bottom: var(--sizes-4);
-
-  .p-card-body {
-    padding: var(--sizes-4);
-  }
-
-  &.collapsed .p-card-body {
-    display: none;
-  }
 
   &-footer {
     display: flex;
     justify-content: flex-end;
     gap: var(--sizes-2);
     padding: var(--sizes-4);
-    border-top: 1px solid var(--colors-gray-300);
+    border-top: 1px solid var(--colors-gray-300-original);
   }
 }
 

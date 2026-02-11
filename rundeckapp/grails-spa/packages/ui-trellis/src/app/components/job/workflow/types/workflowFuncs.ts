@@ -50,6 +50,8 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
     }
   } else {
     if (cmd.jobref) {
+      editData.type = "job.reference";
+      editData.nodeStep = cmd.nodeStep ?? cmd.jobref?.nodeStep ?? false;
       editData.jobref = cmd.jobref;
     } else if (cmd.script) {
       editData.nodeStep = true;

@@ -260,6 +260,106 @@ describe("stepEditorUtils", () => {
 
       expect(result.title).toBe("My custom step");
     });
+
+    it("returns jobref plugin details when element has jobref but no type (loaded from saved workflow)", () => {
+      mockGetServicePlugins.mockReturnValue([
+        {
+          name: "job.reference",
+          title: "Job reference",
+          description: "Execute another job",
+          iconUrl: "",
+          providerMetadata: { glyphicon: "book" },
+        },
+      ]);
+
+      const element = {
+        jobref: { name: "My Job", uuid: "", nodeStep: false },
+        description: "My job ref step",
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(element);
+
+      expect(mockGetServicePlugins).toHaveBeenCalledWith(
+        ServiceType.WorkflowStep,
+      );
+      expect(result).toEqual({
+        title: "Job reference",
+        description: "Execute another job",
+        iconUrl: "",
+        tooltip: "Execute another job",
+        providerMetadata: { glyphicon: "book" },
+      });
+    });
+
+    it("returns jobref plugin details when element has type job.reference", () => {
+      mockGetServicePlugins.mockReturnValue([
+        {
+          name: "job.reference",
+          title: "Job reference",
+          description: "Run a job on the remote node",
+          iconUrl: "",
+          providerMetadata: { glyphicon: "book" },
+        },
+      ]);
+
+      const element = {
+        type: "job.reference",
+        jobref: { nodeStep: true },
+        nodeStep: true,
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(element);
+
+      expect(mockGetServicePlugins).toHaveBeenCalledWith(
+        ServiceType.WorkflowNodeStep,
+      );
+      expect(result.providerMetadata).toEqual({ glyphicon: "book" });
+      expect(result.title).toBe("Job reference");
+    });
+
+    it("includes providerMetadata when plugin has it", () => {
+      mockGetServicePlugins.mockReturnValue([
+        {
+          name: "job.reference",
+          title: "Job reference",
+          description: "Execute another job",
+          iconUrl: "",
+          providerMetadata: { glyphicon: "book" },
+        },
+      ]);
+
+      const element = {
+        type: "job.reference",
+        jobref: { nodeStep: false },
+        nodeStep: false,
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(element);
+
+      expect(result.providerMetadata).toEqual({ glyphicon: "book" });
+    });
+
+    it("returns fallback with providerMetadata for jobref when plugin not found", () => {
+      mockGetServicePlugins.mockReturnValue([]);
+
+      const element = {
+        jobref: { name: "", uuid: "" },
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(element);
+
+      expect(result).toEqual({
+        title: "Job reference",
+        description: "Execute another job",
+        iconUrl: "",
+        tooltip: "Execute another job",
+        providerMetadata: { glyphicon: "book" },
+      });
+    });
   });
 
   describe("validateStepForSave", () => {

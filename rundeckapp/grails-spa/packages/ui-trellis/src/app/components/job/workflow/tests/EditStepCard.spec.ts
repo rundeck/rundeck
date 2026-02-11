@@ -75,9 +75,8 @@ jest.mock("../../../../../library/services/projects");
 // --- Import component after mocks ---
 import EditStepCard from "../EditStepCard.vue";
 
-// Card is the only manual stub needed because its named slots (#header, #content, #footer)
-// must render for the test to see inner content. Everything else is auto-stubbed by shallowMount.
-const CardStub = {
+// BaseStepCard must render its slots for the test to see inner content.
+const BaseStepCardStub = {
   template: `<div class="p-card">
     <div class="p-card-header"><slot name="header" /></div>
     <div class="p-card-content"><slot name="content" /></div>
@@ -102,7 +101,7 @@ const createWrapper = async (
     },
     global: {
       stubs: {
-        Card: CardStub,
+        BaseStepCard: BaseStepCardStub,
       },
       mocks: {
         $t: (key: string, args?: any[]) => {
@@ -240,7 +239,7 @@ describe("EditStepCard", () => {
           serviceName: "WorkflowNodeStep",
         },
         global: {
-          stubs: { Card: CardStub },
+          stubs: { BaseStepCard: BaseStepCardStub },
           mocks: { $t: (key: string) => key },
         },
       });
