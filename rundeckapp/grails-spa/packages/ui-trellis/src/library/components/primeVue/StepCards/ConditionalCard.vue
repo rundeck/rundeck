@@ -44,7 +44,7 @@
                           >
                             <template #titleprefix>
                               <span class="link-step-plugin" @click.stop="handleNestedStepClick(nestedStep, nestedIndex)">
-                                {{ nestedStep.description || nestedStep.type || $t("Workflow.stepLabel") }}
+                                {{ nestedStep.description || getStepPluginDetails(nestedStep)?.title || $t("Workflow.stepLabel") }}
                               </span>
                               <i class="pi pi-pencil"/>
                             </template>
@@ -84,7 +84,7 @@
                 >
                   <template #titleprefix>
                     <span class="link-step-plugin" @click.stop="handleStepClick(step, index)">
-                      {{ step.description || step.type || $t("Workflow.stepLabel") }}
+                      {{ step.description || getStepPluginDetails(step)?.title || $t("Workflow.stepLabel") }}
                     </span>
                     <i class="pi pi-pencil"/>
                   </template>
@@ -264,7 +264,7 @@ export default defineComponent({
       if ((step as any).pluginDetails) {
         return (step as any).pluginDetails;
       }
-      return getPluginDetailsForStep(step as EditStepData);
+      return getPluginDetailsForStep(step as EditStepData, this.computedServiceName);
     },
     getStepErrorHandlerConfig(step: EditStepData) {
       const eh = step.errorhandler;

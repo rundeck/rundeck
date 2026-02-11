@@ -468,7 +468,10 @@ export default defineComponent({
       eventBus.emit("workflow-editor-workflowsteps-updated", this.model);
     },
     getPluginDetails(element: EditStepData) {
-      return getPluginDetailsForStep(element);
+      const service = element.nodeStep
+        ? ServiceType.WorkflowNodeStep
+        : ServiceType.WorkflowStep;
+      return getPluginDetailsForStep(element, service);
     },
     async chooseProviderAdd({
       service,

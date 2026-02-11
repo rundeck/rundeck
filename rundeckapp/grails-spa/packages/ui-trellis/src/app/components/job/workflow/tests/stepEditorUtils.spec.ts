@@ -149,7 +149,10 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(element);
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowNodeStep,
+      );
 
       expect(mockGetServicePlugins).toHaveBeenCalledWith(
         ServiceType.WorkflowNodeStep,
@@ -162,20 +165,28 @@ describe("stepEditorUtils", () => {
       });
     });
 
-    it("uses WorkflowStep service when nodeStep is false", () => {
-      mockGetServicePlugins.mockReturnValue([]);
+    it("uses service passed by caller (e.g. InnerStepList targetService)", () => {
+      mockGetServicePlugins.mockReturnValue([
+        {
+          name: "exec-command",
+          title: "Command",
+          description: "Execute a remote command",
+          iconUrl: "/icon/shell.png",
+          providerMetadata: { faicon: "terminal" },
+        },
+      ]);
 
       const element = {
-        type: "some-step",
-        nodeStep: false,
+        type: "exec-command",
         id: "test-id",
       } as EditStepData;
 
-      getPluginDetailsForStep(element);
-
-      expect(mockGetServicePlugins).toHaveBeenCalledWith(
-        ServiceType.WorkflowStep,
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowNodeStep,
       );
+
+      expect(result.title).toBe("Command");
     });
 
     it("falls back to element description when plugin not found", () => {
@@ -183,12 +194,14 @@ describe("stepEditorUtils", () => {
 
       const element = {
         type: "unknown-plugin",
-        nodeStep: true,
         description: "My custom step",
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(element);
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowNodeStep,
+      );
 
       expect(result).toEqual({
         title: "My custom step",
@@ -207,7 +220,10 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(element);
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowNodeStep,
+      );
 
       expect(result).toEqual({
         title: "unknown-plugin",
@@ -234,7 +250,10 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(element);
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowNodeStep,
+      );
 
       expect(result.title).toBe("Inline Script");
     });
@@ -256,7 +275,10 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(element);
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowNodeStep,
+      );
 
       expect(result.title).toBe("My custom step");
     });
@@ -278,7 +300,10 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(element);
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowStep,
+      );
 
       expect(mockGetServicePlugins).toHaveBeenCalledWith(
         ServiceType.WorkflowStep,
@@ -310,11 +335,11 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(element);
-
-      expect(mockGetServicePlugins).toHaveBeenCalledWith(
+      const result = getPluginDetailsForStep(
+        element,
         ServiceType.WorkflowNodeStep,
       );
+
       expect(result.providerMetadata).toEqual({ glyphicon: "book" });
       expect(result.title).toBe("Job reference");
     });
@@ -337,7 +362,10 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(element);
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowStep,
+      );
 
       expect(result.providerMetadata).toEqual({ glyphicon: "book" });
     });
@@ -350,7 +378,10 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(element);
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowStep,
+      );
 
       expect(result).toEqual({
         title: "Job reference",
@@ -359,6 +390,24 @@ describe("stepEditorUtils", () => {
         tooltip: "Execute another job",
         providerMetadata: { glyphicon: "book" },
       });
+    });
+
+    it("falls back to element type when plugin not found", () => {
+      mockGetServicePlugins.mockReturnValue([]);
+
+      const element = {
+        type: "exec-command",
+        nodeStep: true,
+        id: "test-id",
+      } as EditStepData;
+
+      const result = getPluginDetailsForStep(
+        element,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.title).toBe("exec-command");
+      expect(result.description).toBe("");
     });
   });
 

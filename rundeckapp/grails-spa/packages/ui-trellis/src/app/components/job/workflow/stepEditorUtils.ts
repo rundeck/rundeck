@@ -68,19 +68,17 @@ export function createStepFromProvider(
 
 /**
  * Looks up plugin metadata from rootStore for a given step element.
- * Plugins must already be loaded in the rootStore (via `rootStore.plugins.load()`)
- * before calling this function.
+ * Plugins must already be loaded. Caller passes the step's service.
  */
-export function getPluginDetailsForStep(element: EditStepData): PluginDetails {
+export function getPluginDetailsForStep(
+  element: EditStepData,
+  service: string,
+): PluginDetails {
   const context = getRundeckContext();
   const isJobRef = Boolean(element.jobref || element.type === "job.reference");
-  const nodeStep = element.nodeStep ?? element.jobref?.nodeStep ?? false;
   const pluginName = isJobRef ? "job.reference" : element.type;
 
-  const plugins = nodeStep
-    ? context.rootStore.plugins.getServicePlugins(ServiceType.WorkflowNodeStep)
-    : context.rootStore.plugins.getServicePlugins(ServiceType.WorkflowStep);
-
+  const plugins = context.rootStore.plugins.getServicePlugins(service);
   const plugin = pluginName
     ? plugins.find((p: any) => p.name === pluginName)
     : undefined;

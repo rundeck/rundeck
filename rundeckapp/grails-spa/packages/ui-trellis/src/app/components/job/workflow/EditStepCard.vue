@@ -10,7 +10,7 @@
         v-if="provider"
         :plugin-details="provider"
         :config="stepConfig"
-        :hide-step-type="true"
+        :editing="true"
         :show-toggle="depth > 0"
         :expanded="contentExpanded"
         @delete="handleCancel"

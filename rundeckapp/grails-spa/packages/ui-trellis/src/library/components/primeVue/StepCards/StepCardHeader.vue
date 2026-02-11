@@ -7,7 +7,7 @@
             :detail="{
               ...config,
               ...pluginDetails,
-              title: config.description || pluginDetails.description,
+              title: config.description || pluginDetails.title,
             }"
             :show-description="false"
             :show-extended="false"
@@ -20,18 +20,23 @@
         </div>
       </div>
       <div class="stepCardHeader-description">
-        <Tag
-          v-if="!hideStepType"
-          :class="[effectiveNodeStep ? 'tag-node' : 'tag-workflow']"
-          :value="effectiveNodeStep ? $t('Workflow.nodeStep') : $t('Workflow.workflowStep')"
-        />
-        <p>{{ pluginDetails.title }}</p>
-        <i
-          class="pi pi-info-circle"
-          v-tooltip="{
-            value: pluginDetails.tooltip || pluginDetails.description,
-          }"
-        ></i>
+        <p v-if="editing">{{ pluginDetails.description }}</p>
+        <template v-else>
+          <Tag
+            :class="[effectiveNodeStep ? 'tag-node' : 'tag-workflow']"
+            :value="effectiveNodeStep ? $t('Workflow.nodeStep') : $t('Workflow.workflowStep')"
+          />
+          <template v-if="config.description">
+            <p>{{ pluginDetails.title }}</p>
+            <i
+              class="pi pi-info-circle"
+              v-tooltip="{
+                value: pluginDetails.tooltip || pluginDetails.description,
+              }"
+            ></i>
+          </template>
+          <p v-else>{{ pluginDetails.description }}</p>
+        </template>
       </div>
     </div>
     <div class="stepCardHeader-buttons">
@@ -91,7 +96,7 @@ export default defineComponent({
       type: Object,
       required: true,
     },
-    hideStepType: {
+    editing: {
       type: Boolean,
       default: false,
     },

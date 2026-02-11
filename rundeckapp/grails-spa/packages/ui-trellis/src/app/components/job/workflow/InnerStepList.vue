@@ -220,7 +220,7 @@ export default defineComponent({
   },
   methods: {
     getPluginDetails(element: EditStepData) {
-      return getPluginDetailsForStep(element);
+      return getPluginDetailsForStep(element, this.targetService);
     },
     stepTitle(step: EditStepData, index: number) {
       if (step.description) {

@@ -9,7 +9,7 @@
         v-else
         :plugin-details="pluginDetails"
         :config="config"
-        :hide-step-type="hideStepType"
+        :editing="editing"
         :show-as-node-step="showAsNodeStep"
         :show-toggle="showToggle"
         :expanded="effectiveExpanded"
@@ -56,7 +56,7 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    hideStepType: {
+    editing: {
       type: Boolean,
       default: false,
     },
