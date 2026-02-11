@@ -117,6 +117,8 @@ export default defineComponent({
       } as PluginConfig,
       editModelValidation: { errors: [], valid: true },
       filtersEb: null,
+      addEventHandler: null as (() => void) | null,
+      editEventHandler: null as ((filterIndex: number) => void) | null,
     };
   },
   computed: {
@@ -137,25 +139,26 @@ export default defineComponent({
     this.model = cloneDeep(this.modelValue);
     this.filtersEb = mitt();
     if (this.addEvent) {
-      eventBus.on(this.addEvent, () => {
+      this.addEventHandler = () => {
         this.addFilter();
-      });
+      };
+      eventBus.on(this.addEvent, this.addEventHandler);
     }
     if (this.editEvent) {
-      eventBus.on(this.editEvent, (filterIndex: number) => {
-        // Validate index is within bounds
+      this.editEventHandler = (filterIndex: number) => {
         if (typeof filterIndex === 'number' && filterIndex >= 0 && filterIndex < this.model.length) {
           this.editFilterByIndex(filterIndex);
         }
-      });
+      };
+      eventBus.on(this.editEvent, this.editEventHandler);
     }
   },
   beforeUnmount() {
-    if (this.addEvent) {
-      eventBus.off(this.addEvent);
+    if (this.addEvent && this.addEventHandler) {
+      eventBus.off(this.addEvent, this.addEventHandler);
     }
-    if (this.editEvent) {
-      eventBus.off(this.editEvent);
+    if (this.editEvent && this.editEventHandler) {
+      eventBus.off(this.editEvent, this.editEventHandler);
     }
   },
   methods: {

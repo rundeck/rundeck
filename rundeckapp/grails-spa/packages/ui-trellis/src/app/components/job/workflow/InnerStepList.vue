@@ -20,7 +20,7 @@
               :log-filters="element.jobref ? [] : (element.filters || [])"
               :error-handler="element.errorhandler ? [element.errorhandler] : []"
               @add-log-filter="!element.jobref && addLogFilter(element.id)"
-              @add-error-handler="toggleAddErrorHandlerModal(index)"
+              @add-error-handler="toggleAddErrorHandlerModal(element.id)"
               @update:log-filters="!element.jobref && updateLogFilters(index, $event)"
               @edit-log-filter="!element.jobref && handleEditLogFilterFromChip(element.id, $event)"
               @edit-error-handler="editErrorHandler(index)"
@@ -34,8 +34,8 @@
               :model-value="element.filters || []"
               :title="$t('Workflow.logFilters')"
               :subtitle="stepTitle(element, index)"
-              :add-event="'inner-step-action:add-logfilter:' + element.id"
-              :edit-event="'inner-step-action:edit-logfilter:' + element.id"
+              :add-event="logFilterAddEvent(element.id)"
+              :edit-event="logFilterEditEvent(element.id)"
               :conditional-enabled="true"
               @update:model-value="updateLogFilters(index, $event)"
             />
@@ -196,7 +196,7 @@ export default defineComponent({
       editErrorHandlerModal: false,
       errorHandlerEditModel: {} as any,
       errorHandlerExtra: { keepgoingOnSuccess: false },
-      errorHandlerIndex: -1,
+      errorHandlerStepId: null as string | null,
     };
   },
   computed: {
@@ -335,12 +335,18 @@ export default defineComponent({
     },
 
     // --- Log Filters ---
+    logFilterAddEvent(stepId: string): string {
+      return `inner-step-action:add-logfilter:${this.depth}:${stepId}`;
+    },
+    logFilterEditEvent(stepId: string): string {
+      return `inner-step-action:edit-logfilter:${this.depth}:${stepId}`;
+    },
     addLogFilter(stepId: string) {
-      eventBus.emit("inner-step-action:add-logfilter:" + stepId);
+      eventBus.emit(this.logFilterAddEvent(stepId));
     },
 
     handleEditLogFilterFromChip(stepId: string, data: { filter: any; index: number }) {
-      eventBus.emit("inner-step-action:edit-logfilter:" + stepId, data.index);
+      eventBus.emit(this.logFilterEditEvent(stepId), data.index);
     },
 
     updateLogFilters(index: number, data: any) {
@@ -351,9 +357,9 @@ export default defineComponent({
     },
 
     // --- Error Handler ---
-    toggleAddErrorHandlerModal(index: number) {
+    toggleAddErrorHandlerModal(stepId: string) {
       this.isErrorHandler = true;
-      this.errorHandlerIndex = index;
+      this.errorHandlerStepId = stepId;
       this.addStepModal = true;
     },
 
@@ -374,7 +380,7 @@ export default defineComponent({
         console.warn("Cannot edit error handler: it does not exist");
         return;
       }
-      this.errorHandlerIndex = index;
+      this.errorHandlerStepId = command.id;
       this.errorHandlerEditModel = cloneDeep(command.errorhandler);
       this.errorHandlerExtra = {
         keepgoingOnSuccess: command.errorhandler.keepgoingOnSuccess || false,
@@ -391,6 +397,18 @@ export default defineComponent({
 
     async saveErrorHandler() {
       try {
+        if (!this.errorHandlerStepId) {
+          console.error("Cannot save error handler: no step ID");
+          return;
+        }
+
+        const index = this.commands.findIndex((c) => c.id === this.errorHandlerStepId);
+        if (index === -1) {
+          console.error("Cannot save error handler: step not found", this.errorHandlerStepId);
+          this.cancelErrorHandlerEdit();
+          return;
+        }
+
         const handlerData = {
           ...this.errorHandlerEditModel,
           keepgoingOnSuccess: this.errorHandlerExtra.keepgoingOnSuccess,
@@ -410,9 +428,9 @@ export default defineComponent({
           }
         }
 
-        const command = cloneDeep(this.commands[this.errorHandlerIndex]);
+        const command = cloneDeep(this.commands[index]);
         command.errorhandler = handlerData;
-        this.commands[this.errorHandlerIndex] = command;
+        this.commands[index] = command;
         this.cancelErrorHandlerEdit();
         this.emitUpdate();
       } catch (e) {
@@ -424,7 +442,7 @@ export default defineComponent({
       this.editErrorHandlerModal = false;
       this.errorHandlerEditModel = {};
       this.errorHandlerExtra = { keepgoingOnSuccess: false };
-      this.errorHandlerIndex = -1;
+      this.errorHandlerStepId = null;
       this.editModelValidation = { errors: {}, valid: true };
     },
 
