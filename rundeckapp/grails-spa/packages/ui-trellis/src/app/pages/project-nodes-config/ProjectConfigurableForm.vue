@@ -20,7 +20,7 @@
                   key="save"
                   class="btn btn-cta reset_page_confirm"
                   @click="saveConfig"
-                  >{{ "Save" }}</a
+                  >{{ $t("Save") }}</a
                 >
               </span>
             </div>
@@ -114,6 +114,8 @@ export default defineComponent({
           item.properties.forEach((prop: any) => {
             const originalPropName = prop.name;
             prop.name = itemName + "." + prop.name;
+            prop.title = this.$t(prop.title) as string;
+            prop.description = this.$t(prop.description) as string;
             Object.entries(item.values).forEach(([key, value]) => {
               if (originalPropName === key) {
                 this.massagedConfig[prop.name] = value;
