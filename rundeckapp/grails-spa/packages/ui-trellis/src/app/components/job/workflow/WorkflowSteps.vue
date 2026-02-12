@@ -36,7 +36,6 @@
               @duplicate="duplicateStep(index)"
               @edit="editStepByIndex(index)"
             />
-            <!-- LogFilters component for EA mode - provides the modal for adding/editing filters -->
             <log-filters
               v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId !== element.id"
               :model-value="element.filters || []"
@@ -930,6 +929,7 @@ h2.text-heading--lg {
 
   &.ea {
     padding: 0 !important;
+    margin-bottom: 0px;
     border: none;
   }
 

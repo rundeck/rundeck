@@ -84,6 +84,21 @@ const BaseStepCardStub = {
   </div>`,
 };
 
+// JobRefFormFields stub to render the actual form fields
+const JobRefFormFieldsStub = {
+  name: 'JobRefFormFieldsStub',
+  template: `<div class="jobref-form-fields-stub">
+    <select data-testid="jobProjectField">
+      <option value="testProject">testProject</option>
+    </select>
+    <input data-testid="jobNameField" :value="modelValue.name" />
+    <input data-testid="jobGroupField" :value="modelValue.group" />
+    <input data-testid="jobUuidField" :value="modelValue.uuid" />
+  </div>`,
+  props: ['modelValue', 'showValidation', 'extraAutocompleteVars'],
+  emits: ['update:modelValue'],
+};
+
 // --- Helper to create wrapper ---
 const createWrapper = async (
   props: Record<string, any> = {},
@@ -102,6 +117,7 @@ const createWrapper = async (
     global: {
       stubs: {
         BaseStepCard: BaseStepCardStub,
+        JobRefFormFields: JobRefFormFieldsStub,
       },
       mocks: {
         $t: (key: string, args?: any[]) => {
@@ -725,7 +741,7 @@ describe("EditStepCard", () => {
       expect((wrapper.vm as any).editModel.description).toBeUndefined();
     });
 
-    it("merges with defaults for job reference model values", async () => {
+    it("passes jobref data to JobRefFormFields component", async () => {
       const wrapper = await createWrapper({
         modelValue: {
           type: "job.reference",
@@ -734,16 +750,32 @@ describe("EditStepCard", () => {
           jobref: {
             name: "My Job",
             uuid: "",
+            project: "testProject",
+            group: "",
+            args: "",
+            nodeStep: true,
+            failOnDisable: false,
+            childNodes: false,
+            importOptions: false,
+            ignoreNotifications: false,
+            nodefilters: {
+              filter: "",
+              dispatch: {
+                threadcount: null,
+                keepgoing: null,
+                rankAttribute: null,
+                rankOrder: null,
+                nodeIntersect: null,
+              },
+            },
           },
         },
         serviceName: "WorkflowNodeStep",
       });
 
-      const jobref = (wrapper.vm as any).editModel.jobref;
-      expect(jobref).toBeDefined();
-      expect(jobref.name).toBe("My Job");
-      expect(jobref.nodefilters).toBeDefined();
-      expect(jobref.nodefilters.dispatch).toBeDefined();
+      const jobrefComp = wrapper.findComponent({ name: "JobRefFormFieldsStub" });
+      expect(jobrefComp.exists()).toBe(true);
+      expect(jobrefComp.props("modelValue").name).toBe("My Job");
     });
   });
 
