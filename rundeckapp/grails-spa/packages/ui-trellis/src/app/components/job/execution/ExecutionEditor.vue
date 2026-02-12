@@ -136,6 +136,50 @@ export default defineComponent({
     },
   },
   methods: {
+    localizeText(text?: string) {
+      if (!text || typeof text !== "string") {
+        return text;
+      }
+      const normalized = text.replace(/\r\n/g, "\n");
+      const candidates = [normalized, normalized.trim()];
+      for (const candidate of candidates) {
+        if (!candidate) continue;
+        const translated = this.$t(candidate) as string;
+        if (translated && translated !== candidate) {
+          return translated;
+        }
+      }
+
+      // Some plugin descriptions are multiline server strings; translate line by line.
+      if (normalized.includes("\n")) {
+        return normalized
+          .split("\n")
+          .map((line) => {
+            if (!line.trim()) {
+              return line;
+            }
+            const lineCandidates = [line, line.trim()];
+            for (const lineCandidate of lineCandidates) {
+              if (!lineCandidate) continue;
+              const lineTranslated = this.$t(lineCandidate) as string;
+              if (lineTranslated && lineTranslated !== lineCandidate) {
+                return lineTranslated;
+              }
+            }
+            return line;
+          })
+          .join("\n");
+      }
+
+      return normalized.trim();
+    },
+    localizeProperties(properties: any[] = []) {
+      return properties.map((prop) => ({
+        ...prop,
+        title: this.localizeText(prop?.title),
+        description: this.localizeText(prop?.description),
+      }));
+    },
     massagePluginInfo(plugin: PluginInitialData): Plugin {
       let config = {};
       const retrievedValue = this.initialData.ExecutionLifecycle[plugin.name];
@@ -155,8 +199,17 @@ export default defineComponent({
         config = { ...retrievedValue };
       }
 
+      const localizedDescription = this.localizeText(plugin.description);
+      const localizedTitle = this.localizeText((plugin as any).title);
+      const localizedProperties = this.localizeProperties(
+        (plugin as any).properties || [],
+      );
+
       return {
         ...plugin,
+        ...(localizedTitle ? { title: localizedTitle } : {}),
+        ...(localizedDescription ? { description: localizedDescription } : {}),
+        properties: localizedProperties,
         type: plugin.name,
         providerMetadata: plugin.metadata,
         extra: {
