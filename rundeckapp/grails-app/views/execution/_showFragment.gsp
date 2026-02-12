@@ -29,7 +29,7 @@
           <i class="exec-status icon "
              data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
           </i>
-          <g:render template="wfItemView" model="[item: execution.workflow.commands[0], icon: 'icon-small']"/>
+          <g:render template="wfItemView" model="[item: execution.getWorkflowData().commands[0], icon: 'icon-small']"/>
       </div>
 
         <div class="col-xs-12 col-sm-6 text-right execution-action-links">
