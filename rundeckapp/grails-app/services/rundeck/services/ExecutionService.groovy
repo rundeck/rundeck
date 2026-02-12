@@ -4600,13 +4600,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     List<PluginConfiguration> getGlobalPluginConfigurations(String project){
         def list = []
 
+        // framework.globalfilter.* properties come from framework.properties
         def fwPlugins = ProjectNodeSupport.listPluginConfigurations(
-                frameworkService.getProjectProperties(project),
+                frameworkService.getFrameworkPropertiesMap(),
                 'framework.globalfilter',
                 ServiceNameConstants.LogFilter,
                 true
         )
 
+        // project.globalfilter.* properties come from project properties
         def projPlugins = ProjectNodeSupport.listPluginConfigurations(
                 frameworkService.getProjectProperties(project),
                 'project.globalfilter',

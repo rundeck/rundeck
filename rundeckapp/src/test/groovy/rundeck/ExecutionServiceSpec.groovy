@@ -5076,37 +5076,43 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         def project = "asdf"
         service.frameworkService = Stub(FrameworkService) {
-            getProjectProperties(project) >> props
+            // framework.globalfilter.* comes from framework.properties (via getFrameworkPropertiesMap)
+            getFrameworkPropertiesMap() >> frameworkProps
+            // project.globalfilter.* comes from project properties
+            getProjectProperties(project) >> projectProps
         }
         when:
 
-        //def result = ProjectNodeSupport.listPluginConfigurations(props, prefix, svc, true)
         def result = service.getGlobalPluginConfigurations(project)
         then:
 
         result.size() == expectedSize
 
         where:
-        expectedSize    | props
-        1               | ['framework.globalfilter.1.type':'mask-passwords',
-                           'framework.globalfilter.1.config.replacement':'[SECURE]',
-                           'framework.globalfilter.1.config.color': 'blue']
-        1               | ['project.globalfilter.1.type':'highlight-output',
-                           'project.globalfilter.1.config.regex':'test',
-                           'project.globalfilter.1.config.bgcolor': 'yellow']
-        0               | [:]
-        2               | ['framework.globalfilter.1.type':'mask-passwords',
-                           'framework.globalfilter.1.config.replacement':'[SECURE]',
-                           'framework.globalfilter.1.config.color': 'blue',
-                           'project.globalfilter.1.type':'highlight-output',
-                           'project.globalfilter.1.config.regex':'test',
-                           'project.globalfilter.1.config.bgcolor': 'yellow']
-        2               | ['framework.globalfilter.1.type':'mask-passwords',
-                           'framework.globalfilter.1.config.replacement':'[SECURE]',
-                           'framework.globalfilter.1.config.color': 'blue',
-                           'framework.globalfilter.2.type':'highlight-output',
-                           'framework.globalfilter.2.config.regex':'test',
-                           'framework.globalfilter.2.config.bgcolor': 'yellow']
+        expectedSize | frameworkProps | projectProps
+        // Only framework global filter
+        1            | ['framework.globalfilter.1.type':'mask-passwords',
+                        'framework.globalfilter.1.config.replacement':'[SECURE]',
+                        'framework.globalfilter.1.config.color': 'blue'] | [:]
+        // Only project global filter
+        1            | [:] | ['project.globalfilter.1.type':'highlight-output',
+                              'project.globalfilter.1.config.regex':'test',
+                              'project.globalfilter.1.config.bgcolor': 'yellow']
+        // No filters
+        0            | [:] | [:]
+        // Both framework and project filters
+        2            | ['framework.globalfilter.1.type':'mask-passwords',
+                        'framework.globalfilter.1.config.replacement':'[SECURE]',
+                        'framework.globalfilter.1.config.color': 'blue'] | ['project.globalfilter.1.type':'highlight-output',
+                                                                             'project.globalfilter.1.config.regex':'test',
+                                                                             'project.globalfilter.1.config.bgcolor': 'yellow']
+        // Multiple framework filters
+        2            | ['framework.globalfilter.1.type':'mask-passwords',
+                        'framework.globalfilter.1.config.replacement':'[SECURE]',
+                        'framework.globalfilter.1.config.color': 'blue',
+                        'framework.globalfilter.2.type':'highlight-output',
+                        'framework.globalfilter.2.config.regex':'test',
+                        'framework.globalfilter.2.config.bgcolor': 'yellow'] | [:]
 
     }
 
