@@ -2,7 +2,7 @@
   <div v-if="modelData">
     <div class="form-group">
       <label class="col-sm-2 control-label">
-        Schedule to run repeatedly?
+        {{ $t("schedule.to.run.repeatedly") }}
       </label>
       <div class="col-sm-10">
         <div class="radio radio-inline">
@@ -53,7 +53,7 @@
                                 data-crontabstring="false"
                                 href="#cronsimple"
                                 @click="showSimpleCron"
-                                >Simple</a
+                                >{{ $t("scheduledExecution.crontab.tab.simple") }}</a
                               >
                             </li>
                             <li
@@ -66,7 +66,7 @@
                                 data-crontabstring="true"
                                 href="#cronstrtab"
                                 @click="showCronExpression"
-                                >Crontab</a
+                                >{{ $t("scheduledExecution.crontab.tab.crontab") }}</a
                               >
                             </li>
                           </ul>
@@ -83,7 +83,7 @@
                                   for="hourNumber"
                                   aria-hidden="false"
                                   style="display: none"
-                                  >Hour</label
+                                  >{{ $t("scheduledExecution.crontab.field.hour") }}</label
                                 >
                                 <select
                                   id="hourNumber"
@@ -105,7 +105,7 @@
                                   for="minuteNumber"
                                   aria-hidden="false"
                                   style="display: none"
-                                  >Minute</label
+                                  >{{ $t("scheduledExecution.crontab.field.minute") }}</label
                                 >
                                 <select
                                   id="minuteNumber"
@@ -135,7 +135,9 @@
                                     type="checkbox"
                                     value="all"
                                   />
-                                  <label for="everyDay">Every Day</label>
+                                  <label for="everyDay">{{
+                                    $t("scheduledExecution.crontab.everyDay")
+                                  }}</label>
                                   <template v-if="!modelData.everyDayOfWeek">
                                     <div
                                       v-for="(day, n) in days"
@@ -171,7 +173,9 @@
                                     type="checkbox"
                                     value="all"
                                   />
-                                  <label for="everyMonth">Every Month</label>
+                                  <label for="everyMonth">{{
+                                    $t("scheduledExecution.crontab.everyMonth")
+                                  }}</label>
                                   <template v-if="!modelData.allMonths">
                                     <div
                                       v-for="(month, n) in months"
@@ -240,20 +244,34 @@
                                   <div class="text-strong col-sm-12">
                                     <div>
                                       <p>
-                                        Ranges: <code>1-3</code>. Lists:
-                                        <code>1,4,6</code>. Increments:
-                                        <code>0/15</code> "every 15 units
-                                        starting at 0".
+                                        {{ $t("scheduledExecution.crontab.help.ranges") }}
+                                        <code>1-3</code>.
+                                        {{ $t("scheduledExecution.crontab.help.lists") }}
+                                        <code>1,4,6</code>.
+                                        {{ $t("scheduledExecution.crontab.help.increments") }}
+                                        <code>0/15</code>
+                                        {{
+                                          $t(
+                                            "scheduledExecution.crontab.help.increments.description"
+                                          )
+                                        }}
                                       </p>
                                       <p>
-                                        Valid values of Day of Week: 1-7 or
-                                        SUN-SAT
+                                        {{
+                                          $t(
+                                            "scheduledExecution.crontab.help.validDayOfWeek"
+                                          )
+                                        }}
                                       </p>
                                       <p>
-                                        Valid values of Month: 1-12 or JAN-DEC
+                                        {{
+                                          $t(
+                                            "scheduledExecution.crontab.help.validMonth"
+                                          )
+                                        }}
                                       </p>
                                     </div>
-                                    See:
+                                    {{ $t("scheduledExecution.crontab.help.see") }}
                                     <a
                                       :href="
                                         $t('documentation.reference.cron.url')
@@ -262,7 +280,7 @@
                                       target="_blank"
                                       >Cron reference</a
                                     >
-                                    for formatting help
+                                    {{ $t("scheduledExecution.crontab.help.formatting") }}
                                   </div>
                                 </div>
                               </div>
@@ -589,3 +607,10 @@ function getCaretPos() {
   return ii;
 }
 </script>
+<style scoped>
+.radio input[type="radio"] {
+  appearance: auto;
+  -webkit-appearance: radio;
+  -moz-appearance: radio;
+}
+</style>

@@ -4,6 +4,31 @@ const messages = {
   Delete: "Delete",
   Cancel: "Cancel",
   Revert: "Revert",
+  Configuration: "Configuration",
+  "Edit Node Sources": "Edit Node Sources",
+  "Add a new Node Source": "Add a new Node Source",
+  "Add a new Node Enhancer": "Add a new Node Enhancer",
+  "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)":
+    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)",
+  "Node Enhancers can modify the data loaded from Node Sources.":
+    "Node Enhancers can modify the data loaded from Node Sources.",
+  "None configured. Click NodeEnhancer to add a new plugin.":
+    "None configured. Click NodeEnhancer to add a new plugin.",
+  "Scans a directory and loads all resource document files":
+    "Scans a directory and loads all resource document files",
+  "Reads a file containing node definitions in a supported format":
+    "Reads a file containing node definitions in a supported format",
+  "Provides the local node as the single resource":
+    "Provides the local node as the single resource",
+  "Run a script to produce resource model data":
+    "Run a script to produce resource model data",
+  "Retrieves a URL containing node definitions in a supported format":
+    "Retrieves a URL containing node definitions in a supported format",
+  "storage.enter.path": "Enter a path",
+  "storage.enter.password": "Enter a password",
+  "storage.enter.directory.name": "Enter the directory name",
+  "storage.specify.name": "Specify a name.",
+  "soft.wrap": "Soft Wrap",
   jobAverageDurationPlaceholder: "leave blank for Job Average duration",
   resourcesEditor: {
     "Dispatch to Nodes": "Dispatch to Nodes",
@@ -71,6 +96,17 @@ const messages = {
   message_userSummary: {
     desc: "This is a list of User Profiles which have logged in to Rundeck.",
   },
+  notifications: {
+    helpText:
+      "Notifications can be triggered by different events during the Job Execution.",
+    emptyText:
+      "No Notifications are defined. Click an event below to add a Notification for that Trigger.",
+    addButton: "Add Notification",
+    triggerLabel: "Trigger",
+    selectTrigger: "Select a Trigger",
+    typeLabel: "Notification Type",
+    selectNotification: "Select a Notification",
+  },
   message_webhookPageTitle: "Webhooks",
   message_webhookListTitle: "Webhooks",
   message_webhookDetailTitle: "Webhook Detail",
@@ -102,6 +138,11 @@ const messages = {
   message_webhookRegenClicked:
     "A new authorization string will be generated and displayed when the webhook is saved.",
   message_webhookPluginLabel: "Choose Webhook Plugin",
+  message_webhookFilterListPlaceholder: "Filter Webhooks",
+  message_webhookTabGeneral: "General",
+  message_webhookTabHandlerConfiguration: "Handler Configuration",
+  message_webhookButtonRegenerate: "Regenerate",
+  message_webhookNewHookName: "New Hook",
   message_hello: "hello world",
   message_sidebarNotificationText: "Rundeck update available",
   message_updateAvailable: "Update Available",
@@ -345,6 +386,23 @@ const messages = {
   "scheduledExecution.property.timezone.prompt": "Time Zone",
   "scheduledExecution.property.timezone.description":
     'A valid Time Zone, either an abbreviation such as "PST", a full name such as "America/Los_Angeles",or a custom ID such as "GMT-8{\':\'}00".',
+  "scheduledExecution.crontab.tab.simple": "Simple",
+  "scheduledExecution.crontab.tab.crontab": "Crontab",
+  "scheduledExecution.crontab.field.hour": "Hour",
+  "scheduledExecution.crontab.field.minute": "Minute",
+  "scheduledExecution.crontab.everyDay": "Every Day",
+  "scheduledExecution.crontab.everyMonth": "Every Month",
+  "scheduledExecution.crontab.help.ranges": "Ranges:",
+  "scheduledExecution.crontab.help.lists": "Lists:",
+  "scheduledExecution.crontab.help.increments": "Increments:",
+  "scheduledExecution.crontab.help.increments.description":
+    '"every 15 units starting at 0".',
+  "scheduledExecution.crontab.help.validDayOfWeek":
+    "Valid values of Day of Week: 1-7 or SUN-SAT",
+  "scheduledExecution.crontab.help.validMonth":
+    "Valid values of Month: 1-12 or JAN-DEC",
+  "scheduledExecution.crontab.help.see": "See:",
+  "scheduledExecution.crontab.help.formatting": "for formatting help",
   "documentation.reference.cron.url":
     "https{':'}//www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html",
   "set.as.default.filter": "Set as Default Filter",
@@ -656,6 +714,10 @@ const messages = {
     "Project search: name, label or /regex/",
   "page.home.search.project.title": "{n} Project found | {n} Projects found",
   "button.Action": "Action",
+  Any: "Any",
+  "Any Time": "Any Time",
+  "Other...": "Other...",
+  "Search Activity": "Search Activity",
   "edit.configuration": "Edit Configuration",
   "page.home.new.project.button.label": "New Project",
   Execution: "{n} Executions | {n} Execution | {n} Executions",
@@ -679,8 +741,12 @@ const messages = {
     "Warning! Relying on unquoted arguments could make this job vulnerable to command injection. Use with care.",
   "add.new.option": "Add New Option",
   "add.an.option": "Add an option",
+  "global.log.filters": "Global Log Filters",
+  "workflow.all.steps": "All workflow steps",
   "option.values.c": "1 Value|{n} Values",
   "no.options.message": "No Options",
+  "Allow this Job to be scheduled?": "Allow this Job to be scheduled?",
+  "Allow this Job to be executed?": "Allow this Job to be executed?",
   "the.option.values.will.be.available.to.scripts.in.these.forms":
     "The option values will be available to scripts in these forms:",
   "option.usage.multiline.note":
