@@ -660,6 +660,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
                 workflowMap = [
                     keepgoing: workflowData.keepgoing,
                     strategy: workflowData.strategy,
+                    threadcount: workflowData.getThreadcount(),
                     commands: workflowData.steps?.collect { step ->
                         if (step.respondsTo('toMap')) {
                             step.toMap()

@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
 import com.dtolabs.rundeck.core.utils.WaitUtils
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.springframework.jdbc.core.RowCallbackHandler
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -2397,7 +2399,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    def validateWorkflowStep(WorkflowStep step, List projects = [], Boolean validateJobref = false, String currentProj = null) {
+    def validateWorkflowStep(WorkflowStepData step, List projects = [], Boolean validateJobref = false, String currentProj = null) {
         WorkflowController._validateCommandExec(step, null, projects, validateJobref, currentProj)
         if (step.errors.hasErrors()) {
             return false
@@ -3023,10 +3025,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def wfitemfailed = false
             def failedlist = []
             List<String> fprojects = frameworkService.projectNames(userAndRoles)
-            workflow.commands?.each {WorkflowStep cexec ->
+            workflow.getSteps()?.each {WorkflowStepData cexec ->
                 if (!validateWorkflowStep(cexec, fprojects, validateJobref, scheduledExecution.project)) {
                     wfitemfailed = true
-                    failedlist << "$i: " + cexec.errors.allErrors.collect {
+                    failedlist << "$i: " + (cexec as WorkflowStep).errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
                     }
                 }
@@ -3034,7 +3036,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if (cexec.errorHandler) {
                     if (!validateWorkflowStep(cexec.errorHandler, fprojects, validateJobref, scheduledExecution.project)) {
                         wfitemfailed = true
-                        failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
+                        failedlist << "$i: " + (cexec as WorkflowStep).errorHandler.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)
                         }
                     }
@@ -3048,8 +3050,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
             }
         }
-        if (!workflowData || !(workflowData as Workflow).commands ||
-            (workflowData as Workflow).commands.isEmpty()) {
+        if (!workflowData || !(workflowData as Workflow).getSteps() ||
+            (workflowData as Workflow).getSteps().isEmpty()) {
 
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message', 'Step must not be empty')
             failed= true
@@ -3941,13 +3943,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
 
 //    @CompileStatic
-    boolean validateWorkflow(Workflow workflow, ScheduledExecution scheduledExecution){
+    boolean validateWorkflow(WorkflowData workflow, ScheduledExecution scheduledExecution){
         def valid=true
         //validate error handler types
         if (workflow?.strategy == 'node-first') {
             //if a step is a Node step and has an error handler
             def cmdi = 1
-            workflow.commands.each { WorkflowStep step ->
+            workflow.getSteps().each { WorkflowStepData step ->
                 if(step.errorHandler && step.nodeStep && !step.errorHandler.nodeStep){
                     //reject if the Error Handler is not a node step
                     step.errors.rejectValue('errorHandler', 'WorkflowStep.errorHandler.nodeStep.invalid', [cmdi] as Object[], "Step {0}: Must have a Node Step as an Error Handler")

@@ -5,9 +5,11 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import grails.util.Holders
+import groovy.transform.CompileDynamic
 import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import grails.validation.Validateable
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.springframework.validation.Errors
 import rundeck.data.validation.validators.ValidatorUtils
 import rundeck.data.validation.validators.plugin.RundeckPluginValidator
@@ -62,7 +64,11 @@ class RdWorkflow implements WorkflowData, Validateable {
         })
     }
 
-    /**
+    @Override
+    List<WorkflowStepData> getCommands() {
+        return steps
+    }
+/**
      * Convert to canonical map representation for serialization
      * @return Map representation
      */
@@ -87,5 +93,38 @@ class RdWorkflow implements WorkflowData, Validateable {
             strategy: strategy,
             commands: steps?.collect { it.toMap() } ?: []
         ] + plugins
+    }
+
+    /**
+     * Construct an RdWorkflow from a canonical map representation (inverse of toMap).
+     *
+     * Accepts top-level keys:
+     *  - keepgoing (Boolean)
+     *  - strategy (String)
+     *  - commands or steps (List of step maps)
+     *  - pluginConfig or pluginConfigMap (Map)
+     *
+     * @param m Map representation of a workflow
+     * @return RdWorkflow instance or null if map is null/empty
+     */
+    @CompileDynamic
+    static RdWorkflow fromMap(Map m) {
+        if (!m) return null
+        def wf = new RdWorkflow()
+        if (m.containsKey('keepgoing')) {
+            wf.keepgoing = m.keepgoing as Boolean
+        }
+        wf.strategy = m.strategy ?: wf.strategy
+
+        def commands = m.commands ?: m.steps
+        if (commands instanceof List) {
+            wf.steps = commands.collect { entry ->
+                (entry instanceof Map) ? RdWorkflowStep.fromMap((Map) entry) : null
+            }.findAll { it != null }
+        }
+
+        wf.pluginConfigMap = (m.pluginConfig ?: m.pluginConfigMap) as Map<String, Object>
+
+        return wf
     }
 }

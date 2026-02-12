@@ -40,6 +40,8 @@ public interface WorkflowData {
      */
     List<WorkflowStepData> getSteps();
 
+    List<WorkflowStepData> getCommands();
+
     /**
      *
      * @return Defines the workflow strategy plugin to apply for this workflow

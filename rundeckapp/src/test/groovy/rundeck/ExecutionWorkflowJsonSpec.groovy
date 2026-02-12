@@ -70,7 +70,7 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
         result instanceof Workflow
         result.keepgoing == false
         result.strategy == 'sequential'
-        result.commands != null
+        result.getSteps() != null
     }
 
     def "test getWorkflowData returns null when both fields are null"() {
@@ -170,7 +170,7 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
         execWorkflow.keepgoing == true
         execWorkflow.strategy == 'sequential'
         execWorkflow.threadcount == 2
-        execWorkflow.commands.size() == 1
+        execWorkflow.getSteps().size() == 1
     }
 
     def "test backwards compatibility - prefers old workflow over JSON"() {

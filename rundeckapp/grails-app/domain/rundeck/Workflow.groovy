@@ -36,7 +36,7 @@ public class Workflow implements WorkflowData {
 
     Integer threadcount=1
     Boolean keepgoing=false
-    List<WorkflowStep> commands
+    List<WorkflowStepData> commands
     String strategy="node-first"
     String pluginConfig
     static belongsTo = [Execution, ScheduledExecution]
@@ -140,7 +140,7 @@ public class Workflow implements WorkflowData {
             final ObjectMapper mapper = new ObjectMapper()
             pluginConfig = mapper.writeValueAsString(obj)
         } else {
-            pluginConfig = null
+            pluginConfig = "{}"
         }
     }
 

@@ -58,7 +58,7 @@ class ExecutionFromRdExecutionUpdaterSpec extends Specification implements DataT
         e.status == "test-status"
         e.dateStarted == startDate
         e.dateCompleted == completeDate
-        e.workflow.steps.size() == 1
+        e.getWorkflowData().steps.size() == 1
         e.failedNodeList == "node1"
         e.succeededNodeList == "node2"
         e.abortedby == "tester"

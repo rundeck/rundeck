@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
@@ -36,6 +37,7 @@ import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.util.Sizes
+import rundeck.data.job.RdWorkflow
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.validation.shared.SharedJobConstraints
 import rundeck.data.validation.shared.SharedLogConfigConstraints
@@ -1271,8 +1273,8 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      */
     WorkflowData getWorkflowData() {
         // Backwards compatibility: check old workflow field first
-        if (workflow != null) {
-            return workflow
+        if (this.workflow != null) {
+            return this.workflow
         }
 
         // New format: deserialize from JSON
@@ -1340,14 +1342,25 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
             if (workflowData instanceof Workflow) {
                 // Use existing toMap() method
                 workflowMap = ((Workflow) workflowData).toMap()
+                // Preserve empty pluginConfig as "{}" instead of removing it
+                if (!workflowMap.containsKey('pluginConfig') && workflowData.pluginConfigMap != null) {
+                    // If toMap() removed pluginConfig but it exists in the source, preserve it as empty map
+                    workflowMap.pluginConfig = [:]
+                }
             } else if (workflowData.respondsTo('toMap')) {
                 // RdWorkflow or other implementations with toMap()
                 workflowMap = workflowData.toMap()
+                // Preserve empty pluginConfig as "{}" instead of removing it
+                if (!workflowMap.containsKey('pluginConfig') && workflowData.pluginConfigMap != null) {
+                    // If toMap() removed pluginConfig but it exists in the source, preserve it as empty map
+                    workflowMap.pluginConfig = [:]
+                }
             } else {
                 // Fallback: manually construct map from WorkflowData interface
                 workflowMap = [
                     keepgoing: workflowData.keepgoing,
                     strategy: workflowData.strategy,
+                    threadcount: workflowData.getThreadcount(),
                     commands: workflowData.steps?.collect { step ->
                         if (step.respondsTo('toMap')) {
                             step.toMap()
@@ -1359,6 +1372,9 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                 ]
                 if (workflowData.pluginConfigMap) {
                     workflowMap.pluginConfig = workflowData.pluginConfigMap
+                } else if (workflowData.respondsTo('getPluginConfig') && workflowData.pluginConfig != null) {
+                    // Preserve empty pluginConfig as "{}" instead of null
+                    workflowMap.pluginConfig = [:]
                 }
             }
 
