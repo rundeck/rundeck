@@ -2,8 +2,8 @@
   <log-filters
     id="globalLogFilters"
     v-model="model.LogFilter"
-    title="Global Log Filters"
-    subtitle="All workflow steps"
+    :title="$t('global.log.filters')"
+    :subtitle="$t('workflow.all.steps')"
     :show-if-empty="true"
   />
 </template>

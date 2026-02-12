@@ -5,7 +5,6 @@ const messages = {
   Cancel: "Cancel",
   Revert: "Revert",
   Configuration: "Configuration",
-
   "Add a new Node Source": "Add a new Node Source",
   "Add a new Node Enhancer": "Add a new Node Enhancer",
   "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)":
@@ -389,6 +388,23 @@ const messages = {
   "scheduledExecution.property.timezone.prompt": "Time Zone",
   "scheduledExecution.property.timezone.description":
     'A valid Time Zone, either an abbreviation such as "PST", a full name such as "America/Los_Angeles",or a custom ID such as "GMT-8{\':\'}00".',
+  "scheduledExecution.crontab.tab.simple": "Simple",
+  "scheduledExecution.crontab.tab.crontab": "Crontab",
+  "scheduledExecution.crontab.field.hour": "Hour",
+  "scheduledExecution.crontab.field.minute": "Minute",
+  "scheduledExecution.crontab.everyDay": "Every Day",
+  "scheduledExecution.crontab.everyMonth": "Every Month",
+  "scheduledExecution.crontab.help.ranges": "Ranges:",
+  "scheduledExecution.crontab.help.lists": "Lists:",
+  "scheduledExecution.crontab.help.increments": "Increments:",
+  "scheduledExecution.crontab.help.increments.description":
+    '"every 15 units starting at 0".',
+  "scheduledExecution.crontab.help.validDayOfWeek":
+    "Valid values of Day of Week: 1-7 or SUN-SAT",
+  "scheduledExecution.crontab.help.validMonth":
+    "Valid values of Month: 1-12 or JAN-DEC",
+  "scheduledExecution.crontab.help.see": "See:",
+  "scheduledExecution.crontab.help.formatting": "for formatting help",
   "documentation.reference.cron.url":
     "https{':'}//www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html",
   "set.as.default.filter": "Set as Default Filter",
@@ -747,8 +763,12 @@ const messages = {
     "Warning! Relying on unquoted arguments could make this job vulnerable to command injection. Use with care.",
   "add.new.option": "Add New Option",
   "add.an.option": "Add an option",
+  "global.log.filters": "Global Log Filters",
+  "workflow.all.steps": "All workflow steps",
   "option.values.c": "1 Value|{n} Values",
   "no.options.message": "No Options",
+  "Allow this Job to be scheduled?": "Allow this Job to be scheduled?",
+  "Allow this Job to be executed?": "Allow this Job to be executed?",
   "the.option.values.will.be.available.to.scripts.in.these.forms":
     "The option values will be available to scripts in these forms:",
   "option.usage.multiline.note":
