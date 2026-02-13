@@ -18,6 +18,7 @@ module.exports = {
   roots: ["<rootDir>/src/app", "<rootDir>/src/library", "<rootDir>/tests"],
   moduleNameMapper: {
     "\\.(css|less|sass|scss)$": "identity-obj-proxy",
+    "\\.(jpg|jpeg|png|gif|svg|webp)$": "<rootDir>/src/__mocks__/fileMock.js",
     "^@/(.*)$": "<rootDir>/src/$1",
     "^primevue/(.*)": "<rootDir>/node_modules/primevue/$1",
     "^@primevue/(.*)": "<rootDir>/node_modules/@primevue/$1",

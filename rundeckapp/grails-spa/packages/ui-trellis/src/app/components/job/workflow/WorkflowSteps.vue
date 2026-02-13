@@ -232,7 +232,7 @@
           $t('plugin.type.WorkflowNodeStep.title.plural'),
           $t('plugin.type.WorkflowStep.title.plural'),
         ]"
-        :exclude-providers="conditionalEnabled && isErrorHandler ? ['conditional.logic'] : []"
+        :exclude-providers="!conditionalEnabled || isErrorHandler ? ['conditional.logic'] : []"
         show-search
         show-divider
         @cancel="cancelProviderAdd"
