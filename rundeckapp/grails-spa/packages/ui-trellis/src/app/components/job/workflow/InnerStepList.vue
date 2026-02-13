@@ -5,12 +5,16 @@
       tag="ol"
       item-key="id"
       handle=".inner-drag-handle"
+      :disabled="!!editingStepId"
       @end="emitUpdate"
     >
       <template #item="{ element, index }">
         <li>
           <i class="pi pi-bars inner-drag-handle"></i>
-          <div class="inner-step-item">
+          <div
+            class="inner-step-item"
+            :class="{ 'edit-lock-disabled': editingStepId && editingStepId !== element.id }"
+          >
             <StepCard
               v-if="editingStepId !== element.id && element.type !== 'conditional.logic'"
               :plugin-details="getPluginDetails(element)"
@@ -19,6 +23,7 @@
               :show-toggle="true"
               :log-filters="element.jobref ? [] : (element.filters || [])"
               :error-handler="element.errorhandler ? [element.errorhandler] : []"
+              :disabled="!!editingStepId"
               @add-log-filter="!element.jobref && addLogFilter(element.id)"
               @add-error-handler="toggleAddErrorHandlerModal(element.id)"
               @update:log-filters="!element.jobref && updateLogFilters(index, $event)"
@@ -45,6 +50,7 @@
               :config="element"
               :service-name="targetService"
               :show-toggle="true"
+              :disabled="!!editingStepId"
               @delete="removeStep(index)"
               @duplicate="duplicateStep(index)"
               @edit="editStep(index)"
@@ -72,6 +78,7 @@
       icon="pi pi-plus"
       :label="addStepLabel"
       class="btn-add-inner-step"
+      :disabled="!!editingStepId"
       @click="openAddStepModal"
     />
 
@@ -236,6 +243,8 @@ export default defineComponent({
 
     // --- Add step flow ---
     openAddStepModal() {
+      if (this.editingStepId) return;
+
       this.isErrorHandler = false;
       this.addStepModal = true;
     },
@@ -261,6 +270,8 @@ export default defineComponent({
 
     // --- Edit step flow ---
     editStep(index: number) {
+      if (this.editingStepId) return;
+
       const command = this.commands[index];
       this.editIndex = index;
       this.editingStepId = command.id;
@@ -327,11 +338,15 @@ export default defineComponent({
 
     // --- Delete / Duplicate ---
     removeStep(index: number) {
+      if (this.editingStepId) return;
+
       this.commands.splice(index, 1);
       this.emitUpdate();
     },
 
     duplicateStep(index: number) {
+      if (this.editingStepId) return;
+
       const command = cloneDeep(this.commands[index]);
       command.id = mkid();
       command.nodeStep = this.targetService === ServiceType.WorkflowNodeStep;
@@ -347,14 +362,20 @@ export default defineComponent({
       return `inner-step-action:edit-logfilter:${this.depth}:${stepId}`;
     },
     addLogFilter(stepId: string) {
+      if (this.editingStepId) return;
+
       eventBus.emit(this.logFilterAddEvent(stepId));
     },
 
     handleEditLogFilterFromChip(stepId: string, data: { filter: any; index: number }) {
+      if (this.editingStepId) return;
+
       eventBus.emit(this.logFilterEditEvent(stepId), data.index);
     },
 
     updateLogFilters(index: number, data: any) {
+      if (this.editingStepId) return;
+
       const command = cloneDeep(this.commands[index]);
       command.filters = cloneDeep(data);
       this.commands[index] = command;
@@ -363,6 +384,8 @@ export default defineComponent({
 
     // --- Error Handler ---
     toggleAddErrorHandlerModal(stepId: string) {
+      if (this.editingStepId) return;
+
       this.isErrorHandler = true;
       this.errorHandlerStepId = stepId;
       this.addStepModal = true;
@@ -503,6 +526,10 @@ export default defineComponent({
 
   .inner-step-item {
     width: 100%;
+
+    &.edit-lock-disabled {
+      filter: grayscale(0.3);
+    }
   }
 
   .btn-add-inner-step {

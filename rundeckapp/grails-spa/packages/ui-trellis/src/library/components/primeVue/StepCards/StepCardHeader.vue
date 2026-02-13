@@ -2,7 +2,7 @@
   <div class="stepCardHeader">
     <div>
       <div>
-        <div class="plugin-info-wrapper" @click="handleEdit">
+        <div class="plugin-info-wrapper" :class="{ 'disabled': disabled }" @click="handleEdit">
           <plugin-info
             :detail="{
               ...config,
@@ -46,6 +46,7 @@
         icon="pi pi-trash"
         :aria-label="$t('Workflow.deleteThisStep')"
         v-tooltip.top="$t('Workflow.deleteThisStep')"
+        :disabled="disabled"
         @click="handleDelete"
       />
       <template v-if="showToggle">
@@ -54,6 +55,7 @@
           :icon="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-up'"
           :aria-label="expanded ? $t('Workflow.collapse') : $t('Workflow.expand')"
           :aria-expanded="expanded"
+          :disabled="disabled"
           @click.stop="$emit('toggle')"
         />
       </template>
@@ -64,6 +66,7 @@
           icon="pi pi-ellipsis-h"
           aria-haspopup="true"
           aria-controls="overlay_menu"
+          :disabled="disabled"
           @click="handleMoreActions"
         />
         <Menu
@@ -112,6 +115,10 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["delete", "duplicate", "edit", "toggle"],
   computed: {
@@ -143,6 +150,7 @@ export default defineComponent({
       this.$emit("duplicate");
     },
     handleEdit() {
+      if (this.disabled) return;
       this.$emit("edit");
     },
   },
@@ -159,6 +167,16 @@ export default defineComponent({
 
   .plugin-info-wrapper {
     cursor: pointer;
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+
+      .link-title {
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+    }
   }
 
   .plugin {
@@ -195,6 +213,12 @@ export default defineComponent({
     align-items: flex-start;
     display: flex;
     gap: var(--sizes-2);
+
+    .p-button:disabled,
+    button:disabled {
+      cursor: not-allowed;
+      pointer-events: auto;
+    }
   }
 }
 

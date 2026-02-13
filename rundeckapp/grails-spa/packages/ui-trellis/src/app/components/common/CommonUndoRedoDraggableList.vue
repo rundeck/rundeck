@@ -28,6 +28,7 @@
             :item-key="itemKey"
             :handle="handle"
             :tag="draggableTag"
+            :disabled="draggableDisabled"
             data-testid="draggable-container"
             @update="dragUpdated"
           >
@@ -48,6 +49,7 @@
             size="sm"
             class="ready"
             data-testid="add-button"
+            :disabled="addButtonDisabled"
             @click="handleButtonClick"
           >
             <i class="fas fa-plus" />
@@ -112,6 +114,14 @@ export default defineComponent({
       default: false,
     },
     conditionalEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    addButtonDisabled: {
+      type: Boolean,
+      default: false,
+    },
+    draggableDisabled: {
       type: Boolean,
       default: false,
     },

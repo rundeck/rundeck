@@ -12,13 +12,18 @@
     :button-label="$t('Workflow.addStep')"
     :loading="loadingWorflowSteps"
     :conditional-enabled="conditionalEnabled"
+    :add-button-disabled="!!editingStepId"
+    :draggable-disabled="!!editingStepId"
     @add-button-click="toggleAddStepModal"
   >
     <template #item="{ item: { element, index } }">
       <li>
         <i v-if="conditionalEnabled" class="pi pi-bars dragHandle"></i>
         <div class="step-list-item" :class="{'ea': conditionalEnabled}">
-          <div class="step-item-display">
+          <div
+            class="step-item-display"
+            :class="{ 'edit-lock-disabled': editingStepId && editingStepId !== element.id }"
+          >
             <StepCard
               v-if="conditionalEnabled && element.type !== 'conditional.logic' && editingStepId !== element.id"
               :plugin-details="getPluginDetails(element)"
@@ -26,6 +31,7 @@
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
               :log-filters="element.jobref ? [] : (element.filters || [])"
               :error-handler="element.errorhandler ? [element.errorhandler] : []"
+              :disabled="!!editingStepId"
               @add-log-filter="!element.jobref && addLogFilterForIndex(element.id)"
               @add-error-handler="toggleAddErrorHandlerModal(index)"
               @update:log-filters="!element.jobref && updateHistoryWithLogFiltersData(index, $event)"
@@ -63,6 +69,7 @@
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
               :log-filters="element.filters || []"
               :error-handler="element.errorhandler ? [element.errorhandler] : []"
+              :disabled="!!editingStepId"
               @add-log-filter="addLogFilterForIndex(element.id)"
               @add-error-handler="toggleAddErrorHandlerModal(index)"
               @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
@@ -580,6 +587,8 @@ export default defineComponent({
       this.cancelEditStep();
     },
     removeStep(index: number, removeErrorHandler: boolean = false) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
       const originalData = cloneDeep(this.model.commands[index]);
       const commandToRemove = cloneDeep(this.model.commands[index]);
 
@@ -607,14 +616,20 @@ export default defineComponent({
       });
     },
     async addLogFilterForIndex(id: string) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
       eventBus.emit("step-action:add-logfilter:" + id);
     },
     handleEditLogFilterFromChip(stepId: string, data: { filter: any; index: number }) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
       // Emit event on global eventBus to trigger LogFilters editFilterByIndex
       // The event data should include the filter index
       eventBus.emit("step-action:edit-logfilter:" + stepId, data.index);
     },
     duplicateStep(index: number) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
       const command = cloneDeep(this.model.commands[index]);
       command.id = mkid();
       this.$refs.historyControls.operationInsert(index + 1, command);
@@ -627,6 +642,8 @@ export default defineComponent({
       });
     },
     editStepByIndex(index: number, isErrorHandler: boolean = false) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
       if (isErrorHandler) {
         this.editIndex = index;
         const command = this.model.commands[index];
@@ -749,14 +766,20 @@ export default defineComponent({
       }
     },
     toggleAddStepModal() {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
       this.addStepModal = !this.addStepModal;
     },
     toggleAddErrorHandlerModal(index: number) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
       this.isErrorHandler = true;
       this.editIndex = index;
       this.addStepModal = true;
     },
     updateHistoryWithLogFiltersData(index: number, data: any) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
       const command = cloneDeep(this.model.commands[index]);
       command.filters = cloneDeep(data);
       const orig = this.$refs.historyControls.operationModify(index, command);
@@ -936,6 +959,10 @@ h2.text-heading--lg {
 
   .step-item-display {
     width: 100%;
+
+    &.edit-lock-disabled {
+      filter: grayscale(0.3);
+    }
 
     .node-icon {
       margin-left: 5px;

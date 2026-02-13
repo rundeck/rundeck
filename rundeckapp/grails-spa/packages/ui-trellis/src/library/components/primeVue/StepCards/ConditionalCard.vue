@@ -6,6 +6,7 @@
     :show-toggle="showToggle"
     :show-as-node-step="computedServiceName === 'WorkflowNodeStep'"
     :card-class="complex ? 'complex' : ''"
+    :disabled="disabled"
     @delete="handleDelete"
     @duplicate="handleDuplicate"
     @edit="handleEdit"
@@ -60,6 +61,7 @@
                             :error-handler-config="getStepErrorHandlerConfig(nestedStep)"
                             :error-handler-service-name="getStepErrorHandlerServiceName(nestedStep)"
                             :error-handler-provider="getStepErrorHandlerProvider(nestedStep)"
+                            :disabled="disabled"
                             @add-log-filter="$emit('add-log-filter')"
                             @add-error-handler="$emit('add-error-handler')"
                             @edit-log-filter="$emit('edit-log-filter', $event)"
@@ -100,6 +102,7 @@
                   :error-handler-config="getStepErrorHandlerConfig(step)"
                   :error-handler-service-name="getStepErrorHandlerServiceName(step)"
                   :error-handler-provider="getStepErrorHandlerProvider(step)"
+                  :disabled="disabled"
                   @add-log-filter="$emit('add-log-filter')"
                   @add-error-handler="$emit('add-error-handler')"
                   @edit-log-filter="$emit('edit-log-filter', $event)"
@@ -186,6 +189,10 @@ export default defineComponent({
       default: () => [],
     },
     showToggle: {
+      type: Boolean,
+      default: false,
+    },
+    disabled: {
       type: Boolean,
       default: false,
     },

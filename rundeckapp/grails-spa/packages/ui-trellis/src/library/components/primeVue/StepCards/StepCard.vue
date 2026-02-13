@@ -5,6 +5,7 @@
     :service-name="serviceName"
     :show-toggle="showToggle"
     :show-as-node-step="computedServiceName === 'WorkflowNodeStep'"
+    :disabled="disabled"
     @delete="handleDelete"
     @duplicate="handleDuplicate"
     @edit="handleEdit"
@@ -19,6 +20,7 @@
         :error-handler-config="computedErrorHandlerConfig"
         :error-handler-service-name="computedErrorHandlerServiceName"
         :error-handler-provider="computedErrorHandlerProvider"
+        :disabled="disabled"
         @add-log-filter="handleAddLogFilter"
         @add-error-handler="handleAddErrorHandler"
         @edit-log-filter="handleEditLogFilter"
@@ -63,6 +65,10 @@ export default defineComponent({
       default: () => [],
     },
     showToggle: {
+      type: Boolean,
+      default: false,
+    },
+    disabled: {
       type: Boolean,
       default: false,
     },

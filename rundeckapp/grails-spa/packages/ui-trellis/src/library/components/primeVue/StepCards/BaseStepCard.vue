@@ -13,6 +13,7 @@
         :show-as-node-step="showAsNodeStep"
         :show-toggle="showToggle"
         :expanded="effectiveExpanded"
+        :disabled="disabled"
         @delete="$emit('delete')"
         @duplicate="$emit('duplicate')"
         @edit="$emit('edit')"
@@ -71,6 +72,10 @@ export default defineComponent({
     expanded: {
       type: Boolean,
       default: undefined,
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ["delete", "duplicate", "edit", "toggle"],

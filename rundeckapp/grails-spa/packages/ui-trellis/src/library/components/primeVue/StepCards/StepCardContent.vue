@@ -27,6 +27,7 @@
       :title="$t('Workflow.logFilters')"
       :tooltip="$t('Workflow.logFiltersTooltip')"
       :model-value="logFilters"
+      :disabled="disabled"
       @update:model-value="$emit('update:logFilters', $event)"
       @addElement="handleAddElement"
       @editElement="handleEditLogFilter"
@@ -35,6 +36,7 @@
       :title="$t('Workflow.addErrorHandler')"
       :tooltip="$t('Workflow.errorHandlerDescription')"
       :model-value="errorHandler"
+      :disabled="disabled"
       @addElement="handleAddErrorHandler"
       @editElement="handleEditErrorHandler"
       @removeElement="handleRemoveErrorHandler"
@@ -117,6 +119,10 @@ export default defineComponent({
     errorHandlerProvider: {
       type: String,
       default: "",
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: [

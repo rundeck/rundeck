@@ -61,28 +61,14 @@
 
       <div v-else-if="isConditionalLogic" class="conditional-logic-content">
         <div class="step-name-section">
-          <div class="form-group">
-            <label
-              class="col-sm-2 control-label input-sm"
-              for="stepDescription"
-            >
-              {{ $t("Workflow.step.property.description.label") }}
-            </label>
-            <div class="col-sm-10">
-              <input
-                id="stepDescription"
-                data-testid="step-description"
-                v-model="stepDescription"
-                type="text"
-                name="stepDescription"
-                size="100"
-                class="form-control input-sm"
-              />
-            </div>
-            <div class="col-sm-10 col-sm-offset-2 help-block">
-              {{ $t("Workflow.step.property.description.help") }}
-            </div>
-          </div>
+          <label class="text-heading--sm form-label">{{ $t("editConditionalStep.stepName") }}</label>
+          <p class="text-body--sm helper-text">{{ $t("editConditionalStep.stepNameHelper") }}</p>
+          <PtInput
+            v-model="stepDescription"
+            :placeholder="$t('editConditionalStep.stepNamePlaceholder')"
+            class="step-name-input"
+            data-testid="step-description"
+          />
         </div>
 
         <div class="condition-section">
@@ -182,6 +168,7 @@ import { defineComponent, defineAsyncComponent, type PropType } from "vue";
 import BaseStepCard from "@/library/components/primeVue/StepCards/BaseStepCard.vue";
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
+import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
 import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { getServiceProviderDescription } from "@/library/modules/pluginService";
@@ -203,6 +190,7 @@ export default defineComponent({
     BaseStepCard,
     pluginConfig,
     PtButton,
+    PtInput,
     StepCardHeader,
     ConditionsEditor,
     InnerStepList: defineAsyncComponent(() => import("./InnerStepList.vue")),
