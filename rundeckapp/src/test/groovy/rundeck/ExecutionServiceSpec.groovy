@@ -1,6 +1,6 @@
 package rundeck
 
-import asset.pipeline.grails.LinkGenerator
+import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
