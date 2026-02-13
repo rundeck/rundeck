@@ -27,7 +27,6 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
-import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
@@ -37,7 +36,6 @@ import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.util.Sizes
-import rundeck.data.job.RdWorkflow
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.validation.shared.SharedJobConstraints
 import rundeck.data.validation.shared.SharedLogConfigConstraints
