@@ -70,7 +70,7 @@
       outlined
       severity="secondary"
       icon="pi pi-plus"
-      :label="$t('editConditionalStep.addConditionStep')"
+      :label="addStepLabel"
       class="btn-add-inner-step"
       @click="openAddStepModal"
     />
@@ -205,6 +205,11 @@ export default defineComponent({
         return ["conditional.logic"];
       }
       return [];
+    },
+    addStepLabel(): string {
+      return this.depth >= 2
+        ? this.$t("editConditionalStep.addNestedConditionStep")
+        : this.$t("editConditionalStep.addConditionStep");
     },
   },
   watch: {

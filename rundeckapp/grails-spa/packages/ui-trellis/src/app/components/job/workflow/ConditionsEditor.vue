@@ -55,7 +55,7 @@
           outlined
           severity="secondary"
           icon="pi pi-plus"
-          :label="$t('editConditionalStep.addConditionSet')"
+          :label="addConditionSetLabel"
           class="btn-add-condition-set"
           @click="addConditionSet"
         />
@@ -153,6 +153,11 @@ export default defineComponent({
   computed: {
     canAddConditionSet(): boolean {
       return this.conditionSets.length < MAX_CONDITION_SETS;
+    },
+    addConditionSetLabel(): string {
+      return this.depth >= 1
+        ? this.$t("editConditionalStep.addNestedConditionSet")
+        : this.$t("editConditionalStep.addConditionSet");
     },
     fieldOptions(): FieldOption[] {
       const nodeAttrs = contextVariables().node || [];
