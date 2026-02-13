@@ -99,7 +99,7 @@
         <tr>
             <td><g:message code="steps" /></td>
             <td >
-                <g:render template="/execution/execDetailsWorkflow" model="${[strategyPlugins:strategyPlugins, edit: false, workflow:execdata.workflow,context:execdata,noimgs:noimgs,project:execdata.project]}"/>
+                <g:render template="/execution/execDetailsWorkflow" model="${[strategyPlugins:strategyPlugins, edit: false, workflow:execdata.getWorkflowData(),context:execdata,noimgs:noimgs,project:execdata.project]}"/>
             </td>
         </tr>
         </g:unless>
