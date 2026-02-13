@@ -45,7 +45,7 @@ configurations.all {
         eachDependency { DependencyResolveDetails details ->
             // Block old groovy-bom from Micronaut 3.x
             if (details.requested.group == 'org.codehaus.groovy' && details.requested.name == 'groovy-bom') {
-                details.useTarget group: 'org.apache.groovy', name: 'groovy-bom', version: getProperty('groovy.version')
+                details.useTarget group: 'org.apache.groovy', name: 'groovy-bom', version: groovyVersion
                 details.because 'Grails 7 uses Apache Groovy 4.x'
             }
             // Force Spring Integration 6.x for Spring Boot 3.5.8
@@ -192,7 +192,7 @@ dependencies {
     compileOnly "org.liquibase:liquibase-core:${liquibaseVersion}"
     
     // Groovy 4: XML parsing is a separate module
-    implementation "org.apache.groovy:groovy-xml:${getProperty('groovy.version')}"
+    implementation "org.apache.groovy:groovy-xml:${groovyVersion}"
     
     // Micronaut integration DISABLED due to BOM incompatibility in Grails 7.0.4:
     // - grails-micronaut:7.0.4 depends on micronaut-spring-bom:5.11.0 (requires Micronaut 5.x)
@@ -224,7 +224,7 @@ dependencies {
     // BOMs for dependency management
     implementation platform("org.apache.grails:grails-bom:$grailsVersion")
     implementation platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
-    implementation platform("org.apache.groovy:groovy-bom:${getProperty('groovy.version')}")
+    implementation platform("org.apache.groovy:groovy-bom:${groovyVersion}")
     
     implementation "commons-codec:commons-codec:${commonsCodecVersion}"
     implementation 'commons-cli:commons-cli:1.11.0'
@@ -348,8 +348,8 @@ dependencies {
     testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.apache.grails:grails-testing-support-web"
-    testImplementation "org.apache.groovy:groovy-xml:${getProperty('groovy.version')}"
-    testImplementation "org.apache.groovy:groovy-test:${getProperty('groovy.version')}"
+    testImplementation "org.apache.groovy:groovy-xml:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-test:${groovyVersion}"
     testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
     testImplementation "org.eclipse.jetty.ee10:jetty-ee10-webapp"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"

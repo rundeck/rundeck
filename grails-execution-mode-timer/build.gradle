@@ -89,7 +89,7 @@ dependencies {
     console "org.apache.grails:grails-console"
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
-    implementation "org.apache.groovy:groovy-dateutil:${project.property('groovy.version')}"
+    implementation "org.apache.groovy:groovy-dateutil:${groovyVersion}"
 
     profile "org.grails.profiles:web-plugin"
     provided "org.apache.grails:grails-services"

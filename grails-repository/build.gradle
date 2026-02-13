@@ -59,7 +59,7 @@ dependencies {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
 
-    implementation "org.apache.groovy:groovy-dateutil:${findProperty('groovy.version')}"
+    implementation "org.apache.groovy:groovy-dateutil:${groovyVersion}"
     implementation "org.apache.grails:grails-web-boot"
     implementation "org.apache.grails:grails-logging"
     implementation "org.apache.grails:grails-rest-transforms"

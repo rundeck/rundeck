@@ -99,7 +99,7 @@ dependencies {
     testImplementation 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.10.19'
 
-    testImplementation "org.apache.groovy:groovy-all:${findProperty('groovy.version')}"
+    testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
     testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"

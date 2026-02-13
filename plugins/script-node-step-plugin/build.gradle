@@ -19,7 +19,7 @@ configurations{
 
 dependencies {
     // Use the latest Groovy version for building this library
-    implementation "org.apache.groovy:groovy:${findProperty('groovy.version')}"
+    implementation "org.apache.groovy:groovy:${groovyVersion}"
 
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     // Pattern #10: Spock mocking dependencies for Java 17 + Groovy 4
