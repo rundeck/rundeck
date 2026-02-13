@@ -1,5 +1,7 @@
 package rundeck
 
+import asset.pipeline.grails.LinkGenerator
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 
@@ -29,6 +31,9 @@ import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.WorkflowExecutionListenerTest
 import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
@@ -56,7 +61,15 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
+import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
+import com.dtolabs.rundeck.core.execution.workflow.IWorkflow
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.core.jobs.JobRefCommand
@@ -76,6 +89,7 @@ import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.data.UserDataService
 import com.dtolabs.rundeck.core.config.FeatureService
+import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -6285,4 +6299,705 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * mockJobStatsDataProvider.updateJobStats(jobUuid, executionId, executionTime, "failed", dateCompleted) >> true
             result == true
     }
+
+
+    @Unroll
+    def "executeAsyncBegin workflow modification - workflow updated when isUpdateWorkflowDataValues is #updateWorkflowDataValues"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'original command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
+                getWorkflow() >> Mock(IWorkflow)
+            }
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        and: "execution lifecycle handler setup"
+        def mockNewWorkflow = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def mockNewContext = Mock(StepExecutionContext)
+        def mockLifecycleStatus = Mock(ExecutionLifecycleStatus) {
+            isUseNewValues() >> useNewValues
+            isUpdateWorkflowDataValues() >> updateWorkflowDataValues
+            getExecutionContext() >> (useNewValues ? mockNewContext : null)
+            getWorkflow() >> (updateWorkflowDataValues ? mockNewWorkflow : null)
+        }
+        def mockHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeWorkflowIsSet(_, _) >> Optional.of(mockLifecycleStatus)
+        }
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> mockHandler
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "workflow is updated based on lifecycle status"
+        1 * service.workflowService.createWorkflowStateListenerForExecution(
+                execution,
+                { workflow ->
+                    if (updateWorkflowDataValues && useNewValues) {
+                        workflow == mockNewWorkflow.workflow
+                    } else {
+                        true // original workflow
+                    }
+                },
+                framework,
+                authContext,
+                _,
+                _
+        )
+
+        where:
+        useNewValues | updateWorkflowDataValues
+        true         | true
+        true         | false
+        false        | true
+        false        | false
+    }
+
+    def "executeAsyncBegin workflow modification - execution context updated when useNewValues is true"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
+                getWorkflow() >> Mock(IWorkflow)
+            }
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            //createPeriodicCheckpoint(_) >> Mock(Consumer)
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        and: "execution lifecycle handler with new context"
+        def mockNewContext = Mock(StepExecutionContext) {
+            getDataContext() >> [newKey: 'newValue']
+        }
+        def mockLifecycleStatus = Mock(ExecutionLifecycleStatus) {
+            isUseNewValues() >> true
+            isUpdateWorkflowDataValues() >> false
+            getExecutionContext() >> mockNewContext
+            getWorkflow() >> null
+        }
+        def mockHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeWorkflowIsSet(_, _) >> Optional.of(mockLifecycleStatus)
+        }
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> mockHandler
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "execution context should be updated"
+        1 * mockHandler.beforeWorkflowIsSet(_, _) >> Optional.of(mockLifecycleStatus)
+        result != null
+    }
+
+    def "executeAsyncBegin workflow modification - original workflow preserved when conditions are false"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def originalWorkflow = new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec([adhocRemoteString: 'original command'])]
+        )
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: originalWorkflow
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: originalWorkflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        def originalWorkflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        and: "execution lifecycle handler with useNewValues false"
+        def mockLifecycleStatus = Mock(ExecutionLifecycleStatus) {
+            isUseNewValues() >> false
+            isUpdateWorkflowDataValues() >> false
+            getExecutionContext() >> null
+            getWorkflow() >> null
+        }
+        def mockHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeWorkflowIsSet(_, _) >> Optional.of(mockLifecycleStatus)
+        }
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> mockHandler
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "original workflow is preserved"
+        1 * service.workflowService.createWorkflowStateListenerForExecution(
+                execution,
+                originalWorkflowItem.workflow,
+                framework,
+                authContext,
+                _,
+                _
+        )
+        result != null
+    }
+
+    def "executeAsyncBegin workflow modification - handles null executionLifecycleStatus"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        def originalWorkflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            //createSimplePluginLoader(_, _, _) >> Mock(PluginLoaderService)
+            getPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            //createPeriodicCheckpoint(_) >> Mock(Consumer)
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        and: "execution lifecycle handler returns empty Optional"
+        def mockHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeWorkflowIsSet(_, _) >> Optional.empty()
+        }
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> mockHandler
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "original workflow is preserved and no errors occur"
+        1 * service.workflowService.createWorkflowStateListenerForExecution(
+                execution,
+                originalWorkflowItem.workflow,
+                framework,
+                authContext,
+                _,
+                _
+        )
+        result != null
+    }
+
+    def "executeAsyncBegin workflow modification - handles null executionLifecyclePluginExecHandler"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        def originalWorkflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+        }
+
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        and: "execution lifecycle handler is null"
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> null
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "original workflow is preserved and no errors occur"
+        1 * service.workflowService.createWorkflowStateListenerForExecution(
+                execution,
+                originalWorkflowItem.workflow,
+                framework,
+                authContext,
+                _,
+                _
+        )
+        result != null
+    }
+
+    def "runSubworkflowExecutionItem should execute subworkflow successfully"() {
+        given: "a SubWorkflowExecutionItem with a valid workflow"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+
+        and: "mocked services"
+        def framework = Mock(Framework)
+        def wservice = Mock(WorkflowExecutionService)
+        def executionListener = Mock(ExecutionListener)
+
+        framework.getWorkflowExecutionService() >> wservice
+
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> executionListener
+        }
+
+        and: "successful workflow result"
+        def successResult = [
+                result: [
+                        success: true,
+                        stepFailures: [:]
+                ],
+                interrupt: false
+        ]
+
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                closure()
+                successResult
+            }
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            runRefJobWithTimer(_, _, _, _) >> successResult
+        }
+
+        and: "result closures"
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+
+        when: "runSubworkflowExecutionItem is called"
+        def result = service.runSubworkflowExecutionItem(context, runnerItem, createFailure, createSuccess)
+
+        then: "it returns a success result"
+        result instanceof StepExecutionResultImpl
+        result.success
+    }
+
+
+    def "runSubworkflowExecutionItem should handle workflow execution failure"() {
+        given: "a SubWorkflowExecutionItem with a valid workflow"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+
+        and: "mocked services"
+        def framework = Mock(Framework)
+        def wservice = Mock(WorkflowExecutionService)
+        def executionListener = Mock(ExecutionListener)
+
+        framework.getWorkflowExecutionService() >> wservice
+
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> executionListener
+        }
+
+        and: "failed workflow result"
+        def failureResult = [
+                result: [
+                        success: false,
+                        stepFailures: [
+                                '1': [failureMessage: 'Step 1 failed'],
+                                '2': [failureMessage: 'Step 2 failed']
+                        ]
+                ],
+                interrupt: false
+        ]
+
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                closure()
+                failureResult
+            }
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            runRefJobWithTimer(_, _, _, _) >> failureResult
+        }
+
+        and: "result closures"
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+
+        when: "runSubworkflowExecutionItem is called"
+        def result = service.runSubworkflowExecutionItem(context, runnerItem, createFailure, createSuccess)
+
+        then: "it returns a plugin failure with error messages"
+        result instanceof StepExecutionResultImpl
+        !result.success
+        result.failureReason == StepFailureReason.PluginFailed
+        result.failureMessage.contains("Step 1: Step 1 failed")
+        result.failureMessage.contains("Step 2: Step 2 failed")
+    }
+
+    def "runSubworkflowExecutionItem should handle workflow interruption"() {
+        given: "a SubWorkflowExecutionItem with a valid workflow"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+
+        and: "mocked services"
+        def framework = Mock(Framework)
+        def wservice = Mock(WorkflowExecutionService)
+        def executionListener = Mock(ExecutionListener)
+
+        framework.getWorkflowExecutionService() >> wservice
+
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> executionListener
+        }
+
+        and: "interrupted workflow result"
+        def interruptedResult = [
+                result: [
+                        success: true,
+                        stepFailures: [:]
+                ],
+                interrupt: true
+        ]
+
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                closure()
+                interruptedResult
+            }
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            runRefJobWithTimer(_, _, _, _) >> interruptedResult
+        }
+
+        and: "result closures"
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+
+        when: "runSubworkflowExecutionItem is called"
+        def result = service.runSubworkflowExecutionItem(context, runnerItem, createFailure, createSuccess)
+
+        then: "it returns a plugin failure"
+        result instanceof StepExecutionResultImpl
+        !result.success
+        result.failureReason == StepFailureReason.PluginFailed
+    }
+
+    def "runSubworkflowExecutionItem should handle exceptions during execution"() {
+        given: "a SubWorkflowExecutionItem with a valid workflow"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+
+        and: "mocked services that throw exception"
+        def framework = Mock(Framework)
+        def wservice = Mock(WorkflowExecutionService)
+        def executionListener = Mock(ExecutionListener)
+
+        framework.getWorkflowExecutionService() >> wservice
+
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> executionListener
+        }
+
+        and: "metric service that throws exception"
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                throw new RuntimeException("Test exception")
+            }
+        }
+
+        and: "result closures"
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+
+        when: "runSubworkflowExecutionItem is called"
+        service.runSubworkflowExecutionItem(context, runnerItem, createFailure, createSuccess)
+
+        then: "it throws a StepException"
+        def exception = thrown(StepException)
+        exception.message.contains("Error executing runner workflow")
+        exception.failureReason == StepFailureReason.Unknown
+
+        and: "logs the error"
+        1 * executionListener.log(0, { it.contains("Error executing runner workflow") })
+    }
+
 }

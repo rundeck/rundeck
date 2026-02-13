@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.IExecutionLifecycleComponentService
@@ -24,6 +25,7 @@ import grails.events.bus.EventBusAware
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -76,7 +78,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
 
 
     enum EventType{
-        BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun')
+        BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun'), BEFORE_WORKFLOW_IS_SET('beforeWorkflowIsSet')
         private final String value
         EventType(String value){
             this.value = value
@@ -176,6 +178,8 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
                 return plugin.beforeJobStarts(event)
             case EventType.AFTER_RUN:
                 return plugin.afterJobEnds(event)
+            case EventType.BEFORE_WORKFLOW_IS_SET:
+                return plugin.beforeWorkflowIsSet(event)
         }
     }
 
@@ -192,9 +196,14 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
                     status
             )
 
+            // Use updated workflowData from status if updateWorkflowDataValues is true
+            WorkflowExecutionItem workflowDataToUse = (status?.updateWorkflowDataValues && status?.workflow) ?
+                                              status.workflow :
+                                              jobEvent.workflow
+
             return jobEvent.result != null ?
                    JobExecutionEventImpl.afterRun(newContext, jobEvent.execution, jobEvent.result) :
-                   JobExecutionEventImpl.beforeRun(newContext, jobEvent.execution, jobEvent.workflow)
+                   JobExecutionEventImpl.beforeRun(newContext, jobEvent.execution, workflowDataToUse)
         } else {
             throw new IllegalArgumentException("Unexpected type")
         }
@@ -212,7 +221,17 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
         if (jobEvent instanceof JobExecutionEventImpl) {
             ExecutionContextImpl newContext = mergeExecutionEventContext(jobEvent.executionContext, status)
 
-            return new ExecutionLifecycleStatusImpl(successful: success, executionContext: newContext)
+            // Use updated workflowData from status if updateWorkflowDataValues is true, otherwise use original
+            WorkflowExecutionItem workflowDataToUse = (status?.updateWorkflowDataValues && status?.workflow) ?
+                                              status.workflow :
+                                              jobEvent?.workflow
+
+            return new ExecutionLifecycleStatusImpl(successful: success,
+                    executionContext: newContext,
+                    useNewValues: useNewValues,
+                    workflow: workflowDataToUse,
+                    updateWorkflowDataValues: status?.updateWorkflowDataValues
+            )
         } else {
             throw new IllegalArgumentException("Unexpected type")
         }
@@ -394,6 +413,10 @@ class NamedExecutionLifecycleComponent implements ExecutionLifecycleComponent {
         component.afterJobEnds(event)
     }
 
+    ExecutionLifecycleStatus beforeWorkflowIsSet(JobExecutionEvent event) throws ExecutionLifecycleComponentException{
+        component.beforeWorkflowIsSet(event)
+    }
+
 }
 
 @CompileStatic
@@ -401,4 +424,6 @@ class ExecutionLifecycleStatusImpl implements ExecutionLifecycleStatus {
     boolean successful
     boolean useNewValues
     StepExecutionContext executionContext
+    WorkflowExecutionItem  workflow
+    boolean updateWorkflowDataValues
 }

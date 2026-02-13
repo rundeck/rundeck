@@ -30,4 +30,19 @@ public interface ExecutionLifecycleComponentHandler {
      */
     Optional<ExecutionLifecycleStatus> afterJobEnds(final StepExecutionContext executionContext, final JobEventResult result)
             throws ExecutionLifecycleComponentException;
+
+
+    /**
+     * Workflow configuration event triggered before the workflow execution items are configured for the execution.
+     *
+     * @param executionContext input execution context
+     * @throws ExecutionLifecycleComponentException
+     */
+    default Optional<ExecutionLifecycleStatus> beforeWorkflowIsSet(
+            final StepExecutionContext executionContext,
+            final WorkflowExecutionItem workflowItem
+    ) throws ExecutionLifecycleComponentException {
+        return Optional.empty();
+    }
+
 }

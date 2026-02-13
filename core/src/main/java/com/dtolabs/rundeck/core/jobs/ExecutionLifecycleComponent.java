@@ -17,4 +17,16 @@ public interface ExecutionLifecycleComponent {
      * @return JobEventStatus
      */
     ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event) throws ExecutionLifecycleComponentException;
+
+
+
+    /**
+     * It triggers before the workflow is configured
+     * @param event event execution data
+     * @return JobEventStatus
+     */
+    default ExecutionLifecycleStatus beforeWorkflowIsSet(JobExecutionEvent event) throws ExecutionLifecycleComponentException{
+        return null;
+    }
+
 }

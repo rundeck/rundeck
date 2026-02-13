@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 
 /**
  * Status result returned from execution lifecycle event handlers
@@ -26,4 +27,24 @@ public interface ExecutionLifecycleStatus extends LifecycleStatus{
      * @return StepExecutionContext of the event to use if isUseNewValues is true
      */
     default StepExecutionContext getExecutionContext(){ return null; }
+
+
+    /**
+     * Indicates whether workflow data values should be updated for this lifecycle status.
+     *
+     * @return {@code true} if workflow data values should be updated; {@code false} otherwise
+     */
+    default boolean isUpdateWorkflowDataValues() {
+        return false;
+    }
+
+
+    /**
+     * Returns the workflow associated with this execution lifecycle status.
+     *
+     * @return the workflow as an {@link WorkflowExecutionItem} instance
+     */
+    default WorkflowExecutionItem getWorkflow() {
+        return null;
+    }
 }

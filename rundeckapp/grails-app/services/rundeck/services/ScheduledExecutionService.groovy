@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
+import com.dtolabs.rundeck.core.jobs.JobReferenceItem
 import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
 import com.dtolabs.rundeck.core.utils.WaitUtils
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
@@ -4995,6 +4996,75 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return 0;
     }
+
+
+    /**
+     * Find a ScheduledExecution job by UUID or by name/group identifier
+     * @param useName if true, search by name/group; if false, search by UUID
+     * @param uuid the job UUID (used when useName is false)
+     * @param jobIdentifier the job identifier in format "group/name" or just "name" (used when useName is true)
+     * @param jobProject the project from the job reference (may be null)
+     * @param defaultProject the default project to use if jobProject is null
+     * @return the ScheduledExecution if found, null otherwise
+     */
+    private ScheduledExecution findJobByIdentifier(boolean useName, String uuid, String jobIdentifier, String jobProject, String defaultProject) {
+        if (!useName && uuid) {
+            return ScheduledExecution.findByUuid(uuid)
+        } else {
+            String jobName = jobIdentifier
+            String jobGroup = null
+
+            // Parse the jobIdentifier to extract jobGroup and jobName
+            // Format is: "groupPath/jobName" or just "jobName" if no group
+            if (jobIdentifier?.contains('/')) {
+                int lastSlash = jobIdentifier.lastIndexOf('/')
+                jobGroup = jobIdentifier.substring(0, lastSlash)
+                jobName = jobIdentifier.substring(lastSlash + 1)
+            } else {
+                jobName = jobIdentifier
+                jobGroup = null
+            }
+
+            return ScheduledExecution.findByProjectAndJobNameAndGroupPath(
+                    jobProject ?: defaultProject,
+                    jobName,
+                    jobGroup ?: null
+            )
+        }
+    }
+
+    /**
+     * Find a ScheduledExecution from a JobReferenceItem
+     * @param jobRef the job reference item
+     * @param project the default project to use if not specified in jobRef
+     * @return the ScheduledExecution if found, null otherwise
+     */
+    ScheduledExecution findJobFromJobReference(JobReferenceItem jobRef, String project) {
+        return findJobByIdentifier(
+                jobRef.useName?:false,
+                jobRef.uuid,
+                jobRef.jobIdentifier,
+                jobRef.project,
+                project
+        )
+    }
+
+    /**
+     * Find a ScheduledExecution from a JobExec
+     * @param jobRef the JobExec reference
+     * @param project the default project to use if not specified in jobRef
+     * @return the ScheduledExecution if found, null otherwise
+     */
+    ScheduledExecution findJobFromJobExec(JobExec jobRef, String defaultProject) {
+        return findJobByIdentifier(
+                jobRef.useName,
+                jobRef.uuid,
+                jobRef.jobIdentifier,
+                jobRef.jobProject,
+                defaultProject
+        )
+    }
+
 
     /**
      * Returns properties from the SCM integration validations, these properties will be options for the job's
