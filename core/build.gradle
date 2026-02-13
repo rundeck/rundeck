@@ -96,8 +96,10 @@ dependencies {
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-    testImplementation 'junit:junit:4.8.1',
-        'org.mockito:mockito-all:1.10.19'
+    testImplementation 'junit:junit:4.8.1'
+    testImplementation "org.mockito:mockito-core:${mockitoInlineVersion}"
+    testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
+    testImplementation "org.objenesis:objenesis:${objenesisVersion}"
 
     testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
     testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
