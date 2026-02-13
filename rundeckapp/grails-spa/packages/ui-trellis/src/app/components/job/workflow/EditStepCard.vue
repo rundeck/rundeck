@@ -91,6 +91,7 @@
             v-model="conditionSets"
             :service-name="serviceName"
             :extra-autocomplete-vars="extraAutocompleteVars"
+            :depth="depth"
           />
         </div>
 

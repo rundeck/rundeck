@@ -49,6 +49,7 @@
             v-model="conditionSets"
             :service-name="serviceName"
             :extra-autocomplete-vars="extraAutocompleteVars"
+            :depth="depth"
             @switch-step-type="handleSwitchStepType"
           />
         </div>
@@ -60,7 +61,7 @@
           <InnerStepList
             v-model="innerCommands"
             :target-service="serviceName"
-            :depth="1"
+            :depth="depth + 1"
             :extra-autocomplete-vars="extraAutocompleteVars"
           />
         </div>
@@ -130,6 +131,10 @@ export default defineComponent({
       type: Array as PropType<ContextVariable[]>,
       required: false,
       default: () => [],
+    },
+    depth: {
+      type: Number,
+      default: 0,
     },
   },
   emits: ["cancel", "save", "update:modelValue", "switch-step-type"],

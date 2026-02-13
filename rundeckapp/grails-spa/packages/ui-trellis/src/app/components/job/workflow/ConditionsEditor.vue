@@ -32,6 +32,7 @@
                   :tab-mode="autocompleteSuggestions.length > 0"
                   :field-error="fieldErrors[condition.id]"
                   :value-error="valueErrors[condition.id]"
+                  :depth="depth"
                   @update:condition="(payload) => updateCondition(setIndex, condIndex, payload.condition, payload.fieldName)"
                   @delete="() => removeCondition(setIndex, condIndex)"
                   @switch-step-type="handleSwitchStepType"
@@ -100,6 +101,10 @@ export default defineComponent({
       type: Array as PropType<ContextVariable[]>,
       required: false,
       default: () => [],
+    },
+    depth: {
+      type: Number,
+      default: 0,
     },
   },
   emits: ["update:modelValue", "switch-step-type"],

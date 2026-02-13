@@ -79,6 +79,7 @@
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
               :validation="editModelValidation"
               :extra-autocomplete-vars="extraAutocompleteVars"
+              :depth="0"
               @save="handleSaveConditionalStep(index)"
               @cancel="handleCancelEdit"
               @switch-step-type="handleSwitchStepType(index)"

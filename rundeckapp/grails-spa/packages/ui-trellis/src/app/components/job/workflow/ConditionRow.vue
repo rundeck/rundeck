@@ -144,6 +144,10 @@ export default defineComponent({
       type: String,
       default: undefined,
     },
+    depth: {
+      type: Number,
+      default: 0,
+    },
   },
   emits: ["update:condition", "delete", "switch-step-type"],
   computed: {
@@ -152,12 +156,15 @@ export default defineComponent({
       return this.serviceName === "WorkflowStep" ? "node" : "workflow";
     },
     fieldOptionsWithNote(): FieldOption[] {
-      const noteOption: FieldOption = {
-        value: "__NOTE__",
-        label: "",
-        isNote: true,
-      };
-      return [noteOption, ...this.fieldOptions];
+      if (this.depth === 0) {
+        const noteOption: FieldOption = {
+          value: "__NOTE__",
+          label: "",
+          isNote: true,
+        };
+        return [noteOption, ...this.fieldOptions];
+      }
+      return this.fieldOptions;
     },
     tabs(): TabConfig[] | undefined {
       if (!this.tabMode) {
