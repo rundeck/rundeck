@@ -216,11 +216,11 @@ export default defineComponent({
   },
   methods: {
     handleAddErrorHandler() {
-      this.$emit("add-error-handler");
+      this.$emit("add-error-handler", this.elementId);
     },
     handleAddElement() {
       // Emit to parent - parent will handle opening modal
-      this.$emit("add-log-filter");
+      this.$emit("add-log-filter", this.elementId);
     },
     handleEditLogFilter(filter: any, index: number) {
       // Find the index in the logFilters array if not provided
@@ -241,10 +241,10 @@ export default defineComponent({
       if (!this.errorHandlerData) {
         return;
       }
-      this.$emit("edit-error-handler");
+      this.$emit("edit-error-handler", this.elementId);
     },
     handleRemoveErrorHandler() {
-      this.$emit("remove-error-handler");
+      this.$emit("remove-error-handler", this.elementId);
     },
   },
 });

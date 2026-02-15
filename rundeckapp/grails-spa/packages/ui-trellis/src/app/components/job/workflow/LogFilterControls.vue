@@ -3,24 +3,28 @@
     <i class="glyphicon glyphicon-plus"></i>
     {{ $t("message_add") }}
   </btn>
-  <choose-plugin-modal
-    v-if="addFilterModal"
-    v-model="addFilterModal"
-    :title="addFilterTitle"
-    :services="[ServiceType.LogFilter]"
-    @cancel="addFilterModal = false"
-    @selected="chooseProviderAdd"
-  >
-  </choose-plugin-modal>
-  <edit-plugin-modal
-    v-model:modal-active="editFilterModal"
-    v-model="model"
-    :validation="editModelValidation"
-    :service-name="ServiceType.LogFilter"
-    :title="editFilterTitle"
-    @cancel="cancelEditFilter"
-    @save="saveEditFilter"
-  ></edit-plugin-modal>
+  <Teleport to="body">
+    <choose-plugin-modal
+      v-if="addFilterModal"
+      v-model="addFilterModal"
+      :title="addFilterTitle"
+      :services="[ServiceType.LogFilter]"
+      @cancel="addFilterModal = false"
+      @selected="chooseProviderAdd"
+    >
+    </choose-plugin-modal>
+  </Teleport>
+  <Teleport to="body">
+    <edit-plugin-modal
+      v-model:modal-active="editFilterModal"
+      v-model="model"
+      :validation="editModelValidation"
+      :service-name="ServiceType.LogFilter"
+      :title="editFilterTitle"
+      @cancel="cancelEditFilter"
+      @save="saveEditFilter"
+    ></edit-plugin-modal>
+  </Teleport>
 </template>
 <script lang="ts">
 import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";

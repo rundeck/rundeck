@@ -97,11 +97,11 @@ export default defineComponent({
     },
   },
   methods: {
-    handleAddLogFilter() {
-      this.$emit("add-log-filter");
+    handleAddLogFilter(elementId: string) {
+      this.$emit("add-log-filter", elementId);
     },
-    handleAddErrorHandler() {
-      this.$emit("add-error-handler");
+    handleAddErrorHandler(elementId: string) {
+      this.$emit("add-error-handler", elementId);
     },
     handleDelete() {
       this.$emit("delete");
@@ -115,11 +115,11 @@ export default defineComponent({
     handleEditLogFilter(data: { filter: any; index: number }) {
       this.$emit("edit-log-filter", data);
     },
-    handleEditErrorHandler() {
-      this.$emit("edit-error-handler");
+    handleEditErrorHandler(elementId: string) {
+      this.$emit("edit-error-handler", elementId);
     },
-    handleRemoveErrorHandler() {
-      this.$emit("remove-error-handler");
+    handleRemoveErrorHandler(elementId: string) {
+      this.$emit("remove-error-handler", elementId);
     },
   },
 });

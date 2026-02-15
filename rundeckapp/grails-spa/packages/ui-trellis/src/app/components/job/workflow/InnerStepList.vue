@@ -25,8 +25,8 @@
               :log-filters="element.jobref ? [] : (element.filters || [])"
               :error-handler="element.errorhandler ? [element.errorhandler] : []"
               :disabled="!!editingStepId"
-              @add-log-filter="!element.jobref && addLogFilter(element.id)"
-              @add-error-handler="toggleAddErrorHandlerModal(element.id)"
+              @add-log-filter="!element.jobref && addLogFilter($event || element.id)"
+              @add-error-handler="toggleAddErrorHandlerModal($event || element.id)"
               @update:log-filters="!element.jobref && updateLogFilters(index, $event)"
               @edit-log-filter="!element.jobref && handleEditLogFilterFromChip(element.id, $event)"
               @edit-error-handler="editErrorHandler(index)"
@@ -53,6 +53,12 @@
               :show-toggle="true"
               :initially-expanded="false"
               :disabled="!!editingStepId"
+              @add-log-filter="addLogFilter($event)"
+              @add-error-handler="toggleAddErrorHandlerModalForNestedStep($event, index)"
+              @edit-log-filter="handleEditLogFilterFromChip($event.stepId, $event)"
+              @edit-error-handler="editErrorHandlerByStepId($event, index)"
+              @remove-error-handler="removeErrorHandlerByStepId($event, index)"
+              @update:log-filters="updateLogFiltersForNestedStep($event, index)"
               @delete="removeStep(index)"
               @duplicate="duplicateStep(index)"
               @edit="editStep(index)"
@@ -102,34 +108,36 @@
       @selected="chooseProviderAdd"
     />
 
-    <EditPluginModal
-      v-if="editErrorHandlerModal"
-      v-model="errorHandlerEditModel"
-      :title="$t('Workflow.editErrorHandler')"
-      :service-name="targetService"
-      :validation="editModelValidation"
-      :modal-active="editErrorHandlerModal"
-      :extra-autocomplete-vars="extraAutocompleteVars"
-      @update:modal-active="editErrorHandlerModal = $event"
-      @cancel="cancelErrorHandlerEdit"
-      @save="saveErrorHandler"
-    >
-      <template #extra>
-        <div class="presentation checkbox">
-          <input
-            id="innerKeepgoingOnSuccess"
-            v-model="errorHandlerExtra.keepgoingOnSuccess"
-            type="checkbox"
-          />
-          <label for="innerKeepgoingOnSuccess">
-            {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}
-            <span>
-              {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.description") }}
-            </span>
-          </label>
-        </div>
-      </template>
-    </EditPluginModal>
+    <Teleport to="body">
+      <EditPluginModal
+        v-if="editErrorHandlerModal"
+        v-model="errorHandlerEditModel"
+        :title="$t('Workflow.editErrorHandler')"
+        :service-name="targetService"
+        :validation="editModelValidation"
+        :modal-active="editErrorHandlerModal"
+        :extra-autocomplete-vars="extraAutocompleteVars"
+        @update:modal-active="editErrorHandlerModal = $event"
+        @cancel="cancelErrorHandlerEdit"
+        @save="saveErrorHandler"
+      >
+        <template #extra>
+          <div class="presentation checkbox">
+            <input
+              id="innerKeepgoingOnSuccess"
+              v-model="errorHandlerExtra.keepgoingOnSuccess"
+              type="checkbox"
+            />
+            <label for="innerKeepgoingOnSuccess">
+              {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}
+              <span>
+                {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.description") }}
+              </span>
+            </label>
+          </div>
+        </template>
+      </EditPluginModal>
+    </Teleport>
   </div>
 </template>
 
@@ -206,6 +214,11 @@ export default defineComponent({
       errorHandlerEditModel: {} as any,
       errorHandlerExtra: { keepgoingOnSuccess: false },
       errorHandlerStepId: null as string | null,
+      editingNestedStepPath: null as {
+        conditionalIndex: number;
+        stepIndex: number;
+        nestedStepIndex?: number;
+      } | null,
     };
   },
   computed: {
@@ -394,8 +407,27 @@ export default defineComponent({
     toggleAddErrorHandlerModal(stepId: string) {
       if (this.editingStepId) return;
 
+      this.editingNestedStepPath = null;
       this.isErrorHandler = true;
       this.errorHandlerStepId = stepId;
+      this.addStepModal = true;
+    },
+
+    toggleAddErrorHandlerModalForNestedStep(stepId: string, conditionalIndex: number) {
+      if (this.editingStepId) return;
+
+      const path = this.findNestedStepPath(conditionalIndex, stepId);
+      if (!path) return;
+
+      const conditional = this.commands[path.conditionalIndex];
+      const step = path.nestedStepIndex !== undefined
+        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+        : conditional.config.commands[path.stepIndex];
+
+      this.editingNestedStepPath = path;
+      this.isErrorHandler = true;
+      this.errorHandlerStepId = stepId;
+      this.editExtra = cloneDeep(step);
       this.addStepModal = true;
     },
 
@@ -416,12 +448,92 @@ export default defineComponent({
         console.warn("Cannot edit error handler: it does not exist");
         return;
       }
+      this.editingNestedStepPath = null;
       this.errorHandlerStepId = command.id;
       this.errorHandlerEditModel = cloneDeep(command.errorhandler);
       this.errorHandlerExtra = {
         keepgoingOnSuccess: command.errorhandler.keepgoingOnSuccess || false,
       };
       this.editErrorHandlerModal = true;
+    },
+
+    findNestedStepPath(
+      conditionalIndex: number,
+      stepId: string,
+    ): { conditionalIndex: number; stepIndex: number; nestedStepIndex?: number } | null {
+      const conditional = this.commands[conditionalIndex];
+      if (!conditional?.config?.commands) return null;
+
+      const directIndex = conditional.config.commands.findIndex(
+        (c: EditStepData) => c.id === stepId,
+      );
+      if (directIndex >= 0) {
+        return { conditionalIndex, stepIndex: directIndex };
+      }
+
+      for (let i = 0; i < conditional.config.commands.length; i++) {
+        const step = conditional.config.commands[i];
+        if (step.type === "conditional.logic" && step.config?.commands) {
+          const nestedIndex = step.config.commands.findIndex(
+            (c: EditStepData) => c.id === stepId,
+          );
+          if (nestedIndex >= 0) {
+            return { conditionalIndex, stepIndex: i, nestedStepIndex: nestedIndex };
+          }
+        }
+      }
+      return null;
+    },
+
+    editErrorHandlerByStepId(stepId: string, conditionalIndex: number) {
+      const path = this.findNestedStepPath(conditionalIndex, stepId);
+      if (!path) return;
+
+      const conditional = this.commands[path.conditionalIndex];
+      const step = path.nestedStepIndex !== undefined
+        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+        : conditional.config.commands[path.stepIndex];
+
+      if (!step.errorhandler) return;
+
+      this.editingNestedStepPath = path;
+      this.errorHandlerStepId = stepId;
+      this.errorHandlerEditModel = cloneDeep(step.errorhandler);
+      this.errorHandlerExtra = {
+        keepgoingOnSuccess: step.errorhandler.keepgoingOnSuccess || false,
+      };
+      this.editErrorHandlerModal = true;
+    },
+
+    removeErrorHandlerByStepId(stepId: string, conditionalIndex: number) {
+      const path = this.findNestedStepPath(conditionalIndex, stepId);
+      if (!path) return;
+
+      const conditional = cloneDeep(this.commands[path.conditionalIndex]);
+      const step = path.nestedStepIndex !== undefined
+        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+        : conditional.config.commands[path.stepIndex];
+
+      delete step.errorhandler;
+      this.commands[path.conditionalIndex] = conditional;
+      this.emitUpdate();
+    },
+
+    updateLogFiltersForNestedStep(
+      payload: { stepId: string; filters: any },
+      conditionalIndex: number,
+    ) {
+      const path = this.findNestedStepPath(conditionalIndex, payload.stepId);
+      if (!path) return;
+
+      const conditional = cloneDeep(this.commands[path.conditionalIndex]);
+      const step = path.nestedStepIndex !== undefined
+        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+        : conditional.config.commands[path.stepIndex];
+
+      step.filters = cloneDeep(payload.filters);
+      this.commands[path.conditionalIndex] = conditional;
+      this.emitUpdate();
     },
 
     removeErrorHandler(index: number) {
@@ -435,13 +547,6 @@ export default defineComponent({
       try {
         if (!this.errorHandlerStepId) {
           console.error("Cannot save error handler: no step ID");
-          return;
-        }
-
-        const index = this.commands.findIndex((c) => c.id === this.errorHandlerStepId);
-        if (index === -1) {
-          console.error("Cannot save error handler: step not found", this.errorHandlerStepId);
-          this.cancelErrorHandlerEdit();
           return;
         }
 
@@ -464,9 +569,28 @@ export default defineComponent({
           }
         }
 
-        const command = cloneDeep(this.commands[index]);
-        command.errorhandler = handlerData;
-        this.commands[index] = command;
+        if (this.editingNestedStepPath) {
+          const path = this.editingNestedStepPath;
+          const conditional = cloneDeep(this.commands[path.conditionalIndex]);
+          const step = path.nestedStepIndex !== undefined
+            ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+            : conditional.config.commands[path.stepIndex];
+
+          step.errorhandler = handlerData;
+          this.commands[path.conditionalIndex] = conditional;
+        } else {
+          const index = this.commands.findIndex((c) => c.id === this.errorHandlerStepId);
+          if (index === -1) {
+            console.error("Cannot save error handler: step not found", this.errorHandlerStepId);
+            this.cancelErrorHandlerEdit();
+            return;
+          }
+
+          const command = cloneDeep(this.commands[index]);
+          command.errorhandler = handlerData;
+          this.commands[index] = command;
+        }
+
         this.cancelErrorHandlerEdit();
         this.emitUpdate();
       } catch (e) {
@@ -479,6 +603,7 @@ export default defineComponent({
       this.errorHandlerEditModel = {};
       this.errorHandlerExtra = { keepgoingOnSuccess: false };
       this.errorHandlerStepId = null;
+      this.editingNestedStepPath = null;
       this.editModelValidation = { errors: {}, valid: true };
     },
 

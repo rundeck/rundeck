@@ -32,7 +32,7 @@
               :log-filters="element.jobref ? [] : (element.filters || [])"
               :error-handler="element.errorhandler ? [element.errorhandler] : []"
               :disabled="!!editingStepId"
-              @add-log-filter="!element.jobref && addLogFilterForIndex(element.id)"
+              @add-log-filter="!element.jobref && addLogFilterForIndex($event || element.id)"
               @add-error-handler="toggleAddErrorHandlerModal(index)"
               @update:log-filters="!element.jobref && updateHistoryWithLogFiltersData(index, $event)"
               @edit-log-filter="!element.jobref && handleEditLogFilterFromChip(element.id, $event)"
@@ -70,12 +70,12 @@
               :log-filters="element.filters || []"
               :error-handler="element.errorhandler ? [element.errorhandler] : []"
               :disabled="!!editingStepId"
-              @add-log-filter="addLogFilterForIndex(element.id)"
-              @add-error-handler="toggleAddErrorHandlerModal(index)"
-              @update:log-filters="updateHistoryWithLogFiltersData(index, $event)"
-              @edit-log-filter="handleEditLogFilterFromChip(element.id, $event)"
-              @edit-error-handler="editStepByIndex(index, true)"
-              @remove-error-handler="removeStep(index, true)"
+              @add-log-filter="handleConditionalCardAddLogFilter($event, index)"
+              @add-error-handler="handleConditionalCardAddErrorHandler($event, index)"
+              @update:log-filters="handleConditionalCardUpdateLogFilters($event, index)"
+              @edit-log-filter="handleConditionalCardEditLogFilter($event, index)"
+              @edit-error-handler="handleConditionalCardEditErrorHandler($event, index)"
+              @remove-error-handler="handleConditionalCardRemoveErrorHandler($event, index)"
               @delete="removeStep(index)"
               @duplicate="duplicateStep(index)"
               @edit="editStepByIndex(index)"
@@ -406,6 +406,11 @@ export default defineComponent({
       loadingWorflowSteps: false,
       editingStepId: null as string | null,
       isNewInlineStep: false,
+      nestedStepContext: null as {
+        conditionalIndex: number;
+        stepIndex: number;
+        nestedStepIndex?: number;
+      } | null,
     };
   },
   computed: {
@@ -563,6 +568,7 @@ export default defineComponent({
       this.isErrorHandler = false;
       this.editingStepId = null;
       this.isNewInlineStep = false;
+      this.nestedStepContext = null;
     },
     handleCancelEdit() {
       // If we're canceling a new step that was just added, remove it
@@ -775,7 +781,149 @@ export default defineComponent({
 
       this.isErrorHandler = true;
       this.editIndex = index;
+      this.nestedStepContext = null;
       this.addStepModal = true;
+    },
+    findNestedStepPath(
+      conditionalIndex: number,
+      stepId: string,
+    ): { conditionalIndex: number; stepIndex: number; nestedStepIndex?: number } | null {
+      const conditional = this.model.commands[conditionalIndex];
+      if (!conditional?.config?.commands) return null;
+
+      const directIndex = conditional.config.commands.findIndex(
+        (c: EditStepData) => c.id === stepId,
+      );
+      if (directIndex >= 0) {
+        return { conditionalIndex, stepIndex: directIndex };
+      }
+
+      for (let i = 0; i < conditional.config.commands.length; i++) {
+        const step = conditional.config.commands[i];
+        if (
+          step.type === "conditional.logic" &&
+          step.config?.commands
+        ) {
+          const nestedIndex = step.config.commands.findIndex(
+            (c: EditStepData) => c.id === stepId,
+          );
+          if (nestedIndex >= 0) {
+            return { conditionalIndex, stepIndex: i, nestedStepIndex: nestedIndex };
+          }
+        }
+      }
+      return null;
+    },
+    handleConditionalCardAddLogFilter(stepId: string, conditionalIndex: number) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+      this.addLogFilterForIndex(stepId);
+    },
+    handleConditionalCardAddErrorHandler(stepId: string, conditionalIndex: number) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
+      const path = this.findNestedStepPath(conditionalIndex, stepId);
+      if (!path) return;
+
+      const conditional = this.model.commands[path.conditionalIndex];
+      const step = path.nestedStepIndex !== undefined
+        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+        : conditional.config.commands[path.stepIndex];
+
+      this.nestedStepContext = path;
+      this.editIndex = path.conditionalIndex;
+      this.editExtra = cloneDeep(step);
+      this.isErrorHandler = true;
+      this.addStepModal = true;
+    },
+    handleConditionalCardUpdateLogFilters(
+      payload: { stepId: string; filters: any },
+      conditionalIndex: number,
+    ) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
+      const path = this.findNestedStepPath(conditionalIndex, payload.stepId);
+      if (!path) return;
+
+      const conditional = cloneDeep(this.model.commands[path.conditionalIndex]);
+      const step = path.nestedStepIndex !== undefined
+        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+        : conditional.config.commands[path.stepIndex];
+
+      step.filters = cloneDeep(payload.filters);
+      const orig = this.$refs.historyControls.operationModify(
+        path.conditionalIndex,
+        conditional,
+      );
+
+      this.$refs.historyControls.changeEvent({
+        index: path.conditionalIndex,
+        dest: -1,
+        orig,
+        value: conditional,
+        operation: Operation.Modify,
+        undo: Operation.Modify,
+      });
+    },
+    handleConditionalCardEditLogFilter(
+      payload: { stepId: string; index?: number; filter?: any },
+      conditionalIndex: number,
+    ) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+      const filterIndex =
+        payload.index !== undefined ? payload.index : 0;
+      this.handleEditLogFilterFromChip(payload.stepId, {
+        filter: payload.filter,
+        index: filterIndex,
+      });
+    },
+    handleConditionalCardEditErrorHandler(stepId: string, conditionalIndex: number) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
+      const path = this.findNestedStepPath(conditionalIndex, stepId);
+      if (!path) return;
+
+      const conditional = this.model.commands[path.conditionalIndex];
+      const step = path.nestedStepIndex !== undefined
+        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+        : conditional.config.commands[path.stepIndex];
+
+      if (!step.errorhandler) return;
+
+      this.nestedStepContext = path;
+      this.editIndex = path.conditionalIndex;
+      this.editExtra = cloneDeep(step);
+      this.editModel = cloneDeep(step.errorhandler);
+      this.isErrorHandler = true;
+      this.editService = step.errorhandler.nodeStep
+        ? ServiceType.WorkflowNodeStep
+        : ServiceType.WorkflowStep;
+      this.editStepModal = true;
+    },
+    handleConditionalCardRemoveErrorHandler(stepId: string, conditionalIndex: number) {
+      if (this.conditionalEnabled && this.editingStepId) return;
+
+      const path = this.findNestedStepPath(conditionalIndex, stepId);
+      if (!path) return;
+
+      const conditional = cloneDeep(this.model.commands[path.conditionalIndex]);
+      const step = path.nestedStepIndex !== undefined
+        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+        : conditional.config.commands[path.stepIndex];
+
+      delete step.errorhandler;
+      const orig = this.$refs.historyControls.operationModify(
+        path.conditionalIndex,
+        conditional,
+      );
+
+      this.$refs.historyControls.changeEvent({
+        index: path.conditionalIndex,
+        dest: -1,
+        orig,
+        value: conditional,
+        operation: Operation.Modify,
+        undo: Operation.Modify,
+      });
     },
     updateHistoryWithLogFiltersData(index: number, data: any) {
       if (this.conditionalEnabled && this.editingStepId) return;
@@ -814,6 +962,30 @@ export default defineComponent({
         dataForUpdatingHistory.index = this.editIndex;
         dataForUpdatingHistory.operation = Operation.Insert;
         dataForUpdatingHistory.undo = Operation.Remove;
+      } else if (this.nestedStepContext && this.isErrorHandler) {
+        // Nested step inside conditional - update the nested step's error handler
+        const path = this.nestedStepContext;
+        const conditional = cloneDeep(this.model.commands[path.conditionalIndex]);
+        const step = path.nestedStepIndex !== undefined
+          ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
+          : conditional.config.commands[path.stepIndex];
+
+        step.errorhandler = {
+          ...saveData.errorhandler,
+          config: this.editModel.config,
+          jobref: this.editModel.jobref,
+          type: this.editModel.type,
+          nodeStep: this.editService === ServiceType.WorkflowNodeStep,
+          id: mkid(),
+        };
+
+        const originalData = this.model.commands[path.conditionalIndex];
+        this.$refs.historyControls.operationModify(path.conditionalIndex, conditional);
+        dataForUpdatingHistory.index = path.conditionalIndex;
+        dataForUpdatingHistory.operation = Operation.Modify;
+        dataForUpdatingHistory.undo = Operation.Modify;
+        dataForUpdatingHistory.orig = originalData;
+        newData = conditional;
       } else if (this.editIndex >= 0) {
         // Existing step being modified
         const originalData = this.model.commands[this.editIndex];
@@ -847,6 +1019,7 @@ export default defineComponent({
       this.editIndex = -1;
       this.editingStepId = null;
       this.isNewInlineStep = false;
+      this.nestedStepContext = null;
     },
     async handleSaveStep(index: number) {
       try {

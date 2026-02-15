@@ -63,12 +63,22 @@
                             :error-handler-service-name="getStepErrorHandlerServiceName(nestedStep)"
                             :error-handler-provider="getStepErrorHandlerProvider(nestedStep)"
                             :disabled="disabled"
-                            @add-log-filter="$emit('add-log-filter')"
-                            @add-error-handler="$emit('add-error-handler')"
-                            @edit-log-filter="$emit('edit-log-filter', $event)"
-                            @edit-error-handler="$emit('edit-error-handler')"
-                            @remove-error-handler="$emit('remove-error-handler')"
-                            @update:log-filters="$emit('update:logFilters', $event)"
+                            @add-log-filter="$emit('add-log-filter', nestedStep.id)"
+                            @add-error-handler="$emit('add-error-handler', nestedStep.id)"
+                            @edit-log-filter="$emit('edit-log-filter', { stepId: nestedStep.id, ...$event })"
+                            @edit-error-handler="$emit('edit-error-handler', nestedStep.id)"
+                            @remove-error-handler="$emit('remove-error-handler', nestedStep.id)"
+                            @update:log-filters="$emit('update:logFilters', { stepId: nestedStep.id, filters: $event })"
+                          />
+                          <log-filters
+                            v-if="!nestedStep.jobref && nestedStep.type !== 'conditional.logic'"
+                            :model-value="nestedStep.filters || []"
+                            :title="$t('Workflow.logFilters')"
+                            :subtitle="stepTitle(nestedStep, nestedIndex)"
+                            :add-event="'step-action:add-logfilter:' + nestedStep.id"
+                            :edit-event="'step-action:edit-logfilter:' + nestedStep.id"
+                            :conditional-enabled="true"
+                            @update:model-value="$emit('update:logFilters', { stepId: nestedStep.id, filters: $event })"
                           />
                         </AccordionContent>
                       </AccordionPanel>
@@ -104,12 +114,22 @@
                   :error-handler-service-name="getStepErrorHandlerServiceName(step)"
                   :error-handler-provider="getStepErrorHandlerProvider(step)"
                   :disabled="disabled"
-                  @add-log-filter="$emit('add-log-filter')"
-                  @add-error-handler="$emit('add-error-handler')"
-                  @edit-log-filter="$emit('edit-log-filter', $event)"
-                  @edit-error-handler="$emit('edit-error-handler')"
-                  @remove-error-handler="$emit('remove-error-handler')"
-                  @update:log-filters="$emit('update:logFilters', $event)"
+                  @add-log-filter="$emit('add-log-filter', step.id)"
+                  @add-error-handler="$emit('add-error-handler', step.id)"
+                  @edit-log-filter="$emit('edit-log-filter', { stepId: step.id, ...$event })"
+                  @edit-error-handler="$emit('edit-error-handler', step.id)"
+                  @remove-error-handler="$emit('remove-error-handler', step.id)"
+                  @update:log-filters="$emit('update:logFilters', { stepId: step.id, filters: $event })"
+                />
+                <log-filters
+                  v-if="!step.jobref && step.type !== 'conditional.logic'"
+                  :model-value="step.filters || []"
+                  :title="$t('Workflow.logFilters')"
+                  :subtitle="stepTitle(step, index)"
+                  :add-event="'step-action:add-logfilter:' + step.id"
+                  :edit-event="'step-action:edit-logfilter:' + step.id"
+                  :conditional-enabled="true"
+                  @update:model-value="$emit('update:logFilters', { stepId: step.id, filters: $event })"
                 />
               </AccordionContent>
             </AccordionPanel>
@@ -295,6 +315,12 @@ export default defineComponent({
     },
     handleNestedStepClick(step: EditStepData, index: number) {
       this.$emit("step-click", { step, index, parentStepId: this.config.id });
+    },
+    stepTitle(step: EditStepData, index: number) {
+      if (step.description) {
+        return `Step ${index + 1} "` + step.description + '"';
+      }
+      return `Step ${index + 1}`;
     },
   },
 });
