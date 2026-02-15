@@ -628,16 +628,17 @@ export default defineComponent({
     list-style: none;
     padding: 0;
     margin: 0;
+    margin-left: 47px;
     position: relative;
-    counter-reset: inner-list;
+    counter-reset: inner-step-counter 0 !important;
 
     li {
       position: relative;
-      padding-left: var(--sizes-6);
+      //padding-left: var(--sizes-6);
 
       &::before {
-        counter-increment: inner-list;
-        content: counter(inner-list) ".";
+        counter-increment: inner-step-counter !important;
+        content: counter(inner-step-counter) "." !important;
         display: block;
         font-size: 16px;
         font-family: Inter, var(--fonts-body);
