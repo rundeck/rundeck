@@ -1093,6 +1093,9 @@ const messages = {
   "Workflow.stepErrorHandler.label.on.error": "on error",
   "Workflow.stepErrorHandler.label.keep.going.on.success":
     "keep going on success",
+  "Workflow.validation.oneError": "1 error",
+  "Workflow.validation.multipleErrors": "{count} errors",
+  "Workflow.validation.invalidConditionCriteria": "Invalid Condition Criteria",
   "framework.service.WorkflowNodeStep.description":
     "Runs once for each node in the workflow.",
   "framework.service.WorkflowStep.description": "Runs only once in a workflow.",

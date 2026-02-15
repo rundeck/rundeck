@@ -40,6 +40,12 @@
       </div>
     </div>
     <div class="stepCardHeader-buttons">
+      <Tag
+        v-if="showErrorTag && editing"
+        icon="pi pi-exclamation-triangle"
+        severity="danger"
+        :value="showInvalidCondition ? $t('Workflow.validation.invalidConditionCriteria') : errorMessage"
+      />
       <PtButton
         outlined
         severity="secondary"
@@ -119,6 +125,14 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    showInvalidCondition: {
+      type: Boolean,
+      default: false,
+    },
+    validationErrors: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   emits: ["delete", "duplicate", "edit", "toggle"],
   computed: {
@@ -137,6 +151,22 @@ export default defineComponent({
           },
         },
       ];
+    },
+    errorCount(): number {
+      // Count validation errors from various sources
+      if (!this.validationErrors || typeof this.validationErrors !== 'object') {
+        return 0;
+      }
+      return Object.keys(this.validationErrors).length;
+    },
+    errorMessage(): string {
+      if (this.errorCount === 1) {
+        return this.$t('Workflow.validation.oneError');
+      }
+      return this.$t('Workflow.validation.multipleErrors', { count: this.errorCount });
+    },
+    showErrorTag(): boolean {
+      return this.showInvalidCondition || this.errorCount > 0;
     },
   },
   methods: {

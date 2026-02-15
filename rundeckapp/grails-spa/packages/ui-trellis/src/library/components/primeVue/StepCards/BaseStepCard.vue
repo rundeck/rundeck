@@ -14,6 +14,8 @@
         :show-toggle="showToggle"
         :expanded="contentExpanded"
         :disabled="disabled"
+        :validation-errors="validationErrors"
+        :show-invalid-condition="showInvalidCondition"
         @delete="$emit('delete')"
         @duplicate="$emit('duplicate')"
         @edit="$emit('edit')"
@@ -74,6 +76,14 @@ export default defineComponent({
       default: true,
     },
     disabled: {
+      type: Boolean,
+      default: false,
+    },
+    validationErrors: {
+      type: Object,
+      default: () => ({}),
+    },
+    showInvalidCondition: {
       type: Boolean,
       default: false,
     },

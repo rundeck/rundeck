@@ -3,25 +3,13 @@
     ref="baseStepCard"
     :config="stepConfig"
     :plugin-details="provider || {}"
-    :expanded="contentExpanded"
+    :editing="true"
+    :show-toggle="depth > 0"
+    :initially-expanded="contentExpanded"
     card-class="edit-step-card"
+    @delete="handleCancel"
+    @toggle="contentExpanded = !contentExpanded"
   >
-    <template #header>
-      <StepCardHeader
-        v-if="provider"
-        :plugin-details="provider"
-        :config="stepConfig"
-        :editing="true"
-        :show-toggle="depth > 0"
-        :expanded="contentExpanded"
-        @delete="handleCancel"
-        @toggle="contentExpanded = !contentExpanded"
-      />
-      <div v-else-if="loading" class="loading-container">
-        <i class="fas fa-spinner fa-spin"></i>
-        <span>{{ $t("loading.text") }}</span>
-      </div>
-    </template>
     <template #content>
       <div v-if="isJobRef" class="jobref-form-content">
         <div v-if="validationError" class="alert alert-danger">
@@ -173,7 +161,6 @@ import BaseStepCard from "@/library/components/primeVue/StepCards/BaseStepCard.v
 import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
-import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
 import { PluginConfig } from "@/library/interfaces/PluginConfig";
 import { getServiceProviderDescription } from "@/library/modules/pluginService";
 import { ContextVariable } from "@/library/stores/contextVariables";
@@ -195,7 +182,6 @@ export default defineComponent({
     pluginConfig,
     PtButton,
     PtInput,
-    StepCardHeader,
     ConditionsEditor,
     InnerStepList: defineAsyncComponent(() => import("./InnerStepList.vue")),
     JobRefFormFields,
