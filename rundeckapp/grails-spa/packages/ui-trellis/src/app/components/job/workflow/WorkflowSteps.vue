@@ -88,7 +88,8 @@
               :validation="editModelValidation"
               :extra-autocomplete-vars="extraAutocompleteVars"
               :depth="0"
-              :nested-step-to-edit="nestedStepToEdit"
+              :nested-step-to-edit="element.id === nestedStepToEdit?.stepId ? null : nestedStepToEdit"
+              :should-scroll-into-view="element.id === nestedStepToEdit?.stepId"
               @save="handleSaveConditionalStep(index)"
               @cancel="handleCancelEdit"
               @switch-step-type="handleSwitchStepType(index)"
@@ -418,9 +419,7 @@ export default defineComponent({
         stepIndex: number;
         parentConditionalId?: string;
         parentConditionalIndex?: number;
-        scrollToken?: string;
       } | null,
-      pendingScrollToken: null as string | null,
     };
   },
   computed: {
@@ -480,14 +479,10 @@ export default defineComponent({
       await this.getStepPlugins();
       this.model = commandsToEditData(this.modelValue);
       eventBus.on("workflow-editor-workflowsteps-request", this.notify);
-      eventBus.on('nested-step-edit-ready', this.handleNestedStepReady);
       this.notify();
     } finally {
       this.loadingWorflowSteps = false;
     }
-  },
-  beforeUnmount() {
-    eventBus.off('nested-step-edit-ready', this.handleNestedStepReady);
   },
   methods: {
     notify() {
@@ -622,10 +617,6 @@ export default defineComponent({
     ) {
       if (this.editingStepId) return;
 
-      // Generate unique scroll token for this edit session
-      const scrollToken = `nested-step-scroll-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      this.pendingScrollToken = scrollToken;
-
       // Handle both depth=1 and depth=2 cases
       if (payload.parentConditional) {
         // Depth=2: step is nested inside a conditional inside a conditional
@@ -642,7 +633,6 @@ export default defineComponent({
           stepIndex: payload.stepIndex ?? payload.index ?? 0,
           parentConditionalId: payload.parentConditional.id,
           parentConditionalIndex: payload.parentConditional.index,
-          scrollToken,
         };
       } else {
         // Depth=1: step is directly nested inside a conditional
@@ -657,30 +647,7 @@ export default defineComponent({
         this.nestedStepToEdit = {
           stepId: payload.step.id,
           stepIndex: payload.stepIndex ?? payload.index ?? 0,
-          scrollToken,
         };
-      }
-    },
-    handleNestedStepReady(payload: { scrollToken: string; element: HTMLElement }) {
-      // Only handle if this is the scroll token we're waiting for
-      if (payload.scrollToken === this.pendingScrollToken) {
-        this.$nextTick(() => {
-          // Scroll the element into view
-          payload.element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-          // Focus the first input field
-          this.$nextTick(() => {
-            const firstInput = payload.element?.querySelector<HTMLInputElement>(
-              'input[type="text"]:not([disabled]), textarea:not([disabled]), input[data-testid="step-description"]'
-            );
-            if (firstInput) {
-              firstInput.focus();
-            }
-          });
-        });
-
-        // Clear the pending token
-        this.pendingScrollToken = null;
       }
     },
     removeStep(index: number, removeErrorHandler: boolean = false) {

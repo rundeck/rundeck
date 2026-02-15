@@ -65,6 +65,7 @@
           <label class="text-heading--sm form-label">{{ $t("editConditionalStep.stepName") }}</label>
           <p class="text-body--sm helper-text">{{ $t("editConditionalStep.stepNameHelper") }}</p>
           <PtInput
+            ref="stepDescriptionInput"
             v-model="stepDescription"
             :placeholder="$t('editConditionalStep.stepNamePlaceholder')"
             class="step-name-input"
@@ -156,7 +157,6 @@
           @click="handleCancel"
         />
         <PtButton
-          severity="primary"
           :label="$t('Save')"
           data-testid="save-button"
           :disabled="isSaveDisabled"
@@ -184,9 +184,9 @@ import type { ConditionSet } from "./types/conditionalStepTypes";
 import { createEmptyConditionSet } from "./types/conditionalStepTypes";
 import type { EditStepData } from "./types/workflowTypes";
 import JobRefFormFields from "./JobRefFormFields.vue";
+import VueScrollTo from "vue-scrollto";
 
 const rundeckContext = getRundeckContext();
-const eventBus = rundeckContext.eventBus;
 
 export default defineComponent({
   name: "EditStepCard",
@@ -247,6 +247,10 @@ export default defineComponent({
       } | null>,
       required: false,
       default: null,
+    },
+    shouldScrollIntoView: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ["cancel", "save", "update:modelValue"],
@@ -356,28 +360,18 @@ export default defineComponent({
                 innerStepList.nestedStepToEdit = {
                   stepId: val.stepId,
                   stepIndex: val.stepIndex,
-                  scrollToken: val.scrollToken,
                 };
 
                 // Open the nested conditional
                 innerStepList.editStep(val.parentConditionalIndex);
               } else {
-                // Depth=1 case: directly open the target step
+                // Depth=1 case: set the target step info so InnerStepList knows which EditStepCard should scroll
+                innerStepList.nestedStepToEdit = {
+                  stepId: val.stepId,
+                  stepIndex: val.stepIndex,
+                };
+                // Open the target step
                 innerStepList.editStep(val.stepIndex);
-
-                // Wait for the nested step's EditStepCard to mount, then emit ready event
-                this.$nextTick(() => {
-                  this.$nextTick(() => {
-                    if (val.scrollToken) {
-                      const baseStepCard = this.$refs.baseStepCard as any;
-                      const element = baseStepCard?.$el || baseStepCard;
-                      eventBus.emit('nested-step-edit-ready', {
-                        scrollToken: val.scrollToken,
-                        element,
-                      });
-                    }
-                  });
-                });
               }
             }
           });
@@ -414,6 +408,27 @@ export default defineComponent({
     }
 
     await this.loadProvider();
+
+    // Scroll into view if this step was opened via click-to-edit
+    if (this.shouldScrollIntoView) {
+      this.$nextTick(() => {
+        const baseStepCard = this.$refs.baseStepCard as any;
+        const element = baseStepCard?.$el || baseStepCard;
+
+        if (element) {
+          VueScrollTo.scrollTo(element, 500, {
+            offset: -100,
+            easing: 'ease-in-out',
+            onDone: () => {
+              // Focus step description input after scroll completes
+              const stepDescriptionInput = this.$refs.stepDescriptionInput as any;
+              const inputElement = stepDescriptionInput?.$el?.querySelector('input') || stepDescriptionInput?.$el;
+              inputElement?.focus();
+            }
+          });
+        }
+      });
+    }
   },
   methods: {
     handleSave() {

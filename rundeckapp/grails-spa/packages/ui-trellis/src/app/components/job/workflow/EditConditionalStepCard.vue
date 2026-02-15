@@ -30,6 +30,7 @@
           <label class="text-heading--sm form-label">{{ $t("editConditionalStep.stepName") }}</label>
           <p class="text-body--sm helper-text">{{ $t("editConditionalStep.stepNameHelper") }}</p>
           <PtInput
+            ref="stepNameInput"
             v-model="stepName"
             :placeholder="$t('editConditionalStep.stepNamePlaceholder')"
             class="step-name-input"
@@ -105,10 +106,7 @@ import {
 } from "./types/conditionalStepTypes";
 import type { EditStepData } from "./types/workflowTypes";
 import type { ContextVariable } from "@/library/stores/contextVariables";
-import { getRundeckContext } from "@/library";
-
-const rundeckContext = getRundeckContext();
-const eventBus = rundeckContext.eventBus;
+import VueScrollTo from "vue-scrollto";
 
 export default defineComponent({
   name: "EditConditionalStepCard",
@@ -153,6 +151,10 @@ export default defineComponent({
       required: false,
       default: null,
     },
+    shouldScrollIntoView: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["cancel", "save", "update:modelValue", "switch-step-type"],
   data() {
@@ -190,27 +192,18 @@ export default defineComponent({
                 innerStepList.nestedStepToEdit = {
                   stepId: val.stepId,
                   stepIndex: val.stepIndex,
-                  scrollToken: val.scrollToken,
                 };
 
                 // Open the nested conditional
                 innerStepList.editStep(val.parentConditionalIndex);
               } else {
-                // Depth=1 case: directly open the target step
+                // Depth=1 case: set the target step info so InnerStepList knows which EditStepCard should scroll
+                innerStepList.nestedStepToEdit = {
+                  stepId: val.stepId,
+                  stepIndex: val.stepIndex,
+                };
+                // Open the target step
                 innerStepList.editStep(val.stepIndex);
-
-                // Wait for the nested step's EditStepCard to mount, then emit ready event
-                this.$nextTick(() => {
-                  this.$nextTick(() => {
-                    if (val.scrollToken) {
-                      const element = this.$refs.editConditionalStepCard as HTMLElement;
-                      eventBus.emit('nested-step-edit-ready', {
-                        scrollToken: val.scrollToken,
-                        element,
-                      });
-                    }
-                  });
-                });
               }
             }
           });
@@ -224,6 +217,26 @@ export default defineComponent({
     this.stepName = this.modelValue.description || "";
     this.conditionSets = this.modelValue.config?.conditionSets || [createEmptyConditionSet()];
     this.innerCommands = this.modelValue.config?.commands || [];
+
+    // Scroll into view if this step was opened via click-to-edit
+    if (this.shouldScrollIntoView) {
+      this.$nextTick(() => {
+        const element = this.$refs.editConditionalStepCard as HTMLElement;
+
+        if (element) {
+          VueScrollTo.scrollTo(element, 500, {
+            offset: -100,
+            easing: 'ease-in-out',
+            onDone: () => {
+              // Focus step name input after scroll completes
+              const stepNameInput = this.$refs.stepNameInput as any;
+              const inputElement = stepNameInput?.$el?.querySelector('input') || stepNameInput?.$el;
+              inputElement?.focus();
+            }
+          });
+        }
+      });
+    }
   },
   computed: {
     cardTitle(): string {
