@@ -63,6 +63,7 @@
             :target-service="serviceName"
             :depth="depth + 1"
             :extra-autocomplete-vars="extraAutocompleteVars"
+            @update:editing="isEditingInnerStep = $event"
           />
         </div>
       </template>
@@ -79,6 +80,7 @@
             outlined
             :label="$t('editConditionalStep.saveStep')"
             class="btn-save"
+            :disabled="isSaveDisabled"
             @click="handleSave"
           />
         </div>
@@ -144,6 +146,7 @@ export default defineComponent({
       stepName: "",
       conditionSets: [createEmptyConditionSet()] as ConditionSet[],
       innerCommands: [] as EditStepData[],
+      isEditingInnerStep: false,
     };
   },
   watch: {
@@ -176,6 +179,9 @@ export default defineComponent({
       return this.serviceName === ServiceType.WorkflowStep
         ? this.$t("editConditionalStep.descriptionWorkflow")
         : this.$t("editConditionalStep.description");
+    },
+    isSaveDisabled(): boolean {
+      return this.innerCommands.length === 0 || this.isEditingInnerStep;
     },
   },
   methods: {

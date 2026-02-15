@@ -89,6 +89,7 @@
             :target-service="serviceName"
             :depth="depth + 1"
             :extra-autocomplete-vars="extraAutocompleteVars"
+            @update:editing="isEditingInnerStep = $event"
           />
         </div>
       </div>
@@ -156,6 +157,7 @@
           severity="primary"
           :label="$t('Save')"
           data-testid="save-button"
+          :disabled="isSaveDisabled"
           @click="handleSave"
         />
       </div>
@@ -249,6 +251,7 @@ export default defineComponent({
       // Conditional logic specific data
       conditionSets: [createEmptyConditionSet()] as ConditionSet[],
       innerCommands: [] as EditStepData[],
+      isEditingInnerStep: false,
       // Job reference defaults (matching JobRefForm)
       jobRefDefaults: {
         description: "",
@@ -290,6 +293,12 @@ export default defineComponent({
         ...this.editModel,
         description: this.stepDescription,
       };
+    },
+    isSaveDisabled(): boolean {
+      if (!this.isConditionalLogic) {
+        return false;
+      }
+      return this.innerCommands.length === 0 || this.isEditingInnerStep;
     },
   },
   watch: {

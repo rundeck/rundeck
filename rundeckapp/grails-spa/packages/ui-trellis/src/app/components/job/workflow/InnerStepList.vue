@@ -188,7 +188,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-  emits: ["update:modelValue"],
+  emits: ["update:modelValue", "update:editing"],
   data() {
     return {
       ServiceType,
@@ -228,6 +228,12 @@ export default defineComponent({
       },
       immediate: true,
       deep: true,
+    },
+    editingStepId: {
+      handler(val) {
+        this.$emit("update:editing", !!val);
+      },
+      immediate: true,
     },
   },
   methods: {
