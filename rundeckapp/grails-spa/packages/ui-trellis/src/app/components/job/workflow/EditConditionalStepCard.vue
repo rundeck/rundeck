@@ -1,5 +1,5 @@
 <template>
-  <div class="edit-conditional-step-card">
+  <div ref="editConditionalStepCard" class="edit-conditional-step-card">
     <Card>
       <template #header>
         <div class="card-header">
@@ -59,6 +59,7 @@
         <div class="steps-section">
           <h3 class="text-heading--md section-title">{{ $t("editConditionalStep.setSteps") }}</h3>
           <InnerStepList
+            ref="innerStepList"
             v-model="innerCommands"
             :target-service="serviceName"
             :depth="depth + 1"
@@ -104,6 +105,10 @@ import {
 } from "./types/conditionalStepTypes";
 import type { EditStepData } from "./types/workflowTypes";
 import type { ContextVariable } from "@/library/stores/contextVariables";
+import { getRundeckContext } from "@/library";
+
+const rundeckContext = getRundeckContext();
+const eventBus = rundeckContext.eventBus;
 
 export default defineComponent({
   name: "EditConditionalStepCard",
@@ -138,6 +143,16 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
+    nestedStepToEdit: {
+      type: Object as PropType<{
+        stepId: string;
+        stepIndex: number;
+        parentConditionalId?: string;
+        parentConditionalIndex?: number;
+      } | null>,
+      required: false,
+      default: null,
+    },
   },
   emits: ["cancel", "save", "update:modelValue", "switch-step-type"],
   data() {
@@ -161,6 +176,47 @@ export default defineComponent({
       },
       immediate: true,
       deep: true,
+    },
+    nestedStepToEdit: {
+      handler(val) {
+        if (val) {
+          this.$nextTick(() => {
+            const innerStepList = this.$refs.innerStepList as any;
+            if (innerStepList && typeof innerStepList.editStep === 'function') {
+              // Check if we need to open a nested conditional first (depth=2 case)
+              if (val.parentConditionalId && val.parentConditionalIndex !== undefined) {
+                // Set nested step info on the InnerStepList so EditStepCard for the
+                // intermediate conditional receives it and can open the target step
+                innerStepList.nestedStepToEdit = {
+                  stepId: val.stepId,
+                  stepIndex: val.stepIndex,
+                  scrollToken: val.scrollToken,
+                };
+
+                // Open the nested conditional
+                innerStepList.editStep(val.parentConditionalIndex);
+              } else {
+                // Depth=1 case: directly open the target step
+                innerStepList.editStep(val.stepIndex);
+
+                // Wait for the nested step's EditStepCard to mount, then emit ready event
+                this.$nextTick(() => {
+                  this.$nextTick(() => {
+                    if (val.scrollToken) {
+                      const element = this.$refs.editConditionalStepCard as HTMLElement;
+                      eventBus.emit('nested-step-edit-ready', {
+                        scrollToken: val.scrollToken,
+                        element,
+                      });
+                    }
+                  });
+                });
+              }
+            }
+          });
+        }
+      },
+      immediate: true,
     },
   },
   mounted() {

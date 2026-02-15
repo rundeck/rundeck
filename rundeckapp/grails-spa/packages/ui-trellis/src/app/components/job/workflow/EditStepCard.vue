@@ -1,5 +1,6 @@
 <template>
   <BaseStepCard
+    ref="baseStepCard"
     :config="stepConfig"
     :plugin-details="provider || {}"
     :expanded="contentExpanded"
@@ -85,6 +86,7 @@
 
         <div class="steps-section">
           <InnerStepList
+            ref="innerStepList"
             v-model="innerCommands"
             :target-service="serviceName"
             :depth="depth + 1"
@@ -236,6 +238,16 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
+    nestedStepToEdit: {
+      type: Object as PropType<{
+        stepId: string;
+        stepIndex: number;
+        parentConditionalId?: string;
+        parentConditionalIndex?: number;
+      } | null>,
+      required: false,
+      default: null,
+    },
   },
   emits: ["cancel", "save", "update:modelValue"],
   data() {
@@ -330,6 +342,48 @@ export default defineComponent({
       },
       immediate: true,
       deep: true,
+    },
+    nestedStepToEdit: {
+      handler(val) {
+        if (val && this.isConditionalLogic) {
+          this.$nextTick(() => {
+            const innerStepList = this.$refs.innerStepList as any;
+            if (innerStepList && typeof innerStepList.editStep === 'function') {
+              // Check if we need to open a nested conditional first (depth=2 case)
+              if (val.parentConditionalId && val.parentConditionalIndex !== undefined) {
+                // Set nested step info on the InnerStepList so EditStepCard for the
+                // intermediate conditional receives it and can open the target step
+                innerStepList.nestedStepToEdit = {
+                  stepId: val.stepId,
+                  stepIndex: val.stepIndex,
+                  scrollToken: val.scrollToken,
+                };
+
+                // Open the nested conditional
+                innerStepList.editStep(val.parentConditionalIndex);
+              } else {
+                // Depth=1 case: directly open the target step
+                innerStepList.editStep(val.stepIndex);
+
+                // Wait for the nested step's EditStepCard to mount, then emit ready event
+                this.$nextTick(() => {
+                  this.$nextTick(() => {
+                    if (val.scrollToken) {
+                      const baseStepCard = this.$refs.baseStepCard as any;
+                      const element = baseStepCard?.$el || baseStepCard;
+                      eventBus.emit('nested-step-edit-ready', {
+                        scrollToken: val.scrollToken,
+                        element,
+                      });
+                    }
+                  });
+                });
+              }
+            }
+          });
+        }
+      },
+      immediate: true,
     },
   },
   async mounted() {

@@ -45,7 +45,7 @@
                             :show-extended="false"
                           >
                             <template #titleprefix>
-                              <span class="link-step-plugin" @click.stop="handleNestedStepClick(nestedStep, nestedIndex)">
+                              <span class="link-step-plugin" @click.stop="handleNestedStepClick(nestedStep, nestedIndex, step, index)">
                                 {{ nestedStep.description || getStepPluginDetails(nestedStep)?.title || $t("Workflow.stepLabel") }}
                               </span>
                               <i class="pi pi-pencil"/>
@@ -313,8 +313,21 @@ export default defineComponent({
     handleStepClick(step: EditStepData, index: number) {
       this.$emit("step-click", { step, index });
     },
-    handleNestedStepClick(step: EditStepData, index: number) {
-      this.$emit("step-click", { step, index, parentStepId: this.config.id });
+    handleNestedStepClick(
+      nestedStep: EditStepData,
+      nestedIndex: number,
+      parentConditional: EditStepData,
+      parentIndex: number
+    ) {
+      this.$emit("step-click", {
+        step: nestedStep,
+        stepIndex: nestedIndex,
+        parentConditional: {
+          id: parentConditional.id,
+          index: parentIndex,
+          rootConditionalId: this.config.id,
+        },
+      });
     },
     stepTitle(step: EditStepData, index: number) {
       if (step.description) {

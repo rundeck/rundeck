@@ -62,6 +62,7 @@
               @delete="removeStep(index)"
               @duplicate="duplicateStep(index)"
               @edit="editStep(index)"
+              @step-click="handleNestedStepClick($event, index)"
             />
             <EditStepCard
               v-if="editingStepId === element.id"
@@ -72,6 +73,7 @@
               :extra-autocomplete-vars="extraAutocompleteVars"
               :show-navigation="true"
               :depth="depth"
+              :nested-step-to-edit="nestedStepToEdit"
               @save="handleSaveStep(index)"
               @cancel="handleCancelEdit"
             />
@@ -219,6 +221,14 @@ export default defineComponent({
         stepIndex: number;
         nestedStepIndex?: number;
       } | null,
+      nestedStepToEdit: null as {
+        stepId: string;
+        stepIndex: number;
+        parentConditionalId?: string;
+        parentConditionalIndex?: number;
+        scrollToken?: string;
+      } | null,
+      pendingScrollToken: null as string | null,
     };
   },
   computed: {
@@ -250,6 +260,14 @@ export default defineComponent({
       },
       immediate: true,
     },
+  },
+  mounted() {
+    // Listen for nested step ready events on eventBus
+    eventBus.on('nested-step-edit-ready', this.handleNestedStepReady);
+  },
+  beforeUnmount() {
+    // Clean up eventBus listener
+    eventBus.off('nested-step-edit-ready', this.handleNestedStepReady);
   },
   methods: {
     getPluginDetails(element: EditStepData) {
@@ -298,6 +316,89 @@ export default defineComponent({
       this.editingStepId = command.id;
       this.editModel = cloneDeep(command);
       this.editModelValidation = { errors: {}, valid: true };
+    },
+
+    handleNestedStepClick(
+      payload: {
+        step: EditStepData;
+        stepIndex?: number;
+        index?: number;
+        parentConditional?: {
+          id: string;
+          index: number;
+          rootConditionalId: string;
+        };
+      },
+      conditionalIndex: number,
+    ) {
+      if (this.editingStepId) return;
+
+      // Generate unique scroll token for this edit session
+      const scrollToken = `nested-step-scroll-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      this.pendingScrollToken = scrollToken;
+
+      // Handle both depth=1 and depth=2 cases
+      if (payload.parentConditional) {
+        // Depth=2: step is nested inside a conditional inside a conditional
+        // payload.step = the target step
+        // payload.parentConditional.id = the intermediate conditional's ID
+        // payload.parentConditional.index = the intermediate conditional's index within root conditional
+        // conditionalIndex = the root conditional's index
+
+        const parentConditional = this.commands[conditionalIndex];
+        this.editIndex = conditionalIndex;
+        this.editingStepId = parentConditional.id;
+        this.editModel = cloneDeep(parentConditional);
+        this.editModelValidation = { errors: {}, valid: true };
+
+        // Pass nested step info to EditStepCard with full path
+        this.nestedStepToEdit = {
+          stepId: payload.step.id,
+          stepIndex: payload.stepIndex ?? payload.index ?? 0,
+          parentConditionalId: payload.parentConditional.id,
+          parentConditionalIndex: payload.parentConditional.index,
+          scrollToken,
+        };
+      } else {
+        // Depth=1: step is directly nested inside a conditional
+        // payload.step = the target step
+        // payload.index or payload.stepIndex = the step's index
+
+        const parentConditional = this.commands[conditionalIndex];
+        this.editIndex = conditionalIndex;
+        this.editingStepId = parentConditional.id;
+        this.editModel = cloneDeep(parentConditional);
+        this.editModelValidation = { errors: {}, valid: true };
+
+        // Store nested step info to pass to EditStepCard
+        this.nestedStepToEdit = {
+          stepId: payload.step.id,
+          stepIndex: payload.stepIndex ?? payload.index ?? 0,
+          scrollToken,
+        };
+      }
+    },
+    handleNestedStepReady(payload: { scrollToken: string; element: HTMLElement }) {
+      // Only handle if this is the scroll token we're waiting for
+      if (payload.scrollToken === this.pendingScrollToken) {
+        this.$nextTick(() => {
+          // Scroll the element into view
+          payload.element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          // Focus the first input field
+          this.$nextTick(() => {
+            const firstInput = payload.element?.querySelector<HTMLInputElement>(
+              'input[type="text"]:not([disabled]), textarea:not([disabled]), input[data-testid="step-description"]'
+            );
+            if (firstInput) {
+              firstInput.focus();
+            }
+          });
+        });
+
+        // Clear the pending token
+        this.pendingScrollToken = null;
+      }
     },
 
     async handleSaveStep(index: number) {
@@ -355,6 +456,7 @@ export default defineComponent({
       this.editModel = {} as EditStepData;
       this.editModelValidation = { errors: {}, valid: true };
       this.editIndex = -1;
+      this.nestedStepToEdit = null;
     },
 
     // --- Delete / Duplicate ---
