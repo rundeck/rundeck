@@ -1,7 +1,7 @@
 <template>
   <Card
     class="baseStepCard"
-    :class="[cardClass, { collapsed: !effectiveExpanded }]"
+    :class="[cardClass, { collapsed: !contentExpanded }]"
   >
     <template #header>
       <slot v-if="$slots.header" name="header" />
@@ -12,7 +12,7 @@
         :editing="editing"
         :show-as-node-step="showAsNodeStep"
         :show-toggle="showToggle"
-        :expanded="effectiveExpanded"
+        :expanded="contentExpanded"
         :disabled="disabled"
         @delete="$emit('delete')"
         @duplicate="$emit('duplicate')"
@@ -69,9 +69,9 @@ export default defineComponent({
       type: String,
       default: "",
     },
-    expanded: {
+    initiallyExpanded: {
       type: Boolean,
-      default: undefined,
+      default: true,
     },
     disabled: {
       type: Boolean,
@@ -81,13 +81,8 @@ export default defineComponent({
   emits: ["delete", "duplicate", "edit", "toggle"],
   data() {
     return {
-      contentExpanded: true,
+      contentExpanded: this.initiallyExpanded,
     };
-  },
-  computed: {
-    effectiveExpanded(): boolean {
-      return this.expanded !== undefined ? this.expanded : this.contentExpanded;
-    },
   },
 });
 </script>

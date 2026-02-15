@@ -5,6 +5,7 @@
     :service-name="serviceName"
     :show-toggle="showToggle"
     :show-as-node-step="computedServiceName === 'WorkflowNodeStep'"
+    :initially-expanded="initiallyExpanded"
     :disabled="disabled"
     @delete="handleDelete"
     @duplicate="handleDuplicate"
@@ -67,6 +68,10 @@ export default defineComponent({
     showToggle: {
       type: Boolean,
       default: false,
+    },
+    initiallyExpanded: {
+      type: Boolean,
+      default: true,
     },
     disabled: {
       type: Boolean,
