@@ -94,7 +94,7 @@
         </tr>
     </g:if>
 
-    <g:if test="${execdata instanceof ExecutionContext && execdata?.workflow}">
+    <g:if test="${execdata instanceof ExecutionContext && execdata?.getWorkflowData()}">
         <g:unless test="${hideAdhoc}">
         <tr>
             <td><g:message code="steps" /></td>
