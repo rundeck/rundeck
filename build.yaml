@@ -1,9 +1,9 @@
 ---
 rundeck:
   plugins: # Extra plugins to bundle
-  - "com.rundeck.plugins:ansible-plugin:4.0.18-grails7"
+  - "com.rundeck.plugins:ansible-plugin:4.0.19-grails7"
   - "com.rundeck.plugins:aws-s3-model-source:1.0.15-grails7"
-  - "com.rundeck.plugins:py-winrm-plugin:2.1.7-grails7"
+  - "com.rundeck.plugins:py-winrm-plugin:2.1.8-grails7"
   - "com.rundeck.plugins:openssh-node-execution:2.0.12-grails7"
   - "com.rundeck.plugins:multiline-regex-datacapture-filter:1.1.9-grails7"
   - "com.rundeck.plugins:attribute-match-node-enhancer:0.2.8-grails7"
