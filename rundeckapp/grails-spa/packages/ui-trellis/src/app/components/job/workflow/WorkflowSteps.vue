@@ -350,6 +350,7 @@ import { Operation } from "@/app/components/job/options/model/ChangeEvents";
 import {
   createStepFromProvider,
   getPluginDetailsForStep,
+  resetValidation,
   validateStepForSave,
 } from "./stepEditorUtils";
 import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
@@ -403,7 +404,7 @@ export default defineComponent({
       editJobRefModal: false,
       editModel: {} as EditStepData,
       editExtra: {} as EditStepData,
-      editModelValidation: { errors: [], valid: true },
+      editModelValidation: resetValidation(),
       editService: null,
       editIndex: -1,
       loadingWorflowSteps: false,
@@ -572,7 +573,7 @@ export default defineComponent({
       this.editJobRefModal = false;
       this.editModel = {};
       this.editExtra = {};
-      this.editModelValidation = null;
+      this.editModelValidation = resetValidation();
       this.editIndex = -1;
       this.isErrorHandler = false;
       this.editingStepId = null;
@@ -625,7 +626,7 @@ export default defineComponent({
         this.editingStepId = parentConditional.id;
         this.editExtra = cloneDeep(parentConditional);
         this.editModel = cloneDeep(parentConditional);
-        this.editModelValidation = { errors: [], valid: true };
+        this.editModelValidation = resetValidation();
 
         // Pass nested step info to EditConditionalStepCard with full path
         this.nestedStepToEdit = {
@@ -641,7 +642,7 @@ export default defineComponent({
         this.editingStepId = parentConditional.id;
         this.editExtra = cloneDeep(parentConditional);
         this.editModel = cloneDeep(parentConditional);
-        this.editModelValidation = { errors: [], valid: true };
+        this.editModelValidation = resetValidation();
 
         // Store nested step info to pass to EditConditionalStepCard
         this.nestedStepToEdit = {
@@ -739,8 +740,7 @@ export default defineComponent({
       this.editService = command.nodeStep
         ? ServiceType.WorkflowNodeStep
         : ServiceType.WorkflowStep;
-      // Clear any previous validation errors when starting to edit
-      this.editModelValidation = { errors: [], valid: true };
+      this.editModelValidation = resetValidation();
 
       // In EA mode, show EditStepCard/EditConditionalStepCard inline for ALL steps (including jobref)
       // Error handlers always use modals (handled separately above)

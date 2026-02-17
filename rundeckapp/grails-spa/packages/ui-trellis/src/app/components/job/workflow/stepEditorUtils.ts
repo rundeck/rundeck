@@ -22,6 +22,14 @@ export interface ValidationResult {
 }
 
 /**
+ * Returns a clean validation state.
+ * Use this to reset validation before editing or after canceling edits.
+ */
+export function resetValidation(): ValidationResult {
+  return { errors: {}, valid: true };
+}
+
+/**
  * Creates a new step object from a provider selection.
  * Handles job references, conditional logic, and regular plugins.
  *

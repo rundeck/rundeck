@@ -304,35 +304,6 @@ export default defineComponent({
     },
   },
   watch: {
-    modelValue: {
-      handler(val) {
-        if (val && Object.keys(val).length > 0) {
-          // Extract description separately
-          this.stepDescription = val.description || "";
-
-          // For jobref: merge with defaults (like JobRefForm does)
-          // For regular steps: clone as-is
-          if (val.jobref) {
-            this.editModel = merge(cloneDeep(this.jobRefDefaults), val);
-          } else {
-            const { description, ...rest } = val;
-            this.editModel = cloneDeep(rest);
-          }
-
-          // Initialize conditional logic data
-          if (this.editModel.type === "conditional.logic") {
-            this.conditionSets = this.editModel.config?.conditionSets || [
-              createEmptyConditionSet(),
-            ];
-            this.innerCommands = this.editModel.config?.commands || [];
-          }
-
-          this.loadProvider();
-        }
-      },
-      immediate: true,
-      deep: true,
-    },
     nestedStepToEdit: {
       handler(val) {
         if (val && this.isConditionalLogic) {
@@ -480,13 +451,15 @@ export default defineComponent({
             this.editModel.type,
           );
         } catch (e) {
-          console.log(e);
+          console.error("Error loading provider description:", e);
+          // Don't clear provider on error - keep previous value
         } finally {
           this.loading = false;
         }
       } else {
+        // Don't set provider to null if we already have one - prevents header corruption during validation
         this.loading = false;
-        this.provider = null;
+        console.warn("loadProvider called without editModel.type - keeping existing provider");
       }
     },
   },

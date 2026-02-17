@@ -163,6 +163,7 @@ import type { ContextVariable } from "@/library/stores/contextVariables";
 import {
   createStepFromProvider,
   getPluginDetailsForStep,
+  resetValidation,
   validateStepForSave,
 } from "./stepEditorUtils";
 import { validatePluginConfig } from "@/library/modules/pluginService";
@@ -210,7 +211,7 @@ export default defineComponent({
       isErrorHandler: false,
       editingStepId: null as string | null,
       editModel: {} as EditStepData,
-      editModelValidation: { errors: {}, valid: true } as any,
+      editModelValidation: resetValidation(),
       editIndex: -1,
       // Error handler editing
       editErrorHandlerModal: false,
@@ -306,7 +307,7 @@ export default defineComponent({
       this.editIndex = index;
       this.editingStepId = command.id;
       this.editModel = cloneDeep(command);
-      this.editModelValidation = { errors: {}, valid: true };
+      this.editModelValidation = resetValidation();
     },
 
     handleNestedStepClick(
@@ -336,7 +337,7 @@ export default defineComponent({
         this.editIndex = conditionalIndex;
         this.editingStepId = parentConditional.id;
         this.editModel = cloneDeep(parentConditional);
-        this.editModelValidation = { errors: {}, valid: true };
+        this.editModelValidation = resetValidation();
 
         // Pass nested step info to EditStepCard with full path
         this.nestedStepToEdit = {
@@ -354,7 +355,7 @@ export default defineComponent({
         this.editIndex = conditionalIndex;
         this.editingStepId = parentConditional.id;
         this.editModel = cloneDeep(parentConditional);
-        this.editModelValidation = { errors: {}, valid: true };
+        this.editModelValidation = resetValidation();
 
         // Store nested step info to pass to EditStepCard
         this.nestedStepToEdit = {
@@ -417,7 +418,7 @@ export default defineComponent({
     clearEdit() {
       this.editingStepId = null;
       this.editModel = {} as EditStepData;
-      this.editModelValidation = { errors: {}, valid: true };
+      this.editModelValidation = resetValidation();
       this.editIndex = -1;
       this.nestedStepToEdit = null;
     },
@@ -669,7 +670,7 @@ export default defineComponent({
       this.errorHandlerExtra = { keepgoingOnSuccess: false };
       this.errorHandlerStepId = null;
       this.editingNestedStepPath = null;
-      this.editModelValidation = { errors: {}, valid: true };
+      this.editModelValidation = resetValidation();
     },
 
     // --- Emit changes ---

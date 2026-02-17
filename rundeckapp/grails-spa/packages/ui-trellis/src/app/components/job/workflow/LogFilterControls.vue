@@ -37,6 +37,7 @@ import {
 import { ServiceType } from "@/library/stores/Plugins";
 import { cloneDeep } from "lodash";
 import { defineComponent, nextTick } from "vue";
+import { resetValidation } from "./stepEditorUtils";
 export default defineComponent({
   name: "LogFilterControls",
   components: { ChoosePluginModal, EditPluginModal },
@@ -76,7 +77,7 @@ export default defineComponent({
         type: "",
         config: {},
       } as PluginConfig,
-      editModelValidation: { errors: [], valid: true },
+      editModelValidation: resetValidation(),
     };
   },
   computed: {
@@ -111,7 +112,7 @@ export default defineComponent({
   methods: {
     clearEdit() {
       this.model = { type: "", config: {} };
-      this.editModelValidation = { errors: [], valid: true };
+      this.editModelValidation = resetValidation();
     },
     addFilter() {
       if (this.editFilterModal) {

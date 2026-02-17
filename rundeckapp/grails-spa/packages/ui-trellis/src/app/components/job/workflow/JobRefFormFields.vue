@@ -134,6 +134,8 @@
             data-testid="jobUuidField"
             :suggestions="inputTypeContextVariables"
             :read-only="!!isUseName"
+            :invalid="showValidation && !isUseName"
+            :errorText="$t('commandExec.jobName.blank.message')"
             :placeholder="$t('Workflow.Step.jobreference.uuid.placeholder')"
           />
         </div>

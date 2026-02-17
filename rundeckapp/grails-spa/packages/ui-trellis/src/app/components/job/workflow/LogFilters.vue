@@ -56,6 +56,7 @@ import LogFilterControls from "@/app/components/job/workflow/LogFilterControls.v
 import { cloneDeep } from "lodash";
 import mitt from "mitt";
 import { defineComponent } from "vue";
+import { resetValidation } from "./stepEditorUtils";
 const eventBus = getRundeckContext().eventBus;
 export default defineComponent({
   name: "LogFilters",
@@ -115,7 +116,7 @@ export default defineComponent({
         type: "",
         config: {},
       } as PluginConfig,
-      editModelValidation: { errors: [], valid: true },
+      editModelValidation: resetValidation(),
       filtersEb: null,
       addEventHandler: null as (() => void) | null,
       editEventHandler: null as ((filterIndex: number) => void) | null,
