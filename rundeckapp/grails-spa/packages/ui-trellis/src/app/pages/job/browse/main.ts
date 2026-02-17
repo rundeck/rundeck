@@ -19,7 +19,6 @@ import JobListPage from "./JobListPage.vue";
 import * as uiv from "uiv";
 import JobsPage from "./JobsPage.vue";
 import JobsPageHeader from "./JobsPageHeader.vue";
-import NextUiToggle from "./NextUiToggle.vue";
 import BulkSelectCheckbox from "./tree/BulkSelectCheckbox.vue";
 import JobActionsMenu from "./tree/JobActionsMenu.vue";
 import JobRunButton from "./tree/JobRunButton.vue";
@@ -34,14 +33,6 @@ function init() {
   const jobTreeMeta = loadJsonData("jobTreeUiMeta");
   const showActions = !jobTreeMeta?.hideActions;
   const showHeader = !jobTreeMeta?.hideHeader;
-  rootStore.ui.addItems([
-    {
-      section: "theme-select",
-      location: "after",
-      visible: true,
-      widget: markRaw(NextUiToggle),
-    },
-  ]);
   if (uiType !== "next") {
     return;
   }
