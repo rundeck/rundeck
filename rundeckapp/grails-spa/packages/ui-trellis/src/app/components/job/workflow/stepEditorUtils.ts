@@ -144,8 +144,41 @@ export async function validateStepForSave(
     return { valid: true, errors: {} };
   }
 
-  // Conditional logic steps skip plugin validation
+  // Conditional logic: validate that all conditions have field and value
   if (step.type === "conditional.logic") {
+    const conditionSets = step.config?.conditionSets || [];
+    const conditionErrors: Record<string, { field?: string; value?: string }> = {};
+    let hasErrors = false;
+
+    conditionSets.forEach((conditionSet: any) => {
+      if (conditionSet.conditions) {
+        conditionSet.conditions.forEach((condition: any) => {
+          const errors: { field?: string; value?: string } = {};
+
+          if (!condition.field || condition.field.trim() === "") {
+            errors.field = "editConditionalStep.fieldRequired";
+            hasErrors = true;
+          }
+
+          if (!condition.value || condition.value.trim() === "") {
+            errors.value = "editConditionalStep.valueRequired";
+            hasErrors = true;
+          }
+
+          if (Object.keys(errors).length > 0) {
+            conditionErrors[condition.id] = errors;
+          }
+        });
+      }
+    });
+
+    if (hasErrors) {
+      return {
+        valid: false,
+        errors: { conditions: conditionErrors },
+      };
+    }
+
     return { valid: true, errors: {} };
   }
 

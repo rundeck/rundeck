@@ -51,6 +51,7 @@
             :service-name="serviceName"
             :extra-autocomplete-vars="extraAutocompleteVars"
             :depth="depth"
+            :validation="validation"
             @switch-step-type="handleSwitchStepType"
           />
         </div>
@@ -255,12 +256,6 @@ export default defineComponent({
   },
   methods: {
     handleSave() {
-      // Delegate conditions validation to ConditionsEditor
-      const conditionsEditor = this.$refs.conditionsEditor as InstanceType<typeof ConditionsEditor>;
-      if (conditionsEditor && !conditionsEditor.validate()) {
-        return;
-      }
-
       const updatedModel = {
         ...this.editModel,
         description: this.stepName,

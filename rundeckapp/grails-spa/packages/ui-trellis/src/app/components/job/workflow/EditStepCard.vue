@@ -12,10 +12,6 @@
   >
     <template #content>
       <div v-if="isJobRef" class="jobref-form-content">
-        <div v-if="validationError" class="alert alert-danger">
-          {{ validationError }}
-        </div>
-
         <div class="step-name-section">
           <div class="form-group">
             <label
@@ -43,15 +39,19 @@
 
         <JobRefFormFields
           v-model="editModel.jobref"
-          :show-validation="showRequired"
+          :show-validation="hasJobRefValidationError"
           :extra-autocomplete-vars="extraAutocompleteVars"
         />
       </div>
 
       <div v-else-if="isConditionalLogic" class="conditional-logic-content">
         <div class="step-name-section">
-          <label class="text-heading--sm form-label">{{ $t("editConditionalStep.stepName") }}</label>
-          <p class="text-body--sm helper-text">{{ $t("editConditionalStep.stepNameHelper") }}</p>
+          <label class="text-heading--sm form-label">{{
+            $t("editConditionalStep.stepName")
+          }}</label>
+          <p class="text-body--sm helper-text">
+            {{ $t("editConditionalStep.stepNameHelper") }}
+          </p>
           <PtInput
             ref="stepDescriptionInput"
             v-model="stepDescription"
@@ -68,6 +68,7 @@
             :service-name="serviceName"
             :extra-autocomplete-vars="extraAutocompleteVars"
             :depth="depth"
+            :validation="validation"
           />
         </div>
 
@@ -145,6 +146,7 @@
           @click="handleCancel"
         />
         <PtButton
+          outlined
           :label="$t('Save')"
           data-testid="save-button"
           :disabled="isSaveDisabled"
@@ -248,8 +250,6 @@ export default defineComponent({
       provider: null as any,
       loading: false,
       pluginConfigMode: "edit",
-      validationError: "",
-      showRequired: false,
       // Conditional logic specific data
       conditionSets: [createEmptyConditionSet()] as ConditionSet[],
       innerCommands: [] as EditStepData[],
@@ -302,6 +302,9 @@ export default defineComponent({
       }
       return this.innerCommands.length === 0 || this.isEditingInnerStep;
     },
+    hasJobRefValidationError(): boolean {
+      return Boolean(this.validation?.errors?.jobref);
+    },
   },
   watch: {
     nestedStepToEdit: {
@@ -309,9 +312,12 @@ export default defineComponent({
         if (val && this.isConditionalLogic) {
           this.$nextTick(() => {
             const innerStepList = this.$refs.innerStepList as any;
-            if (innerStepList && typeof innerStepList.editStep === 'function') {
+            if (innerStepList && typeof innerStepList.editStep === "function") {
               // Check if we need to open a nested conditional first (depth=2 case)
-              if (val.parentConditionalId && val.parentConditionalIndex !== undefined) {
+              if (
+                val.parentConditionalId &&
+                val.parentConditionalIndex !== undefined
+              ) {
                 // Set nested step info on the InnerStepList so EditStepCard for the
                 // intermediate conditional receives it and can open the target step
                 innerStepList.nestedStepToEdit = {
@@ -375,13 +381,16 @@ export default defineComponent({
         if (element) {
           VueScrollTo.scrollTo(element, 500, {
             offset: -100,
-            easing: 'ease-in-out',
+            easing: "ease-in-out",
             onDone: () => {
               // Focus step description input after scroll completes
-              const stepDescriptionInput = this.$refs.stepDescriptionInput as any;
-              const inputElement = stepDescriptionInput?.$el?.querySelector('input') || stepDescriptionInput?.$el;
+              const stepDescriptionInput = this.$refs
+                .stepDescriptionInput as any;
+              const inputElement =
+                stepDescriptionInput?.$el?.querySelector("input") ||
+                stepDescriptionInput?.$el;
               inputElement?.focus();
-            }
+            },
           });
         }
       });
@@ -389,26 +398,8 @@ export default defineComponent({
   },
   methods: {
     handleSave() {
-      // Validate job reference before saving
-      if (this.isJobRef) {
-        if (!this.editModel.jobref.name && !this.editModel.jobref.uuid) {
-          this.validationError = this.$t("commandExec.jobName.blank.message");
-          this.showRequired = true;
-          return;
-        }
-        this.validationError = "";
-        this.showRequired = false;
-      }
-
-      // Validate conditional logic before saving
+      // For conditional logic, build save data with conditions and commands
       if (this.isConditionalLogic) {
-        const conditionsEditor = this.$refs.conditionsEditor as InstanceType<
-          typeof ConditionsEditor
-        >;
-        if (conditionsEditor && !conditionsEditor.validate()) {
-          return;
-        }
-
         const saveData = {
           ...this.editModel,
           description: this.stepDescription,
@@ -459,7 +450,9 @@ export default defineComponent({
       } else {
         // Don't set provider to null if we already have one - prevents header corruption during validation
         this.loading = false;
-        console.warn("loadProvider called without editModel.type - keeping existing provider");
+        console.warn(
+          "loadProvider called without editModel.type - keeping existing provider",
+        );
       }
     },
   },
@@ -517,5 +510,4 @@ export default defineComponent({
     gap: var(--sizes-4);
   }
 }
-
 </style>

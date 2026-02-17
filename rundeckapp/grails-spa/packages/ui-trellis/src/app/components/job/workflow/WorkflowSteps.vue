@@ -343,7 +343,7 @@ import { ServiceType } from "@/library/stores/Plugins";
 import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
 import { cloneDeep } from "lodash";
 import { mapState } from "pinia";
-import { defineComponent } from "vue";
+import {computed, defineComponent} from "vue";
 import LogFilters from "./LogFilters.vue";
 import CommonUndoRedoDraggableList from "@/app/components/common/CommonUndoRedoDraggableList.vue";
 import { Operation } from "@/app/components/job/options/model/ChangeEvents";
@@ -1148,6 +1148,11 @@ export default defineComponent({
       }
     },
   },
+  provide() {
+    return {
+      editModelValidation: computed(() => this.editModelValidation)
+    }
+  }
 });
 </script>
 <style lang="scss">

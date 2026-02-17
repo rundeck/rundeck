@@ -145,7 +145,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from "vue";
+import {computed, defineComponent, type PropType} from "vue";
 import draggable from "vuedraggable";
 import { cloneDeep } from "lodash";
 import StepCard from "@/library/components/primeVue/StepCards/StepCard.vue";
@@ -678,6 +678,11 @@ export default defineComponent({
       this.$emit("update:modelValue", this.commands);
     },
   },
+  provide() {
+    return {
+      editModelValidation: computed(() => this.editModelValidation)
+    }
+  }
 });
 </script>
 

@@ -129,12 +129,9 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    validationErrors: {
-      type: Object,
-      default: () => ({}),
-    },
   },
   emits: ["delete", "duplicate", "edit", "toggle"],
+  inject: ['editModelValidation'],
   computed: {
     effectiveNodeStep(): boolean {
       if (this.showAsNodeStep !== undefined) {
@@ -153,11 +150,10 @@ export default defineComponent({
       ];
     },
     errorCount(): number {
-      // Count validation errors from various sources
-      if (!this.validationErrors || typeof this.validationErrors !== 'object') {
-        return 0;
+      if(!this.editModelValidation) {
+        return 0
       }
-      return Object.keys(this.validationErrors).length;
+      return this.editModelValidation && !this.editModelValidation?.valid ? Object.keys(this.editModelValidation.errors).length : 0;
     },
     errorMessage(): string {
       if (this.errorCount === 1) {
@@ -166,7 +162,7 @@ export default defineComponent({
       return this.$t('Workflow.validation.multipleErrors', { count: this.errorCount });
     },
     showErrorTag(): boolean {
-      return this.showInvalidCondition || this.errorCount > 0;
+      return this.errorCount > 0 && !this.editModelValidation?.valid;
     },
   },
   methods: {

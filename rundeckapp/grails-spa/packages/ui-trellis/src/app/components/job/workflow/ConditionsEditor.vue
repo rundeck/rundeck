@@ -30,8 +30,8 @@
                   :service-name="serviceName"
                   :suggestions="autocompleteSuggestions"
                   :tab-mode="autocompleteSuggestions.length > 0"
-                  :field-error="fieldErrors[condition.id]"
-                  :value-error="valueErrors[condition.id]"
+                  :field-error="conditionErrors[condition.id]?.field ? $t(conditionErrors[condition.id].field) : undefined"
+                  :value-error="conditionErrors[condition.id]?.value ? $t(conditionErrors[condition.id].value) : undefined"
                   :depth="depth"
                   @update:condition="(payload) => updateCondition(setIndex, condIndex, payload.condition, payload.fieldName)"
                   @delete="() => removeCondition(setIndex, condIndex)"
@@ -106,15 +106,16 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
+    validation: {
+      type: Object as PropType<{ valid: boolean; errors: Record<string, any> }>,
+      required: false,
+      default: () => ({ valid: true, errors: {} }),
+    },
   },
   emits: ["update:modelValue", "switch-step-type"],
   data() {
     return {
       conditionSets: [] as ConditionSet[],
-      fieldErrors: {} as Record<string, string>,
-      valueErrors: {} as Record<string, string>,
-      isInitialized: false,
-      touchedConditions: new Set<string>(),
     };
   },
   watch: {
@@ -134,21 +135,11 @@ export default defineComponent({
       immediate: true,
       deep: true,
     },
-    conditionSets: {
-      handler() {
-        // Emit changes back to parent via v-model
-      },
-      deep: true,
-      immediate: false,
-    },
   },
   mounted() {
     this.conditionSets = this.modelValue.length > 0
       ? this.modelValue
       : [createEmptyConditionSet()];
-    this.$nextTick(() => {
-      this.isInitialized = true;
-    });
   },
   computed: {
     canAddConditionSet(): boolean {
@@ -188,6 +179,9 @@ export default defineComponent({
         }));
       return [...jobVars, ...optionVars];
     },
+    conditionErrors(): Record<string, { field?: string; value?: string }> {
+      return this.validation?.errors?.conditions || {};
+    },
   },
   methods: {
     canAddCondition(setIndex: number): boolean {
@@ -202,16 +196,10 @@ export default defineComponent({
     },
     removeCondition(setIndex: number, conditionIndex: number) {
       const set = this.conditionSets[setIndex];
-      const conditionToRemove = set.conditions[conditionIndex];
       if (set.conditions.length > 1) {
         set.conditions.splice(conditionIndex, 1);
       } else if (this.conditionSets.length > 1) {
         this.conditionSets.splice(setIndex, 1);
-      }
-      if (conditionToRemove) {
-        delete this.fieldErrors[conditionToRemove.id];
-        delete this.valueErrors[conditionToRemove.id];
-        this.touchedConditions.delete(conditionToRemove.id);
       }
       this.emitUpdate();
     },
@@ -222,13 +210,6 @@ export default defineComponent({
       fieldName?: "field" | "value" | "operator",
     ) {
       this.conditionSets[setIndex].conditions[conditionIndex] = updatedCondition;
-
-      if (fieldName === "field" || fieldName === "value") {
-        this.touchedConditions.add(updatedCondition.id);
-        if (this.isInitialized) {
-          this.validateField(updatedCondition.id, fieldName);
-        }
-      }
       this.emitUpdate();
     },
     addConditionSet() {
@@ -237,68 +218,6 @@ export default defineComponent({
         this.conditionSets.push(newSet);
         this.emitUpdate();
       }
-    },
-    validateField(conditionId: string, fieldName: "field" | "value" | null = null) {
-      let condition: Condition | null = null;
-      for (const conditionSet of this.conditionSets) {
-        const found = conditionSet.conditions.find((c) => c.id === conditionId);
-        if (found) {
-          condition = found;
-          break;
-        }
-      }
-
-      if (!condition) {
-        if (!fieldName || fieldName === "field") {
-          delete this.fieldErrors[conditionId];
-        }
-        if (!fieldName || fieldName === "value") {
-          delete this.valueErrors[conditionId];
-        }
-        return;
-      }
-
-      if (!fieldName || fieldName === "field") {
-        const fieldError = !condition.field || (condition.field && condition.field.trim() === "")
-          ? this.$t("editConditionalStep.fieldRequired")
-          : undefined;
-
-        if (fieldError) {
-          this.fieldErrors[conditionId] = fieldError;
-        } else {
-          delete this.fieldErrors[conditionId];
-        }
-      }
-
-      if (!fieldName || fieldName === "value") {
-        const valueError = !condition.value || condition.value.trim() === ""
-          ? this.$t("editConditionalStep.valueRequired")
-          : undefined;
-
-        if (valueError) {
-          this.valueErrors[conditionId] = valueError;
-        } else {
-          delete this.valueErrors[conditionId];
-        }
-      }
-    },
-    /**
-     * Validates all conditions across all condition sets.
-     * Returns true if valid, false if any field/value errors exist.
-     * Parents call this on save via template ref:
-     *   this.$refs.conditionsEditor.validate()
-     */
-    validate(): boolean {
-      let isValid = true;
-      this.conditionSets.forEach((conditionSet) => {
-        conditionSet.conditions.forEach((condition) => {
-          this.validateField(condition.id, null);
-          if (this.fieldErrors[condition.id] || this.valueErrors[condition.id]) {
-            isValid = false;
-          }
-        });
-      });
-      return isValid;
     },
     emitUpdate() {
       this.$emit("update:modelValue", this.conditionSets);
