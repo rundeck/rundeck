@@ -68,7 +68,7 @@ class GormExecutionDataProviderSpec extends Specification implements DataTest {
         then:
         actual.uuid == uuid
         actual.dateStarted == now
-        actual.workflow.getSteps()[0].configuration.exec == "echo hello"
+        actual.workflow.getSteps()[0].configuration.adhocRemoteString == "echo hello"
     }
 
     def "Delete"() {

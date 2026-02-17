@@ -1254,14 +1254,14 @@ class WorkflowController extends ControllerBase {
                 exec.errors.rejectValue('adhocRemoteString', 'scheduledExecution.adhocString.duplicate.message')
             } else
             if (!exec.adhocRemoteString && 'command' == type) {
-                // When type is inferred as 'command' but field is empty, set error on 'adhocExecution'
-                exec.errors.rejectValue('adhocExecution', 'commandExec.adhocExecution.adhocString.blank.message')
+                // When type is inferred as 'command' but field is empty, set error on the specific field
+                exec.errors.rejectValue('adhocRemoteString', 'commandExec.adhocExecution.adhocString.blank.message')
             } else if (!exec.adhocLocalString && 'script' == type) {
-                // When type is inferred as 'script' but field is empty, set error on 'adhocExecution'
-                exec.errors.rejectValue('adhocExecution', 'commandExec.adhocExecution.adhocString.blank.message')
+                // When type is inferred as 'script' but field is empty, set error on the specific field
+                exec.errors.rejectValue('adhocLocalString', 'commandExec.adhocExecution.adhocString.blank.message')
             } else if (!exec.adhocFilepath && 'scriptfile' == type) {
-                // When type is inferred as 'scriptfile' but field is empty, set error on 'adhocExecution'
-                exec.errors.rejectValue('adhocExecution', 'commandExec.adhocExecution.adhocString.blank.message')
+                // When type is inferred as 'scriptfile' but field is empty, set error on the specific field
+                exec.errors.rejectValue('adhocFilepath', 'commandExec.adhocExecution.adhocString.blank.message')
             } else if (!exec.adhocRemoteString && !exec.adhocLocalString && !exec.adhocFilepath) {
                 exec.errors.rejectValue('adhocExecution', 'commandExec.adhocExecution.adhocString.blank.message')
             }

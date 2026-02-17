@@ -2,6 +2,7 @@ package org.rundeck.app.data.job.converters
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import rundeck.Execution
+import rundeck.Workflow
 import rundeck.data.execution.RdExecution
 
 class ExecutionToRdExecutionConverter {
@@ -38,7 +39,8 @@ class ExecutionToRdExecutionConverter {
         re.cancelled = e.cancelled
         re.timedOut = e.timedOut
         re.nodeConfig = e.nodeConfig
-        re.workflow = WorkflowToRdWorkflowConverter.convertWorkflow(e.workflow)
+        def workflowData = e.getWorkflowData()
+        re.workflow = WorkflowToRdWorkflowConverter.convertWorkflow(workflowData as Workflow)
         re.orchestrator = OrchestratorToRdOrchestratorConverter.convertOrchestrator(e.orchestrator)
         return re
 

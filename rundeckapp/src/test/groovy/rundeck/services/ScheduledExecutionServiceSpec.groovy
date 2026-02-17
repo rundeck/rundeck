@@ -630,8 +630,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "do validate step log filter"() {
         given:
         setupDoValidate()
-        // Override frameworkService to be a Mock instead of Stub for interaction verification
-        def mockDescription = Mock(Description)
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
@@ -695,10 +693,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         ]
         // Set up expectations with return values - these will be used during execution
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(mockDescription, null, 'abc', null, null)
-        // validateDescription may be called multiple times - for step validation and for LogFilter validation
-        // More specific expectation first (for LogFilter), then general one (for step validation)
-        1 * service.frameworkService.validateDescription(mockDescription, '', [a: 'b'], _, _, _) >> [
+                new DescribedPlugin(null, null, 'abc', null, null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
         // Allow for step validation calls (with different parameters)
@@ -727,6 +723,13 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             getFrameworkNodeName() >> "testProject"
             getNodeStepPluginDescription(_) >> Mock(Description)
             getStepPluginDescription(_) >> Mock(Description)
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
         }
         // Override pluginService to set up return value for getPluginDescriptor
         service.pluginService = Mock(PluginService) {
@@ -770,13 +773,13 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(mockDescription, null, 'abc', null, null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         // validateDescription may be called multiple times - for step validation and for LogFilter validation
         // More specific expectation first (for LogFilter), then general one (for step validation)
-        1 * service.frameworkService.validateDescription(mockDescription, '', [a: 'b'], _, _, _) >> [
+        1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: 'bogus'
         ]
-        // Allow other calls to validateDescription (for step validation) to return valid: true
+//        // Allow other calls to validateDescription (for step validation) to return valid: true
         _ * service.frameworkService.validateDescription(*_) >> [valid: true]
 
     }
