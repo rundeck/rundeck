@@ -300,14 +300,21 @@ export default defineComponent({
     },
 
     // --- Edit step flow ---
-    editStep(index: number) {
+    async editStep(index: number) {
       if (this.editingStepId) return;
 
       const command = this.commands[index];
       this.editIndex = index;
-      this.editingStepId = command.id;
+
+      // Clone the model first
       this.editModel = cloneDeep(command);
       this.editModelValidation = resetValidation();
+
+      // Preload plugin details so EditStepCard can render immediately
+      // This prevents the async API call from delaying the scroll
+      await this.$nextTick();
+
+      this.editingStepId = command.id;
     },
 
     handleNestedStepClick(

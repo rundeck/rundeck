@@ -220,22 +220,30 @@ export default defineComponent({
     this.innerCommands = this.modelValue.config?.commands || [];
 
     // Scroll into view if this step was opened via click-to-edit
-    if (this.shouldScrollIntoView) {
+    // BUT only if we're not opening a nested step (let the deepest component handle scrolling)
+    if (this.shouldScrollIntoView && !this.nestedStepToEdit) {
       this.$nextTick(() => {
-        const element = this.$refs.editConditionalStepCard as HTMLElement;
+        setTimeout(() => {
+          const element = this.$refs.editConditionalStepCard as HTMLElement;
 
-        if (element) {
-          VueScrollTo.scrollTo(element, 500, {
-            offset: -100,
-            easing: 'ease-in-out',
-            onDone: () => {
-              // Focus step name input after scroll completes
-              const stepNameInput = this.$refs.stepNameInput as any;
-              const inputElement = stepNameInput?.$el?.querySelector('input') || stepNameInput?.$el;
-              inputElement?.focus();
-            }
-          });
-        }
+          if (element) {
+            VueScrollTo.scrollTo(element, 500, {
+              offset: -100,
+              easing: 'ease-in-out',
+              onDone: () => {
+                // Focus step name input after scroll completes
+                setTimeout(() => {
+                  const stepNameInput = this.$refs.stepNameInput as any;
+                  const inputElement = stepNameInput?.$el?.querySelector('input') || stepNameInput?.$el;
+                  // Prevent browser's native scroll on focus
+                  if (inputElement) {
+                    inputElement.focus({ preventScroll: true });
+                  }
+                }, 100);
+              }
+            });
+          }
+        }, 150);
       });
     }
   },

@@ -397,26 +397,34 @@ export default defineComponent({
     await this.loadProvider();
 
     // Scroll into view if this step was opened via click-to-edit
-    if (this.shouldScrollIntoView) {
+    // BUT only if we're not opening a nested step (let the deepest component handle scrolling)
+    if (this.shouldScrollIntoView && !this.nestedStepToEdit) {
       this.$nextTick(() => {
-        const baseStepCard = this.$refs.baseStepCard as any;
-        const element = baseStepCard?.$el || baseStepCard;
+        setTimeout(() => {
+          const baseStepCard = this.$refs.baseStepCard as any;
+          const element = baseStepCard?.$el || baseStepCard;
 
-        if (element) {
-          VueScrollTo.scrollTo(element, 500, {
-            offset: -100,
-            easing: "ease-in-out",
-            onDone: () => {
-              // Focus step description input after scroll completes
-              const stepDescriptionInput = this.$refs
-                .stepDescriptionInput as any;
-              const inputElement =
-                stepDescriptionInput?.$el?.querySelector("input") ||
-                stepDescriptionInput?.$el;
-              inputElement?.focus();
-            },
-          });
-        }
+          if (element) {
+            VueScrollTo.scrollTo(element, 500, {
+              offset: -100,
+              easing: "ease-in-out",
+              onDone: () => {
+                // Focus step description input after scroll completes
+                setTimeout(() => {
+                  const stepDescriptionInput = this.$refs
+                    .stepDescriptionInput as any;
+                  const inputElement =
+                    stepDescriptionInput?.$el?.querySelector("input") ||
+                    document.getElementById("stepDescription");
+                  // Prevent browser's native scroll on focus
+                  if (inputElement) {
+                    inputElement.focus({ preventScroll: true });
+                  }
+                }, 100);
+              },
+            });
+          }
+        }, 150);
       });
     }
   },
