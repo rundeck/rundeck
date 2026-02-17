@@ -26,7 +26,7 @@
           >
             <StepCard
               v-if="conditionalEnabled && element.type !== 'conditional.logic' && editingStepId !== element.id"
-              :plugin-details="getPluginDetails(element)"
+              :plugin-details="pluginDetailsMap.get(element.id)"
               :config="element"
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
               :log-filters="element.jobref ? [] : (element.filters || [])"
@@ -55,7 +55,7 @@
             <EditStepCard
               v-else-if="conditionalEnabled && element.type !== 'conditional.logic' && editingStepId === element.id"
               v-model="editModel"
-              :plugin-details="getPluginDetails(editModel)"
+              :plugin-details="editModelPluginDetails"
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
               :validation="editModelValidation"
               :extra-autocomplete-vars="extraAutocompleteVars"
@@ -64,7 +64,7 @@
             />
             <ConditionalCard
               v-else-if="conditionalEnabled && element.type === 'conditional.logic' && editingStepId !== element.id"
-              :plugin-details="getPluginDetails(element)"
+              :plugin-details="pluginDetailsMap.get(element.id)"
               :config="element"
               :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
               :log-filters="element.filters || []"
@@ -424,6 +424,21 @@ export default defineComponent({
     };
   },
   computed: {
+    pluginDetailsMap(): Map<string, any> {
+      const map = new Map();
+      for (const element of this.model.commands || []) {
+        const service = element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep;
+        map.set(element.id, getPluginDetailsForStep(element, service));
+      }
+      return map;
+    },
+    editModelPluginDetails() {
+      if (!this.editModel || !this.editModel.id) {
+        return null;
+      }
+      const service = this.editModel.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep;
+      return getPluginDetailsForStep(this.editModel, service);
+    },
     chooseModalComponent() {
       return this.conditionalEnabled ? "ChoosePluginsEAModal" : "ChoosePluginModal";
     },
@@ -488,12 +503,6 @@ export default defineComponent({
   methods: {
     notify() {
       eventBus.emit("workflow-editor-workflowsteps-updated", this.model);
-    },
-    getPluginDetails(element: EditStepData) {
-      const service = element.nodeStep
-        ? ServiceType.WorkflowNodeStep
-        : ServiceType.WorkflowStep;
-      return getPluginDetailsForStep(element, service);
     },
     async chooseProviderAdd({
       service,

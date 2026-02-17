@@ -135,7 +135,12 @@ export default defineComponent({
     },
   },
   emits: ["delete", "duplicate", "edit", "toggle"],
-  inject: ['editModelValidation'],
+  inject: {
+    editModelValidation: {
+      from: 'editModelValidation',
+      default: undefined
+    }
+  },
   computed: {
     effectiveNodeStep(): boolean {
       if (this.showAsNodeStep !== undefined) {
@@ -154,10 +159,11 @@ export default defineComponent({
       ];
     },
     errorCount(): number {
-      // Prefer validationErrors prop over injected editModelValidation
+      // Only use injected editModelValidation when in editing mode
+      // This prevents non-editing StepCards from subscribing to global validation state
       const validation = this.validationErrors?.valid !== undefined
         ? this.validationErrors
-        : this.editModelValidation;
+        : (this.editing ? this.editModelValidation : null);
 
       if (!validation) {
         return 0;
