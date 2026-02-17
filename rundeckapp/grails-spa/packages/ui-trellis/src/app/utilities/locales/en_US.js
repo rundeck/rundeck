@@ -5,7 +5,7 @@ const messages = {
   Cancel: "Cancel",
   Revert: "Revert",
   Configuration: "Configuration",
-  "Edit Node Sources": "Edit Node Sources",
+
   "Add a new Node Source": "Add a new Node Source",
   "Add a new Node Enhancer": "Add a new Node Enhancer",
   "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)":
