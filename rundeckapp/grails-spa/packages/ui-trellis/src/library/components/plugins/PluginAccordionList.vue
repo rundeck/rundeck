@@ -45,7 +45,7 @@
             :key="key"
             :value="key"
           >
-            <AccordionHeader @click="handleAccordionClick(group, key)">
+            <AccordionHeader @click.stop="handleAccordionClick(group, key)">
               <div class="accordion-header-content">
                 <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
                 <div v-if="group.isGroup" class="accordion-title-text text-body">
@@ -94,7 +94,7 @@
             :key="key"
             :value="key"
           >
-            <AccordionHeader @click="handleAccordionClick(group, key)">
+            <AccordionHeader @click.stop="handleAccordionClick(group, key)">
               <div class="accordion-header-content">
                 <PluginIcon :detail="group.iconDetail" icon-class="img-icon" />
                 <div v-if="group.isGroup" class="accordion-title-text text-body">
@@ -119,11 +119,6 @@
                 </PluginInfo>
               </div>
             </AccordionHeader>
-            <AccordionContent v-if="group.isGroup">
-              <p class="text-body--sm">
-                Grouped provider layout (to be implemented)
-              </p>
-            </AccordionContent>
           </AccordionPanel>
         </Accordion>
       </div>

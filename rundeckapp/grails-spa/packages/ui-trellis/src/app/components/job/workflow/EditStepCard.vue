@@ -148,6 +148,7 @@
           @click="handleCancel"
         />
         <PtButton
+          v-memo="[isSaveDisabled]"
           outlined
           :label="$t('Save')"
           data-testid="save-button"

@@ -80,6 +80,7 @@
             @click="handleCancel"
           />
           <PtButton
+            v-memo="[isSaveDisabled]"
             outlined
             :label="$t('editConditionalStep.saveStep')"
             class="btn-save"
