@@ -93,8 +93,12 @@ dependencies {
     runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
     testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.mockito:mockito-core"
+<<<<<<< HEAD
     testImplementation "org.apache.grails:grails-testing-support-web"
     testImplementation "cglib:cglib:2.2"
+=======
+    testImplementation "org.grails:grails-web-testing-support"
+>>>>>>> main
 }
 
 bootRun {
