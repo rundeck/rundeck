@@ -13,7 +13,6 @@
         :show-as-node-step="showAsNodeStep"
         :show-toggle="showToggle"
         :expanded="contentExpanded"
-        :disabled="disabled"
         :validation-errors="validationErrors"
         :show-invalid-condition="showInvalidCondition"
         @delete="$emit('delete')"
@@ -74,10 +73,6 @@ export default defineComponent({
     initiallyExpanded: {
       type: Boolean,
       default: true,
-    },
-    disabled: {
-      type: Boolean,
-      default: false,
     },
     validationErrors: {
       type: Object,

@@ -103,3 +103,11 @@ export default defineComponent({
   margin-left: var(--spacing-2);
 }
 </style>
+<style lang="scss">
+.edit-lock-disabled .btn.btn-xs.btn-default,
+.edit-lock-disabled .btn.btn-simple.btn-xs.btn-muted {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+</style>

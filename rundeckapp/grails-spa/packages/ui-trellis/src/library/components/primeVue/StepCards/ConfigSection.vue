@@ -12,7 +12,6 @@
             @click.prevent="handleAdd"
             class="inline-button link-button"
             type="button"
-            :disabled="disabled"
           >
             + Add
           </button>
@@ -29,8 +28,7 @@
               :key="element.name || element.type || index"
               :label="getElementLabel(element)"
               :icon="hideIcon ? undefined : getElementIcon(element)"
-              :removable="!disabled"
-              :class="{ 'chip-disabled': disabled }"
+              removable
               @remove="handleRemove(index)"
               @click="handleEdit(index)"
             />
@@ -41,7 +39,6 @@
             @click.prevent="handleAdd"
             class="link-button"
             type="button"
-            :disabled="disabled"
           >
             + Add
           </button>
@@ -80,26 +77,19 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    disabled: {
-      type: Boolean,
-      default: false,
-    },
   },
   emits: ["addElement", "removeElement", "editElement", "update:modelValue"],
   methods: {
     handleAdd() {
-      if (this.disabled) return;
       this.$emit("addElement");
     },
     handleRemove(index: number) {
-      if (this.disabled) return;
       const updatedArray = [...this.modelValue];
       updatedArray.splice(index, 1);
       this.$emit("update:modelValue", updatedArray);
       this.$emit("removeElement", index);
     },
     handleEdit(index: number) {
-      if (this.disabled) return;
       // Guard: check if element exists
       if (!this.modelValue[index]) {
         return;
@@ -170,15 +160,6 @@ export default defineComponent({
     &:hover {
       opacity: 0.8;
     }
-
-    &.chip-disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-
-      &:hover {
-        opacity: 0.5;
-      }
-    }
   }
 
   &.has-chips .header-row {
@@ -199,16 +180,6 @@ export default defineComponent({
 
     &:hover {
       text-decoration: underline;
-    }
-
-    &:disabled {
-      color: var(--colors-gray-400);
-      cursor: not-allowed;
-      opacity: 0.6;
-
-      &:hover {
-        text-decoration: none;
-      }
     }
   }
 }

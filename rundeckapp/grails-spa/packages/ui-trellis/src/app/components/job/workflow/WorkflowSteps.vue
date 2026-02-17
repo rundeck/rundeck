@@ -15,6 +15,7 @@
     :add-button-disabled="!!editingStepId"
     :draggable-disabled="!!editingStepId"
     @add-button-click="toggleAddStepModal"
+    :class="{ 'edit-lock-disabled': editingStepId }"
   >
     <template #item="{ item: { element, index } }">
       <li>
@@ -1205,10 +1206,6 @@ h2.text-heading--lg {
   .step-item-display {
     width: 100%;
 
-    &.edit-lock-disabled {
-      filter: grayscale(0.3);
-    }
-
     .node-icon {
       margin-left: 5px;
     }
@@ -1296,6 +1293,53 @@ h2.text-heading--lg {
     margin-top: 10px;
   }
 }
+
+:deep(.edit-lock-disabled) {
+  :deep(.btn.btn-default.btn-xs) {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+  }
+}
+
+// Disabled state styling for non-editing cards
+.step-list-item .step-item-display.edit-lock-disabled {
+  filter: grayscale(0.3) !important;
+
+  // Interactive elements faded and disabled
+  .plugin-info-wrapper,
+  .link-title,
+  .link-step-plugin,
+  button,
+  .btn,
+  .p-button,
+  a {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+  }
+
+  // Hide pencil icons on hover
+  .link-title:hover + .pi,
+  .link-step-plugin:hover + .pi {
+    display: none !important;
+  }
+
+  // StepCard header buttons
+  .stepCardHeader-buttons .p-button {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+  }
+
+  // Chips with not-allowed cursor
+  .p-chip {
+    cursor: not-allowed !important;
+
+    .p-chip-remove-icon {
+      cursor: not-allowed !important;
+    }
+  }
+}
+
 
 .ea-mode {
 

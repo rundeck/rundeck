@@ -22,7 +22,6 @@
                   <span class="and-label">{{ $t("editConditionalStep.and") }}</span>
                 </div>
                 <ConditionRow
-                  :key="condition.id"
                   :condition="condition"
                   :field-options="fieldOptions"
                   :operator-options="operatorOptions"
