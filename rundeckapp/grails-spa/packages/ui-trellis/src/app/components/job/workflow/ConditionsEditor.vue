@@ -22,6 +22,7 @@
                   <span class="and-label">{{ $t("editConditionalStep.and") }}</span>
                 </div>
                 <ConditionRow
+                  :key="condition.id"
                   :condition="condition"
                   :field-options="fieldOptions"
                   :operator-options="operatorOptions"
@@ -113,28 +114,10 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue", "switch-step-type"],
-  data() {
-    return {
-      conditionSets: [] as ConditionSet[],
-    };
-  },
-  watch: {
-    modelValue: {
-      handler(val) {
-        if (val && val.length > 0) {
-          this.conditionSets = val;
-        }
-      },
-      immediate: true,
-      deep: true,
-    },
-  },
-  mounted() {
-    this.conditionSets = this.modelValue.length > 0
-      ? this.modelValue
-      : [createEmptyConditionSet()];
-  },
   computed: {
+    conditionSets(): ConditionSet[] {
+      return this.modelValue.length > 0 ? this.modelValue : [createEmptyConditionSet()];
+    },
     canAddConditionSet(): boolean {
       return this.conditionSets.length < MAX_CONDITION_SETS;
     },
@@ -183,18 +166,26 @@ export default defineComponent({
     addCondition(setIndex: number) {
       if (this.canAddCondition(setIndex)) {
         const newCondition = createEmptyCondition();
-        this.conditionSets[setIndex].conditions.push(newCondition);
-        this.emitUpdate();
+        const updated = [...this.conditionSets];
+        updated[setIndex] = {
+          ...updated[setIndex],
+          conditions: [...updated[setIndex].conditions, newCondition],
+        };
+        this.$emit("update:modelValue", updated);
       }
     },
     removeCondition(setIndex: number, conditionIndex: number) {
-      const set = this.conditionSets[setIndex];
+      const updated = [...this.conditionSets];
+      const set = updated[setIndex];
       if (set.conditions.length > 1) {
-        set.conditions.splice(conditionIndex, 1);
-      } else if (this.conditionSets.length > 1) {
-        this.conditionSets.splice(setIndex, 1);
+        updated[setIndex] = {
+          ...set,
+          conditions: set.conditions.filter((_, i) => i !== conditionIndex),
+        };
+      } else if (updated.length > 1) {
+        updated.splice(setIndex, 1);
       }
-      this.emitUpdate();
+      this.$emit("update:modelValue", updated);
     },
     updateCondition(
       setIndex: number,
@@ -202,18 +193,20 @@ export default defineComponent({
       updatedCondition: Condition,
       fieldName?: "field" | "value" | "operator",
     ) {
-      this.conditionSets[setIndex].conditions[conditionIndex] = updatedCondition;
-      this.emitUpdate();
+      const updated = [...this.conditionSets];
+      updated[setIndex] = {
+        ...updated[setIndex],
+        conditions: updated[setIndex].conditions.map((c, i) =>
+          i === conditionIndex ? updatedCondition : c
+        ),
+      };
+      this.$emit("update:modelValue", updated);
     },
     addConditionSet() {
       if (this.canAddConditionSet) {
         const newSet = createEmptyConditionSet();
-        this.conditionSets.push(newSet);
-        this.emitUpdate();
+        this.$emit("update:modelValue", [...this.conditionSets, newSet]);
       }
-    },
-    emitUpdate() {
-      this.$emit("update:modelValue", this.conditionSets);
     },
     handleSwitchStepType() {
       this.$emit("switch-step-type");
