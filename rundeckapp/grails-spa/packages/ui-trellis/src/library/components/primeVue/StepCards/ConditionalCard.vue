@@ -55,6 +55,7 @@
                         <AccordionContent>
                           <StepCardContent
                             :config="nestedStep"
+                            :hide-config-section="true"
                             :service-name="computedServiceName"
                             :element-id="nestedStep.id || ''"
                             :log-filters="nestedStep.filters || []"
@@ -106,6 +107,7 @@
               <AccordionContent v-if="step.type !== 'conditional.logic'">
                 <StepCardContent
                   :config="step"
+                  :hide-config-section="true"
                   :service-name="computedServiceName"
                   :element-id="step.id || ''"
                   :log-filters="step.filters || []"

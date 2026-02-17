@@ -165,10 +165,20 @@ export default defineComponent({
         ? this.validationErrors
         : (this.editing ? this.editModelValidation : null);
 
-      if (!validation) {
+      if (!validation || validation.valid) {
         return 0;
       }
-      return validation && !validation?.valid ? Object.keys(validation.errors).length : 0;
+
+      // Special handling for nested conditional logic errors
+      if (validation.errors.conditions) {
+        let count = 0;
+        Object.values(validation.errors.conditions).forEach((conditionError: any) => {
+          count += Object.keys(conditionError).length;
+        });
+        return count;
+      }
+
+      return Object.keys(validation.errors).length;
     },
     errorMessage(): string {
       if (this.errorCount === 1) {

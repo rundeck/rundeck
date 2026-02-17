@@ -19,6 +19,7 @@
               v-if="editingStepId !== element.id && element.type !== 'conditional.logic'"
               :plugin-details="getPluginDetails(element)"
               :config="element"
+              :hide-config-section="true"
               :service-name="targetService"
               :show-toggle="true"
               :initially-expanded="false"

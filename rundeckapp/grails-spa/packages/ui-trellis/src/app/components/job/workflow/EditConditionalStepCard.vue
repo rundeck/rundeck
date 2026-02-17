@@ -174,8 +174,8 @@ export default defineComponent({
         if (val && Object.keys(val).length > 0) {
           this.editModel = cloneDeep(val);
           this.stepName = val.description || "";
-          this.conditionSets = val.config?.conditionSets || [createEmptyConditionSet()];
-          this.innerCommands = val.config?.commands || [];
+          this.conditionSets = this.editModel.config?.conditionSets || [createEmptyConditionSet()];
+          this.innerCommands = this.editModel.config?.commands || [];
         }
       },
       immediate: true,
@@ -217,8 +217,8 @@ export default defineComponent({
   mounted() {
     this.editModel = cloneDeep(this.modelValue);
     this.stepName = this.modelValue.description || "";
-    this.conditionSets = this.modelValue.config?.conditionSets || [createEmptyConditionSet()];
-    this.innerCommands = this.modelValue.config?.commands || [];
+    this.conditionSets = this.editModel.config?.conditionSets || [createEmptyConditionSet()];
+    this.innerCommands = this.editModel.config?.commands || [];
 
     // Scroll into view if this step was opened via click-to-edit
     // BUT only if we're not opening a nested step (let the deepest component handle scrolling)

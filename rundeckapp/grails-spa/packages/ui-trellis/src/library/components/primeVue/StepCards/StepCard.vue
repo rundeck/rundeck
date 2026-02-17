@@ -14,6 +14,7 @@
     <template #content>
       <StepCardContent
         :config="config"
+        :hide-config-section="hideConfigSection"
         :service-name="computedServiceName"
         :element-id="config.id || ''"
         :log-filters="logFilters"
@@ -77,6 +78,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    hideConfigSection: {
+      type: Boolean,
+      default: false,
+    }
   },
   emits: ["update:logFilters", "add-log-filter", "add-error-handler", "edit-log-filter", "edit-error-handler", "remove-error-handler", "delete", "duplicate", "edit"],
   computed: {

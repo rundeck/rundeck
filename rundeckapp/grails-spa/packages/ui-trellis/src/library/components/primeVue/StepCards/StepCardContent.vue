@@ -23,7 +23,7 @@
       allowCopy
     />
     <ConfigSection
-      v-if="!config.jobref"
+      v-if="!hideConfigSection && !config.jobref"
       :title="$t('Workflow.logFilters')"
       :tooltip="$t('Workflow.logFiltersTooltip')"
       :model-value="logFilters"
@@ -33,6 +33,7 @@
       @editElement="handleEditLogFilter"
     />
     <ConfigSection
+      v-if="!hideConfigSection"
       :title="$t('Workflow.addErrorHandler')"
       :tooltip="$t('Workflow.errorHandlerDescription')"
       :model-value="errorHandler"
@@ -124,6 +125,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    hideConfigSection: {
+      type: Boolean,
+      default: false
+    }
   },
   emits: [
     "add-log-filter",
