@@ -202,7 +202,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-  emits: ["update:modelValue", "update:editing"],
+  emits: ["update:modelValue", "update:editing", "update:inner-validation"],
   data() {
     return {
       ServiceType,
@@ -378,6 +378,7 @@ export default defineComponent({
           this.commands[index] = saveData;
           this.clearEdit();
           this.emitUpdate();
+          this.$emit("update:inner-validation", { valid: true, errors: {} });
         } else {
           if (result.errors.jobref) {
             this.editModelValidation = {
@@ -390,6 +391,7 @@ export default defineComponent({
               errors: result.errors,
             };
           }
+          this.$emit("update:inner-validation", { valid: false, errors: result.errors });
         }
       } catch (e) {
         console.error("Error saving inner step:", e);

@@ -123,13 +123,6 @@ export default defineComponent({
       handler(val) {
         if (val && val.length > 0) {
           this.conditionSets = val;
-          this.fieldErrors = {};
-          this.valueErrors = {};
-          this.touchedConditions.clear();
-          this.isInitialized = false;
-          this.$nextTick(() => {
-            this.isInitialized = true;
-          });
         }
       },
       immediate: true,

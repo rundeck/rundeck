@@ -6,6 +6,7 @@
     :editing="true"
     :show-toggle="depth > 0"
     :initially-expanded="contentExpanded"
+    :validation-errors="innerStepValidationErrors"
     card-class="edit-step-card"
     @delete="handleCancel"
     @toggle="contentExpanded = !contentExpanded"
@@ -82,6 +83,7 @@
             :depth="depth + 1"
             :extra-autocomplete-vars="extraAutocompleteVars"
             @update:editing="isEditingInnerStep = $event"
+            @update:inner-validation="innerStepValidation = $event"
           />
         </div>
       </div>
@@ -174,6 +176,7 @@ import { createEmptyConditionSet } from "./types/conditionalStepTypes";
 import type { EditStepData } from "./types/workflowTypes";
 import JobRefFormFields from "./JobRefFormFields.vue";
 import VueScrollTo from "vue-scrollto";
+import { resetValidation } from "./stepEditorUtils";
 
 const rundeckContext = getRundeckContext();
 
@@ -254,6 +257,7 @@ export default defineComponent({
       conditionSets: [createEmptyConditionSet()] as ConditionSet[],
       innerCommands: [] as EditStepData[],
       isEditingInnerStep: false,
+      innerStepValidation: resetValidation(),
       // Job reference defaults (matching JobRefForm)
       jobRefDefaults: {
         description: "",
@@ -304,6 +308,10 @@ export default defineComponent({
     },
     hasJobRefValidationError(): boolean {
       return Boolean(this.validation?.errors?.jobref);
+    },
+    innerStepValidationErrors() {
+      // Only return validation errors if there are actual errors
+      return this.innerStepValidation.valid ? undefined : this.innerStepValidation;
     },
   },
   watch: {
@@ -361,6 +369,22 @@ export default defineComponent({
         createEmptyConditionSet(),
       ];
       this.innerCommands = this.editModel.config?.commands || [];
+
+      // Handle nested step editing after editModel is populated
+      if (this.nestedStepToEdit) {
+        this.$nextTick(() => {
+          const innerStepList = this.$refs.innerStepList as any;
+          if (innerStepList && typeof innerStepList.editStep === "function") {
+            // For depth=2: we only get here if parentConditionalId was already handled by parent
+            // So this is the depth=1 case where we need to open the final target
+            innerStepList.nestedStepToEdit = {
+              stepId: this.nestedStepToEdit.stepId,
+              stepIndex: this.nestedStepToEdit.stepIndex,
+            };
+            innerStepList.editStep(this.nestedStepToEdit.stepIndex);
+          }
+        });
+      }
     }
 
     if (
@@ -409,6 +433,7 @@ export default defineComponent({
             commands: this.innerCommands,
           },
         };
+        this.innerStepValidation = resetValidation();
         this.$emit("update:modelValue", saveData);
         this.$emit("save");
         return;
@@ -423,6 +448,7 @@ export default defineComponent({
       this.$emit("save");
     },
     handleCancel() {
+      this.innerStepValidation = resetValidation();
       this.$emit("cancel");
     },
     async loadProvider() {

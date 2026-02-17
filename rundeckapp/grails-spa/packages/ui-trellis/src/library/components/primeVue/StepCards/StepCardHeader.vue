@@ -129,6 +129,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    validationErrors: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   emits: ["delete", "duplicate", "edit", "toggle"],
   inject: ['editModelValidation'],
@@ -150,10 +154,15 @@ export default defineComponent({
       ];
     },
     errorCount(): number {
-      if(!this.editModelValidation) {
-        return 0
+      // Prefer validationErrors prop over injected editModelValidation
+      const validation = this.validationErrors?.valid !== undefined
+        ? this.validationErrors
+        : this.editModelValidation;
+
+      if (!validation) {
+        return 0;
       }
-      return this.editModelValidation && !this.editModelValidation?.valid ? Object.keys(this.editModelValidation.errors).length : 0;
+      return validation && !validation?.valid ? Object.keys(validation.errors).length : 0;
     },
     errorMessage(): string {
       if (this.errorCount === 1) {
@@ -162,7 +171,7 @@ export default defineComponent({
       return this.$t('Workflow.validation.multipleErrors', { count: this.errorCount });
     },
     showErrorTag(): boolean {
-      return this.errorCount > 0 && !this.editModelValidation?.valid;
+      return this.errorCount > 0;
     },
   },
   methods: {
