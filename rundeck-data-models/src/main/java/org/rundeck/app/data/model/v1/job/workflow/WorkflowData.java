@@ -15,6 +15,7 @@
  */
 package org.rundeck.app.data.model.v1.job.workflow;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -59,4 +60,106 @@ public interface WorkflowData {
      * @return Map representation of this workflow
      */
     Map<String, Object> toMap();
+
+    /**
+     * Get the config for a plugin type
+     * @param type Plugin type
+     * @return available config data, or null
+     */
+    default Object getPluginConfigData(String type) {
+        Map<String, Object> map = getPluginConfigMap();
+        return map != null ? map.get(type) : null;
+    }
+
+    /**
+     * Get the config for a plugin type, wraps the value as a list if it is not a collection
+     * @param type Plugin type
+     * @return available config data, as a List, or null
+     */
+    default Collection getPluginConfigDataList(String type) {
+        Map<String, Object> map = getPluginConfigMap();
+        if (map == null) {
+            return null;
+        }
+        Object val = map.get(type);
+        if (val == null) {
+            return null;
+        }
+        if (val instanceof Collection) {
+            return new java.util.ArrayList<>((Collection<?>) val);
+        }
+        return new java.util.ArrayList<>(List.of(val));
+    }
+
+    /**
+     * Get the config for a plugin type expecting a map, and an entry in the map
+     * @param type Plugin type
+     * @param name Plugin name
+     * @return available map data or empty map
+     */
+    default Map<String, Object> getPluginConfigData(String type, String name) {
+        Map<String, Object> map = getPluginConfigMap();
+        if (map == null) {
+            return new java.util.HashMap<>();
+        }
+        Object typeObj = map.get(type);
+        if (typeObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> typeMap = (Map<String, Object>) typeObj;
+            Object value = typeMap.get(name);
+            if (value != null) {
+                return new java.util.HashMap<>(Map.of(name, value));
+            }
+        }
+        return new java.util.HashMap<>();
+    }
+
+    /**
+     * Set plugin config data for a specific type
+     * @param type Plugin type
+     * @param data Configuration data
+     */
+    void setPluginConfigData(String type, Object data);
+
+    /**
+     * Set plugin config data for a specific type and name
+     * @param type Plugin type
+     * @param name Plugin name
+     * @param data Configuration data
+     */
+    void setPluginConfigData(String type, String name, Object data);
+
+    /**
+     * Set the entire plugin config map
+     * @param obj Map of plugin configurations
+     */
+    void setPluginConfigMap(Map<String, Object> obj);
+
+    /**
+     * Validate plugin config map structure
+     * @return true if valid, false otherwise
+     */
+    default boolean validatePluginConfigMap() {
+        Map<String, Object> configMap = getPluginConfigMap();
+        if (configMap == null) {
+            return true;
+        }
+        Object workflowStrategyConfigObj = configMap.get("WorkflowStrategy");
+        if (workflowStrategyConfigObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> workflowStrategyConfig = (Map<String, Object>) workflowStrategyConfigObj;
+            String strategy = getStrategy();
+            if (strategy != null && workflowStrategyConfig.containsKey(strategy)) {
+                Object strategyConfigObj = workflowStrategyConfig.get(strategy);
+                if (strategyConfigObj instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> strategyConfig = (Map<String, Object>) strategyConfigObj;
+                    // Validate that the map structure is correct
+                    return strategyConfig.size() != 1 ||
+                           !strategyConfig.keySet().stream().anyMatch(strategy::equals);
+                }
+            }
+        }
+        return true;
+    }
 }

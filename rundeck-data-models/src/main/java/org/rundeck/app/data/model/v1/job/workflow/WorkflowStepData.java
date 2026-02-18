@@ -15,6 +15,8 @@
  */
 package org.rundeck.app.data.model.v1.job.workflow;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -69,4 +71,56 @@ public interface WorkflowStepData {
     String summarize();
 
     Map toMap();
+
+    /**
+     * Get plugin config for a specific type
+     * @param type Plugin type
+     * @return Plugin config for the type, or null
+     */
+    default Object getPluginConfigForType(String type) {
+        Map<String, Object> config = getPluginConfig();
+        return config != null ? config.get(type) : null;
+    }
+
+    /**
+     * Get plugin config list for a specific type
+     * @param type Plugin type
+     * @return List of plugin configurations for the type, or null
+     */
+    default List<?> getPluginConfigListForType(String type) {
+        Map<String, Object> config = getPluginConfig();
+        if (config == null) {
+            return null;
+        }
+        Object val = config.get(type);
+        if (val == null) {
+            return null;
+        }
+        if (val instanceof Collection) {
+            return new java.util.ArrayList<>((Collection<?>) val);
+        }
+        return new java.util.ArrayList<>(List.of(val));
+    }
+
+    /**
+     * Store plugin configuration for a type
+     * @param key Plugin type key
+     * @param obj Configuration object
+     */
+    void storePluginConfigForType(String key, Object obj);
+
+    /**
+     * Set the entire plugin config map
+     * @param obj Map of plugin configurations
+     */
+    void setPluginConfig(Map<String, Object> obj);
+
+    /**
+     * Return map representation without details (for backward compatibility)
+     * Default implementation returns the same as toMap()
+     * @return Map representation
+     */
+    default Map toDescriptionMap() {
+        return toMap();
+    }
 }

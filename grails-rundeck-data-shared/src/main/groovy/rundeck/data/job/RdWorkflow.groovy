@@ -95,7 +95,16 @@ class RdWorkflow implements WorkflowData, Validateable {
         ] + plugins
     }
 
-    /**
+    @Override
+    void setPluginConfigData(String type, Object data) {
+
+    }
+
+    @Override
+    void setPluginConfigData(String type, String name, Object data) {
+
+    }
+/**
      * Construct an RdWorkflow from a canonical map representation (inverse of toMap).
      *
      * Accepts top-level keys:

@@ -70,6 +70,11 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
     Workflow workflow
     String workflowJson
 
+    // Transient cached workflow data for validation (when deserialized from JSON)
+    // This allows validation errors to be set and accessed on the workflow object
+    private transient WorkflowData cachedWorkflowData
+    private transient String cachedWorkflowJsonHash
+
     /** @deprecated unused */
     Date nextExecution
     Boolean scheduled = false
@@ -120,7 +125,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                          'crontabString', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap', 'components', 'workflowJsonMap', 'workflowData']
+                         'pluginConfigMap', 'components', 'workflowJsonMap', 'workflowData', 'cachedWorkflowData']
 
     static constraints = {
         importFrom SharedProjectNameConstraints
@@ -1267,7 +1272,9 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
     /**
      * Get the workflow data, checking both old and new storage formats.
      * Provides backwards compatibility by checking workflow field first.
-     * @return WorkflowData instance (either Workflow domain or deserialized from JSON)
+     * When deserializing from JSON, returns a validateable RdWorkflow instance
+     * that allows validation errors to be set and accessed.
+     * @return WorkflowData instance (either Workflow domain or deserialized validateable RdWorkflow from JSON)
      */
     WorkflowData getWorkflowData() {
         // Backwards compatibility: check old workflow field first
@@ -1277,9 +1284,21 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
         // New format: deserialize from JSON
         if (workflowJson != null) {
-            return deserializeWorkflowData(workflowJson)
+            // Check if we have a cached instance and if the JSON hasn't changed
+            String currentHash = workflowJson.hashCode().toString()
+            if (cachedWorkflowData != null && cachedWorkflowJsonHash == currentHash) {
+                return cachedWorkflowData
+            }
+
+            // Deserialize and cache the validateable workflow instance
+            cachedWorkflowData = deserializeWorkflowData(workflowJson)
+            cachedWorkflowJsonHash = currentHash
+            return cachedWorkflowData
         }
 
+        // Clear cache if workflowJson is null
+        cachedWorkflowData = null
+        cachedWorkflowJsonHash = null
         return null
     }
 
@@ -1295,8 +1314,13 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         // Serialize to new format
         if (workflowData != null) {
             this.workflowJson = serializeWorkflowData(workflowData)
+            // Clear cache so it will be recreated on next getWorkflowData() call
+            cachedWorkflowData = null
+            cachedWorkflowJsonHash = null
         } else {
             this.workflowJson = null
+            cachedWorkflowData = null
+            cachedWorkflowJsonHash = null
         }
     }
 

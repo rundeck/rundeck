@@ -87,7 +87,7 @@ public class Workflow implements WorkflowData {
      * @param type
      * @return available config data, as a List, or null
      */
-    public def getPluginConfigDataList(String type) {
+    public Collection getPluginConfigDataList(String type) {
         def map = getPluginConfigMap()
         def val = map?.get(type)
         if (val && !(val instanceof Collection)) {
@@ -101,7 +101,7 @@ public class Workflow implements WorkflowData {
      * @param name
      * @return available map data or empty map
      */
-    public def getPluginConfigData(String type,String name) {
+    public Map getPluginConfigData(String type,String name) {
         def map = getPluginConfigMap()
         if(!map){
             map=[(type):[:]]
@@ -169,8 +169,8 @@ public class Workflow implements WorkflowData {
         this.strategy=source.strategy
         this.pluginConfigMap=source.pluginConfigMap
         commands = new ArrayList()
-        source.commands.each { WorkflowStep cmd->
-            final item = createItem(cmd)
+        source.commands.each { WorkflowStepData cmd->
+            final item = createItem(cmd as WorkflowStep)
             if(cmd.errorHandler){
                 final handler=createItem(cmd.errorHandler)
                 item.errorHandler=handler

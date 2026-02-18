@@ -68,7 +68,11 @@ class RdWorkflowStep implements WorkflowStepData, PluginProviderConfiguration, V
         return map
     }
 
-    /**
+    @Override
+    void storePluginConfigForType(String key, Object obj) {
+
+    }
+/**
      * Construct an RdWorkflowStep from a canonical map representation (inverse of toMap).
      *
      * Recognizes keys:
