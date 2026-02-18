@@ -147,11 +147,11 @@ export async function validateStepForSave(
 
   // Conditional logic: validate that all conditions have field and value
   if (step.type === "conditional.logic") {
-    const conditionSets = step.config?.conditionSets || [];
+    const conditionSet = step.config?.conditionSet || [];
     const conditionErrors: Record<string, { field?: string; value?: string }> = {};
     let hasErrors = false;
 
-    conditionSets.forEach((conditionSet: any) => {
+    conditionSet.forEach((conditionSet: any) => {
       if (conditionSet.conditions) {
         conditionSet.conditions.forEach((condition: any) => {
           const errors: { field?: string; value?: string } = {};

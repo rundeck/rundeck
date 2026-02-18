@@ -32,8 +32,8 @@ const mockConfig = {
   id: "conditional-1",
   type: "conditional.logic",
   config: {
-    conditionSets: [{ id: "cs-1", conditions: [] }],
-    commands: [],
+    conditionSet: [{ id: "cs-1", conditions: [] }],
+    subSteps: [],
   },
 };
 

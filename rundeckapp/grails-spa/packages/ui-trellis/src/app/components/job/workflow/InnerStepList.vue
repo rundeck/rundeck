@@ -95,6 +95,7 @@
     />
 
     <ChoosePluginsEAModal
+      v-if="addStepModal"
       v-model="addStepModal"
       :title="isErrorHandler
         ? $t('Workflow.addErrorHandler')
@@ -411,7 +412,7 @@ export default defineComponent({
         const lastStep = this.commands[this.editIndex];
         if (lastStep && lastStep.id === this.editingStepId) {
           const isEmpty = lastStep.type === "conditional.logic"
-            ? (!lastStep.config || !lastStep.config.conditionSets || lastStep.config.conditionSets.length === 0)
+            ? (!lastStep.config || !lastStep.config.conditionSet || lastStep.config.conditionSet.length === 0)
             : lastStep.jobref
               ? !lastStep.jobref.name && !lastStep.jobref.uuid
               : (!lastStep.config || Object.keys(lastStep.config || {}).length === 0);
@@ -497,8 +498,8 @@ export default defineComponent({
 
       const conditional = this.commands[path.conditionalIndex];
       const step = path.nestedStepIndex !== undefined
-        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-        : conditional.config.commands[path.stepIndex];
+        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+        : conditional.config.subSteps[path.stepIndex];
 
       this.editingNestedStepPath = path;
       this.isErrorHandler = true;
@@ -538,19 +539,19 @@ export default defineComponent({
       stepId: string,
     ): { conditionalIndex: number; stepIndex: number; nestedStepIndex?: number } | null {
       const conditional = this.commands[conditionalIndex];
-      if (!conditional?.config?.commands) return null;
+      if (!conditional?.config?.subSteps) return null;
 
-      const directIndex = conditional.config.commands.findIndex(
+      const directIndex = conditional.config.subSteps.findIndex(
         (c: EditStepData) => c.id === stepId,
       );
       if (directIndex >= 0) {
         return { conditionalIndex, stepIndex: directIndex };
       }
 
-      for (let i = 0; i < conditional.config.commands.length; i++) {
-        const step = conditional.config.commands[i];
-        if (step.type === "conditional.logic" && step.config?.commands) {
-          const nestedIndex = step.config.commands.findIndex(
+      for (let i = 0; i < conditional.config.subSteps.length; i++) {
+        const step = conditional.config.subSteps[i];
+        if (step.type === "conditional.logic" && step.config?.subSteps) {
+          const nestedIndex = step.config.subSteps.findIndex(
             (c: EditStepData) => c.id === stepId,
           );
           if (nestedIndex >= 0) {
@@ -567,8 +568,8 @@ export default defineComponent({
 
       const conditional = this.commands[path.conditionalIndex];
       const step = path.nestedStepIndex !== undefined
-        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-        : conditional.config.commands[path.stepIndex];
+        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+        : conditional.config.subSteps[path.stepIndex];
 
       if (!step.errorhandler) return;
 
@@ -587,8 +588,8 @@ export default defineComponent({
 
       const conditional = cloneDeep(this.commands[path.conditionalIndex]);
       const step = path.nestedStepIndex !== undefined
-        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-        : conditional.config.commands[path.stepIndex];
+        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+        : conditional.config.subSteps[path.stepIndex];
 
       delete step.errorhandler;
       this.commands[path.conditionalIndex] = conditional;
@@ -604,8 +605,8 @@ export default defineComponent({
 
       const conditional = cloneDeep(this.commands[path.conditionalIndex]);
       const step = path.nestedStepIndex !== undefined
-        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-        : conditional.config.commands[path.stepIndex];
+        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+        : conditional.config.subSteps[path.stepIndex];
 
       step.filters = cloneDeep(payload.filters);
       this.commands[path.conditionalIndex] = conditional;
@@ -649,8 +650,8 @@ export default defineComponent({
           const path = this.editingNestedStepPath;
           const conditional = cloneDeep(this.commands[path.conditionalIndex]);
           const step = path.nestedStepIndex !== undefined
-            ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-            : conditional.config.commands[path.stepIndex];
+            ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+            : conditional.config.subSteps[path.stepIndex];
 
           step.errorhandler = handlerData;
           this.commands[path.conditionalIndex] = conditional;

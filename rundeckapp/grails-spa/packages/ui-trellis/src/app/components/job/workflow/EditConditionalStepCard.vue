@@ -47,7 +47,7 @@
 
           <ConditionsEditor
             ref="conditionsEditor"
-            v-model="conditionSets"
+            v-model="conditionSet"
             :service-name="serviceName"
             :extra-autocomplete-vars="extraAutocompleteVars"
             :depth="depth"
@@ -163,7 +163,7 @@ export default defineComponent({
     return {
       editModel: {} as EditStepData,
       stepName: "",
-      conditionSets: [createEmptyConditionSet()] as ConditionSet[],
+      conditionSet: [createEmptyConditionSet()] as ConditionSet[],
       innerCommands: [] as EditStepData[],
       isEditingInnerStep: false,
     };
@@ -174,8 +174,8 @@ export default defineComponent({
         if (val && Object.keys(val).length > 0) {
           this.editModel = cloneDeep(val);
           this.stepName = val.description || "";
-          this.conditionSets = this.editModel.config?.conditionSets || [createEmptyConditionSet()];
-          this.innerCommands = this.editModel.config?.commands || [];
+          this.conditionSet = this.editModel.config?.conditionSet || [createEmptyConditionSet()];
+          this.innerCommands = this.editModel.config?.subSteps || [];
         }
       },
       immediate: true,
@@ -217,8 +217,8 @@ export default defineComponent({
   mounted() {
     this.editModel = cloneDeep(this.modelValue);
     this.stepName = this.modelValue.description || "";
-    this.conditionSets = this.editModel.config?.conditionSets || [createEmptyConditionSet()];
-    this.innerCommands = this.editModel.config?.commands || [];
+    this.conditionSet = this.editModel.config?.conditionSet || [createEmptyConditionSet()];
+    this.innerCommands = this.editModel.config?.subSteps || [];
 
     // Scroll into view if this step was opened via click-to-edit
     // BUT only if we're not opening a nested step (let the deepest component handle scrolling)
@@ -270,8 +270,8 @@ export default defineComponent({
         description: this.stepName,
         config: {
           ...this.editModel.config,
-          conditionSets: this.conditionSets,
-          commands: this.innerCommands,
+          conditionSet: this.conditionSet,
+          subSteps: this.innerCommands,
         },
       };
       this.$emit("update:modelValue", updatedModel);

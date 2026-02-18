@@ -65,7 +65,7 @@
         <div class="condition-section">
           <ConditionsEditor
             ref="conditionsEditor"
-            v-model="conditionSets"
+            v-model="conditionSet"
             :service-name="serviceName"
             :extra-autocomplete-vars="extraAutocompleteVars"
             :depth="depth"
@@ -255,7 +255,7 @@ export default defineComponent({
       loading: false,
       pluginConfigMode: "edit",
       // Conditional logic specific data
-      conditionSets: [createEmptyConditionSet()] as ConditionSet[],
+      conditionSet: [createEmptyConditionSet()] as ConditionSet[],
       innerCommands: [] as EditStepData[],
       isEditingInnerStep: false,
       innerStepValidation: resetValidation(),
@@ -366,10 +366,10 @@ export default defineComponent({
 
     // Initialize conditional logic data
     if (this.editModel.type === "conditional.logic") {
-      this.conditionSets = this.editModel.config?.conditionSets || [
+      this.conditionSet = this.editModel.config?.conditionSet || [
         createEmptyConditionSet(),
       ];
-      this.innerCommands = this.editModel.config?.commands || [];
+      this.innerCommands = this.editModel.config?.subSteps || [];
 
       // Handle nested step editing after editModel is populated
       if (this.nestedStepToEdit) {
@@ -438,8 +438,8 @@ export default defineComponent({
           description: this.stepDescription,
           config: {
             ...this.editModel.config,
-            conditionSets: this.conditionSets,
-            commands: this.innerCommands,
+            conditionSet: this.conditionSet,
+            subSteps: this.innerCommands,
           },
         };
         this.innerStepValidation = resetValidation();

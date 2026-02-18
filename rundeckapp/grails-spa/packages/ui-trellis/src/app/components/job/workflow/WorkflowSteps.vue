@@ -232,6 +232,7 @@
     </template>
     <template #extra>
       <component
+        v-if="addStepModal"
         :is="chooseModalComponent"
         v-model="addStepModal"
         :title="
@@ -600,9 +601,9 @@ export default defineComponent({
         const isExistingStep = this.editExtra && this.editExtra.id && this.editExtra.id === lastStep?.id;
         
         if (!isExistingStep && lastStep && lastStep.id === this.editingStepId) {
-          // For conditional steps, check if conditionSets exist; for regular steps, check if config is empty
+          // For conditional steps, check if conditionSet exist; for regular steps, check if config is empty
           const isEmpty = lastStep.type === 'conditional.logic' 
-            ? (!lastStep.config || !lastStep.config.conditionSets || lastStep.config.conditionSets.length === 0)
+            ? (!lastStep.config || !lastStep.config.conditionSet || lastStep.config.conditionSet.length === 0)
             : (!lastStep.config || Object.keys(lastStep.config || {}).length === 0);
           
           if (isEmpty) {
@@ -857,22 +858,22 @@ export default defineComponent({
       stepId: string,
     ): { conditionalIndex: number; stepIndex: number; nestedStepIndex?: number } | null {
       const conditional = this.model.commands[conditionalIndex];
-      if (!conditional?.config?.commands) return null;
+      if (!conditional?.config?.subSteps) return null;
 
-      const directIndex = conditional.config.commands.findIndex(
+      const directIndex = conditional.config.subSteps.findIndex(
         (c: EditStepData) => c.id === stepId,
       );
       if (directIndex >= 0) {
         return { conditionalIndex, stepIndex: directIndex };
       }
 
-      for (let i = 0; i < conditional.config.commands.length; i++) {
-        const step = conditional.config.commands[i];
+      for (let i = 0; i < conditional.config.subSteps.length; i++) {
+        const step = conditional.config.subSteps[i];
         if (
           step.type === "conditional.logic" &&
-          step.config?.commands
+          step.config?.subSteps
         ) {
-          const nestedIndex = step.config.commands.findIndex(
+          const nestedIndex = step.config.subSteps.findIndex(
             (c: EditStepData) => c.id === stepId,
           );
           if (nestedIndex >= 0) {
@@ -894,8 +895,8 @@ export default defineComponent({
 
       const conditional = this.model.commands[path.conditionalIndex];
       const step = path.nestedStepIndex !== undefined
-        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-        : conditional.config.commands[path.stepIndex];
+        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+        : conditional.config.subSteps[path.stepIndex];
 
       this.nestedStepContext = path;
       this.editIndex = path.conditionalIndex;
@@ -914,8 +915,8 @@ export default defineComponent({
 
       const conditional = cloneDeep(this.model.commands[path.conditionalIndex]);
       const step = path.nestedStepIndex !== undefined
-        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-        : conditional.config.commands[path.stepIndex];
+        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+        : conditional.config.subSteps[path.stepIndex];
 
       step.filters = cloneDeep(payload.filters);
       const orig = this.$refs.historyControls.operationModify(
@@ -952,8 +953,8 @@ export default defineComponent({
 
       const conditional = this.model.commands[path.conditionalIndex];
       const step = path.nestedStepIndex !== undefined
-        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-        : conditional.config.commands[path.stepIndex];
+        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+        : conditional.config.subSteps[path.stepIndex];
 
       if (!step.errorhandler) return;
 
@@ -975,8 +976,8 @@ export default defineComponent({
 
       const conditional = cloneDeep(this.model.commands[path.conditionalIndex]);
       const step = path.nestedStepIndex !== undefined
-        ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-        : conditional.config.commands[path.stepIndex];
+        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+        : conditional.config.subSteps[path.stepIndex];
 
       delete step.errorhandler;
       const orig = this.$refs.historyControls.operationModify(
@@ -1035,8 +1036,8 @@ export default defineComponent({
         const path = this.nestedStepContext;
         const conditional = cloneDeep(this.model.commands[path.conditionalIndex]);
         const step = path.nestedStepIndex !== undefined
-          ? conditional.config.commands[path.stepIndex].config.commands[path.nestedStepIndex]
-          : conditional.config.commands[path.stepIndex];
+          ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
+          : conditional.config.subSteps[path.stepIndex];
 
         step.errorhandler = {
           ...saveData.errorhandler,

@@ -26,6 +26,7 @@ export interface ScriptGeneralPluginConfig {
   interpreterArgsQuoted?: boolean;
   fileExtension?: string;
 }
+
 /**
  * Ouput Plugin config for script-inline plugin type
  */
@@ -40,6 +41,7 @@ export interface ScriptFileData extends ScriptArgsData {
   scriptfile?: string;
   expandTokenInScriptFile?: boolean;
 }
+
 /**
  * Ouput Plugin config for script-inline plugin type
  */
@@ -47,9 +49,11 @@ export interface ScriptFilePluginConfig extends ScriptGeneralPluginConfig {
   adhocFilepath: string;
   expandTokenInScriptFile?: boolean;
 }
+
 export interface CommandExecData {
   exec?: string;
 }
+
 /**
  * Ouput Plugin config for exec-command plugin type
  */
@@ -92,6 +96,24 @@ export interface CommandData {
   description?: string;
   plugins?: { [key: string]: any };
 }
+/**
+ * Backend API format for a single condition
+ */
+export interface BackendCondition {
+  key: string;
+  operator: string;
+  value: string;
+}
+
+/**
+ * Backend API format for conditional step
+ * conditionSet is an array of arrays (each inner array = one condition set)
+ */
+export interface ConditionalStepData {
+  name?: string;
+  subSteps?: StepData[];
+  conditionSet?: BackendCondition[][];
+}
 
 export interface BasicData {
   keepgoing: boolean;
@@ -122,7 +144,7 @@ export interface ErrorHandlerDefinition {
   id: string;
 }
 export interface ErrorHandlerData {
-  errorhandler?: ErrorHandlerDefinition
+  errorhandler?: ErrorHandlerDefinition;
 }
 
 export interface GlobalLogFiltersData {
@@ -136,6 +158,7 @@ export type StepData = CommandData &
   ScriptFileData &
   ScriptInlineData &
   CommandExecData &
+  ConditionalStepData &
   ErrorHandlerData;
 
 export interface StepsData {

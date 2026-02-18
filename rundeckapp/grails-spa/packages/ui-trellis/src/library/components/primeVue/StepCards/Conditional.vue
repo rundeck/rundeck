@@ -1,7 +1,7 @@
 <template>
   <div class="conditional">
-    <template v-if="conditionSets && conditionSets.length > 0">
-      <template v-for="(conditionSet, setIndex) in conditionSets" :key="conditionSet.id">
+    <template v-if="conditionSet && conditionSet.length > 0">
+      <template v-for="(conditionSet, setIndex) in conditionSet" :key="conditionSet.id">
         <p v-if="setIndex === 0" class="conditional--if">
           {{ $t("editConditionalStep.if") || "If" }}
           <template v-for="(condition, condIndex) in conditionSet.conditions" :key="condition.id">
@@ -14,8 +14,8 @@
       </template>
     </template>
     <div v-if="!headerOnly" class="conditional--do">
-      <div v-if="complex && conditionSets && conditionSets.length > 1" class="conditional--complex">
-        <template v-for="(conditionSet, setIndex) in conditionSets" :key="conditionSet.id">
+      <div v-if="complex && conditionSet && conditionSet.length > 1" class="conditional--complex">
+        <template v-for="(conditionSet, setIndex) in conditionSet" :key="conditionSet.id">
           <template v-if="setIndex > 0">
             <p class="conditional--or">
               <span>{{ $t("editConditionalStep.or") }}</span><span class="conditional--divider" />
@@ -53,7 +53,7 @@ export default defineComponent({
       type: Boolean,
       default: false
     },
-    conditionSets: {
+    conditionSet: {
       type: Array as PropType<ConditionSet[]>,
       default: () => []
     },

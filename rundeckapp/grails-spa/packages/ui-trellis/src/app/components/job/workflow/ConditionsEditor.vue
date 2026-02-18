@@ -2,7 +2,7 @@
   <div class="conditions-editor">
     <div class="condition-section">
       <div
-        v-for="(conditionSet, setIndex) in conditionSets"
+        v-for="(conditionSet, setIndex) in conditionSet"
         :key="conditionSet.id"
         class="condition-set-container"
       >
@@ -26,7 +26,7 @@
                   :field-options="fieldOptions"
                   :operator-options="operatorOptions"
                   :show-labels="condIndex === 0"
-                  :show-delete-button="conditionSet.conditions.length > 1 || conditionSets.length > 1"
+                  :show-delete-button="conditionSet.conditions.length > 1 || conditionSet.length > 1"
                   :service-name="serviceName"
                   :suggestions="autocompleteSuggestions"
                   :tab-mode="autocompleteSuggestions.length > 0"
@@ -114,11 +114,11 @@ export default defineComponent({
   },
   emits: ["update:modelValue", "switch-step-type"],
   computed: {
-    conditionSets(): ConditionSet[] {
+    conditionSet(): ConditionSet[] {
       return this.modelValue.length > 0 ? this.modelValue : [createEmptyConditionSet()];
     },
     canAddConditionSet(): boolean {
-      return this.conditionSets.length < MAX_CONDITION_SETS;
+      return this.conditionSet.length < MAX_CONDITION_SETS;
     },
     addConditionSetLabel(): string {
       return this.depth >= 1
@@ -160,12 +160,12 @@ export default defineComponent({
   },
   methods: {
     canAddCondition(setIndex: number): boolean {
-      return this.conditionSets[setIndex].conditions.length < MAX_CONDITIONS_PER_SET;
+      return this.conditionSet[setIndex].conditions.length < MAX_CONDITIONS_PER_SET;
     },
     addCondition(setIndex: number) {
       if (this.canAddCondition(setIndex)) {
         const newCondition = createEmptyCondition();
-        const updated = [...this.conditionSets];
+        const updated = [...this.conditionSet];
         updated[setIndex] = {
           ...updated[setIndex],
           conditions: [...updated[setIndex].conditions, newCondition],
@@ -174,7 +174,7 @@ export default defineComponent({
       }
     },
     removeCondition(setIndex: number, conditionIndex: number) {
-      const updated = [...this.conditionSets];
+      const updated = [...this.conditionSet];
       const set = updated[setIndex];
       if (set.conditions.length > 1) {
         updated[setIndex] = {
@@ -192,7 +192,7 @@ export default defineComponent({
       updatedCondition: Condition,
       fieldName?: "field" | "value" | "operator",
     ) {
-      const updated = [...this.conditionSets];
+      const updated = [...this.conditionSet];
       updated[setIndex] = {
         ...updated[setIndex],
         conditions: updated[setIndex].conditions.map((c, i) =>
@@ -204,7 +204,7 @@ export default defineComponent({
     addConditionSet() {
       if (this.canAddConditionSet) {
         const newSet = createEmptyConditionSet();
-        this.$emit("update:modelValue", [...this.conditionSets, newSet]);
+        this.$emit("update:modelValue", [...this.conditionSet, newSet]);
       }
     },
     handleSwitchStepType() {

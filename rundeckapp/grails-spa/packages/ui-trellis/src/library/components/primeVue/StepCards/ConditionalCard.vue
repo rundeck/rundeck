@@ -14,7 +14,7 @@
   >
     <template #content>
       <div class="conditionalCard">
-        <Conditional :complex="complex" :condition-sets="conditionSets">
+        <Conditional :complex="complex" :condition-set="conditionSet">
         <slot name="steps">
           <Accordion v-if="computedSteps && computedSteps.length > 0" multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
             <AccordionPanel
@@ -26,12 +26,12 @@
               <AccordionHeader v-if="step.type === 'conditional.logic'" as-child>
                 <div class="p-accordionheader nested">
                   <Conditional
-                    :complex="((step.config?.conditionSets?.length) || 0) > 1"
-                    :condition-sets="step.config?.conditionSets || []"
+                    :complex="((step.config?.conditionSet?.length) || 0) > 1"
+                    :condition-set="step.config?.conditionSet || []"
                   >
-                    <Accordion v-if="(step.config?.commands?.length || 0) > 0" multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
+                    <Accordion v-if="(step.config?.subSteps?.length || 0) > 0" multiple expandIcon="pi pi-chevron-down" collapseIcon="pi pi-chevron-up">
                       <AccordionPanel
-                        v-for="(nestedStep, nestedIndex) in (step.config?.commands || [])"
+                        v-for="(nestedStep, nestedIndex) in (step.config?.subSteps || [])"
                         :key="nestedStep.id || nestedIndex"
                         :value="String(nestedIndex + 1)"
                       >
@@ -232,18 +232,18 @@ export default defineComponent({
     eventBus() {
       return getRundeckContext()?.eventBus;
     },
-    conditionSets() {
-      return this.config?.config?.conditionSets || [];
+    conditionSet() {
+      return this.config?.config?.conditionSet || [];
     },
     computedSteps(): EditStepData[] {
-      const commands = this.config?.config?.commands || [];
+      const commands = this.config?.config?.subSteps || [];
       if (commands.length === 0) {
         return this.steps || [];
       }
       return commands;
     },
     complex() {
-      return this.conditionSets.length > 1;
+      return this.conditionSet.length > 1;
     },
     errorHandlerData() {
       return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] : null;
