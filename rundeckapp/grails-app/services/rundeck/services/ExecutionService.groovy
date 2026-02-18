@@ -3723,11 +3723,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
 
+        def globalConfig = getGlobalPluginConfigurations(se.project)
         def loggingFilters = se  ?
                 ExecutionUtilService.createLogFilterConfigs(
                         se.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
-                ) :
-                []
+                ) + globalConfig :
+                globalConfig
         def workflowLogManager = executionContext.loggingManager?.createManager(
                 loggingFilters
         )
@@ -4600,19 +4601,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     List<PluginConfiguration> getGlobalPluginConfigurations(String project){
         def list = []
 
-        def fwPlugins = ProjectNodeSupport.listPluginConfigurations(
-                frameworkService.getProjectProperties(project),
+        // framework.globalfilter.* properties come from framework.properties
+        def fwProps = frameworkService.getFrameworkPropertiesMap()
+        def fwPlugins = fwProps ? ProjectNodeSupport.listPluginConfigurations(
+                fwProps,
                 'framework.globalfilter',
                 ServiceNameConstants.LogFilter,
                 true
-        )
+        ) : []
 
-        def projPlugins = ProjectNodeSupport.listPluginConfigurations(
-                frameworkService.getProjectProperties(project),
+        // project.globalfilter.* properties come from project properties
+        def projProps = frameworkService.getProjectProperties(project)
+        def projPlugins = projProps ? ProjectNodeSupport.listPluginConfigurations(
+                projProps,
                 'project.globalfilter',
                 ServiceNameConstants.LogFilter,
                 true
-        )
+        ) : []
         list = list + projPlugins
         list = list + fwPlugins
 
