@@ -1212,7 +1212,7 @@ const messages = {
     defineCondition: "Define the Condition",
     defineConditionHelper: "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
     field: "Field",
-    selectPlaceholder: "Select...",
+    selectPlaceholder: "Enter value or click on the dropdown to select context variables",
     operator: "Operator",
     operatorPlaceholder: "Equal",
     value: "Value",

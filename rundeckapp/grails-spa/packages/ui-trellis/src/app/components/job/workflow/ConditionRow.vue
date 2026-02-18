@@ -10,6 +10,7 @@
       <PtSelect
         :modelValue="condition.field"
         :options="fieldOptionsWithNote"
+        :editable="true"
         option-label="label"
         option-value="value"
         :placeholder="$t('editConditionalStep.selectPlaceholder')"

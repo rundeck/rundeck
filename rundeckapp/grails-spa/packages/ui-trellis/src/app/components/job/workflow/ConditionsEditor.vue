@@ -70,6 +70,7 @@ import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
 import ConditionRow from "./ConditionRow.vue";
 import { contextVariables, type ContextVariable } from "@/library/stores/contextVariables";
 import { ServiceType } from "@/library/stores/Plugins";
+import { loadJsonData } from "@/app/utilities/loadJsonData";
 import {
   type Condition,
   type ConditionSet,
@@ -126,11 +127,30 @@ export default defineComponent({
         : this.$t("editConditionalStep.addConditionSet");
     },
     fieldOptions(): FieldOption[] {
+      const jobAttrs = contextVariables().job || [];
       const nodeAttrs = contextVariables().node || [];
-      return nodeAttrs.map((attr) => ({
+      const globalAttrs = this.getGlobalVariables();
+
+      const jobOptions = jobAttrs.map((attr) => ({
+        value: `job.${attr.name}`,
+        label: `${attr.title} [job.${attr.name}]`,
+      }));
+
+      const nodeOptions = nodeAttrs.map((attr) => ({
         value: `node.${attr.name}`,
         label: `${attr.title} [node.${attr.name}]`,
       }));
+
+      const globalOptions = globalAttrs.map((attr) => ({
+        value: `globals.${attr.name}`,
+        label: `${attr.title} [globals.${attr.name}]`,
+      }));
+
+      if (this.serviceName === ServiceType.WorkflowStep) {
+        return [...jobOptions, ...globalOptions];
+      }
+
+      return [...jobOptions, ...nodeOptions, ...globalOptions];
     },
     operatorOptions(): OperatorOption[] {
       return [
@@ -159,6 +179,17 @@ export default defineComponent({
     },
   },
   methods: {
+    getGlobalVariables(): ContextVariable[] {
+      const globdata = loadJsonData("globalVarData");
+      if (!globdata || !Array.isArray(globdata)) {
+        return [];
+      }
+      return globdata.map((varName: string): ContextVariable => ({
+        name: varName,
+        title: `Global Variable: ${varName}`,
+        type: "global",
+      }));
+    },
     canAddCondition(setIndex: number): boolean {
       return this.conditionSet[setIndex].conditions.length < MAX_CONDITIONS_PER_SET;
     },
