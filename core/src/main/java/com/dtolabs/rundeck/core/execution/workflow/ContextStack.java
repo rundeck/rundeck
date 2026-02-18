@@ -23,7 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 

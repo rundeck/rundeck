@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.core.utils;
 
-import org.apache.commons.lang3.text.StrMatcher;
+import org.apache.commons.lang.text.StrMatcher;
 
 import java.util.*;
 
