@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.WorkflowExecutionListenerTest
 import groovy.time.TimeCategory
@@ -5123,32 +5124,49 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
 
         result.size() == expectedSize
+        // Validate plugin properties
+        if (expectedSize > 0) {
+            result.eachWithIndex { plugin, idx ->
+                assert plugin.service == ServiceNameConstants.LogFilter
+                assert plugin.provider == expectedProviders[idx]
+                assert plugin.configuration == expectedConfigs[idx]
+            }
+        }
 
         where:
-        expectedSize | frameworkProps | projectProps
+        expectedSize | frameworkProps | projectProps | expectedProviders | expectedConfigs
         // Only framework global filter
         1            | ['framework.globalfilter.1.type':'mask-passwords',
                         'framework.globalfilter.1.config.replacement':'[SECURE]',
-                        'framework.globalfilter.1.config.color': 'blue'] | [:]
+                        'framework.globalfilter.1.config.color': 'blue'] | [:] |
+                      ['mask-passwords'] |
+                      [['replacement':'[SECURE]', 'color':'blue']]
         // Only project global filter
         1            | [:] | ['project.globalfilter.1.type':'highlight-output',
                               'project.globalfilter.1.config.regex':'test',
-                              'project.globalfilter.1.config.bgcolor': 'yellow']
+                              'project.globalfilter.1.config.bgcolor': 'yellow'] |
+                      ['highlight-output'] |
+                      [['regex':'test', 'bgcolor':'yellow']]
         // No filters
-        0            | [:] | [:]
-        // Both framework and project filters
+        0            | [:] | [:] | [] | []
+        // Both framework and project filters (project filters come first)
         2            | ['framework.globalfilter.1.type':'mask-passwords',
                         'framework.globalfilter.1.config.replacement':'[SECURE]',
-                        'framework.globalfilter.1.config.color': 'blue'] | ['project.globalfilter.1.type':'highlight-output',
-                                                                             'project.globalfilter.1.config.regex':'test',
-                                                                             'project.globalfilter.1.config.bgcolor': 'yellow']
+                        'framework.globalfilter.1.config.color': 'blue'] |
+                      ['project.globalfilter.1.type':'highlight-output',
+                       'project.globalfilter.1.config.regex':'test',
+                       'project.globalfilter.1.config.bgcolor': 'yellow'] |
+                      ['highlight-output', 'mask-passwords'] |
+                      [['regex':'test', 'bgcolor':'yellow'], ['replacement':'[SECURE]', 'color':'blue']]
         // Multiple framework filters
         2            | ['framework.globalfilter.1.type':'mask-passwords',
                         'framework.globalfilter.1.config.replacement':'[SECURE]',
                         'framework.globalfilter.1.config.color': 'blue',
                         'framework.globalfilter.2.type':'highlight-output',
                         'framework.globalfilter.2.config.regex':'test',
-                        'framework.globalfilter.2.config.bgcolor': 'yellow'] | [:]
+                        'framework.globalfilter.2.config.bgcolor': 'yellow'] | [:] |
+                      ['mask-passwords', 'highlight-output'] |
+                      [['replacement':'[SECURE]', 'color':'blue'], ['regex':'test', 'bgcolor':'yellow']]
 
     }
 
