@@ -21,7 +21,7 @@ import com.dtolabs.rundeck.core.logging.LogLevel;
 import com.dtolabs.rundeck.core.logging.LogUtil;
 import com.dtolabs.rundeck.core.utils.Utility;
 import com.google.common.base.Predicate;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
