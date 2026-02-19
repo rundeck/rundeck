@@ -48,6 +48,7 @@ import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
 import rundeck.codecs.HTMLElementCodec
@@ -66,7 +67,7 @@ import java.text.SimpleDateFormat
  */
 class ExecutionControllerSpec extends Specification implements ControllerUnitTest<ExecutionController>, DataTest {
 
-    def setupSpec() { mockDomain Execution }
+    def setupSpec() { mockDomains(Execution, LogFileStorageRequest) }
 
     def setup() {
         mockCodec(AnsiColorCodec)
@@ -167,7 +168,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
-        respondJson * controller.executionService.respondExecutionsJson(_, _, [], [total: 1, offset: 0, max: 20])
+        respondJson * controller.executionService.respondExecutionsJson(_, _, [], [total: 1, offset: 0, max: 20],_)
         respondXml * controller.executionService.respondExecutionsXml(_, _, [], [total: 1, offset: 0, max: 20])
 
         where:
