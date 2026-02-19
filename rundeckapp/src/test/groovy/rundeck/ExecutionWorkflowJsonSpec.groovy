@@ -18,6 +18,7 @@ package rundeck
 
 import grails.testing.gorm.DataTest
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import spock.lang.Specification
 
 /**
@@ -67,7 +68,7 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
 
         then: "Should deserialize from JSON"
         result != null
-        result instanceof Workflow
+        result instanceof WorkflowDataImpl
         result.keepgoing == false
         result.strategy == 'sequential'
         result.getSteps() != null
@@ -374,7 +375,7 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
 
         when: "Setting and getting workflow"
         execution.setWorkflowData(workflow)
-        def result = execution.getWorkflowData() as Workflow
+        def result = execution.getWorkflowData()
 
         then: "Complex configuration should be preserved"
         result.commands[0].configuration.nested instanceof Map

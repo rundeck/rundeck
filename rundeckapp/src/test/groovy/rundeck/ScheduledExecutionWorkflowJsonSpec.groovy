@@ -18,6 +18,7 @@ package rundeck
 
 import grails.testing.gorm.DataTest
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import spock.lang.Specification
 
 /**
@@ -65,7 +66,7 @@ class ScheduledExecutionWorkflowJsonSpec extends Specification implements DataTe
 
         then: "Should deserialize from JSON"
         result != null
-        result instanceof Workflow
+        result instanceof WorkflowDataImpl
         result.keepgoing == true
         result.strategy == 'sequential'
         result.commands != null
@@ -237,7 +238,7 @@ class ScheduledExecutionWorkflowJsonSpec extends Specification implements DataTe
 
         when: "Setting and getting workflow data"
         se.setWorkflowData(originalWorkflow)
-        def deserializedWorkflow = se.getWorkflowData() as Workflow
+        def deserializedWorkflow = se.getWorkflowData()
 
         then: "Workflow properties should be preserved"
         deserializedWorkflow != null

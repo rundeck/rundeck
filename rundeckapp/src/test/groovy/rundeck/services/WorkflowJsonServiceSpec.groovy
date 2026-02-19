@@ -63,7 +63,7 @@ class WorkflowJsonServiceSpec extends Specification implements ServiceUnitTest<E
         workflowData.commands.size() == 1
 
         when: "Cloning for execution"
-        def clonedWorkflow = new Workflow(workflowData as Workflow)
+        def clonedWorkflow = new Workflow(workflowData)
 
         then: "Cloned workflow should have same properties"
         clonedWorkflow.keepgoing == true
@@ -103,7 +103,7 @@ class WorkflowJsonServiceSpec extends Specification implements ServiceUnitTest<E
 
         when: "Setting execution workflow from job"
         def workflowData = job.getWorkflowData()
-        def executionWorkflow = new Workflow(workflowData as Workflow)
+        def executionWorkflow = new Workflow(workflowData)
         execution.setWorkflowData(executionWorkflow)
 
         then: "Execution should have workflow from job"
@@ -365,7 +365,7 @@ class WorkflowJsonServiceSpec extends Specification implements ServiceUnitTest<E
             dateStarted: new Date(),
             uuid: UUID.randomUUID().toString()
         )
-        def execWorkflow = new Workflow(job.getWorkflowData() as Workflow)
+        def execWorkflow = new Workflow(job.getWorkflowData())
         execution.setWorkflowData(execWorkflow)
 
         when: "Modifying job workflow"
