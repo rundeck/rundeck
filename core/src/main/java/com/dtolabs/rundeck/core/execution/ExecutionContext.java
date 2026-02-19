@@ -229,4 +229,11 @@ public interface ExecutionContext {
      * @return An {@link ExecutionReference} to the execution, or null if doesn't apply.
      */
     public ExecutionReference getExecution();
+
+    /**
+     * Retrieves the workflow JSON representation for the execution.
+     *
+     * @return the workflow JSON string
+     */
+    public String getWorkflowJson();
 }

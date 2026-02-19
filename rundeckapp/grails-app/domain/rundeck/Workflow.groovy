@@ -36,7 +36,7 @@ public class Workflow implements WorkflowData {
 
     Integer threadcount=1
     Boolean keepgoing=false
-    List<WorkflowStep> commands
+    List<WorkflowStepData> commands
     String strategy="node-first"
     String pluginConfig
     static belongsTo = [Execution, ScheduledExecution]
@@ -87,7 +87,7 @@ public class Workflow implements WorkflowData {
      * @param type
      * @return available config data, as a List, or null
      */
-    public def getPluginConfigDataList(String type) {
+    public Collection getPluginConfigDataList(String type) {
         def map = getPluginConfigMap()
         def val = map?.get(type)
         if (val && !(val instanceof Collection)) {
@@ -101,7 +101,7 @@ public class Workflow implements WorkflowData {
      * @param name
      * @return available map data or empty map
      */
-    public def getPluginConfigData(String type,String name) {
+    public Map getPluginConfigData(String type,String name) {
         def map = getPluginConfigMap()
         if(!map){
             map=[(type):[:]]
@@ -140,7 +140,7 @@ public class Workflow implements WorkflowData {
             final ObjectMapper mapper = new ObjectMapper()
             pluginConfig = mapper.writeValueAsString(obj)
         } else {
-            pluginConfig = null
+            pluginConfig = "{}"
         }
     }
 
@@ -163,16 +163,31 @@ public class Workflow implements WorkflowData {
 
     }
 
-    public Workflow(Workflow source){
+    public Workflow(WorkflowData source){
         this.threadcount=source.threadcount
         this.keepgoing=source.keepgoing
         this.strategy=source.strategy
         this.pluginConfigMap=source.pluginConfigMap
         commands = new ArrayList()
-        source.commands.each { WorkflowStep cmd->
-            final item = createItem(cmd)
-            if(cmd.errorHandler){
-                final handler=createItem(cmd.errorHandler)
+        source.commands.each { WorkflowStepData cmd->
+            WorkflowStepData exec
+            Map map=cmd.toMap()
+            if (map.jobref!=null) {
+                exec = JobExec.jobExecFromMap(map)
+            } else {
+                exec = PluginStep.fromMap(map)
+            }
+            exec
+            final item = createItem(exec)
+            if(map.errorhandler){
+                WorkflowStepData errorHandlerExec
+                Map mapErrorHandler = map.errorhandler as Map
+                if (mapErrorHandler.jobref!=null) {
+                    errorHandlerExec = JobExec.jobExecFromMap(mapErrorHandler)
+                } else {
+                    errorHandlerExec = PluginStep.fromMap(mapErrorHandler)
+                }
+                final handler=createItem(errorHandlerExec)
                 item.errorHandler=handler
             }
             commands.add(item)
@@ -196,7 +211,7 @@ public class Workflow implements WorkflowData {
         }
         return newwf
     }
-    WorkflowStep createItem(WorkflowStep item){
+    WorkflowStepData createItem(WorkflowStep item){
         return item.createClone()
     }
 
@@ -230,7 +245,7 @@ public class Workflow implements WorkflowData {
         if(data.commands){
             ArrayList commands = new ArrayList()
             def createStep={Map map->
-                WorkflowStep exec
+                WorkflowStepData exec
                 if (map.jobref!=null) {
                     exec = JobExec.jobExecFromMap(map)
                 } else {

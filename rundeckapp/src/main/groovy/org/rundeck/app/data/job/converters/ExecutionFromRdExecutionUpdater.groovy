@@ -46,8 +46,12 @@ class ExecutionFromRdExecutionUpdater {
         e.cancelled = re.cancelled
         e.timedOut = re.timedOut
         updateNodeConfig(e, re.nodeConfig)
-        if(!e.workflow) e.workflow = new Workflow(commands:[])
-        WorkflowUpdater.updateWorkflow(e.workflow, re.workflow)
+        // Get or create workflow for updating
+        def workflow = e.getWorkflowData()
+        if(!workflow) workflow = new Workflow(commands:[])
+        WorkflowUpdater.updateWorkflow(workflow, re.workflow)
+        // Persist workflow as JSON
+        e.setWorkflowData(workflow)
         updateOrchestrator(e, re.orchestrator)
     }
 

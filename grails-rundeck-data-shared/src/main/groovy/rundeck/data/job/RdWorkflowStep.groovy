@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import grails.util.Holders
 import grails.validation.Validateable
+import groovy.transform.CompileDynamic
 import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import rundeck.data.validation.shared.SharedWorkflowStepConstraints
@@ -42,5 +43,69 @@ class RdWorkflowStep implements WorkflowStepData, PluginProviderConfiguration, V
     @JsonIgnore
     String summarize() {
         return "implement summarization"
+    }
+
+    /**
+     * Convert to canonical map representation for serialization
+     * @return Map representation
+     */
+    Map toMap() {
+        def map = [type: pluginType, nodeStep: nodeStep]
+
+        if (configuration) {
+            map.put('configuration', configuration)
+        }
+        if (description) {
+            map.description = description
+        }
+        if (errorHandler) {
+            map.errorhandler = errorHandler.toMap()
+        } else if (keepgoingOnSuccess) {
+            map.keepgoingOnSuccess = keepgoingOnSuccess
+        }
+        if (pluginConfig) {
+            map.plugins = pluginConfig
+        }
+        return map
+    }
+
+    @Override
+    void storePluginConfigForType(String key, Object obj) {
+
+    }
+/**
+     * Construct an RdWorkflowStep from a canonical map representation (inverse of toMap).
+     *
+     * Recognizes keys:
+     *  - type or provider -> pluginType
+     *  - nodeStep (Boolean)
+     *  - configuration or config (Map)
+     *  - description (String)
+     *  - errorhandler (Map) -> recursive RdWorkflowStep
+     *  - keepgoingOnSuccess (Boolean)
+     *  - plugins or pluginConfig (Map) -> pluginConfig
+     *
+     * @param m Map representation of a workflow step
+     * @return RdWorkflowStep instance or null if map is null/empty
+     */
+    @CompileDynamic
+    static RdWorkflowStep fromMap(Map m) {
+        if (!m) return null
+        def step = new RdWorkflowStep()
+        step.pluginType = m.type ?: m.provider
+        if (m.containsKey('nodeStep')) {
+            step.nodeStep = m.nodeStep as Boolean
+        }
+        step.configuration = (m.configuration ?: m.config) as Map<String, Object>
+        step.description = m.description
+        if (m.containsKey('keepgoingOnSuccess')) {
+            step.keepgoingOnSuccess = m.keepgoingOnSuccess as Boolean
+        }
+        if (m.errorhandler instanceof Map) {
+            step.errorHandler = RdWorkflowStep.fromMap((Map) m.errorhandler)
+        }
+        step.pluginConfig = (m.plugins ?: m.pluginConfig) as Map<String, Object>
+
+        return step
     }
 }

@@ -212,7 +212,7 @@
                      uuid:scheduledExecution?.uuid
              ]}"/>
 
-<g:embedJSON id="jobWorkflowJSON" data="${ scheduledExecution?.workflow?.toMap()?:[:]}"/>
+<g:embedJSON id="jobWorkflowJSON" data="${ scheduledExecution?.getWorkflowData()?.toMap()?:[:]}"/>
 <g:embedJSON id="jobNodeDataJSON" data="${ [
         nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence ? 'true': 'false',
         excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck ? 'true': 'false',

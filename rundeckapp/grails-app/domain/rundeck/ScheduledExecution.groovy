@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
@@ -34,6 +35,7 @@ import rundeck.data.job.RdSchedule
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.model.v1.job.option.OptionData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.util.Sizes
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.validation.shared.SharedJobConstraints
@@ -67,6 +69,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
     String logOutputThresholdStatus;
 
     Workflow workflow
+    String workflowJson
+
+    // Transient cached workflow data for validation (when deserialized from JSON)
+    // This allows validation errors to be set and accessed on the workflow object
+    private transient WorkflowData cachedWorkflowData
+    private transient String cachedWorkflowJsonHash
 
     /** @deprecated unused */
     Date nextExecution
@@ -118,7 +126,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                          'crontabString', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap', 'components']
+                         'pluginConfigMap', 'components', 'workflowJsonMap', 'workflowData', 'cachedWorkflowData']
 
     static constraints = {
         importFrom SharedProjectNameConstraints
@@ -126,6 +134,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         importFrom SharedNodeConfigConstraints
         importFrom SharedLogConfigConstraints
         workflow(nullable:true)
+        workflowJson(nullable:true, blank:true)
         options(nullable:true)
         nextExecution(nullable:true)
         userRoleList(nullable:true)
@@ -178,6 +187,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         notifyAvgDurationThreshold(type: 'text')
         serverNodeUUID(type: 'string')
         pluginConfig(type: 'text')
+        workflowJson(type: 'text')
         lastModifiedBy(type: 'string')
 
         DomainIndexHelper.generate(delegate) {
@@ -302,7 +312,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
             }
         }
 
-        map.sequence=workflow.toMap()
+        map.sequence=getWorkflowData().toMap()
 
         if(scheduled){
             map.schedule=[time:[hour:hour,minute:minute,seconds:seconds],month:month,year:year]
@@ -1258,6 +1268,156 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                 scheduleEnabled: scheduleEnabled,
                 executionEnabled: executionEnabled
         )
+    }
+
+    /**
+     * Get the workflow data, checking both old and new storage formats.
+     * Provides backwards compatibility by checking workflow field first.
+     * When deserializing from JSON, returns a validateable RdWorkflow instance
+     * that allows validation errors to be set and accessed.
+     * @return WorkflowData instance (either Workflow domain or deserialized validateable RdWorkflow from JSON)
+     */
+    WorkflowData getWorkflowData() {
+        // Backwards compatibility: check old workflow field first
+        if (this.workflow != null) {
+            return this.workflow
+        }
+
+        // New format: deserialize from JSON
+        if (workflowJson != null) {
+            // Check if we have a cached instance and if the JSON hasn't changed
+            String currentHash = workflowJson.hashCode().toString()
+            if (cachedWorkflowData != null && cachedWorkflowJsonHash == currentHash) {
+                return cachedWorkflowData
+            }
+
+            // Deserialize and cache the validateable workflow instance
+            cachedWorkflowData = deserializeWorkflowData(workflowJson)
+            cachedWorkflowJsonHash = currentHash
+            return cachedWorkflowData
+        }
+
+        // Clear cache if workflowJson is null
+        cachedWorkflowData = null
+        cachedWorkflowJsonHash = null
+        return null
+    }
+
+    /**
+     * Update the workflow data using new JSON storage format.
+     * Nulls out the old workflow field and serializes to workflowJson.
+     * @param workflowData WorkflowData instance to store
+     */
+    void setWorkflowData(WorkflowData workflowData) {
+        // Null out old format
+        this.workflow = null
+
+        // Serialize to new format
+        if (workflowData != null) {
+            this.workflowJson = serializeWorkflowData(workflowData)
+            // Clear cache so it will be recreated on next getWorkflowData() call
+            cachedWorkflowData = null
+            cachedWorkflowJsonHash = null
+        } else {
+            this.workflowJson = null
+            cachedWorkflowData = null
+            cachedWorkflowJsonHash = null
+        }
+    }
+
+    /**
+     * Deserialize workflow JSON to WorkflowData.
+     * Converts JSON -> Map -> Workflow domain object for runtime use.
+     * @param json JSON string
+     * @return WorkflowData instance
+     */
+    private WorkflowData deserializeWorkflowData(String json) {
+        if (json == null || json.isEmpty()) {
+            return null
+        }
+
+        try {
+            // Deserialize JSON to Map using EmbeddedJsonData trait
+            Map workflowMap = asJsonMap(json)
+
+            // Convert Map to Workflow domain object for runtime type safety
+            return WorkflowDataImpl.fromMap(workflowMap)
+        } catch (Exception e) {
+            log.error("Failed to deserialize workflowJson for ScheduledExecution ${id}", e)
+            return null
+        }
+    }
+
+    /**
+     * Serialize WorkflowData to JSON string.
+     * Converts WorkflowData -> Map -> JSON.
+     * @param workflowData WorkflowData instance
+     * @return JSON string
+     */
+    private String serializeWorkflowData(WorkflowData workflowData) {
+        if (workflowData == null) {
+            return null
+        }
+
+        try {
+            // Convert WorkflowData to Map representation
+            Map workflowMap
+            if (workflowData instanceof Workflow) {
+                // Use existing toMap() method
+                workflowMap = ((Workflow) workflowData).toMap()
+                // Preserve empty pluginConfig as "{}" instead of removing it
+                if (!workflowMap.containsKey('pluginConfig') && workflowData.pluginConfigMap != null) {
+                    // If toMap() removed pluginConfig but it exists in the source, preserve it as empty map
+                    workflowMap.pluginConfig = [:]
+                }
+            } else if (workflowData.respondsTo('toMap')) {
+                // RdWorkflow or other implementations with toMap()
+                workflowMap = workflowData.toMap()
+                // Preserve empty pluginConfig as "{}" instead of removing it
+                if (!workflowMap.containsKey('pluginConfig') && workflowData.pluginConfigMap != null) {
+                    // If toMap() removed pluginConfig but it exists in the source, preserve it as empty map
+                    workflowMap.pluginConfig = [:]
+                }
+            } else {
+                // Fallback: manually construct map from WorkflowData interface
+                workflowMap = [
+                    keepgoing: workflowData.keepgoing,
+                    strategy: workflowData.strategy,
+                    threadcount: workflowData.getThreadcount(),
+                    commands: workflowData.steps?.collect { step ->
+                        if (step.respondsTo('toMap')) {
+                            step.toMap()
+                        } else {
+                            // Basic map construction from step
+                            [:]  // This shouldn't happen in practice
+                        }
+                    }
+                ]
+                if (workflowData.pluginConfigMap) {
+                    workflowMap.pluginConfig = workflowData.pluginConfigMap
+                } else if (workflowData.respondsTo('getPluginConfig') && workflowData.pluginConfig != null) {
+                    // Preserve empty pluginConfig as "{}" instead of null
+                    workflowMap.pluginConfig = [:]
+                }
+            }
+
+            // Serialize Map to JSON using EmbeddedJsonData trait
+            return serializeJsonMap(workflowMap)
+        } catch (Exception e) {
+            log.error("Failed to serialize workflowData for ScheduledExecution ${id}", e)
+            return null
+        }
+    }
+
+    /**
+     * Helper to get workflow as a Map (for backward compatibility with existing code).
+     * @return Map representation of workflow
+     */
+    Map getWorkflowJsonMap() {
+        if (workflowJson != null) {
+            return asJsonMap(workflowJson)
+        }
+        return null
     }
 }
 

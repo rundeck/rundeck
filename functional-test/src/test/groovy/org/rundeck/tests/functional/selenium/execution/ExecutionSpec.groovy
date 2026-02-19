@@ -117,7 +117,7 @@ class ExecutionSpec extends SeleniumBase {
         commandPage.runCommandAndWaitToBe("echo 'Hello world'", "SUCCEEDED")
         then:
         commandPage.runContent.isDisplayed()
-        commandPage.runArgument.text == "echo 'Hello world'"
+        commandPage.commandRunArgument.text == "echo 'Hello world'"
         commandPage.getExecLogGutters().size() == 2
         commandPage.execLogContent.text == "Hello world"
         commandPage.runningExecState == "SUCCEEDED"

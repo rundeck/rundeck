@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import org.rundeck.core.execution.ScriptCommand
@@ -1194,10 +1195,13 @@ class WorkflowController extends ControllerBase {
                 ScheduledExecution sched = ScheduledExecution.getByIdOrUUID(params.scheduledExecutionId)
                 if (!sched) {
                     session.editWF[wfid] = new Workflow()
-                }
-
-                if (sched.workflow) {
-                    session.editWF[wfid] = new Workflow(sched.workflow)
+                } else {
+                    def workflowData = sched.getWorkflowData()
+                    if (workflowData) {
+                        session.editWF[wfid] = new Workflow(workflowData)
+                    } else {
+                        session.editWF[wfid] = new Workflow()
+                    }
                 }
             }
         } else if (usedwf) {
@@ -1218,7 +1222,7 @@ class WorkflowController extends ControllerBase {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null, boolean strict=false, String project=null) {
+    public static boolean _validateCommandExec(WorkflowStepData exec, String type = null, List authProjects = null, boolean strict=false, String project=null) {
         if (exec instanceof JobExec) {
             if(strict){
                 def refSe = exec.findJob(project)
@@ -1242,21 +1246,24 @@ class WorkflowController extends ControllerBase {
                 }
             }
         }else if(exec instanceof CommandExec){
+            // First check for duplicates (multiple fields set)
+            def x = ['adhocLocalString', 'adhocRemoteString', 'adhocFilepath'].grep {
+                exec[it]
+            }
+            if (x && x.size() > 1) {
+                exec.errors.rejectValue('adhocRemoteString', 'scheduledExecution.adhocString.duplicate.message')
+            } else
             if (!exec.adhocRemoteString && 'command' == type) {
-                exec.errors.rejectValue('adhocRemoteString', 'commandExec.adhocExecution.adhocRemoteString.blank.message')
+                // When type is inferred as 'command' but field is empty, set error on the specific field
+                exec.errors.rejectValue('adhocRemoteString', 'commandExec.adhocExecution.adhocString.blank.message')
             } else if (!exec.adhocLocalString && 'script' == type) {
-                exec.errors.rejectValue('adhocLocalString', 'commandExec.adhocExecution.adhocLocalString.blank.message')
+                // When type is inferred as 'script' but field is empty, set error on the specific field
+                exec.errors.rejectValue('adhocLocalString', 'commandExec.adhocExecution.adhocString.blank.message')
             } else if (!exec.adhocFilepath && 'scriptfile' == type) {
-                exec.errors.rejectValue('adhocFilepath', 'commandExec.adhocExecution.adhocFilepath.blank.message')
+                // When type is inferred as 'scriptfile' but field is empty, set error on the specific field
+                exec.errors.rejectValue('adhocFilepath', 'commandExec.adhocExecution.adhocString.blank.message')
             } else if (!exec.adhocRemoteString && !exec.adhocLocalString && !exec.adhocFilepath) {
                 exec.errors.rejectValue('adhocExecution', 'commandExec.adhocExecution.adhocString.blank.message')
-            } else {
-                def x = ['adhocLocalString', 'adhocRemoteString', 'adhocFilepath'].grep {
-                    exec[it]
-                }
-                if (x && x.size() > 1) {
-                    exec.errors.rejectValue('adhocRemoteString', 'scheduledExecution.adhocString.duplicate.message')
-                }
             }
         }else if(exec instanceof PluginStep){
             //TODO: validate
@@ -1272,7 +1279,7 @@ class WorkflowController extends ControllerBase {
     static Map _validatePluginStep(FrameworkService frameworkService, WorkflowStep exec) {
         if (exec instanceof PluginStep) {
             PluginStep item = exec as PluginStep
-            def description = getPluginStepDescription(frameworkService, item.nodeStep, item.type)
+            def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep ?: false, item.type)
             if (!description) {
                 return [valid: false, report: "Plugin not found: " + item.type]
             }

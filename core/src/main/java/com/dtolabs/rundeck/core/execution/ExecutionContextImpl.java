@@ -36,7 +36,9 @@ import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 import com.dtolabs.rundeck.core.common.NodeFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -82,6 +84,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private OrchestratorConfig orchestrator;
     private PluginControlService pluginControlService;
     @Getter private List<ContextComponent<?>> componentList;
+    @Getter private String workflowJson;
     
     private ExecutionReference execution;
 
@@ -257,6 +260,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 if (null != original.getComponentList()) {
                     ctx.componentList.addAll(original.getComponentList());
                 }
+                ctx.workflowJson = original.getWorkflowJson();
             }
         }
 
@@ -364,6 +368,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             newList.addAll(other.ctx.componentList);
             ctx.componentList = newList;
 
+            if (null != other.ctx.workflowJson) {
+                ctx.workflowJson = other.ctx.workflowJson;
+            }
             //step context and number taken from merged context
             ctx.stepContext = other.ctx.stepContext;
             ctx.stepNumber = other.ctx.stepNumber;
@@ -664,8 +671,70 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             return this;
         }
 
+        /**
+         * Set workflow from WorkflowData by serializing to JSON
+         * @param workflowData WorkflowData instance to serialize
+         * @return builder
+         */
+        public Builder workflowData(WorkflowData workflowData) {
+            if (workflowData != null) {
+                ctx.workflowJson = serializeWorkflowData(workflowData);
+            } else {
+                ctx.workflowJson = null;
+            }
+            return this;
+        }
+
+        /**
+         * Set workflow JSON directly
+         * @param workflowJson workflow JSON string
+         * @return builder
+         */
+        public Builder workflowJson(String workflowJson) {
+            ctx.workflowJson = workflowJson;
+            return this;
+        }
+
         public ExecutionContextImpl build() {
             return ctx;
+        }
+    }
+
+    /**
+     * Serialize WorkflowData to JSON string
+     * @param workflowData WorkflowData instance
+     * @return JSON string representation
+     */
+    private static String serializeWorkflowData(WorkflowData workflowData) {
+        if (workflowData == null) {
+            return null;
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> workflowMap = workflowData.toMap();
+            return mapper.writeValueAsString(workflowMap);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize WorkflowData to JSON", e);
+        }
+    }
+
+    /**
+     * Deserialize JSON string to WorkflowData
+     * Note: This returns a Map representation. The caller should convert to appropriate WorkflowData implementation.
+     * @param json JSON string
+     * @return Map representation of workflow
+     */
+    public static Map<String, Object> deserializeWorkflowJson(String json) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(json, Map.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deserialize workflow JSON", e);
         }
     }
 

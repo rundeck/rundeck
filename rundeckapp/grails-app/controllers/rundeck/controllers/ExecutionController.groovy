@@ -156,13 +156,14 @@ class ExecutionController extends ControllerBase{
 
             offset+=res.size()
             res.each{exec->
+                def workflow = exec.getWorkflowData()
                 if(execs.size()<max
-                        && exec.workflow.commands.size()==1
-                        && exec.workflow.commands[0] instanceof CommandExec
-                        && exec.workflow.commands[0].adhocRemoteString){
+                        && workflow && workflow.commands.size()==1
+                        && workflow.commands[0] instanceof CommandExec
+                        && workflow.commands[0].adhocRemoteString){
 
                     def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                    def str=exec.workflow.commands[0].adhocRemoteString+";"+appliedFilter
+                    def str=workflow.commands[0].adhocRemoteString+";"+appliedFilter
                     if(query && query.size()>4 && !str.contains(query)){
                         return
                     }
@@ -178,7 +179,8 @@ class ExecutionController extends ControllerBase{
         }
 
         def elementList = execs.collect{Execution exec->
-            if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
+            def workflow = exec.getWorkflowData()
+            if(workflow && workflow.commands.size()==1 && workflow.commands[0].adhocRemoteString) {
                 def href=createLink(
                         controller: 'framework',
                         action: 'adhoc',
@@ -191,7 +193,7 @@ class ExecutionController extends ControllerBase{
                         succeeded: exec.statusSucceeded(),
                         href: href,
                         execid: exec.id,
-                        title: exec.workflow.commands[0].adhocRemoteString,
+                        title: workflow.commands[0].adhocRemoteString,
                         filter: appliedFilter,
                         extraMetadata: exec.extraMetadataMap
                 ]
@@ -265,7 +267,8 @@ class ExecutionController extends ControllerBase{
 
         eprev = result ? result[0] : null
         def readAuth = authorizingExecution.isAuthorized(RundeckAccess.General.APP_READ)
-        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
+        def executionWorkflowData = e.getWorkflowData()
+        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, executionWorkflowData, readAuth,0)
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 

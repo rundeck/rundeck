@@ -21,9 +21,14 @@ import com.dtolabs.rundeck.core.jobs.JobReferenceItem
 import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
 import com.dtolabs.rundeck.core.utils.WaitUtils
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
+import org.rundeck.app.data.workflow.WorkflowStepDataImpl
 import org.springframework.jdbc.core.RowCallbackHandler
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import org.springframework.validation.ObjectError
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.job.reference.JobRevReferenceImpl
 import rundeck.data.util.JobTakeoverQueryBuilder
@@ -1244,7 +1249,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param readAuth if true, includes contents of each step, if false only includes only basic step details
      * @return List of maps for each step, descend up to maxDepth following job references
      */
-    def getWorkflowDescriptionTree(String project,Workflow workflow,readAuth,maxDepth=3){
+    def getWorkflowDescriptionTree(String project,WorkflowData workflow,readAuth,maxDepth=3){
         def jobids=[:]
         def cmdData={}
         cmdData={x,WorkflowStep step->
@@ -1270,7 +1275,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                     if(doload && x>0){
                         map.workflow=jobids[map.jobId]
-                        jobids[map.jobId].addAll(refjob.workflow.commands.collect(cmdData.curry(x-1)))
+                        def refjobWorkflow = refjob.getWorkflowData()
+                        if (refjobWorkflow) {
+                            jobids[map.jobId].addAll(refjobWorkflow.commands.collect(cmdData.curry(x-1)))
+                        }
                     }
                 }
             }
@@ -1286,7 +1294,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                     if(doload && x>0){
                         map.ehWorkflow=jobids[map.ehJobId]
-                        jobids[map.ehJobId].addAll(refjob.workflow.commands.collect(cmdData.curry(x-1)))
+                        def refjobWorkflow = refjob.getWorkflowData()
+                        if (refjobWorkflow) {
+                            jobids[map.ehJobId].addAll(refjobWorkflow.commands.collect(cmdData.curry(x-1)))
+                        }
                     }
                 }
             }
@@ -2392,7 +2403,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    def validateWorkflowStep(WorkflowStep step, List projects = [], Boolean validateJobref = false, String currentProj = null) {
+    def validateWorkflowStep(WorkflowStepData step, List projects = [], Boolean validateJobref = false, String currentProj = null) {
         WorkflowController._validateCommandExec(step, null, projects, validateJobref, currentProj)
         if (step.errors.hasErrors()) {
             return false
@@ -2799,7 +2810,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //v3
 
         //validate error handler types
-        failed |= !validateWorkflow(scheduledExecution.workflow, scheduledExecution)
+        failed |= !validateWorkflow(scheduledExecution.getWorkflowData(), scheduledExecution)
 
         //v4
         failed |=validateDefinitionWFStrategy(scheduledExecution, params, validation)
@@ -2961,8 +2972,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @CompileStatic
     public boolean validateDefinitionLogFilterPlugins(ScheduledExecution scheduledExecution, Map params, Map validationMap) {
         boolean failed=false
-        if(scheduledExecution.workflow) {
-            def configs = (List) scheduledExecution.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+        def workflowData = scheduledExecution.getWorkflowData()
+        if(workflowData) {
+            def configs = (List) (workflowData).getPluginConfigDataList(ServiceNameConstants.LogFilter)
             if (configs && configs instanceof List) {
                 List<Map> lfReports = validateLogFilterPlugins(scheduledExecution, configs)
                 if (null != lfReports && lfReports.any { !it.valid }) {
@@ -2978,18 +2990,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public boolean validateDefinitionWFStrategy(ScheduledExecution scheduledExecution, Map params, Map validationMap) {
         //workflow strategy plugin config and validation
         boolean failed=false
-        if(scheduledExecution.workflow) {
+        def workflowData = scheduledExecution.getWorkflowData()
+        if(workflowData) {
             def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
             def projectProps = frameworkProject.getProperties()
 
             def validation = validateWorkflowStrategyPlugin(
                     scheduledExecution,
                     projectProps,
-                    (Map) scheduledExecution.
-                            workflow.
-                            getPluginConfigData(
+                    (Map) workflowData.getPluginConfigData(
                                     ServiceNameConstants.WorkflowStrategy,
-                                    scheduledExecution.workflow.strategy
+                                    workflowData.strategy
                             )
             )
             if (null != validation && !validation.valid) {
@@ -3010,16 +3021,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @CompileStatic
     public boolean validateDefinitionWorkflow(ScheduledExecution scheduledExecution, UserAndRolesAuthContext userAndRoles, boolean validateJobref) {
         boolean failed=false
-        if (scheduledExecution.workflow) {
-            def Workflow workflow = scheduledExecution.workflow
+        def workflowData = scheduledExecution.getWorkflowData()
+        if (workflowData) {
             def i = 1;
             def wfitemfailed = false
             def failedlist = []
             List<String> fprojects = frameworkService.projectNames(userAndRoles)
-            workflow.commands?.each {WorkflowStep cexec ->
+            workflowData.getSteps()?.each {WorkflowStepData cexec ->
                 if (!validateWorkflowStep(cexec, fprojects, validateJobref, scheduledExecution.project)) {
                     wfitemfailed = true
-                    failedlist << "$i: " + cexec.errors.allErrors.collect {
+                    failedlist << "$i: " + (cexec as WorkflowStep).errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
                     }
                 }
@@ -3027,7 +3038,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if (cexec.errorHandler) {
                     if (!validateWorkflowStep(cexec.errorHandler, fprojects, validateJobref, scheduledExecution.project)) {
                         wfitemfailed = true
-                        failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
+                        failedlist << "$i: " + (cexec as WorkflowStep).errorHandler.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)
                         }
                     }
@@ -3041,8 +3052,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
             }
         }
-        if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands ||
-            scheduledExecution.workflow.commands.isEmpty()) {
+        if (!workflowData || !workflowData.getSteps() || workflowData.getSteps().isEmpty()) {
 
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message', 'Step must not be empty')
             failed= true
@@ -3353,16 +3363,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param userAndRoles is not being used at the moment
      */
     void jobDefinitionGlobalLogFilters(ScheduledExecution scheduledExecution, ScheduledExecution input, Map params, UserAndRoles userAndRoles) {
+        def workflow = scheduledExecution.getWorkflowData()
+        if (!workflow) return
+
         if(input){
-            scheduledExecution.workflow.setPluginConfigData(
+            def inputWorkflow = input.getWorkflowData()
+            workflow.setPluginConfigData(
                     ServiceNameConstants.LogFilter,
-                    input.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+                    inputWorkflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
             )
         } else if (params.jobWorkflowJson) {
             def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
 
             if(jobWorkflowData instanceof JSONObject && jobWorkflowData.has("pluginConfig")) {
-                scheduledExecution.workflow.setPluginConfigData(
+                workflow.setPluginConfigData(
                     ServiceNameConstants.LogFilter,
                     jobWorkflowData.get("pluginConfig").has("LogFilter") ? jobWorkflowData.get("pluginConfig").get(
                         "LogFilter"
@@ -3382,33 +3396,40 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             //validate
             if (configs) {
-                scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, configs)
+                workflow.setPluginConfigData(ServiceNameConstants.LogFilter, configs)
             } else {
-                scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, null)
+                workflow.setPluginConfigData(ServiceNameConstants.LogFilter, null)
             }
         }else{
-            scheduledExecution.workflow.setPluginConfigData(ServiceNameConstants.LogFilter, null)
+            workflow.setPluginConfigData(ServiceNameConstants.LogFilter, null)
         }
+
+        // Save modified workflow back
+        scheduledExecution.setWorkflowData(workflow)
     }
 
     public void jobDefinitionWFStrategy(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         //workflow strategy plugin config and validation
+        def workflow = scheduledExecution.getWorkflowData()
+        if (!workflow) return
+
         if(input){
-            scheduledExecution.workflow.setPluginConfigData(
+            def inputWorkflow = input.getWorkflowData()
+            workflow.setPluginConfigData(
                     ServiceNameConstants.WorkflowStrategy,
-                    input.workflow.strategy,
-                    input.workflow.getPluginConfigData(
+                    inputWorkflow.strategy,
+                    inputWorkflow.getPluginConfigData(
                         ServiceNameConstants.WorkflowStrategy,
-                        input.workflow.strategy
+                        inputWorkflow.strategy
                     )
             )
         } else if (params.jobWorkflowJson) {
             def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
             if (jobWorkflowData instanceof JSONObject && jobWorkflowData.has('strategy')) {
-                scheduledExecution.workflow.strategy = jobWorkflowData.get('strategy')
+                workflow.strategy = jobWorkflowData.get('strategy')
             }
             if(jobWorkflowData instanceof JSONObject && jobWorkflowData.has("pluginConfig")) {
-                scheduledExecution.workflow.setPluginConfigData(
+                workflow.setPluginConfigData(
                     ServiceNameConstants.WorkflowStrategy,
                     jobWorkflowData.get("pluginConfig").has("WorkflowStrategy") ? jobWorkflowData.get("pluginConfig").get(
                         "WorkflowStrategy"
@@ -3416,28 +3437,32 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
             }
         } else if (params.workflow instanceof Map) {
-            Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+            Map configmap = params.workflow?.strategyPlugin?.get(workflow.strategy)?.config
 
-            scheduledExecution.workflow.setPluginConfigData(
+            workflow.setPluginConfigData(
                     ServiceNameConstants.WorkflowStrategy,
-                    scheduledExecution.workflow.strategy,
+                    workflow.strategy,
                     configmap
             )
 
         } else if (params.workflow instanceof Workflow) {
-            scheduledExecution.workflow.pluginConfigMap = params.workflow.pluginConfigMap
+            workflow.pluginConfigMap = params.workflow.pluginConfigMap
 
         }
 
-        if(!scheduledExecution.workflow.validatePluginConfigMap()){
-            throw new RuntimeException("Invalid workflow plugin config: " + scheduledExecution.workflow.pluginConfig )
+        if(!workflow.validatePluginConfigMap()){
+            throw new RuntimeException("Invalid workflow plugin config: " + workflow.pluginConfigMap() )
         }
+
+        // Save modified workflow back
+        scheduledExecution.setWorkflowData(workflow)
     }
 
     public void jobDefinitionWorkflow(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         if(input){
-            final Workflow workflow = new Workflow(input.workflow)
-            scheduledExecution.workflow = workflow
+            def inputWorkflow = input.getWorkflowData()
+            final Workflow workflow = new Workflow(inputWorkflow)
+            scheduledExecution.setWorkflowData(workflow)
         } else if (params['_sessionwf'] == 'true' && params['_sessionEditWFObject']) {
             //use session-stored workflow
             def Workflow wf = params['_sessionEditWFObject']
@@ -3451,32 +3476,34 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             if (wf.commands) {
                 final Workflow workflow = new Workflow(wf)
-                scheduledExecution.workflow = workflow
+                scheduledExecution.setWorkflowData(workflow)
                 wf.discard()
             }
         } else if (params.jobWorkflowJson) {
             def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
 
             if(jobWorkflowData instanceof JSONObject) {
-                scheduledExecution.workflow = Workflow.fromMap(jobWorkflowData)
+                scheduledExecution.setWorkflowData(Workflow.fromMap(jobWorkflowData))
             }
         } else if (params.workflow && params.workflow instanceof Workflow) {
-            scheduledExecution.workflow = new Workflow(params.workflow)
+            scheduledExecution.setWorkflowData(new Workflow(params.workflow))
         }else if (params.workflow && params.workflow instanceof Map){
-            if (!scheduledExecution.workflow) {
-                scheduledExecution.workflow = new Workflow(params.workflow)
+            WorkflowData workflow = scheduledExecution.getWorkflowData()
+            if (!workflow) {
+                workflow = new Workflow(params.workflow)
             }
             if (params.workflow.strategy) {
-                scheduledExecution.workflow.strategy = params.workflow.strategy
-            } else if (!scheduledExecution.workflow.strategy) {
-                scheduledExecution.workflow.strategy = 'sequential'
+                workflow.strategy = params.workflow.strategy
+            } else if (!workflow.strategy) {
+                workflow.strategy = 'sequential'
             }
             if (null != params.workflow.keepgoing) {
-                scheduledExecution.workflow.keepgoing = params.workflow.keepgoing == 'true'
+                workflow.keepgoing = params.workflow.keepgoing == 'true'
             }
+            scheduledExecution.setWorkflowData(workflow)
         }
-        if(!scheduledExecution.workflow){
-            scheduledExecution.workflow = new Workflow()
+        if(!scheduledExecution.getWorkflowData()){
+            scheduledExecution.setWorkflowData(new Workflow())
         }
     }
 
@@ -3687,12 +3714,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
 
 
-        if (!failed && null != scheduledExecution.workflow) {
-            if (!scheduledExecution.workflow.save(flush: true)) {
-                log.error(scheduledExecution.workflow.errors.allErrors.collect {lookupMessageError(it)}.join("\n"))
-                failed = true
-            }
-        }
+        // Workflow is now stored as JSON within ScheduledExecution, no separate save needed
+        // Workflow validation happens during ScheduledExecution save
 
         //set UUID if not submitted
 
@@ -3795,12 +3818,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}",
                     unauthorized: true, scheduledExecution: scheduledExecution]
         }
-        if (!failed && null != scheduledExecution.workflow) {
-            if (!scheduledExecution.workflow.save(flush: true)) {
-                log.error(scheduledExecution.workflow.errors.allErrors.collect {lookupMessageError(it)}.join("\n"))
-                failed = true
-            }
-        }
+        // Workflow is now stored as JSON within ScheduledExecution, no separate save needed
+        // Workflow validation happens during ScheduledExecution save
 
         //set UUID if not submitted
         if (!scheduledExecution.uuid) {
@@ -3925,13 +3944,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
 
 //    @CompileStatic
-    boolean validateWorkflow(Workflow workflow, ScheduledExecution scheduledExecution){
+    boolean validateWorkflow(WorkflowData workflow, ScheduledExecution scheduledExecution){
         def valid=true
         //validate error handler types
         if (workflow?.strategy == 'node-first') {
             //if a step is a Node step and has an error handler
             def cmdi = 1
-            workflow.commands.each { WorkflowStep step ->
+            workflow.getSteps().each { WorkflowStepData step ->
                 if(step.errorHandler && step.nodeStep && !step.errorHandler.nodeStep){
                     //reject if the Error Handler is not a node step
                     step.errors.rejectValue('errorHandler', 'WorkflowStep.errorHandler.nodeStep.invalid', [cmdi] as Object[], "Step {0}: Must have a Node Step as an Error Handler")
@@ -3989,7 +4008,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     {
 
         def service = frameworkService.rundeckFramework.workflowStrategyService
-        def workflow = new Workflow(scheduledExecution.workflow)
+        def workflowData = scheduledExecution.getWorkflowData()
+        if (!workflowData) return null
+        def workflow = new Workflow(workflowData)
         workflow.discard()
         if (!workflow.commands || workflow.commands.size() < 1) {
             return null
@@ -4030,7 +4051,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             Map validationMap,
             Validator.Report report
     ) {
-        def name=scheduledExecution.workflow.strategy
+        def workflowData = scheduledExecution.getWorkflowData()
+        def name = workflowData?.strategy
         if (params !=null) {
             if (!params['strategyValidation']) {
                 params['strategyValidation'] = [:]
@@ -4055,7 +4077,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                                                "Workflow strategy {0}: Some config values were not valid"
         )
 
-        scheduledExecution.workflow.errors.rejectValue(
+        (workflowData as WorkflowDataImpl).errors.rejectValue(
                 'strategy',
                 'scheduledExecution.workflowStrategy.invalidPlugin.message',
                 [name] as Object[],

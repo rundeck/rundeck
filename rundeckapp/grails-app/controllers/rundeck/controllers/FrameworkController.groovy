@@ -80,6 +80,7 @@ import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.PasswordFieldsService
@@ -289,8 +290,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return
             }
 
-            if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
-                def cmd = e.workflow.commands[0]
+            def execWorkflowData = e?.getWorkflowData()
+            if (e && !e.scheduledExecution && execWorkflowData?.commands?.size() == 1) {
+                def cmd = execWorkflowData.commands[0]
                 if (cmd.adhocRemoteString) {
                     runCommand = cmd.adhocRemoteString
                     //configure node filters

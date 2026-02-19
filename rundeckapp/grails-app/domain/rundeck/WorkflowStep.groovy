@@ -97,5 +97,19 @@ abstract class WorkflowStep implements WorkflowStepData {
 
     abstract WorkflowStep createClone()
 
-    abstract Map toMap()
+    Map toMap() {
+        def map = [:]
+        if (description) {
+            map.description = description
+        }
+        if (errorHandler) {
+            map.errorhandler = errorHandler.toMap()
+        } else if (keepgoingOnSuccess != null) {
+            map.keepgoingOnSuccess = keepgoingOnSuccess
+        }
+        if (pluginConfig) {
+            map.plugins = pluginConfig
+        }
+        return map
+    }
 }

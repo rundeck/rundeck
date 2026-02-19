@@ -785,7 +785,8 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
             [AuthConstants.ACTION_READ],
             scheduledExecution.project
         )
-        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,readAuth,maxDepth)
+        def workflowData = scheduledExecution.getWorkflowData()
+        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,workflowData,readAuth,maxDepth)
         def controller = this
         withFormat {
             '*' {
@@ -2428,7 +2429,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         //set session new workflow
-        WorkflowController.getSessionWorkflow(session,null,new Workflow(scheduledExecution.workflow))
+        def origWorkflowData = scheduledExecution.getWorkflowData()
+        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? new Workflow(origWorkflowData) : new Workflow())
         if(scheduledExecution.options){
             def editopts = [:]
 
@@ -2483,7 +2485,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
         def props=[:]
         props.putAll(execution.properties)
-        props.workflow=new Workflow(execution.workflow)
+        def execWorkflowData = execution.getWorkflowData()
+        props.workflow=execWorkflowData ? new Workflow(execWorkflowData) : new Workflow()
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
             props = props.findAll{!(it.key=~/^node(In|Ex)clude.*$/)}
@@ -2718,7 +2721,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
-        params.workflow=new Workflow(scheduledExecution.workflow)
+        def jobWorkflowData = scheduledExecution.getWorkflowData()
+        params.workflow=jobWorkflowData ? new Workflow(jobWorkflowData) : new Workflow()
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch
         params.filter=scheduledExecution.asFilter()
