@@ -1,5 +1,6 @@
 <template>
   <Button
+    data-testid="pt-button"
     :label="label"
     :icon="icon"
     :icon-pos="iconPos"

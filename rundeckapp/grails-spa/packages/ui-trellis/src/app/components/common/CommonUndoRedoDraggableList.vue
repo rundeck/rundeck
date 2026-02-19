@@ -4,7 +4,7 @@
       <div v-if="loading">
         <slot name="loading">
           <div class="loader">
-            <i class="fas fa-spinner fa-spin loading-spinner text-muted" />
+            <i class="fas fa-spinner fa-spin loading-spinner text-muted" data-testid="loading-spinner" />
             {{ $t("loading.text") }}
           </div>
         </slot>
@@ -13,6 +13,7 @@
         v-else
         class="list-container"
         :class="{ 'ea-mode': conditionalEnabled }"
+        data-testid="list-container"
       >
         <undo-redo
           :class="{ right: conditionalEnabled }"
@@ -33,7 +34,7 @@
             @update="dragUpdated"
           >
             <template #item="{ element, index }">
-              <div class="item-container">
+              <div class="item-container" data-testid="item-container">
                 <slot name="item" :item="{ element, index }" />
               </div>
             </template>

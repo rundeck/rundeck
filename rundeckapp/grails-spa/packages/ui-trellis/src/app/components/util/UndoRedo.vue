@@ -4,7 +4,7 @@
       :class="{ disabled: !hasUndo }"
       @click="doUndo"
       size="xs"
-      data-test="undo-btn"
+      data-testid="undo-btn"
     >
       <i class="glyphicon glyphicon-step-backward"></i>
       {{ $t("util.undoredo.undo") }}
@@ -13,7 +13,7 @@
       :class="{ disabled: !hasRedo }"
       @click="doRedo"
       size="xs"
-      data-test="redo-btn"
+      data-testid="redo-btn"
     >
       {{ $t("util.undoredo.redo") }}
       <i class="glyphicon glyphicon-step-forward"></i>
@@ -24,7 +24,7 @@
       class="btn-muted"
       v-if="revertAllEnabled && hasUndo"
       @click="doRevertAll"
-      data-test="revertAll-btn"
+      data-testid="revertAll-btn"
     >
       <i class="glyphicon glyphicon-fast-backward"></i>
       {{ $t("util.undoredo.revertAll") }}

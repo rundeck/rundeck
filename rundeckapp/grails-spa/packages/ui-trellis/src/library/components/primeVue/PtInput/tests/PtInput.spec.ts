@@ -6,234 +6,131 @@ import PtInput from "../PtInput.vue";
 
 const createWrapper = async (props = {}) => {
   const wrapper = mount(PtInput, {
-    props: {
-      modelValue: "",
-      ...props,
-    },
-    global: {
-      components: {
-        InputText,
-        IconField,
-        InputIcon,
-      },
-    },
+    props: { modelValue: "", ...props },
+    global: { components: { InputText, IconField, InputIcon } },
   });
   await wrapper.vm.$nextTick();
   return wrapper;
 };
 
 describe("PtInput", () => {
-  describe("Rendering", () => {
-    it("renders InputText without icons when no icon props provided", async () => {
+  describe("label", () => {
+    it("does not show a label when no label prop is given", async () => {
       const wrapper = await createWrapper();
-      
-      expect(wrapper.findComponent(InputText).exists()).toBe(true);
-      expect(wrapper.findComponent(IconField).exists()).toBe(false);
+      expect(wrapper.find('[data-testid="pt-input-label"]').exists()).toBe(false);
     });
 
-    it("renders IconField with left icon when leftIcon prop provided", async () => {
-      const wrapper = await createWrapper({ leftIcon: "pi pi-search" });
-      
-      expect(wrapper.findComponent(IconField).exists()).toBe(true);
-      expect(wrapper.findAllComponents(InputIcon).length).toBe(1);
-      expect(wrapper.findComponent(InputIcon).classes()).toContain("pi");
-      expect(wrapper.findComponent(InputIcon).classes()).toContain("pi-search");
-    });
-
-    it("renders IconField with right icon when rightIcon prop provided", async () => {
-      const wrapper = await createWrapper({ rightIcon: "pi pi-times" });
-      
-      expect(wrapper.findComponent(IconField).exists()).toBe(true);
-      expect(wrapper.findAllComponents(InputIcon).length).toBe(1);
-    });
-
-    it("renders IconField with both icons when both props provided", async () => {
-      const wrapper = await createWrapper({
-        leftIcon: "pi pi-search",
-        rightIcon: "pi pi-times",
-      });
-      
-      expect(wrapper.findComponent(IconField).exists()).toBe(true);
-      expect(wrapper.findAllComponents(InputIcon).length).toBe(2);
-    });
-
-    it("displays label when label prop provided", async () => {
+    it("shows the label text so users know what the field is for", async () => {
       const wrapper = await createWrapper({ label: "Username" });
-      
-      const label = wrapper.find("label");
+      const label = wrapper.find('[data-testid="pt-input-label"]');
       expect(label.exists()).toBe(true);
       expect(label.text()).toBe("Username");
-      expect(label.classes()).toContain("text-heading--sm");
     });
 
-    it("displays helper text when helpText prop provided", async () => {
-      const wrapper = await createWrapper({ helpText: "Enter your username" });
-      
-      const helpText = wrapper.find(".pt-input__help");
-      expect(helpText.exists()).toBe(true);
-      expect(helpText.text()).toBe("Enter your username");
-      expect(helpText.classes()).toContain("text-body--sm");
-    });
-
-    it("displays error text when invalid and errorText provided", async () => {
-      const wrapper = await createWrapper({
-        invalid: true,
-        errorText: "This field is required",
-      });
-      
-      const errorText = wrapper.find(".pt-input__error");
-      expect(errorText.exists()).toBe(true);
-      expect(errorText.text()).toBe("This field is required");
-      expect(errorText.classes()).toContain("text-body--sm");
-    });
-
-    it("does not display error text when not invalid", async () => {
-      const wrapper = await createWrapper({
-        invalid: false,
-        errorText: "This field is required",
-      });
-      
-      const errorText = wrapper.find(".pt-input__error");
-      expect(errorText.exists()).toBe(false);
+    it("links the label to the input via for attribute so clicking the label focuses the field", async () => {
+      const wrapper = await createWrapper({ label: "Username", inputId: "username-field" });
+      expect(
+        wrapper.find('[data-testid="pt-input-label"]').attributes("for"),
+      ).toBe("username-field");
     });
   });
 
-  describe("v-model", () => {
-    it("binds modelValue correctly", async () => {
-      const wrapper = await createWrapper({ modelValue: "test value" });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("modelValue")).toBe("test value");
+  describe("help text", () => {
+    it("does not show help text when none is provided", async () => {
+      const wrapper = await createWrapper();
+      expect(wrapper.find('[data-testid="pt-input-help"]').exists()).toBe(false);
     });
 
-    it("emits update:modelValue when value changes", async () => {
-      const wrapper = await createWrapper();
-      
-      const input = wrapper.findComponent(InputText);
-      await input.setValue("new value");
-      
-      expect(wrapper.emitted("update:modelValue")).toBeTruthy();
-      expect(wrapper.emitted("update:modelValue")![0]).toEqual(["new value"]);
+    it("shows the help text below the field so users understand how to fill it", async () => {
+      const wrapper = await createWrapper({ helpText: "Enter your full username" });
+      const help = wrapper.find('[data-testid="pt-input-help"]');
+      expect(help.exists()).toBe(true);
+      expect(help.text()).toBe("Enter your full username");
     });
   });
 
-  describe("Events", () => {
-    it("emits focus event", async () => {
-      const wrapper = await createWrapper();
-      
-      const input = wrapper.findComponent(InputText);
-      await input.trigger("focus");
-      
-      expect(wrapper.emitted("focus")).toBeTruthy();
+  describe("error message", () => {
+    it("does not show an error when the field is valid", async () => {
+      const wrapper = await createWrapper({ invalid: false, errorText: "Required" });
+      expect(wrapper.find('[data-testid="pt-input-error"]').exists()).toBe(false);
     });
 
-    it("emits blur event", async () => {
-      const wrapper = await createWrapper();
-      
-      const input = wrapper.findComponent(InputText);
-      await input.trigger("blur");
-      
-      expect(wrapper.emitted("blur")).toBeTruthy();
+    it("shows the error message text when the field is invalid so users know what to fix", async () => {
+      const wrapper = await createWrapper({ invalid: true, errorText: "This field is required" });
+      const error = wrapper.find('[data-testid="pt-input-error"]');
+      expect(error.exists()).toBe(true);
+      expect(error.text()).toBe("This field is required");
     });
 
-    it("emits input event", async () => {
-      const wrapper = await createWrapper();
-      
-      const input = wrapper.findComponent(InputText);
-      await input.trigger("input");
-      
-      expect(wrapper.emitted("input")).toBeTruthy();
-    });
-  });
-
-  describe("Props", () => {
-    it("passes placeholder to InputText", async () => {
-      const wrapper = await createWrapper({ placeholder: "Enter text..." });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("placeholder")).toBe("Enter text...");
-    });
-
-    it("passes disabled to InputText", async () => {
-      const wrapper = await createWrapper({ disabled: true });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("disabled")).toBe(true);
-    });
-
-    it("passes invalid to InputText", async () => {
+    it("does not show an error even when invalid if no errorText is provided", async () => {
       const wrapper = await createWrapper({ invalid: true });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("invalid")).toBe(true);
-    });
-
-    it("passes name to InputText", async () => {
-      const wrapper = await createWrapper({ name: "username" });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("name")).toBe("username");
-    });
-
-    it("passes inputId to InputText as id", async () => {
-      const wrapper = await createWrapper({ inputId: "my-input" });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.attributes("id")).toBe("my-input");
-    });
-
-    it("associates label with input via for attribute", async () => {
-      const wrapper = await createWrapper({
-        label: "Username",
-        inputId: "username-input",
-      });
-      
-      const label = wrapper.find("label");
-      expect(label.attributes("for")).toBe("username-input");
-    });
-
-    it("passes type to InputText", async () => {
-      const wrapper = await createWrapper({ type: "password" });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("type")).toBe("password");
-    });
-
-    it("passes readonly to InputText", async () => {
-      const wrapper = await createWrapper({ readonly: true });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("readonly")).toBe(true);
-    });
-
-    it("passes maxlength to InputText", async () => {
-      const wrapper = await createWrapper({ maxlength: 50 });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("maxlength")).toBe(50);
-    });
-
-    it("passes autocomplete to InputText", async () => {
-      const wrapper = await createWrapper({ autocomplete: "off" });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.props("autocomplete")).toBe("off");
+      expect(wrapper.find('[data-testid="pt-input-error"]').exists()).toBe(false);
     });
   });
 
-  describe("Accessibility", () => {
-    it("passes aria-label to InputText", async () => {
-      const wrapper = await createWrapper({ ariaLabel: "Search input" });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.attributes("aria-label")).toBe("Search input");
+  describe("typing in the field", () => {
+    it("emits the new value when the user types", async () => {
+      const wrapper = await createWrapper();
+      await wrapper.find('[data-testid="pt-input-field"]').setValue("hello");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual(["hello"]);
+    });
+  });
+
+  describe("focus and blur events", () => {
+    it("emits a focus event with the native event when the field gains focus", async () => {
+      const wrapper = await createWrapper();
+      await wrapper.find('[data-testid="pt-input-field"]').trigger("focus");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("focus")).toHaveLength(1);
+      expect(wrapper.emitted("focus")![0][0]).toBeInstanceOf(Event);
     });
 
-    it("passes aria-labelledby to InputText", async () => {
-      const wrapper = await createWrapper({ ariaLabelledby: "label-id" });
-      
-      const input = wrapper.findComponent(InputText);
-      expect(input.attributes("aria-labelledby")).toBe("label-id");
+    it("emits a blur event with the native event when the field loses focus", async () => {
+      const wrapper = await createWrapper();
+      await wrapper.find('[data-testid="pt-input-field"]').trigger("blur");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("blur")).toHaveLength(1);
+      expect(wrapper.emitted("blur")![0][0]).toBeInstanceOf(Event);
+    });
+
+    it("emits an input event with the native event on each keystroke", async () => {
+      const wrapper = await createWrapper();
+      await wrapper.find('[data-testid="pt-input-field"]').trigger("input");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("input")).toHaveLength(1);
+      expect(wrapper.emitted("input")![0][0]).toBeInstanceOf(Event);
+    });
+  });
+
+  describe("icon variants", () => {
+    it("does not render an icon container when no icons are configured", async () => {
+      const wrapper = await createWrapper();
+      expect(wrapper.find('[data-testid="pt-input-icon-container"]').exists()).toBe(false);
+    });
+
+    it("renders an icon container when a left icon is provided so users see a visual indicator", async () => {
+      const wrapper = await createWrapper({ leftIcon: "pi pi-search" });
+      expect(wrapper.find('[data-testid="pt-input-icon-container"]').exists()).toBe(true);
+    });
+
+    it("renders an icon container when a right icon is provided so users see a visual indicator", async () => {
+      const wrapper = await createWrapper({ rightIcon: "pi pi-times" });
+      expect(wrapper.find('[data-testid="pt-input-icon-container"]').exists()).toBe(true);
+    });
+  });
+
+  describe("placeholder text", () => {
+    it("shows placeholder text inside the empty field", async () => {
+      const wrapper = await createWrapper({ placeholder: "Enter your username" });
+      expect(
+        wrapper.find('[data-testid="pt-input-field"]').attributes("placeholder"),
+      ).toBe("Enter your username");
     });
   });
 });

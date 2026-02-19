@@ -2,7 +2,7 @@
   <div class="conditional">
     <template v-if="conditionSet && conditionSet.length > 0">
       <template v-for="(conditionSet, setIndex) in conditionSet" :key="conditionSet.id">
-        <p v-if="setIndex === 0" class="conditional--if">
+        <p v-if="setIndex === 0" class="conditional--if" data-testid="conditional-if-statement">
           {{ $t("editConditionalStep.if") || "If" }}
           <template v-for="(condition, condIndex) in conditionSet.conditions" :key="condition.id">
             <Tag v-if="condition.field" class="tag-code" :value="condition.field" />
@@ -13,8 +13,8 @@
         </p>
       </template>
     </template>
-    <div v-if="!headerOnly" class="conditional--do">
-      <div v-if="complex && conditionSet && conditionSet.length > 1" class="conditional--complex">
+    <div v-if="!headerOnly" class="conditional--do" data-testid="conditional-do-section">
+      <div v-if="complex && conditionSet && conditionSet.length > 1" class="conditional--complex" data-testid="conditional-complex-section">
         <template v-for="(conditionSet, setIndex) in conditionSet" :key="conditionSet.id">
           <template v-if="setIndex > 0">
             <p class="conditional--or">

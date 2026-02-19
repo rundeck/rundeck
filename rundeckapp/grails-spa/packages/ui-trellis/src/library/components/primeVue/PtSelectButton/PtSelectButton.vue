@@ -1,5 +1,6 @@
 <template>
   <SelectButton
+    data-testid="pt-select-button"
     :model-value="modelValue"
     :options="options"
     :option-label="optionLabel"

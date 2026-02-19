@@ -10,7 +10,7 @@
                 alt="Condition"
                 class="condition-icon"
               />
-              <h2 class="text-heading--lg card-title">{{ cardTitle }}</h2>
+              <h2 class="text-heading--lg card-title" data-testid="card-title">{{ cardTitle }}</h2>
             </div>
             <p class="text-body text-body--secondary card-description">
               {{ cardDescription }}
@@ -21,6 +21,7 @@
             severity="secondary"
             icon="pi pi-times"
             class="close-button"
+            data-testid="close-btn"
             @click="handleCancel"
           />
         </div>
@@ -34,6 +35,7 @@
             v-model="stepName"
             :placeholder="$t('editConditionalStep.stepNamePlaceholder')"
             class="step-name-input"
+            data-testid="step-name-input"
           />
         </div>
 
@@ -77,6 +79,7 @@
             severity="secondary"
             :label="$t('editConditionalStep.cancel')"
             class="btn-cancel"
+            data-testid="cancel-btn"
             @click="handleCancel"
           />
           <PtButton
@@ -84,6 +87,7 @@
             outlined
             :label="$t('editConditionalStep.saveStep')"
             class="btn-save"
+            data-testid="save-btn"
             :disabled="isSaveDisabled"
             @click="handleSave"
           />

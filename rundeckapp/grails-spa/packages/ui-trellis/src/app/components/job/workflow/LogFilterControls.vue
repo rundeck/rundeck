@@ -1,11 +1,12 @@
 <template>
-  <btn v-if="showButton" size="sm" @click="addFilter">
+  <btn v-if="showButton" size="sm" data-testid="add-filter-button" @click="addFilter">
     <i class="glyphicon glyphicon-plus"></i>
     {{ $t("message_add") }}
   </btn>
   <Teleport to="body">
     <choose-plugin-modal
       v-if="addFilterModal"
+      data-testid="add-filter-modal"
       v-model="addFilterModal"
       :title="addFilterTitle"
       :services="[ServiceType.LogFilter]"
@@ -16,6 +17,7 @@
   </Teleport>
   <Teleport to="body">
     <edit-plugin-modal
+      data-testid="edit-filter-modal"
       v-model:modal-active="editFilterModal"
       v-model="model"
       :validation="editModelValidation"

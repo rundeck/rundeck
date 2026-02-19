@@ -12,7 +12,7 @@
     @toggle="contentExpanded = !contentExpanded"
   >
     <template #content>
-      <div v-if="isJobRef" class="jobref-form-content">
+      <div v-if="isJobRef" class="jobref-form-content" data-testid="jobref-form-content">
         <div class="step-name-section">
           <div class="form-group">
             <label
@@ -130,7 +130,7 @@
         />
       </div>
 
-      <div v-else-if="loading" class="loading-container">
+      <div v-else-if="loading" class="loading-container" data-testid="loading-container">
         <i class="fas fa-spinner fa-spin"></i>
         <span>{{ $t("loading.text") }}</span>
       </div>

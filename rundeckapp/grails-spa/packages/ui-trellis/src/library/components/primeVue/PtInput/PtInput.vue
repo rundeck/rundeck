@@ -4,15 +4,16 @@
       v-if="label"
       :for="inputId"
       class="text-heading--sm pt-form-label"
+      data-testid="pt-input-label"
     >
       {{ label }}
     </label>
 
-    <p v-if="helpText" class="text-body--sm pt-input__help">
+    <p v-if="helpText" class="text-body--sm pt-input__help" data-testid="pt-input-help">
       {{ helpText }}
     </p>
 
-    <IconField v-if="leftIcon || rightIcon" class="pt-input__field">
+    <IconField v-if="leftIcon || rightIcon" class="pt-input__field" data-testid="pt-input-icon-container">
       <InputIcon v-if="leftIcon" :class="leftIcon" />
       <InputText
         :id="inputId"
@@ -38,6 +39,7 @@
       v-else
       :id="inputId"
       v-model="internalValue"
+      data-testid="pt-input-field"
       class="pt-input__field"
       :placeholder="placeholder"
       :disabled="disabled"
@@ -54,7 +56,7 @@
       @input="onInput"
     />
 
-    <p v-if="invalid && errorText" class="text-body--sm pt-input__error">
+    <p v-if="invalid && errorText" class="text-body--sm pt-input__error" data-testid="pt-input-error">
       {{ errorText }}
     </p>
   </div>

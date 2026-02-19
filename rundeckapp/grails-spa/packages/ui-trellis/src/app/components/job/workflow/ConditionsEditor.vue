@@ -1,12 +1,12 @@
 <template>
-  <div class="conditions-editor">
+  <div class="conditions-editor" data-testid="conditions-editor">
     <div class="condition-section">
       <div
         v-for="(conditionSet, setIndex) in conditionSet"
         :key="conditionSet.id"
         class="condition-set-container"
       >
-        <div v-if="setIndex > 0" class="or-separator">
+        <div v-if="setIndex > 0" class="or-separator" data-testid="or-separator">
           <span class="or-label">{{ $t("editConditionalStep.or") }}</span>
         </div>
 
@@ -18,7 +18,7 @@
           <div class="conditions-list">
             <div class="conditions-connector" :class="{ 'has-multiple': conditionSet.conditions.length > 1 }">
               <template v-for="(condition, condIndex) in conditionSet.conditions" :key="condition.id">
-                <div v-if="condIndex > 0" class="and-separator">
+                <div v-if="condIndex > 0" class="and-separator" data-testid="and-separator">
                   <span class="and-label">{{ $t("editConditionalStep.and") }}</span>
                 </div>
                 <ConditionRow
@@ -42,7 +42,7 @@
           </div>
 
           <div v-if="canAddCondition(setIndex)" class="condition-actions" :class="{ 'has-multiple': conditionSet.conditions.length > 1 }">
-            <button type="button" class="btn-add-link" @click="addCondition(setIndex)">
+            <button type="button" class="btn-add-link" :data-testid="'add-condition-btn-' + setIndex" @click="addCondition(setIndex)">
               <i class="pi pi-plus"></i>
               <span>{{ $t("editConditionalStep.add") }}</span>
             </button>
@@ -57,6 +57,7 @@
           icon="pi pi-plus"
           :label="addConditionSetLabel"
           class="btn-add-condition-set"
+          data-testid="add-condition-set-btn"
           @click="addConditionSet"
         />
       </div>

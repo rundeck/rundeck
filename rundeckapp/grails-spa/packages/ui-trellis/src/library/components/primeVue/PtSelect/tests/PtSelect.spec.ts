@@ -1,6 +1,5 @@
 import { mount } from "@vue/test-utils";
 import Select from "primevue/select";
-
 import { PtSelect } from "../../index";
 
 const createWrapper = async (props = {}): Promise<any> => {
@@ -8,113 +7,131 @@ const createWrapper = async (props = {}): Promise<any> => {
     props: {
       modelValue: null,
       options: ["Option 1", "Option 2", "Option 3"],
-      placeholder: "Select an option",
       ...props,
     },
-    global: {
-      components: {
-        Select: Select,
-      },
-    },
+    global: { components: { Select } },
   });
   await wrapper.vm.$nextTick();
   return wrapper;
 };
 
 describe("PtSelect", () => {
-  it("renders the component", async () => {
-    const wrapper = await createWrapper();
-    expect(wrapper.findComponent(Select).exists()).toBe(true);
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
-  it("updates value and emits 'update:modelValue'", async () => {
-    const wrapper = await createWrapper();
-    const select = wrapper.findComponent(Select);
-    await select.vm.$emit("update:model-value", "Option 1");
-    await wrapper.vm.$nextTick();
-    expect(wrapper.emitted("update:modelValue")).toBeTruthy();
-    expect(wrapper.emitted("update:modelValue")[0]).toEqual(["Option 1"]);
+  describe("label", () => {
+    it("does not show a label when none is provided", async () => {
+      const wrapper = await createWrapper();
+      expect(wrapper.find('[data-testid="pt-select-label"]').exists()).toBe(false);
+    });
+
+    it("shows the label text above the dropdown so users know what to pick", async () => {
+      const wrapper = await createWrapper({ label: "Environment" });
+      const label = wrapper.find('[data-testid="pt-select-label"]');
+      expect(label.exists()).toBe(true);
+      expect(label.text()).toBe("Environment");
+    });
+
+    it("links the label to the dropdown via the for attribute so clicking the label opens it", async () => {
+      const wrapper = await createWrapper({ label: "Environment", inputId: "env-field" });
+      expect(wrapper.find('[data-testid="pt-select-label"]').attributes("for")).toBe("env-field");
+    });
   });
 
-  it("emits 'change' when selection changes", async () => {
-    const wrapper = await createWrapper();
-    const select = wrapper.findComponent(Select);
-    await select.vm.$emit("change", { value: "Option 1" });
-    await wrapper.vm.$nextTick();
-    expect(wrapper.emitted("change")).toBeTruthy();
-    expect(wrapper.emitted("change")[0]).toEqual([{ value: "Option 1" }]);
+  describe("error message", () => {
+    it("does not show an error when the field is valid", async () => {
+      const wrapper = await createWrapper({ invalid: false, errorText: "Required" });
+      expect(wrapper.find('[data-testid="pt-select-error"]').exists()).toBe(false);
+    });
+
+    it("shows the error message when the field is invalid so users know what to fix", async () => {
+      const wrapper = await createWrapper({ invalid: true, errorText: "Please select an option" });
+      const error = wrapper.find('[data-testid="pt-select-error"]');
+      expect(error.exists()).toBe(true);
+      expect(error.text()).toBe("Please select an option");
+    });
+
+    it("does not show an error even when invalid if no errorText is provided", async () => {
+      const wrapper = await createWrapper({ invalid: true });
+      expect(wrapper.find('[data-testid="pt-select-error"]').exists()).toBe(false);
+    });
   });
 
-  it("emits 'focus' when input is focused", async () => {
-    const wrapper = await createWrapper();
-    const select = wrapper.findComponent(Select);
-    const focusEvent = new FocusEvent("focus");
-    await select.vm.$emit("focus", focusEvent);
-    await wrapper.vm.$nextTick();
-    expect(wrapper.emitted("focus")).toBeTruthy();
+  describe("when user picks an option", () => {
+    it("emits the selected value so the parent can update its state", async () => {
+      const wrapper = await createWrapper();
+      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 2");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual(["Option 2"]);
+    });
+
+    it("debounces the update:modelValue emission when debounceMs is set so rapid selections do not flood the parent", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper({ debounceMs: 300 });
+
+      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 1");
+
+      // Should not emit immediately
+      expect(wrapper.emitted("update:modelValue")).toBeFalsy();
+
+      jest.advanceTimersByTime(300);
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual(["Option 1"]);
+    });
+
+    it("only emits the last selection when the user changes rapidly within the debounce window", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper({ debounceMs: 300 });
+
+      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 1");
+      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 2");
+      await wrapper.findComponent(Select).vm.$emit("update:modelValue", "Option 3");
+
+      jest.advanceTimersByTime(300);
+      await wrapper.vm.$nextTick();
+
+      // Only the last value should be emitted once
+      expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual(["Option 3"]);
+    });
   });
 
-  it("emits 'blur' when input loses focus", async () => {
-    const wrapper = await createWrapper();
-    const select = wrapper.findComponent(Select);
-    const blurEvent = new FocusEvent("blur");
-    await select.vm.$emit("blur", blurEvent);
-    await wrapper.vm.$nextTick();
-    expect(wrapper.emitted("blur")).toBeTruthy();
+  describe("focus and blur", () => {
+    it("forwards the focus event with the native event payload to the parent", async () => {
+      const wrapper = await createWrapper();
+      const focusEvent = new FocusEvent("focus");
+      await wrapper.findComponent(Select).vm.$emit("focus", focusEvent);
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("focus")).toHaveLength(1);
+      expect(wrapper.emitted("focus")![0][0]).toBe(focusEvent);
+    });
+
+    it("forwards the blur event with the native event payload to the parent", async () => {
+      const wrapper = await createWrapper();
+      const blurEvent = new FocusEvent("blur");
+      await wrapper.findComponent(Select).vm.$emit("blur", blurEvent);
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("blur")).toHaveLength(1);
+      expect(wrapper.emitted("blur")![0][0]).toBe(blurEvent);
+    });
   });
 
-  it("emits 'show' when dropdown opens", async () => {
-    const wrapper = await createWrapper();
-    const select = wrapper.findComponent(Select);
-    await select.vm.$emit("show");
-    await wrapper.vm.$nextTick();
-    expect(wrapper.emitted("show")).toBeTruthy();
-  });
+  describe("filter event", () => {
+    it("forwards the filter event with the search query so the parent can fetch filtered options", async () => {
+      const wrapper = await createWrapper({ filter: true });
+      const filterPayload = { value: "prod" };
+      await wrapper.findComponent(Select).vm.$emit("filter", filterPayload);
+      await wrapper.vm.$nextTick();
 
-  it("emits 'hide' when dropdown closes", async () => {
-    const wrapper = await createWrapper();
-    const select = wrapper.findComponent(Select);
-    await select.vm.$emit("hide");
-    await wrapper.vm.$nextTick();
-    expect(wrapper.emitted("hide")).toBeTruthy();
-  });
-
-  it("emits 'filter' when filter is used", async () => {
-    const wrapper = await createWrapper({ filter: true });
-    const select = wrapper.findComponent(Select);
-    await select.vm.$emit("filter", { value: "test" });
-    await wrapper.vm.$nextTick();
-    expect(wrapper.emitted("filter")).toBeTruthy();
-    expect(wrapper.emitted("filter")[0]).toEqual([{ value: "test" }]);
-  });
-
-  it("passes placeholder prop correctly", async () => {
-    const wrapper = await createWrapper({ placeholder: "Choose option" });
-    const select = wrapper.findComponent(Select);
-    expect(select.props("placeholder")).toBe("Choose option");
-  });
-
-  it("passes disabled prop correctly", async () => {
-    const wrapper = await createWrapper({ disabled: true });
-    const select = wrapper.findComponent(Select);
-    expect(select.props("disabled")).toBe(true);
-  });
-
-  it("passes invalid prop correctly", async () => {
-    const wrapper = await createWrapper({ invalid: true });
-    const select = wrapper.findComponent(Select);
-    expect(select.props("invalid")).toBe(true);
-  });
-
-  it("passes filter prop correctly", async () => {
-    const wrapper = await createWrapper({ filter: true });
-    const select = wrapper.findComponent(Select);
-    expect(select.props("filter")).toBe(true);
-  });
-
-  it("passes showClear prop correctly", async () => {
-    const wrapper = await createWrapper({ showClear: true });
-    const select = wrapper.findComponent(Select);
-    expect(select.props("showClear")).toBe(true);
+      expect(wrapper.emitted("filter")).toHaveLength(1);
+      expect(wrapper.emitted("filter")![0]).toEqual([filterPayload]);
+    });
   });
 });

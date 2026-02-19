@@ -4,6 +4,7 @@
       v-if="label"
       :for="inputId"
       class="text-heading--sm pt-form-label"
+      data-testid="pt-select-label"
     >
       {{ label }}
     </label>

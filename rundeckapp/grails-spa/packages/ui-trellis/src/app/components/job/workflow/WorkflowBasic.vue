@@ -1,9 +1,9 @@
 <template>
   <div :class="conditionalEnabled ? 'conditional-enabled' : ''">
-    <h2 v-if="conditionalEnabled" class="text-heading--lg">
+    <h2 v-if="conditionalEnabled" class="text-heading--lg" data-testid="execution-behavior-heading">
       {{ $t("Workflow.property.executionBehavior.label") }}
     </h2>
-    <div v-if="conditionalEnabled" class="workflow-section">
+    <div v-if="conditionalEnabled" class="workflow-section" data-testid="workflow-section">
       <h3 class="text-heading--md">
         {{ $t("Workflow.property.stepFailureBehavior.label") }}
       </h3>
@@ -11,7 +11,7 @@
         {{ $t("Workflow.property.keepgoing.prompt") }}
       </p>
     </div>
-    <div v-if="!conditionalEnabled">{{ $t("Workflow.property.keepgoing.prompt") }}</div>
+    <div v-if="!conditionalEnabled" data-testid="simple-prompt">{{ $t("Workflow.property.keepgoing.prompt") }}</div>
     <div :class="conditionalEnabled ? 'radio workflow-radio' : 'radio radio-inline'">
       <input
         id="workflowKeepGoingFail"
@@ -19,6 +19,7 @@
         type="radio"
         name="workflow_keepgoing"
         :value="false"
+        data-testid="keepgoing-false-radio"
       />
       <label for="workflowKeepGoingFail">
         {{ $t("Workflow.property.keepgoing.false.description") }}
@@ -31,6 +32,7 @@
         type="radio"
         name="workflow_keepgoing"
         :value="true"
+        data-testid="keepgoing-true-radio"
       />
       <label for="workflowKeepGoingRemainingSteps">
         {{ $t("Workflow.property.keepgoing.true.description") }}
