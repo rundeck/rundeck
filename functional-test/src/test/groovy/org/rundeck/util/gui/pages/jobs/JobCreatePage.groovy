@@ -23,7 +23,7 @@ class JobCreatePage extends BasePage {
     By selectNode = By.cssSelector(".glyphicon-circle-arrow-right")
     By lastNodeInList = By.cssSelector(".col-xs-6:nth-child(3) span:nth-child(2)")
     By refreshNodesBy = By.cssSelector(".refresh_nodes")
-    By numberOfStepsBy = By.cssSelector(".autohilite.autoedit.wfitem")
+    By numberOfStepsBy = By.cssSelector("[data-test='edit-step-item']")
     By notificationModalBy = By.cssSelector('#job-notifications-edit-modal')
     By notificationDropDownBy = By.cssSelector('#notification-edit-type-dropdown > button')
     By notificationSaveBy = By.id("job-notifications-edit-modal-btn-save")
@@ -44,24 +44,22 @@ class JobCreatePage extends BasePage {
     By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@value="killhandler"]//following-sibling::div[1]//div[2]//input[@type="checkbox"]')
     By multiExecFalseBy = By.cssSelector('input#multipleFalse')
     By multiExecTrueBy = By.cssSelector('input#multipleTrue')
-    By workFlowStrategyBy = By.xpath('//*[@id="workflow.strategy"]')
-    By deleteStepBy = By.xpath('//*[@title="Delete this step"]')
+    By workFlowStrategyBy = By.xpath('//select[contains(@name, \'workflow.strategy\')]')
+    By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
     By strategyPluginParallelBy = By.xpath('//*[@id="strategyPluginparallel"]')
-    By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span/span')
+    By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span')
     By strategyPluginSequentialBy = By.xpath('//*[@id="strategyPluginsequential"]')
     By strategyPluginSequentialMsgBy = By.xpath('//*[@id="strategyPluginsequential"]/span/span')
-    By adhocRemoteStringBy = By.name("pluginConfig.adhocRemoteString")
-    By floatBy = By.className("floatr")
+    By adhocRemoteStringBy = By.xpath('//*[@data-prop-name="adhocRemoteString"]//input[@type="text"]')
     By createJobBy = By.id("Create")
     By cancelBy = By.id('createFormCancelButton')
-    By optionBy = By.cssSelector("#optnewbutton > span")
+    By optionBy = By.cssSelector("#optnewbutton > button")
     By nodeStepSectionActiveBy = By.cssSelector(".node_step_section.tab-pane.active")
     By executionEnabledFalseBy = By.id("executionEnabledFalse")
     By executionEnabledTrueBy = By.id("executionEnabledTrue")
     By scheduleEnabledFalseBy = By.id("scheduleEnabledFalse")
     By scheduleEnabledTrueBy = By.id("scheduleEnabledTrue")
-    By workflowAlphaUiContainer = By.id("workflowContent") // TODO: delete once out of Alpha
-    By workflowContentControlLabelBy = By.xpath("//section[@id='workflowContent']//div[contains(@class, 'control-label')]")
+    By workflowAlphaUiContainer = By.cssSelector(".job-editor-workflow-vue")
     By workflowAlphaUiButton = By.id("addButton")
     By workflowSaveStepButton = By.xpath('//div[contains(@class, \'in\') and contains(@class, \'modal\')]//button[@data-testid="save-button"]')
 
@@ -72,26 +70,9 @@ class JobCreatePage extends BasePage {
         static By killHandlerPluginPreviousRow = By.xpath('//input[@value="killhandler"]/ancestor::div[@class="list-group-item"]/preceding-sibling::div[@class="list-group-item"][1]')
         static By killHandlerPluginCheckbox = By.xpath('//input[@value="killhandler"]')
         static By killHandlerPluginKillSpawnedCheckbox = By.xpath('//*[@data-prop-name="killChilds"]//input[@type="checkbox"]')
-        static By optionBy = By.cssSelector("#optnewbutton > button")
-        static By usageSectionBy = By.cssSelector("#option_preview")
-        static By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
-        static By optionOpenKeyStorageBy = By.cssSelector(".opt_sec_enabled div.input-group > .input-group-btn > button")
-        static By optionUndoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(1)")
-        static By optionRedoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(2)")
-        static By optionRevertAllBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(3)")
-        static By defaultValueInput=By.cssSelector("[data-test='option.value'] input[name=defaultValue]")
-        static By optionItemBy(int index) {
-            By.cssSelector("#optitem_$index")
-        }
-        static By storagePathInput = By.name("storagePath")
-        static By adhocRemoteStringBy = By.xpath('//*[@data-prop-name="adhocRemoteString"]//input[@type="text"]')
-        static By workFlowStrategyBy = By.xpath('//select[contains(@name, \'workflow.strategy\')]')
-        static By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span')
-        static By numberOfStepsBy = By.cssSelector("[data-test='edit-step-item']")
-        static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
     }
 
-    By usageSectionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
+    By usageSectionBy = By.cssSelector("#option_preview")
     By saveOptionBy = By.xpath("//*[@title[contains(.,'Save the new option')]]")
     By nodeDispatchTrueBy = By.id("doNodedispatchTrue")
     By nodeFilterLinkBy = By.cssSelector("#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown")
@@ -108,16 +89,14 @@ class JobCreatePage extends BasePage {
     By orchestratorDropdownBy = By.cssSelector('#orchestrator-edit-type-dropdown > button')
     By errorAlertBy = By.cssSelector('#error')
     By formValidationAlertBy = By.cssSelector('#page_job_edit > div.list-group-item > div.alert.alert-danger')
-    By sessionSectionBy = By.xpath("//div[contains(@class, 'opt_sec_nexp_disabled')]")
     By secureInputTypeBy = By.xpath("//input[contains(@value, 'secureExposed')]")
-    By storagePathInput = By.name("defaultStoragePath")
-    By defaultValueInput = By.id("opt_defaultValue")
-    By optionOpenKeyStorageBy = By.cssSelector(".btn.btn-default.obs-select-storage-path")
-    By optionCloseKeyStorageBy = By.xpath("//button[@class='btn btn-sm btn-default']")
-    By optionUndoBy = By.xpath("//*[@id='optundoredo']/div/span[1]")
-    By optionRedoBy = By.xpath("//*[@id='optundoredo']/div/span[2]")
-    By optionRevertAllBy = By.xpath("//*[starts-with(@id,'revertall')]")
-    By optionConfirmRevertAllBy = By.cssSelector("div[class='popover-content'] span[class*='confirm']")
+    By storagePathInput = By.name("storagePath")
+    By defaultValueInput = By.cssSelector("[data-test='option.value'] input[name=defaultValue]")
+    By optionOpenKeyStorageBy = By.cssSelector(".opt_sec_enabled div.input-group > .input-group-btn > button")
+    By optionCloseKeyStorageBy = By.cssSelector("#storage-file.modal .modal-footer > button.btn-default")
+    By optionUndoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(1)")
+    By optionRedoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(2)")
+    By optionRevertAllBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(3)")
     By workFlowStepBy = By.linkText("Workflow Steps")
     By ansibleBinariesPathBy = By.name("pluginConfig.ansible-binaries-dir-path")
     By autocompleteSuggestionsBy = By.cssSelector("div[class='autocomplete-suggestions']")
@@ -128,7 +107,7 @@ class JobCreatePage extends BasePage {
     By wfRevertAllButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[3]")
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
-    By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
+    By addSimpleCommandStepBy = By.id("addButton")
     By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
     By nofiticationChildsBy = By.className("text-success")
     By updateBtn        = By.name("_action_Update")
@@ -203,12 +182,8 @@ class JobCreatePage extends BasePage {
     void fillBasicJob(String name) {
         jobNameInput.sendKeys name
         tab JobTab.WORKFLOW click()
-        if(nextUi){
-            waitForElementVisible workflowAlphaUiButton
-            addSimpleCommandStepNextUi 'echo selenium test', 0
-        } else {
-            addSimpleCommandStep 'echo selenium test', 0
-        }
+        waitForElementVisible workflowAlphaUiButton
+        addSimpleCommandStepNextUi 'echo selenium test', 0
     }
 
     /**
@@ -218,25 +193,14 @@ class JobCreatePage extends BasePage {
      * @return
      */
     JobCreatePage addSimpleCommandStep(String command, int stepIndexNumber) {
-
-        executeScript "window.location.hash = '#addnodestep'"
-        stepLink 'exec-command', StepType.NODE click()
-        byAndWaitClickable adhocRemoteStringBy
-        adhocRemoteStringField.click()
-        waitForNumberOfElementsToBeOne floatBy
-
-        adhocRemoteStringField.sendKeys command
-
-        saveStep stepIndexNumber
-
-        return this
+        return addSimpleCommandStepNextUi(command, stepIndexNumber)
     }
 
     JobCreatePage addSimpleCommandStepNextUi(String command, int stepIndexNumber) {
         clickAddStep()
         byAndWaitClickable By.xpath("//*[@${StepType.NODE.getStepType()}='exec-command']")
         stepLink 'exec-command', StepType.NODE click()
-        byAndWaitClickable NextUi.adhocRemoteStringBy
+        byAndWaitClickable adhocRemoteStringBy
         adhocRemoteStringField.click()
         adhocRemoteStringField.sendKeys command
 
@@ -247,11 +211,7 @@ class JobCreatePage extends BasePage {
 
     JobCreatePage addStep(JobStep step, int stepNumber = 0){
         def stepName = step.STEP_NAME
-        if(nextUi){
-            clickAddStep();
-        } else{
-            tab(JobTab.WORKFLOW).click()
-        }
+        clickAddStep()
         stepLink(stepName, step.stepType).click()
 
         step.configure(this, nextUi)
@@ -480,7 +440,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getWorkFlowStrategyField() {
-        el nextUi? NextUi.workFlowStrategyBy : workFlowStrategyBy
+        el workFlowStrategyBy
     }
 
     WebElement getStrategyPluginParallelField() {
@@ -488,7 +448,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getStrategyPluginParallelMsgField() {
-        el nextUi? NextUi.strategyPluginParallelMsgBy : strategyPluginParallelMsgBy
+        el strategyPluginParallelMsgBy
     }
 
     WebElement stepLink(String dataNodeStepType, StepType stepType) {
@@ -499,11 +459,11 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getAdhocRemoteStringBy() {
-        el nextUi? NextUi.adhocRemoteStringBy : adhocRemoteStringBy
+        el adhocRemoteStringBy
     }
 
     WebElement getAdhocRemoteStringField() {
-        el nextUi? NextUi.adhocRemoteStringBy : adhocRemoteStringBy
+        el adhocRemoteStringBy
     }
 
     WebElement getCreateJobButton() {
@@ -536,31 +496,26 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getOptionButton() {
-        el nextUi ? NextUi.optionBy : optionBy
+        el optionBy
     }
 
     WebElement optionNameNew(int index=0) {
-        if(nextUi){
-            return byAndWait (By.cssSelector("#optitem_new input[type=text][name=name]"))
-        }else{
-            return optionName(index)
-        }
+        byAndWait By.cssSelector("#optitem_new input[type=text][name=name]")
     }
+
     WebElement optionName(int index) {
-        byAndWait nextUi?
-                  By.cssSelector("#optitem_$index div.optEditForm input[type=text][name=name]"):
-                  By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]")
+        byAndWait By.cssSelector("#optitem_$index div.optEditForm input[type=text][name=name]")
     }
 
     WebElement getUsageSection() {
-        el nextUi ? NextUi.usageSectionBy : usageSectionBy
+        el usageSectionBy
     }
 
     WebElement getSaveOptionButton() {
         el saveOptionBy
     }
     By optionItemBy(int index) {
-        nextUi ? NextUi.optionItemBy(index) : By.cssSelector("#optli_$index")
+        By.cssSelector("#optitem_$index")
     }
     void waitFotOptLi(int index) {
         waitForElementVisible optionItemBy(index)
@@ -575,15 +530,11 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement optionNameSaved(int index) {
-        el nextUi?
-           By.cssSelector("#optitem_${index} .option-item .option-item-content .optdetail_name")
-           :By.xpath("//*[@id=\"optli_$index\"]/div/div/span[2]/span/span[1]/span[1]")
+        el By.cssSelector("#optitem_${index} .option-item .option-item-content .optdetail_name")
     }
 
     WebElement duplicateButton(String nameOpt, int optNum = 0) {
-        el nextUi?
-           By.cssSelector("#optitem_${optNum} .option-item-content+.btn-group> .btn + .btn")
-           :By.xpath("//*[@id='optctrls_$nameOpt']/span[2]")
+        el By.cssSelector("#optitem_${optNum} .option-item-content+.btn-group> .btn + .btn")
     }
 
     WebElement getNodeDispatchTrueCheck() {
@@ -638,51 +589,39 @@ class JobCreatePage extends BasePage {
         el orchestratorDropdownBy
     }
 
-    WebElement getSessionSectionLabel() {
-        el sessionSectionBy
-    }
-
     WebElement getSecureInputTypeRadio() {
         el secureInputTypeBy
     }
 
     WebElement getStoragePathInput(){
-        el nextUi ? NextUi.storagePathInput : storagePathInput
+        el storagePathInput
     }
 
     By getDefaultValueBy(){
-        nextUi? NextUi.defaultValueInput:defaultValueInput
+        defaultValueInput
     }
     WebElement getDefaultValueInput(){
         el defaultValueBy
     }
 
     WebElement getOptionOpenKeyStorageButton() {
-        el nextUi?
-           NextUi.optionOpenKeyStorageBy
-           :optionOpenKeyStorageBy
+        el optionOpenKeyStorageBy
     }
 
     WebElement getOptionCloseKeyStorageButton() {
-        el nextUi?
-           NextUi.optionCloseKeyStorageBy
-           :optionCloseKeyStorageBy
+        el optionCloseKeyStorageBy
     }
 
     WebElement getOptionUndoButton() {
-        el nextUi ? NextUi.optionUndoBy : optionUndoBy
+        el optionUndoBy
     }
 
     WebElement getOptionRedoButton() {
-        el nextUi ? NextUi.optionRedoBy : optionRedoBy
+        el optionRedoBy
     }
 
     WebElement getOptionRevertAllButton() {
-        el nextUi ? NextUi.optionRevertAllBy : optionRevertAllBy
-    }
-
-    WebElement getOptionConfirmRevertAllButton() {
-        el optionConfirmRevertAllBy
+        el optionRevertAllBy
     }
 
     WebElement orchestratorChoiceLink(String variable) {
@@ -840,28 +779,19 @@ class JobCreatePage extends BasePage {
     }
 
     void saveStep(Integer stepNumber) {
-        def button
-        if(!nextUi) {
-            button = el floatBy findElement By.cssSelector(".btn.btn-cta.btn-sm")
-        } else {
-            button = el workflowSaveStepButton
-        }
+        def button = el workflowSaveStepButton
         executeScript "arguments[0].scrollIntoView(true);", button
         button.click()
         waitForElementVisible By.id("wfitem_${stepNumber}")
     }
 
     void removeStepByIndex(int stepIndex){
-        if(nextUi) {
-            (el By.cssSelector("#wfitem_${stepIndex} + .step-item-controls button[data-test='remove-step']")).click()
-        } else {
-            (els deleteStepBy).get(stepIndex).click()
-        }
+        (el By.cssSelector("#wfitem_${stepIndex} + .step-item-controls button[data-test='remove-step']")).click()
     }
 
     def expectNumberOfStepsToBe(int numberSteps){
         new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
-                ExpectedConditions.numberOfElementsToBe(this.nextUi? NextUi.numberOfStepsBy: numberOfStepsBy, numberSteps)
+                ExpectedConditions.numberOfElementsToBe(numberOfStepsBy, numberSteps)
         )
     }
 
@@ -882,7 +812,7 @@ class JobCreatePage extends BasePage {
     void addScriptStep(String jobName, List<String> params, Integer waitTime = null) {
         jobNameInput.sendKeys jobName
         tab JobTab.WORKFLOW click()
-        executeScript "window.location.hash = '#addnodestep'"
+        clickAddStep()
         stepLink 'script-inline', StepType.NODE click()
         waitForElementVisible scriptTextAreaBy
         params.each {scriptTextAreaInput.sendKeys(it)}
@@ -890,9 +820,9 @@ class JobCreatePage extends BasePage {
         getWfItemIndex(0).isDisplayed()
 
         waitTime?.with {
-            el(By.id("wfnewbutton")).findElement(By.cssSelector(".btn.btn-default.btn-sm.ready")).click()
+            clickAddStep()
             addSimpleCommandStep("sleep $it", 1)
-            el(By.id("wfnewbutton")).findElement(By.cssSelector(".btn.btn-default.btn-sm.ready")).click()
+            clickAddStep()
             addSimpleCommandStep("echo \"after wait\"", 2)
 
             getWfItemIndex(1).isDisplayed()

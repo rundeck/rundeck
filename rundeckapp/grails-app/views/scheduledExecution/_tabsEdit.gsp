@@ -33,12 +33,6 @@
                 <li>
                     <a href="#tab_workflow" data-toggle="tab">
                         <g:message code="job.edit.page.tab.workflow.title"/>
-                        <g:if test="${uiType=='current'}">
-                            <!-- ko if: inPageError() -->
-                            <b class="text-warning fas fa-exclamation-circle"></b>
-                            <!-- /ko -->
-                        </g:if>
-
                         <g:if test="${sectionProps.any{jobComponentValidation?.get(it.name) || scheduledExecution.errors?.hasFieldErrors('workflow')}}">
                             <b class="text-warning fas fa-exclamation-circle "></b>
                         </g:if>

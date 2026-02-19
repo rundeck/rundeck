@@ -220,54 +220,9 @@
 
       %{--Options--}%
     <div class="tab-pane" id="tab_workflow">
-      <g:if test="${uiType=='next' }">
-          <div class="job-editor-workflow-vue">
-            <workflow-editor-section  />
-          </div>
-      </g:if>
-      <g:else>
-        <section id="optionsContent" class=" section-space-lg" >
-          <div class="form-group">
-            <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
-            <div class="${fieldColSize}">
-              <div  id="editoptssect" class="rounded">
-                <%
-                  def options = sessionOpts
-                  if(!options){
-                    def tmpse = ScheduledExecution.get(scheduledExecution.id)
-                    options = tmpse?tmpse.options:scheduledExecution.options
-                  }
-                %>
-                <g:render template="/scheduledExecution/detailsOptions" model="${[options:options,edit:true]}"/>
-                <g:if test="${scheduledExecution && scheduledExecution.argString}">
-                  <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
-                </g:if>
-                <g:hiddenField name="_sessionopts" value="true"/>
-
-              </div>
-            </div>
-          </div>
-        </section>%{--//Options--}%
-        <section id="workflowContent" class="section-separator section-space-lg" >
-          <div class="form-group">
-            <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
-            <div class="${fieldColSize}" style="padding-top:1em;">
-              <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
-              <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'',
-                                                                            strategyPlugins:strategyPlugins]}"/>
-              <g:hiddenField name="_sessionwf" value="true"/>
-              <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
-                <g:javascript>
-                  fireWhenReady('workflowContent',function(){
-                    jQuery('#wfnewtypes').show();
-                    jQuery('#wfnewbutton').hide();
-                  });
-                </g:javascript>
-              </g:if>
-            </div>
-          </div>
-        </section>%{--//Workflow--}%
-      </g:else>
+      <div class="job-editor-workflow-vue">
+        <workflow-editor-section  />
+      </div>
 
 
       <g:render template="jobComponentProperties"

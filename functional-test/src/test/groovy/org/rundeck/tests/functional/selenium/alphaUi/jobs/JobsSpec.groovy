@@ -1,6 +1,5 @@
 package org.rundeck.tests.functional.selenium.alphaUi.jobs
 
-import org.openqa.selenium.By
 import org.rundeck.util.annotations.AlphaUiSeleniumCoreTest
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobTab
@@ -40,12 +39,10 @@ class JobsSpec extends SeleniumBase {
         return page
     }
 
-    def "job workflow alphaUi flag enabled"() {
+    def "job workflow vue editor visible"() {
         when:
         jobCreatePage.tab JobTab.WORKFLOW click()
         then:
-        jobCreatePage.waitForTextToBePresentBySelector(By.xpath("//section[@id='workflowContent']//div[contains(@class, 'control-label')]"), "Workflow",60)
-        expect:
         jobCreatePage.workflowAlphaUiContainer.isDisplayed()
     }
 

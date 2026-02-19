@@ -43,17 +43,13 @@ class JobsSpec extends SeleniumBase {
         then:
             jobCreatePage.jobNameInput.sendKeys 'jobs workflow strategy'
             jobCreatePage.tab JobTab.WORKFLOW click()
-            jobCreatePage.workFlowStrategyField.sendKeys 'Parallel'
+            jobCreatePage.waitForElementVisible jobCreatePage.workFlowStrategyField
+            def select = new Select(jobCreatePage.workFlowStrategyField)
+            select.selectByValue('parallel')
             jobCreatePage.waitIgnoringForElementVisible jobCreatePage.strategyPluginParallelField
             jobCreatePage.strategyPluginParallelMsgField.getText() == 'Run all steps in parallel'
 
-            jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
-            jobCreatePage.stepLink 'exec-command', StepType.NODE click()
-            jobCreatePage.waitForElementVisible jobCreatePage.adhocRemoteStringField
-            jobCreatePage.adhocRemoteStringField.click()
-            jobCreatePage.waitForNumberOfElementsToBeOne jobCreatePage.floatBy
-            jobCreatePage.adhocRemoteStringField.sendKeys 'echo selenium test'
-            jobCreatePage.saveStep 0
+            jobCreatePage.addSimpleCommandStep 'echo selenium test', 0
             jobCreatePage.createJobButton.click()
         expect:
             jobShowPage.jobDefinitionModal.click()
@@ -104,11 +100,9 @@ class JobsSpec extends SeleniumBase {
             jobListPage.validatePage()
     }
 
-    def "Duplicate_options - only validations, not save jobs old ui"() {
+    def "Duplicate_options - only validations, not save jobs"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi = false
-            jobCreatePage.go()
+            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
             def optName = 'test'
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name
             jobCreatePage.optionButton.click()
@@ -205,10 +199,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.usageSection
             jobCreatePage.usageSection.isDisplayed()
-            if(!nextUi) {
-                jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
-                jobCreatePage.sessionSectionLabel.isDisplayed()
-            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
@@ -228,9 +218,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.usageSection
             jobCreatePage.usageSection.isDisplayed()
-            if(!nextUi) {
-                jobCreatePage.sessionSectionLabel.isDisplayed()
-            }
             jobCreatePage.secureInputTypeRadio.click()
             jobCreatePage.optionOpenKeyStorageButton.click()
             jobCreatePage.optionCloseKeyStorageButton.click()
@@ -256,9 +243,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.usageSection
             jobCreatePage.usageSection.isDisplayed()
-            if(!nextUi) {
-                jobCreatePage.sessionSectionLabel.isDisplayed()
-            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
@@ -266,9 +250,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
             jobCreatePage.waitForElementVisible jobCreatePage.usageSection
             jobCreatePage.usageSection.isDisplayed()
-            if(!nextUi) {
-                jobCreatePage.sessionSectionLabel.isDisplayed()
-            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
@@ -293,9 +274,6 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
         jobCreatePage.usageSection.isDisplayed()
-        if(!nextUi) {
-            jobCreatePage.sessionSectionLabel.isDisplayed()
-        }
         jobCreatePage.secureInputTypeRadio.click()
         jobCreatePage.storagePathInput.sendKeys("test")
         jobCreatePage.secureInputTypeRadio.click()
@@ -317,9 +295,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.usageSection
             jobCreatePage.usageSection.isDisplayed()
-            if(!nextUi) {
-                jobCreatePage.sessionSectionLabel.isDisplayed()
-            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
@@ -327,9 +302,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
             jobCreatePage.waitForElementVisible jobCreatePage.usageSection
             jobCreatePage.usageSection.isDisplayed()
-            if(!nextUi) {
-                jobCreatePage.sessionSectionLabel.isDisplayed()
-            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
@@ -338,9 +310,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionUndoButton
         when:
             jobCreatePage.optionRevertAllButton.click()
-            if(!nextUi) {
-                jobCreatePage.optionConfirmRevertAllButton.click()
-            }
         then:
             jobCreatePage.waitForOptionsToBe 0, 0
             jobCreatePage.waitForOptionsToBe 1, 0
@@ -360,9 +329,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
             jobCreatePage.waitForElementVisible jobCreatePage.usageSection
             jobCreatePage.usageSection.isDisplayed()
-            if(!nextUi) {
-                jobCreatePage.sessionSectionLabel.isDisplayed()
-            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
@@ -370,9 +336,6 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
             jobCreatePage.waitForElementVisible jobCreatePage.usageSection
             jobCreatePage.usageSection.isDisplayed()
-            if(!nextUi) {
-                jobCreatePage.sessionSectionLabel.isDisplayed()
-            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
@@ -783,15 +746,11 @@ class JobsSpec extends SeleniumBase {
         deleteProject(projectName)
     }
 
-    def "job workflow next ui"() {
+    def "job workflow vue"() {
         when:
         def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
-        jobCreatePage.nextUi = true
-        jobCreatePage.go()
         jobCreatePage.tab JobTab.WORKFLOW click()
         then:
-        jobCreatePage.waitForTextToBePresentBySelector(jobCreatePage.workflowContentControlLabelBy, "Workflow",60)
-        expect:
         jobCreatePage.workflowAlphaUiContainer.isDisplayed()
     }
 
