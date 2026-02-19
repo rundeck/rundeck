@@ -1,10 +1,10 @@
 <template>
   <span :class="iconClass">
-    <img v-if="iconUrl" class="plugin-icon" :src="iconUrl" />
-    <i v-else-if="glyphicon" :class="'glyphicon glyphicon-' + glyphicon"></i>
-    <i v-else-if="faicon" :class="'fas fa-' + faicon"></i>
-    <i v-else-if="fabicon" :class="'fab fa-' + fabicon"></i>
-    <i v-else class="rdicon icon-small plugin"></i>
+    <img v-if="iconUrl" data-testid="plugin-icon-image" class="plugin-icon" :src="iconUrl" />
+    <i v-else-if="glyphicon" data-testid="plugin-icon-glyphicon" :class="'glyphicon glyphicon-' + glyphicon"></i>
+    <i v-else-if="faicon" data-testid="plugin-icon-faicon" :class="'fas fa-' + faicon"></i>
+    <i v-else-if="fabicon" data-testid="plugin-icon-fabicon" :class="'fab fa-' + fabicon"></i>
+    <i v-else data-testid="plugin-icon-default" class="rdicon icon-small plugin"></i>
   </span>
 </template>
 

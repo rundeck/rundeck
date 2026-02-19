@@ -1,7 +1,7 @@
 <template>
   <div class="col-sm-12">
     <div class="form-group">
-      <label v-if="!ea" for="stepFilter" class="col-sm-2 control-label">
+      <label v-if="!ea" data-testid="plugin-search-label" for="stepFilter" class="col-sm-2 control-label">
         {{ $t("step.plugins.filter.prompt") }}
       </label>
       <div v-if="!ea" class="col-sm-10">
@@ -9,6 +9,7 @@
           <input
             id="stepFilter"
             v-model="filterValue"
+            data-testid="plugin-search-input"
             type="search"
             name="nodeFilter"
             class="schedJobStepFilter form-control allowenter"
@@ -72,7 +73,7 @@
               </template>
             </popover>
 
-            <btn data-test-id="search" @click="filterStepDescriptions">
+            <btn data-testid="plugin-search-button" @click="filterStepDescriptions">
               {{ $t("search") }}
             </btn>
           </div>
