@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.util.Holders
 import groovy.transform.CompileDynamic
 import org.rundeck.app.core.FrameworkServiceCapabilities
@@ -93,6 +94,20 @@ class RdWorkflow implements WorkflowData, Validateable {
             strategy: strategy,
             commands: steps?.collect { it.toMap() } ?: []
         ] + plugins
+    }
+
+    @Override
+    String getPluginConfig() {
+        def obj = getPluginConfigMap()
+        String pluginConfig
+        if (null != obj) {
+            final ObjectMapper mapper = new ObjectMapper()
+            pluginConfig = mapper.writeValueAsString(obj)
+        } else {
+            pluginConfig = "{}"
+        }
+
+        return pluginConfig
     }
 
     @Override

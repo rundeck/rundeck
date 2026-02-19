@@ -28,6 +28,7 @@ import grails.gorm.DetachedCriteria
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.model.v1.execution.ExecutionDataSummary
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.execution.RdExecutionDataSummary
 import rundeck.data.job.RdNodeConfig
 import rundeck.data.validation.shared.SharedExecutionConstraints
@@ -628,7 +629,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
             Map workflowMap = asJsonMap(json)
 
             // Convert Map to Workflow domain object for runtime type safety
-            return Workflow.fromMap(workflowMap)
+            return WorkflowDataImpl.fromMap(workflowMap)
         } catch (Exception e) {
             log.error("Failed to deserialize workflowJson for Execution ${id}", e)
             return null

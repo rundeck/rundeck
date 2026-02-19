@@ -1,5 +1,7 @@
 package org.rundeck.app.data.job.converters
 
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.PluginStep
@@ -10,7 +12,7 @@ import rundeck.data.job.RdWorkflowStep
 
 class WorkflowToRdWorkflowConverter {
 
-    static RdWorkflow convertWorkflow(Workflow w) {
+    static RdWorkflow convertWorkflow(WorkflowData w) {
         def wkf = new RdWorkflow()
         wkf.threadcount = w.threadcount
         wkf.keepgoing = w.keepgoing
@@ -20,7 +22,7 @@ class WorkflowToRdWorkflowConverter {
         return wkf
     }
 
-    static RdWorkflowStep convertWorkflowStep(WorkflowStep wstep) {
+    static RdWorkflowStep convertWorkflowStep(WorkflowStepData wstep) {
         if(!wstep) return null
         def rds = new RdWorkflowStep()
         rds.description = wstep.description

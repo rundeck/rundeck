@@ -47,7 +47,7 @@ class ExecutionFromRdExecutionUpdater {
         e.timedOut = re.timedOut
         updateNodeConfig(e, re.nodeConfig)
         // Get or create workflow for updating
-        def workflow = e.getWorkflowData() as Workflow
+        def workflow = e.getWorkflowData()
         if(!workflow) workflow = new Workflow(commands:[])
         WorkflowUpdater.updateWorkflow(workflow, re.workflow)
         // Persist workflow as JSON

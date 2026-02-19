@@ -22,6 +22,8 @@ import com.dtolabs.rundeck.core.utils.WaitUtils
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
+import org.rundeck.app.data.workflow.WorkflowStepDataImpl
 import org.springframework.jdbc.core.RowCallbackHandler
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -1246,7 +1248,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param readAuth if true, includes contents of each step, if false only includes only basic step details
      * @return List of maps for each step, descend up to maxDepth following job references
      */
-    def getWorkflowDescriptionTree(String project,Workflow workflow,readAuth,maxDepth=3){
+    def getWorkflowDescriptionTree(String project,WorkflowData workflow,readAuth,maxDepth=3){
         def jobids=[:]
         def cmdData={}
         cmdData={x,WorkflowStep step->
@@ -3457,7 +3459,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     public void jobDefinitionWorkflow(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         if(input){
-            def inputWorkflow = input.getWorkflowData() as Workflow
+            def inputWorkflow = input.getWorkflowData()
             final Workflow workflow = new Workflow(inputWorkflow)
             scheduledExecution.setWorkflowData(workflow)
         } else if (params['_sessionwf'] == 'true' && params['_sessionEditWFObject']) {
@@ -3485,7 +3487,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } else if (params.workflow && params.workflow instanceof Workflow) {
             scheduledExecution.setWorkflowData(new Workflow(params.workflow))
         }else if (params.workflow && params.workflow instanceof Map){
-            Workflow workflow = scheduledExecution.getWorkflowData() as Workflow
+            WorkflowData workflow = scheduledExecution.getWorkflowData()
             if (!workflow) {
                 workflow = new Workflow(params.workflow)
             }
@@ -4007,7 +4009,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def service = frameworkService.rundeckFramework.workflowStrategyService
         def workflowData = scheduledExecution.getWorkflowData()
         if (!workflowData) return null
-        def workflow = new Workflow(workflowData as Workflow)
+        def workflow = new Workflow(workflowData)
         workflow.discard()
         if (!workflow.commands || workflow.commands.size() < 1) {
             return null
@@ -4048,7 +4050,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             Map validationMap,
             Validator.Report report
     ) {
-        def workflowData = scheduledExecution.getWorkflowData() as Workflow
+        def workflowData = scheduledExecution.getWorkflowData()
         def name = workflowData?.strategy
         if (params !=null) {
             if (!params['strategyValidation']) {
@@ -4074,7 +4076,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                                                "Workflow strategy {0}: Some config values were not valid"
         )
 
-        workflowData.errors.rejectValue(
+        (workflowData as WorkflowDataImpl).errors.rejectValue(
                 'strategy',
                 'scheduledExecution.workflowStrategy.invalidPlugin.message',
                 [name] as Object[],

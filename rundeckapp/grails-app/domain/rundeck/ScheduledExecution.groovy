@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
@@ -1340,7 +1341,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
             Map workflowMap = asJsonMap(json)
 
             // Convert Map to Workflow domain object for runtime type safety
-            return Workflow.fromMap(workflowMap)
+            return WorkflowDataImpl.fromMap(workflowMap)
         } catch (Exception e) {
             log.error("Failed to deserialize workflowJson for ScheduledExecution ${id}", e)
             return null

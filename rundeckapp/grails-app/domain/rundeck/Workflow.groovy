@@ -163,16 +163,31 @@ public class Workflow implements WorkflowData {
 
     }
 
-    public Workflow(Workflow source){
+    public Workflow(WorkflowData source){
         this.threadcount=source.threadcount
         this.keepgoing=source.keepgoing
         this.strategy=source.strategy
         this.pluginConfigMap=source.pluginConfigMap
         commands = new ArrayList()
         source.commands.each { WorkflowStepData cmd->
-            final item = createItem(cmd as WorkflowStep)
-            if(cmd.errorHandler){
-                final handler=createItem(cmd.errorHandler)
+            WorkflowStepData exec
+            Map map=cmd.toMap()
+            if (map.jobref!=null) {
+                exec = JobExec.jobExecFromMap(map)
+            } else {
+                exec = PluginStep.fromMap(map)
+            }
+            exec
+            final item = createItem(exec)
+            if(map.errorhandler){
+                WorkflowStepData errorHandlerExec
+                Map mapErrorHandler = map.errorhandler as Map
+                if (mapErrorHandler.jobref!=null) {
+                    errorHandlerExec = JobExec.jobExecFromMap(mapErrorHandler)
+                } else {
+                    errorHandlerExec = PluginStep.fromMap(mapErrorHandler)
+                }
+                final handler=createItem(errorHandlerExec)
                 item.errorHandler=handler
             }
             commands.add(item)
@@ -196,7 +211,7 @@ public class Workflow implements WorkflowData {
         }
         return newwf
     }
-    WorkflowStep createItem(WorkflowStep item){
+    WorkflowStepData createItem(WorkflowStep item){
         return item.createClone()
     }
 
@@ -230,7 +245,7 @@ public class Workflow implements WorkflowData {
         if(data.commands){
             ArrayList commands = new ArrayList()
             def createStep={Map map->
-                WorkflowStep exec
+                WorkflowStepData exec
                 if (map.jobref!=null) {
                     exec = JobExec.jobExecFromMap(map)
                 } else {

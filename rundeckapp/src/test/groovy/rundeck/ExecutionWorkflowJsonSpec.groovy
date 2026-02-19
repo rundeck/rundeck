@@ -161,12 +161,12 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
         )
 
         when: "Cloning workflow from job"
-        def clonedWorkflow = new Workflow(job.getWorkflowData() as Workflow)
+        def clonedWorkflow = new Workflow(job.getWorkflowData())
         execution.setWorkflowData(clonedWorkflow)
 
         then: "Execution should have workflow data"
         execution.getWorkflowData() != null
-        def execWorkflow = execution.getWorkflowData() as Workflow
+        def execWorkflow = execution.getWorkflowData()
         execWorkflow.keepgoing == true
         execWorkflow.strategy == 'sequential'
         execWorkflow.threadcount == 2
@@ -218,7 +218,7 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
 
         when: "Setting and getting workflow data"
         execution.setWorkflowData(originalWorkflow)
-        def deserializedWorkflow = execution.getWorkflowData() as Workflow
+        def deserializedWorkflow = execution.getWorkflowData()
 
         then: "Workflow properties should be preserved"
         deserializedWorkflow != null
@@ -259,7 +259,7 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
         execution.setWorkflowData(workflow)
 
         and: "Getting it back"
-        def result = execution.getWorkflowData() as Workflow
+        def result = execution.getWorkflowData()
 
         then: "Error handler should be preserved"
         result.commands.size() == 1

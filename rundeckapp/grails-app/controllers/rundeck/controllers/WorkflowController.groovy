@@ -1198,7 +1198,7 @@ class WorkflowController extends ControllerBase {
                 } else {
                     def workflowData = sched.getWorkflowData()
                     if (workflowData) {
-                        session.editWF[wfid] = new Workflow(workflowData as Workflow)
+                        session.editWF[wfid] = new Workflow(workflowData)
                     } else {
                         session.editWF[wfid] = new Workflow()
                     }

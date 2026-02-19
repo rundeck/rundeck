@@ -290,7 +290,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return
             }
 
-            def execWorkflowData = e?.getWorkflowData() as Workflow
+            def execWorkflowData = e?.getWorkflowData()
             if (e && !e.scheduledExecution && execWorkflowData?.commands?.size() == 1) {
                 def cmd = execWorkflowData.commands[0]
                 if (cmd.adhocRemoteString) {

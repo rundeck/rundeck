@@ -59,7 +59,7 @@ class ScheduledExecutionToJobConverter {
         job.optionSet = convertJobOptionSet(se)
         job.notificationSet = convertNotificationSet(se)
         def workflowData = se.getWorkflowData()
-        job.workflow = WorkflowToRdWorkflowConverter.convertWorkflow(workflowData as Workflow)
+        job.workflow = WorkflowToRdWorkflowConverter.convertWorkflow(workflowData)
         if(se.scheduled) job.schedule = se.schedule
         job.orchestrator = OrchestratorToRdOrchestratorConverter.convertOrchestrator(se.orchestrator)
         job.pluginConfigMap = se.getPluginConfigMap()

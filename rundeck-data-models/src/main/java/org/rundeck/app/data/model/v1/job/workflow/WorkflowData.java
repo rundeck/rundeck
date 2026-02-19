@@ -114,6 +114,8 @@ public interface WorkflowData {
         return new java.util.HashMap<>();
     }
 
+    String getPluginConfig();
+
     /**
      * Set plugin config data for a specific type
      * @param type Plugin type

@@ -38,6 +38,8 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import grails.converters.JSON
 import grails.util.Environment
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -103,7 +105,7 @@ class WorkflowService implements ApplicationContextAware{
      * @param secureOptions
      * @return
      */
-    def MutableWorkflowState createStateForWorkflow(ExecutionContext execContext, Workflow wf, String project,
+    def MutableWorkflowState createStateForWorkflow(ExecutionContext execContext, WorkflowData wf, String project,
                                                     IFramework framework,
                                                     UserAndRolesAuthContext authContext,
                                                     Map jobcontext,
@@ -126,11 +128,11 @@ class WorkflowService implements ApplicationContextAware{
      * @param secureOptions
      * @return
      */
-    def MutableWorkflowStateImpl createStateForWorkflow( Workflow wf, String project, String frameworkNodeName,
+    def MutableWorkflowStateImpl createStateForWorkflow( WorkflowData wf, String project, String frameworkNodeName,
                                                     StepExecutionContext parent, Map secureOptions, StepIdentifier parentId=null) {
 
         Map<Integer, MutableWorkflowStepStateImpl> substeps = [:]
-        wf.commands.eachWithIndex { WorkflowStep step, int ndx ->
+        wf.commands.eachWithIndex { WorkflowStepData step, int ndx ->
             def stepId= StateUtils.stepIdentifierAppend(parentId, StateUtils.stepIdentifier(ndx + 1))
             if (step instanceof JobExec) {
 

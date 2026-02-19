@@ -40,7 +40,7 @@ class ExecutionToRdExecutionConverter {
         re.timedOut = e.timedOut
         re.nodeConfig = e.nodeConfig
         def workflowData = e.getWorkflowData()
-        re.workflow = WorkflowToRdWorkflowConverter.convertWorkflow(workflowData as Workflow)
+        re.workflow = WorkflowToRdWorkflowConverter.convertWorkflow(workflowData)
         re.orchestrator = OrchestratorToRdOrchestratorConverter.convertOrchestrator(e.orchestrator)
         return re
 

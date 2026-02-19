@@ -2429,7 +2429,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         //set session new workflow
-        def origWorkflowData = scheduledExecution.getWorkflowData() as Workflow
+        def origWorkflowData = scheduledExecution.getWorkflowData()
         WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? new Workflow(origWorkflowData) : new Workflow())
         if(scheduledExecution.options){
             def editopts = [:]
@@ -2485,7 +2485,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
         def props=[:]
         props.putAll(execution.properties)
-        def execWorkflowData = execution.getWorkflowData() as Workflow
+        def execWorkflowData = execution.getWorkflowData()
         props.workflow=execWorkflowData ? new Workflow(execWorkflowData) : new Workflow()
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
@@ -2721,7 +2721,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
-        def jobWorkflowData = scheduledExecution.getWorkflowData() as Workflow
+        def jobWorkflowData = scheduledExecution.getWorkflowData()
         params.workflow=jobWorkflowData ? new Workflow(jobWorkflowData) : new Workflow()
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch

@@ -11,7 +11,7 @@ import rundeck.data.constants.WorkflowStepConstants
 
 class WorkflowUpdater {
 
-    static void updateWorkflow(Workflow wkf, WorkflowData rdw) {
+    static void updateWorkflow(WorkflowData wkf, WorkflowData rdw) {
         if(!wkf || !rdw) return
         wkf.threadcount = rdw.threadcount
         wkf.keepgoing = rdw.keepgoing

@@ -864,7 +864,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobstring = " job: " + e.scheduledExecution.extid + " " + (e.scheduledExecution.groupPath ?: '') + "/" +
                     e.scheduledExecution.jobName
         } else {
-            def workflowData = e.getWorkflowData() as Workflow
+            def workflowData = e.getWorkflowData()
             def adhocCommand = workflowData?.commands?.size()==1 && (workflowData.commands[0] instanceof CommandExec) && workflowData.commands[0].adhocRemoteString
             if (adhocCommand) {
                 mdcprops.put("command", adhocCommand)
@@ -1103,7 +1103,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logFilterPluginLoader,
                     scheduledExecution ?
                             ExecutionUtilService.createLogFilterConfigs(
-                                    (execution.getWorkflowData() as Workflow)?.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+                                    (execution.getWorkflowData())?.getPluginConfigDataList(ServiceNameConstants.LogFilter)
                             ) + globalConfig :
                             globalConfig
             )
@@ -1213,7 +1213,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             )
             logsInstalled=true
-            def workflowData = execution.getWorkflowData() as Workflow
+            def workflowData = execution.getWorkflowData()
             if (!workflowData) {
                 throw new ExecutionServiceException("No workflow data available for execution")
             }
@@ -2612,7 +2612,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         // Clone workflow from job definition using new JSON storage approach
         def workflowData = se.getWorkflowData()
         if (workflowData) {
-            Workflow workflow = new Workflow(workflowData as Workflow)
+            Workflow workflow = new Workflow(workflowData)
             props.workflow = workflow
         }
 
@@ -3694,7 +3694,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def loggingFilters = se  ?
                 ExecutionUtilService.createLogFilterConfigs(
-                        (se.getWorkflowData() as Workflow)?.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+                        (se.getWorkflowData())?.getPluginConfigDataList(ServiceNameConstants.LogFilter)
                 ) :
                 []
         def workflowLogManager = executionContext.loggingManager?.createManager(
@@ -3857,7 +3857,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
                     return
                 }
-                def seWorkflowData = se.getWorkflowData() as Workflow
+                def seWorkflowData = se.getWorkflowData()
                 if (!seWorkflowData) {
                     def msg = "No workflow data available for job [${jitem.jobIdentifier}]: ${se.extid}"
                     executionContext.getExecutionListener().log(0, msg);
