@@ -50,15 +50,23 @@
   </tr>
 </template>
 <script>
+import { computed } from "vue";
 import axios from "axios";
-import { mapActions, mapState } from "vuex";
+import { usePluginsStore } from "../stores/plugins.store";
 import * as StringFormatters from "../../../utilities/StringFormatters";
 
 export default {
   name: "ProviderCard",
   props: ["provider"],
+  setup() {
+    const pluginsStore = usePluginsStore();
+    return {
+      selectedServiceFacet: computed(() => pluginsStore.selectedServiceFacet),
+      getProviderInfo: (properties) => pluginsStore.getProviderInfo(properties),
+      uninstallPlugin: (provider) => pluginsStore.uninstallPlugin(provider),
+    };
+  },
   methods: {
-    ...mapActions("plugins", ["getProviderInfo", "uninstallPlugin"]),
     openInfo() {
       this.getProviderInfo({
         serviceName: this.provider.service,
@@ -73,7 +81,6 @@ export default {
     StringFormatters() {
       return StringFormatters;
     },
-    ...mapState("plugins", ["selectedServiceFacet"]),
     displayCard() {
       if (
         this.selectedServiceFacet === null ||

@@ -26,11 +26,18 @@
 </template>
 <script>
 import { defineComponent } from "vue";
-import { mapActions } from "vuex";
+import { useOverlayStore } from "../stores/overlay.store";
 import axios from "axios";
 import { client } from "../../../../library/modules/rundeckClient";
 export default defineComponent({
   name: "UploadPluginForm",
+  setup() {
+    const overlayStore = useOverlayStore();
+    return {
+      openOverlay: (properties) => overlayStore.openOverlay(properties),
+      closeOverlay: () => overlayStore.closeOverlay(),
+    };
+  },
   computed: {
     fileName() {
       if (this.files && this.files[0] && this.files[0].name) {
@@ -41,7 +48,6 @@ export default defineComponent({
     },
   },
   methods: {
-    ...mapActions("overlay", ["openOverlay", "closeOverlay"]),
     submitFiles() {
       // Initialize the form data and iteate over any
       // file sent over appending the files to the form data.

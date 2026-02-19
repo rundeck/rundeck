@@ -24,20 +24,20 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { computed } from "vue";
+import { useOverlayStore } from "../stores/overlay.store";
 
 export default {
   name: "Overlay",
-  computed: {
-    ...mapState("overlay", [
-      "overlay",
-      "errors",
-      "loadingMessage",
-      "loadingSpinner",
-    ]),
-  },
-  methods: {
-    ...mapActions("overlay", ["closeOverlay"]),
+  setup() {
+    const overlayStore = useOverlayStore();
+    return {
+      overlay: computed(() => overlayStore.overlay),
+      errors: computed(() => overlayStore.errors),
+      loadingMessage: computed(() => overlayStore.loadingMessage),
+      loadingSpinner: computed(() => overlayStore.loadingSpinner),
+      closeOverlay: () => overlayStore.closeOverlay(),
+    };
   },
 };
 </script>
