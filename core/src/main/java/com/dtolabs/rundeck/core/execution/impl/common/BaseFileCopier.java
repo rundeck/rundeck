@@ -33,7 +33,6 @@ import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.utils.Streams;
-import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.*;
 import java.util.*;
