@@ -95,8 +95,8 @@ class JobAuditApiSpec extends SeleniumBase {
 
         try {
             // Try robust CSS selectors first (preferred method)
-            def createdByElem = modalContent.findElement(By.cssSelector("[data-testid='created-by']"))
-            def lastModifiedByElem = modalContent.findElement(By.cssSelector("[data-testid='last-modified-by']"))
+            def createdByElem = jobShowPage.getCreatedByElement()
+            def lastModifiedByElem = jobShowPage.getLastModifiedByElement()
 
             createdBy = createdByElem.getText()
             lastModifiedBy = lastModifiedByElem.getText()

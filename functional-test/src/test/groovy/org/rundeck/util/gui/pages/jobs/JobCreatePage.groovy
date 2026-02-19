@@ -61,6 +61,7 @@ class JobCreatePage extends BasePage {
     By scheduleEnabledFalseBy = By.id("scheduleEnabledFalse")
     By scheduleEnabledTrueBy = By.id("scheduleEnabledTrue")
     By workflowAlphaUiContainer = By.id("workflowContent") // TODO: delete once out of Alpha
+    By workflowContentControlLabelBy = By.xpath("//section[@id='workflowContent']//div[contains(@class, 'control-label')]")
     By workflowAlphaUiButton = By.id("addButton")
     By workflowSaveStepButton = By.xpath('//div[contains(@class, \'in\') and contains(@class, \'modal\')]//button[@data-testid="save-button"]')
 
@@ -323,12 +324,6 @@ class JobCreatePage extends BasePage {
 
     boolean commandStepVisible(){
         stepLink 'exec-command', StepType.NODE displayed
-    }
-
-    void validatePage() {
-        if (!driver.currentUrl.endsWith(getLoadPath())) {
-            throw new IllegalStateException("Not on job create page: " + driver.currentUrl)
-        }
     }
 
     void validateCopyPage() {

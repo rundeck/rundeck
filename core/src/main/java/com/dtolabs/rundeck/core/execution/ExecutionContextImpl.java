@@ -371,6 +371,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             if (null != other.ctx.workflowJson) {
                 ctx.workflowJson = other.ctx.workflowJson;
             }
+            //step context and number taken from merged context
+            ctx.stepContext = other.ctx.stepContext;
+            ctx.stepNumber = other.ctx.stepNumber;
 
             return this;
         }

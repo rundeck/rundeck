@@ -123,4 +123,11 @@ public interface WorkflowStepData {
     default Map toDescriptionMap() {
         return toMap();
     }
+    /**
+     * Returns the name of the runner where this workflow step should be executed (the "runner node").
+     * it could be a remote runner or local server
+     *
+     * @return the name of the runner node, or {@code null} if the step should use the default node selection.
+     */
+    String getRunnerNode();
 }

@@ -134,12 +134,6 @@ class JobListPage extends BasePage implements ActivityListTrait {
         loadPath = "/project/${projectName}/job/show/${jobId}"
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on job list page: " + driver.currentUrl)
-        }
-    }
-
     /**
      * It validates this by looking for the run job button to be disabled
      */
@@ -154,12 +148,10 @@ class JobListPage extends BasePage implements ActivityListTrait {
      * It validates this by looking for the run job button to be disabled
      */
     def expectScheduleDisabled(){
-        new WebDriverWait(context.driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.numberOfElementsToBe(runJobButtonDisabled, 0))
-        new WebDriverWait(context.driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.numberOfElementsToBe(executionPausedIcon, 1))
-        new WebDriverWait(context.driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.numberOfElementsToBe(scheduleDisabledIcon, 1))
+        waitForNumberOfElementsToBe(runJobButtonDisabled, 0)
+        waitForNumberOfElementsToBe(executionPausedIcon, 1)
+        waitForNumberOfElementsToBe(scheduleDisabledIcon, 1)
+        return true
     }
 
     void loadPathToNextUI(String projectName) {

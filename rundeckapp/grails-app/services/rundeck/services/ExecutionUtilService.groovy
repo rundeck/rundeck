@@ -46,6 +46,7 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec
 import rundeck.PluginStep
+import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
 import rundeck.codecs.JobsXMLCodec
@@ -66,6 +67,7 @@ class ExecutionUtilService {
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    ScheduledExecutionService scheduledExecutionService
 
     @CompileStatic
     def finishExecution(ExecutionService.AsyncStarted execMap) {
@@ -208,7 +210,14 @@ class ExecutionUtilService {
                     createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
             )
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
-            final JobExec jobcmditem = step as JobExec;
+            final JobExec jobcmditem = step as JobExec
+
+            // get the workflow item for the referenced job, if the job refers is found, otherwise set it to null
+            WorkflowExecutionItem jobReferenceWorkflow = null
+            ScheduledExecution se = scheduledExecutionService.findJobFromJobExec(jobcmditem, jobcmditem.jobProject ?: parentProject)
+            if(se){
+                jobReferenceWorkflow = createExecutionItemForWorkflow(se?.workflow, parentProject)
+            }
 
             final String[] args
             if (null != jobcmditem.getArgString()) {
@@ -217,7 +226,7 @@ class ExecutionUtilService {
             } else {
                 args = new String[0];
             }
-            def tmpProj = jobcmditem.jobProject
+            String tmpProj = jobcmditem.jobProject
             if(!jobcmditem.jobProject && parentProject){
                 tmpProj = parentProject
             }
@@ -240,7 +249,8 @@ class ExecutionUtilService {
                     jobcmditem.uuid,
                     jobcmditem.useName,
                     jobcmditem.ignoreNotifications,
-                    jobcmditem.childNodes
+                    jobcmditem.childNodes,
+                    jobReferenceWorkflow
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep

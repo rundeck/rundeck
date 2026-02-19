@@ -8,10 +8,10 @@ echo "current TAG: $CUR_TAG"
 
 function usage {
     echo "Usage:"
-    echo "  setversion.sh <version> [GA|rc#|alpha#]           - Update version in version.properties"
-    echo "  setversion.sh --bump-minor                            - Bump minor version number"
-    echo "  setversion.sh --tag <version> [GA|rc#|alpha#]     - Create git tag for release directly on current branch"
-    echo "  setversion.sh --create-release-branch <version>       - Create release branch for patch releases"
+    echo "  setversion.sh <version> [GA|rc#|alpha#]                 - Update version in version.properties"
+    echo "  setversion.sh --bump-minor                              - Bump minor version number"
+    echo "  setversion.sh --tag <version> [GA|rc#|alpha#] [--push]    - Create git tag for release directly on current branch"
+    echo "  setversion.sh --create-release-branch <version> [--push]  - Create release branch for patch releases"
     exit 2
 }
 
@@ -19,9 +19,17 @@ if [ -z "$1" ] ; then
     usage
 fi
 
+# Check if last argument is --push (applies to --tag and --create-release-branch)
+PUSH_TO_ORIGIN=false
+if [ "${!#}" == "--push" ]; then
+    PUSH_TO_ORIGIN=true
+    set -- "${@:1:$#-1}"  # Remove last argument
+fi
+
 # Handle tag creation directly on main
 if [ "$1" == "--tag" ]; then
     shift
+
     if [ -z "$1" ] ; then
         echo "Error: Version number required"
         usage
@@ -29,7 +37,6 @@ if [ "$1" == "--tag" ]; then
     VNUM="$1"
     shift
     VTAG="${1:-GA}"
-
 
     # Create the appropriate tag
     if [ "$VTAG" == "GA" ]; then
@@ -40,6 +47,33 @@ if [ "$1" == "--tag" ]; then
       echo "Error: Invalid tag format '$VTAG'. Expected 'GA' or to match [a-z]+[0-9]+ (e.g., rc1, rc2, alpha3)."
       exit 5
     fi
+
+    # For patch releases (patch != 0), checkout release branch
+    IFS='.' read -r MAJOR MINOR PATCH <<< "$VNUM"
+    if [ -z "$MAJOR" ] || [ -z "$MINOR" ] || [ -z "$PATCH" ]; then
+        echo "Error: Version ($VNUM) must be in MAJOR.MINOR.PATCH format"
+        exit 3
+    fi
+
+    if [ "$PATCH" -ne 0 ]; then
+        RELEASE_BRANCH="release/$MAJOR.$MINOR.x"
+
+        # Check if release branch exists
+        if ! git rev-parse --verify "$RELEASE_BRANCH" >/dev/null 2>&1 &&
+           ! git ls-remote --heads origin "$RELEASE_BRANCH" | grep -q "$RELEASE_BRANCH"; then
+            echo "Error: Release branch $RELEASE_BRANCH does not exist."
+            echo "Create it first with: setversion.sh --create-release-branch $VNUM"
+            exit 9
+        fi
+
+        # Checkout release branch if not already on it
+        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$CURRENT_BRANCH" != "$RELEASE_BRANCH" ]; then
+            echo "Checking out release branch: $RELEASE_BRANCH"
+            git checkout "$RELEASE_BRANCH" || exit 10
+        fi
+    fi
+
     echo "Creating tag: $TAG_NAME"
 
     # Verify we're on main or a release branch
@@ -50,12 +84,21 @@ if [ "$1" == "--tag" ]; then
     fi
 
     git tag -a "$TAG_NAME" -m "Release $VNUM $VTAG"
-    echo "Tag created. Use 'git push origin $TAG_NAME' to push the tag to remote."
+    echo "Tag created: $TAG_NAME"
+
+    if [ "$PUSH_TO_ORIGIN" = true ]; then
+        echo "Pushing tag to remote..."
+        git push origin "$TAG_NAME"
+        echo "Tag pushed to remote."
+    else
+        echo "Use 'git push origin $TAG_NAME' to push the tag to remote."
+    fi
     exit 0
 
 # Create a release branch for patch releases
 elif [ "$1" == "--create-release-branch" ]; then
     shift
+
     if [ -z "$1" ] ; then
         echo "Error: Version required"
         usage
@@ -70,12 +113,8 @@ elif [ "$1" == "--create-release-branch" ]; then
 
     # Check if this is a patch version (patch > 0)
     if [ "$PATCH" -eq 0 ]; then
-        echo "Warning: Creating a patch release branch typically requires a patch version > 0 (e.g., 5.19.1, not 5.19.0)"
-        read -p "Do you want to continue with $VNUM? (y/n): " confirm
-        if [[ "$confirm" != [yY] ]]; then
-            echo "Operation cancelled"
-            exit 0
-        fi
+        echo "Error: Creating a patch release branch requires a patch version > 0 (e.g., 5.19.1, not 5.19.0)"
+        exit 3
     fi
 
     BASE_VERSION="$MAJOR.$MINOR.0"
@@ -92,25 +131,14 @@ elif [ "$1" == "--create-release-branch" ]; then
     # Check if branch already exists locally or remotely
     if git rev-parse --verify "$BRANCH_NAME" >/dev/null 2>&1 ||
        git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
-        echo "Warning: Branch $BRANCH_NAME already exists locally or remotely."
-        read -p "Do you want to use the existing branch? (y/n): " use_existing
-        if [[ "$use_existing" == [yY] ]]; then
-            echo "Checking out existing branch: $BRANCH_NAME"
-            git checkout "$BRANCH_NAME" || exit 7
-            if ! git pull origin "$BRANCH_NAME"; then
-                echo "Error: Failed to pull latest changes from remote branch $BRANCH_NAME"
-                echo "Please resolve any conflicts or network issues before continuing."
-                exit 8
-            fi
-        else
-            echo "Operation cancelled"
-            exit 0
-        fi
-    else
-        # Create new branch from the GA tag
-        echo "Creating release branch $BRANCH_NAME from tag $GA_TAG"
-        git checkout -b "$BRANCH_NAME" "$GA_TAG" || exit 7
+        echo "Error: Branch $BRANCH_NAME already exists locally or remotely."
+        echo "Use the tag process to create tags on the existing release branch."
+        exit 11
     fi
+
+    # Create new branch from the GA tag
+    echo "Creating release branch $BRANCH_NAME from tag $GA_TAG"
+    git checkout -b "$BRANCH_NAME" "$GA_TAG" || exit 7
 
     # Update version in version.properties to patch-SNAPSHOT
     VDATE="$(date +%Y%m%d)"
@@ -136,7 +164,14 @@ elif [ "$1" == "--create-release-branch" ]; then
 
     echo ""
     echo "Release branch $BRANCH_NAME created successfully."
-    echo "Use 'git push origin $BRANCH_NAME' to push to remote."
+
+    if [ "$PUSH_TO_ORIGIN" = true ]; then
+        echo "Pushing branch to remote..."
+        git push origin "$BRANCH_NAME"
+        echo "Branch pushed to remote."
+    else
+        echo "Use 'git push origin $BRANCH_NAME' to push to remote."
+    fi
     exit 0
 
 # Handle bump minor version

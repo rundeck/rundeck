@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.common.INodeEntry;
+
 /**
  * StepExecutionItem is the base interface for any step execution item to be submitted to the ExecutionService
  *
@@ -39,5 +41,23 @@ public interface StepExecutionItem {
      * @return label/id or description of this step
      */
     public String getLabel();
+
+    /**
+     * Returns the runner node for this step, if applicable.
+     * <p>
+     * The runner node represents the specific {@link INodeEntry} on which this step should be executed.
+     * This is typically relevant for Workflow Steps that are intended
+     * to run on a particular Remote Runner.
+     * </p>
+     * <p>
+     * For step types that are not node-specific (e.g., workflow steps that are not tied to a node),
+     * or if the runner node is not defined, this method returns {@code null}.
+     * </p>
+     *
+     * @return the runner {@link INodeEntry} for this step, or {@code null} if not applicable or not defined
+     */
+    public default INodeEntry getRunner() {
+        return null;
+    }
 
 }

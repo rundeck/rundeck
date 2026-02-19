@@ -20,6 +20,7 @@ class RdWorkflowStep implements WorkflowStepData, PluginProviderConfiguration, V
     Boolean nodeStep;
     String pluginType;
     Map<String,Object> pluginConfig;
+    String runnerNode;
 
     static constraints = {
         importFrom SharedWorkflowStepConstraints
