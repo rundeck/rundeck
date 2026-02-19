@@ -8,6 +8,7 @@
         display: flex;
         align-items: center;
         font-weight: var(--fontWeights-bold);
+        flex-grow: 1;
     }
 
     .p-message-subtitle {

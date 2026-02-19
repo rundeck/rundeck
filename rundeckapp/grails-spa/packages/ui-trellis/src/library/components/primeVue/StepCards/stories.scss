@@ -1,0 +1,85 @@
+ul[data-testid='draggable-container']{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    list-style: none;
+    position: relative;
+    counter-reset: list;
+
+  li:before {
+    counter-increment: list;
+    content: counter(list)'.';
+    display: block;
+    font-size: 16px;
+    font-family: Inter, var(--fonts-body) !important;
+    left: -18px;
+    position: absolute;
+    top: 1rem;
+  }
+}
+
+.item-container {
+  position: relative;
+}
+
+i.pi-bars {
+  position: absolute;
+  cursor: grab;
+  left: -45px;
+  top: 19px;
+}
+
+.dragging * {
+  cursor: grabbing !important;
+}
+
+
+.link-button,
+.link-title,
+.link-step-plugin {
+  all: unset;
+  color: #0052CC;
+  cursor: pointer;
+  font-weight: 400;
+  font-size: 12px;
+
+  + .pi,
+  .pi {
+    color: #0052CC;
+    display: none;
+    margin-left: 5px;
+  }
+
+  &:hover {
+    text-decoration: underline;
+
+    + .pi {
+      display: inline;
+    }
+  }
+}
+
+.link-title {
+  font-size: 16px;
+}
+
+.link-step-plugin {
+  font-size: 14px;
+}
+
+.p-menu-item {
+  color: var(--colors-menuitem-color);
+  background: transparent;
+
+  &-link {
+    color: inherit !important;
+  }
+}
+
+div[data-test='options_undo_redo'] {
+  align-self: flex-end;
+}
+
+.ready {
+  align-self: center;
+}
