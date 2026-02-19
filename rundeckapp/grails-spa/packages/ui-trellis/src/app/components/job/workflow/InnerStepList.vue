@@ -1,5 +1,5 @@
 <template>
-  <div class="inner-step-list">
+  <div class="inner-step-list" data-testid="inner-step-list">
     <draggable
       v-model="commands"
       tag="ol"
@@ -14,6 +14,7 @@
           <div
             class="inner-step-item"
             :class="{ 'edit-lock-disabled': editingStepId && editingStepId !== element.id }"
+            data-testid="inner-step-item"
           >
             <StepCard
               v-if="editingStepId !== element.id && element.type !== 'conditional.logic'"
@@ -90,6 +91,7 @@
       icon="pi pi-plus"
       :label="addStepLabel"
       class="btn-add-inner-step"
+      data-testid="add-substep-button"
       :disabled="!!editingStepId"
       @click="openAddStepModal"
     />

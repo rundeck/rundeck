@@ -107,6 +107,7 @@
               type="hidden"
               :value="inputValues[prop.name]"
               :data-hidden-field-identity="prop.options['hidden_identity']"
+              :data-testid="`prop-hidden-${prop.name}`"
               class="_config_prop_display_hidden"
             />
 
@@ -118,6 +119,7 @@
                 (validation && validation.errors[prop.name] ? ' has-error' : '')
               "
               :data-prop-name="prop.name"
+              :data-testid="`prop-field-${prop.name}`"
             >
               <plugin-prop-edit
                 v-model="inputValues[prop.name]"
@@ -143,6 +145,7 @@
             v-if="group.name"
             :open="!group.secondary"
             class="more-info details-reset"
+            :data-testid="`prop-section-${group.name}`"
           >
             <summary>
               <span class="row">
@@ -166,6 +169,7 @@
                 type="hidden"
                 :value="inputValues[prop.name]"
                 :data-hidden-field-identity="prop.options['hidden_identity']"
+                :data-testid="`prop-hidden-${prop.name}`"
                 class="_config_prop_display_hidden"
               />
               <div
@@ -178,6 +182,7 @@
                     : '')
                 "
                 :data-prop-name="prop.name"
+                :data-testid="`prop-field-${prop.name}`"
               >
                 <plugin-prop-edit
                   v-model="inputValues[prop.name]"

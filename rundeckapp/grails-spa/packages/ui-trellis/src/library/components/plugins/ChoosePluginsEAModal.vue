@@ -3,6 +3,7 @@
     v-model="modalShown"
     :title="title || $t('plugin.choose.title')"
     size="lg"
+    data-testid="choose-plugins-ea-modal"
   >
     <div class="modal-content-wrapper">
       <p class="text-heading--sm">{{ $t("searchForStep") }}</p>
@@ -71,6 +72,7 @@
           v-else-if="hasSearchQuery && hasNoResults"
           key="no-matches"
           class="no-matches-found"
+          data-testid="no-matches-found"
         >
           <svg
             class="no-matches-icon"

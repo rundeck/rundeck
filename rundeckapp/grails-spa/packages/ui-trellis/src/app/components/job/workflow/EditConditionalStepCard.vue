@@ -1,5 +1,5 @@
 <template>
-  <div ref="editConditionalStepCard" class="edit-conditional-step-card">
+  <div ref="editConditionalStepCard" class="edit-conditional-step-card" data-testid="edit-conditional-step-card">
     <Card>
       <template #header>
         <div class="card-header">
