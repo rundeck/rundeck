@@ -15,7 +15,7 @@
             :key="plugin.name"
             :value="plugin.name"
           >
-            {{ plugin.title }}
+            {{ localizedPluginTitle(plugin) }}
           </option>
         </select>
       </label>
@@ -24,7 +24,7 @@
 
   <div v-if="selectedPlugin" :id="`strategyPlugin${selectedPlugin.name}`">
     <PluginDetails
-      :description="selectedPlugin.description"
+      :description="localizedPluginDescription(selectedPlugin)"
       :description-css="'text-info'"
     />
   </div>
@@ -117,6 +117,22 @@ export default defineComponent({
     this.loaded = true;
   },
   methods: {
+    i18nOrDefault(key: string, fallback: string) {
+      const translated = this.$t(key) as string;
+      return translated === key ? fallback : translated;
+    },
+    localizedPluginTitle(plugin: { name: string; title: string }) {
+      return this.i18nOrDefault(
+        `Workflow.strategy.label.${plugin.name}`,
+        plugin.title,
+      );
+    },
+    localizedPluginDescription(plugin: { name: string; description: string }) {
+      return this.i18nOrDefault(
+        `Workflow.strategy.description.${plugin.name}`,
+        plugin.description,
+      );
+    },
     cleanStrategy(strategy: string) {
       if (strategy === "step-first") {
         return "sequential";
