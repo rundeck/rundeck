@@ -153,7 +153,7 @@ describe("BaseStepCard", () => {
       props: {
         pluginDetails: mockPluginDetails,
         config: mockConfig,
-        expanded: false,
+        initiallyExpanded: false,
       },
       slots: {
         content: "<div>Content</div>",

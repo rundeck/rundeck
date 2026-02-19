@@ -7,6 +7,10 @@ jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
 }));
 
+jest.mock("@/library/services/feature", () => ({
+  getFeatureEnabled: jest.fn().mockResolvedValue(false),
+}));
+
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },

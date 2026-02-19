@@ -566,13 +566,19 @@ export default defineComponent({
           return;
         }
 
-        // Regular new step - use inline EditStepCard flow
-        this.editModel = newStep;
-        this.editIndex = this.model.commands.length;
-        this.editingStepId = newStep.id;
-        this.isNewInlineStep = true;
-        // Add the step to the list immediately so EditStepCard shows
-        this.model.commands.push(newStep);
+        if (this.conditionalEnabled) {
+          // EA mode: inline editing via EditStepCard
+          this.editModel = newStep;
+          this.editIndex = this.model.commands.length;
+          this.editingStepId = newStep.id;
+          this.isNewInlineStep = true;
+          // Add the step to the list immediately so EditStepCard shows
+          this.model.commands.push(newStep);
+        } else {
+          // Non-EA mode: use modal
+          this.editModel = newStep;
+          this.editStepModal = true;
+        }
       }
     },
     cancelProviderAdd() {

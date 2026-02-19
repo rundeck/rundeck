@@ -243,7 +243,10 @@ describe("JobRefForm", () => {
 
       await wrapper.find(".act_choose_job").trigger("click");
 
-      expect(wrapper.vm.openJobSelectionModal).toBe(true);
+      expect(
+        wrapper.findComponent({ name: "JobRefFormFields" }).vm
+          .openJobSelectionModal,
+      ).toBe(true);
     });
 
     it("updates job reference when job is selected", async () => {
@@ -255,7 +258,9 @@ describe("JobRefForm", () => {
       };
 
       // Simulate the event bus event that would come from job selection
-      wrapper.vm.eventBus.emit("browser-job-item-selection", mockJob);
+      wrapper
+        .findComponent({ name: "JobRefFormFields" })
+        .vm.eventBus.emit("browser-job-item-selection", mockJob);
       await wrapper.vm.$nextTick();
 
       expect(

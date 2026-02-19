@@ -22,7 +22,14 @@ jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
 }));
 jest.mock("@/library/rundeckService", () => {
-  const eventBus = { on: jest.fn(), off: jest.fn(), emit: jest.fn() };
+  const mittLib = require("mitt");
+  const mittFn = mittLib.default || mittLib;
+  const _bus = mittFn();
+  const eventBus = {
+    on: jest.fn((...args: any[]) => _bus.on(...args)),
+    off: jest.fn((...args: any[]) => _bus.off(...args)),
+    emit: jest.fn((...args: any[]) => _bus.emit(...args)),
+  };
   return {
     getRundeckContext: jest.fn().mockImplementation(() => ({
       client: {},
