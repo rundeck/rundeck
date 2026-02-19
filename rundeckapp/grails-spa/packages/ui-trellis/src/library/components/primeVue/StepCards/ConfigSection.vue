@@ -1,7 +1,7 @@
 <template>
   <div class="config-section" :class="{ 'has-chips': modelValue.length > 0 }">
     <div class="header-row">
-      <p>
+      <p data-testid="config-section-title">
         {{ title }}
         <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i> :
       </p>
@@ -12,6 +12,7 @@
             @click.prevent="handleAdd"
             class="inline-button link-button"
             type="button"
+            data-testid="config-section-add-btn"
           >
             + Add
           </button>
@@ -21,7 +22,7 @@
 
     <transition name="chips-slide" mode="out-in">
       <slot name="extra">
-        <div v-if="modelValue.length > 0" class="chips-row">
+        <div v-if="modelValue.length > 0" class="chips-row" data-testid="config-section-chips-row">
           <transition-group name="chip-list" tag="div" class="chips-container">
             <Chip
               v-for="(element, index) in modelValue"
@@ -38,6 +39,7 @@
             v-show="!hideWhenSingle || modelValue.length !== 1"
             @click.prevent="handleAdd"
             class="link-button"
+            data-testid="config-section-add-more-btn"
             type="button"
           >
             + Add

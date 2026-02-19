@@ -2,7 +2,7 @@
   <div class="stepCardHeader">
     <div>
       <div>
-        <div class="plugin-info-wrapper" :class="{ 'disabled': disabled }" @click="handleEdit">
+        <div class="plugin-info-wrapper" :class="{ 'disabled': disabled }" data-testid="step-card-header-plugin-info" @click="handleEdit">
           <plugin-info
             :detail="{
               ...config,
@@ -20,11 +20,12 @@
         </div>
       </div>
       <div class="stepCardHeader-description">
-        <p v-if="editing">{{ pluginDetails.description }}</p>
+        <p v-if="editing" data-testid="step-card-header-plugin-desc">{{ pluginDetails.description }}</p>
         <template v-else>
           <Tag
             :class="[effectiveNodeStep ? 'tag-node' : 'tag-workflow']"
             :value="effectiveNodeStep ? $t('Workflow.nodeStep') : $t('Workflow.workflowStep')"
+            data-testid="step-card-header-step-type-tag"
           />
           <template v-if="config.description">
             <p>{{ pluginDetails.title }}</p>
@@ -35,7 +36,7 @@
               }"
             ></i>
           </template>
-          <p v-else>{{ pluginDetails.description }}</p>
+          <p v-else data-testid="step-card-header-plugin-desc-fallback">{{ pluginDetails.description }}</p>
         </template>
       </div>
     </div>
@@ -45,6 +46,7 @@
         icon="pi pi-exclamation-triangle"
         severity="danger"
         :value="showInvalidCondition ? $t('Workflow.validation.invalidConditionCriteria') : errorMessage"
+        data-testid="step-card-header-error-tag"
       />
       <PtButton
         outlined
@@ -53,6 +55,7 @@
         :aria-label="$t('Workflow.deleteThisStep')"
         v-tooltip.top="$t('Workflow.deleteThisStep')"
         :disabled="disabled"
+        data-testid="step-card-header-delete-btn"
         @click="handleDelete"
       />
       <template v-if="showToggle">
@@ -62,6 +65,7 @@
           :aria-label="expanded ? $t('Workflow.collapse') : $t('Workflow.expand')"
           :aria-expanded="expanded"
           :disabled="disabled"
+          data-testid="step-card-header-toggle-btn"
           @click.stop="$emit('toggle')"
         />
       </template>
@@ -73,6 +77,7 @@
           aria-haspopup="true"
           aria-controls="overlay_menu"
           :disabled="disabled"
+          data-testid="step-card-header-more-btn"
           @click="handleMoreActions"
         />
         <Menu

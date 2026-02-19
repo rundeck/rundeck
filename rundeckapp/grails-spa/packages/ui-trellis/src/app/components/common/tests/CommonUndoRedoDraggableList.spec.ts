@@ -185,7 +185,6 @@ describe("CommonUndoRedoDraggableList", () => {
     });
   });
 
-  describe("draggableDisabled prop", () => {
   describe("eventBus null guard in wasChanged", () => {
     it("does not throw and still emits update:modelValue when eventBus is undefined", async () => {
       const { getRundeckContext } = require("@/library");
