@@ -1,6 +1,6 @@
 <template>
   <div class="step-card-content">
-    <div v-if="config.jobref" class="plugin-config-section">
+    <div v-if="config.jobref" class="plugin-config-section" data-testid="step-card-content-jobref-section">
       <span v-for="prop in jobRefProps" :key="prop.name" class="configprop">
         <plugin-prop-view
           :prop="prop"
@@ -9,21 +9,23 @@
         />
       </span>
     </div>
-    <plugin-config
-      v-else
-      class="plugin-config-section"
-      :serviceName="serviceName"
-      :provider="config.type"
-      :config="config.config"
-      :readOnly="true"
-      :showTitle="false"
-      :showIcon="false"
-      :showDescription="false"
-      mode="show"
-      allowCopy
-    />
+    <div v-else data-testid="step-card-content-plugin-config">
+      <plugin-config
+        class="plugin-config-section"
+        :serviceName="serviceName"
+        :provider="config.type"
+        :config="config.config"
+        :readOnly="true"
+        :showTitle="false"
+        :showIcon="false"
+        :showDescription="false"
+        mode="show"
+        allowCopy
+      />
+    </div>
     <ConfigSection
       v-if="!hideConfigSection && !config.jobref"
+      data-testid="step-card-content-log-filters"
       :title="$t('Workflow.logFilters')"
       :tooltip="$t('Workflow.logFiltersTooltip')"
       :model-value="logFilters"
@@ -34,6 +36,7 @@
     />
     <ConfigSection
       v-if="!hideConfigSection"
+      data-testid="step-card-content-error-handler"
       :title="$t('Workflow.addErrorHandler')"
       :tooltip="$t('Workflow.errorHandlerDescription')"
       :model-value="errorHandler"

@@ -6,7 +6,7 @@
     data-testid="log-filters-container"
   >
     <template v-if="showIfEmpty || model.length > 0">{{ title }}</template>
-    <div v-if="model.length > 0 && mode === 'inline' && !conditionalEnabled" class="add-gap" :id="id">
+    <div v-if="model.length > 0 && mode === 'inline' && !conditionalEnabled" class="add-gap" data-testid="log-filters-inline-buttons" :id="id">
       <template v-for="(entry, i) in model">
         <LogFilterButton
           v-if="findProvider(entry.type)"

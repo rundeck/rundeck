@@ -7,9 +7,10 @@
           (prop.defaultValue === 'true' && innerValue === 'false')
         "
       >
-        <span :title="prop.desc">{{ prop.title }}: </span>
+        <span data-testid="boolean-prop-title" :title="prop.desc">{{ prop.title }}: </span>
         <span
           v-if="innerValue === 'true'"
+          data-testid="boolean-true-value"
           :class="[
             (prop.options && prop.options['booleanTrueDisplayValueClass']) ||
               'text-success',
@@ -22,6 +23,7 @@
         </span>
         <span
           v-else-if="innerValue === 'false'"
+          data-testid="boolean-false-value"
           :class="[
             (prop.options && prop.options['booleanFalseDisplayValueClass']) ||
               'text-success',
@@ -50,7 +52,7 @@
       class="configpair"
     >
       <span>
-        <span :title="prop.desc">{{ prop.title }}:</span>
+        <span data-testid="options-prop-title" :title="prop.desc">{{ prop.title }}:</span>
         <template v-if="prop.type !== 'Options'">
           <span class="text-success copiable-text" @click="copyText(innerValue)">
             <plugin-prop-val :prop="prop" :value="innerValue" />
@@ -62,6 +64,7 @@
             <span
                 v-for="optval in innerValue.split(/, */)"
                 :key="optval"
+                data-testid="option-value"
                 class="text-success copiable-text"
                 @click="copyText(optval)"
             >
@@ -96,8 +99,8 @@
       <template v-if="prop.options && prop.options['displayType'] === 'CODE'">
         <expandable>
           <template #label>
-            <span :title="prop.desc">{{ prop.title }}:</span>
-            <span class="text-info">
+            <span data-testid="code-prop-title" :title="prop.desc">{{ prop.title }}:</span>
+            <span data-testid="code-line-count" class="text-info">
               {{ innerValue.split(/\r?\n/).length }} lines
             </span>
           </template>
@@ -115,8 +118,8 @@
       >
         <expandable>
           <template #label
-            ><span :title="prop.desc">{{ prop.title }}:</span>
-            <span class="text-info"
+            ><span data-testid="multiline-prop-title" :title="prop.desc">{{ prop.title }}:</span>
+            <span data-testid="multiline-line-count" class="text-info"
               >{{ `${innerValue}`.split(/\r?\n/).length }} lines</span
             ></template
           >
@@ -152,9 +155,10 @@
         </span>
       </template>
       <span class="" v-else>
-        <span :title="prop.desc">{{ prop.title }}:</span>
+        <span data-testid="string-prop-title" :title="prop.desc">{{ prop.title }}:</span>
         <span
           v-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
+          data-testid="password-prop-value"
           class="text-success copiable-text"
           @click="copyText(innerValue)"
           :title="allowCopy ? 'Click to copy password' : ''"
@@ -164,6 +168,7 @@
         </span>
         <span
           v-else
+          data-testid="string-prop-value"
           class="text-success copiable-text"
           @click="copyText(innerValue)"
         >

@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import Conditional from "./Conditional.vue";
+import Conditional from "../Conditional.vue";
 
 const createWrapper = async (props = {}) => {
   const wrapper = mount(Conditional, { props: { ...props } });

@@ -1,5 +1,5 @@
 import { mount } from "@vue/test-utils";
-import BaseStepCard from "./BaseStepCard.vue";
+import BaseStepCard from "../BaseStepCard.vue";
 
 const mockPluginDetails = {
   title: "Test Step",

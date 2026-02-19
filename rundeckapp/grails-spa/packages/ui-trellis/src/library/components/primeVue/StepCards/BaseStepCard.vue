@@ -2,6 +2,7 @@
   <Card
     class="baseStepCard"
     :class="[cardClass, { collapsed: !contentExpanded }]"
+    data-testid="base-step-card"
   >
     <template #header>
       <slot v-if="$slots.header" name="header" />
