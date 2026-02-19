@@ -650,6 +650,15 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     def getFrameworkProperties(){
         return rundeckFramework.getPropertyRetriever()
     }
+
+    /**
+     * Return framework properties as a Map.
+     * This includes properties from framework.properties file.
+     * @return Map of framework properties
+     */
+    Map<String, String> getFrameworkPropertiesMap() {
+        return rundeckFramework.getPropertyLookup().getPropertiesMap()
+    }
     /**
      * Filter nodes for a project given the node selector
      * @param framework

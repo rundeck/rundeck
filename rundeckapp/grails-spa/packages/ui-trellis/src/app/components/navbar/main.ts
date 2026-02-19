@@ -1,11 +1,13 @@
-import { createApp, markRaw } from "vue";
+import { createApp, markRaw, defineComponent } from "vue";
 
 import NavigationBar from "../../../library/components/navbar/NavBar.vue";
 import UtilityBar from "../../../library/components/utility-bar/UtilityBar.vue";
 import RundeckInfoWidget from "../../../library/components/widgets/rundeck-info/RundeckInfoWidget.vue";
-import ThemeSelectWidget from "../../../library/components/widgets/theme-select/ThemeSelect.vue";
+import NextUIIndicator from "../../../library/components/widgets/settings-bar/NextUIIndicator.vue";
+import SettingsCogButton from "../../../library/components/widgets/settings-bar/SettingsCogButton.vue";
+import SettingsModal from "../../../library/components/widgets/settings-bar/SettingsModal.vue";
 
-import { UtilityActionItem } from "../../../library/stores/UtilityBar";
+import { UtilityBarItem } from "../../../library/stores/UtilityBar";
 import { getRundeckContext, getAppLinks } from "../../../library";
 import { commonAddUiMessages, initI18n } from "../../utilities/i18n";
 import * as uiv from "uiv";
@@ -38,34 +40,62 @@ rootStore.utilityBar.addItems([
   },
   {
     type: "widget",
-    id: "utility-theme",
+    id: "utility-nextui-indicator",
     container: "root",
     group: "right",
-    class: "fas fa-sun fas-xs",
-    // "label": "Theme",
     visible: true,
-    widget: markRaw({
-      name: "ThemeSelectWidgetItem",
-      components: { ThemeSelectWidget },
-      template: `<ThemeSelectWidget/>`,
-      provide: {
-        rootStore,
-      },
-    }),
+    inline: true,
+    order: 200,
+    widget: markRaw(
+      defineComponent({
+        name: "NextUIIndicatorWidget",
+        components: { NextUIIndicator },
+        provide: {
+          rootStore,
+        },
+        template: `<NextUIIndicator />`,
+      }),
+    ),
   },
   {
-    type: "action",
-    id: "utility-help",
+    type: "widget",
+    id: "utility-settings-cog",
     container: "root",
     group: "right",
-    class: "fas fa-question-circle fas-xs",
-    label: "Help",
     visible: true,
-    action: () => {
-      window.open(appLinks.help, "_blank");
-    },
+    inline: true,
+    order: 100,
+    widget: markRaw(
+      defineComponent({
+        name: "SettingsCogButtonWidget",
+        components: { SettingsCogButton },
+        provide: {
+          rootStore,
+        },
+        template: `<SettingsCogButton />`,
+      }),
+    ),
   },
-] as Array<UtilityActionItem>);
+  {
+    type: "widget",
+    id: "utility-settings-modal",
+    container: "root",
+    group: "right",
+    visible: true,
+    inline: true,
+    order: 300,
+    widget: markRaw(
+      defineComponent({
+        name: "SettingsModalWidget",
+        components: { SettingsModal },
+        provide: {
+          rootStore,
+        },
+        template: `<SettingsModal />`,
+      }),
+    ),
+  },
+] as Array<UtilityBarItem>);
 
 function initNav() {
   const elm = document.getElementById("section-navbar") as HTMLElement;

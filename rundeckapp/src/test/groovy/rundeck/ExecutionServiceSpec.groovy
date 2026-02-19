@@ -33,6 +33,9 @@ import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.WorkflowExecutionListenerTest
 import groovy.time.TimeCategory
@@ -644,6 +647,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -703,6 +708,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_) >> ['a': 'b', c: 'd']
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -768,6 +775,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -848,6 +857,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -927,6 +938,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -999,6 +1012,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -1114,6 +1129,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -1152,6 +1169,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -1194,6 +1213,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -2898,6 +2919,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -3101,6 +3124,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * filterNodeSet(null, orgProject)
             0 * filterNodeSet(null, jobProj)
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -4122,6 +4147,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -4330,6 +4357,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
             service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -4402,6 +4431,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
             service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -4462,6 +4493,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
             service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -4757,6 +4790,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -4844,6 +4879,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -5076,37 +5113,60 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         def project = "asdf"
         service.frameworkService = Stub(FrameworkService) {
-            getProjectProperties(project) >> props
+            // framework.globalfilter.* comes from framework.properties (via getFrameworkPropertiesMap)
+            getFrameworkPropertiesMap() >> frameworkProps
+            // project.globalfilter.* comes from project properties
+            getProjectProperties(project) >> projectProps
         }
         when:
 
-        //def result = ProjectNodeSupport.listPluginConfigurations(props, prefix, svc, true)
         def result = service.getGlobalPluginConfigurations(project)
         then:
 
         result.size() == expectedSize
+        // Validate plugin properties
+        if (expectedSize > 0) {
+            result.eachWithIndex { plugin, idx ->
+                assert plugin.service == ServiceNameConstants.LogFilter
+                assert plugin.provider == expectedProviders[idx]
+                assert plugin.configuration == expectedConfigs[idx]
+            }
+        }
 
         where:
-        expectedSize    | props
-        1               | ['framework.globalfilter.1.type':'mask-passwords',
-                           'framework.globalfilter.1.config.replacement':'[SECURE]',
-                           'framework.globalfilter.1.config.color': 'blue']
-        1               | ['project.globalfilter.1.type':'highlight-output',
-                           'project.globalfilter.1.config.regex':'test',
-                           'project.globalfilter.1.config.bgcolor': 'yellow']
-        0               | [:]
-        2               | ['framework.globalfilter.1.type':'mask-passwords',
-                           'framework.globalfilter.1.config.replacement':'[SECURE]',
-                           'framework.globalfilter.1.config.color': 'blue',
-                           'project.globalfilter.1.type':'highlight-output',
-                           'project.globalfilter.1.config.regex':'test',
-                           'project.globalfilter.1.config.bgcolor': 'yellow']
-        2               | ['framework.globalfilter.1.type':'mask-passwords',
-                           'framework.globalfilter.1.config.replacement':'[SECURE]',
-                           'framework.globalfilter.1.config.color': 'blue',
-                           'framework.globalfilter.2.type':'highlight-output',
-                           'framework.globalfilter.2.config.regex':'test',
-                           'framework.globalfilter.2.config.bgcolor': 'yellow']
+        expectedSize | frameworkProps | projectProps | expectedProviders | expectedConfigs
+        // Only framework global filter
+        1            | ['framework.globalfilter.1.type':'mask-passwords',
+                        'framework.globalfilter.1.config.replacement':'[SECURE]',
+                        'framework.globalfilter.1.config.color': 'blue'] | [:] |
+                      ['mask-passwords'] |
+                      [['replacement':'[SECURE]', 'color':'blue']]
+        // Only project global filter
+        1            | [:] | ['project.globalfilter.1.type':'highlight-output',
+                              'project.globalfilter.1.config.regex':'test',
+                              'project.globalfilter.1.config.bgcolor': 'yellow'] |
+                      ['highlight-output'] |
+                      [['regex':'test', 'bgcolor':'yellow']]
+        // No filters
+        0            | [:] | [:] | [] | []
+        // Both framework and project filters (project filters come first)
+        2            | ['framework.globalfilter.1.type':'mask-passwords',
+                        'framework.globalfilter.1.config.replacement':'[SECURE]',
+                        'framework.globalfilter.1.config.color': 'blue'] |
+                      ['project.globalfilter.1.type':'highlight-output',
+                       'project.globalfilter.1.config.regex':'test',
+                       'project.globalfilter.1.config.bgcolor': 'yellow'] |
+                      ['highlight-output', 'mask-passwords'] |
+                      [['regex':'test', 'bgcolor':'yellow'], ['replacement':'[SECURE]', 'color':'blue']]
+        // Multiple framework filters
+        2            | ['framework.globalfilter.1.type':'mask-passwords',
+                        'framework.globalfilter.1.config.replacement':'[SECURE]',
+                        'framework.globalfilter.1.config.color': 'blue',
+                        'framework.globalfilter.2.type':'highlight-output',
+                        'framework.globalfilter.2.config.regex':'test',
+                        'framework.globalfilter.2.config.bgcolor': 'yellow'] | [:] |
+                      ['mask-passwords', 'highlight-output'] |
+                      [['replacement':'[SECURE]', 'color':'blue'], ['regex':'test', 'bgcolor':'yellow']]
 
     }
 
@@ -5383,6 +5443,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
             service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -5422,6 +5484,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -6121,6 +6185,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             0 * filterNodeSet(null, orgProject)
             1 * filterNodeSet(null, jobProj)
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -6339,11 +6405,15 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             }
         }
         service.pluginService = Mock(PluginService) {
-            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
         }
         service.frameworkService = Mock(FrameworkService) {
             getDefaultInputCharsetForProject(_) >> 'UTF-8'
             getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
         }
         service.executionUtilService = Mock(ExecutionUtilService) {
             createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
@@ -6361,6 +6431,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
 
         and: "execution lifecycle handler setup"
         def mockNewWorkflow = Mock(WorkflowExecutionItem) {
@@ -6446,11 +6520,15 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         service.pluginService = Mock(PluginService) {
             getPluginRegistry() >> Mock(PluginRegistry)
-            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
         }
         service.frameworkService = Mock(FrameworkService) {
             getDefaultInputCharsetForProject(_) >> 'UTF-8'
             getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
         }
         service.executionUtilService = Mock(ExecutionUtilService) {
             createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
@@ -6470,6 +6548,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
         service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
         service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
         service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
 
@@ -6542,11 +6621,15 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         service.pluginService = Mock(PluginService) {
             getPluginRegistry() >> Mock(PluginRegistry)
-            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
         }
         service.frameworkService = Mock(FrameworkService) {
             getDefaultInputCharsetForProject(_) >> 'UTF-8'
             getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
         }
         service.executionUtilService = Mock(ExecutionUtilService) {
             createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
@@ -6563,6 +6646,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
         service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
         service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
         service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
 
@@ -6644,6 +6728,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             getDefaultInputCharsetForProject(_) >> 'UTF-8'
             getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
         }
         service.executionUtilService = Mock(ExecutionUtilService) {
             createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
@@ -6661,6 +6746,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
         service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
         service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
         service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
 
@@ -6730,11 +6816,15 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         service.pluginService = Mock(PluginService) {
             getPluginRegistry() >> Mock(PluginRegistry)
-            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
         }
         service.frameworkService = Mock(FrameworkService) {
             getDefaultInputCharsetForProject(_) >> 'UTF-8'
             getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
         }
 
         service.executionUtilService = Mock(ExecutionUtilService) {
@@ -6752,6 +6842,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
         service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
         service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
         service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
 
