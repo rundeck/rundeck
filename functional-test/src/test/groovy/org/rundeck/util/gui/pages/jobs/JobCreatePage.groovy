@@ -158,7 +158,7 @@ class JobCreatePage extends BasePage {
     By optionsBy = By.cssSelector(".opt.item")
     By timeZoneBy = By.id("timeZone")
     By optEditFormBy = By.className("optEditForm")
-    By addGlobalLogFilter = By.cssSelector("div[data-testid='log-filters-container'] > button")
+    By addGlobalLogFilter = By.cssSelector("[data-testid='add-filter-button']")
     By addLogFilterOption = By.cssSelector("a[data-test='add-log-filter']")
     By addErrorHandlerOption = By.cssSelector("a[data-test='add-error-handler']")
 
