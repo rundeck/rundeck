@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.codahale.metrics.Counter
+import com.codahale.metrics.Histogram
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.internal.RundeckLogFormat
@@ -393,6 +394,13 @@ class LogFileStorageService
     }
     Counter getStorageFailedCounter(){
         metricService?.counter(this.class.name + ".storageRequests","failed")
+    }
+
+    Counter getStoredFileCounter(){
+        metricService?.counter(this.class.name + ".stored","count")
+    }
+    Histogram getStoredFileSizeHistogram(String filetype){
+        metricService?.histogram(this.class.name + ".stored." + filetype.replaceAll('.', '_'), "bytes")
     }
 
     List getCurrentRetrievalRequests(){
@@ -2133,6 +2141,10 @@ class LogFileStorageService
                     success = storage.store(filetype, input, length, lastModified)
                 }
                 message="No message"
+            }
+            if(success){
+                storedFileCounter?.inc()
+                getStoredFileSizeHistogram(filetype)?.update(length)
             }
         }catch (Throwable e) {
             log.error("Storage request [ID#${ident}] error: ${e.message}")
