@@ -26,6 +26,7 @@ class WorkflowStepDataImpl implements WorkflowStepData, PluginProviderConfigurat
     Boolean nodeStep
     String pluginType
     Map<String, Object> pluginConfig
+    String runnerNode;
 
     static constraints = {
         importFrom SharedWorkflowStepConstraints

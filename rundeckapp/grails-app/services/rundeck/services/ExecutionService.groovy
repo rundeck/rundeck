@@ -1149,7 +1149,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     null
             def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
 
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow, execution.project)
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.getWorkflowData(), execution.project)
 
             StepExecutionContext createInitContext = createContext(
                     execution,
@@ -1249,12 +1249,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             )
             logsInstalled=true
-            def workflowData = execution.getWorkflowData()
-            if (!workflowData) {
-                throw new ExecutionServiceException("No workflow data available for execution")
-            }
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(workflowData)
-
 
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
