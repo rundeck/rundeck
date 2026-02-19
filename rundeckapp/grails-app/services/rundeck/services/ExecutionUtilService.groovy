@@ -216,7 +216,7 @@ class ExecutionUtilService {
             WorkflowExecutionItem jobReferenceWorkflow = null
             ScheduledExecution se = scheduledExecutionService.findJobFromJobExec(jobcmditem, jobcmditem.jobProject ?: parentProject)
             if(se){
-                jobReferenceWorkflow = createExecutionItemForWorkflow(se?.workflow, parentProject)
+                jobReferenceWorkflow = createExecutionItemForWorkflow(se?.getWorkflowData(), parentProject)
             }
 
             final String[] args
