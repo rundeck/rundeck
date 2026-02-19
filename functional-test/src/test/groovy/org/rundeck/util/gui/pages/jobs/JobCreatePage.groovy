@@ -197,6 +197,7 @@ class JobCreatePage extends BasePage {
     }
 
     JobCreatePage addSimpleCommandStepNextUi(String command, int stepIndexNumber) {
+        waitForElementToBeClickable workflowAlphaUiButton
         clickAddStep()
         byAndWaitClickable By.xpath("//*[@${StepType.NODE.getStepType()}='exec-command']")
         stepLink 'exec-command', StepType.NODE click()
@@ -211,6 +212,8 @@ class JobCreatePage extends BasePage {
 
     JobCreatePage addStep(JobStep step, int stepNumber = 0){
         def stepName = step.STEP_NAME
+        tab(JobTab.WORKFLOW).click()
+        waitForElementToBeClickable workflowAlphaUiButton
         clickAddStep()
         stepLink(stepName, step.stepType).click()
 

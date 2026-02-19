@@ -56,7 +56,6 @@ class JobEditSpec extends SeleniumBase{
             jobShowPage.getJobActionDropdownButton().click()
             jobShowPage.getEditJobLink().click()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
-            jobCreatePage.addSimpleCommandStepButton.click()
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
             jobCreatePage.getUpdateJobButton().click()
         then:

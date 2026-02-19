@@ -223,7 +223,10 @@
       <div class="job-editor-workflow-vue">
         <workflow-editor-section  />
       </div>
-
+      <g:if test="${uiType != 'next'}">
+        <g:hiddenField name="_sessionopts" value="true"/>
+        <g:hiddenField name="_sessionwf" value="true"/>
+      </g:if>
 
       <g:render template="jobComponentProperties"
                 model="[

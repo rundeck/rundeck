@@ -76,7 +76,7 @@ class ExportImportSpec extends SeleniumBase {
         when:
         jobCreatePage.fillBasicJob jobName
         jobCreatePage.optionButton.click()
-        jobCreatePage.optionName 0 sendKeys optName
+        jobCreatePage.optionNameNew() sendKeys optName
         jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
         jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 0
