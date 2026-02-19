@@ -19,6 +19,7 @@ module.exports = {
     },
     "components/motd": { entry: "./src/app/components/motd/main.js" },
     "components/navbar": { entry: "./src/app/components/navbar/main.ts" },
+    "components/mainbar": { entry: "./src/app/components/mainbar/main.ts" },
     "components/project-picker": {
       entry: "./src/app/components/project-picker/main.ts",
     },

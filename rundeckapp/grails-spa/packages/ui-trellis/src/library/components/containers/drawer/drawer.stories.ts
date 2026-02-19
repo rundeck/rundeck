@@ -1,5 +1,5 @@
 import type { Meta, StoryFn } from "@storybook/vue3";
-import { addons } from "@storybook/addons";
+// import { addons } from "@storybook/addons";
 
 import "../../../stories/setup";
 
@@ -20,7 +20,7 @@ function setupStory(vue) {
 }
 
 export const drawer: StoryFn<typeof Drawer> = (args) => {
-  const chan = addons.getChannel();
+  // const chan = addons.getChannel();
 
   return {
     setup() {
@@ -36,7 +36,8 @@ export const drawer: StoryFn<typeof Drawer> = (args) => {
     },
     methods: {
       close() {
-        chan.emit("Open", false);
+        // chan.emit("Open", false);
+        args.visible = false;
       },
     },
   };
@@ -48,7 +49,7 @@ drawer.args = {
 };
 
 export const autoSize: StoryFn<typeof Drawer> = (args) => {
-  const chan = addons.getChannel();
+  // const chan = addons.getChannel();
 
   return {
     setup() {
@@ -64,7 +65,8 @@ export const autoSize: StoryFn<typeof Drawer> = (args) => {
     },
     methods: {
       close() {
-        chan.emit("Open", false);
+        // chan.emit("Open", false);
+        args.visible = false;
       },
     },
   };

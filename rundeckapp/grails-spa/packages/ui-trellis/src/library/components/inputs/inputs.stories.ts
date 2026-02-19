@@ -1,5 +1,5 @@
 import type { Meta, StoryFn } from "@storybook/vue3";
-import { addons } from "@storybook/addons";
+// import { addons } from "@storybook/addons";
 
 import "../../stories/setup";
 
@@ -20,7 +20,7 @@ function setupStory(vue) {
 }
 
 export const inputSwitch: StoryFn<typeof InputSwitch> = (args) => {
-  const chan = addons.getChannel();
+  // const chan = addons.getChannel();
 
   return {
     setup() {
@@ -33,7 +33,7 @@ export const inputSwitch: StoryFn<typeof InputSwitch> = (args) => {
     },
     methods: {
       handleChecked(val: boolean) {
-        chan.emit("checked", val);
+        // chan.emit("checked", val);
       },
     },
   };
@@ -69,7 +69,7 @@ export const inputSwitchDisabled: StoryFn<typeof InputSwitch> = () => {
 };
 
 export const inputSwitchContrast: StoryFn<typeof InputSwitch> = (args) => {
-  const chan = addons.getChannel();
+  // const chan = addons.getChannel();
 
   return {
     setup() {
@@ -86,7 +86,7 @@ export const inputSwitchContrast: StoryFn<typeof InputSwitch> = (args) => {
     },
     methods: {
       handleChecked(val: boolean) {
-        chan.emit("checked", val);
+        // chan.emit("checked", val);
       },
     },
   };
