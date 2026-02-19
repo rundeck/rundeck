@@ -91,6 +91,65 @@ class JobCreatePage extends BasePage {
         static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
     }
 
+    /**
+     * Selectors for EA (Enhanced Architecture) mode - Conditional Logic feature
+     * Uses existing data-testid values from Vue components where available
+     */
+    static class EAMode {
+        // Modal and card containers (existing data-testids)
+        static By addStepButtonBy = By.cssSelector("[data-testid='add-button']")
+        static By choosePluginsEAModalBy = By.cssSelector("[data-testid='choose-plugins-ea-modal']")
+        static By editConditionalStepCardBy = By.cssSelector("[data-testid='edit-conditional-step-card']")
+        static By editStepCardBy = By.cssSelector("[data-testid='base-step-card']")
+
+        // Step configuration (existing data-testids)
+        static By stepNameInputBy = By.cssSelector("[data-testid='step-name-input'] [data-testid='pt-input-field']")
+        static By saveStepButtonBy = By.cssSelector("[data-testid='save-button']")
+        static By saveConditionalStepButtonBy = By.cssSelector("[data-testid='save-btn']")
+
+        // Condition configuration (existing data-testids from ConditionRow.vue)
+        static By conditionFieldDropdownBy = By.cssSelector("[data-testid='condition-field-select']")
+        static By conditionOperatorDropdownBy = By.cssSelector("[data-testid='condition-operator-select']")
+        static By conditionValueInputBy = By.cssSelector("[data-testid='condition-value-input']")
+
+        // Substeps management (existing data-testids from InnerStepList.vue)
+        static By addConditionStepButtonBy = By.cssSelector("[data-testid='add-substep-button']")
+        static By substepsListBy = By.cssSelector("[data-testid='inner-step-list']")
+        static By substepItemBy = By.cssSelector("[data-testid='inner-step-item']")
+        static By editSubstepButtonBy = By.cssSelector("[data-testid='edit-substep-button']")
+
+        // Step cards
+        static By stepCardBy = By.cssSelector("[data-testid='base-step-card']")
+        static By stepHeaderPluginInfoBy = By.cssSelector("[data-testid='step-card-header-plugin-info']")
+
+        // Condition row
+        static By conditionFieldInputBy = By.cssSelector("[data-testid='condition-field-select'] input")
+        static By conditionOperatorArrowBy = By.cssSelector("[data-testid='condition-operator-select'] .p-select-dropdown")
+        static By conditionValueInputFieldBy = By.cssSelector("[data-testid='condition-value-input'] input")
+        static By selectOverlayOptionBy = By.cssSelector(".p-select-overlay .p-select-option")
+
+        // Fallback selectors
+        static By choosePluginsEAModalFallbackBy = By.cssSelector(".modal-dialog, .choose-plugins-modal")
+        static By editConditionalStepCardFallbackBy = By.cssSelector(".edit-conditional-step-card")
+        static By editStepCardFallbackBy = By.cssSelector(".edit-step-card")
+        static By addSubstepFallbackBy = By.cssSelector(".btn-add-inner-step")
+        static By substepsListFallbackBy = By.cssSelector(".inner-step-list")
+        static By substepItemFallbackBy = By.cssSelector(".inner-step-item")
+
+        // Dynamic selectors (parameterized)
+        static By selectOverlayOptionByText(String text) {
+            By.xpath("//div[contains(@class,'p-select-overlay')]//li[contains(normalize-space(.),'${text}') and not(contains(@class,'note'))]")
+        }
+
+        static By innerStepItemHeaderByIndex(int index) {
+            By.xpath("(//div[@data-testid='inner-step-item'])[${index}]//*[@data-testid='step-card-header-plugin-info']")
+        }
+
+        static By accordionTitleBy(String stepName) {
+            By.xpath("//*[contains(@class,'accordion-title') and contains(text(),'${stepName}')]")
+        }
+    }
+
     By usageSectionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
     By saveOptionBy = By.xpath("//*[@title[contains(.,'Save the new option')]]")
     By nodeDispatchTrueBy = By.id("doNodedispatchTrue")
@@ -975,6 +1034,151 @@ class JobCreatePage extends BasePage {
 
     def doesntHasDropdownOption(int index, String dataTest) {
         els(By.cssSelector("#wfitem_${index} +.step-item-controls a[data-test='${dataTest}']")).isEmpty()
+    }
+
+    // EA Mode methods
+    void clickAddStepButtonEA() {
+        def btn = waitForElementVisible(workflowAlphaUiButton)
+        executeScript("arguments[0].scrollIntoView(true);", btn)
+        waitIgnoringForElementToBeClickable(btn).click()
+    }
+
+    void waitForEAModal() {
+        try {
+            waitForElementVisible(EAMode.choosePluginsEAModalBy)
+        } catch (Exception e) {
+            waitForElementVisible(EAMode.choosePluginsEAModalFallbackBy)
+        }
+    }
+
+    void waitForEditConditionalStepCard() {
+        try {
+            waitForElementVisible(EAMode.editConditionalStepCardBy)
+        } catch (Exception e) {
+            waitForElementVisible(EAMode.editConditionalStepCardFallbackBy)
+        }
+    }
+
+    void setEAStepName(String name) {
+        def stepNameInput = waitForElementVisible(EAMode.stepNameInputBy)
+        executeScript("arguments[0].scrollIntoView(true);", stepNameInput)
+        waitIgnoringForElementToBeClickable(stepNameInput).click()
+        stepNameInput.sendKeys(name)
+    }
+
+    void configureCondition(String field, String operator, String value) {
+        // Field - editable PtSelect: scroll, type to filter then click matching option
+        def fieldInput = waitForElementVisible(EAMode.conditionFieldInputBy)
+        executeScript("arguments[0].scrollIntoView(true);", fieldInput)
+        waitIgnoringForElementToBeClickable(fieldInput).click()
+        fieldInput.sendKeys(field)
+        waitForElementVisible(EAMode.selectOverlayOptionBy)
+        el(EAMode.selectOverlayOptionByText(field)).click()
+
+        // Operator - non-editable PtSelect: scroll then click the dropdown arrow to open
+        def operatorArrow = waitForElementVisible(EAMode.conditionOperatorArrowBy)
+        executeScript("arguments[0].scrollIntoView(true);", operatorArrow)
+        waitIgnoringForElementToBeClickable(operatorArrow).click()
+        waitForElementVisible(EAMode.selectOverlayOptionBy)
+        el(EAMode.selectOverlayOptionByText(operator)).click()
+
+        // Value - PtAutoComplete: scroll then type into the inner input
+        def valueInput = waitForElementVisible(EAMode.conditionValueInputFieldBy)
+        executeScript("arguments[0].scrollIntoView(true);", valueInput)
+        waitIgnoringForElementToBeClickable(valueInput).click()
+        valueInput.sendKeys(value)
+    }
+
+    void clickAddSubstep() {
+        By addBy = EAMode.addConditionStepButtonBy
+        try {
+            waitForElementVisible(addBy)
+        } catch (Exception e) {
+            addBy = EAMode.addSubstepFallbackBy
+        }
+        def btn = el(addBy)
+        executeScript("arguments[0].scrollIntoView(true);", btn)
+        waitForElementToBeClickable(btn)
+        btn.click()
+    }
+
+    void waitForEditStepCard() {
+        try {
+            waitForElementVisible(EAMode.editStepCardBy)
+        } catch (Exception e) {
+            waitForElementVisible(EAMode.editStepCardFallbackBy)
+        }
+    }
+
+    void setEACommand(String command, boolean clear = false) {
+        def commandInput = waitForElementVisible(NextUi.adhocRemoteStringBy)
+        executeScript("arguments[0].scrollIntoView(true);", commandInput)
+        waitForElementToBeClickable(commandInput)
+        if (clear) commandInput.clear()
+        commandInput.sendKeys(command)
+    }
+
+    void setEAScript(String script) {
+        waitForElementVisible(scriptTextAreaBy)
+        def scriptInput = el(scriptTextAreaBy).findElement(By.tagName("textarea"))
+        executeScript("arguments[0].scrollIntoView(true);", scriptInput)
+        waitForElementToBeClickable(scriptInput)
+        scriptInput.sendKeys(script)
+    }
+
+    void clickSaveSubstep() {
+        def saveButton = waitForElementVisible(EAMode.saveStepButtonBy)
+        executeScript("arguments[0].scrollIntoView(true);", saveButton)
+        waitForElementToBeClickable(saveButton)
+        saveButton.click()
+    }
+
+    void waitForSubstepText(String expectedText) {
+        try {
+            waitForTextToBePresentInElement(el(EAMode.substepsListBy), expectedText)
+        } catch (Exception e) {
+            waitForTextToBePresentInElement(el(EAMode.substepsListFallbackBy), expectedText)
+        }
+    }
+
+    void waitForSubstepCount(int count) {
+        try {
+            waitForNumberOfElementsToBeMoreThan(EAMode.substepItemBy, count - 1)
+        } catch (Exception e) {
+            waitForNumberOfElementsToBeMoreThan(EAMode.substepItemFallbackBy, count - 1)
+        }
+    }
+
+    void clickEditSubstep(int index) {
+        def editTarget = el(EAMode.innerStepItemHeaderByIndex(index))
+        executeScript("arguments[0].scrollIntoView(true);", editTarget)
+        waitForElementToBeClickable(editTarget)
+        editTarget.click()
+    }
+
+    void clickSaveConditionalStep() {
+        def saveButton = waitForElementVisible(EAMode.saveConditionalStepButtonBy)
+        executeScript("arguments[0].scrollIntoView(true);", saveButton)
+        waitForElementToBeClickable(saveButton)
+        saveButton.click()
+    }
+
+    void waitForConditionalStepInWorkflow(String stepName) {
+        waitForElementVisible(EAMode.stepCardBy)
+        waitForTextToBePresentInElement(el(EAMode.stepCardBy), stepName)
+    }
+
+    List<WebElement> getWorkflowStepElements() {
+        els(EAMode.stepCardBy)
+    }
+
+    /**
+     * Select a step type from the EA modal by accordion title text
+     * @param stepName The accordion title text (e.g., "Conditional Logic Node Step", "Command", "Script")
+     */
+    void selectStepTypeEA(String stepName) {
+        waitForElementVisible(EAMode.accordionTitleBy(stepName))
+        el(EAMode.accordionTitleBy(stepName)).click()
     }
 }
 

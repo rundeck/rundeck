@@ -856,4 +856,25 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         return "${name.replaceAll(/[^a-zA-Z0-9_-]+/, '_').substring(0, 20)}-${System.currentTimeMillis()}"
     }
 
+    /**
+     * Wait for a feature flag or config value to be set and propagated
+     * @param key The config key (e.g., "rundeck.feature.earlyAccessJobConditional.enabled")
+     * @param value The expected value (default: "true")
+     */
+    def waitFeatureFlag(String key, String value = 'true') {
+        boolean seenValue = false
+        def mapper = new ObjectMapper()
+
+        while (!seenValue) {
+            Thread.sleep(WaitingTime.MODERATE.toMillis())
+            def response = client.doGet("/config/get?key=${key}&strata=default")
+            if (response?.body() != null) {
+                def parsedBody = mapper.readValue(response.body().string(), Map.class)
+                if (parsedBody?.value == value) {
+                    seenValue = true
+                }
+            }
+        }
+    }
+
 }
