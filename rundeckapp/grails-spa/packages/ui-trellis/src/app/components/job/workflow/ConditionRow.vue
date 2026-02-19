@@ -1,13 +1,14 @@
 <template>
-  <div class="condition-row">
+  <div class="condition-row" data-testid="condition-row">
     <div class="field-group field-column">
-      <label class="text-heading--sm form-label" :class="{ 'form-label-hidden': !showLabels }">
+      <label data-testid="condition-field-label" class="text-heading--sm form-label" :class="{ 'form-label-hidden': !showLabels }">
         <template v-if="showLabels">
           {{ $t("editConditionalStep.field") }} <span class="required-indicator">*</span>
         </template>
         <template v-else>&nbsp;</template>
       </label>
       <PtSelect
+        data-testid="condition-field-select"
         :modelValue="condition.field"
         :options="fieldOptionsWithNote"
         :editable="true"
@@ -29,6 +30,7 @@
             <button
               type="button"
               class="note-link"
+              data-testid="condition-note-link"
               @click.stop="handleNoteClick"
             >
               {{ $t("editConditionalStep.switchStepTypeLink", { stepType: oppositeStepType }) }}
@@ -40,11 +42,12 @@
     </div>
 
     <div class="field-group operator-column">
-      <label class="text-heading--sm form-label" :class="{ 'form-label-hidden': !showLabels }">
+      <label data-testid="condition-operator-label" class="text-heading--sm form-label" :class="{ 'form-label-hidden': !showLabels }">
         <template v-if="showLabels">{{ $t("editConditionalStep.operator") }}</template>
         <template v-else>&nbsp;</template>
       </label>
       <PtSelect
+        data-testid="condition-operator-select"
         :modelValue="condition.operator"
         :options="operatorOptions"
         option-label="label"
@@ -56,13 +59,14 @@
     </div>
 
     <div class="field-group value-column">
-      <label class="text-heading--sm form-label" :class="{ 'form-label-hidden': !showLabels }">
+      <label data-testid="condition-value-label" class="text-heading--sm form-label" :class="{ 'form-label-hidden': !showLabels }">
         <template v-if="showLabels">
           {{ $t("editConditionalStep.value") }} <span class="required-indicator">*</span>
         </template>
         <template v-else>&nbsp;</template>
       </label>
       <PtAutoComplete
+        data-testid="condition-value-input"
         :modelValue="condition.value"
         :suggestions="suggestions"
         :placeholder="$t('editConditionalStep.valuePlaceholder')"
@@ -83,6 +87,7 @@
       severity="secondary"
       icon="pi pi-trash"
       class="delete-button"
+      data-testid="condition-delete-btn"
       @click="handleDelete"
     />
   </div>

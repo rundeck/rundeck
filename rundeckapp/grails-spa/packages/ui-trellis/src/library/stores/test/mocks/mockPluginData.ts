@@ -193,3 +193,36 @@ export const mockJobRefWorkflowNodeStepPlugin: Plugin = {
     glyphicon: "book"
   },
 };
+
+export const mockConditionalLogicWorkflowStepPlugin: Plugin = {
+  id: "",
+  name: "conditional.logic",
+  artifactName: "Conditional logic",
+  title: "Conditional Logic Workflow Step",
+  description: "Define steps that will be executed under specific conditions",
+  highlightedOrder: 6,
+  isHighlighted: true,
+  author: "",
+  builtin: true,
+  pluginVersion: "0.1",
+  service: ServiceType.WorkflowStep,
+  iconUrl: "test-file-stub",
+  providerMetadata: {},
+};
+
+export const mockConditionalLogicWorkflowNodeStepPlugin: Plugin = {
+  id: "",
+  name: "conditional.logic",
+  artifactName: "Conditional logic",
+  title: "Conditional Logic Node Step",
+  description:
+    "Define steps that will be executed per-node under specific conditions",
+  highlightedOrder: 6,
+  isHighlighted: true,
+  author: "",
+  builtin: true,
+  pluginVersion: "0.1",
+  service: ServiceType.WorkflowNodeStep,
+  iconUrl: "test-file-stub",
+  providerMetadata: {},
+};

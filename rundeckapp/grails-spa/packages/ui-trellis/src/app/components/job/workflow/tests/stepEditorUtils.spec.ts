@@ -40,6 +40,7 @@ jest.mock("../../../../../library/services/projects");
 import {
   createStepFromProvider,
   getPluginDetailsForStep,
+  resetValidation,
   validateStepForSave,
 } from "../stepEditorUtils";
 
@@ -52,6 +53,22 @@ const ServiceType = {
 describe("stepEditorUtils", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe("resetValidation", () => {
+    it("returns a clean validation state with valid true and empty errors", () => {
+      const result = resetValidation();
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual({});
+    });
+
+    it("returns a new object on each call", () => {
+      const result1 = resetValidation();
+      const result2 = resetValidation();
+
+      expect(result1).not.toBe(result2);
+    });
   });
 
   describe("createStepFromProvider", () => {
@@ -464,7 +481,7 @@ describe("stepEditorUtils", () => {
       expect(result.errors.jobref).toBeDefined();
     });
 
-    it("returns valid for conditional.logic without calling API", async () => {
+    it("returns valid for conditional.logic when conditionSet is empty", async () => {
       const step = {
         type: "conditional.logic",
         config: {},
@@ -480,6 +497,168 @@ describe("stepEditorUtils", () => {
       expect(result.valid).toBe(true);
       expect(result.errors).toEqual({});
       expect(mockValidatePluginConfig).not.toHaveBeenCalled();
+    });
+
+    it("returns valid for conditional.logic when all conditions have field and value", async () => {
+      const step = {
+        type: "conditional.logic",
+        config: {
+          conditionSet: [
+            {
+              id: "set-1",
+              conditions: [
+                { id: "cond-1", field: "myField", operator: "equals", value: "myValue" },
+              ],
+            },
+          ],
+        },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual({});
+      expect(mockValidatePluginConfig).not.toHaveBeenCalled();
+    });
+
+    it("returns invalid for conditional.logic when a condition has no field", async () => {
+      const step = {
+        type: "conditional.logic",
+        config: {
+          conditionSet: [
+            {
+              id: "set-1",
+              conditions: [
+                { id: "cond-1", field: null, operator: "equals", value: "myValue" },
+              ],
+            },
+          ],
+        },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect((result.errors as any).conditions["cond-1"].field).toBe("editConditionalStep.fieldRequired");
+      expect(mockValidatePluginConfig).not.toHaveBeenCalled();
+    });
+
+    it("returns invalid for conditional.logic when a condition has no value", async () => {
+      const step = {
+        type: "conditional.logic",
+        config: {
+          conditionSet: [
+            {
+              id: "set-1",
+              conditions: [
+                { id: "cond-2", field: "someField", operator: "equals", value: "" },
+              ],
+            },
+          ],
+        },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect((result.errors as any).conditions["cond-2"].value).toBe("editConditionalStep.valueRequired");
+      expect(mockValidatePluginConfig).not.toHaveBeenCalled();
+    });
+
+    it("returns invalid for conditional.logic when a condition has whitespace-only field", async () => {
+      const step = {
+        type: "conditional.logic",
+        config: {
+          conditionSet: [
+            {
+              id: "set-1",
+              conditions: [
+                { id: "cond-3", field: "   ", operator: "equals", value: "someValue" },
+              ],
+            },
+          ],
+        },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect((result.errors as any).conditions["cond-3"].field).toBe("editConditionalStep.fieldRequired");
+    });
+
+    it("reports both field and value errors for a condition missing both", async () => {
+      const step = {
+        type: "conditional.logic",
+        config: {
+          conditionSet: [
+            {
+              id: "set-1",
+              conditions: [
+                { id: "cond-4", field: null, operator: "equals", value: "" },
+              ],
+            },
+          ],
+        },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect((result.errors as any).conditions["cond-4"].field).toBe("editConditionalStep.fieldRequired");
+      expect((result.errors as any).conditions["cond-4"].value).toBe("editConditionalStep.valueRequired");
+    });
+
+    it("only records errors for invalid conditions, not valid ones", async () => {
+      const step = {
+        type: "conditional.logic",
+        config: {
+          conditionSet: [
+            {
+              id: "set-1",
+              conditions: [
+                { id: "cond-bad", field: null, operator: "equals", value: "" },
+                { id: "cond-good", field: "validField", operator: "equals", value: "validValue" },
+              ],
+            },
+          ],
+        },
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect((result.errors as any).conditions["cond-bad"]).toBeDefined();
+      expect((result.errors as any).conditions["cond-good"]).toBeUndefined();
     });
 
     it("calls validatePluginConfig for regular plugins and returns valid", async () => {

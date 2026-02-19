@@ -8,6 +8,7 @@
       {{ label }}
     </label>
     <Select
+      data-testid="pt-select-control"
       v-model="internalValue"
       :options="options"
       :option-label="optionLabel"
@@ -72,7 +73,7 @@
         <slot name="clearicon" v-bind="slotProps" />
       </template>
     </Select>
-    <p v-if="invalid && errorText" class="text-body--sm pt-select__error">
+    <p v-if="invalid && errorText" class="text-body--sm pt-select__error" data-testid="pt-select-error">
       {{ errorText }}
     </p>
   </div>

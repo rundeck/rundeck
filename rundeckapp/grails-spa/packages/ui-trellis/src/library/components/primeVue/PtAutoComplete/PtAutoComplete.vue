@@ -51,7 +51,7 @@
         </div>
       </template>
     </AutoComplete>
-    <p v-if="invalid && errorText" class="text-body--sm pt-autocomplete__error">
+    <p v-if="invalid && errorText" class="text-body--sm pt-autocomplete__error" data-testid="pt-autocomplete-error">
       {{ errorText }}
     </p>
   </div>

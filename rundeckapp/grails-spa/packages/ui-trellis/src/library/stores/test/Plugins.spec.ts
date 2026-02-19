@@ -16,6 +16,8 @@ import {
   mockWorkflowNodeStepPlugins,
   mockJobRefWorkflowStepPlugin,
   mockJobRefWorkflowNodeStepPlugin,
+  mockConditionalLogicWorkflowStepPlugin,
+  mockConditionalLogicWorkflowNodeStepPlugin,
   mockPluginDetail,
 } from "./mocks/mockPluginData";
 import { getPluginDetail } from "@/library/services/plugins";
@@ -67,7 +69,11 @@ describe("PluginStore", () => {
   describe("load", () => {
     it("should load plugins for a given service", async () => {
       api.get.mockResolvedValueOnce(createMockResponse(mockWorkflowStepPlugins))
-      const expectedResponse = [mockJobRefWorkflowStepPlugin, ...mockWorkflowStepPlugins]
+      const expectedResponse = [
+        mockJobRefWorkflowStepPlugin,
+        mockConditionalLogicWorkflowStepPlugin,
+        ...mockWorkflowStepPlugins,
+      ];
 
       await pluginStore.load(ServiceType.WorkflowStep);
 
@@ -87,9 +93,13 @@ describe("PluginStore", () => {
       ]);
     });
 
-    it("should load job reference job when service is WorkflowStep", async () => {
+    it("should load job reference job and conditional logic plugin when service is WorkflowStep", async () => {
       api.get.mockResolvedValueOnce(createMockResponse(mockWorkflowStepPlugins))
-      const expectedResponse = [mockJobRefWorkflowStepPlugin, ...mockWorkflowStepPlugins];
+      const expectedResponse = [
+        mockJobRefWorkflowStepPlugin,
+        mockConditionalLogicWorkflowStepPlugin,
+        ...mockWorkflowStepPlugins,
+      ];
 
       await pluginStore.load(ServiceType.WorkflowStep);
 
@@ -112,6 +122,9 @@ describe("PluginStore", () => {
       expect(pluginStore.pluginsById[pluginNames[2]]).toEqual([
         expectedResponse[2],
       ]);
+      expect(pluginStore.pluginsById[pluginNames[3]]).toEqual([
+        expectedResponse[3],
+      ]);
     })
 
     it("should not reload plugins if already loaded for the service", async () => {
@@ -133,11 +146,11 @@ describe("PluginStore", () => {
       await pluginStore.load(ServiceType.WorkflowStep);
       await pluginStore.load(ServiceType.WorkflowStep);
 
-      // it is 2 as workflowStep will add the plugin returned by the API + job reference
-      expect(pluginStore.plugins).toHaveLength(2);
+      // it is 3: jobRef + conditionalLogic (both static) + 1 API plugin
+      expect(pluginStore.plugins).toHaveLength(3);
       expect(
         pluginStore.pluginsByService[ServiceType.WorkflowStep],
-      ).toHaveLength(2);
+      ).toHaveLength(3);
     });
   });
 
@@ -153,10 +166,28 @@ describe("PluginStore", () => {
       );
 
       expect(result).toEqual([
-        mockJobRefWorkflowNodeStepPlugin, // "Job ref"
-        mockWorkflowNodeStepPlugins[1], // "Local Command"
-        mockWorkflowNodeStepPlugins[0], // "SSH Command"
+        mockJobRefWorkflowNodeStepPlugin,               // highlighted, order 5
+        mockConditionalLogicWorkflowNodeStepPlugin,     // highlighted, order 6
+        mockWorkflowNodeStepPlugins[1],                 // "Local Command" (L < S alphabetically)
+        mockWorkflowNodeStepPlugins[0],                 // "SSH Command"
       ]);
+    });
+
+    it("should inject both static plugins for WorkflowNodeStep service", async () => {
+      api.get.mockResolvedValueOnce(createMockResponse([]));
+
+      await pluginStore.load(ServiceType.WorkflowNodeStep);
+
+      expect(pluginStore.plugins).toContainEqual(mockJobRefWorkflowNodeStepPlugin);
+      expect(pluginStore.plugins).toContainEqual(mockConditionalLogicWorkflowNodeStepPlugin);
+    });
+
+    it("should not inject static plugins for LogFilter service", async () => {
+      api.get.mockResolvedValueOnce(createMockResponse([]));
+
+      await pluginStore.load(ServiceType.LogFilter);
+
+      expect(pluginStore.plugins).toHaveLength(0);
     });
 
     it("should return an empty array for a service with no plugins", () => {
