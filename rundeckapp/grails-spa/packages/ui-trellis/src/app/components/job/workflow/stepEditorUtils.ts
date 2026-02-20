@@ -32,7 +32,7 @@ export function resetValidation(): ValidationResult {
 
 /**
  * Creates a new step object from a provider selection.
- * Handles job references, conditional logic, and regular plugins.
+ * Handles job references and regular plugins.
  *
  * The returned step includes a unique `id` and the correct `nodeStep` flag
  * based on the service type. Callers are responsible for adding the step
@@ -52,16 +52,6 @@ export function createStepFromProvider(
       jobref: {
         nodeStep,
       },
-      id: mkid(),
-    } as EditStepData;
-  }
-
-  if (provider === "conditional.logic") {
-    return {
-      type: provider,
-      config: {},
-      nodeStep,
-      description: "",
       id: mkid(),
     } as EditStepData;
   }
@@ -127,7 +117,6 @@ export function getPluginDetailsForStep(
  *
  * - Job references: validates that name or uuid is present.
  *   Returns `errors.jobref` with a key string that callers can use for i18n.
- * - Conditional logic: skips validation (always valid).
  * - Regular plugins: calls the `validatePluginConfig` API endpoint.
  */
 export async function validateStepForSave(
@@ -142,44 +131,6 @@ export async function validateStepForSave(
         errors: { jobref: "commandExec.jobName.blank.message" },
       };
     }
-    return { valid: true, errors: {} };
-  }
-
-  // Conditional logic: validate that all conditions have field and value
-  if (step.type === "conditional.logic") {
-    const conditionSet = step.config?.conditionSet || [];
-    const conditionErrors: Record<string, { field?: string; value?: string }> = {};
-    let hasErrors = false;
-
-    conditionSet.forEach((conditionSet: any) => {
-      if (conditionSet.conditions) {
-        conditionSet.conditions.forEach((condition: any) => {
-          const errors: { field?: string; value?: string } = {};
-
-          if (!condition.field || condition.field.trim() === "") {
-            errors.field = "editConditionalStep.fieldRequired";
-            hasErrors = true;
-          }
-
-          if (!condition.value || condition.value.trim() === "") {
-            errors.value = "editConditionalStep.valueRequired";
-            hasErrors = true;
-          }
-
-          if (Object.keys(errors).length > 0) {
-            conditionErrors[condition.id] = errors;
-          }
-        });
-      }
-    });
-
-    if (hasErrors) {
-      return {
-        valid: false,
-        errors: { conditions: conditionErrors },
-      };
-    }
-
     return { valid: true, errors: {} };
   }
 

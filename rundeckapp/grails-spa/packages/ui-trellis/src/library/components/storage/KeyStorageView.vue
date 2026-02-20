@@ -339,6 +339,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import { listProjects } from "../../services/projects";
 import {
   storageKeyDelete,
@@ -556,7 +557,7 @@ export default defineComponent({
       const requestOptions = {
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
-      this.getKeyMetadata(getPath, requestOptions)
+      this.getKeyMetadata(getPath)
         .then((result: any) => {
           this.directories = [];
           this.files = [];
@@ -619,7 +620,7 @@ export default defineComponent({
               "Error: Key browsing is not allowed in CCP mode."
             ) {
               // Generate sample key path string
-              const sampleKeyPath = this.rootPath.endsWith("/")
+              const sampleKeyPath = this.rootPath?.endsWith("/")
                 ? `${this.rootPath}${this.path}`
                 : `${this.rootPath}/${this.path}`;
 

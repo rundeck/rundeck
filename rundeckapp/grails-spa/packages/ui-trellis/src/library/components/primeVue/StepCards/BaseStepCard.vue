@@ -34,7 +34,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import Card from "primevue/card";
-import StepCardHeader from "@/library/components/primeVue/StepCards/StepCardHeader.vue";
+import StepCardHeader from "./StepCardHeader.vue";
 
 export default defineComponent({
   name: "BaseStepCard",

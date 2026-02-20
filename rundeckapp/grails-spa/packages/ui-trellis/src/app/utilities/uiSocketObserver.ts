@@ -1,10 +1,13 @@
 //on job edit page list for dom content changes
-
+// @ts-nocheck
 import * as uiv from "uiv";
 import { getRundeckContext } from "../../library";
 import UiSocket from "../../library/components/utils/UiSocket.vue";
 import { initI18n, updateLocaleMessages } from "./i18n";
 import { createApp } from "vue";
+import { Tooltip } from "primevue";
+import Lara from "@primeuix/themes/lara";
+import PrimeVue from "primevue/config";
 
 export const observer = new MutationObserver(function (mutations_list) {
   mutations_list.forEach(function (mutation) {
@@ -14,6 +17,7 @@ export const observer = new MutationObserver(function (mutations_list) {
       }
       const added_elem = added_node as Element;
       let uiSockets = added_elem.getElementsByClassName("vue-ui-socket");
+      console.log(uiSockets);
 
       if (added_elem.className && uiSockets?.length > 0) {
         const i18n = initI18n();
@@ -48,6 +52,17 @@ export const observer = new MutationObserver(function (mutations_list) {
 
           vue.use(i18n);
           vue.use(uiv);
+          vue.use(PrimeVue, {
+            theme: {
+              preset: Lara,
+              options: {
+                prefix: "p",
+                cssLayer: true,
+                darkModeSelector: ".dark",
+              },
+            },
+          });
+          vue.directive("tooltip", Tooltip);
           vue.mount(socketElem, true);
         }
       }

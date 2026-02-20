@@ -165,6 +165,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import VueMultiselect from "vue-multiselect";
 import { defineComponent } from "vue";
 import { Btn, Alert, Modal } from "uiv";

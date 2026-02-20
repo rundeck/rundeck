@@ -74,7 +74,7 @@ export default defineComponent({
       let newindex = this.index + 1;
       let change = this.stack[this.index];
       this.index = newindex;
-      this.eventBus.emit("undo", change);
+      this.eventBus?.emit("undo", change);
     },
     doRedo() {
       if (this.index < 1) {
@@ -83,18 +83,18 @@ export default defineComponent({
       let newindex = this.index - 1;
       let change = this.stack[newindex];
       this.index = newindex;
-      this.eventBus.emit("redo", change);
+      this.eventBus?.emit("redo", change);
     },
     doRevertAll() {
       this.index = this.stack.length;
-      this.eventBus.emit("revertAll");
+      this.eventBus?.emit("revertAll");
     },
   },
   mounted() {
-    this.eventBus.on("change", this.addChange);
+    this.eventBus?.on("change", this.addChange);
   },
   beforeUnmount() {
-    this.eventBus.off("change");
+    this.eventBus?.off("change");
   },
 });
 </script>

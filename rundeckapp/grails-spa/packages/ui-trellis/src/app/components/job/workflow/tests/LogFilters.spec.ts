@@ -22,7 +22,7 @@ jest.mock("@/library/rundeckService", () => {
   };
 });
 
-jest.mock("../../../../../library/services/projects");
+jest.mock("@/library/services/projects");
 
 jest.mock("@/library/modules/pluginService", () => ({
   getPluginProvidersForService: jest.fn().mockResolvedValue({
@@ -46,7 +46,6 @@ const createWrapper = async (props: Record<string, any> = {}) => {
       modelValue: [],
       title: "Log Filters",
       subtitle: "Manage your log filters",
-      conditionalEnabled: false,
       editEvent: undefined,
       ...props,
     },
@@ -169,52 +168,6 @@ describe("LogFilters", () => {
       expect(
         wrapper.findComponent(LogFilterControls).props("modelValue"),
       ).toEqual({ type: "", config: {} });
-    });
-  });
-
-  describe("conditionalEnabled prop (PR change)", () => {
-    it("hides log-filters-container when conditionalEnabled is true", async () => {
-      const wrapper = await createWrapper({ conditionalEnabled: true });
-      expect(
-        wrapper.find('[data-testid="log-filters-container"]').exists(),
-      ).toBe(false);
-    });
-
-    it("shows log-filters-container when conditionalEnabled is false", async () => {
-      const wrapper = await createWrapper({ conditionalEnabled: false });
-      expect(
-        wrapper.find('[data-testid="log-filters-container"]').exists(),
-      ).toBe(true);
-    });
-
-    it("hides log-filters-button-container when conditionalEnabled is true", async () => {
-      const wrapper = await createWrapper({
-        conditionalEnabled: true,
-        modelValue: [{ type: "filterType" }],
-      });
-      expect(
-        wrapper.find('[data-testid="log-filters-button-container"]').exists(),
-      ).toBe(false);
-    });
-
-    it("passes show-button=false to LogFilterControls when conditionalEnabled is true", async () => {
-      const wrapper = await createWrapper({
-        conditionalEnabled: true,
-        showIfEmpty: true,
-      });
-      expect(
-        wrapper.findComponent(LogFilterControls).props("showButton"),
-      ).toBe(false);
-    });
-
-    it("passes show-button=true to LogFilterControls when conditionalEnabled is false and showIfEmpty is true", async () => {
-      const wrapper = await createWrapper({
-        conditionalEnabled: false,
-        showIfEmpty: true,
-      });
-      expect(
-        wrapper.findComponent(LogFilterControls).props("showButton"),
-      ).toBe(true);
     });
   });
 

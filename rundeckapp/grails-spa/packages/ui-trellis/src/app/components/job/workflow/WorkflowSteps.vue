@@ -1,8 +1,4 @@
 <template>
-  <h2 v-if="conditionalEnabled" class="text-heading--lg smaller-margin">
-    {{ $t("Workflow.jobSteps.label") }}
-  </h2>
-
   <common-undo-redo-draggable-list
     ref="historyControls"
     v-model="model.commands"
@@ -11,215 +7,134 @@
     item-key="id"
     :button-label="$t('Workflow.addStep')"
     :loading="loadingWorflowSteps"
-    :conditional-enabled="conditionalEnabled"
-    :add-button-disabled="!!editingStepId"
-    :draggable-disabled="!!editingStepId"
     @add-button-click="toggleAddStepModal"
-    :class="{ 'edit-lock-disabled': editingStepId }"
   >
     <template #item="{ item: { element, index } }">
       <li>
-        <i v-if="conditionalEnabled" class="pi pi-bars dragHandle"></i>
-        <div class="step-list-item" :class="{'ea': conditionalEnabled}">
-          <div
-            class="step-item-display"
-            :class="{ 'edit-lock-disabled': editingStepId && editingStepId !== element.id }"
-          >
-            <StepCard
-              v-if="conditionalEnabled && element.type !== 'conditional.logic' && editingStepId !== element.id"
-              :plugin-details="pluginDetailsMap.get(element.id)"
-              :config="element"
-              :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
-              :log-filters="element.jobref ? [] : (element.filters || [])"
-              :error-handler="element.errorhandler ? [element.errorhandler] : []"
-              :disabled="!!editingStepId"
-              @add-log-filter="!element.jobref && addLogFilterForIndex($event || element.id)"
-              @add-error-handler="toggleAddErrorHandlerModal(index)"
-              @update:log-filters="!element.jobref && updateHistoryWithLogFiltersData(index, $event)"
-              @edit-log-filter="!element.jobref && handleEditLogFilterFromChip(element.id, $event)"
-              @edit-error-handler="editStepByIndex(index, true)"
-              @remove-error-handler="removeStep(index, true)"
-              @delete="removeStep(index)"
-              @duplicate="duplicateStep(index)"
-              @edit="editStepByIndex(index)"
-            />
-            <log-filters
-              v-if="conditionalEnabled && !element.jobref && element.type !== 'conditional.logic' && editingStepId !== element.id"
-              :model-value="element.filters || []"
-              :title="$t('Workflow.logFilters')"
-              :subtitle="stepTitle(element, index)"
-              :add-event="'step-action:add-logfilter:' + element.id"
-              :edit-event="'step-action:edit-logfilter:' + element.id"
-              :conditional-enabled="true"
-              @update:model-value="updateHistoryWithLogFiltersData(index, $event)"
-            />
-            <EditStepCard
-              v-else-if="conditionalEnabled && element.type !== 'conditional.logic' && editingStepId === element.id"
-              v-model="editModel"
-              :plugin-details="editModelPluginDetails"
-              :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
-              :validation="editModelValidation"
-              :extra-autocomplete-vars="extraAutocompleteVars"
-              @save="handleSaveStep(index)"
-              @cancel="handleCancelEdit"
-            />
-            <ConditionalCard
-              v-else-if="conditionalEnabled && element.type === 'conditional.logic' && editingStepId !== element.id"
-              :plugin-details="pluginDetailsMap.get(element.id)"
-              :config="element"
-              :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
-              :log-filters="element.filters || []"
-              :error-handler="element.errorhandler ? [element.errorhandler] : []"
-              :disabled="!!editingStepId"
-              @add-log-filter="handleConditionalCardAddLogFilter($event, index)"
-              @add-error-handler="handleConditionalCardAddErrorHandler($event, index)"
-              @update:log-filters="handleConditionalCardUpdateLogFilters($event, index)"
-              @edit-log-filter="handleConditionalCardEditLogFilter($event, index)"
-              @edit-error-handler="handleConditionalCardEditErrorHandler($event, index)"
-              @remove-error-handler="handleConditionalCardRemoveErrorHandler($event, index)"
-              @delete="removeStep(index)"
-              @duplicate="duplicateStep(index)"
-              @edit="editStepByIndex(index)"
-              @step-click="handleNestedStepClick($event, index)"
-            />
-            <EditConditionalStepCard
-              v-else-if="conditionalEnabled && element.type === 'conditional.logic' && editingStepId === element.id"
-              v-model="editModel"
-              :service-name="element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep"
-              :validation="editModelValidation"
-              :extra-autocomplete-vars="extraAutocompleteVars"
-              :depth="0"
-              :nested-step-to-edit="element.id === nestedStepToEdit?.stepId ? null : nestedStepToEdit"
-              :should-scroll-into-view="element.id === nestedStepToEdit?.stepId"
-              @save="handleSaveConditionalStep(index)"
-              @cancel="handleCancelEdit"
-              @switch-step-type="handleSwitchStepType(index)"
-            />
-            <template v-else-if="!conditionalEnabled">
-              <div class="step-item-row">
-                <div
-                    :id="`wfitem_${index}`"
-                    class="step-item-config"
-                    data-test="edit-step-item"
-                    :title="$t('Workflow.clickToEdit')"
-                    @click="editStepByIndex(index)"
-                >
-                  <plugin-config
-                      v-if="!element.jobref && element.type !== 'conditional.logic'"
-                      :service-name="
-                    element.nodeStep
-                      ? ServiceType.WorkflowNodeStep
-                      : ServiceType.WorkflowStep
-                  "
-                      :provider="element.type"
-                      :config="element.config"
-                      :read-only="true"
-                      :show-title="true"
-                      :show-icon="true"
-                      :show-description="true"
-                      mode="show"
-                  >
-                    <template v-if="element.nodeStep" #iconSuffix>
-                      <i class="fas fa-hdd node-icon"></i>
-                    </template>
-                  </plugin-config>
-                  <job-ref-step v-else-if="element.jobref" :step="element"></job-ref-step>
-
-                  <div v-if="element.description" class="wfstep-description">
-                    {{ element.description }}
-                  </div>
-                </div>
-                <div class="step-item-controls">
-                  <div
-                      class="btn-group"
-                      role="group"
-                      :aria-label="$t('Workflow.itemControls')"
-                  >
-                    <btn
-                        size="xs"
-                        style="min-height: 21px"
-                        @click.stop="editStepByIndex(index)"
-                    >
-                      <i class="fas fa-edit"></i>
-                      {{ $t("Workflow.edit") }}
-                    </btn>
-                    <btn
-                        size="xs"
-                        :title="$t('Workflow.duplicateStep')"
-                        @click.stop="duplicateStep(index)"
-                    >
-                      <i class="glyphicon glyphicon-duplicate"></i>
-                    </btn>
-                    <dropdown menu-right>
-                      <btn size="xs" data-role="trigger" :disabled="!!(element.errorhandler && element.jobref)">
-                        <i class="glyphicon glyphicon-cog"></i>
-                        <span class="caret"></span>
-                      </btn>
-                      <template #dropdown>
-                        <li v-if="!element.errorhandler">
-                          <a
-                              role="button"
-                              data-test="add-error-handler"
-                              @click="toggleAddErrorHandlerModal(index)"
-                          >
-                            {{ $t("Workflow.addErrorHandler") }}
-                          </a>
-                        </li>
-                        <li v-if="!element.jobref">
-                          <a
-                              role="button"
-                              data-test="add-log-filter"
-                              @click="addLogFilterForIndex(element.id)"
-                          >
-                            {{ $t("Workflow.addLogFilter") }}
-                          </a>
-                        </li>
-                      </template>
-                    </dropdown>
-                    <btn
-                        size="xs"
-                        type="danger"
-                        :title="$t('Workflow.deleteThisStep')"
-                        data-test="remove-step"
-                        @click.prevent="removeStep(index)"
-                    >
-                      <i class="glyphicon glyphicon-remove"></i>
-                    </btn>
-                  </div>
-
-                  <span
-                      class="btn btn-xs dragHandle"
-                      :title="$t('Workflow.dragToReorder')"
-                  >
-                  <i class="glyphicon glyphicon-resize-vertical" />
-                </span>
-                </div>
-              </div>
-
+        <div class="step-list-item">
+          <div class="step-item-display">
+            <div class="step-item-row">
               <div
-                  v-if="!element.jobref"
-                  :class="{'step-item-logfilters': element.filters?.length > 0 }"
+                  :id="`wfitem_${index}`"
+                  class="step-item-config"
+                  data-test="edit-step-item"
+                  :title="$t('Workflow.clickToEdit')"
+                  @click="editStepByIndex(index)"
               >
-                <log-filters
-                    :model-value="element.filters || []"
-                    :title="$t('Workflow.logFilters')"
-                    :subtitle="stepTitle(element, index)"
-                    :add-event="'step-action:add-logfilter:' + element.id"
-                    mode="inline"
-                    @update:model-value="
-                  updateHistoryWithLogFiltersData(index, $event)
+                <plugin-config
+                    v-if="!element.jobref"
+                    :service-name="
+                  element.nodeStep
+                    ? ServiceType.WorkflowNodeStep
+                    : ServiceType.WorkflowStep
                 "
-                />
-              </div>
-              <error-handler-step
-                  v-if="element.errorhandler"
-                  :step="element"
-                  @edit="editStepByIndex(index, true)"
-                  @removeHandler="removeStep(index, true)"
-                  data-test="error-handler-step"
-              />
-            </template>
+                    :provider="element.type"
+                    :config="element.config"
+                    :read-only="true"
+                    :show-title="true"
+                    :show-icon="true"
+                    :show-description="true"
+                    mode="show"
+                >
+                  <template v-if="element.nodeStep" #iconSuffix>
+                    <i class="fas fa-hdd node-icon"></i>
+                  </template>
+                </plugin-config>
+                <job-ref-step v-else-if="element.jobref" :step="element"></job-ref-step>
 
+                <div v-if="element.description" class="wfstep-description">
+                  {{ element.description }}
+                </div>
+              </div>
+              <div class="step-item-controls">
+                <div
+                    class="btn-group"
+                    role="group"
+                    :aria-label="$t('Workflow.itemControls')"
+                >
+                  <btn
+                      size="xs"
+                      style="min-height: 21px"
+                      @click.stop="editStepByIndex(index)"
+                  >
+                    <i class="fas fa-edit"></i>
+                    {{ $t("Workflow.edit") }}
+                  </btn>
+                  <btn
+                      size="xs"
+                      :title="$t('Workflow.duplicateStep')"
+                      @click.stop="duplicateStep(index)"
+                  >
+                    <i class="glyphicon glyphicon-duplicate"></i>
+                  </btn>
+                  <dropdown menu-right>
+                    <btn size="xs" data-role="trigger" :disabled="!!(element.errorhandler && element.jobref)">
+                      <i class="glyphicon glyphicon-cog"></i>
+                      <span class="caret"></span>
+                    </btn>
+                    <template #dropdown>
+                      <li v-if="!element.errorhandler">
+                        <a
+                            role="button"
+                            data-test="add-error-handler"
+                            @click="toggleAddErrorHandlerModal(index)"
+                        >
+                          {{ $t("Workflow.addErrorHandler") }}
+                        </a>
+                      </li>
+                      <li v-if="!element.jobref">
+                        <a
+                            role="button"
+                            data-test="add-log-filter"
+                            @click="addLogFilterForIndex(element.id)"
+                        >
+                          {{ $t("Workflow.addLogFilter") }}
+                        </a>
+                      </li>
+                    </template>
+                  </dropdown>
+                  <btn
+                      size="xs"
+                      type="danger"
+                      :title="$t('Workflow.deleteThisStep')"
+                      data-test="remove-step"
+                      @click.prevent="removeStep(index)"
+                  >
+                    <i class="glyphicon glyphicon-remove"></i>
+                  </btn>
+                </div>
+
+                <span
+                    class="btn btn-xs dragHandle"
+                    :title="$t('Workflow.dragToReorder')"
+                >
+                <i class="glyphicon glyphicon-resize-vertical" />
+              </span>
+              </div>
+            </div>
+
+            <div
+                v-if="!element.jobref"
+                :class="{'step-item-logfilters': element.filters?.length > 0 }"
+            >
+              <log-filters
+                  :model-value="element.filters || []"
+                  :title="$t('Workflow.logFilters')"
+                  :subtitle="stepTitle(element, index)"
+                  :add-event="'step-action:add-logfilter:' + element.id"
+                  mode="inline"
+                  @update:model-value="
+                updateHistoryWithLogFiltersData(index, $event)
+              "
+              />
+            </div>
+            <error-handler-step
+                v-if="element.errorhandler"
+                :step="element"
+                @edit="editStepByIndex(index, true)"
+                @removeHandler="removeStep(index, true)"
+                data-test="error-handler-step"
+            />
           </div>
         </div>
       </li>
@@ -231,9 +146,8 @@
       </div>
     </template>
     <template #extra>
-      <component
+      <ChoosePluginModal
         v-if="addStepModal"
-        :is="chooseModalComponent"
         v-model="addStepModal"
         :title="
           isErrorHandler
@@ -245,7 +159,6 @@
           $t('plugin.type.WorkflowNodeStep.title.plural'),
           $t('plugin.type.WorkflowStep.title.plural'),
         ]"
-        :exclude-providers="!conditionalEnabled || isErrorHandler ? ['conditional.logic'] : []"
         show-search
         show-divider
         @cancel="cancelProviderAdd"
@@ -265,7 +178,7 @@
               : $t("Workflow.clickOnStepType")
           }}
         </span>
-      </component>
+      </ChoosePluginModal>
       <component
         v-if="editStepModal || (editJobRefModal && modalComponent)"
         :is="modalComponent"
@@ -328,68 +241,53 @@ import {
   commandsToEditData,
   editCommandsToStepsData,
   mkid,
-} from "@/app/components/job/workflow/types/workflowFuncs";
+} from "./types/workflowFuncs";
 import {
   EditStepData,
   StepsData,
   StepsEditData,
-} from "@/app/components/job/workflow/types/workflowTypes";
-import { getRundeckContext } from "@/library";
-import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
-import ChoosePluginsEAModal from "@/library/components/plugins/ChoosePluginsEAModal.vue";
-import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
-import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import { createOptionVariables } from "@/library/stores/contextVariables";
-import { useJobStore } from "@/library/stores/JobsStore";
-import { ServiceType } from "@/library/stores/Plugins";
-import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
+} from "./types/workflowTypes";
+import { getRundeckContext } from "../../../../library";
+import ChoosePluginModal from "../../../../library/components/plugins/ChoosePluginModal.vue";
+import EditPluginModal from "../../../../library/components/plugins/EditPluginModal.vue";
+import pluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
+import { createOptionVariables } from "../../../../library/stores/contextVariables";
+import { useJobStore } from "../../../../library/stores/JobsStore";
+import { ServiceType } from "../../../../library/stores/Plugins";
+import JobRefStep from "./JobRefStep.vue";
 import { cloneDeep } from "lodash";
 import { mapState } from "pinia";
-import {computed, defineComponent} from "vue";
+import { defineComponent } from "vue";
 import LogFilters from "./LogFilters.vue";
-import CommonUndoRedoDraggableList from "@/app/components/common/CommonUndoRedoDraggableList.vue";
-import { Operation } from "@/app/components/job/options/model/ChangeEvents";
+import CommonUndoRedoDraggableList from "../../common/CommonUndoRedoDraggableList.vue";
+import { Operation } from "../options/model/ChangeEvents";
 import {
   createStepFromProvider,
-  getPluginDetailsForStep,
   resetValidation,
   validateStepForSave,
 } from "./stepEditorUtils";
-import JobRefForm from "@/app/components/job/workflow/JobRefForm.vue";
-import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
-import ConditionalCard from "@/library/components/primeVue/StepCards/ConditionalCard.vue";
-import StepCard from "@/library/components/primeVue/StepCards/StepCard.vue";
-import EditStepCard from "./EditStepCard.vue";
-import EditConditionalStepCard from "./EditConditionalStepCard.vue";
+import JobRefForm from "./JobRefForm.vue";
+import ErrorHandlerStep from "./ErrorHandlerStep.vue";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
 export default defineComponent({
   name: "WorkflowSteps",
   components: {
-    ConditionalCard,
     ErrorHandlerStep,
     JobRefForm,
     CommonUndoRedoDraggableList,
     EditPluginModal,
     pluginConfig,
     ChoosePluginModal,
-    ChoosePluginsEAModal,
     JobRefStep,
     LogFilters,
-    StepCard,
-    EditStepCard,
-    EditConditionalStepCard,
   },
   props: {
     modelValue: {
       type: Object,
       required: true,
       default: () => ({}) as StepsData,
-    },
-    conditionalEnabled: {
-      type: Boolean,
-      default: false,
     },
   },
   emits: ["update:modelValue"],
@@ -410,40 +308,9 @@ export default defineComponent({
       editService: null,
       editIndex: -1,
       loadingWorflowSteps: false,
-      editingStepId: null as string | null,
-      isNewInlineStep: false,
-      nestedStepContext: null as {
-        conditionalIndex: number;
-        stepIndex: number;
-        nestedStepIndex?: number;
-      } | null,
-      nestedStepToEdit: null as {
-        stepId: string;
-        stepIndex: number;
-        parentConditionalId?: string;
-        parentConditionalIndex?: number;
-      } | null,
     };
   },
   computed: {
-    pluginDetailsMap(): Map<string, any> {
-      const map = new Map();
-      for (const element of this.model.commands || []) {
-        const service = element.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep;
-        map.set(element.id, getPluginDetailsForStep(element, service));
-      }
-      return map;
-    },
-    editModelPluginDetails() {
-      if (!this.editModel || !this.editModel.id) {
-        return null;
-      }
-      const service = this.editModel.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep;
-      return getPluginDetailsForStep(this.editModel, service);
-    },
-    chooseModalComponent() {
-      return this.conditionalEnabled ? "ChoosePluginsEAModal" : "ChoosePluginModal";
-    },
     modalAttributes() {
       if (this.editStepModal) {
         return {
@@ -478,9 +345,6 @@ export default defineComponent({
       return this.editStepModal ? "edit-plugin-modal" : "job-ref-form";
     },
     ...mapState(useJobStore, ["jobDefinition"]),
-    extraAutocompleteVars() {
-      return createOptionVariables(this.jobDefinition?.options || []);
-    },
   },
   watch: {
     model: {
@@ -539,25 +403,9 @@ export default defineComponent({
           return;
         }
 
-        // EA mode: inline editing (add to array, same as regular steps)
-        if (this.conditionalEnabled) {
-          this.editModel = newStep;
-          this.editIndex = this.model.commands.length;
-          this.editingStepId = this.editModel.id;
-          this.isNewInlineStep = true;
-          this.model.commands.push(this.editModel);
-        } else {
-          // Non-EA mode: modal
-          this.editModel = newStep;
-          this.editJobRefModal = true;
-        }
-      } else if (provider === "conditional.logic") {
+        // Non-EA mode: modal
         this.editModel = newStep;
-        this.editIndex = this.model.commands.length;
-        this.editingStepId = newStep.id;
-        this.isNewInlineStep = true;
-        // Add the step to the list immediately so EditConditionalStepCard shows
-        this.model.commands.push(newStep);
+        this.editJobRefModal = true;
       } else {
         // Check if this is an error handler - use modal flow
         if (this.isErrorHandler) {
@@ -566,19 +414,9 @@ export default defineComponent({
           return;
         }
 
-        if (this.conditionalEnabled) {
-          // EA mode: inline editing via EditStepCard
-          this.editModel = newStep;
-          this.editIndex = this.model.commands.length;
-          this.editingStepId = newStep.id;
-          this.isNewInlineStep = true;
-          // Add the step to the list immediately so EditStepCard shows
-          this.model.commands.push(newStep);
-        } else {
-          // Non-EA mode: use modal
-          this.editModel = newStep;
-          this.editStepModal = true;
-        }
+        // Use modal
+        this.editModel = newStep;
+        this.editStepModal = true;
       }
     },
     cancelProviderAdd() {
@@ -593,84 +431,8 @@ export default defineComponent({
       this.editModelValidation = resetValidation();
       this.editIndex = -1;
       this.isErrorHandler = false;
-      this.editingStepId = null;
-      this.isNewInlineStep = false;
-      this.nestedStepContext = null;
-      this.nestedStepToEdit = null;
-    },
-    handleCancelEdit() {
-      // If we're canceling a new step that was just added, remove it
-      // Only remove if editExtra doesn't have an id matching the step (meaning it's a new step, not an existing one being edited)
-      if (this.editIndex >= 0 && this.editIndex >= this.model.commands.length - 1) {
-        const lastStep = this.model.commands[this.editIndex];
-        // Check if this is an existing step being edited (editExtra will have the original step data with matching id)
-        const isExistingStep = this.editExtra && this.editExtra.id && this.editExtra.id === lastStep?.id;
-        
-        if (!isExistingStep && lastStep && lastStep.id === this.editingStepId) {
-          // For conditional steps, check if conditionSet exist; for regular steps, check if config is empty
-          const isEmpty = lastStep.type === 'conditional.logic' 
-            ? (!lastStep.config || !lastStep.config.conditionSet || lastStep.config.conditionSet.length === 0)
-            : (!lastStep.config || Object.keys(lastStep.config || {}).length === 0);
-          
-          if (isEmpty) {
-            // Remove the newly added step
-            this.model.commands.splice(this.editIndex, 1);
-          }
-        }
-      }
-      this.cancelEditStep();
-    },
-    handleNestedStepClick(
-      payload: {
-        step: EditStepData;
-        stepIndex?: number;
-        index?: number;
-        parentConditional?: {
-          id: string;
-          index: number;
-          rootConditionalId: string;
-        };
-      },
-      conditionalIndex: number,
-    ) {
-      if (this.editingStepId) return;
-
-      // Handle both depth=1 and depth=2 cases
-      if (payload.parentConditional) {
-        // Depth=2: step is nested inside a conditional inside a conditional
-        const parentConditional = this.model.commands[conditionalIndex];
-        this.editIndex = conditionalIndex;
-        this.editingStepId = parentConditional.id;
-        this.editExtra = cloneDeep(parentConditional);
-        this.editModel = cloneDeep(parentConditional);
-        this.editModelValidation = resetValidation();
-
-        // Pass nested step info to EditConditionalStepCard with full path
-        this.nestedStepToEdit = {
-          stepId: payload.step.id,
-          stepIndex: payload.stepIndex ?? payload.index ?? 0,
-          parentConditionalId: payload.parentConditional.id,
-          parentConditionalIndex: payload.parentConditional.index,
-        };
-      } else {
-        // Depth=1: step is directly nested inside a conditional
-        const parentConditional = this.model.commands[conditionalIndex];
-        this.editIndex = conditionalIndex;
-        this.editingStepId = parentConditional.id;
-        this.editExtra = cloneDeep(parentConditional);
-        this.editModel = cloneDeep(parentConditional);
-        this.editModelValidation = resetValidation();
-
-        // Store nested step info to pass to EditConditionalStepCard
-        this.nestedStepToEdit = {
-          stepId: payload.step.id,
-          stepIndex: payload.stepIndex ?? payload.index ?? 0,
-        };
-      }
     },
     removeStep(index: number, removeErrorHandler: boolean = false) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
       const originalData = cloneDeep(this.model.commands[index]);
       const commandToRemove = cloneDeep(this.model.commands[index]);
 
@@ -698,20 +460,9 @@ export default defineComponent({
       });
     },
     async addLogFilterForIndex(id: string) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
       eventBus.emit("step-action:add-logfilter:" + id);
     },
-    handleEditLogFilterFromChip(stepId: string, data: { filter: any; index: number }) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
-      // Emit event on global eventBus to trigger LogFilters editFilterByIndex
-      // The event data should include the filter index
-      eventBus.emit("step-action:edit-logfilter:" + stepId, data.index);
-    },
     duplicateStep(index: number) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
       const command = cloneDeep(this.model.commands[index]);
       command.id = mkid();
       this.$refs.historyControls.operationInsert(index + 1, command);
@@ -724,12 +475,9 @@ export default defineComponent({
       });
     },
     editStepByIndex(index: number, isErrorHandler: boolean = false) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
       if (isErrorHandler) {
         this.editIndex = index;
         const command = this.model.commands[index];
-        // Guard: check if error handler exists
         if (!command.errorhandler) {
           console.warn("Cannot edit error handler: error handler does not exist");
           return;
@@ -751,7 +499,6 @@ export default defineComponent({
 
       const command = this.model.commands[index];
       this.editIndex = index;
-      this.editingStepId = command.id;
       this.editExtra = cloneDeep(command);
       this.editModel = cloneDeep(command);
       this.editService = command.nodeStep
@@ -759,19 +506,6 @@ export default defineComponent({
         : ServiceType.WorkflowStep;
       this.editModelValidation = resetValidation();
 
-      // In EA mode, show EditStepCard/EditConditionalStepCard inline for ALL steps (including jobref)
-      // Error handlers always use modals (handled separately above)
-      if (this.conditionalEnabled) {
-        // Ensure modals are closed when showing inline edit cards
-        this.editStepModal = false;
-        this.editJobRefModal = false;
-        // Don't open modal - EditStepCard/EditConditionalStepCard will render based on editingStepId
-        return;
-      }
-
-      // Non-EA mode: use modals
-      // Ensure editingStepId is cleared when using modal
-      this.editingStepId = null;
       if (command.jobref) {
         this.editJobRefModal = true;
       } else {
@@ -798,8 +532,6 @@ export default defineComponent({
           saveData.jobref = this.editModel.jobref;
         }
 
-        // Build a step-like object for shared validation
-        // For error handlers, the type/config come from editModel (what user edited in the modal)
         const stepForValidation = this.isErrorHandler
           ? { type: this.editModel.type, config: this.editModel.config, jobref: this.editModel.jobref }
           : { type: saveData.type, config: saveData.config, jobref: saveData.jobref };
@@ -807,7 +539,6 @@ export default defineComponent({
         const result = await validateStepForSave(stepForValidation as EditStepData, this.editService);
 
         if (result.valid) {
-          // For jobrefs, carry over the description from editModel
           if (stepForValidation.jobref) {
             saveData.description = this.editModel.description;
           }
@@ -847,162 +578,14 @@ export default defineComponent({
       }
     },
     toggleAddStepModal() {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
       this.addStepModal = !this.addStepModal;
     },
     toggleAddErrorHandlerModal(index: number) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
       this.isErrorHandler = true;
       this.editIndex = index;
-      this.nestedStepContext = null;
       this.addStepModal = true;
-    },
-    findNestedStepPath(
-      conditionalIndex: number,
-      stepId: string,
-    ): { conditionalIndex: number; stepIndex: number; nestedStepIndex?: number } | null {
-      const conditional = this.model.commands[conditionalIndex];
-      if (!conditional?.config?.subSteps) return null;
-
-      const directIndex = conditional.config.subSteps.findIndex(
-        (c: EditStepData) => c.id === stepId,
-      );
-      if (directIndex >= 0) {
-        return { conditionalIndex, stepIndex: directIndex };
-      }
-
-      for (let i = 0; i < conditional.config.subSteps.length; i++) {
-        const step = conditional.config.subSteps[i];
-        if (
-          step.type === "conditional.logic" &&
-          step.config?.subSteps
-        ) {
-          const nestedIndex = step.config.subSteps.findIndex(
-            (c: EditStepData) => c.id === stepId,
-          );
-          if (nestedIndex >= 0) {
-            return { conditionalIndex, stepIndex: i, nestedStepIndex: nestedIndex };
-          }
-        }
-      }
-      return null;
-    },
-    handleConditionalCardAddLogFilter(stepId: string, conditionalIndex: number) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-      this.addLogFilterForIndex(stepId);
-    },
-    handleConditionalCardAddErrorHandler(stepId: string, conditionalIndex: number) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
-      const path = this.findNestedStepPath(conditionalIndex, stepId);
-      if (!path) return;
-
-      const conditional = this.model.commands[path.conditionalIndex];
-      const step = path.nestedStepIndex !== undefined
-        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
-        : conditional.config.subSteps[path.stepIndex];
-
-      this.nestedStepContext = path;
-      this.editIndex = path.conditionalIndex;
-      this.editExtra = cloneDeep(step);
-      this.isErrorHandler = true;
-      this.addStepModal = true;
-    },
-    handleConditionalCardUpdateLogFilters(
-      payload: { stepId: string; filters: any },
-      conditionalIndex: number,
-    ) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
-      const path = this.findNestedStepPath(conditionalIndex, payload.stepId);
-      if (!path) return;
-
-      const conditional = cloneDeep(this.model.commands[path.conditionalIndex]);
-      const step = path.nestedStepIndex !== undefined
-        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
-        : conditional.config.subSteps[path.stepIndex];
-
-      step.filters = cloneDeep(payload.filters);
-      const orig = this.$refs.historyControls.operationModify(
-        path.conditionalIndex,
-        conditional,
-      );
-
-      this.$refs.historyControls.changeEvent({
-        index: path.conditionalIndex,
-        dest: -1,
-        orig,
-        value: conditional,
-        operation: Operation.Modify,
-        undo: Operation.Modify,
-      });
-    },
-    handleConditionalCardEditLogFilter(
-      payload: { stepId: string; index?: number; filter?: any },
-      conditionalIndex: number,
-    ) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-      const filterIndex =
-        payload.index !== undefined ? payload.index : 0;
-      this.handleEditLogFilterFromChip(payload.stepId, {
-        filter: payload.filter,
-        index: filterIndex,
-      });
-    },
-    handleConditionalCardEditErrorHandler(stepId: string, conditionalIndex: number) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
-      const path = this.findNestedStepPath(conditionalIndex, stepId);
-      if (!path) return;
-
-      const conditional = this.model.commands[path.conditionalIndex];
-      const step = path.nestedStepIndex !== undefined
-        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
-        : conditional.config.subSteps[path.stepIndex];
-
-      if (!step.errorhandler) return;
-
-      this.nestedStepContext = path;
-      this.editIndex = path.conditionalIndex;
-      this.editExtra = cloneDeep(step);
-      this.editModel = cloneDeep(step.errorhandler);
-      this.isErrorHandler = true;
-      this.editService = step.errorhandler.nodeStep
-        ? ServiceType.WorkflowNodeStep
-        : ServiceType.WorkflowStep;
-      this.editStepModal = true;
-    },
-    handleConditionalCardRemoveErrorHandler(stepId: string, conditionalIndex: number) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
-      const path = this.findNestedStepPath(conditionalIndex, stepId);
-      if (!path) return;
-
-      const conditional = cloneDeep(this.model.commands[path.conditionalIndex]);
-      const step = path.nestedStepIndex !== undefined
-        ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
-        : conditional.config.subSteps[path.stepIndex];
-
-      delete step.errorhandler;
-      const orig = this.$refs.historyControls.operationModify(
-        path.conditionalIndex,
-        conditional,
-      );
-
-      this.$refs.historyControls.changeEvent({
-        index: path.conditionalIndex,
-        dest: -1,
-        orig,
-        value: conditional,
-        operation: Operation.Modify,
-        undo: Operation.Modify,
-      });
     },
     updateHistoryWithLogFiltersData(index: number, data: any) {
-      if (this.conditionalEnabled && this.editingStepId) return;
-
       const command = cloneDeep(this.model.commands[index]);
       command.filters = cloneDeep(data);
       const orig = this.$refs.historyControls.operationModify(index, command);
@@ -1025,43 +608,7 @@ export default defineComponent({
       };
       let newData = cloneDeep(saveData);
 
-      if (this.editIndex >= 0 && this.isNewInlineStep) {
-        // New inline step: the step was pushed to the array at selection time
-        // without an undo entry. Use operationModify to update the data in place,
-        // but record as Insert/Remove so a single undo removes the entire step.
-        if (this.isErrorHandler) {
-          const originalData = this.model.commands[this.editIndex];
-          newData = { ...originalData, ...saveData };
-        }
-        this.$refs.historyControls.operationModify(this.editIndex, newData);
-        dataForUpdatingHistory.index = this.editIndex;
-        dataForUpdatingHistory.operation = Operation.Insert;
-        dataForUpdatingHistory.undo = Operation.Remove;
-      } else if (this.nestedStepContext && this.isErrorHandler) {
-        // Nested step inside conditional - update the nested step's error handler
-        const path = this.nestedStepContext;
-        const conditional = cloneDeep(this.model.commands[path.conditionalIndex]);
-        const step = path.nestedStepIndex !== undefined
-          ? conditional.config.subSteps[path.stepIndex].config.subSteps[path.nestedStepIndex]
-          : conditional.config.subSteps[path.stepIndex];
-
-        step.errorhandler = {
-          ...saveData.errorhandler,
-          config: this.editModel.config,
-          jobref: this.editModel.jobref,
-          type: this.editModel.type,
-          nodeStep: this.editService === ServiceType.WorkflowNodeStep,
-          id: mkid(),
-        };
-
-        const originalData = this.model.commands[path.conditionalIndex];
-        this.$refs.historyControls.operationModify(path.conditionalIndex, conditional);
-        dataForUpdatingHistory.index = path.conditionalIndex;
-        dataForUpdatingHistory.operation = Operation.Modify;
-        dataForUpdatingHistory.undo = Operation.Modify;
-        dataForUpdatingHistory.orig = originalData;
-        newData = conditional;
-      } else if (this.editIndex >= 0) {
+      if (this.editIndex >= 0) {
         // Existing step being modified
         const originalData = this.model.commands[this.editIndex];
         if (this.isErrorHandler) {
@@ -1092,95 +639,11 @@ export default defineComponent({
       this.editExtra = {};
       this.editModelValidation = null;
       this.editIndex = -1;
-      this.editingStepId = null;
-      this.isNewInlineStep = false;
-      this.nestedStepContext = null;
-    },
-    async handleSaveStep(index: number) {
-      try {
-        const saveData = cloneDeep(this.editModel);
-        if (!saveData.id) {
-          saveData.id = this.model.commands[index]?.id || mkid();
-        }
-        if (saveData.nodeStep === undefined) {
-          saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
-        }
-
-        // Initialize filters for regular plugin steps
-        if (!saveData.jobref && saveData.type !== "conditional.logic" && !saveData.filters) {
-          saveData.filters = [];
-        }
-
-        const serviceName = this.editService || (saveData.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep);
-        const result = await validateStepForSave(saveData, serviceName);
-
-        if (result.valid) {
-          this.handleSuccessOnValidation(saveData);
-        } else {
-          // Translate i18n key for jobref validation error
-          if (result.errors.jobref) {
-            result.errors.jobref = this.$t(result.errors.jobref);
-          }
-          this.editModelValidation = result;
-        }
-      } catch (e) {
-        console.log(e);
-      }
-    },
-    async handleSaveConditionalStep(index: number) {
-      try {
-        const saveData = cloneDeep(this.editModel);
-        if (!saveData.id) {
-          saveData.id = this.model.commands[index]?.id || mkid();
-        }
-        if (saveData.nodeStep === undefined) {
-          saveData.nodeStep = this.editService === ServiceType.WorkflowNodeStep;
-        }
-
-        const serviceName = this.editService || (saveData.nodeStep ? ServiceType.WorkflowNodeStep : ServiceType.WorkflowStep);
-        const result = await validateStepForSave(saveData, serviceName);
-
-        if (result.valid) {
-          this.handleSuccessOnValidation(saveData);
-        } else {
-          this.editModelValidation = result;
-        }
-      } catch (e) {
-        console.log(e);
-      }
-    },
-    handleSwitchStepType(index: number) {
-      const command = this.model.commands[index];
-      if (command && command.type === "conditional.logic") {
-        // Toggle nodeStep property directly on the model command
-        // without creating an undo snapshot. The save handler will
-        // create the proper undo entry when the user saves.
-        command.nodeStep = !command.nodeStep;
-
-        // Update editModel and editService to reflect the change
-        this.editModel = cloneDeep(command);
-        this.editService = command.nodeStep
-          ? ServiceType.WorkflowNodeStep
-          : ServiceType.WorkflowStep;
-      }
     },
   },
-  provide() {
-    return {
-      editModelValidation: computed(() => this.editModelValidation)
-    }
-  }
 });
 </script>
 <style lang="scss">
-h2.text-heading--lg {
-  margin: 0 0 24px 0;
-
-  &.smaller-margin {
-    margin: 0 0 12px 0;
-  }
-}
-
 @media (min-width: 1280px) {
   .modal-dialog {
     min-width: 1024px;
@@ -1203,12 +666,6 @@ h2.text-heading--lg {
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-start;
-
-  &.ea {
-    padding: 0 !important;
-    margin-bottom: 0px;
-    border: none;
-  }
 
   .step-item-display {
     width: 100%;
@@ -1298,91 +755,6 @@ h2.text-heading--lg {
 
   .error-handler-section {
     margin-top: 10px;
-  }
-}
-
-:deep(.edit-lock-disabled) {
-  :deep(.btn.btn-default.btn-xs) {
-    opacity: 0.4 !important;
-    cursor: not-allowed !important;
-    pointer-events: none !important;
-  }
-}
-
-// Disabled state styling for non-editing cards
-.step-list-item .step-item-display.edit-lock-disabled {
-  filter: grayscale(0.3) !important;
-
-  // Interactive elements faded and disabled
-  .plugin-info-wrapper,
-  .link-title,
-  .link-step-plugin,
-  button,
-  .btn,
-  .p-button,
-  a {
-    opacity: 0.4 !important;
-    cursor: not-allowed !important;
-  }
-
-  // Hide pencil icons on hover
-  .link-title:hover + .pi,
-  .link-step-plugin:hover + .pi {
-    display: none !important;
-  }
-
-  // StepCard header buttons
-  .stepCardHeader-buttons .p-button {
-    opacity: 0.4 !important;
-    cursor: not-allowed !important;
-  }
-
-  // Chips with not-allowed cursor
-  .p-chip {
-    cursor: not-allowed !important;
-
-    .p-chip-remove-icon {
-      cursor: not-allowed !important;
-    }
-  }
-}
-
-
-.ea-mode {
-
-  ol[data-testid='draggable-container'] {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    list-style: none;
-    position: relative;
-    counter-reset: list;
-
-    li {
-      position: relative;
-
-      &:before {
-        counter-increment: list;
-        content: counter(list)'.';
-        display: block;
-        font-size: 16px;
-        font-family: Inter, var(--fonts-body) !important;
-        left: -18px;
-        position: absolute;
-        top: 1rem;
-      }
-
-      i.pi-bars {
-        position: absolute;
-        cursor: grab;
-        left: -40px;
-        top: 17px !important;
-      }
-    }
-  }
-
-  .dragging * {
-    cursor: grabbing !important;
   }
 }
 </style>

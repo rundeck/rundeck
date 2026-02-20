@@ -18,7 +18,7 @@ jest.mock("@/library/rundeckService", () => ({
   }),
 }));
 
-jest.mock("../../../../../library/services/projects");
+jest.mock("@/library/services/projects");
 
 jest.mock("@/library/stores/Plugins", () => ({
   ServiceType: { LogFilter: "LogFilter" },

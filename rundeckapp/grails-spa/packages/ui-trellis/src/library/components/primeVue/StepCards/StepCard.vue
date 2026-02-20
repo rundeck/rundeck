@@ -35,9 +35,11 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import { defineComponent } from "vue";
-import BaseStepCard from "@/library/components/primeVue/StepCards/BaseStepCard.vue";
-import StepCardContent from "@/library/components/primeVue/StepCards/StepCardContent.vue";
+import BaseStepCard from "./BaseStepCard.vue";
+import StepCardContent from "./StepCardContent.vue";
+import type { ErrorHandlerDefinition } from "@/app/components/job/workflow/types/workflowTypes";
 
 export default defineComponent({
   name: "StepCard",

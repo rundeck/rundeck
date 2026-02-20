@@ -4,7 +4,7 @@ import { createTestingPinia } from "@pinia/testing";
 import { useNodesStore } from "../../../../../library/stores/NodesStorePinia";
 import JobRefForm from "../JobRefForm.vue";
 
-jest.mock("../../../../../library/services/api", () => ({
+jest.mock("@/library/services/api", () => ({
   api: {
     get: jest.fn(),
     post: jest.fn(),
@@ -18,7 +18,7 @@ jest.mock("../../../../../library/services/api", () => ({
   },
 }));
 
-jest.mock("../../../../../library", () => ({
+jest.mock("@/library", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     rdBase: "http://localhost:4440/",
     projectName: "TestProject",

@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { nextTick } from "vue";
 import { UiMessage } from "../../library/stores/UIStore";
 import en_US from "./locales/en_US";

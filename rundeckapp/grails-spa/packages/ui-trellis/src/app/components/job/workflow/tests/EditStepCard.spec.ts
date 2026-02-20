@@ -70,7 +70,7 @@ jest.mock("@/library/components/utils/contextVariableUtils", () => ({
   transformVariables: jest.fn().mockReturnValue([]),
 }));
 
-jest.mock("../../../../../library/services/projects");
+jest.mock("@/library/services/projects");
 jest.mock("vue-scrollto", () => ({ scrollTo: jest.fn() }));
 jest.mock("@/app/utilities/loadJsonData", () => ({
   loadJsonData: jest.fn().mockReturnValue(null),
@@ -621,89 +621,6 @@ describe("EditStepCard", () => {
 
       expect(wrapper.emitted("save")).toBeTruthy();
       expect(wrapper.emitted("update:modelValue")).toBeTruthy();
-    });
-  });
-
-  describe("Conditional logic step", () => {
-    const conditionalModel = {
-      type: "conditional.logic",
-      config: { conditionSet: [], subSteps: [] },
-      nodeStep: true,
-      id: "test-conditional-1",
-    };
-
-    const conditionalModelWithSubSteps = {
-      type: "conditional.logic",
-      config: {
-        conditionSet: [],
-        subSteps: [
-          { type: "exec-command", config: { adhocRemoteString: "echo" }, nodeStep: true, id: "sub-1" },
-        ],
-      },
-      nodeStep: true,
-      id: "test-conditional-1",
-    };
-
-    it("renders ConditionsEditor when type is conditional.logic", async () => {
-      const wrapper = await createWrapper({ modelValue: conditionalModel });
-
-      expect(wrapper.findComponent({ name: "ConditionsEditor" }).exists()).toBe(true);
-    });
-
-    it("does not render pluginConfig for conditional.logic steps", async () => {
-      const wrapper = await createWrapper({ modelValue: conditionalModel });
-
-      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(false);
-    });
-
-    it("does not render jobref form for conditional.logic steps", async () => {
-      const wrapper = await createWrapper({ modelValue: conditionalModel });
-
-      expect(wrapper.find('[data-testid="step-description"]').exists()).toBe(true);
-      expect(wrapper.findComponent({ name: "JobRefFormFieldsStub" }).exists()).toBe(false);
-    });
-
-    it("save button is disabled when there are no inner commands", async () => {
-      const wrapper = await createWrapper({ modelValue: conditionalModel });
-
-      expect(wrapper.find('[data-testid="save-button"]').attributes("disabled")).toBeDefined();
-    });
-
-    it("save button is enabled when inner commands exist", async () => {
-      const wrapper = await createWrapper({ modelValue: conditionalModelWithSubSteps });
-
-      expect(wrapper.find('[data-testid="save-button"]').attributes("disabled")).toBeUndefined();
-    });
-
-    it("save button becomes disabled when InnerStepList signals editing started", async () => {
-      const wrapper = await createWrapper({ modelValue: conditionalModelWithSubSteps });
-      const innerStepList = wrapper.findComponent({ name: "InnerStepList" });
-
-      await innerStepList.vm.$emit("update:editing", true);
-      await wrapper.vm.$nextTick();
-
-      expect(wrapper.find('[data-testid="save-button"]').attributes("disabled")).toBeDefined();
-    });
-
-    it("clicking save emits save and update:modelValue with conditionSet and subSteps", async () => {
-      const wrapper = await createWrapper({ modelValue: conditionalModelWithSubSteps });
-
-      await wrapper.find('[data-testid="save-button"]').trigger("click");
-
-      expect(wrapper.emitted("save")).toBeTruthy();
-      expect(wrapper.emitted("update:modelValue")).toBeTruthy();
-      const payload = wrapper.emitted("update:modelValue")![0][0] as any;
-      expect(payload.config?.conditionSet).toBeDefined();
-      expect(payload.config?.subSteps).toBeDefined();
-    });
-
-    it("clicking save includes the step description in the payload", async () => {
-      const wrapper = await createWrapper({ modelValue: { ...conditionalModelWithSubSteps, description: "My Step" } });
-
-      await wrapper.find('[data-testid="save-button"]').trigger("click");
-
-      const payload = wrapper.emitted("update:modelValue")![0][0] as any;
-      expect(payload.description).toBe("My Step");
     });
   });
 });

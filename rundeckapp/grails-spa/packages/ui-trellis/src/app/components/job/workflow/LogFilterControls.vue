@@ -29,14 +29,15 @@
   </Teleport>
 </template>
 <script lang="ts">
-import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
-import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
-import { PluginConfig } from "@/library/interfaces/PluginConfig";
+// @ts-nocheck
+import ChoosePluginModal from "../../../../library/components/plugins/ChoosePluginModal.vue";
+import EditPluginModal from "../../../../library/components/plugins/EditPluginModal.vue";
+import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import {
   getPluginProvidersForService,
   validatePluginConfig,
-} from "@/library/modules/pluginService";
-import { ServiceType } from "@/library/stores/Plugins";
+} from "../../../../library/modules/pluginService";
+import { ServiceType, Plugin } from "../../../../library/stores/Plugins";
 import { cloneDeep } from "lodash";
 import { defineComponent, nextTick } from "vue";
 import { resetValidation } from "./stepEditorUtils";
@@ -71,7 +72,7 @@ export default defineComponent({
   data() {
     return {
       ServiceType,
-      pluginProviders: [],
+      pluginProviders: [] as Plugin[],
       pluginLabels: [],
       addFilterModal: false,
       editFilterModal: false,

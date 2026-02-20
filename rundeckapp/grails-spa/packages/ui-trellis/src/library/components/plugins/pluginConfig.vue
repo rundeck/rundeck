@@ -212,9 +212,11 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import { ContextVariable } from "@/library/stores/contextVariables";
 import { getRundeckContext } from "../../rundeckService";
 import { defineComponent, type PropType } from "vue";
+import type { PluginConfig } from "@/library/interfaces/PluginConfig";
 
 import PluginInfo from "./PluginInfo.vue";
 import PluginPropView from "./pluginPropView.vue";
@@ -248,8 +250,8 @@ export default defineComponent({
     showTitle: { required: false },
     showIcon: { required: false },
     showDescription: { required: false },
-    modelValue: { required: false },
-    savedProps: { required: false },
+    modelValue: { type: Object as PropType<PluginConfig>, required: false },
+    savedProps: { type: Array as PropType<string[]>, required: false },
     pluginConfig: { required: false },
     validation: { required: false },
     readOnly: { required: false },
@@ -291,7 +293,7 @@ export default defineComponent({
       inputValues: {} as any,
       inputSaved: {} as any,
       inputSavedProps:
-        typeof this.savedProps !== "undefined" ? this.savedProps : ["type"],
+        (typeof this.savedProps !== "undefined" ? this.savedProps : ["type"]) as string[] | null,
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },

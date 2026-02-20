@@ -5,7 +5,6 @@ const createWrapper = async (props = {}) => {
   return mount(WorkflowBasic, {
     props: {
       modelValue: { keepgoing: false },
-      conditionalEnabled: false,
       ...props,
     },
   });
@@ -46,39 +45,4 @@ describe("WorkflowBasic", () => {
     });
   });
 
-  describe("conditionalEnabled prop", () => {
-    it("does not show section heading or workflow-section when conditionalEnabled is false", async () => {
-      const wrapper = await createWrapper({ conditionalEnabled: false });
-
-      expect(wrapper.find('[data-testid="execution-behavior-heading"]').exists()).toBe(false);
-      expect(wrapper.find('[data-testid="workflow-section"]').exists()).toBe(false);
-    });
-
-    it("shows the simple prompt when conditionalEnabled is false", async () => {
-      const wrapper = await createWrapper({ conditionalEnabled: false });
-
-      expect(wrapper.find('[data-testid="simple-prompt"]').exists()).toBe(true);
-    });
-
-    it("shows the section heading and workflow-section when conditionalEnabled is true", async () => {
-      const wrapper = await createWrapper({ conditionalEnabled: true });
-
-      expect(wrapper.find('[data-testid="execution-behavior-heading"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="workflow-section"]').exists()).toBe(true);
-    });
-
-    it("hides the simple prompt when conditionalEnabled is true", async () => {
-      const wrapper = await createWrapper({ conditionalEnabled: true });
-
-      expect(wrapper.find('[data-testid="simple-prompt"]').exists()).toBe(false);
-    });
-
-    it("radio buttons still emit correctly when conditionalEnabled is true", async () => {
-      const wrapper = await createWrapper({ conditionalEnabled: true });
-
-      await wrapper.find('[data-testid="keepgoing-true-radio"]').setValue();
-
-      expect(wrapper.emitted("update:modelValue")![0][0]).toEqual({ keepgoing: true });
-    });
-  });
 });

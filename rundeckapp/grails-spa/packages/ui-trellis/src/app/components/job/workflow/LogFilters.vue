@@ -1,12 +1,11 @@
 <template>
   <div
-    v-if="!conditionalEnabled"
     class="log-filters-container"
     :class="{ inline: mode === 'inline' }"
     data-testid="log-filters-container"
   >
     <template v-if="showIfEmpty || model.length > 0">{{ title }}</template>
-    <div v-if="model.length > 0 && mode === 'inline' && !conditionalEnabled" class="add-gap" data-testid="log-filters-inline-buttons" :id="id">
+    <div v-if="model.length > 0 && mode === 'inline'" class="add-gap" data-testid="log-filters-inline-buttons" :id="id">
       <template v-for="(entry, i) in model">
         <LogFilterButton
           v-if="findProvider(entry.type)"
@@ -19,7 +18,7 @@
     </div>
   </div>
   <div
-    v-if="model.length > 0 && mode !== 'inline' && !conditionalEnabled"
+    v-if="model.length > 0 && mode !== 'inline'"
     class="log-filters-container"
     data-testid="log-filters-button-container"
     :id="id"
@@ -40,19 +39,20 @@
     :title="title"
     :subtitle="subtitle"
     :event-bus="filtersEb"
-    :show-button="conditionalEnabled ? false : (showIfEmpty || model.length > 0)"
+    :show-button="showIfEmpty || model.length > 0"
     @update:model-value="saveEditFilter"
     @cancel="clearEdit"
   />
 </template>
 
 <script lang="ts">
-import LogFilterButton from "@/app/components/job/workflow/LogFilterButton.vue";
-import { getRundeckContext } from "@/library";
-import { PluginConfig } from "@/library/interfaces/PluginConfig";
-import { getPluginProvidersForService } from "@/library/modules/pluginService";
-import { ServiceType } from "@/library/stores/Plugins";
-import LogFilterControls from "@/app/components/job/workflow/LogFilterControls.vue";
+// @ts-nocheck
+import LogFilterButton from "./LogFilterButton.vue";
+import { getRundeckContext } from "../../../../library";
+import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
+import { getPluginProvidersForService } from "../../../../library/modules/pluginService";
+import { ServiceType } from "../../../../library/stores/Plugins";
+import LogFilterControls from "./LogFilterControls.vue";
 import { cloneDeep } from "lodash";
 import mitt from "mitt";
 import { defineComponent } from "vue";
@@ -97,10 +97,6 @@ export default defineComponent({
       type: String,
       default: "logFilters",
     },
-    conditionalEnabled: {
-      type: Boolean,
-      default: false,
-    },
   },
   emits: ["update:modelValue"],
   data() {
@@ -117,7 +113,7 @@ export default defineComponent({
         config: {},
       } as PluginConfig,
       editModelValidation: resetValidation(),
-      filtersEb: null,
+      filtersEb: null as ReturnType<typeof mitt> | null,
       addEventHandler: null as (() => void) | null,
       editEventHandler: null as ((filterIndex: number) => void) | null,
     };

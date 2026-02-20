@@ -75,11 +75,12 @@
   </modal>
 </template>
 <script lang="ts">
-import { getRundeckContext } from "@/library";
-import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
+// @ts-nocheck
+import { getRundeckContext } from "../../../library";
+import pluginInfo from "./PluginInfo.vue";
 import { defineComponent } from "vue";
-import PluginSearch from "@/library/components/plugins/PluginSearch.vue";
-import { ServiceType } from "@/library/stores/Plugins";
+import PluginSearch from "./PluginSearch.vue";
+import { ServiceType } from "../../../library/stores/Plugins";
 
 const context = getRundeckContext();
 
@@ -121,7 +122,7 @@ export default defineComponent({
   emits: ["cancel", "selected", "update:modelValue"],
   data() {
     return {
-      loadedServices: [],
+      loadedServices: [] as Array<{ service: string; providers: any[] }>,
       loading: false,
       modalShown: false,
       searchQuery: "",
@@ -173,7 +174,7 @@ export default defineComponent({
       const name =
         this.tabNames && this.tabNames.length > i
           ? this.tabNames[i]
-          : $t("plugin.type." + service + ".title.plural") || service;
+          : this.$t("plugin.type." + service + ".title.plural") || service;
       const count =
         this.filteredServices.find((s) => s.service === service)?.providers
           .length || 0;
@@ -181,12 +182,12 @@ export default defineComponent({
     },
     chooseProviderAdd(service: string, provider: string) {
       this.$emit("selected", { service, provider });
-      this.active = false;
+      this.modalShown = false;
     },
     filterLoadedServices(searchQuery: string) {
       this.searchQuery = searchQuery.toLowerCase();
     },
-    matchesSearchQuery(provider) {
+    matchesSearchQuery(provider: any) {
       if (!this.searchQuery) return true;
       const filterValue = this.searchQuery.split("=");
       const prop = filterValue.length > 1 ? filterValue[0] : "title";

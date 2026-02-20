@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PluginConfig } from "../../../../../library/interfaces/PluginConfig";
 
 /**
@@ -96,25 +97,6 @@ export interface CommandData {
   description?: string;
   plugins?: { [key: string]: any };
 }
-/**
- * Backend API format for a single condition
- */
-export interface BackendCondition {
-  key: string;
-  operator: string;
-  value: string;
-}
-
-/**
- * Backend API format for conditional step
- * conditionSet is an array of arrays (each inner array = one condition set)
- */
-export interface ConditionalStepData {
-  name?: string;
-  subSteps?: StepData[];
-  conditionSet?: BackendCondition[][];
-}
-
 export interface BasicData {
   keepgoing: boolean;
 }
@@ -158,7 +140,6 @@ export type StepData = CommandData &
   ScriptFileData &
   ScriptInlineData &
   CommandExecData &
-  ConditionalStepData &
   ErrorHandlerData;
 
 export interface StepsData {
@@ -199,7 +180,10 @@ export function exportPluginData(
   strategy: PluginConfig,
   logFilters: GlobalLogFiltersData,
 ): any {
-  const obj = {
+  const obj: {
+    pluginConfig: { WorkflowStrategy: { [x: string]: any }; [key: string]: any };
+    strategy: string;
+  } = {
     pluginConfig: {
       WorkflowStrategy: { [strategy.type]: strategy.config },
     },

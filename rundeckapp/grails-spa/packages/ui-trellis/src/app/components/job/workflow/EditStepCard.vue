@@ -6,7 +6,7 @@
     :editing="true"
     :show-toggle="depth > 0"
     :initially-expanded="contentExpanded"
-    :validation-errors="innerStepValidationErrors"
+    :validation-errors="validationErrors"
     card-class="edit-step-card"
     @delete="handleCancel"
     @toggle="contentExpanded = !contentExpanded"
@@ -43,49 +43,6 @@
           :show-validation="hasJobRefValidationError"
           :extra-autocomplete-vars="extraAutocompleteVars"
         />
-      </div>
-
-      <div v-else-if="isConditionalLogic" class="conditional-logic-content">
-        <div class="step-name-section">
-          <label class="text-heading--sm form-label">{{
-            $t("editConditionalStep.stepName")
-          }}</label>
-          <p class="text-body--sm helper-text">
-            {{ $t("editConditionalStep.stepNameHelper") }}
-          </p>
-          <PtInput
-            ref="stepDescriptionInput"
-            v-model="stepDescription"
-            :placeholder="$t('editConditionalStep.stepNamePlaceholder')"
-            class="step-name-input"
-            data-testid="step-description"
-          />
-        </div>
-
-        <div class="condition-section">
-          <ConditionsEditor
-            ref="conditionsEditor"
-            v-model="conditionSet"
-            :service-name="serviceName"
-            :extra-autocomplete-vars="extraAutocompleteVars"
-            :depth="depth"
-            :validation="validation"
-          />
-        </div>
-
-        <div class="conditional-divider"></div>
-
-        <div class="steps-section">
-          <InnerStepList
-            ref="innerStepList"
-            v-model="innerCommands"
-            :target-service="serviceName"
-            :depth="depth + 1"
-            :extra-autocomplete-vars="extraAutocompleteVars"
-            @update:editing="isEditingInnerStep = $event"
-            @update:inner-validation="innerStepValidation = $event"
-          />
-        </div>
       </div>
 
       <div v-else-if="provider">
@@ -148,11 +105,9 @@
           @click="handleCancel"
         />
         <PtButton
-          v-memo="[isSaveDisabled]"
           outlined
           :label="$t('Save')"
           data-testid="save-button"
-          :disabled="isSaveDisabled"
           @click="handleSave"
         />
       </div>
@@ -161,19 +116,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, defineAsyncComponent, type PropType } from "vue";
-import BaseStepCard from "@/library/components/primeVue/StepCards/BaseStepCard.vue";
-import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import PtButton from "@/library/components/primeVue/PtButton/PtButton.vue";
-import PtInput from "@/library/components/primeVue/PtInput/PtInput.vue";
-import { PluginConfig } from "@/library/interfaces/PluginConfig";
-import { getServiceProviderDescription } from "@/library/modules/pluginService";
-import { ContextVariable } from "@/library/stores/contextVariables";
+import { defineComponent, type PropType } from "vue";
+import BaseStepCard from "../../../../library/components/primeVue/StepCards/BaseStepCard.vue";
+import pluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
+import PtButton from "../../../../library/components/primeVue/PtButton/PtButton.vue";
+import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
+import { getServiceProviderDescription } from "../../../../library/modules/pluginService";
+import { ContextVariable } from "../../../../library/stores/contextVariables";
 import { cloneDeep, merge } from "lodash";
-import { getRundeckContext } from "@/library";
-import ConditionsEditor from "./ConditionsEditor.vue";
-import type { ConditionSet } from "./types/conditionalStepTypes";
-import { createEmptyConditionSet } from "./types/conditionalStepTypes";
+import { getRundeckContext } from "../../../../library";
 import type { EditStepData } from "./types/workflowTypes";
 import JobRefFormFields from "./JobRefFormFields.vue";
 import VueScrollTo from "vue-scrollto";
@@ -187,9 +138,6 @@ export default defineComponent({
     BaseStepCard,
     pluginConfig,
     PtButton,
-    PtInput,
-    ConditionsEditor,
-    InnerStepList: defineAsyncComponent(() => import("./InnerStepList.vue")),
     JobRefFormFields,
   },
   provide() {
@@ -230,16 +178,6 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
-    nestedStepToEdit: {
-      type: Object as PropType<{
-        stepId: string;
-        stepIndex: number;
-        parentConditionalId?: string;
-        parentConditionalIndex?: number;
-      } | null>,
-      required: false,
-      default: null,
-    },
     shouldScrollIntoView: {
       type: Boolean,
       default: false,
@@ -254,11 +192,7 @@ export default defineComponent({
       provider: null as any,
       loading: false,
       pluginConfigMode: "edit",
-      // Conditional logic specific data
-      conditionSet: [createEmptyConditionSet()] as ConditionSet[],
-      innerCommands: [] as EditStepData[],
-      isEditingInnerStep: false,
-      innerStepValidation: resetValidation(),
+      validationErrors: resetValidation(),
       // Job reference defaults (matching JobRefForm)
       jobRefDefaults: {
         description: "",
@@ -291,9 +225,6 @@ export default defineComponent({
     isJobRef() {
       return Boolean(this.editModel?.jobref);
     },
-    isConditionalLogic() {
-      return this.editModel?.type === "conditional.logic";
-    },
     stepConfig() {
       // Computed config that includes description for StepCardHeader
       return {
@@ -301,55 +232,8 @@ export default defineComponent({
         description: this.stepDescription,
       };
     },
-    isSaveDisabled(): boolean {
-      if (!this.isConditionalLogic) {
-        return false;
-      }
-      return this.innerCommands.length === 0 || this.isEditingInnerStep;
-    },
     hasJobRefValidationError(): boolean {
       return Boolean(this.validation?.errors?.jobref);
-    },
-    innerStepValidationErrors() {
-      // Only return validation errors if there are actual errors
-      return this.innerStepValidation.valid ? undefined : this.innerStepValidation;
-    },
-  },
-  watch: {
-    nestedStepToEdit: {
-      handler(val) {
-        if (val && this.isConditionalLogic) {
-          this.$nextTick(() => {
-            const innerStepList = this.$refs.innerStepList as any;
-            if (innerStepList && typeof innerStepList.editStep === "function") {
-              // Check if we need to open a nested conditional first (depth=2 case)
-              if (
-                val.parentConditionalId &&
-                val.parentConditionalIndex !== undefined
-              ) {
-                // Set nested step info on the InnerStepList so EditStepCard for the
-                // intermediate conditional receives it and can open the target step
-                innerStepList.nestedStepToEdit = {
-                  stepId: val.stepId,
-                  stepIndex: val.stepIndex,
-                };
-
-                // Open the nested conditional
-                innerStepList.editStep(val.parentConditionalIndex);
-              } else {
-                // Depth=1 case: set the target step info so InnerStepList knows which EditStepCard should scroll
-                innerStepList.nestedStepToEdit = {
-                  stepId: val.stepId,
-                  stepIndex: val.stepIndex,
-                };
-                // Open the target step
-                innerStepList.editStep(val.stepIndex);
-              }
-            }
-          });
-        }
-      },
-      immediate: true,
     },
   },
   async mounted() {
@@ -364,30 +248,6 @@ export default defineComponent({
       this.editModel = cloneDeep(rest);
     }
 
-    // Initialize conditional logic data
-    if (this.editModel.type === "conditional.logic") {
-      this.conditionSet = this.editModel.config?.conditionSet || [
-        createEmptyConditionSet(),
-      ];
-      this.innerCommands = this.editModel.config?.subSteps || [];
-
-      // Handle nested step editing after editModel is populated
-      if (this.nestedStepToEdit) {
-        this.$nextTick(() => {
-          const innerStepList = this.$refs.innerStepList as any;
-          if (innerStepList && typeof innerStepList.editStep === "function") {
-            // For depth=2: we only get here if parentConditionalId was already handled by parent
-            // So this is the depth=1 case where we need to open the final target
-            innerStepList.nestedStepToEdit = {
-              stepId: this.nestedStepToEdit.stepId,
-              stepIndex: this.nestedStepToEdit.stepIndex,
-            };
-            innerStepList.editStep(this.nestedStepToEdit.stepIndex);
-          }
-        });
-      }
-    }
-
     if (
       this.modelValue.config &&
       Object.keys(this.modelValue.config).length === 0
@@ -398,8 +258,7 @@ export default defineComponent({
     await this.loadProvider();
 
     // Scroll into view if this step was opened via click-to-edit
-    // BUT only if we're not opening a nested step (let the deepest component handle scrolling)
-    if (this.shouldScrollIntoView && !this.nestedStepToEdit) {
+    if (this.shouldScrollIntoView) {
       this.$nextTick(() => {
         setTimeout(() => {
           const baseStepCard = this.$refs.baseStepCard as any;
@@ -410,14 +269,8 @@ export default defineComponent({
               offset: -100,
               easing: "ease-in-out",
               onDone: () => {
-                // Focus step description input after scroll completes
                 setTimeout(() => {
-                  const stepDescriptionInput = this.$refs
-                    .stepDescriptionInput as any;
-                  const inputElement =
-                    stepDescriptionInput?.$el?.querySelector("input") ||
-                    document.getElementById("stepDescription");
-                  // Prevent browser's native scroll on focus
+                  const inputElement = document.getElementById("stepDescription");
                   if (inputElement) {
                     inputElement.focus({ preventScroll: true });
                   }
@@ -431,23 +284,6 @@ export default defineComponent({
   },
   methods: {
     handleSave() {
-      // For conditional logic, build save data with conditions and commands
-      if (this.isConditionalLogic) {
-        const saveData = {
-          ...this.editModel,
-          description: this.stepDescription,
-          config: {
-            ...this.editModel.config,
-            conditionSet: this.conditionSet,
-            subSteps: this.innerCommands,
-          },
-        };
-        this.innerStepValidation = resetValidation();
-        this.$emit("update:modelValue", saveData);
-        this.$emit("save");
-        return;
-      }
-
       // Merge description back into editModel before emitting
       const saveData = {
         ...this.editModel,
@@ -457,7 +293,6 @@ export default defineComponent({
       this.$emit("save");
     },
     handleCancel() {
-      this.innerStepValidation = resetValidation();
       this.$emit("cancel");
     },
     async loadProvider() {
@@ -478,12 +313,10 @@ export default defineComponent({
           );
         } catch (e) {
           console.error("Error loading provider description:", e);
-          // Don't clear provider on error - keep previous value
         } finally {
           this.loading = false;
         }
       } else {
-        // Don't set provider to null if we already have one - prevents header corruption during validation
         this.loading = false;
         console.warn(
           "loadProvider called without editModel.type - keeping existing provider",
@@ -519,30 +352,5 @@ export default defineComponent({
   flex-direction: column;
   gap: var(--sizes-1);
   margin-bottom: var(--sizes-4);
-}
-
-// Conditional logic specific styles
-.conditional-logic-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sizes-6);
-
-  .condition-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sizes-4);
-  }
-
-  .conditional-divider {
-    height: 1px;
-    background: var(--colors-gray-200);
-    margin: var(--sizes-2) 0;
-  }
-
-  .steps-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sizes-4);
-  }
 }
 </style>

@@ -65,8 +65,8 @@ import AutoComplete, {
   AutoCompleteChangeEvent,
 } from "primevue/autocomplete";
 import Badge from "primevue/badge";
-import "@/library/components/primeVue/Badge/badge.scss";
-import { ContextVariable } from "../../stores/contextVariables";
+import "../Badge/badge.scss";
+import { ContextVariable } from "../../../stores/contextVariables";
 import type { TabConfig } from "./PtAutoCompleteTypes";
 
 export default defineComponent({

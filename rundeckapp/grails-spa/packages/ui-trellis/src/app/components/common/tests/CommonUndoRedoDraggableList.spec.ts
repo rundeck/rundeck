@@ -18,7 +18,6 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
       handle: ".dragHandle",
       draggableTag: "div",
       loading: false,
-      conditionalEnabled: false,
       addButtonDisabled: false,
       draggableDisabled: false,
       ...props,
@@ -126,42 +125,6 @@ describe("CommonUndoRedoDraggableList", () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.emitted()["update:modelValue"]).toBeTruthy();
-  });
-
-  describe("conditionalEnabled prop", () => {
-    it("does not add ea-mode class to list-container by default", async () => {
-      const wrapper = await createWrapper({ modelValue: [] });
-
-      expect(
-        wrapper.find('[data-testid="list-container"]').classes(),
-      ).not.toContain("ea-mode");
-    });
-
-    it("adds ea-mode class to list-container when conditionalEnabled is true", async () => {
-      const wrapper = await createWrapper({
-        modelValue: [],
-        conditionalEnabled: true,
-      });
-
-      expect(
-        wrapper.find('[data-testid="list-container"]').classes(),
-      ).toContain("ea-mode");
-    });
-
-    it("adds right class to UndoRedo when conditionalEnabled is true", async () => {
-      const wrapper = await createWrapper({
-        modelValue: [],
-        conditionalEnabled: true,
-      });
-
-      expect(wrapper.findComponent(UndoRedo).classes()).toContain("right");
-    });
-
-    it("does not add right class to UndoRedo by default", async () => {
-      const wrapper = await createWrapper({ modelValue: [] });
-
-      expect(wrapper.findComponent(UndoRedo).classes()).not.toContain("right");
-    });
   });
 
   describe("addButtonDisabled prop", () => {

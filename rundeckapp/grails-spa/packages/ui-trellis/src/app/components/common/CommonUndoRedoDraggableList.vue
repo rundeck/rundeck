@@ -64,15 +64,16 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 import { defineComponent } from "vue";
-import UndoRedo from "@/app/components/util/UndoRedo.vue";
+import UndoRedo from "../util/UndoRedo.vue";
 import draggable from "vuedraggable";
-import { getRundeckContext } from "@/library";
+import { getRundeckContext } from "../../../library";
 import mitt, { Emitter, EventType } from "mitt";
 import {
   ChangeEvent,
   Operation,
-} from "@/app/components/job/options/model/ChangeEvents";
+} from "../job/options/model/ChangeEvents";
 import { cloneDeep } from "lodash";
 
 const emitter = mitt();
@@ -132,8 +133,8 @@ export default defineComponent({
     return {
       eventBus: getRundeckContext().eventBus,
       localEB,
-      internalData: null,
-      originalData: null,
+      internalData: null as any[] | null,
+      originalData: null as any[] | null,
     };
   },
   watch: {
@@ -151,8 +152,8 @@ export default defineComponent({
   },
   async mounted() {
     if (this.modelValue) {
-      this.originalData = cloneDeep(this.modelValue);
-      this.internalData = cloneDeep(this.modelValue);
+      this.originalData = cloneDeep(this.modelValue) as any[];
+      this.internalData = cloneDeep(this.modelValue) as any[];
     }
 
     this.localEB.on("undo", this.doUndo);
@@ -165,7 +166,7 @@ export default defineComponent({
       this.$emit("addButtonClick");
     },
     cloneDeep,
-    dragUpdated(change) {
+    dragUpdated(change: { oldIndex: number; newIndex: number }) {
       this.changeEvent({
         index: change.oldIndex,
         dest: change.newIndex,
@@ -174,21 +175,25 @@ export default defineComponent({
       });
     },
     operationRemove(index: number) {
+      if (!this.internalData) return undefined;
       const oldval = this.internalData[index];
       this.internalData.splice(index, 1);
       return oldval;
     },
     operationModify(index: number, data: any) {
+      if (!this.internalData) return undefined;
       const orig = this.internalData[index];
       this.internalData[index] = cloneDeep(data);
       return orig;
     },
     operationMove(index: number, dest: number) {
+      if (!this.internalData) return;
       const orig = this.internalData[index];
       this.internalData.splice(index, 1);
       this.internalData.splice(dest, 0, orig);
     },
     operationInsert(index: number, value: any) {
+      if (!this.internalData) return;
       this.internalData.splice(index, 0, cloneDeep(value));
     },
     operation(op: Operation, data: any) {

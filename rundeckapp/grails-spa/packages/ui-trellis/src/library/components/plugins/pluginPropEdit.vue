@@ -415,7 +415,7 @@
   </div>
 </template>
 <script lang="ts">
-import { ContextVariable } from "@/library/stores/contextVariables";
+import { ContextVariable } from "../../../library/stores/contextVariables";
 import { defineComponent, type PropType } from "vue";
 import JobConfigPicker from "./JobConfigPicker.vue";
 import KeyStorageSelector from "./KeyStorageSelector.vue";
@@ -425,9 +425,9 @@ import PluginPropVal from "./pluginPropVal.vue";
 import { client } from "../../modules/rundeckClient";
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 import { getRundeckContext } from "../../rundeckService";
-import { EventBus } from "@/library";
+import { EventBus } from "../../../library";
 import UiSocket from "../utils/UiSocket.vue";
-import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
+import PluginDetails from "./PluginDetails.vue";
 import PtAutoComplete from "../primeVue/PtAutoComplete/PtAutoComplete.vue";
 import {
   getContextVariables,

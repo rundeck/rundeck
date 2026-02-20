@@ -614,19 +614,19 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
-import { getRundeckContext } from "@/library";
-import NodeFilterInput from "@/app/components/job/resources/NodeFilterInput.vue";
-import NodeListEmbed from "@/app/components/job/resources/NodeListEmbed.vue";
-import PtAutoComplete from "@/library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
-import UiSocket from "@/library/components/utils/UiSocket";
-import { ContextVariable } from "@/library/stores/contextVariables";
+import { getRundeckContext } from "../../../../library";
+import NodeFilterInput from "../resources/NodeFilterInput.vue";
+import NodeListEmbed from "../resources/NodeListEmbed.vue";
+import PtAutoComplete from "../../../../library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
+import UiSocket from "../../../../library/components/utils/UiSocket.vue";
+import { ContextVariable } from "../../../../library/stores/contextVariables";
 import { cloneDeep, merge } from "lodash";
 import { mapState, mapActions } from "pinia";
-import { useNodesStore } from "@/library/stores/NodesStorePinia";
+import { useNodesStore } from "../../../../library/stores/NodesStorePinia";
 import {
   getContextVariables,
   transformVariables,
-} from "@/library/components/utils/contextVariableUtils";
+} from "../../../../library/components/utils/contextVariableUtils";
 
 const rundeckContext = getRundeckContext();
 const eventBus = rundeckContext.eventBus;

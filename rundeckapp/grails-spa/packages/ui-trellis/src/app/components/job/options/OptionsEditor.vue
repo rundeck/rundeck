@@ -90,16 +90,18 @@
   </div>
 </template>
 <script lang="ts">
-import { getRundeckContext } from "@/library";
+// @ts-nocheck
+import { getRundeckContext } from "../../../../library";
 import { cloneDeep, clone } from "lodash";
 import {
   JobOption,
+  JobOptionEdit,
   JobOptionsData,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
 import { Operation, ChangeEvent } from "./model/ChangeEvents";
 import OptionItem from "./OptionItem.vue";
-import pluginService from "@/library/modules/pluginService";
+import pluginService from "../../../../library/modules/pluginService";
 import { defineComponent, PropType } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
@@ -142,8 +144,8 @@ export default defineComponent({
       editIndex: -1,
       origOptions: [] as JobOption[],
       intOptions: [] as JobOption[],
-      createOption: null,
-      fileUploadPluginType: "",
+      createOption: null as JobOptionEdit | null,
+      fileUploadPluginType: "" as string | undefined,
       providers: [],
       providerLabels: {},
     };
@@ -153,7 +155,7 @@ export default defineComponent({
     this.intOptions = cloneDeep(this.optionsData.options);
     this.updateIndexes();
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
-    pluginService.getPluginProvidersForService("OptionValues").then((data) => {
+    pluginService.getPluginProvidersForService("OptionValues").then((data: { service?: string; descriptions?: any; labels?: any }) => {
       if (data.service) {
         this.providers = data.descriptions;
         this.providerLabels = data.labels;
@@ -218,7 +220,7 @@ export default defineComponent({
         });
       }
     },
-    dragUpdated(change) {
+    dragUpdated(change: { oldIndex: number; newIndex: number }) {
       this.updateIndexes();
       this.changeEvent({
         index: change.oldIndex,
@@ -275,16 +277,18 @@ export default defineComponent({
       this.intOptions.splice(index, 0, cloneDeep(value));
     },
     operation(op: Operation, data: any) {
+      let result;
       if (op === Operation.Insert) {
-        this.operationInsert(data.index, data.value);
+        result = this.operationInsert(data.index, data.value);
       } else if (op === Operation.Remove) {
-        this.operationRemove(data.index);
+        result = this.operationRemove(data.index);
       } else if (op === Operation.Modify) {
-        this.operationModify(data.index, data.value);
+        result = this.operationModify(data.index, data.value);
       } else if (op === Operation.Move) {
-        this.operationMove(data.index, data.dest);
+        result = this.operationMove(data.index, data.dest);
       }
       this.updateIndexes();
+      return result;
     },
     doCancel() {
       this.createMode = false;

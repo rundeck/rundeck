@@ -77,11 +77,11 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import ConfigSection from "@/library/components/primeVue/StepCards/ConfigSection.vue";
-import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
-import PluginPropView from "@/library/components/plugins/pluginPropView.vue";
-import { getRundeckContext } from "@/library";
+import ConfigSection from "./ConfigSection.vue";
+import PluginConfig from "../../plugins/pluginConfig.vue";
+import PluginInfo from "../../plugins/PluginInfo.vue";
+import PluginPropView from "../../plugins/pluginPropView.vue";
+import { getRundeckContext } from "../../../../library";
 
 export default defineComponent({
   name: "StepCardContent",

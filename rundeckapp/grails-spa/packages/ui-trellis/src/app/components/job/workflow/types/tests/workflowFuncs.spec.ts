@@ -109,55 +109,6 @@ describe("workflowFuncs", () => {
       expect(result.nodeStep).toBe(false);
     });
 
-    it("converts a conditional.logic step from backend format", () => {
-      const step: StepData = {
-        conditionSet: [[{ key: "field1", operator: "==", value: "val1" }]],
-        subSteps: [{ exec: "echo sub", nodeStep: true }],
-        nodeStep: true,
-        name: "My conditional",
-      };
-
-      const result = commandToEditConfig(step);
-
-      expect(result.type).toBe("conditional.logic");
-      expect(result.nodeStep).toBe(true);
-      expect(result.description).toBe("My conditional");
-      const conditionSet = result.config?.conditionSet as any[];
-      expect(conditionSet).toHaveLength(1);
-      expect(conditionSet[0].conditions).toHaveLength(1);
-      expect(conditionSet[0].conditions[0].field).toBe("field1");
-      expect(conditionSet[0].conditions[0].operator).toBe("equals");
-      expect(conditionSet[0].conditions[0].value).toBe("val1");
-      const subSteps = result.config?.subSteps as any[];
-      expect(subSteps).toHaveLength(1);
-      expect(subSteps[0].type).toBe("exec-command");
-    });
-
-    it("maps backend operators to UI operators in conditional.logic", () => {
-      const step: StepData = {
-        conditionSet: [[
-          { key: "f1", operator: "==", value: "v1" },
-          { key: "f2", operator: "!=", value: "v2" },
-          { key: "f3", operator: "in", value: "v3" },
-          { key: "f4", operator: "!~", value: "v4" },
-          { key: "f5", operator: "~", value: "v5" },
-          { key: "f6", operator: "=~", value: "v6" },
-        ]],
-        subSteps: [],
-        nodeStep: true,
-      };
-
-      const result = commandToEditConfig(step);
-      const conditions = (result.config?.conditionSet as any[])[0].conditions;
-
-      expect(conditions[0].operator).toBe("equals");
-      expect(conditions[1].operator).toBe("notEquals");
-      expect(conditions[2].operator).toBe("contains");
-      expect(conditions[3].operator).toBe("notContains");
-      expect(conditions[4].operator).toBe("regex");
-      expect(conditions[5].operator).toBe("matches");
-    });
-
     it("preserves log filters when present", () => {
       const step: StepData = {
         exec: "echo hello",
@@ -286,75 +237,6 @@ describe("workflowFuncs", () => {
 
       expect(result.type).toBe("my-plugin");
       expect(result.configuration).toEqual({ key: "value" });
-    });
-
-    it("converts a conditional.logic step to backend format", () => {
-      const plugin: EditStepData = {
-        type: "conditional.logic",
-        description: "My conditional",
-        config: {
-          conditionSet: [
-            {
-              id: "set-1",
-              conditions: [
-                { id: "cond-1", field: "field1", operator: "equals", value: "val1" },
-              ],
-            },
-          ],
-          subSteps: [
-            { type: "exec-command", config: { adhocRemoteString: "echo sub" }, nodeStep: true, id: "sub-1" },
-          ],
-        },
-        nodeStep: true,
-        id: "6",
-      };
-
-      const result = editToCommandConfig(plugin);
-
-      expect(result.type).toBeUndefined();
-      expect(result.name).toBe("My conditional");
-      expect(result.description).toBeUndefined();
-      expect(result.conditionSet).toHaveLength(1);
-      expect(result.conditionSet![0]).toHaveLength(1);
-      expect(result.conditionSet![0][0].key).toBe("field1");
-      expect(result.conditionSet![0][0].operator).toBe("==");
-      expect(result.conditionSet![0][0].value).toBe("val1");
-      expect(result.subSteps).toHaveLength(1);
-      expect(result.subSteps![0].exec).toBe("echo sub");
-    });
-
-    it("maps UI operators to backend operators in conditional.logic", () => {
-      const plugin: EditStepData = {
-        type: "conditional.logic",
-        config: {
-          conditionSet: [
-            {
-              id: "set-1",
-              conditions: [
-                { id: "c1", field: "f1", operator: "equals", value: "v1" },
-                { id: "c2", field: "f2", operator: "notEquals", value: "v2" },
-                { id: "c3", field: "f3", operator: "contains", value: "v3" },
-                { id: "c4", field: "f4", operator: "notContains", value: "v4" },
-                { id: "c5", field: "f5", operator: "regex", value: "v5" },
-                { id: "c6", field: "f6", operator: "matches", value: "v6" },
-              ],
-            },
-          ],
-          subSteps: [],
-        },
-        nodeStep: true,
-        id: "7",
-      };
-
-      const result = editToCommandConfig(plugin);
-      const backendConditions = result.conditionSet![0];
-
-      expect(backendConditions[0].operator).toBe("==");
-      expect(backendConditions[1].operator).toBe("!=");
-      expect(backendConditions[2].operator).toBe("in");
-      expect(backendConditions[3].operator).toBe("!~");
-      expect(backendConditions[4].operator).toBe("~");
-      expect(backendConditions[5].operator).toBe("=~");
     });
 
     it("preserves log filters in output", () => {

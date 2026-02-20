@@ -127,8 +127,8 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import PluginIcon from "@/library/components/plugins/PluginIcon.vue";
-import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import PluginIcon from "./PluginIcon.vue";
+import PluginInfo from "./PluginInfo.vue";
 import Skeleton from "primevue/skeleton";
 import Accordion from "primevue/accordion";
 import AccordionPanel from "primevue/accordionpanel";

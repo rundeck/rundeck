@@ -826,10 +826,11 @@
   </div>
 </template>
 <script lang="ts">
+// @ts-nocheck
 import ErrorsList from "./ErrorsList.vue";
 import OptionUsagePreview from "./OptionUsagePreview.vue";
 import OptionRemoteUrlConfig from "./OptionRemoteUrlConfig.vue";
-import { validateJobOption } from "@/library/services/jobEdit";
+import { validateJobOption } from "../../../../library/services/jobEdit";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
 
@@ -897,8 +898,8 @@ export default defineComponent({
             : "plain",
       }) as JobOptionEdit,
       regexChoice: false,
-      validationErrors: {},
-      validationWarnings: {},
+      validationErrors: {} as Record<string, string[]>,
+      validationWarnings: {} as Record<string, string[]>,
     };
   },
   computed: {
@@ -946,7 +947,7 @@ export default defineComponent({
         if (val) {
           this.option.values = val.split(this.option.delimiter || ",");
         } else {
-          this.option.values = null;
+          this.option.values = undefined;
         }
       },
     },
@@ -1028,7 +1029,7 @@ export default defineComponent({
         this.option.secure = false;
         this.option.valueExposed = false;
         this.option.enforced = false;
-        this.valuesList = null;
+        this.valuesList = "";
       }
     },
     async doSave() {

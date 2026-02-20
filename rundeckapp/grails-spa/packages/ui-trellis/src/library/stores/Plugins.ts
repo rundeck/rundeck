@@ -4,9 +4,6 @@ import { getPluginDetail } from "../services/plugins";
 import { Serial } from "../utilities/Async";
 import { RootStore } from "./RootStore";
 import { apiClient } from "../services/api";
-// @ts-ignore
-import iconConditionImage from "../theme/images/icon-condition.png";
-
 export class PluginStore {
   plugins: Plugin[] = [];
 
@@ -60,23 +57,7 @@ export class PluginStore {
             isHighlighted: true,
             highlightedOrder: 5,
         };
-        const conditionalLogicPlugin = {
-            artifactName: "Conditional logic",
-            author: "",
-            builtin: true,
-            id: "",
-            name: "conditional.logic",
-            pluginVersion: "0.1",
-            service: service,
-            description: `Define steps that will be executed ${service === ServiceType.WorkflowNodeStep? 'per-node ': ''}under specific conditions`,
-            title: `Conditional Logic ${service === ServiceType.WorkflowNodeStep? 'Node': 'Workflow'} Step`,
-            iconUrl: iconConditionImage,
-            providerMetadata: {},
-            isHighlighted: true,
-            highlightedOrder: 6,
-        };
-
-        const staticPlugins = [jobRefPlugin, conditionalLogicPlugin];
+        const staticPlugins = [jobRefPlugin];
 
         for(const staticPlugin of staticPlugins) {
             const pluginKey = this._getPluginByIdKey(staticPlugin);

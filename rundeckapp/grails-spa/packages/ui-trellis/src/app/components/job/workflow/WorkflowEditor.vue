@@ -11,16 +11,16 @@
   </section>
   <section id="workflowContent" class="section-separator section-space-lg">
     <div class="form-group">
-      <div v-if="!conditionalEnabled" class="col-sm-2 control-label text-form-label">
+      <div class="col-sm-2 control-label text-form-label">
         {{ $t("Workflow.label") }}
       </div>
-      <div v-if="loaded" :class="[conditionalEnabled? 'col-sm-12': 'col-sm-10']" style="padding-top: 1em">
-        <workflow-basic v-model="basicData" :conditional-enabled="conditionalEnabled"  />
-        <workflow-strategy v-model="strategyData" :conditional-enabled="conditionalEnabled" />
+      <div v-if="loaded" class="col-sm-10" style="padding-top: 1em">
+        <workflow-basic v-model="basicData" />
+        <workflow-strategy v-model="strategyData" />
         <hr />
         <workflow-global-log-filters v-model="logFiltersData" />
         <hr />
-        <workflow-steps v-model="stepsData" :conditional-enabled="conditionalEnabled" />
+        <workflow-steps v-model="stepsData" />
       </div>
     </div>
   </section>
@@ -36,15 +36,14 @@ import {
   GlobalLogFiltersData,
   StepsData,
   WorkflowData,
-} from "@/app/components/job/workflow/types/workflowTypes";
-import WorkflowBasic from "@/app/components/job/workflow/WorkflowBasic.vue";
-import WorkflowGlobalLogFilters from "@/app/components/job/workflow/WorkflowGlobalLogFilters.vue";
-import WorkflowSteps from "@/app/components/job/workflow/WorkflowSteps.vue";
-import WorkflowStrategy from "@/app/components/job/workflow/WorkflowStrategy.vue";
-import { PluginConfig } from "@/library/interfaces/PluginConfig";
+} from "./types/workflowTypes";
+import WorkflowBasic from "./WorkflowBasic.vue";
+import WorkflowGlobalLogFilters from "./WorkflowGlobalLogFilters.vue";
+import WorkflowSteps from "./WorkflowSteps.vue";
+import WorkflowStrategy from "./WorkflowStrategy.vue";
+import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import { defineComponent } from "vue";
 import OptionsEditorSection from "@/app/pages/job/editor/OptionsEditorSection.vue";
-import { getFeatureEnabled } from "@/library/services/feature";
 
 export default defineComponent({
   name: "WorkflowEditor",
@@ -70,7 +69,6 @@ export default defineComponent({
       logFiltersData: {} as GlobalLogFiltersData,
       stepsData: {} as StepsData,
       loaded: false,
-      conditionalEnabled: false,
     };
   },
   watch: {
@@ -100,7 +98,6 @@ export default defineComponent({
     },
   },
   async mounted() {
-    this.conditionalEnabled = await getFeatureEnabled("earlyAccessJobConditional");
     this.basicData = createBasicData(this.modelValue);
     this.strategyData = createStrategyData(this.modelValue);
     this.logFiltersData = createLogFiltersData(this.modelValue);

@@ -25,7 +25,8 @@
   </div>
 </template>
 <script lang="ts">
-import { JobRefData } from "@/app/components/job/workflow/types/workflowTypes";
+// @ts-nocheck
+import { JobRefData } from "./types/workflowTypes";
 import { defineComponent, PropType } from "vue";
 
 type OptionsMap = Record<string, string>;

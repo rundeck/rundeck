@@ -96,7 +96,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { PtInput } from "@/library/components/primeVue";
+import { PtInput } from "../../../library/components/primeVue";
 
 export default defineComponent({
   name: "PluginSearch",

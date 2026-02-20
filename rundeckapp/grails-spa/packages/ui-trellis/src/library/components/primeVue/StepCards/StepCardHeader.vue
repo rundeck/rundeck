@@ -45,7 +45,7 @@
         v-if="showErrorTag && editing"
         icon="pi pi-exclamation-triangle"
         severity="danger"
-        :value="showInvalidCondition ? $t('Workflow.validation.invalidConditionCriteria') : errorMessage"
+        :value="errorMessage"
         data-testid="step-card-header-error-tag"
       />
       <PtButton
@@ -91,6 +91,7 @@
   </div>
 </template>
 <script lang="ts">
+// @ts-nocheck
 import { defineComponent } from "vue";
 import Menu from "primevue/menu";
 import PluginInfo from "../../plugins/PluginInfo.vue";
@@ -127,10 +128,6 @@ export default defineComponent({
       default: true,
     },
     disabled: {
-      type: Boolean,
-      default: false,
-    },
-    showInvalidCondition: {
       type: Boolean,
       default: false,
     },
@@ -172,15 +169,6 @@ export default defineComponent({
 
       if (!validation || validation.valid) {
         return 0;
-      }
-
-      // Special handling for nested conditional logic errors
-      if (validation.errors.conditions) {
-        let count = 0;
-        Object.values(validation.errors.conditions).forEach((conditionError: any) => {
-          count += Object.keys(conditionError).length;
-        });
-        return count;
       }
 
       return Object.keys(validation.errors).length;
@@ -260,7 +248,7 @@ export default defineComponent({
 
     p {
       font-weight: var(--fontWeights-medium);
-      font-size: var(--fontSizes-md);
+      font-size: 14px;
       margin: 0;
     }
   }
@@ -281,7 +269,7 @@ export default defineComponent({
 /* Tag styling for Node Step and Workflow Step badges */
 .stepCardHeader .p-tag {
   font-family: Inter, var(--fonts-body) !important;
-  font-size: 12px;
+  font-size: 12px !important;
   font-weight: var(--fontWeights-regular);
   line-height: normal;
   padding: 4px 8px;

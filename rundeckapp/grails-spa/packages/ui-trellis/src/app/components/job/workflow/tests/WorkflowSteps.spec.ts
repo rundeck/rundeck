@@ -46,7 +46,7 @@ jest.mock("@/library/rundeckService", () => {
     })),
   };
 });
-jest.mock("../../../../../library/services/projects");
+jest.mock("@/library/services/projects");
 jest.mock("@/library/modules/pluginService");
 jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: jest.fn().mockImplementation(() => ({})),
