@@ -22,8 +22,7 @@ configurations.all {
         // Force safe commons-compress versions to fix CVE-2024-25710
         // Only force artifacts that exist for version 1.21
         force "org.apache.commons:commons-compress:${commonsCompressVersion}"
-        // Force commons-lang3 to align with Spring Boot BOM (3.17.0)
-        force "org.apache.commons:commons-lang3:${commonsLang3Version}"
+        // Let Spring Boot BOM manage commons-lang3 version
     }
 }
 
