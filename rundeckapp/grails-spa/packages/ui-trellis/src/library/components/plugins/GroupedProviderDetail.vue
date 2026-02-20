@@ -58,7 +58,6 @@
 </template>
 
 <script lang="ts">
-// @ts-nocheck
 import { defineComponent } from "vue";
 import PluginIcon from "./PluginIcon.vue";
 import PluginInfo from "./PluginInfo.vue";
@@ -125,7 +124,7 @@ export default defineComponent({
       }
 
       // Use parent's matchesSearchQuery logic
-      return this.group.providers.filter((provider) =>
+      return this.group.providers.filter((provider: any) =>
         this.matchesSearchQuery(provider)
       );
     },

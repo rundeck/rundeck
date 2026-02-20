@@ -1,4 +1,3 @@
-//@ts-nocheck
 /**
  * Shared utility functions for step editing.
  * Used by both WorkflowSteps (root level) and InnerStepList (inner level).

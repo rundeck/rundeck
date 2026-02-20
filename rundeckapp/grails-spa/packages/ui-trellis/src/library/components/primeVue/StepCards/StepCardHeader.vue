@@ -91,7 +91,6 @@
   </div>
 </template>
 <script lang="ts">
-// @ts-nocheck
 import { defineComponent } from "vue";
 import Menu from "primevue/menu";
 import PluginInfo from "../../plugins/PluginInfo.vue";
@@ -163,9 +162,9 @@ export default defineComponent({
     errorCount(): number {
       // Only use injected editModelValidation when in editing mode
       // This prevents non-editing StepCards from subscribing to global validation state
-      const validation = this.validationErrors?.valid !== undefined
-        ? this.validationErrors
-        : (this.editing ? this.editModelValidation : null);
+      const validation: { valid: boolean; errors: Record<string, string> } | null = this.validationErrors?.valid !== undefined
+        ? this.validationErrors as any
+        : (this.editing ? this.editModelValidation as any : null);
 
       if (!validation || validation.valid) {
         return 0;

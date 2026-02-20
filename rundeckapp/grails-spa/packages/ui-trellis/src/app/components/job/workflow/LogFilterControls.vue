@@ -29,7 +29,6 @@
   </Teleport>
 </template>
 <script lang="ts">
-// @ts-nocheck
 import ChoosePluginModal from "../../../../library/components/plugins/ChoosePluginModal.vue";
 import EditPluginModal from "../../../../library/components/plugins/EditPluginModal.vue";
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
@@ -104,7 +103,7 @@ export default defineComponent({
   },
   async mounted() {
     await this.getLogFilterPlugins();
-    this.model = cloneDeep(this.modelValue);
+    this.model = cloneDeep(this.modelValue) as { type: string; config: any; };
     this.eventBus.on("edit", () => {
       if (!this.addFilterModal) {
         this.editFilterModal = true;

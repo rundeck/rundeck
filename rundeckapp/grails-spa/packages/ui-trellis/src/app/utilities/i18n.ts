@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 import { nextTick } from "vue";
 import { UiMessage } from "../../library/stores/UIStore";
 import en_US from "./locales/en_US";
@@ -10,7 +10,7 @@ import zh_CN from "./locales/zh_CN";
 import { createI18n } from "vue-i18n";
 import { mergeDeep } from "./objectUtils";
 
-const internationalization = {
+const internationalization: Record<string, any> = {
   en_US: en_US,
   es_419: es_419,
   fr_FR: fr_FR,
@@ -43,7 +43,7 @@ const initI18n = (options = {}) => {
   });
 };
 
-const updateLocaleMessages = async (i18n, locale, lang, messages) => {
+const updateLocaleMessages = async (i18n: any, locale: string, lang: string, messages: any) => {
   //include previously loaded messages
   const merged = mergeDeep(i18n.global.messages[locale] || {}, messages);
   i18n.global.setLocaleMessage(locale, merged);
@@ -54,7 +54,7 @@ const updateLocaleMessages = async (i18n, locale, lang, messages) => {
  * @param i18n vue-i18n instance
  * @param messages new messages data
  */
-const commonAddUiMessages = async (i18n, messages) => {
+const commonAddUiMessages = async (i18n: any, messages: any) => {
   const newMessages = messages.reduce(
     (acc: any, message: UiMessage) => (message ? { ...acc, ...message } : acc),
     {},

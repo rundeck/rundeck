@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { PluginConfig } from "../../../../../library/interfaces/PluginConfig";
 
 /**
@@ -165,14 +164,14 @@ export interface WorkflowData
     WorkflowPluginConfig,
     StepsData {}
 
-export function createBasicData({ keepgoing }): BasicData {
+export function createBasicData({ keepgoing }: any): BasicData {
   return { keepgoing: !!keepgoing };
 }
 
 export function createStrategyData(workflowData: WorkflowData): PluginConfig {
-  const type = workflowData.strategy;
+  const type = workflowData.strategy || '';
   const strategyObj = workflowData.pluginConfig?.WorkflowStrategy;
-  const config = strategyObj ? strategyObj[type] : {};
+  const config = strategyObj && type ? strategyObj[type] : {};
   return { type, config };
 }
 
@@ -194,9 +193,9 @@ export function exportPluginData(
   }
   return obj;
 }
-export function createLogFiltersData({ pluginConfig }): GlobalLogFiltersData {
+export function createLogFiltersData({ pluginConfig }: any): GlobalLogFiltersData {
   return { LogFilter: pluginConfig?.LogFilter || [] };
 }
-export function createStepsData({ commands }): StepsData {
+export function createStepsData({ commands }: any): StepsData {
   return { commands: commands || [] };
 }

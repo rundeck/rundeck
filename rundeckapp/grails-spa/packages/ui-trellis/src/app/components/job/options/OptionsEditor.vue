@@ -90,7 +90,6 @@
   </div>
 </template>
 <script lang="ts">
-// @ts-nocheck
 import { getRundeckContext } from "../../../../library";
 import { cloneDeep, clone } from "lodash";
 import {
@@ -142,8 +141,8 @@ export default defineComponent({
       error: "",
       createMode: false,
       editIndex: -1,
-      origOptions: [] as JobOption[],
-      intOptions: [] as JobOption[],
+      origOptions: [] as JobOptionEdit[],
+      intOptions: [] as JobOptionEdit[],
       createOption: null as JobOptionEdit | null,
       fileUploadPluginType: "" as string | undefined,
       providers: [],
@@ -193,7 +192,7 @@ export default defineComponent({
       this.changeEvent({
         index,
         dest: -1,
-        orig: orig,
+        orig: orig as JobOption,
         operation: Operation.Remove,
         undo: Operation.Insert,
       });
@@ -235,7 +234,7 @@ export default defineComponent({
       this.changeEvent({
         index: index,
         dest: -1,
-        orig,
+        orig: orig as JobOption,
         value,
         operation: Operation.Modify,
         undo: Operation.Modify,
@@ -258,34 +257,34 @@ export default defineComponent({
       });
       this.createOption = null;
     },
-    operationRemove(index: number) {
+    operationRemove(index: number): JobOptionEdit {
       const oldval = this.intOptions[index];
       this.intOptions.splice(index, 1);
       return oldval;
     },
-    operationModify(index: number, data: any) {
+    operationModify(index: number, data: JobOptionEdit): JobOptionEdit {
       const orig = this.intOptions[index];
       this.intOptions[index] = cloneDeep(data);
       return orig;
     },
-    operationMove(index: number, dest: number) {
+    operationMove(index: number, dest: number): void {
       const orig = this.intOptions[index];
       this.intOptions.splice(index, 1);
       this.intOptions.splice(dest, 0, orig);
     },
-    operationInsert(index: number, value: any) {
+    operationInsert(index: number, value: JobOptionEdit): void {
       this.intOptions.splice(index, 0, cloneDeep(value));
     },
-    operation(op: Operation, data: any) {
-      let result;
+    operation(op: Operation, data: any): JobOptionEdit | undefined {
+      let result: JobOptionEdit | undefined;
       if (op === Operation.Insert) {
-        result = this.operationInsert(data.index, data.value);
+        this.operationInsert(data.index, data.value);
       } else if (op === Operation.Remove) {
         result = this.operationRemove(data.index);
       } else if (op === Operation.Modify) {
         result = this.operationModify(data.index, data.value);
       } else if (op === Operation.Move) {
-        result = this.operationMove(data.index, data.dest);
+        this.operationMove(data.index, data.dest);
       }
       this.updateIndexes();
       return result;
@@ -297,8 +296,8 @@ export default defineComponent({
     },
     doUndo(change: ChangeEvent) {
       this.operation(change.undo, {
-        index: change.dest >= 0 ? change.dest : change.index,
-        dest: change.index >= 0 ? change.index : change.dest,
+        index: (change.dest !== undefined && change.dest >= 0) ? change.dest : change.index,
+        dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
         value: change.orig || change.value,
       });
       this.wasChanged();

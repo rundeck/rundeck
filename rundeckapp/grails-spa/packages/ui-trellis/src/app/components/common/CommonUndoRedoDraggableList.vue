@@ -64,7 +64,6 @@
 </template>
 
 <script lang="ts">
-// @ts-nocheck
 import { defineComponent } from "vue";
 import UndoRedo from "../util/UndoRedo.vue";
 import draggable from "vuedraggable";
@@ -209,8 +208,8 @@ export default defineComponent({
     },
     doUndo(change: ChangeEvent) {
       this.operation(change.undo, {
-        index: change.dest >= 0 ? change.dest : change.index,
-        dest: change.index >= 0 ? change.index : change.dest,
+        index: (change.dest !== undefined && change.dest >= 0) ? change.dest : change.index,
+        dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
         value: change.orig || change.value,
       });
       this.wasChanged();

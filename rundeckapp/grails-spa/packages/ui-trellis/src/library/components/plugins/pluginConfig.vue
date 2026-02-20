@@ -212,11 +212,10 @@
 </template>
 
 <script lang="ts">
-// @ts-nocheck
-import { ContextVariable } from "@/library/stores/contextVariables";
+import { ContextVariable } from "../../../library/stores/contextVariables";
 import { getRundeckContext } from "../../rundeckService";
 import { defineComponent, type PropType } from "vue";
-import type { PluginConfig } from "@/library/interfaces/PluginConfig";
+import type { PluginConfig } from "../../../library/interfaces/PluginConfig";
 
 import PluginInfo from "./PluginInfo.vue";
 import PluginPropView from "./pluginPropView.vue";
@@ -435,16 +434,17 @@ export default defineComponent({
 
       if (
         typeof this.inputSavedProps !== "undefined" &&
+        this.inputSavedProps !== null &&
         this.inputSavedProps.length > 0
       ) {
         for (const i of this.inputSavedProps) {
           if (typeof this.inputSaved[i] === "undefined") {
-            this.inputSaved[i] = this.modelValue[i];
+            this.inputSaved[i] = (this.modelValue as any)[i];
           }
         }
       }
 
-      const config = this.modelValue.config;
+      const config = this.modelValue?.config || {};
 
       const modeCreate = this.isCreateMode;
 
@@ -566,7 +566,7 @@ export default defineComponent({
       try {
         const data =
           await getRundeckContext().rootStore.plugins.getPluginDetail(
-            this.serviceName,
+            this.serviceName as string,
             provider,
           );
         if (data.props) {

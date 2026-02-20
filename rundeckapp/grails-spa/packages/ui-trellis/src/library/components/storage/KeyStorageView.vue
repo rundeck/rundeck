@@ -339,7 +339,6 @@
 </template>
 
 <script lang="ts">
-// @ts-nocheck
 import { listProjects } from "../../services/projects";
 import {
   storageKeyDelete,
@@ -503,7 +502,7 @@ export default defineComponent({
           return;
         }
       } catch (e) {
-        this.errorMsg = e.message;
+        this.errorMsg = (e as Error).message;
         return;
       }
       this.selectedKey = {};

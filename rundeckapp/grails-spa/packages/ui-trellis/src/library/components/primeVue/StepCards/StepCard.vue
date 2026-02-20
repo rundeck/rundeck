@@ -35,11 +35,10 @@
 </template>
 
 <script lang="ts">
-// @ts-nocheck
 import { defineComponent } from "vue";
 import BaseStepCard from "./BaseStepCard.vue";
 import StepCardContent from "./StepCardContent.vue";
-import type { ErrorHandlerDefinition } from "@/app/components/job/workflow/types/workflowTypes";
+import type { ErrorHandlerDefinition } from "../../../../app/components/job/workflow/types/workflowTypes";
 
 export default defineComponent({
   name: "StepCard",
@@ -90,8 +89,8 @@ export default defineComponent({
     computedServiceName() {
       return this.serviceName || (this.config.nodeStep ? "WorkflowNodeStep" : "WorkflowStep");
     },
-    errorHandlerData() {
-      return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] : null;
+    errorHandlerData(): ErrorHandlerDefinition | null {
+      return this.errorHandler && this.errorHandler.length > 0 ? this.errorHandler[0] as ErrorHandlerDefinition : null;
     },
     computedErrorHandlerConfig() {
       return this.errorHandlerData?.config || {};

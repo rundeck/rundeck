@@ -29,7 +29,6 @@
 </template>
 
 <script lang="ts">
-// @ts-nocheck
 import { defineComponent, type PropType } from "vue";
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import { getRundeckContext } from "../../../../library";
@@ -89,15 +88,15 @@ export default defineComponent({
           nodefilters: {
             filter: "",
             dispatch: {
-              threadcount: null,
-              keepgoing: null,
-              rankAttribute: null,
-              rankOrder: null,
-              nodeIntersect: null,
+              threadcount: undefined,
+              keepgoing: undefined,
+              rankAttribute: undefined,
+              rankOrder: undefined,
+              nodeIntersect: undefined,
             },
           },
         },
-      } as JobRefData,
+      },
       error: false,
       errorMessage: "",
       showRequired: false,
@@ -121,8 +120,8 @@ export default defineComponent({
   methods: {
     async saveChanges() {
       if (
-        this.editModel.jobref.name.length === 0 &&
-        this.editModel.jobref.uuid.length === 0
+        (!this.editModel.jobref?.name || this.editModel.jobref.name.length === 0) &&
+        (!this.editModel.jobref?.uuid || this.editModel.jobref.uuid.length === 0)
       ) {
         this.error = true;
         this.errorMessage = this.$t("commandExec.jobName.blank.message");

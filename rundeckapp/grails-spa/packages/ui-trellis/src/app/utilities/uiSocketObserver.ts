@@ -1,5 +1,4 @@
 //on job edit page list for dom content changes
-// @ts-nocheck
 import * as uiv from "uiv";
 import { getRundeckContext } from "../../library";
 import UiSocket from "../../library/components/utils/UiSocket.vue";

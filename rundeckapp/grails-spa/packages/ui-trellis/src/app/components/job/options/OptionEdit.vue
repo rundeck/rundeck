@@ -826,7 +826,6 @@
   </div>
 </template>
 <script lang="ts">
-// @ts-nocheck
 import ErrorsList from "./ErrorsList.vue";
 import OptionUsagePreview from "./OptionUsagePreview.vue";
 import OptionRemoteUrlConfig from "./OptionRemoteUrlConfig.vue";
@@ -1070,27 +1069,27 @@ export default defineComponent({
       delete this.validationWarnings[field];
       delete this.validationErrors[field];
     },
-    getProviderFor(name) {
-      return this.optionValuesPlugins.find((p) => p.name === name);
+    getProviderFor(name: string) {
+      return this.optionValuesPlugins.find((p: any) => p.name === name);
     },
     validateLen(field: string, max: number): boolean {
-      return !(this.option[field] && this.option[field].length > max);
+      return !((this.option as any)[field] && (this.option as any)[field].length > max);
     },
     validateRegex(field: string, regex: string): boolean {
       const testRegex = new RegExp(regex);
-      return testRegex.test(this.option[field]);
+      return testRegex.test((this.option as any)[field]);
     },
     validateFieldName(field: string): boolean {
-      if (Validations[field]) {
+      if ((Validations as any)[field]) {
         this.clearValidation(field);
-        return this.validateField(field, Validations[field]);
+        return this.validateField(field, (Validations as any)[field]);
       }
       return true;
     },
     validateField(field: string, validationConfig: ValidationConfig): boolean {
       let pass = true;
       if (validationConfig.required) {
-        if (!this.option[field]) {
+        if (!(this.option as any)[field]) {
           pass = false;
           this.addWarning(field, this.$t("form.field.required.message"));
         }
@@ -1106,7 +1105,7 @@ export default defineComponent({
           );
         }
       }
-      if (validationConfig.regex && this.option[field]) {
+      if (validationConfig.regex && (this.option as any)[field]) {
         if (!this.validateRegex(field, validationConfig.regex)) {
           pass = false;
           this.addError(

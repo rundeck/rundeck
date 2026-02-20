@@ -46,7 +46,6 @@
 </template>
 
 <script lang="ts">
-// @ts-nocheck
 import LogFilterButton from "./LogFilterButton.vue";
 import { getRundeckContext } from "../../../../library";
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
@@ -103,7 +102,7 @@ export default defineComponent({
     return {
       ServiceType,
       model: [] as PluginConfig[],
-      pluginProviders: [],
+      pluginProviders: [] as any[],
       pluginLabels: [],
       addFilterModal: false,
       editFilterModal: false,
@@ -133,7 +132,7 @@ export default defineComponent({
   },
   async mounted() {
     await this.getLogFilterPlugins();
-    this.model = cloneDeep(this.modelValue);
+    this.model = cloneDeep(this.modelValue) as { type: string; config: any; }[];
     this.filtersEb = mitt();
     if (this.addEvent) {
       this.addEventHandler = () => {
@@ -162,7 +161,7 @@ export default defineComponent({
     editFilterByIndex(index: number) {
       this.editFilterIndex = index;
       this.editModel = cloneDeep(this.model[index]);
-      this.filtersEb.emit("edit");
+      this.filtersEb?.emit("edit");
     },
     removeFilterIndex(index: number) {
       this.model.splice(index, 1);
@@ -174,7 +173,7 @@ export default defineComponent({
     },
     addFilter() {
       this.clearEdit();
-      this.filtersEb.emit("add");
+      this.filtersEb?.emit("add");
     },
     async saveEditFilter() {
       try {

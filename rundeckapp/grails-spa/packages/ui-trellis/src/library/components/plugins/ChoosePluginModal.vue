@@ -75,7 +75,6 @@
   </modal>
 </template>
 <script lang="ts">
-// @ts-nocheck
 import { getRundeckContext } from "../../../library";
 import pluginInfo from "./PluginInfo.vue";
 import { defineComponent } from "vue";
@@ -156,10 +155,10 @@ export default defineComponent({
   },
   async mounted() {
     this.loading = true;
-    for (const service of this.services) {
+    for (const service of this.services as string[]) {
       await context.rootStore.plugins.load(service);
     }
-    this.loadedServices = this.services.map((service: string) => {
+    this.loadedServices = (this.services as string[]).map((service: string) => {
       const providers = context.rootStore.plugins.getServicePlugins(service);
       return {
         service,
@@ -203,12 +202,12 @@ export default defineComponent({
             this.checkMatch(provider, "name", value) ||
             this.checkMatch(provider, "description", value);
     },
-    checkMatch(obj, field: string, val: string) {
+    checkMatch(obj: any, field: string, val: string) {
       return obj[field] && val && obj[field].toLowerCase().indexOf(val) >= 0;
     },
     calculateDividerIndex(providers: any) {
       return providers.findIndex(
-        (provider) => provider.isHighlighted === false,
+        (provider: any) => provider.isHighlighted === false,
       );
     },
     dividerTitle(service: any): string {
@@ -224,7 +223,7 @@ export default defineComponent({
       return "";
     },
     dataStepType(service: string, name: string) {
-      const servicesWithDataStep = {
+      const servicesWithDataStep: Record<string, string> = {
         [ServiceType.WorkflowStep]: "data-step-type",
         [ServiceType.WorkflowNodeStep]: "data-node-step-type",
       };
