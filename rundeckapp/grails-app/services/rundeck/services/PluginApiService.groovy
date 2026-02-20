@@ -320,6 +320,7 @@ class PluginApiService {
                 // Get groupBy from provider metadata (v57+ feature)
                 def groupBy = includeGroupMetadata ?
                     provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY) : null
+                pluginDesc.providerMetadata = new LinkedHashMap<>()
 
                 if(service != ServiceNameConstants.UI) {
                     def uiDesc = uiPluginService.getProfileFor(service, provider.name)
@@ -330,13 +331,9 @@ class PluginApiService {
                                 params: [service: service, name: provider.name],
                                 absolute: true)
 
-                    if (uiDesc.providerMetadata) {
-                        pluginDesc.providerMetadata = new LinkedHashMap<>(uiDesc.providerMetadata)
-                    } else {
-                        pluginDesc.providerMetadata = new LinkedHashMap<>()
+                    if(uiDesc.providerMetadata) {
+                        pluginDesc.providerMetadata.put(uiDesc.providerMetadata)
                     }
-                } else {
-                    pluginDesc.providerMetadata = new LinkedHashMap<>()
                 }
 
                 // Group icon resolution (v57+ feature)
