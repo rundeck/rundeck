@@ -332,7 +332,7 @@ class PluginApiService {
                                 absolute: true)
 
                     if(uiDesc.providerMetadata) {
-                        pluginDesc.providerMetadata.put(uiDesc.providerMetadata)
+                        pluginDesc.providerMetadata.putAll(uiDesc.providerMetadata)
                     }
                 }
 
