@@ -76,7 +76,7 @@ dependencies {
         'org.slf4j:slf4j-api:1.7.32',
         "commons-codec:commons-codec:${commonsCodecVersion}",
         'commons-collections:commons-collections:3.2.2',
-        "org.apache.commons:commons-lang3",
+        'org.apache.commons:commons-lang3:3.17.0',  // Match Spring Boot 3.5.9 BOM version
         'jaxen:jaxen:1.2.0',
         "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
         "org.yaml:snakeyaml:${snakeyamlVersion}",
