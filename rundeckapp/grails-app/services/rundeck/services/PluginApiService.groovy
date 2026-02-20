@@ -348,8 +348,8 @@ class PluginApiService {
                         def pluginGroupType = provider.pluginGroupType
                         if (pluginGroupType) {
                             try {
-                                def method = pluginGroupType.getMethod('getGroupIconUrl', String.class)
-                                String explicitIconPath = method.invoke(null, groupBy) as String
+                                def pluginGroupInstance = pluginGroupType.newInstance()
+                                String explicitIconPath = pluginGroupInstance.getGroupIconUrl(groupBy) as String
                                 if (explicitIconPath) {
                                     // Extract icon filename from path like "/images/plugins/datadog-icon.svg"
                                     String iconName = explicitIconPath.substring(explicitIconPath.lastIndexOf('/') + 1)
@@ -364,7 +364,7 @@ class PluginApiService {
                                     groupIconUrl = absoluteUrl
                                 }
                             } catch (Exception ignored) {
-                                // No getGroupIconUrl method or error calling it, continue to fallback
+                                // Error creating instance or calling method, continue to fallback
                             }
                         }
 
