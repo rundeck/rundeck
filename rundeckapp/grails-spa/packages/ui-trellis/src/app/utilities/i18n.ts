@@ -7,7 +7,7 @@ import fr_FR from "./locales/fr_FR";
 import ja_JP from "./locales/ja_JP";
 import pt_BR from "./locales/pt_BR";
 import zh_CN from "./locales/zh_CN";
-import { createI18n } from "vue-i18n";
+import { createI18n, type I18n } from "vue-i18n";
 import { mergeDeep } from "./objectUtils";
 
 const internationalization: Record<string, any> = {
@@ -43,9 +43,9 @@ const initI18n = (options = {}) => {
   });
 };
 
-const updateLocaleMessages = async (i18n: any, locale: string, lang: string, messages: any) => {
+const updateLocaleMessages = async (i18n: I18n, locale: string, lang: string, messages: Record<string, any>) => {
   //include previously loaded messages
-  const merged = mergeDeep(i18n.global.messages[locale] || {}, messages);
+  const merged = mergeDeep((i18n.global.getLocaleMessage(locale) as Record<string, any>) || {}, messages);
   i18n.global.setLocaleMessage(locale, merged);
   return nextTick();
 };
@@ -54,7 +54,7 @@ const updateLocaleMessages = async (i18n: any, locale: string, lang: string, mes
  * @param i18n vue-i18n instance
  * @param messages new messages data
  */
-const commonAddUiMessages = async (i18n: any, messages: any) => {
+const commonAddUiMessages = async (i18n: I18n, messages: UiMessage[]) => {
   const newMessages = messages.reduce(
     (acc: any, message: UiMessage) => (message ? { ...acc, ...message } : acc),
     {},

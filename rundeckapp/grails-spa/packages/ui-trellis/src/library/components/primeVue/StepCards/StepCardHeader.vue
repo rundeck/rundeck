@@ -97,6 +97,7 @@ import PluginInfo from "../../plugins/PluginInfo.vue";
 import PtButton from "../PtButton/PtButton.vue";
 import Tag from "primevue/tag";
 import "../Tooltip/tooltip.scss";
+import type PluginValidation from "../../../interfaces/PluginValidation";
 
 export default defineComponent({
   name: "StepCardHeader",
@@ -162,9 +163,9 @@ export default defineComponent({
     errorCount(): number {
       // Only use injected editModelValidation when in editing mode
       // This prevents non-editing StepCards from subscribing to global validation state
-      const validation: { valid: boolean; errors: Record<string, string> } | null = this.validationErrors?.valid !== undefined
-        ? this.validationErrors as any
-        : (this.editing ? this.editModelValidation as any : null);
+      const validation: PluginValidation | null = this.validationErrors?.valid !== undefined
+        ? this.validationErrors as PluginValidation
+        : (this.editing ? this.editModelValidation as PluginValidation : null);
 
       if (!validation || validation.valid) {
         return 0;

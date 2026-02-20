@@ -67,6 +67,7 @@ import AccordionPanel from "primevue/accordionpanel";
 import AccordionHeader from "primevue/accordionheader";
 import Badge from "primevue/badge";
 import "../../../library/components/primeVue/Badge/badge.scss";
+import type { Plugin } from "../../stores/Plugins";
 
 export default defineComponent({
   name: "GroupedProviderDetail",
@@ -124,16 +125,16 @@ export default defineComponent({
       }
 
       // Use parent's matchesSearchQuery logic
-      return this.group.providers.filter((provider: any) =>
+      return this.group.providers.filter((provider: Plugin) =>
         this.matchesSearchQuery(provider)
       );
     },
   },
   methods: {
-    selectProvider(provider: any) {
+    selectProvider(provider: Plugin) {
       this.$emit("select", provider);
     },
-    matchesSearchQuery(provider: any) {
+    matchesSearchQuery(provider: Plugin) {
       if (!this.searchQuery) return true;
 
       const filterValue = this.searchQuery.toLowerCase().split("=");
@@ -149,8 +150,8 @@ export default defineComponent({
             this.checkMatch(provider, "name", value) ||
             this.checkMatch(provider, "description", value);
     },
-    checkMatch(obj: any, field: string, val: string) {
-      return obj[field] && val && obj[field].toLowerCase().indexOf(val) >= 0;
+    checkMatch(obj: Plugin, field: string, val: string) {
+      return obj[field as keyof Plugin] && val && String(obj[field as keyof Plugin]).toLowerCase().indexOf(val) >= 0;
     },
   },
 });

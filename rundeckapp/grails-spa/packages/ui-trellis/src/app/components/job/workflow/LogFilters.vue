@@ -50,7 +50,7 @@ import LogFilterButton from "./LogFilterButton.vue";
 import { getRundeckContext } from "../../../../library";
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import { getPluginProvidersForService } from "../../../../library/modules/pluginService";
-import { ServiceType } from "../../../../library/stores/Plugins";
+import { ServiceType, type Plugin } from "../../../../library/stores/Plugins";
 import LogFilterControls from "./LogFilterControls.vue";
 import { cloneDeep } from "lodash";
 import mitt from "mitt";
@@ -102,7 +102,7 @@ export default defineComponent({
     return {
       ServiceType,
       model: [] as PluginConfig[],
-      pluginProviders: [] as any[],
+      pluginProviders: [] as Plugin[],
       pluginLabels: [],
       addFilterModal: false,
       editFilterModal: false,

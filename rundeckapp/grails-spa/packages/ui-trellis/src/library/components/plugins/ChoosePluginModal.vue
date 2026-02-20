@@ -79,7 +79,7 @@ import { getRundeckContext } from "../../../library";
 import pluginInfo from "./PluginInfo.vue";
 import { defineComponent } from "vue";
 import PluginSearch from "./PluginSearch.vue";
-import { ServiceType } from "../../../library/stores/Plugins";
+import { ServiceType, type Plugin } from "../../../library/stores/Plugins";
 
 const context = getRundeckContext();
 
@@ -202,12 +202,12 @@ export default defineComponent({
             this.checkMatch(provider, "name", value) ||
             this.checkMatch(provider, "description", value);
     },
-    checkMatch(obj: any, field: string, val: string) {
-      return obj[field] && val && obj[field].toLowerCase().indexOf(val) >= 0;
+    checkMatch(obj: Plugin, field: string, val: string) {
+      return obj[field as keyof Plugin] && val && String(obj[field as keyof Plugin]).toLowerCase().indexOf(val) >= 0;
     },
-    calculateDividerIndex(providers: any) {
+    calculateDividerIndex(providers: Plugin[]) {
       return providers.findIndex(
-        (provider: any) => provider.isHighlighted === false,
+        (provider: Plugin) => provider.isHighlighted === false,
       );
     },
     dividerTitle(service: any): string {

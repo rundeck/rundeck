@@ -42,7 +42,7 @@ import WorkflowGlobalLogFilters from "./WorkflowGlobalLogFilters.vue";
 import WorkflowSteps from "./WorkflowSteps.vue";
 import WorkflowStrategy from "./WorkflowStrategy.vue";
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import OptionsEditorSection from "@/app/pages/job/editor/OptionsEditorSection.vue";
 
 export default defineComponent({
@@ -56,7 +56,7 @@ export default defineComponent({
   },
   props: {
     modelValue: {
-      type: Object,
+      type: Object as PropType<WorkflowData>,
       required: true,
       default: () => ({}) as WorkflowData,
     },

@@ -840,12 +840,13 @@ import PluginConfig from "../../../../library/components/plugins/pluginConfig.vu
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 
 import AceEditor from "../../../../library/components/utils/AceEditor.vue";
-import { Validations, ValidationConfig } from "./model/Validations";
+import { Validations, ValidationConfig, type ValidationSet } from "./model/Validations";
 import {
   JobOption,
   JobOptionEdit,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
+import type { Plugin } from "../../../../library/stores/Plugins";
 
 export default defineComponent({
   name: "OptionEdit",
@@ -1070,26 +1071,26 @@ export default defineComponent({
       delete this.validationErrors[field];
     },
     getProviderFor(name: string) {
-      return this.optionValuesPlugins.find((p: any) => p.name === name);
+      return (this.optionValuesPlugins as Plugin[]).find((p: Plugin) => p.name === name);
     },
     validateLen(field: string, max: number): boolean {
-      return !((this.option as any)[field] && (this.option as any)[field].length > max);
+      return !(this.option[field] && this.option[field].length > max);
     },
     validateRegex(field: string, regex: string): boolean {
       const testRegex = new RegExp(regex);
-      return testRegex.test((this.option as any)[field]);
+      return testRegex.test(this.option[field]);
     },
     validateFieldName(field: string): boolean {
-      if ((Validations as any)[field]) {
+      if (field in Validations) {
         this.clearValidation(field);
-        return this.validateField(field, (Validations as any)[field]);
+        return this.validateField(field, Validations[field as keyof ValidationSet]);
       }
       return true;
     },
     validateField(field: string, validationConfig: ValidationConfig): boolean {
       let pass = true;
       if (validationConfig.required) {
-        if (!(this.option as any)[field]) {
+        if (!this.option[field]) {
           pass = false;
           this.addWarning(field, this.$t("form.field.required.message"));
         }
@@ -1105,7 +1106,7 @@ export default defineComponent({
           );
         }
       }
-      if (validationConfig.regex && (this.option as any)[field]) {
+      if (validationConfig.regex && this.option[field]) {
         if (!this.validateRegex(field, validationConfig.regex)) {
           pass = false;
           this.addError(
