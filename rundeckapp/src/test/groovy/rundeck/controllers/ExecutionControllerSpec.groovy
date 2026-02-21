@@ -58,7 +58,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 import java.text.SimpleDateFormat
 /**

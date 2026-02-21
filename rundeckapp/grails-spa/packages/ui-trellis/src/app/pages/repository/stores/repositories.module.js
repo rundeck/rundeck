@@ -59,7 +59,7 @@ const actions = {
           headers: {
             "x-rundeck-ajax": true,
           },
-          url: `${rdBase}repository/artifacts/list`,
+          url: `${rdBase}/repository/artifacts/list`,
           withCredentials: true,
         }).then(
           (response) => {
@@ -99,7 +99,7 @@ const actions = {
       headers: {
         "x-rundeck-ajax": true,
       },
-      url: `${this.state.repositories.rdBase}repository/${properties.repo.repositoryName}/install/${properties.plugin.installId}`,
+      url: `${this.state.repositories.rdBase}/repository/${properties.repo.repositoryName}/install/${properties.plugin.installId}`,
       withCredentials: true,
     })
       .then((response) => {
@@ -148,7 +148,7 @@ const actions = {
       headers: {
         "x-rundeck-ajax": true,
       },
-      url: `${this.state.repositories.rdBase}repository/uninstall/${properties.plugin.installId}`,
+      url: `${this.state.repositories.rdBase}/repository/uninstall/${properties.plugin.installId}`,
       withCredentials: true,
     })
       .then((response) => {

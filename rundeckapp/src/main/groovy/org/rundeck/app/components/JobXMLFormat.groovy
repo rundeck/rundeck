@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.util.XmlParserUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
+import groovy.xml.XmlParser
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat

@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import asset.pipeline.grails.LinkGenerator
+import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState

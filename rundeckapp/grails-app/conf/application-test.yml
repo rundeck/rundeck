@@ -1,0 +1,19 @@
+# Grails 7 Test Configuration
+# Override settings specifically for test environment
+
+server:
+    servlet:
+        context-path: "/"  # Explicit context path for asset pipeline
+
+grails:
+    assets:
+        url: /assets/  # Match production config - trailing slash required
+        mapping: /assets/**  # URL pattern for asset serving
+
+spring:
+    liquibase:
+        enabled: false  # Disable Liquibase for unit tests
+    jpa:
+        hibernate:
+            ddl-auto: create-drop  # Let Hibernate manage test schema
+

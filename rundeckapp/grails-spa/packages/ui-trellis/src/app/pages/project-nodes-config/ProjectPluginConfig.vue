@@ -535,7 +535,7 @@ export default defineComponent({
       const response = await axios({
         method: "get",
         headers: { "x-rundeck-ajax": true },
-        url: `${this.rdBase}framework/projectPluginsAjax`,
+        url: `${this.rdBase}/framework/projectPluginsAjax`,
         params: {
           project: `${window._rundeck.projectName}`,
           configPrefix: this.configPrefix,

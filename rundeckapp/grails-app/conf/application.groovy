@@ -5,7 +5,7 @@ hibernate {
     cache.use_query_cache = true
     cache.region.factory_class = "jcache"
     cache.ehcache.missing_cache_strategy = "create"
-    javax{
+    jakarta{
         cache{
             provider='org.ehcache.jsr107.EhcacheCachingProvider'
             missing_cache_strategy = "create"
@@ -105,15 +105,16 @@ grails.config.locations = [
 
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 
+// Grails 7: Order matters! More specific patterns must come before catch-all /**
 grails.plugin.springsecurity.interceptUrlMap = [
+        [pattern: '/assets/**',      access: ['permitAll']], // FIRST: Asset pipeline must be before /**
+        [pattern: '/static/**',      access: ['permitAll']],
+        [pattern: '/user-assets/**', access: ['permitAll']],
         [pattern: '/j_security_check', access: ['permitAll']],
         [pattern: '/error/**',        access: ['permitAll']],
         [pattern: '/common/error',   access: ['permitAll']],
         [pattern: '/404',            access: ['permitAll']],
         [pattern: '/404.gsp',        access: ['permitAll']],
-        [pattern: '/static/**',      access: ['permitAll']],
-        [pattern: '/user-assets/**', access: ['permitAll']],
-        [pattern: '/assets/**',      access: ['permitAll']],
         [pattern: '/favicon.ico',    access: ['permitAll']],
         [pattern: '/user/login',     access: ['permitAll']],
         [pattern: '/user/reset',     access: ['permitAll']],
@@ -124,33 +125,44 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/feed/**',        access: ['permitAll']],
         [pattern: '/svc/api/**',     access: ['permitAll']],
         [pattern: '/api/**',         access: ['permitAll']],
+        [pattern: '/metrics/**',     access: ['permitAll']], // Legacy Dropwizard metrics endpoints
         [pattern: '/health',         access: ['permitAll']],
         [pattern: '/actuator/**',    access: ['permitAll']],
         [pattern: '/actuator/health/**',    access: ['permitAll']],
-        [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']]
+        [pattern: '/monitoring/**',  access: ['permitAll']], // Spring Boot Actuator endpoints
+        [pattern: '/.well-known/**', access: ['permitAll']],
+        [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']] // LAST: Catch-all
 ]
 
 grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/user/login',     filters: 'none'],
         [pattern: '/user/reset',     filters: 'none'],
-        [pattern: '/error/**',       filters: 'JOINED_FILTERS'],
+        [pattern: '/j_security_check', filters: 'JOINED_FILTERS,-csrf'], // Form login endpoint - needs auth filters
+        [pattern: '/error/**',       filters: 'JOINED_FILTERS,-csrf'],
         [pattern: '/user/error',     filters: 'none'],
         [pattern: '/common/error',   filters: 'none'],
         [pattern: '/static/**',      filters: 'none'],
         [pattern: '/user-assets/**', filters: 'none'],
         [pattern: '/assets/**',      filters: 'none'],
         [pattern: '/feed/**',        filters: 'none'],
-        [pattern: '/svc/api/**',     filters: 'JOINED_FILTERS'],
-        [pattern: '/api/**',         filters: 'JOINED_FILTERS'],
-        [pattern: '/plugin/**',      filters: 'JOINED_FILTERS'],
+        [pattern: '/svc/api/**',     filters: 'JOINED_FILTERS,-csrf'],
+        [pattern: '/api/**',         filters: 'JOINED_FILTERS,-csrf'],
+        [pattern: '/metrics/**',     filters: 'none'], // Legacy Dropwizard metrics endpoints
+        [pattern: '/plugin/**',      filters: 'JOINED_FILTERS,-csrf'],
         [pattern: '/404',            filters: 'none'],
         [pattern: '/404.gsp',        filters: 'none'],
         [pattern: '/favicon.ico',    filters: 'none'],
         [pattern: '/health',         filters: 'none'],
         [pattern: '/actuator/**',    filters: 'none'],
         [pattern: '/actuator/health/**',    filters: 'none'],
-        [pattern: '/**',             filters: 'JOINED_FILTERS']
+        [pattern: '/monitoring/**',  filters: 'JOINED_FILTERS,-csrf'], // Allow filters to run (for config check)
+        [pattern: '/.well-known/**', filters: 'none'],
+        [pattern: '/**',             filters: 'JOINED_FILTERS,-csrf']
 ]
+
+// Grails 7/Spring Security 6: Disable Spring Security's CSRF filter
+// Rundeck uses its own HMac-based CSRF protection (rundeck.security.useHMacRequestTokens)
+grails.plugin.springsecurity.csrf.enabled = false
 grails.plugin.springsecurity.printStatusMessages=false
 grails.plugin.springsecurity.useSecurityEventListener=true
 grails.plugin.springsecurity.useHttpSessionEventPublisher=true
@@ -161,6 +173,10 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
+// Grails 7/Spring Security 6: Prevent Chrome DevTools protocol URLs from being used as redirects
+grails.plugin.springsecurity.successHandler.defaultTargetUrl = '/menu/home'
+grails.plugin.springsecurity.successHandler.alwaysUseDefault = false
+grails.plugin.springsecurity.successHandler.useReferer = false
 grails.plugin.springsecurity.ajaxHeader = 'AJAX AUTH DISABLED\u0000'
 grails.plugin.springsecurity.logout.handlerNames = [
         'rememberMeServices',

@@ -12,7 +12,7 @@ project.evaluationDependsOn(":rundeckapp")
 
 def dockerRepository = findProperty("dockerRepository")?: 'rundeck/rundeck'
 def providedTags = findProperty('dockerTags')?: ''
-def jreVersion = findProperty("jreVersion")?: 'openjdk-11-jre-headless'
+def jreVersion = findProperty("jreVersion")?: 'openjdk-17-jre-headless'
 
 def dockerTags = [].plus(providedTags.split(',').findAll())
 
@@ -71,6 +71,7 @@ tasks.register('officialBuild') {
         def args = [
             "docker",
             "build",
+            "--platform=${findProperty('dockerPlatform') ?: System.getenv('DOCKER_DEFAULT_PLATFORM') ?: 'linux/amd64'}",
             "--label=com.rundeck.version=$resolvedVersion",
             "--label=com.rundeck.commit=$commit"
         ]

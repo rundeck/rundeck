@@ -76,7 +76,7 @@ import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
+import io.micronaut.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -87,7 +87,7 @@ import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -1569,7 +1569,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
-    @Post(uri = "/project/{project}/plugins/save")
+    @Post(uri = "/project/{project}/plugins/save", produces = MediaType.APPLICATION_JSON)
     @Operation(
             method = "POST",
             summary = "Save list-style plugin configurations for a project",
@@ -1606,7 +1606,11 @@ Since: v55""",
                     content = @Content(
                             mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                             schema = @Schema(type = "object"),
-                            examples = @ExampleObject(value = """
+                            examples = [
+                                @ExampleObject(
+                                    name = 'save-project-plugins-example',
+                                    description = 'Save and remove project plugins',
+                                    value = """
 {
   "plugins": [
     { "type": "file", "config": { "file": "/path/resources.yml" }, "extra": {}, "origIndex": 0 }
@@ -1615,16 +1619,22 @@ Since: v55""",
     { "type": "stub", "origIndex": 2 }
   ]
 }
-""")
+"""
+                                )
+                            ]
                     )
-            ),
-            responses = [
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Saved. Returns the saved plugins.",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(value = """
+            )
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Saved. Returns the saved plugins.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'save-plugins-request',
+                            description = 'Save project plugins request',
+                            value = """
 {
   "project": "Ansible-resource-model-error",
   "plugins": [
@@ -1636,35 +1646,47 @@ Since: v55""",
     }
   ]
 }
-""")
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Bad request (missing/invalid body or parameters).",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(value = """{ "errors": ["plugins and removedPlugins must be arrays"] }""")
-                            )
-                    ),
-                    @ApiResponse(
-                            responseCode = "403",
-                            description = "Forbidden (user lacks 'configure' on the project)."
-                    ),
-                    @ApiResponse(
-                            responseCode = "422",
-                            description = "Validation errors.",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(value = """
+"""
+                        )
+                    ]
+            )
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request (missing/invalid body or parameters).",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'bad-request-error',
+                            description = 'Bad request error response',
+                            value = """{ "errors": ["plugins and removedPlugins must be arrays"] }"""
+                        )
+                    ]
+            )
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Forbidden (user lacks 'configure' on the project)."
+    )
+    @ApiResponse(
+            responseCode = "422",
+            description = "Validation errors.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'validation-errors',
+                            description = 'Validation errors response',
+                            value = """
 {
   "errors": ["[0]: configuration was invalid: ..."],
   "reports": { "0": [ { "key": "file", "msg": "is required" } ] }
 }
-""")
-                            )
-                    )
-            ]
+"""
+                        )
+                    ]
+            )
     )
     def saveProjectPlugins(String project, String serviceName, String configPrefix) {
         // Require API (use your current bumped version)
@@ -1694,8 +1716,8 @@ Since: v55""",
             return
         }
 
-        // Parse body
-        def body = request.JSON
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def body = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
         List plugins = (body?.plugins ?: []) as List
         List removedPlugins = (body?.removedPlugins ?: []) as List
 
@@ -1839,19 +1861,24 @@ Since: v55""",
     }
 
     @Hidden
-    @Get(uri='/project/{project}/configurable')
+    @Get(uri='/project/{project}/configurable', produces = MediaType.APPLICATION_JSON)
     @Operation(
             method = 'GET',
             summary = 'Get Project Configurations Using Mapping defined in ProjectConfigurable beans',
             description = 'Get Project Configurable configs and properties.',
             tags = ['Project'],
-            responses = [
-                    @ApiResponse(
-                            responseCode = '200',
-                            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
-                            content = @Content(
-                                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
-                                    examples = @ExampleObject('''
+            operationId = 'GetProjectConfigurable'
+    )
+    @ApiResponse(
+            responseCode = '200',
+            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
+            content = @Content(
+                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'project-configurable',
+                            description = 'Project configurable response',
+                            value = '''
 {
                         "project": "projectName",
                         "projectConfigurable": [
@@ -1877,14 +1904,13 @@ Since: v55""",
                                 "delay": "0"
                            },
                         ]
-}''')
-                            )
-                    ),
-                    @ApiResponse(responseCode = '400', description = 'Bad request'),
-                    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
-            ],
-            operationId = 'GetProjectConfigurable'
+}'''
+                        )
+                    ]
+            )
     )
+    @ApiResponse(responseCode = '400', description = 'Bad request')
+    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
     def getProjectConfigurable() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
@@ -1910,6 +1936,7 @@ Since: v55""",
         for (entry in extraConfig) {
             propertyConfig.add([
                     name: entry.key,
+                    // Grails 7: Property objects serialized via custom JSON marshaller (see BootStrap.groovy)
                     properties: entry.value["propertyList"],
                     propertiesMapping: entry.value["mapping"],
                     values: entry.value["values"],
@@ -1926,7 +1953,7 @@ Since: v55""",
     }
 
     @Hidden
-    @Post(uri='/project/{project}/configurable')
+    @Post(uri='/project/{project}/configurable', produces = MediaType.APPLICATION_JSON)
     @Operation(
             method = 'POST',
             summary = 'Create or Update Configurations Using Mapping defined in ProjectConfigurable beans',
@@ -1944,7 +1971,11 @@ List of config values, each value contains:
                     content = @Content(
                             mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                             array = @ArraySchema(schema = @Schema(type = 'object')),
-                            examples = @ExampleObject('''[
+                            examples = [
+                                @ExampleObject(
+                                    name = 'update-project-config-example',
+                                    description = 'Update project configuration with extra config',
+                                    value = '''[
   {
   "extraConfig": {
       "nodeService": {
@@ -1959,16 +1990,23 @@ List of config values, each value contains:
       }
   }
   }
-]''')
+]'''
+                                )
+                            ]
                     )
             ),
-            responses = [
-                    @ApiResponse(
-                            responseCode = '200',
-                            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
-                            content = @Content(
-                                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
-                                    examples = @ExampleObject('''
+            operationId = 'SaveProjectConfigurable'
+    )
+    @ApiResponse(
+            responseCode = '200',
+            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
+            content = @Content(
+                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'save-result',
+                            description = 'Save project configurable result',
+                            value = '''
 {
                         "result": {
                             "success": true,
@@ -1978,18 +2016,18 @@ List of config values, each value contains:
                           "error message",
                           "error message"
                         ]
-}''')
-                            )
-                    ),
-                    @ApiResponse(responseCode = '400', description = 'Bad request'),
-                    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
-            ],
-            operationId = 'SaveProjectConfigurable'
+}'''
+                        )
+                    ]
+            )
     )
+    @ApiResponse(responseCode = '400', description = 'Bad request')
+    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
     def saveProjectConfigurable(){
         def project = params.project
         def category = params.category
-        def cfgPayload = request.JSON
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def cfgPayload = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
@@ -2861,7 +2899,7 @@ List of config values, each value contains:
             def flabels = frameworkService.projectLabels(authContext)
             session.frameworkLabels = flabels
         }
-        [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])
+        ([projects:projects,project:params.project]) + (params.page ? ([selectParams:[page:params.page]]) : ([:]))
     }
     /**
      * Select project via parameter, and redirect to default page for the project
@@ -2903,7 +2941,7 @@ List of config values, each value contains:
         return result
     }
 
-    @Get(uri='/project/{project}/sources')
+    @Get(uri='/project/{project}/sources', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='GET',
         summary='List Resource Model Sources for a Project',
@@ -2924,14 +2962,19 @@ Since: v23''',
             required = true,
             in = ParameterIn.PATH,
             schema = @Schema(type = 'string')
-        ),
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''Sources List.''',
-            content=@Content(
-                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                array = @ArraySchema(schema = @Schema(implementation = Source)),
-                examples=@ExampleObject('''[
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''Sources List.''',
+        content=@Content(
+            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(implementation = Source)),
+            examples=[
+                @ExampleObject(
+                    name = 'sources-list',
+                    description = 'Project sources list',
+                    value = '''[
     {
         "index": 1,
         "resources": {
@@ -2951,8 +2994,9 @@ Since: v23''',
         },
         "type": "stub"
     }
-]''')
-            )
+]'''
+                )
+            ]
         )
     )
     def apiSourcesList() {
@@ -3031,7 +3075,7 @@ Since: v23''',
         )
     }
 
-    @Post(uri = '/project/{project}/source/{index}/resources')
+    @Post(uri = '/project/{project}/source/{index}/resources', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method = 'POST',
         summary = 'Update Resources of a Resource Model Source',
@@ -3066,7 +3110,11 @@ Since: v23''',
                         url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
                         description = "Resources JSON Format"
                     )),
-                    examples = @ExampleObject('''{
+                    examples = [
+                        @ExampleObject(
+                            name = 'update-node-resources-json-example',
+                            description = 'Update node resources in JSON format',
+                            value = '''{
   "node1": {
     "nodename": "node1",
     "hostname": "node1",
@@ -3076,7 +3124,9 @@ Since: v23''',
     "description": "Rundeck server node",
     "osName": "Linux"
   }
-}''')
+}'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = 'text/yaml',
@@ -3084,7 +3134,11 @@ Since: v23''',
                         url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
                         description = "Resources YAML Format"
                     )),
-                    examples = @ExampleObject('''node1:
+                    examples = [
+                        @ExampleObject(
+                            name = 'update-node-resources-yaml-example',
+                            description = 'Update node resources in YAML format',
+                            value = '''node1:
   nodename: node1
   hostname: node1
   osVersion: 5.15.49-linuxkit
@@ -3092,40 +3146,40 @@ Since: v23''',
   osArch: amd64
   description: Rundeck server node
   osName: Linux
-  tags: \'\'''')
+  tags: \'\''''
+                        )
+                    ]
                 )
             ]
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode='200',
-                description='''The resource model data.''',
-                content = [
-                    @Content(
-                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                            schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
-                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
-                                    description = "Resources JSON Format"
-                            ))
-                    ),
-                    @Content(
-                            mediaType = 'text/yaml',
-                            schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
-                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
-                                    description = "Resources YAML Format"
-                            ))
-                    )
-                ]
-            ),
-            @ApiResponse(
-                responseCode="400",
-                description="Invalid format",
-                content=@Content(
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''The resource model data.''',
+        content = [
+            @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                    schema = @Schema(type='object', implementation = ApiErrorResponse)
-                )
+                    schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                            description = "Resources JSON Format"
+                    ))
+            ),
+            @Content(
+                    mediaType = 'text/yaml',
+                    schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                            description = "Resources YAML Format"
+                    ))
             )
         ]
+    )
+    @ApiResponse(
+        responseCode="400",
+        description="Invalid format",
+        content=@Content(
+            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+            schema = @Schema(type='object', implementation = ApiErrorResponse)
+        )
     )
     def apiSourceWriteContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
@@ -3255,7 +3309,7 @@ Since: v23''',
     }
 
 
-    @Get(uri='/project/{project}/source/{index}')
+    @Get(uri='/project/{project}/source/{index}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     @Operation(
         method='GET',
         summary='Get a Resource Model Source for a Project',
@@ -3285,14 +3339,15 @@ Since: v23''',
                 in = ParameterIn.PATH,
                 schema = @Schema(type = 'integer')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''Source definition.''',
-            content=@Content(
-                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                schema=@Schema(implementation = Source),
-                examples=@ExampleObject('''
+        ]
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''Source definition.''',
+        content=@Content(
+            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+            schema=@Schema(implementation = Source),
+            examples=@ExampleObject('''
     {
         "index": 1,
         "resources": {
@@ -3303,7 +3358,6 @@ Since: v23''',
         },
         "type": "file"
     }''')
-            )
         )
     )
     def apiSourceGet() {
@@ -3399,7 +3453,7 @@ Since: v23''',
         )
     }
 
-    @Get(uri='/project/{project}/source/{index}/resources')
+    @Get(uri='/project/{project}/source/{index}/resources', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method='GET',
         summary='List Resources of a Resource Model Source',
@@ -3423,29 +3477,27 @@ Since: v23''',
                 in = ParameterIn.PATH,
                 schema = @Schema(type = 'integer')
             )
-        ],
-        responses = [
-                @ApiResponse(
-                        responseCode='200',
-                        description='''The resource model data.''',
-                        content = [
-                                @Content(
-                                        mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                                        schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
-                                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
-                                                description = "Resources JSON Format"
-                                        ))
-                                ),
-                                @Content(
-                                        mediaType = 'text/yaml',
-                                        schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
-                                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
-                                                description = "Resources YAML Format"
-                                        ))
-                                )
-                        ]
-                )
         ]
+    )
+    @ApiResponse(
+            responseCode='200',
+            description='''The resource model data.''',
+            content = [
+                    @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                                    description = "Resources JSON Format"
+                            ))
+                    ),
+                    @Content(
+                            mediaType = 'text/yaml',
+                            schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                                    description = "Resources YAML Format"
+                            ))
+                    )
+            ]
     )
     def apiSourceGetContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
@@ -3493,7 +3545,7 @@ Since: v23''',
         return apiRenderNodeResult(source.source.nodes, fmk, params.project)
     }
 
-    @Get(uri='/project/{project}/resource/{name}')
+    @Get(uri='/project/{project}/resource/{name}', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method='GET',
         summary='Get Node Info',
@@ -3518,27 +3570,27 @@ Since: v14''',
                 in = ParameterIn.PATH,
                 schema = @Schema(type = 'string')
             )
-        ],
-        responses = @ApiResponse(
-                responseCode='200',
-                description='''The resource model data.''',
-                content = [
-                        @Content(
-                                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                                schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
-                                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
-                                        description = "Resources JSON Format"
-                                ))
-                        ),
-                        @Content(
-                                mediaType = 'text/yaml',
-                                schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
-                                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
-                                        description = "Resources YAML Format"
-                                ))
-                        )
-                ]
-        )
+        ]
+    )
+    @ApiResponse(
+            responseCode='200',
+            description='''The resource model data.''',
+            content = [
+                    @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                                    description = "Resources JSON Format"
+                            ))
+                    ),
+                    @Content(
+                            mediaType = 'text/yaml',
+                            schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                                    description = "Resources YAML Format"
+                            ))
+                    )
+            ]
     )
     /**
      * API: /api/14/project/PROJECT/resource/NAME, version 14
@@ -3585,7 +3637,7 @@ Since: v14''',
         return apiRenderNodeResult(readnodes, framework, params.project)
     }
 
-    @Get(uri='/project/{project}/resources')
+    @Get(uri='/project/{project}/resources', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method='GET',
         summary='List Project Nodes',
@@ -3636,18 +3688,19 @@ Since: v14''',
                 in = ParameterIn.QUERY,
                 schema = @Schema(type = 'string')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''The resource model data.''',
-            content = [
-                @Content(
-                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                    schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
-                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
-                        description = "Resources JSON Format"
-                    )),
-                    examples=@ExampleObject('''{
+        ]
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''The resource model data.''',
+        content = [
+            @Content(
+                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                    description = "Resources JSON Format"
+                )),
+                examples=@ExampleObject('''{
   "node1": {
     "nodename": "node1",
     "hostname": "node1",
@@ -3658,14 +3711,18 @@ Since: v14''',
     "osName": "Linux"
   }
 }''')
-                ),
-                @Content(
-                    mediaType = 'text/yaml',
-                    schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
-                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
-                        description = "Resources YAML Format"
-                    )),
-                    examples=@ExampleObject('''node1:
+            ),
+            @Content(
+                mediaType = 'text/yaml',
+                schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                    description = "Resources YAML Format"
+                )),
+                examples=[
+                    @ExampleObject(
+                        name = 'resources-yaml',
+                        description = 'Resources in YAML format',
+                        value = '''node1:
   nodename: node1
   hostname: node1
   osVersion: 5.15.49-linuxkit
@@ -3673,10 +3730,11 @@ Since: v14''',
   osArch: amd64
   description: Rundeck server node
   osName: Linux
-  tags: \'\'''')
-                )
-            ]
-        )
+  tags: \'\''''
+                    )
+                ]
+            )
+        ]
     )
     /**
      * API: /api/2/project/NAME/resources, version 2
@@ -3799,29 +3857,20 @@ Since: v52''',
         }
         if (!generator) {
             //try accept header
-            List<MediaType> mimes = []
-            try {
-                mimes = MediaType.parseMediaTypes(request.getHeader('accept'))
-                MediaType.sortBySpecificityAndQuality(mimes)
-            } catch (RuntimeException e) {
-                return apiService.renderErrorFormat(
-                    response,
-                    [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.invalid.request',
-                        args  : [e.message]
-                    ]
-                )
-            }
-            for (MediaType mime : mimes) {
-                try {
-                    generator = service.getGeneratorForMIMEType(mime.toString())
-                    break
-                } catch (UnsupportedFormatException e) {
-                    log.debug(
-                        "could not get generator for mime type: ${request.getHeader("accept")}: ${e.message}",
-                        e
-                    )
+            String acceptHeader = request.getHeader('accept')
+            if (acceptHeader && acceptHeader != '*/*') {
+                // Grails 7: Manually parse Accept header since Micronaut MediaType.parseMediaTypes() doesn't exist
+                List<String> mimeTypes = acceptHeader.split(',').collect { it.split(';')[0].trim() }
+                for (String mimeType : mimeTypes) {
+                    try {
+                        generator = service.getGeneratorForMIMEType(mimeType)
+                        break
+                    } catch (UnsupportedFormatException e) {
+                        log.debug(
+                            "could not get generator for mime type: ${mimeType}: ${e.message}",
+                            e
+                        )
+                    }
                 }
             }
         }
@@ -3858,7 +3907,7 @@ Since: v52''',
     /**
      * Documentation method for DELETE system acls
      */
-    @Delete('/system/acl/{path}')
+    @Delete(uri = '/system/acl/{path}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "DELETE",
         summary = "Delete an ACL Policy.",
@@ -3876,30 +3925,34 @@ Since: v14""",
                 required = true,
                 schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
             )
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = "204",
-                description = "No Content"
-            ),
-
-            @ApiResponse(
-                responseCode = "404",
-                description = "Not Found",
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
-            )
-
         ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "apiSystemAcls_DELETE_docs 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
+        responseCode = "204",
+        description = "No Content"
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
     )
     protected def apiSystemAcls_DELETE_docs(){}
 
     /**
      * Documentation method for PUT system acls
      */
-    @Put('/system/acl/{path}')
+    @Put(uri = '/system/acl/{path}', produces = ['text/plain', MediaType.APPLICATION_YAML, MediaType.APPLICATION_JSON])
     @Operation(
         method = "PUT",
         summary = "Update an ACL Policy.",
@@ -3933,41 +3986,43 @@ Otherwise, you can use JSON to wrap the yaml content inside `contents`
                             schema=@Schema(type='object')
                     )
             ]
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = "200",
-                description = "ACL Policy Document",
-                content = [
-                    @Content(
-                            mediaType = 'text/plain'
-                    ),
-                    @Content(
-                            mediaType = "application/yaml"
-                    ),
-                    @Content(
-                            mediaType = "application/json"
-                    )
-                ]
+        )
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "ACL Policy Document",
+        content = [
+            @Content(
+                    mediaType = 'text/plain'
             ),
-
-            @ApiResponse(
-                responseCode = "404",
-                description = "Not Found",
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
+            @Content(
+                    mediaType = MediaType.APPLICATION_YAML
             ),
-
-            @ApiResponse(
-                responseCode = "400",
-                description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
+            @Content(
+                    mediaType = MediaType.APPLICATION_JSON
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
 Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(type='object'),
-                    examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type='object'),
+            examples = [
+                @ExampleObject(
+                    name = 'acl-validation-error',
+                    description = 'ACL validation error response',
+                    value = '''{
   "valid": false,
   "policies": [
     {
@@ -3986,10 +4041,10 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
       ]
     }
   ]
-}''')
+}'''
                 )
-            )
-        ]
+            ]
+        )
     )
     protected def apiSystemAcls_PUT_docs(){}
 
@@ -3997,7 +4052,7 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
     /**
      * Documentation method for POST system acls
      */
-    @Post('/system/acl/{path}')
+    @Post(uri = '/system/acl/{path}', produces = ['text/plain', MediaType.APPLICATION_YAML, MediaType.APPLICATION_JSON])
     @Operation(
         method = "POST",
         summary = "Create an ACL Policy.",
@@ -4025,77 +4080,125 @@ Otherwise, you can use JSON to wrap the yaml content inside `contents`
                 @Content(
                     mediaType = 'application/yaml',
                     schema=@Schema(type='string'),
-                    examples = @ExampleObject('''description: "my policy"
+                    examples = [
+                        @ExampleObject(
+                            name = 'system-acl-yaml-example',
+                            description = 'System ACL policy in YAML format',
+                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                     schema=@Schema(type='object'),
-                    examples = @ExampleObject('''{
+                    examples = [
+                        @ExampleObject(
+                            name = 'system-acl-json-example',
+                            description = 'System ACL policy as JSON with embedded YAML',
+                            value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                        )
+                    ]
                 )
             ]
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = "201",
-                description = "Created",
-                content = [
-                    @Content(
-                        mediaType = 'text/plain',
-                        examples = @ExampleObject('''description: "my policy"
+        )
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "Created",
+        content = [
+            @Content(
+                mediaType = 'text/plain',
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
-                    ),
-                    @Content(
-                        mediaType = "application/yaml",
-                        examples = @ExampleObject('''description: "my policy"
-context:
-  application: rundeck
-for:
-  project:
-    - allow: read
-by:
-  group: build''')
-                    ),
-                    @Content(
-                        mediaType = "application/json",
-                        examples = @ExampleObject('''{
-  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+  group: build'''
                     )
                 ]
             ),
-
-            @ApiResponse(
-                responseCode = "409",
-                description = "Conflict. Already exists",
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
+            @Content(
+                mediaType = MediaType.APPLICATION_YAML,
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build'''
+                    )
+                ]
             ),
-
-            @ApiResponse(
-                responseCode = "400",
-                description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-contents',
+                        description = 'ACL policy contents',
+                        value = '''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}'''
+                    )
+                ]
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "apiSystemAcls_POST_docs 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "Created",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
+        responseCode = "409",
+        description = "Conflict. Already exists",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
 Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(type='object'),
-                    examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type='object'),
+            examples = [
+                @ExampleObject(
+                    name = 'acl-validation-error',
+                    description = 'ACL validation error response',
+                    value = '''{
   "valid": false,
   "policies": [
     {
@@ -4114,10 +4217,10 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
       ]
     }
   ]
-}''')
+}'''
                 )
-            )
-        ]
+            ]
+        )
     )
     protected def apiSystemAcls_POST_docs(){}
 
@@ -4149,31 +4252,49 @@ Since: v14""",
         content = [
             @Content(
                 mediaType = 'text/plain',
-                examples = @ExampleObject('''description: "my policy"
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                    )
+                ]
             ),
             @Content(
-                mediaType = "application/yaml",
-                examples = @ExampleObject('''description: "my policy"
+                mediaType = MediaType.APPLICATION_YAML,
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                    )
+                ]
             ),
             @Content(
-                mediaType = "application/json",
-                examples = @ExampleObject('''{
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-contents',
+                        description = 'ACL policy contents',
+                        value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                    )
+                ]
             )
         ]
     )

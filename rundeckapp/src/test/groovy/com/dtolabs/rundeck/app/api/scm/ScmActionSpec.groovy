@@ -15,6 +15,8 @@
  */
 
 package com.dtolabs.rundeck.app.api.scm
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import spock.lang.Specification
 

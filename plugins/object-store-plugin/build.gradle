@@ -22,13 +22,14 @@ configurations.all {
         // Force safe commons-compress versions to fix CVE-2024-25710
         // Only force artifacts that exist for version 1.21
         force "org.apache.commons:commons-compress:${commonsCompressVersion}"
+        force "org.apache.commons:commons-lang3:${commonsLang3Version}"
     }
 }
 
 
 dependencies {
     // Use the latest Groovy version for building this library
-    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation "org.apache.groovy:groovy:${groovyVersion}"
     pluginLibs("io.minio:minio:${minioVersion}") {
         exclude(group: 'com.fasterxml.jackson.core')
         exclude(group: 'com.google.guava', module: 'guava')
@@ -71,4 +72,9 @@ jar {
 jar.dependsOn(copyToLib)
 tasks.withType(Test) {
     useJUnitPlatform()
+    jvmArgs += [
+        '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+        '--add-opens=java.base/java.util=ALL-UNNAMED'
+    ]
 }

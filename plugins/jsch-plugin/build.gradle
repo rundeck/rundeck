@@ -30,11 +30,20 @@ dependencies {
         exclude(group: 'com.jcraft', module: 'jsch')
     }
 
-    testImplementation 'junit:junit:4.13.2',
-            'org.mockito:mockito-all:1.10.19'
-    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testImplementation "cglib:cglib-nodep:2.2.2"
-    testImplementation "org.spockframework:spock-core:${spockVersion}"
+    testImplementation 'junit:junit:4.13.2'
+    
+    // Spock + Mockito mocking dependencies (Pattern #10 & #74)
+    testImplementation "org.mockito:mockito-core:${mockitoInlineVersion}"
+    testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
+    testImplementation "org.objenesis:objenesis:${objenesisVersion}"
+    testImplementation "cglib:cglib-nodep:${cglibNoDepVersion}"
+    
+    testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
+    testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
+    testImplementation "org.spockframework:spock-core"
+    testImplementation "org.spockframework:spock-junit4"
+    
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
 }
 
@@ -50,6 +59,10 @@ task copyToLib(type: Copy) {
 
 tasks.withType(Test) {
     useJUnitPlatform()
+    jvmArgs(
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+    )
 }
 
 

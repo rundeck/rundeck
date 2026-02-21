@@ -20,21 +20,29 @@ class KeyStorageApiClient {
         this.client = clientProvider.client
     }
 
+    /**
+     * Grails 7: Jetty 12 rejects URIs with empty segments (double slashes).
+     * Remove leading slashes from path to prevent /storage/keys//path construction.
+     */
+    private static String normalizePath(String path) {
+        return path?.startsWith('/') ? path.substring(1) : path
+    }
+
     Response callUploadKeyFile(String path, String keyType, File content) {
         return callUploadKey(path) {
             it ?
-            client.doPut("${STORAGE_BASE_URL}/${path}", content, keyContentTypes[keyType.toLowerCase()]) :
-            client.doPost("${STORAGE_BASE_URL}/${path}", content, keyContentTypes[keyType.toLowerCase()])
+            client.doPut("${STORAGE_BASE_URL}/${normalizePath(path)}", content, keyContentTypes[keyType.toLowerCase()]) :
+            client.doPost("${STORAGE_BASE_URL}/${normalizePath(path)}", content, keyContentTypes[keyType.toLowerCase()])
         }
     }
     Response callUploadKey(String path, String keyType, String keyValue){
         return callUploadKey(path) {
             it ? client.doPutWithRawText(
-                "${STORAGE_BASE_URL}/${path}",
+                "${STORAGE_BASE_URL}/${normalizePath(path)}",
                 keyContentTypes[keyType.toLowerCase()],
                 keyValue
             ) : client.doPostWithRawText(
-                "${STORAGE_BASE_URL}/${path}",
+                "${STORAGE_BASE_URL}/${normalizePath(path)}",
                 keyContentTypes[keyType.toLowerCase()],
                 keyValue
             )
@@ -45,7 +53,7 @@ class KeyStorageApiClient {
     Response callUploadKey(String path, Function<Boolean, Response> putOrPostFunction) {
         //test key exists
         boolean exists = false
-        try (def testexists = client.doGet("${STORAGE_BASE_URL}/${path}")) {
+        try (def testexists = client.doGet("${STORAGE_BASE_URL}/${normalizePath(path)}")) {
             exists = testexists.successful
         }
         Response resp = putOrPostFunction(exists)

@@ -17,6 +17,7 @@
 package rundeck.services
 
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -24,7 +25,7 @@ import rundeck.events.RdExecutionCompleteEvent
 import rundeck.services.events.ExecutionCompleteEvent
 
 @Transactional
-class ExecutionEventsService {
+class ExecutionEventsService implements EventBusAware {
     LogFileStorageService logFileStorageService
 
     /**

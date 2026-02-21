@@ -28,7 +28,6 @@ import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import grails.test.runtime.DirtiesRuntime
 
 import org.junit.Assert
 import org.quartz.*
@@ -65,7 +64,6 @@ class ScheduledExServiceSpec extends Specification implements DataTest {
     /**
      * Test getByIDorUUID method.
      */
-    @DirtiesRuntime
     public void testGetByIDorUUID() {
         when:
         def testService = new ScheduledExecutionService()
@@ -109,7 +107,6 @@ class ScheduledExServiceSpec extends Specification implements DataTest {
     /**
      * test overlap between internal ID and UUID values, the ID should take precedence (return first)
      */
-    @DirtiesRuntime
     public void testGetByIDorUUIDWithOverlap() {
         when:
         def testService = new ScheduledExecutionService()

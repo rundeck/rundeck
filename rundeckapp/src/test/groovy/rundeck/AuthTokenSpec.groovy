@@ -98,7 +98,8 @@ class AuthTokenSpec extends Specification implements DataTest {
     // token gets hashed on save
     def "newly created token gets hashed on save by default"() {
         given:
-        def user = new User(login: "admin").save()
+        def user = new User(login: "admin")
+        user.save()
         def newToken = new AuthToken(
                 token: TOKEN_CLEAR_VALUE,
                 user: user,
@@ -120,7 +121,8 @@ class AuthTokenSpec extends Specification implements DataTest {
 
     def "token save by mode"() {
         given:
-        def user = new User(login: "admin").save()
+        def user = new User(login: "admin")
+        user.save()
         def newToken = new AuthToken(
             token: clear,
             user: user,
@@ -148,7 +150,8 @@ class AuthTokenSpec extends Specification implements DataTest {
 
     def "token dont get rehashed on update"() {
         given:
-        def user = new User(login: "admin").save()
+        def user = new User(login: "admin")
+        user.save()
         def newToken = new AuthToken(
             user: user,
             authRoles: "admin",

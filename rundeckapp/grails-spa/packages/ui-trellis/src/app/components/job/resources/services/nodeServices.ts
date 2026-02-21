@@ -15,7 +15,7 @@ export async function getConfigMetaForExecutionMode(
     headers: {
       "x-rundeck-ajax": "true",
     },
-    url: `${ctx.rdBase}api/${ctx.apiVersion}/project/${project}/meta?meta=${meta}`,
+    url: `${ctx.rdBase}/api/${ctx.apiVersion}/project/${project}/meta?meta=${meta}`,
     validateStatus(status) {
       return status <= 403;
     },

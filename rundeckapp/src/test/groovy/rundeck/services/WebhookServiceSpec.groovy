@@ -60,7 +60,7 @@ import spock.lang.Unroll
 import webhooks.Webhook
 import webhooks.WebhookService
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 class WebhookServiceSpec extends Specification implements ServiceUnitTest<WebhookService>, DataTest {
     @Shared GormEventStoreService eventStoreService

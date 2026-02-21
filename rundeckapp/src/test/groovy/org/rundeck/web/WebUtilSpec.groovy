@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
-import groovy.util.slurpersupport.GPathResult
+import groovy.xml.slurpersupport.GPathResult
 import org.grails.plugins.codecs.JSONCodec
 import org.grails.web.util.WebUtils
 import org.springframework.context.MessageSource
@@ -12,8 +12,8 @@ import rundeck.services.ApiService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 class WebUtilSpec extends Specification implements GrailsWebUnitTest{
     WebUtil service

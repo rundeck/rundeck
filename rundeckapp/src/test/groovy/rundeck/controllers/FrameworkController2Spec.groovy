@@ -360,7 +360,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         assertEquals("plugin", model["prefixKey"])
         assertEquals(model["project"], "edit_test_project")
         assertEquals(1, passwordFieldsService.fields.size())
-        model.pluginGroupConfig == (pgFeatureEnabled?[[type: 'somePlugin', config: [aprop:'avalue']]]:[])
+        model.pluginGroupConfig == (pgFeatureEnabled ? [[type: 'somePlugin', config: [aprop:'avalue']]] : [])
         where:
             pgFeatureEnabled<<[true,false]
     }

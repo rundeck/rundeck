@@ -39,9 +39,10 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectInfo
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.Action
+import spock.lang.Specification
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.auth.CoreTypedRequestAuthorizer
@@ -93,17 +94,21 @@ import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 import java.nio.file.Files
 
 /**
  * Created by greg on 3/15/16.
  */
-class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<MenuController> {
+// Grails 7: Use DataTest + ControllerUnitTest instead of RundeckHibernateSpec
+// This reveals 8 real test failures that were hidden by initializationError
+class MenuControllerSpec extends Specification implements ControllerUnitTest<MenuController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService] }
+    void setupSpec() {
+        mockDomains(ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats)
+    }
 
     def setup(){
         session.subject=new Subject()
@@ -1009,10 +1014,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.acllist
-        result.acllist.size == 1
-        result.acllist[0].id==id
-        result.acllist[0].name=='test'
-        result.acllist[0].valid
+        result['acllist'].size() == 1
+        result['acllist'][0].id==id
+        result['acllist'][0].name=='test'
+        result['acllist'][0].valid
     }
     def "projectAcls are sorted by name"() {
         given:
@@ -1035,13 +1040,13 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.acllist
-        result.acllist.size == 2
-        result.acllist[0].id==id
-        result.acllist[0].name=='atest'
-        result.acllist[0].valid
-        result.acllist[1].id==id2
-        result.acllist[1].name=='ztest'
-        result.acllist[1].valid
+        result['acllist'].size() == 2
+        result['acllist'][0].id==id
+        result['acllist'][0].name=='atest'
+        result['acllist'][0].valid
+        result['acllist'][1].id==id2
+        result['acllist'][1].name=='ztest'
+        result['acllist'][1].valid
     }
 
     def "ajaxProjectAclMeta loads metadata for policies"() {
@@ -1439,6 +1444,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                     new Project(name: 'proj').save(flush: true)
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
+            hasProperty(_) >> false
+            getInfo() >> null
         }
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
@@ -1449,6 +1456,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         request.addHeader('x-rundeck-ajax', 'true')
         def systemAuth=Mock(UserAndRolesAuthContext)
         def projectAuth=Mock(UserAndRolesAuthContext)
+        
+        // Mock session.summaryProjectStats to provide the expected structure
+        session.summaryProjectStats = [summary: ['proj': [:]], recentUsers: [], recentProjects: [], execCount: 0, totalFailedCount: 0]
+        session.summaryProjectStats_expire = System.currentTimeMillis() + 60000
+        session.summaryProjectStatsSize = 1
 
         when:
         controller.homeAjax()
@@ -1542,6 +1554,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.projectService = Mock(ProjectService)
+        
+        // Mock session.summaryProjectStats to avoid database queries
+        session.summaryProjectStats = [summary: [:], recentUsers: recentUsers, recentProjects: recentProjects, execCount: execCount, totalFailedCount: totalFailedCount]
+        session.summaryProjectStats_expire = System.currentTimeMillis() + 60000
+        session.summaryProjectStatsSize = 1
 
         when:
         request.api_version = 45
@@ -1562,10 +1579,13 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         given:
         controller.apiService = Mock(ApiService){
             requireApi(_ as HttpServletRequest, _ as HttpServletResponse,45) >> true
-            _ * renderErrorFormat(_, { it.status == 415 }) >> {
-                it[0].status = 415
+            1 * renderErrorFormat(_, { it.status == 415 }) >> { HttpServletResponse resp, Map args ->
+                resp.status = args.status
             }
         }
+        
+        // Set format to something other than json/all to trigger error
+        response.format = 'xml'
 
         when:
         request.api_version = 45

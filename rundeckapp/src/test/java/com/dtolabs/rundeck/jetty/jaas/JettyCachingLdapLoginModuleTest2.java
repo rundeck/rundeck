@@ -23,8 +23,8 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.eclipse.jetty.jaas.callback.ObjectCallback;
-import org.eclipse.jetty.jaas.spi.UserInfo;
+import org.rundeck.jaas.callback.ObjectCallback;
+import org.rundeck.jaas.UserInfo;
 import org.junit.Assert;
 import org.junit.Test;
 

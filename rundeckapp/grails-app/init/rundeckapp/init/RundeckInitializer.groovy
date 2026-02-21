@@ -124,6 +124,9 @@ class RundeckInitializer {
             installCompleteMarker.createNewFile() //mark install as complete so we don't always install
         } else {
             DEBUG("--" + CommandLineSetup.FLAG_SKIPINSTALL + ": Not extracting.");
+            // Grails 7: Ensure critical directories exist even if install was skipped
+            // This handles Docker caching, partial installs, and other edge cases
+            ensureCriticalDirectoriesExist()
         }
         setupLog4j2ConfigurationFile()
         if(config.isInstallOnly()) {
@@ -148,35 +151,81 @@ class RundeckInitializer {
     }
 
     void initServerUuidWithServerIdFile() {
+        System.err.println "[SERVER UUID INIT] Starting server UUID initialization"
         String serverUuid = System.getenv("RUNDECK_SERVER_UUID") ?: System.getProperty("rundeck.server.uuid")
+        System.err.println "[SERVER UUID INIT] Environment/System property UUID: ${serverUuid ?: 'null'}"
+        
         String rdBase = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        System.err.println "[SERVER UUID INIT] rdeck.base: ${rdBase}"
+        
         String configBase = getConfigBase(rdBase)
+        System.err.println "[SERVER UUID INIT] Config base directory: ${configBase}"
+        
         File serverId = Paths.get(configBase,"serverId").toFile()
+        String serverIdPath = serverId.getAbsolutePath()
+        System.err.println "[SERVER UUID INIT] serverId file path: ${serverIdPath}"
+        System.err.println "[SERVER UUID INIT] serverId file exists: ${serverId.exists()}"
+        
         if(serverId.exists()) {
-            List<String> serverIdFileLines = serverId.readLines()
-            String currentServerUuid = serverIdFileLines.size() > 0 ? serverIdFileLines[0].trim() : ""
-            if(currentServerUuid.isEmpty()) {
-                if(!serverUuid) serverUuid = UUID.randomUUID().toString()
-                serverId.withPrintWriter {it.println(serverUuid) }
-            } else {
-                serverUuid = currentServerUuid
+            System.err.println "[SERVER UUID INIT] serverId file found, reading contents"
+            try {
+                List<String> serverIdFileLines = serverId.readLines()
+                System.err.println "[SERVER UUID INIT] serverId file has ${serverIdFileLines.size()} line(s)"
+                String currentServerUuid = serverIdFileLines.size() > 0 ? serverIdFileLines[0].trim() : ""
+                System.err.println "[SERVER UUID INIT] UUID read from file: '${currentServerUuid}'"
+                
+                if(currentServerUuid.isEmpty()) {
+                    System.err.println "[SERVER UUID INIT] File empty, generating new UUID"
+                    if(!serverUuid) serverUuid = UUID.randomUUID().toString()
+                    System.err.println "[SERVER UUID INIT] Writing UUID to file: ${serverUuid}"
+                    serverId.withPrintWriter {it.println(serverUuid) }
+                    System.err.println "[SERVER UUID INIT] UUID written successfully"
+                } else {
+                    serverUuid = currentServerUuid
+                    System.err.println "[SERVER UUID INIT] Using existing UUID from file: ${serverUuid}"
+                }
+            } catch (Exception e) {
+                System.err.println "[SERVER UUID INIT] ERROR reading serverId file: ${e.message}"
+                e.printStackTrace()
             }
         } else {
-            Files.createDirectories(serverId.toPath().parent)
-            if(!serverId.createNewFile()) {
-                println "Unable to create server id file. Aborting startup"
-                System.exit(-1)
+            System.err.println "[SERVER UUID INIT] serverId file does NOT exist, creating new"
+            try {
+                Files.createDirectories(serverId.toPath().parent)
+                System.err.println "[SERVER UUID INIT] Parent directory created/verified"
+                
+                if(!serverId.createNewFile()) {
+                    System.err.println "[SERVER UUID INIT] ERROR: Unable to create server id file. Aborting startup"
+                    System.exit(-1)
+                }
+                System.err.println "[SERVER UUID INIT] serverId file created successfully"
+                
+                File legacyFrameworkProps = new File(configBase,"framework.properties")
+                if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
+                    System.err.println "[SERVER UUID INIT] Legacy framework.properties found, checking for UUID"
+                    Properties fprops = new Properties()
+                    fprops.load(new FileReader(legacyFrameworkProps))
+                    serverUuid = fprops.getProperty("rundeck.server.uuid")
+                    System.err.println "[SERVER UUID INIT] UUID from framework.properties: ${serverUuid ?: 'null'}"
+                }
+                
+                if(!serverUuid) {
+                    serverUuid = UUID.randomUUID().toString()
+                    System.err.println "[SERVER UUID INIT] Generated new UUID: ${serverUuid}"
+                }
+                
+                System.err.println "[SERVER UUID INIT] Writing UUID to new file: ${serverUuid}"
+                serverId.withPrintWriter {it.println(serverUuid) }
+                System.err.println "[SERVER UUID INIT] UUID written successfully"
+            } catch (Exception e) {
+                System.err.println "[SERVER UUID INIT] ERROR creating serverId file: ${e.message}"
+                e.printStackTrace()
             }
-            File legacyFrameworkProps = new File(configBase,"framework.properties")
-            if(legacyFrameworkProps.exists()) { //supply the serverUuid from framework properties
-                Properties fprops = new Properties()
-                fprops.load(new FileReader(legacyFrameworkProps))
-                serverUuid = fprops.getProperty("rundeck.server.uuid")
-            }
-            if(!serverUuid) serverUuid = UUID.randomUUID().toString()
-            serverId.withPrintWriter {it.println(serverUuid) }
         }
+        
         System.setProperty("rundeck.server.uuid",serverUuid)
+        System.err.println "[SERVER UUID INIT] Final UUID set as system property: ${serverUuid}"
+        System.err.println "[SERVER UUID INIT] Initialization complete"
     }
 
     String getConfigBase(String rdBase) {
@@ -253,6 +302,46 @@ class RundeckInitializer {
             return new File(location.toURI());
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
+        } catch (IllegalArgumentException e) {
+            // Groovy 4 / Spring Boot 3: jar: URIs are not hierarchical and can't be converted to File
+            // For Spring Boot 3 nested JARs, extract the actual WAR/ZIP file path
+            String urlString = location.toString()
+            
+            // Handle nested: protocol URLs from Spring Boot 3
+            // Format: jar:nested:/path/to/app.war/!WEB-INF/... or nested:/path/to/app.zip/!WEB-INF/...
+            if (urlString.contains("nested:")) {
+                // Find the start of the actual file path after "nested:"
+                int nestedIndex = urlString.indexOf("nested:")
+                if (nestedIndex >= 0) {
+                    String pathPart = urlString.substring(nestedIndex + 7) // Skip "nested:"
+                    
+                    // Extract up to .war or .zip (whichever comes first)
+                    int warIndex = pathPart.indexOf(".war")
+                    int zipIndex = pathPart.indexOf(".zip")
+                    
+                    if (warIndex >= 0 && (zipIndex < 0 || warIndex < zipIndex)) {
+                        String warPath = pathPart.substring(0, warIndex + 4) // Include ".war"
+                        return new File(warPath)
+                    } else if (zipIndex >= 0) {
+                        String zipPath = pathPart.substring(0, zipIndex + 4) // Include ".zip"
+                        return new File(zipPath)
+                    }
+                }
+            }
+            
+            // Handle jar: protocol URLs
+            if (urlString.startsWith("jar:file:")) {
+                // Extract path between jar:file: and !/
+                int startIdx = "jar:file:".length()
+                int endIdx = urlString.indexOf("!/")
+                if (endIdx > startIdx) {
+                    String jarPath = urlString.substring(startIdx, endIdx)
+                    return new File(jarPath)
+                }
+            }
+            
+            // Fallback: try direct path (may not work for nested JARs)
+            return new File(location.getPath())
         }
     }
 
@@ -398,6 +487,24 @@ class RundeckInitializer {
         }
         dir.mkdirs()
         return dir
+    }
+
+    /**
+     * Grails 7: Ensure critical directories exist even when installation is skipped.
+     * This handles cases where:
+     * - Docker layer caching preserves install marker but not all directories
+     * - Partial installations or interrupted installs
+     * - Directory structure changes between versions
+     */
+    void ensureCriticalDirectoriesExist() {
+        basedir = new File(config.baseDir)
+        if(!basedir.exists()) basedir.mkdirs()
+        serverdir = new File(config.serverBaseDir ?: new File(basedir, "server").path)
+        if(!serverdir.exists()) serverdir.mkdirs()
+        configdir = new File(config.configDir ?: new File(serverdir, "config").path)
+        if(!configdir.exists()) configdir.mkdirs()
+        // Note: Don't create ALL directories (data, logs, work, etc.) - just critical ones
+        // Full createDirectories() will run on fresh installs
     }
 
     /**

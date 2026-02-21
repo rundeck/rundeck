@@ -1,11 +1,13 @@
 buildscript {
     repositories {
         mavenLocal()
+        mavenCentral()
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:${assetPluginVersion}"
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
+        classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
+        classpath "cloud.wondrify:asset-pipeline-gradle:${assetPluginVersion}"
     }
 }
 
@@ -17,14 +19,16 @@ group "webhooks"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
-apply plugin:"org.grails.grails-plugin"
-apply plugin:"asset-pipeline"
-apply plugin:"org.grails.grails-gsp"
+apply plugin:"org.apache.grails.gradle.grails-plugin"
+apply plugin:"cloud.wondrify.asset-pipeline"
+apply plugin:"org.apache.grails.gradle.grails-gsp"
 
+// OpenAPI generation enabled - grailsopenapispec.gradle skips GSP compilation tasks
 apply from:'../gradle/grailsopenapispec.gradle'
 
 repositories {
     mavenLocal()
+        mavenCentral()
     maven { url "https://repo.grails.org/grails/core" }
 }
 
@@ -41,36 +45,45 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
-    implementation("org.grails:grails-core") {
+    implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
+    implementation("org.apache.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    implementation "org.grails:grails-web-boot"
-    implementation "org.grails:grails-logging"
-    implementation "org.grails:grails-plugin-rest"
-    implementation "org.grails:grails-plugin-databinding"
-    implementation "org.grails:grails-plugin-i18n"
-    implementation "org.grails:grails-plugin-services"
-    implementation "org.grails:grails-plugin-url-mappings"
-    implementation "org.grails:grails-plugin-interceptors"
-    implementation "org.grails.plugins:async"
-    implementation "org.grails.plugins:scaffolding"
-    implementation "org.grails.plugins:gsp"
-    implementation "io.micronaut:micronaut-inject-groovy"
-    console "org.grails:grails-console"
+    implementation "org.apache.grails:grails-web-boot"
+    implementation "org.apache.grails:grails-logging"
+    implementation "org.apache.grails:grails-rest-transforms"
+    implementation "org.apache.grails:grails-databinding"
+    implementation "org.apache.grails:grails-core"
+    implementation "org.apache.grails:grails-services"
+    implementation "org.apache.grails:grails-url-mappings"
+    implementation "org.apache.grails:grails-interceptors"
+    implementation "org.apache.grails:grails-async"
+    implementation "org.apache.grails:grails-scaffolding"
+    implementation "org.apache.grails:grails-gsp"
+    compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
+    implementation "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
+    
+    // Micronaut dependencies (needed for HTTP annotations, but OpenAPI spec generation disabled due to GSP conflicts)
+    compileOnly "io.micronaut:micronaut-http-server:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-inject"
+    compileOnly "io.micronaut:micronaut-inject-java:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-core"
+    console "org.apache.grails:grails-console"
     implementation project(":core")
     implementation project(':rundeck-app-util')
 
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
-    compileOnly "org.grails:grails-plugin-domain-class"
-    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    testImplementation "org.grails:grails-gorm-testing-support"
+    compileOnly "org.apache.grails:grails-domain-class"
+    runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
+    testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.mockito:mockito-core"
-    testImplementation "org.grails:grails-web-testing-support"
+    testImplementation "org.apache.grails:grails-testing-support-web"
     
     constraints {
         implementation("commons-fileupload:commons-fileupload:${commonsFileuploadVersion}") {
-            because "Fix CVE-2025-48976 - force newer version over transitive dependencies from grails-web-fileupload"
+            because "Fix CVE-2025-48976"
         }
     }
 }
@@ -89,6 +102,20 @@ bootRun {
 
 tasks.withType(Test) {
     useJUnitPlatform()
+}
+
+// Fix Gradle 8 task ordering for OpenAPI generation
+tasks.named("findMainClass") {
+    mustRunAfter tasks.named("compileTestGroovy")
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
+}
+tasks.named("jar") {
+    mustRunAfter tasks.named("compileTestGroovy")
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
+}
+tasks.named("compileGroovyPages") {
+    mustRunAfter tasks.named("compileTestGroovy")
+    mustRunAfter tasks.named("compileIntegrationTestGroovy")
 }
 
 // enable if you wish to package this plugin as a standalone application

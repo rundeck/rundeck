@@ -17,7 +17,6 @@
 package org.rundeck.web.infosec
 
 import com.dtolabs.rundeck.util.MacUtils
-import org.grails.plugins.codecs.HexCodecExtensionMethods
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -50,7 +49,8 @@ class HMacSynchronizerTokensManager implements InitializingBean, Serializable {
      */
     public String generateToken(String nonce, String sessionId, List<String> data) {
         String token = ('' +  nonce + '/' + sessionId + (data ? '/' + (data.join('/')) : ''))
-        String digest = HexCodecExtensionMethods.encodeAsHex(MacUtils.digest(algorithm, secretKey, token))
+        byte[] digestBytes = MacUtils.digest(algorithm, secretKey, token)
+        String digest = digestBytes.encodeHex().toString()
         digest
     }
 

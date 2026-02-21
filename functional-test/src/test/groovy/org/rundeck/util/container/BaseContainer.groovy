@@ -161,7 +161,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     void setupProject(String name, Map config = [:]) {
         try (def getProject = client.doGet("/project/${name}")) {
             if (getProject.code() == 404) {
-                def result = client.post("/projects", config + [name: name])
+                // Grails 7: Project creation API requires name at top-level and config as nested object
+                def projectConfig = [
+                    "name": name,
+                    "config": config + ["project.name": name]
+                ]
+                def result = client.post("/projects", projectConfig)
             } else if (!getProject.successful) {
                 throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
             }
@@ -362,7 +367,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         }
         try (Response getProject = client.doGet("/project/${name}")) {
             if (getProject.code() == 404) {
-                try (def post = client.doPost("/projects", [name: name])) {
+                // Grails 7: Project creation API requires name at top-level and config as nested object
+                def projectConfig = [
+                    "name": name,
+                    "config": ["project.name": name]
+                ]
+                try (def post = client.doPost("/projects", projectConfig)) {
                     if (!post.successful) {
                         throw new RuntimeException("Failed to create project: ${post.body().string()}")
                     }
@@ -735,10 +745,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
         def checkIsRundeckApiResponding = {
             //use httpClient directly to invoke a non-api path
+            // Use /monitoring/health/readiness instead of /actuator/health/readiness
+            // Spring Boot Actuator web endpoints are disabled, MonitoringController provides the endpoint
             try (def response =
                 client.httpClient.newCall(
                     new Request.Builder().
-                        url("${client.baseUrl}/actuator/health/readiness").
+                        url("${client.baseUrl}/monitoring/health/readiness").
                         header('Accept', 'application/json').
                         get().
                         build()

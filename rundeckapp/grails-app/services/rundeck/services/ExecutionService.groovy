@@ -121,10 +121,10 @@ import org.rundeck.app.config.SysConfigProp
 import org.rundeck.app.config.SystemConfig
 import org.rundeck.app.config.SystemConfigurable
 
-import javax.annotation.PreDestroy
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import javax.servlet.http.HttpSession
+import jakarta.annotation.PreDestroy
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpSession
 import java.nio.charset.Charset
 import java.sql.Time
 import java.sql.Timestamp
@@ -187,30 +187,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         new ThreadLocal<DateFormat>() {
             @Override
             protected DateFormat initialValue() {
-				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-			}
-		}
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+            }
+        }
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_XXX =
         new ThreadLocal<DateFormat>() {
             @Override
             protected DateFormat initialValue() {
-				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
-			}
-		}
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
+            }
+        }
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS =
         new ThreadLocal<DateFormat>() {
             @Override
             protected DateFormat initialValue() {
-				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX")
-			}
-		}
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX")
+            }
+        }
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT =
         new ThreadLocal<DateFormat>() {
-			@Override
-			protected DateFormat initialValue() {
-				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
-			}
-		}
+            @Override
+            protected DateFormat initialValue() {
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
+            }
+        }
 
     boolean getExecutionsAreActive(){
         configurationService.executionModeActive
@@ -3273,10 +3273,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def executionId = event.execution.id
 
         //load stored execution to get the orchestrator data
-        Execution executionLoad = Execution.createCriteria().get() {
-            createAlias('orchestrator', 'o', JoinType.LEFT_OUTER_JOIN)
-            eq('id', executionId)
-        } as Execution
+        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+        // Fallback to simple get() for DataTest compatibility
+        Execution executionLoad
+        try {
+            executionLoad = Execution.withSession { session ->
+                String hql = '''
+                    SELECT e
+                    FROM Execution e
+                    LEFT JOIN e.orchestrator o
+                    WHERE e.id = :executionId
+                '''
+                def query = session.createQuery(hql, Execution)
+                query.setParameter('executionId', executionId)
+                query.uniqueResult()
+            } as Execution
+        } catch (MissingMethodException e) {
+            // DataTest fallback: SimpleMapSession doesn't support HQL, use simple get()
+            executionLoad = Execution.get(executionId)
+        }
 
         //just replacing the value for the received from ExecutionJob because the status is not saved yet
         if(executionLoad && executionLoad.orchestrator){

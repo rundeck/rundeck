@@ -16,10 +16,8 @@
 
 package org.rundeck.jaas.jetty;
 
-import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
-import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule;
-import org.eclipse.jetty.jaas.spi.UserInfo;
 import org.rundeck.jaas.AbstractSharedLoginModule;
+import org.rundeck.jaas.UserInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,10 +32,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Extends Jetty property file login module {@link PropertyFileLoginModule}, to ignore authentication via property file
- * login, but match the username with supplied Role lists from the property file.<br>
- * Adds a "caseInsensitive" option, default true.  If true, then the username will be lowercased before lookup in the
- * property file.
+ * Property file-based module that extracts roles from a property file
+ * without performing authentication (relies on shared credentials from another module).
+ * 
+ * DESIGN CHANGE from Jetty JAAS implementation:
+ * - Previously used org.eclipse.jetty.jaas.spi.PropertyFileLoginModule
+ * - Now uses org.rundeck.jaas.jetty.ReloadablePropertyFileLoginModule (our implementation)
+ * - Same functionality, independent of Jetty JAAS packages
+ * 
+ * Options:
+ * - caseInsensitive: If true, username is lowercased before lookup (default: true)
+ * - file: Path to property file (required)
+ * - hotReload: Enable file hot-reload (default: true)
  */
 public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule {
     public static final Logger logger = LoggerFactory.getLogger(JettyRolePropertyFileLoginModule.class.getName());
@@ -66,7 +72,7 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
         }
 
         if(!options.containsKey("hotReload") || !options.get("hotReload").equals("true")) {
-            module.setReloadEnabled(false);
+            module.setHotReload(false);
         }
         module.initialize(subject, callbackHandler, shared, options);
     }

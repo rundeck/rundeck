@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.app.api.authorizations.ProjectAuthorizationContext
 import com.dtolabs.rundeck.app.api.authorizations.TypeResource
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
+import org.rundeck.app.api.model.ApiErrorResponse
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.swagger.v3.oas.annotations.Operation
@@ -61,7 +62,11 @@ Useful for UI components that need to conditionally display features or for appl
     )
     @ApiResponse(
             responseCode='400',
-            description='Bad request - missing required parameter `actions`'
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
+            )
     )
     def appContextAuthorizationsForResourceKind() {
         def kindParams = validateAndGetParamsForKind(params)
@@ -110,7 +115,11 @@ Example: `GET /api/56/authorizations/application/project/myproject?actions=read&
     )
     @ApiResponse(
             responseCode='400',
-            description='Bad request - missing required parameter `actions`'
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
+            )
     )
     def appContextAuthorizationsForTypeWithSpecifier() {
         def typeParams = validateAndGetParamsForTypeWithSpecifier(params, APPLICATION_CONTEXT_ALLOWED_TYPES)
@@ -159,7 +168,11 @@ Example: `GET /api/56/authorizations/project/myproject/node?actions=read&actions
     )
     @ApiResponse(
             responseCode='400',
-            description='Bad request - missing required parameter `actions`'
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
+            )
     )
     def projectContextAuthorizationsForResourceKind() {
         def kindParams = validateAndGetParamsForKind(params)
@@ -192,7 +205,7 @@ Evaluation is made in the context of the project for the supplied job.
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
                     @Parameter(name = 'specifier', description = 'Job Id', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
             ])
     @ApiResponse(
             responseCode='200',
@@ -260,7 +273,11 @@ Example: `GET /api/56/authorizations/project/myproject/node/node1?actions=read&a
     )
     @ApiResponse(
             responseCode='400',
-            description='Bad request - missing required parameter `actions`'
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
+            )
     )
     def projectContextAuthorizationsForTypeWithSpecifier() {
         def typeParams = validateAndGetParamsForTypeWithSpecifier(params, PROJECT_CONTEXT_ALLOWED_TYPES)

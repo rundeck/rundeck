@@ -30,6 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 /**
  * JarPluginScanner scans for java Jar plugins in the extensions dir.
@@ -74,6 +77,43 @@ public class JarPluginScanner extends DirPluginScanner {
     }
 
     public boolean isValidPluginFile(final File file) {
+        // Skip ZIP-as-JAR plugins - they don't have Rundeck-Plugin-Classnames
+        // ScriptPluginScanner handles these, not JarPluginScanner
+        try (JarFile jarFile = new JarFile(file)) {
+            Manifest manifest = jarFile.getManifest();
+            if (manifest == null || manifest.getMainAttributes() == null) {
+                // No manifest = likely a ZIP-as-JAR plugin (ZIP files don't require manifests)
+                // Skip it - ScriptPluginScanner will handle it
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format(
+                        "Skipping ZIP-as-JAR plugin (no manifest): %s",
+                        file.getAbsolutePath()
+                    ));
+                }
+                return false;
+            }
+            String classnames = manifest.getMainAttributes().getValue(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES);
+            if (classnames == null || classnames.trim().isEmpty()) {
+                // Missing Rundeck-Plugin-Classnames = ZIP-as-JAR plugin, not compiled JAR
+                // Skip it - ScriptPluginScanner will handle it
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format(
+                        "Skipping ZIP-as-JAR plugin (missing Rundeck-Plugin-Classnames): %s",
+                        file.getAbsolutePath()
+                    ));
+                }
+                return false;
+            }
+        } catch (IOException e) {
+            // If we can't read it as a JAR, it might be corrupted or not a valid JAR/ZIP
+            // Skip it - don't try to validate as JAR plugin
+            if (log.isDebugEnabled()) {
+                log.debug("Error reading JAR manifest for: " + file.getAbsolutePath() + ", skipping", e);
+            }
+            return false;
+        }
+        
+        // Has manifest with Rundeck-Plugin-Classnames - validate as compiled JAR plugin
         return JarPluginProviderLoader.isValidJarPlugin(file);
     }
 

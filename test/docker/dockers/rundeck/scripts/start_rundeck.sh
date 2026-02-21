@@ -80,7 +80,8 @@ cat > $HOME/etc/profile <<END
 RDECK_BASE=$RDECK_BASE
 export RDECK_BASE
 
-JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk-amd64}
+# Grails 7: Java 17 required
+JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}
 export JAVA_HOME
 
 PATH=\$JAVA_HOME/bin:\$RDECK_BASE/tools/bin:\$PATH
@@ -150,6 +151,7 @@ setup_project_api(){
     XJSON=$(cat "$XFILE" | grep -v '^#' | sed 's/^/"/' | sed 's/=/":"/' | sed 's/$/",/' )
   fi
   mkdir -p $DIR/projects/$PROJ/etc
+  # Use flat JSON format for rd CLI tool (backward compatible)
   cat >$DIR/projects/$PROJ/etc/project.json<<END
 {
     "project.name":"$PROJ",

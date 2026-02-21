@@ -21,15 +21,40 @@ info:
         name: '@info.app.name@'
         version: '@info.app.version@'
         grailsVersion: '@info.app.grailsVersion@'
-build:
-    ident: '@build.ident@'
+
+logging:
+    level:
+        root: INFO
+        # Grails 7: Auth is working, reduced logging
+        org.springframework.security: INFO
+        grails.plugin.springsecurity: INFO
+        # Keep JAAS at DEBUG for troubleshooting if needed
+        org.springframework.security.authentication.jaas: INFO
+        com.dtolabs.rundeck.jaas: INFO
+        # Keep Hikari at DEBUG for connection pool monitoring
+        com.zaxxer.hikari: DEBUG
+        com.zaxxer.hikari.pool.HikariPool: DEBUG
 
 spring:
+    liquibase:
+        enabled: false  # Temporarily disabled for Grails 7 testing
+    cloud:
+        bootstrap:
+            enabled: false  # Spring Boot 3.x - bootstrap context deprecated
+        config:
+            enabled: false  # Disable external config server (not used in standard deployments)
+        consul:
+            enabled: false  # Disable Consul (enabled via rundeckpro-config when configured)
+    autoconfigure:
+        exclude:
+            - org.springframework.boot.autoconfigure.integration.IntegrationAutoConfiguration
+    security:
+        # Spring Security configured via grails.plugin.springsecurity.* in application.groovy
     jpa:
         hibernate:
             naming:
-                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
-                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+                implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     jmx:
         unique-names: true
     application:
@@ -50,13 +75,21 @@ spring:
                 - '*.properties'
 management:
     endpoints:
-        enabled-by-default: false
+        enabled-by-default: true  # Enable endpoints so beans are created
+        web:
+            exposure:
+                # Disable Spring Boot Actuator web endpoints entirely
+                # MonitoringController at /monitoring/* calls MeterRegistry beans directly
+                exclude: '*'
     health:
         defaults:
             enabled: true
     endpoint:
         health:
-            enabled: false
+            enabled: true
+            # Grails 7: Disable strict health contributor validation during startup
+            # The rundeckDataSourceHealthIndicator bean is registered but Spring Boot 3 validates before full initialization
+            validate-group-membership: false
             probes:
                 enabled: true
             show-details: always
@@ -69,6 +102,19 @@ management:
                     include:
                         - readinessState
                         - rundeckDataSourceHealthIndicator
+        metrics:
+            enabled: true
+        prometheus:
+            enabled: true
+        info:
+            enabled: true
+        threaddump:
+            enabled: true
+    metrics:
+        enabled: true  # Explicitly enable metrics collection
+        export:
+            prometheus:
+                enabled: true  # Enable Prometheus registry bean
 
 ---
 
@@ -159,6 +205,8 @@ grails:
         twitterbootstrap:
             fixtaglib: true
     assets:
+        url: /assets/  # Grails 7: Asset pipeline URL prefix (trailing slash required)
+        mapping: /assets/**  # Grails 7: URL pattern for asset serving
         less:
             compile: less4j
         plugin:
@@ -216,6 +264,9 @@ rundeck:
                     - health
                     - agent
                 paths:
+                    - /assets
+                    - /static
+                    - /user-assets
                     - /error
                     - /favicon.ico
                     - /health
@@ -223,6 +274,11 @@ rundeck:
                     - /actuator/health
                     - /actuator/health/liveness
                     - /actuator/health/readiness
+                    - /monitoring
+                    - /monitoring/**
+                    - /metrics
+                    - /metrics/**
+                    - /.well-known
     storage:
         default: deleteMe
     execution:
@@ -332,6 +388,7 @@ beans:
 server:
     port: 4440
     servlet:
+        context-path: "/"  # Grails 7: Explicit context-path required for asset pipeline
         session:
             persistent: false
             cookie:
@@ -348,5 +405,5 @@ rundeck:
 ---
 hibernate:
     allow_update_outside_transaction: true
-    physical_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
-    implicit_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+    physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl

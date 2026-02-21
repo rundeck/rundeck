@@ -12,7 +12,7 @@ import {JobBrowseItem, JobBrowseMeta} from '../../types/jobs/JobBrowse';
 jest.mock('../../rundeckService', () => ({
     getRundeckContext: jest.fn().mockImplementation(() => ({
         projectName: 'TestProject',
-        rdBase: 'http://localhost:4440/',
+        rdBase: 'http://localhost:4440',
     })),
 }));
 

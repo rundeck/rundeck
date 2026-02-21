@@ -25,7 +25,7 @@ import rundeck.services.UserService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.ServletContext
+import jakarta.servlet.ServletContext
 
 class SetUserInterceptorSpec extends Specification implements InterceptorUnitTest<SetUserInterceptor>, DataTest {
 
@@ -199,7 +199,9 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
         setup:
         User u1 = new User(login: "admin")
+        u1.id = 1L  // Explicitly set ID for Groovy 4 compatibility
         User u2 = new User(login: "whk")
+        u2.id = 2L  // Explicitly set ID for Groovy 4 compatibility
         AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"admin",type: null)
         AuthToken userTk2 = new AuthToken(token: "456", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.LEGACY)
         AuthToken userTk3 = new AuthToken(token: "ABC", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)

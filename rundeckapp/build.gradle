@@ -4,16 +4,17 @@ import java.util.regex.Matcher
 buildscript {
     repositories {
         mavenLocal()
+        mavenCentral()
         maven { url "https://repo.grails.org/grails/core" }
+        maven { url "https://repo.grails.org/grails/restricted" }
     }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
+        classpath "org.apache.grails:grails-gradle-plugins"
+        classpath "org.apache.grails:grails-data-hibernate5"
+        classpath "org.apache.grails:grails-data-hibernate5-dbmigration"
+        classpath "cloud.wondrify:asset-pipeline-gradle"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
-        classpath "org.grails.plugins:hibernate5:7.0.0"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
-        classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
-            exclude group: 'org.spockframework', module: 'spock-core'
-        }
     }
 }
 plugins {
@@ -26,16 +27,40 @@ plugins {
 
 apply plugin:"eclipse"
 apply plugin:"idea"
-apply plugin:"war"
-apply plugin:"org.grails.grails-web"
+apply plugin:"org.apache.grails.gradle.grails-web"
 apply plugin: "com.energizedwork.idea-base"
-apply plugin:"asset-pipeline"
-apply plugin:"org.grails.grails-gsp"
+apply plugin:"cloud.wondrify.asset-pipeline"
+apply plugin:"org.apache.grails.gradle.grails-gsp"
 apply plugin: "maven-publish"
 apply plugin: "signing"
 
 allprojects {
     ext["liquibase.version"] = liquibaseVersion
+}
+
+// Exclude micronaut-bom - it's not included by default in Grails 7 per docs
+// Also prevent old Groovy BOM conflicts
+configurations.all {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            // Block old groovy-bom from Micronaut 3.x
+            if (details.requested.group == 'org.codehaus.groovy' && details.requested.name == 'groovy-bom') {
+                details.useTarget group: 'org.apache.groovy', name: 'groovy-bom', version: groovyVersion
+                details.because 'Grails 7 uses Apache Groovy 4.x'
+            }
+            // Force Spring Integration 6.x for Spring Boot 3.5.8
+            if (details.requested.group == 'org.springframework.integration') {
+                details.useVersion springIntegrationVersion
+                details.because 'Spring Boot 3.5.8 requires Spring Integration 6.x'
+            }
+            // Force BouncyCastle 1.79 (Spring Boot 3.5+ BOM manages BC and uses 1.80 which breaks Jasypt)
+            if (details.requested.group == 'org.bouncycastle') {
+                details.useVersion bouncyCastleVersion
+                details.because 'BC 1.80 breaks Jasypt encryption - staying on 1.79 until migration'
+            }
+        }
+    }
+    exclude group: 'io.micronaut', module: 'micronaut-bom'
 }
 
 //list of grails plugins to depend on in various ways
@@ -80,6 +105,10 @@ configurations {
     runtimeClasspath {
         extendsFrom developmentOnly
         exclude group: 'junit', module: 'junit'
+        exclude group: 'org.junit.jupiter'
+        exclude group: 'org.junit.platform'
+        exclude group: 'org.apache.groovy', module: 'groovy-test-junit5'
+        exclude group: 'org.apache.ant', module: 'ant-junit'
         exclude group: 'org.codehaus.groovy', module: 'groovy-ant'
         exclude group: 'org.grails', module: 'grails-shell'
     }
@@ -96,7 +125,14 @@ repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-    maven { url "https://jitpack.io" }
+    
+    // PackageCloud com.rundeck.plugins repositories
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeckpro-test/maven2"
+    }
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeckpro/maven2"
+    }
 }
 sourceSets {
     main {
@@ -108,6 +144,13 @@ sourceSets {
 dependencies {
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
+
+    // Force Jakarta Annotation API 3.0.0 for annotation processing
+    annotationProcessor "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
+
+    // Jakarta Validation implementation for tests
+    testImplementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
+    testImplementation "org.glassfish.expressly:expressly:5.0.0" // EL implementation required by Hibernate Validator
 
     testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '3.0.0'
 
@@ -142,10 +185,27 @@ dependencies {
 
     // From BuildConfig.groovy.
     implementation 'org.quartz-scheduler:quartz:2.3.2'
-    implementation 'org.grails.plugins:quartz:2.0.13'
+    implementation 'org.apache.grails:grails-quartz:4.0.0'
     implementation 'org.grails.plugins:mail:3.0.0'
+    
+    // Liquibase for compile-time exception classes (runtime provided by Spring Boot)
+    compileOnly "org.liquibase:liquibase-core:${liquibaseVersion}"
+    
+    // Groovy 4: XML parsing is a separate module
+    implementation "org.apache.groovy:groovy-xml:${groovyVersion}"
+    
+    // Micronaut integration DISABLED due to BOM incompatibility in Grails 7.0.4:
+    // - grails-micronaut:7.0.4 depends on micronaut-spring-bom:5.11.0 (requires Micronaut 5.x)
+    // - But Grails 7.0.4 uses Micronaut Platform 4.10.1 (Micronaut 4.x)
+    // - No micronaut-spring version exists that works with Micronaut 4.x
+    // Per docs: "The default integration of the Micronaut Framework has been removed in Grails 7"
+    // TODO: Re-enable when Grails BOM is fixed or upgrade to newer Grails version
+    // implementation 'org.apache.grails:grails-micronaut'
+    
+    // Layout engine for Grails 7 (Sitemesh 2.6.x continuation)
+    implementation 'org.apache.grails:grails-layout'
 
-    implementation 'org.springframework.cloud:spring-cloud-context:3.1.6'
+    implementation "org.springframework.cloud:spring-cloud-context:${springCloudContextVersion}"
 
     //enable greenmail plugin below for testing email behavior
     // https://github.com/gpc/greenmail
@@ -161,6 +221,11 @@ dependencies {
     implementation "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
     implementation "commons-io:commons-io:${commonsIoVersion}"
     implementation "commons-beanutils:commons-beanutils:${beanutilsVersion}"
+    // BOMs for dependency management
+    implementation platform("org.apache.grails:grails-bom:$grailsVersion")
+    implementation platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
+    implementation platform("org.apache.groovy:groovy-bom:${groovyVersion}")
+    
     implementation "commons-codec:commons-codec:${commonsCodecVersion}"
     implementation 'commons-cli:commons-cli:1.11.0'
 
@@ -168,20 +233,22 @@ dependencies {
     implementation "com.zaxxer:HikariCP:${hikariVersion}"
 
     // Defined by create-app
-    implementation "org.grails.plugins:hibernate5"
-    implementation "org.hibernate:hibernate-core:${hibernateVersion}"
-
-    implementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
+    implementation "org.apache.grails:grails-data-hibernate5"
+    // hibernate-jcache needed for Hibernate 5.6.15 caching (Grails 7.0.4 → GORM 7.x → Hibernate 5.6.15 Jakarta)
+    implementation "org.hibernate:hibernate-jcache:5.6.15.Final"
     implementation('org.ehcache:ehcache:3.8.1')
 
-    implementation ('org.hibernate:hibernate-validator:6.2.0.Final')
-    implementation ('org.hibernate.validator:hibernate-validator:6.2.0.Final')
+    implementation ('org.hibernate.validator:hibernate-validator:8.0.1.Final')
 
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
 
-    implementation "org.grails:grails-core"
+    implementation "org.apache.grails:grails-core"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "io.micrometer:micrometer-registry-prometheus"  // Prometheus metrics endpoint
+    implementation "org.springframework.boot:spring-boot-starter-mail"  // Jakarta Mail API for Spring Boot 3
+    // Temporarily removed explicit micronaut-spring-context to see what Spring Security provides
+    // implementation "io.micronaut.spring:micronaut-spring-context:4.6.1"
 
     implementation("org.springframework.boot:spring-boot-starter-web") {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
@@ -192,44 +259,55 @@ dependencies {
         exclude(group:'org.eclipse.jetty.websocket',module:'javax-websocket-server-impl')
     }
 
-    implementation "org.grails:grails-web-boot"
-    implementation "org.grails:grails-logging"
-    implementation "org.grails:grails-plugin-rest"
-    implementation "org.grails:grails-plugin-databinding"
-    implementation "org.grails:grails-plugin-i18n"
-    implementation "org.grails:grails-plugin-services"
-    implementation "org.grails:grails-plugin-url-mappings"
-    implementation "org.grails:grails-plugin-interceptors"
+    implementation "org.apache.grails:grails-web-boot"
+    implementation "org.apache.grails:grails-logging"
+    implementation "org.apache.grails:grails-rest-transforms"
+    implementation "org.apache.grails:grails-databinding"
+    implementation "org.apache.grails:grails-core"
+    implementation "org.apache.grails:grails-services"
+    implementation "org.apache.grails:grails-url-mappings"
+    implementation "org.apache.grails:grails-interceptors"
     implementation 'org.grails.plugins:grails-executor:0.4'
-    implementation "org.grails.plugins:async"
-    implementation "org.grails.plugins:scaffolding"
-    implementation "org.grails.plugins:events"
-    implementation "org.grails.plugins:gsp"
-    implementation "org.grails:grails-codecs"
-    implementation "org.grails.plugins:cache"
-    implementation "io.micronaut:micronaut-inject-groovy"
+    implementation "org.apache.grails:grails-async"
+    implementation "org.apache.grails:grails-scaffolding"
+    implementation "org.apache.grails:grails-events"
+    implementation "org.apache.grails:grails-gsp"
+    implementation "org.apache.grails:grails-codecs"
+    implementation "org.apache.grails:grails-cache"
+    compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     implementation "com.google.code.gson:gson:${gsonVersion}"
-    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+    // Jackson versions managed by Spring Boot BOM
+    implementation "com.fasterxml.jackson.core:jackson-databind"
     implementation "com.fasterxml.jackson.core:jackson-core"
     implementation "com.fasterxml.jackson.core:jackson-annotations"
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
-    implementation "org.eclipse.jetty:jetty-jaas"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor"
+    // Jetty JAAS removed - using org.rundeck.jaas implementation instead
+    // implementation "org.eclipse.jetty:jetty-jaas"  // REMOVED - Jetty 12 doesn't have this
     implementation "org.eclipse.jetty:jetty-jmx"
     implementation "org.eclipse.jetty:jetty-util"
     implementation "org.eclipse.jetty:jetty-security"
     implementation "org.apache.mina:mina-core:${minaCoreVersion}"
-    implementation ("org.grails.plugins:spring-security-core:${grailsSpringSecurityVersion}"){
+    implementation ("org.apache.grails:grails-spring-security:${grailsSpringSecurityVersion}"){
         exclude(group:'net.sf.ehcache',module:'ehcache')
+        exclude(group:'org.grails',module:'grails-core')
+        exclude(group:'org.grails.plugins',module:'async')
+        exclude(group:'io.micronaut',module:'micronaut-bom')
+        // Allow micronaut-spring - version will be forced to 4.5.1 via resolutionStrategy
     }
     implementation 'org.kohsuke:libpam4j:1.11'
-    implementation "javax.xml.bind:jaxb-api:2.3.1"
+    implementation "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaXmlBindVersion}"
+    implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
     implementation 'org.dom4j:dom4j:2.1.3'
     implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
     implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}")
-    implementation ("org.grails:grails-console") {
+    // Grails 7: BC 1.80 requires bcutil for CryptlibObjectIdentifiers
+    implementation ("org.bouncycastle:bcutil-jdk18on:${bouncyCastleVersion}")
+    implementation ("org.apache.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    implementation "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
+    implementation("org.grails.plugins:database-migration:${dbMigrationPluginVersion}") {
+        exclude group: 'org.grails', module: 'grails-shell'
+    }
     implementation "org.apache.commons:commons-lang3:${commonsLang3Version}"
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
@@ -249,10 +327,10 @@ dependencies {
         exclude group: 'org.slf4j', module: 'slf4j-nop'
     }
     implementation "io.micronaut:micronaut-http-server:${micronautVersion}"
-    implementation "io.micronaut:micronaut-inject:${micronautVersion}"
+    implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-inject-java:${micronautVersion}"
-    implementation "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
-    implementation "io.micronaut:micronaut-core:${micronautVersion}"
+    compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
+    implementation "io.micronaut:micronaut-core"
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
 
@@ -264,19 +342,22 @@ dependencies {
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.1'
 
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.89"
-    runtimeOnly "org.springframework:spring-jcl:${springVersion}"
-    runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
-    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    runtimeOnly "org.springframework:spring-jcl"  // Version managed by Spring Boot BOM
+    runtimeOnly "org.apache.groovy:groovy-dateutil"  // Version managed by Grails BOM
+    api ("cloud.wondrify:asset-pipeline-grails:$assetPluginVersion")
+    runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
 
     implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
-    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.mockito:mockito-core"
-    testImplementation "org.grails:grails-web-testing-support"
-    testImplementation "org.grails:grails-test-mixins:3.3.0.RC1"
+    testImplementation "org.apache.grails:grails-testing-support-web"
+    testImplementation "org.apache.groovy:groovy-xml:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-test:${groovyVersion}"
+    testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+    testImplementation "org.eclipse.jetty.ee10:jetty-ee10-webapp"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
-    testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
+    // testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}") // Managed by Grails BOM
 
     testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver:${seleniumJavaVersion}"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-firefox-driver:${seleniumJavaVersion}"
@@ -287,7 +368,9 @@ dependencies {
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     // transitive dependencies constraints.
     constraints {
-        implementation("com.mchange:c3p0:0.9.5.4") {
+        // CVE constraints temporarily disabled - will re-enable after Grails 7 baseline is stable
+        /*
+        implementation("com.mchange:c3p0:${c3p0Version}") {
             because "version brought by quartz affected by CVE-2019-5427"
         }
         implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}") {
@@ -296,36 +379,50 @@ dependencies {
         implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}") {
             because "earlier versions affected by exploitable bugs"
         }
+        */
+        
+        // Keep guava constraint - this is for build compatibility, not CVE
+        implementation('com.google.guava:guava') {
+            version {
+                strictly '32.0.1-jre'
+            }
+            because "guava 33.4.8 from micronaut-guice-bom causes variant resolution conflicts with exportedLibs"
+        }
+        implementation('com.google.errorprone:failureaccess') {
+            version {
+                strictly '1.0.1'
+            }
+            because "matches guava 32.0.1-jre transitive dependency"
+        }
+        
+        // Temporarily disabled - will re-enable after baseline
+        /*
         implementation ("org.yaml:snakeyaml:${snakeyamlVersion}") {
             because "required by rundeck:repository"
         }
-        implementation("commons-io:commons-io:${commonsIoVersion}") {
-            because "Fix CVE-2024-47554 - force newer version over transitive dependencies"
-        }
         implementation("commons-fileupload:commons-fileupload:${commonsFileuploadVersion}") {
-            because "Fix CVE-2025-48976 - force newer version over transitive dependencies from grails-web-fileupload"
+            because "Fix CVE-2025-48976"
         }
+        */
     }
 
 
 
 }
-grails{
-    plugins{
-        coreGrailsPlugins.each {
-            implementation project(it)
-        }
 
-        /** It's important that the configuration addition follow the form 'compile project("")'
-         * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
-         * can produce broken plugins in development mode. */
-        for(proj in project.findProperty('bundledGrailsPlugins')) {
-            logger.info("Injecting Grails plugin ${proj}")
-            implementation project("$proj")
-        }
-    }
-    pathingJar = true
+// Inject bundled Grails plugins
+coreGrailsPlugins.each {
+    dependencies.add('implementation', project(it))
 }
+
+for(proj in project.findProperty('bundledGrailsPlugins')) {
+    logger.info("Injecting Grails plugin ${proj}")
+    dependencies.add('implementation', project("$proj"))
+}
+
+// grails{
+//     pathingJar = true  // Deprecated in Grails 7
+// }
 
 task copyRuntimeLibs(type: Copy) {
     from configurations.pluginFiles
@@ -367,6 +464,48 @@ tasks.register('copyApiSpecFiles', Copy){
     inputs.files configurations.apiSpecFiles
     from configurations.apiSpecFiles
     into additionalSpecDir
+    
+    // Fix Gradle 8 task ordering - ensure compile tasks run first
+    mustRunAfter(':grails-webhooks:compileGroovy')
+    mustRunAfter(':grails-webhooks:compileTestGroovy')
+    mustRunAfter(':grails-webhooks:compileIntegrationTestGroovy')
+    mustRunAfter(':grails-execution-mode-timer:compileGroovy')
+    mustRunAfter(':grails-execution-mode-timer:compileTestGroovy')
+    mustRunAfter(':grails-execution-mode-timer:compileIntegrationTestGroovy')
+    mustRunAfter(':grails-repository:compileGroovy')
+    mustRunAfter(':grails-job-kill-handler:compileGroovy')
+    mustRunAfter(':grails-metricsweb:compileGroovy')
+    
+    // Add Pro plugin compile dependencies (only those with integration tests)
+    // Only add these dependencies if the plugins exist (Pro repo)
+    def proPluginsWithIntTests = [
+        'rundeckpro-calendars',
+        'rundeckpro-cluster',
+        'rundeckpro-config',
+        'rundeckpro-genai',
+        'rundeckpro-job-tags',
+        'rundeckpro-jobdata',
+        'rundeckpro-jobqueue',
+        'rundeckpro-license',
+        'rundeckpro-nodehealthcheck',
+        'rundeckpro-paged-job-list',
+        'rundeckpro-roimetrics',
+        'rundeckpro-runner',
+        'rundeckpro-security',
+        'rundeckpro-system-report',
+        'rundeckpro-tour-manager',
+        'rundeckpro-webhooks'
+    ]
+    
+    proPluginsWithIntTests.each { pluginName ->
+        def pluginPath = ":plugins:${pluginName}"
+        // Only add mustRunAfter if the project exists
+        if (project.findProject(pluginPath)) {
+            mustRunAfter("${pluginPath}:compileGroovy")
+            mustRunAfter("${pluginPath}:compileTestGroovy")
+            mustRunAfter("${pluginPath}:compileIntegrationTestGroovy")
+        }
+    }
 }
 
 tasks.register('fixOpenApiSpec') {
@@ -377,6 +516,10 @@ tasks.register('fixOpenApiSpec') {
     inputs.file(specFile)
     inputs.file(apiVersionsFile)
     outputs.file(specFile)
+    
+    // Gradle 8: Explicit task ordering - run after main compilation
+    mustRunAfter compileGroovy
+    mustRunAfter compileJava
     
     doLast {
         if (specFile.exists() && apiVersionsFile.exists()) {
@@ -411,6 +554,9 @@ tasks.register('fixOpenApiSpec') {
 }
 
 tasks.withType(GroovyCompile).configureEach {
+    // Disable incremental compilation - incompatible with annotation processors in Gradle 8
+    options.incremental = false
+    
     def additionalSpecDir = new File(project.buildDir, 'openapi')
     def opts=[
         '-Xmx1024m'
@@ -432,10 +578,63 @@ tasks.withType(GroovyCompile).configureEach {
 
 tasks.withType(Test) {
     useJUnitPlatform()
+    // Increased memory for Groovy 4 + Grails 7 tests
+    maxHeapSize = "2048m"
+    // Gradle 8: Explicit dependency on fixOpenApiSpec
+    dependsOn fixOpenApiSpec
+    // Increase Spring Test Context cache size to prevent premature eviction
+    // Default is 32, but integration tests need more headroom
+    systemProperty 'spring.test.context.cache.maxSize', '256'
+    // Also set as JVM arg to ensure it's picked up
+    jvmArgs += ['-Dspring.test.context.cache.maxSize=256']
+    // Unset GROOVY_HOME to prevent SDKMAN Groovy from interfering with Gradle's test execution
+    // Gradle manages its own Groovy dependencies and having GROOVY_HOME set can cause
+    // Spring Test Context eviction issues in integration tests
+    // Set to empty string to effectively unset it for the test process
+    environment['GROOVY_HOME'] = ''
+}
+
+// Gradle 8: compileGroovyPages uses fixOpenApiSpec output
+tasks.named('compileGroovyPages') {
+    dependsOn fixOpenApiSpec
+}
+
+// Gradle 8: findMainClass uses fixOpenApiSpec output  
+tasks.named('findMainClass') {
+    dependsOn fixOpenApiSpec
+}
+
+// Gradle 8: javadoc uses fixOpenApiSpec output
+tasks.named('javadoc') {
+    dependsOn fixOpenApiSpec
 }
 
 tasks.withType(Test).configureEach {
     forkEvery = 500
+}
+
+// Configure integrationTest task specifically to prevent Spring Test Context eviction
+tasks.named('integrationTest').configure {
+    // Increase Spring Test Context cache size to prevent premature eviction
+    // Default is 32, but integration tests need more headroom
+    // Using 512 to handle many test configurations without eviction
+    systemProperty 'spring.test.context.cache.maxSize', '512'
+    // Also set as JVM arg to ensure it's picked up
+    jvmArgs += ['-Dspring.test.context.cache.maxSize=512']
+    // Disable parallel execution to prevent context eviction during parallel test runs
+    maxParallelForks = 1
+    // Unset GROOVY_HOME to prevent SDKMAN Groovy from interfering with Gradle's test execution
+    // Gradle manages its own Groovy dependencies and having GROOVY_HOME set can cause
+    // Spring Test Context eviction issues in integration tests
+    // Set to empty string to effectively unset it for the test process
+    environment['GROOVY_HOME'] = ''
+}
+
+// Groovy 4: Increase memory for test compilation
+tasks.named('compileTestGroovy').configure {
+    groovyOptions.forkOptions.with {
+        jvmArgs = ['-Xmx3072m', '-XX:MaxMetaspaceSize=768m']
+    }
 }
 
 // To make Spring boot bootWar task work, we need to declare the duplicateStrategy explicitly

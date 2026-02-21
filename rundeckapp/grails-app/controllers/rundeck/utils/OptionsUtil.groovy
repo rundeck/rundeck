@@ -9,7 +9,7 @@ import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
 
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 
 class OptionsUtil {
     static Logger logger = LoggerFactory.getLogger(OptionsUtil)

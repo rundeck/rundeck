@@ -76,14 +76,14 @@ dependencies {
         'org.slf4j:slf4j-api:1.7.32',
         "commons-codec:commons-codec:${commonsCodecVersion}",
         'commons-collections:commons-collections:3.2.2',
-        "org.apache.commons:commons-lang3:${commonsLang3Version}",
+        'org.apache.commons:commons-lang3:3.17.0',  // Match Spring Boot 3.5.9 BOM version
         'jaxen:jaxen:1.2.0',
         "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
         "org.yaml:snakeyaml:${snakeyamlVersion}",
         "com.squareup.retrofit2:retrofit:3.0.0",
         "com.squareup.retrofit2:converter-jackson:3.0.0",
         "com.squareup.retrofit2:converter-jaxb:3.0.0",
-        'javax.servlet:javax.servlet-api:4.0.1'
+        "jakarta.servlet:jakarta.servlet-api:${jakartaServletVersion}"
 
     implementation ("commons-beanutils:commons-beanutils:${beanutilsVersion}")
 
@@ -96,10 +96,12 @@ dependencies {
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-    testImplementation 'junit:junit:4.8.1',
-        'org.mockito:mockito-all:1.10.19'
+    testImplementation 'junit:junit:4.8.1'
+    testImplementation "org.mockito:mockito-core:${mockitoInlineVersion}"
+    testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
+    testImplementation "org.objenesis:objenesis:${objenesisVersion}"
 
-    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
     testImplementation platform("org.spockframework:spock-bom:${spockVersion}")
     testImplementation "org.spockframework:spock-core"
     testImplementation "org.spockframework:spock-junit4"
@@ -172,10 +174,18 @@ task expandTemplate {
     }
 }
 processResources.dependsOn tasks.expandTemplate
+// Note: sourceJar/sourcesJar dependencies on expandTemplate are handled by exported-project.gradle afterEvaluate
 
 test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
     useJUnitPlatform()
+    
+    // Java 17 + CGLIB/Spock: Open modules for mocking
+    jvmArgs = [
+        '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.io=ALL-UNNAMED',
+        '--add-opens=java.base/java.util=ALL-UNNAMED'
+    ]
 }
 
 ext.description= "Rundeck project ${project.name}"

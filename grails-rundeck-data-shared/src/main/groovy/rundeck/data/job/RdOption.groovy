@@ -48,6 +48,11 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
         realValuesUrl(nullable: true)
     }
 
+    @Override
+    List<OptionValueData> getValuesFromPlugin() {
+        return valuesFromPlugin as List<OptionValueData>
+    }
+
     List<String> getOptionValues() {
         if (this.optionValues != null) {
             return this.optionValues

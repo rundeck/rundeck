@@ -17,7 +17,7 @@ package org.rundeck.security
 
 import spock.lang.Specification
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 
 class RundeckPreauthenticationRequestHeaderFilterTest extends Specification {

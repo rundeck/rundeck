@@ -14,28 +14,39 @@ class TourLoaderService {
 
     def listAllTourManifests(String project = null) {
         def tourManifest = []
-        PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
+        try {
+            PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
 
-       pluginService.listPlugins(TourLoaderPlugin).each { prov ->
-            TourLoaderPlugin tourLoader = pluginService.configurePlugin(prov.key, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
-            def title = getPluginTitle(tourLoader)
+            pluginService.listPlugins(TourLoaderPlugin)?.each { prov ->
+                try {
+                    TourLoaderPlugin tourLoader = pluginService.configurePlugin(prov.key, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance)?.instance
+                    if (!tourLoader) return // Skip this plugin if configuration failed
+                    
+                    def title = getPluginTitle(tourLoader)
 
-            def manifest = project ? tourLoader.getTourManifest(project) : tourLoader.tourManifest
+                    def manifest = project ? tourLoader.getTourManifest(project) : tourLoader.tourManifest
 
-            if(manifest){
-                def tours = manifest.tours
-                def groupedTours = tours.findAll { it.group }
-                def ungroupedTours = tours.findAll { !it.group }
-                groupedTours.groupBy{ it.group }.each { group, gtours  ->
-                    tourManifest.add([provider:prov.key,loader:group,tours:gtours])
-                }
-                if(!ungroupedTours.isEmpty()) {
-                    tourManifest.add([provider:prov.key,loader:manifest.name ?: title ?: prov.key,tours:ungroupedTours])
+                    if(manifest){
+                        def tours = manifest.tours
+                        def groupedTours = tours?.findAll { it.group } ?: []
+                        def ungroupedTours = tours?.findAll { !it.group } ?: []
+                        groupedTours.groupBy{ it.group }.each { group, gtours  ->
+                            tourManifest.add([provider:prov.key,loader:group,tours:gtours])
+                        }
+                        if(!ungroupedTours.isEmpty()) {
+                            tourManifest.add([provider:prov.key,loader:manifest.name ?: title ?: prov.key,tours:ungroupedTours])
+                        }
+                    }
+                } catch (Exception e) {
+                    // Skip this tour plugin if it fails to load
+                    log.debug("Failed to load tour plugin: ${prov.key}", e)
                 }
             }
-
+        } catch (Exception e) {
+            // If entire tour loading fails, return empty list rather than null
+            log.warn("Failed to load tour plugins", e)
         }
-        return tourManifest
+        return tourManifest ?: [] // Extra safety: ensure we never return null
     }
 
     String getPluginTitle(final TourLoaderPlugin tourLoaderPlugin) {

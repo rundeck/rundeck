@@ -37,7 +37,7 @@ import rundeck.data.validation.exception.DataValidationException
 import rundeck.services.audit.JobUpdateAuditEvent
 import rundeck.services.data.ScheduledExecutionDataService
 
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 
 @GrailsCompileStatic
 @Log4j2

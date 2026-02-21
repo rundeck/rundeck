@@ -135,6 +135,21 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static ConfigurableApplicationContext ctx;
     static String[] startArgs = []
     static void main(String[] args) {
+        // Spring Boot 3: Disable legacy Spring Cloud Bootstrap context
+        // Grails 7 Option B: Database config is now loaded via ConfigServiceRefresher after DataSource initialization
+        // ConfigServiceRefresher listens for ContextRefreshedEvent to load app_config table
+        // This respects Grails lifecycle and ensures DataSource is ready before querying database
+        System.setProperty("spring.cloud.bootstrap.enabled", "false")
+        
+        // Grails 7: Register BouncyCastle security provider for Jasypt encryption
+        // BC provider required for storage encryption (keys, projects) via Jasypt plugin
+        try {
+            java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider())
+        } catch (Exception e) {
+            System.err.println "CRITICAL: Failed to register BouncyCastle security provider: ${e.message}"
+            e.printStackTrace()
+        }
+        
         Application.startArgs = args
         boolean error = runPrebootstrap()
         if(error) {
@@ -189,7 +204,14 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         environment.propertySources.addFirst(
                 new PropertiesPropertySource("hardcoded-rundeck-props", hardCodedRundeckConfigs)
         )
-        environment.propertySources.addFirst(ReloadableRundeckPropertySource.getRundeckPropertySourceInstance())
+        println "=== Application.groovy: About to add ReloadableRundeckPropertySource to environment ==="
+        def propertySource = ReloadableRundeckPropertySource.getRundeckPropertySourceInstance()
+        environment.propertySources.addFirst(propertySource)
+        println "=== Application.groovy: ReloadableRundeckPropertySource added to environment ==="
+        println "  Property source name: ${propertySource.name}"
+        println "  Testing if password is accessible from environment:"
+        println "    rundeck.config.storage.converter.1.config.password = ${environment.getProperty('rundeck.config.storage.converter.1.config.password')}"
+        println "    rundeck.storage.converter.1.config.password = ${environment.getProperty('rundeck.storage.converter.1.config.password')}"
         if(rundeckConfig.migrate) {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }

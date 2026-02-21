@@ -1,4 +1,6 @@
 package rundeck
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *

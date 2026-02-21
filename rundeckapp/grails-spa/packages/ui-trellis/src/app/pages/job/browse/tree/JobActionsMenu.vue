@@ -213,28 +213,28 @@ export default defineComponent({
       return this.jobPageStore.projTypesAuthz?.job?.create || false;
     },
     editHref() {
-      return `${context.rdBase}project/${context.projectName}/job/edit/${this.job.id}`;
+      return `${context.rdBase}/project/${context.projectName}/job/edit/${this.job.id}`;
     },
     duplicateHref() {
-      return `${context.rdBase}project/${context.projectName}/job/copy/${this.job.id}`;
+      return `${context.rdBase}/project/${context.projectName}/job/copy/${this.job.id}`;
     },
     duplicateOtherHref() {
-      return `${context.rdBase}project/${context.projectName}/job/copy/${this.job.id}`;
+      return `${context.rdBase}/project/${context.projectName}/job/copy/${this.job.id}`;
     },
     deleteHref() {
-      return `${context.rdBase}project/${context.projectName}/job/delete/${this.job.id}`;
+      return `${context.rdBase}/project/${context.projectName}/job/delete/${this.job.id}`;
     },
     disableExecutionHref() {
-      return `${context.rdBase}project/${context.projectName}/job/flipExecutionEnabled/${this.job.id}?enabled=false`;
+      return `${context.rdBase}/project/${context.projectName}/job/flipExecutionEnabled/${this.job.id}?enabled=false`;
     },
     enableExecutionHref() {
-      return `${context.rdBase}project/${context.projectName}/job/flipExecutionEnabled/${this.job.id}?enabled=true`;
+      return `${context.rdBase}/project/${context.projectName}/job/flipExecutionEnabled/${this.job.id}?enabled=true`;
     },
     disableScheduleHref() {
-      return `${context.rdBase}project/${context.projectName}/job/flipScheduleEnabled/${this.job.id}?enabled=false`;
+      return `${context.rdBase}/project/${context.projectName}/job/flipScheduleEnabled/${this.job.id}?enabled=false`;
     },
     enableScheduleHref() {
-      return `${context.rdBase}project/${context.projectName}/job/flipScheduleEnabled/${this.job.id}?enabled=true`;
+      return `${context.rdBase}/project/${context.projectName}/job/flipScheduleEnabled/${this.job.id}?enabled=true`;
     },
   },
   methods: {
@@ -243,10 +243,10 @@ export default defineComponent({
         ?.data;
     },
     downloadFormatHref(format: string) {
-      return `${context.rdBase}project/${context.projectName}/job/show/${this.job.id}?format=${encodeURIComponent(format)}`;
+      return `${context.rdBase}/project/${context.projectName}/job/show/${this.job.id}?format=${encodeURIComponent(format)}`;
     },
     activityPageHref() {
-      return `${context.rdBase}project/${context.projectName}/activity?jobIdFilter=${encodeURIComponent(this.job.id)}`;
+      return `${context.rdBase}/project/${context.projectName}/activity?jobIdFilter=${encodeURIComponent(this.job.id)}`;
     },
     action(name: string) {
       context.eventBus.emit(`job-action-single`, { name, job: this.job });

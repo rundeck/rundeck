@@ -1,11 +1,14 @@
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import spock.lang.Specification
 
-class ReferencedExecutionSpec extends RundeckHibernateSpec
-{
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec, ReferencedExecution]}
+// Grails 7: Use DataTest instead of RundeckHibernateSpec
+class ReferencedExecutionSpec extends Specification implements DataTest {
+    
+    void setupSpec() {
+        mockDomains(ScheduledExecution, Workflow, CommandExec, ReferencedExecution)
+    }
     def "execution id list"(){
         given:
         def refTotal = 10

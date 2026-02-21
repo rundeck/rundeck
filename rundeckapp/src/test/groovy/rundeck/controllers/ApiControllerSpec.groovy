@@ -358,7 +358,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator   : 'elf',
                 expired   : true,
                 roles     : ['a', 'b'],
-                expiration: '1970-01-01T00:00:00Z',
+                // Grails 7/Spring Boot 3: Jackson now includes milliseconds in ISO-8601 format
+                expiration: '1970-01-01T00:00:00.123Z',
                 id        : '123uuid',
                 user      : 'bob',
                 token     : 'abc'
@@ -414,7 +415,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator   : 'elf',
                 expired   : true,
                 roles     : ['a', 'b'],
-                expiration: '1970-01-01T00:00:00Z',
+                // Grails 7/Spring Boot 3: Jackson now includes milliseconds in ISO-8601 format
+                expiration: '1970-01-01T00:00:00.123Z',
                 id        : '123uuid',
                 user      : 'bob',
                 token     : 'abc'
@@ -429,7 +431,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     @Unroll
     def "api metrics links response"() {
         given:
-        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
         controller.apiService = Mock(ApiService)
         controller.configurationService = Mock(ConfigurationService)
         controller.grailsLinkGenerator = Mock(LinkGenerator) {
@@ -440,7 +441,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         }
 
         when:
-        def result = controller.apiMetrics(input)
+        controller.apiMetrics(input)
 
         then:
 
@@ -452,33 +453,18 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         )
 
         1 * controller.apiService.requireVersion(_, _, 25) >> true
-
-        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> enabledAll
-        (enabledAll?1:0) * controller.configurationService.getBoolean("metrics.api.enabled", true) >> enabledAll
-        for (def i = 0; i < endpoints.size(); i++) {
-            def endp = endpoints[i]
-            (enabledAll ? 1 : 0) * controller.configurationService.getBoolean(
-                "metrics.api.${endp}.enabled",
-                true
-            ) >> (enabledApi[endp] ? true : false)
-        }
+        1 * controller.configurationService.getBoolean("metrics.legacy.enabled", false) >> legacyEnabled
         (forwarded ? 1 : 0) * controller.configurationService.getString('metrics.servletUrlPattern', '/metrics/*') >>
         '/metrics/*'
 
         where:
-        input | enabledApi                                                    | enabledAll   | forwarded | links
-        ''    | [:]                                                           | false              | false     | [:]
-        ''    | [:]                                                           | false  | false     | [:]
-        ''    | [metrics: true]                                               | false | false     | [:]
-        ''    | [metrics: true]                                               | true                                                                          | false                                                                                                | [metrics: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/metrics']]
-        ''    | [healthcheck: true]                                           | true                                                                      | false                                                                                                | [healthcheck: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/healthcheck']]
-        ''    | [ping: true]                                                  | true                                                                             | false                                                                                                | [ping: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/ping']]
-        ''    | [threads: true]                                               | true                                                                          | false                                                                                                | [threads: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/threads']]
-        ''    | [threads: true, ping: true, metrics: true, healthcheck: true] | true                            | false                                                                                                | [
+        input | legacyEnabled | forwarded | links
+        ''    | false         | false     | [:]
+        ''    | true          | false     | [
             metrics    : [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/metrics'],
-            threads    : [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/threads'],
-            healthcheck: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/healthcheck'],
             ping       : [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/ping'],
+            threads    : [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/threads'],
+            healthcheck: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/healthcheck']
         ]
     }
 
@@ -523,7 +509,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     @Unroll
     def "api metrics forwarding"() {
         given:
-        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
         controller.apiService = Mock(ApiService)
         controller.configurationService = Mock(ConfigurationService)
         controller.grailsLinkGenerator = Mock(LinkGenerator) {
@@ -533,25 +518,14 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             0 * _(*_)
         }
         when:
-        def result = controller.apiMetrics(input)
+        controller.apiMetrics(input)
 
         then:
 
         response.forwardedUrl == "/metrics/$input?"
 
-
         1 * controller.apiService.requireVersion(_, _, 25) >> true
-
-
-        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> true
-        1 * controller.configurationService.getBoolean("metrics.api.enabled", true) >> true
-        for (def i = 0; i < endpoints.size(); i++) {
-            def endp = endpoints[i]
-            1 * controller.configurationService.getBoolean(
-                "metrics.api.${endp}.enabled",
-                true
-            ) >> true
-        }
+        1 * controller.configurationService.getBoolean("metrics.legacy.enabled", false) >> true
         1 * controller.configurationService.getString('metrics.servletUrlPattern', '/metrics/*') >>
         '/metrics/*'
 
@@ -568,7 +542,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             result.value() == access
         where:
             endpoint          | access
-            'apiMetricsList'  | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
+            'apiMetricsList_docs'  | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
@@ -578,7 +552,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     @Unroll
     def "api metrics bad endpoint"() {
         given:
-        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
         controller.apiService = Mock(ApiService)
         controller.configurationService = Mock(ConfigurationService)
         controller.grailsLinkGenerator = Mock(LinkGenerator) {
@@ -588,25 +561,15 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             0 * _(*_)
         }
         when:
-        def result = controller.apiMetrics(input)
+        controller.apiMetrics(input)
 
         then:
 
         response.forwardedUrl == null
         response.status == 404
 
-
         1 * controller.apiService.requireVersion(_, _, 25) >> true
-
-        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> true
-        1 * controller.configurationService.getBoolean("metrics.api.enabled", true) >> true
-        for (def i = 0; i < endpoints.size(); i++) {
-            def endp = endpoints[i]
-            1 * controller.configurationService.getBoolean(
-                "metrics.api.${endp}.enabled",
-                true
-            ) >> true
-        }
+        1 * controller.configurationService.getBoolean("metrics.legacy.enabled", false) >> true
         1 * controller.apiService.renderErrorFormat(
             _, {
             it.code == 'api.error.invalid.request' && it.status == 404
@@ -619,7 +582,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     @Unroll
     def "api metrics disabled"() {
         given:
-        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
         controller.apiService = Mock(ApiService)
         controller.configurationService = Mock(ConfigurationService)
         controller.grailsLinkGenerator = Mock(LinkGenerator) {
@@ -629,7 +591,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             0 * _(*_)
         }
         when:
-        def result = controller.apiMetrics(input)
+        controller.apiMetrics(input)
 
         then:
 
@@ -637,16 +599,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         response.status == 404
 
         1 * controller.apiService.requireVersion(_, _, 25) >> true
-
-        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> enabledAll
-        (enabledAll?1:0) * controller.configurationService.getBoolean("metrics.api.enabled", true) >> enabledAll
-        for (def i = 0; i < endpoints.size(); i++) {
-            def endp = endpoints[i]
-            (enabledAll ? 1 : 0) * controller.configurationService.getBoolean(
-                "metrics.api.${endp}.enabled",
-                true
-            ) >> (enabledApi[endp] ? true : false)
-        }
+        1 * controller.configurationService.getBoolean("metrics.legacy.enabled", false) >> false
         1 * controller.apiService.renderErrorFormat(
             _, {
             it.code == 'api.error.invalid.request' && it.status == 404
@@ -654,12 +607,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         ) >> { it[0].status = it[1].status }
 
         where:
-        input         | enabledApi       | enabledAll
-        'metrics'     | [metrics: false] | true
-        'metrics'     | [metrics: true]  | false
-        'healthcheck' | [metrics: true]  | true
-        'ping'        | [metrics: true]  | true
-        'threads'     | [metrics: true]  | true
+        input << ['metrics', 'healthcheck', 'ping', 'threads']
     }
 
 

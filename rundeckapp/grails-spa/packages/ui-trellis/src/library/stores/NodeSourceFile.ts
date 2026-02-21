@@ -84,7 +84,7 @@ export class NodeSourceFile {
     const ctx = getRundeckContext();
     try {
       const response = await axios.get(
-        `${ctx.rdBase}api/${ctx.apiVersion}/project/${ctx.projectName}/source/${index}/resources`,
+        `${ctx.rdBase}/api/${ctx.apiVersion}/project/${ctx.projectName}/source/${index}/resources`,
         {
           responseType: "text",
           headers: {
@@ -117,7 +117,7 @@ export class NodeSourceFile {
     const token = await Tokens.getUIAjaxTokens();
     const response = (await axios
       .post(
-        `${ctx.rdBase}api/${ctx.apiVersion}/project/${ctx.projectName}/source/${index}/resources`,
+        `${ctx.rdBase}/api/${ctx.apiVersion}/project/${ctx.projectName}/source/${index}/resources`,
         content,
         {
           headers: {

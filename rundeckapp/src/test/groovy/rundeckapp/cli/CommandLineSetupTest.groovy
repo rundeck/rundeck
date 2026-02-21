@@ -73,8 +73,9 @@ class CommandLineSetupTest extends Specification {
     def "EncryptPassword with Jetty"() {
         when:
         int linesWritten = 0
-        def console = new Console()
-        console.metaClass.readLine = { ->
+        // Modern Groovy approach: Use Expando to create a mock Console without instantiating the final class
+        def console = new Expando()
+        console.readLine = { ->
             if(linesWritten++ == 0) return "username\n"
             if(linesWritten++ == 1) return "thepassword\n"
             return "\n"
@@ -103,12 +104,13 @@ class CommandLineSetupTest extends Specification {
     def "EncryptPassword with Hidden Input"() {
         when:
         int linesWrittenRL = 0
-        def console = new Console()
-        console.metaClass.readLine = { ->
+        // Modern Groovy approach: Use Expando to create a mock Console without instantiating the final class
+        def console = new Expando()
+        console.readLine = { ->
             if(linesWrittenRL++ == 0) return "username\n"
             return "\n"
         }
-        console.metaClass.readPassword = { -> return "thepassword".toCharArray() }
+        console.readPassword = { -> return "thepassword".toCharArray() }
         System.metaClass.static.console = { -> console }
         CommandLineSetup setup = new CommandLineSetup()
         Exception ex

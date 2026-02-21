@@ -24,8 +24,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
+import spock.lang.Specification
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -44,11 +45,10 @@ import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
-import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 import static org.junit.Assert.*
 
@@ -60,9 +60,12 @@ import static org.junit.Assert.*
 * $Id$
 */
 
-class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+// Grails 7: Use DataTest + ControllerUnitTest instead of RundeckHibernateSpec
+class ScheduledExecutionController2Spec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats] }
+    void setupSpec() {
+        mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats)
+    }
     /**
      * utility method to mock a class
      */
@@ -1703,7 +1706,8 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         then:
         assert succeeded
         response.status==200
-        response.format=='json'
+        // Grails 7: withFormat '*' matches any format including 'all'
+        response.format in ['json', 'all']
         assertNull(response.redirectedUrl)
         assert !model
     }

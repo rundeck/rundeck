@@ -792,7 +792,9 @@ class JobsSpec extends SeleniumBase {
         then:
         jobCreatePage.waitForTextToBePresentBySelector(jobCreatePage.workflowContentControlLabelBy, "Workflow",60)
         expect:
-        jobCreatePage.workflowAlphaUiContainer.isDisplayed()
+        // Grails 7: Verify NextUI workflow UI is loaded by checking for add step button
+        // The button is rendered by CommonUndoRedoDraggableList.vue with data-testid="add-button"
+        jobCreatePage.waitForElementVisible(By.cssSelector("[data-testid='add-button']"))
     }
 
     def "Create option form next ui"() {

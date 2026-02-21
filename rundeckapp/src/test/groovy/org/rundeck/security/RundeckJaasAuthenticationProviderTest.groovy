@@ -15,7 +15,7 @@
  */
 package org.rundeck.security
 
-import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule
+import org.rundeck.jaas.PropertyFileLoginModule
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContext
@@ -64,25 +64,24 @@ class RundeckJaasAuthenticationProviderTest extends Specification {
         noExceptionThrown()
     }
 
-    def "Handle Ignored Error Logout"() {
-        when:
+    def "Handle Logout Error"() {
+        given:
         RundeckJaasAuthenticationProvider provider = new RundeckJaasAuthenticationProvider()
-        LoginContext lcontext = Stub(LoginContext) {
-            logout() >> { throw new LoginException(RundeckJaasAuthenticationProvider.IGNORE_THIS_ERROR)}
-        }
+        LoginContext lcontext = Mock(LoginContext)
+        
         TestSecurityContext testContext = new TestSecurityContext(testAuth: new JaasAuthenticationToken("user","pass",lcontext))
         def sessionDestroyedEvent = Stub(HttpSessionDestroyedEvent) {
             getSecurityContexts() >> [testContext]
         }
-        boolean neverCalled = true
-        provider.metaClass.writeWarning = { msg, ex ->
-            neverCalled = false
-        }
+
+        when:
         provider.handleLogout(sessionDestroyedEvent)
 
         then:
+        1 * lcontext.logout() >> { throw new LoginException("Logout failed") }
+        
+        and: "Exception is caught and logged (not propagated)"
         noExceptionThrown()
-        neverCalled
     }
 
     class TestSecurityContext implements SecurityContext {
