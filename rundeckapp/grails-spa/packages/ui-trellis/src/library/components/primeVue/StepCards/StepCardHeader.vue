@@ -282,7 +282,6 @@ export default defineComponent({
 }
 
 .stepCardHeader .tag-workflow {
-  background-color: var(--colors-green-100);
   color: var(--colors-gray-900);
 }
 
