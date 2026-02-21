@@ -654,9 +654,13 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     /**
      * Return framework properties as a Map.
      * This includes properties from framework.properties file.
-     * @return Map of framework properties
+     * @return Map of framework properties, or empty map if framework not initialized
      */
     Map<String, String> getFrameworkPropertiesMap() {
+        // Guard against access during test context initialization when framework may not be ready
+        if (!rundeckFramework?.propertyLookup) {
+            return [:]
+        }
         return rundeckFramework.getPropertyLookup().getPropertiesMap()
     }
     /**
@@ -1210,6 +1214,10 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
     }
 
     Map<String, String> getProjectProperties(final String project) {
+        // Guard against access during test context initialization when framework may not be ready
+        if (!rundeckFramework?.frameworkProjectMgr) {
+            return [:]
+        }
         rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties()
     }
 
