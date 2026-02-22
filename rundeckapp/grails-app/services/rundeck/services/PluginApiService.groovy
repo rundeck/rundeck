@@ -280,14 +280,14 @@ class PluginApiService {
         ]
     }
 
-    def listPlugins() {
+    def listPlugins(boolean includeGroupMetadata = false) {
         Locale locale = getLocale()
         long appEpoch = VersionConstants.DATE.time
         String appVer = VersionConstants.VERSION
         def pluginList = listPluginsDetailed()
-        
-        // Cache for group icons: group name -> iconUrl
-        Map<String, String> groupIconCache = [:]
+
+        // Cache for group icons: group name -> iconUrl (v57+ feature)
+        Map<String, String> groupIconCache = includeGroupMetadata ? [:] : null
 
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
@@ -317,8 +317,10 @@ class PluginApiService {
                  pluginDate   : meta?.pluginDate?.time?:appEpoch,
                  enabled      : true] as LinkedHashMap<Object, Object>
 
-                // Get groupBy from provider metadata
-                def groupBy = provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY)
+                // Get groupBy from provider metadata (v57+ feature)
+                def groupBy = includeGroupMetadata ?
+                    provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY) : null
+                pluginDesc.providerMetadata = new LinkedHashMap<>()
 
                 if(service != ServiceNameConstants.UI) {
                     def uiDesc = uiPluginService.getProfileFor(service, provider.name)
@@ -329,30 +331,25 @@ class PluginApiService {
                                 params: [service: service, name: provider.name],
                                 absolute: true)
 
-                    if (uiDesc.providerMetadata) {
-                        pluginDesc.providerMetadata = new LinkedHashMap<>(uiDesc.providerMetadata)
-                    } else {
-                        pluginDesc.providerMetadata = new LinkedHashMap<>()
+                    if(uiDesc.providerMetadata) {
+                        pluginDesc.providerMetadata.putAll(uiDesc.providerMetadata)
                     }
-                } else {
-                    pluginDesc.providerMetadata = new LinkedHashMap<>()
                 }
 
-                if (groupBy) {
+                // Group icon resolution (v57+ feature)
+                if (includeGroupMetadata && groupBy) {
                     pluginDesc.providerMetadata[com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY] = groupBy
 
                     String groupIconUrl = null
 
-                    // 1. Check cache first
                     if (groupIconCache.containsKey(groupBy)) {
                         groupIconUrl = groupIconCache[groupBy]
                     } else {
-                        // 2. Check for explicit groupIconUrl from PluginGroup class
                         def pluginGroupType = provider.pluginGroupType
                         if (pluginGroupType) {
                             try {
-                                def method = pluginGroupType.getMethod('getGroupIconUrl', String.class)
-                                String explicitIconPath = method.invoke(null, groupBy) as String
+                                def pluginGroupInstance = pluginGroupType.newInstance()
+                                String explicitIconPath = pluginGroupInstance.getGroupIconUrl(groupBy) as String
                                 if (explicitIconPath) {
                                     // Extract icon filename from path like "/images/plugins/datadog-icon.svg"
                                     String iconName = explicitIconPath.substring(explicitIconPath.lastIndexOf('/') + 1)
@@ -366,8 +363,8 @@ class PluginApiService {
                                     groupIconCache[groupBy] = absoluteUrl
                                     groupIconUrl = absoluteUrl
                                 }
-                            } catch (NoSuchMethodException | Exception ignored) {
-                                // No getGroupIconUrl method or error calling it, continue to fallback
+                            } catch (Exception ignored) {
+                                // Error creating instance or calling method, continue to fallback
                             }
                         }
 

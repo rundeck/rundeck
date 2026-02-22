@@ -201,14 +201,16 @@ Since: v33
     )
     def listPlugins() {
         String service = params.service
+        boolean includeGroupMetadata = request.api_version >= ApiVersions.V57
+        boolean includeV40Fields = request.api_version >= ApiVersions.V40
 
         def providers = []
-        pluginApiService.listPlugins().each { svc ->
+        pluginApiService.listPlugins(includeGroupMetadata).each { svc ->
             if (service && service != svc.service)
                 return
 
             svc.providers.each { p ->
-                ApiPluginListProvider provider = new ApiPluginListProvider([
+                def providerMap = [
                         service: svc.service,
                         artifactName: p.pluginName,
                         name: p.name,
@@ -220,9 +222,14 @@ Since: v33
                         isHighlighted: p.isHighlighted,
                         highlightedOrder: p.highlightedOrder,
                         author: p.pluginAuthor,
-                        iconUrl: p.iconUrl,
-                        providerMetadata: p.providerMetadata,
-                ])
+                ]
+
+                if (includeV40Fields) {
+                    providerMap.iconUrl = p.iconUrl
+                    providerMap.providerMetadata = p.providerMetadata
+                }
+
+                ApiPluginListProvider provider = new ApiPluginListProvider(providerMap)
 
                 providers.add(provider)
             }
@@ -234,8 +241,9 @@ Since: v33
     }
 
     def listPluginsByService() {
+        boolean includeGroupMetadata = request.api_version >= ApiVersions.V57
         def services = []
-        pluginApiService.listPlugins().each { svc ->
+        pluginApiService.listPlugins(includeGroupMetadata).each { svc ->
             def providers = []
             svc.providers.each { p ->
                 def provider = [:]
