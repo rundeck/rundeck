@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupF
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.NodeExecutorServiceFactory
-import com.dtolabs.rundeck.app.internal.framework.FeatureToggleNodeExecutorProfile
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckNodeExecutorProfile
 import com.dtolabs.rundeck.app.mail.DynamicMailSender
@@ -47,7 +46,6 @@ import com.dtolabs.rundeck.core.common.NodeSupport
 import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor
-import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
@@ -320,27 +318,13 @@ beans={
         frameworkNodes = ref('rundeckNodeSupport')
         nodeExecutorService = ref('rundeckNodeExecutorService')
     }
-    rundeckBaseNodeExecutorProfile(RundeckNodeExecutorProfile){
+    rundeckNodeExecutorProfile(RundeckNodeExecutorProfile){
         defaultLocalProvider = LocalNodeExecutor.SERVICE_PROVIDER_TYPE
         defaultRemoteProvider = "sshj-ssh"
         localRegistry = [
                 (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
-                (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
+                (LocalNodeExecutor.SERVICE_PROVIDER_TYPE_ALIAS): LocalNodeExecutor,
         ]
-    }
-    rundeckNewLocalNodeExecutorProfile(RundeckNodeExecutorProfile){
-        defaultLocalProvider = NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE
-        defaultRemoteProvider = "sshj-ssh"
-        localRegistry = [
-            (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
-            (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
-        ]
-    }
-    rundeckNodeExecutorProfile(FeatureToggleNodeExecutorProfile){
-        baseProfile = ref('rundeckBaseNodeExecutorProfile')
-        toggleProfile = ref('rundeckNewLocalNodeExecutorProfile')
-        featureService = ref('featureService')
-        feature = Features.NEW_LOCAL_NODE_EXECUTOR
     }
     rundeckNodeExecutorService(NodeExecutorServiceFactory)
     rundeckBaseFrameworkExecutionServices(BaseFrameworkExecutionServices){

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,12 @@
  * limitations under the License.
  */
 
-/*
-* LocalNodeExecutor.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/21/11 5:42 PM
-* 
-*/
 package com.dtolabs.rundeck.core.execution.impl.local;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionException;
-import com.dtolabs.rundeck.core.execution.ExecutionListener;
-import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameterGenerator;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameterGeneratorImpl;
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameters;
@@ -39,34 +29,53 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.taskdefs.ExecTask;
-import org.apache.tools.ant.types.RedirectorElement;
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
-import java.util.Map;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
 /**
- * LocalNodeExecutor is ...
- *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * Local node executor using Java ProcessBuilder API (formerly NewLocalNodeExecutor).
+ * Executes commands locally on the Rundeck server using native Java process handling.
+ * @author greg
+ * @since 6/12/17
  */
 @Plugin(name = LocalNodeExecutor.SERVICE_PROVIDER_TYPE, service = ServiceNameConstants.NodeExecutor)
 @PluginDescription(title = "Local", description = "Executes commands locally on the Rundeck server")
-public class LocalNodeExecutor implements NodeExecutor {
+public class LocalNodeExecutor
+        implements NodeExecutor, DescriptionBuilder.Collaborator
+{
     public static final String SERVICE_PROVIDER_TYPE = "local";
+    public static final String SERVICE_PROVIDER_TYPE_ALIAS = "newlocal"; // Backwards compatibility alias
+    public static final String PROP_MERGE_ENV = "mergeEnv";
     public static final String DISABLE_LOCAL_EXECUTOR_ENV = "DISABLED_LOCAL_EXECUTOR";
     public static final String DISABLE_LOCAL_EXECUTOR_PROP = "rundeck.localExecutor.disabled";
-
-    private Framework framework;
-    private ExecTaskParameterGenerator parameterGenerator;
+    private ExecTaskParameterGenerator parameterGenerator = new ExecTaskParameterGeneratorImpl();
     private boolean disableLocalExecutor = false;
 
-    public LocalNodeExecutor(final Framework framework) {
-        this.framework = framework;
-        parameterGenerator = new ExecTaskParameterGeneratorImpl();
+    @PluginProperty(
+            title = "Merge Environment",
+            description = "Merge the environment variables from the Rundeck server with the local environment",
+            defaultValue = "true",
+            scope = PropertyScope.Framework
+    )
+    Boolean mergeEnv;
+
+    @Override
+    public void buildWith(final DescriptionBuilder builder) {
+        builder.frameworkMapping(
+                PROP_MERGE_ENV,
+                String.join(".", "framework", ServiceNameConstants.NodeExecutor, SERVICE_PROVIDER_TYPE, PROP_MERGE_ENV)
+        );
+    }
+
+    public LocalNodeExecutor() {
         this.disableLocalExecutor = getDisableLocalExecutorEnv();
     }
 
@@ -78,105 +87,94 @@ public class LocalNodeExecutor implements NodeExecutor {
         }
 
         return Boolean.getBoolean(DISABLE_LOCAL_EXECUTOR_PROP);
-
     }
 
-    public void setDisableLocalExecutor(boolean disableLocalExecutor) {
-        this.disableLocalExecutor = disableLocalExecutor;
+    @Override
+    public NodeExecutorResult executeCommand(
+            final ExecutionContext context,
+            final String[] command,
+            final INodeEntry node
+    )
+    {
+        return executeCommand(context, command, null, node);
     }
 
-    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
-                                             final INodeEntry node)  {
-
-
-        if(disableLocalExecutor){
-            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
+    @Override
+    public NodeExecutorResult executeCommand(
+            final ExecutionContext context, final String[] command,
+            final InputStream inputStream,
+            final INodeEntry node
+    )
+    {
+        if (disableLocalExecutor) {
+            return NodeExecutorResultImpl.createFailure(
+                    StepFailureReason.ConfigurationFailure,
                     "Local Executor is disabled",
-                    node);
-        }
-
-        final ExecutionListener listener = context.getExecutionListener();
-        final Project project = new Project();
-        AntSupport.addAntBuildListener(listener, project);
-
-        String propName = System.currentTimeMillis() + ".node." + node.getNodename() + ".LocalNodeExecutor.result";
-        listener.log(3, "using charset: " + context.getCharsetEncoding());
-        boolean success = false;
-        final ExecTask execTask;
-        //perform jsch sssh command
-        try {
-            execTask = buildExecTask(project,
-                                     parameterGenerator.generate(node, true, null, command),
-                                     context.getDataContext(),
-                                     context.getCharsetEncoding(),
-                                     new ExecTask()
+                    node
             );
-        } catch (ExecutionException e) {
-            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
-                                                        e.getMessage(),
-                                                        node);
         }
 
-        execTask.setResultProperty(propName);
-
+        List<String> commandList = new ArrayList<>();
         try {
-            execTask.execute();
-            success = true;
-        } catch (BuildException e) {
-            context.getExecutionListener().log(0, e.getMessage());
+            ExecTaskParameters
+                    taskParameters =
+                    parameterGenerator.generate(node, true, null, command);
+            commandList.add(taskParameters.getCommandexecutable());
+            commandList.addAll(Arrays.asList(taskParameters.getCommandArgs()));
+        } catch (ExecutionException e) {
+            return NodeExecutorResultImpl.createFailure(
+                    StepFailureReason.ConfigurationFailure,
+                    e.getMessage(),
+                    node
+            );
         }
 
-        int result = success ? 0 : -1;
-        if (project.getProperty(propName) != null) {
-            try {
-                result = Integer.parseInt(project.getProperty(propName));
-            } catch (NumberFormatException e) {
-
-            }
+        StringBuilder preview = new StringBuilder();
+        for (final String aCommand : commandList) {
+            preview.append("'").append(aCommand).append("'");
         }
-        if(null!=context.getOutputContext()){
+        context.getExecutionLogger().log(
+                5,
+                "LocalNodeExecutor, running command (" + commandList.size() + "): " + preview
+        );
+        Map<String, String> env = DataContextUtils.generateEnvVarsFromContext(context.getDataContext());
+        final int result;
+        try {
+            result =
+                    ScriptExecUtil.runLocalCommand(
+                            commandList.toArray(new String[]{}),
+                            env,
+                            null,
+                            System.out,
+                            System.err,
+                            !mergeEnv,
+                            ScriptExecUtil::killProcessHandleDescend,
+                            inputStream
+                    );
+        } catch (IOException e) {
+            return NodeExecutorResultImpl.createFailure(
+                    StepFailureReason.IOFailure,
+                    e.getMessage(),
+                    node
+            );
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+
+            return NodeExecutorResultImpl.createFailure(
+                    StepFailureReason.Interrupted,
+                    e.getMessage(),
+                    node
+            );
+        }
+        if (null != context.getOutputContext()) {
             context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
         }
-        final boolean status = 0==result;
-        if(status) {
-            return NodeExecutorResultImpl.createSuccess(node);
-        }else {
-            return NodeExecutorResultImpl.createFailure(NodeStepFailureReason.NonZeroResultCode,
-                                                        "Result code was " + result, node, result);
+        if (result != 0) {
+            return NodeExecutorResultImpl.createFailure(
+                    NodeStepFailureReason.NonZeroResultCode,
+                    "Result code was " + result, node, result
+            );
         }
+        return NodeExecutorResultImpl.createSuccess(node);
     }
-
-    public static ExecTask buildExecTask(
-            Project project, ExecTaskParameters taskParameters,
-            Map<String, Map<String, String>> dataContext,
-            final String charset,
-            final ExecTask task
-    ) {
-        final ExecTask execTask = task;
-        execTask.setTaskType("exec");
-        execTask.setFailonerror(false);
-        execTask.setProject(project);
-
-        execTask.setExecutable(taskParameters.getCommandexecutable());
-        String[] commandargs = taskParameters.getCommandArgs();
-        if(null!=commandargs){
-            for (String commandarg : commandargs) {
-                execTask.createArg().setValue(commandarg);
-            }
-        }
-
-        //add Env elements to pass environment variables to the exec
-
-        DataContextUtils.addEnvVarsFromContextForExec(execTask, dataContext);
-
-        if(charset!=null) {
-            //set input encoding as specified
-            RedirectorElement redirectorElement = new RedirectorElement();
-            redirectorElement.setInputEncoding(charset);
-            execTask.addConfiguredRedirector(redirectorElement);
-        }
-
-        return execTask;
-    }
-
 }

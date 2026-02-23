@@ -43,7 +43,6 @@ public enum Features implements FeaturesDefinition{
     CASE_INSENSITIVE_USERNAME("caseInsensitiveUsername"),
     ALPHA_UI("alphaUi"),
     API_PROJECT_CONFIG_VALIDATION("apiProjectConfigValidation"),
-    NEW_LOCAL_NODE_EXECUTOR("newLocalNodeExecutor"),
     NODE_EXECUTOR_SECURE_INPUT("nodeExecutorSecureInput"),
     PUBLIC_KEYS_DOWNLOAD("publicKeysDownload"),
     GUI_HIDE_ROI_INSTRUCTIONS("guiHideRoiInstructions"),
