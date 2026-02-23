@@ -83,10 +83,11 @@ export default defineComponent({
   },
   computed: {
     description(): string {
-      return this.detail.description || this.detail.desc;
+      const raw = this.detail.description || this.detail.desc;
+      return this.$t(raw) as string;
     },
     title(): string {
-      return this.detail.title;
+      return this.$t(this.detail.title) as string;
     },
     providerMeta(): any {
       return (this.detail && this.detail.providerMetadata) || {};

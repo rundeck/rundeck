@@ -7,7 +7,7 @@
           (prop.defaultValue === 'true' && innerValue === 'false')
         "
       >
-        <span :title="prop.desc">{{ prop.title }}: </span>
+        <span :title="$t(prop.desc)">{{ $t(prop.title) }}: </span>
         <span
           v-if="innerValue === 'true'"
           :class="
@@ -29,8 +29,8 @@
       </template>
     </span>
     <span v-else-if="prop.type === 'Integer'" class="configpair">
-      <span :title="prop.desc" data-testid="integer-prop-title">
-        {{ prop.title }}:
+      <span :title="$t(prop.desc)" data-testid="integer-prop-title">
+        {{ $t(prop.title) }}:
       </span>
       <span
         style="font-family: Courier, monospace"
@@ -43,7 +43,7 @@
       v-else-if="['Options', 'Select', 'FreeSelect'].indexOf(prop.type) >= 0"
       class="configpair"
     >
-      <span :title="prop.desc">{{ prop.title }}:</span>
+      <span :title="$t(prop.desc)">{{ $t(prop.title) }}:</span>
       <template v-if="prop.type !== 'Options'">
         <span class="text-success">
           <plugin-prop-val :prop="prop" :value="innerValue" />
@@ -78,7 +78,7 @@
       <template v-if="prop.options && prop.options['displayType'] === 'CODE'">
         <expandable>
           <template #label>
-            <span :title="prop.desc">{{ prop.title }}:</span>
+            <span :title="$t(prop.desc)">{{ $t(prop.title) }}:</span>
             <span class="text-info">
               {{ innerValue.split(/\r?\n/).length }} lines
             </span>
@@ -97,7 +97,7 @@
       >
         <expandable>
           <template #label
-            ><span :title="prop.desc">{{ prop.title }}:</span>
+            ><span :title="$t(prop.desc)">{{ $t(prop.title) }}:</span>
             <span class="text-info"
               >{{ `${innerValue}`.split(/\r?\n/).length }} lines</span
             ></template
@@ -128,7 +128,7 @@
         </span>
       </template>
       <span v-else>
-        <span :title="prop.desc">{{ prop.title }}:</span>
+        <span :title="$t(prop.desc)">{{ $t(prop.title) }}:</span>
         <span
           v-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
           class="text-success"

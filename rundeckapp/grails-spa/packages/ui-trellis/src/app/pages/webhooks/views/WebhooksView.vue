@@ -68,7 +68,7 @@
             data-tabkey="webhook-header"
             style="height: 200px"
           >
-            <Tab :index="0" title="General">
+            <Tab :index="0" :title="$t('message_webhookTabGeneral')">
               <div class="wh-edit__body">
                 <div class="form-group">
                   <div class="card card-accent">
@@ -110,7 +110,7 @@
                           class="btn btn-sm btn-default"
                           @click="setRegenerate"
                         >
-                          Regenerate
+                          {{ $t("message_webhookButtonRegenerate") }}
                         </button>
                         <span
                           v-if="curHook.regenAuth"
@@ -181,7 +181,10 @@
                 </div>
               </div>
             </Tab>
-            <Tab :index="1" title="Handler Configuration">
+            <Tab
+              :index="1"
+              :title="$t('message_webhookTabHandlerConfiguration')"
+            >
               <div class="wh-edit__body">
                 <div class="card" style="padding: 1em">
                   <div class="form-group">
@@ -578,7 +581,7 @@ export default defineComponent({
       this.showPluginConfig = false;
       this.origUseAuthVal = false;
       this.curHook = this.webhookStore.newFromApi({
-        name: "New Hook",
+        name: this.$t("message_webhookNewHookName"),
         user: this.curUser,
         roles: this.curUserRoles,
         useAuth: false,

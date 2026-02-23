@@ -1,6 +1,7 @@
 import { nextTick } from "vue";
 import { UiMessage } from "../../library/stores/UIStore";
 import en_US from "./locales/en_US";
+import de_DE from "./locales/de_DE";
 import es_419 from "./locales/es_419";
 import fr_FR from "./locales/fr_FR";
 import ja_JP from "./locales/ja_JP";
@@ -11,11 +12,19 @@ import { mergeDeep } from "./objectUtils";
 
 const internationalization = {
   en_US: en_US,
+  en: en_US,
+  de_DE: de_DE,
+  de: de_DE,
   es_419: es_419,
+  es: es_419,
   fr_FR: fr_FR,
+  fr: fr_FR,
   ja_JP: ja_JP,
+  ja: ja_JP,
   pt_BR: pt_BR,
+  pt: pt_BR,
   zh_CN: zh_CN,
+  zh: zh_CN,
 };
 
 const initI18n = (options = {}) => {
