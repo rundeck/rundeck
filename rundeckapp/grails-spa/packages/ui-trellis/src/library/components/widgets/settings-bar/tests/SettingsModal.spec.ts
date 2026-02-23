@@ -50,6 +50,9 @@ const mountSettingsModal = async () => {
         $t: (key: string) => key,
         $cookies: mockCookies,
       },
+      stubs: {
+        Teleport: true,
+      },
     },
   });
   await flushPromises();
@@ -147,7 +150,8 @@ describe("SettingsModal", () => {
     await tabs[1].trigger("click");
     await wrapper.vm.$nextTick();
 
-    expect(tabs[1].classes()).toContain("settings-modal__tab--active");
+    const updatedTabs = wrapper.findAll(".settings-modal__tab");
+    expect(updatedTabs[1].classes()).toContain("settings-modal__tab--active");
     expect(wrapper.find(".settings-panel__title").text()).toBe("settings.uiEarlyAccess.title");
   });
 
