@@ -747,15 +747,21 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getDefaultTabNodes() {
-        (el defaultTabNodes)
+        def element = el defaultTabNodes
+        executeScript "arguments[0].scrollIntoView(true);", element
+        return element
     }
 
     WebElement getDefaultTabOutput() {
-        (el defaultTabOutput)
+        def element = el defaultTabOutput
+        executeScript "arguments[0].scrollIntoView(true);", element
+        return element
     }
 
     WebElement getDefaultTabHtml() {
-        (el defaultTabHtml)
+        def element = el defaultTabHtml
+        executeScript "arguments[0].scrollIntoView(true);", element
+        return element
     }
 
     WebElement getSchedulesCrontab(){
