@@ -125,11 +125,9 @@ class PluginApiService {
                 .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
-        if(featureService.featurePresent(Features.OPTION_VALUES_PLUGIN)) {
-            pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
-                it.value.description
-            }.sort { a, b -> a.name <=> b.name }
-        }
+        pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
 
         pluginDescs['PasswordUtilityEncrypter'] = pluginService.listPlugins(PasswordUtilityEncrypterPlugin).collect {
             it.value.description

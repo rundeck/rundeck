@@ -29,8 +29,6 @@ import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckNodeExecutorProfile
 import com.dtolabs.rundeck.app.mail.DynamicMailSender
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
-import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
-import com.dtolabs.rundeck.app.tree.JasyptEncryptionEnforcerUpdaterConfig
 import com.dtolabs.rundeck.app.tree.StorageTreeCreator
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
@@ -667,17 +665,6 @@ beans={
         rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
     }else{
         rundeckKeyStorageContextProvider(KeyStorageContextProvider)
-    }
-
-    rundeckJasyptConverterUpdaterConfig(JasyptEncryptionEnforcerUpdaterConfig){
-        treeCreator = ref('rundeckStorageTreeCreator')
-    }
-
-    rundeckBootstrapStorageTreeUpdater(RundeckBootstrapStorageTreeUpdater){
-        storageTree = ref('rundeckStorageTree')
-        updaterConfig = ref('rundeckJasyptConverterUpdaterConfig')
-        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, false)
-        basePath = grailsApplication.config.getProperty('rundeck.storage.rewrite.basePath', String.class, 'keys')
     }
 
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree, rundeckKeyStorageContextProvider)

@@ -81,15 +81,13 @@ class WebhookService {
 
         Services contextServices = rundeckAuthorizedServicesProvider.getServicesWith(authContext)
 
-        if (featureService.featurePresent(Features.EVENT_STORE)) {
-            def scopedStore = gormEventStoreService.scoped(
-                new Evt(projectName: data.project, subsystem: 'webhooks'),
-                new EvtQuery(projectName: data.project, subsystem: 'webhooks')
-            )
-            contextServices = contextServices.combine(
-                    new SimpleServiceProvider([(EventStoreService): new EventStoreServiceTxn(scopedStore)])
-            )
-        }
+        def scopedStore = gormEventStoreService.scoped(
+            new Evt(projectName: data.project, subsystem: 'webhooks'),
+            new EvtQuery(projectName: data.project, subsystem: 'webhooks')
+        )
+        contextServices = contextServices.combine(
+                new SimpleServiceProvider([(EventStoreService): new EventStoreServiceTxn(scopedStore)])
+        )
         def keyStorageService = storageService.storageTreeWithContext(authContext)
         contextServices = contextServices.combine(new SimpleServiceProvider([(KeyStorageTree): keyStorageService]))
 

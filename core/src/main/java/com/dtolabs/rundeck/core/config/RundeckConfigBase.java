@@ -428,31 +428,25 @@ public class RundeckConfigBase {
 
         Boolean enableAll;
         Repository repository = new Repository();
-        Enabled optionValuesPlugin = new Enabled();
         Enabled webhooks = new Enabled();
-        Enabled emailCSSFramework = new Enabled();
         Enabled enhancedNodes = new Enabled();
         Enabled cleanExecutionsHistoryJob = new Enabled();
         Enabled cleanExecutionsHistoryJobAsyncStart = new Enabled();
-        Enabled workflowDynamicStepSummaryGUI = new Enabled();
-        Enabled legacyProjectNodesUi = new Enabled();
-        Enabled jobLifecyclePlugin = new Enabled();
-        Enabled executionLifecyclePlugin = new Enabled();
+        Enabled workflowDynamicStepSummaryGUI = new Enabled(true);
+        Enabled jobLifecyclePlugin = new Enabled(true);
+        Enabled executionLifecyclePlugin = new Enabled(true);
         Enabled sidebarProjectListing = new Enabled(true);
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
         Enabled notificationsOwnThread = new Enabled(true);
         Enabled workflowDesigner = new Enabled(true);
-        Enabled eventStore = new Enabled(true);
-        Enabled projectKeyStorage = new Enabled(true);
         Enabled pluginSecurity = new Enabled();
         Enabled healthEndpoint = new Enabled(true);
         Enabled fileUploadPlugin = new Enabled(true);
-        Enabled pluginGroups = new Enabled(true);
-        Enabled vueKeyStorage = new Enabled(true);
         Enabled legacyUi = new Enabled();
-        Enabled legacyXml = new Enabled();
+        // XML API support disabled in 6.0 - JSON only
+        Enabled legacyXml = new Enabled(false);
         Enabled apiProjectConfigValidation = new Enabled();
         Enabled caseInsensitiveUsername = new Enabled();
         Enabled nodeExecutorSecureInput = new Enabled();

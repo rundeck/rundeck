@@ -1287,37 +1287,35 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
 
-            if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
-                List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
-                //specific props for typed pluginValues
-                removePrefixes.add("project.plugin.PluginGroup.".toString())
-                removePrefixes.add("project.PluginGroup.".toString())
-                if (params.pluginValues?.PluginGroup?.json) {
-                    def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
-                    if (groupData instanceof Collection) {
-                        for (Object data : groupData) {
-                            if (data instanceof Map
-                                && data.type instanceof String
-                                && data.config instanceof Map) {
-                                String type = data.get('type')
-                                Map config = data.get('config')
-                                pluginGroupPasswordFieldsService.untrack(
-                                    [[config: [type: type, props: config], type: type, index: 0]],
-                                    pluginGroupDescs
-                                )
-                                projProps.put(
-                                        "project.PluginGroup.${type}.enabled".toString(),
-                                        'true'
-                                )
-                                for (String confKey : config.keySet()) {
-                                    if(config.get(confKey) != null) {
-                                        projProps.put(
-                                                "project.plugin.PluginGroup.${type}.${confKey}".toString(),
-                                                config.get(confKey).toString()
-                                        )
-                                    }
-
+            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+            //specific props for typed pluginValues
+            removePrefixes.add("project.plugin.PluginGroup.".toString())
+            removePrefixes.add("project.PluginGroup.".toString())
+            if (params.pluginValues?.PluginGroup?.json) {
+                def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
+                if (groupData instanceof Collection) {
+                    for (Object data : groupData) {
+                        if (data instanceof Map
+                            && data.type instanceof String
+                            && data.config instanceof Map) {
+                            String type = data.get('type')
+                            Map config = data.get('config')
+                            pluginGroupPasswordFieldsService.untrack(
+                                [[config: [type: type, props: config], type: type, index: 0]],
+                                pluginGroupDescs
+                            )
+                            projProps.put(
+                                    "project.PluginGroup.${type}.enabled".toString(),
+                                    'true'
+                            )
+                            for (String confKey : config.keySet()) {
+                                if(config.get(confKey) != null) {
+                                    projProps.put(
+                                            "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                            config.get(confKey).toString()
+                                    )
                                 }
+
                             }
                         }
                     }
@@ -2388,17 +2386,15 @@ List of config values, each value contains:
         execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], execDesc)
         fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
         List<Map<String, Object>> pluginGroupConfig = []
-        if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
-          final fproject = frameworkService.getFrameworkProject(project)
-          def projectProps = fproject.getProjectProperties()
-            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
-            pluginGroupDescs.each {
-                if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
-                    Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
-                    pluginGroupPasswordFieldsService
-                        .track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
-                    pluginGroupConfig.add([type: it.name, config: providerConfig])
-                }
+        final fproject = frameworkService.getFrameworkProject(project)
+        def projectProps = fproject.getProjectProperties()
+        List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+        pluginGroupDescs.each {
+            if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
+                Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
+                pluginGroupPasswordFieldsService
+                    .track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
+                pluginGroupConfig.add([type: it.name, config: providerConfig])
             }
         }
         // resourceConfig CRUD rely on this session mapping

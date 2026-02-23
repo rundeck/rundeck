@@ -139,7 +139,7 @@
         },
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
-            eventStore: {enabled: ${feature.isEnabled(name:'eventStore')}},
+            eventStore: {enabled: true},
             workflowDesigner: {enabled: ${feature.isEnabled(name:'workflowDesigner')}}
         },
         Browser: {

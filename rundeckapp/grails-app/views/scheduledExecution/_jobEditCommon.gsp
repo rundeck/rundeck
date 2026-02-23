@@ -143,7 +143,7 @@
              ]}"/>
 <g:set var="featuresMap" value="${[
         fileUploadPlugin:feature.isEnabled(name:'fileUploadPlugin'),
-        optionValuesPlugin:feature.isEnabled(name:'optionValuesPlugin'),
+        optionValuesPlugin:true,
         multilineJobOptions:feature.isEnabled(name:'multilineJobOptions'),
 ]}"/>
 <g:embedJSON id="featuresMapJSON" data="${ featuresMap}"/>
