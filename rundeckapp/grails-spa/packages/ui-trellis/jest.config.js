@@ -1,15 +1,15 @@
 const esModules = [
   "vue-virtual-scroller",
   "uuid",
-    "primevue/.*",
-    "@primevue/.*",
-    "@primeuix/.*",
+  "primevue/.*",
+  "@primevue/.*",
+  "@primeuix/.*",
 ].join("|");
 
 module.exports = {
   moduleFileExtensions: ["js", "ts", "vue", "mjs"],
   transform: {
-    "^.+\\.tsx?$": ["ts-jest", { tsconfig: "tsconfig.app.json" }],
+    "^.+\\.tsx?$": ["ts-jest", { tsconfig: "tsconfig.test.json" }],
     "^.+\\.vue$": "@vue/vue3-jest",
     "^.+\\.(mj|j|t)s$": "babel-jest",
   },
