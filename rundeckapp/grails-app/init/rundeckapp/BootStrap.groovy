@@ -47,7 +47,6 @@ import java.text.SimpleDateFormat
 
 class BootStrap {
 
-    public static final String WORKFLOW_CONFIG_FIX973 = 'workflowConfigFix973'
     def grailsApplication
     def scheduledExecutionService
     def executionService
@@ -558,7 +557,6 @@ class BootStrap {
                 log.warn("[Development Mode] Usage of H2 database is recommended only for development and testing")
             }
             if(canApplyServerUpdates) {
-                applyWorkflowConfigFix()
                 ensureTypeOnAuthToken()
             }
 
@@ -569,37 +567,6 @@ class BootStrap {
             log.info("Migrate only detected. Skipping bootstrap event.")
         }
         log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
-    }
-
-    def applyWorkflowConfigFix() {
-        if (grailsApplication.config.getProperty("rundeck.applyFix.${WORKFLOW_CONFIG_FIX973}",Boolean.class, false)
-                || !configStorageService.hasFixIndicator(WORKFLOW_CONFIG_FIX973)) {
-            try {
-                log.info("$WORKFLOW_CONFIG_FIX973: applying... ")
-                Map result = workflowService.applyWorkflowConfigFix973()
-                if (result) {
-                    if (!result.success) {
-                        log.warn("$WORKFLOW_CONFIG_FIX973: fix process was finished with errors")
-                    }
-                    if (result.invalidCount == 0) {
-                        log.info("$WORKFLOW_CONFIG_FIX973: No fix was needed. Storing fix application state.")
-                    } else {
-                        log.warn("$WORKFLOW_CONFIG_FIX973: Fixed ${result.invalidCount} workflows. Storing fix application state.")
-                    }
-                    final ObjectMapper mapper = new ObjectMapper()
-                    String resultAsString = mapper.writeValueAsString(result)
-                    configStorageService.writeFileResource(
-                            configStorageService.getSystemFixIndicatorPath(WORKFLOW_CONFIG_FIX973),
-                            new ByteArrayInputStream(resultAsString.bytes),
-                            [:]
-                    )
-                } else {
-                    log.error("$WORKFLOW_CONFIG_FIX973: The fix process did not return any results")
-                }
-            }catch(Throwable t){
-                log.error("$WORKFLOW_CONFIG_FIX973: The fix process threw an exception: $t", t)
-            }
-        }
     }
 
     def ensureTypeOnAuthToken() {
