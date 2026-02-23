@@ -1,7 +1,9 @@
 :root {
     --colors-blue-100:  #DCE6FB;
+    --colors-blue-100-original: #BEE3F8;
     --colors-blue-500: #285ED2;
     --colors-blue-600:  #1248BD;
+    --colors-blue-600-original: #003F9C;
     --colors-gray-100: #FAFAFA;
     --colors-gray-300: #E4E4E7;
     --colors-gray-300-original: #CBD5E0;

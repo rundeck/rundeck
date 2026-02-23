@@ -18,11 +18,11 @@ import { loadJsonData } from "@/app/utilities/loadJsonData";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
 import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
-import PrimeVue from "primevue/config";
-import Lara from "@primeuix/themes/lara";
-import Tooltip from "primevue/tooltip";
 import "primeicons/primeicons.css";
 import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
+import {configurePrimeVue} from "@/library/utilities/primeVueConfig";
+import Message from "primevue/message";
+import Banner from "@/app/pages/job/editor/Banner.vue";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -99,6 +99,14 @@ const jobSections = [
     addEventBus: true,
     visible: uiType === "next",
   },
+  {
+    name: "MessageApp2",
+    component: { Banner },
+    elementClass: "banner2",
+    addEventBus: true,
+    addCookies: true,
+    visible: true
+  }
 ];
 
 const mountSection = (section) => {
@@ -132,17 +140,7 @@ const mountSection = (section) => {
       if (section.addCookies) {
         app.use(VueCookies);
       }
-      app.use(PrimeVue, {
-        theme: {
-          preset: Lara,
-          options: {
-            prefix: "p",
-            cssLayer: true,
-            darkModeSelector: ".dark",
-          },
-        },
-      });
-      app.directive("tooltip", Tooltip);
+      configurePrimeVue(app, { includeTooltip: true });
       app.use(pinia);
       app.mount(element);
     });

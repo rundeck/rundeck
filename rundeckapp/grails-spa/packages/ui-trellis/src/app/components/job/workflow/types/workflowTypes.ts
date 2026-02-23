@@ -55,7 +55,7 @@ export interface CommandExecData {
 }
 
 /**
- * Ouput Plugin config for exec-command plugin type
+ * Output Plugin config for exec-command plugin type
  */
 export interface CommandExecPluginConfig {
   adhocRemoteString: string;

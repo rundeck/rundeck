@@ -21,9 +21,9 @@
 <g:render template="/common/errorFragment"/>
 <g:render template="editLogFilterModal"/>
 
-<span class="vue-ui-socket">
-    <ui-socket section="job-edit-page" location="banners"></ui-socket>
-</span>
+<div class="banner2">
+    <banner severity="warn"></banner>
+</div>
 
 %{--Edit job form--}%
 <g:form controller="scheduledExecution" method="post"

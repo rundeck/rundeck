@@ -110,8 +110,14 @@ export default defineComponent({
     padding: var(--sizes-4);
   }
 
-  &.collapsed .p-card-body {
-    display: none;
+  &.collapsed {
+    .p-card-body {
+      display: none;
+    }
+
+    .stepCardHeader {
+      border-bottom: 0 !important;
+    }
   }
 }
 </style>

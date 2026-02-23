@@ -50,6 +50,7 @@
     >
       <template #header v-if="errorHandler.length >= 1">
         <plugin-info
+          :key="errorHandlerKey"
           :detail="errorHandlerData"
           :show-description="false"
           :show-extended="false"
@@ -59,6 +60,7 @@
       </template>
       <template #content v-if="errorHandler.length >= 1">
         <plugin-config
+          :key="errorHandlerKey"
           class="plugin-config-section"
           :serviceName="errorHandlerServiceName"
           :provider="errorHandlerProvider"
@@ -76,6 +78,7 @@
 </template>
 
 <script lang="ts">
+//@ts-nocheck
 import { defineComponent } from "vue";
 import ConfigSection from "./ConfigSection.vue";
 import PluginConfig from "../../plugins/pluginConfig.vue";
@@ -130,8 +133,8 @@ export default defineComponent({
     },
     hideConfigSection: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   emits: [
     "add-log-filter",
@@ -144,13 +147,34 @@ export default defineComponent({
   data() {
     return {
       globalEventBus: getRundeckContext()?.eventBus,
+      errorHandlerKey: 0,
     };
+  },
+  watch: {
+    errorHandlerConfig: {
+      handler() {
+        this.errorHandlerKey++;
+      },
+      deep: true,
+    },
   },
   computed: {
     errorHandlerData() {
-      return this.errorHandler && this.errorHandler.length > 0
-        ? this.errorHandler[0]
-        : null;
+      if (!this.errorHandler || this.errorHandler.length === 0) {
+        return null;
+      }
+
+      const handler = this.errorHandler[0];
+
+      // If it's a job reference, augment with job reference plugin metadata
+      if (handler.jobref) {
+        return {
+          ...handler,
+          title: this.$t('Job reference')
+        };
+      }
+
+      return handler;
     },
     jobRefFullName(): string {
       if (!this.config.jobref) return "";
