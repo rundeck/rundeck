@@ -311,10 +311,6 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
     Map<String, DescribedPlugin<ExecutionLifecyclePlugin>> listEnabledExecutionLifecyclePlugins(
             PluginControlService pluginControlService
     ) {
-        if (!featureService.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
-            return null
-        }
-
         return getPluginService().listPlugins(ExecutionLifecyclePlugin).findAll { k, v ->
             !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.ExecutionLifecycle)
         }
