@@ -2634,7 +2634,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // Clone workflow from job definition using new JSON storage approach
         def workflowData = se.getWorkflowData()
-        props.workflow = WorkflowDataImpl.fromWorkflowData(workflowData)
+        if(workflowData) {
+            props.workflow = WorkflowDataImpl.fromMap(workflowData.toMap())
+        }
 
         Execution execution = createExecution(props)
         execution.dateStarted = new Date()

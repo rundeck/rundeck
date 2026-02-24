@@ -282,7 +282,8 @@ class WorkflowDataImpl implements WorkflowData, Validateable  {
         // Copy steps
         if (source.steps) {
             workflow.steps = source.steps.collect { step ->
-                WorkflowStepDataImpl.fromWorkflowStepData(step)
+                Map stepMap = step.toMap()
+                WorkflowStepDataImpl.fromMap(stepMap)
             }
         }
 

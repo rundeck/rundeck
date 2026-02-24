@@ -1200,7 +1200,7 @@ class WorkflowController extends ControllerBase {
                 } else {
                     def workflowData = sched.getWorkflowData()
                     if (workflowData) {
-                        session.editWF[wfid] = WorkflowDataImpl.fromWorkflowData(workflowData)
+                        session.editWF[wfid] = WorkflowDataImpl.fromMap(workflowData.toMap())
                     } else {
                         session.editWF[wfid] = new WorkflowDataImpl()
                     }
@@ -1208,7 +1208,7 @@ class WorkflowController extends ControllerBase {
             }
         } else if (usedwf) {
             //load from existing execution
-            session.editWF[wfid] = WorkflowDataImpl.fromWorkflowData(usedwf)
+            session.editWF[wfid] = WorkflowDataImpl.fromMap(usedwf.toMap())
         } else if (!session.editWF[wfid]) {
             session.editWF[wfid] = new WorkflowDataImpl()
         }

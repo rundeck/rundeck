@@ -2431,7 +2431,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.uuid=null
         //set session new workflow
         def origWorkflowData = scheduledExecution.getWorkflowData()
-        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? WorkflowDataImpl.fromWorkflowData(origWorkflowData) : new WorkflowDataImpl())
+        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? WorkflowDataImpl.fromMap(origWorkflowData.toMap()) : new WorkflowDataImpl())
         if(scheduledExecution.options){
             def editopts = [:]
 
@@ -2487,7 +2487,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         def props=[:]
         props.putAll(execution.properties)
         def execWorkflowData = execution.getWorkflowData()
-        props.workflow=execWorkflowData ? WorkflowDataImpl.fromWorkflowData(origWorkflowData) : new WorkflowDataImpl()
+        props.workflow=execWorkflowData ? WorkflowDataImpl.fromMap(execWorkflowData.toMap()) : new WorkflowDataImpl()
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
             props = props.findAll{!(it.key=~/^node(In|Ex)clude.*$/)}
@@ -2833,7 +2833,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                 newScheduledExecution.id=null
                 newScheduledExecution.uuid=null
                 //set session new workflow
-                WorkflowController.getSessionWorkflow(session,null, WorkflowDataImpl.fromWorkflowData(newScheduledExecution.getWorkflowData()))
+                WorkflowController.getSessionWorkflow(session,null, WorkflowDataImpl.fromMap(newScheduledExecution.getWorkflowData()?.toMap()))
                 if(newScheduledExecution.options){
                     def editopts = [:]
 
