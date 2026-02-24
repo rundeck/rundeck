@@ -1,8 +1,6 @@
 package org.rundeck.app.data.job.converters
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import rundeck.Execution
-import rundeck.Workflow
 import rundeck.data.execution.RdExecution
 
 class ExecutionToRdExecutionConverter {

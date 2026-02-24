@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import org.hibernate.sql.JoinType
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
@@ -1705,8 +1706,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def wfData = null
         if(execMap instanceof Execution) {
             wfData = execMap.getWorkflowData()
-        } else if(execMap instanceof ScheduledExecution) {
-            wfData = execMap.getWorkflowData()
         }
 
         //create execution context
@@ -1727,9 +1726,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             executionListener(listener)
             workflowExecutionListener(wlistener)
             execution(executionReference)
-            if(wfData) {
-                workflowData(wfData)
-            }
+            workflowData(wfData)
         }
         builder.charsetEncoding(charsetEncoding)
         builder.framework(framework)
@@ -2637,10 +2634,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // Clone workflow from job definition using new JSON storage approach
         def workflowData = se.getWorkflowData()
-        if (workflowData) {
-            Workflow workflow = new Workflow(workflowData)
-            props.workflow = workflow
-        }
+        props.workflow = WorkflowDataImpl.fromWorkflowData(workflowData)
 
         Execution execution = createExecution(props)
         execution.dateStarted = new Date()
@@ -2663,9 +2657,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         // Set workflow data if we have a workflow
-        if (props.workflow) {
-            execution.setWorkflowData(props.workflow)
-        }
+        execution.setWorkflowData(props.workflow)
         if (!execution.save(flush:true)) {
             execution.errors.allErrors.each { log.warn(it.toString()) }
             def msg=execution.errors.allErrors.collect { ObjectError err-> lookupMessage(err.codes,err.arguments?.toList(),err.defaultMessage) }.join(", ")
@@ -4700,7 +4692,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.user = scheduledExecution.user
         missed.userRoleList = scheduledExecution.userRoleList
         missed.serverNodeUUID = scheduledServer
-        missed.setWorkflowData(new Workflow())
+        missed.setWorkflowData(new WorkflowDataImpl())
         missed.status = 'missed'
         missed.save()
 

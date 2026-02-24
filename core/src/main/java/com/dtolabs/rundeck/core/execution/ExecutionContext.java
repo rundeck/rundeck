@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
 
 import java.util.Collection;
 import java.util.List;
@@ -235,5 +236,5 @@ public interface ExecutionContext {
      *
      * @return the workflow JSON string
      */
-    public String getWorkflowJson();
+    public WorkflowData getWorkflowData();
 }

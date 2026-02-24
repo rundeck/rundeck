@@ -42,8 +42,6 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import grails.converters.JSON
 import grails.util.Environment
-import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
-import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution

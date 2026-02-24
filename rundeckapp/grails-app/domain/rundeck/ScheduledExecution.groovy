@@ -1278,11 +1278,6 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      * @return WorkflowData instance (either Workflow domain or deserialized validateable RdWorkflow from JSON)
      */
     WorkflowData getWorkflowData() {
-        // Backwards compatibility: check old workflow field first
-        if (this.workflow != null) {
-            return this.workflow
-        }
-
         // New format: deserialize from JSON
         if (workflowJson != null) {
             // Check if we have a cached instance and if the JSON hasn't changed
@@ -1300,6 +1295,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         // Clear cache if workflowJson is null
         cachedWorkflowData = null
         cachedWorkflowJsonHash = null
+
+        // Backwards compatibility: check old workflow field first
+        if (this.workflow != null) {
+            return this.workflow
+        }
+
         return null
     }
 

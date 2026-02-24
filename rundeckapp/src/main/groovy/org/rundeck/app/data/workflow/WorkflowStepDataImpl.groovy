@@ -154,4 +154,27 @@ class WorkflowStepDataImpl implements WorkflowStepData, PluginProviderConfigurat
         }
         return map
     }
+
+    /**
+     * Instanteate new WorkflowStepDataImpl from WorkflowStepData source
+     * @param source WorkflowStepData source
+     * @return WorkflowStepDataImpl instance
+     */
+    static WorkflowStepDataImpl fromWorkflowStepData(WorkflowStepData source) {
+        if (!source) {
+            return null
+        }
+        def step = new WorkflowStepDataImpl()
+        step.pluginType = source.pluginType
+        step.nodeStep = source.nodeStep
+        step.description = source.description
+        step.keepgoingOnSuccess = source.keepgoingOnSuccess
+        step.configuration = source.configuration
+        step.pluginConfig = source.pluginConfig
+
+        if (source.errorHandler) {
+            step.errorHandler = fromWorkflowStepData(source.errorHandler)
+        }
+        return step
+    }
 }

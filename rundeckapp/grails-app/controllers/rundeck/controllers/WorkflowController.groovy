@@ -17,7 +17,9 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import org.rundeck.core.execution.ScriptCommand
@@ -421,7 +423,7 @@ class WorkflowController extends ControllerBase {
      */
     static private Description getPluginStepDescription(
             FrameworkService frameworkService,
-            boolean isNodeStep,
+            Boolean isNodeStep,
             String type
     )
     {
@@ -1174,7 +1176,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Return the session-stored workflow, or store the specified one in the session
      */
-    private def _getSessionWorkflow (Workflow usedwf = null){
+    private def _getSessionWorkflow (WorkflowData usedwf = null){
         return getSessionWorkflow(session,params,usedwf)
     }
     /**
@@ -1183,7 +1185,7 @@ class WorkflowController extends ControllerBase {
      * @param params the params
      * @param usedwf Workflow to store in the session (optional)
      */
-    public static Workflow getSessionWorkflow (session,params,Workflow usedwf = null){
+    public static Workflow getSessionWorkflow (session, params, WorkflowData usedwf = null){
         def wfid = '_new'
         def Workflow editwf
         if (!session.editWF) {
@@ -1194,21 +1196,21 @@ class WorkflowController extends ControllerBase {
             if (!session.editWF[wfid]) {
                 ScheduledExecution sched = ScheduledExecution.getByIdOrUUID(params.scheduledExecutionId)
                 if (!sched) {
-                    session.editWF[wfid] = new Workflow()
+                    session.editWF[wfid] = new WorkflowDataImpl()
                 } else {
                     def workflowData = sched.getWorkflowData()
                     if (workflowData) {
-                        session.editWF[wfid] = new Workflow(workflowData)
+                        session.editWF[wfid] = WorkflowDataImpl.fromWorkflowData(workflowData)
                     } else {
-                        session.editWF[wfid] = new Workflow()
+                        session.editWF[wfid] = new WorkflowDataImpl()
                     }
                 }
             }
         } else if (usedwf) {
             //load from existing execution
-            session.editWF[wfid] = new Workflow(usedwf)
+            session.editWF[wfid] = WorkflowDataImpl.fromWorkflowData(usedwf)
         } else if (!session.editWF[wfid]) {
-            session.editWF[wfid] = new Workflow()
+            session.editWF[wfid] = new WorkflowDataImpl()
         }
         editwf = session.editWF[wfid]
         return editwf
@@ -1279,7 +1281,7 @@ class WorkflowController extends ControllerBase {
     static Map _validatePluginStep(FrameworkService frameworkService, WorkflowStep exec) {
         if (exec instanceof PluginStep) {
             PluginStep item = exec as PluginStep
-            def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep ?: false, item.type)
+            def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep, item.type)
             if (!description) {
                 return [valid: false, report: "Plugin not found: " + item.type]
             }

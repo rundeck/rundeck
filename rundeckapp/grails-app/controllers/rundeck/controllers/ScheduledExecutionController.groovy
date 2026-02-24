@@ -78,6 +78,7 @@ import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -2430,7 +2431,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.uuid=null
         //set session new workflow
         def origWorkflowData = scheduledExecution.getWorkflowData()
-        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? new Workflow(origWorkflowData) : new Workflow())
+        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? WorkflowDataImpl.fromWorkflowData(origWorkflowData) : new WorkflowDataImpl())
         if(scheduledExecution.options){
             def editopts = [:]
 
@@ -2486,7 +2487,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         def props=[:]
         props.putAll(execution.properties)
         def execWorkflowData = execution.getWorkflowData()
-        props.workflow=execWorkflowData ? new Workflow(execWorkflowData) : new Workflow()
+        props.workflow=execWorkflowData ? WorkflowDataImpl.fromWorkflowData(origWorkflowData) : new WorkflowDataImpl()
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
             props = props.findAll{!(it.key=~/^node(In|Ex)clude.*$/)}
@@ -2832,7 +2833,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                 newScheduledExecution.id=null
                 newScheduledExecution.uuid=null
                 //set session new workflow
-                WorkflowController.getSessionWorkflow(session,null,new Workflow(newScheduledExecution.workflow))
+                WorkflowController.getSessionWorkflow(session,null, WorkflowDataImpl.fromWorkflowData(newScheduledExecution.getWorkflowData()))
                 if(newScheduledExecution.options){
                     def editopts = [:]
 

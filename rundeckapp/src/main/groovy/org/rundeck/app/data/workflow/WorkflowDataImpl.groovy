@@ -259,4 +259,33 @@ class WorkflowDataImpl implements WorkflowData, Validateable  {
             commands: steps?.collect { it.toMap() } ?: []
         ] + plugins
     }
+
+    /**
+     * Instanteate new WorkflowDataImpl from WorkflowData source
+     * @param source WorkflowData source to copy from
+     * @return new WorkflowDataImpl instance with copied data
+     */
+    static WorkflowDataImpl fromWorkflowData(WorkflowData source) {
+        if (!source) {
+            return null
+        }
+        def workflow = new WorkflowDataImpl()
+        workflow.keepgoing = source.keepgoing
+        workflow.strategy = source.strategy
+        workflow.threadcount = source.threadcount
+
+        // Copy plugin config map
+        if (source.pluginConfigMap) {
+            workflow.pluginConfigMap = new HashMap<>(source.pluginConfigMap)
+        }
+
+        // Copy steps
+        if (source.steps) {
+            workflow.steps = source.steps.collect { step ->
+                WorkflowStepDataImpl.fromWorkflowStepData(step)
+            }
+        }
+
+        return workflow
+    }
 }

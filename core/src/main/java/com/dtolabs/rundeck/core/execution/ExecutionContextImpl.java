@@ -84,7 +84,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private OrchestratorConfig orchestrator;
     private PluginControlService pluginControlService;
     @Getter private List<ContextComponent<?>> componentList;
-    @Getter private String workflowJson;
+    @Getter private WorkflowData workflowData;
     
     private ExecutionReference execution;
 
@@ -260,7 +260,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 if (null != original.getComponentList()) {
                     ctx.componentList.addAll(original.getComponentList());
                 }
-                ctx.workflowJson = original.getWorkflowJson();
+                ctx.workflowData = original.getWorkflowData();
             }
         }
 
@@ -368,8 +368,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             newList.addAll(other.ctx.componentList);
             ctx.componentList = newList;
 
-            if (null != other.ctx.workflowJson) {
-                ctx.workflowJson = other.ctx.workflowJson;
+            if (null != other.ctx.workflowData) {
+                ctx.workflowData = other.ctx.workflowData;
             }
             //step context and number taken from merged context
             ctx.stepContext = other.ctx.stepContext;
@@ -677,21 +677,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
          * @return builder
          */
         public Builder workflowData(WorkflowData workflowData) {
-            if (workflowData != null) {
-                ctx.workflowJson = serializeWorkflowData(workflowData);
-            } else {
-                ctx.workflowJson = null;
-            }
-            return this;
-        }
-
-        /**
-         * Set workflow JSON directly
-         * @param workflowJson workflow JSON string
-         * @return builder
-         */
-        public Builder workflowJson(String workflowJson) {
-            ctx.workflowJson = workflowJson;
+            ctx.workflowData = workflowData;
             return this;
         }
 

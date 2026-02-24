@@ -583,14 +583,13 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
      * @return WorkflowData instance (either Workflow domain or deserialized from JSON)
      */
     WorkflowData getWorkflowData() {
-        // Backwards compatibility: check old workflow field first
-        if (workflow != null) {
-            return workflow
-        }
-
         // New format: deserialize from JSON
         if (workflowJson != null) {
             return deserializeWorkflowData(workflowJson)
+        }
+        // Backwards compatibility: check old workflow field
+        if (workflow != null) {
+            return workflow
         }
 
         return null

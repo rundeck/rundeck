@@ -36,7 +36,7 @@ public class Workflow implements WorkflowData {
 
     Integer threadcount=1
     Boolean keepgoing=false
-    List<WorkflowStepData> commands
+    List<WorkflowStep> commands
     String strategy="node-first"
     String pluginConfig
     static belongsTo = [Execution, ScheduledExecution]
@@ -58,6 +58,10 @@ public class Workflow implements WorkflowData {
 
     List<WorkflowStepData> getSteps() {
         return commands
+    }
+
+    List<WorkflowStepData> getCommands(){
+        return getSteps()
     }
 
     public Map getPluginConfigMap() {
