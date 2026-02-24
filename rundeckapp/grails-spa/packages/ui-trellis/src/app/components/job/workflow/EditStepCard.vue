@@ -128,7 +128,7 @@ import { getRundeckContext } from "../../../../library";
 import type { EditStepData } from "./types/workflowTypes";
 import JobRefFormFields from "./JobRefFormFields.vue";
 import VueScrollTo from "vue-scrollto";
-import { resetValidation } from "./stepEditorUtils";
+import { resetValidation, type PluginDetails } from "./stepEditorUtils";
 
 const rundeckContext = getRundeckContext();
 
@@ -187,9 +187,9 @@ export default defineComponent({
   data() {
     return {
       contentExpanded: true,
-      editModel: {} as any,
+      editModel: {} as EditStepData,
       stepDescription: "",
-      provider: null as any,
+      provider: null as PluginDetails | null,
       loading: false,
       pluginConfigMode: "edit",
       validationErrors: resetValidation(),

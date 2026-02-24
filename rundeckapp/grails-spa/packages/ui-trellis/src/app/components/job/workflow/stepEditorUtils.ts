@@ -5,7 +5,7 @@
 import { mkid } from "./types/workflowFuncs";
 import type { EditStepData } from "./types/workflowTypes";
 import { getRundeckContext } from "../../../../library";
-import { ServiceType } from "../../../../library/stores/Plugins";
+import { ServiceType, type Plugin } from "../../../../library/stores/Plugins";
 import { validatePluginConfig } from "../../../../library/modules/pluginService";
 
 export interface PluginDetails {
@@ -78,7 +78,7 @@ export function getPluginDetailsForStep(
 
   const plugins = context.rootStore.plugins.getServicePlugins(service);
   const plugin = pluginName
-    ? plugins.find((p: any) => p.name === pluginName)
+    ? plugins.find((p: Plugin) => p.name === pluginName)
     : undefined;
 
   if (plugin) {

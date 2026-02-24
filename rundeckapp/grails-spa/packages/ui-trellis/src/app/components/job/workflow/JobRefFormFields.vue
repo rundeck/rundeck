@@ -654,6 +654,16 @@ interface JobRefModel {
   };
 }
 
+interface JobSelection {
+  id: string;
+  jobName: string;
+  groupPath: string;
+}
+
+interface NodeFilterSelection {
+  filter: string;
+}
+
 export default defineComponent({
   name: "JobRefFormFields",
   components: {
@@ -790,7 +800,7 @@ export default defineComponent({
       this.showFavoritesButton = true;
     },
 
-    updateJobSelection(job: any) {
+    updateJobSelection(job: JobSelection) {
       this.modelValue.uuid = job.id;
       this.modelValue.name = job.jobName;
       this.modelValue.group = job.groupPath;
@@ -806,7 +816,7 @@ export default defineComponent({
       this.nodeFilterStore.setSelectedFilter(val);
     },
 
-    filterClicked(filter: any) {
+    filterClicked(filter: NodeFilterSelection) {
       this.nodeFilterStore.setSelectedFilter(filter.filter);
     },
 
