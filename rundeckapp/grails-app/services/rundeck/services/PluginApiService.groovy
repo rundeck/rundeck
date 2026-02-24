@@ -134,12 +134,18 @@ class PluginApiService {
         }.sort { a, b -> a.name <=> b.name }
 
         //web-app level plugin descriptions
-        pluginDescs[jobLifecycleComponentService.jobLifecyclePluginProviderService.name]=jobLifecycleComponentService.listJobLifecyclePlugins().collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[executionLifecycleComponentService.executionLifecyclePluginProviderService.name]=executionLifecycleComponentService.listExecutionLifecyclePlugins().collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        def jobLifecyclePlugins = jobLifecycleComponentService.listJobLifecyclePlugins()
+        if(jobLifecyclePlugins) {
+            pluginDescs[jobLifecycleComponentService.jobLifecyclePluginProviderService.name] = jobLifecyclePlugins.collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
+        def executionLifecyclePlugins = executionLifecycleComponentService.listExecutionLifecyclePlugins()
+        if(executionLifecyclePlugins) {
+            pluginDescs[executionLifecycleComponentService.executionLifecyclePluginProviderService.name] = executionLifecyclePlugins.collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
         pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
