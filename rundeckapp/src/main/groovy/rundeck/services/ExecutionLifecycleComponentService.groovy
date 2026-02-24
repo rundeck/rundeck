@@ -93,7 +93,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @return Map containing all of the ExecutionLifecyclePlugin implementations
      */
     Map listExecutionLifecyclePlugins(){
-        return pluginService?.listPlugins(ExecutionLifecyclePlugin, executionLifecyclePluginProviderService)
+        return pluginService.listPlugins(ExecutionLifecyclePlugin, executionLifecyclePluginProviderService)
     }
 
     /**
