@@ -104,7 +104,6 @@ export default defineComponent({
   },
   methods: {
     handleTryNow() {
-      console.log("[BANNER] Try Now clicked, emitting event");
       if (this.eventBus) {
         this.eventBus.emit("conditional-early-access:try-now");
       } else {
@@ -112,8 +111,6 @@ export default defineComponent({
       }
     },
     handleRemindMeLater() {
-      console.log("[BANNER] Remind Me Later clicked");
-      // Set cookie for 1 year (first dismissal)
       this.$cookies.set(
         COOKIE_REMINDED,
         "true",
@@ -133,8 +130,6 @@ export default defineComponent({
       });
     },
     handleClose() {
-      console.log("[BANNER] Close button clicked (permanent dismissal)");
-      // Set permanent dismissal cookie
       this.$cookies.set(
         COOKIE_PERMANENTLY_DISMISSED,
         "true",
@@ -144,7 +139,6 @@ export default defineComponent({
         false,
         "Strict",
       );
-      // Remove the temporary "reminded" cookie (cleanup)
       this.$cookies.remove(COOKIE_REMINDED, "/");
       this.isBannerPermanentlyDismissed = true;
 

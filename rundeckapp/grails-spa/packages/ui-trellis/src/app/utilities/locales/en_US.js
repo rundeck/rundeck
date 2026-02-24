@@ -965,10 +965,10 @@ const messages = {
     conditional: {
       defineCondition: "Define the Condition",
       conditionDescription: "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
-      conditionSet: "Condition Set",
+      conditionGroups: "Condition Set",
       addCondition: "+ Add",
-      addConditionSet: "+ Add Condition Set",
-      removeConditionSet: "Remove Condition Set",
+      addconditionGroups: "+ Add Condition Set",
+      removeconditionGroups: "Remove Condition Set",
       removeCondition: "Remove Condition",
       selectField: "Select Field",
       selectOperator: "Select Operator",
