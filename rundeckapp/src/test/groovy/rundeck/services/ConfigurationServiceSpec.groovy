@@ -257,7 +257,7 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.feature.'*'.enabled = false
-        grailsApplication.config.rundeck.feature.'case-insensitive-username'.enabled = true
+        grailsApplication.config.rundeck.feature.'test-hyphenated-name'.enabled = true
         service.setAppConfig(grailsApplication.config.rundeck)
         def sysconfigprop=Mock(SysConfigProp){
             1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> prop
@@ -271,8 +271,8 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         val2 == expected
 
         where:
-        prop                                           | expected
-        "feature.caseInsensitiveUsername.enabled"      | true
-        "feature.enableAll"                            | false
+        prop                                    | expected
+        "feature.testHyphenatedName.enabled"    | true
+        "feature.enableAll"                     | false
     }
 }
