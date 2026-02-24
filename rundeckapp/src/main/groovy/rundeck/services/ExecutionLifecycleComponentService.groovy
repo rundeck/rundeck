@@ -93,10 +93,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @return Map containing all of the ExecutionLifecyclePlugin implementations
      */
     Map listExecutionLifecyclePlugins(){
-        if(!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)){
-            return pluginService?.listPlugins(ExecutionLifecyclePlugin, executionLifecyclePluginProviderService)
-        }
-        return null
+        return pluginService?.listPlugins(ExecutionLifecyclePlugin, executionLifecyclePluginProviderService)
     }
 
     /**
@@ -330,9 +327,6 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      */
     @CompileDynamic
     PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(JobData job) {
-        if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
-            return null
-        }
         def pluginConfig = job.pluginConfigMap?.get ServiceNameConstants.ExecutionLifecycle
 
         if (!(pluginConfig instanceof Map)) {
@@ -367,13 +361,11 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @return execution event handler
      */
     ExecutionLifecycleComponentHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference) {
-        log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Called for project: ${executionReference.project}, feature enabled: ${featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)}")
+        log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Called for project: ${executionReference.project}")
         
-        // Always load bean components (they don't require the feature flag)
         def components = loadConfiguredComponents(configurations, executionReference.project)
         
-        // Only load plugin-based components if the feature flag is enabled
-        if(featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false) && configurations){
+        if(configurations){
             def plugins = createConfiguredPlugins(configurations, executionReference.project)
             log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Adding ${plugins.size()} configured plugins")
             components.addAll(plugins)

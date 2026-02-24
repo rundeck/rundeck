@@ -126,10 +126,7 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
      * @return Map containing all of the JobLifecyclePlugin implementations
      */
     Map listJobLifecyclePlugins(){
-        if(featureService?.featurePresent(Features.JOB_LIFECYCLE_PLUGIN, false)){
-            return pluginService?.listPlugins(JobLifecyclePlugin, jobLifecyclePluginProviderService)
-        }
-        return null
+        return pluginService?.listPlugins(JobLifecyclePlugin, jobLifecyclePluginProviderService)
     }
 
     /**
