@@ -767,7 +767,6 @@ public class RundeckConfigBase {
     }
 
     public static final Map<String,String> DEPRECATED_PROPS = ImmutableMap.of(
-            "feature.optionValuesPlugin.enabled","feature.option-values-plugin.enabled",
             "feature.enhancedNodes.enabled","feature.enhanced-nodes.enabled",
             "feature.enableAll","feature.*.enabled"
     );
