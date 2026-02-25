@@ -13,6 +13,7 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.springframework.validation.Errors
 import rundeck.JobExec
 import rundeck.PluginStep
+import rundeck.Workflow
 import rundeck.data.validation.validators.ValidatorUtils
 import rundeck.data.validation.validators.plugin.RundeckPluginValidator
 import rundeck.data.validation.validators.workflowstep.WorkflowStepValidatorFactory
