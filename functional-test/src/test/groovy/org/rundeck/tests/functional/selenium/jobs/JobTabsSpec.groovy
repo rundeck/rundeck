@@ -35,6 +35,8 @@ class JobTabsSpec extends SeleniumBase {
         def executionShowPage = page(ExecutionShowPage)
         then:
         def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-output-tab")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
@@ -60,6 +62,8 @@ class JobTabsSpec extends SeleniumBase {
         def executionShowPage = page(ExecutionShowPage)
         then:
         def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-output-tab")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
@@ -89,6 +93,8 @@ class JobTabsSpec extends SeleniumBase {
         def htmlOutputPage = page HtmlRenderedOutputPage
         then:
         def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-html-output")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.addSimpleCommandStep(fullCommand, 0)

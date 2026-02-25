@@ -53,8 +53,10 @@ class JobEditSpec extends SeleniumBase{
             jobListPage.go("/project/${projectName}/jobs")
             jobListPage.getLink(jobName).click()
             jobShowPage.validatePage()
-            jobShowPage.getJobActionDropdownButton().click()
-            jobShowPage.getEditJobLink().click()
+            def jobId = jobShowPage.getJobId()
+            jobCreatePage.legacyUi = true
+            jobCreatePage.loadEditPath(projectName, jobId, false)
+            jobCreatePage.go()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
             jobCreatePage.addSimpleCommandStepButton.click()
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
