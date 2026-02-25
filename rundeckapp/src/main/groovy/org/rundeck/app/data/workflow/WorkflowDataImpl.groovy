@@ -98,7 +98,8 @@ class WorkflowDataImpl implements WorkflowData, Validateable  {
             if (map.jobref!=null) {
                 exec = JobExec.jobExecFromMap(map)
             } else {
-                exec = PluginStep.fromMap(map)
+                WorkflowStepData pluginStep = PluginStep.fromMap(map)
+                exec = pluginStep.createClone()
             }
             //exec
             //WorkflowStepDataImpl.fromMap(map as Map<String, Object>)
@@ -256,6 +257,7 @@ class WorkflowDataImpl implements WorkflowData, Validateable  {
         return [
             keepgoing: keepgoing,
             strategy: strategy,
+            threadcount: threadcount,
             commands: steps?.collect { it.toMap() } ?: []
         ] + plugins
     }

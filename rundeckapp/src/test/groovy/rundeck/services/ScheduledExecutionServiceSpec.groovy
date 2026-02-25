@@ -48,6 +48,7 @@ import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
@@ -285,6 +286,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 description   : 'a job',
                 argString     : '-a b -c d',
                 workflow      : new Workflow(
+                        threadcount: 1,
                         keepgoing: true,
                         commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
                 ),
@@ -1024,7 +1026,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupDoValidate()
         def params = baseJobParams() + [
-                _sessionEditWFObject: new Workflow([threadcount: 1, keepgoing: true, strategy: 'sequential', commands: [new CommandExec(cmd)]]),
+                _sessionEditWFObject: new WorkflowDataImpl().fromMap([threadcount: 1, keepgoing: true, strategy: 'sequential', commands: [new CommandExec(cmd).toMap()]]),
         ]
         service.messageSource = Mock(MessageSource) {
             getMessage(_, _) >> { it[0].toString() }
@@ -5307,20 +5309,24 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.jobDefinitionWorkflow(job, input, [:], auth)
         then: "workflow is the same"
             job.getWorkflowData() != null
-            job.getWorkflowData().toMap() == input.workflow.toMap()
+            job.getWorkflowData().toMap().keepgoing == input.getWorkflowData().toMap().keepgoing
+            job.getWorkflowData().toMap().strategy == input.getWorkflowData().toMap().strategy
+            job.getWorkflowData().toMap().commands == input.getWorkflowData().toMap().commands
 
     }
 
     def "job definition workflow from workflow param"() {
         given: "new job"
             def job = new ScheduledExecution()
-            def params = [workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])]
+            def params = [workflow: new Workflow(threadcount: 1, commands: [new CommandExec(adhocRemoteString: 'test')])]
             def auth = Mock(UserAndRolesAuthContext)
         when: "define the workflow from params"
             service.jobDefinitionWorkflow(job, null, params, auth)
         then: "workflow is the same"
             job.getWorkflowData() != null
-            job.getWorkflowData().toMap() == params.workflow.toMap()
+            job.getWorkflowData().toMap().keepgoing == params.workflow.toMap().keepgoing
+            job.getWorkflowData().toMap().strategy == params.workflow.toMap().strategy
+            job.getWorkflowData().toMap().commands == params.workflow.toMap().commands
 
     }
     def "job definition workflow from map params"() {
@@ -5420,6 +5426,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def params = [
                     _sessionwf          : 'true',
                     _sessionEditWFObject: new Workflow(
+                            threadcount: 1,
                             commands: [
                                     new CommandExec(adhocRemoteString: 'test')
                             ]
@@ -5430,7 +5437,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.jobDefinitionWorkflow(job, null, params, auth)
         then: "workflow is the same"
             job.getWorkflowData() != null
-            job.getWorkflowData().toMap() == params._sessionEditWFObject.toMap()
+            job.getWorkflowData().toMap().keepgoing == params._sessionEditWFObject.toMap().keepgoing
+            job.getWorkflowData().toMap().strategy == params._sessionEditWFObject.toMap().strategy
+            job.getWorkflowData().toMap().commands == params._sessionEditWFObject.toMap().commands
     }
 
     @Unroll

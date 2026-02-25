@@ -1371,33 +1371,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                     // If toMap() removed pluginConfig but it exists in the source, preserve it as empty map
                     workflowMap.pluginConfig = [:]
                 }
-            } else if (workflowData.respondsTo('toMap')) {
+            } else {
                 // RdWorkflow or other implementations with toMap()
                 workflowMap = workflowData.toMap()
                 // Preserve empty pluginConfig as "{}" instead of removing it
                 if (!workflowMap.containsKey('pluginConfig') && workflowData.pluginConfigMap != null) {
                     // If toMap() removed pluginConfig but it exists in the source, preserve it as empty map
-                    workflowMap.pluginConfig = [:]
-                }
-            } else {
-                // Fallback: manually construct map from WorkflowData interface
-                workflowMap = [
-                    keepgoing: workflowData.keepgoing,
-                    strategy: workflowData.strategy,
-                    threadcount: workflowData.getThreadcount(),
-                    commands: workflowData.steps?.collect { step ->
-                        if (step.respondsTo('toMap')) {
-                            step.toMap()
-                        } else {
-                            // Basic map construction from step
-                            [:]  // This shouldn't happen in practice
-                        }
-                    }
-                ]
-                if (workflowData.pluginConfigMap) {
-                    workflowMap.pluginConfig = workflowData.pluginConfigMap
-                } else if (workflowData.respondsTo('getPluginConfig') && workflowData.pluginConfig != null) {
-                    // Preserve empty pluginConfig as "{}" instead of null
                     workflowMap.pluginConfig = [:]
                 }
             }

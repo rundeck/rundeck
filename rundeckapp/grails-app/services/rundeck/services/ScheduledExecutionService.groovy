@@ -3475,9 +3475,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 wf.strategy='sequential'
             }
             if (wf.commands) {
-                final Workflow workflow = new Workflow(wf)
+                final WorkflowData workflow = new WorkflowDataImpl().fromMap(wf.toMap())
                 scheduledExecution.setWorkflowData(workflow)
-                wf.discard()
             }
         } else if (params.jobWorkflowJson) {
             def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())

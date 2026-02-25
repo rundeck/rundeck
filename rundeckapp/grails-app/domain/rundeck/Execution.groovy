@@ -652,24 +652,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
             if (workflowData instanceof Workflow) {
                 // Use existing toMap() method
                 workflowMap = ((Workflow) workflowData).toMap()
-            } else if (workflowData.respondsTo('toMap')) {
-                // RdWorkflow or other implementations with toMap()
-                workflowMap = workflowData.toMap()
             } else {
                 // Fallback: manually construct map from WorkflowData interface
-                workflowMap = [
-                    keepgoing: workflowData.keepgoing,
-                    strategy: workflowData.strategy,
-                    threadcount: workflowData.getThreadcount(),
-                    commands: workflowData.steps?.collect { step ->
-                        if (step.respondsTo('toMap')) {
-                            step.toMap()
-                        } else {
-                            // Basic map construction from step
-                            [:]  // This shouldn't happen in practice
-                        }
-                    }
-                ]
+                workflowMap = workflowData.toMap()
                 if (workflowData.pluginConfigMap) {
                     workflowMap.pluginConfig = workflowData.pluginConfigMap
                 }

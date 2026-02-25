@@ -94,7 +94,7 @@ class WorkflowController extends ControllerBase {
             return renderErrorFragment("num parameter is required")
         }
 
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def numi;
         if (params.num) {
             numi = Integer.parseInt(params.num)
@@ -177,7 +177,7 @@ class WorkflowController extends ControllerBase {
                 return renderErrorFragment("num parameter required")
             }
 
-            def Workflow editwf = _getSessionWorkflow()
+            def WorkflowData editwf = _getSessionWorkflow()
 
             def num = Integer.parseInt(params.num)
             def result = _applyWFEditAction(editwf, [action: 'copy', num: num])
@@ -220,7 +220,7 @@ class WorkflowController extends ControllerBase {
             if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
                 return
             }
-            def Workflow editwf = _getSessionWorkflow()
+            def WorkflowData editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
                 log.error("num parameter is invalid: ${numi}")
@@ -279,7 +279,7 @@ class WorkflowController extends ControllerBase {
             if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
                 return
             }
-            def Workflow editwf = _getSessionWorkflow()
+            def WorkflowData editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
                 log.error("num parameter is invalid: ${numi}")
@@ -361,7 +361,7 @@ class WorkflowController extends ControllerBase {
             if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
                 return
             }
-            def Workflow editwf = _getSessionWorkflow()
+            def WorkflowData editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
                 log.error("num parameter is invalid: ${numi}")
@@ -450,7 +450,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def numi = Integer.parseInt(params.num)
         if (numi >= editwf.commands.size()) {
             log.error("num parameter is invalid: ${numi}")
@@ -483,7 +483,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def item
         def numi
         def wfEditAction = 'true' == params.newitem ? 'insert' : 'modify'
@@ -579,7 +579,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
 
         def fromi = Integer.parseInt(params.fromnum)
         def toi = Integer.parseInt(params.tonum)
@@ -611,7 +611,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
 
         def fromi = Integer.parseInt(params.delnum)
         def wfEditAction = 'remove'
@@ -644,7 +644,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def action = _popUndoAction(params.scheduledExecutionId)
 
         def num
@@ -684,7 +684,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def action = _popRedoAction(params.scheduledExecutionId)
 
         def num
@@ -722,7 +722,7 @@ class WorkflowController extends ControllerBase {
         session.editWF?.remove(uid)
         session.undoWF?.remove(uid)
         session.redoWF?.remove(uid)
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
 
         return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: true,
                 project: params.project])
@@ -1185,9 +1185,9 @@ class WorkflowController extends ControllerBase {
      * @param params the params
      * @param usedwf Workflow to store in the session (optional)
      */
-    public static Workflow getSessionWorkflow (session, params, WorkflowData usedwf = null){
+    public static WorkflowData getSessionWorkflow (session, params, WorkflowData usedwf = null){
         def wfid = '_new'
-        def Workflow editwf
+        def WorkflowData editwf
         if (!session.editWF) {
             session.editWF = [:]
         }

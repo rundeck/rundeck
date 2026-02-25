@@ -141,13 +141,13 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
             jobName: "test-job",
             project: "test-project"
         )
-        def jobWorkflow = new Workflow(
+        def jobWorkflow = new WorkflowDataImpl(
             keepgoing: true,
             strategy: 'sequential',
             threadcount: 2,
-            commands: []
+            steps: []
         )
-        jobWorkflow.addToCommands(new PluginStep(
+        jobWorkflow.steps.add(new PluginStep(
             type: 'test-plugin',
             nodeStep: true,
             configuration: [key: 'value']
@@ -162,7 +162,7 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
         )
 
         when: "Cloning workflow from job"
-        def clonedWorkflow = new Workflow(job.getWorkflowData())
+        def clonedWorkflow = new WorkflowDataImpl().fromMap(job.getWorkflowData().toMap())
         execution.setWorkflowData(clonedWorkflow)
 
         then: "Execution should have workflow data"
@@ -189,26 +189,27 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
         when: "Getting workflow data"
         def result = execution.getWorkflowData()
 
-        then: "Should prefer old format for backwards compatibility"
-        result == execution.workflow
-        result.keepgoing == false
-        result.strategy == 'node-first'
+        then: "Should prefer new format if old workflow is present"
+        result.keepgoing == true
+        result.strategy == 'sequential'
+        result.getSteps() != null
     }
 
     def "test roundtrip serialization preserves execution workflow"() {
         given: "A workflow for execution"
-        def originalWorkflow = new Workflow(
+        def originalWorkflow = new WorkflowDataImpl(
             keepgoing: false,
             strategy: 'node-first',
             threadcount: 1,
-            commands: []
+            steps: []
         )
-        def step = new PluginStep(
-            type: 'exec-command',
+        def step = PluginStep.fromMap([
+            type: 'test-command',
             nodeStep: true,
             configuration: [command: 'echo hello']
+        ]
         )
-        originalWorkflow.addToCommands(step)
+        originalWorkflow.steps.add(step)
 
         and: "An Execution"
         def execution = new Execution(
@@ -226,7 +227,7 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
         deserializedWorkflow.keepgoing == originalWorkflow.keepgoing
         deserializedWorkflow.strategy == originalWorkflow.strategy
         deserializedWorkflow.commands.size() == 1
-        deserializedWorkflow.commands[0].pluginType == 'exec-command'
+        deserializedWorkflow.commands[0].pluginType == 'test-command'
     }
 
     def "test workflow with error handler serializes correctly"() {

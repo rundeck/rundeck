@@ -203,19 +203,19 @@ class ScheduledExecutionWorkflowJsonSpec extends Specification implements DataTe
         when: "Getting workflow data"
         def result = se.getWorkflowData()
 
-        then: "Should prefer old format for backwards compatibility"
-        result == se.workflow
-        result.keepgoing == false
-        result.strategy == 'node-first'
+        then: "Should prefer new format"
+        result == se.getWorkflowData()
+        result.keepgoing == true
+        result.strategy == 'sequential'
     }
 
     def "test roundtrip serialization preserves workflow data"() {
         given: "A complex workflow"
-        def originalWorkflow = new Workflow(
+        def originalWorkflow = new WorkflowDataImpl(
             keepgoing: true,
             strategy: 'parallel',
             threadcount: 3,
-            commands: []
+            steps: []
         )
         def step1 = new PluginStep(
             type: 'test-plugin',
@@ -227,8 +227,8 @@ class ScheduledExecutionWorkflowJsonSpec extends Specification implements DataTe
             nodeStep: false,
             configuration: [setting: 'data']
         )
-        originalWorkflow.addToCommands(step1)
-        originalWorkflow.addToCommands(step2)
+        originalWorkflow.steps.add(step1)
+        originalWorkflow.steps.add(step2)
 
         and: "A ScheduledExecution"
         def se = new ScheduledExecution(
@@ -311,14 +311,13 @@ class ScheduledExecutionWorkflowJsonSpec extends Specification implements DataTe
 
     def "test setWorkflowData handles WorkflowData interface implementations"() {
         given: "A mock WorkflowData implementation"
-        def workflowData = Mock(WorkflowData) {
-            getKeepgoing() >> true
-            getStrategy() >> 'sequential'
-            getThreadcount() >> 2
-            getSteps() >> []
-            getPluginConfigMap() >> [:]
-        }
-        workflowData.respondsTo('toMap') >> false
+        def workflowData = new WorkflowDataImpl(
+                keepgoing: true,
+                strategy: 'sequential',
+                threadcount: 2,
+                steps: [],
+                pluginConfigMap: [:]
+        )
 
         and: "A ScheduledExecution"
         def se = new ScheduledExecution(
