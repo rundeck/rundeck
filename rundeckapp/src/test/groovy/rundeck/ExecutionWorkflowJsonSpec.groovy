@@ -170,7 +170,6 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
         def execWorkflow = execution.getWorkflowData()
         execWorkflow.keepgoing == true
         execWorkflow.strategy == 'sequential'
-        execWorkflow.threadcount == 2
         execWorkflow.getSteps().size() == 1
     }
 

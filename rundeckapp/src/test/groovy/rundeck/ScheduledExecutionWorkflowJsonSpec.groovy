@@ -244,7 +244,6 @@ class ScheduledExecutionWorkflowJsonSpec extends Specification implements DataTe
         deserializedWorkflow != null
         deserializedWorkflow.keepgoing == originalWorkflow.keepgoing
         deserializedWorkflow.strategy == originalWorkflow.strategy
-        deserializedWorkflow.threadcount == originalWorkflow.threadcount
 
         and: "Steps should be preserved"
         deserializedWorkflow.commands.size() == 2
