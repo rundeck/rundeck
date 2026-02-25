@@ -66,7 +66,7 @@ public class LocalNodeExecutor
             defaultValue = "true",
             scope = PropertyScope.Framework
     )
-    Boolean mergeEnv;
+    boolean mergeEnv = true;
 
     @Override
     public void buildWith(final DescriptionBuilder builder) {
