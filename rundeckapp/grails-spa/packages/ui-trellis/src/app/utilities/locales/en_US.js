@@ -950,7 +950,7 @@ const messages = {
       label: "Job Steps",
     },
     logFilters: "Log Filters",
-    logFiltersTooltip: "Filters that will affect the logs produces by these steps",
+    logFiltersTooltip: "Filters that will affect the logs produced by these steps",
     addLogFilter: "Add Log Filter",
     clickToEdit: "Click to edit",
     edit: "Edit",

@@ -38,7 +38,38 @@
 import { defineComponent } from "vue";
 import BaseStepCard from "./BaseStepCard.vue";
 import StepCardContent from "./StepCardContent.vue";
-import type { ErrorHandlerDefinition } from "../../../../app/components/job/workflow/types/workflowTypes";
+
+//todo: move the types out
+interface JobRefDefinition {
+  group: string;
+  name: string;
+  project?: string;
+  uuid?: string;
+  args?: string;
+  failOnDisable?: boolean;
+  childNodes?: boolean;
+  importOptions?: boolean;
+  ignoreNotifications?: boolean;
+  nodeStep?: boolean;
+  nodefilters?: {
+    filter: string;
+    dispatch?: {
+      threadcount?: number;
+      keepgoing?: boolean;
+      rankAttribute?: string;
+      rankOrder?: string;
+      nodeIntersect?: boolean;
+    };
+  };
+}
+interface ErrorHandlerDefinition {
+  config: any;
+  keepgoingOnSuccess?: boolean;
+  nodeStep: boolean;
+  jobref?: JobRefDefinition;
+  type: string;
+  id: string;
+}
 
 export default defineComponent({
   name: "StepCard",

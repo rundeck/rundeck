@@ -30,8 +30,6 @@ export function configurePrimeVue(
   if (options.includeTooltip) {
     app.directive('tooltip', Tooltip);
   }
-
-  console.log('[PrimeVue Config] PrimeVue configured successfully');
 }
 
 export { Tooltip };

@@ -556,7 +556,8 @@ export default defineComponent({
       const requestOptions = {
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
-      this.getKeyMetadata(getPath)
+      // @ts-ignore
+      this.getKeyMetadata(getPath, requestOptions)
         .then((result: any) => {
           this.directories = [];
           this.files = [];
