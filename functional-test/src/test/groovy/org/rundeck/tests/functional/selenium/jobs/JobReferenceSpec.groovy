@@ -63,7 +63,7 @@ class JobReferenceSpec extends SeleniumBase {
 
         when:
         def jobCreatePage = go(JobCreatePage, projectName)
-        jobCreatePage.legacyUi = true
+        jobCreatePage.legacyUi = legacyUi
         JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
@@ -83,6 +83,8 @@ class JobReferenceSpec extends SeleniumBase {
         }
         cleanup:
         deleteProject(projectName)
+        where:
+        legacyUi << [false, true]
     }
 
     def "create a job with referenced execution node step by name and run it successfully"(){
@@ -95,7 +97,7 @@ class JobReferenceSpec extends SeleniumBase {
 
         when:
         def jobCreatePage = go(JobCreatePage, projectName)
-        jobCreatePage.legacyUi = true
+        jobCreatePage.legacyUi = legacyUi
         JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
@@ -120,6 +122,8 @@ class JobReferenceSpec extends SeleniumBase {
         }
         cleanup:
         deleteProject(projectName)
+        where:
+        legacyUi << [false, true]
     }
 
     def "create a job with referenced execution workflow step by using 'choose a job' button and run it successfully"() {
@@ -132,7 +136,7 @@ class JobReferenceSpec extends SeleniumBase {
 
         when:
         def jobCreatePage = go(JobCreatePage, projectName)
-        jobCreatePage.legacyUi = true
+        jobCreatePage.legacyUi = legacyUi
         JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
@@ -153,6 +157,8 @@ class JobReferenceSpec extends SeleniumBase {
         }
         cleanup:
         deleteProject(projectName)
+        where:
+        legacyUi << [false, true]
     }
 
     def "override node filters thread count"(){

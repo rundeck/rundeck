@@ -54,11 +54,13 @@ class JobEditSpec extends SeleniumBase{
             jobListPage.getLink(jobName).click()
             jobShowPage.validatePage()
             def jobId = jobShowPage.getJobId()
-            jobCreatePage.legacyUi = true
+            jobCreatePage.legacyUi = legacyUi
             jobCreatePage.loadEditPath(projectName, jobId, false)
             jobCreatePage.go()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
-            jobCreatePage.addSimpleCommandStepButton.click()
+            if(legacyUi) {
+                jobCreatePage.addSimpleCommandStepButton.click()
+            }
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
             jobCreatePage.getUpdateJobButton().click()
         then:
@@ -68,8 +70,7 @@ class JobEditSpec extends SeleniumBase{
 
         when:
             jobShowPage.closeDefinitionModalButton.click()
-            jobShowPage.jobActionDropdownButton.click()
-            jobShowPage.getEditJobLink().click()
+            jobCreatePage.go()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
             jobCreatePage.removeStepByIndex(1)
             hold(2)
@@ -81,6 +82,8 @@ class JobEditSpec extends SeleniumBase{
             jobShowPage.expectNumberOfStepsToBe(1)
         cleanup:
             deleteProject(projectName)
+        where:
+            legacyUi << [false, true]
     }
 
     /**
