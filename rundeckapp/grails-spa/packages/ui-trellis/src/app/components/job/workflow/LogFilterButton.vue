@@ -41,4 +41,13 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.btn-group {
+  display: inline-flex;
+
+  & > .btn > span {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+</style>

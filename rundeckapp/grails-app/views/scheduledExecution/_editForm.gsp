@@ -30,9 +30,6 @@
 
 <g:embedJSON id="jobEditUiMeta" data="[isAdmin: isAdmin]"/>
 
-<div class="banner2">
-    <banner severity="warn"></banner>
-</div>
 
 %{--Edit job form--}%
 <g:form controller="scheduledExecution" method="post"
