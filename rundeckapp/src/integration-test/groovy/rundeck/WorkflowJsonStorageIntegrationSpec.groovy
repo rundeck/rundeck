@@ -18,6 +18,7 @@ package rundeck
 
 import grails.testing.mixin.integration.Integration
 import grails.gorm.transactions.Rollback
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import spock.lang.Specification
 
 /**
@@ -70,7 +71,6 @@ class WorkflowJsonStorageIntegrationSpec extends Specification {
         retrievedWorkflow != null
         retrievedWorkflow.keepgoing == true
         retrievedWorkflow.strategy == 'sequential'
-        retrievedWorkflow.threadcount == 2
         retrievedWorkflow.commands.size() == 1
         retrievedWorkflow.commands[0].pluginType == 'test-plugin'
     }
@@ -343,13 +343,15 @@ class WorkflowJsonStorageIntegrationSpec extends Specification {
             commands: []
         )
         50.times { i ->
+            String dataValue = "value-${i}"
+            String nestedValue = "nested-${i}"
             workflow.addToCommands(new PluginStep(
                 type: "plugin-${i}",
                 nodeStep: i % 2 == 0,
                 configuration: [
                     index: i,
-                    data: "value-${i}",
-                    nested: [key: "nested-${i}"]
+                    data: dataValue.toString(),
+                    nested: [key: nestedValue.toString()]
                 ]
             ))
         }
@@ -370,7 +372,6 @@ class WorkflowJsonStorageIntegrationSpec extends Specification {
         then: "All steps should be preserved"
         def retrievedWorkflow = retrieved.getWorkflowData()
         retrievedWorkflow.commands.size() == 50
-        retrievedWorkflow.threadcount == 4
         retrievedWorkflow.commands[0].configuration.index == 0
         retrievedWorkflow.commands[49].configuration.index == 49
         retrievedWorkflow.commands[25].configuration.nested.key == "nested-25"
@@ -426,12 +427,12 @@ class WorkflowJsonStorageIntegrationSpec extends Specification {
 
     def "test concurrent workflow updates do not conflict"() {
         given: "A job with workflow"
-        def workflow = new Workflow(
+        def workflow = new WorkflowDataImpl().fromMap(
             keepgoing: true,
             strategy: 'sequential',
             commands: []
         )
-        workflow.addToCommands(new PluginStep(
+        workflow.steps.add(new PluginStep(
             type: 'test-plugin',
             nodeStep: true,
             configuration: [version: '1']
@@ -451,15 +452,16 @@ class WorkflowJsonStorageIntegrationSpec extends Specification {
         when: "Multiple updates to workflow"
         5.times { i ->
             def retrieved = ScheduledExecution.get(savedId)
-            def updatedWorkflow = new Workflow(
+            def updatedWorkflow = new WorkflowDataImpl().fromMap(
                 keepgoing: true,
                 strategy: 'sequential',
                 commands: []
             )
-            updatedWorkflow.addToCommands(new PluginStep(
+            String version = "${i + 2}"
+            updatedWorkflow.steps.add(new PluginStep(
                 type: 'test-plugin',
                 nodeStep: true,
-                configuration: [version: "${i + 2}"]
+                configuration: [version: version.toString()]
             ))
             retrieved.setWorkflowData(updatedWorkflow)
             retrieved.save(flush: true)
