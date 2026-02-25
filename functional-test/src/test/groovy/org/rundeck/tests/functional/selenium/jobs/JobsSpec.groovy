@@ -396,6 +396,8 @@ class JobsSpec extends SeleniumBase {
     def "job workflow step context variables autocomplete"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.legacyUi = true
+            jobCreatePage.go()
         then:
             jobCreatePage.jobNameInput.sendKeys 'job workflow step context variables autocomplete'
             jobCreatePage.tab JobTab.WORKFLOW click()
@@ -552,6 +554,8 @@ class JobsSpec extends SeleniumBase {
         when:
         setupProject(projectName)
         go JobCreatePage, projectName
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.waitForElementToBeClickable(jobCreatePage.stepFilterInput)
@@ -594,6 +598,8 @@ class JobsSpec extends SeleniumBase {
         when:
         setupProject(projectName)
         go JobCreatePage, projectName
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.optionButton.click()
@@ -654,6 +660,8 @@ class JobsSpec extends SeleniumBase {
         when:
         setupProject(projectName)
         go JobCreatePage, projectName
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-duplication")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
@@ -701,6 +709,8 @@ class JobsSpec extends SeleniumBase {
         when:
         setupProject(projectName)
         go JobCreatePage, projectName
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-url-opts")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.optionButton.click()
