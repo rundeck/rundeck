@@ -1026,7 +1026,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         given:
         setupDoValidate()
         def params = baseJobParams() + [
-                _sessionEditWFObject: new WorkflowDataImpl().fromMap([threadcount: 1, keepgoing: true, strategy: 'sequential', commands: [new CommandExec(cmd).toMap()]]),
+                _sessionEditWFObject: new WorkflowDataImpl().fromMap([threadcount: 1, keepgoing: true, strategy: 'sequential', commands: [PluginStep.fromMap([type: "exec-command"] + cmd).toMap()]]),
         ]
         service.messageSource = Mock(MessageSource) {
             getMessage(_, _) >> { it[0].toString() }
