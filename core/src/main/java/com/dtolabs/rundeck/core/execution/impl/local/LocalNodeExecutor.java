@@ -170,6 +170,7 @@ public class LocalNodeExecutor
             context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
         }
         if (result != 0) {
+            context.getExecutionListener().log(Constants.ERR_LEVEL, "Result: " + result);
             return NodeExecutorResultImpl.createFailure(
                     NodeStepFailureReason.NonZeroResultCode,
                     "Result code was " + result, node, result
