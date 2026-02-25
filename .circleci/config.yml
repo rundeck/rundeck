@@ -9,11 +9,11 @@ parameters:
     default: true
 
 orbs:
-  aws-cli: circleci/aws-cli@1.0.0
-  node: circleci/node@6.3.0
+  aws-cli: circleci/aws-cli@5.4.1
+  node: circleci/node@7.2.1
   trigger: rundeck/trigger-pipeline@0.0.5
-  slack: circleci/slack@4.4.0
-  snyk: snyk/snyk@2.2 # https://circleci.com/developer/orbs/orb/snyk/snyk
+  slack: circleci/slack@6.1.3
+  snyk: snyk/snyk@2.3.3 # https://circleci.com/developer/orbs/orb/snyk/snyk
   git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
 
 # Slack notifier
