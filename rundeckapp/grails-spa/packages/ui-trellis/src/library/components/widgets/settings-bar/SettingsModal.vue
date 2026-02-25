@@ -1,15 +1,16 @@
 <template>
-  <div v-if="isOpen" class="settings-modal-overlay" @click.self="close">
-    <div class="settings-modal">
-      <button class="settings-modal__close" @click="close">
+  <div v-if="isOpen" class="settings-modal-overlay" data-testid="settings-modal-overlay" @click.self="close">
+    <div class="settings-modal" data-testid="settings-modal">
+      <button class="settings-modal__close" data-testid="settings-modal-close" @click="close">
         <i class="fas fa-times"></i>
       </button>
 
       <div class="settings-modal__content">
-        <nav class="settings-modal__tabs">
+        <nav class="settings-modal__tabs" data-testid="settings-modal-tabs">
           <button
             class="settings-modal__tab"
             :class="{ 'settings-modal__tab--active': currentTab === 'theme' }"
+            data-testid="settings-tab-theme"
             @click="changeTab('theme')"
           >
             {{ $t("settings.tabs.theme") }}
@@ -17,20 +18,21 @@
           <button
             class="settings-modal__tab"
             :class="{ 'settings-modal__tab--active': currentTab === 'ui-early-access' }"
+            data-testid="settings-tab-ui-early-access"
             @click="changeTab('ui-early-access')"
           >
             {{ $t("settings.tabs.uiEarlyAccess") }}
           </button>
         </nav>
 
-        <div class="settings-modal__panel">
-          <div v-if="currentTab === 'theme'" class="settings-panel">
-            <h2 class="settings-panel__title">{{ $t("settings.theme.title") }}</h2>
+        <div class="settings-modal__panel" data-testid="settings-modal-panel">
+          <div v-if="currentTab === 'theme'" class="settings-panel" data-testid="settings-panel-theme">
+            <h2 class="settings-panel__title" data-testid="settings-panel-title">{{ $t("settings.theme.title") }}</h2>
             <p class="settings-panel__description">
               {{ $t("settings.theme.description") }}
             </p>
             <div class="settings-panel__control">
-              <select v-model="theme" class="form-control select">
+              <select v-model="theme" class="form-control select" data-testid="theme-select">
                 <option v-for="themeOpt in themes" :key="themeOpt" :value="themeOpt">
                   {{ $t(`settings.theme.options.${themeOpt}`) }}
                 </option>
@@ -38,8 +40,8 @@
             </div>
           </div>
 
-          <div v-if="currentTab === 'ui-early-access'" class="settings-panel">
-            <h2 class="settings-panel__title">{{ $t("settings.uiEarlyAccess.title") }}</h2>
+          <div v-if="currentTab === 'ui-early-access'" class="settings-panel" data-testid="settings-panel-ui-early-access">
+            <h2 class="settings-panel__title" data-testid="settings-panel-title">{{ $t("settings.uiEarlyAccess.title") }}</h2>
             <p class="settings-panel__description">
               {{ $t("settings.uiEarlyAccess.description") }}
             </p>
@@ -51,6 +53,7 @@
                   type="checkbox"
                   v-model="nextUiEnabled"
                   class="settings-toggle__input"
+                  data-testid="nextui-toggle"
                   @change="handleNextUiToggle"
                 />
                 <span class="settings-toggle__switch"></span>
@@ -87,15 +90,16 @@ export default defineComponent({
     const rundeckContext = getRundeckContext();
     const themeStore = rundeckContext?.rootStore?.theme;
     const pageUiMeta = getPageUiMeta();
+    const cookieEnabled = this.$cookies.get(COOKIE_NAME);
 
     return {
       isOpen: false,
       currentTab: "theme" as SettingsTab,
       themes: ["system", "light", "dark"] as ThemeOption[],
       theme: (themeStore?.userPreferences?.theme ||
-        "system") as ThemeOption,
+          "system") as ThemeOption,
       themeStore,
-      nextUiEnabled: pageUiMeta.isNextUiPage,
+      nextUiEnabled: cookieEnabled ? cookieEnabled === "true" : pageUiMeta.isNextUiPage,
     };
   },
   computed: {

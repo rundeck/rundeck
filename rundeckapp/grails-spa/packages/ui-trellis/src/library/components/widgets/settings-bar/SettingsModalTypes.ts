@@ -9,5 +9,4 @@ export interface SettingsModalData {
   theme: ThemeOption;
   themeStore: any;
   nextUiEnabled: boolean;
-  isLoading: boolean;
 }

@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
@@ -236,6 +237,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     def "plugin list filters by service"() {
         given:
             params.service = a
+            request.api_version = apiVersion
             controller.pluginService = Mock(PluginService)
             controller.pluginApiService = Mock(PluginApiService)
             controller.uiPluginService = Mock(UiPluginService)
@@ -256,13 +258,15 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         when:
             def result = controller.listPlugins()
         then:
-            1 * controller.pluginApiService.listPlugins() >> plugins
+            1 * controller.pluginApiService.listPlugins(expectedIncludeGroupMetadata) >> plugins
             response.json.size() == b
 
         where:
-            a                | b
-            null             | 3
-            'WebhookEvent'   | 2
+            a                | apiVersion | expectedIncludeGroupMetadata | b
+            null             | 56         | false                        | 3
+            null             | 57         | true                         | 3
+            'WebhookEvent'   | 56         | false                        | 2
+            'WebhookEvent'   | 57         | true                         | 2
     }
 
     def "plugin list returns isHighlighted and highlightedOrder properties"() {
@@ -271,6 +275,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.pluginApiService = Mock(PluginApiService)
         controller.uiPluginService = Mock(UiPluginService)
         params.service = null
+        request.api_version = apiVersion
 
         def plugins = [
                 [
@@ -294,7 +299,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         when:
         controller.listPlugins()
         then:
-        1 * controller.pluginApiService.listPlugins() >> plugins
+        1 * controller.pluginApiService.listPlugins(expectedIncludeGroupMetadata) >> plugins
         response.json.size() == 3
 
         response.json[0].isHighlighted == true
@@ -305,6 +310,11 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
         response.json[2].isHighlighted == false
         response.json[2].highlightedOrder == 321
+
+        where:
+        apiVersion | expectedIncludeGroupMetadata
+        56         | false
+        57         | true
     }
 
     def "plugin service descriptions"() {

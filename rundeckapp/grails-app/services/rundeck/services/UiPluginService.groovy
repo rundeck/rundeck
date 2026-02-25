@@ -111,7 +111,7 @@ class UiPluginService implements InitializingBean {
         def reslist = resourcesForPlugin(key.service, key.name)
         String iconResourcePath = null
         if (reslist) {
-            def testlist = ['png', 'gif'].inject([]) { list, ext ->
+            def testlist = ['svg', 'png', 'gif'].inject([]) { list, ext ->
                 list + ["${key.service}.${key.name}.icon.", "${key.name}.icon.", "${key.service}.icon.", 'icon.'].
                         collect { prefix ->
                     prefix + ext
