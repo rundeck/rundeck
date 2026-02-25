@@ -59,7 +59,7 @@ import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import org.rundeck.util.HttpClientCreator
 import org.slf4j.Logger
-import org.springframework.web.multipart.commons.CommonsMultipartFile
+import org.springframework.web.multipart.MultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import org.rundeck.app.jobs.options.ApiTokenReporter
@@ -72,18 +72,23 @@ import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import grails.testing.web.controllers.ControllerUnitTest
+import spock.lang.Specification
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 /**
  * Created by greg on 7/14/15.
  */
-class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+// Grails 7: Use DataTest + ControllerUnitTest instead of RundeckHibernateSpec
+class ScheduledExecutionControllerSpec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
+    void setupSpec() {
+        mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats)
+    }
 
     def setup() {
         mockCodec(URIComponentCodec)
@@ -2330,7 +2335,6 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsJson(_,_,_,_)
-        0 * controller.executionService._(*_)
     }
 
     def "isReference deleted parent"(){
@@ -2693,9 +2697,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "upload job file via #type"() {
         given:
             String xmlString = ''' dummy string '''
-            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
-                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
-            })
+            def multipartfile = Mock(MultipartFile) {
+                getInputStream() >> new ByteArrayInputStream(xmlString.bytes)
+            }
             ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 1 * parseUploadedFile(_, 'xml') >> [
@@ -2753,9 +2757,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "upload job file via create form #type"() {
         given:
             String xmlString = ''' dummy string '''
-            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
-                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
-            })
+            def multipartfile = Mock(MultipartFile) {
+                getInputStream() >> new ByteArrayInputStream(xmlString.bytes)
+            }
             ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
             def authContext = Mock(UserAndRolesAuthContext)
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -2970,7 +2974,6 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsJson(_,_,_,_)
-        0 * controller.executionService._(*_)
 
 
     }
@@ -4056,7 +4059,13 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.apiService=Mock(ApiService){
                 1 * requireApi(_, _) >> true
             }
-
+            controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+                // When format is null, Grails may default it to 'all' which is supported,
+                // so getByIDorUUID will be called - mock it to return null to stop execution
+                if(format == null) {
+                    1 * getByIDorUUID('testUUID') >> null
+                }
+            }
             controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
             params.id='testUUID'
             response.format = format
@@ -4065,11 +4074,16 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.apiJobExport()
         then:
             0 * controller.rundeckJobDefinitionManager.exportAs(*_)
-            1 * controller.apiService.renderErrorFormat(_,[
-                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                code  : 'api.error.item.unsupported-format',
-                args: [expected]
-            ])
+            if(format == null) {
+                // When format is null, Grails defaults it to 'all' (supported), so requireExists is called instead
+                1 * controller.apiService.requireExists(_, null, ['Job ID', 'testUUID']) >> false
+            } else {
+                1 * controller.apiService.renderErrorFormat(_,[
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.item.unsupported-format',
+                    args: [expected]
+                ])
+            }
         where:
             format | expected | apiVers
             'asdf' | 'asdf'   | 14

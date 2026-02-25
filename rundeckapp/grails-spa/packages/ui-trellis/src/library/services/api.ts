@@ -9,7 +9,7 @@ if (document && document.getElementById("web_ui_token")) {
 }
 export const apiClient = function (apiVersion: number | string) {
   const api = axios.create({
-    baseURL: rundeckContext.rdBase + "api/" + apiVersion + "/",
+    baseURL: rundeckContext.rdBase + "/api/" + apiVersion + "/",
     headers: {
       "X-Rundeck-ajax": "true",
       Accept: "application/json",

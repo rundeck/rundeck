@@ -16,7 +16,7 @@
 
 package org.rundeck.web.infosec
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 /**
  * Created by greg on 2/17/15.

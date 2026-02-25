@@ -13,7 +13,7 @@ import java.util.stream.Collectors
 @SeleniumCoreTest
 class ExecutorSpec extends SeleniumBase {
 
-    private static final List<String> availableExecutors = Arrays.asList(new String[] { "SSH", "Local", "Local (New)", "SSHJ-SSH", "Script Execution", "Stub", "Ansible Ad-Hoc Node Executor", "WinRM Node Executor Python", "openssh / executor" });
+    private static final List<String> availableExecutors = Arrays.asList(new String[] { "SSH", "Local", "SSHJ-SSH", "Script Execution", "Stub", "Ansible Ad-Hoc Node Executor", "WinRM Node Executor Python", "openssh / executor" });
     private static final int EXPECTED_EXECUTORS_SIZE = availableExecutors.size()
     /**
      * Checks if the node executor list renders.

@@ -37,7 +37,7 @@ class SHAInputStream extends DigestInputStream {
      * @return
      */
     byte[] getSHABytes() {
-        digest.digest()
+        getMessageDigest().digest()  // Use getter instead of protected field (Groovy 4)
     }
 
     /**

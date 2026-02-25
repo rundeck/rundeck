@@ -137,7 +137,7 @@ import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.utils.OptionsUtil
 import org.rundeck.app.spi.AuthorizedServicesProvider
 
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 import java.sql.ResultSet
 import java.sql.SQLException
 import java.text.MessageFormat
@@ -4468,17 +4468,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(se.isEmpty()) return [:]
         Date now = new Date()
         Map item = [:]
-        Execution.createCriteria().list() {
-            createAlias("scheduledExecution", "se", JoinType.LEFT_OUTER_JOIN)
-            projections {
-                property('se.id')
-                property('dateStarted')
-            }
-            and {
-                'in'('se.id', se*.id)
-                gt("dateStarted", now)
-                isNull("dateCompleted")
-            }
+        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+        String hql = '''
+            SELECT se.id, e.dateStarted
+            FROM Execution e
+            LEFT JOIN e.scheduledExecution se
+            WHERE se.id IN (:seIds)
+            AND e.dateStarted > :now
+            AND e.dateCompleted IS NULL
+        '''
+        Execution.withSession { session ->
+            def query = session.createQuery(hql)
+            query.setParameterList('seIds', se*.id)
+            query.setParameter('now', now)
+            query.list()
         }?.collect{ row ->
             if(row && row[0]){
                 item[row[0]] = new Date(row[1]?.getTime())
@@ -5112,8 +5115,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def refsuccesscount = referencedExecutionDataProvider.countByJobUuidAndStatus(scheduledExecution.uuid, 'succeeded')
         def execCount = Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution)
         def refexecCount = referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid)
-        def totalCount = execCount + refexecCount
-        double successrate = (totalCount) > 0 ? ((successcount + refsuccesscount) / ((double)totalCount)) : -1d
+        long total1 = execCount
+        long total2 = refexecCount
+        def totalCount = total1 + total2
+        long success1 = successcount
+        long success2 = refsuccesscount
+        long successTotal = success1 + success2
+        double successrate = (totalCount) > 0 ? (successTotal / ((double)totalCount)) : -1d
         JobStats.with(
             successrate,
             totalCount,

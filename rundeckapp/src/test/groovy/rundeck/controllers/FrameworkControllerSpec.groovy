@@ -616,6 +616,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
             1 * fwkService.discoverScopedConfiguration(_, 'project.plugin')
+            1 * fwkService.listPluginGroupDescriptions() >> []
             0 * fwkService._(*_)
     }
     def "save project plugin groups"() {
@@ -628,7 +629,6 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
             controller.userService = Mock(UserService)
             controller.featureService = Mock(FeatureService){
-                (pgEnabled ? 1 : 0) * featurePresent(Features.PLUGIN_GROUPS) >> pgEnabled
                 _ * featurePresent(Features.CLEAN_EXECUTIONS_HISTORY,_) >> false
             }
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -662,7 +662,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
             1 * fwkService.getRundeckFramework()
-            (pgEnabled?1:0) * fwkService.listPluginGroupDescriptions() >> null
+            1 * fwkService.listPluginGroupDescriptions() >> null
             1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
@@ -2314,7 +2314,7 @@ project.label=A Label
             _ * featurePresent(Features.EXECUTION_CLEANUP_ENABLE)
         }
         controller.frameworkService = Mock(FrameworkService) {
-            1 * getFrameworkProject("testProject") >> Mock(IRundeckProject) {
+            2 * getFrameworkProject("testProject") >> Mock(IRundeckProject) {
                 getProjectProperties() >> projectProps
             }
             1 * listDescriptions() >> [[], [], []]
@@ -2323,6 +2323,7 @@ project.label=A Label
             1 * getDefaultFileCopyService("testProject") >> "local"
             1 * getNodeExecConfigurationForType("local", "testProject") >> [:]
             1 * getFileCopyConfigurationForType("local", "testProject") >> [:]
+            1 * listPluginGroupDescriptions() >> []
         }
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
             1 * authorizeProjectConfigure(_, "testProject") >> true

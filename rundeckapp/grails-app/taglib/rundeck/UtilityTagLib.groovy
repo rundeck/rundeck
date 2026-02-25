@@ -603,7 +603,7 @@ class UtilityTagLib{
 
     def autoLink={ attrs,body->
         def outx=body()
-        def xparams = params.project?[params:[project:params.project]]:[:]
+        def xparams = params.project ? ([params:[project:params.project]]) : ([:])
         def linkopts=[
                 execution:[
                         pattern: /\{\{(Execution\s+(\d+))\}\}/ ,
@@ -859,7 +859,7 @@ class UtilityTagLib{
                 fragment='#'+split[1]
             }
         }
-        def rdversion = grailsApplication.metadata.getProperty('info.app.version', String).get()
+        def rdversion = grailsApplication.metadata['info.app.version']
         def rdversionShort = rdversion.split('-')[0]
 
         def helpBase

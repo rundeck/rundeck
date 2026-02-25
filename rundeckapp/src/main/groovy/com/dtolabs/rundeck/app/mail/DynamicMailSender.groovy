@@ -13,8 +13,8 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 
-import javax.annotation.PostConstruct
-import javax.mail.Session
+import jakarta.annotation.PostConstruct
+import jakarta.mail.Session
 
 
 /**

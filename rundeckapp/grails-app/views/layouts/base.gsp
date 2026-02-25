@@ -123,7 +123,7 @@
         var isOpera = Object.prototype.toString.call(window.opera) == '[object Opera]';
 
         window._rundeck = Object.assign(window._rundeck || {}, {
-        rdBase: '${g.createLink(uri:"/",absolute:true)}',
+        rdBase: '${g.createLink(uri:"/",absolute:true).replaceAll('/$', '')}',
         context: '${grailsApplication.config.getProperty("server.servlet.context-path", String.class)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         language: '${response.locale?.language ?: request.locale?.language}',
@@ -139,7 +139,7 @@
         },
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
-            eventStore: {enabled: ${feature.isEnabled(name:'eventStore')}},
+            eventStore: {enabled: true},
             workflowDesigner: {enabled: ${feature.isEnabled(name:'workflowDesigner')}}
         },
         Browser: {

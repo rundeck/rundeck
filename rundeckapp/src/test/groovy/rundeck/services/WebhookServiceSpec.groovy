@@ -60,7 +60,7 @@ import spock.lang.Unroll
 import webhooks.Webhook
 import webhooks.WebhookService
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 class WebhookServiceSpec extends Specification implements ServiceUnitTest<WebhookService>, DataTest {
     @Shared GormEventStoreService eventStoreService
@@ -106,16 +106,12 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def mockPropertyResolver = Mock(PropertyResolver)
         def webhookProviderService = Mock(PluggableProviderService)
 
-        service.featureService = Mock(FeatureService) {
-            featurePresent(Features.EVENT_STORE) >> false
-        }
-
         service.gormEventStoreService = Mock(EventStoreService) {
             scoped(_,_) >> { Mock(EventStoreService) }
         }
 
         service.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider) {
-            getServicesWith(_) >> { Mock(Services)}
+            getServicesWith(_) >> new SimpleServiceProvider([:])
         }
         service.frameworkService = Mock(MockFrameworkService) {
             getFrameworkPropertyResolver(_,_) >> { mockPropertyResolver }
@@ -160,10 +156,6 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
         def mockPropertyResolver = Mock(PropertyResolver)
         def webhookProviderService = Mock(PluggableProviderService)
-
-        service.featureService = Mock(FeatureService) {
-            featurePresent(Features.EVENT_STORE) >> true
-        }
 
         def scopedService=Mock(EventStoreService)
         service.gormEventStoreService = Mock(EventStoreService) {
