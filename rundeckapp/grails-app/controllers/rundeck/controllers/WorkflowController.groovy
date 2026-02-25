@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.data.workflow.WorkflowDataImpl
+import org.rundeck.app.data.workflow.WorkflowStepDataImpl
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import org.rundeck.core.execution.ScriptCommand
@@ -776,7 +777,7 @@ class WorkflowController extends ControllerBase {
      * error: any error message
      * undo: corresponding undo action map
      */
-    protected Map _applyWFEditAction (Workflow editwf, Map input){
+    protected Map _applyWFEditAction (WorkflowData editwf, Map input){
         def result = [:]
         def createItemFromParams={params->
             def item
@@ -886,7 +887,7 @@ class WorkflowController extends ControllerBase {
             if (null != editwf.commands) {
                 editwf.commands.add(num, item)
             } else {
-                editwf.addToCommands(item)
+                editwf.commands = [item]
                 num = 0
             }
             result['undo'] = [action: 'remove', num: num]
@@ -909,7 +910,7 @@ class WorkflowController extends ControllerBase {
             }
             config = validation.props
 
-            def WorkflowStep item = editwf.commands.get(numi)
+            def WorkflowStepData item = editwf.commands.get(numi)
             def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
             if (filterConfig instanceof List) {
                 List configs = (List) filterConfig
@@ -967,7 +968,7 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def WorkflowStep item = editwf.commands.get(numi)
+            def WorkflowStepData item = editwf.commands.get(numi)
             def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
 
             if (!(filterConfig instanceof List)) {
@@ -1008,9 +1009,9 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def WorkflowStep item = editwf.commands.get(numi)
-            def clone = item.createClone()
-            def moditem = item.createClone()
+            def WorkflowStepData item = editwf.commands.get(numi)
+            def clone =new WorkflowStepDataImpl().fromMap(item.toMap())
+            def moditem = new WorkflowStepDataImpl().fromMap(item.toMap())
             modifyItemFromParams(moditem,input.params)
             _validateCommandExec(moditem,input.params.origitemtype, fprojects)
             if (moditem.errors.hasErrors()) {
@@ -1039,7 +1040,7 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def WorkflowStep item = editwf.commands.get(numi)
+            def WorkflowStepData item = editwf.commands.get(numi)
             def ehitem= createItemFromParams(input.params)
             _validateCommandExec(ehitem, params.newitemtype, fprojects, false, input.project)
             if (ehitem.errors.hasErrors()) {
@@ -1058,15 +1059,15 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def WorkflowStep stepitem = editwf.commands.get(numi)
-            def WorkflowStep ehitem = stepitem.errorHandler
+            def WorkflowStepData stepitem = editwf.commands.get(numi)
+            def WorkflowStepData ehitem = stepitem.errorHandler
 
             if (!ehitem) {
                 result.error = "num parameter is invalid: ${numi}: no error handler"
                 return result
             }
-            def clone = ehitem.createClone()
-            def moditem = ehitem.createClone()
+            def clone = new WorkflowStepDataImpl().fromMap(ehitem.toMap())
+            def moditem = new WorkflowStepDataImpl().fromMap(ehitem.toMap())
 
             modifyItemFromParams(moditem, input.params)
 
@@ -1278,7 +1279,7 @@ class WorkflowController extends ControllerBase {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    static Map _validatePluginStep(FrameworkService frameworkService, WorkflowStep exec) {
+    static Map _validatePluginStep(FrameworkService frameworkService, WorkflowStepData exec) {
         if (exec instanceof PluginStep) {
             PluginStep item = exec as PluginStep
             def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep, item.type)
@@ -1303,10 +1304,10 @@ class WorkflowController extends ControllerBase {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    protected Map _doValidatePluginStep(WorkflowStep exec) {
+    protected Map _doValidatePluginStep(WorkflowStepData exec) {
         _validatePluginStep(frameworkService, exec)
     }
-    private void _sanitizePluginStep(WorkflowStep item, Map validation){
+    private void _sanitizePluginStep(WorkflowStepData item, Map validation){
         if (item instanceof PluginStep) {
             PluginStep step = item as PluginStep
             //set configuration based on parsed props

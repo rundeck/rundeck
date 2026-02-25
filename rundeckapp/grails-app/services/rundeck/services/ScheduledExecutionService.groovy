@@ -3465,7 +3465,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.setWorkflowData(workflow)
         } else if (params['_sessionwf'] == 'true' && params['_sessionEditWFObject']) {
             //use session-stored workflow
-            def Workflow wf = params['_sessionEditWFObject']
+            def WorkflowData wf = params['_sessionEditWFObject']
             if(params.workflow && null!=params.workflow.keepgoing) {
                 wf.keepgoing = params.workflow.keepgoing == 'true'
             }
