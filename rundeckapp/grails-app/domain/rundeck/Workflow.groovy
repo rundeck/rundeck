@@ -174,24 +174,9 @@ public class Workflow implements WorkflowData {
         this.pluginConfigMap=source.pluginConfigMap
         commands = new ArrayList()
         source.commands.each { WorkflowStepData cmd->
-            WorkflowStepData exec
-            Map map=cmd.toMap()
-            if (map.jobref!=null) {
-                exec = JobExec.jobExecFromMap(map)
-            } else {
-                exec = PluginStep.fromMap(map)
-            }
-            exec
-            final item = createItem(exec)
-            if(map.errorhandler){
-                WorkflowStepData errorHandlerExec
-                Map mapErrorHandler = map.errorhandler as Map
-                if (mapErrorHandler.jobref!=null) {
-                    errorHandlerExec = JobExec.jobExecFromMap(mapErrorHandler)
-                } else {
-                    errorHandlerExec = PluginStep.fromMap(mapErrorHandler)
-                }
-                final handler=createItem(errorHandlerExec)
+            final item = createItem(cmd as WorkflowStep)
+            if(cmd.errorHandler){
+                final handler=createItem(cmd.errorHandler)
                 item.errorHandler=handler
             }
             commands.add(item)

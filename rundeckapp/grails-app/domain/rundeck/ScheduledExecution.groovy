@@ -1363,22 +1363,11 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         try {
             // Convert WorkflowData to Map representation
             Map workflowMap
-            if (workflowData instanceof Workflow) {
-                // Use existing toMap() method
-                workflowMap = ((Workflow) workflowData).toMap()
-                // Preserve empty pluginConfig as "{}" instead of removing it
-                if (!workflowMap.containsKey('pluginConfig') && workflowData.pluginConfigMap != null) {
-                    // If toMap() removed pluginConfig but it exists in the source, preserve it as empty map
-                    workflowMap.pluginConfig = [:]
-                }
-            } else {
-                // RdWorkflow or other implementations with toMap()
-                workflowMap = workflowData.toMap()
-                // Preserve empty pluginConfig as "{}" instead of removing it
-                if (!workflowMap.containsKey('pluginConfig') && workflowData.pluginConfigMap != null) {
-                    // If toMap() removed pluginConfig but it exists in the source, preserve it as empty map
-                    workflowMap.pluginConfig = [:]
-                }
+            workflowMap = workflowData.toMap()
+            // Preserve empty pluginConfig as "{}" instead of removing it
+            if (!workflowMap.containsKey('pluginConfig') && workflowData.pluginConfigMap != null) {
+                // If toMap() removed pluginConfig but it exists in the source, preserve it as empty map
+                workflowMap.pluginConfig = [:]
             }
 
             // Serialize Map to JSON using EmbeddedJsonData trait

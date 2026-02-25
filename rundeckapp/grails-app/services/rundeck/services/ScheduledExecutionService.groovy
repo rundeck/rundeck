@@ -3485,11 +3485,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.setWorkflowData(Workflow.fromMap(jobWorkflowData))
             }
         } else if (params.workflow && params.workflow instanceof Workflow) {
-            scheduledExecution.setWorkflowData(new Workflow(params.workflow))
+            scheduledExecution.setWorkflowData(new WorkflowDataImpl().fromWorkflow(params.workflow))
         }else if (params.workflow && params.workflow instanceof Map){
             WorkflowData workflow = scheduledExecution.getWorkflowData()
             if (!workflow) {
-                workflow = new Workflow(params.workflow)
+                workflow = new WorkflowDataImpl().fromMap(params.workflow)
             }
             if (params.workflow.strategy) {
                 workflow.strategy = params.workflow.strategy
@@ -4009,8 +4009,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def service = frameworkService.rundeckFramework.workflowStrategyService
         def workflowData = scheduledExecution.getWorkflowData()
         if (!workflowData) return null
-        def workflow = new Workflow(workflowData)
-        workflow.discard()
+        def workflow = new WorkflowDataImpl().fromMap(workflowData.toMap())
+        //workflow.discard()
         if (!workflow.commands || workflow.commands.size() < 1) {
             return null
         }

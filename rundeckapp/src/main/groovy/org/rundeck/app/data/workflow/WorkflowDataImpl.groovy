@@ -257,7 +257,7 @@ class WorkflowDataImpl implements WorkflowData, Validateable  {
         return [
             keepgoing: keepgoing,
             strategy: strategy,
-            threadcount: threadcount,
+            //threadcount: threadcount,
             commands: steps?.collect { it.toMap() } ?: []
         ] + plugins
     }
@@ -290,5 +290,18 @@ class WorkflowDataImpl implements WorkflowData, Validateable  {
         }
 
         return workflow
+    }
+
+    /**
+     * Create a WorkflowDataImpl instance from a Workflow domain object
+     * @param workflow Workflow domain object to convert from
+     * @return WorkflowDataImpl instance with converted data
+     */
+    static WorkflowDataImpl fromWorkflow(Workflow workflow) {
+        if (!workflow) {
+            return null
+        }
+        Map workflowMap = workflow.toMap()
+        return fromMap(workflowMap)
     }
 }

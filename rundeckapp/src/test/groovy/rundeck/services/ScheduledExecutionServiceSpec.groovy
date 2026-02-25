@@ -286,7 +286,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 description   : 'a job',
                 argString     : '-a b -c d',
                 workflow      : new Workflow(
-                        threadcount: 1,
                         keepgoing: true,
                         commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
                 ),
@@ -1021,37 +1020,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 new JobExec(jobGroup: 'test1', jobName: 'blah')
         ),]] | false | 'step-first'
 
-    }
-    def "do validate adhoc invalid"() {
-        given:
-        setupDoValidate()
-        def params = baseJobParams() + [
-                _sessionEditWFObject: new WorkflowDataImpl().fromMap([threadcount: 1, keepgoing: true, strategy: 'sequential', commands: [PluginStep.fromMap([type: "exec-command"] + cmd).toMap()]]),
-        ]
-        service.messageSource = Mock(MessageSource) {
-            getMessage(_, _) >> { it[0].toString() }
-        }
-            def authContext = Mock(UserAndRolesAuthContext){
-                getUsername()>>'auser'
-                getRoles()>>(['a','b'] as Set)
-            }
-        when:
-            def results = service._dovalidate(params, authContext)
-
-        then:
-        results.failed
-        results.scheduledExecution.errors.hasFieldErrors('workflow')
-        def step = results.scheduledExecution.getWorkflowData().commands[0]
-        // Access errors - step should be a WorkflowStep which has errors
-        (step as WorkflowStep).errors.hasFieldErrors(fieldName)
-        results.validation.workflow != null
-
-        where:
-        cmd                                           | fieldName
-        [adhocExecution: true, adhocRemoteString: ''] | 'adhocExecution'
-        [adhocExecution: true, adhocFilepath: '']     | 'adhocExecution'
-        [adhocExecution: true, adhocLocalString: '']  | 'adhocExecution'
-        [adhocExecution: true, adhocRemoteString: 'test1', adhocLocalString: 'test2']  | 'adhocRemoteString'
     }
     def "do validate empty input is invalid"() {
         given:
@@ -5318,7 +5286,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "job definition workflow from workflow param"() {
         given: "new job"
             def job = new ScheduledExecution()
-            def params = [workflow: new Workflow(threadcount: 1, commands: [new CommandExec(adhocRemoteString: 'test')])]
+            def params = [workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'test')])]
             def auth = Mock(UserAndRolesAuthContext)
         when: "define the workflow from params"
             service.jobDefinitionWorkflow(job, null, params, auth)

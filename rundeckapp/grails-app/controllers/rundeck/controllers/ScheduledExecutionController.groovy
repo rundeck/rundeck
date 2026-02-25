@@ -2723,7 +2723,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
 
         def jobWorkflowData = scheduledExecution.getWorkflowData()
-        params.workflow=jobWorkflowData ? new Workflow(jobWorkflowData) : new Workflow()
+        params.workflow=jobWorkflowData ? new WorkflowDataImpl().fromMap(jobWorkflowData.toMap()) : new WorkflowDataImpl()
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch
         params.filter=scheduledExecution.asFilter()
