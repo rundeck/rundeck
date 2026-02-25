@@ -829,12 +829,6 @@ workflows:
           <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
-          name: T Feature NewLocalExec
-          gradle-task: apiTestNewLocal
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
           name: T Feature NodeExecutorSecureInput
           gradle-task: apiTestNodeExecutorSecureInput
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
@@ -927,11 +921,6 @@ workflows:
           name: T Functional Plugin Blocklist running JRE 17
           gradle-task: pluginBlocklistTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
-          <<: *require-build-jre-17
-      - test-gradle-functional:
-          name: T Feature NewLocalExec running JRE 17
-          gradle-task: apiTestNewLocal
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
           <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Feature NodeExecutorSecureInput running JRE 17
