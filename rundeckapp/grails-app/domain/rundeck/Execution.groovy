@@ -518,7 +518,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         }
         exec.project = data.project
         exec.user = data.user
-        exec.workflow = Workflow.fromMap(data.workflow)
+        exec.setWorkflowData(WorkflowDataImpl.fromMap(data.workflow))
         if(data.orchestrator){
             exec.orchestrator = Orchestrator.fromMap(data.orchestrator)
         }

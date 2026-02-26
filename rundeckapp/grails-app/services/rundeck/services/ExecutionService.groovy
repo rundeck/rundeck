@@ -2148,7 +2148,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
    def Execution createExecution(Map params) {
         def Execution execution
-        if (params.project && params.workflow) {
+        if (params.project && (params.workflow || params.workflowJson)) {
             execution = new Execution(project:params.project,
                                       user:params.user, loglevel:params.loglevel,
                                       doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
@@ -2161,6 +2161,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       nodeRankOrderAscending:params.nodeRankOrderAscending,
                                       nodeRankAttribute:params.nodeRankAttribute,
                                       workflow:params.workflow,
+                                      workflowJson:params.workflowJson,
                                       argString:params.argString,
                                       executionType: params.executionType ?: 'scheduled',
                                       timeout:params.timeout?:null,

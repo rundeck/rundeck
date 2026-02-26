@@ -52,6 +52,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import rundeck.data.report.SaveReportRequestImpl
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
@@ -2526,11 +2527,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertEquals e,result.execidmap.keySet().first()
         assertEquals 1,result.execidmap.values().first()
         assertEquals( [(e):1],result.execidmap)
-
-        assertNotNull e.workflow
-        assertNotNull e.workflow.commands
-        assertEquals 1,e.workflow.commands.size()
-        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0].configuration)
+        WorkflowData workflowData = e.getWorkflowData()
+        assertNotNull workflowData
+        assertNotNull workflowData.commands
+        assertEquals 1,workflowData.commands.size()
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],workflowData.commands[0].configuration)
     }
     def testLoadExecutionsWorkflow(){
         when:
@@ -2541,12 +2542,13 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull result.execidmap
         assertEquals 1,result.executions.size()
         def Execution e = result.executions[0]
-        assertNotNull e.workflow
-        assertNotNull e.workflow.commands
-        assertEquals 1,e.workflow.commands.size()
+        WorkflowData workflowData = e.getWorkflowData()
+        assertNotNull workflowData
+        assertNotNull workflowData.commands
+        assertEquals 1,workflowData.commands.size()
         assertPropertiesEquals( [jobName: 'echo', nodeStep:true,argString: '-name ${node.name}',
                                  description: 'echo on node'],
-                                e.workflow.commands[0])
+                                workflowData.commands[0])
     }
     /**
      * load execution xml with orchestrator definition
@@ -2627,11 +2629,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull(e.scheduledExecution)
         assertEquals(se,e.scheduledExecution)
         assertEquals( [(e):1],result.execidmap)
-
-        assertNotNull e.workflow
-        assertNotNull e.workflow.commands
-        assertEquals 1,e.workflow.commands.size()
-        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0].configuration)
+        WorkflowData workflowData = e.getWorkflowData()
+        assertNotNull workflowData
+        assertNotNull workflowData.commands
+        assertEquals 1,workflowData.commands.size()
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],workflowData.commands[0].configuration)
     }
     /**
      * using job id that already exists will attach to that job
@@ -2691,11 +2693,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertNotNull(e.scheduledExecution)
         assertEquals(se,e.scheduledExecution)
         assertEquals( [(e):1],result.execidmap)
-
-        assertNotNull e.workflow
-        assertNotNull e.workflow.commands
-        assertEquals 1,e.workflow.commands.size()
-        assertPropertiesEquals( [adhocRemoteString: 'exec command'],e.workflow.commands[0].configuration)
+        WorkflowData workflowData = e.getWorkflowData()
+        assertNotNull workflowData
+        assertNotNull workflowData.commands
+        assertEquals 1,workflowData.commands.size()
+        assertPropertiesEquals( [adhocRemoteString: 'exec command'],workflowData.commands[0].configuration)
     }
     def testloadExecutionsRetryExecId(){
         def remapExecId='12'
