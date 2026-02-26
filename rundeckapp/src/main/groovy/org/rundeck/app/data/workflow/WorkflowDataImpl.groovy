@@ -96,8 +96,11 @@ class WorkflowDataImpl implements WorkflowData, Validateable  {
         def commands = workflowMap.commands ?: []
         workflow.steps = commands.collect { Map map ->
             WorkflowStepData exec
-            if (map.jobref!=null) {
-                exec = JobExec.jobExecFromMap(map)
+            if (map.conditionGroups) {
+                exec = ConditionalStep.fromMap(map)
+            }else if (map.jobref!=null) {
+                WorkflowStepData jobExec = JobExec.jobExecFromMap(map)
+                exec = jobExec.createClone()
             } else {
                 WorkflowStepData pluginStep = PluginStep.fromMap(map)
                 exec = pluginStep.createClone()
@@ -231,7 +234,7 @@ class WorkflowDataImpl implements WorkflowData, Validateable  {
      * This method provides compatibility for code that accesses .commands on workflow objects.
      * @return List of workflow steps
      */
-    List<WorkflowStepDataImpl> getCommands() {
+    List<WorkflowStepData> getCommands() {
         return steps
     }
 

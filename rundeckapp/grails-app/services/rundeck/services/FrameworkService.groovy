@@ -49,6 +49,7 @@ import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.core.FrameworkServiceCapabilities
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter
@@ -719,7 +720,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
      * @param step
      * @return
      */
-    def getPluginDescriptionForItem(PluginStep step) {
+    def getPluginDescriptionForItem(WorkflowStepData step) {
         try {
             return step.nodeStep ? getNodeStepPluginDescription(step.type) : getStepPluginDescription(step.type)
         } catch (MissingProviderException e) {

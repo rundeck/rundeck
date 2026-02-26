@@ -1252,7 +1252,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def getWorkflowDescriptionTree(String project,WorkflowData workflow,readAuth,maxDepth=3){
         def jobids=[:]
         def cmdData={}
-        cmdData={x,WorkflowStep step->
+        cmdData={x,WorkflowStepData step->
             def map=readAuth?step.toMap():step.toDescriptionMap()
             map.remove('plugins')
             if(map.type){
@@ -3461,8 +3461,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public void jobDefinitionWorkflow(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         if(input){
             def inputWorkflow = input.getWorkflowData()
-            final Workflow workflow = new Workflow(inputWorkflow)
-            scheduledExecution.setWorkflowData(workflow)
+            scheduledExecution.setWorkflowData(inputWorkflow)
         } else if (params['_sessionwf'] == 'true' && params['_sessionEditWFObject']) {
             //use session-stored workflow
             def WorkflowData wf = params['_sessionEditWFObject']
@@ -3479,10 +3478,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.setWorkflowData(workflow)
             }
         } else if (params.jobWorkflowJson) {
-            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString()) //check json workflow format is valid
 
             if(jobWorkflowData instanceof JSONObject) {
-                scheduledExecution.setWorkflowData(Workflow.fromMap(jobWorkflowData))
+                scheduledExecution.setWorkflowJson(params.jobWorkflowJson.toString())
             }
         } else if (params.workflow && params.workflow instanceof Workflow) {
             scheduledExecution.setWorkflowData(new WorkflowDataImpl().fromWorkflow(params.workflow))
@@ -3502,7 +3501,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.setWorkflowData(workflow)
         }
         if(!scheduledExecution.getWorkflowData()){
-            scheduledExecution.setWorkflowData(new Workflow())
+            scheduledExecution.setWorkflowData(new WorkflowDataImpl())
         }
     }
 

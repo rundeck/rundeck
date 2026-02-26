@@ -61,6 +61,8 @@ public interface WorkflowStepData {
      */
     String getPluginType();
 
+    default String getType(){return getPluginType();}
+
     /**
      * Configuration data for any plugins that
      * are attached to this workflow step
@@ -130,4 +132,16 @@ public interface WorkflowStepData {
      * @return the name of the runner node, or {@code null} if the step should use the default node selection.
      */
     String getRunnerNode();
+
+    /**
+     * Get the condition set for this step, if it is a conditional step.
+     * @return ConditionalSet if this is a conditional step, null otherwise
+     */
+    default ConditionalSet getConditionSet(){return null;};
+
+    /**
+     * Get the sub-steps for this conditional step.
+     * @return List of sub-steps if this is a conditional step, null or empty list otherwise
+     */
+    default List<WorkflowStepData> getSubSteps(){return null;}
 }

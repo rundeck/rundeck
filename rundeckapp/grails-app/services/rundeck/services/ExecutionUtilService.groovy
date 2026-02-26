@@ -18,8 +18,10 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.NodesetEmptyException
+import com.dtolabs.rundeck.core.config.FeatureService
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.data.workflow.ConditionalStep
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptCommand
 import org.rundeck.core.execution.ScriptFileCommand
@@ -62,6 +64,7 @@ import static org.apache.tools.ant.util.StringUtils.getStackTrace
 class ExecutionUtilService {
     static transactional = false
     MetricService metricService
+    FeatureService featureService
     ConfigurationService configurationService
     LogFileStorageService logFileStorageService
     def ThreadBoundOutputStream sysThreadBoundOut
@@ -164,19 +167,14 @@ class ExecutionUtilService {
      * Create an WorkflowExecutionItem instance for the given Workflow,
      * suitable for the ExecutionService layer
      */
-    public WorkflowExecutionItem createExecutionItemForWorkflow(WorkflowData workflow, parentProject=null) {
+    public WorkflowExecutionItem createExecutionItemForWorkflow(WorkflowData workflow, String parentProject=null) {
         if (!workflow.commands || workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
 
+        List<StepExecutionItem> stepExecutionItems = consolidateWorkflowSteps(workflow, parentProject)
         def impl = new WorkflowImpl(
-                workflow.commands.collect {
-                    itemForWFCmdItem(
-                            it,
-                            it.errorHandler ? itemForWFCmdItem(it.errorHandler,null,parentProject) : null,
-                            parentProject
-                    )
-                },
+                stepExecutionItems,
                 workflow.threadcount,
                 workflow.keepgoing,
                 workflow.strategy ? workflow.strategy : "node-first"
@@ -186,9 +184,42 @@ class ExecutionUtilService {
         return item
     }
 
+    private List<StepExecutionItem> consolidateWorkflowSteps(WorkflowData workflow, String parentProject) {
+        List<StepExecutionItem> stepExecutionItems = workflow.commands.collect {
+            if (!it.conditionSet) {
+                itemForWFCmdItem(
+                        it,
+                        it.errorHandler ? itemForWFCmdItem(it.errorHandler, null, parentProject) : null,
+                        parentProject
+                )
+            }
+        }.findAll { it != null }
 
-    public StepExecutionItem itemForWFCmdItem(final WorkflowStep step, final StepExecutionItem handler=null,final parentProject=null) throws FileNotFoundException {
-        if(step instanceof CommandExec || step.instanceOf(CommandExec)){
+        if(featureService.featurePresent("earlyAccessJobConditional")) {
+            workflow.commands.each {
+                if (it.conditionSet && it.subSteps) {
+                    stepExecutionItems.addAll(
+                            it.subSteps.collect { subStep ->
+                                StepExecutionItem sei = itemForWFCmdItem(
+                                        subStep,
+                                        subStep.errorHandler ? itemForWFCmdItem(subStep.errorHandler, null, parentProject) : null,
+                                        parentProject
+                                )
+                                sei.conditions = it.conditionSet
+                                sei
+                            }.findAll { it != null }
+                    )
+                }
+            }
+        }
+        stepExecutionItems
+    }
+
+
+    public StepExecutionItem itemForWFCmdItem(final WorkflowStepData step, final StepExecutionItem handler=null,final parentProject=null) throws FileNotFoundException {
+        if(step.type == "conditional"){
+            //log.warn("Workflow step ${step} has a condition set, but conditions are not supported in this context, ignoring")
+        } else if(step instanceof CommandExec || step.instanceOf(CommandExec)){
             CommandExec cmd= step as CommandExec
             String type
             if (null != cmd.getAdhocRemoteString()) {
@@ -207,12 +238,12 @@ class ExecutionUtilService {
                     handler,
                     !!cmd.keepgoingOnSuccess,
                     cmd.description,
-                    createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                    createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                    step.conditionSet
             )
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
             final JobExec jobcmditem = step as JobExec
 
-            // get the workflow item for the referenced job, if the job refers is found, otherwise set it to null
             WorkflowExecutionItem jobReferenceWorkflow = null
             ScheduledExecution se = scheduledExecutionService.findJobFromJobExec(jobcmditem, jobcmditem.jobProject ?: parentProject)
             if(se){
@@ -250,10 +281,11 @@ class ExecutionUtilService {
                     jobcmditem.useName,
                     jobcmditem.ignoreNotifications,
                     jobcmditem.childNodes,
-                    jobReferenceWorkflow
+                    jobReferenceWorkflow,
+                    step.conditionSet
             )
-        }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
-            final PluginStep stepitem = step as PluginStep
+        }else if(step instanceof PluginStep || step.instanceOf(PluginStep)  || step.instanceOf(ConditionalStep)){
+            final WorkflowStepData stepitem = step
             if(stepitem.nodeStep) {
                 return ExecutionItemFactory.createPluginNodeStepItem(
                         stepitem.type,
@@ -261,7 +293,8 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                        step.conditionSet
                 )
             }else {
                 return ExecutionItemFactory.createPluginStepItem(
@@ -270,7 +303,8 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter)),
+                        step.conditionSet
                 )
             }
         } else {
@@ -352,7 +386,7 @@ class ExecutionUtilService {
         builder.objToDom("executions", [execution: map], xml)
     }
 
-    def runRefJobWithTimer(Thread thread, long startTime, boolean shouldCheckTimeout, long timeoutms){
+    Map runRefJobWithTimer(Thread thread, long startTime, boolean shouldCheckTimeout, long timeoutms){
 
         boolean never = true
         def interrupt = false

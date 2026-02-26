@@ -446,8 +446,8 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
             se.options=options
         }
         if(data.sequence){
-            Workflow wf = Workflow.fromMap(data.sequence as Map)
-            se.workflow=wf
+            WorkflowData wf = WorkflowDataImpl.fromMap(data.sequence as Map)
+            se.setWorkflowData(wf)
         }
         if(data.schedule){
             se.scheduled=true

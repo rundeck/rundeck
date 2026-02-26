@@ -34,7 +34,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
         return SERVICE_NAME;
     }
 
-    private WorkflowStrategyService(final IFramework framework) {
+    protected WorkflowStrategyService(final IFramework framework) {
         this.framework=framework;
         this.serviceList = new ArrayList<>();
         /*

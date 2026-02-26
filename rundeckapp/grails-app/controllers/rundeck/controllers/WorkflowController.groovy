@@ -21,6 +21,8 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.app.data.workflow.WorkflowStepDataImpl
+import org.rundeck.app.data.workflow.ConditionalStep
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import org.rundeck.core.execution.ScriptCommand
@@ -123,7 +125,7 @@ class WorkflowController extends ControllerBase {
         def newitemDescription
         def dynamicProperties
         AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(request.subject)
-        if(item && item.instanceOf(PluginStep)){
+        if(item && item.instanceOf(PluginStep) ){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
             dynamicProperties = getDynamicProperties(params.project,
@@ -466,7 +468,7 @@ class WorkflowController extends ControllerBase {
                 return renderErrorFragment("num parameter is invalid: ${numi} no error handler")
             }
         }
-        def itemDescription = item.instanceOf(PluginStep)?getPluginStepDescription(item.nodeStep, item.type):null
+        def itemDescription = (item.instanceOf(PluginStep) || item.instanceOf(ConditionalStep))?getPluginStepDescription(item.nodeStep, item.type):null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum:numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, isErrorHandler: isErrorHandler, itemDescription: itemDescription])
     }
 
@@ -515,7 +517,7 @@ class WorkflowController extends ControllerBase {
 
             def itemDescription
             def dynamicProperties
-            if(item && item.instanceOf(PluginStep)){
+            if(item && (item.instanceOf(PluginStep))){
                 itemDescription = getPluginStepDescription(item.nodeStep, item.type)
                 dynamicProperties = getDynamicProperties(params.project,
                         item.type,
@@ -553,7 +555,7 @@ class WorkflowController extends ControllerBase {
         if(isErrorHandler){
             item=item.errorHandler
         }
-        def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
+        def itemDescription = (item.instanceOf(PluginStep) || item.instanceOf(ConditionalStep)) ? getPluginStepDescription(item.nodeStep, item.type) : null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
         }.invalidToken {
             response.status=HttpServletResponse.SC_BAD_REQUEST
