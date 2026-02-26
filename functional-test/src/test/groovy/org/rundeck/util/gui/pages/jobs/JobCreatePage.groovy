@@ -66,8 +66,8 @@ class JobCreatePage extends BasePage {
     By workflowSaveStepButton = By.xpath('//div[contains(@class, \'in\') and contains(@class, \'modal\')]//button[@data-testid="save-button"]')
 
     static class NextUi {
-        static By jobNameInputBy = By.cssSelector("form input[id=\"schedJobName\"]")
-        static By groupPathInputBy = By.cssSelector("form input[id=\"schedJobGroup\"]")
+        static By jobNameInputBy = By.id("schedJobName")
+        static By groupPathInputBy = By.id("schedJobGroup")
         static By descriptionTextareaBy = By.cssSelector("form textarea.ace_text-input")
         static By killHandlerPluginPreviousRow = By.xpath('//input[@value="killhandler"]/ancestor::div[@class="list-group-item"]/preceding-sibling::div[@class="list-group-item"][1]')
         static By killHandlerPluginCheckbox = By.xpath('//input[@value="killhandler"]')
