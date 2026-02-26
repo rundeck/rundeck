@@ -107,8 +107,9 @@ class ExportImportSpec extends SeleniumBase {
         then:
         jobShowPage.getExtraOptFirsts(optName).size() == 1
         when:
-        jobShowPage.getLink "Action" click()
-        jobShowPage.getLink "Edit this Job" click()
+        def jobUuid = jobShowPage.jobUuid.text
+        jobCreatePage.loadEditPath(SELENIUM_EXPORT_IMPORT_PROJECT, jobUuid, false)
+        jobCreatePage.go()
         jobCreatePage.tab JobTab.WORKFLOW click()
         then:
         jobCreatePage.optDetails.size() == 1

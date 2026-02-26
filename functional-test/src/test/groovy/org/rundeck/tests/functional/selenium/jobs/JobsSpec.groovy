@@ -128,7 +128,7 @@ class JobsSpec extends SeleniumBase {
     def "Duplicate_options - only validations, not save jobs old ui"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi = false
+            jobCreatePage.legacyUi = true
             jobCreatePage.go()
             def optName = 'test'
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name
