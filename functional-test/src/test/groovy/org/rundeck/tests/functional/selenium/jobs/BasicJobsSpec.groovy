@@ -79,12 +79,12 @@ class BasicJobsSpec extends SeleniumBase {
     def "create valid job basic options"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
+            jobCreatePage.legacyUi=legacyUi
             jobCreatePage.go()
             def jobShowPage = page JobShowPage
             def optionName = 'seleniumOption1'
         then:
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? "legacy ui" : "vue ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys optionName
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
@@ -96,18 +96,18 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
             jobShowPage.optionInputText(optionName) != null
         where:
-            nextUi<<[false, true]
+            legacyUi<<[false, true]
     }
 
     def "edit job set description"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
+            jobCreatePage.legacyUi=legacyUi
             jobCreatePage.go()
             def jobShowPage = page JobShowPage
-            jobShowPage.nextUi=nextUi
+            jobShowPage.legacyUi=legacyUi
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", false
             jobCreatePage.go()
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()
@@ -118,30 +118,30 @@ class BasicJobsSpec extends SeleniumBase {
         expect:
             'a new job description' == jobShowPage.descriptionTextLabel.getText()
         where:
-            nextUi<<[false,true]
+            legacyUi<<[false,true]
     }
 
     def "edit job set groups"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
+            jobCreatePage.legacyUi=legacyUi
             jobCreatePage.go()
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", false
             jobCreatePage.go()
             jobCreatePage.jobGroupField.clear()
             jobCreatePage.jobGroupField.sendKeys 'testGroup'
         where:
-            nextUi<<[false,true]
+            legacyUi<<[false,true]
     }
 
     def "edit job set group via modal"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
+            jobCreatePage.legacyUi=legacyUi
             jobCreatePage.go()
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", false
             jobCreatePage.go()
             jobCreatePage.groupChooseButton.click()
             jobCreatePage.waitForElementToBeClickable jobCreatePage.groupNameOption
@@ -149,7 +149,7 @@ class BasicJobsSpec extends SeleniumBase {
         expect:
             'test' == jobCreatePage.jobGroupField.getAttribute("value")
         where:
-            nextUi<<[false, true]
+            legacyUi<<[false, true]
     }
 
     def "edit job and set schedules tab"() {
@@ -173,7 +173,7 @@ class BasicJobsSpec extends SeleniumBase {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", false
             jobCreatePage.go()
             jobCreatePage.tab JobTab.EXECUTION_PLUGINS click()
             if(jobCreatePage.executionPluginsRows.size() > 1){
@@ -193,7 +193,7 @@ class BasicJobsSpec extends SeleniumBase {
             // Wait for page transition after clicking update button
             jobCreatePage.waitForUrlToContain('/job/show')
         where:
-            nextUi<<[false,true]
+            legacyUi<<[false,true]
     }
 
     def "edit job and set other tab"() {
