@@ -488,7 +488,9 @@ class JobsSpec extends SeleniumBase {
             }
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
             jobCreatePage.wfRevertAllButton.click()
-            jobCreatePage.revertWfConfirmYes.click()
+            if(legacyUi) {
+                jobCreatePage.revertWfConfirmYes.click()
+            }
             jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.listWorkFlowItemBy, 0
         expect:
             jobCreatePage.workFlowList.size() == 0

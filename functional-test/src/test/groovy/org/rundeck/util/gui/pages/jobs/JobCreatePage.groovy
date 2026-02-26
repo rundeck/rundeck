@@ -130,6 +130,7 @@ class JobCreatePage extends BasePage {
     By wfRedoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[2]")
     By wfRedoButtonLinkBy = By.xpath("//*[@class='btn btn-xs btn-default act_redo flash_undo']")
     By wfRevertAllButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[3]")
+    By wfRevertAllButtonByNextUi = By.cssSelector("[data-testid='revertAll-btn']")
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
     By cancelNewStepFormBy = By.cssSelector('ol.flowlist li span.btn.btn-default.btn-sm[onclick*="_wficancelnew("]')
     By cancelEditStepFormBy = By.cssSelector('ol.flowlist li span.btn.btn-default.btn-sm[onclick*="_wfiview"]')
@@ -771,7 +772,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getWfRevertAllButton() {
-        el wfRevertAllButtonBy
+        el(legacyUi ? wfRevertAllButtonBy : wfRevertAllButtonByNextUi)
     }
 
     WebElement getRevertWfConfirmYes() {
