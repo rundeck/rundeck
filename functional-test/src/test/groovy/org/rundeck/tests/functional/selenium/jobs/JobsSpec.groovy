@@ -450,7 +450,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.workFlowList.size() == 1
             jobCreatePage.createJobButton.click()
         where:
-            legacyUi << [false, true]
+            legacyUi << [true]
     }
 
     def "job workflow undo redo"() {

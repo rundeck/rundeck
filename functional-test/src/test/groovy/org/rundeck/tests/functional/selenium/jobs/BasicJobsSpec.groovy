@@ -172,26 +172,30 @@ class BasicJobsSpec extends SeleniumBase {
     def "edit job and set executions tab"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        then:
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.legacyUi = !nextUi
             jobCreatePage.go()
             jobCreatePage.tab JobTab.EXECUTION_PLUGINS click()
             if(jobCreatePage.executionPluginsRows.size() > 1){
                 jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.killHandlerPluginPreviousRow
             }
-            if (jobCreatePage.killHandlerPluginCheckbox.isSelected()) {
-                jobCreatePage.killHandlerPluginCheckbox.click()
-                jobCreatePage.killHandlerPluginKillSpawnedCheckbox.click()
+            def killHandlerCheckbox = jobCreatePage.killHandlerPluginCheckbox
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", killHandlerCheckbox
+            if (killHandlerCheckbox.isSelected()) {
+                jobCreatePage.executeScript "arguments[0].click();", killHandlerCheckbox
+                jobCreatePage.executeScript "arguments[0].click();", jobCreatePage.killHandlerPluginKillSpawnedCheckbox
             } else {
-                jobCreatePage.killHandlerPluginCheckbox.click()
+                jobCreatePage.executeScript "arguments[0].click();", killHandlerCheckbox
                 jobCreatePage.killHandlerPluginCheckbox.isSelected()
-                jobCreatePage.killHandlerPluginKillSpawnedCheckbox.click()
+                jobCreatePage.executeScript "arguments[0].click();", jobCreatePage.killHandlerPluginKillSpawnedCheckbox
                 jobCreatePage.killHandlerPluginKillSpawnedCheckbox.isSelected()
             }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
             jobCreatePage.updateJobButton.click()
             // Wait for page transition after clicking update button
             jobCreatePage.waitForUrlToContain('/job/show')
+        then:
+            noExceptionThrown()
         where:
             nextUi<<[false,true]
     }
