@@ -249,12 +249,18 @@ class JobCreatePage extends BasePage {
      * @return
      */
     JobCreatePage addSimpleCommandStep(String command, int stepIndexNumber) {
-
-        executeScript "window.location.hash = '#addnodestep'"
+        if (legacyUi) {
+            executeScript "window.location.hash = '#addnodestep'"
+        } else {
+            clickAddStep()
+            byAndWaitClickable By.xpath("//*[@${StepType.NODE.getStepType()}='exec-command']")
+        }
         stepLink 'exec-command', StepType.NODE click()
-        byAndWaitClickable adhocRemoteStringBy
+        byAndWaitClickable(legacyUi ? adhocRemoteStringBy : NextUi.adhocRemoteStringBy)
         adhocRemoteStringField.click()
-        waitForNumberOfElementsToBeOne floatBy
+        if (legacyUi) {
+            waitForNumberOfElementsToBeOne floatBy
+        }
 
         adhocRemoteStringField.sendKeys command
 
