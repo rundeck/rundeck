@@ -412,7 +412,9 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getUpdateJobButton() {
-        el updateJob
+        def element = el updateJob
+        executeScript "arguments[0].scrollIntoView(true);", element
+        return element
     }
 
     void waitNotificationModal(Integer totalNotificationModals) {
