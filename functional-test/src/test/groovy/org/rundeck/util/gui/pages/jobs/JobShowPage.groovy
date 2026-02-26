@@ -92,7 +92,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By buttonDangerBy = By.cssSelector(".btn.btn-danger.btn-sm")
     By jobDisableExecutionButtonBy = By.linkText("Disable Execution")
     By jobEnableExecutionButtonBy = By.linkText("Enable Execution")
-    By jobOptionsDropdownBy = By.cssSelector(".optionvalues")
+    By jobOptionsDropdownBy = By.cssSelector("select.optionvalues, select[name^='extra.option.']")
     By duplicateJobButtonBy = By.partialLinkText("Duplicate this Job")
     By duplicateJobToProjectButtonBy = By.partialLinkText("Duplicate this Job to other Project")
     By projectDropDownToDuplicateBy = By.id("jobProject")
@@ -364,7 +364,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     WebElement getJobOptionsDropdown(){
-        el jobOptionsDropdownBy
+        waitForElementVisible(jobOptionsDropdownBy)
+        el(jobOptionsDropdownBy)
     }
 
     /**

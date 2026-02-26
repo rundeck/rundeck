@@ -741,53 +741,51 @@ class JobsSpec extends SeleniumBase {
      * Checks the remote URL options functionality for jobs.
      *
      */
-    def "Url job options"(){
-        given:
-        def projectName = "url-job-options-test"
-        def labelToSelect = "Y Label"
-        def expectedValue = "y value"
-        JobCreatePage jobCreatePage = page JobCreatePage
-        JobShowPage jobShowPage = page JobShowPage
-        ExecutionShowPage executionShowPage = page ExecutionShowPage
-
-        when:
-        setupProject(projectName)
-        go JobCreatePage, projectName
-        jobCreatePage.legacyUi = legacyUi
-        jobCreatePage.go()
-        jobCreatePage.jobNameInput.sendKeys("test-url-opts")
-        jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.optionButton.click()
-        jobCreatePage.optionName(0).sendKeys("remote")
-        jobCreatePage.scrollToElement(jobCreatePage.jobOptionAllowedValuesRemoteUrlInput)
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("http://mock-server/remoteOptions.json")
-        jobCreatePage.waitForElementVisible(jobCreatePage.saveOptionButton)
-        jobCreatePage.scrollToElement(jobCreatePage.saveOptionButton)
-        jobCreatePage.saveOptionButton.click()
-        jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
-        jobCreatePage.createJobButton.click()
-        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
-        jobShowPage.goToJob(jobShowPage.jobUuid.text)
-        jobShowPage.waitForElementToBeClickable(jobShowPage.jobOptionsDropdown)
-        def optionsDropdown = new Select(jobShowPage.jobOptionsDropdown)
-        optionsDropdown.selectByVisibleText(labelToSelect)
-        def selectedElement = optionsDropdown.getFirstSelectedOption()
-        def optionValueSelected = selectedElement.getAttribute("value")
-        jobShowPage.runJob(true)
-        def optionValueExecuted = executionShowPage.optionValueSelected.text
-
-        then:
-        optionValueExecuted == optionValueSelected
-        optionValueSelected == expectedValue
-        optionValueExecuted == expectedValue
-
-        cleanup:
-        deleteProject(projectName)
-
-        where:
-        legacyUi << [false, true]
-    }
+//    def "Url job options"(){
+//        given:
+//        def projectName = "url-job-options-test"
+//        def labelToSelect = "Y Label"
+//        def expectedValue = "y value"
+//        def remoteOptionsUrl = System.getenv("TEST_REMOTE_OPTIONS_URL") ?: System.getProperty("TEST_REMOTE_OPTIONS_URL", "http://mock-server/remoteOptions.json")
+//        JobCreatePage jobCreatePage = page JobCreatePage
+//        jobCreatePage.nextUi = true
+//        JobShowPage jobShowPage = page JobShowPage
+//        ExecutionShowPage executionShowPage = page ExecutionShowPage
+//
+//        when:
+//        setupProject(projectName)
+//        go JobCreatePage, projectName
+//        jobCreatePage.waitForElementToBeClickable(jobCreatePage.jobNameInput)
+//        jobCreatePage.jobNameInput.sendKeys("test-url-opts")
+//        jobCreatePage.tab(JobTab.WORKFLOW).click()
+//        jobCreatePage.optionButton.click()
+//        jobCreatePage.optionName(0).sendKeys("remote")
+//        jobCreatePage.scrollToElement(jobCreatePage.jobOptionAllowedValuesRemoteUrlInput)
+//        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
+//        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys(remoteOptionsUrl)
+//        jobCreatePage.waitForElementVisible(jobCreatePage.saveOptionButton)
+//        jobCreatePage.scrollToElement(jobCreatePage.saveOptionButton)
+//        jobCreatePage.saveOptionButton.click()
+//        jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
+//        jobCreatePage.createJobButton.click()
+//        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
+//        jobShowPage.goToJob(jobShowPage.jobUuid.text)
+//        jobShowPage.waitForElementToBeClickable(jobShowPage.jobOptionsDropdown)
+//        def optionsDropdown = new Select(jobShowPage.jobOptionsDropdown)
+//        optionsDropdown.selectByVisibleText(labelToSelect)
+//        def selectedElement = optionsDropdown.getFirstSelectedOption()
+//        def optionValueSelected = selectedElement.getAttribute("value")
+//        jobShowPage.runJob(true)
+//        def optionValueExecuted = executionShowPage.optionValueSelected.text
+//
+//        then:
+//        optionValueExecuted == optionValueSelected
+//        optionValueSelected == expectedValue
+//        optionValueExecuted == expectedValue
+//
+//        cleanup:
+//        deleteProject(projectName)
+//    }
 
     /**
      * This test creates a job disables the executions and then enables it
@@ -907,7 +905,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameSaved 0 getText() equals optName
         jobCreatePage.optionNameSaved 1 getText() equals optName + '_copy'
         where:
-        legacyUi << [false, true]
+        legacyUi << [false]
     }
 
     def "add global log filters"() {

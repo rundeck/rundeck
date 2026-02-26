@@ -151,7 +151,8 @@ class JobCreatePage extends BasePage {
     By jobOptionListValuesBy = By.name("valuesList")
     By jobOptionListDelimiterBy = By.name("valuesListDelimiter")
     By jobOptionEnforcedBy = By.id("enforcedType_enforced")
-    By jobOptionAllowedValuesRemoteUrlBy = By.xpath("//div[10]/div/div/div[2]/input")
+    By jobOptionAllowedValuesRemoteUrlBy = By.cssSelector("input[name='valuesType'][value='url']")
+    By jobOptionAllowedValuesRemoteUrlByNextUi = By.cssSelector("[data-test='option.valuesType'] input[value='url']")
     By jobOptionAllowedValuesRemoteUrlValueBy = By.name("valuesUrl")
     By jobOptionRequiredBy = By.id("option-required-yes")
     By jobOptionMultivaluedBy = By.xpath("//div[15]/div/div/div[2]/input")
@@ -443,7 +444,9 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobNameInput() {
-        el legacyUi ? jobNameInputBy : NextUi.jobNameInputBy
+        def by = legacyUi ? jobNameInputBy : NextUi.jobNameInputBy
+        waitForElementVisible(by)
+        el(by)
     }
 
     WebElement getGroupPathInput() {
@@ -864,7 +867,15 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobOptionAllowedValuesRemoteUrlInput(){
-        el jobOptionAllowedValuesRemoteUrlBy
+        def by = (legacyUi ? jobOptionAllowedValuesRemoteUrlBy : jobOptionAllowedValuesRemoteUrlByNextUi)
+        def optionsSectionBy = By.id("optionsContent")
+        waitForElementVisible(optionsSectionBy)
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", el(optionsSectionBy))
+        def element = new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.presenceOfElementLocated(by))
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", element)
+        waitForElementToBeClickable(element)
+        element
     }
 
     void scrollToElement(WebElement el){
