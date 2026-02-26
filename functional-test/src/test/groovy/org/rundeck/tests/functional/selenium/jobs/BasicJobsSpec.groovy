@@ -315,8 +315,8 @@ class BasicJobsSpec extends SeleniumBase {
             expected = [
                 "selenium-option-test1",
                 "predefined job with options",
-                "create valid job basic options next ui",
-                "create valid job basic options old ui"
+                "create valid job basic options vue ui",
+                "create valid job basic options legacy ui"
             ]
     }
 

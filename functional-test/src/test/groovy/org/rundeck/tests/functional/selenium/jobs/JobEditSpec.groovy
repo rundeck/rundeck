@@ -20,7 +20,7 @@ class JobEditSpec extends SeleniumBase{
      */
     def "add and remove steps"(){
         given:
-            def projectName = "addRemoveStepsProject"
+            def projectName = "addRemoveStepsProject_${legacyUi}"
             setupProject(projectName)
             def loginPage = page LoginPage
             def homePage = page HomePage
