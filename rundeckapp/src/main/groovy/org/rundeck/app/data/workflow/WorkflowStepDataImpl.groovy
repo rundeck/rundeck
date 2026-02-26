@@ -7,6 +7,9 @@ import grails.util.Holders
 import grails.validation.Validateable
 import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import rundeck.CommandExec
+import rundeck.JobExec
+import rundeck.PluginStep
 import rundeck.data.validation.shared.SharedWorkflowStepConstraints
 import rundeck.data.validation.validators.workflowstep.WorkflowStepValidatorFactory
 
@@ -44,33 +47,38 @@ class WorkflowStepDataImpl implements WorkflowStepData, PluginProviderConfigurat
      * @param stepMap Map containing workflow step data
      * @return WorkflowStepDataImpl instance
      */
-    static WorkflowStepDataImpl fromMap(Map<String, Object> stepMap) {
-        if (!stepMap) {
+    static WorkflowStepData workflowStepDatafromMap(Map<String, Object> map) {
+
+    }
+    static WorkflowStepData fromMap(Map<String, Object> map) {
+        if (!map) {
             return null
         }
 
-        def step = new WorkflowStepDataImpl()
-        step.pluginType = stepMap.type ?: stepMap.exec
-        step.nodeStep = stepMap.nodeStep ?: false
-        step.description = stepMap.description
-        step.keepgoingOnSuccess = stepMap.keepgoingOnSuccess
-
-        // Handle configuration
-        if (stepMap.configuration) {
-            step.configuration = stepMap.configuration as Map<String, Object>
+        WorkflowStepData exec
+        if (map.jobref!=null) {
+            exec = JobExec.jobExecFromMap(map)
+        } else if (map.exec != null || map.script != null || map.scriptfile != null || map.scripturl != null) {
+            CommandExec ce = new CommandExec()
+            CommandExec.updateFromMap(ce, map)
+            exec = ce
+        } else {
+            WorkflowStepData pluginStep = PluginStep.fromMap(map)
+            exec = pluginStep.createClone()
+        }
+        //exec
+        //WorkflowStepDataImpl.fromMap(map as Map<String, Object>)
+        if(map.errorhandler){
+            WorkflowStepData errorHandlerExec
+            Map mapErrorHandler = map.errorhandler as Map
+            if (mapErrorHandler.jobref!=null) {
+                exec.errorHandler = JobExec.jobExecFromMap(mapErrorHandler)
+            } else {
+                exec.errorHandler = PluginStep.fromMap(mapErrorHandler)
+            }
         }
 
-        // Handle plugin config
-        if (stepMap.plugins) {
-            step.pluginConfig = stepMap.plugins as Map<String, Object>
-        }
-
-        // Handle error handler recursively
-        if (stepMap.errorhandler) {
-            step.errorHandler = WorkflowStepDataImpl.fromMap(stepMap.errorhandler as Map<String, Object>)
-        }
-
-        return step
+        return exec
     }
 
     @Override
@@ -176,5 +184,44 @@ class WorkflowStepDataImpl implements WorkflowStepData, PluginProviderConfigurat
             step.errorHandler = fromWorkflowStepData(source.errorHandler)
         }
         return step
+    }
+
+    void updateFromMap(Map params) {
+        if (params == null) {
+            return
+        }
+
+        // Common properties for all step types
+        if (params.containsKey('description')) {
+            this.description = params.description?.toString()
+        }
+        if (params.containsKey('keepgoingOnSuccess')) {
+            this.keepgoingOnSuccess = params.keepgoingOnSuccess != null ?
+                    (params.keepgoingOnSuccess instanceof Boolean ? params.keepgoingOnSuccess :
+                            Boolean.parseBoolean(params.keepgoingOnSuccess.toString())) : null
+        }
+        if (params.containsKey('nodeStep')) {
+            if (params.nodeStep instanceof String) {
+                this.nodeStep = params.nodeStep == 'true'
+            } else {
+                this.nodeStep = params.nodeStep as Boolean
+            }
+        }
+        if (params.containsKey('pluginType') || params.containsKey('type')) {
+            this.pluginType = params.pluginType ?: params.type
+        }
+        if (params.containsKey('configuration')) {
+            this.configuration = params.configuration as Map<String, Object>
+        }
+        if (params.containsKey('pluginConfig') || params.containsKey('plugins')) {
+            this.pluginConfig = (params.pluginConfig ?: params.plugins) as Map<String, Object>
+        }
+        if (params.containsKey('runnerNode')) {
+            this.runnerNode = params.runnerNode?.toString()
+        }
+
+        // Note: JobExec and CommandExec specific properties (jobName, jobGroup, adhocRemoteString, etc.)
+        // are not stored directly in WorkflowStepDataImpl. They would need to be stored in configuration
+        // or handled by converting to/from the appropriate domain class type.
     }
 }

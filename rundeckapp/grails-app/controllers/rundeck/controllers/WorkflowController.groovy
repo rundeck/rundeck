@@ -811,13 +811,21 @@ class WorkflowController extends ControllerBase {
                 if (!params.keepgoingOnSuccess) {
                     params.keepgoingOnSuccess = 'false'
                 }
-                moditem.properties=params.subMap(['keepgoingOnSuccess','description'])
+                if(moditem instanceof WorkflowStep) {
+                    moditem.properties = params.subMap(['keepgoingOnSuccess', 'description'])
+                } else {
+                    moditem.updateFromMap(params.subMap(['keepgoingOnSuccess', 'description']))
+                }
                 moditem.configuration = cleanLineEndings(params.pluginConfig)
             } else {
                 if(params.nodeStep instanceof String) {
                     params.nodeStep = params.nodeStep == 'true'
                 }
-                moditem.properties = params
+                if(moditem instanceof WorkflowStep) {
+                    moditem.properties = params
+                } else {
+                    moditem.updateFromMap(params)
+                }
                 if (params.jobName) {
                     moditem.nodeStep=params.nodeStep
                 }
@@ -1010,8 +1018,8 @@ class WorkflowController extends ControllerBase {
                 return result
             }
             def WorkflowStepData item = editwf.commands.get(numi)
-            def clone =new WorkflowStepDataImpl().fromMap(item.toMap())
-            def moditem = new WorkflowStepDataImpl().fromMap(item.toMap())
+            def clone = WorkflowStepDataImpl.fromMap(item.toMap())
+            def moditem =WorkflowStepDataImpl.fromMap(item.toMap())
             modifyItemFromParams(moditem,input.params)
             _validateCommandExec(moditem,input.params.origitemtype, fprojects)
             if (moditem.errors.hasErrors()) {
@@ -1066,8 +1074,8 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}: no error handler"
                 return result
             }
-            def clone = new WorkflowStepDataImpl().fromMap(ehitem.toMap())
-            def moditem = new WorkflowStepDataImpl().fromMap(ehitem.toMap())
+            def clone = WorkflowStepDataImpl.fromMap(ehitem.toMap())
+            def moditem = WorkflowStepDataImpl.fromMap(ehitem.toMap())
 
             modifyItemFromParams(moditem, input.params)
 
