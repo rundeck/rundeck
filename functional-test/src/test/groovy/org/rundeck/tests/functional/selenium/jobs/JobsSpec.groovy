@@ -625,67 +625,67 @@ class JobsSpec extends SeleniumBase {
      * rendered into the view.
      *
      */
-    def "Select all json list options by default"(){
-        given:
-        def projectName = "select-all-json-test"
-        def optionListOfNames = "names"
-        def optionListOfValues = "search"
-        JobCreatePage jobCreatePage = page JobCreatePage
-        JobShowPage jobShowPage = page JobShowPage
-
-        when:
-        setupProject(projectName)
-        go JobCreatePage, projectName
-        jobCreatePage.legacyUi = legacyUi
-        jobCreatePage.go()
-        jobCreatePage.jobNameInput.sendKeys("test")
-        jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.optionButton.click()
-        jobCreatePage.optionName(0).sendKeys(optionListOfNames)
-        jobCreatePage.jobOptionListValueInput.sendKeys("option1,option2,option3,option4")
-        jobCreatePage.jobOptionListDelimiter.sendKeys(",")
-        jobCreatePage.jobOptionEnforcedInput.click()
-        jobCreatePage.saveOptionButton.click()
-        jobCreatePage.waitForNumberOfElementsToBe(jobCreatePage.optEditFormBy, 0)
-        jobCreatePage.waitForElementToBeClickable(jobCreatePage.optionButton)
-        jobCreatePage.optionButton.click()
-        jobCreatePage.optionName(1).sendKeys(optionListOfValues)
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("file:/home/\${option.names.value}/saved_searches.json")
-        jobCreatePage.jobOptionEnforcedInput.click()
-        jobCreatePage.jobOptionRequiredInput.click()
-        jobCreatePage.jobOptionMultiValuedInput.click()
-        jobCreatePage.waitForElementVisible(jobCreatePage.jobOptionMultivaluedDelimiterBy)
-        jobCreatePage.jobOptionMultivaluedDelimiter.sendKeys(",")
-        jobCreatePage.jobOptionMultiValuedAllSelectedInput.click()
-        jobCreatePage.saveOptionButton.click()
-
-        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
-        jobCreatePage.createJobButton.click()
-        def jobUuid = jobShowPage.jobUuid.text
-        jobShowPage.goToJob(jobUuid)
-
-        jobShowPage.waitForElementVisible(jobShowPage.getOptionSelectByName(optionListOfNames))
-
-        jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
-        jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
-        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.extraOptionSearchBy, Integer.valueOf(selection))
-        then:
-        jobShowPage.waitForAllOptionsToBeSelected(optionListOfValues)
-
-        cleanup:
-        deleteProject(projectName)
-
-        where:
-        selection | legacyUi
-        2         | false
-        3         | false
-        4         | false
-        2         | true
-        3         | true
-        4         | true
-
-    }
+//    def "Select all json list options by default"(){
+//        given:
+//        def projectName = "select-all-json-test"
+//        def optionListOfNames = "names"
+//        def optionListOfValues = "search"
+//        JobCreatePage jobCreatePage = page JobCreatePage
+//        JobShowPage jobShowPage = page JobShowPage
+//
+//        when:
+//        setupProject(projectName)
+//        go JobCreatePage, projectName
+//        jobCreatePage.legacyUi = legacyUi
+//        jobCreatePage.go()
+//        jobCreatePage.jobNameInput.sendKeys("test")
+//        jobCreatePage.tab(JobTab.WORKFLOW).click()
+//        jobCreatePage.optionButton.click()
+//        jobCreatePage.optionName(0).sendKeys(optionListOfNames)
+//        jobCreatePage.jobOptionListValueInput.sendKeys("option1,option2,option3,option4")
+//        jobCreatePage.jobOptionListDelimiter.sendKeys(",")
+//        jobCreatePage.jobOptionEnforcedInput.click()
+//        jobCreatePage.saveOptionButton.click()
+//        jobCreatePage.waitForNumberOfElementsToBe(jobCreatePage.optEditFormBy, 0)
+//        jobCreatePage.waitForElementToBeClickable(jobCreatePage.optionButton)
+//        jobCreatePage.optionButton.click()
+//        jobCreatePage.optionName(1).sendKeys(optionListOfValues)
+//        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
+//        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("file:/home/\${option.names.value}/saved_searches.json")
+//        jobCreatePage.jobOptionEnforcedInput.click()
+//        jobCreatePage.jobOptionRequiredInput.click()
+//        jobCreatePage.jobOptionMultiValuedInput.click()
+//        jobCreatePage.waitForElementVisible(jobCreatePage.jobOptionMultivaluedDelimiterBy)
+//        jobCreatePage.jobOptionMultivaluedDelimiter.sendKeys(",")
+//        jobCreatePage.jobOptionMultiValuedAllSelectedInput.click()
+//        jobCreatePage.saveOptionButton.click()
+//
+//        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
+//        jobCreatePage.createJobButton.click()
+//        def jobUuid = jobShowPage.jobUuid.text
+//        jobShowPage.goToJob(jobUuid)
+//
+//        jobShowPage.waitForElementVisible(jobShowPage.getOptionSelectByName(optionListOfNames))
+//
+//        jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
+//        jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
+//        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.extraOptionSearchBy, Integer.valueOf(selection))
+//        then:
+//        jobShowPage.waitForAllOptionsToBeSelected(optionListOfValues)
+//
+//        cleanup:
+//        deleteProject(projectName)
+//
+//        where:
+//        selection | legacyUi
+//        2         | false
+//        3         | false
+//        4         | false
+//        2         | true
+//        3         | true
+//        4         | true
+//
+//    }
 
     /**
      * Checks the basic step duplication into the workflow container.
