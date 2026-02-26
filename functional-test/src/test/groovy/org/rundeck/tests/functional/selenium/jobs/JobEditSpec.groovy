@@ -54,8 +54,7 @@ class JobEditSpec extends SeleniumBase{
             jobListPage.getLink(jobName).click()
             jobShowPage.validatePage()
             def jobId = jobShowPage.getJobUuid().getText()
-            jobCreatePage.legacyUi = legacyUi
-            jobCreatePage.loadEditPath(projectName, jobId, false)
+            jobCreatePage.loadEditPath(projectName, jobId, true, legacyUi)
             jobCreatePage.go()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
             if(legacyUi) {
