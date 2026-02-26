@@ -422,6 +422,8 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.tab JobTab.WORKFLOW click()
             if(legacyUi) {
                 jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
+            } else {
+                jobCreatePage.clickAddStep()
             }
             jobCreatePage.stepLink 'com.batix.rundeck.plugins.AnsiblePlaybookInlineWorkflowStep', StepType.WORKFLOW click()
             jobCreatePage.ansibleBinariesPathField.clear()

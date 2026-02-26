@@ -63,6 +63,7 @@ class JobEditSpec extends SeleniumBase{
             } else {
                 jobCreatePage.addSimpleCommandStepNextUi 'echo selenium test 2', 1
             }
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.getUpdateJobButton()
             jobCreatePage.getUpdateJobButton().click()
         then:
             jobCreatePage.waitForUrlToContain('/job/show')
@@ -76,6 +77,7 @@ class JobEditSpec extends SeleniumBase{
             jobCreatePage.removeStepByIndex(1)
             hold(2)
             jobCreatePage.expectNumberOfStepsToBe(1)
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.getUpdateJobButton()
             jobCreatePage.getUpdateJobButton().click()
         then:
             jobCreatePage.waitForUrlToContain('/job/show')

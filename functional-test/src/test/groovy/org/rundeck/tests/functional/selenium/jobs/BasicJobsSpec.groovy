@@ -116,7 +116,7 @@ class BasicJobsSpec extends SeleniumBase {
             // Wait for description element to be visible before reading text
             jobShowPage.waitForElementVisible(jobShowPage.descriptionTextLabel)
         expect:
-            'a new job description' == jobShowPage.descriptionTextLabel.getText()
+            'a new job description' == jobShowPage.descriptionTextLabel.getText().trim()
         where:
             nextUi<<[false,true]
     }

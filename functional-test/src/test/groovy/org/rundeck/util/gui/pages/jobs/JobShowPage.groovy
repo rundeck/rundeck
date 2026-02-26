@@ -33,7 +33,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
     By jobInfoGroupBy = By.cssSelector('div.jobInfoSection a.text-secondary')
     By descriptionText = By
-            .xpath("//*[@class=\"section-space\"]//*[@class=\"h5 text-strong\"]")
+            .xpath("//*[contains(@class, 'section-space')]//*[contains(@class, 'h5') and contains(@class, 'text-strong')]")
     By cronBy = By.xpath("//*[@class='cronselected']")
     By scheduleTimeBy = By.xpath("//*[@class='scheduletime']")
     By multipleExecBy = By.xpath("//*[@id=\"detailtable\"]//td[text()='Multiple Executions?']")

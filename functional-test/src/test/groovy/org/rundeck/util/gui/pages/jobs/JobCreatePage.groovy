@@ -121,6 +121,7 @@ class JobCreatePage extends BasePage {
     By optionRevertAllBy = By.xpath("//*[starts-with(@id,'revertall')]")
     By optionConfirmRevertAllBy = By.cssSelector("div[class='popover-content'] span[class*='confirm']")
     By workFlowStepBy = By.linkText("Workflow Steps")
+    By workFlowStepTabBy = By.xpath("//*[@role='tab' and contains(., 'Workflow Steps')]")
     By ansibleBinariesPathBy = By.name("pluginConfig.ansible-binaries-dir-path")
     By autocompleteSuggestionsBy = By.cssSelector("div[class='autocomplete-suggestions']")
     By wfUndoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[1]")
@@ -159,6 +160,7 @@ class JobCreatePage extends BasePage {
     By scriptTextAreaBy = By.xpath("//*[contains(@class, 'form-group ') and .//*[contains(text(), 'script to execute')]]")
     By wfItemEditFormBy = By.className("wfitemEditForm")
     By optDetailBy = By.cssSelector(".optdetail.autohilite.autoedit")
+    By optDetailByNextUi = By.cssSelector(".optdetail, .option-item .optdetail")
     By optionsBy = By.cssSelector(".opt.item")
     By timeZoneBy = By.id("timeZone")
     By optEditFormBy = By.className("optEditForm")
@@ -520,10 +522,18 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement stepLink(String dataNodeStepType, StepType stepType) {
-        if(stepType == StepType.WORKFLOW)
-            workFlowStepLink.click()
-
-            el By.xpath("//*[contains(@${stepType.getStepType()}, '$dataNodeStepType')]")
+        if(stepType == StepType.WORKFLOW) {
+            if(legacyUi) {
+                workFlowStepLink.click()
+            } else {
+                new WebDriverWait(driver, Duration.ofSeconds(45))
+                    .until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector("[data-testid='loading-text']")))
+                new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.visibilityOfElementLocated(workFlowStepTabBy))
+                el(workFlowStepTabBy).click()
+            }
+        }
+        el By.xpath("//*[contains(@${stepType.getStepType()}, '$dataNodeStepType')]")
     }
 
     WebElement getAdhocRemoteStringBy() {
@@ -580,7 +590,7 @@ class JobCreatePage extends BasePage {
     WebElement optionName(int index) {
         byAndWait legacyUi?
                   By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]"):
-                  By.cssSelector("#optitem_$index div.optEditForm input[type=text][name=name]")
+                  By.cssSelector("#optitem_new input[type=text][name=name], #optitem_$index input[type=text][name=name]")
     }
 
     WebElement getUsageSection() {
@@ -729,7 +739,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getWorkFlowStepLink() {
-        el workFlowStepBy
+        legacyUi ? el(workFlowStepBy) : el(workFlowStepTabBy)
     }
 
     WebElement getAnsibleBinariesPathField() {
@@ -956,7 +966,7 @@ class JobCreatePage extends BasePage {
     }
 
     List<WebElement> getOptDetails(){
-        els optDetailBy
+        els legacyUi ? optDetailBy : optDetailByNextUi
     }
 
     def getTotalFoundPlugins(String pluginName){

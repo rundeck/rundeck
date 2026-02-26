@@ -25,11 +25,19 @@ class JobReferenceStep implements JobStep {
     void configure(JobCreatePage jobCreatePage, Boolean nextUi = false) {
         if(childJobName && useChooseAJobButton){
             jobCreatePage.driver.findElement(jobChooseBtn).click()
-            WebElement jobItem = new WebDriverWait(jobCreatePage.driver, Duration.ofSeconds(5)).until(
-                ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".jobname.job_list_row[data-job-name='${childJobName}']"))
-            )
-
-            jobItem.findElement(By.cssSelector(".glyphicon.glyphicon-book")).click()
+            WebElement jobItem
+            if (nextUi) {
+                By jobSelector = By.xpath("//*[contains(@class, 'job-list-row-item')]//button[contains(., '${childJobName}')] | //*[contains(@class, 'job-list-row-item')]//a[contains(., '${childJobName}')]")
+                jobItem = new WebDriverWait(jobCreatePage.driver, Duration.ofSeconds(10)).until(
+                    ExpectedConditions.visibilityOfElementLocated(jobSelector)
+                )
+                jobItem.click()
+            } else {
+                jobItem = new WebDriverWait(jobCreatePage.driver, Duration.ofSeconds(5)).until(
+                    ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".jobname.job_list_row[data-job-name='${childJobName}']"))
+                )
+                jobItem.findElement(By.cssSelector(".glyphicon.glyphicon-book")).click()
+            }
         }
 
         if(childJobName && !useChooseAJobButton){
