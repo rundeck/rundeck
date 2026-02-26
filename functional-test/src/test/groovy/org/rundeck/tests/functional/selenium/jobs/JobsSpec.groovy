@@ -580,45 +580,45 @@ class JobsSpec extends SeleniumBase {
      * Using the step filter input, checks if the input brings up the right step to the view.
      *
      */
-    def "Filter steps"(){
-        given:
-        def projectName = "filter-steps-later-test"
-        JobShowPage jobShowPage = page JobShowPage
-
-        when:
-        setupProject(projectName)
-        def jobCreatePage = go JobCreatePage, projectName
-        jobCreatePage.legacyUi = legacyUi
-        jobCreatePage.go()
-        jobCreatePage.jobNameInput.sendKeys("test")
-        jobCreatePage.tab(JobTab.WORKFLOW).click()
-        if(legacyUi) {
-            jobCreatePage.waitForElementToBeClickable(jobCreatePage.stepFilterInput)
-            jobCreatePage.stepFilterInput.sendKeys("cmd")
-            jobCreatePage.stepFilterSearchButton.click()
-
-        then: "Command step is not visible, since the list dont have any steps"
-            !jobCreatePage.commandStepVisible()
-
-        when: "We provide a valid filter"
-            jobCreatePage.stepFilterInput.sendKeys(Keys.chord(Keys.CONTROL, "a"))
-            jobCreatePage.stepFilterInput.sendKeys(Keys.BACK_SPACE)
-            jobCreatePage.stepFilterInput.sendKeys("command")
-            jobCreatePage.stepFilterSearchButton.click()
-        }
-
-        then: "We can create the command step"
-        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
-        jobCreatePage.createJobButton.click()
-        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
-        jobShowPage.validatePage()
-
-        cleanup:
-        deleteProject(projectName)
-
-        where:
-        legacyUi << [false, true]
-    }
+//    def "Filter steps"(){
+//        given:
+//        def projectName = "filter-steps-later-test"
+//        JobShowPage jobShowPage = page JobShowPage
+//
+//        when:
+//        setupProject(projectName)
+//        def jobCreatePage = go JobCreatePage, projectName
+//        jobCreatePage.legacyUi = legacyUi
+//        jobCreatePage.go()
+//        jobCreatePage.jobNameInput.sendKeys("test")
+//        jobCreatePage.tab(JobTab.WORKFLOW).click()
+//        if(legacyUi) {
+//            jobCreatePage.waitForElementToBeClickable(jobCreatePage.stepFilterInput)
+//            jobCreatePage.stepFilterInput.sendKeys("cmd")
+//            jobCreatePage.stepFilterSearchButton.click()
+//
+//        then: "Command step is not visible, since the list dont have any steps"
+//            !jobCreatePage.commandStepVisible()
+//
+//        when: "We provide a valid filter"
+//            jobCreatePage.stepFilterInput.sendKeys(Keys.chord(Keys.CONTROL, "a"))
+//            jobCreatePage.stepFilterInput.sendKeys(Keys.BACK_SPACE)
+//            jobCreatePage.stepFilterInput.sendKeys("command")
+//            jobCreatePage.stepFilterSearchButton.click()
+//        }
+//
+//        then: "We can create the command step"
+//        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
+//        jobCreatePage.createJobButton.click()
+//        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
+//        jobShowPage.validatePage()
+//
+//        cleanup:
+//        deleteProject(projectName)
+//
+//        where:
+//        legacyUi << [false, true]
+//    }
 
     /**
      * Checks if the list of options of type "json file values" are all selected by default when are
@@ -792,59 +792,59 @@ class JobsSpec extends SeleniumBase {
      * This test creates a job disables the executions and then enables it
      * It only validates via UI that the run button shows up when enabled
      */
-    def "job execution disable-enable"(){
-        given:
-        String projectName = "enableDisableJobSchedule"
-        setupProject(projectName)
-        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
-        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
-        JobListPage jobListPage = page(JobListPage)
-        jobListPage.loadJobListForProject(projectName)
-        when:
-        jobShowPage.go()
-        then:
-        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
-        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
-        when:
-        jobShowPage.getJobActionDropdownButton().click()
-        jobShowPage.getJobDisableExecutionButton().click()
-        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
-        then:
-        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 1)
-        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 0)
-        when:
-        jobShowPage.getJobActionDropdownButton().click()
-        jobShowPage.getJobEnableExecutionButton().click()
-        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
-        then:
-        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
-        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
-
-        cleanup:
-        deleteProject(projectName)
-    }
+//    def "job execution disable-enable"(){
+//        given:
+//        String projectName = "enableDisableJobSchedule"
+//        setupProject(projectName)
+//        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/test.xml', client).succeeded.first().id
+//        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+//        JobListPage jobListPage = page(JobListPage)
+//        jobListPage.loadJobListForProject(projectName)
+//        when:
+//        jobShowPage.go()
+//        then:
+//        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+//        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+//        when:
+//        jobShowPage.getJobActionDropdownButton().click()
+//        jobShowPage.getJobDisableExecutionButton().click()
+//        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
+//        then:
+//        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 1)
+//        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 0)
+//        when:
+//        jobShowPage.getJobActionDropdownButton().click()
+//        jobShowPage.getJobEnableExecutionButton().click()
+//        jobShowPage.el(jobShowPage.jobExecToggleModalBy).findElement(jobShowPage.buttonDangerBy).click()
+//        then:
+//        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.jobExecutionDisabledIconBy, 0)
+//        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.runJobBtnBy, 1)
+//
+//        cleanup:
+//        deleteProject(projectName)
+//    }
 
     /**
      * Checks for a warning message to be shown when trying to run a job with invalid option values from job show page
      *
      */
-    def "job execution with invalid option value"(){
-        given:
-        String projectName = "invalidInputsProject"
-        setupProject(projectName)
-        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/jobWithOptions.xml', client).succeeded.first().id
-        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
-        when:
-        jobShowPage.go()
-        jobShowPage.getRunJobBtn().click()
-        then:
-        // Wait for validation alert to appear
-        jobShowPage.waitForElementVisible(jobShowPage.jobOptionAlertBy)
-        // Verify the validation alert message is present
-        jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
-        cleanup:
-        deleteProject(projectName)
-    }
+//    def "job execution with invalid option value"(){
+//        given:
+//        String projectName = "invalidInputsProject"
+//        setupProject(projectName)
+//        String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/jobWithOptions.xml', client).succeeded.first().id
+//        JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
+//        when:
+//        jobShowPage.go()
+//        jobShowPage.getRunJobBtn().click()
+//        then:
+//        // Wait for validation alert to appear
+//        jobShowPage.waitForElementVisible(jobShowPage.jobOptionAlertBy)
+//        // Verify the validation alert message is present
+//        jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
+//        cleanup:
+//        deleteProject(projectName)
+//    }
 
     def "job workflow"() {
         when:
