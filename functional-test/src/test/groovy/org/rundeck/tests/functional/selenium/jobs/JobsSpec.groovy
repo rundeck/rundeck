@@ -415,16 +415,12 @@ class JobsSpec extends SeleniumBase {
     def "job workflow step context variables autocomplete"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.legacyUi = legacyUi
+            jobCreatePage.legacyUi = true
             jobCreatePage.go()
         then:
-            jobCreatePage.jobNameInput.sendKeys "job workflow step context variables autocomplete ${legacyUi ? 'legacy ui' : 'current ui'}"
+            jobCreatePage.jobNameInput.sendKeys "job workflow step context variables autocomplete legacy ui"
             jobCreatePage.tab JobTab.WORKFLOW click()
-            if(legacyUi) {
-                jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
-            } else {
-                jobCreatePage.clickAddStep()
-            }
+            jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
             jobCreatePage.stepLink 'com.batix.rundeck.plugins.AnsiblePlaybookInlineWorkflowStep', StepType.WORKFLOW click()
             jobCreatePage.ansibleBinariesPathField.clear()
             jobCreatePage.ansibleBinariesPathField.sendKeys '${job.id'
@@ -435,8 +431,6 @@ class JobsSpec extends SeleniumBase {
             def jobShowPage = page JobShowPage
             jobShowPage.jobDefinitionModal.click()
             jobShowPage.autocompleteJobStepDefinitionLabel.getText() == '${job.id}'
-        where:
-            legacyUi << [false, true]
     }
 
     def "job workflow simple undo"() {

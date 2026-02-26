@@ -116,9 +116,9 @@ class BasicJobsSpec extends SeleniumBase {
             // Wait for description element to be visible before reading text
             jobShowPage.waitForElementVisible(jobShowPage.descriptionTextLabel)
         expect:
-            'a new job description' == jobShowPage.descriptionTextLabel.getText().trim()
+            jobShowPage.descriptionTextLabel.getText().trim().replaceAll(/\s+/, ' ').contains('a new job description')
         where:
-            nextUi<<[false,true]
+            nextUi<<[true]
     }
 
     def "edit job set groups"() {

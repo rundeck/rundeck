@@ -123,6 +123,7 @@ class JobCreatePage extends BasePage {
     By workFlowStepBy = By.linkText("Workflow Steps")
     By workFlowStepTabBy = By.xpath("//*[@role='tab' and contains(., 'Workflow Steps')]")
     By ansibleBinariesPathBy = By.name("pluginConfig.ansible-binaries-dir-path")
+    By ansibleBinariesPathByNextUi = By.cssSelector("[data-testid='prop-field-ansible-binaries-dir-path'] input, [data-prop-name='ansible-binaries-dir-path'] input")
     By autocompleteSuggestionsBy = By.cssSelector("div[class='autocomplete-suggestions']")
     By wfUndoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[1]")
     By wfUndoButtonLinkBy = By.xpath("//*[@class='btn btn-xs btn-default act_undo flash_undo']")
@@ -162,6 +163,7 @@ class JobCreatePage extends BasePage {
     By optDetailBy = By.cssSelector(".optdetail.autohilite.autoedit")
     By optDetailByNextUi = By.cssSelector(".optdetail, .option-item .optdetail")
     By optionsBy = By.cssSelector(".opt.item")
+    By optionsByNextUi = By.cssSelector(".edit-option-item")
     By timeZoneBy = By.id("timeZone")
     By optEditFormBy = By.className("optEditForm")
     By addGlobalLogFilter = By.cssSelector("[data-testid='add-filter-button']")
@@ -743,7 +745,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getAnsibleBinariesPathField() {
-        el ansibleBinariesPathBy
+        el legacyUi ? ansibleBinariesPathBy : ansibleBinariesPathByNextUi
     }
 
     WebElement getWfUndoButton() {
@@ -962,7 +964,7 @@ class JobCreatePage extends BasePage {
     }
 
     List<WebElement> getOptions(){
-        els optionsBy
+        els legacyUi ? optionsBy : optionsByNextUi
     }
 
     List<WebElement> getOptDetails(){

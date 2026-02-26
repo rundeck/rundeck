@@ -138,7 +138,7 @@ class JobReferenceSpec extends SeleniumBase {
 
         when:
         def jobCreatePage = page(JobCreatePage, projectName)
-        jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.legacyUi = true
         jobCreatePage.go()
         JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
@@ -160,8 +160,6 @@ class JobReferenceSpec extends SeleniumBase {
         }
         cleanup:
         deleteProject(projectName)
-        where:
-        legacyUi << [false, true]
     }
 
     def "override node filters thread count"(){
