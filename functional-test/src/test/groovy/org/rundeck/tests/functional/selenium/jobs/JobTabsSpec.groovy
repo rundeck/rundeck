@@ -38,7 +38,11 @@ class JobTabsSpec extends SeleniumBase {
         jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-output-tab")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
+        if(legacyUi) {
+            jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
+        } else {
+            jobCreatePage.addSimpleCommandStepNextUi('echo "hello world"', 0)
+        }
         jobCreatePage.createJobButton.click()
         jobShowPage.jobActionDropdownButton.click()
         jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
@@ -66,7 +70,11 @@ class JobTabsSpec extends SeleniumBase {
         jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-output-tab")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
+        if(legacyUi) {
+            jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
+        } else {
+            jobCreatePage.addSimpleCommandStepNextUi('echo "hello world"', 0)
+        }
         jobCreatePage.createJobButton.click()
         jobShowPage.jobActionDropdownButton.click()
         jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
@@ -98,7 +106,11 @@ class JobTabsSpec extends SeleniumBase {
         jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-html-output")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.addSimpleCommandStep(fullCommand, 0)
+        if(legacyUi) {
+            jobCreatePage.addSimpleCommandStep(fullCommand, 0)
+        } else {
+            jobCreatePage.addSimpleCommandStepNextUi(fullCommand, 0)
+        }
         jobCreatePage.createJobButton.click()
         jobShowPage.jobActionDropdownButton.click()
         jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
