@@ -583,12 +583,11 @@ class JobsSpec extends SeleniumBase {
     def "Filter steps"(){
         given:
         def projectName = "filter-steps-later-test"
-        JobCreatePage jobCreatePage = page JobCreatePage
         JobShowPage jobShowPage = page JobShowPage
 
         when:
         setupProject(projectName)
-        go JobCreatePage, projectName
+        def jobCreatePage = go JobCreatePage, projectName
         jobCreatePage.legacyUi = legacyUi
         jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test")
