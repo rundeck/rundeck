@@ -39,11 +39,30 @@ class JobsSpec extends SeleniumBase {
     def "change workflow strategy"() {
         when:
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.legacyUi = legacyUi
             def jobShowPage = page JobShowPage
         then:
             jobCreatePage.go()
-            jobCreatePage.jobNameInput.sendKeys "jobs workflow strategy ${legacyUi ? 'legacy ui' : 'current ui'}"
+            jobCreatePage.jobNameInput.sendKeys 'jobs workflow strategy'
+            jobCreatePage.tab JobTab.WORKFLOW click()
+            jobCreatePage.workFlowStrategyField.sendKeys 'Parallel'
+            jobCreatePage.waitIgnoringForElementVisible jobCreatePage.strategyPluginParallelField
+            jobCreatePage.strategyPluginParallelMsgField.getText() == 'Run all steps in parallel'
+
+            jobCreatePage.addSimpleCommandStepNextUi 'echo selenium test', 0
+            jobCreatePage.createJobButton.click()
+        expect:
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.workflowDetailField.getText() == 'Parallel Run all steps in parallel'
+    }
+
+    def "change workflow strategy legacy"() {
+        when:
+            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.legacyUi = true
+            def jobShowPage = page JobShowPage
+        then:
+            jobCreatePage.go()
+            jobCreatePage.jobNameInput.sendKeys 'jobs workflow strategy legacy'
             jobCreatePage.tab JobTab.WORKFLOW click()
             jobCreatePage.workFlowStrategyField.sendKeys 'Parallel'
             jobCreatePage.waitIgnoringForElementVisible jobCreatePage.strategyPluginParallelField
@@ -53,17 +72,13 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.stepLink 'exec-command', StepType.NODE click()
             jobCreatePage.waitForElementVisible jobCreatePage.adhocRemoteStringField
             jobCreatePage.adhocRemoteStringField.click()
-            if(legacyUi) {
-                jobCreatePage.waitForNumberOfElementsToBeOne jobCreatePage.floatBy
-            }
+            jobCreatePage.waitForNumberOfElementsToBeOne jobCreatePage.floatBy
             jobCreatePage.adhocRemoteStringField.sendKeys 'echo selenium test'
             jobCreatePage.saveStep 0
             jobCreatePage.createJobButton.click()
         expect:
             jobShowPage.jobDefinitionModal.click()
             jobShowPage.workflowDetailField.getText() == 'Parallel Run all steps in parallel'
-        where:
-            legacyUi << [false, true]
     }
 
     def "cancel job create with default lang"() {
