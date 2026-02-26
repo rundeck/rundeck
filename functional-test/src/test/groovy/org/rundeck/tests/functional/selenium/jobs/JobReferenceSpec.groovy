@@ -62,7 +62,7 @@ class JobReferenceSpec extends SeleniumBase {
         String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded.first().id
 
         when:
-        def jobCreatePage = go(JobCreatePage, projectName)
+        def jobCreatePage = page(JobCreatePage, projectName)
         jobCreatePage.legacyUi = legacyUi
         jobCreatePage.go()
         JobShowPage jobPage = jobCreatePage
@@ -97,8 +97,9 @@ class JobReferenceSpec extends SeleniumBase {
         JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded
 
         when:
-        def jobCreatePage = go(JobCreatePage, projectName)
+        def jobCreatePage = page(JobCreatePage, projectName)
         jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.go()
         JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
@@ -136,8 +137,9 @@ class JobReferenceSpec extends SeleniumBase {
         JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded
 
         when:
-        def jobCreatePage = go(JobCreatePage, projectName)
+        def jobCreatePage = page(JobCreatePage, projectName)
         jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.go()
         JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
