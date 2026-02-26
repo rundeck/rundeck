@@ -1018,8 +1018,8 @@ class WorkflowController extends ControllerBase {
                 return result
             }
             def WorkflowStepData item = editwf.commands.get(numi)
-            def clone = WorkflowStepDataImpl.fromMap(item.toMap())
-            def moditem =WorkflowStepDataImpl.fromMap(item.toMap())
+            def clone = item instanceof WorkflowStep ? item.createClone() : WorkflowStepDataImpl.fromMap(item.toMap())
+            def moditem =item instanceof WorkflowStep ? item.createClone() : WorkflowStepDataImpl.fromMap(item.toMap())
             modifyItemFromParams(moditem,input.params)
             _validateCommandExec(moditem,input.params.origitemtype, fprojects)
             if (moditem.errors.hasErrors()) {
@@ -1074,8 +1074,8 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}: no error handler"
                 return result
             }
-            def clone = WorkflowStepDataImpl.fromMap(ehitem.toMap())
-            def moditem = WorkflowStepDataImpl.fromMap(ehitem.toMap())
+            def clone = ehitem instanceof WorkflowStep ? ehitem.createClone() : WorkflowStepDataImpl.fromMap(ehitem.toMap())
+            def moditem = ehitem instanceof WorkflowStep ? ehitem.createClone() : WorkflowStepDataImpl.fromMap(ehitem.toMap())
 
             modifyItemFromParams(moditem, input.params)
 
