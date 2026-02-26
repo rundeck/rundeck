@@ -27,7 +27,9 @@ class DuplicateOptionsSpec extends SeleniumBase {
     def "duplicate option and check both are present in job show page as inputs with the corresponding option type"(){
         given:
         JobCreatePage jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-                .withName('job-duplicate-default-option')
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
+        jobCreatePage.withName('job-duplicate-default-option')
                 .addOption(new JobOption(name: optionName, optNumber: 0, optionType: optionType))
                 .addSimpleCommandStep('echo hello ', 0)
 
@@ -50,7 +52,9 @@ class DuplicateOptionsSpec extends SeleniumBase {
         given:
         String optionName = 'textOpt'
         JobCreatePage jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-                .withName('job-duplicate-default-option')
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
+        jobCreatePage.withName('job-duplicate-default-option')
                 .addOption(new JobOption(name: optionName, optNumber: 0, inputType: 'date'))
                 .addSimpleCommandStep('echo hello ', 0)
 

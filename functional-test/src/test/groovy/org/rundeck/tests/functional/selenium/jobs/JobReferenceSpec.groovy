@@ -64,6 +64,7 @@ class JobReferenceSpec extends SeleniumBase {
         when:
         def jobCreatePage = go(JobCreatePage, projectName)
         jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.go()
         JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([

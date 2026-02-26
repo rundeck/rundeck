@@ -274,9 +274,8 @@ class JobCreatePage extends BasePage {
 
     JobCreatePage addStep(JobStep step, int stepNumber = 0){
         def stepName = step.STEP_NAME
-        if(legacyUi){
-            tab(JobTab.WORKFLOW).click()
-        } else{
+        tab(JobTab.WORKFLOW).click()
+        if(!legacyUi){
             clickAddStep();
         }
         stepLink(stepName, step.stepType).click()
