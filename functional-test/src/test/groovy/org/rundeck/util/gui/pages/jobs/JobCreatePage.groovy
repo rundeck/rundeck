@@ -1012,7 +1012,10 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getAddGlobalLogFilter() {
-        el addGlobalLogFilter
+        def button = el addGlobalLogFilter
+        executeScript "arguments[0].scrollIntoView(true);", button
+        waitForElementToBeClickable(button)
+        return button
     }
 
     def fillHighlightLogFilter() {

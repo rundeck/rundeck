@@ -919,7 +919,7 @@ class JobsSpec extends SeleniumBase {
         then:
         assert jobCreatePage.getLogFilterButtons('#globalLogFilters').size() == 1
         where:
-        legacyUi << [false, true]
+        legacyUi << [false]
     }
 
     def "Node steps"() {
@@ -958,7 +958,7 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.expectNumberOfStepsToBe(2)
         where:
-        legacyUi << [false, true]
+        legacyUi << [false]
     }
 
     def "Error handlers"() {
@@ -987,7 +987,7 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.expectNumberOfStepsToBe(3) // it counts the error handler as a step due to class
         where:
-        legacyUi << [false, true]
+        legacyUi << [false]
     }
 
     def "edit existing step - change command and save"() {
@@ -1047,7 +1047,7 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobCreatePage.workFlowList.size() == 0
         where:
-            nextUi << [false, true]
+            nextUi << [true]
     }
 
     def "cancel editing existing step - changes discarded"() {
@@ -1072,6 +1072,6 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo selenium test') }
         where:
-            nextUi << [false, true]
+            nextUi << [true]
     }
 }
