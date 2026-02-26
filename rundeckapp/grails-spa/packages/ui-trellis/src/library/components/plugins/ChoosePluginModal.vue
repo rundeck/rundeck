@@ -75,11 +75,12 @@
   </modal>
 </template>
 <script lang="ts">
-import { getRundeckContext } from "@/library";
-import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import { getRundeckContext } from "../../../library";
+import pluginInfo from "./PluginInfo.vue";
 import { defineComponent } from "vue";
-import PluginSearch from "@/library/components/plugins/PluginSearch.vue";
-import { ServiceType } from "@/library/stores/Plugins";
+import PluginSearch from "./PluginSearch.vue";
+import { ServiceType, type Plugin } from "../../../library/stores/Plugins";
+
 const context = getRundeckContext();
 
 export default defineComponent({
@@ -112,11 +113,15 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    excludeProviders: {
+      type: Array as () => string[],
+      default: () => [],
+    },
   },
   emits: ["cancel", "selected", "update:modelValue"],
   data() {
     return {
-      loadedServices: [],
+      loadedServices: [] as Array<{ service: string; providers: any[] }>,
       loading: false,
       modalShown: false,
       searchQuery: "",
@@ -127,7 +132,8 @@ export default defineComponent({
       return this.loadedServices.map((service) => {
         const filteredProviders =
           service.providers?.filter((provider) =>
-            this.matchesSearchQuery(provider),
+            this.matchesSearchQuery(provider) &&
+            !this.excludeProviders.includes(provider.name),
           ) || [];
         return {
           ...service,
@@ -149,10 +155,10 @@ export default defineComponent({
   },
   async mounted() {
     this.loading = true;
-    for (const service of this.services) {
+    for (const service of this.services as string[]) {
       await context.rootStore.plugins.load(service);
     }
-    this.loadedServices = this.services.map((service: string) => {
+    this.loadedServices = (this.services as string[]).map((service: string) => {
       const providers = context.rootStore.plugins.getServicePlugins(service);
       return {
         service,
@@ -167,7 +173,7 @@ export default defineComponent({
       const name =
         this.tabNames && this.tabNames.length > i
           ? this.tabNames[i]
-          : $t("plugin.type." + service + ".title.plural") || service;
+          : this.$t("plugin.type." + service + ".title.plural") || service;
       const count =
         this.filteredServices.find((s) => s.service === service)?.providers
           .length || 0;
@@ -175,12 +181,12 @@ export default defineComponent({
     },
     chooseProviderAdd(service: string, provider: string) {
       this.$emit("selected", { service, provider });
-      this.active = false;
+      this.modalShown = false;
     },
     filterLoadedServices(searchQuery: string) {
       this.searchQuery = searchQuery.toLowerCase();
     },
-    matchesSearchQuery(provider) {
+    matchesSearchQuery(provider: any) {
       if (!this.searchQuery) return true;
       const filterValue = this.searchQuery.split("=");
       const prop = filterValue.length > 1 ? filterValue[0] : "title";
@@ -196,12 +202,12 @@ export default defineComponent({
             this.checkMatch(provider, "name", value) ||
             this.checkMatch(provider, "description", value);
     },
-    checkMatch(obj, field: string, val: string) {
-      return obj[field] && val && obj[field].toLowerCase().indexOf(val) >= 0;
+    checkMatch(obj: Plugin, field: string, val: string) {
+      return obj[field as keyof Plugin] && val && String(obj[field as keyof Plugin]).toLowerCase().indexOf(val) >= 0;
     },
-    calculateDividerIndex(providers: any) {
+    calculateDividerIndex(providers: Plugin[]) {
       return providers.findIndex(
-        (provider) => provider.isHighlighted === false,
+        (provider: Plugin) => provider.isHighlighted === false,
       );
     },
     dividerTitle(service: any): string {
@@ -217,7 +223,7 @@ export default defineComponent({
       return "";
     },
     dataStepType(service: string, name: string) {
-      const servicesWithDataStep = {
+      const servicesWithDataStep: Record<string, string> = {
         [ServiceType.WorkflowStep]: "data-step-type",
         [ServiceType.WorkflowNodeStep]: "data-node-step-type",
       };
@@ -233,5 +239,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped lang="scss"></style>

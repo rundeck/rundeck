@@ -4,7 +4,6 @@ import { getPluginDetail } from "../services/plugins";
 import { Serial } from "../utilities/Async";
 import { RootStore } from "./RootStore";
 import { apiClient } from "../services/api";
-
 export class PluginStore {
   plugins: Plugin[] = [];
 
@@ -24,32 +23,9 @@ export class PluginStore {
       service === ServiceType.WorkflowNodeStep ||
       service === ServiceType.WorkflowStep
     ) {
-      const description =
-        service === ServiceType.WorkflowNodeStep
-          ? "Run a job on the remote node"
-          : "Execute another job";
-      const jobRefPlugin = {
-        artifactName: "Job reference",
-        author: "",
-        builtin: true,
-        id: "",
-        name: "job.reference",
-        pluginVersion: "",
-        service: service,
-        description: description,
-        title: "Job reference",
-        providerMetadata: {
-          glyphicon: "book",
-        },
-        isHighlighted: true,
-        highlightedOrder: 5,
-      };
-      const pluginKey = this._getPluginByIdKey(jobRefPlugin);
-      if (!this.pluginsById[pluginKey]) {
-        this.plugins.push(jobRefPlugin);
-      }
+        this._injectStaticPlugins(service);
     }
-    const plugins = await apiClient(51).get("plugin/list", {
+    const plugins = await apiClient(57).get("plugin/list", {
       params: { service },
     });
 
@@ -62,7 +38,36 @@ export class PluginStore {
     return void 0;
   }
 
-  /**
+    private _injectStaticPlugins(service: string) {
+        const jobRefPlugin = {
+            artifactName: "Job reference",
+            author: "",
+            builtin: true,
+            id: "",
+            name: "job.reference",
+            pluginVersion: "",
+            service: service,
+            description: service === ServiceType.WorkflowNodeStep
+                ? "Run a job on the remote node"
+                : "Execute another job",
+            title: "Job reference",
+            providerMetadata: {
+                glyphicon: "book",
+            },
+            isHighlighted: true,
+            highlightedOrder: 5,
+        };
+        const staticPlugins = [jobRefPlugin];
+
+        for(const staticPlugin of staticPlugins) {
+            const pluginKey = this._getPluginByIdKey(staticPlugin);
+            if (!this.pluginsById[pluginKey]) {
+                this.plugins.push(staticPlugin);
+            }
+        }
+    }
+
+    /**
    * Get the plugin detail for a service provider, caching the result
    * @param serviceName
    * @param provider
@@ -134,6 +139,8 @@ export interface Plugin {
     glyphicon?: string;
     faicon?: string;
     fabicon?: string;
+    groupBy?: string;
+    groupIconUrl?: string;
   };
   isHighlighted?: boolean;
   highlightedOrder?: number;

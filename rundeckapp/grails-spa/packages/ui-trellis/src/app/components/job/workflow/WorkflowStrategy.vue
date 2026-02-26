@@ -1,54 +1,57 @@
 <template>
-  <div v-if="loaded" class="form-inline">
-    <div class="form-group" :class="{ 'has-error': false }">
-      <label class="col-sm-12" title="Strategy for iteration">
-        {{ $t("Workflow.property.strategy.label") }}:
+  <div>
+    <div v-if="loaded">
+      <div class="form-inline">
+        <div class="form-group" :class="{ 'has-error': false }">
+          <label class="col-sm-12" title="Strategy for iteration">
+            {{ $t("Workflow.property.strategy.label") }}:
 
-        <select
-          v-if="pluginProviders && pluginProviders.length > 0"
-          v-model="model.type"
-          class="form-control"
-          name="workflow.strategy"
-        >
-          <option
-            v-for="plugin in pluginProviders"
-            :key="plugin.name"
-            :value="plugin.name"
-          >
-            {{ plugin.title }}
-          </option>
-        </select>
-      </label>
+            <select
+              v-if="pluginProviders && pluginProviders.length > 0"
+              v-model="model.type"
+              class="form-control"
+              name="workflow.strategy"
+            >
+              <option
+                v-for="plugin in pluginProviders"
+                :key="plugin.name"
+                :value="plugin.name"
+              >
+                {{ plugin.title }}
+              </option>
+            </select>
+          </label>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div v-if="selectedPlugin" :id="`strategyPlugin${selectedPlugin.name}`">
-    <PluginDetails
-      :description="selectedPlugin.description"
-      :description-css="'text-info'"
-    />
-  </div>
+    <div v-if="selectedPlugin" :id="`strategyPlugin${selectedPlugin.name}`">
+      <PluginDetails
+        :description="selectedPlugin.description"
+        :description-css="'text-info'"
+      />
+    </div>
 
-  <plugin-config
-    v-if="selectedPlugin"
-    :key="selectedPlugin.name"
-    v-model="editStrategyPlugin"
-    :mode="mode"
-    :service-name="'WorkflowStrategy'"
-    :show-title="false"
-    :show-description="false"
-    :context-autocomplete="true"
-    :validation="editValidation"
-    scope="Instance"
-    default-scope="Instance"
-    group-css=""
-  ></plugin-config>
+    <plugin-config
+      v-if="selectedPlugin"
+      :key="selectedPlugin.name"
+      v-model="editStrategyPlugin"
+      :mode="mode"
+      :service-name="'WorkflowStrategy'"
+      :show-title="false"
+      :show-description="false"
+      :context-autocomplete="true"
+      :validation="editValidation"
+      scope="Instance"
+      default-scope="Instance"
+      group-css=""
+    ></plugin-config>
+  </div>
 </template>
 <script lang="ts">
-import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
-import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
-import { getPluginProvidersForService } from "@/library/modules/pluginService";
+import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
+import PluginDetails from "../../../../library/components/plugins/PluginDetails.vue";
+import { getPluginProvidersForService } from "../../../../library/modules/pluginService";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -56,7 +59,6 @@ export default defineComponent({
   components: {
     PluginConfig,
     PluginDetails,
-    PluginInfo,
   },
   props: {
     modelValue: {

@@ -129,6 +129,9 @@ const messages = {
     "Clear all {0} selected items, or only items shown on this page?",
   "bulk.selected.count": "{0} selected",
   "results.empty.text": "No results for the query",
+  "noResultsFound": "No results found",
+  "noMatchesFound": "No matches found",
+  "noMatchesFoundSecondary": "Please try another search.",
   "Only shown executions": "Only shown executions",
   "Clear bulk selection": "Clear Bulk Selection",
   "Click to edit Search Query": "Click to edit Search Query",
@@ -924,6 +927,12 @@ const messages = {
   Workflow: {
     label: "Workflow",
     property: {
+      executionBehavior: {
+        label: "Execution Behavior",
+      },
+      stepFailureBehavior: {
+        label: "Step Failure Behavior",
+      },
       keepgoing: {
         true: { description: "Run remaining steps before failing." },
         false: { description: "Stop at the failed step." },
@@ -931,10 +940,17 @@ const messages = {
       },
       strategy: {
         label: "Strategy",
+        description: "Select the chronology strategy of steps in the workflow.",
+        learnMore: "Learn more",
+        selectPlaceholder: "Select a strategy",
       },
     },
     addStep: "Add a step",
+    jobSteps: {
+      label: "Job Steps",
+    },
     logFilters: "Log Filters",
+    logFiltersTooltip: "Filters that will affect the logs produced by these steps",
     addLogFilter: "Add Log Filter",
     clickToEdit: "Click to edit",
     edit: "Edit",
@@ -944,13 +960,39 @@ const messages = {
     dragToReorder: "Drag to reorder",
     clickOnStepType: "Click on a step type to add",
     editStep: "Edit step",
+    saveStep: "Save Step",
+    setSteps: "Set the Steps",
+    conditional: {
+      defineCondition: "Define the Condition",
+      conditionDescription: "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
+      conditionGroups: "Condition Set",
+      addCondition: "+ Add",
+      addconditionGroups: "+ Add Condition Set",
+      removeconditionGroups: "Remove Condition Set",
+      removeCondition: "Remove Condition",
+      selectField: "Select Field",
+      selectOperator: "Select Operator",
+      enterValue: "Enter Value",
+      operator: {
+        equals: "Equal",
+        notEquals: "Does not equal",
+        contains: "Contains",
+        notContains: "Does not contain",
+        regex: "Matches",
+      },
+    },
     stepLabel: "Step label",
     noSteps: "No workflow steps",
+    clickAddStep: "Add steps to define what this job will do. Click “Add Step” to get started.",
     addErrorHandler: "Add Error Handler",
     errorHandler: "Error handler",
     errorHandlerDescription:
       "The error handler will execute if the step fails.",
     editErrorHandler: "Edit error handler",
+    nodeStep: "Node Step",
+    workflowStep: "Workflow Step",
+    collapse: "Collapse",
+    expand: "Expand",
   },
   "plugin.choose.title": "Choose a Plugin",
   "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
@@ -959,7 +1001,7 @@ const messages = {
   "plugin.type.WorkflowNodeStep.title": "Node Step",
   "JobExec.nodeStep.true.label": "Node Step",
   "step.plugins.filter.prompt": "Search step",
-  "enter.a.step.filter.override": "Enter a step filter string.",
+  "enter.a.step.filter.override": "Search",
   "workflow.search.help.string1": "Basic search:",
   "workflow.search.help.string2": "mystep1",
   "workflow.search.help.string3":
@@ -981,6 +1023,8 @@ const messages = {
   "workflow.search.help.string17": "property:name=value",
   "node.step.plugin.plural": "{0} Node Step Plugins",
   "workflow.step.plugin.plural": "{0} Workflow Step Plugins",
+  "job.label": "Job",
+  "Project": "Project",
   "Workflow.Step.jobreference.title": "Select job by",
   "Workflow.Step.jobreference.name.label": "Name",
   "Workflow.Step.jobreference.name.description":
@@ -1040,6 +1084,8 @@ const messages = {
     "Enter UUID, e.g. 5910b723-2436-4497-96d5-49a08db95d2b",
   "select.an.existing.job.to.use": "Select an existing Job to use",
   "plugin.edit.title": "Edit step",
+  "Workflow.step.property.description.label": "Step Name",
+  "Workflow.step.property.description.help": "Name for this step",
   "Workflow.step.property.description.placeholder":
     "Label or description of this step",
   "enter.a.node.filter.override":
@@ -1067,6 +1113,8 @@ const messages = {
   "Workflow.stepErrorHandler.label.on.error": "on error",
   "Workflow.stepErrorHandler.label.keep.going.on.success":
     "keep going on success",
+  "Workflow.validation.oneError": "1 error",
+  "Workflow.validation.multipleErrors": "{count} errors",
   "framework.service.WorkflowNodeStep.description":
     "Runs once for each node in the workflow.",
   "framework.service.WorkflowStep.description": "Runs only once in a workflow.",
@@ -1162,6 +1210,22 @@ const messages = {
       },
     },
   },
+  searchForStep: "Search for a step",
+  learnMoreSearchPatterns: "to search using specific patterns",
+  nodeSteps: "Node Steps",
+  nodeStepsDescription: "Node steps execute once for each node targeted by the Job's node-filter.",
+  workflowSteps: "Workflow Steps",
+  workflowStepsDescription: "Workflow Steps execute once per Job execution.",
+  commonNodeSteps: "Common Node Steps",
+  commonWorkflowSteps: "Common Workflow Steps",
+  learnMore: "Learn more",
+  plugins: "plugins",
+  earlyAccess: "Early Access",
+  earlyAccessDescriptionWorkflow: "We've made some improvements to the \"Workflow\" authoring experience! Try the updated experience - you can switch back anytime.",
+  earlyAccessTryNow: "Try Now",
+  earlyAccessRemindMeLater: "Remind me later",
+  earlyAccessRemindLaterToast: "Got it! We'll remind you next time you return to this page.",
+  earlyAccessGoToSettings: "You can try the updated experience by enabling early access on the system configuration page."
 };
 
 export default messages;

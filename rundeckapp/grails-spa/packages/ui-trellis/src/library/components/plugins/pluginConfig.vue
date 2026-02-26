@@ -80,6 +80,7 @@
             "
             :prop="prop"
             :value="config[prop.name]"
+            :allow-copy="allowCopy"
           />
         </span>
         <div class="col-sm-12">
@@ -106,6 +107,7 @@
               type="hidden"
               :value="inputValues[prop.name]"
               :data-hidden-field-identity="prop.options['hidden_identity']"
+              :data-testid="`prop-hidden-${prop.name}`"
               class="_config_prop_display_hidden"
             />
 
@@ -117,6 +119,7 @@
                 (validation && validation.errors[prop.name] ? ' has-error' : '')
               "
               :data-prop-name="prop.name"
+              :data-testid="`prop-field-${prop.name}`"
             >
               <plugin-prop-edit
                 v-model="inputValues[prop.name]"
@@ -142,6 +145,7 @@
             v-if="group.name"
             :open="!group.secondary"
             class="more-info details-reset"
+            :data-testid="`prop-section-${group.name}`"
           >
             <summary>
               <span class="row">
@@ -165,6 +169,7 @@
                 type="hidden"
                 :value="inputValues[prop.name]"
                 :data-hidden-field-identity="prop.options['hidden_identity']"
+                :data-testid="`prop-hidden-${prop.name}`"
                 class="_config_prop_display_hidden"
               />
               <div
@@ -177,6 +182,7 @@
                     : '')
                 "
                 :data-prop-name="prop.name"
+                :data-testid="`prop-field-${prop.name}`"
               >
                 <plugin-prop-edit
                   v-model="inputValues[prop.name]"
@@ -206,9 +212,10 @@
 </template>
 
 <script lang="ts">
-import { ContextVariable } from "@/library/stores/contextVariables";
+import { ContextVariable } from "../../../library/stores/contextVariables";
 import { getRundeckContext } from "../../rundeckService";
 import { defineComponent, type PropType } from "vue";
+import type { PluginConfig } from "../../../library/interfaces/PluginConfig";
 
 import PluginInfo from "./PluginInfo.vue";
 import PluginPropView from "./pluginPropView.vue";
@@ -242,8 +249,8 @@ export default defineComponent({
     showTitle: { required: false },
     showIcon: { required: false },
     showDescription: { required: false },
-    modelValue: { required: false },
-    savedProps: { required: false },
+    modelValue: { type: Object as PropType<PluginConfig>, required: false },
+    savedProps: { type: Array as PropType<string[]>, required: false },
     pluginConfig: { required: false },
     validation: { required: false },
     readOnly: { required: false },
@@ -258,6 +265,7 @@ export default defineComponent({
       required: false,
       default: "col-sm-2 control-label h5 header-reset",
     },
+    allowCopy: { type: Boolean, default: false },
     extraAutocompleteVars: {
       type: Array as PropType<ContextVariable[]>,
       required: false,
@@ -284,7 +292,7 @@ export default defineComponent({
       inputValues: {} as any,
       inputSaved: {} as any,
       inputSavedProps:
-        typeof this.savedProps !== "undefined" ? this.savedProps : ["type"],
+        (typeof this.savedProps !== "undefined" ? this.savedProps : ["type"]) as string[] | null,
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },
@@ -395,6 +403,16 @@ export default defineComponent({
         this.loadForMode();
       },
     },
+    serviceName: {
+      handler() {
+        this.loadForMode();
+      },
+    },
+    provider: {
+      handler() {
+        this.loadForMode();
+      },
+    },
   },
   beforeMount() {
     this.loadForMode();
@@ -416,16 +434,17 @@ export default defineComponent({
 
       if (
         typeof this.inputSavedProps !== "undefined" &&
+        this.inputSavedProps !== null &&
         this.inputSavedProps.length > 0
       ) {
         for (const i of this.inputSavedProps) {
           if (typeof this.inputSaved[i] === "undefined") {
-            this.inputSaved[i] = this.modelValue[i];
+            this.inputSaved[i] = (this.modelValue as any)[i];
           }
         }
       }
 
-      const config = this.modelValue.config;
+      const config = this.modelValue?.config || {};
 
       const modeCreate = this.isCreateMode;
 
@@ -547,7 +566,7 @@ export default defineComponent({
       try {
         const data =
           await getRundeckContext().rootStore.plugins.getPluginDetail(
-            this.serviceName,
+            this.serviceName as string,
             provider,
           );
         if (data.props) {

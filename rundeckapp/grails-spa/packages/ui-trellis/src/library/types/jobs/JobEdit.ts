@@ -26,6 +26,7 @@ export interface JobOption {
   dateFormat?: string;
   storagePath?: string;
   sortIndex?: number;
+  [key: string]: any;
 }
 
 export interface JobOptionEdit extends JobOption {

@@ -5,7 +5,7 @@
     data-testid="log-filters-container"
   >
     <template v-if="showIfEmpty || model.length > 0">{{ title }}</template>
-    <div v-if="model.length > 0 && mode === 'inline'" class="add-gap" :id="id">
+    <div v-if="model.length > 0 && mode === 'inline'" class="add-gap" data-testid="log-filters-inline-buttons" :id="id">
       <template v-for="(entry, i) in model">
         <LogFilterButton
           v-if="findProvider(entry.type)"
@@ -16,16 +16,6 @@
         ></LogFilterButton>
       </template>
     </div>
-    <log-filter-controls
-      v-if="filtersEb"
-      v-model="editModel"
-      :title="title"
-      :subtitle="subtitle"
-      :event-bus="filtersEb"
-      :show-button="showIfEmpty || model.length > 0"
-      @update:model-value="saveEditFilter"
-      @cancel="clearEdit"
-    />
   </div>
   <div
     v-if="model.length > 0 && mode !== 'inline'"
@@ -43,18 +33,29 @@
       ></LogFilterButton>
     </template>
   </div>
+  <log-filter-controls
+    v-if="filtersEb"
+    v-model="editModel"
+    :title="title"
+    :subtitle="subtitle"
+    :event-bus="filtersEb"
+    :show-button="showIfEmpty || model.length > 0"
+    @update:model-value="saveEditFilter"
+    @cancel="clearEdit"
+  />
 </template>
 
 <script lang="ts">
-import LogFilterButton from "@/app/components/job/workflow/LogFilterButton.vue";
-import { getRundeckContext } from "@/library";
-import { PluginConfig } from "@/library/interfaces/PluginConfig";
-import { getPluginProvidersForService } from "@/library/modules/pluginService";
-import { ServiceType } from "@/library/stores/Plugins";
-import LogFilterControls from "@/app/components/job/workflow/LogFilterControls.vue";
+import LogFilterButton from "./LogFilterButton.vue";
+import { getRundeckContext } from "../../../../library";
+import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
+import { getPluginProvidersForService } from "../../../../library/modules/pluginService";
+import { ServiceType, type Plugin } from "../../../../library/stores/Plugins";
+import LogFilterControls from "./LogFilterControls.vue";
 import { cloneDeep } from "lodash";
 import mitt from "mitt";
 import { defineComponent } from "vue";
+import { resetValidation } from "./stepEditorUtils";
 const eventBus = getRundeckContext().eventBus;
 export default defineComponent({
   name: "LogFilters",
@@ -63,7 +64,7 @@ export default defineComponent({
     modelValue: {
       type: Array,
       required: true,
-      default: () => ({}) as PluginConfig[],
+      default: () => [] as PluginConfig[],
     },
     showIfEmpty: {
       type: Boolean,
@@ -82,6 +83,10 @@ export default defineComponent({
       type: String,
       required: false,
     },
+    editEvent: {
+      type: String,
+      required: false,
+    },
     mode: {
       type: String,
       required: false,
@@ -97,7 +102,7 @@ export default defineComponent({
     return {
       ServiceType,
       model: [] as PluginConfig[],
-      pluginProviders: [],
+      pluginProviders: [] as Plugin[],
       pluginLabels: [],
       addFilterModal: false,
       editFilterModal: false,
@@ -106,8 +111,10 @@ export default defineComponent({
         type: "",
         config: {},
       } as PluginConfig,
-      editModelValidation: { errors: [], valid: true },
-      filtersEb: null,
+      editModelValidation: resetValidation(),
+      filtersEb: null as ReturnType<typeof mitt> | null,
+      addEventHandler: null as (() => void) | null,
+      editEventHandler: null as ((filterIndex: number) => void) | null,
     };
   },
   computed: {
@@ -125,24 +132,36 @@ export default defineComponent({
   },
   async mounted() {
     await this.getLogFilterPlugins();
-    this.model = cloneDeep(this.modelValue);
+    this.model = cloneDeep(this.modelValue) as PluginConfig[];
     this.filtersEb = mitt();
     if (this.addEvent) {
-      eventBus.on(this.addEvent, () => {
+      this.addEventHandler = () => {
         this.addFilter();
-      });
+      };
+      eventBus.on(this.addEvent, this.addEventHandler);
+    }
+    if (this.editEvent) {
+      this.editEventHandler = (filterIndex: number) => {
+        if (typeof filterIndex === 'number' && filterIndex >= 0 && filterIndex < this.model.length) {
+          this.editFilterByIndex(filterIndex);
+        }
+      };
+      eventBus.on(this.editEvent, this.editEventHandler);
     }
   },
   beforeUnmount() {
-    if (this.addEvent) {
-      eventBus.off(this.addEvent);
+    if (this.addEvent && this.addEventHandler) {
+      eventBus.off(this.addEvent, this.addEventHandler);
+    }
+    if (this.editEvent && this.editEventHandler) {
+      eventBus.off(this.editEvent, this.editEventHandler);
     }
   },
   methods: {
     editFilterByIndex(index: number) {
       this.editFilterIndex = index;
       this.editModel = cloneDeep(this.model[index]);
-      this.filtersEb.emit("edit");
+      this.filtersEb?.emit("edit");
     },
     removeFilterIndex(index: number) {
       this.model.splice(index, 1);
@@ -154,7 +173,7 @@ export default defineComponent({
     },
     addFilter() {
       this.clearEdit();
-      this.filtersEb.emit("add");
+      this.filtersEb?.emit("add");
     },
     async saveEditFilter() {
       try {

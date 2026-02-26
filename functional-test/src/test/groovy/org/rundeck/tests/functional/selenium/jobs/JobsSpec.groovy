@@ -935,4 +935,89 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.expectNumberOfStepsToBe(3) // it counts the error handler as a step due to class
     }
+
+    def "edit existing step - change command and save"() {
+        when:
+            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi = nextUi
+            jobCreatePage.go()
+            def jobShowPage = page JobShowPage
+        then:
+            jobCreatePage.fillBasicJob "edit step regression ${nextUi ? 'next ui' : 'legacy'}"
+            jobCreatePage.expectNumberOfStepsToBe(1)
+        when: "edit step and change command"
+            jobCreatePage.clickStepToEdit(0)
+            jobCreatePage.waitForElementVisible (nextUi ? JobCreatePage.NextUi.adhocRemoteStringBy : jobCreatePage.adhocRemoteStringBy)
+            jobCreatePage.adhocRemoteStringField.clear()
+            jobCreatePage.adhocRemoteStringField.sendKeys 'echo updated command'
+            if (nextUi) {
+                jobCreatePage.workflowSaveStepButton.click()
+            } else {
+                jobCreatePage.saveStep(0)
+            }
+        then:
+            jobCreatePage.createJobButton.click()
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.expectNumberOfStepsToBe(1)
+        expect:
+            jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo updated command') }
+        where:
+            nextUi << [false, true]
+    }
+
+    def "cancel editing new step - step not added"() {
+        when:
+            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi = nextUi
+            jobCreatePage.go()
+        then:
+            jobCreatePage.jobNameInput.sendKeys "cancel new step ${nextUi ? 'next ui' : 'legacy'}"
+            jobCreatePage.tab(JobTab.WORKFLOW).click()
+        when: "add step, configure, then cancel"
+            if (nextUi) {
+                jobCreatePage.clickAddStep()
+                jobCreatePage.byAndWaitClickable(By.xpath("//*[@${StepType.NODE.getStepType()}='exec-command']"))
+                jobCreatePage.stepLink('exec-command', StepType.NODE).click()
+                jobCreatePage.byAndWaitClickable JobCreatePage.NextUi.adhocRemoteStringBy
+                jobCreatePage.adhocRemoteStringField.sendKeys 'echo should not appear'
+                jobCreatePage.clickCancelStepEdit()
+            } else {
+                jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
+                jobCreatePage.stepLink('exec-command', StepType.NODE).click()
+                jobCreatePage.byAndWaitClickable jobCreatePage.adhocRemoteStringBy
+                jobCreatePage.adhocRemoteStringField.sendKeys 'echo should not appear'
+                jobCreatePage.byAndWaitClickable(jobCreatePage.cancelNewStepFormBy).click()
+            }
+        then:
+            jobCreatePage.waitForNumberOfElementsToBe(jobCreatePage.nextUi ? JobCreatePage.NextUi.numberOfStepsBy : jobCreatePage.numberOfStepsBy, 0)
+        expect:
+            jobCreatePage.workFlowList.size() == 0
+        where:
+            nextUi << [false, true]
+    }
+
+    def "cancel editing existing step - changes discarded"() {
+        when:
+            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            jobCreatePage.nextUi = nextUi
+            jobCreatePage.go()
+            def jobShowPage = page JobShowPage
+        then:
+            jobCreatePage.fillBasicJob "cancel edit step ${nextUi ? 'next ui' : 'legacy'}"
+            jobCreatePage.expectNumberOfStepsToBe(1)
+        when: "edit step, change command, cancel"
+            jobCreatePage.clickStepToEdit(0)
+            jobCreatePage.waitForElementVisible (nextUi ? JobCreatePage.NextUi.adhocRemoteStringBy : jobCreatePage.adhocRemoteStringBy)
+            jobCreatePage.adhocRemoteStringField.clear()
+            jobCreatePage.adhocRemoteStringField.sendKeys 'echo discarded change'
+            jobCreatePage.clickCancelStepEdit()
+        then:
+            jobCreatePage.createJobButton.click()
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.expectNumberOfStepsToBe(1)
+        expect:
+            jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo selenium test') }
+        where:
+            nextUi << [false, true]
+    }
 }

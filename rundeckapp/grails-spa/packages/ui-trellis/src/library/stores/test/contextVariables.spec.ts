@@ -1,4 +1,4 @@
-import {contextVariables, createOptionVariables} from '../contextVariables'
+import {contextVariables, createOptionVariables, ContextVariable} from '../contextVariables'
 import { getRundeckContext } from "../../rundeckService";
 
 jest.mock("../../rundeckService")
@@ -16,6 +16,15 @@ describe("contextVariables", () => {
     expect(contextVariables()).toHaveProperty("execution");
     expect(contextVariables()).toHaveProperty("node");
     expect(contextVariables()).toHaveProperty("error_handler");
+  });
+
+  it("accepts global as a valid ContextVariable type", () => {
+    const globalVar: ContextVariable = {
+      name: "myGlobalVar",
+      title: "My Global Variable",
+      type: "global",
+    };
+    expect(globalVar.type).toBe("global");
   });
 
 });

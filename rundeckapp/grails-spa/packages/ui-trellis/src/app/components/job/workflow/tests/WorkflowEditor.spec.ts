@@ -15,7 +15,7 @@ jest.mock("@/library/rundeckService", () => ({
     apiVersion: "44",
   })),
 }));
-jest.mock("../../../../../library/services/projects");
+jest.mock("@/library/services/projects");
 
 jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: jest.fn().mockImplementation(() => ({})),

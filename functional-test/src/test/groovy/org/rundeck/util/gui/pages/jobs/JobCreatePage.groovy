@@ -89,6 +89,8 @@ class JobCreatePage extends BasePage {
         static By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span')
         static By numberOfStepsBy = By.cssSelector("[data-test='edit-step-item']")
         static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
+        static By stepEditModalCancelBy = By.cssSelector('.modal.in [data-testid="cancel-button"]')
+        static By stepEditModalSaveBy = By.cssSelector('.modal.in [data-testid="save-button"]')
     }
 
     By usageSectionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -127,6 +129,10 @@ class JobCreatePage extends BasePage {
     By wfRedoButtonLinkBy = By.xpath("//*[@class='btn btn-xs btn-default act_redo flash_undo']")
     By wfRevertAllButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[3]")
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
+    /** Cancel button in new step form (legacy). Form loads into ol.flowlist when adding - wfnewtypes is hidden. Unique via onclick. */
+    By cancelNewStepFormBy = By.cssSelector('ol.flowlist li span.btn.btn-default.btn-sm[onclick*="_wficancelnew("]')
+    /** Cancel/Discard button when editing existing step (legacy). Inline form, not modal. */
+    By cancelEditStepFormBy = By.cssSelector('ol.flowlist li span.btn.btn-default.btn-sm[onclick*="_wfiview"]')
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
     By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
     By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
@@ -158,7 +164,7 @@ class JobCreatePage extends BasePage {
     By optionsBy = By.cssSelector(".opt.item")
     By timeZoneBy = By.id("timeZone")
     By optEditFormBy = By.className("optEditForm")
-    By addGlobalLogFilter = By.cssSelector("div[data-testid='log-filters-container'] > button")
+    By addGlobalLogFilter = By.cssSelector("[data-testid='add-filter-button']")
     By addLogFilterOption = By.cssSelector("a[data-test='add-log-filter']")
     By addErrorHandlerOption = By.cssSelector("a[data-test='add-error-handler']")
 
@@ -498,10 +504,6 @@ class JobCreatePage extends BasePage {
             el By.xpath("//*[contains(@${stepType.getStepType()}, '$dataNodeStepType')]")
     }
 
-    WebElement getAdhocRemoteStringBy() {
-        el nextUi? NextUi.adhocRemoteStringBy : adhocRemoteStringBy
-    }
-
     WebElement getAdhocRemoteStringField() {
         el nextUi? NextUi.adhocRemoteStringBy : adhocRemoteStringBy
     }
@@ -515,7 +517,10 @@ class JobCreatePage extends BasePage {
     }
 
     void clickAddStep(){
-        (el workflowAlphaUiButton).click()
+        def btn = waitForElementVisible(workflowAlphaUiButton)
+        executeScript "arguments[0].scrollIntoView(true);", btn
+        waitForElementToBeClickable(btn)
+        btn.click()
     }
 
     void clickAddErrorHandler(int position){
@@ -742,15 +747,21 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getDefaultTabNodes() {
-        (el defaultTabNodes)
+        def element = el defaultTabNodes
+        executeScript "arguments[0].scrollIntoView(true);", element
+        return element
     }
 
     WebElement getDefaultTabOutput() {
-        (el defaultTabOutput)
+        def element = el defaultTabOutput
+        executeScript "arguments[0].scrollIntoView(true);", element
+        return element
     }
 
     WebElement getDefaultTabHtml() {
-        (el defaultTabHtml)
+        def element = el defaultTabHtml
+        executeScript "arguments[0].scrollIntoView(true);", element
+        return element
     }
 
     WebElement getSchedulesCrontab(){
@@ -975,6 +986,36 @@ class JobCreatePage extends BasePage {
 
     def doesntHasDropdownOption(int index, String dataTest) {
         els(By.cssSelector("#wfitem_${index} +.step-item-controls a[data-test='${dataTest}']")).isEmpty()
+    }
+
+    /**
+     * Clicks the step at index to open edit modal (nextUi mode only).
+     * The step item with id wfitem_${index} is clickable and opens EditPluginModal.
+     */
+    void clickStepToEdit(int index) {
+        def stepEl = el(By.id("wfitem_${index}"))
+        executeScript "arguments[0].scrollIntoView(true);", stepEl
+        waitForElementToBeClickable(stepEl)
+        stepEl.click()
+    }
+
+    /**
+     * Clicks the cancel button when editing a step.
+     * nextUi: modal cancel. Legacy: inline form discard button.
+     */
+    void clickCancelStepEdit() {
+        def cancelBy = nextUi ? NextUi.stepEditModalCancelBy : cancelEditStepFormBy
+        def cancelBtn = waitForElementVisible(cancelBy)
+        executeScript "arguments[0].scrollIntoView(true);", cancelBtn
+        waitForElementToBeClickable(cancelBtn)
+        cancelBtn.click()
+    }
+
+    /**
+     * Returns true if the step edit modal (with cancel/save) is visible (nextUi mode only).
+     */
+    boolean isStepEditModalVisible() {
+        els(NextUi.stepEditModalCancelBy).any { it.isDisplayed() }
     }
 }
 

@@ -90,16 +90,17 @@
   </div>
 </template>
 <script lang="ts">
-import { getRundeckContext } from "@/library";
+import { getRundeckContext } from "../../../../library";
 import { cloneDeep, clone } from "lodash";
 import {
   JobOption,
+  JobOptionEdit,
   JobOptionsData,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
 import { Operation, ChangeEvent } from "./model/ChangeEvents";
 import OptionItem from "./OptionItem.vue";
-import pluginService from "@/library/modules/pluginService";
+import pluginService from "../../../../library/modules/pluginService";
 import { defineComponent, PropType } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
@@ -140,10 +141,10 @@ export default defineComponent({
       error: "",
       createMode: false,
       editIndex: -1,
-      origOptions: [] as JobOption[],
-      intOptions: [] as JobOption[],
-      createOption: null,
-      fileUploadPluginType: "",
+      origOptions: [] as JobOptionEdit[],
+      intOptions: [] as JobOptionEdit[],
+      createOption: null as JobOptionEdit | null,
+      fileUploadPluginType: "" as string | undefined,
       providers: [],
       providerLabels: {},
     };
@@ -153,7 +154,7 @@ export default defineComponent({
     this.intOptions = cloneDeep(this.optionsData.options);
     this.updateIndexes();
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
-    pluginService.getPluginProvidersForService("OptionValues").then((data) => {
+    pluginService.getPluginProvidersForService("OptionValues").then((data: { service?: string; descriptions?: any; labels?: any }) => {
       if (data.service) {
         this.providers = data.descriptions;
         this.providerLabels = data.labels;
@@ -191,7 +192,7 @@ export default defineComponent({
       this.changeEvent({
         index,
         dest: -1,
-        orig: orig,
+        orig: orig as JobOption,
         operation: Operation.Remove,
         undo: Operation.Insert,
       });
@@ -218,7 +219,7 @@ export default defineComponent({
         });
       }
     },
-    dragUpdated(change) {
+    dragUpdated(change: { oldIndex: number; newIndex: number }) {
       this.updateIndexes();
       this.changeEvent({
         index: change.oldIndex,
@@ -233,7 +234,7 @@ export default defineComponent({
       this.changeEvent({
         index: index,
         dest: -1,
-        orig,
+        orig: orig as JobOption,
         value,
         operation: Operation.Modify,
         undo: Operation.Modify,
@@ -256,35 +257,37 @@ export default defineComponent({
       });
       this.createOption = null;
     },
-    operationRemove(index: number) {
+    operationRemove(index: number): JobOptionEdit {
       const oldval = this.intOptions[index];
       this.intOptions.splice(index, 1);
       return oldval;
     },
-    operationModify(index: number, data: any) {
+    operationModify(index: number, data: JobOptionEdit): JobOptionEdit {
       const orig = this.intOptions[index];
       this.intOptions[index] = cloneDeep(data);
       return orig;
     },
-    operationMove(index: number, dest: number) {
+    operationMove(index: number, dest: number): void {
       const orig = this.intOptions[index];
       this.intOptions.splice(index, 1);
       this.intOptions.splice(dest, 0, orig);
     },
-    operationInsert(index: number, value: any) {
+    operationInsert(index: number, value: JobOptionEdit): void {
       this.intOptions.splice(index, 0, cloneDeep(value));
     },
-    operation(op: Operation, data: any) {
+    operation(op: Operation, data: any): JobOptionEdit | undefined {
+      let result: JobOptionEdit | undefined;
       if (op === Operation.Insert) {
         this.operationInsert(data.index, data.value);
       } else if (op === Operation.Remove) {
-        this.operationRemove(data.index);
+        result = this.operationRemove(data.index);
       } else if (op === Operation.Modify) {
-        this.operationModify(data.index, data.value);
+        result = this.operationModify(data.index, data.value);
       } else if (op === Operation.Move) {
         this.operationMove(data.index, data.dest);
       }
       this.updateIndexes();
+      return result;
     },
     doCancel() {
       this.createMode = false;
@@ -293,8 +296,8 @@ export default defineComponent({
     },
     doUndo(change: ChangeEvent) {
       this.operation(change.undo, {
-        index: change.dest >= 0 ? change.dest : change.index,
-        dest: change.index >= 0 ? change.index : change.dest,
+        index: (change.dest !== undefined && change.dest >= 0) ? change.dest : change.index,
+        dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
         value: change.orig || change.value,
       });
       this.wasChanged();

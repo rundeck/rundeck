@@ -1,6 +1,6 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import { createApp, markRaw } from "vue";
+import { createApp } from "vue";
 import { createPinia } from "pinia";
 import VueCookies from "vue-cookies";
 import * as uiv from "uiv";
@@ -18,16 +18,15 @@ import { loadJsonData } from "@/app/utilities/loadJsonData";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
 import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
-import PrimeVue from "primevue/config";
-import Lara from "@primeuix/themes/lara";
+import "primeicons/primeicons.css";
 import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
+import {configurePrimeVue} from "@/library/utilities/primeVueConfig";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const i18n = initI18n();
 const EventBus = getRundeckContext().eventBus;
-const rootStore = getRundeckContext().rootStore;
 const uiMeta = loadJsonData("pageUiMeta");
 const uiType = uiMeta?.uiType || "current";
 const pinia = createPinia();
@@ -96,7 +95,7 @@ const jobSections = [
     addUiMessages: true,
     addEventBus: true,
     visible: uiType === "next",
-  },
+  }
 ];
 
 const mountSection = (section) => {
@@ -130,16 +129,7 @@ const mountSection = (section) => {
       if (section.addCookies) {
         app.use(VueCookies);
       }
-      app.use(PrimeVue, {
-        theme: {
-          preset: Lara,
-          options: {
-            prefix: "p",
-            cssLayer: true,
-            darkModeSelector: ".dark",
-          },
-        },
-      });
+      configurePrimeVue(app, { includeTooltip: true });
       app.use(pinia);
       app.mount(element);
     });
