@@ -2160,7 +2160,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       orchestrator:params.orchestrator,
                                       nodeRankOrderAscending:params.nodeRankOrderAscending,
                                       nodeRankAttribute:params.nodeRankAttribute,
-                                      workflow:params.workflow,
+                                      workflowData:params.workflow,
                                       workflowJson:params.workflowJson,
                                       argString:params.argString,
                                       executionType: params.executionType ?: 'scheduled',
