@@ -28,6 +28,7 @@ import grails.gorm.DetachedCriteria
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.model.v1.execution.ExecutionDataSummary
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.execution.RdExecutionDataSummary
 import rundeck.data.job.RdNodeConfig
@@ -597,18 +598,28 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
 
     /**
      * Update the workflow data using new JSON storage format.
-     * Nulls out the old workflow field and serializes to workflowJson.
+     * For backward compatibility with rollback scenarios:
+     * - If workflow contains ConditionalStep: only write to workflowJson (can't convert to Workflow domain class)
+     * - If workflow doesn't contain ConditionalStep: write to both workflowJson and workflow (for old version compatibility)
      * @param workflowData WorkflowData instance to store
      */
     void setWorkflowData(WorkflowData workflowData) {
-        // Null out old format
-        this.workflow = null
-
-        // Serialize to new format
-        if (workflowData != null) {
-            this.workflowJson = serializeWorkflowData(workflowData)
-        } else {
+        if (workflowData == null) {
             this.workflowJson = null
+            this.workflow = null
+            return
+        }
+
+        // Always serialize to new format
+        this.workflowJson = serializeWorkflowData(workflowData)
+
+        //This is a measure to provide backward compatibility for rollback scenarios where the workflow field may still be used by older code.
+        try {
+            Map workflowMap = workflowData.toMap()
+            this.workflow = Workflow.fromMap(workflowMap)
+        } catch (Exception e) {
+            log.warn("Failed to convert WorkflowData to Workflow domain class for Execution ${id}, storing only in workflowJson", e)
+            this.workflow = null
         }
     }
 

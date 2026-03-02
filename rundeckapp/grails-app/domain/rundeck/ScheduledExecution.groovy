@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.RdLogConfig
@@ -1306,23 +1307,31 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
     /**
      * Update the workflow data using new JSON storage format.
-     * Nulls out the old workflow field and serializes to workflowJson.
+     * For backward compatibility with rollback scenarios:
+     * - If workflow contains ConditionalStep: only write to workflowJson (can't convert to Workflow domain class)
+     * - If workflow doesn't contain ConditionalStep: write to both workflowJson and workflow (for old version compatibility)
      * @param workflowData WorkflowData instance to store
      */
     void setWorkflowData(WorkflowData workflowData) {
-        // Null out old format
-        this.workflow = null
+        // Clear cache
+        cachedWorkflowData = null
+        cachedWorkflowJsonHash = null
 
-        // Serialize to new format
-        if (workflowData != null) {
-            this.workflowJson = serializeWorkflowData(workflowData)
-            // Clear cache so it will be recreated on next getWorkflowData() call
-            cachedWorkflowData = null
-            cachedWorkflowJsonHash = null
-        } else {
+        if (workflowData == null) {
             this.workflowJson = null
-            cachedWorkflowData = null
-            cachedWorkflowJsonHash = null
+            this.workflow = null
+            return
+        }
+
+        // Always serialize to new format
+        this.workflowJson = serializeWorkflowData(workflowData)
+
+        //this is a temporary measure to support rollback scenarios where the old workflow field is still used by older versions.
+        try {
+            this.workflow = new Workflow(workflowData)
+        } catch (Exception e) {
+            log.warn("Failed to convert WorkflowData to Workflow domain class for ScheduledExecution ${id}, storing only in workflowJson", e)
+            this.workflow = null
         }
     }
 
