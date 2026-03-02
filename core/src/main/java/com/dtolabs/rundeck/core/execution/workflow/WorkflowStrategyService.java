@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.common.ProviderService;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.plugins.*;
@@ -118,6 +119,17 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
             provider = s;
         }
         WorkflowStrategy workflowStrategy = providerOfType(provider);
+        if(!workflowStrategy.supportsConditionalSteps()){
+            //check if workflow has any steps with conditionalSet
+            List<StepExecutionItem> steps = workflow.getWorkflow().getCommands();
+            for(StepExecutionItem step : steps) {
+                if (step.getConditions() != null) {
+                    throw new ExecutionServiceException(
+                            "Workflow strategy provider '" + provider + "' does not support conditional steps, but workflow contains conditional steps"
+                    );
+                }
+            }
+        }
         if (null != config) {
             IRundeckProjectConfig iRundeckProjectConfig = framework.getFrameworkProjectMgr().loadProjectConfig(
                     projectName);
@@ -168,6 +180,17 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
             provider = s;
         }
         WorkflowStrategy workflowStrategy = providerOfType(provider);
+        if(!workflowStrategy.supportsConditionalSteps()){
+            //check if workflow has any steps with conditionalSet
+            List<StepExecutionItem> steps = workflow.getWorkflow().getCommands();
+            for(StepExecutionItem step : steps) {
+                if (step.getConditions() != null) {
+                    throw new ExecutionServiceException(
+                            "Workflow strategy provider '" + provider + "' does not support conditional steps, but workflow contains conditional steps"
+                    );
+                }
+            }
+        }
         if (null != resolver) {
             Description description = DescribableServiceUtil.descriptionForProvider(
                     true,

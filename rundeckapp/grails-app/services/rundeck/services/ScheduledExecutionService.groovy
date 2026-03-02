@@ -23,12 +23,11 @@ import com.dtolabs.rundeck.core.utils.WaitUtils
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.data.workflow.ConditionalStep
 import org.rundeck.app.data.workflow.WorkflowDataImpl
-import org.rundeck.app.data.workflow.WorkflowStepDataImpl
 import org.springframework.jdbc.core.RowCallbackHandler
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import org.springframework.validation.ObjectError
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.job.reference.JobRevReferenceImpl
 import rundeck.data.util.JobTakeoverQueryBuilder
@@ -2418,6 +2417,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
                 return false
             }
+        } else if(step instanceof ConditionalStep){
+            def validation = WorkflowController._validateConditionalStep(frameworkService, step)
+            if (!validation.valid) {
+                step.errors.rejectValue(
+                        'type',
+                        'Workflow.step.conditional.configuration.invalid',
+                        [validation.report.toString()].toArray(),
+                        'Invalid configuration for conditional step: {0}'
+                )
+                return false
+            }
         }
 
         def pluginConfig = step.getPluginConfigListForType(ServiceNameConstants.LogFilter)
@@ -2815,6 +2825,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //v4
         failed |=validateDefinitionWFStrategy(scheduledExecution, params, validation)
 
+        //v4.5
+        failed |= validateDefinitionConditionalStrategy(scheduledExecution, validation)
+
         //v5
         failed |= validateDefinitionLogFilterPlugins(scheduledExecution,params, validation)
 
@@ -3008,6 +3021,43 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
             }
         }
+        return failed
+    }
+
+    /**
+     * Validate that conditional steps are only used with sequential or parallel workflow strategies.
+     * @param scheduledExecution The scheduled execution to validate
+     * @param validationMap Map to store validation errors
+     * @return true if validation failed
+     */
+    @CompileStatic
+    public boolean validateDefinitionConditionalStrategy(ScheduledExecution scheduledExecution, Map validationMap) {
+        boolean failed = false
+        def workflowData = scheduledExecution.getWorkflowData()
+        
+        if (workflowData) {
+            String strategy = workflowData.strategy
+            boolean hasConditionalSteps = false
+            
+            // Check if workflow has any conditional steps
+            if (workflowData.getSteps()) {
+                hasConditionalSteps = workflowData.getSteps().any {
+                    it.getConditionSet() != null
+                }
+            }
+            
+            // If conditional steps exist, strategy must be sequential or parallel
+            if (hasConditionalSteps && strategy != null && strategy != "sequential" && strategy != "parallel") {
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                    'workflow',
+                    'scheduledExecution.workflow.conditional.strategy.invalid.message',
+                    [strategy] as Object[],
+                    "Conditional steps can only be used with 'sequential' or 'parallel' workflow strategy. Current strategy: {0}"
+                )
+            }
+        }
+        
         return failed
     }
 

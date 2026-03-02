@@ -1,5 +1,6 @@
 package org.rundeck.app.data.workflow
 
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.BaseExecutionItem
 import com.dtolabs.rundeck.core.execution.PluginStepExecutionItemImpl
 import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet
@@ -52,7 +53,7 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
         
         steps.each { WorkflowStepData step ->
             // Check if this is a ConditionalStep
-            if (step instanceof ConditionalStep && featureService.featurePresent("earlyAccessJobConditional")) {
+            if (step instanceof ConditionalStep && featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)) {
                 ConditionalStep conditionalStep = (ConditionalStep) step
                 
                 // Convert data model ConditionalSet to core ConditionSet

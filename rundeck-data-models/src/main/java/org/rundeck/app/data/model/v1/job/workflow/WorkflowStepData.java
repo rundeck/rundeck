@@ -144,4 +144,8 @@ public interface WorkflowStepData {
      * @return List of sub-steps if this is a conditional step, null or empty list otherwise
      */
     default List<WorkflowStepData> getSubSteps(){return null;}
+
+    default boolean isConditional() {
+        return getConditionSet() != null;
+    }
 }

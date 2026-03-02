@@ -1308,6 +1308,44 @@ class WorkflowController extends ControllerBase {
             return [valid: true]
         }
     }
+
+    static Map _validateConditionalStep(FrameworkService frameworkService, WorkflowStepData conditinalStep){
+        Map validationResult = [valid: true]
+        if (conditinalStep instanceof ConditionalStep) {
+            ConditionalStep item = conditinalStep as ConditionalStep
+            item.getSubSteps().each { WorkflowStepData subStep ->
+                if(conditinalStep.nodeStep!=subStep.nodeStep){
+                    validationResult = [valid: false, report: "Conditional step substeps must all be ${subStep.nodeStep ? 'node steps' : 'workflow steps'} as the conditional step"]
+                    return
+                }
+                def description = WorkflowController.getPluginStepDescription(frameworkService, conditinalStep.nodeStep, item.getPluginType())
+                if (!description) {
+                    validationResult = [valid: false, report: "Substep Plugin not found: " + item.type]
+                    return
+                }
+                def validation = _validatePluginStep(frameworkService, subStep)
+                if (!validation.valid) {
+                    validationResult = [valid: false, report: "Conditional plugin configuration was not valid: ${validation.report}", item: subStep, report: validation.report]
+                    return
+                }
+                _sanitizePluginStep(subStep, validation)
+
+                validationResult = frameworkService.validateDescription(
+                        description,
+                        '',
+                        item.configuration,
+                        null,
+                        PropertyScope.Instance,
+                        PropertyScope.Project
+                )
+            }
+
+            return validationResult
+
+        } else {
+            return validationResult
+        }
+    }
     /**
      * Validate a WorkflowStep object.  will call Errors.rejectValue for
      * any invalid fields for the object.

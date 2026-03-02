@@ -60,4 +60,6 @@ public interface WorkflowStrategy {
      * @return
      */
     WorkflowStrategyProfile getProfile();
+
+    default boolean supportsConditionalSteps(){return false;}
 }

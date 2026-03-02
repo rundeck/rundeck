@@ -28,6 +28,7 @@ import org.rundeck.app.components.jobs.JobDefinitionManager
 import org.rundeck.app.components.jobs.JobFormat
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.components.jobs.UnsupportedFormatException
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.ScheduledExecution
@@ -93,6 +94,28 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
             }
         }
         return new Validator.ReportSet(valid, validations)
+    }
+
+    /**
+     * Validate if a job can be exported to the specified format.
+     * Checks if jobs with conditional steps are being exported to XML format,
+     * which is not supported.
+     * @param scheduledExecution The job to validate
+     * @param format The export format (e.g., 'xml', 'yaml', 'json')
+     * @return Validator.Report indicating if the export is valid
+     */
+    @CompileStatic
+    Validator.Report validateJobForExport(ScheduledExecution scheduledExecution, String format) {
+        if (format == 'xml' && isV2JobDefinition(scheduledExecution)) {
+            return Validator.buildReport()
+                .error(
+                    'workflow',
+                    "Cannot export jobs with conditional steps to XML format. " +
+                    "Conditional steps are only supported in JSON and YAML formats."
+                )
+                .build()
+        }
+        return Validator.buildReport().build()
     }
 
 
@@ -304,6 +327,22 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
     }
 
     /**
+     * Check if a ScheduledExecution has conditional steps in its workflow
+     * @param job The ScheduledExecution to check
+     * @return true if the workflow contains conditional steps
+     */
+    @CompileStatic
+    static boolean isV2JobDefinition(ScheduledExecution job) {
+        def workflowData = job.getWorkflowData()
+        if (workflowData && workflowData.getSteps()) {
+            return workflowData.getSteps().any { WorkflowStepData step ->
+               step.getConditionSet() != null
+            }
+        }
+        return false
+    }
+
+    /**
      * Convert canonical map to Xmap
      * @param map canonical map
      * @param preserveUuid if true, preserve job uuid
@@ -360,13 +399,13 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
     }
 
     @Override
-    void exportAs(String format, List<ScheduledExecution> list, JobFormat.Options options, Writer writer) {
+    void exportAs(String format, List<ScheduledExecution> list, JobFormat.Options options, Writer writer) throws JobDefinitionException {
         def mapList = list.collect { jobToMap(it) }
         getFormat(format).encode(mapList, options, writer)
     }
 
     @Override
-    void exportImportedAs(String format, List<ImportedJob<ScheduledExecution>> list, JobFormat.Options options, Writer writer) {
+    void exportImportedAs(String format, List<ImportedJob<ScheduledExecution>> list, JobFormat.Options options, Writer writer) throws JobDefinitionException {
         def mapList = list.collect { jobToMap(it) }
         getFormat(format).encode(mapList, options, writer)
     }

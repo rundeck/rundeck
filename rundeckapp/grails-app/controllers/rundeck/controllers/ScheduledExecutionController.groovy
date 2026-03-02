@@ -558,7 +558,7 @@ Since: v53''',
         if (params.opt && (params.opt instanceof Map)) {
             dataMap.selectedoptsmap = params.opt
         }
-
+        def controller = this
         withFormat{
             html{
                 def stats = scheduledExecutionService.calculateJobStats(scheduledExecution)
@@ -583,14 +583,16 @@ Since: v53''',
                 }
                 flush(response)
             }
-            xml{
-                response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
-                response.contentType='text/xml; charset=UTF-8'
+            if(controller.rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
+                xml {
+                    response.setHeader("Content-Disposition", "attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
+                    response.contentType = 'text/xml; charset=UTF-8'
 
-                response.outputStream.withWriter('UTF-8') { writer ->
-                    rundeckJobDefinitionManager.exportAs('xml', [scheduledExecution], writer)
+                    response.outputStream.withWriter('UTF-8') { writer ->
+                        rundeckJobDefinitionManager.exportAs('xml', [scheduledExecution], writer)
+                    }
+                    flush(response)
                 }
-                flush(response)
             }
         }
     }
@@ -796,7 +798,7 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
                 }
             }
 
-            if (controller.isAllowXml()) {
+            if (controller.isAllowXml() && controller.rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
                 xml {
                     render(contentType: 'application/xml') {
                         workflow wfdata
@@ -3990,7 +3992,8 @@ Authorization required: `read` for the Job.''',
         if(request.api_version > ApiVersions.V43){
             supportedFormats << 'json'
         }
-        if (!(response.format in supportedFormats)) {
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+        if (!(response.format in supportedFormats) || !rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
             return apiService.renderErrorFormat(
                 response,
                 [
@@ -4000,7 +4003,6 @@ Authorization required: `read` for the Job.''',
                 ]
             )
         }
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
             return apiService.renderErrorFormat(response, [

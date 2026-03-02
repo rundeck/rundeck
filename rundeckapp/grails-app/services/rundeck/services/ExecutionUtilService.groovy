@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.NodesetEmptyException
 import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.data.workflow.ConditionalStep
@@ -195,7 +196,8 @@ class ExecutionUtilService {
             }
         }.findAll { it != null }
 
-        if(featureService.featurePresent("earlyAccessJobConditional")) {
+        boolean conditionalFeatureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
+        if(conditionalFeatureEnabled && workflow.hasConditionalSteps()) {
             workflow.commands.each {
                 if (it.conditionSet && it.subSteps) {
                     stepExecutionItems.addAll(
@@ -211,6 +213,9 @@ class ExecutionUtilService {
                     )
                 }
             }
+        } else if(!conditionalFeatureEnabled && workflow.hasConditionalSteps()) {
+            log.error("Workflow has conditional steps, but conditional feature is not enabled.")
+            throw new IllegalArgumentException("Workflow has conditional steps, but conditional feature is not enabled.");
         }
         stepExecutionItems
     }
