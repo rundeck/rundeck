@@ -44,6 +44,7 @@ import WorkflowStrategy from "./WorkflowStrategy.vue";
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import { defineComponent, type PropType } from "vue";
 import OptionsEditorSection from "@/app/pages/job/editor/OptionsEditorSection.vue";
+import { getFeatureEnabled } from "@/library/services/feature";
 
 export default defineComponent({
   name: "WorkflowEditor",
@@ -101,7 +102,11 @@ export default defineComponent({
     this.basicData = createBasicData(this.modelValue);
     this.strategyData = createStrategyData(this.modelValue);
     this.logFiltersData = createLogFiltersData(this.modelValue);
-    this.stepsData = createStepsData(this.modelValue);
+
+    // Filter conditional steps when feature flag is disabled
+    const isConditionalEnabled = await getFeatureEnabled('earlyAccessJobConditional');
+    this.stepsData = createStepsData(this.modelValue, !isConditionalEnabled);
+
     this.loaded = true;
   },
   methods: {
