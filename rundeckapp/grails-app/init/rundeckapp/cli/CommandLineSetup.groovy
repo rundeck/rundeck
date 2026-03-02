@@ -214,7 +214,7 @@ class CommandLineSetup {
             try {
                 //spring boot launched jar scenario
                 //The location the jar is launched from is assumed to be the desired root
-                Class baseClass = ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.Launcher")
+                Class baseClass = ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.launch.Launcher")
                 File launcherLocation = new File(baseClass.getProtectionDomain().getCodeSource().getLocation().getFile())
                 // Grails 7: Handle Spring Boot 3 nested: protocol in JAR paths
                 File actualLocation = stripNestedProtocol(launcherLocation)
@@ -259,7 +259,7 @@ class CommandLineSetup {
     Class tryToLoadCorrectBaseClass() {
         //For spring boot launched jar this will be correct
         try {
-            return ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.Launcher")
+            return ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.launch.Launcher")
         } catch(Exception ex) {}
         //Otherwise use the regular class loader and use any class in it
         return Application.class

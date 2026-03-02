@@ -348,7 +348,7 @@ class RundeckInitializer {
     static Class tryToLoadCorrectBaseClass() {
         //For spring boot launched jar this will be correct
         try {
-            return ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.Launcher")
+            return ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.launch.Launcher")
         } catch(Exception ex) {}
         //Otherwise use the regular class loader and use any class in it
         return Application.class
