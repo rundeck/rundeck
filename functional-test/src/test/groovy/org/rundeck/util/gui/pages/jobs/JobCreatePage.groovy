@@ -198,8 +198,10 @@ class JobCreatePage extends BasePage {
         }
     }
 
-    boolean nextUi = false
-    boolean legacyUi = false
+    boolean getNextUi() { isFlagEnabled('nextUi') }
+    void setNextUi(boolean value) { withFlag('nextUi', value) }
+    boolean getLegacyUi() { isFlagEnabled('legacyUi') }
+    void setLegacyUi(boolean value) { withFlag('legacyUi', value) }
 
     JobCreatePage(final SeleniumContext context) {
         super(context)
@@ -214,7 +216,7 @@ class JobCreatePage extends BasePage {
         this.edit=true
         this.projectName=projectName
         this.jobId=jobId
-        this.nextUi=nextUi
+        withFlag('nextUi', nextUi)
     }
 
     void loadEditPath(String projectName, String jobId, Boolean legacyUi, Boolean isLegacy) {
@@ -222,9 +224,9 @@ class JobCreatePage extends BasePage {
         this.projectName=projectName
         this.jobId=jobId
         if(isLegacy) {
-            this.legacyUi=legacyUi
+            withFlag('legacyUi', legacyUi)
         } else {
-            this.nextUi=legacyUi  // For backward compat
+            withFlag('nextUi', legacyUi)  // For backward compat
         }
     }
 

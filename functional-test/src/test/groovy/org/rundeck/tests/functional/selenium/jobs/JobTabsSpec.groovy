@@ -33,9 +33,7 @@ class JobTabsSpec extends SeleniumBase {
         final String option = 'nodes'
         def jobShowPage = page(JobShowPage)
         def executionShowPage = page(ExecutionShowPage)
-        def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-        jobCreatePage.legacyUi = legacyUi
-        jobCreatePage.go()
+        def jobCreatePage = go(JobCreatePage, PROJECT_NAME, [legacyUi: legacyUi])
         jobCreatePage.jobNameInput.sendKeys("test-output-tab")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         if(legacyUi) {
@@ -65,9 +63,7 @@ class JobTabsSpec extends SeleniumBase {
         when:
         def jobShowPage = page(JobShowPage)
         def executionShowPage = page(ExecutionShowPage)
-        def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-        jobCreatePage.legacyUi = legacyUi
-        jobCreatePage.go()
+        def jobCreatePage = go(JobCreatePage, PROJECT_NAME, [legacyUi: legacyUi])
         jobCreatePage.jobNameInput.sendKeys("test-output-tab")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         if(legacyUi) {
@@ -101,9 +97,7 @@ class JobTabsSpec extends SeleniumBase {
         def jobShowPage = page(JobShowPage)
         def executionShowPage = page(ExecutionShowPage)
         def htmlOutputPage = page HtmlRenderedOutputPage
-        def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-        jobCreatePage.legacyUi = legacyUi
-        jobCreatePage.go()
+        def jobCreatePage = go(JobCreatePage, PROJECT_NAME, [legacyUi: legacyUi])
         jobCreatePage.jobNameInput.sendKeys("test-html-output")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         if(legacyUi) {
