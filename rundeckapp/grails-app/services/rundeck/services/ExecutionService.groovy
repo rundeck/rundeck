@@ -2148,7 +2148,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
    def Execution createExecution(Map params) {
         def Execution execution
-        if (params.project && (params.workflow || params.workflowJson)) {
+        if (params.project && params.workflow) {
             execution = new Execution(project:params.project,
                                       user:params.user, loglevel:params.loglevel,
                                       doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
@@ -2161,7 +2161,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       nodeRankOrderAscending:params.nodeRankOrderAscending,
                                       nodeRankAttribute:params.nodeRankAttribute,
                                       workflowData:params.workflow,
-                                      workflowJson:params.workflowJson,
                                       argString:params.argString,
                                       executionType: params.executionType ?: 'scheduled',
                                       timeout:params.timeout?:null,
@@ -2659,8 +2658,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             execution.setExtraMetadataMap(extraMeta)
         }
 
-        // Set workflow data if we have a workflow
-        execution.setWorkflowData(props.workflow)
         if (!execution.save(flush:true)) {
             execution.errors.allErrors.each { log.warn(it.toString()) }
             def msg=execution.errors.allErrors.collect { ObjectError err-> lookupMessage(err.codes,err.arguments?.toList(),err.defaultMessage) }.join(", ")

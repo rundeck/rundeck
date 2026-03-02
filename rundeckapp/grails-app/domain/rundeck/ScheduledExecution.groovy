@@ -1313,25 +1313,19 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      * @param workflowData WorkflowData instance to store
      */
     void setWorkflowData(WorkflowData workflowData) {
-        // Clear cache
-        cachedWorkflowData = null
-        cachedWorkflowJsonHash = null
+        // Null out old format
+        this.workflow = null
 
-        if (workflowData == null) {
+        // Serialize to new format
+        if (workflowData != null) {
+            this.workflowJson = serializeWorkflowData(workflowData)
+            // Clear cache so it will be recreated on next getWorkflowData() call
+            cachedWorkflowData = null
+            cachedWorkflowJsonHash = null
+        } else {
             this.workflowJson = null
-            this.workflow = null
-            return
-        }
-
-        // Always serialize to new format
-        this.workflowJson = serializeWorkflowData(workflowData)
-
-        //this is a temporary measure to support rollback scenarios where the old workflow field is still used by older versions.
-        try {
-            this.workflow = new Workflow(workflowData)
-        } catch (Exception e) {
-            log.warn("Failed to convert WorkflowData to Workflow domain class for ScheduledExecution ${id}, storing only in workflowJson", e)
-            this.workflow = null
+            cachedWorkflowData = null
+            cachedWorkflowJsonHash = null
         }
     }
 
