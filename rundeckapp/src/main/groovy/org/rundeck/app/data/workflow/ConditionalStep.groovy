@@ -7,6 +7,7 @@ import grails.validation.Validateable
 import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.data.model.v1.job.workflow.ConditionalOperator
 import rundeck.JobExec
 import rundeck.PluginStep
 import rundeck.data.validation.shared.SharedWorkflowStepConstraints
@@ -41,7 +42,7 @@ class ConditionalStep implements WorkflowStepData, Validateable {
             if (val.conditionGroups == null || val.conditionGroups.isEmpty()) {
                 errors.rejectValue("conditionSet", 'WorkflowStep.conditional.conditionGroups.required', [errors.nestedPath] as Object[], "Step {0}: ConditionalSet must have at least one condition group")
             } else {
-                def validOperators = ['==', '!=', '>', '<', '>=', '<=', 'contains', 'matches', 'exists', 'not exists']
+                def validOperators = ConditionalOperator.getAllSymbols()
                 val.conditionGroups.eachWithIndex { group, groupIndex ->
                     if (group == null || group.isEmpty()) {
                         errors.rejectValue("conditionSet", 'WorkflowStep.conditional.conditionGroup.empty', [errors.nestedPath, groupIndex] as Object[], "Step {0}: Condition group {1} must not be empty")
@@ -50,7 +51,7 @@ class ConditionalStep implements WorkflowStepData, Validateable {
                             if (!condDef.key || condDef.key.trim().isEmpty()) {
                                 errors.rejectValue("conditionSet", 'WorkflowStep.conditional.condition.key.required', [errors.nestedPath, groupIndex, condIndex] as Object[], "Step {0}: Condition group {1}, condition {2}: key must be non-empty")
                             }
-                            if (!condDef.operator || !validOperators.contains(condDef.operator)) {
+                            if (!condDef.operator || !ConditionalOperator.isValidOperator(condDef.operator)) {
                                 errors.rejectValue("conditionSet", 'WorkflowStep.conditional.condition.operator.invalid', [errors.nestedPath, groupIndex, condIndex, condDef.operator] as Object[], "Step {0}: Condition group {1}, condition {2}: operator '{3}' is not valid. Valid operators: ${validOperators.join(', ')}")
                             }
                         }

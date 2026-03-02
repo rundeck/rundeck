@@ -30,7 +30,7 @@ public interface ConditionalDefinition {
 
     /**
      * Get the operator to use for comparison
-     * Supported operators: ==, !=, >, <, >=, <=, contains, matches, exists, not exists
+     * Supported operators: ==, !=, >, <, >=, <=, contains, matches
      * @return The operator string
      */
     String getOperator();
