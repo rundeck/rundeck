@@ -142,8 +142,8 @@ class WorkflowJsonServiceSpec extends Specification implements ServiceUnitTest<E
         ))
         job.setWorkflowData(newWorkflow)
 
-        then: "Old workflow should be nulled"
-        job.workflow == null
+        then: "Old workflow should not be nulled"
+        job.workflow != null
 
         and: "New workflow should be in JSON"
         job.workflowJson != null
@@ -256,7 +256,7 @@ class WorkflowJsonServiceSpec extends Specification implements ServiceUnitTest<E
 
         then: "Missed execution should have workflow in JSON"
         missed.workflowJson != null
-        missed.workflow == null
+        missed.workflow != null
 
         and: "Should be retrievable"
         missed.getWorkflowData() != null

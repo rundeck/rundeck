@@ -105,8 +105,8 @@ class ScheduledExecutionWorkflowJsonSpec extends Specification implements DataTe
         when: "Setting workflow data"
         se.setWorkflowData(newWorkflow)
 
-        then: "Old workflow field should be null"
-        se.workflow == null
+        then: "Old workflow field should not be null"
+        se.workflow != null
 
         and: "workflowJson should be set"
         se.workflowJson != null

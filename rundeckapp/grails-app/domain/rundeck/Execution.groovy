@@ -532,10 +532,11 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     ExecutionReference asReference(Closure<String> genTargetNodes = null) {
         JobReference jobRef = null
         String adhocCommand = null
+        WorkflowData workflowData = getWorkflowData()
         if (scheduledExecution) {
             jobRef = scheduledExecution.asReference()
-        } else if (workflow && workflow.commands && workflow.commands[0]) {
-            adhocCommand = workflow.commands[0].summarize()
+        } else if (workflowData && workflowData.commands && workflowData.commands[0]) {
+            adhocCommand = workflowData.commands[0].summarize()
         }
         String targetNodes = genTargetNodes?.call(this)
         return new ExecutionReferenceImpl(
@@ -604,14 +605,21 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
      * @param workflowData WorkflowData instance to store
      */
     void setWorkflowData(WorkflowData workflowData) {
-        // Null out old format
-        this.workflow = null
-
-        // Serialize to new format
-        if (workflowData != null) {
-            this.workflowJson = serializeWorkflowData(workflowData)
-        } else {
+        if (workflowData == null) {
             this.workflowJson = null
+            this.workflow = null
+            return
+        }
+
+        // Always serialize to new format
+        this.workflowJson = serializeWorkflowData(workflowData)
+
+        //This is a measure to provide backward compatibility for rollback scenarios where the workflow field may still be used by older code.
+        try {
+            this.workflow = new Workflow(workflowData)
+        } catch (Exception e) {
+            log.warn("Failed to convert WorkflowData to Workflow domain class for Execution ${id}, storing only in workflowJson", e)
+            this.workflow = null
         }
     }
 

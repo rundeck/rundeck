@@ -2634,11 +2634,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // Clone workflow from job definition using new JSON storage approach
         def workflowData = se.getWorkflowData()
-        if(workflowData) {
-            props.workflow = WorkflowDataImpl.fromMap(workflowData.toMap())
+        if(workflowData){
+            props.workflow = workflowData
         }
 
         Execution execution = createExecution(props)
+        execution.setWorkflowData(workflowData)
         execution.dateStarted = new Date()
 
         def newstr = expandDateStrings(execution.argString, execution.dateStarted)
@@ -2656,6 +2657,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!extraMeta) extraMeta = new HashMap<>()
             extraMeta.put(JobPreExecutionEvent.getName(), beforeExecutionResult.getErrorMessage())
             execution.setExtraMetadataMap(extraMeta)
+        }
+
+        Workflow workflow = execution.workflow
+
+        if (workflow && !workflow.save(flush:true)) {
+            execution.workflow.errors.allErrors.each { log.error(it.toString()) }
+            log.error("unable to save execution workflow")
+            throw new ExecutionServiceException("unable to create execution workflow")
         }
 
         if (!execution.save(flush:true)) {
