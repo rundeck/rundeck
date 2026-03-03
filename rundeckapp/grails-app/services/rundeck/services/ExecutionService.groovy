@@ -2658,6 +2658,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             extraMeta.put(JobPreExecutionEvent.getName(), beforeExecutionResult.getErrorMessage())
             execution.setExtraMetadataMap(extraMeta)
         }
+
         Workflow workflow = execution.workflow
 
         if (workflow && !workflow.save(flush:true)) {

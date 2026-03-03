@@ -109,7 +109,7 @@ class ExecutionWorkflowJsonSpec extends Specification implements DataTest {
         when: "Setting workflow data"
         execution.setWorkflowData(newWorkflow)
 
-        then: "Old workflow field should be null"
+        then: "Old workflow field should not be null"
         execution.workflow != null
 
         and: "workflowJson should be set"
