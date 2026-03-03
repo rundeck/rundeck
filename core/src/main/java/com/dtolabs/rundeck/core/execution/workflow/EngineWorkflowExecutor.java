@@ -503,7 +503,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             for(StepExecutionItem step : steps) {
                 if (step.getConditions() != null) {
                     throw new ExecutionServiceException(
-                            "Workflow strategy provider '" + workflow.getStrategy() + "' does not support conditional steps, but workflow contains conditional steps"
+                            "Workflow strategy provider '" + workflow.getStrategy() + "' does not support conditional steps, but workflow contains conditional steps", ServiceNameConstants.WorkflowStrategy
                     );
                 }
             }
