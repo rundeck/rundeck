@@ -20,7 +20,8 @@ import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
 import "primeicons/primeicons.css";
 import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
-import {configurePrimeVue} from "@/library/utilities/primeVueConfig";
+import { configurePrimeVue } from "@/library/utilities/primeVueConfig";
+import { registerJobBrowserUiSockets } from "./registerJobBrowserUiSockets";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
@@ -132,6 +133,8 @@ const mountSection = (section) => {
 
 //on job edit page listen for dom content changes and install UI Sockets
 window.addEventListener("DOMContentLoaded", (event) => {
+  registerJobBrowserUiSockets();
+
   // Job Editing page - Workflow Tab
   jobSections.forEach((section) => section.visible && mountSection(section));
 
