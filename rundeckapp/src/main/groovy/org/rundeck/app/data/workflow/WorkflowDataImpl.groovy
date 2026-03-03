@@ -100,10 +100,10 @@ class WorkflowDataImpl implements WorkflowData, Validateable  {
                 exec = ConditionalStep.fromMap(map)
             }else if (map.jobref!=null) {
                 WorkflowStepData jobExec = JobExec.jobExecFromMap(map)
-                exec = jobExec.createClone()
+                exec = jobExec
             } else {
                 WorkflowStepData pluginStep = PluginStep.fromMap(map)
-                exec = pluginStep.createClone()
+                exec = pluginStep
             }
             //exec
             //WorkflowStepDataImpl.fromMap(map as Map<String, Object>)

@@ -878,7 +878,7 @@ class WorkflowController extends ControllerBase {
             def numi = input.num
             def item = editwf.commands.remove(numi)
             if (editwf.commands.size() < 1) {
-                editwf.commands = new ArrayList()
+                editwf.steps = new ArrayList()
             }
 
             result['undo'] = [action: 'insert', num: numi, params: item.properties]
@@ -1318,22 +1318,28 @@ class WorkflowController extends ControllerBase {
                     validationResult = [valid: false, report: "Conditional step substeps must all be ${subStep.nodeStep ? 'node steps' : 'workflow steps'} as the conditional step"]
                     return
                 }
-                def description = WorkflowController.getPluginStepDescription(frameworkService, conditinalStep.nodeStep, item.getPluginType())
+                def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep, subStep.getPluginType())
                 if (!description) {
-                    validationResult = [valid: false, report: "Substep Plugin not found: " + item.type]
+                    validationResult = [valid: false, report: "Substep ${item.nodeStep ? "Node Step" : "Workflow Wtep"} Plugin not found: " + subStep.getPluginType()]
                     return
                 }
                 def validation = _validatePluginStep(frameworkService, subStep)
                 if (!validation.valid) {
-                    validationResult = [valid: false, report: "Conditional plugin configuration was not valid: ${validation.report}", item: subStep, report: validation.report]
+                    validationResult = [valid: false, report: "Conditional substep plugin configuration was not valid: ${validation.report}", item: subStep, report: validation.report]
                     return
                 }
-                _sanitizePluginStep(subStep, validation)
+
+                PluginStep step
+                if (subStep instanceof PluginStep) {
+                    step = subStep as PluginStep
+                    //set configuration based on parsed props
+                    step.configuration=validation.props
+                }
 
                 validationResult = frameworkService.validateDescription(
                         description,
                         '',
-                        item.configuration,
+                        step.configuration,
                         null,
                         PropertyScope.Instance,
                         PropertyScope.Project

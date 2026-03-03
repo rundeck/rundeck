@@ -3992,8 +3992,8 @@ Authorization required: `read` for the Job.''',
         if(request.api_version > ApiVersions.V43){
             supportedFormats << 'json'
         }
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if (!(response.format in supportedFormats) || !rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
+
+        if (!(response.format in supportedFormats)) {
             return apiService.renderErrorFormat(
                 response,
                 [
@@ -4001,6 +4001,18 @@ Authorization required: `read` for the Job.''',
                     code  : 'api.error.item.unsupported-format',
                     args: [response.format]
                 ]
+            )
+        }
+
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
+        if(!rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args: [response.format]
+                    ]
             )
         }
 

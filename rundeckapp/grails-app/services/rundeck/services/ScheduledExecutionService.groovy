@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem
 import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
 import com.dtolabs.rundeck.core.utils.WaitUtils
+import grails.validation.Validateable
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
@@ -3080,7 +3081,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             workflowData.getSteps()?.each {WorkflowStepData cexec ->
                 if (!validateWorkflowStep(cexec, fprojects, validateJobref, scheduledExecution.project)) {
                     wfitemfailed = true
-                    failedlist << "$i: " + (cexec as WorkflowStep).errors.allErrors.collect {
+                    failedlist << "$i: " + (cexec as Validateable).errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
                     }
                 }
@@ -3088,7 +3089,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if (cexec.errorHandler) {
                     if (!validateWorkflowStep(cexec.errorHandler, fprojects, validateJobref, scheduledExecution.project)) {
                         wfitemfailed = true
-                        failedlist << "$i: " + (cexec as WorkflowStep).errorHandler.errors.allErrors.collect {
+                        failedlist << "$i: " + (cexec.errorHandler as Validateable).errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)
                         }
                     }

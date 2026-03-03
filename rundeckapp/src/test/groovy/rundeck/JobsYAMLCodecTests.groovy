@@ -800,9 +800,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof  PluginStep)
-        PluginStep cmd1= se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof  PluginStep)
+        PluginStep cmd1= se.getWorkflowData().commands[0]
         assertEquals('monkey',cmd1.type)
         assertEquals(true,cmd1.nodeStep)
         assertEquals([elf:'hider'],cmd1.configuration)
@@ -828,9 +828,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof  PluginStep)
-        PluginStep cmd1= se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof  PluginStep)
+        PluginStep cmd1= se.getWorkflowData().commands[0]
         assertEquals('monkey',cmd1.type)
         assertEquals(true,cmd1.nodeStep)
         assertEquals(null,cmd1.configuration)
@@ -855,9 +855,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof  PluginStep)
-        PluginStep cmd1= se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof  PluginStep)
+        PluginStep cmd1= se.getWorkflowData().commands[0]
         assertEquals('monkey',cmd1.type)
         assertEquals(true,cmd1.nodeStep)
         assertEquals(null,cmd1.configuration)
@@ -884,9 +884,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof JobExec)
-        JobExec cmd1 = se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof JobExec)
+        JobExec cmd1 = se.getWorkflowData().commands[0]
         assertEquals('jobname', cmd1.jobName)
         assertEquals('jobgroup', cmd1.jobGroup)
         assertEquals(false, cmd1.nodeStep)
@@ -918,9 +918,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof JobExec)
-        JobExec cmd1 = se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof JobExec)
+        JobExec cmd1 = se.getWorkflowData().commands[0]
         assertEquals('jobname', cmd1.jobName)
         assertEquals('jobgroup', cmd1.jobGroup)
         assertEquals(true, cmd1.nodeStep)
@@ -953,9 +953,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof JobExec)
-        JobExec cmd1 = se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof JobExec)
+        JobExec cmd1 = se.getWorkflowData().commands[0]
         assertEquals('jobname', cmd1.jobName)
         assertEquals('jobgroup', cmd1.jobGroup)
         assertEquals('abc def', cmd1.nodeFilter)
@@ -989,9 +989,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof JobExec)
-        JobExec cmd1 = se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof JobExec)
+        JobExec cmd1 = se.getWorkflowData().commands[0]
         assertEquals('jobname', cmd1.jobName)
         assertEquals('jobgroup', cmd1.jobGroup)
         assertEquals('abc def', cmd1.nodeFilter)
@@ -1026,9 +1026,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof JobExec)
-        JobExec cmd1 = se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof JobExec)
+        JobExec cmd1 = se.getWorkflowData().commands[0]
         assertEquals('jobname', cmd1.jobName)
         assertEquals('jobgroup', cmd1.jobGroup)
         assertEquals('abc def', cmd1.nodeFilter)
@@ -1063,9 +1063,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof JobExec)
-        JobExec cmd1 = se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof JobExec)
+        JobExec cmd1 = se.getWorkflowData().commands[0]
         assertEquals('jobname', cmd1.jobName)
         assertEquals('jobgroup', cmd1.jobGroup)
         assertEquals('abc def', cmd1.nodeFilter)
@@ -1101,9 +1101,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof JobExec)
-        JobExec cmd1 = se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof JobExec)
+        JobExec cmd1 = se.getWorkflowData().commands[0]
         assertEquals('jobname', cmd1.jobName)
         assertEquals('jobgroup', cmd1.jobGroup)
         assertEquals('abc def', cmd1.nodeFilter)
@@ -1140,9 +1140,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof JobExec)
-        JobExec cmd1 = se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof JobExec)
+        JobExec cmd1 = se.getWorkflowData().commands[0]
         assertEquals('jobname', cmd1.jobName)
         assertEquals('jobgroup', cmd1.jobGroup)
         assertEquals('abc def', cmd1.nodeFilter)
@@ -1179,9 +1179,9 @@ public class JobsYAMLCodecTests  {
         ScheduledExecution se = (ScheduledExecution) list[0]
 
 
-        assertNotNull se.workflow.commands[0]
-        assertTrue(se.workflow.commands[0] instanceof JobExec)
-        JobExec cmd1 = se.workflow.commands[0]
+        assertNotNull se.getWorkflowData().commands[0]
+        assertTrue(se.getWorkflowData().commands[0] instanceof JobExec)
+        JobExec cmd1 = se.getWorkflowData().commands[0]
         assertEquals('jobname', cmd1.jobName)
         assertEquals('jobgroup', cmd1.jobGroup)
         assertEquals('abc def', cmd1.nodeFilter)

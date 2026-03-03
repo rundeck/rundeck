@@ -148,7 +148,7 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
             }else{
                 map.scriptfile=adhocFilepath
             }
-            if(expandTokenInScriptFile) {
+            if(expandTokenInScriptFile != null) {
                 map.expandTokenInScriptFile = !!expandTokenInScriptFile
             }
         }
@@ -159,7 +159,7 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
         if(fileExtension && !adhocRemoteString) {
             map.fileExtension = fileExtension
         }
-        if(argString && !adhocRemoteString){
+        if(argString != null && !adhocRemoteString){
             map.args=argString
         }
         if(errorHandler){
@@ -261,8 +261,10 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
         if (data.fileExtension != null && !obj.adhocRemoteString) {
             obj.fileExtension = data.fileExtension.toString()
         }
-        if (data.args != null && !obj.adhocRemoteString) {
+        if (data.args != null && (!obj.adhocRemoteString || data.args?.toString()?.isEmpty())) {//allow empty string to keep compatibility
             obj.argString = data.args.toString()
+        } else if(data.argString != null && (!obj.adhocRemoteString || data.argString?.toString()?.isEmpty())) {//allow empty string to keep compatibility
+            obj.argString = data.argString.toString()
         }
     }
 
