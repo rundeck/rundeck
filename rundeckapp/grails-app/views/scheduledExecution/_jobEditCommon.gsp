@@ -253,4 +253,5 @@
 </g:javascript>
 <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
 <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
+<asset:javascript src="static/pages/job/browse.js" defer="defer"/>
 <asset:stylesheet href="static/css/pages/job/browse.css" />

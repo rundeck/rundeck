@@ -1,6 +1,6 @@
 /**
- * Tests for registerJobBrowserUiSockets - ensures the job editor can render
- * the "Choose a job" modal (JobRefFormFields) without loading job/browse.js.
+ * Tests for job browse main.ts - ensures ui-socket widgets are registered for
+ * both the jobs list page and the job editor "Choose a job" modal.
  *
  * Uses real RootStore, JobPageStore, UIStore, and loadJsonData. Only mocks
  * external boundaries: RundeckClient (no network), api (no HTTP), and
@@ -9,9 +9,10 @@
 import { mount, flushPromises } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { RootStore } from "../../../../../library/stores/RootStore";
-import { registerJobBrowserUiSockets } from "../registerJobBrowserUiSockets";
 import { loadJsonData } from "../../../../utilities/loadJsonData";
 import JobRefFormFields from "../../../../components/job/workflow/JobRefFormFields.vue";
+
+import "../main";
 
 const mockClient = {
   projectList: jest.fn().mockResolvedValue([]),
@@ -29,6 +30,10 @@ function setupJsonDataElement(id: string, data: unknown) {
 
 function clearJsonDataElement(id: string) {
   document.getElementById(id)?.remove();
+}
+
+function triggerInit() {
+  window.dispatchEvent(new Event("DOMContentLoaded"));
 }
 
 jest.mock("@rundeck/client", () => ({
@@ -75,7 +80,7 @@ jest.mock("@/library/services/jobBrowse", () => ({
   queryPath: jest.fn().mockResolvedValue({ items: [] }),
 }));
 
-describe("registerJobBrowserUiSockets", () => {
+describe("job browse main", () => {
   beforeEach(() => {
     (window as any)._rundeck = {
       navbar: { items: [] },
@@ -95,10 +100,10 @@ describe("registerJobBrowserUiSockets", () => {
     __testContext.rootStore = rootStore;
   });
 
-
   afterEach(() => {
     clearJsonDataElement("pageQueryParams");
     clearJsonDataElement("jobTreeUiMeta");
+    clearJsonDataElement("pageUiMeta");
     delete (window as any)._rundeck;
   });
 
@@ -107,7 +112,7 @@ describe("registerJobBrowserUiSockets", () => {
       setupJsonDataElement("jobTreeUiMeta", { hideActions: true });
       setupJsonDataElement("pageQueryParams", null);
 
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       expect(rootStore.jobPageStore.browsePath).toBe("");
       expect(rootStore.jobPageStore.query["groupPath"]).toBe("");
@@ -119,7 +124,7 @@ describe("registerJobBrowserUiSockets", () => {
       });
       setupJsonDataElement("jobTreeUiMeta", { hideActions: true });
 
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       expect(rootStore.jobPageStore.browsePath).toBe("folder/subfolder");
       expect(rootStore.jobPageStore.query["groupPath"]).toBe(
@@ -131,7 +136,7 @@ describe("registerJobBrowserUiSockets", () => {
       setupJsonDataElement("pageQueryParams", { queryParams: {} });
       setupJsonDataElement("jobTreeUiMeta", { hideActions: true });
 
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       expect(rootStore.jobPageStore.browsePath).toBe("");
       expect(rootStore.jobPageStore.query["groupPath"]).toBe("");
@@ -146,13 +151,13 @@ describe("registerJobBrowserUiSockets", () => {
     it("adds items to the real UIStore", () => {
       expect(rootStore.ui.items).toHaveLength(0);
 
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       expect(rootStore.ui.items.length).toBeGreaterThan(0);
     });
 
     it("registers job-list-page tree-browser widget", () => {
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       const treeBrowser = rootStore.ui.items.find(
         (i) => i.section === "job-list-page" && i.location === "tree-browser",
@@ -164,7 +169,7 @@ describe("registerJobBrowserUiSockets", () => {
     });
 
     it("registers all required job-browse-item widgets", () => {
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       const jobBrowseItems = rootStore.ui.items.filter(
         (i) => i.section === "job-browse-item",
@@ -176,10 +181,40 @@ describe("registerJobBrowserUiSockets", () => {
       expect(locations).toContain("after-job-name");
     });
 
-    it("registers exactly 6 ui-socket items", () => {
-      registerJobBrowserUiSockets();
+    it("registers 8 items; job-list-page/main and main-content/before are hidden when hideHeader", () => {
+      setupJsonDataElement("jobTreeUiMeta", {
+        hideActions: true,
+        hideHeader: true,
+      });
 
-      expect(rootStore.ui.items).toHaveLength(6);
+      triggerInit();
+
+      expect(rootStore.ui.items).toHaveLength(8);
+      const main = rootStore.ui.items.find(
+        (i) => i.section === "job-list-page" && i.location === "main",
+      );
+      const header = rootStore.ui.items.find(
+        (i) => i.section === "main-content" && i.location === "before",
+      );
+      expect(main!.visible).toBe(false);
+      expect(header!.visible).toBe(false);
+    });
+
+    it("registers 8 items; job-list-page/main and main-content/before are visible when showHeader", () => {
+      setupJsonDataElement("pageUiMeta", { uiType: "next" });
+      setupJsonDataElement("jobTreeUiMeta", { hideHeader: false });
+
+      triggerInit();
+
+      expect(rootStore.ui.items).toHaveLength(8);
+      const main = rootStore.ui.items.find(
+        (i) => i.section === "job-list-page" && i.location === "main",
+      );
+      const header = rootStore.ui.items.find(
+        (i) => i.section === "main-content" && i.location === "before",
+      );
+      expect(main!.visible).toBe(true);
+      expect(header!.visible).toBe(true);
     });
   });
 
@@ -187,7 +222,7 @@ describe("registerJobBrowserUiSockets", () => {
     it("hides JobRunButton and JobActionsMenu when hideActions is true", () => {
       setupJsonDataElement("jobTreeUiMeta", { hideActions: true });
 
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       const runButton = rootStore.ui.items.find(
         (i) => i.section === "job-browse-item" && i.order === 1,
@@ -203,7 +238,7 @@ describe("registerJobBrowserUiSockets", () => {
     it("shows JobRunButton and JobActionsMenu when hideActions is false", () => {
       setupJsonDataElement("jobTreeUiMeta", { hideActions: false });
 
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       const runButton = rootStore.ui.items.find(
         (i) => i.section === "job-browse-item" && i.order === 1,
@@ -217,9 +252,10 @@ describe("registerJobBrowserUiSockets", () => {
     });
 
     it("shows actions when jobTreeUiMeta is null (default)", () => {
+      setupJsonDataElement("pageUiMeta", { uiType: "next" });
       setupJsonDataElement("jobTreeUiMeta", null);
 
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       const runButton = rootStore.ui.items.find(
         (i) => i.section === "job-browse-item" && i.order === 1,
@@ -240,7 +276,7 @@ describe("registerJobBrowserUiSockets", () => {
         queryParams: { groupPath: "from/dom" },
       });
 
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       expect(rootStore.jobPageStore.browsePath).toBe("from/dom");
     });
@@ -253,7 +289,7 @@ describe("registerJobBrowserUiSockets", () => {
       const browserBefore = rootStore.jobPageStore.browser;
       expect(browserBefore).toBeUndefined();
 
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       const browserAfter = rootStore.jobPageStore.browser;
       expect(browserAfter).toBeDefined();
@@ -261,10 +297,40 @@ describe("registerJobBrowserUiSockets", () => {
     });
   });
 
+  describe("run condition", () => {
+    it("does not run when uiType is not next and jobTreeUiMeta is absent", () => {
+      setupJsonDataElement("pageUiMeta", { uiType: "current" });
+
+      triggerInit();
+
+      expect(rootStore.ui.items).toHaveLength(0);
+    });
+
+    it("runs when jobTreeUiMeta exists (job editor)", () => {
+      setupJsonDataElement("jobTreeUiMeta", {
+        hideActions: true,
+        hideHeader: true,
+      });
+
+      triggerInit();
+
+      expect(rootStore.ui.items.length).toBeGreaterThan(0);
+    });
+
+    it("runs when uiType is next (jobs page)", () => {
+      setupJsonDataElement("pageUiMeta", { uiType: "next" });
+      setupJsonDataElement("jobTreeUiMeta", { hideHeader: false });
+
+      triggerInit();
+
+      expect(rootStore.ui.items.length).toBeGreaterThan(0);
+    });
+  });
+
   describe("JobRefFormFields integration", () => {
     it("renders real JobListPage in modal when tree-browser is registered", async () => {
       setupJsonDataElement("jobTreeUiMeta", { hideActions: true });
-      registerJobBrowserUiSockets();
+      triggerInit();
 
       const pinia = createPinia();
       const wrapper = mount(JobRefFormFields, {
