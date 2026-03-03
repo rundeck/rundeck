@@ -4005,16 +4005,6 @@ Authorization required: `read` for the Job.''',
         }
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if(!rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
-            return apiService.renderErrorFormat(
-                    response,
-                    [
-                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                            code  : 'api.error.item.unsupported-format',
-                            args: [response.format]
-                    ]
-            )
-        }
 
         if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
             return apiService.renderErrorFormat(response, [
@@ -4027,6 +4017,17 @@ Authorization required: `read` for the Job.''',
 
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
             return
+        }
+
+        if(!rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args: [response.format]
+                    ]
+            )
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)

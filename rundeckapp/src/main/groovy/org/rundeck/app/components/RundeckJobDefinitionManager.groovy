@@ -106,7 +106,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
      */
     @CompileStatic
     Validator.Report validateJobForExport(ScheduledExecution scheduledExecution, String format) {
-        if (format == 'xml' && isV2JobDefinition(scheduledExecution)) {
+        if (format == 'xml' && scheduledExecution && isV2JobDefinition(scheduledExecution)) {
             return Validator.buildReport()
                 .error(
                     'workflow',
