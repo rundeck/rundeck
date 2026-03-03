@@ -877,9 +877,6 @@ class WorkflowController extends ControllerBase {
         } else if (input.action == 'remove') {
             def numi = input.num
             def item = editwf.commands.remove(numi)
-            if (editwf.commands.size() < 1) {
-                editwf.steps = new ArrayList()
-            }
 
             result['undo'] = [action: 'insert', num: numi, params: item.properties]
         } else if (input.action == 'insert') {
