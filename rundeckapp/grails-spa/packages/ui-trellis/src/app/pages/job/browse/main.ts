@@ -33,7 +33,7 @@ function init() {
   const jobTreeMeta = loadJsonData("jobTreeUiMeta");
   const showActions = !jobTreeMeta?.hideActions;
   const showHeader = !jobTreeMeta?.hideHeader;
-  if (uiType !== "nextUi") {
+  if (uiType !== "next") {
     return;
   }
   const pageQueryParams = loadJsonData("pageQueryParams");
