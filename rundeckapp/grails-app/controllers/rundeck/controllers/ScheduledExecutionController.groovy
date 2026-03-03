@@ -493,6 +493,11 @@ Since: v53''',
             return
         }
 
+        if(response.format == "xml" && !rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView(g.message(code: 'api.error.export.format.unsupported', args: ['xml']))
+        }
+
         if (!params.project || params.project != scheduledExecution.project) {
             flash.info = infoMessage
             return redirect(controller: 'scheduledExecution', action: 'show',
@@ -583,7 +588,7 @@ Since: v53''',
                 }
                 flush(response)
             }
-            if(controller.rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
+            //if(controller.rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
                 xml {
                     response.setHeader("Content-Disposition", "attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
                     response.contentType = 'text/xml; charset=UTF-8'
@@ -593,7 +598,7 @@ Since: v53''',
                     }
                     flush(response)
                 }
-            }
+            //}
         }
     }
     private static String getFname(name){
