@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
 import com.dtolabs.rundeck.core.utils.WaitUtils
 import grails.validation.Validateable
@@ -3996,7 +3997,25 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     boolean validateWorkflow(WorkflowData workflow, ScheduledExecution scheduledExecution){
         def valid=true
         //validate error handler types
-        if (workflow?.strategy == 'node-first') {
+        if(workflow?.hasConditionalSteps()){
+            def workflowStrategyService = frameworkService.rundeckFramework.workflowStrategyService
+            def workflowItem = executionUtilService.createExecutionItemForWorkflow(workflow)
+            def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
+            def projectProps = frameworkProject.getProperties()
+            def strategyConfig = workflow.pluginConfigMap?.get(ServiceNameConstants.WorkflowStrategy)?.get(workflow.strategy) ?: [:]
+
+            PropertyResolver resolver = frameworkService.getFrameworkPropertyResolverWithProps(
+                    projectProps,
+                    strategyConfig
+            )
+            def workflowStrategy = workflowStrategyService.getStrategyForWorkflow(workflowItem, resolver)
+
+            if (!workflowStrategy.supportsConditionalSteps()) {
+                workflow.errors.rejectValue('strategy', 'Workflow.strategy.conditionalSteps.unsupported', [workflow.strategy] as Object[], "Workflow strategy {0} does not support conditional steps")
+                scheduledExecution.errors.rejectValue('workflow', 'Workflow.strategy.conditionalSteps.unsupported', [workflow.strategy] as Object[], "Workflow strategy {0} does not support conditional steps")
+                valid = false
+            }
+        }else if (workflow?.strategy == 'node-first') {
             //if a step is a Node step and has an error handler
             def cmdi = 1
             workflow.getSteps().each { WorkflowStepData step ->

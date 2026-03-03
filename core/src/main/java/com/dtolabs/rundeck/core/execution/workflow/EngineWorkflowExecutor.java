@@ -497,6 +497,17 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 pluginConfig,
                 executionContext.getFrameworkProject()
         );
+        if(!strategyForWorkflow.supportsConditionalSteps()){
+            //check if workflow has any steps with conditionalSet
+            List<StepExecutionItem> steps = workflow.getCommands();
+            for(StepExecutionItem step : steps) {
+                if (step.getConditions() != null) {
+                    throw new ExecutionServiceException(
+                            "Workflow strategy provider '" + workflow.getStrategy() + "' does not support conditional steps, but workflow contains conditional steps"
+                    );
+                }
+            }
+        }
         return strategyForWorkflow;
     }
 

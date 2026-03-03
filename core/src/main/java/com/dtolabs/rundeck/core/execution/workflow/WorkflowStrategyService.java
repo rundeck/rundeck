@@ -119,17 +119,6 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
             provider = s;
         }
         WorkflowStrategy workflowStrategy = providerOfType(provider);
-        if(!workflowStrategy.supportsConditionalSteps()){
-            //check if workflow has any steps with conditionalSet
-            List<StepExecutionItem> steps = workflow.getWorkflow().getCommands();
-            for(StepExecutionItem step : steps) {
-                if (step.getConditions() != null) {
-                    throw new ExecutionServiceException(
-                            "Workflow strategy provider '" + provider + "' does not support conditional steps, but workflow contains conditional steps"
-                    );
-                }
-            }
-        }
         if (null != config) {
             IRundeckProjectConfig iRundeckProjectConfig = framework.getFrameworkProjectMgr().loadProjectConfig(
                     projectName);
@@ -180,18 +169,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
             provider = s;
         }
         WorkflowStrategy workflowStrategy = providerOfType(provider);
-        if(!workflowStrategy.supportsConditionalSteps()){
-            //check if workflow has any steps with conditionalSet
-            List<StepExecutionItem> steps = workflow.getWorkflow().getCommands();
-            for(StepExecutionItem step : steps) {
-                if (step.getConditions() != null) {
-                    throw new ExecutionServiceException(
-                            "Workflow strategy provider '" + provider + "' does not support conditional steps, but workflow contains conditional steps"
-                    );
-                }
-            }
-        }
-        if (null != resolver) {
+       if (null != resolver) {
             Description description = DescribableServiceUtil.descriptionForProvider(
                     true,
                     workflowStrategy
