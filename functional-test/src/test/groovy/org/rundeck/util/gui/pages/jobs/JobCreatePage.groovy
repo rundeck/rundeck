@@ -1057,7 +1057,6 @@ class JobCreatePage extends BasePage {
 
     def fillHighlightLogFilter() {
         if (legacyUi) {
-            waitForElementVisible(By.cssSelector("#addLogFilterPluginModal .modal-body"))
             def highlightItem = el(By.xpath("//div[@id='addLogFilterPluginModal']//a[contains(., 'Highlight')]"))
             highlightItem.click()
             waitForElementVisible(By.cssSelector("#editLogFilterPluginModal .modal-body"))
