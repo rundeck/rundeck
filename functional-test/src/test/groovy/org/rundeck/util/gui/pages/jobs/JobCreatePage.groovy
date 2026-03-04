@@ -91,6 +91,9 @@ class JobCreatePage extends BasePage {
         static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
         static By stepEditModalCancelBy = By.cssSelector('.modal.in [data-testid="cancel-button"]')
         static By stepEditModalSaveBy = By.cssSelector('.modal.in [data-testid="save-button"]')
+        static By jobOptionMultivaluedBy = By.cssSelector("[data-test='option.delimiter'] input[name='multivalued'][value='true']")
+        static By jobOptionMultivaluedDelimiterBy = By.cssSelector("[data-test='option.delimiter'] input[name='delimiter']")
+        static By jobOptionMultiValuedAllSelectedBy = By.cssSelector("[data-test='option.delimiter'] input[name='multivalueAllSelected']")
     }
 
     By usageSectionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -897,15 +900,28 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobOptionMultiValuedInput(){
-        el jobOptionMultivaluedBy
+        def by = legacyUi ? jobOptionMultivaluedBy : NextUi.jobOptionMultivaluedBy
+        def el = el(by)
+        scrollToElement(el)
+        el
+    }
+
+    By getJobOptionMultivaluedDelimiterBy() {
+        legacyUi ? jobOptionMultivaluedDelimiterBy : NextUi.jobOptionMultivaluedDelimiterBy
     }
 
     WebElement getJobOptionMultivaluedDelimiter(){
-        el jobOptionMultivaluedDelimiterBy
+        def by = getJobOptionMultivaluedDelimiterBy()
+        def el = el(by)
+        scrollToElement(el)
+        el
     }
 
     WebElement getJobOptionMultiValuedAllSelectedInput(){
-        el jobOptionMultiValuedAllSelectedBy
+        def by = legacyUi ? jobOptionMultiValuedAllSelectedBy : NextUi.jobOptionMultiValuedAllSelectedBy
+        def el = el(by)
+        scrollToElement(el)
+        el
     }
 
     WebElement getDuplicateWfStepButton(){
