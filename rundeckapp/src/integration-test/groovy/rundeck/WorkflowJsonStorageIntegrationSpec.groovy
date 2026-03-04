@@ -64,7 +64,7 @@ class WorkflowJsonStorageIntegrationSpec extends Specification {
         then: "Job should have workflow data"
         retrieved != null
         retrieved.workflowJson != null
-        retrieved.workflow == null // Old format should be null
+        retrieved.workflow != null // Old format should not be null for backwards compatibility
 
         and: "Workflow data should be retrievable"
         def retrievedWorkflow = retrieved.getWorkflowData()
@@ -110,7 +110,7 @@ class WorkflowJsonStorageIntegrationSpec extends Specification {
         then: "Execution should have workflow data"
         retrieved != null
         retrieved.workflowJson != null
-        retrieved.workflow == null // Old format should be null
+        retrieved.workflow != null // Old format should not be null for backwards compatibility
 
         and: "Workflow data should be retrievable"
         def retrievedWorkflow = retrieved.getWorkflowData()
@@ -325,7 +325,7 @@ class WorkflowJsonStorageIntegrationSpec extends Specification {
         then: "Should now use JSON format"
         def migrated = ScheduledExecution.get(savedId)
         migrated.workflowJson != null
-        migrated.workflow == null
+        migrated.workflow != null // Old format should still be present for backwards compatibility
 
         and: "Data should be preserved"
         def migratedWorkflow = migrated.getWorkflowData()
