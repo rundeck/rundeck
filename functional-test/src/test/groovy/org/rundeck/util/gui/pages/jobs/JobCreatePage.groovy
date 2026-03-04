@@ -1066,8 +1066,8 @@ class JobCreatePage extends BasePage {
             fgcolorSelect.selectByValue('yellow')
             el(By.cssSelector("#editLogFilterPluginModal .btn-cta")).click()
         } else {
-            waitForElementVisible(By.cssSelector("#editLogFilterPluginModal .modal-body"))
             getListItemIndex(1).click()
+            waitForElementVisible(By.cssSelector("#editLogFilterPluginModal .modal-body"))
             def highlightPatternInput = getInputField("regex", "input[type='text']")
             highlightPatternInput.click()
             highlightPatternInput.sendKeys 'test'
