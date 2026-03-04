@@ -188,11 +188,6 @@ class ExecutionUtilService {
     private List<StepExecutionItem> consolidateWorkflowSteps(WorkflowData workflow, String parentProject) {
         boolean conditionalFeatureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
         
-        if(!conditionalFeatureEnabled && workflow.hasConditionalSteps()) {
-            log.error("Workflow has conditional steps, but conditional feature is not enabled.")
-            throw new IllegalArgumentException("Workflow has conditional steps, but conditional feature is not enabled.");
-        }
-
         List<StepExecutionItem> stepExecutionItems = []
         
         // Iterate through commands in order to preserve the original sequence

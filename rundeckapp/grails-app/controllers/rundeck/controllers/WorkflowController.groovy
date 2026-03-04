@@ -1317,7 +1317,7 @@ class WorkflowController extends ControllerBase {
                 }
                 def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep, subStep.getPluginType())
                 if (!description) {
-                    validationResult = [valid: false, report: "Substep ${item.nodeStep ? "Node Step" : "Workflow Wtep"} Plugin not found: " + subStep.getPluginType()]
+                    validationResult = [valid: false, report: "Substep ${item.nodeStep ? "Node Step" : "Workflow Step"} Plugin not found: " + subStep.getPluginType()]
                     return
                 }
                 def validation = _validatePluginStep(frameworkService, subStep)
