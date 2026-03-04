@@ -1315,32 +1315,33 @@ class WorkflowController extends ControllerBase {
                     validationResult = [valid: false, report: "Conditional step substeps must all be ${subStep.nodeStep ? 'node steps' : 'workflow steps'} as the conditional step"]
                     return
                 }
-                def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep, subStep.getPluginType())
-                if (!description) {
-                    validationResult = [valid: false, report: "Substep ${item.nodeStep ? "Node Step" : "Workflow Step"} Plugin not found: " + subStep.getPluginType()]
-                    return
-                }
-                def validation = _validatePluginStep(frameworkService, subStep)
-                if (!validation.valid) {
-                    validationResult = [valid: false, report: "Conditional substep plugin configuration was not valid: ${validation.report}", item: subStep, report: validation.report]
-                    return
-                }
 
                 PluginStep step
                 if (subStep instanceof PluginStep) {
                     step = subStep as PluginStep
                     //set configuration based on parsed props
-                    step.configuration=validation.props
-                }
+                    def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep, subStep.getPluginType())
+                    if (!description) {
+                        validationResult = [valid: false, report: "Substep ${item.nodeStep ? "Node Step" : "Workflow Step"} Plugin not found: " + subStep.getPluginType()]
+                        return
+                    }
+                    def validation = _validatePluginStep(frameworkService, subStep)
+                    if (!validation.valid) {
+                        validationResult = [valid: false, report: "Conditional substep plugin configuration was not valid: ${validation.report}", item: subStep, report: validation.report]
+                        return
+                    }
 
-                validationResult = frameworkService.validateDescription(
-                        description,
-                        '',
-                        step.configuration,
-                        null,
-                        PropertyScope.Instance,
-                        PropertyScope.Project
-                )
+                    step.configuration=validation.props
+
+                    validationResult = frameworkService.validateDescription(
+                            description,
+                            '',
+                            step.configuration,
+                            null,
+                            PropertyScope.Instance,
+                            PropertyScope.Project
+                    )
+                }
             }
 
             return validationResult
