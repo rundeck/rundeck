@@ -532,10 +532,11 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     ExecutionReference asReference(Closure<String> genTargetNodes = null) {
         JobReference jobRef = null
         String adhocCommand = null
+        WorkflowData workflowData = getWorkflowData()
         if (scheduledExecution) {
             jobRef = scheduledExecution.asReference()
-        } else if (workflow && workflow.commands && workflow.commands[0]) {
-            adhocCommand = workflow.commands[0].summarize()
+        } else if (workflowData && workflowData.commands && workflowData.commands[0]) {
+            adhocCommand = workflowData.commands[0].summarize()
         }
         String targetNodes = genTargetNodes?.call(this)
         return new ExecutionReferenceImpl(

@@ -33,11 +33,16 @@ class JobTabsSpec extends SeleniumBase {
         final String option = 'nodes'
         def jobShowPage = page(JobShowPage)
         def executionShowPage = page(ExecutionShowPage)
-        then:
         def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
+        jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-output-tab")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
+        if(legacyUi) {
+            jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
+        } else {
+            jobCreatePage.addSimpleCommandStepNextUi('echo "hello world"', 0)
+        }
         jobCreatePage.createJobButton.click()
         jobShowPage.jobActionDropdownButton.click()
         jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
@@ -47,22 +52,29 @@ class JobTabsSpec extends SeleniumBase {
         jobCreatePage.updateBtn.click()
         jobShowPage.runJobBtn.click()
         def nodeViewContainer = executionShowPage.nodeFlowState
-        expect:
+        then:
         currentUrl.endsWith(option)
         executionShowPage.viewButtonOutput.getAttribute("style") == ""
         nodeViewContainer.isDisplayed()
         executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
+        where:
+        legacyUi << [false, true]
     }
 
     void "job log output tab"() {
         when:
         def jobShowPage = page(JobShowPage)
         def executionShowPage = page(ExecutionShowPage)
-        then:
         def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
+        jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-output-tab")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
+        if(legacyUi) {
+            jobCreatePage.addSimpleCommandStep('echo "hello world"', 0)
+        } else {
+            jobCreatePage.addSimpleCommandStepNextUi('echo "hello world"', 0)
+        }
         jobCreatePage.createJobButton.click()
         jobShowPage.jobActionDropdownButton.click()
         jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
@@ -72,11 +84,13 @@ class JobTabsSpec extends SeleniumBase {
         jobCreatePage.updateBtn.click()
         jobShowPage.runJobBtn.click()
         def nodeViewContainer = executionShowPage.nodeFlowState
-        expect:
+        then:
         currentUrl.endsWith("output")
         executionShowPage.viewButtonOutput.getAttribute("style") == "display: none;"
         !nodeViewContainer.isDisplayed()
         executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
+        where:
+        legacyUi << [false, true]
     }
 
     void "job log html tab"() {
@@ -87,11 +101,16 @@ class JobTabsSpec extends SeleniumBase {
         def jobShowPage = page(JobShowPage)
         def executionShowPage = page(ExecutionShowPage)
         def htmlOutputPage = page HtmlRenderedOutputPage
-        then:
         def jobCreatePage = go(JobCreatePage, PROJECT_NAME)
+        jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.go()
         jobCreatePage.jobNameInput.sendKeys("test-html-output")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.addSimpleCommandStep(fullCommand, 0)
+        if(legacyUi) {
+            jobCreatePage.addSimpleCommandStep(fullCommand, 0)
+        } else {
+            jobCreatePage.addSimpleCommandStepNextUi(fullCommand, 0)
+        }
         jobCreatePage.createJobButton.click()
         jobShowPage.jobActionDropdownButton.click()
         jobShowPage.waitForElementToBeClickable(jobShowPage.editJobLink)
@@ -101,8 +120,10 @@ class JobTabsSpec extends SeleniumBase {
         jobCreatePage.updateBtn.click()
         jobShowPage.runJobBtn.click()
         executionShowPage.waitForElementVisible(htmlOutputPage.logLevelNormalBy)
-        expect:
+        then:
         htmlOutputPage.logLevelNormalLogLine.text == commandArg
         currentUrl.endsWith("convertContent=on&loglevels=on&ansicolor=on&reload=true")
+        where:
+        legacyUi << [false, true]
     }
 }

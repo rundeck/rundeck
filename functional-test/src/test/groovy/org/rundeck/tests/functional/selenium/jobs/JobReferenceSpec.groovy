@@ -62,7 +62,10 @@ class JobReferenceSpec extends SeleniumBase {
         String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded.first().id
 
         when:
-        JobShowPage jobPage = go(JobCreatePage, projectName)
+        def jobCreatePage = page(JobCreatePage, projectName)
+        jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.go()
+        JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
                         childJobUuid: jobUuid,
@@ -81,6 +84,8 @@ class JobReferenceSpec extends SeleniumBase {
         }
         cleanup:
         deleteProject(projectName)
+        where:
+        legacyUi << [false, true]
     }
 
     def "create a job with referenced execution node step by name and run it successfully"(){
@@ -92,7 +97,10 @@ class JobReferenceSpec extends SeleniumBase {
         JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded
 
         when:
-        JobShowPage jobPage = go(JobCreatePage, projectName)
+        def jobCreatePage = page(JobCreatePage, projectName)
+        jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.go()
+        JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
                         childJobName   : 'simple-child-job',
@@ -116,6 +124,8 @@ class JobReferenceSpec extends SeleniumBase {
         }
         cleanup:
         deleteProject(projectName)
+        where:
+        legacyUi << [false, true]
     }
 
     def "create a job with referenced execution workflow step by using 'choose a job' button and run it successfully"() {
@@ -127,7 +137,10 @@ class JobReferenceSpec extends SeleniumBase {
         JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded
 
         when:
-        JobShowPage jobPage = go(JobCreatePage, projectName)
+        def jobCreatePage = page(JobCreatePage, projectName)
+        jobCreatePage.legacyUi = true
+        jobCreatePage.go()
+        JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
                         childJobName       : 'simple-child-job',

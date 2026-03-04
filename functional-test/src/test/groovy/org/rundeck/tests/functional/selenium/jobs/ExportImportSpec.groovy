@@ -64,7 +64,9 @@ class ExportImportSpec extends SeleniumBase {
      */
     def "export import job with options"() {
         setup:
-        def jobCreatePage = go JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT
+        def jobCreatePage = page JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT
+        jobCreatePage.legacyUi = legacyUi
+        jobCreatePage.go()
         def jobShowPage = page JobShowPage
         def jobListPage = page JobListPage
         def jobUploadPage = page JobUploadPage
@@ -105,8 +107,9 @@ class ExportImportSpec extends SeleniumBase {
         then:
         jobShowPage.getExtraOptFirsts(optName).size() == 1
         when:
-        jobShowPage.getLink "Action" click()
-        jobShowPage.getLink "Edit this Job" click()
+        def jobUuid = jobShowPage.jobUuid.text
+        jobCreatePage.loadEditPath(SELENIUM_EXPORT_IMPORT_PROJECT, jobUuid, true, legacyUi)
+        jobCreatePage.go()
         jobCreatePage.tab JobTab.WORKFLOW click()
         then:
         jobCreatePage.optDetails.size() == 1
