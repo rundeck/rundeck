@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.NodesetEmptyException
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
+import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.data.workflow.ConditionalStep
@@ -168,12 +169,12 @@ class ExecutionUtilService {
      * Create an WorkflowExecutionItem instance for the given Workflow,
      * suitable for the ExecutionService layer
      */
-    public WorkflowExecutionItem createExecutionItemForWorkflow(WorkflowData workflow, String parentProject=null) {
+    public WorkflowExecutionItem createExecutionItemForWorkflow(WorkflowData workflow, String parentProject=null, ConditionalSet conditionalSetParentJob = null) {
         if (!workflow.commands || workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
 
-        List<StepExecutionItem> stepExecutionItems = consolidateWorkflowSteps(workflow, parentProject)
+        List<StepExecutionItem> stepExecutionItems = consolidateWorkflowSteps(workflow, parentProject, conditionalSetParentJob)
         def impl = new WorkflowImpl(
                 stepExecutionItems,
                 workflow.threadcount,
@@ -185,7 +186,7 @@ class ExecutionUtilService {
         return item
     }
 
-    private List<StepExecutionItem> consolidateWorkflowSteps(WorkflowData workflow, String parentProject) {
+    private List<StepExecutionItem> consolidateWorkflowSteps(WorkflowData workflow, String parentProject, ConditionalSet conditionalSetParentJob) {
         boolean conditionalFeatureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
         
         List<StepExecutionItem> stepExecutionItems = []
@@ -199,6 +200,9 @@ class ExecutionUtilService {
                         command.errorHandler ? itemForWFCmdItem(command.errorHandler, null, parentProject) : null,
                         parentProject
                 )
+                if(conditionalSetParentJob){
+                    item.conditions = conditionalSetParentJob
+                }
                 if (item != null) {
                     stepExecutionItems.add(item)
                 }

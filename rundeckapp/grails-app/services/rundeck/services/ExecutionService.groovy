@@ -3963,7 +3963,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         return
                     }
                 }
-                newExecItem = executionUtilService.createExecutionItemForWorkflow(seWorkflowData, se.project)
+                newExecItem = executionUtilService.createExecutionItemForWorkflow(seWorkflowData, se.project, jitem.conditions)
 
                 try {
                     newContext = createJobReferenceContext(
