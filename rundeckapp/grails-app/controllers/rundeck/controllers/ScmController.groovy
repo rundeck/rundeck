@@ -155,14 +155,14 @@ Since: v15
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
         ]
     )
@@ -214,21 +214,21 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'type',
                 in = ParameterIn.PATH,
                 description = 'Plugin Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ]
     )
@@ -437,28 +437,28 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'type',
                 in = ParameterIn.PATH,
                 description = 'Plugin Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ],
         requestBody = @RequestBody(
           description='Configuration values for the plugin.',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
-                schema=@Schema(type='object'),
+                schema=@Schema(implementation = Object),
                 examples=[
                     @ExampleObject(
                         name='plugin-config-example',
@@ -568,21 +568,21 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'type',
                 in = ParameterIn.PATH,
                 description = 'Plugin Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ]
     )
@@ -654,21 +654,21 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'type',
                 in = ParameterIn.PATH,
                 description = 'Plugin Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ]
     )
@@ -727,7 +727,7 @@ Since: v46''',
             description='Configuration values for the plugin.',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
-                schema=@Schema(type='object', implementation = ScmToggleRequest),
+                schema=@Schema(implementation = ScmToggleRequest),
                 examples=[
                     @ExampleObject(
                         name='enable-scm-example',
@@ -755,7 +755,7 @@ Since: v46''',
             in = ParameterIn.PATH,
             description = 'Project Name',
             required = true,
-            schema = @Schema(type = 'string')
+            schema = @Schema(implementation = String)
         ) String project,
         @Parameter(hidden = true) ScmToggleRequest toggleRequest
     ) {
@@ -940,14 +940,14 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
         ]
     )
@@ -1052,14 +1052,14 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
         ]
     )
@@ -1140,21 +1140,21 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'actionId',
                 in = ParameterIn.PATH,
                 description = 'Action ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ]
     )
@@ -1423,21 +1423,21 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'actionId',
                 in = ParameterIn.PATH,
                 description = 'Action ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ],
         requestBody = @RequestBody(
@@ -1947,14 +1947,14 @@ Since: v15
                 in = ParameterIn.PATH,
                 description = 'Job ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'SCM integration type',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
         ]
     )
@@ -2140,14 +2140,14 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Job ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'SCM integration type',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
         ]
     )
@@ -2312,21 +2312,21 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Job ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'SCM integration type',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'actionId',
                 in = ParameterIn.PATH,
                 description = 'Action Name/ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ]
     )
@@ -2427,21 +2427,21 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Job ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'SCM integration type',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'actionId',
                 in = ParameterIn.PATH,
                 description = 'Action Name/ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ],
         requestBody = @RequestBody(
@@ -2449,7 +2449,7 @@ Since: v15''',
             required=true,
             content=@Content(
                 mediaType = MediaType.APPLICATION_JSON,
-                schema=@Schema(type='object'),
+                schema=@Schema(implementation = Object),
                 examples = [
                     @ExampleObject(
                         name='scm-action-input-example',

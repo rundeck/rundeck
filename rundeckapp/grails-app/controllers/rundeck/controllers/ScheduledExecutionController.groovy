@@ -3841,6 +3841,7 @@ Each job entry contains:
 ''',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Object),
             examples = [
                 @ExampleObject(
                     name = 'job-import-response',
@@ -4189,6 +4190,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         description = 'Created Execution',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Object),
                 examples = [
                     @ExampleObject(
                         name = 'job-execution-response',
@@ -4501,6 +4503,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         description = 'Created Execution',
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Object),
                 examples = [
                     @ExampleObject(
                         name = 'job-execution-response',
@@ -4649,7 +4652,8 @@ For multiple files, use a Multi-part request.  For each file, specify the field 
 is the option name. The filename is specified normally within the multi-part request.
 ''',
             content = @Content(
-                mediaType = MediaType.MULTIPART_FORM_DATA
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(implementation = Object)
             )
         )
     )
@@ -4699,7 +4703,8 @@ Since: v19''',
         requestBody = @RequestBody(
             description="Upload a single file directly",
             content=@Content(
-                mediaType = MediaType.APPLICATION_OCTET_STREAM
+                mediaType = MediaType.APPLICATION_OCTET_STREAM,
+                schema = @Schema(implementation = Object)
             )
         )
     )

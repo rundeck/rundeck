@@ -3995,7 +3995,8 @@ Otherwise, you can use JSON to wrap the yaml content inside `contents`
                     mediaType = MediaType.APPLICATION_YAML
             ),
             @Content(
-                    mediaType = MediaType.APPLICATION_JSON
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = Object)
             )
         ]
     )

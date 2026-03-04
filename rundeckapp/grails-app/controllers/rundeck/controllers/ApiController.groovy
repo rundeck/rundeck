@@ -188,7 +188,8 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         responseCode = '200',
         description = 'Healthcheck results',
         content = @Content(
-            mediaType = MediaType.APPLICATION_JSON
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Object)
         )
     )
     @ApiResponse(
@@ -212,7 +213,8 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         responseCode = '200',
         description = 'Metrics data',
         content = @Content(
-            mediaType = MediaType.APPLICATION_JSON
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = Object)
         )
     )
     @ApiResponse(
@@ -236,7 +238,8 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         responseCode = '200',
         description = 'Ping response',
         content = @Content(
-            mediaType = MediaType.TEXT_PLAIN
+            mediaType = MediaType.TEXT_PLAIN,
+            schema = @Schema(implementation = String)
         )
     )
     @ApiResponse(
@@ -260,7 +263,8 @@ Use this endpoint to verify API connectivity and determine the correct API versi
         responseCode = '200',
         description = 'Thread dump',
         content = @Content(
-            mediaType = MediaType.TEXT_PLAIN
+            mediaType = MediaType.TEXT_PLAIN,
+            schema = @Schema(implementation = String)
         )
     )
     @ApiResponse(
