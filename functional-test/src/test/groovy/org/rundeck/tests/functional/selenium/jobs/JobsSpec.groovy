@@ -852,7 +852,10 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.waitFotOptLi 0
 
         jobCreatePage.duplicateButton( optName, 0) click()
-        jobCreatePage.waitFotOptLi 1
+        
+        if (legacyUi) {
+            jobCreatePage.waitFotOptLi 1
+        }
 
         then: "duplicated option exists"
         if (legacyUi) {
@@ -860,9 +863,10 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionNameSaved(0).getText() == optName
             jobCreatePage.optionNameSaved(1).getText() == optName + '_1'
         } else {
-            // Next UI opens the duplicated option in edit mode with _copy suffix
-            jobCreatePage.optionNameNew() displayed
-            jobCreatePage.optionNameNew().getAttribute('value') == optName + '_copy'
+            jobCreatePage.waitForElementVisible(By.cssSelector("#optitem_new input[type=text][name=name]"))
+            def nameInput = jobCreatePage.byAndWait(By.cssSelector("#optitem_new input[type=text][name=name]"))
+            nameInput.displayed
+            nameInput.getAttribute('value') == optName + '_copy'
             jobCreatePage.saveOptionButton.displayed
         }
         
