@@ -430,7 +430,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.workFlowList.size() == 1
             jobCreatePage.createJobButton.click()
         where:
-            legacyUi << [true]
+            legacyUi << [false, true]
     }
 
     def "job workflow undo redo"() {
@@ -451,7 +451,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.workFlowList.size() == 2
             jobCreatePage.createJobButton.click()
         where:
-            legacyUi << [true]
+            legacyUi << [false, true]
     }
 
     def "job workflow revert all"() {
@@ -563,39 +563,28 @@ class JobsSpec extends SeleniumBase {
 
         when:
         setupProject(projectName)
-        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
+        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: true])
         jobCreatePage.jobNameInput.sendKeys("test")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
-        if(legacyUi) {
-            jobCreatePage.waitForElementToBeClickable(jobCreatePage.stepFilterInput)
-            jobCreatePage.stepFilterInput.sendKeys("cmd")
-            jobCreatePage.stepFilterSearchButton.click()
-        }
+        jobCreatePage.waitForElementToBeClickable(jobCreatePage.stepFilterInput)
+        jobCreatePage.stepFilterInput.sendKeys("cmd")
+        jobCreatePage.stepFilterSearchButton.click()
         then: "Command step is not visible, since the list dont have any steps"
         !jobCreatePage.commandStepVisible()
 
         when: "We provide a valid filter"
-        if(legacyUi) {
-            jobCreatePage.stepFilterInput.sendKeys(Keys.chord(Keys.CONTROL, "a"))
-            jobCreatePage.stepFilterInput.sendKeys(Keys.BACK_SPACE)
-            jobCreatePage.stepFilterInput.sendKeys("command")
-            jobCreatePage.stepFilterSearchButton.click()
-        }
+        jobCreatePage.stepFilterInput.sendKeys(Keys.chord(Keys.CONTROL, "a"))
+        jobCreatePage.stepFilterInput.sendKeys(Keys.BACK_SPACE)
+        jobCreatePage.stepFilterInput.sendKeys("command")
+        jobCreatePage.stepFilterSearchButton.click()
         then: "We can create the command step"
-        if(legacyUi) {
-            jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
-        } else {
-            jobCreatePage.addSimpleCommandStepNextUi("echo 'asd'", 0)
-        }
+        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
         jobCreatePage.createJobButton.click()
         jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
         jobShowPage.validatePage()
 
         cleanup:
         deleteProject(projectName)
-
-        where:
-        legacyUi << [false, true]
     }
 
     /**
@@ -876,7 +865,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameSaved 0 getText() equals optName
         jobCreatePage.optionNameSaved 1 getText() equals optName + '_copy'
         where:
-        legacyUi << [false]
+        legacyUi << [false, true]
     }
 
     def "add global log filters"() {
@@ -888,7 +877,7 @@ class JobsSpec extends SeleniumBase {
         then:
         assert jobCreatePage.getLogFilterButtons('#globalLogFilters').size() == 1
         where:
-        legacyUi << [false]
+        legacyUi << [false, true]
     }
 
     def "Node steps"() {
@@ -925,7 +914,7 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.expectNumberOfStepsToBe(2)
         where:
-        legacyUi << [false]
+        legacyUi << [false, true]
     }
 
     def "Error handlers"() {
@@ -984,7 +973,7 @@ class JobsSpec extends SeleniumBase {
 
     def "cancel editing new step - step not added"() {
         when:
-            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi, legacyUi: !nextUi])
         then:
             jobCreatePage.jobNameInput.sendKeys "cancel new step ${nextUi ? 'next ui' : 'legacy'}"
             jobCreatePage.tab(JobTab.WORKFLOW).click()
@@ -1008,12 +997,12 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobCreatePage.workFlowList.size() == 0
         where:
-            nextUi << [true]
+            nextUi << [false, true]
     }
 
     def "cancel editing existing step - changes discarded"() {
         when:
-            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi, legacyUi: !nextUi])
             def jobShowPage = page JobShowPage
         then:
             jobCreatePage.fillBasicJob "cancel edit step ${nextUi ? 'next ui' : 'legacy'}"
@@ -1031,6 +1020,6 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo selenium test') }
         where:
-            nextUi << [true]
+            nextUi << [false, true]
     }
 }
