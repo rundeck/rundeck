@@ -186,37 +186,45 @@ class ExecutionUtilService {
     }
 
     private List<StepExecutionItem> consolidateWorkflowSteps(WorkflowData workflow, String parentProject) {
-        List<StepExecutionItem> stepExecutionItems = workflow.commands.collect {
-            if (!it.conditionSet) {
-                itemForWFCmdItem(
-                        it,
-                        it.errorHandler ? itemForWFCmdItem(it.errorHandler, null, parentProject) : null,
-                        parentProject
-                )
-            }
-        }.findAll { it != null }
-
         boolean conditionalFeatureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
-        if(conditionalFeatureEnabled && workflow.hasConditionalSteps()) {
-            workflow.commands.each {
-                if (it.conditionSet && it.subSteps) {
-                    stepExecutionItems.addAll(
-                            it.subSteps.collect { subStep ->
-                                StepExecutionItem sei = itemForWFCmdItem(
-                                        subStep,
-                                        subStep.errorHandler ? itemForWFCmdItem(subStep.errorHandler, null, parentProject) : null,
-                                        parentProject
-                                )
-                                sei.conditions = it.conditionSet
-                                sei
-                            }.findAll { it != null }
-                    )
-                }
-            }
-        } else if(!conditionalFeatureEnabled && workflow.hasConditionalSteps()) {
+        
+        if(!conditionalFeatureEnabled && workflow.hasConditionalSteps()) {
             log.error("Workflow has conditional steps, but conditional feature is not enabled.")
             throw new IllegalArgumentException("Workflow has conditional steps, but conditional feature is not enabled.");
         }
+
+        List<StepExecutionItem> stepExecutionItems = []
+        
+        // Iterate through commands in order to preserve the original sequence
+        workflow.commands.each { command ->
+            if (!command.conditionSet) {
+                // Regular step: add it directly
+                StepExecutionItem item = itemForWFCmdItem(
+                        command,
+                        command.errorHandler ? itemForWFCmdItem(command.errorHandler, null, parentProject) : null,
+                        parentProject
+                )
+                if (item != null) {
+                    stepExecutionItems.add(item)
+                }
+            } else if (conditionalFeatureEnabled && command.conditionSet) {
+                // Conditional step: add its substeps in place
+                if (command.subSteps) {
+                    command.subSteps.each { subStep ->
+                        StepExecutionItem sei = itemForWFCmdItem(
+                                subStep,
+                                subStep.errorHandler ? itemForWFCmdItem(subStep.errorHandler, null, parentProject) : null,
+                                parentProject
+                        )
+                        if (sei != null) {
+                            sei.conditions = command.conditionSet
+                            stepExecutionItems.add(sei)
+                        }
+                    }
+                }
+            }
+        }
+        
         stepExecutionItems
     }
 

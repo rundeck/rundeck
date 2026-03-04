@@ -25,6 +25,8 @@ class ConditionalSetImpl implements ConditionalSet {
             throw new IllegalArgumentException("ConditionalSet cannot be null");
         }
         this.dataModelConditionalSet = dataModelConditionalSet;
+        this.conditionGroups = dataModelConditionalSet.conditionGroups;
+        this.nodeStep = dataModelConditionalSet.isNodeStep();
     }
 
     /**
