@@ -31,8 +31,16 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
     void executeNodeStep(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException {
         boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getExecutionContext().getIFramework()
                 .getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
+        
+        boolean execQuotingDisabled = Boolean.valueOf(context.getExecutionContext().getIFramework()
+                .getPropertyRetriever().getProperty("rundeck.feature.exec.quoting.disabled"));
 
         def arr = OptsUtil.burst(adhocRemoteString)
+
+        // Track which arguments contain property references BEFORE replacement
+        def containsPropertyRef = arr.collect { arg ->
+            DataContextUtils.stringContainsPropertyReferencePredicate.test(arg)
+        }
 
         def result = SharedDataContextUtils.replaceDataReferencesInObject(
                 arr,
@@ -44,10 +52,17 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
                 true
         ) as String[]
 
+        // Build ExecArgList with proper quoting based on original property references
+        def execArgListBuilder = ExecArgList.builder()
+        for (int i = 0; i < result.length; i++) {
+            // Quote if: original contained property ref AND quoting not disabled
+            boolean shouldQuote = containsPropertyRef[i] && !execQuotingDisabled
+            execArgListBuilder.arg(result[i], shouldQuote, featureQuotingBackwardCompatible)
+        }
+
         NodeExecutorResult nodeExecutorResult =  context.getFramework().getExecutionService().executeCommand(
                 context.getExecutionContext(),
-                ExecArgList.fromStrings(featureQuotingBackwardCompatible, DataContextUtils
-                .stringContainsPropertyReferencePredicate, result),
+                execArgListBuilder.build(),
                 entry
         );
 

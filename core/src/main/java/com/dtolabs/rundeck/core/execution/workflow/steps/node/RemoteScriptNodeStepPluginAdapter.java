@@ -175,13 +175,20 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         if (null != script.getCommand()) {
             //execute the command
             boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
+            boolean execQuotingDisabled = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.exec.quoting.disabled"));
+            
+            String[] command = script.getCommand();
+            ExecArgList.Builder builder = ExecArgList.builder();
+            for (String arg : command) {
+                // Quote all arguments unless quoting is explicitly disabled
+                // This protects against command injection in option values
+                boolean shouldQuote = !execQuotingDisabled;
+                builder.arg(arg, shouldQuote, featureQuotingBackwardCompatible);
+            }
+            
             return executionService.executeCommand(
                     context,
-                    ExecArgList.fromStrings(
-                            featureQuotingBackwardCompatible,
-                            DataContextUtils.stringContainsPropertyReferencePredicate,
-                            script.getCommand()
-                    ),
+                    builder.build(),
                     node
             );
         } else if (null != script.getScript()) {
