@@ -127,8 +127,10 @@ class JobCreatePage extends BasePage {
     By autocompleteSuggestionsBy = By.cssSelector("div[class='autocomplete-suggestions']")
     By wfUndoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[1]")
     By wfUndoButtonLinkBy = By.xpath("//*[@class='btn btn-xs btn-default act_undo flash_undo']")
+    By wfUndoButtonByNextUi = By.cssSelector("#workflowContent [data-testid='undo-btn']")
     By wfRedoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[2]")
     By wfRedoButtonLinkBy = By.xpath("//*[@class='btn btn-xs btn-default act_redo flash_undo']")
+    By wfRedoButtonByNextUi = By.cssSelector("#workflowContent [data-testid='redo-btn']")
     By wfRevertAllButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[3]")
     By wfRevertAllButtonByNextUi = By.cssSelector("[data-testid='revertAll-btn']")
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
@@ -767,19 +769,19 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getWfUndoButton() {
-        el wfUndoButtonBy
+        el(legacyUi ? wfUndoButtonBy : wfUndoButtonByNextUi)
     }
 
     WebElement getWfUndoButtonLink() {
-        el wfUndoButtonLinkBy
+        el(legacyUi ? wfUndoButtonLinkBy : wfUndoButtonByNextUi)
     }
 
     WebElement getWfRedoButton() {
-        el wfRedoButtonBy
+        el(legacyUi ? wfRedoButtonBy : wfRedoButtonByNextUi)
     }
 
     WebElement getWfRedoButtonLink() {
-        el wfRedoButtonLinkBy
+        el(legacyUi ? wfRedoButtonLinkBy : wfRedoButtonByNextUi)
     }
 
     WebElement getWfRevertAllButton() {
