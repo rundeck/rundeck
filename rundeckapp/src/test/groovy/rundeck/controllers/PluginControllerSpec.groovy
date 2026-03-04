@@ -723,4 +723,36 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
                 }
             }
     }
+
+    @Unroll
+    def "groupIcon validates icon name to prevent path traversal - #iconName"() {
+        given:
+            params.iconName = iconName
+            
+        when:
+            controller.groupIcon(iconName)
+            
+        then:
+            response.status == expectedStatus
+            
+        where:
+            iconName                                    | expectedStatus
+            'aws-icon.svg'                              | 404  // Valid format, but file doesn't exist in test
+            'datadog-icon.png'                          | 404  // Valid format, but file doesn't exist in test
+            'my-plugin-icon.jpg'                        | 404  // Valid format
+            '../../application.yml'                     | 400  // Path traversal attempt
+            '../../../WEB-INF/classes/application.yml'  | 400  // Path traversal attempt
+            '/etc/passwd'                               | 400  // Absolute path
+            '..\\..\\application.yml'                   | 400  // Windows path traversal
+            'icon;whoami.svg'                           | 400  // Command injection attempt
+            'icon`whoami`.svg'                          | 400  // Command injection attempt
+            'icon$(whoami).svg'                         | 400  // Command injection attempt
+            'icon|whoami.svg'                           | 400  // Pipe character
+            'icon&whoami.svg'                           | 400  // Ampersand
+            'icon with spaces.svg'                      | 400  // Spaces not allowed
+            'icon.svg.yml'                              | 400  // Wrong extension
+            'icon.txt'                                  | 400  // Non-image extension
+            ''                                          | 400  // Empty string
+            null                                        | 400  // Null value
+    }
 }
