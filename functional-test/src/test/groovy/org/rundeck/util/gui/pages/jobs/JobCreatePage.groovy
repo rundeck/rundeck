@@ -173,6 +173,7 @@ class JobCreatePage extends BasePage {
     By optionsByNextUi = By.cssSelector(".edit-option-item")
     By timeZoneBy = By.id("timeZone")
     By optEditFormBy = By.className("optEditForm")
+    By optionNameNewBy = By.cssSelector(".optEditForm input[type=text][name=name]")
     By addGlobalLogFilter = By.cssSelector("[data-testid='add-filter-button']")
     By addLogFilterOption = By.cssSelector("a[data-test='add-log-filter']")
     By addErrorHandlerOption = By.cssSelector("a[data-test='add-error-handler']")
@@ -607,9 +608,9 @@ class JobCreatePage extends BasePage {
 
     WebElement optionNameNew(int index=0) {
         if(legacyUi){
-            return optionName(index)
+            return byAndWait(optionNameNewBy)
         }else{
-            return byAndWait (By.cssSelector("#optitem_new input[type=text][name=name]"))
+            return byAndWait(By.cssSelector("#optitem_new input[type=text][name=name]"))
         }
     }
     WebElement optionName(int index) {

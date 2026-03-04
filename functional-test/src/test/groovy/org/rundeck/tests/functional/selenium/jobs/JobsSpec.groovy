@@ -841,7 +841,8 @@ class JobsSpec extends SeleniumBase {
         when:
         def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         def optName = 'test'
-        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? 'legacy ui' : 'current ui'}"
+        jobCreatePage.jobNameInput.sendKeys(specificationContext.currentIteration.name+" ${legacyUi ? 'legacy ui' : 'current ui'}")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys optName
         jobCreatePage.waitForElementVisible jobCreatePage.usageSection
@@ -851,19 +852,31 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.waitFotOptLi 0
 
         jobCreatePage.duplicateButton( optName, 0) click()
-
-        then: "create form is shown"
-        jobCreatePage.optionNameNew() displayed
-        jobCreatePage.optionNameNew().getAttribute('value') == optName + '_copy'
-        jobCreatePage.saveOptionButton.displayed
-        when:
-        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
-        jobCreatePage.saveOptionButton.click()
         jobCreatePage.waitFotOptLi 1
 
+        then: "duplicated option exists"
+        if (legacyUi) {
+            // Legacy UI reloads options in view mode after duplicate with _1 suffix
+            jobCreatePage.optionNameSaved(0).getText() == optName
+            jobCreatePage.optionNameSaved(1).getText() == optName + '_1'
+        } else {
+            // Next UI opens the duplicated option in edit mode with _copy suffix
+            jobCreatePage.optionNameNew() displayed
+            jobCreatePage.optionNameNew().getAttribute('value') == optName + '_copy'
+            jobCreatePage.saveOptionButton.displayed
+        }
+        
+        when:
+        if (!legacyUi) {
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 1
+        }
+
         then:
-        jobCreatePage.optionNameSaved 0 getText() equals optName
-        jobCreatePage.optionNameSaved 1 getText() equals optName + '_copy'
+        jobCreatePage.optionNameSaved(0).getText() == optName
+        jobCreatePage.optionNameSaved(1).getText() == (legacyUi ? optName + '_1' : optName + '_copy')
+        
         where:
         legacyUi << [false, true]
     }
