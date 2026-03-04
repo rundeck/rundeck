@@ -183,7 +183,7 @@ search
       <asset:stylesheet href="static/css/chunk-vendors.css"/>
       <asset:javascript src="static/pages/execution-show.js" defer="defer"/>
   </head>
-  <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
+  <g:set var="isAdhoc" value="${!scheduledExecution && execution.getWorkflowData().commands.size() == 1}"/>
   <body id="executionShowPage">
 
 
@@ -495,7 +495,7 @@ search
                                       data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
                                     </b>
                                     <g:render template="wfItemView" model="[
-                                            item: execution.workflow.commands[0],
+                                            item: execution.getWorkflowData().commands[0],
                                             icon: 'icon-small'
                                     ]"/>
                                 </div>
