@@ -65,8 +65,8 @@ class AssetPipelineResourceConfigurer implements WebMvcConfigurer {
             .addResourceHandler("/assets/**")
             .addResourceLocations("classpath:/assets/")
             .setCachePeriod(31536000) // 1 year cache for asset pipeline (hashed filenames)
-            .resourceChain(true)  // Enable resource chain for proper resolution
-        
+            .resourceChain(true)
+
         log.info("✅ Asset pipeline resource handler configured successfully")
     }
 }

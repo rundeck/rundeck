@@ -207,6 +207,10 @@ grails:
     assets:
         url: /assets/  # Grails 7: Asset pipeline URL prefix (trailing slash required)
         mapping: /assets/**  # Grails 7: URL pattern for asset serving
+        bundle: true  # Force use of compiled/hashed assets even in development
+        minifyJs: false
+        minifyCss: false
+        enableDigests: true  # Enable digest/hash in asset names
         less:
             compile: less4j
         plugin:
