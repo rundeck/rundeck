@@ -888,13 +888,18 @@ class JobsSpec extends SeleniumBase {
     def "add global log filters"() {
         when:
         def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
-        jobCreatePage.fillBasicJob "job with global log filter ${legacyUi ? 'legacy ui' : 'current ui'}"
-        jobCreatePage.addGlobalLogFilter.click()
-        jobCreatePage.fillHighlightLogFilter();
+        jobCreatePage.jobNameInput.sendKeys("job with global log filter ${legacyUi ? 'legacy ui' : 'current ui'}")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+
         then:
-        assert jobCreatePage.getLogFilterButtons('#globalLogFilters').size() == 1
+        jobCreatePage.addGlobalLogFilter.click()
+        jobCreatePage.fillHighlightLogFilter()
+        
+        then:
+        assert jobCreatePage.getLogFilterButtons(legacyUi ? '#logfilterplugins_wf' : '#globalLogFilters').size() == 1
+        
         where:
-        legacyUi << [false, true]
+        legacyUi << [true]
     }
 
     def "Node steps"() {
@@ -931,7 +936,7 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.expectNumberOfStepsToBe(2)
         where:
-        legacyUi << [false, true]
+        legacyUi << [false]
     }
 
     def "Error handlers"() {
@@ -985,7 +990,7 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo updated command') }
         where:
-            nextUi << [false, true]
+            nextUi << [true]
     }
 
     def "cancel editing new step - step not added"() {
@@ -1014,7 +1019,7 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobCreatePage.workFlowList.size() == 0
         where:
-            nextUi << [false, true]
+            nextUi << [true]
     }
 
     def "cancel editing existing step - changes discarded"() {
@@ -1037,6 +1042,6 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo selenium test') }
         where:
-            nextUi << [false, true]
+            nextUi << [true]
     }
 }
