@@ -737,7 +737,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             
         where:
             iconName                                    | expectedStatus
-            'aws-icon.svg'                              | 404  // Valid format, but file doesn't exist in test
+            'aws-icon.svg'                              | 200  // Valid format, file exists
             'datadog-icon.png'                          | 404  // Valid format, but file doesn't exist in test
             'my-plugin-icon.jpg'                        | 404  // Valid format
             '../../application.yml'                     | 400  // Path traversal attempt
