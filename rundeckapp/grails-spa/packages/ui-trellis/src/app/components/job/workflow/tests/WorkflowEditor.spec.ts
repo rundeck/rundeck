@@ -21,6 +21,10 @@ jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: jest.fn().mockImplementation(() => ({})),
 }));
 
+jest.mock("@/library/services/feature", () => ({
+  getFeatureEnabled: jest.fn().mockResolvedValue(false),
+}));
+
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(WorkflowEditor, {
     props: {

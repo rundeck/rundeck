@@ -91,6 +91,9 @@ class JobCreatePage extends BasePage {
         static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
         static By stepEditModalCancelBy = By.cssSelector('.modal.in [data-testid="cancel-button"]')
         static By stepEditModalSaveBy = By.cssSelector('.modal.in [data-testid="save-button"]')
+        static By jobOptionMultivaluedBy = By.cssSelector("[data-test='option.delimiter'] input[name='multivalued'][value='true']")
+        static By jobOptionMultivaluedDelimiterBy = By.cssSelector("[data-test='option.delimiter'] input[name='delimiter']")
+        static By jobOptionMultiValuedAllSelectedBy = By.cssSelector("[data-test='option.delimiter'] input[name='multivalueAllSelected']")
     }
 
     By usageSectionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -127,8 +130,10 @@ class JobCreatePage extends BasePage {
     By autocompleteSuggestionsBy = By.cssSelector("div[class='autocomplete-suggestions']")
     By wfUndoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[1]")
     By wfUndoButtonLinkBy = By.xpath("//*[@class='btn btn-xs btn-default act_undo flash_undo']")
+    By wfUndoButtonByNextUi = By.cssSelector("#workflowContent [data-testid='undo-btn']")
     By wfRedoButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[2]")
     By wfRedoButtonLinkBy = By.xpath("//*[@class='btn btn-xs btn-default act_redo flash_undo']")
+    By wfRedoButtonByNextUi = By.cssSelector("#workflowContent [data-testid='redo-btn']")
     By wfRevertAllButtonBy = By.xpath("//*[@id='wfundoredo']/div/span[3]")
     By wfRevertAllButtonByNextUi = By.cssSelector("[data-testid='revertAll-btn']")
     By revertWfConfirmBy = By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
@@ -168,7 +173,9 @@ class JobCreatePage extends BasePage {
     By optionsByNextUi = By.cssSelector(".edit-option-item")
     By timeZoneBy = By.id("timeZone")
     By optEditFormBy = By.className("optEditForm")
+    By optionNameNewBy = By.cssSelector(".optEditForm input[type=text][name=name]")
     By addGlobalLogFilter = By.cssSelector("[data-testid='add-filter-button']")
+    By addGlobalLogFilterLegacy = By.cssSelector("#logfilterplugins_wf [data-bind='click: addFilterPopup']")
     By addLogFilterOption = By.cssSelector("a[data-test='add-log-filter']")
     By addErrorHandlerOption = By.cssSelector("a[data-test='add-error-handler']")
 
@@ -192,14 +199,16 @@ class JobCreatePage extends BasePage {
         if(legacyUi) {
             return '?legacyUi=true'
         } else if(nextUi) {
-            return '?nextUi=true'  // Keep for backward compatibility
+            return '?nextUi=true'
         } else {
             return ''  // Default = Vue UI
         }
     }
 
-    boolean nextUi = false
-    boolean legacyUi = false
+    boolean getNextUi() { isFlagEnabled('nextUi') }
+    void setNextUi(boolean value) { withFlag('nextUi', value) }
+    boolean getLegacyUi() { isFlagEnabled('legacyUi') }
+    void setLegacyUi(boolean value) { withFlag('legacyUi', value) }
 
     JobCreatePage(final SeleniumContext context) {
         super(context)
@@ -214,7 +223,7 @@ class JobCreatePage extends BasePage {
         this.edit=true
         this.projectName=projectName
         this.jobId=jobId
-        this.nextUi=nextUi
+        withFlag('nextUi', nextUi)
     }
 
     void loadEditPath(String projectName, String jobId, Boolean legacyUi, Boolean isLegacy) {
@@ -222,9 +231,9 @@ class JobCreatePage extends BasePage {
         this.projectName=projectName
         this.jobId=jobId
         if(isLegacy) {
-            this.legacyUi=legacyUi
+            withFlag('legacyUi', legacyUi)
         } else {
-            this.nextUi=legacyUi  // For backward compat
+            withFlag('nextUi', legacyUi)  // For backward compat
         }
     }
 
@@ -579,14 +588,23 @@ class JobCreatePage extends BasePage {
 
     void clickAddErrorHandler(int position){
         stepDropdownTrigger(position).click()
-        waitForElementVisible(addErrorHandlerOption)
-        (el addErrorHandlerOption).click()
+        def errorHandlerOptionBy = legacyUi ? 
+            By.cssSelector("a.wfitem_add_errorhandler") : 
+            addErrorHandlerOption
+        waitForElementVisible(errorHandlerOptionBy)
+        (el errorHandlerOptionBy).click()
     }
 
     def clickAddLogFilter(int position) {
         stepDropdownTrigger(position).click()
-        waitForElementVisible(addErrorHandlerOption)
-        (el addLogFilterOption).click()
+        def logFilterOptionBy = legacyUi ? 
+            By.cssSelector("a[data-bind*='addFilterPopup'][title*='Add Log Filter']") : 
+            addLogFilterOption
+        def errorHandlerOptionBy = legacyUi ? 
+            By.cssSelector("a.wfitem_add_errorhandler") : 
+            addErrorHandlerOption
+        waitForElementVisible(errorHandlerOptionBy)
+        (el logFilterOptionBy).click()
         return this
     }
 
@@ -600,9 +618,9 @@ class JobCreatePage extends BasePage {
 
     WebElement optionNameNew(int index=0) {
         if(legacyUi){
-            return optionName(index)
+            return byAndWait(optionNameNewBy)
         }else{
-            return byAndWait (By.cssSelector("#optitem_new input[type=text][name=name]"))
+            return byAndWait(By.cssSelector("#optitem_new input[type=text][name=name]"))
         }
     }
     WebElement optionName(int index) {
@@ -765,19 +783,19 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getWfUndoButton() {
-        el wfUndoButtonBy
+        el(legacyUi ? wfUndoButtonBy : wfUndoButtonByNextUi)
     }
 
     WebElement getWfUndoButtonLink() {
-        el wfUndoButtonLinkBy
+        el(legacyUi ? wfUndoButtonLinkBy : wfUndoButtonByNextUi)
     }
 
     WebElement getWfRedoButton() {
-        el wfRedoButtonBy
+        el(legacyUi ? wfRedoButtonBy : wfRedoButtonByNextUi)
     }
 
     WebElement getWfRedoButtonLink() {
-        el wfRedoButtonLinkBy
+        el(legacyUi ? wfRedoButtonLinkBy : wfRedoButtonByNextUi)
     }
 
     WebElement getWfRevertAllButton() {
@@ -893,15 +911,28 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobOptionMultiValuedInput(){
-        el jobOptionMultivaluedBy
+        def by = legacyUi ? jobOptionMultivaluedBy : NextUi.jobOptionMultivaluedBy
+        def el = el(by)
+        scrollToElement(el)
+        el
+    }
+
+    By getJobOptionMultivaluedDelimiterBy() {
+        legacyUi ? jobOptionMultivaluedDelimiterBy : NextUi.jobOptionMultivaluedDelimiterBy
     }
 
     WebElement getJobOptionMultivaluedDelimiter(){
-        el jobOptionMultivaluedDelimiterBy
+        def by = getJobOptionMultivaluedDelimiterBy()
+        def el = el(by)
+        scrollToElement(el)
+        el
     }
 
     WebElement getJobOptionMultiValuedAllSelectedInput(){
-        el jobOptionMultiValuedAllSelectedBy
+        def by = legacyUi ? jobOptionMultiValuedAllSelectedBy : NextUi.jobOptionMultiValuedAllSelectedBy
+        def el = el(by)
+        scrollToElement(el)
+        el
     }
 
     WebElement getDuplicateWfStepButton(){
@@ -1004,7 +1035,12 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getListItemIndex(int position) {
-        el By.cssSelector(".list-group[data-testid='list-view'] > .list-group-item:nth-child(${position})")
+        if (legacyUi) {
+            // Legacy UI uses knockout modal for filter selection
+            el By.cssSelector("#addLogFilterPluginModal .list-group-item:nth-child(${position})")
+        } else {
+            el By.cssSelector("[data-testid='add-filter-modal'] .list-group[data-testid='list-view'] > button.list-group-item:nth-child(${position})")
+        }
     }
 
     WebElement getInputField(String value, String childElement) {
@@ -1012,20 +1048,32 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getAddGlobalLogFilter() {
-        def button = el addGlobalLogFilter
+        def by = legacyUi ? addGlobalLogFilterLegacy : addGlobalLogFilter
+        def button = el(by)
         executeScript "arguments[0].scrollIntoView(true);", button
         waitForElementToBeClickable(button)
         return button
     }
 
     def fillHighlightLogFilter() {
-        getListItemIndex(3).click();
-        def highlightPatternInput = getInputField("regex", "input[type='text']")
-        highlightPatternInput.click()
-        highlightPatternInput.sendKeys 'test'
-        def select = new Select(getInputField("fgcolor", "select"))
-        select.selectByValue('yellow')
-        getWorkflowSaveStepButton().click()
+        if (legacyUi) {
+            def highlightItem = el(By.xpath("//div[@id='addLogFilterPluginModal']//a[contains(., 'Highlight')]"))
+            highlightItem.click()
+            waitForElementVisible(By.cssSelector("#editLogFilterPluginModal .modal-body"))
+            def regexInput = byAndWait(By.cssSelector("#editLogFilterPluginModal input[type='text']"))
+            regexInput.sendKeys('test')
+            def fgcolorSelect = new Select(byAndWait(By.cssSelector("#editLogFilterPluginModal select")))
+            fgcolorSelect.selectByValue('yellow')
+            el(By.cssSelector("#editLogFilterPluginModal .btn-cta")).click()
+        } else {
+            getListItemIndex(3).click();
+            def highlightPatternInput = getInputField("regex", "input[type='text']")
+            highlightPatternInput.click()
+            highlightPatternInput.sendKeys 'test'
+            def select = new Select(getInputField("fgcolor", "select"))
+            select.selectByValue('yellow')
+            getWorkflowSaveStepButton().click()
+        }
         return this
     }
 
@@ -1046,11 +1094,33 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement stepDropdownTrigger(int index) {
-        el By.cssSelector("#wfitem_${index} +.step-item-controls button[data-role='trigger']")
+        if (legacyUi) {
+            el By.cssSelector("#pfctrls_${index} .btn-group .dropdown-toggle")
+        } else {
+            el By.cssSelector("#wfitem_${index} +.step-item-controls button[data-role='trigger']")
+        }
     }
 
     def doesntHasDropdownOption(int index, String dataTest) {
-        els(By.cssSelector("#wfitem_${index} +.step-item-controls a[data-test='${dataTest}']")).isEmpty()
+        if (legacyUi) {
+            // In legacy UI, check for classes like 'wfitem_add_errorhandler' in the dropdown
+            // Map data-test values to legacy class names
+            def classMap = [
+                'add-error-handler': 'wfitem_add_errorhandler',
+                'add-log-filter': '' // Log filter button has data-bind="click: addFilterPopup"
+            ]
+            def className = classMap[dataTest]
+            if (dataTest == 'add-log-filter') {
+                // Legacy UI: log filter button is in the dropdown menu with data-bind
+                els(By.cssSelector("#pfctrls_${index} .dropdown-menu a[data-bind*='addFilterPopup']")).isEmpty()
+            } else if (className) {
+                els(By.cssSelector("#pfctrls_${index} .dropdown-menu a.${className}")).isEmpty()
+            } else {
+                true // Unknown dataTest, assume it doesn't exist
+            }
+        } else {
+            els(By.cssSelector("#wfitem_${index} +.step-item-controls a[data-test='${dataTest}']")).isEmpty()
+        }
     }
 
     /**
