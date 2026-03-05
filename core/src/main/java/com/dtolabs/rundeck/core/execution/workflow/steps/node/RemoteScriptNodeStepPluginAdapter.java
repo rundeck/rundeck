@@ -175,14 +175,17 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         if (null != script.getCommand()) {
             //execute the command
             boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
-            boolean execQuotingDisabled = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.exec.quoting.disabled"));
-            
+            // Default true: quoting enabled (secure). Set to false to disable (not recommended).
+            String execQuotingEnabledProp = context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.exec.quoting.enabled");
+            boolean execQuotingEnabled = (execQuotingEnabledProp == null || execQuotingEnabledProp.isEmpty())
+                    ? true
+                    : Boolean.parseBoolean(execQuotingEnabledProp);
+
             String[] command = script.getCommand();
             ExecArgList.Builder builder = ExecArgList.builder();
             for (String arg : command) {
-                // Quote all arguments unless quoting is explicitly disabled
-                // This protects against command injection in option values
-                boolean shouldQuote = !execQuotingDisabled;
+                // Quote all arguments when quoting is enabled (default). Protects against command injection in option values.
+                boolean shouldQuote = execQuotingEnabled;
                 builder.arg(arg, shouldQuote, featureQuotingBackwardCompatible);
             }
             

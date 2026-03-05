@@ -32,15 +32,14 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
         boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getExecutionContext().getIFramework()
                 .getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
         
-        boolean execQuotingDisabled = Boolean.valueOf(context.getExecutionContext().getIFramework()
-                .getPropertyRetriever().getProperty("rundeck.feature.exec.quoting.disabled"));
+        // Default true: quoting enabled (secure). Set to false to disable (not recommended).
+        String execQuotingEnabledProp = context.getExecutionContext().getIFramework()
+                .getPropertyRetriever().getProperty("rundeck.feature.exec.quoting.enabled")
+        boolean execQuotingEnabled = (execQuotingEnabledProp == null || execQuotingEnabledProp.isEmpty())
+                ? true
+                : Boolean.parseBoolean(execQuotingEnabledProp)
 
         def arr = OptsUtil.burst(adhocRemoteString)
-
-        // Track which arguments contain property references BEFORE replacement
-        def containsPropertyRef = arr.collect { arg ->
-            DataContextUtils.stringContainsPropertyReferencePredicate.test(arg)
-        }
 
         def result = SharedDataContextUtils.replaceDataReferencesInObject(
                 arr,
@@ -55,8 +54,8 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
         // Build ExecArgList with proper quoting based on original property references
         def execArgListBuilder = ExecArgList.builder()
         for (int i = 0; i < result.length; i++) {
-            // Quote if: original contained property ref AND quoting not disabled
-            boolean shouldQuote = containsPropertyRef[i] && !execQuotingDisabled
+            // Quote if: original contained property ref AND quoting enabled
+            boolean shouldQuote = DataContextUtils.stringContainsPropertyReferencePredicate.test(result[i]) && execQuotingEnabled
             execArgListBuilder.arg(result[i], shouldQuote, featureQuotingBackwardCompatible)
         }
 
