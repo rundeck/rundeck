@@ -8,18 +8,34 @@ const mockEventBusEmit = jest.fn();
 const mockSetSelectedFilter = jest.fn();
 const mockFetchNodes = jest.fn();
 
+const createMockRootStore = () => {
+  const uiItems: Array<{ section: string; location: string; visible: boolean; widget?: unknown }> = [];
+  return {
+    projects: {
+      projects: [
+        { name: "testProject" },
+        { name: "otherProject" },
+      ],
+      loaded: true,
+      load: jest.fn(),
+    },
+    ui: {
+      items: uiItems,
+      itemsForLocation: (section: string, location: string) =>
+        uiItems.filter(
+          (i) => i.section === section && (!location || i.location === location),
+        ),
+      addWatcher: jest.fn(),
+      removeWatcher: jest.fn(),
+    },
+  };
+};
+
+let mockRootStore = createMockRootStore();
+
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
-    rootStore: {
-      projects: {
-        projects: [
-          { name: "testProject" },
-          { name: "otherProject" },
-        ],
-        loaded: true,
-        load: jest.fn(),
-      },
-    },
+    rootStore: mockRootStore,
     projectName: "testProject",
     eventBus: {
       on: mockEventBusOn,
@@ -153,6 +169,7 @@ describe("JobRefFormFields", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRootStore = createMockRootStore();
   });
 
   afterEach(() => {

@@ -58,6 +58,7 @@ public interface ExecutionData {
     WorkflowData getWorkflow();
     OrchestratorData getOrchestrator();
     Map<String,Object> getExtraMetadataMap();
+    WorkflowData getWorkflowData();
 
     //transient methods
     String getExecutionState();

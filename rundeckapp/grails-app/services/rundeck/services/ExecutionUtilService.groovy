@@ -18,6 +18,8 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.NodesetEmptyException
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptCommand
 import org.rundeck.core.execution.ScriptFileCommand
@@ -162,7 +164,7 @@ class ExecutionUtilService {
      * Create an WorkflowExecutionItem instance for the given Workflow,
      * suitable for the ExecutionService layer
      */
-    public WorkflowExecutionItem createExecutionItemForWorkflow(Workflow workflow, parentProject=null) {
+    public WorkflowExecutionItem createExecutionItemForWorkflow(WorkflowData workflow, parentProject=null) {
         if (!workflow.commands || workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
@@ -214,7 +216,7 @@ class ExecutionUtilService {
             WorkflowExecutionItem jobReferenceWorkflow = null
             ScheduledExecution se = scheduledExecutionService.findJobFromJobExec(jobcmditem, jobcmditem.jobProject ?: parentProject)
             if(se){
-                jobReferenceWorkflow = createExecutionItemForWorkflow(se?.workflow, parentProject)
+                jobReferenceWorkflow = createExecutionItemForWorkflow(se?.getWorkflowData(), parentProject)
             }
 
             final String[] args

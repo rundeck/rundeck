@@ -104,15 +104,16 @@ class ExecReport extends BaseReport implements RdExecReport{
         def succeededList=exec.succeededNodeList? exec.succeededNodeList:'';
         def totalCount = failedCount+successCount;
         def adhocScript = null
+        def workflowData = exec.getWorkflowData()
         if(
             null == exec.scheduledExecution
-            && exec.workflow.commands
-            && exec.workflow.commands.size()==1
-            && exec.workflow.commands[0] instanceof CommandExec
+            && workflowData?.commands
+            && workflowData.commands.size()==1
+            && workflowData.commands[0] instanceof CommandExec
         ){
-            adhocScript=exec.workflow.commands[0].adhocRemoteString
+            adhocScript=workflowData.commands[0].adhocRemoteString
         }
-        def summary = "[${exec.workflow.commands?exec.workflow.commands.size():0} steps]"
+        def summary = "[${workflowData?.commands ? workflowData.commands.size() : 0} steps]"
         def issuccess = exec.statusSucceeded()
         def iscancelled = exec.cancelled
         def istimedout = exec.timedOut

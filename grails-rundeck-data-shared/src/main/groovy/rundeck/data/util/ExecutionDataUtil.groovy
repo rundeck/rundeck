@@ -38,7 +38,7 @@ class ExecutionDataUtil {
     public static ExecutionReference createExecutionReference(ExecutionData executionData, JobReference jobRef = null, String targetNodes = null) {
         String adhocCommand = null
         if(!jobRef) {
-            adhocCommand = executionData.workflow.steps.get(0).summarize()
+            adhocCommand = executionData.getWorkflowData()?.steps?.get(0)?.summarize()
         }
         return new ExecutionReferenceImpl(
                 project: executionData.project,

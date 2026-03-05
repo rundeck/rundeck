@@ -20,7 +20,7 @@ import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
 import "primeicons/primeicons.css";
 import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
-import {configurePrimeVue} from "@/library/utilities/primeVueConfig";
+import { configurePrimeVue } from "@/library/utilities/primeVueConfig";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
