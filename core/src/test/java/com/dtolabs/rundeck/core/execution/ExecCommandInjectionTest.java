@@ -164,4 +164,51 @@ public class ExecCommandInjectionTest {
         Assert.assertEquals("echo", result.get(0));
         Assert.assertEquals("'Scanning port: 80 6c 1d > /tmp/poc_amd'", result.get(1));
     }
+
+    @Test
+    public void testFeatureQuotingBackwardCompatibleQuotesModifiedStrings() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, true);
+        builder.arg("Scanning port: 80 | whoami", true, true);
+        ExecArgList execArgList = builder.build();
+        
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "unix");
+        
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("'Scanning port: 80 | whoami'", result.get(1));
+    }
+
+    @Test
+    public void testQuotingAppliedWhenArgumentContainsPropertyReference() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, false);
+        // Simulate an argument that originally contained ${option.port} and was replaced
+        builder.arg("80 | whoami", true, false);
+        ExecArgList execArgList = builder.build();
+        
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "unix");
+        
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("'80 | whoami'", result.get(1));
+    }
+
+    @Test
+    public void testQuotingSkippedWhenArgumentDoesNotContainPropertyReference() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, false);
+        // Argument that never contained a property reference
+        builder.arg("literal text", false, false);
+        ExecArgList execArgList = builder.build();
+        
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "unix");
+        
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("literal text", result.get(1));
+    }
 }
