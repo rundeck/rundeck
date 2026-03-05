@@ -78,7 +78,14 @@ class PluginController extends ControllerBase {
             response.status = 400
             return render(view: '/common/error')
         }
-        // Serve group icons from app resources
+        
+        if (!iconName.matches(/^[a-zA-Z0-9_-]+\.(svg|png|jpg|jpeg|gif|ico)$/)) {
+            def sanitizedIconName = iconName.replaceAll(/[\p{Cntrl}]/, '')
+            log.warn("Invalid groupIcon request for iconName: {}", sanitizedIconName)
+            response.status = 400
+            return render(view: '/common/error')
+        }
+        
         def iconPath = "/images/plugins/${iconName}"
         def resource = grailsApplication.mainContext.getResource("classpath:public${iconPath}")
 

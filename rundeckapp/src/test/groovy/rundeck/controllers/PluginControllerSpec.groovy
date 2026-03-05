@@ -723,4 +723,43 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
                 }
             }
     }
+
+    @Unroll
+    def "groupIcon validates icon name to prevent path traversal - #iconName"() {
+        given:
+            params.iconName = iconName
+            
+        when:
+            controller.groupIcon(iconName)
+            
+        then:
+            if (isValidFormat) {
+                // For valid formats, ensure not rejected as bad request (400)
+                // regardless of whether the resource actually exists
+                response.status != HttpServletResponse.SC_BAD_REQUEST
+            } else {
+                // For invalid or malicious inputs, expect 400 Bad Request
+                response.status == HttpServletResponse.SC_BAD_REQUEST
+            }
+            
+        where:
+            iconName                                    | isValidFormat
+            'aws-icon.svg'                              | true   // Valid format; existence not assumed
+            'datadog-icon.png'                          | true   // Valid format; existence not assumed
+            'my-plugin-icon.jpg'                        | true   // Valid format; existence not assumed
+            '../../application.yml'                     | false  // Path traversal attempt
+            '../../../WEB-INF/classes/application.yml'  | false  // Path traversal attempt
+            '/etc/passwd'                               | false  // Absolute path
+            '..\\..\\application.yml'                   | false  // Windows path traversal
+            'icon;whoami.svg'                           | false  // Command injection attempt
+            'icon`whoami`.svg'                          | false  // Command injection attempt
+            'icon$(whoami).svg'                         | false  // Command injection attempt
+            'icon|whoami.svg'                           | false  // Pipe character
+            'icon&whoami.svg'                           | false  // Ampersand
+            'icon with spaces.svg'                      | false  // Spaces not allowed
+            'icon.svg.yml'                              | false  // Wrong extension
+            'icon.txt'                                  | false  // Non-image extension
+            ''                                          | false  // Empty string
+            null                                        | false  // Null value
+    }
 }
