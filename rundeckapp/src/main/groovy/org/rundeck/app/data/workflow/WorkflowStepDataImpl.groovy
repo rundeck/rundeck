@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import grails.util.Holders
 import grails.validation.Validateable
 import org.rundeck.app.core.FrameworkServiceCapabilities
+import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import rundeck.CommandExec
 import rundeck.JobExec
@@ -30,6 +31,8 @@ class WorkflowStepDataImpl implements WorkflowStepData, PluginProviderConfigurat
     String pluginType
     Map<String, Object> pluginConfig
     String runnerNode;
+    ConditionalSet conditionSet
+    List<WorkflowStepData> subSteps
 
     static constraints = {
         importFrom SharedWorkflowStepConstraints
@@ -43,28 +46,26 @@ class WorkflowStepDataImpl implements WorkflowStepData, PluginProviderConfigurat
     }
 
     /**
-     * Create a WorkflowStepDataImpl instance from a Map representation
+     * Create a WorkflowStepData instance from a Map representation.
+     * If conditionSet is present, returns a ConditionalStep; otherwise returns WorkflowStepDataImpl.
      * @param stepMap Map containing workflow step data
-     * @return WorkflowStepDataImpl instance
+     * @return WorkflowStepData instance (ConditionalStep or WorkflowStepDataImpl)
      */
-    static WorkflowStepData workflowStepDatafromMap(Map<String, Object> map) {
-
-    }
     static WorkflowStepData fromMap(Map<String, Object> map) {
         if (!map) {
             return null
         }
 
-        WorkflowStepData exec
+        WorkflowStepData step
         if (map.jobref!=null) {
-            exec = JobExec.jobExecFromMap(map)
+            step = JobExec.jobExecFromMap(map)
         } else if (map.exec != null || map.script != null || map.scriptfile != null || map.scripturl != null) {
             CommandExec ce = new CommandExec()
             CommandExec.updateFromMap(ce, map)
-            exec = ce
+            step = ce
         } else {
             WorkflowStepData pluginStep = PluginStep.fromMap(map)
-            exec = pluginStep.createClone()
+            step = pluginStep.createClone()
         }
         //exec
         //WorkflowStepDataImpl.fromMap(map as Map<String, Object>)
@@ -72,13 +73,31 @@ class WorkflowStepDataImpl implements WorkflowStepData, PluginProviderConfigurat
             WorkflowStepData errorHandlerExec
             Map mapErrorHandler = map.errorhandler as Map
             if (mapErrorHandler.jobref!=null) {
-                exec.errorHandler = JobExec.jobExecFromMap(mapErrorHandler)
+                step.errorHandler = JobExec.jobExecFromMap(mapErrorHandler)
             } else {
-                exec.errorHandler = PluginStep.fromMap(mapErrorHandler)
+                step.errorHandler = PluginStep.fromMap(mapErrorHandler)
             }
         }
 
-        return exec
+        if (map.conditionGroups) {
+            step.conditionSet = new ConditionalSetImpl().fromMap(map as Map<String, Object>)
+        }
+        // Handle subSteps - can be any WorkflowStepData type
+        if (map.conditionGroups && map.subSteps) {
+            def subStepsList = []
+            map.subSteps.each { Map subStepMap ->
+                WorkflowStepData exec
+                if (subStepMap.jobref!=null) {
+                    exec = JobExec.jobExecFromMap(subStepMap)
+                } else {
+                    exec = PluginStep.fromMap(subStepMap)
+                }
+                subStepsList.add(exec)
+            }
+            step.subSteps = subStepsList
+        }
+
+        return step
     }
 
     @Override
@@ -159,6 +178,15 @@ class WorkflowStepDataImpl implements WorkflowStepData, PluginProviderConfigurat
         }
         if (pluginConfig) {
             map.plugins = pluginConfig
+        }
+        if (runnerNode) {
+            map.runnerNode = runnerNode
+        }
+        if(conditionSet){
+            map.conditionSet = conditionSet
+        }
+        if(subSteps){
+            map.subSteps = subSteps.collect { it.toMap() }
         }
         return map
     }
