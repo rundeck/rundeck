@@ -94,16 +94,16 @@ class JobsYAMLCodecSpec extends Specification {
             se.year == "2011"
 
             //workflow
-            se.workflow
-            se.workflow.commands
-            !se.workflow.keepgoing
-            se.workflow.strategy == "node-first"
-            se.workflow.commands.size() == 4
-            se.workflow.commands.eachWithIndex { def entry, int i ->
+            se.getWorkflowData()
+            se.getWorkflowData().commands
+            !se.getWorkflowData().keepgoing
+            se.getWorkflowData().strategy == "node-first"
+            se.getWorkflowData().commands.size() == 4
+            se.getWorkflowData().commands.eachWithIndex { def entry, int i ->
                 entry.description == "test${i + 1}".toString()
             }
-            se.workflow.commands[0].configuration.adhocRemoteString == "test script"
-            se.workflow.commands[1].configuration.adhocLocalString == "A Monkey returns"
+            se.getWorkflowData().commands[0].configuration.adhocRemoteString == "test script"
+            se.getWorkflowData().commands[1].configuration.adhocLocalString == "A Monkey returns"
 
             //options
             se.options != null
@@ -166,24 +166,24 @@ class JobsYAMLCodecSpec extends Specification {
             se.executionEnabled == true
 
             //workflow
-            se.workflow
-            se.workflow.commands
-            !se.workflow.keepgoing
-            se.workflow.strategy == "node-first"
-            se.workflow.commands.size() == 2
-            se.workflow.commands.eachWithIndex { def entry, int i ->
+            se.getWorkflowData()
+            se.getWorkflowData().commands
+            !se.getWorkflowData().keepgoing
+            se.getWorkflowData().strategy == "node-first"
+            se.getWorkflowData().commands.size() == 2
+            se.getWorkflowData().commands.eachWithIndex { def entry, int i ->
                 entry.description == "test${i + 1}".toString()
             }
-            se.workflow.commands[0].pluginType == ScriptCommand.SCRIPT_COMMAND_TYPE
-            se.workflow.commands[0].configuration == [
+            se.getWorkflowData().commands[0].pluginType == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.getWorkflowData().commands[0].configuration == [
                 adhocLocalString     : "A Monkey returns",
                 scriptInterpreter    : 'sh',
                 fileExtension        : 'sh',
                 interpreterArgsQuoted: 'true',
                 argString            : 'oi'
             ]
-            se.workflow.commands[1].pluginType == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
-            se.workflow.commands[1].configuration == [
+            se.getWorkflowData().commands[1].pluginType == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+            se.getWorkflowData().commands[1].configuration == [
                 adhocFilepath          : "/some/file",
                 scriptInterpreter      : 'sh',
                 fileExtension          : 'sh',
@@ -281,17 +281,17 @@ class JobsYAMLCodecSpec extends Specification {
             se.year == "2011"
 
             //workflow
-            se.workflow != null
-            se.workflow.commands != null
-            !se.workflow.keepgoing
-            se.workflow.strategy == "node-first"
-            se.workflow.commands.size() == 4
-            se.workflow.commands.eachWithIndex { def entry, int i ->
+            se.getWorkflowData() != null
+            se.getWorkflowData().commands != null
+            !se.getWorkflowData().keepgoing
+            se.getWorkflowData().strategy == "node-first"
+            se.getWorkflowData().commands.size() == 4
+            se.getWorkflowData().commands.eachWithIndex { def entry, int i ->
                 entry.description == "test${i + 1}".toString()
             }
-            se.workflow.commands[0].configuration.adhocRemoteString == "test script"
+            se.getWorkflowData().commands[0].configuration.adhocRemoteString == "test script"
 
-            se.workflow.commands[1].configuration.adhocLocalString == "A Monkey returns"
+            se.getWorkflowData().commands[1].configuration.adhocLocalString == "A Monkey returns"
 
             //options
             se.options != null
@@ -423,30 +423,30 @@ class JobsYAMLCodecSpec extends Specification {
             se.year == "2001,2010,2012"
 
             //workflow
-            se.workflow != null
-            se.workflow.commands != null
-            se.workflow.keepgoing
-            se.workflow.strategy == "step-first"
-            se.workflow.commands.size() == 5
-            se.workflow.commands[0].configuration.adhocRemoteString == "test script"
+            se.getWorkflowData() != null
+            se.getWorkflowData().commands != null
+            se.getWorkflowData().keepgoing
+            se.getWorkflowData().strategy == "step-first"
+            se.getWorkflowData().commands.size() == 5
+            se.getWorkflowData().commands[0].configuration.adhocRemoteString == "test script"
             //exec doesn't support arguments
-            se.workflow.commands[0].configuration.argString == null
+            se.getWorkflowData().commands[0].configuration.argString == null
 
-            se.workflow.commands[1].configuration.adhocLocalString == "A Monkey returns"
-            se.workflow.commands[1].configuration.argString == "whatever"
+            se.getWorkflowData().commands[1].configuration.adhocLocalString == "A Monkey returns"
+            se.getWorkflowData().commands[1].configuration.argString == "whatever"
 
-            se.workflow.commands[2].configuration.adhocFilepath == "/path/to/file"
+            se.getWorkflowData().commands[2].configuration.adhocFilepath == "/path/to/file"
 
-            se.workflow.commands[2].configuration.argString == "-whatever something -else"
+            se.getWorkflowData().commands[2].configuration.argString == "-whatever something -else"
 
-            se.workflow.commands[3] instanceof JobExec
-            se.workflow.commands[3].jobName == "some job"
-            se.workflow.commands[3].jobGroup == "another group"
-            se.workflow.commands[3].argString == "yankee doodle"
-            se.workflow.commands[3].nodeStep == true
-            se.workflow.commands[4] instanceof PluginStep
-            se.workflow.commands[4].configuration.adhocFilepath == "http://example.com/path/to/file"
-            se.workflow.commands[4].configuration.argString == "-blah bloo -blee"
+            se.getWorkflowData().commands[3] instanceof JobExec
+            se.getWorkflowData().commands[3].jobName == "some job"
+            se.getWorkflowData().commands[3].jobGroup == "another group"
+            se.getWorkflowData().commands[3].argString == "yankee doodle"
+            se.getWorkflowData().commands[3].nodeStep == true
+            se.getWorkflowData().commands[4] instanceof PluginStep
+            se.getWorkflowData().commands[4].configuration.adhocFilepath == "http://example.com/path/to/file"
+            se.getWorkflowData().commands[4].configuration.argString == "-blah bloo -blee"
 
 
             //options
@@ -549,14 +549,14 @@ class JobsYAMLCodecSpec extends Specification {
             se.year == "2011"
 
             //workflow
-            se.workflow != null
-            se.workflow.commands != null
-            !se.workflow.keepgoing
-            se.workflow.strategy == "node-first"
-            se.workflow.commands.size() == 2
+            se.getWorkflowData() != null
+            se.getWorkflowData().commands != null
+            !se.getWorkflowData().keepgoing
+            se.getWorkflowData().strategy == "node-first"
+            se.getWorkflowData().commands.size() == 2
 
-            se.workflow.commands[0].configuration == [adhocRemoteString: 'test script']
-            se.workflow.commands[1].configuration == [adhocLocalString: 'A Monkey returns']
+            se.getWorkflowData().commands[0].configuration == [adhocRemoteString: 'test script']
+            se.getWorkflowData().commands[1].configuration == [adhocLocalString: 'A Monkey returns']
 
             //options
             se.options != null
@@ -622,12 +622,12 @@ class JobsYAMLCodecSpec extends Specification {
             ScheduledExecution se = (ScheduledExecution) list[0]
 
             //workflow
-            se.workflow != null
-            se.workflow.commands != null
-            se.workflow.commands.size() == 4
+            se.getWorkflowData() != null
+            se.getWorkflowData().commands != null
+            se.getWorkflowData().commands.size() == 4
 
 
-            def cmd0 = se.workflow.commands[0]
+            def cmd0 = se.getWorkflowData().commands[0]
             cmd0.class == PluginStep.class
             cmd0.configuration == [adhocRemoteString: 'test script']
 
@@ -637,7 +637,7 @@ class JobsYAMLCodecSpec extends Specification {
             !cmd0.errorHandler.keepgoingOnSuccess
 
 
-            def cmd1 = se.workflow.commands[1]
+            def cmd1 = se.getWorkflowData().commands[1]
             cmd1.class == PluginStep.class
             cmd1.configuration == [adhocLocalString: 'script string', argString: 'script args']
 
@@ -647,7 +647,7 @@ class JobsYAMLCodecSpec extends Specification {
             !cmd1.errorHandler.keepgoingOnSuccess
 
 
-            def cmd2 = se.workflow.commands[2]
+            def cmd2 = se.getWorkflowData().commands[2]
             cmd2.class == PluginStep.class
             cmd2.configuration == [adhocFilepath: 'file path',  argString: 'file args']
 
@@ -657,7 +657,7 @@ class JobsYAMLCodecSpec extends Specification {
             !cmd2.errorHandler.keepgoingOnSuccess
 
 
-            def cmd3 = se.workflow.commands[3]
+            def cmd3 = se.getWorkflowData().commands[3]
             cmd3.class == JobExec.class
             cmd3.jobName == "job name"
             cmd3.jobGroup == "job group"

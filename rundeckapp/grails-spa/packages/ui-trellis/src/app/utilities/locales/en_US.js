@@ -978,7 +978,11 @@ const messages = {
         notEquals: "Does not equal",
         contains: "Contains",
         notContains: "Does not contain",
-        regex: "Matches",
+        matches: "Matches",
+        greaterThan: "Greater than",
+        greaterThanOrEqual: "Greater than or equal",
+        lessThan: "Less than",
+        lessThanOrEqual: "Less than or equal"
       },
     },
     stepLabel: "Step label",

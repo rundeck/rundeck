@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
+import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet;
 
 import java.util.*;
 
@@ -46,6 +47,18 @@ public class PluginNodeStepExecutionItemImpl extends PluginStepExecutionItemImpl
                                            final List<PluginConfiguration> filterConfigurations
     )
     {
+        this(type, stepConfiguration, keepgoingOnSuccess, handler, label, filterConfigurations, null);
+    }
+
+    public PluginNodeStepExecutionItemImpl(final String type,
+                                           final Map stepConfiguration,
+                                           final boolean keepgoingOnSuccess,
+                                           final StepExecutionItem handler,
+                                           final String label,
+                                           final List<PluginConfiguration> filterConfigurations,
+                                           final ConditionalSet conditions
+    )
+    {
         super(
                 NodeDispatchStepExecutor.STEP_EXECUTION_TYPE,
                 stepConfiguration,
@@ -53,7 +66,8 @@ public class PluginNodeStepExecutionItemImpl extends PluginStepExecutionItemImpl
                 handler,
                 label,
                 filterConfigurations,
-                null
+                null,
+                conditions
         );
         this.nodeStepType = type;
     }

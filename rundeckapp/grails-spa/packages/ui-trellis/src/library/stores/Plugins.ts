@@ -10,6 +10,7 @@ export class PluginStore {
   pluginsByService: { [key: string]: Plugin[] } = {};
   pluginsById: { [key: string]: Plugin[] } = {};
   pluginDetailLoader: { [key: string]: Promise<any> } = {};
+  loadedServices: Set<string> = new Set();
 
   constructor(
     readonly root: RootStore,
@@ -18,7 +19,7 @@ export class PluginStore {
 
   @Serial
   async load(service: string): Promise<void> {
-    if (this.pluginsByService[service]) return void 0;
+    if (this.loadedServices.has(service)) return void 0;
     if (
       service === ServiceType.WorkflowNodeStep ||
       service === ServiceType.WorkflowStep
@@ -35,6 +36,7 @@ export class PluginStore {
       else this.plugins.push(p);
     });
     this._refreshPluginGroups();
+    this.loadedServices.add(service);
     return void 0;
   }
 

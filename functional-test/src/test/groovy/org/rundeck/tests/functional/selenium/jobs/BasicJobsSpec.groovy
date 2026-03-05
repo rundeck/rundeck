@@ -78,9 +78,7 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "create valid job basic options"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.legacyUi=legacyUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
             def jobShowPage = page JobShowPage
             def optionName = 'seleniumOption1'
         then:
@@ -101,11 +99,9 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "edit job set description"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
             def jobShowPage = page JobShowPage
-            jobShowPage.nextUi=nextUi
+            jobShowPage.nextUi = nextUi
         then:
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
@@ -123,9 +119,7 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "edit job set groups"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
         then:
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
@@ -137,9 +131,7 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "edit job set group via modal"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
         then:
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
@@ -172,8 +164,7 @@ class BasicJobsSpec extends SeleniumBase {
     def "edit job and set executions tab"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
-            jobCreatePage.legacyUi = !nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", true, !nextUi
             jobCreatePage.go()
             jobCreatePage.tab JobTab.EXECUTION_PLUGINS click()
             if(jobCreatePage.executionPluginsRows.size() > 1){

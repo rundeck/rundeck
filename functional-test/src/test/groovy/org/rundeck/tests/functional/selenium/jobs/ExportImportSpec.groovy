@@ -64,9 +64,7 @@ class ExportImportSpec extends SeleniumBase {
      */
     def "export import job with options"() {
         setup:
-        def jobCreatePage = page JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT
-        jobCreatePage.legacyUi = legacyUi
-        jobCreatePage.go()
+        def jobCreatePage = go(JobCreatePage, SELENIUM_EXPORT_IMPORT_PROJECT, [legacyUi: legacyUi])
         def jobShowPage = page JobShowPage
         def jobListPage = page JobListPage
         def jobUploadPage = page JobUploadPage

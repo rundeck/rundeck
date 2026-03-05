@@ -23,6 +23,7 @@ class CommandPage extends BasePage {
     By abortBy = By.cssSelector("span[data-bind\$='killExecAction']")
     By runContentBy = By.id("runcontent")
     By runArgumentBy = By.className("argString")
+    By runCommandArgumentBy = By.className("text-success")
     By execLogGutterBy = By.className("execution-log_gutter-entry")
     By execLogContentBy = By.className("execution-log__content-text")
     By runningExecStateBy = By.cssSelector(".execstate.execstatedisplay.overall")
@@ -94,6 +95,10 @@ class CommandPage extends BasePage {
 
     WebElement getRunArgument() {
         el runArgumentBy
+    }
+
+    WebElement getCommandRunArgument() {
+        el runCommandArgumentBy
     }
 
     List<WebElement> getExecLogGutters() {

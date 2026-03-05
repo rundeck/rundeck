@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
+import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet;
 
 import java.util.*;
 
@@ -46,6 +47,7 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
     private String label;
     private List<PluginConfiguration> filterConfigurations;
     private String runnerNode;
+    private ConditionalSet conditions;
 
     public PluginStepExecutionItemImpl(
             final String type,
@@ -56,6 +58,19 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
             final List<PluginConfiguration> filterConfigurations,
             final String runnerNode
     ) {
+        this(type, stepConfiguration, keepgoingOnSuccess, failureHandler, label, filterConfigurations, runnerNode, null);
+    }
+
+    public PluginStepExecutionItemImpl(
+            final String type,
+            final Map stepConfiguration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem failureHandler,
+            final String label,
+            final List<PluginConfiguration> filterConfigurations,
+            final String runnerNode,
+            final ConditionalSet conditions
+    ) {
         this.type = type;
         this.stepConfiguration = stepConfiguration;
         this.keepgoingOnSuccess = keepgoingOnSuccess;
@@ -63,6 +78,7 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
         this.label= label;
         this.filterConfigurations=filterConfigurations;
         this.runnerNode = runnerNode;
+        this.conditions = conditions;
     }
 
     @Override
@@ -128,5 +144,14 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
             return new NodeEntryImpl(runnerNode);
         }
         return null;
+    }
+
+    @Override
+    public ConditionalSet getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(ConditionalSet conditions) {
+        this.conditions = conditions;
     }
 }

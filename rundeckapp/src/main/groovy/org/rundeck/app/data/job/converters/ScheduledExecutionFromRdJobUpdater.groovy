@@ -43,8 +43,12 @@ class ScheduledExecutionFromRdJobUpdater {
         se.defaultTab = job.defaultTab
         se.maxMultipleExecutions = job.maxMultipleExecutions
         se.save() //This is necessary for inserts to happen in the correct order
-        if(!se.workflow) se.workflow = new Workflow(commands: [])
-        WorkflowUpdater.updateWorkflow(se.workflow, job.workflow)
+        // Get or create workflow for updating
+        def workflow = se.getWorkflowData()
+        if(!workflow) workflow = new Workflow(commands: [])
+        WorkflowUpdater.updateWorkflow(workflow, job.workflow)
+        // Persist workflow as JSON
+        se.setWorkflowData(workflow)
         updateSchedule(se, job.schedule)
         updateLogConfig(se, job.logConfig)
         updateNodeConfig(se, job.nodeConfig)

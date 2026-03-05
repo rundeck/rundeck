@@ -55,6 +55,8 @@
       <button
         v-for="prov in filteredServices[0].providers"
         class="list-group-item"
+        data-test="provider-button"
+        v-bind="dataStepType(filteredServices[0].service, prov.name)"
         @click.prevent="
           chooseProviderAdd(filteredServices[0].service, prov.name)
         "

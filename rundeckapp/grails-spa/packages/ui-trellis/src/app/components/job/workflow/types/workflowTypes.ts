@@ -196,6 +196,57 @@ export function exportPluginData(
 export function createLogFiltersData({ pluginConfig }: any): GlobalLogFiltersData {
   return { LogFilter: pluginConfig?.LogFilter || [] };
 }
-export function createStepsData({ commands }: any): StepsData {
+
+/**
+ * Recursively filters out conditional steps from commands array
+ * Removes entire conditional blocks including all sub-steps
+ * @param commands - Array of step data
+ * @returns Filtered array without conditional steps
+ */
+function filterConditionalSteps(commands: StepData[]): StepData[] {
+  if (!commands || commands.length === 0) {
+    return [];
+  }
+
+  return commands
+    .filter((cmd) => {
+      // Remove entire conditional block (both wrapper and sub-steps)
+      // Check type field OR duck-typing with conditionGroups/subSteps
+      const cmdAny = cmd as any;
+      if (cmd.type === 'conditional' ||
+          (cmdAny.conditionGroups !== undefined && cmdAny.subSteps !== undefined)) {
+        return false;
+      }
+      return true;
+    })
+    .map((cmd) => {
+      // Recursively filter error handlers
+      if (cmd.errorhandler) {
+        const cmdAny = cmd.errorhandler as any;
+        const filteredHandler = filterConditionalSteps([cmdAny])[0];
+        if (filteredHandler) {
+          cmd.errorhandler = filteredHandler as ErrorHandlerDefinition;
+        } else {
+          // If error handler was conditional, remove it entirely
+          delete cmd.errorhandler;
+        }
+      }
+
+      // Recursively filter plugin configurations with nested commands
+      if (cmd.configuration && (cmd.configuration as any).commands) {
+        (cmd.configuration as any).commands = filterConditionalSteps((cmd.configuration as any).commands);
+      }
+
+      return cmd;
+    });
+}
+
+export function createStepsData({ commands }: Partial<StepsData>, filterConditionals: boolean = false): StepsData {
+  if (filterConditionals && commands) {
+    // Filter out conditional steps when feature is disabled
+    const filteredCommands = filterConditionalSteps(commands);
+    return { commands: filteredCommands };
+  }
+
   return { commands: commands || [] };
 }
