@@ -110,7 +110,9 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
     private String project
-    boolean nextUi = false
+
+    boolean getNextUi() { isFlagEnabled('nextUi') }
+    void setNextUi(boolean value) { withFlag('nextUi', value) }
 
     JobShowPage(final SeleniumContext context) {
         super(context)
