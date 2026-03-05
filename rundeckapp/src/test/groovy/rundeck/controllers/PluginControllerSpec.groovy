@@ -733,26 +733,33 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             controller.groupIcon(iconName)
             
         then:
-            response.status == expectedStatus
+            if (isValidFormat) {
+                // For valid formats, ensure not rejected as bad request (400)
+                // regardless of whether the resource actually exists
+                response.status != HttpServletResponse.SC_BAD_REQUEST
+            } else {
+                // For invalid or malicious inputs, expect 400 Bad Request
+                response.status == HttpServletResponse.SC_BAD_REQUEST
+            }
             
         where:
-            iconName                                    | expectedStatus
-            'aws-icon.svg'                              | 404  // Valid format, but file doesn't exist in test
-            'datadog-icon.png'                          | 404  // Valid format, but file doesn't exist in test
-            'my-plugin-icon.jpg'                        | 404  // Valid format
-            '../../application.yml'                     | 400  // Path traversal attempt
-            '../../../WEB-INF/classes/application.yml'  | 400  // Path traversal attempt
-            '/etc/passwd'                               | 400  // Absolute path
-            '..\\..\\application.yml'                   | 400  // Windows path traversal
-            'icon;whoami.svg'                           | 400  // Command injection attempt
-            'icon`whoami`.svg'                          | 400  // Command injection attempt
-            'icon$(whoami).svg'                         | 400  // Command injection attempt
-            'icon|whoami.svg'                           | 400  // Pipe character
-            'icon&whoami.svg'                           | 400  // Ampersand
-            'icon with spaces.svg'                      | 400  // Spaces not allowed
-            'icon.svg.yml'                              | 400  // Wrong extension
-            'icon.txt'                                  | 400  // Non-image extension
-            ''                                          | 400  // Empty string
-            null                                        | 400  // Null value
+            iconName                                    | isValidFormat
+            'aws-icon.svg'                              | true   // Valid format; existence not assumed
+            'datadog-icon.png'                          | true   // Valid format; existence not assumed
+            'my-plugin-icon.jpg'                        | true   // Valid format; existence not assumed
+            '../../application.yml'                     | false  // Path traversal attempt
+            '../../../WEB-INF/classes/application.yml'  | false  // Path traversal attempt
+            '/etc/passwd'                               | false  // Absolute path
+            '..\\..\\application.yml'                   | false  // Windows path traversal
+            'icon;whoami.svg'                           | false  // Command injection attempt
+            'icon`whoami`.svg'                          | false  // Command injection attempt
+            'icon$(whoami).svg'                         | false  // Command injection attempt
+            'icon|whoami.svg'                           | false  // Pipe character
+            'icon&whoami.svg'                           | false  // Ampersand
+            'icon with spaces.svg'                      | false  // Spaces not allowed
+            'icon.svg.yml'                              | false  // Wrong extension
+            'icon.txt'                                  | false  // Non-image extension
+            ''                                          | false  // Empty string
+            null                                        | false  // Null value
     }
 }

@@ -80,7 +80,8 @@ class PluginController extends ControllerBase {
         }
         
         if (!iconName.matches(/^[a-zA-Z0-9_-]+\.(svg|png|jpg|jpeg|gif|ico)$/)) {
-            log.warn("Invalid groupIcon request with potential path traversal: ${iconName}")
+            def sanitizedIconName = iconName.replaceAll(/[\p{Cntrl}]/, '')
+            log.warn("Invalid groupIcon request for iconName: {}", sanitizedIconName)
             response.status = 400
             return render(view: '/common/error')
         }
