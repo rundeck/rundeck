@@ -117,10 +117,11 @@ export default defineComponent({
 
     const shouldEnableAutoCompletion =
       this.contextVariableSuggestions && this.contextVariableSuggestions.length > 0;
+    const autoCompleteDelay = shouldEnableAutoCompletion ? 150 : undefined;
     editor.setOptions({
       ...(this.options || {}),
       enableLiveAutocompletion: shouldEnableAutoCompletion,
-      liveAutocompletionDelay: 150,
+      liveAutocompletionDelay: autoCompleteDelay,
     });
 
     if (this.modelValue) editor.setValue(this.resolveValue(this.modelValue), 1);
