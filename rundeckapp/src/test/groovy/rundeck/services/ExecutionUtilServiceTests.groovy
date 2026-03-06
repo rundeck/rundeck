@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
@@ -26,7 +26,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCom
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.core.jobs.JobExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobRefCommand
-import com.dtolabs.rundeck.execution.PluginNodeStepExecutionItemImpl
+import com.dtolabs.rundeck.core.execution.PluginNodeStepExecutionItemImpl
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
@@ -35,6 +35,8 @@ import org.rundeck.core.execution.ScriptCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import rundeck.CommandExec
 import rundeck.JobExec
+import rundeck.PluginStep
+import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.Execution
 import spock.lang.Specification
@@ -46,7 +48,15 @@ import static org.junit.Assert.*
  */
 class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest<ExecutionUtilService>, DataTest, GrailsWebUnitTest{
 
-    def setupSpec() { mockDomains Execution, CommandExec, JobExec, Workflow }
+    def setupSpec() {
+        mockDomains Execution, CommandExec, JobExec, Workflow, PluginStep, ScheduledExecution
+    }
+
+    def setup() {
+        service.featureService = Mock(FeatureService){
+            featurePresent(_) >> false
+        }
+    }
 
 
     void "itemForWFCmdItem command step basics"(){
@@ -258,6 +268,11 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testItemForWFCmdItem_jobref() {
         when:
         def testService = service
+
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
+
         //file url script path
         JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz')
         def res = testService.itemForWFCmdItem(ce)
@@ -276,6 +291,10 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testItemForWFCmdItem_jobref_args() {
         when:
         def testService = service
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
+
         //file url script path
         JobExec ce = new JobExec(
                 jobName: 'abc',
@@ -303,6 +322,9 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testItemForWFCmdItem_jobref_externalProject() {
         when:
         def testService = service
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
         //file url script path
         JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'anotherProject')
         def res = testService.itemForWFCmdItem(ce)
@@ -321,6 +343,10 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testItemForWFCmdItem_jobref_args_externalProject() {
         when:
         def testService = service
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
+
         //file url script path
         JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'anotherProject')
         def res = testService.itemForWFCmdItem(ce)
@@ -340,6 +366,10 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testItemForWFCmdItem_jobref_sameproject() {
         when:
         def testService = service
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
+
         //file url script path
         JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'jobProject')
         def res = testService.itemForWFCmdItem(ce, null,'jobProject')
@@ -362,6 +392,9 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testItemForWFCmdItem_jobref_otherproject() {
         when:
         def testService = service
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
         JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz',jobProject: 'refProject')
         def res = testService.itemForWFCmdItem(ce,null,'jobProject')
         assertNotNull(res)
@@ -383,6 +416,10 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testItemForWFCmdItem_jobref_nullproject() {
         when:
         def testService = service
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
+
         JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: null)
         def res = testService.itemForWFCmdItem(ce)
         assertNotNull(res)
@@ -404,6 +441,10 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testItemForWFCmdItem_jobref_setproject() {
         when:
         def testService = service
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
+
         JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: null)
         def res = testService.itemForWFCmdItem(ce, null, 'jobProject')
         assertNotNull(res)
@@ -425,6 +466,10 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testItemForWFCmdItem_jobref_unmodified_original() {
         when:
         def testService = service
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
+
         JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: null)
         def res = testService.itemForWFCmdItem(ce, null, 'jobProject')
 
@@ -436,6 +481,10 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
     void testcreateExecutionItemForWorkflow() {
         when:
         def testService = service
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            findJobFromJobExec(_,_) >> getJobReference()
+        }
+
         def project = 'test'
         def eh1= new JobExec([jobName: 'refhandler', jobGroup: 'grp', project: null,
                               argString: 'blah err4', keepgoingOnSuccess: false])
@@ -460,7 +509,26 @@ class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest
         assertEquals(project,item.failureHandler.project)
 
     }
+
+
+    def getJobReference(){
+        def step = new PluginStep()
+        step.nodeStep = false
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'myjob',
+                jobGroup: 'mygroup',
+                project: 'myproject'
+        )
+
+        Workflow wf = new Workflow()
+        wf.setCommands([step])
+        job.setWorkflow(wf)
+        return job
+
+    }
 }
+
 
 
 class MockForThreadOutputStream extends ThreadBoundOutputStream{
@@ -483,4 +551,7 @@ class MockForThreadOutputStream extends ThreadBoundOutputStream{
     void close() throws IOException {
 
     }
+
+
+
 }

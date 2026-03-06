@@ -34,10 +34,7 @@ class JobsSpec extends SeleniumBase {
     }
 
     private JobCreatePage setupJobCreatePage() {
-        def page = page JobCreatePage, projectName
-        page.nextUi = true
-        page.go()
-        return page
+        go(JobCreatePage, projectName, [nextUi: true]) as JobCreatePage
     }
 
     def "job workflow alphaUi flag enabled"() {

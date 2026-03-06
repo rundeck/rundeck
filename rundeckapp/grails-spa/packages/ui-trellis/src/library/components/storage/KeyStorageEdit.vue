@@ -364,10 +364,10 @@ export default defineComponent({
         try {
           let response=await storageKeyUpdate(fullPath, value, {type: this.uploadSetting.keyType})
           this.$emit("finishEditing", response);
-        } catch (err) {
+        } catch (err: unknown) {
           let errorMessage = "";
-          if (err?.message) {
-            errorMessage = err?.message;
+          if (err && typeof err === 'object' && 'message' in err) {
+            errorMessage = (err as Error).message;
           }
           this.uploadSetting.errorMsg = errorMessage;
         }
@@ -378,10 +378,10 @@ export default defineComponent({
             this.$emit("keyCreated", this.createdKey);
             this.$emit("finishEditing", response);
           });
-        }catch(err){
+        }catch(err: unknown){
             let errorMessage = "";
-            if (err?.message) {
-              errorMessage = err?.message;
+            if (err && typeof err === 'object' && 'message' in err) {
+              errorMessage = (err as Error).message;
             }
             this.uploadSetting.errorMsg = errorMessage;
           }

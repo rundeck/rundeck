@@ -4,7 +4,7 @@ import { createTestingPinia } from "@pinia/testing";
 import { useNodesStore } from "../../../../../library/stores/NodesStorePinia";
 import JobRefForm from "../JobRefForm.vue";
 
-jest.mock("../../../../../library/services/api", () => ({
+jest.mock("@/library/services/api", () => ({
   api: {
     get: jest.fn(),
     post: jest.fn(),
@@ -18,7 +18,7 @@ jest.mock("../../../../../library/services/api", () => ({
   },
 }));
 
-jest.mock("../../../../../library", () => ({
+jest.mock("@/library", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     rdBase: "http://localhost:4440/",
     projectName: "TestProject",
@@ -243,7 +243,10 @@ describe("JobRefForm", () => {
 
       await wrapper.find(".act_choose_job").trigger("click");
 
-      expect(wrapper.vm.openJobSelectionModal).toBe(true);
+      expect(
+        wrapper.findComponent({ name: "JobRefFormFields" }).vm
+          .openJobSelectionModal,
+      ).toBe(true);
     });
 
     it("updates job reference when job is selected", async () => {
@@ -255,7 +258,9 @@ describe("JobRefForm", () => {
       };
 
       // Simulate the event bus event that would come from job selection
-      wrapper.vm.eventBus.emit("browser-job-item-selection", mockJob);
+      wrapper
+        .findComponent({ name: "JobRefFormFields" })
+        .vm.eventBus.emit("browser-job-item-selection", mockJob);
       await wrapper.vm.$nextTick();
 
       expect(

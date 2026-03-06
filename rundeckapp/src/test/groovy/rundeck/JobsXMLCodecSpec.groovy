@@ -88,7 +88,7 @@ class JobsXMLCodecSpec extends Specification {
 <b>inline html</b>
     '''
 
-            def cmds = jobs[0].workflow.commands
+            def cmds = jobs[0].getWorkflowData().commands
             cmds.size() == 8
             cmds[0].configuration.adhocRemoteString == 'true'
             cmds[1].configuration.adhocRemoteString == 'false'
@@ -166,14 +166,14 @@ class JobsXMLCodecSpec extends Specification {
             def jobs = JobsXMLCodec.decode(xml)
         then:
             jobs != null
-            jobs[0].workflow.commands.size() == 5
+            jobs[0].getWorkflowData().commands.size() == 5
 
-            jobs[0].workflow.commands[0].configuration==[adhocLocalString: 'true', argString: 'true']
-            jobs[0].workflow.commands[1].configuration==[adhocLocalString: 'true', argString: 'true',scriptInterpreter: 'bash -c']
-            jobs[0].workflow.commands[2].configuration==[adhocLocalString: 'false', argString: 'false',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'true']
-            jobs[0].workflow.commands[3].configuration==[adhocLocalString: '0', argString: '0',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'false']
-            jobs[0].workflow.commands[4].configuration==[adhocFilepath: 'false', argString: 'false',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'false']
-            jobs[0].workflow.commands[4].errorHandler.configuration==[adhocFilepath: 'false', argString: '0']
+            jobs[0].getWorkflowData().commands[0].configuration==[adhocLocalString: 'true', argString: 'true']
+            jobs[0].getWorkflowData().commands[1].configuration==[adhocLocalString: 'true', argString: 'true',scriptInterpreter: 'bash -c',interpreterArgsQuoted:'false']
+            jobs[0].getWorkflowData().commands[2].configuration==[adhocLocalString: 'false', argString: 'false',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'true']
+            jobs[0].getWorkflowData().commands[3].configuration==[adhocLocalString: '0', argString: '0',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'false']
+            jobs[0].getWorkflowData().commands[4].configuration==[adhocFilepath: 'false', argString: 'false',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'false']
+            jobs[0].getWorkflowData().commands[4].errorHandler.configuration==[adhocFilepath: 'false', argString: '0']
 
     }
 
@@ -251,7 +251,7 @@ class JobsXMLCodecSpec extends Specification {
             jobs.size() == 1
             ScheduledExecution se = jobs[0]
 
-            def cmds = jobs[0].workflow.commands
+            def cmds = jobs[0].getWorkflowData().commands
             cmds.size() == 5
             cmds.every {
                 it.errorHandler != null
@@ -343,13 +343,13 @@ class JobsXMLCodecSpec extends Specification {
             jobs[0].nodeInclude == null
             jobs[0].filter == "hostname: false"
             jobs[0].project == 'proj1'
-            jobs[0].workflow.commands.size() == 1
-            jobs[0].workflow.commands[0].configuration.adhocRemoteString == "false"
-            jobs[0].workflow.commands[0].errorHandler.configuration.adhocLocalString == "false"
-            jobs[0].workflow.commands[0].errorHandler.configuration.argString == "false"
-            jobs[0].workflow.commands[0].errorHandler.keepgoingOnSuccess == false
+            jobs[0].getWorkflowData().commands.size() == 1
+            jobs[0].getWorkflowData().commands[0].configuration.adhocRemoteString == "false"
+            jobs[0].getWorkflowData().commands[0].errorHandler.configuration.adhocLocalString == "false"
+            jobs[0].getWorkflowData().commands[0].errorHandler.configuration.argString == "false"
+            jobs[0].getWorkflowData().commands[0].errorHandler.keepgoingOnSuccess == false
             jobs[0].nodeThreadcount == 2
-            jobs[0].workflow.keepgoing == false
+            jobs[0].getWorkflowData().keepgoing == false
             jobs[0].options.size() == 2
             def opts = new ArrayList(jobs[0].options)
             opts[0].name == 'false'
@@ -394,11 +394,11 @@ class JobsXMLCodecSpec extends Specification {
         then:
             jobs != null
             jobs.size() == 1
-            jobs[0].workflow != null
-            jobs[0].workflow.strategy == "node-first"
-            jobs[0].workflow.commands != null
-            jobs[0].workflow.commands.size() == 1
-            def cmd1 = jobs[0].workflow.commands[0]
+            jobs[0].getWorkflowData() != null
+            jobs[0].getWorkflowData().strategy == "node-first"
+            jobs[0].getWorkflowData().commands != null
+            jobs[0].getWorkflowData().commands.size() == 1
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             cmd1 != null
             cmd1.configuration == [adhocRemoteString: 'a script']
     }
@@ -438,11 +438,11 @@ class JobsXMLCodecSpec extends Specification {
         then:
             jobs != null
             jobs.size() == 1
-            jobs[0].workflow != null
-            jobs[0].workflow.strategy == "node-first"
-            jobs[0].workflow.commands != null
-            jobs[0].workflow.commands.size() == 1
-            def cmd1 = jobs[0].workflow.commands[0]
+            jobs[0].getWorkflowData() != null
+            jobs[0].getWorkflowData().strategy == "node-first"
+            jobs[0].getWorkflowData().commands != null
+            jobs[0].getWorkflowData().commands.size() == 1
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             cmd1 != null
             cmd1.configuration == [adhocLocalString: 'a script 2']
     }
@@ -482,11 +482,11 @@ class JobsXMLCodecSpec extends Specification {
         then:
             jobs != null
             jobs.size() == 1
-            jobs[0].workflow != null
-            jobs[0].workflow.strategy == "node-first"
-            jobs[0].workflow.commands != null
-            jobs[0].workflow.commands.size() == 1
-            def cmd1 = jobs[0].workflow.commands[0]
+            jobs[0].getWorkflowData() != null
+            jobs[0].getWorkflowData().strategy == "node-first"
+            jobs[0].getWorkflowData().commands != null
+            jobs[0].getWorkflowData().commands.size() == 1
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             cmd1 != null
             cmd1.configuration == [
                 adhocFilepath          : '/a/path/to/a/script',
@@ -529,16 +529,16 @@ class JobsXMLCodecSpec extends Specification {
         then:
             jobs != null
             jobs.size() == 1
-            jobs[0].workflow != null
-            jobs[0].workflow.strategy == "node-first"
-            jobs[0].workflow.commands != null
-            jobs[0].workflow.commands.size() == 1
-            def cmd1 = jobs[0].workflow.commands[0]
+            jobs[0].getWorkflowData() != null
+            jobs[0].getWorkflowData().strategy == "node-first"
+            jobs[0].getWorkflowData().commands != null
+            jobs[0].getWorkflowData().commands.size() == 1
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             cmd1 != null
             (cmd1 instanceof JobExec)
             cmd1.argString == null
             cmd1.jobName == 'bob'
-            cmd1.jobGroup == null
+            cmd1.jobGroup == ""
             !!cmd1.nodeStep == false
     }
 
@@ -576,11 +576,11 @@ class JobsXMLCodecSpec extends Specification {
         then:
             jobs != null
             jobs.size() == 1
-            jobs[0].workflow != null
-            jobs[0].workflow.strategy == "node-first"
-            jobs[0].workflow.commands != null
-            jobs[0].workflow.commands.size() == 1
-            def cmd1 = jobs[0].workflow.commands[0]
+            jobs[0].getWorkflowData() != null
+            jobs[0].getWorkflowData().strategy == "node-first"
+            jobs[0].getWorkflowData().commands != null
+            jobs[0].getWorkflowData().commands.size() == 1
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             cmd1 != null
             (cmd1 instanceof JobExec)
             cmd1.argString == null
@@ -623,11 +623,11 @@ class JobsXMLCodecSpec extends Specification {
         then:
             jobs != null
             jobs.size() == 1
-            jobs[0].workflow != null
-            jobs[0].workflow.strategy == "step-first"
-            jobs[0].workflow.commands != null
-            jobs[0].workflow.commands.size() == 1
-            def cmd1 = jobs[0].workflow.commands[0]
+            jobs[0].getWorkflowData() != null
+            jobs[0].getWorkflowData().strategy == "step-first"
+            jobs[0].getWorkflowData().commands != null
+            jobs[0].getWorkflowData().commands.size() == 1
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             cmd1 != null
             (cmd1 instanceof JobExec)
             cmd1.argString == null
@@ -672,11 +672,11 @@ class JobsXMLCodecSpec extends Specification {
         then:
             jobs != null
             jobs.size() == 1
-            jobs[0].workflow != null
-            jobs[0].workflow.strategy == "node-first"
-            jobs[0].workflow.commands != null
-            jobs[0].workflow.commands.size() == 1
-            def cmd1 = jobs[0].workflow.commands[0]
+            jobs[0].getWorkflowData() != null
+            jobs[0].getWorkflowData().strategy == "node-first"
+            jobs[0].getWorkflowData().commands != null
+            jobs[0].getWorkflowData().commands.size() == 1
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             cmd1 != null
             (cmd1 instanceof JobExec)
             cmd1.argString != null
@@ -722,11 +722,11 @@ class JobsXMLCodecSpec extends Specification {
         then:
             jobs != null
             jobs.size() == 1
-            jobs[0].workflow != null
-            jobs[0].workflow.strategy == "node-first"
-            jobs[0].workflow.commands != null
-            jobs[0].workflow.commands.size() == 1
-            def cmd1 = jobs[0].workflow.commands[0]
+            jobs[0].getWorkflowData() != null
+            jobs[0].getWorkflowData().strategy == "node-first"
+            jobs[0].getWorkflowData().commands != null
+            jobs[0].getWorkflowData().commands.size() == 1
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             cmd1 != null
             (cmd1 instanceof JobExec)
             cmd1.argString != null
@@ -771,11 +771,11 @@ class JobsXMLCodecSpec extends Specification {
         then:
             jobs != null
             jobs.size() == 1
-            jobs[0].workflow != null
-            jobs[0].workflow.strategy == "node-first"
-            jobs[0].workflow.commands != null
-            jobs[0].workflow.commands.size() == 1
-            def cmd1 = jobs[0].workflow.commands[0]
+            jobs[0].getWorkflowData() != null
+            jobs[0].getWorkflowData().strategy == "node-first"
+            jobs[0].getWorkflowData().commands != null
+            jobs[0].getWorkflowData().commands.size() == 1
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             cmd1 != null
             cmd1.configuration == [
                 adhocFilepath          : 'http://example.com/a/path/to/a/script',
@@ -822,10 +822,10 @@ exit 0''',
             jobs != null
             jobs.size() == 1
             def job1 = jobs[0]
-            job1.workflow != null
-            job1.workflow.commands != null
-            job1.workflow.commands.size() == 1
-            def wfi = job1.workflow.commands[0]
+            job1.getWorkflowData() != null
+            job1.getWorkflowData().commands != null
+            job1.getWorkflowData().commands.size() == 1
+            def wfi = job1.getWorkflowData().commands[0]
             wfi.configuration == [
                 adhocLocalString: '''#!/bin/bash
 

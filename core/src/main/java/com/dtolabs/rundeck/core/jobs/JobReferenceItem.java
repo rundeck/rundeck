@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import lombok.Data;
 
 @Data
@@ -24,6 +25,8 @@ public class JobReferenceItem extends JobRefCommandBase {
     private final Boolean useName;
     private final Boolean ignoreNotifications;
     private final Boolean childNodes;
+    private final WorkflowExecutionItem workflow;
+
 
     @Override
     public Boolean isFailOnDisable() {
@@ -58,5 +61,33 @@ public class JobReferenceItem extends JobRefCommandBase {
                 (project != null ? ", project='" + project + '\'' : "") +
                 ", nodeStep=" + nodeStep +
                 "}";
+    }
+
+    public static JobReferenceItem cloneWithNewWorkflow(
+            final JobReferenceItem original,
+            final WorkflowExecutionItem workflow
+    ) {
+        return new JobReferenceItem(
+                original.getLabel(),
+                original.getJobIdentifier(),
+                original.getArgs(),
+                original.isNodeStep(),
+                original.getFailureHandler(),
+                original.isKeepgoingOnSuccess(),
+                original.getNodeKeepgoing(),
+                original.getNodeFilter(),
+                original.getNodeThreadcount(),
+                original.getNodeRankAttribute(),
+                original.getNodeRankOrderAscending(),
+                original.getNodeIntersect(),
+                original.getProject(),
+                original.getFailOnDisable(),
+                original.getImportOptions(),
+                original.getUuid(),
+                original.getUseName(),
+                original.getIgnoreNotifications(),
+                original.getChildNodes(),
+                workflow
+        );
     }
 }

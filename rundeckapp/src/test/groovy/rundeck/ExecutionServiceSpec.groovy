@@ -1,5 +1,7 @@
 package rundeck
 
+import asset.pipeline.grails.LinkGenerator
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 
@@ -29,6 +31,12 @@ import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.WorkflowExecutionListenerTest
 import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
@@ -56,7 +64,15 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
+import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
+import com.dtolabs.rundeck.core.execution.workflow.IWorkflow
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.core.jobs.JobRefCommand
@@ -76,6 +92,7 @@ import rundeck.data.util.OptionsParserUtil
 import rundeck.services.*
 import rundeck.services.data.UserDataService
 import com.dtolabs.rundeck.core.config.FeatureService
+import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -630,6 +647,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -689,6 +708,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_) >> ['a': 'b', c: 'd']
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -754,6 +775,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -834,6 +857,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -913,6 +938,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -985,6 +1012,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -1100,6 +1129,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -1138,6 +1169,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -1180,6 +1213,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -2884,6 +2919,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -3003,29 +3040,75 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                         commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
                 ).save(),
                 ).save(flush: true)
-        service.frameworkService = Mock(FrameworkService)
-            service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        service.reportService = Mock(ReportService) {
-            1 * reportExecutionResult(_) >> [:]
+
+        def spyService = Spy(ExecutionService) {
+            // Stub out all internal methods we don't want to execute
+            triggerJobCompleteNotifications(_, _) >> { }
+            reportExecutionResult(_) >> [:]
+            logExecution(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) >> { }
+            logExecutionLog4j(_, _, _) >> { }
         }
-        service.notificationService = Mock(NotificationService) {
-            1 * asyncTriggerJobNotification(_, _, _)
-        }
-        service.metricService = Mock(MetricService)
-        service.workflowService = Mock(WorkflowService)
+        spyService.jobStatsDataProvider = Mock(GormJobStatsDataProvider)
+
         when:
-        service.cleanupExecution(e, status)
+        spyService.cleanupExecution(e, status)
+
         then:
         e.refresh()
         e.id != null
         e.status == result
         e.cancelled == (status == null)
+        // No stats collected for adhoc executions (no scheduledExecution)
+        0 * spyService.jobStatsDataProvider.updateJobStats(_, _, _, _, _)
 
         where:
         status      | result
         'testvalue' | 'testvalue'
         null        | 'false'
+    }
 
+    def "updateScheduledExecStatistics should collect stats for failed executions"() {
+        given: "a job UUID, execution ID, and execution time"
+        def jobUuid = UUID.randomUUID().toString()
+        def executionId = 123L
+        def executionTime = 5000L
+        def dateCompleted = new Date()
+        def mockConfigService = Mock(ConfigurationService)
+        mockConfigService.getBoolean("executionDailyMetrics.enabled", false) >> true
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        service.jobStatsDataProvider.configurationService = mockConfigService
+
+        when: "updateScheduledExecStatistics is called with failed status"
+        def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, 'failed', dateCompleted)
+
+        then: "stats are collected"
+        result == true
+        def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+        stats != null
+    }
+
+    def "updateScheduledExecStatistics should collect stats for all status types"() {
+        given: "a job UUID and execution details"
+        def jobUuid = UUID.randomUUID().toString()
+        def dateCompleted = new Date()
+        def mockConfigService = Mock(ConfigurationService)
+        mockConfigService.getBoolean("executionDailyMetrics.enabled", false) >> true
+        service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        service.jobStatsDataProvider.configurationService = mockConfigService
+
+        when: "multiple executions with different statuses are tracked"
+        service.updateScheduledExecStatistics(jobUuid, 1L, 1000L, 'succeeded', dateCompleted)
+        service.updateScheduledExecStatistics(jobUuid, 2L, 2000L, 'failed', dateCompleted)
+        service.updateScheduledExecStatistics(jobUuid, 3L, 3000L, 'aborted', dateCompleted)
+        service.updateScheduledExecStatistics(jobUuid, 4L, 4000L, 'timedout', dateCompleted)
+
+        then: "all executions are tracked"
+        def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+        stats != null
+        def content = stats.getContentMap()
+        // Rolling-10 should only count succeeded (our fix)
+        content.execCount == 1
+        content.totalTime == 1000
     }
 
     def "get NodeService from origContext only if exists for referenced from another projects jobs"() {
@@ -3041,6 +3124,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * filterNodeSet(null, orgProject)
             0 * filterNodeSet(null, jobProj)
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
         service.storageService = Mock(StorageService) {
@@ -4062,6 +4147,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -4270,6 +4357,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
             service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -4342,6 +4431,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
             service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -4402,6 +4493,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
             service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -4697,6 +4790,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -4784,6 +4879,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -5016,37 +5113,60 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         def project = "asdf"
         service.frameworkService = Stub(FrameworkService) {
-            getProjectProperties(project) >> props
+            // framework.globalfilter.* comes from framework.properties (via getFrameworkPropertiesMap)
+            getFrameworkPropertiesMap() >> frameworkProps
+            // project.globalfilter.* comes from project properties
+            getProjectProperties(project) >> projectProps
         }
         when:
 
-        //def result = ProjectNodeSupport.listPluginConfigurations(props, prefix, svc, true)
         def result = service.getGlobalPluginConfigurations(project)
         then:
 
         result.size() == expectedSize
+        // Validate plugin properties
+        if (expectedSize > 0) {
+            result.eachWithIndex { plugin, idx ->
+                assert plugin.service == ServiceNameConstants.LogFilter
+                assert plugin.provider == expectedProviders[idx]
+                assert plugin.configuration == expectedConfigs[idx]
+            }
+        }
 
         where:
-        expectedSize    | props
-        1               | ['framework.globalfilter.1.type':'mask-passwords',
-                           'framework.globalfilter.1.config.replacement':'[SECURE]',
-                           'framework.globalfilter.1.config.color': 'blue']
-        1               | ['project.globalfilter.1.type':'highlight-output',
-                           'project.globalfilter.1.config.regex':'test',
-                           'project.globalfilter.1.config.bgcolor': 'yellow']
-        0               | [:]
-        2               | ['framework.globalfilter.1.type':'mask-passwords',
-                           'framework.globalfilter.1.config.replacement':'[SECURE]',
-                           'framework.globalfilter.1.config.color': 'blue',
-                           'project.globalfilter.1.type':'highlight-output',
-                           'project.globalfilter.1.config.regex':'test',
-                           'project.globalfilter.1.config.bgcolor': 'yellow']
-        2               | ['framework.globalfilter.1.type':'mask-passwords',
-                           'framework.globalfilter.1.config.replacement':'[SECURE]',
-                           'framework.globalfilter.1.config.color': 'blue',
-                           'framework.globalfilter.2.type':'highlight-output',
-                           'framework.globalfilter.2.config.regex':'test',
-                           'framework.globalfilter.2.config.bgcolor': 'yellow']
+        expectedSize | frameworkProps | projectProps | expectedProviders | expectedConfigs
+        // Only framework global filter
+        1            | ['framework.globalfilter.1.type':'mask-passwords',
+                        'framework.globalfilter.1.config.replacement':'[SECURE]',
+                        'framework.globalfilter.1.config.color': 'blue'] | [:] |
+                      ['mask-passwords'] |
+                      [['replacement':'[SECURE]', 'color':'blue']]
+        // Only project global filter
+        1            | [:] | ['project.globalfilter.1.type':'highlight-output',
+                              'project.globalfilter.1.config.regex':'test',
+                              'project.globalfilter.1.config.bgcolor': 'yellow'] |
+                      ['highlight-output'] |
+                      [['regex':'test', 'bgcolor':'yellow']]
+        // No filters
+        0            | [:] | [:] | [] | []
+        // Both framework and project filters (project filters come first)
+        2            | ['framework.globalfilter.1.type':'mask-passwords',
+                        'framework.globalfilter.1.config.replacement':'[SECURE]',
+                        'framework.globalfilter.1.config.color': 'blue'] |
+                      ['project.globalfilter.1.type':'highlight-output',
+                       'project.globalfilter.1.config.regex':'test',
+                       'project.globalfilter.1.config.bgcolor': 'yellow'] |
+                      ['highlight-output', 'mask-passwords'] |
+                      [['regex':'test', 'bgcolor':'yellow'], ['replacement':'[SECURE]', 'color':'blue']]
+        // Multiple framework filters
+        2            | ['framework.globalfilter.1.type':'mask-passwords',
+                        'framework.globalfilter.1.config.replacement':'[SECURE]',
+                        'framework.globalfilter.1.config.color': 'blue',
+                        'framework.globalfilter.2.type':'highlight-output',
+                        'framework.globalfilter.2.config.regex':'test',
+                        'framework.globalfilter.2.config.bgcolor': 'yellow'] | [:] |
+                      ['mask-passwords', 'highlight-output'] |
+                      [['replacement':'[SECURE]', 'color':'blue'], ['regex':'test', 'bgcolor':'yellow']]
 
     }
 
@@ -5323,6 +5443,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
             service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -5362,6 +5484,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'testproj')
             1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -6061,6 +6185,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             0 * filterNodeSet(null, orgProject)
             1 * filterNodeSet(null, jobProj)
             1 * getProjectGlobals(*_) >> [:]
+            _ * getFrameworkPropertiesMap() >> [:]
+            _ * getProjectProperties(_) >> [:]
             0 * _(*_)
         }
 
@@ -6204,4 +6330,765 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             result.size() == 2
             result.containsAll(initialListeners)
     }
+
+    def "updateScheduledExecStatistics calls jobStatsDataProvider with correct parameters"() {
+        given: "a job UUID and execution details"
+            def jobUuid = UUID.randomUUID().toString()
+            def executionId = 123L
+            def executionTime = 5000L
+            def status = "succeeded"
+            def dateCompleted = new Date()
+            def mockJobStatsDataProvider = Mock(GormJobStatsDataProvider)
+            service.jobStatsDataProvider = mockJobStatsDataProvider
+
+        when: "updateScheduledExecStatistics is called"
+            def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, status, dateCompleted)
+
+        then: "jobStatsDataProvider is called with correct parameters"
+            1 * mockJobStatsDataProvider.updateJobStats(jobUuid, executionId, executionTime, status, dateCompleted) >> true
+            result == true
+    }
+
+    def "updateScheduledExecStatistics passes status and dateCompleted correctly"() {
+        given: "different execution statuses"
+            def jobUuid = UUID.randomUUID().toString()
+            def executionId = 456L
+            def executionTime = 3000L
+            def dateCompleted = new Date()
+            def mockJobStatsDataProvider = Mock(GormJobStatsDataProvider)
+            service.jobStatsDataProvider = mockJobStatsDataProvider
+
+        when: "updateScheduledExecStatistics is called with failed status"
+            def result = service.updateScheduledExecStatistics(jobUuid, executionId, executionTime, "failed", dateCompleted)
+
+        then: "status and dateCompleted are passed correctly"
+            1 * mockJobStatsDataProvider.updateJobStats(jobUuid, executionId, executionTime, "failed", dateCompleted) >> true
+            result == true
+    }
+
+
+    @Unroll
+    def "executeAsyncBegin workflow modification - workflow updated when isUpdateWorkflowDataValues is #updateWorkflowDataValues"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'original command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
+                getWorkflow() >> Mock(IWorkflow)
+            }
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        and: "execution lifecycle handler setup"
+        def mockNewWorkflow = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def mockNewContext = Mock(StepExecutionContext)
+        def mockLifecycleStatus = Mock(ExecutionLifecycleStatus) {
+            isUseNewValues() >> useNewValues
+            isUpdateWorkflowDataValues() >> updateWorkflowDataValues
+            getExecutionContext() >> (useNewValues ? mockNewContext : null)
+            getWorkflow() >> (updateWorkflowDataValues ? mockNewWorkflow : null)
+        }
+        def mockHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeWorkflowIsSet(_, _) >> Optional.of(mockLifecycleStatus)
+        }
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> mockHandler
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "workflow is updated based on lifecycle status"
+        1 * service.workflowService.createWorkflowStateListenerForExecution(
+                execution,
+                { workflow ->
+                    if (updateWorkflowDataValues && useNewValues) {
+                        workflow == mockNewWorkflow.workflow
+                    } else {
+                        true // original workflow
+                    }
+                },
+                framework,
+                authContext,
+                _,
+                _
+        )
+
+        where:
+        useNewValues | updateWorkflowDataValues
+        true         | true
+        true         | false
+        false        | true
+        false        | false
+    }
+
+    def "executeAsyncBegin workflow modification - execution context updated when useNewValues is true"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
+                getWorkflow() >> Mock(IWorkflow)
+            }
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            //createPeriodicCheckpoint(_) >> Mock(Consumer)
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        and: "execution lifecycle handler with new context"
+        def mockNewContext = Mock(StepExecutionContext) {
+            getDataContext() >> [newKey: 'newValue']
+        }
+        def mockLifecycleStatus = Mock(ExecutionLifecycleStatus) {
+            isUseNewValues() >> true
+            isUpdateWorkflowDataValues() >> false
+            getExecutionContext() >> mockNewContext
+            getWorkflow() >> null
+        }
+        def mockHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeWorkflowIsSet(_, _) >> Optional.of(mockLifecycleStatus)
+        }
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> mockHandler
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "execution context should be updated"
+        1 * mockHandler.beforeWorkflowIsSet(_, _) >> Optional.of(mockLifecycleStatus)
+        result != null
+    }
+
+    def "executeAsyncBegin workflow modification - original workflow preserved when conditions are false"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def originalWorkflow = new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec([adhocRemoteString: 'original command'])]
+        )
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: originalWorkflow
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: originalWorkflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        def originalWorkflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        and: "execution lifecycle handler with useNewValues false"
+        def mockLifecycleStatus = Mock(ExecutionLifecycleStatus) {
+            isUseNewValues() >> false
+            isUpdateWorkflowDataValues() >> false
+            getExecutionContext() >> null
+            getWorkflow() >> null
+        }
+        def mockHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeWorkflowIsSet(_, _) >> Optional.of(mockLifecycleStatus)
+        }
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> mockHandler
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "original workflow is preserved"
+        1 * service.workflowService.createWorkflowStateListenerForExecution(
+                execution,
+                originalWorkflowItem.workflow,
+                framework,
+                authContext,
+                _,
+                _
+        )
+        result != null
+    }
+
+    def "executeAsyncBegin workflow modification - handles null executionLifecycleStatus"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        def originalWorkflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            //createSimplePluginLoader(_, _, _) >> Mock(PluginLoaderService)
+            getPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            //createPeriodicCheckpoint(_) >> Mock(Consumer)
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        and: "execution lifecycle handler returns empty Optional"
+        def mockHandler = Mock(ExecutionLifecycleComponentHandler) {
+            beforeWorkflowIsSet(_, _) >> Optional.empty()
+        }
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> mockHandler
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "original workflow is preserved and no errors occur"
+        1 * service.workflowService.createWorkflowStateListenerForExecution(
+                execution,
+                originalWorkflowItem.workflow,
+                framework,
+                authContext,
+                _,
+                _
+        )
+        result != null
+    }
+
+    def "executeAsyncBegin workflow modification - handles null executionLifecyclePluginExecHandler"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def jobname = 'testJob'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        def originalWorkflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getPluginRegistry() >> Mock(PluginRegistry)
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
+        }
+
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> originalWorkflowItem
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        and: "execution lifecycle handler is null"
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> null
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "original workflow is preserved and no errors occur"
+        1 * service.workflowService.createWorkflowStateListenerForExecution(
+                execution,
+                originalWorkflowItem.workflow,
+                framework,
+                authContext,
+                _,
+                _
+        )
+        result != null
+    }
+
+    def "runSubworkflowExecutionItem should execute subworkflow successfully"() {
+        given: "a SubWorkflowExecutionItem with a valid workflow"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+
+        and: "mocked services"
+        def framework = Mock(Framework)
+        def wservice = Mock(WorkflowExecutionService)
+        def executionListener = Mock(ExecutionListener)
+
+        framework.getWorkflowExecutionService() >> wservice
+
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> executionListener
+        }
+
+        and: "successful workflow result"
+        def successResult = [
+                result: [
+                        success: true,
+                        stepFailures: [:]
+                ],
+                interrupt: false
+        ]
+
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                closure()
+                successResult
+            }
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            runRefJobWithTimer(_, _, _, _) >> successResult
+        }
+
+        and: "result closures"
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+
+        when: "runSubworkflowExecutionItem is called"
+        def result = service.runSubworkflowExecutionItem(context, runnerItem, createFailure, createSuccess)
+
+        then: "it returns a success result"
+        result instanceof StepExecutionResultImpl
+        result.success
+    }
+
+
+    def "runSubworkflowExecutionItem should handle workflow execution failure"() {
+        given: "a SubWorkflowExecutionItem with a valid workflow"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+
+        and: "mocked services"
+        def framework = Mock(Framework)
+        def wservice = Mock(WorkflowExecutionService)
+        def executionListener = Mock(ExecutionListener)
+
+        framework.getWorkflowExecutionService() >> wservice
+
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> executionListener
+        }
+
+        and: "failed workflow result"
+        def failureResult = [
+                result: [
+                        success: false,
+                        stepFailures: [
+                                '1': [failureMessage: 'Step 1 failed'],
+                                '2': [failureMessage: 'Step 2 failed']
+                        ]
+                ],
+                interrupt: false
+        ]
+
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                closure()
+                failureResult
+            }
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            runRefJobWithTimer(_, _, _, _) >> failureResult
+        }
+
+        and: "result closures"
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+
+        when: "runSubworkflowExecutionItem is called"
+        def result = service.runSubworkflowExecutionItem(context, runnerItem, createFailure, createSuccess)
+
+        then: "it returns a plugin failure with error messages"
+        result instanceof StepExecutionResultImpl
+        !result.success
+        result.failureReason == StepFailureReason.PluginFailed
+        result.failureMessage.contains("Step 1: Step 1 failed")
+        result.failureMessage.contains("Step 2: Step 2 failed")
+    }
+
+    def "runSubworkflowExecutionItem should handle workflow interruption"() {
+        given: "a SubWorkflowExecutionItem with a valid workflow"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+
+        and: "mocked services"
+        def framework = Mock(Framework)
+        def wservice = Mock(WorkflowExecutionService)
+        def executionListener = Mock(ExecutionListener)
+
+        framework.getWorkflowExecutionService() >> wservice
+
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> executionListener
+        }
+
+        and: "interrupted workflow result"
+        def interruptedResult = [
+                result: [
+                        success: true,
+                        stepFailures: [:]
+                ],
+                interrupt: true
+        ]
+
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                closure()
+                interruptedResult
+            }
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            runRefJobWithTimer(_, _, _, _) >> interruptedResult
+        }
+
+        and: "result closures"
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+
+        when: "runSubworkflowExecutionItem is called"
+        def result = service.runSubworkflowExecutionItem(context, runnerItem, createFailure, createSuccess)
+
+        then: "it returns a plugin failure"
+        result instanceof StepExecutionResultImpl
+        !result.success
+        result.failureReason == StepFailureReason.PluginFailed
+    }
+
+    def "runSubworkflowExecutionItem should handle exceptions during execution"() {
+        given: "a SubWorkflowExecutionItem with a valid workflow"
+        def workflowItem = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow)
+        }
+        def runnerItem = Mock(SubWorkflowExecutionItem) {
+            getSubWorkflow() >> workflowItem
+        }
+
+        and: "mocked services that throw exception"
+        def framework = Mock(Framework)
+        def wservice = Mock(WorkflowExecutionService)
+        def executionListener = Mock(ExecutionListener)
+
+        framework.getWorkflowExecutionService() >> wservice
+
+        def context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getExecutionListener() >> executionListener
+        }
+
+        and: "metric service that throws exception"
+        service.metricService = Mock(MetricService) {
+            withTimer(_, _, _) >> { String className, String name, Closure closure ->
+                throw new RuntimeException("Test exception")
+            }
+        }
+
+        and: "result closures"
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+
+        when: "runSubworkflowExecutionItem is called"
+        service.runSubworkflowExecutionItem(context, runnerItem, createFailure, createSuccess)
+
+        then: "it throws a StepException"
+        def exception = thrown(StepException)
+        exception.message.contains("Error executing runner workflow")
+        exception.failureReason == StepFailureReason.Unknown
+
+        and: "logs the error"
+        1 * executionListener.log(0, { it.contains("Error executing runner workflow") })
+    }
+
 }

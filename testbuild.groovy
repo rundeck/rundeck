@@ -22,6 +22,7 @@ import java.util.zip.ZipEntry
 
 cli = new CliBuilder(usage: 'slide')
 cli._(longOpt: 'buildType', args: 1, '-buildType [development | release]')
+cli._(longOpt: 'version', args: 1, '-version <version>')
 def options = cli.parse(args)
 
 def target="build/libs"
@@ -38,7 +39,7 @@ def version
 if(options.buildType == 'development'){
     version = "${vNum}-SNAPSHOT".toString()
 } else if (options.buildType == 'release'){
-    version = props.get('version.version')
+    version = options.version ?: props.get('version.version')
 } else {
     throw new Exception("Unknown build type [${options.buildType}]".toString())
 }

@@ -17,9 +17,18 @@
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
 <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+<g:set var="isAdmin" value="${auth.resourceAllowedTest(
+        type: AuthConstants.TYPE_RESOURCE,
+        kind: AuthConstants.TYPE_SYSTEM,
+        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN],
+        any: true,
+        context: AuthConstants.CTX_APPLICATION
+)}"/>
 
 <g:render template="/common/errorFragment"/>
 <g:render template="editLogFilterModal"/>
+
+<g:embedJSON id="jobEditUiMeta" data="[isAdmin: isAdmin]"/>
 
 
 %{--Edit job form--}%

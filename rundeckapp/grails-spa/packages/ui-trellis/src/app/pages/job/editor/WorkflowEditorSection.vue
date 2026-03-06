@@ -1,6 +1,8 @@
 <template>
   <div v-if="loaded">
-    <workflow-editor v-model="updatedData" />
+    <UiSocket section="workflow-editor" location="main" v-model="updatedData">
+      <workflow-editor v-model="updatedData" />
+    </UiSocket>
     <json-embed :output-data="updatedData" field-name="jobWorkflowJson" />
   </div>
 </template>
@@ -11,11 +13,13 @@ import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
 import JsonEmbed from "@/app/pages/job/editor/JsonEmbed.vue";
 import WorkflowEditor from "@/app/components/job/workflow/WorkflowEditor.vue";
+import UiSocket from "@/library/components/utils/UiSocket.vue";
 
 export default defineComponent({
   name: "WorkflowEditorSection",
   components: {
     JsonEmbed,
+    UiSocket,
     WorkflowEditor,
   },
   data() {

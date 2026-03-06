@@ -2135,19 +2135,24 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                                           .dataContext(['option':[:],'job':['execid':'123']])
                                           .user('aUser')
                                           .build()
-        service.frameworkService=mockWith(FrameworkService){
-            parseOptsFromArray(1..2){String[] args->
+        service.frameworkService = mockWith(FrameworkService) {
+            parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
-            getProjectGlobals(1..1) {  project->
+            getFrameworkPropertiesMap(1..1) { -> [:] }
+            getProjectProperties(1..1) { project -> [:] }
+            parseOptsFromArray(1..1) { String[] args ->
+                ['test1':'value']
+            }
+            getProjectGlobals(1..1) { project ->
                 [:]
             }
             filterNodeSet(1..1) { NodesSelector selector, String project ->
                 makeNodeSet(['x','y'])
             }
         }
-        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['x','y']) }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * filterAuthorizedNodes(*_) >> { makeNodeSet(['x','y']) }
         }
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
@@ -2203,11 +2208,16 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                                           .dataContext(['option':[:],'job':['execid':'123']])
                                           .user('aUser')
                                           .build()
-        service.frameworkService=mockWith(FrameworkService){
-            parseOptsFromArray(1..2){String[] args->
+        service.frameworkService = mockWith(FrameworkService) {
+            parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
-            getProjectGlobals(1..1) {  project->
+            getFrameworkPropertiesMap(1..1) { -> [:] }
+            getProjectProperties(1..1) { project -> [:] }
+            parseOptsFromArray(1..1) { String[] args ->
+                ['test1':'value']
+            }
+            getProjectGlobals(1..1) { project ->
                 [:]
             }
             //called by createContext
@@ -2219,8 +2229,8 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                 makeNodeSet(['z', 'p'])
             }
         }
-        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            2 * filterAuthorizedNodes(*_)>>>[makeNodeSet(['x','y']),makeNodeSet(['z','p'])]
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            2 * filterAuthorizedNodes(*_) >>> [makeNodeSet(['x','y']), makeNodeSet(['z','p'])]
         }
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
@@ -2281,34 +2291,36 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                                           .dataContext(['option':['monkey':'wakeful'],'job':['execid':'123']])
                                           .user('aUser')
                                           .build()
-        def parseOptsCount=0
-        service.frameworkService=mockWith(FrameworkService){
-            parseOptsFromArray(1..2){String[] args->
-                def argsl=args as List
-                if(parseOptsCount<1){
-                    assertEquals(['test1','wakeful'],argsl)
-                }else{
-                    assertTrue(argsl.indexOf('-test1')>=0 && argsl.indexOf('-test1')<=argsl.size()-2)
-                    assertTrue(argsl.indexOf('-test2')>=0 && argsl.indexOf('-test2')<=argsl.size()-2)
-                    assertTrue(argsl.indexOf('-test3')>=0 && argsl.indexOf('-test3')<=argsl.size()-2)
-                    assertEquals('wakeful',argsl[argsl.indexOf('-test1')+1])
-                    assertEquals('val2a',argsl[argsl.indexOf('-test2')+1])
-                    assertEquals('val3',argsl[argsl.indexOf('-test3')+1])
-                }
+        def parseOptsCount = 0
+        service.frameworkService = mockWith(FrameworkService) {
+            parseOptsFromArray(1..1) { String[] args ->
+                def argsl = args as List
+                assertEquals(['test1','wakeful'], argsl)
                 parseOptsCount++
                 ['test1':'wakeful']
             }
-            getProjectGlobals(1..1) {  project->
+            getFrameworkPropertiesMap(1..1) { -> [:] }
+            getProjectProperties(1..1) { project -> [:] }
+            parseOptsFromArray(1..1) { String[] args ->
+                def argsl = args as List
+                assertTrue(argsl.indexOf('-test1') >= 0 && argsl.indexOf('-test1') <= argsl.size() - 2)
+                assertTrue(argsl.indexOf('-test2') >= 0 && argsl.indexOf('-test2') <= argsl.size() - 2)
+                assertTrue(argsl.indexOf('-test3') >= 0 && argsl.indexOf('-test3') <= argsl.size() - 2)
+                assertEquals('wakeful', argsl[argsl.indexOf('-test1') + 1])
+                assertEquals('val2a', argsl[argsl.indexOf('-test2') + 1])
+                assertEquals('val3', argsl[argsl.indexOf('-test3') + 1])
+                parseOptsCount++
+                ['test1':'wakeful']
+            }
+            getProjectGlobals(1..1) { project ->
                 [:]
             }
-            //called by createContext
             filterNodeSet(1..1) { NodesSelector selector, String project ->
                 makeNodeSet(['x','y'])
             }
-
         }
-        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * filterAuthorizedNodes(*_)>>makeNodeSet(['x','y'])
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * filterAuthorizedNodes(*_) >> makeNodeSet(['x','y'])
         }
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
@@ -2368,44 +2380,56 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                                           .dataContext(['option':['monkey':'wakeful'],'job':['execid':'123']])
                                           .user('aUser')
                                           .build()
-        def parseOptsCount=0
-        service.frameworkService=mockWith(FrameworkService){
-            parseOptsFromArray(1..2){String[] args->
-                def argsl=args as List
-                if(parseOptsCount<1){
-                    assertEquals(4,argsl.size())
-                }else{
-                    assertTrue(argsl.indexOf('-test1')>=0 && argsl.indexOf('-test1')<=argsl.size()-2)
-                    assertTrue(argsl.indexOf('-test2')>=0 && argsl.indexOf('-test2')<=argsl.size()-2)
-                    assertTrue(argsl.indexOf('-test3')>=0 && argsl.indexOf('-test3')<=argsl.size()-2)
-                    assertEquals('wakeful',argsl[argsl.indexOf('-test1')+1])
-                    assertEquals('',argsl[argsl.indexOf('-test2')+1])
-                    assertEquals('val3',argsl[argsl.indexOf('-test3')+1])
-                }
+        def parseOptsCount = 0
+        service.frameworkService = mockWith(FrameworkService) {
+            parseOptsFromArray(1..1) { String[] args ->
+                def argsl = args as List
+                assertEquals(4, argsl.size())
                 parseOptsCount++
-                def opts=[:]
-                def key=null
-                argsl.each{v->
-                    if(key){
-                        opts[key]=v
-                        key=null
-                    }else{
-                        key=v.replaceFirst('^-','')
+                def opts = [:]
+                def key = null
+                argsl.each { v ->
+                    if (key) {
+                        opts[key] = v
+                        key = null
+                    } else {
+                        key = v.replaceFirst('^-', '')
                     }
                 }
                 opts
             }
-            getProjectGlobals(1..1) {  project->
+            getFrameworkPropertiesMap(1..1) { -> [:] }
+            getProjectProperties(1..1) { project -> [:] }
+            parseOptsFromArray(1..1) { String[] args ->
+                def argsl = args as List
+                assertTrue(argsl.indexOf('-test1') >= 0 && argsl.indexOf('-test1') <= argsl.size() - 2)
+                assertTrue(argsl.indexOf('-test2') >= 0 && argsl.indexOf('-test2') <= argsl.size() - 2)
+                assertTrue(argsl.indexOf('-test3') >= 0 && argsl.indexOf('-test3') <= argsl.size() - 2)
+                assertEquals('wakeful', argsl[argsl.indexOf('-test1') + 1])
+                assertEquals('', argsl[argsl.indexOf('-test2') + 1])
+                assertEquals('val3', argsl[argsl.indexOf('-test3') + 1])
+                parseOptsCount++
+                def opts = [:]
+                def key = null
+                argsl.each { v ->
+                    if (key) {
+                        opts[key] = v
+                        key = null
+                    } else {
+                        key = v.replaceFirst('^-', '')
+                    }
+                }
+                opts
+            }
+            getProjectGlobals(1..1) { project ->
                 [:]
             }
-            //called by createContext
             filterNodeSet(1..1) { NodesSelector selector, String project ->
                 makeNodeSet(['x','y'])
             }
-
         }
-        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * filterAuthorizedNodes(*_)>>makeNodeSet(['x','y'])
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * filterAuthorizedNodes(*_) >> makeNodeSet(['x','y'])
         }
 
         service.fileUploadService = mockWith(FileUploadService){

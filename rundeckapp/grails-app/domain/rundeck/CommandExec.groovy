@@ -114,13 +114,14 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
     }
 
     public String getPluginType() {
-        if(adhocRemoteString) {
+        // Check for != null instead of truthy to preserve type even when strings are empty
+        if(adhocRemoteString != null) {
             return WorkflowStepConstants.TYPE_COMMAND
-        } else if(adhocLocalString) {
+        } else if(adhocLocalString != null) {
             return WorkflowStepConstants.TYPE_SCRIPT
-        } else if(adhocFilepath && adhocFilePathIsUrl()) {
+        } else if(adhocFilepath != null && adhocFilePathIsUrl()) {
             return WorkflowStepConstants.TYPE_SCRIPT_URL
-        } else if(adhocFilepath && !adhocFilePathIsUrl()) {
+        } else if(adhocFilepath != null && !adhocFilePathIsUrl()) {
             return WorkflowStepConstants.TYPE_SCRIPT_FILE
         }
         return null
@@ -135,17 +136,19 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
      */
     public Map toMap(){
         def map=[:]
-        if(adhocRemoteString){
+        // Include keys even for empty strings to preserve type information during conversion
+        // Priority: adhocRemoteString > adhocLocalString > adhocFilepath
+        if(adhocRemoteString != null){
             map.exec=adhocRemoteString
-        }else if(adhocLocalString){
+        }else if(adhocLocalString != null){
             map.script=adhocLocalString
-        }else {
+        }else if(adhocFilepath != null) {
             if(adhocFilePathIsUrl()){
                 map.scripturl = adhocFilepath
             }else{
                 map.scriptfile=adhocFilepath
             }
-            if(expandTokenInScriptFile) {
+            if(expandTokenInScriptFile != null) {
                 map.expandTokenInScriptFile = !!expandTokenInScriptFile
             }
         }
@@ -156,7 +159,7 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
         if(fileExtension && !adhocRemoteString) {
             map.fileExtension = fileExtension
         }
-        if(argString && !adhocRemoteString){
+        if(argString != null && !adhocRemoteString){
             map.args=argString
         }
         if(errorHandler){
@@ -258,8 +261,10 @@ public class CommandExec extends WorkflowStep implements BaseCommandExec {
         if (data.fileExtension != null && !obj.adhocRemoteString) {
             obj.fileExtension = data.fileExtension.toString()
         }
-        if (data.args != null && !obj.adhocRemoteString) {
+        if (data.args != null && (!obj.adhocRemoteString || data.args?.toString()?.isEmpty())) {//allow empty string to keep compatibility
             obj.argString = data.args.toString()
+        } else if(data.argString != null && (!obj.adhocRemoteString || data.argString?.toString()?.isEmpty())) {//allow empty string to keep compatibility
+            obj.argString = data.argString.toString()
         }
     }
 

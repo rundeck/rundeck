@@ -332,7 +332,11 @@ tasks.register('verifyBuild', JavaExec) {
     classpath = configurations.groovyScript
     mainClass = 'groovy.ui.GroovyMain'
     boolean debug = project.hasProperty('debug')
-    def scriptArgs = ["testbuild.groovy", "--buildType=${project.ext.environment}"]
+    def scriptArgs = [
+        "testbuild.groovy",
+        "--buildType=${project.ext.environment}",
+        "--version",
+        project.resolvedVersion]
     if (debug) {
         scriptArgs << "-debug"
     }

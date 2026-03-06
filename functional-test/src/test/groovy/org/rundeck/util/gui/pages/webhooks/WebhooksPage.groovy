@@ -77,12 +77,6 @@ class WebhooksPage extends BasePage{
         return el(alertInfoBy)
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on execution show page: " + driver.currentUrl)
-        }
-    }
-
     void loadPageForProject(String projectName){
         this.loadPath = "/webhook/admin?project=${projectName}"
     }

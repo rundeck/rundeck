@@ -78,6 +78,7 @@ import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -492,6 +493,11 @@ Since: v53''',
             return
         }
 
+        if(response.format == "xml" && !rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView(g.message(code: 'api.error.export.format.unsupported', args: ['xml']))
+        }
+
         if (!params.project || params.project != scheduledExecution.project) {
             flash.info = infoMessage
             return redirect(controller: 'scheduledExecution', action: 'show',
@@ -557,7 +563,7 @@ Since: v53''',
         if (params.opt && (params.opt instanceof Map)) {
             dataMap.selectedoptsmap = params.opt
         }
-
+        def controller = this
         withFormat{
             html{
                 def stats = scheduledExecutionService.calculateJobStats(scheduledExecution)
@@ -582,15 +588,17 @@ Since: v53''',
                 }
                 flush(response)
             }
-            xml{
-                response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
-                response.contentType='text/xml; charset=UTF-8'
+            //if(controller.rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
+                xml {
+                    response.setHeader("Content-Disposition", "attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
+                    response.contentType = 'text/xml; charset=UTF-8'
 
-                response.outputStream.withWriter('UTF-8') { writer ->
-                    rundeckJobDefinitionManager.exportAs('xml', [scheduledExecution], writer)
+                    response.outputStream.withWriter('UTF-8') { writer ->
+                        rundeckJobDefinitionManager.exportAs('xml', [scheduledExecution], writer)
+                    }
+                    flush(response)
                 }
-                flush(response)
-            }
+            //}
         }
     }
     private static String getFname(name){
@@ -785,7 +793,8 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
             [AuthConstants.ACTION_READ],
             scheduledExecution.project
         )
-        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,readAuth,maxDepth)
+        def workflowData = scheduledExecution.getWorkflowData()
+        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,workflowData,readAuth,maxDepth)
         def controller = this
         withFormat {
             '*' {
@@ -794,7 +803,7 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
                 }
             }
 
-            if (controller.isAllowXml()) {
+            if (controller.isAllowXml() && controller.rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
                 xml {
                     render(contentType: 'application/xml') {
                         workflow wfdata
@@ -2428,7 +2437,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         //set session new workflow
-        WorkflowController.getSessionWorkflow(session,null,new Workflow(scheduledExecution.workflow))
+        def origWorkflowData = scheduledExecution.getWorkflowData()
+        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? WorkflowDataImpl.fromMap(origWorkflowData.toMap()) : new WorkflowDataImpl())
         if(scheduledExecution.options){
             def editopts = [:]
 
@@ -2483,7 +2493,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
         def props=[:]
         props.putAll(execution.properties)
-        props.workflow=new Workflow(execution.workflow)
+        def execWorkflowData = execution.getWorkflowData()
+        props.workflow=execWorkflowData ? WorkflowDataImpl.fromMap(execWorkflowData.toMap()) : new WorkflowDataImpl()
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
             props = props.findAll{!(it.key=~/^node(In|Ex)clude.*$/)}
@@ -2718,7 +2729,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
-        params.workflow=new Workflow(scheduledExecution.workflow)
+        def jobWorkflowData = scheduledExecution.getWorkflowData()
+        params.workflow=jobWorkflowData ? new WorkflowDataImpl().fromMap(jobWorkflowData.toMap()) : new WorkflowDataImpl()
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch
         params.filter=scheduledExecution.asFilter()
@@ -2828,7 +2840,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                 newScheduledExecution.id=null
                 newScheduledExecution.uuid=null
                 //set session new workflow
-                WorkflowController.getSessionWorkflow(session,null,new Workflow(newScheduledExecution.workflow))
+                WorkflowController.getSessionWorkflow(session,null, WorkflowDataImpl.fromMap(newScheduledExecution.getWorkflowData()?.toMap()))
                 if(newScheduledExecution.options){
                     def editopts = [:]
 
@@ -3985,6 +3997,7 @@ Authorization required: `read` for the Job.''',
         if(request.api_version > ApiVersions.V43){
             supportedFormats << 'json'
         }
+
         if (!(response.format in supportedFormats)) {
             return apiService.renderErrorFormat(
                 response,
@@ -3995,6 +4008,7 @@ Authorization required: `read` for the Job.''',
                 ]
             )
         }
+
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
@@ -4008,6 +4022,17 @@ Authorization required: `read` for the Job.''',
 
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
             return
+        }
+
+        if(!rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args: [response.format]
+                    ]
+            )
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
