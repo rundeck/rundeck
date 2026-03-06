@@ -1330,7 +1330,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         try {
             this.workflow = new Workflow(workflowData)
         } catch (Exception e) {
-            log.warn("Failed to convert WorkflowData to Workflow domain class for ScheduledExecution ${id}, storing only in workflowJson", e)
+            log.debug("Failed to convert WorkflowData to Workflow domain class for ScheduledExecution ${id}, storing only in workflowJson", e)
             this.workflow = null
         }
     }
