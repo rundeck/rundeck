@@ -41,6 +41,11 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
 
         def arr = OptsUtil.burst(adhocRemoteString)
 
+        // Track which arguments contain property references BEFORE replacement
+        def containsPropertyRef = arr.collect { arg ->
+            DataContextUtils.stringContainsPropertyReferencePredicate.test(arg)
+        }
+
         def result = SharedDataContextUtils.replaceDataReferencesInObject(
                 arr,
                 ContextView.node(entry.getNodename()),
@@ -55,7 +60,7 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
         def execArgListBuilder = ExecArgList.builder()
         for (int i = 0; i < result.length; i++) {
             // Quote if: original contained property ref AND quoting enabled
-            boolean shouldQuote = DataContextUtils.stringContainsPropertyReferencePredicate.test(result[i]) && execQuotingEnabled
+            boolean shouldQuote = containsPropertyRef[i] && execQuotingEnabled
             execArgListBuilder.arg(result[i], shouldQuote, featureQuotingBackwardCompatible)
         }
 
