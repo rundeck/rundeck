@@ -120,6 +120,7 @@ export default defineComponent({
     editor.setOptions({
       ...(this.options || {}),
       enableLiveAutocompletion: shouldEnableAutoCompletion,
+      liveAutocompletionDelay: 150,
     });
 
     if (this.modelValue) editor.setValue(this.resolveValue(this.modelValue), 1);
@@ -233,7 +234,6 @@ export default defineComponent({
               meta: type[0].toUpperCase() + type.slice(1),
             }),
           );
-
           callback(null, suggestions);
         },
       };

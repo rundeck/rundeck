@@ -125,7 +125,7 @@ export default defineComponent({
 
     p {
       margin: 0;
-      font-family: Inter, var(--fonts-body) !important;
+      font-family: Inter, var(--fonts-body2) !important;
 
       i {
         width: auto;
