@@ -206,7 +206,7 @@ export default defineComponent({
   p,
   a,
   span:not(.glyphicon, .fa, .pi) {
-    font-family: Inter, var(--fonts-body) !important;
+    font-family: Inter, var(--fonts-body2) !important;
   }
 
   .plugin-info-wrapper {
@@ -268,7 +268,7 @@ export default defineComponent({
 
 /* Tag styling for Node Step and Workflow Step badges */
 .stepCardHeader .p-tag {
-  font-family: Inter, var(--fonts-body) !important;
+  font-family: Inter, var(--fonts-body2) !important;
   font-size: 12px !important;
   font-weight: var(--fontWeights-regular);
   line-height: normal;
