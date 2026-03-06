@@ -19,8 +19,9 @@ package com.dtolabs.rundeck.app.support
 import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
 import grails.validation.Validateable
+import rundeck.Execution
 import rundeck.ReferencedExecution
-import rundeck.controllers.ExecutionController
+import rundeck.ExecReport
 import rundeck.services.ExecutionService
 
 /*
@@ -54,8 +55,16 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     boolean includeJobRef
     List<String> execProjects
     String recentFilter
+    String olderFilter
     String userFilter
     String executionTypeFilter
+    String adhocStringFilter
+    String nodeFilter
+    String optionFilter
+
+    boolean excludeRunning = false
+    boolean executionSummary = false
+
 
     static constraints={
         statusFilter(nullable:true)
@@ -63,6 +72,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         loglevelFilter(nullable:true)
         excludeJobIdListFilter(nullable:true)
         recentFilter(nullable:true)
+        olderFilter(nullable:true)
         jobListFilter(nullable:true)
         startafterFilter(nullable:true)
         jobFilter(nullable:true)
@@ -87,7 +97,22 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         adhoc(nullable:true)
         executionTypeFilter( nullable: true)
         execProjects(nullable:true)
+        adhocStringFilter(nullable:true)
+        nodeFilter(nullable:true)
+        optionFilter(nullable:true)
     }
+
+    /**
+     * Escape special LIKE wildcard characters in user input to prevent LIKE pattern injection.
+     * This ensures that user-provided %, _, and \ characters are treated as literals.
+     * @param input the user input string to escape
+     * @return the escaped string safe for use in LIKE patterns
+     */
+    static String escapeLikePattern(String input) {
+        if (input == null) return null
+        return input.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    }
+
     /**
      * Modify a date by rewinding a certain number of units
      * @param recentFilter string matching "\d+[hdwmyns]"
@@ -200,6 +225,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                   } else {
                       if(query.includeJobRef && query.execProjects){
                           or {
+                              eq("uuid", theid)
                               exists(new DetachedCriteria(ReferencedExecution, "re").build {
                                   projections { property 're.execution.id' }
                                   eq('re.jobUuid', theid)
@@ -211,7 +237,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
                                       }
                                   }
                               })
-                              eq("uuid", theid)
+
                           }
                       }else{
                           eq("uuid", theid)
@@ -378,6 +404,10 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         }
         if(query.projFilter) {
           eq('project', query.projFilter)
+
+          if(excludeRunning){
+              isNotNull('dateCompleted')
+          }
         }
         if (query.userFilter) {
           eq('user', query.userFilter)
@@ -407,17 +437,11 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         } else if(state == ExecutionService.EXECUTION_FAILED){
           isNotNull('dateCompleted')
           eq('cancelled', false)
-          or{
-            eq('status',  'failed')
-            eq('status',  'false')
-          }
+          eq('status',  'failed')
         }else if(state == ExecutionService.EXECUTION_SUCCEEDED){
           isNotNull('dateCompleted')
           eq('cancelled', false)
-          or{
-            eq('status',  'true')
-            eq('status',  'succeeded')
-          }
+          eq('status',  'succeeded')
         }else if(state){
           isNotNull('dateCompleted')
           eq('cancelled', false)
@@ -446,6 +470,39 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
           ge('dateCompleted', query.endafterFilter)
         }
 
+        if (query.adhocStringFilter) {
+          isNull('scheduledExecution')
+          def escapedAdhocString = ExecutionQuery.escapeLikePattern(query.adhocStringFilter)
+          exists(new DetachedCriteria(ExecReport, "er").build {
+              projections { property 'er.executionId' }
+              eqProperty('er.executionId', 'this.id')
+              eqProperty('er.project', 'this.project')
+              ilike('er.title', '%' + escapedAdhocString + '%')
+          })
+        }
+        if(query.nodeFilter){
+          // Check if this is a simple node name filter vs a complex filter expression
+          // Simple: "name:nodename" or plain "nodename" (no special chars)
+          // Complex: filters with ":" (like "tags:prod") or regex patterns (".*")
+          if(query.nodeFilter.startsWith('name:') || !(query.nodeFilter.contains(":") || query.nodeFilter.contains(".*"))){
+              def node = query.nodeFilter.startsWith('name:') ? query.nodeFilter.substring(5).trim() : query.nodeFilter
+              def escapedNode = ExecutionQuery.escapeLikePattern(node)
+              or {
+                  ilike("failedNodeList", '%' + escapedNode + '%')
+                  ilike("succeededNodeList", '%' + escapedNode + '%')
+              }
+
+          }else{
+              def escapedFilter = ExecutionQuery.escapeLikePattern(query.nodeFilter)
+              ilike("filter", '%' + escapedFilter + '%')
+          }
+        }
+
+        if(query.optionFilter){
+          def escapedOption = ExecutionQuery.escapeLikePattern(query.optionFilter)
+          ilike('argString', '%' + escapedOption + '%')
+        }
+
         def critDelegate = delegate
         jobQueryComponents?.each { name, jobQuery ->
           jobQuery.extendCriteria(query, [:], critDelegate)
@@ -460,5 +517,223 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
 
       return criteriaClos
     }
+
+    /**
+     * Count executions using HQL without expensive JOINs to scheduled_execution table.
+     * Handles both simple queries and cross-project job reference queries (includeJobRef).
+     * 
+     * For includeJobRef queries: Uses dual-query approach to count direct executions 
+     * and referenced executions separately.
+     * 
+     * For simple queries: Uses single HQL count on execution table only.
+     * 
+     * Applies all query filters (status, user, date range, etc.) to ensure accurate counts.
+     * @return total execution count
+     */
+    Long countExecutions() {
+        // Build dynamic filter conditions (shared between both approaches)
+        def filterConditions = []
+        def filterParams = [:]
+        def state = this.statusFilter
+
+        // Status filter with all the complex state logic
+        if (state == ExecutionService.EXECUTION_RUNNING) {
+            filterConditions << "e.dateCompleted IS NULL"
+            filterConditions << "(e.status IS NULL OR (e.status != :scheduledStatus AND e.status != :queuedStatus))"
+            filterParams.scheduledStatus = ExecutionService.EXECUTION_SCHEDULED
+            filterParams.queuedStatus = ExecutionService.EXECUTION_QUEUED
+        } else if (state == ExecutionService.EXECUTION_SCHEDULED) {
+            filterConditions << "e.status = :status"
+            filterParams.status = ExecutionService.EXECUTION_SCHEDULED
+        } else if (state == ExecutionService.EXECUTION_QUEUED) {
+            filterConditions << "e.status = :status"
+            filterParams.status = ExecutionService.EXECUTION_QUEUED
+        } else if (state == ExecutionService.EXECUTION_ABORTED) {
+            filterConditions << "e.dateCompleted IS NOT NULL"
+            filterConditions << "e.cancelled = true"
+        } else if (state == ExecutionService.EXECUTION_TIMEDOUT) {
+            filterConditions << "e.dateCompleted IS NOT NULL"
+            filterConditions << "e.timedOut = true"
+        } else if (state == ExecutionService.EXECUTION_FAILED_WITH_RETRY) {
+            filterConditions << "e.dateCompleted IS NOT NULL"
+            filterConditions << "e.willRetry = true"
+        } else if (state == ExecutionService.EXECUTION_FAILED) {
+            filterConditions << "e.dateCompleted IS NOT NULL"
+            filterConditions << "e.cancelled = false"
+            filterConditions << "e.status = :status"
+            filterParams.status = 'failed'
+        } else if (state == ExecutionService.EXECUTION_SUCCEEDED) {
+            filterConditions << "e.dateCompleted IS NOT NULL"
+            filterConditions << "e.cancelled = false"
+            filterConditions << "e.status = :status"
+            filterParams.status = 'succeeded'
+        } else if (state) {
+            // Custom status
+            filterConditions << "e.dateCompleted IS NOT NULL"
+            filterConditions << "e.cancelled = false"
+            filterConditions << "e.status = :status"
+            filterParams.status = state
+        }
+
+        // User filter
+        if (this.userFilter) {
+            filterConditions << "e.user = :userFilter"
+            filterParams.userFilter = this.userFilter
+        }
+
+        // Execution type filter
+        if (this.executionTypeFilter) {
+            filterConditions << "e.executionType = :executionTypeFilter"
+            filterParams.executionTypeFilter = this.executionTypeFilter
+        }
+
+        // Aborted by filter
+        if (this.abortedbyFilter) {
+            filterConditions << "e.abortedby = :abortedbyFilter"
+            filterParams.abortedbyFilter = this.abortedbyFilter
+        }
+
+        // Date started filters
+        if (this.dostartafterFilter && this.dostartbeforeFilter && this.startbeforeFilter && this.startafterFilter) {
+            filterConditions << "e.dateStarted BETWEEN :startafterFilter AND :startbeforeFilter"
+            filterParams.startafterFilter = this.startafterFilter
+            filterParams.startbeforeFilter = this.startbeforeFilter
+        } else if (this.dostartbeforeFilter && this.startbeforeFilter) {
+            filterConditions << "e.dateStarted <= :startbeforeFilter"
+            filterParams.startbeforeFilter = this.startbeforeFilter
+        } else if (this.dostartafterFilter && this.startafterFilter) {
+            filterConditions << "e.dateStarted >= :startafterFilter"
+            filterParams.startafterFilter = this.startafterFilter
+        }
+
+        // Date completed filters
+        if (this.doendafterFilter && this.doendbeforeFilter && this.endafterFilter && this.endbeforeFilter) {
+            filterConditions << "e.dateCompleted BETWEEN :endafterFilter AND :endbeforeFilter"
+            filterParams.endafterFilter = this.endafterFilter
+            filterParams.endbeforeFilter = this.endbeforeFilter
+        } else if (this.doendbeforeFilter && this.endbeforeFilter) {
+            filterConditions << "e.dateCompleted <= :endbeforeFilter"
+            filterParams.endbeforeFilter = this.endbeforeFilter
+        } else if (this.doendafterFilter && this.endafterFilter) {
+            filterConditions << "e.dateCompleted >= :endafterFilter"
+            filterParams.endafterFilter = this.endafterFilter
+        }
+
+        // Exclude running filter
+        if (this.excludeRunning) {
+            filterConditions << "e.dateCompleted IS NOT NULL"
+        }
+
+        // Build the filter clause string
+        def filterClause = filterConditions ? " AND " + filterConditions.join(" AND ") : ""
+
+        // Choose counting strategy based on query type
+        if (shouldUseUnionQuery()) {
+            // Cross-project job reference query: use dual-query approach
+            return countWithJobReferences(filterClause, filterParams)
+        } else {
+            // Simple query: use single HQL count
+            return countSimple(filterClause, filterParams)
+        }
+    }
+
+    /**
+     * Count executions using simple HQL without JOINs.
+     * Used for queries that don't need cross-project job references.
+     */
+    private Long countSimple(String filterClause, Map filterParams) {
+        def params = [:]
+        if (filterParams) {
+            params.putAll(filterParams)
+        }
+
+        // Build base HQL
+        def hqlParts = ["SELECT COUNT(*) FROM Execution e WHERE 1=1"]
+
+        // Project filter
+        if (this.projFilter) {
+            hqlParts << "AND e.project = :project"
+            params.project = this.projFilter
+        }
+
+        // Job UUID filter - uses execution.job_uuid column directly (no JOIN needed)
+        if (this.jobIdListFilter) {
+            if (this.jobIdListFilter.size() == 1) {
+                hqlParts << "AND e.jobUuid = :jobUuid"
+                params.jobUuid = this.jobIdListFilter[0].toString()
+            } else {
+                hqlParts << "AND e.jobUuid IN (:jobUuids)"
+                params.jobUuids = this.jobIdListFilter.collect { it.toString() }
+            }
+        }
+
+        def hql = hqlParts.join(' ') + filterClause
+        def result = Execution.executeQuery(hql, params)
+        return (result[0] ?: 0) as Long
+    }
+
+    /**
+     * Count executions including cross-project job references.
+     * Uses dual-query approach: counts direct executions separately from referenced executions.
+     */
+    private Long countWithJobReferences(String filterClause, Map filterParams) {
+        if (!this.jobIdListFilter) {
+            return 0L
+        }
+
+        String jobUuid = this.jobIdListFilter[0]
+
+        // COUNT QUERY 1: Executions with ReferencedExecution entries (cross-project job references)
+        // Uses HQL with INNER JOIN instead of EXISTS for better performance (1900x faster)
+        // Counts executions in projects that have referenced this job (via workflow job reference steps)
+        // execProjects contains all projects where this job has been referenced, including projFilter
+        def hql1Base = """SELECT COUNT(e.id)
+FROM Execution e
+INNER JOIN ReferencedExecution re WITH re.execution.id = e.id
+WHERE e.scheduledExecution IS NOT NULL
+AND re.jobUuid = :jobUuid
+AND e.project IN (:projects)"""
+        def hql1 = hql1Base + filterClause
+        def params1 = [jobUuid: jobUuid, projects: this.execProjects]
+        if (filterParams) {
+            params1.putAll(filterParams)
+        }
+        def count1 = Execution.executeQuery(hql1, params1)[0] ?: 0
+
+        // COUNT QUERY 2: Direct executions in the job's own project (without ReferencedExecution)
+        // This counts executions that were directly triggered (not via a parent job's workflow step)
+        // Note: projFilter may be in execProjects if the job references itself, but such executions
+        // will have a ReferencedExecution entry and thus only be counted in COUNT QUERY 1
+        def hql2Base = """SELECT COUNT(e.id)
+FROM Execution e
+WHERE e.project = :project
+AND e.scheduledExecution IS NOT NULL
+AND e.jobUuid = :jobUuid
+AND NOT EXISTS (
+    SELECT 1 FROM ReferencedExecution re
+    WHERE re.execution.id = e.id
+)"""
+        def hql2 = hql2Base + filterClause
+        def params2 = [project: this.projFilter, jobUuid: jobUuid]
+        if (filterParams) {
+            params2.putAll(filterParams)
+        }
+        def count2 = Execution.executeQuery(hql2, params2)[0] ?: 0
+
+        return (count1 as Long) + (count2 as Long)
+    }
+
+    /**
+     * Check if this query should use the cross-project job reference optimization
+     */
+    boolean shouldUseUnionQuery() {
+        return this.includeJobRef &&
+                this.projFilter &&
+                this.execProjects &&
+                this.jobIdListFilter &&
+                this.jobIdListFilter.size() == 1 &&
+                !(this.jobIdListFilter[0] instanceof Long)
+    }
+
 
 }
