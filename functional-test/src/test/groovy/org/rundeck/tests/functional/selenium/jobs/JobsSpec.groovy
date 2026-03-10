@@ -869,6 +869,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.go()
         jobCreatePage.fillBasicJob 'job with global log filter'
         jobCreatePage.addGlobalLogFilter.click()
+        jobCreatePage.waitForModal(1)
         jobCreatePage.fillHighlightLogFilter();
         then:
         assert jobCreatePage.getLogFilterButtons('#globalLogFilters').size() == 1
