@@ -96,6 +96,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         mockDomain Execution
         mockDomain LogFileStorageRequest
         mockDomain CommandExec
+        mockDomain JobExec
         mockDomain JobFileRecord
         mockCodec JobsXMLCodec
 

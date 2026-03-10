@@ -260,7 +260,7 @@ export default defineComponent({
   width: 100%;
   @include form-input-base;
   padding: 10px;
-  font-family: Inter, var(--fonts-body);
+  font-family: Inter, var(--fonts-body2);
   font-size: 14px;
   font-weight: var(--fontWeights-regular);
   line-height: normal;

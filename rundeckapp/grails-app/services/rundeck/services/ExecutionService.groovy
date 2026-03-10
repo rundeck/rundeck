@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import groovy.transform.EqualsAndHashCode
 import org.hibernate.sql.JoinType
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
@@ -1295,7 +1296,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     null
             def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
 
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.getWorkflowData(), execution.project)
+            WorkflowData eWorkflowData = execution.getWorkflowData()
+
+            if (eWorkflowData.hasConditionalSteps()) {
+                boolean featureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
+                if(!featureEnabled) {
+                    def msg = "Job [${scheduledExecution.jobName}] has conditional steps and the conditional logic feature is not enabled"
+                    throw new ExecutionServiceException(msg, "Conditional Steps not supported")
+                }
+            }
+
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(eWorkflowData, execution.project)
 
             StepExecutionContext createInitContext = createContext(
                     execution,
@@ -4088,7 +4099,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     result = createFailure(JobReferenceFailureReason.NotFound, msg)
                     return
                 }
-                newExecItem = executionUtilService.createExecutionItemForWorkflow(seWorkflowData, se.project)
+                if (seWorkflowData.hasConditionalSteps()) {
+                    boolean featureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
+                    if(!featureEnabled) {
+                        def msg = "Job [${jitem.jobIdentifier}] has conditional steps and the feature is not enabled: ${se.extid}"
+                        executionContext.getExecutionListener().log(0, msg);
+                        result = createFailure(JobReferenceFailureReason.JobFailed, msg)
+                        return
+                    }
+                }
+                newExecItem = executionUtilService.createExecutionItemForWorkflow(seWorkflowData, se.project, jitem.conditions)
 
                 try {
                     newContext = createJobReferenceContext(

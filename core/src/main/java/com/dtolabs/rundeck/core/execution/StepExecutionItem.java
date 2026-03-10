@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet;
 
 /**
  * StepExecutionItem is the base interface for any step execution item to be submitted to the ExecutionService
@@ -57,6 +58,14 @@ public interface StepExecutionItem {
      * @return the runner {@link INodeEntry} for this step, or {@code null} if not applicable or not defined
      */
     public default INodeEntry getRunner() {
+        return null;
+    }
+
+    /**
+     * Get the condition set for this step, if any.
+     * @return ConditionSet if this step has conditional logic, null otherwise
+     */
+    public default ConditionalSet getConditions() {
         return null;
     }
 
