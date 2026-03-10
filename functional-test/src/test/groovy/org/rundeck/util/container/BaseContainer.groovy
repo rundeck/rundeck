@@ -542,7 +542,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param body An object representing the job run request options. Must be serializable to JSON.
      * @return A wrapper containing the final execution and the output of the execution.
      */
-    RunJobOutput runJobGetOutput(String jobId, Object body = null) {
+    RunJobOutput runJobGetOutput(String jobId, Object body = null, Duration waitingTime = WaitingTime.EXCESSIVE) {
         Execution execution
         try (def r = JobUtils.executeJobWithOptions(jobId, client, body)) {
             if (!r.successful) {
@@ -551,7 +551,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
             execution = jsonValue(r.body(), Execution.class)
         }
-        execution = waitForExecutionFinish(execution.id as String, WaitingTime.EXCESSIVE)
+        execution = waitForExecutionFinish(execution.id as String, waitingTime)
         def output=JobUtils.getExecutionOutput(execution.id, client)
         return new RunJobOutput(execution: execution, output: output)
     }
