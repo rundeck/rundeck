@@ -49,11 +49,11 @@
   </modal>
 </template>
 <script lang="ts">
-import pluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
-import { PluginConfig } from "@/library/interfaces/PluginConfig";
-import { getServiceProviderDescription } from "@/library/modules/pluginService";
-import { ContextVariable } from "@/library/stores/contextVariables";
+import pluginConfig from "./pluginConfig.vue";
+import pluginInfo from "./PluginInfo.vue";
+import { PluginConfig } from "../../../library/interfaces/PluginConfig";
+import { getServiceProviderDescription } from "../../../library/modules/pluginService";
+import { ContextVariable } from "../../../library/stores/contextVariables";
 import { cloneDeep } from "lodash";
 import { defineComponent, type PropType } from "vue";
 
@@ -66,7 +66,7 @@ export default defineComponent({
       required: true,
     },
     modelValue: {
-      type: Object,
+      type: Object as PropType<PluginConfig>,
       required: true,
       default: () => ({}) as PluginConfig,
     },

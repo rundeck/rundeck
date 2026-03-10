@@ -1,13 +1,12 @@
 import { createApp } from "vue";
 import * as uiv from "uiv";
 import VueCookies from "vue-cookies";
-import PrimeVue from "primevue/config";
-import Lara from "@primeuix/themes/lara";
 
 import { getRundeckContext } from "../../../library";
 import { UiMessage } from "../../../library/stores/UIStore";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
 import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
+import {configurePrimeVue} from "../../../library/utilities/primeVueConfig";
 
 const rootStore = getRundeckContext().rootStore;
 const EventBus = getRundeckContext().eventBus;
@@ -68,16 +67,7 @@ function initUiComponents(elmElement: any) {
   vue.use(i18n);
   vue.use(uiv);
 
-  vue.use(PrimeVue, {
-    theme: {
-      preset: Lara,
-      options: {
-        prefix: "p",
-        cssLayer: true,
-        darkModeSelector: ".dark",
-      },
-    },
-  });
+  configurePrimeVue(vue);
 
   vue.provide("registerComponent", (name, comp) => {
     vue.component(name, comp);

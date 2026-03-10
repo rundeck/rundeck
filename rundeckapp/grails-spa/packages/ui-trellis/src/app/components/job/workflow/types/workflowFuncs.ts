@@ -39,9 +39,11 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
   if (cmd.type) {
     editData.type = cmd.type;
     editData.config = cmd.configuration || {};
-    editData.nodeStep = cmd.nodeStep;
+    editData.nodeStep = cmd.nodeStep ?? false;
   } else {
     if (cmd.jobref) {
+      editData.type = "job.reference";
+      editData.nodeStep = cmd.nodeStep ?? cmd.jobref?.nodeStep ?? false;
       editData.jobref = cmd.jobref;
     } else if (cmd.script) {
       editData.nodeStep = true;
@@ -83,6 +85,7 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
 export function mkid() {
   return Math.random().toString(36).substring(7);
 }
+
 export function editToCommandConfig(plugin: EditStepData): StepData {
   let data = {
     description: plugin.description,

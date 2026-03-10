@@ -113,6 +113,20 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
         return clazz.getDeclaredConstructor(SeleniumContext, args.getClass()).newInstance(this, args)
     }
 
+    /**
+     * Page with flags applied before return. Use for create-with-flags in one call.
+     */
+    <T extends BasePage> T page(Class<T> clazz, Object args, Map<String, Object> flags) {
+        T p = page(clazz, args)
+        flags?.each { k, v -> p.withFlag(k, v) }
+        return p
+    }
+
+    <T extends BasePage> T page(Class<T> clazz, Map<String, Object> flags) {
+        T p = page(clazz)
+        flags?.each { k, v -> p.withFlag(k, v) }
+        return p
+    }
 
     /**
      * Load the page and return the page object
@@ -134,6 +148,21 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
         T page = page(clazz, args)
         page.go()
         return page
+    }
+
+    /**
+     * Go to page with flags. One-liner: go(JobCreatePage, project, [nextUi: true])
+     */
+    <T extends BasePage> T go(Class<T> clazz, Object args, Map<String, Object> flags) {
+        T p = page(clazz, args, flags)
+        p.go()
+        return p
+    }
+
+    <T extends BasePage> T go(Class<T> clazz, Map<String, Object> flags) {
+        T p = page(clazz, flags)
+        p.go()
+        return p
     }
 
     /**

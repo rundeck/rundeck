@@ -8,7 +8,7 @@ import {
 describe("workflowTypes", () => {
   it("createStrategyData empty data", () => {
     const wfData = {} as WorkflowData;
-    expect(createStrategyData(wfData)).toEqual({ type: undefined, config: {} });
+    expect(createStrategyData(wfData)).toEqual({ type: "", config: {} });
   });
   it("createStrategyData strategy type only", () => {
     const wfData = {

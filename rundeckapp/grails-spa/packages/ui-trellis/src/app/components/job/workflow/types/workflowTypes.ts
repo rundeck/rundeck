@@ -26,6 +26,7 @@ export interface ScriptGeneralPluginConfig {
   interpreterArgsQuoted?: boolean;
   fileExtension?: string;
 }
+
 /**
  * Ouput Plugin config for script-inline plugin type
  */
@@ -40,6 +41,7 @@ export interface ScriptFileData extends ScriptArgsData {
   scriptfile?: string;
   expandTokenInScriptFile?: boolean;
 }
+
 /**
  * Ouput Plugin config for script-inline plugin type
  */
@@ -47,11 +49,13 @@ export interface ScriptFilePluginConfig extends ScriptGeneralPluginConfig {
   adhocFilepath: string;
   expandTokenInScriptFile?: boolean;
 }
+
 export interface CommandExecData {
   exec?: string;
 }
+
 /**
- * Ouput Plugin config for exec-command plugin type
+ * Output Plugin config for exec-command plugin type
  */
 export interface CommandExecPluginConfig {
   adhocRemoteString: string;
@@ -92,7 +96,6 @@ export interface CommandData {
   description?: string;
   plugins?: { [key: string]: any };
 }
-
 export interface BasicData {
   keepgoing: boolean;
 }
@@ -122,7 +125,7 @@ export interface ErrorHandlerDefinition {
   id: string;
 }
 export interface ErrorHandlerData {
-  errorhandler?: ErrorHandlerDefinition
+  errorhandler?: ErrorHandlerDefinition;
 }
 
 export interface GlobalLogFiltersData {
@@ -161,14 +164,14 @@ export interface WorkflowData
     WorkflowPluginConfig,
     StepsData {}
 
-export function createBasicData({ keepgoing }): BasicData {
+export function createBasicData({ keepgoing }: any): BasicData {
   return { keepgoing: !!keepgoing };
 }
 
 export function createStrategyData(workflowData: WorkflowData): PluginConfig {
-  const type = workflowData.strategy;
+  const type = workflowData.strategy || '';
   const strategyObj = workflowData.pluginConfig?.WorkflowStrategy;
-  const config = strategyObj ? strategyObj[type] : {};
+  const config = strategyObj && type ? strategyObj[type] : {};
   return { type, config };
 }
 
@@ -176,7 +179,10 @@ export function exportPluginData(
   strategy: PluginConfig,
   logFilters: GlobalLogFiltersData,
 ): any {
-  const obj = {
+  const obj: {
+    pluginConfig: { WorkflowStrategy: { [x: string]: any }; [key: string]: any };
+    strategy: string;
+  } = {
     pluginConfig: {
       WorkflowStrategy: { [strategy.type]: strategy.config },
     },
@@ -187,9 +193,60 @@ export function exportPluginData(
   }
   return obj;
 }
-export function createLogFiltersData({ pluginConfig }): GlobalLogFiltersData {
+export function createLogFiltersData({ pluginConfig }: any): GlobalLogFiltersData {
   return { LogFilter: pluginConfig?.LogFilter || [] };
 }
-export function createStepsData({ commands }): StepsData {
+
+/**
+ * Recursively filters out conditional steps from commands array
+ * Removes entire conditional blocks including all sub-steps
+ * @param commands - Array of step data
+ * @returns Filtered array without conditional steps
+ */
+function filterConditionalSteps(commands: StepData[]): StepData[] {
+  if (!commands || commands.length === 0) {
+    return [];
+  }
+
+  return commands
+    .filter((cmd) => {
+      // Remove entire conditional block (both wrapper and sub-steps)
+      // Check type field OR duck-typing with conditionGroups/subSteps
+      const cmdAny = cmd as any;
+      if (cmd.type === 'conditional' ||
+          (cmdAny.conditionGroups !== undefined && cmdAny.subSteps !== undefined)) {
+        return false;
+      }
+      return true;
+    })
+    .map((cmd) => {
+      // Recursively filter error handlers
+      if (cmd.errorhandler) {
+        const cmdAny = cmd.errorhandler as any;
+        const filteredHandler = filterConditionalSteps([cmdAny])[0];
+        if (filteredHandler) {
+          cmd.errorhandler = filteredHandler as ErrorHandlerDefinition;
+        } else {
+          // If error handler was conditional, remove it entirely
+          delete cmd.errorhandler;
+        }
+      }
+
+      // Recursively filter plugin configurations with nested commands
+      if (cmd.configuration && (cmd.configuration as any).commands) {
+        (cmd.configuration as any).commands = filterConditionalSteps((cmd.configuration as any).commands);
+      }
+
+      return cmd;
+    });
+}
+
+export function createStepsData({ commands }: Partial<StepsData>, filterConditionals: boolean = false): StepsData {
+  if (filterConditionals && commands) {
+    // Filter out conditional steps when feature is disabled
+    const filteredCommands = filterConditionalSteps(commands);
+    return { commands: filteredCommands };
+  }
+
   return { commands: commands || [] };
 }

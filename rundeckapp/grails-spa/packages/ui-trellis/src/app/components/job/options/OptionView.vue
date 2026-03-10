@@ -90,7 +90,7 @@
 </template>
 
 <script lang="ts">
-import { JobOption } from "@/library/types/jobs/JobEdit";
+import { JobOption } from "../../../../library/types/jobs/JobEdit";
 import { defineComponent, PropType } from "vue";
 
 export default defineComponent({

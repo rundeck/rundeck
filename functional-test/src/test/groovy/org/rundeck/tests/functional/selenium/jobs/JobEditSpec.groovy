@@ -20,7 +20,7 @@ class JobEditSpec extends SeleniumBase{
      */
     def "add and remove steps"(){
         given:
-            def projectName = "addRemoveStepsProject"
+            def projectName = "addRemoveStepsProject_${legacyUi}"
             setupProject(projectName)
             def loginPage = page LoginPage
             def homePage = page HomePage
@@ -53,11 +53,17 @@ class JobEditSpec extends SeleniumBase{
             jobListPage.go("/project/${projectName}/jobs")
             jobListPage.getLink(jobName).click()
             jobShowPage.validatePage()
-            jobShowPage.getJobActionDropdownButton().click()
-            jobShowPage.getEditJobLink().click()
+            def jobId = jobShowPage.getJobUuid().getText()
+            jobCreatePage.loadEditPath(projectName, jobId, true, legacyUi)
+            jobCreatePage.go()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
-            jobCreatePage.addSimpleCommandStepButton.click()
-            jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
+            if(legacyUi) {
+                jobCreatePage.addSimpleCommandStepButton.click()
+                jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
+            } else {
+                jobCreatePage.addSimpleCommandStepNextUi 'echo selenium test 2', 1
+            }
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.getUpdateJobButton()
             jobCreatePage.getUpdateJobButton().click()
         then:
             jobCreatePage.waitForUrlToContain('/job/show')
@@ -66,12 +72,12 @@ class JobEditSpec extends SeleniumBase{
 
         when:
             jobShowPage.closeDefinitionModalButton.click()
-            jobShowPage.jobActionDropdownButton.click()
-            jobShowPage.getEditJobLink().click()
+            jobCreatePage.go()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
             jobCreatePage.removeStepByIndex(1)
             hold(2)
             jobCreatePage.expectNumberOfStepsToBe(1)
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.getUpdateJobButton()
             jobCreatePage.getUpdateJobButton().click()
         then:
             jobCreatePage.waitForUrlToContain('/job/show')
@@ -79,6 +85,8 @@ class JobEditSpec extends SeleniumBase{
             jobShowPage.expectNumberOfStepsToBe(1)
         cleanup:
             deleteProject(projectName)
+        where:
+            legacyUi << [false, true]
     }
 
     /**

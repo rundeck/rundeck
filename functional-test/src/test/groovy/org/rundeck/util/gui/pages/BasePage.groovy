@@ -33,6 +33,36 @@ abstract class BasePage {
         this.context.driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10))
     }
 
+    /** Mutable map of page flags (e.g. nextUi, betaUi) that affect selectors/behavior.
+     *  Read on each access — supports toggling mid-test without navigation. */
+    protected final Map<String, Object> pageFlags = [:]
+
+    /** Fluent: set a flag and return this for chaining. Can be called before go() or mid-test. */
+    BasePage withFlag(String key, Object value) {
+        pageFlags[key] = value
+        return this
+    }
+
+    /** Check if a boolean flag is enabled (default false) */
+    boolean isFlagEnabled(String key) {
+        (pageFlags[key] as Boolean) ?: false
+    }
+
+    /** Get flag value with optional default */
+    <T> T getFlag(String key, T defaultValue = null) {
+        (pageFlags.containsKey(key) ? pageFlags[key] : defaultValue) as T
+    }
+
+    /** Fluent: enable nextUi mode. Shorthand for withFlag('nextUi', true) */
+    BasePage withNextUi(boolean enabled = true) {
+        return withFlag('nextUi', enabled)
+    }
+
+    /** Fluent: enable legacyUi mode. Shorthand for withFlag('legacyUi', true) */
+    BasePage withLegacyUi(boolean enabled = true) {
+        return withFlag('legacyUi', enabled)
+    }
+
     abstract String getLoadPath()
     /**
      * Go to the page and validate

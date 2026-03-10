@@ -147,11 +147,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         jobList.size() == 1
         ScheduledExecution se = jobList.first().getJob()
         se
-        se.workflow.commands.size() == 1
-        se.workflow.commands.first() instanceOf PluginStep
-        se.workflow.commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        se.getWorkflowData().commands.size() == 1
+        se.getWorkflowData().commands.first() instanceOf PluginStep
+        se.getWorkflowData().commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
 
-        se.workflow.commands.first().configuration == [
+        se.getWorkflowData().commands.first().configuration == [
             adhocFilepath          : 'path/to/file.sh'
         ] + additional
 
@@ -175,11 +175,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         jobList.size() == 1
         ScheduledExecution se = jobList.first().getJob()
         se
-        se.workflow.commands.size() == 1
-        se.workflow.commands.first() instanceOf PluginStep
-        se.workflow.commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        se.getWorkflowData().commands.size() == 1
+        se.getWorkflowData().commands.first() instanceOf PluginStep
+        se.getWorkflowData().commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
 
-        se.workflow.commands.first().configuration == [
+        se.getWorkflowData().commands.first().configuration == [
             adhocFilepath          : 'http://example.com'
         ] + additional
 
@@ -205,11 +205,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ExecCommand.EXEC_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ExecCommand.EXEC_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocRemoteString: 'some command',
             ]
 
@@ -229,11 +229,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocLocalString: 'some script',
             ] + (emptyargs ? [argString: ''] : [:])
 
@@ -252,11 +252,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocLocalString: 'some script',
                 argString: "oi",
                 fileExtension: "sh",
@@ -280,11 +280,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocLocalString: script,
             ] + (emptyargs ? [argString: ''] : [:])
 
@@ -322,11 +322,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocLocalString: script,
             ]
 

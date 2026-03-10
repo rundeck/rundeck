@@ -50,6 +50,9 @@ const createWrapper = async () => {
         $t: (key: string) => key,
         $cookies: mockCookies,
       },
+      stubs: {
+        Teleport: true,
+      },
     },
   });
   await flushPromises();

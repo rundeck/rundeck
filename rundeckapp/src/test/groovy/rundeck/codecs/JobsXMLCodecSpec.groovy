@@ -242,12 +242,12 @@ class JobsXMLCodecSpec extends Specification implements GrailsWebUnitTest {
 
         then:
         result.size() == 1
-        result[0].workflow.commands[0] != null
-        result[0].workflow.commands[0] instanceof JobExec
-        result[0].workflow.commands[0].jobName == 'ajob'
-        result[0].workflow.commands[0].jobGroup == 'some/group'
-        result[0].workflow.commands[0].nodeIntersect == input
-        result[0].workflow.commands[0].nodeFilter == filter
+        result[0].getWorkflowData().commands[0] != null
+        result[0].getWorkflowData().commands[0] instanceof JobExec
+        result[0].getWorkflowData().commands[0].jobName == 'ajob'
+        result[0].getWorkflowData().commands[0].jobGroup == 'some/group'
+        result[0].getWorkflowData().commands[0].nodeIntersect == input
+        result[0].getWorkflowData().commands[0].nodeFilter == filter
 
         where:
         input | filterXml                                             | filter
@@ -292,11 +292,11 @@ class JobsXMLCodecSpec extends Specification implements GrailsWebUnitTest {
 
         then:
         result.size() == 1
-        result[0].workflow.commands[0] != null
-        result[0].workflow.commands[0] instanceof JobExec
-        result[0].workflow.commands[0].jobName == 'ajob'
-        result[0].workflow.commands[0].jobGroup == 'some/group'
-        result[0].workflow.commands[0].jobProject == 'projectB'
+        result[0].getWorkflowData().commands[0] != null
+        result[0].getWorkflowData().commands[0] instanceof JobExec
+        result[0].getWorkflowData().commands[0].jobName == 'ajob'
+        result[0].getWorkflowData().commands[0].jobGroup == 'some/group'
+        result[0].getWorkflowData().commands[0].jobProject == 'projectB'
 
 
         where:
@@ -529,8 +529,8 @@ inside]]></aproperty>
         then:
         result.size()==1
         result[0].jobName=='test job 1'
-        result[0].workflow.strategy=='teststrateg'
-        result[0].workflow.pluginConfigMap == [WorkflowStrategy: [teststrateg: [aproperty: 'multiline\ndata\ninside']]]
+        result[0].getWorkflowData().strategy=='teststrateg'
+        result[0].getWorkflowData().pluginConfigMap == [WorkflowStrategy: [teststrateg: [aproperty: 'multiline\ndata\ninside']]]
 
     }
     def "decode exec lifecycle plugin multiple"(){
@@ -853,9 +853,9 @@ inside]]></aproperty>
         then:
         result.size() == 1
         result[0].jobName == 'test job 1'
-        result[0].workflow.commands[0].pluginConfig == [LogFilter: [expected]]
-        result[0].workflow.commands[0].getPluginConfigForType('LogFilter') == [expected]
-        result[0].workflow.commands[0].getPluginConfigListForType('LogFilter') == [expected]
+        result[0].getWorkflowData().commands[0].pluginConfig == [LogFilter: [expected]]
+        result[0].getWorkflowData().commands[0].getPluginConfigForType('LogFilter') == [expected]
+        result[0].getWorkflowData().commands[0].getPluginConfigListForType('LogFilter') == [expected]
 
         where:
         configxml                     | expected
@@ -895,9 +895,9 @@ inside]]></aproperty>
         then:
         result.size() == 1
         result[0].jobName == 'test job 1'
-        result[0].workflow.commands[0].pluginConfig == null
-        result[0].workflow.commands[0].getPluginConfigForType('LogFilter') == null
-        result[0].workflow.commands[0].getPluginConfigListForType('LogFilter') == null
+        result[0].getWorkflowData().commands[0].pluginConfig == null
+        result[0].getWorkflowData().commands[0].getPluginConfigForType('LogFilter') == null
+        result[0].getWorkflowData().commands[0].getPluginConfigListForType('LogFilter') == null
 
     }
 
@@ -939,17 +939,17 @@ inside]]></aproperty>
         then:
         result.size() == 1
         result[0].jobName == 'test job 1'
-        result[0].workflow.commands[0].pluginConfig ==
+        result[0].getWorkflowData().commands[0].pluginConfig ==
                 [LogFilter: [expected,
                              [type  : 'key-value-data',
                               config: [regex: 'something', debugOnly: 'true']]
                 ]]
-        result[0].workflow.commands[0].getPluginConfigForType('LogFilter') ==
+        result[0].getWorkflowData().commands[0].getPluginConfigForType('LogFilter') ==
                 [expected,
                  [type  : 'key-value-data',
                   config: [regex: 'something', debugOnly: 'true']]
                 ]
-        result[0].workflow.commands[0].getPluginConfigListForType('LogFilter') ==
+        result[0].getWorkflowData().commands[0].getPluginConfigListForType('LogFilter') ==
                 [expected,
                  [type  : 'key-value-data',
                   config: [regex: 'something', debugOnly: 'true']]
@@ -1109,9 +1109,9 @@ inside]]></aproperty>
         then:
         result.size()==1
         result[0].jobName=='test job 1'
-        result[0].workflow.pluginConfigMap == [LogFilter: [expected]]
-        result[0].workflow.getPluginConfigData('LogFilter') == [expected]
-        result[0].workflow.getPluginConfigDataList('LogFilter') == [expected]
+        result[0].getWorkflowData().pluginConfigMap == [LogFilter: [expected]]
+        result[0].getWorkflowData().getPluginConfigData('LogFilter') == [expected]
+        result[0].getWorkflowData().getPluginConfigDataList('LogFilter') == [expected]
 
         where:
         configxml                     | expected
@@ -1150,9 +1150,9 @@ inside]]></aproperty>
         then:
         result.size()==1
         result[0].jobName=='test job 1'
-        result[0].workflow.pluginConfigMap == null
-        result[0].workflow.getPluginConfigData('LogFilter') == null
-        result[0].workflow.getPluginConfigDataList('LogFilter') == null
+        result[0].getWorkflowData().pluginConfigMap == null
+        result[0].getWorkflowData().getPluginConfigData('LogFilter') == null
+        result[0].getWorkflowData().getPluginConfigDataList('LogFilter') == null
 
 
     }
@@ -1193,21 +1193,21 @@ inside]]></aproperty>
         then:
         result.size() == 1
         result[0].jobName == 'test job 1'
-        result[0].workflow.pluginConfigMap ==
+        result[0].getWorkflowData().pluginConfigMap ==
                 [LogFilter: [expected,
                              [type  : 'key-value-data',
                               config: [
                                       regex    : 'something',
                                       debugOnly: 'true'
                               ]]]]
-        result[0].workflow.getPluginConfigData('LogFilter') ==
+        result[0].getWorkflowData().getPluginConfigData('LogFilter') ==
                 [expected,
                  [type  : 'key-value-data',
                   config: [
                           regex    : 'something',
                           debugOnly: 'true'
                   ]]]
-        result[0].workflow.getPluginConfigDataList('LogFilter') ==
+        result[0].getWorkflowData().getPluginConfigDataList('LogFilter') ==
                 [expected,
                  [type  : 'key-value-data',
                   config: [

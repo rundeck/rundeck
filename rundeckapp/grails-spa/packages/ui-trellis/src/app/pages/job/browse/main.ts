@@ -31,11 +31,13 @@ function init() {
   const uiType = uiMeta?.uiType || "current";
 
   const jobTreeMeta = loadJsonData("jobTreeUiMeta");
-  const showActions = !jobTreeMeta?.hideActions;
-  const showHeader = !jobTreeMeta?.hideHeader;
-  if (uiType !== "next") {
+  const runBrowse = uiType === "next" || !!jobTreeMeta;
+  if (!runBrowse) {
     return;
   }
+
+  const showActions = !jobTreeMeta?.hideActions;
+  const showHeader = !jobTreeMeta?.hideHeader;
   const pageQueryParams = loadJsonData("pageQueryParams");
 
   moment.locale(getRundeckContext().locale || "en_US");
@@ -58,7 +60,7 @@ function init() {
     {
       section: "job-list-page",
       location: "main",
-      visible: true,
+      visible: showHeader,
       widget: markRaw(
         defineComponent({
           name: "JobPageMain",

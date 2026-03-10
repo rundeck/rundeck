@@ -67,7 +67,7 @@
                             params="[project:execution.project]"
                                 class="_defaultAction">#<g:enc>${execution.id}</g:enc></g:link>
 
-                        <g:enc>${execution.workflow.commands[0].adhocRemoteString}</g:enc>
+                        <g:enc>${execution.getWorkflowData().commands[0].adhocRemoteString}</g:enc>
                     </td>
                     <td class="eventargs">
                     </td>

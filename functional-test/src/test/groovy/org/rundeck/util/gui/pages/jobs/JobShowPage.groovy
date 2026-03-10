@@ -33,7 +33,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
     By jobInfoGroupBy = By.cssSelector('div.jobInfoSection a.text-secondary')
     By descriptionText = By
-            .xpath("//*[@class=\"section-space\"]//*[@class=\"h5 text-strong\"]")
+            .xpath("//*[contains(@class, 'section-space')]//*[contains(@class, 'h5') and contains(@class, 'text-strong')] | //*[contains(@class, 'markdown-body')]")
     By cronBy = By.xpath("//*[@class='cronselected']")
     By scheduleTimeBy = By.xpath("//*[@class='scheduletime']")
     By multipleExecBy = By.xpath("//*[@id=\"detailtable\"]//td[text()='Multiple Executions?']")
@@ -75,7 +75,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobDeleteModalBy = By.id("jobdelete")
     By runJobLaterBy = By.linkText("Run Job Later...")
     By runJobLaterMinuteArrowUpBy = By.cssSelector("td:nth-child(3) .glyphicon-chevron-up")
-    By runJobLaterScheduleCreateButtonBy = By.id("scheduler_buttons")
+    By runJobLaterSchedulerModalBy = By.cssSelector("#scheduler.modal.in")
+    By runJobLaterScheduleCreateButtonBy = By.cssSelector("#scheduler_buttons button.schedule-button")
     By jobStatusBarBy = By.className("job-stats-value")
     By jobOptionValuesBy = By.cssSelector(".optionvalues")
     By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
@@ -91,7 +92,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By buttonDangerBy = By.cssSelector(".btn.btn-danger.btn-sm")
     By jobDisableExecutionButtonBy = By.linkText("Disable Execution")
     By jobEnableExecutionButtonBy = By.linkText("Enable Execution")
-    By jobOptionsDropdownBy = By.cssSelector(".optionvalues")
+    By jobOptionsDropdownBy = By.cssSelector("select.optionvalues, select[name^='extra.option.']")
     By duplicateJobButtonBy = By.partialLinkText("Duplicate this Job")
     By duplicateJobToProjectButtonBy = By.partialLinkText("Duplicate this Job to other Project")
     By projectDropDownToDuplicateBy = By.id("jobProject")
@@ -109,7 +110,9 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
     private String project
-    boolean nextUi = false
+
+    boolean getNextUi() { isFlagEnabled('nextUi') }
+    void setNextUi(boolean value) { withFlag('nextUi', value) }
 
     JobShowPage(final SeleniumContext context) {
         super(context)
@@ -363,7 +366,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     WebElement getJobOptionsDropdown(){
-        el jobOptionsDropdownBy
+        waitForElementVisible(jobOptionsDropdownBy)
+        el(jobOptionsDropdownBy)
     }
 
     /**

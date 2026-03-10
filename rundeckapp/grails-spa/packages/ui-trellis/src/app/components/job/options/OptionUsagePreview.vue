@@ -121,7 +121,7 @@
   </section>
 </template>
 <script lang="ts">
-import { JobOption } from "@/library/types/jobs/JobEdit";
+import { JobOption } from "../../../../library/types/jobs/JobEdit";
 import { defineComponent, PropType } from "vue";
 import { VMarkdownView } from "vue3-markdown";
 

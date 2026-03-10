@@ -78,8 +78,11 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus
 import io.micronaut.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
+import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.PasswordFieldsService
@@ -289,10 +292,20 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return
             }
 
-            if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
-                def cmd = e.workflow.commands[0]
-                if (cmd.adhocRemoteString) {
-                    runCommand = cmd.adhocRemoteString
+            def execWorkflowData = e?.getWorkflowData()
+            if (e && !e.scheduledExecution && execWorkflowData?.commands?.size() == 1) {
+                def cmd = execWorkflowData.commands[0]
+                String adhocRemoteString = null
+
+                if(cmd instanceof CommandExec){
+                    adhocRemoteString = cmd.adhocRemoteString
+                } else if(cmd instanceof PluginStep){
+                    Map config = cmd.getConfiguration() ?: [:]
+                    adhocRemoteString = config.adhocRemoteString
+                }
+
+                if (adhocRemoteString) {
+                    runCommand = adhocRemoteString
                     //configure node filters
                     if (params.retryFailedExecId) {
                         query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)

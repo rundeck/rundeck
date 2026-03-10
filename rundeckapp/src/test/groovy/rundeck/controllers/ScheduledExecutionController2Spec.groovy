@@ -24,7 +24,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
+
 import grails.testing.gorm.DataTest
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 import groovy.mock.interceptor.MockFor
@@ -1782,7 +1784,11 @@ class ScheduledExecutionController2Spec extends Specification implements Control
         sec.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
         }
-        sec.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        sec.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()

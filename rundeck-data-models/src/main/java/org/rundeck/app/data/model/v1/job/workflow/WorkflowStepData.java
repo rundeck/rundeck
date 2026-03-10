@@ -15,6 +15,8 @@
  */
 package org.rundeck.app.data.model.v1.job.workflow;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,6 +61,8 @@ public interface WorkflowStepData {
      */
     String getPluginType();
 
+    default String getType(){return getPluginType();}
+
     /**
      * Configuration data for any plugins that
      * are attached to this workflow step
@@ -68,6 +72,59 @@ public interface WorkflowStepData {
 
     String summarize();
 
+    Map toMap();
+
+    /**
+     * Get plugin config for a specific type
+     * @param type Plugin type
+     * @return Plugin config for the type, or null
+     */
+    default Object getPluginConfigForType(String type) {
+        Map<String, Object> config = getPluginConfig();
+        return config != null ? config.get(type) : null;
+    }
+
+    /**
+     * Get plugin config list for a specific type
+     * @param type Plugin type
+     * @return List of plugin configurations for the type, or null
+     */
+    default List<?> getPluginConfigListForType(String type) {
+        Map<String, Object> config = getPluginConfig();
+        if (config == null) {
+            return null;
+        }
+        Object val = config.get(type);
+        if (val == null) {
+            return null;
+        }
+        if (val instanceof Collection) {
+            return new java.util.ArrayList<>((Collection<?>) val);
+        }
+        return new java.util.ArrayList<>(List.of(val));
+    }
+
+    /**
+     * Store plugin configuration for a type
+     * @param key Plugin type key
+     * @param obj Configuration object
+     */
+    void storePluginConfigForType(String key, Object obj);
+
+    /**
+     * Set the entire plugin config map
+     * @param obj Map of plugin configurations
+     */
+    void setPluginConfig(Map<String, Object> obj);
+
+    /**
+     * Return map representation without details (for backward compatibility)
+     * Default implementation returns the same as toMap()
+     * @return Map representation
+     */
+    default Map toDescriptionMap() {
+        return toMap();
+    }
     /**
      * Returns the name of the runner where this workflow step should be executed (the "runner node").
      * it could be a remote runner or local server
@@ -75,4 +132,20 @@ public interface WorkflowStepData {
      * @return the name of the runner node, or {@code null} if the step should use the default node selection.
      */
     String getRunnerNode();
+
+    /**
+     * Get the condition set for this step, if it is a conditional step.
+     * @return ConditionalSet if this is a conditional step, null otherwise
+     */
+    default ConditionalSet getConditionSet(){return null;};
+
+    /**
+     * Get the sub-steps for this conditional step.
+     * @return List of sub-steps if this is a conditional step, null or empty list otherwise
+     */
+    default List<WorkflowStepData> getSubSteps(){return null;}
+
+    default boolean isConditional() {
+        return getConditionSet() != null;
+    }
 }

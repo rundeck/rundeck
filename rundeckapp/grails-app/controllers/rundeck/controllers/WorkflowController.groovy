@@ -17,6 +17,12 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
+import org.rundeck.app.data.workflow.WorkflowStepDataImpl
+import org.rundeck.app.data.workflow.ConditionalStep
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import org.rundeck.core.execution.ScriptCommand
@@ -91,7 +97,7 @@ class WorkflowController extends ControllerBase {
             return renderErrorFragment("num parameter is required")
         }
 
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def numi;
         if (params.num) {
             numi = Integer.parseInt(params.num)
@@ -119,7 +125,7 @@ class WorkflowController extends ControllerBase {
         def newitemDescription
         def dynamicProperties
         AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(request.subject)
-        if(item && item.instanceOf(PluginStep)){
+        if(item && item.instanceOf(PluginStep) ){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
             dynamicProperties = getDynamicProperties(params.project,
@@ -174,7 +180,7 @@ class WorkflowController extends ControllerBase {
                 return renderErrorFragment("num parameter required")
             }
 
-            def Workflow editwf = _getSessionWorkflow()
+            def WorkflowData editwf = _getSessionWorkflow()
 
             def num = Integer.parseInt(params.num)
             def result = _applyWFEditAction(editwf, [action: 'copy', num: num])
@@ -217,7 +223,7 @@ class WorkflowController extends ControllerBase {
             if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
                 return
             }
-            def Workflow editwf = _getSessionWorkflow()
+            def WorkflowData editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
                 log.error("num parameter is invalid: ${numi}")
@@ -278,7 +284,7 @@ class WorkflowController extends ControllerBase {
             if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
                 return
             }
-            def Workflow editwf = _getSessionWorkflow()
+            def WorkflowData editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
                 log.error("num parameter is invalid: ${numi}")
@@ -360,7 +366,7 @@ class WorkflowController extends ControllerBase {
             if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
                 return
             }
-            def Workflow editwf = _getSessionWorkflow()
+            def WorkflowData editwf = _getSessionWorkflow()
             def numi = Integer.parseInt(params.num);
             if (numi >= editwf.commands.size()) {
                 log.error("num parameter is invalid: ${numi}")
@@ -422,7 +428,7 @@ class WorkflowController extends ControllerBase {
      */
     static private Description getPluginStepDescription(
             FrameworkService frameworkService,
-            boolean isNodeStep,
+            Boolean isNodeStep,
             String type
     )
     {
@@ -449,7 +455,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def numi = Integer.parseInt(params.num)
         if (numi >= editwf.commands.size()) {
             log.error("num parameter is invalid: ${numi}")
@@ -464,7 +470,7 @@ class WorkflowController extends ControllerBase {
                 return renderErrorFragment("num parameter is invalid: ${numi} no error handler")
             }
         }
-        def itemDescription = item.instanceOf(PluginStep)?getPluginStepDescription(item.nodeStep, item.type):null
+        def itemDescription = (item.instanceOf(PluginStep) || item.instanceOf(ConditionalStep))?getPluginStepDescription(item.nodeStep, item.type):null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum:numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, isErrorHandler: isErrorHandler, itemDescription: itemDescription])
     }
 
@@ -482,7 +488,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def item
         def numi
         def wfEditAction = 'true' == params.newitem ? 'insert' : 'modify'
@@ -513,7 +519,7 @@ class WorkflowController extends ControllerBase {
 
             def itemDescription
             def dynamicProperties
-            if(item && item.instanceOf(PluginStep)){
+            if(item && (item.instanceOf(PluginStep))){
                 itemDescription = getPluginStepDescription(item.nodeStep, item.type)
                 dynamicProperties = getDynamicProperties(params.project,
                         item.type,
@@ -551,7 +557,7 @@ class WorkflowController extends ControllerBase {
         if(isErrorHandler){
             item=item.errorHandler
         }
-        def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
+        def itemDescription = (item.instanceOf(PluginStep) || item.instanceOf(ConditionalStep)) ? getPluginStepDescription(item.nodeStep, item.type) : null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
         }.invalidToken {
             response.status=HttpServletResponse.SC_BAD_REQUEST
@@ -578,7 +584,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
 
         def fromi = Integer.parseInt(params.fromnum)
         def toi = Integer.parseInt(params.tonum)
@@ -610,7 +616,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
 
         def fromi = Integer.parseInt(params.delnum)
         def wfEditAction = 'remove'
@@ -643,7 +649,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def action = _popUndoAction(params.scheduledExecutionId)
 
         def num
@@ -683,7 +689,7 @@ class WorkflowController extends ControllerBase {
         if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
             return
         }
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
         def action = _popRedoAction(params.scheduledExecutionId)
 
         def num
@@ -721,7 +727,7 @@ class WorkflowController extends ControllerBase {
         session.editWF?.remove(uid)
         session.undoWF?.remove(uid)
         session.redoWF?.remove(uid)
-        def Workflow editwf = _getSessionWorkflow()
+        def WorkflowData editwf = _getSessionWorkflow()
 
         return render(template: "/execution/wflistContent", model: [workflow: editwf, edit: true,
                 project: params.project])
@@ -775,7 +781,7 @@ class WorkflowController extends ControllerBase {
      * error: any error message
      * undo: corresponding undo action map
      */
-    protected Map _applyWFEditAction (Workflow editwf, Map input){
+    protected Map _applyWFEditAction (WorkflowData editwf, Map input){
         def result = [:]
         def createItemFromParams={params->
             def item
@@ -809,13 +815,21 @@ class WorkflowController extends ControllerBase {
                 if (!params.keepgoingOnSuccess) {
                     params.keepgoingOnSuccess = 'false'
                 }
-                moditem.properties=params.subMap(['keepgoingOnSuccess','description'])
+                if(moditem instanceof WorkflowStep) {
+                    moditem.properties = params.subMap(['keepgoingOnSuccess', 'description'])
+                } else {
+                    moditem.updateFromMap(params.subMap(['keepgoingOnSuccess', 'description']))
+                }
                 moditem.configuration = cleanLineEndings(params.pluginConfig)
             } else {
                 if(params.nodeStep instanceof String) {
                     params.nodeStep = params.nodeStep == 'true'
                 }
-                moditem.properties = params
+                if(moditem instanceof WorkflowStep) {
+                    moditem.properties = params
+                } else {
+                    moditem.updateFromMap(params)
+                }
                 if (params.jobName) {
                     moditem.nodeStep=params.nodeStep
                 }
@@ -865,9 +879,6 @@ class WorkflowController extends ControllerBase {
         } else if (input.action == 'remove') {
             def numi = input.num
             def item = editwf.commands.remove(numi)
-            if (editwf.commands.size() < 1) {
-                editwf.commands = new ArrayList()
-            }
 
             result['undo'] = [action: 'insert', num: numi, params: item.properties]
         } else if (input.action == 'insert') {
@@ -885,7 +896,7 @@ class WorkflowController extends ControllerBase {
             if (null != editwf.commands) {
                 editwf.commands.add(num, item)
             } else {
-                editwf.addToCommands(item)
+                editwf.commands = [item]
                 num = 0
             }
             result['undo'] = [action: 'remove', num: num]
@@ -908,7 +919,7 @@ class WorkflowController extends ControllerBase {
             }
             config = validation.props
 
-            def WorkflowStep item = editwf.commands.get(numi)
+            def WorkflowStepData item = editwf.commands.get(numi)
             def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
             if (filterConfig instanceof List) {
                 List configs = (List) filterConfig
@@ -966,7 +977,7 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def WorkflowStep item = editwf.commands.get(numi)
+            def WorkflowStepData item = editwf.commands.get(numi)
             def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
 
             if (!(filterConfig instanceof List)) {
@@ -1007,9 +1018,9 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def WorkflowStep item = editwf.commands.get(numi)
-            def clone = item.createClone()
-            def moditem = item.createClone()
+            def WorkflowStepData item = editwf.commands.get(numi)
+            def clone = item instanceof WorkflowStep ? item.createClone() : WorkflowStepDataImpl.fromMap(item.toMap())
+            def moditem =item instanceof WorkflowStep ? item.createClone() : WorkflowStepDataImpl.fromMap(item.toMap())
             modifyItemFromParams(moditem,input.params)
             _validateCommandExec(moditem,input.params.origitemtype, fprojects)
             if (moditem.errors.hasErrors()) {
@@ -1038,7 +1049,7 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def WorkflowStep item = editwf.commands.get(numi)
+            def WorkflowStepData item = editwf.commands.get(numi)
             def ehitem= createItemFromParams(input.params)
             _validateCommandExec(ehitem, params.newitemtype, fprojects, false, input.project)
             if (ehitem.errors.hasErrors()) {
@@ -1057,15 +1068,15 @@ class WorkflowController extends ControllerBase {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
             }
-            def WorkflowStep stepitem = editwf.commands.get(numi)
-            def WorkflowStep ehitem = stepitem.errorHandler
+            def WorkflowStepData stepitem = editwf.commands.get(numi)
+            def WorkflowStepData ehitem = stepitem.errorHandler
 
             if (!ehitem) {
                 result.error = "num parameter is invalid: ${numi}: no error handler"
                 return result
             }
-            def clone = ehitem.createClone()
-            def moditem = ehitem.createClone()
+            def clone = ehitem instanceof WorkflowStep ? ehitem.createClone() : WorkflowStepDataImpl.fromMap(ehitem.toMap())
+            def moditem = ehitem instanceof WorkflowStep ? ehitem.createClone() : WorkflowStepDataImpl.fromMap(ehitem.toMap())
 
             modifyItemFromParams(moditem, input.params)
 
@@ -1175,7 +1186,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Return the session-stored workflow, or store the specified one in the session
      */
-    private def _getSessionWorkflow (Workflow usedwf = null){
+    private def _getSessionWorkflow (WorkflowData usedwf = null){
         return getSessionWorkflow(session,params,usedwf)
     }
     /**
@@ -1184,9 +1195,9 @@ class WorkflowController extends ControllerBase {
      * @param params the params
      * @param usedwf Workflow to store in the session (optional)
      */
-    public static Workflow getSessionWorkflow (session,params,Workflow usedwf = null){
+    public static WorkflowData getSessionWorkflow (session, params, WorkflowData usedwf = null){
         def wfid = '_new'
-        def Workflow editwf
+        def WorkflowData editwf
         if (!session.editWF) {
             session.editWF = [:]
         }
@@ -1195,18 +1206,21 @@ class WorkflowController extends ControllerBase {
             if (!session.editWF[wfid]) {
                 ScheduledExecution sched = ScheduledExecution.getByIdOrUUID(params.scheduledExecutionId)
                 if (!sched) {
-                    session.editWF[wfid] = new Workflow()
-                }
-
-                if (sched.workflow) {
-                    session.editWF[wfid] = new Workflow(sched.workflow)
+                    session.editWF[wfid] = new WorkflowDataImpl()
+                } else {
+                    def workflowData = sched.getWorkflowData()
+                    if (workflowData) {
+                        session.editWF[wfid] = WorkflowDataImpl.fromMap(workflowData.toMap())
+                    } else {
+                        session.editWF[wfid] = new WorkflowDataImpl()
+                    }
                 }
             }
         } else if (usedwf) {
             //load from existing execution
-            session.editWF[wfid] = new Workflow(usedwf)
+            session.editWF[wfid] = WorkflowDataImpl.fromMap(usedwf.toMap())
         } else if (!session.editWF[wfid]) {
-            session.editWF[wfid] = new Workflow()
+            session.editWF[wfid] = new WorkflowDataImpl()
         }
         editwf = session.editWF[wfid]
         return editwf
@@ -1220,7 +1234,7 @@ class WorkflowController extends ControllerBase {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null, boolean strict=false, String project=null) {
+    public static boolean _validateCommandExec(WorkflowStepData exec, String type = null, List authProjects = null, boolean strict=false, String project=null) {
         if (exec instanceof JobExec) {
             if(strict){
                 def refSe = exec.findJob(project)
@@ -1244,21 +1258,24 @@ class WorkflowController extends ControllerBase {
                 }
             }
         }else if(exec instanceof CommandExec){
+            // First check for duplicates (multiple fields set)
+            def x = ['adhocLocalString', 'adhocRemoteString', 'adhocFilepath'].grep {
+                exec[it]
+            }
+            if (x && x.size() > 1) {
+                exec.errors.rejectValue('adhocRemoteString', 'scheduledExecution.adhocString.duplicate.message')
+            } else
             if (!exec.adhocRemoteString && 'command' == type) {
-                exec.errors.rejectValue('adhocRemoteString', 'commandExec.adhocExecution.adhocRemoteString.blank.message')
+                // When type is inferred as 'command' but field is empty, set error on the specific field
+                exec.errors.rejectValue('adhocRemoteString', 'commandExec.adhocExecution.adhocString.blank.message')
             } else if (!exec.adhocLocalString && 'script' == type) {
-                exec.errors.rejectValue('adhocLocalString', 'commandExec.adhocExecution.adhocLocalString.blank.message')
+                // When type is inferred as 'script' but field is empty, set error on the specific field
+                exec.errors.rejectValue('adhocLocalString', 'commandExec.adhocExecution.adhocString.blank.message')
             } else if (!exec.adhocFilepath && 'scriptfile' == type) {
-                exec.errors.rejectValue('adhocFilepath', 'commandExec.adhocExecution.adhocFilepath.blank.message')
+                // When type is inferred as 'scriptfile' but field is empty, set error on the specific field
+                exec.errors.rejectValue('adhocFilepath', 'commandExec.adhocExecution.adhocString.blank.message')
             } else if (!exec.adhocRemoteString && !exec.adhocLocalString && !exec.adhocFilepath) {
                 exec.errors.rejectValue('adhocExecution', 'commandExec.adhocExecution.adhocString.blank.message')
-            } else {
-                def x = ['adhocLocalString', 'adhocRemoteString', 'adhocFilepath'].grep {
-                    exec[it]
-                }
-                if (x && x.size() > 1) {
-                    exec.errors.rejectValue('adhocRemoteString', 'scheduledExecution.adhocString.duplicate.message')
-                }
             }
         }else if(exec instanceof PluginStep){
             //TODO: validate
@@ -1271,10 +1288,10 @@ class WorkflowController extends ControllerBase {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    static Map _validatePluginStep(FrameworkService frameworkService, WorkflowStep exec) {
+    static Map _validatePluginStep(FrameworkService frameworkService, WorkflowStepData exec) {
         if (exec instanceof PluginStep) {
             PluginStep item = exec as PluginStep
-            def description = getPluginStepDescription(frameworkService, item.nodeStep, item.type)
+            def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep, item.type)
             if (!description) {
                 return [valid: false, report: "Plugin not found: " + item.type]
             }
@@ -1290,16 +1307,61 @@ class WorkflowController extends ControllerBase {
             return [valid: true]
         }
     }
+
+    static Map _validateConditionalStep(FrameworkService frameworkService, WorkflowStepData conditinalStep){
+        Map validationResult = [valid: true]
+        if (conditinalStep instanceof ConditionalStep) {
+            ConditionalStep item = conditinalStep as ConditionalStep
+            item.getSubSteps().each { WorkflowStepData subStep ->
+                if(conditinalStep.nodeStep!=subStep.nodeStep){
+                    validationResult = [valid: false, report: "Conditional step substeps must all be ${subStep.nodeStep ? 'node steps' : 'workflow steps'} as the conditional step"]
+                    return
+                }
+
+                PluginStep step
+                if (subStep instanceof PluginStep) {
+                    step = subStep as PluginStep
+                    //set configuration based on parsed props
+                    def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep, subStep.getPluginType())
+                    if (!description) {
+                        validationResult = [valid: false, report: "Substep ${item.nodeStep ? "Node Step" : "Workflow Step"} Plugin not found: " + subStep.getPluginType()]
+                        return
+                    }
+                    def validation = _validatePluginStep(frameworkService, subStep)
+                    if (!validation.valid) {
+                        validationResult = [valid: false, report: "Conditional substep plugin configuration was not valid: ${validation.report}", item: subStep, report: validation.report]
+                        return
+                    }
+
+                    step.configuration=validation.props
+
+                    validationResult = frameworkService.validateDescription(
+                            description,
+                            '',
+                            step.configuration,
+                            null,
+                            PropertyScope.Instance,
+                            PropertyScope.Project
+                    )
+                }
+            }
+
+            return validationResult
+
+        } else {
+            return validationResult
+        }
+    }
     /**
      * Validate a WorkflowStep object.  will call Errors.rejectValue for
      * any invalid fields for the object.
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    protected Map _doValidatePluginStep(WorkflowStep exec) {
+    protected Map _doValidatePluginStep(WorkflowStepData exec) {
         _validatePluginStep(frameworkService, exec)
     }
-    private void _sanitizePluginStep(WorkflowStep item, Map validation){
+    private void _sanitizePluginStep(WorkflowStepData item, Map validation){
         if (item instanceof PluginStep) {
             PluginStep step = item as PluginStep
             //set configuration based on parsed props

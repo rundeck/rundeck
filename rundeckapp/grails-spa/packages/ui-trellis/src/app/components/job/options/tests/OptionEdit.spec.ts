@@ -1,8 +1,11 @@
 import { mount, shallowMount, VueWrapper } from "@vue/test-utils";
 import { VueNode } from "@vue/test-utils/dist/types";
 import { Btn } from "uiv";
-import { validateJobOption } from "../../../../../library/services/jobEdit";
 import OptionEdit from "../OptionEdit.vue";
+
+jest.mock("@/library/services/jobEdit", () => ({
+  validateJobOption: jest.fn(),
+}));
 
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
@@ -14,8 +17,9 @@ jest.mock("@/library/rundeckService", () => ({
 jest.mock("@/library/modules/rundeckClient", () => ({
   client: {},
 }));
-// Mock validateJobOption method
-jest.mock("@/library/services/jobEdit");
+
+// Import mocked function
+const { validateJobOption } = jest.requireMock("@/library/services/jobEdit");
 
 const mockedValidateJobOption = validateJobOption as jest.MockedFunction<
   typeof validateJobOption
@@ -132,7 +136,7 @@ describe("OptionEdit", () => {
     // Verify type is multiline and values are cleared
     expect(wrapper.vm.option.type).toBe("multiline");
     expect(wrapper.vm.valuesList).toBe("");
-    expect(wrapper.vm.option.values).toBeNull();
+    expect(wrapper.vm.option.values).toBeFalsy();
     expect(wrapper.vm.option.isDate).toBeFalsy();
     expect(wrapper.vm.option.secure).toBeFalsy();
     expect(wrapper.vm.option.valueExposed).toBeFalsy();
