@@ -221,12 +221,12 @@
                   {{ $t("jobquery.title.optionFilter") }}
                 </label>
                 <input
-                    v-model="query.optionFilter"
-                    type="text"
-                    name="optionFilter"
-                    class="form-control"
-                    :placeholder="$t('jobquery.title.optionFilter.label')"
-                    data-test-id="option-filter"
+                  v-model="query.optionFilter"
+                  type="text"
+                  name="optionFilter"
+                  class="form-control"
+                  :placeholder="$t('jobquery.title.optionFilter.label')"
+                  data-test-id="option-filter"
                 />
               </div>
             </div>
@@ -490,7 +490,7 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .query-params-summary {
   ul.list-inline {
     display: inline-block;
