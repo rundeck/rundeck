@@ -51,7 +51,7 @@
     <div class="four-oh-four">
       <div class="nav-bar">
         <a
-          href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}">
+          href="${grailsApplication.config.getProperty('rundeck.gui.titleLink', String) ? enc(attr:grailsApplication.config.getProperty('rundeck.gui.titleLink', String)) : g.createLink(uri: '/')}">
           <img src="${resource(dir: 'images', file: 'rundeck-full-logo-white.png')}" alt="Rundeck"
             style="height: 20px; width: auto;" />
         </a>
@@ -59,7 +59,7 @@
       <div style="padding-top:16vh;">
         <div>
           <div class="col-xs-12 col-sm-6 space-cat-container">
-            <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
+            <g:if test="${!grailsApplication.config.getProperty('rundeck.feature.fourOhFour.hideSpaceCat', Boolean, false)}">
               <asset:image src="spacecat/saucer-cat.png" class="img-responsive"
                 alt="Space Cat" />
             </g:if>
@@ -69,7 +69,7 @@
             <h2>
               <g:message code="request.error.notfound.title" />
             </h2>
-            <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
+            <g:if test="${!grailsApplication.config.getProperty('rundeck.feature.fourOhFour.hideSpaceCat', Boolean, false)}">
               <h3>"We must be purrr-fectly lost"</h3>
             </g:if>
             <div>
@@ -81,7 +81,7 @@
               </h5>
             </div>
             <div>
-              <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+              <a href="${grailsApplication.config.getProperty('rundeck.gui.titleLink', String) ? enc(attr:grailsApplication.config.getProperty('rundeck.gui.titleLink', String)) : g.createLink(uri: '/')}"
                 class="
                 btn btn-lg return-button">Return to Rundeck</a>
             </div>
