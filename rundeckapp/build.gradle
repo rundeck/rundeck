@@ -58,6 +58,11 @@ configurations.all {
                 details.useVersion bouncyCastleVersion
                 details.because 'BC 1.80 breaks Jasypt encryption - staying on 1.79 until migration'
             }
+            // Force commons-lang3 3.20.0 (prevent duplicate versions in WAR)
+            if (details.requested.group == 'org.apache.commons' && details.requested.name == 'commons-lang3') {
+                details.useVersion commonsLang3Version
+                details.because 'Prevent duplicate commons-lang3 versions in WAR file'
+            }
         }
     }
     exclude group: 'io.micronaut', module: 'micronaut-bom'
@@ -582,6 +587,12 @@ tasks.withType(GroovyCompile).configureEach {
     configure(groovyOptions) {
         forkOptions.jvmArgs = opts
     }
+}
+
+// Increase memory for Java compilation (Grails 7 + Spring Boot 3)
+tasks.withType(JavaCompile).configureEach {
+    options.fork = true
+    options.forkOptions.jvmArgs = ['-Xmx4096m', '-XX:MaxMetaspaceSize=768m']
 }
 
 tasks.withType(Test) {
