@@ -78,7 +78,7 @@ class SetUserInterceptor {
         } else if(request.remoteUser && session.subject &&
                 !configurationService.getBoolean("security.authorization.preauthenticated.enabled",false)) {
             request.subject = session.subject
-        } else if (request.api_version && !session.user && authtoken) {
+        } else if (request.api_version && authtoken) {
             //allow authentication token to be used
             boolean webhookType = controllerName == "webhook" && actionName == "post"
 
