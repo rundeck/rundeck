@@ -76,6 +76,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -2502,7 +2503,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         //set session new workflow
-        WorkflowController.getSessionWorkflow(session,null,new Workflow(scheduledExecution.workflow))
+        WorkflowController.getSessionWorkflow(session,null,new Workflow(scheduledExecution.workflow as WorkflowData))
         if(scheduledExecution.options){
             def editopts = [:]
 
@@ -2557,7 +2558,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
         def props=[:]
         props.putAll(execution.properties)
-        props.workflow=new Workflow(execution.workflow)
+        props.workflow=new Workflow(execution.workflow as WorkflowData)
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
             props = props.findAll{!(it.key=~/^node(In|Ex)clude.*$/)}
@@ -2792,7 +2793,9 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
-        params.workflow=new Workflow(scheduledExecution.workflow)
+        if (scheduledExecution.workflow) {
+            params.workflow=new Workflow(scheduledExecution.workflow as WorkflowData)
+        }
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch
         params.filter=scheduledExecution.asFilter()
@@ -2902,7 +2905,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                 newScheduledExecution.id=null
                 newScheduledExecution.uuid=null
                 //set session new workflow
-                WorkflowController.getSessionWorkflow(session,null,new Workflow(newScheduledExecution.workflow))
+                WorkflowController.getSessionWorkflow(session,null,new Workflow(newScheduledExecution.workflow as WorkflowData))
                 if(newScheduledExecution.options){
                     def editopts = [:]
 
