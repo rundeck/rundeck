@@ -893,6 +893,7 @@ class JobsSpec extends SeleniumBase {
 
         then:
         jobCreatePage.addGlobalLogFilter.click()
+        jobCreatePage.waitForModal(1)
         jobCreatePage.fillHighlightLogFilter()
 
         then:

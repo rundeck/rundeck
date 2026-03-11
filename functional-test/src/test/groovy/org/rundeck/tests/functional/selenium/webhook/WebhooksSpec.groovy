@@ -129,6 +129,7 @@ class WebhooksSpec extends SeleniumBase {
         webhookPage.waitForElementToBeClickable(webhookPage.createWebhookButton)
 
         then:
+        webhookPage.waitForNumberOfElementsToBeMoreThan(webhookPage.webhookSelectItem, 0)
         containsName(webhookPage, webhookName)
 
         cleanup:
