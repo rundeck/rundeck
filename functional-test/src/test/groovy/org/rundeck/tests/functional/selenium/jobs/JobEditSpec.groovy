@@ -134,7 +134,7 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.nodeDispatchTrueCheck.click()
         jobCreatePage.refreshNodesButton.click()
         jobCreatePage.lastNodeInListSpan.click()
-        jobCreatePage.selectTabAddFilterByName("testBoth").click():q
+        jobCreatePage.selectTabAddFilterByName("testBoth").click()
         jobCreatePage.getNodeInListSpan(1).click()
         jobCreatePage.selectTabAddFilterByName("test").click()
 
