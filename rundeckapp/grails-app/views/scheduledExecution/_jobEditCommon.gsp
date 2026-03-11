@@ -141,14 +141,17 @@
              data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],
                        notifyAvgDurationThreshold:scheduledExecution?.notifyAvgDurationThreshold,
              ]}"/>
+<g:set var="featuresMap" value="${[
+        fileUploadPlugin:feature.isEnabled(name:'fileUploadPlugin'),
+        optionValuesPlugin:feature.isEnabled(name:'optionValuesPlugin'),
+        multilineJobOptions:feature.isEnabled(name:'multilineJobOptions'),
+]}"/>
+<g:embedJSON id="featuresMapJSON" data="${ featuresMap}"/>
 <g:embedJSON id="jobOptionsJSON"
              data="${ [
                      options:scheduledExecution.options?.collect{it.toMap()}?:[],
                      fileUploadPluginType:fileUploadPluginType?:'',
-                     features:[
-                             fileUploadPlugin:feature.isEnabled(name:'fileUploadPlugin'),
-                             optionValuesPlugin:feature.isEnabled(name:'optionValuesPlugin'),
-                     ],
+                     features: featuresMap,
                      jobWasScheduled: scheduledExecution?.scheduled?:false,
              ]}"/>
 <g:embedJSON id="jobResourcesJSON"
@@ -209,7 +212,7 @@
                      uuid:scheduledExecution?.uuid
              ]}"/>
 
-<g:embedJSON id="jobWorkflowJSON" data="${ scheduledExecution?.workflow?.toMap()?:[:]}"/>
+<g:embedJSON id="jobWorkflowJSON" data="${ scheduledExecution?.getWorkflowData()?.toMap()?:[:]}"/>
 <g:embedJSON id="jobNodeDataJSON" data="${ [
         nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence ? 'true': 'false',
         excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck ? 'true': 'false',
@@ -228,7 +231,8 @@
             executionData: loadJsonData('jobExecutionPluginsJSON'),
             otherData: loadJsonData('jobOtherJSON'),
             workflowData: loadJsonData('jobWorkflowJSON'),
-            nodeData: loadJsonData('jobNodeDataJSON')
+            nodeData: loadJsonData('jobNodeDataJSON'),
+            features: loadJsonData('featuresMapJSON'),
         }
     })
     var workflowEditor = new WorkflowEditor();

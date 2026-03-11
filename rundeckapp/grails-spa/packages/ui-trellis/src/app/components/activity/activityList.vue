@@ -726,6 +726,7 @@ export default defineComponent({
         execnodeFilter: "",
         titleFilter: "",
         statFilter: "",
+        optionFilter: "",
         recentFilter: "",
         filterName: "",
       } as { [key: string]: string },

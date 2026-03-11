@@ -508,7 +508,6 @@ public class NotificationService implements ApplicationContextAware{
                                     if(attachlogbody){
                                         outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
                                     }
-                                    def renderJobStats = false
 
                                     body(
                                             view: "/execution/mailNotification/status",
@@ -520,8 +519,7 @@ public class NotificationService implements ApplicationContextAware{
                                                     nodestatus        : content.nodestatus,
                                                     jobref            : content.jobref,
                                                     allowUnsanitized  : allowUnsanitized,
-                                                    logOutput         : outputBuffer!=null? outputBuffer.toString(): null,
-                                                    renderJobStats    : renderJobStats
+                                                    logOutput         : outputBuffer!=null? outputBuffer.toString(): null
                                             ]
                                     )
                                 }
@@ -994,17 +992,21 @@ public class NotificationService implements ApplicationContextAware{
         if(evt.jobUuid) {
             ScheduledExecution.withNewSession {
                 def job = ScheduledExecution.findByUuid(evt.jobUuid)
+                def execution = Execution.findByUuid(evt.executionUuid)
                 if (job.notificationSet) {
                     def contextBuilder = ExecutionContextImpl.builder()
                     contextBuilder.with {
                         storageTree(storageService.storageTreeWithContext(evt.authContext))
                         framework(frameworkService.rundeckFramework)
                         frameworkProject(job.project)
+                        if(job.getWorkflowData()) {
+                            workflowData(execution.getWorkflowData())
+                        }
                     }
                     contextBuilder.authContext(evt.authContext)
                     triggerJobNotification(
                             evt.trigger, job,
-                            [execution: Execution.findByUuid(evt.executionUuid),
+                            [execution: execution,
                              context  : contextBuilder.build()]
                     )
                 }

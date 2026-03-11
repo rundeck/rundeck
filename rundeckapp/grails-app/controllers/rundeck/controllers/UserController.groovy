@@ -266,7 +266,7 @@ class UserController extends ControllerBase{
 Authorization required: `app_admin` for `system` resource, if not the current user.
 
 Since: v21''',
-        tags = ['user'],
+        tags = ['User'],
         parameters=[
             @Parameter(
                 name = 'username',
@@ -308,7 +308,7 @@ Since: v21''',
         description='''Modify the user profile data for current user.
 
 Since: v21''',
-        tags = ['user'],
+        tags = ['User'],
         requestBody = @RequestBody(
           description='Request content',
             content=@Content(
@@ -341,7 +341,7 @@ Since: v21''',
         description='''Get the user profile data for current user.
 
 Since: v21''',
-        tags=['user'],
+        tags = ['User'],
         responses=[
             @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
             @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
@@ -370,7 +370,7 @@ Since: v21''',
 Authorization required: `app_admin` for `system` resource, if not the current user.
 
 Since: v21''',
-        tags=['user'],
+        tags = ['User'],
         parameters=[
             @Parameter(
                 name = 'username',
@@ -478,7 +478,7 @@ Since: v21''',
         description = '''Get a list of the authenticated user's roles.
 
 Since: v30''',
-        tags = ['user'],
+        tags = ['User'],
         responses = [
             @ApiResponse(
                 responseCode = '200',
@@ -529,7 +529,7 @@ Since: v30''',
 Authorization required: `app_admin` for `system` resource
 
 Since: v21''',
-        tags = ['user'],
+        tags = ['User'],
         responses = [
             @ApiResponse(
                 responseCode = '200',

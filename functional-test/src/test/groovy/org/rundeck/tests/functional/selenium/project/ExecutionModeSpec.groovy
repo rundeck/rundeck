@@ -14,6 +14,7 @@ import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.login.LoginPage
+import org.rundeck.util.gui.pages.project.DashboardPage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import org.rundeck.util.gui.pages.project.SideBarPage
 
@@ -29,6 +30,7 @@ class ExecutionModeSpec extends SeleniumBase{
             def projectName = "disabledExecutionsProject"
             setupProject(projectName)
             def projectEditPage = page ProjectEditPage
+            def dashboardPage = page DashboardPage
             def homePage = page HomePage
             def loginPage = page LoginPage
             def jobListPage = page JobListPage
@@ -50,13 +52,14 @@ class ExecutionModeSpec extends SeleniumBase{
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                     .build()
-            client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+            client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
             loginPage.go()
             loginPage.login(TEST_USER, TEST_PASS)
-            homePage.validatePage()
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.save()
+            dashboardPage.loadDashboardForProject(projectName)
+            projectEditPage.validatePage(dashboardPage.loadPath)
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.clickEditConfigurationFile()
             projectEditPage.replaceConfiguration("project.disable.executions=false", "project.disable.executions=true")
@@ -109,11 +112,10 @@ class ExecutionModeSpec extends SeleniumBase{
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickExecutionMode()
@@ -144,6 +146,7 @@ class ExecutionModeSpec extends SeleniumBase{
         def projectName = "disabledSchedulesProject"
         setupProject(projectName)
         def projectEditPage = page ProjectEditPage
+        def dashboardPage = page DashboardPage
         def homePage = page HomePage
         def loginPage = page LoginPage
         def jobListPage = page JobListPage
@@ -177,25 +180,27 @@ class ExecutionModeSpec extends SeleniumBase{
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.save()
+        dashboardPage.loadDashboardForProject(projectName)
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.clickEditConfigurationFile()
         projectEditPage.replaceConfiguration("project.disable.schedule=false", "project.disable.schedule=true")
         projectEditPage.save()
         projectEditPage.validateConfigFileSave()
+        // Wait for all executions to finish before checking schedule status
+        // This ensures the schedule change has propagated and any pending executions are cancelled
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         sideBarPage.goTo NavLinkTypes.JOBS
         then:
         jobListPage.expectScheduleDisabled()
         when:
-        // Waits for all executions to finish
-        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         sideBarPage.goTo NavLinkTypes.ACTIVITY
         def executions = activityPage.getActivityRowsByJobName(jobName).size()
         projectEditPage.go("/project/${projectName}/configure")
@@ -269,22 +274,22 @@ class ExecutionModeSpec extends SeleniumBase{
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickScheduleMode()
         projectEditPage.save()
+        // Wait for all executions to finish before checking schedule status
+        // This ensures the schedule change has propagated and any pending executions are cancelled
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         sideBarPage.goTo NavLinkTypes.JOBS
         then:
         jobListPage.expectScheduleDisabled()
         when:
-        // Waits for all executions to finish
-        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
         sideBarPage.goTo NavLinkTypes.ACTIVITY
         def executions = activityPage.getActivityRowsByJobName(jobName).size()
         projectEditPage.go("/project/${projectName}/configure")

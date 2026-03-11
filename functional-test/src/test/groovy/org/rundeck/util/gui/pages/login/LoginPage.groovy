@@ -23,11 +23,6 @@ class LoginPage extends BasePage {
     LoginPage(final SeleniumContext context) {
         super(context)
     }
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on login page: " + driver.currentUrl)
-        }
-    }
 
     WebElement getHelpLink() {
         el helpLinkBy
@@ -53,5 +48,6 @@ class LoginPage extends BasePage {
         loginField.sendKeys(username)
         passwordField.sendKeys(password)
         loginBtn.click()
+        waitForUrlToNotContain("/user/login")
     }
 }

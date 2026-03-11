@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.annotations.servers.Server
 import io.swagger.v3.oas.annotations.servers.ServerVariable
+import io.swagger.v3.oas.annotations.tags.Tag
 import liquibase.exception.LockException
 import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
@@ -35,35 +36,96 @@ import java.nio.file.Paths
 
 @OpenAPIDefinition(
     info = @Info(
-        title = "Rundeck",
-        version = ApiVersions.API_CURRENT_VERSION_STR,
-        description = "Rundeck provides a Web API for use with your applications.",
-        license = @License(name = "Apache 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0.html")
+    title = "Rundeck / Runbook Automation API",
+    version = ApiVersions.API_CURRENT_VERSION_STR,
+    description = "Rundeck / Runbook Automation REST API for job automation, execution management, and system administration.\n\n" +
+              "The Rundeck API provides comprehensive access to:\n" +
+              "- Job management (create, update, delete, execute jobs)\n" +
+              "- Execution monitoring and control\n" +
+              "- Project and resource management\n" +
+              "- Node filtering and resource queries\n" +
+              "- System configuration and administration\n" +
+              "- SCM integration (Git and other version control)\n" +
+              "- Authentication token management\n" +
+              "- Metrics and health monitoring\n\n" +
+              "All API endpoints require authentication via API token, password session, or JWT token (Enterprise).\n" +
+              "API version must be specified in the URL path (e.g., /api/46/...).\n\n" +
+              "For detailed documentation, see: [Rundeck API Docs](https://docs.rundeck.com/docs/api/)",
+    license = @License(
+        name = "Apache 2.0",
+        url = "https://www.apache.org/licenses/LICENSE-2.0.html"
+    )
     ),
     externalDocs = @ExternalDocumentation(
         description = 'Original Rundeck API Documentation',
-        url = 'https://docs.rundeck.com/docs/api/rundeck-api.html'
+        url = 'https://docs.rundeck.com/docs/api/'
     ),
-    security = @SecurityRequirement(name = "rundeckApiToken"),
-    servers = @Server(
-        url = '{host}/api/{apiversion}',
-        variables = [
-            @ServerVariable(
-                name = 'apiversion',
-                defaultValue = '44' //NB: spec generation doesn't seem to accept a constant string :(
-            ),
-            @ServerVariable(
-                name = 'host',
-                defaultValue = 'http://localhost:4440'
-            )
-        ]
-    )
+    servers = [
+        @Server(
+            url = "{protocol}://{host}:{port}/api/{version}",
+            description = "Rundeck / Runbook Automation Server",
+            variables = [
+                @ServerVariable(name = "protocol", defaultValue = "https", allowableValues = ["http", "https"], description = "Protocol (http or https)"),
+                @ServerVariable(name = "host", defaultValue = "localhost", description = "Server hostname or IP address"),
+                @ServerVariable(name = "port", defaultValue = "4440", description = "Server port number"),
+                @ServerVariable(name = "version", defaultValue = "\$API_VERSION\$", description = "API version number")
+            ]
+        )
+    ],
+    security = [
+        @SecurityRequirement(name = "rundeckApiToken"),
+        @SecurityRequirement(name = "rundeckPassword"),
+        @SecurityRequirement(name = "rundeckJWT")
+    ],
+    tags = [
+        @Tag(name = "ACL", description = "Access Control List operations"),
+        @Tag(name = "Ad Hoc", description = "Ad-hoc command execution operations"),
+        @Tag(name = "API", description = "API information and utilities"),
+        @Tag(name = "Authorization", description = "Check User Authorization operations"),
+        @Tag(name = "Calendars", description = "Calendar management operations"),
+        @Tag(name = "Cluster", description = "Cluster management operations"),
+        @Tag(name = "Configuration", description = "Configuration management"),
+        @Tag(name = "Execution Mode", description = "Execution Mode operations"),
+        @Tag(name = "Health", description = "Health check operations"),
+        @Tag(name = "History", description = "Execution history operations"),
+        @Tag(name = "Jobs", description = "Job management operations"),
+        @Tag(name = "Job Executions", description = "Job execution operations"),
+        @Tag(name = "Key Storage", description = "Key storage operations"),
+        @Tag(name = "License", description = "License management operations"),
+        @Tag(name = "Log Storage", description = "Log storage operations"),
+        @Tag(name = "Metrics", description = "Metrics and monitoring operations"),
+        @Tag(name = "Plugins", description = "Plugin management operations"),
+        @Tag(name = "Project", description = "Project management operations"),
+        @Tag(name = "ROI", description = "Return on Investment metrics operations"),
+        @Tag(name = "Runner", description = "Runner management operations"),
+        @Tag(name = "SCM", description = "Source Control Management operations"),
+        @Tag(name = "System", description = "System operations"),
+        @Tag(name = "Tokens", description = "API token operations"),
+        @Tag(name = "Tours", description = "User interface tour operations"),
+        @Tag(name = "User", description = "User management operations"),
+        @Tag(name = "User Class", description = "User Class management operations"),
+        @Tag(name = "Webhook", description = "Webhook operations")
+    ]
 )
 @SecurityScheme(
     name = "rundeckApiToken",
     type = SecuritySchemeType.APIKEY,
     in = SecuritySchemeIn.HEADER,
-    paramName = "X-Rundeck-Auth-Token"
+    paramName = "X-Rundeck-Auth-Token",
+    description = "API Token authentication. Include your API token in the X-Rundeck-Auth-Token header or as an 'authtoken' query parameter. Tokens can be generated from your User Profile page and must have appropriate authorization roles and expiration settings."
+)
+@SecurityScheme(
+    name = "rundeckPassword",
+    type = SecuritySchemeType.HTTP,
+    scheme = "basic",
+    description = "Session-based authentication using username and password. Submit credentials to /j_security_check and maintain JSESSIONID cookie."
+)
+@SecurityScheme(
+    name = "rundeckJWT",
+    type = SecuritySchemeType.HTTP,
+    scheme = "bearer",
+    bearerFormat = "JWT",
+    description = "JWT token authentication for OAuth/OIDC integration (Commercial/Enterprise only). Include JWT token in Authorization header with Bearer schema."
 )
 @EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
 @Slf4j

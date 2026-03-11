@@ -71,7 +71,7 @@ export default defineComponent({
   }
 
   .p-stepper-separator {
-    //background: var(--colors-gray-300);
+    //background: var(--colors-gray-300-original);
   }
 
   &.p-completed {

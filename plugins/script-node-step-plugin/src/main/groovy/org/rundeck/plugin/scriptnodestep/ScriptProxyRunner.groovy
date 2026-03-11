@@ -15,7 +15,7 @@ class ScriptProxyRunner implements ProxyRunnerPlugin {
 
     @Override
     Map<String, String> getRuntimeProperties(ExecutionContext context) {
-        return context.getFramework().getFrameworkProjectMgr().loadProjectConfig(context.frameworkProject).getProjectProperties()
+        return context.getIFramework().getFrameworkProjectMgr().getFrameworkProject(context.frameworkProject).getProjectProperties()
     }
 
     @Override

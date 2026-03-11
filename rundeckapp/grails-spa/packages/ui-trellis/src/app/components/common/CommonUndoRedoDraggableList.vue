@@ -4,13 +4,19 @@
       <div v-if="loading">
         <slot name="loading">
           <div class="loader">
-            <i class="fas fa-spinner fa-spin loading-spinner text-muted" />
+            <i class="fas fa-spinner fa-spin loading-spinner text-muted" data-testid="loading-spinner" />
             {{ $t("loading.text") }}
           </div>
         </slot>
       </div>
-      <div v-else class="list-container">
+      <div
+        v-else
+        class="list-container"
+        :class="{ 'ea-mode': conditionalEnabled }"
+        data-testid="list-container"
+      >
         <undo-redo
+          :class="{ right: conditionalEnabled }"
           data-test="options_undo_redo"
           :event-bus="localEB"
           :revert-all-enabled="revertAllEnabled"
@@ -23,11 +29,12 @@
             :item-key="itemKey"
             :handle="handle"
             :tag="draggableTag"
+            :disabled="draggableDisabled"
             data-testid="draggable-container"
             @update="dragUpdated"
           >
             <template #item="{ element, index }">
-              <div class="item-container">
+              <div class="item-container" data-testid="item-container">
                 <slot name="item" :item="{ element, index }" />
               </div>
             </template>
@@ -43,6 +50,7 @@
             size="sm"
             class="ready"
             data-testid="add-button"
+            :disabled="addButtonDisabled"
             @click="handleButtonClick"
           >
             <i class="fas fa-plus" />
@@ -57,19 +65,18 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import UndoRedo from "@/app/components/util/UndoRedo.vue";
+import UndoRedo from "../util/UndoRedo.vue";
 import draggable from "vuedraggable";
-import { getRundeckContext } from "@/library";
+import { getRundeckContext } from "../../../library";
 import mitt, { Emitter, EventType } from "mitt";
 import {
   ChangeEvent,
   Operation,
-} from "@/app/components/job/options/model/ChangeEvents";
+} from "../job/options/model/ChangeEvents";
 import { cloneDeep } from "lodash";
 
 const emitter = mitt();
 const localEB: Emitter<Record<EventType, any>> = emitter;
-const eventBus = getRundeckContext().eventBus;
 
 export default defineComponent({
   name: "CommonUndoRedoDraggableList",
@@ -107,14 +114,26 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    conditionalEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    addButtonDisabled: {
+      type: Boolean,
+      default: false,
+    },
+    draggableDisabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["addButtonClick", "update:modelValue"],
   data() {
     return {
-      eventBus,
+      eventBus: getRundeckContext().eventBus,
       localEB,
-      internalData: null,
-      originalData: null,
+      internalData: null as any[] | null,
+      originalData: null as any[] | null,
     };
   },
   watch: {
@@ -132,8 +151,8 @@ export default defineComponent({
   },
   async mounted() {
     if (this.modelValue) {
-      this.originalData = cloneDeep(this.modelValue);
-      this.internalData = cloneDeep(this.modelValue);
+      this.originalData = cloneDeep(this.modelValue) as any[];
+      this.internalData = cloneDeep(this.modelValue) as any[];
     }
 
     this.localEB.on("undo", this.doUndo);
@@ -146,7 +165,7 @@ export default defineComponent({
       this.$emit("addButtonClick");
     },
     cloneDeep,
-    dragUpdated(change) {
+    dragUpdated(change: { oldIndex: number; newIndex: number }) {
       this.changeEvent({
         index: change.oldIndex,
         dest: change.newIndex,
@@ -155,21 +174,25 @@ export default defineComponent({
       });
     },
     operationRemove(index: number) {
+      if (!this.internalData) return undefined;
       const oldval = this.internalData[index];
       this.internalData.splice(index, 1);
       return oldval;
     },
     operationModify(index: number, data: any) {
+      if (!this.internalData) return undefined;
       const orig = this.internalData[index];
       this.internalData[index] = cloneDeep(data);
       return orig;
     },
     operationMove(index: number, dest: number) {
+      if (!this.internalData) return;
       const orig = this.internalData[index];
       this.internalData.splice(index, 1);
       this.internalData.splice(dest, 0, orig);
     },
     operationInsert(index: number, value: any) {
+      if (!this.internalData) return;
       this.internalData.splice(index, 0, cloneDeep(value));
     },
     operation(op: Operation, data: any) {
@@ -185,8 +208,8 @@ export default defineComponent({
     },
     doUndo(change: ChangeEvent) {
       this.operation(change.undo, {
-        index: change.dest >= 0 ? change.dest : change.index,
-        dest: change.index >= 0 ? change.index : change.dest,
+        index: (change.dest !== undefined && change.dest >= 0) ? change.dest : change.index,
+        dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
         value: change.orig || change.value,
       });
       this.wasChanged();
@@ -204,7 +227,12 @@ export default defineComponent({
       this.wasChanged();
     },
     wasChanged() {
-      eventBus.emit("job-edit:edited", true);
+      if (this.eventBus) {
+        this.eventBus.emit("job-edit:edited", true);
+      } else {
+        this.localEB.emit("job-edit:edited", true);
+      }
+
       this.$emit("update:modelValue", this.internalData);
     },
   },
@@ -223,6 +251,10 @@ export default defineComponent({
   align-items: flex-start;
   gap: 10px;
   height: auto;
+
+  .right {
+    align-self: flex-end;
+  }
 }
 
 .loader {

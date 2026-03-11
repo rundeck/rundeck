@@ -167,13 +167,15 @@ class LogFilterSpec extends SeleniumBase{
         when:
         jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
         jobShowPage.getRunJobBtn().click()
+        executionShowPage.waitForFinalState()
         executionShowPage.getViewButtonOutput().click()
 
         then: "Checks that the second steps has the right replacement value"
-        executionShowPage.getLogOutput().size() == 3
-        executionShowPage.getLogOutput()[0].getText() == "Key contains not valid value which will be replaced"
-        executionShowPage.getLogOutput()[1].getText() == "A B=data pass example from first step"
-        executionShowPage.getLogOutput()[2].getText() == "data passed: data pass example from first step"
+        executionShowPage.getLogOutputText() == [
+            "Key contains not valid value which will be replaced",
+            "A B=data pass example from first step",
+            "data passed: data pass example from first step"
+        ]
     }
 
     def "global log filter with a multiline regex data capture"(){

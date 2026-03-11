@@ -158,6 +158,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return false
     }
 
+
     def list() {
         def results = index(params)
         render(view:"index",model:results)
@@ -1542,7 +1543,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         String fileText = input.fileText
-        def validation = aclFileManagerService.validateYamlPolicy(AppACLContext.system(), input.upload ? 'uploaded-file' : input.id, fileText)
+        def validation = aclFileManagerService.validateYamlPolicy(AppACLContext.system(), input.upload ? 'uploaded-file' : input.id ?: 'editor', fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
@@ -2209,7 +2210,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 Since: V45
 ''',
-            tags=["execution"],
+            tags=["Job Executions"],
             responses = @ApiResponse(
                     responseCode = "200",
                     description = '''Success response, with summary information.
@@ -2298,7 +2299,7 @@ Authorization required: `read` for `system` resource
 
 Since: V17
 ''',
-        tags=["logstorage"],
+        tags=["Log Storage"],
         responses = @ApiResponse(
             responseCode = "200",
             description = '''Success response, with log storage info and stats.
@@ -2412,7 +2413,7 @@ Fields:
 Authorization required: `read` for `system` resource
 
 Since: V17''',
-        tags=["logstorage"],
+        tags=["Log Storage"],
         responses = @ApiResponse(
             responseCode = "200",
             description = '''
@@ -2587,7 +2588,7 @@ Since: V17''',
 Authorization required: `ops_admin` for `system` resource
 
 Since: V17''',
-        tags=["logstorage"],
+        tags=["Log Storage"],
         responses = @ApiResponse(
             responseCode = "200",
             description = '''Resumed response''',
@@ -2638,7 +2639,7 @@ Since: V17''',
 Authorization required: `read` or `view` for the job.
 
 Since: V18''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters = @Parameter(
             name = "id",
             description = "Job ID",
@@ -2655,9 +2656,14 @@ Since: V18''',
             )
         )
     )
-    /**
-     * API: get job info: /api/18/job/{id}/info
-     */
+
+/**
+ * API: get job info: /api/18/job/{id}/info
+ * Returns job metadata in XML or JSON with consistent date formatting.
+ *
+ * @return Job metadata for the given job ID.
+ * @since API v18
+ */
     @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     def apiJobDetail() {
         if (!apiService.requireApi(request, response, ApiVersions.V18)) {
@@ -2707,17 +2713,64 @@ Since: V18''',
         if(jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)){
             extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
         }
-        respond(
 
-                JobInfo.from(
-                        scheduledExecution,
-                        apiService.apiHrefForJob(scheduledExecution),
-                        apiService.guiHrefForJob(scheduledExecution),
-                        extra
-                ),
 
-                [formats: responseFormats]
-        )
+
+        withFormat {
+            xml {
+                return apiService.renderSuccessXml(request, response) {
+                    def jobparams = [
+                            id: scheduledExecution.extid,
+                            href: apiService.apiHrefForJob(scheduledExecution),
+                            permalink: apiService.guiHrefForJob(scheduledExecution),
+                            scheduled: scheduledExecution.scheduled,
+                            scheduleEnabled: scheduledExecution.scheduleEnabled,
+                            enabled: scheduledExecution.executionEnabled
+                    ]
+                    if (clusterModeEnabled && scheduledExecution.scheduled) {
+                        jobparams.serverNodeUUID = scheduledExecution.serverNodeUUID
+                        jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
+                    }
+                    if (extra.averageDuration) {
+                        jobparams.averageDuration = extra.averageDuration
+                    }
+                    job(jobparams) {
+                        name(scheduledExecution.jobName)
+                        group(scheduledExecution.groupPath)
+                        project(scheduledExecution.project)
+                        description(scheduledExecution.description)
+                        if (request.api_version >= ApiVersions.V56) {
+                            if (scheduledExecution.dateCreated) {
+                                created(apiService.w3cDateValue(scheduledExecution.dateCreated))
+                            }
+                            if (scheduledExecution.user) {
+                                createdBy(scheduledExecution.user)
+                            }
+                            if (scheduledExecution.lastUpdated) {
+                                lastModified(apiService.w3cDateValue(scheduledExecution.lastUpdated))
+                            }
+                            if (scheduledExecution.lastModifiedBy) {
+                                lastModifiedBy(scheduledExecution.lastModifiedBy)
+                            }
+                        }
+                        if (extra.nextScheduledExecution) {
+                            nextScheduledExecution(extra.nextScheduledExecution)
+                        }
+                    }
+                }
+            }
+            json {
+                respond(
+                        JobInfo.from(
+                                scheduledExecution,
+                                apiService.apiHrefForJob(scheduledExecution),
+                                apiService.guiHrefForJob(scheduledExecution),
+                                extra
+                        ),
+                        [formats: ['json']]
+                )
+            }
+        }
     }
 
 
@@ -2731,7 +2784,7 @@ Since: V18''',
 Authorization required: `read` or `view` for the Job
 
 Since: V31''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(
                 name = 'id',
@@ -2973,6 +3026,18 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                                 group(se.groupPath)
                                 project(se.project)
                                 description(se.description)
+                                if (request.api_version >= ApiVersions.V56) {
+                                    created(apiService.w3cDateValue(se.dateCreated))
+                                    if (se.user) {
+                                        createdBy(se.user)
+                                    }
+                                    if (se.lastUpdated) {
+                                        lastModified(apiService.w3cDateValue(se.lastUpdated))
+                                    }
+                                    if (se.lastModifiedBy) {
+                                        lastModifiedBy(se.lastModifiedBy)
+                                    }
+                                }
                             }
                         }
                     }
@@ -3015,7 +3080,7 @@ Format is a string like `2d1h4n5s` using the following characters for time units
 Authorization required: `read` or `view` for each job resource
 
 Since: v17''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         responses = @ApiResponse(
             responseCode='200',
             description='Job List',
@@ -3039,7 +3104,7 @@ Since: v17''',
 Authorization required: `read` or `view` for each job resource
 
 Since: v17''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         responses = @ApiResponse(
                 responseCode='200',
                 description='Job List',
@@ -3125,7 +3190,7 @@ Since: v17''',
 
 Authorization required: `view` or `read` for each Job resource.
 ''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='project',
@@ -3239,7 +3304,7 @@ Authorization required: `read` for each job resource.
 
 Since: v14
 ''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters=[
             @Parameter(
                 name = 'project',
@@ -3367,7 +3432,7 @@ Since: v14
 
 Authorization required: `read` for project resource type `event`
 ''',
-        tags = ['execution'],
+        tags = ['Job Executions'],
         parameters = [
             @Parameter(
                 name = 'project',

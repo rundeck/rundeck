@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="">{{ $t("Workflow.property.keepgoing.prompt") }}</div>
+    <div data-testid="simple-prompt">{{ $t("Workflow.property.keepgoing.prompt") }}</div>
     <div class="radio radio-inline">
       <input
         id="workflowKeepGoingFail"
@@ -8,6 +8,7 @@
         type="radio"
         name="workflow_keepgoing"
         :value="false"
+        data-testid="keepgoing-false-radio"
       />
       <label for="workflowKeepGoingFail">
         {{ $t("Workflow.property.keepgoing.false.description") }}
@@ -20,6 +21,7 @@
         type="radio"
         name="workflow_keepgoing"
         :value="true"
+        data-testid="keepgoing-true-radio"
       />
       <label for="workflowKeepGoingRemainingSteps">
         {{ $t("Workflow.property.keepgoing.true.description") }}
@@ -32,7 +34,7 @@
 import {
   BasicData,
   createBasicData,
-} from "@/app/components/job/workflow/types/workflowTypes";
+} from "./types/workflowTypes";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -51,12 +53,6 @@ export default defineComponent({
     };
   },
   watch: {
-    // modelValue: {
-    //   handler() {
-    //     this.data = createBasicData(this.modelValue);
-    //   },
-    //   deep: true,
-    // },
     data: {
       handler() {
         this.$emit("update:modelValue", this.data);
@@ -69,5 +65,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style scoped lang="scss"></style>

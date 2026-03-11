@@ -15,10 +15,14 @@ jest.mock("@/library/rundeckService", () => ({
     apiVersion: "44",
   })),
 }));
-jest.mock("../../../../../library/services/projects");
+jest.mock("@/library/services/projects");
 
 jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: jest.fn().mockImplementation(() => ({})),
+}));
+
+jest.mock("@/library/services/feature", () => ({
+  getFeatureEnabled: jest.fn().mockResolvedValue(false),
 }));
 
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {

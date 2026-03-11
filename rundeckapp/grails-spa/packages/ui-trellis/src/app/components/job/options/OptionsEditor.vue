@@ -38,6 +38,7 @@
               :can-move-down="index < intOptions.length - 1"
               :can-move-up="index > 0"
               :option="element"
+              :features="features"
               @move-up="doMoveUp(index)"
               @move-down="doMoveDown(index)"
               @edit="doEdit(index)"
@@ -47,7 +48,11 @@
           </div>
         </template>
         <template #footer>
-          <template v-if="createMode">
+          <div
+            v-if="createMode"
+            class="edit-option-item"
+            :class="{ alternate: intOptions.length % 2 === 1 }"
+          >
             <option-edit
               id="optitem_new"
               :ui-features="{ next: false }"
@@ -61,7 +66,7 @@
               @update:model-value="saveNewOption"
               @cancel="doCancel"
             />
-          </template>
+          </div>
         </template>
       </draggable>
 
@@ -85,16 +90,17 @@
   </div>
 </template>
 <script lang="ts">
-import { getRundeckContext } from "@/library";
+import { getRundeckContext } from "../../../../library";
 import { cloneDeep, clone } from "lodash";
 import {
   JobOption,
+  JobOptionEdit,
   JobOptionsData,
   OptionPrototype,
 } from "../../../../library/types/jobs/JobEdit";
 import { Operation, ChangeEvent } from "./model/ChangeEvents";
 import OptionItem from "./OptionItem.vue";
-import pluginService from "@/library/modules/pluginService";
+import pluginService from "../../../../library/modules/pluginService";
 import { defineComponent, PropType } from "vue";
 import UndoRedo from "../../util/UndoRedo.vue";
 import OptionEdit from "./OptionEdit.vue";
@@ -118,6 +124,11 @@ export default defineComponent({
       type: Object as PropType<JobOptionsData>,
       required: true,
     },
+    features: {
+      type: Object as PropType<any>,
+      required: false,
+      default: () => ({}),
+    },
     edit: {
       type: Boolean,
       default: true,
@@ -130,11 +141,10 @@ export default defineComponent({
       error: "",
       createMode: false,
       editIndex: -1,
-      origOptions: [] as JobOption[],
-      intOptions: [] as JobOption[],
-      createOption: null,
-      fileUploadPluginType: "",
-      features: {},
+      origOptions: [] as JobOptionEdit[],
+      intOptions: [] as JobOptionEdit[],
+      createOption: null as JobOptionEdit | null,
+      fileUploadPluginType: "" as string | undefined,
       providers: [],
       providerLabels: {},
     };
@@ -144,8 +154,7 @@ export default defineComponent({
     this.intOptions = cloneDeep(this.optionsData.options);
     this.updateIndexes();
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
-    this.features = this.optionsData.features;
-    pluginService.getPluginProvidersForService("OptionValues").then((data) => {
+    pluginService.getPluginProvidersForService("OptionValues").then((data: { service?: string; descriptions?: any; labels?: any }) => {
       if (data.service) {
         this.providers = data.descriptions;
         this.providerLabels = data.labels;
@@ -183,7 +192,7 @@ export default defineComponent({
       this.changeEvent({
         index,
         dest: -1,
-        orig: orig,
+        orig: orig as JobOption,
         operation: Operation.Remove,
         undo: Operation.Insert,
       });
@@ -210,7 +219,7 @@ export default defineComponent({
         });
       }
     },
-    dragUpdated(change) {
+    dragUpdated(change: { oldIndex: number; newIndex: number }) {
       this.updateIndexes();
       this.changeEvent({
         index: change.oldIndex,
@@ -220,13 +229,12 @@ export default defineComponent({
       });
     },
     updateOption(index: number, data: any) {
-      console.log(data);
       const value = cloneDeep(data);
       const orig = this.operation(Operation.Modify, { index, value });
       this.changeEvent({
         index: index,
         dest: -1,
-        orig,
+        orig: orig as JobOption,
         value,
         operation: Operation.Modify,
         undo: Operation.Modify,
@@ -249,35 +257,37 @@ export default defineComponent({
       });
       this.createOption = null;
     },
-    operationRemove(index: number) {
+    operationRemove(index: number): JobOptionEdit {
       const oldval = this.intOptions[index];
       this.intOptions.splice(index, 1);
       return oldval;
     },
-    operationModify(index: number, data: any) {
+    operationModify(index: number, data: JobOptionEdit): JobOptionEdit {
       const orig = this.intOptions[index];
       this.intOptions[index] = cloneDeep(data);
       return orig;
     },
-    operationMove(index: number, dest: number) {
+    operationMove(index: number, dest: number): void {
       const orig = this.intOptions[index];
       this.intOptions.splice(index, 1);
       this.intOptions.splice(dest, 0, orig);
     },
-    operationInsert(index: number, value: any) {
+    operationInsert(index: number, value: JobOptionEdit): void {
       this.intOptions.splice(index, 0, cloneDeep(value));
     },
-    operation(op: Operation, data: any) {
+    operation(op: Operation, data: any): JobOptionEdit | undefined {
+      let result: JobOptionEdit | undefined;
       if (op === Operation.Insert) {
         this.operationInsert(data.index, data.value);
       } else if (op === Operation.Remove) {
-        this.operationRemove(data.index);
+        result = this.operationRemove(data.index);
       } else if (op === Operation.Modify) {
-        this.operationModify(data.index, data.value);
+        result = this.operationModify(data.index, data.value);
       } else if (op === Operation.Move) {
         this.operationMove(data.index, data.dest);
       }
       this.updateIndexes();
+      return result;
     },
     doCancel() {
       this.createMode = false;
@@ -286,8 +296,8 @@ export default defineComponent({
     },
     doUndo(change: ChangeEvent) {
       this.operation(change.undo, {
-        index: change.dest >= 0 ? change.dest : change.index,
-        dest: change.index >= 0 ? change.index : change.dest,
+        index: (change.dest !== undefined && change.dest >= 0) ? change.dest : change.index,
+        dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
         value: change.orig || change.value,
       });
       this.wasChanged();
@@ -324,10 +334,10 @@ export default defineComponent({
   margin-top: 10px;
   border: 1px solid var(--gray-input-outline);
   &.alternate {
-    background-color: var(--background-color-accent-lvl2);
+    background-color: var(--background-color);
   }
 
-  padding: 10px 4px;
+  padding: 10px;
 }
 
 .note {

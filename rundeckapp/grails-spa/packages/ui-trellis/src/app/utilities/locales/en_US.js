@@ -111,6 +111,8 @@ const messages = {
   message_getUpdate: "Get Update",
   message_dismissMessage:
     "To dismiss this notification until the next release, please click here.",
+  "success.rate": "Success Rate",
+  "average.duration": "Avg duration",
   message_close: "Close",
   "bulk.edit": "Bulk Edit",
   "in.of": "in",
@@ -127,6 +129,9 @@ const messages = {
     "Clear all {0} selected items, or only items shown on this page?",
   "bulk.selected.count": "{0} selected",
   "results.empty.text": "No results for the query",
+  "noResultsFound": "No results found",
+  "noMatchesFound": "No matches found",
+  "noMatchesFoundSecondary": "Please try another search.",
   "Only shown executions": "Only shown executions",
   "Clear bulk selection": "Clear Bulk Selection",
   "Click to edit Search Query": "Click to edit Search Query",
@@ -401,6 +406,9 @@ const messages = {
   "jobquery.title.adhocRemoteStringFilter": "Shell Command",
   "jobquery.title.adhocFilepathFilter": "Script File Path",
   "jobquery.title.argStringFilter": "Script File Arguments",
+  "jobquery.title.optionFilter": "Options",
+  "jobquery.title.optionFilter.label":
+    "Job Options by pair, name or value (e.g. -sleep 10 or -debug 1 -env prod or -debug)",
   "page.unsaved.changes": "You have unsaved changes",
   "edit.nodes.file": "Edit Nodes File",
   "project.node.file.source.label": "Source",
@@ -610,6 +618,26 @@ const messages = {
   "page.section.Activity.for.jobs": "Activity for Jobs",
   "widget.theme.title": "Theme",
   "widget.nextUi.title": "Enable Next UI",
+  "settings.support.title": "Support",
+  "settings.support.label": "Support",
+  "settings.theme.title": "Theme",
+  "settings.theme.description": "Select your preferred visual theme for the interface.",
+  "settings.theme.options.system": "System",
+  "settings.theme.options.light": "Light",
+  "settings.theme.options.dark": "Dark",
+  "settings.tabs.theme": "Theme",
+  "settings.tabs.uiEarlyAccess": "UI Early Access",
+  "settings.nextUi.indicatorTitle": "Next UI Mode",
+  "settings.nextUi.available": "Next UI available",
+  "settings.nextUi.enabled": "Next UI enabled",
+  "settings.uiEarlyAccess.title": "UI Early Access",
+  "settings.uiEarlyAccess.description": "We're incrementally improving the Rundeck UI. Enable early access below to try new features as they're released. Please note: Early access features may contain bugs or incomplete functionality. We strongly encourage you to submit feedback or report issues through a support ticket.",
+  "settings.uiEarlyAccess.enableLabel": "Enable Next UI",
+  "settings.uiEarlyAccess.feature1": "When enabled, you'll see experimental UI updates throughout the product. A small indicator at the bottom of the page will show when you're viewing an early access feature.",
+  "settings.uiEarlyAccess.learnMore": "Learn more",
+  "settings.uiEarlyAccess.feedbackLink": "Give feedback on Early Access",
+  "settings.uiEarlyAccess.toast.enabled": "Next UI early access enabled. You can switch back anytime.",
+  "settings.uiEarlyAccess.toast.disabled": "Next UI has been turned off. You can switch back anytime.",
   "page.section.title.AllJobs": "All Jobs",
   "advanced.search": "Advanced",
   "jobs.advanced.search.title": "Click to modify filter",
@@ -664,6 +692,8 @@ const messages = {
     "Discard or save changes to this option before completing changes to the job",
   "bash.prompt": "Bash:",
   "script.content.prompt": "Script Content:",
+  "script.content.multiline.prompt.warning":
+    "WARNING: this usage can be UNSAFE. See the documentation for details.",
   "rundeck.user.guide.option.model.provider":
     "Rundeck User Guide - Option model provider",
   save: "Save",
@@ -676,6 +706,8 @@ const messages = {
   "no.options.message": "No Options",
   "the.option.values.will.be.available.to.scripts.in.these.forms":
     "The option values will be available to scripts in these forms:",
+  "option.usage.multiline.note":
+    "Multiline Text option values will likely need to be quoted when used in scripts or commandline arguments:",
   "form.option.date.label": "Date",
   "form.option.enforcedType.label": "Restrictions",
   "form.option.usage.file.fileName.preview.description":
@@ -737,7 +769,12 @@ const messages = {
     "Query Parameter",
   "form.option.create.title": "Save the new option",
   "form.option.regex.label": "Match Regular Expression",
+  "form.option.regex.description.md":
+    "Enter a Regular Expression, in the [Java Pattern](https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html) format.",
+  "form.option.regex.multiline.description.md":
+    "For Multiline Text options, use `(?s)` to match across all lines.",
   "form.option.optionType.file.label": "File",
+  "form.option.optionType.multiline.label": "Multiline Text",
   "form.option.valuesDelimiter.label": "List Delimiter",
   "form.option.cancel.title": "Cancel adding new option",
   "form.option.values.label": "Allowed Values",
@@ -823,7 +860,7 @@ const messages = {
   "option.view.enforced.placeholder": "Strict",
   "option.view.regex.info.note": "Values must match the regular expression:",
   "option.view.notenforced.title": "No restrictions on input value",
-  "option.view.notenforced.placeholder": "None",
+  "option.view.notenforced.placeholder": "No restrictions",
   "option.view.action.delete.title": "Delete this Option",
   "option.view.action.edit.title": "Edit this Option",
   "option.view.action.duplicate.title": "Duplicate this Option",
@@ -890,6 +927,12 @@ const messages = {
   Workflow: {
     label: "Workflow",
     property: {
+      executionBehavior: {
+        label: "Execution Behavior",
+      },
+      stepFailureBehavior: {
+        label: "Step Failure Behavior",
+      },
       keepgoing: {
         true: { description: "Run remaining steps before failing." },
         false: { description: "Stop at the failed step." },
@@ -897,10 +940,17 @@ const messages = {
       },
       strategy: {
         label: "Strategy",
+        description: "Select the chronology strategy of steps in the workflow.",
+        learnMore: "Learn more",
+        selectPlaceholder: "Select a strategy",
       },
     },
     addStep: "Add a step",
+    jobSteps: {
+      label: "Job Steps",
+    },
     logFilters: "Log Filters",
+    logFiltersTooltip: "Filters that will affect the logs produced by these steps",
     addLogFilter: "Add Log Filter",
     clickToEdit: "Click to edit",
     edit: "Edit",
@@ -910,13 +960,43 @@ const messages = {
     dragToReorder: "Drag to reorder",
     clickOnStepType: "Click on a step type to add",
     editStep: "Edit step",
+    saveStep: "Save Step",
+    setSteps: "Set the Steps",
+    conditional: {
+      defineCondition: "Define the Condition",
+      conditionDescription: "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
+      conditionGroups: "Condition Set",
+      addCondition: "+ Add",
+      addconditionGroups: "+ Add Condition Set",
+      removeconditionGroups: "Remove Condition Set",
+      removeCondition: "Remove Condition",
+      selectField: "Select Field",
+      selectOperator: "Select Operator",
+      enterValue: "Enter Value",
+      operator: {
+        equals: "Equal",
+        notEquals: "Does not equal",
+        contains: "Contains",
+        notContains: "Does not contain",
+        matches: "Matches",
+        greaterThan: "Greater than",
+        greaterThanOrEqual: "Greater than or equal",
+        lessThan: "Less than",
+        lessThanOrEqual: "Less than or equal"
+      },
+    },
     stepLabel: "Step label",
     noSteps: "No workflow steps",
+    clickAddStep: "Add steps to define what this job will do. Click “Add Step” to get started.",
     addErrorHandler: "Add Error Handler",
     errorHandler: "Error handler",
     errorHandlerDescription:
       "The error handler will execute if the step fails.",
     editErrorHandler: "Edit error handler",
+    nodeStep: "Node Step",
+    workflowStep: "Workflow Step",
+    collapse: "Collapse",
+    expand: "Expand",
   },
   "plugin.choose.title": "Choose a Plugin",
   "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
@@ -925,7 +1005,7 @@ const messages = {
   "plugin.type.WorkflowNodeStep.title": "Node Step",
   "JobExec.nodeStep.true.label": "Node Step",
   "step.plugins.filter.prompt": "Search step",
-  "enter.a.step.filter.override": "Enter a step filter string.",
+  "enter.a.step.filter.override": "Search",
   "workflow.search.help.string1": "Basic search:",
   "workflow.search.help.string2": "mystep1",
   "workflow.search.help.string3":
@@ -947,6 +1027,8 @@ const messages = {
   "workflow.search.help.string17": "property:name=value",
   "node.step.plugin.plural": "{0} Node Step Plugins",
   "workflow.step.plugin.plural": "{0} Workflow Step Plugins",
+  "job.label": "Job",
+  "Project": "Project",
   "Workflow.Step.jobreference.title": "Select job by",
   "Workflow.Step.jobreference.name.label": "Name",
   "Workflow.Step.jobreference.name.description":
@@ -1006,6 +1088,8 @@ const messages = {
     "Enter UUID, e.g. 5910b723-2436-4497-96d5-49a08db95d2b",
   "select.an.existing.job.to.use": "Select an existing Job to use",
   "plugin.edit.title": "Edit step",
+  "Workflow.step.property.description.label": "Step Name",
+  "Workflow.step.property.description.help": "Name for this step",
   "Workflow.step.property.description.placeholder":
     "Label or description of this step",
   "enter.a.node.filter.override":
@@ -1033,9 +1117,119 @@ const messages = {
   "Workflow.stepErrorHandler.label.on.error": "on error",
   "Workflow.stepErrorHandler.label.keep.going.on.success":
     "keep going on success",
+  "Workflow.validation.oneError": "1 error",
+  "Workflow.validation.multipleErrors": "{count} errors",
   "framework.service.WorkflowNodeStep.description":
     "Runs once for each node in the workflow.",
   "framework.service.WorkflowStep.description": "Runs only once in a workflow.",
+  "archive.import.importConfig.true.help":
+    "Overwrites the project configuration with the properties stored in the archive.",
+  "archive.import.importACL.true.title": "Import Project ACL Policies",
+  "archive.import.validateJobRef.false.title": "Do not Validate",
+  "archive.import.importWebhooks.false.help":
+    "Does not import webhooks into the project",
+  "archive.import.importWebhooks.true.help": "Import Webhooks into the project",
+  "archive.import.importScm.false.help": "Does not import SCM Configuration.",
+  "archive.import.importConfig.false.help":
+    "Does not import the project configuration.",
+  "archive.import.importWebhooks.true.title": "Import Webhooks",
+  "archive.import.validateJobRef.true.help":
+    "Throw errors when using a referenced job that does not exist.",
+  "archive.import.importACL.false.help": "Does not import ACL Policies.",
+  "archive.import.validateJobRef.true.title": "Validate Referenced Jobs",
+  "archive.import.importWebhooks.false.title": "Do not import webhooks",
+  "archive.import.importACL.true.help":
+    "Imports any Project ACL Policies, overwriting policies with the same name.",
+  "archive.import.importNodesSource.false.help":
+    "Does not import the Node Sources.",
+  "archive.import.importScm.unauthorized.help":
+    "Not authorized to configure SCM.",
+  "archive.import.importConfig.true.title": "Import Project Configuration",
+  "archive.import.importScm.true.title": "Import Project SCM Configuration",
+  "archive.import.importNodesSource.true.help":
+    "Overwrites the Node Sources with the properties stored in the archive.",
+  "archive.import.importNodesSource.true.title": "Import Node Sources",
+  "archive.import.importNodesSource.failed.message":
+    "Failed to save nodes file, please contact your administrator.",
+  "archive.import.importACL.unauthorized.help":
+    "Not authorized to create ACL Policies.",
+  "archive.import.validateJobRef.false.help":
+    "Import referenced jobs without validating existence.",
+  "archive.import.importScm.true.help":
+    "Import Project SCM Configuration unless the project has SCM configuration.",
+  "archive.import.validateJobRef.label": "Validate Referenced Jobs:",
+  "archive.import.uuidOption.remove.description":
+    "Strip UUIDs from imported jobs.",
+  "archive.import.uuidOption.preserve.description":
+    "Preserve the imported Job UUIDs. Note: If a job with the same UUID exists in another project, the new job will not be imported.",
+  "archive.import.uuidOption.preserve.label": "Preserve UUIDs",
+  "archive.import.uuidOption.remove.label": "Remove UUIDs",
+  "archive.import.uuidOption.label": "Imported Jobs:",
+  // Job Upload Page messages
+  jobUpload: {
+    title: "Upload Job Definition to project",
+    fileSelectLabel: "Select a Job definition file.",
+    formatRadioLabel: {
+      xml: "XML format",
+      yaml: "YAML format",
+      json: "JSON format",
+    },
+    dupeOption: {
+      label: "When a Job with the same name already exists:",
+      update: {
+        word: "Update",
+        label: "{0} the existing Job",
+      },
+      skip: {
+        word: "Skip",
+        label: "{0} the uploaded Job",
+      },
+      create: {
+        word: "Create",
+        label: "Always {0} a new Job",
+      },
+    },
+    button: {
+      cancel: "Cancel",
+      upload: "Upload",
+      uploadAnother: "Upload Another Job Definition File...",
+    },
+    uploadingFile: "Uploading File...",
+    jobs: "Job | Jobs",
+    wasWere: {
+      singular: " was",
+      plural: "were",
+    },
+    results: {
+      error: {
+        notProcessed: "not processed due to errors",
+        definitionErrors: "Job Definition Errors",
+      },
+      skipped: {
+        skippedMessage: "skipped due to existing jobs with the same name",
+        existing: "Existing:",
+      },
+      success: {
+        successMessage: "successfully created/modified",
+      },
+    },
+  },
+  searchForStep: "Search for a step",
+  learnMoreSearchPatterns: "to search using specific patterns",
+  nodeSteps: "Node Steps",
+  nodeStepsDescription: "Node steps execute once for each node targeted by the Job's node-filter.",
+  workflowSteps: "Workflow Steps",
+  workflowStepsDescription: "Workflow Steps execute once per Job execution.",
+  commonNodeSteps: "Common Node Steps",
+  commonWorkflowSteps: "Common Workflow Steps",
+  learnMore: "Learn more",
+  plugins: "plugins",
+  earlyAccess: "Early Access",
+  earlyAccessDescriptionWorkflow: "We've made some improvements to the \"Workflow\" authoring experience! Try the updated experience - you can switch back anytime.",
+  earlyAccessTryNow: "Try Now",
+  earlyAccessRemindMeLater: "Remind me later",
+  earlyAccessRemindLaterToast: "Got it! We'll remind you next time you return to this page.",
+  earlyAccessGoToSettings: "You can try the updated experience by enabling early access on the system configuration page."
 };
 
 export default messages;

@@ -47,6 +47,30 @@ Primary build is supported with gradle. More info in the [wiki](https://github.c
 
 Requirements: Java 11, NodeJs 18
 
+## Cloudsmith Authentication Setup
+
+#### For PagerDuty employees with Cloudsmith access
+
+Export your Cloudsmith token before building:
+
+```bash
+export CLOUDSMITH_NPM_TOKEN=your-cloudsmith-token-here
+```
+
+#### For contributors without Cloudsmith access
+
+1. Delete the `.npmrc` and `package-lock.json` files in the ui-trellis package:
+
+```bash
+rm rundeckapp/grails-spa/packages/ui-trellis/.npmrc rundeckapp/grails-spa/packages/ui-trellis/package-lock.json 
+```
+
+2. And the `.npmrc` and `package-lock.json` files in the _package-manager directory:
+
+```bash
+rm rundeckapp/grails-app/assets/javascripts/_package-manager/.npmrc rundeckapp/grails-app/assets/javascripts/_package-manager/package-lock.json
+```
+
 ## Build with Gradle
 
 Produces: `rundeckapp/build/libs/rundeck-X.Y.war`

@@ -13,7 +13,6 @@ orbs:
   node: circleci/node@6.3.0
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
-  browser-tools: circleci/browser-tools@1.4.8
   snyk: snyk/snyk@2.2 # https://circleci.com/developer/orbs/orb/snyk/snyk
   git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
 
@@ -91,7 +90,7 @@ executors:
   # Machine executor
   machine-builder:
     machine:
-      image: ubuntu-2204:current
+      image: ubuntu-2204:2025.09.1
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
@@ -470,10 +469,10 @@ jobs:
   packaging-publish:
     <<: *job-defaults
     executor:
-      name: docker-builder
+      name: machine-builder  # Change from docker-builder
+      resource_class: medium
 
     steps:
-      - setup_docker
       - checkout
       - install-packaging-dependencies
       - restore-build-cache
@@ -506,10 +505,10 @@ jobs:
   packaging-test:
     <<: *job-defaults
     executor:
-      name: docker-builder
+      name: machine-builder  # Change from docker-builder
+      resource_class: medium
 
     steps:
-      - setup_docker
       - checkout
       - install-packaging-dependencies
       - restore-build-cache
@@ -640,6 +639,12 @@ slack-defaults: &slack-defaults
     - slack-secrets
   <<: *slack-fail-post-step
 
+cloudsmith-slack-defaults: &cloudsmith-slack-defaults
+  context:
+    - Cloudsmith
+    - slack-secrets
+  <<: *slack-fail-post-step
+
 require-build: &require-build
   requires:
     - Build
@@ -670,7 +675,7 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build Release
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
           <<: *filter-tags
       - packaging-publish:
           name: Package and Release
@@ -682,7 +687,7 @@ workflows:
           name: Maven Publish
           requires:
             - Build Release
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
           <<: *filter-tags
       - docker-publish:
           name: Docker Publish
@@ -704,13 +709,13 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
       - test-gradle:
           name: T Unit Gradle
           <<: *slack-defaults
       - test-gui:
           name: T Unit UI
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
       - trigger-enterprise:
           name: Enterprise Snapshot
           <<: *require-build
@@ -747,11 +752,6 @@ workflows:
             branches: { only: main }
           <<: *require-build
           <<: *slack-fail-post-step
-      - test-docker:
-          name: T Docker
-          command: bash test/run-docker-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
       - test-docker:
           name: T Integration SSL
           command: bash test/run-docker-ssl-tests.sh
@@ -834,10 +834,6 @@ workflows:
       - build-rundeck:
           name: Build with Docker image using JRE 17
           jreVersion: "openjdk-17-jre-headless"
-      - test-docker:
-          name: T Docker running JRE 17
-          command: bash test/run-docker-tests.sh
-          <<: *require-build-jre-17
       - test-docker:
           name: T Integration SSL running JRE 17
           command: bash test/run-docker-ssl-tests.sh

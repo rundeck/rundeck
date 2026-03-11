@@ -52,7 +52,7 @@ class CommandLineSetupTest extends Specification {
 
         then:
         ex.message == "system.exit 1"
-        sysErr.toString().contains("Parsing failed.  Reason: no argument for:")
+        sysErr.toString().contains("Parsing failed.  Reason: Missing argument for option: encryptpwd")
     }
 
     def "EncryptPassword fails specifying unknown service"() {

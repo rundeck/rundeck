@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.PluginStep; rundeck.ScheduledExecution; rundeck.JobExec" %>
+<%@ page import="rundeck.PluginStep; rundeck.ScheduledExecution; rundeck.JobExec; rundeck.JobExec;org.rundeck.app.data.workflow.ConditionalStep" %>
 <%--
     _wfItemView.gsp
     
@@ -23,7 +23,7 @@
     $Id$
  --%>
             <g:set var="jobitem" value="${item.instanceOf(JobExec)}"/>
-            <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
+            <g:set var="pluginitem" value="${item.instanceOf(PluginStep) || item.instanceOf(ConditionalStep)}"/>
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
                 %{--Display job icon and name--}%

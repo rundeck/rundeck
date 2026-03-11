@@ -349,10 +349,15 @@ class ProjectController extends ControllerBase{
             response.setContentType("application/zip")
             response.setHeader("Content-Disposition", "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\"")
 
-            outfile.withInputStream {instream->
-                Streams.copy(instream,response.outputStream,false)
+            try {
+                outfile.withInputStream { instream ->
+                    Streams.copy(instream, response.outputStream, false)
+                }
+            } catch (Exception e) {
+                throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
+            } finally {
+                projectService.releasePromise(session.user, token)
             }
-            projectService.releasePromise(session.user,token)
         }else {
             def percentage = projectService.promiseSummary(session.user, token).percent()
 
@@ -647,9 +652,9 @@ class ProjectController extends ControllerBase{
         summary = 'List Projects',
         description = '''List the existing projects on the server.
 
-Authorization required: `read` for project resource
+Authorization required: `read` for each project resource. Only authorized projects will be included in the response.
 ''',
-        tags = ['project'],
+        tags = ['Project'],
         parameters = [
                 @Parameter(
                         name = 'meta',
@@ -741,7 +746,7 @@ Authorization required: `read` access for `project` resource type to get basic p
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -784,7 +789,7 @@ Authorization required: `read` access for `project` resource type to get basic p
 
 Authorization required: `create` for resource type `project`
 ''',
-        tags = ['project'],
+        tags = ['Project'],
         requestBody = @RequestBody(
             description='Project Create contains a name, and configuration values',
             content = @Content(
@@ -958,7 +963,7 @@ Authorization required: `create` for resource type `project`
     @Operation(
             method = "Delete",
             summary = "Delete a project",
-            description = """Delete an existing projects on the server.
+            description = """Delete an existing project on the server.  The action cannot be undone.
 
 Authorization required: `delete` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
             parameters = [
@@ -981,7 +986,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -1110,28 +1115,38 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
-            responseCode = "200",
-            description = "Project details",
-            content = [
-                    @Content(
-                            mediaType = "application/text",
-                            schema=@Schema(type='string'),
-                            examples = @ExampleObject('''key=value
-key2=value''')
-                    ),
-                    @Content(
-                            mediaType = "application/json",
-                            schema=@Schema(type='object'),
-                            examples = @ExampleObject('''{
-    "key":"value",
-    "key2":"value2..."
-}''')
-                    )
-            ]
+    responseCode = "200",
+    description = "Project configuration retrieved successfully",
+    content = @Content(
+        mediaType = MediaType.APPLICATION_JSON,
+        schema = @Schema(implementation = Map),
+        examples = @ExampleObject(
+            name = "projectConfig",
+            summary = "Example project configuration",
+            value = '''{
+            "project.description": "My Project Description",
+            "project.label": "My Project",
+            "project.disable.executions": "false",
+            "project.disable.schedule": "false",
+            "project.execution.history.cleanup.enabled": "true",
+            "project.execution.history.cleanup.retention.days": "60",
+            "project.execution.history.cleanup.retention.minimum": "50",
+            "project.execution.history.cleanup.batch": "500",
+            "project.execution.history.cleanup.schedule": "0 0 0 1/1 * ? *",
+            "project.jobs.gui.groupExpandLevel": "1",
+            "resources.source.1.type": "file",
+            "resources.source.1.config.file": "/var/rundeck/projects/myproject/etc/resources.xml",
+            "resources.source.1.config.generateFileAutomatically": "true",
+            "resources.source.1.config.includeServerNode": "true",
+            "service.NodeExecutor.default.provider": "jsch-ssh",
+            "service.FileCopier.default.provider": "jsch-scp"
+            }'''
+            )
+        )
     )
     @GrailsCompileStatic
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
@@ -1204,7 +1219,7 @@ Since: v14""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1319,7 +1334,7 @@ by:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1443,7 +1458,7 @@ by:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1519,7 +1534,7 @@ Since: v14""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1860,7 +1875,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2010,7 +2025,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2031,7 +2046,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @ApiResponse(
             responseCode = "404",
-            description = "Not found",
+            description = "Resource file does not exist in the project. This occurs when the requested readme.md or motd.md file has not been created for the project.",
             content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = ApiErrorResponse)
@@ -2105,7 +2120,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2154,7 +2169,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     @Operation(
             method = "PUT",
             summary = "Modify a project config",
-            description = """Replaces all configuration data with the submitted values.
+            description = """Replaces all configuration data with the submitted values. Any existing configuration properties not included in the request will be removed.
 The response, based on `Accept` header, can be returned in the Text, XML or Json format.
 
 Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
@@ -2199,7 +2214,7 @@ key2=value'''
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2347,7 +2362,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2467,7 +2482,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                                             @ExampleObject(
                                                     name = 'set-project-config',
                                                     summary = "Replace an individual config settings",
-                                                    value = '''{ "[KEY]" : "key value" }'''
+                                                    value = '''{ "value" : "key value" }'''
                                             )
                                     ]
                             ),
@@ -2513,7 +2528,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2693,7 +2708,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2724,7 +2739,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     @Operation(
             method = "GET",
             summary = "Export a zip archive of the project.",
-            description = """Performs the export to a zip archive of the project synchronously. 
+            description = """Performs the export to a zip archive of the project synchronously.  _For large projects, consider using the async export endpoint instead._
 Optional parameters:
 
 * executionIds a list (comma-separated) of execution IDs. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
@@ -2745,6 +2760,7 @@ In APIv34 or later:
 * whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
 
 Requires `export` authorization for the project resource.""",
+            tags = ['Project'],
             parameters = [
                     @Parameter(
                             name = 'project',
@@ -2767,9 +2783,70 @@ Requires `export` authorization for the project resource.""",
                     @Parameter(name = 'exportComponents.node-wizard', required = false, in = ParameterIn.QUERY, description = 'true/false, include node wizard', schema = @Schema(implementation = String.class)),
             ]
     )
-    @Tags(
-            [
-                    @Tag(name="project")
+    @ApiResponse(
+            responseCode = "200",
+            description = "The project exported zip archive file",
+            content = @Content(mediaType = "application/zip", schema = @Schema(implementation = OutputStream))
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
+    protected def apiProjectExport_docs() {}
+
+    @Post('/project/{project}/export')
+    @Operation(
+            method = "POST",
+            summary = "Export a zip archive of the project (POST).",
+            description = """Performs the export to a zip archive of the project synchronously using POST method. _For large projects, consider using the async export endpoint instead._
+
+This is useful for large lists of execution IDs that exceed URL length limits when using GET.
+
+Parameters can be sent as application/x-www-form-urlencoded or as query parameters.
+
+Optional parameters:
+
+* executionIds a list (comma-separated) of execution IDs, or specified multiple times with a single ID per entry. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.""",
+            tags = ['Project'],
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(name = 'executionIds', required = false, in = ParameterIn.QUERY, description = 'List of execution to include to the exported archive', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAll', required = false, in = ParameterIn.QUERY, description = 'true/false, include all project contents (default: true)', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportJobs', required = false, in = ParameterIn.QUERY, description = 'true/false, include jobs', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportExecutions', required = false, in = ParameterIn.QUERY, description = 'true/false, include executions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportConfigs', required = false, in = ParameterIn.QUERY, description = 'true/false, include project configuration', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportReadmes', required = false, in = ParameterIn.QUERY, description = 'true/false, include project readme/motd files', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAcls', required = false, in = ParameterIn.QUERY, description = 'true/false, include project ACL Policy files, if authorized', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.calendars', required = false, in = ParameterIn.QUERY, description = 'true/false, include project calendars', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.Schedule%20Definitions', required = false, in = ParameterIn.QUERY, description = 'true/false, include schedule definitions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.tours-manager', required = false, in = ParameterIn.QUERY, description = 'true/false, include tours manager', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.node-wizard', required = false, in = ParameterIn.QUERY, description = 'true/false, include node wizard', schema = @Schema(implementation = String.class)),
             ]
     )
     @ApiResponse(
@@ -2785,6 +2862,8 @@ Requires `export` authorization for the project resource.""",
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
+    protected def apiProjectExportPost_docs() {}
+
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
     def apiProjectExport(ProjectArchiveParams archiveParams) {
         if(!apiService.requireApi(request,response)){
@@ -2924,7 +3003,7 @@ Requires `export` authorization for the project resource.""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2955,6 +3034,83 @@ Requires `export` authorization for the project resource.""",
     )
     protected def apiProjectExportAsync_docs() {}
 
+    @Post('/project/{project}/export/async')
+    @Operation(
+            method = "POST",
+            summary = "Export a zip archive of the project asynchronously (POST).",
+            description = """Performs the export to a zip archive of the project asynchronously using POST method.
+This is useful for large lists of execution IDs that exceed URL length limits.
+
+Parameters can be sent as application/x-www-form-urlencoded or as query parameters.
+
+Optional parameters:
+
+* executionIds a list (comma-separated) of execution IDs, or specified multiple times with a single ID per entry. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.""",
+            tags = ['Project'],
+            parameters = [
+                    @Parameter(
+                            name = 'project',
+                            in = ParameterIn.PATH,
+                            description = 'Project Name',
+                            allowEmptyValue = false,
+                            required = true,
+                            schema = @Schema(implementation = String.class)
+                    ),
+                    @Parameter(name = 'executionIds', required = false, in = ParameterIn.QUERY, description = 'List of execution to include to the exported archive', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAll', required = false, in = ParameterIn.QUERY, description = 'true/false, include all project contents (default: true)', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportJobs', required = false, in = ParameterIn.QUERY, description = 'true/false, include jobs', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportExecutions', required = false, in = ParameterIn.QUERY, description = 'true/false, include executions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportConfigs', required = false, in = ParameterIn.QUERY, description = 'true/false, include project configuration', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportReadmes', required = false, in = ParameterIn.QUERY, description = 'true/false, include project readme/motd files', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportAcls', required = false, in = ParameterIn.QUERY, description = 'true/false, include project ACL Policy files, if authorized', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.calendars', required = false, in = ParameterIn.QUERY, description = 'true/false, include project calendars', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.Schedule%20Definitions', required = false, in = ParameterIn.QUERY, description = 'true/false, include schedule definitions', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.tours-manager', required = false, in = ParameterIn.QUERY, description = 'true/false, include tours manager', schema = @Schema(implementation = String.class)),
+                    @Parameter(name = 'exportComponents.node-wizard', required = false, in = ParameterIn.QUERY, description = 'true/false, include node wizard', schema = @Schema(implementation = String.class)),
+            ]
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Returns the Token to retrieve export status and download zip archive",
+            content = [
+                    @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object'),
+                            examples = [
+                                    @ExampleObject('''{
+    "token":"[TOKEN]",
+    "ready":true/false,
+    "percentage":int,
+}'''
+                                    )
+                            ]
+                    )
+            ]
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request if it has error in the parameters",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ApiErrorResponse)
+            )
+    )
+    protected def apiProjectExportAsyncPost_docs() {}
 
     @Get('/project/{project}/export/status/{token}')
     @Operation(
@@ -2986,7 +3142,7 @@ Since: v19""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3076,7 +3232,7 @@ Since: v19""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3127,10 +3283,15 @@ Since: v19""",
                 "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\""
         )
 
-        outfile.withInputStream { instream ->
-            Streams.copy(instream, response.outputStream, false)
+        try {
+            outfile.withInputStream { instream ->
+                Streams.copy(instream, response.outputStream, false)
+            }
+        } catch (Exception e) {
+            throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
+        } finally {
+            projectService.releasePromise(session.user, token)
         }
-        projectService.releasePromise(session.user, token)
     }
 
     @Put('/project/{project}/import')
@@ -3157,11 +3318,11 @@ If preserve (default) then imported job UUIDs will not be modified, and may conf
 If remove then all job UUIDs will be removed before importing.''', schema = @Schema(implementation = String.class)),
                     @Parameter(name = 'importExecutions', required = false, in = ParameterIn.QUERY, description = '''If true, import all executions and logs from the archive (default). 
 If false, do not import executions or logs.''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importConfig ', required = false, in = ParameterIn.QUERY, description = '''If true, import the project configuration from the archive. 
+                    @Parameter(name = 'importConfig', required = false, in = ParameterIn.QUERY, description = '''If true, import the project configuration from the archive. 
 If false, do not import the project configuration (default).''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importACL ', required = false, in = ParameterIn.QUERY, description = '''If true, import all of the ACL Policies from the archive. 
+                    @Parameter(name = 'importACL', required = false, in = ParameterIn.QUERY, description = '''If true, import all of the ACL Policies from the archive. 
 If false, do not import the ACL Policies (default).''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importScm ', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
+                    @Parameter(name = 'importScm', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
 If false, do not import the SCM configuration (default).''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'importWebhooks', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, import the webhooks in the archive. 
 If false, do not import webhooks (default).''', schema = @Schema(implementation = Boolean.class)),
@@ -3171,7 +3332,7 @@ If no auth token info was included with the webhook, it will be generated (defau
                     @Parameter(name = 'importNodesSources', required = false, in = ParameterIn.QUERY, description = '''In APIv38 or later: If true, import Node Resources Source defined on project properties. 
 If false, do not import the nodes sources.''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'importComponents.NAME', required = false, in = ParameterIn.QUERY, description = '''Enable a component for import.
-Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Process Automation (Rundeck Enterprise) features.
+Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Runbook Automation (prev. Rundeck Enterprise) features.
 
 For example, to enable Webhook import, you could use `importWebhooks` and `whkRegenAuthTokens` params, but those are simply shortcuts for the following parameters:
 
@@ -3185,7 +3346,7 @@ Import schedules definitions:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3471,7 +3632,7 @@ Since: v46"""
     )
     @Tags(
         [
-            @Tag(name="project")
+            @Tag(name="Project")
         ]
     )
     @ApiResponse(

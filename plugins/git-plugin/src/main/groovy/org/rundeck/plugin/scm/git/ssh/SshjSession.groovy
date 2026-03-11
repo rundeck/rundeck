@@ -10,6 +10,7 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier
 import net.schmizz.sshj.userauth.keyprovider.FileKeyProvider
 import net.schmizz.sshj.userauth.keyprovider.KeyFormat
 import net.schmizz.sshj.userauth.keyprovider.KeyProviderUtil
+import net.schmizz.sshj.userauth.password.PasswordFinder
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig
 import org.eclipse.jgit.transport.RemoteSession
@@ -82,7 +83,7 @@ class SshjSession implements RemoteSession {
             if(privateKey){
                 KeyFormat format = KeyProviderUtil.detectKeyFileFormat(privateKey,true);
                 FileKeyProvider keys = Factory.Named.Util.create(ssh.getTransport().getConfig().getFileKeyProviderFactories(), format.toString());
-                keys.init(new StringReader(privateKey), null)
+                keys.init(new StringReader(privateKey), (PasswordFinder) null)
                 ssh.authPublickey(user, keys)
             }
 

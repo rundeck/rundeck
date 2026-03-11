@@ -53,7 +53,7 @@
     </div>
     <div class="footer__group footer__group--right">
         <div class="copyright">
-            &copy; Copyright ${java.time.LocalDate.now().getYear()} <a href="http://pagerduty.com">PagerDuty, Inc.</a>
+            &copy; Copyright ${java.time.LocalDate.now().getYear()} <a href="https://pagerduty.com">PagerDuty, Inc.</a>
 
             All rights reserved.
         </div>

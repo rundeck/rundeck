@@ -27,6 +27,9 @@ import com.fasterxml.jackson.core.JsonParseException
 import grails.gorm.DetachedCriteria
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.model.v1.execution.ExecutionDataSummary
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.execution.RdExecutionDataSummary
 import rundeck.data.job.RdNodeConfig
 import rundeck.data.validation.shared.SharedExecutionConstraints
@@ -53,6 +56,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     boolean cancelled
     Boolean timedOut=false
     Workflow workflow
+    String workflowJson
     String executionType
     Integer retryAttempt=0
     Boolean willRetry=false
@@ -69,7 +73,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     boolean serverNodeUUIDChanged = false
 
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
-    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged', 'execIdForLogStore']
+    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged', 'execIdForLogStore', 'workflowJsonMap', 'workflowData']
     static constraints = {
         importFrom SharedExecutionConstraints
         importFrom SharedNodeConfigConstraints
@@ -81,6 +85,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         })
         logFileStorageRequest(nullable:true)
         workflow(nullable:true)
+        workflowJson(nullable:true, blank:true)
         scheduledExecution(nullable:true)
         orchestrator(nullable: true)
         retryExecution(nullable: true)
@@ -120,6 +125,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         userRoleList(type: 'text')
         serverNodeUUID(type: 'string')
         extraMetadata(type: 'text')
+        workflowJson(type: 'text')
 
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_IDX_1', ['id', 'project', 'dateCompleted']
@@ -417,7 +423,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         map.project= this.project
         map.user= this.user
         if(includeWorkflow) {
-            map.workflow = this.workflow.toMap()
+            map.workflow = this.getWorkflowData().toMap()
         }
 		if(this.orchestrator){
 			map.orchestrator=this.orchestrator.toMap();
@@ -513,7 +519,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         }
         exec.project = data.project
         exec.user = data.user
-        exec.workflow = Workflow.fromMap(data.workflow)
+        exec.setWorkflowData(WorkflowDataImpl.fromMap(data.workflow))
         if(data.orchestrator){
             exec.orchestrator = Orchestrator.fromMap(data.orchestrator)
         }
@@ -526,10 +532,11 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     ExecutionReference asReference(Closure<String> genTargetNodes = null) {
         JobReference jobRef = null
         String adhocCommand = null
+        WorkflowData workflowData = getWorkflowData()
         if (scheduledExecution) {
             jobRef = scheduledExecution.asReference()
-        } else if (workflow && workflow.commands && workflow.commands[0]) {
-            adhocCommand = workflow.commands[0].summarize()
+        } else if (workflowData && workflowData.commands && workflowData.commands[0]) {
+            adhocCommand = workflowData.commands[0].summarize()
         }
         String targetNodes = genTargetNodes?.call(this)
         return new ExecutionReferenceImpl(
@@ -570,6 +577,117 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
                 dateCompleted: this.dateCompleted,
                 serverNodeUUID: this.serverNodeUUID
         )
+    }
+
+    /**
+     * Get the workflow data, checking both old and new storage formats.
+     * Provides backwards compatibility by checking workflow field first.
+     * @return WorkflowData instance (either Workflow domain or deserialized from JSON)
+     */
+    WorkflowData getWorkflowData() {
+        // New format: deserialize from JSON
+        if (workflowJson != null) {
+            return deserializeWorkflowData(workflowJson)
+        }
+        // Backwards compatibility: check old workflow field
+        if (workflow != null) {
+            return workflow
+        }
+
+        return null
+    }
+
+    /**
+     * Update the workflow data using new JSON storage format.
+     * For backward compatibility with rollback scenarios:
+     * - If workflow contains ConditionalStep: only write to workflowJson (can't convert to Workflow domain class)
+     * - If workflow doesn't contain ConditionalStep: write to both workflowJson and workflow (for old version compatibility)
+     * @param workflowData WorkflowData instance to store
+     */
+    void setWorkflowData(WorkflowData workflowData) {
+        if (workflowData == null) {
+            this.workflowJson = null
+            this.workflow = null
+            return
+        }
+
+        // Always serialize to new format
+        this.workflowJson = serializeWorkflowData(workflowData)
+
+        //This is a measure to provide backward compatibility for rollback scenarios where the workflow field may still be used by older code.
+        try {
+            this.workflow = new Workflow(workflowData)
+        } catch (Exception e) {
+            log.debug("Failed to convert WorkflowData to Workflow domain class for Execution ${id}, storing only in workflowJson", e)
+            this.workflow = null
+        }
+    }
+
+    /**
+     * Deserialize workflow JSON to WorkflowData.
+     * Converts JSON -> Map -> Workflow domain object for runtime use.
+     * @param json JSON string
+     * @return WorkflowData instance
+     */
+    private WorkflowData deserializeWorkflowData(String json) {
+        if (json == null || json.isEmpty()) {
+            return null
+        }
+
+        try {
+            // Deserialize JSON to Map using EmbeddedJsonData trait
+            Map workflowMap = asJsonMap(json)
+
+            // Convert Map to Workflow domain object for runtime type safety
+            return WorkflowDataImpl.fromMap(workflowMap)
+        } catch (Exception e) {
+            log.error("Failed to deserialize workflowJson for Execution ${id}", e)
+            return null
+        }
+    }
+
+    /**
+     * Serialize WorkflowData to JSON string.
+     * Converts WorkflowData -> Map -> JSON.
+     * @param workflowData WorkflowData instance
+     * @return JSON string
+     */
+    private String serializeWorkflowData(WorkflowData workflowData) {
+        if (workflowData == null) {
+            return null
+        }
+
+        try {
+            // Convert WorkflowData to Map representation
+            Map workflowMap
+            if (workflowData instanceof Workflow) {
+                // Use existing toMap() method
+                workflowMap = ((Workflow) workflowData).toMap()
+            } else {
+                // Fallback: manually construct map from WorkflowData interface
+                workflowMap = workflowData.toMap()
+                if (workflowData.pluginConfigMap) {
+                    workflowMap.pluginConfig = workflowData.pluginConfigMap
+                }
+            }
+
+            // Serialize Map to JSON using EmbeddedJsonData trait
+            return serializeJsonMap(workflowMap)
+        } catch (Exception e) {
+            log.error("Failed to serialize workflowData for Execution ${id}", e)
+            return null
+        }
+    }
+
+    /**
+     * Helper to get workflow as a Map (for backward compatibility with existing code).
+     * @return Map representation of workflow
+     */
+    Map getWorkflowJsonMap() {
+        if (workflowJson != null) {
+            return asJsonMap(workflowJson)
+        }
+        return null
     }
 
 }

@@ -502,7 +502,7 @@ export default defineComponent({
           return;
         }
       } catch (e) {
-        this.errorMsg = e.message;
+        this.errorMsg = (e as Error).message;
         return;
       }
       this.selectedKey = {};
@@ -556,6 +556,7 @@ export default defineComponent({
       const requestOptions = {
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
+      // @ts-ignore
       this.getKeyMetadata(getPath, requestOptions)
         .then((result: any) => {
           this.directories = [];
@@ -619,7 +620,7 @@ export default defineComponent({
               "Error: Key browsing is not allowed in CCP mode."
             ) {
               // Generate sample key path string
-              const sampleKeyPath = this.rootPath.endsWith("/")
+              const sampleKeyPath = this.rootPath?.endsWith("/")
                 ? `${this.rootPath}${this.path}`
                 : `${this.rootPath}/${this.path}`;
 

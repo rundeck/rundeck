@@ -9,9 +9,6 @@ Test plan:
 3. in rundeck1, upload hostnode ssh key to key storage for key-storage tests.
 4. run remote dispatch tests in rundeck1
 
-# Run
-
-	bash test.sh
 
 This uses docker-compose to run tests.  It will by default download the rundeck-launcher jar for version
 2.6.9. 

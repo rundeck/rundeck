@@ -21,11 +21,11 @@ import com.dtolabs.rundeck.app.api.marshall.ElementName
 import com.dtolabs.rundeck.app.api.marshall.Ignore
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
-import grails.validation.Validateable
 import rundeck.ScheduledExecution
+import java.util.TimeZone
 
 /**
- * Resource view used by /project/jobs listing, and /job/[id]/info, and /scheduler
+ * Resource view used by /project/jobs listing, /job/[id]/info, and /scheduler
  */
 @ApiResource
 @ElementName('job')
@@ -93,6 +93,38 @@ class JobInfo {
     @XmlAttribute
     Boolean projectDisableSchedule
 
+    /**
+     * Job creation timestamp.
+     */
+    @ApiVersion(56)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String created
+
+    /**
+     * User who created the job.
+     */
+    @ApiVersion(56)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String createdBy
+
+    /**
+     * Job last modification timestamp.
+     */
+    @ApiVersion(56)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String lastModified
+
+    /**
+     * User who last modified the job.
+     */
+    @ApiVersion(56)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    String lastModifiedBy
+
 //    Map blah=[
 //            z:'x'
 //    ]
@@ -105,18 +137,37 @@ class JobInfo {
 //    renders as: <map><entry key="a">b</entry></map>
 
     static JobInfo from(ScheduledExecution se, href, permalink, Map extra = [:]) {
-        new JobInfo([id             : se.extid,
-                     name           : (se.jobName),
-                     group          : (se.groupPath),
-                     project        : (se.project),
-                     description    : (se.description),
-                     href           : href,
-                     permalink      : permalink,
-                     scheduled      : se.scheduled,
-                     scheduleEnabled: se.scheduleEnabled,
-                     enabled        : se.executionEnabled
-                    ] + extra?.subMap('serverNodeUUID', 'serverOwner', 'averageDuration', 'nextScheduledExecution',
-                        'futureScheduledExecutions', 'projectDisableExecutions', 'projectDisableSchedule')
+        // Format as UTC ISO-8601 with trailing 'Z'
+        String createdIso = se?.dateCreated ?
+                se.dateCreated.format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC')) : null
+        String lastModifiedIso = se?.lastUpdated ?
+                se.lastUpdated.format("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone('UTC')) : null
+
+        new JobInfo(
+                [
+                        id             : se.extid,
+                        name           : se.jobName,
+                        group          : se.groupPath,
+                        project        : se.project,
+                        description    : se.description,
+                        href           : href,
+                        permalink      : permalink,
+                        scheduled      : se.scheduled,
+                        scheduleEnabled: se.scheduleEnabled,
+                        enabled        : se.executionEnabled,
+                        created        : createdIso,
+                        createdBy      : se.user,
+                        lastModified   : lastModifiedIso,
+                        lastModifiedBy : se.lastModifiedBy
+                ] + extra?.subMap(
+                        'serverNodeUUID',
+                        'serverOwner',
+                        'averageDuration',
+                        'nextScheduledExecution',
+                        'futureScheduledExecutions',
+                        'projectDisableExecutions',
+                        'projectDisableSchedule'
+                )
         )
     }
 }

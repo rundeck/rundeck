@@ -16,7 +16,7 @@
       <span class="gutter line-number">
         <span
           class="execution-log_gutter-entry"
-          :pseudo-content="timestamps ? logEntry.time : ''"
+          :pseudo-content="timestamps ? formatTime() : ''"
         />
         <!-- {{timestamps ? logEntry.time : ''}} -->
         <i
@@ -71,6 +71,7 @@
 </template>
 
 <script lang="ts">
+import moment from "moment/moment";
 import { defineComponent } from "vue";
 import UiSocket from "../utils/UiSocket.vue";
 import { IBuilderOpts } from "./logBuilder";
@@ -152,6 +153,11 @@ export default defineComponent({
     );
   },
   methods: {
+    formatTime() {
+      return this.logEntry.absoluteTime
+        ? moment(this.logEntry.absoluteTime).format("hh:mm:ss")
+        : this.logEntry.time;
+    },
     onLineSelect() {
       this.$emit("line-select", this.logEntry.lineNumber);
     },

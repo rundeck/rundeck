@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.app.internal.framework.NodeExecutorServiceFactory
 import com.dtolabs.rundeck.app.internal.framework.FeatureToggleNodeExecutorProfile
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckNodeExecutorProfile
+import com.dtolabs.rundeck.app.mail.DynamicMailSender
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
 import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
 import com.dtolabs.rundeck.app.tree.JasyptEncryptionEnforcerUpdaterConfig
@@ -83,6 +84,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.notification.DummyEmailNotificationPlugin
 import com.dtolabs.rundeck.server.plugins.notification.DummyWebhookNotificationPlugin
+import com.dtolabs.rundeck.server.plugins.runner.SubWorkflowWorkflowStepExecutor
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
@@ -116,9 +118,11 @@ import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+import org.rundeck.app.config.FeatureFlagConfigurable
 import org.rundeck.app.data.job.metadata.JobAuthorizationMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScheduleMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScmMetadataComponent
+import org.rundeck.app.data.job.metadata.JobStatsMetadataComponent
 import org.rundeck.app.data.project.ProjectAuthorizationMetadataComponent
 import org.rundeck.app.data.project.ProjectConfigMetadataComponent
 import org.rundeck.app.data.project.ProjectMessageMetadataComponent
@@ -753,27 +757,28 @@ beans={
     [
             //Job reference plugins
             JobReferenceNodeStepExecutor,
-            JobReferenceStepExecutor
+            JobReferenceStepExecutor,
+            SubWorkflowWorkflowStepExecutor
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(JobReferencePluginFactoryBean, it)
     }
 
     //list of plugin classes to generate factory beans for
     [
-            //log converters
-            JsonConverterPlugin,
-            PropertiesConverterPlugin,
-            HTMLTableViewConverterPlugin,
-            MarkdownConverterPlugin,
-            TabularDataConverterPlugin,
-            HTMLViewConverterPlugin,
-            //log filters
-            MaskPasswordsFilterPlugin,
-            MaskLogOutputByRegexPlugin,
-            SimpleDataFilterPlugin,
-            RenderDatatypeFilterPlugin,
-            QuietFilterPlugin,
-            HighlightFilterPlugin
+        //log converters
+        JsonConverterPlugin,
+        PropertiesConverterPlugin,
+        HTMLTableViewConverterPlugin,
+        MarkdownConverterPlugin,
+        TabularDataConverterPlugin,
+        HTMLViewConverterPlugin,
+        //log filters
+        MaskPasswordsFilterPlugin,
+        MaskLogOutputByRegexPlugin,
+        KeyValueDataLogFilterPlugin,
+        RenderDatatypeFilterPlugin,
+        QuietFilterPlugin,
+        HighlightFilterPlugin
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
@@ -949,8 +954,8 @@ beans={
     }
 
 
-    // Activate Spring Actuator DataSourceHealthIndicator with a Rundeck specific bean name `rundeckDataSourceHeathIndicator`
-    rundeckDataSourceHeathIndicator(DataSourceHealthIndicator) {
+    // Activate Spring Actuator DataSourceHealthIndicator with a Rundeck specific bean name `rundeckDataSourceHealthIndicator`
+    rundeckDataSourceHealthIndicator(DataSourceHealthIndicator) {
         dataSource = ref("dataSource")
         // Get the validation query from config, if not provided the Spring DataSourceHealthIndicator will use the Connection.isValid() to test the database connection.
         query = grailsApplication.config.getProperty("rundeck.health.databaseValidationQuery")
@@ -969,7 +974,9 @@ beans={
         userService = ref("userService")
     }
     remoteJsonOptionRetriever(DefaultRemoteJsonOptionRetriever)
-    workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory)
+    workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory){
+        featureService = ref('featureService')
+    }
     workflowStateDataLoader(DefaultWorkflowStateDataLoader) {
         logFileStorageService = ref('logFileStorageService')
     }
@@ -999,8 +1006,14 @@ beans={
     jobScheduleMetadataComponent(JobScheduleMetadataComponent)
     jobAuthorizationMetadataComponent(JobAuthorizationMetadataComponent)
     jobScmMetadataComponent(JobScmMetadataComponent)
+    jobStatsMetadataComponent(JobStatsMetadataComponent)
     projectAuthorizationMetadataComponent(ProjectAuthorizationMetadataComponent)
     projectConfigMetadataComponent(ProjectConfigMetadataComponent)
     projectScmMetadataComponent(ProjectScmMetadataComponent)
     projectExecutionMetadataComponent(ProjectMessageMetadataComponent)
+
+    //defines feature flag metadata for system configuration
+    rundeckFeatureFlagConfigurable(FeatureFlagConfigurable)
+
+    rundeckDynamicMailSender(DynamicMailSender)
 }

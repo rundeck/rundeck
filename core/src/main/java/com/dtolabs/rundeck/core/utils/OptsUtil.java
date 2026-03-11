@@ -23,8 +23,9 @@
 */
 package com.dtolabs.rundeck.core.utils;
 
-import org.apache.commons.lang.CharUtils;
-import org.apache.commons.lang.StringUtils;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.CharUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

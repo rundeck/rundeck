@@ -47,6 +47,7 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
     static final By logContentTextBy = By.className("execution-log__content-text")
     static final By logContentTextOverflowBy = By.cssSelector(".execution-log__content-text.execution-log__content-text--overflow")
     static final By gutterLineNumberBy = By.cssSelector(".gutter.line-number")
+    static final By nodeOutputLoadingSpinnerBy = By.cssSelector(".wfnodeoutput .fa-spinner.fa-pulse")
     static final By subtitleExecutionActionMenuButtonBy = By.cssSelector("#subtitlebar .execution-head-info .btn-group button")
     static final By subtitleExecutionActionMenuBy = By.cssSelector("#subtitlebar .execution-head-info .btn-group.open ul[role=menu]")
     static final By subtitleExecutionActionLinksBy = By.cssSelector("#subtitlebar .execution-head-info .btn-group.open ul[role=menu] a")
@@ -61,12 +62,6 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
     ExecutionShowPage(final SeleniumContext context, String loadPath) {
         super(context)
         this.loadPath=loadPath
-    }
-
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on execution show page: " + driver.currentUrl)
-        }
     }
 
     WebElement getExecutionStateDisplayLabel() {
@@ -96,6 +91,9 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
     List<WebElement> getLogOutput(){
         els logOutputBy
     }
+    List<String> getLogOutputText(){
+        getLogOutput()*.text
+    }
 
     WebElement getNodeFlowState(){
         el nodeFlowStateBy
@@ -115,7 +113,7 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
         WebElement execStatusIconElem = waitForElementVisible(execStatusIcon)
         waitForElementVisible(execCompletedIcon)
 
-        return execStatusIconElem.getAttribute(execStateAttribute)
+        return execStatusIconElem.getDomAttribute(execStateAttribute)
     }
 
     /**
@@ -127,7 +125,7 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
 
     String getExecutionStatus(){
         WebElement execStatusIconElem = new WebDriverWait(driver, Duration.ofSeconds(10)).until(ExpectedConditions.visibilityOfElementLocated(execStatusIcon))
-        return execStatusIconElem.getAttribute(execStateAttribute)
+        return execStatusIconElem.getDomAttribute(execStateAttribute)
     }
 
     NodesView getNodesView(){
@@ -296,5 +294,9 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
     }
     List<WebElement> getActionMenuLinks(){
         els subtitleExecutionActionLinksBy
+    }
+
+    WebElement getNodeOutputLoadingSpinner(){
+        el nodeOutputLoadingSpinnerBy
     }
 }

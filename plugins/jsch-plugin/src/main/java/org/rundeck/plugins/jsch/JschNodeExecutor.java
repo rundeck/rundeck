@@ -45,8 +45,8 @@ import org.rundeck.plugins.jsch.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.jcraft.jsch.JSchException;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.tools.ant.BuildException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -605,6 +605,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
         } else {
             failureReason = StepFailureReason.Unknown;
             errormsg = e.getMessage();
+            e.printStackTrace();
         }
         return new ExtractFailure(errormsg, failureReason);
     }

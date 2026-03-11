@@ -17,7 +17,7 @@ import org.rundeck.util.common.jobs.JobUtils
 
 @APITest
 @ExcludePro
-class ScmPluginActionsSpec extends BaseContainer {
+class ScmPluginActionsSpec extends ScmBaseContainer {
     static final String PROJECT_NAME = 'ScmPluginActionsSpec'
     static final String BASE_EXPORT_PROJECT_LOCATION = '/projects-import/scm/project-scm-export-one-job.rdproject'
     static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo('repoExample')

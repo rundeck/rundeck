@@ -78,8 +78,11 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
+import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.PasswordFieldsService
@@ -143,6 +146,34 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def MenuService menuService
     def PluginService pluginService
 
+    private Integer getDefaultDaysToKeep() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return MAX_DAYS_TO_KEEP
+        }
+        return configurationService.getInteger("executionCleanupConfig.defaultExecutionDaysToKeep", MAX_DAYS_TO_KEEP)
+    }
+
+    private Integer getDefaultMinimumToKeep() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return MINIMUM_EXECUTION_TO_KEEP
+        }
+        return configurationService.getInteger("executionCleanupConfig.defaultExecutionMinimumToKeep", MINIMUM_EXECUTION_TO_KEEP)
+    }
+
+    private Integer getDefaultMaximumDeletionSize() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return MAXIMUM_DELETION_SIZE
+        }
+        return configurationService.getInteger("executionCleanupConfig.defaultExecutionMaximumDeletionSize", MAXIMUM_DELETION_SIZE)
+    }
+
+    private String getDefaultCleanupSchedule() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return SCHEDULE_DEFAULT
+        }
+        return  configurationService.getString("executionCleanupConfig.defaultExecutionCleanupScheduleCron", SCHEDULE_DEFAULT)
+    }
+
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -152,7 +183,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         saveProject              : 'POST',
         saveProjectNodeSources   : 'POST',
         saveProjectNodeSourceFile: 'POST',
-        saveProjectPluginsAjax   : 'POST',
+        saveProjectPlugins       : 'POST',
         getProjectConfigurable   : 'GET',
         saveProjectConfigurable  : 'POST',
     ]
@@ -261,10 +292,20 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return
             }
 
-            if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
-                def cmd = e.workflow.commands[0]
-                if (cmd.adhocRemoteString) {
-                    runCommand = cmd.adhocRemoteString
+            def execWorkflowData = e?.getWorkflowData()
+            if (e && !e.scheduledExecution && execWorkflowData?.commands?.size() == 1) {
+                def cmd = execWorkflowData.commands[0]
+                String adhocRemoteString = null
+
+                if(cmd instanceof CommandExec){
+                    adhocRemoteString = cmd.adhocRemoteString
+                } else if(cmd instanceof PluginStep){
+                    Map config = cmd.getConfiguration() ?: [:]
+                    adhocRemoteString = config.adhocRemoteString
+                }
+
+                if (adhocRemoteString) {
+                    runCommand = adhocRemoteString
                     //configure node filters
                     if (params.retryFailedExecId) {
                         query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)
@@ -654,15 +695,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
         if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
-            projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
-            projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: SCHEDULE_DEFAULT
+            projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: getDefaultDaysToKeep().toString()
+            projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: getDefaultMinimumToKeep().toString()
+            projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: getDefaultMaximumDeletionSize().toString()
+            projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: getDefaultCleanupSchedule()
         }else{
-            projProps['project.execution.history.cleanup.retention.days'] = MAX_DAYS_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.retention.minimum'] = MINIMUM_EXECUTION_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.batch'] = MAXIMUM_DELETION_SIZE.toString()
-            projProps['project.execution.history.cleanup.schedule'] = SCHEDULE_DEFAULT
+            projProps['project.execution.history.cleanup.retention.days'] = getDefaultDaysToKeep().toString()
+            projProps['project.execution.history.cleanup.retention.minimum'] = getDefaultMinimumToKeep().toString()
+            projProps['project.execution.history.cleanup.batch'] = getDefaultMaximumDeletionSize().toString()
+            projProps['project.execution.history.cleanup.schedule'] = getDefaultCleanupSchedule()
         }
         def errors = []
         def configs
@@ -875,7 +916,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             prefixKey:prefixKey,
             extraConfig:extraConfig,
             cronModelValues: CRON_MODELS_SELECT_VALUES,
-            cronValues: [:]
+            cronValues: [:],
+            enableCleanHistory: featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE),
+            cleanerHistoryPeriod: getDefaultDaysToKeep(),
+            minimumExecutionToKeep: getDefaultMinimumToKeep(),
+            maximumDeletionSize: getDefaultMaximumDeletionSize(),
+            cronExression: getDefaultCleanupSchedule()
         ]
     }
 
@@ -1186,15 +1232,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
-                projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
-                projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: SCHEDULE_DEFAULT
+                projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: getDefaultDaysToKeep().toString()
+                projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: getDefaultMinimumToKeep().toString()
+                projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: getDefaultMaximumDeletionSize().toString()
+                projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: getDefaultCleanupSchedule()
             }else{
-                projProps['project.execution.history.cleanup.retention.days'] = MAX_DAYS_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.retention.minimum'] = MINIMUM_EXECUTION_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.batch'] = MAXIMUM_DELETION_SIZE.toString()
-                projProps['project.execution.history.cleanup.schedule'] = SCHEDULE_DEFAULT
+                projProps['project.execution.history.cleanup.retention.days'] = getDefaultDaysToKeep().toString()
+                projProps['project.execution.history.cleanup.retention.minimum'] = getDefaultMinimumToKeep().toString()
+                projProps['project.execution.history.cleanup.batch'] = getDefaultMaximumDeletionSize().toString()
+                projProps['project.execution.history.cleanup.schedule'] = getDefaultCleanupSchedule()
             }
 
             def Set<String> removePrefixes=[]
@@ -1339,15 +1385,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                         ExecutionCleanerConfigImpl.build {
                             enabled(cleanerHistoryEnabled)
                             maxDaysToKeep(
-                                FrameworkService.tryParseInt(params.cleanperiod).orElse(MAX_DAYS_TO_KEEP)
+                                FrameworkService.tryParseInt(params.cleanperiod).orElse(getDefaultDaysToKeep())
                             )
                             minimumExecutionToKeep(
-                                FrameworkService.tryParseInt(params.minimumtokeep).orElse(MINIMUM_EXECUTION_TO_KEEP)
+                                FrameworkService.tryParseInt(params.minimumtokeep).orElse(getDefaultMinimumToKeep())
                             )
                             maximumDeletionSize(
-                                FrameworkService.tryParseInt(params.maximumdeletionsize).orElse(MAXIMUM_DELETION_SIZE)
+                                FrameworkService.tryParseInt(params.maximumdeletionsize).orElse(getDefaultMaximumDeletionSize())
                             )
-                            cronExpression(params.crontabString ?: SCHEDULE_DEFAULT)
+                            cronExpression(params.crontabString ?: getDefaultCleanupSchedule())
                         }
                     )
                 }
@@ -1536,60 +1582,145 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
-    def saveProjectPluginsAjax(String project, String serviceName, String configPrefix) {
-        boolean valid = false
-        withForm {
-            valid = true
-            g.refreshFormTokensHeader()
-        }.invalidToken {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
+    @Post(uri = "/project/{project}/plugins/save")
+    @Operation(
+            method = "POST",
+            summary = "Save list-style plugin configurations for a project",
+            description = """Create/update list-based plugin configurations (e.g. Resource Model Sources).
+Authorization required: `configure` on the project.
+Since: v55""",
+            tags = ["Project"],
+            parameters = [
+                    @Parameter(
+                            name = "project",
+                            description = "Project name",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string")
+                    ),
+                    @Parameter(
+                            name = "serviceName",
+                            description = "Plugin service name (e.g. `ResourceModelSource`)",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string")
+                    ),
+                    @Parameter(
+                            name = "configPrefix",
+                            description = "Property prefix (e.g. `resources.source`)",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string")
+                    )
+            ],
+            requestBody = @RequestBody(
+                    required = true,
+                    description = "Plugins payload",
+                    content = @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema = @Schema(type = "object"),
+                            examples = @ExampleObject(value = """
+{
+  "plugins": [
+    { "type": "file", "config": { "file": "/path/resources.yml" }, "extra": {}, "origIndex": 0 }
+  ],
+  "removedPlugins": [
+    { "type": "stub", "origIndex": 2 }
+  ]
+}
+""")
+                    )
+            ),
+            responses = [
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Saved. Returns the saved plugins.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = """
+{
+  "project": "Ansible-resource-model-error",
+  "plugins": [
+    {
+      "type": "file",
+      "service": "ResourceModelSource",
+      "config": { "file": "/path/to/nodes.yml" },
+      "extra": {}
+    }
+  ]
+}
+""")
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Bad request (missing/invalid body or parameters).",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = """{ "errors": ["plugins and removedPlugins must be arrays"] }""")
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "Forbidden (user lacks 'configure' on the project)."
+                    ),
+                    @ApiResponse(
+                            responseCode = "422",
+                            description = "Validation errors.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(value = """
+{
+  "errors": ["[0]: configuration was invalid: ..."],
+  "reports": { "0": [ { "key": "file", "msg": "is required" } ] }
+}
+""")
+                            )
+                    )
             ]
-            )
-        }
-        if (!valid) {
+    )
+    def saveProjectPlugins(String project, String serviceName, String configPrefix) {
+        // Require API (use your current bumped version)
+        if (!apiService.requireApi(request, response, ApiVersions.V55)) {
             return
         }
 
-        if (request.format != 'json') {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code  : 'api.error.item.unsupported-format',
-                    args  : [request.format]
-            ]
-            )
+        // Required params & project existence
+        if (!apiService.requireParameters(params, response, ['serviceName', 'configPrefix'])) {
+            return
+        }
+        if (!apiService.requireExists(
+                response,
+                frameworkService.existsFrameworkProject(project),
+                ['project', project]
+        )) {
+            return
         }
 
-        if (!project) {
-            return renderErrorView("Project parameter is required")
-        }
-        if (!serviceName) {
-            return renderErrorView("serviceName parameter is required")
-        }
-        if (!configPrefix) {
-            return renderErrorView("configPrefix parameter is required")
-        }
-        def plugins = request.JSON.plugins
-        List removedPlugins = request.JSON.removedPlugins as List
-
+        // AuthZ
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
-            AuthConstants.ACTION_CONFIGURE, 'Project',project)) {
+        if (!apiService.requireAuthorized(
+                rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
+                response,
+                [AuthConstants.ACTION_CONFIGURE, 'Project', project]
+        )) {
             return
         }
 
-        if(removedPlugins)
+        // Parse body
+        def body = request.JSON
+        List plugins = (body?.plugins ?: []) as List
+        List removedPlugins = (body?.removedPlugins ?: []) as List
+
+        if (removedPlugins) {
             notifyRemovedPlugins(project, removedPlugins)
+        }
 
         def errors = []
         def reports = [:]
         List<ExtPluginConfiguration> configs = []
-
         def mappedConfigs = []
+
         plugins.eachWithIndex { pluginDef, int ndx ->
             def confData = new HashMap<>(pluginDef.config ?: [:])
             mappedConfigs << [
@@ -1601,9 +1732,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     newIndex: ndx
             ]
         }
+
         final pluginDescriptions = pluginService.listPluginDescriptions(serviceName)
 
-        //replace obscured values with original values
+        // Restore obscured values
         obscurePasswordFieldsService.untrack(
                 "${project}/${serviceName}/${configPrefix}",
                 mappedConfigs,
@@ -1611,36 +1743,24 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
 
         mappedConfigs.eachWithIndex { pluginDef, int ndx ->
-
             String type = pluginDef.type
-            if (!type) {
-                errors << "[$ndx]: missing type"
-                return
-            }
-
+            if (!type) { errors << "[$ndx]: missing type"; return }
             if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
-                errors << "[$ndx]: Invalid provider type name"
-                return
+                errors << "[$ndx]: Invalid provider type name"; return
             }
-
             def described = pluginService.getPluginDescriptor(type, serviceName)
-            if (!described) {
-                errors << "[$ndx]: $serviceName provider was not found: ${type}"
-                return
-            }
+            if (!described) { errors << "[$ndx]: $serviceName provider was not found: ${type}"; return }
 
-            //validate
-            Map<String, Object> configMap = pluginDef.props
+            Map<String,Object> configMap = (pluginDef.props ?: [:]) as Map<String,Object>
             ValidatedPlugin validated = pluginService.validatePluginConfig(serviceName, type, configMap)
             if (!validated.valid) {
                 errors << "[$ndx]: configuration was invalid: $validated.report"
                 reports["$ndx"] = validated.report.errors
                 return
             }
-            Map<String, Object> extraMap = pluginDef.extra ?: [:]
 
-
-            configs <<  SimplePluginConfiguration.builder()
+            Map<String,Object> extraMap = (pluginDef.extra ?: [:]) as Map<String,Object>
+            configs << SimplePluginConfiguration.builder()
                     .service(serviceName)
                     .provider(type)
                     .configuration(configMap)
@@ -1649,42 +1769,53 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         if (!errors) {
-
             Properties projProps = ProjectNodeSupport.serializePluginConfigurations(configPrefix, configs, true)
-            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, [configPrefix+'.'].toSet())
+            def result = frameworkService.updateFrameworkProjectConfig(
+                    project,
+                    projProps,
+                    [(configPrefix + '.')] as Set
+            )
             if (!result.success) {
                 errors << result.error
             }
         }
 
         if (errors) {
-            return respond(
-                    formats: ['json'],
+            render(
+                    contentType: 'application/json',
                     status: HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                    [
-                            errors : errors,
-                            reports: reports
-                    ]
+                    text: ([errors: errors, reports: reports] as grails.converters.JSON) as String
             )
+            return
         }
 
-
+        // Track obscured/secret values again after a successful save
         obscurePasswordFieldsService.resetTrack(
                 "${project}/${serviceName}/${configPrefix}",
                 configs,
                 pluginDescriptions
         )
 
-        respond(
-                formats: ['json'],
-                [
+        // === Success: always return { project, plugins: [...] } ===
+        def responsePlugins = (configs ?: []).collect { ExtPluginConfiguration conf ->
+            [
+                    type   : conf.provider,
+                    service: conf.service,
+                    config : conf.configuration ?: [:],
+                    extra  : conf.extra ?: [:]
+            ]
+        }
+
+        render(
+                contentType: 'application/json',
+                status: 200,
+                text: ([
                         project: project,
-                        plugins: configs.collect { ExtPluginConfiguration conf ->
-                            [type: conf.provider, config: conf.configuration, service: conf.service, extra: conf.extra]
-                        },
-                ]
+                        plugins: responsePlugins
+                ] as grails.converters.JSON) as String
         )
     }
+
 
     def projectNodeSources() {
         if (!params.project) {
@@ -1726,7 +1857,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             method = 'GET',
             summary = 'Get Project Configurations Using Mapping defined in ProjectConfigurable beans',
             description = 'Get Project Configurable configs and properties.',
-            tags = ['project'],
+            tags = ['Project'],
             responses = [
                     @ApiResponse(
                             responseCode = '200',
@@ -1813,7 +1944,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             method = 'POST',
             summary = 'Create or Update Configurations Using Mapping defined in ProjectConfigurable beans',
             description = 'Create or update configs and properties.',
-            tags = ['project'],
+            tags = ['Project'],
             requestBody = @RequestBody(
                     required = true,
                     description = '''Update Config Request.
@@ -2259,11 +2390,18 @@ List of config values, each value contains:
             project: project,
             projectDescription:projectDescription?:fwkProject.getProjectProperties().get("project.description"),
             projectLabel:fwkProject.getProjectProperties().get("project.label"),
-            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days") ?: MAX_DAYS_TO_KEEP,
-            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum") ?: MINIMUM_EXECUTION_TO_KEEP,
-            maximumDeletionSize:fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch") ?: MAXIMUM_DELETION_SIZE,
-            enableCleanHistory:["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled")),
-            cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: SCHEDULE_DEFAULT,
+            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days") ?: getDefaultDaysToKeep(),
+            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum") ?: getDefaultMinimumToKeep(),
+            maximumDeletionSize:fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch") ?: getDefaultMaximumDeletionSize(),
+            enableCleanHistory: {
+                def propertyValue = fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled")
+                if (propertyValue != null) {
+                    return ["true", true].contains(propertyValue)
+                } else {
+                    return featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)
+                }
+            }(),
+            cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: getDefaultCleanupSchedule(),
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             pluginGroupConfig: pluginGroupConfig,
@@ -2792,7 +2930,7 @@ whether it is `writeable`.  The `href` indicates the URL for `/project/{project}
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project'],
+        tags=['Project'],
         parameters = @Parameter(
             name = 'project',
             description = 'Project Name',
@@ -2914,7 +3052,7 @@ Since: v23''',
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags = ['project'],
+        tags = ['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3144,7 +3282,7 @@ whether it is `writeable`.  The `href` indicates the URL for `/project/{project}
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3282,7 +3420,7 @@ Since: v23''',
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3377,7 +3515,7 @@ Since: v23''',
 Authorization required: `read` for project resource type `node`, as well as `read` for the Node 
 
 Since: v14''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3496,7 +3634,7 @@ Custom attributes can also be used.
 Authorization required: `read` for project resource type `node`, as well as `read` for each Node resource
 
 Since: v14''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3603,7 +3741,7 @@ Since: v14''',
             description='''List tags for project nodes.
 
 Since: v52''',
-            tags=['project'],
+            tags=['Project'],
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string'))
             ])
@@ -3741,7 +3879,7 @@ Since: v52''',
 Authorization required: `delete` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -3782,7 +3920,7 @@ Since: v14""",
 Authorization required: `update` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -3880,7 +4018,7 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
 Authorization required: `create` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -4006,7 +4144,7 @@ Otherwise if XML or JSON is requested, the YAML text will be wrapped within that
 Authorization required: `read` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',

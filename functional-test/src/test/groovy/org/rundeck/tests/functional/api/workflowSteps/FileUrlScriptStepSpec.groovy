@@ -17,10 +17,8 @@ class FileUrlScriptStepSpec extends BaseContainer{
     public static final String USER_VAULT_PASSWORD = "vault123"
 
     @Override
-    void startEnvironment() {
+    def setupSpec() {
         String keyPath = getClass().getClassLoader().getResource("docker/compose/oss").getPath()+"/keys"
-
-        super.startEnvironment()
 
         loadKeysForNodes(keyPath, TEST_PROJECT, NODE_KEY_PASSPHRASE, NODE_USER_PASSWORD, USER_VAULT_PASSWORD)
 
@@ -35,6 +33,10 @@ class FileUrlScriptStepSpec extends BaseContainer{
                 ]
         )
         waitingResourceEnabled(TEST_PROJECT, "ssh-node")
+    }
+
+    def cleanupSpec(){
+        deleteProject(TEST_PROJECT)
     }
 
     def "test execute script from URL running locally"() {

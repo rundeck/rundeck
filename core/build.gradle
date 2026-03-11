@@ -56,7 +56,7 @@ dependencies {
     api project(":rundeck-authz:rundeck-authz-api")
     api project(":rundeck-authz:rundeck-authz-core")
     api project(":rundeck-authz:rundeck-authz-yaml")
-    api "org.rundeck:rundeck-data-models:1.0.6"
+    api project(":rundeck-data-models")
 
     api ('com.google.guava:guava:32.0.1-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
@@ -76,9 +76,8 @@ dependencies {
         'org.slf4j:slf4j-api:1.7.32',
         "commons-codec:commons-codec:${commonsCodecVersion}",
         'commons-collections:commons-collections:3.2.2',
-        'commons-lang:commons-lang:2.6',
+        "org.apache.commons:commons-lang3:${commonsLang3Version}",
         'jaxen:jaxen:1.2.0',
-        'commons-cli:commons-cli:1.0',
         "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
         "org.yaml:snakeyaml:${snakeyamlVersion}",
         "com.squareup.retrofit2:retrofit:3.0.0",
@@ -128,8 +127,8 @@ buildConfig {
     buildConfigField('String', 'GIT_COMMIT', "\"${project.gitCommit}\"")
     buildConfigField('String', 'GIT_BRANCH', "\"${project.gitBranch}\"")
     buildConfigField('String', 'GIT_DESCRIPTION', "\"${project.gitDescribeInfo}\"")
-    buildConfigField('String', 'BUILD_NUM', "\"${buildNum}\"")
-    buildConfigField('String', 'BUILD_IDENT', "\"${version + '-' + buildNum}\"")
+    buildConfigField('String', 'BUILD_NUM', "\"0\"")
+    buildConfigField('String', 'BUILD_IDENT', "\"${version + '-0'}\"")
 }
 
 def archiveName = project.name
@@ -164,9 +163,9 @@ task expandTemplate {
     doLast {
         ant.delete(file: "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties")
         def datestring = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())
-        println("Building: $version-$buildNum ($datestring)")
+        println("Building: $version-0 ($datestring)")
         copy {
-            expand('version': version, 'version_build': buildNum, 'version_ident': version + '-' + buildNum, date: datestring)
+            expand('version': version, 'version_build': '0', 'version_ident': version + '-0', date: datestring)
             from "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
             into "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/"
         }

@@ -561,7 +561,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         }
 
         1 * executionService.executeCommand(context, {
-            (((ExecArgList) it).asFlatStringList()) == ['sync']
+            (((ExecArgList) it).asFlatStringList()) == ['sync', testRemotePath]
         }, node
         ) >> Mock(NodeExecutorResult) {
             isSuccess() >> true

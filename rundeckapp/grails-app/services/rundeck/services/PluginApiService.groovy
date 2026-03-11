@@ -280,11 +280,15 @@ class PluginApiService {
         ]
     }
 
-    def listPlugins() {
+    def listPlugins(boolean includeGroupMetadata = false) {
         Locale locale = getLocale()
         long appEpoch = VersionConstants.DATE.time
         String appVer = VersionConstants.VERSION
         def pluginList = listPluginsDetailed()
+
+        // Cache for group icons: group name -> iconUrl (v57+ feature)
+        Map<String, String> groupIconCache = includeGroupMetadata ? [:] : null
+
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
             def providers = it.value.collect { provider ->
@@ -313,6 +317,11 @@ class PluginApiService {
                  pluginDate   : meta?.pluginDate?.time?:appEpoch,
                  enabled      : true] as LinkedHashMap<Object, Object>
 
+                // Get groupBy from provider metadata (v57+ feature)
+                def groupBy = includeGroupMetadata ?
+                    provider.metadata?.get(com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY) : null
+                pluginDesc.providerMetadata = new LinkedHashMap<>()
+
                 if(service != ServiceNameConstants.UI) {
                     def uiDesc = uiPluginService.getProfileFor(service, provider.name)
                     if (uiDesc.icon)
@@ -322,8 +331,52 @@ class PluginApiService {
                                 params: [service: service, name: provider.name],
                                 absolute: true)
 
-                    if (uiDesc.providerMetadata) {
-                        pluginDesc.providerMetadata = uiDesc.providerMetadata
+                    if(uiDesc.providerMetadata) {
+                        pluginDesc.providerMetadata.putAll(uiDesc.providerMetadata)
+                    }
+                }
+
+                // Group icon resolution (v57+ feature)
+                if (includeGroupMetadata && groupBy) {
+                    pluginDesc.providerMetadata[com.dtolabs.rundeck.plugins.PluginGroupConstants.PLUGIN_GROUP_KEY] = groupBy
+
+                    String groupIconUrl = null
+
+                    if (groupIconCache.containsKey(groupBy)) {
+                        groupIconUrl = groupIconCache[groupBy]
+                    } else {
+                        def pluginGroupType = provider.pluginGroupType
+                        if (pluginGroupType) {
+                            try {
+                                def pluginGroupInstance = pluginGroupType.newInstance()
+                                String explicitIconPath = pluginGroupInstance.getGroupIconUrl(groupBy) as String
+                                if (explicitIconPath) {
+                                    // Extract icon filename from path like "/images/plugins/datadog-icon.svg"
+                                    String iconName = explicitIconPath.substring(explicitIconPath.lastIndexOf('/') + 1)
+                                    // Generate controller URL to serve the group icon
+                                    String absoluteUrl = grailsLinkGenerator.link(
+                                        controller: 'plugin',
+                                        action: 'groupIcon',
+                                        params: [iconName: iconName],
+                                        absolute: true
+                                    )
+                                    groupIconCache[groupBy] = absoluteUrl
+                                    groupIconUrl = absoluteUrl
+                                }
+                            } catch (Exception ignored) {
+                                // Error creating instance or calling method, continue to fallback
+                            }
+                        }
+
+                        // 3. Fallback to first plugin's icon in the group
+                        if (!groupIconUrl && pluginDesc.iconUrl) {
+                            groupIconCache[groupBy] = pluginDesc.iconUrl
+                            groupIconUrl = pluginDesc.iconUrl
+                        }
+                    }
+
+                    if (groupIconUrl) {
+                        pluginDesc.providerMetadata['groupIconUrl'] = groupIconUrl
                     }
                 }
 

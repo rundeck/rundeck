@@ -1,5 +1,7 @@
 package org.rundeck.tests.functional.selenium.scm
 
+import groovy.util.logging.Slf4j
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.common.scm.ScmIntegration
 import org.rundeck.util.gui.scm.ScmStatusBadge
 import org.rundeck.util.gui.pages.jobs.JobShowPage
@@ -10,11 +12,10 @@ import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.api.scm.GitScmApiClient
 import org.rundeck.util.api.scm.gitea.GiteaApiRemoteRepo
 import org.rundeck.util.api.storage.KeyStorageApiClient
-import org.rundeck.util.container.SeleniumBase
 import spock.lang.Ignore
 
 @SeleniumCoreTest
-class ScmStatusBadgeSpec extends SeleniumBase {
+class ScmStatusBadgeSpec extends ScmSeleniumBase {
 
     private static String REPO_NAME = "statusBadgeTest"
     private static String PROJECT_LOCATION = "/projects-import/scm/PScmStatusBadgeTest.rdproject"
@@ -45,6 +46,9 @@ class ScmStatusBadgeSpec extends SeleniumBase {
 
         JobShowPage jobShowPage = page(JobShowPage, PROJECT_NAME).forJob("740791d7-8734-4d8a-a77d-465aa2ccfe63")
         jobShowPage.go()
+        
+        // Wait for SCM status badge to be present and loaded before retrieving it
+        ScmStatusBadge.waitForStatusBadgeAndReturn(jobShowPage, true)
 
         when:
         ScmStatusBadge scmStatusBadge = jobShowPage.getScmStatusBadge()
@@ -55,7 +59,6 @@ class ScmStatusBadgeSpec extends SeleniumBase {
         scmStatusBadge.getTooltips() == 'Not Tracked for SCM Import'
     }
 
-    @Ignore("flaky test, needs to be fixed")
     def "job scm import status badge after import job changes"(){
         given:
         go(LoginPage).login(TEST_USER, TEST_PASS)
@@ -67,6 +70,10 @@ class ScmStatusBadgeSpec extends SeleniumBase {
         configureScmPage.go()
         configureScmPage.disableScmExport()
         configureScmPage.enableScmImport()
+
+        // Wait for SCM import to initialize and start syncing job status after mode switch
+        // This allows the SCM system to detect the committed job in the repository
+        Thread.sleep(WaitingTime.MODERATE.toMillis())
 
         JobShowPage jobShowPage = page(JobShowPage, PROJECT_NAME).forJob(jobUuid)
         jobShowPage.go()

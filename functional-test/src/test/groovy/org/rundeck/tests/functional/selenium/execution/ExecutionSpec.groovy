@@ -77,7 +77,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         then:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -117,7 +117,7 @@ class ExecutionSpec extends SeleniumBase {
         commandPage.runCommandAndWaitToBe("echo 'Hello world'", "SUCCEEDED")
         then:
         commandPage.runContent.isDisplayed()
-        commandPage.runArgument.text == "echo 'Hello world'"
+        commandPage.commandRunArgument.text == "echo 'Hello world'"
         commandPage.getExecLogGutters().size() == 2
         commandPage.execLogContent.text == "Hello world"
         commandPage.runningExecState == "SUCCEEDED"
@@ -129,6 +129,7 @@ class ExecutionSpec extends SeleniumBase {
      * Steps:
      * - Executes the command 'echo 'Hello world'' and waits for it to succeed.
      * - Navigates to the log node view and validates its contents.
+     * - Verifies that the loading spinner does not appear after execution completes.
      */
     def "viewer execution check log node view"() {
         setup:
@@ -149,6 +150,7 @@ class ExecutionSpec extends SeleniumBase {
         executionShowPage.execLogNode.isDisplayed()
         executionShowPage.execLogNode.text == "Hello world"
         executionShowPage.execLogGutterEntryAttribute.matches("\\d{2}:\\d{2}:\\d{2}")
+        executionShowPage.waitForNumberOfElementsToBe executionShowPage.nodeOutputLoadingSpinnerBy, 0
     }
 
     /**
@@ -191,7 +193,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -287,7 +289,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -342,7 +344,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.validatePage()
@@ -402,7 +404,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -462,7 +464,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -523,7 +525,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -595,7 +597,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         commandPage.runCommandAndWaitToBe("echo 'Hello world'", "SUCCEEDED")
         sideBarPage.goTo NavLinkTypes.ACTIVITY

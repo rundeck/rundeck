@@ -250,17 +250,13 @@ class ExecExportSpec extends BaseContainer{
             final String endpoint,
             final String outPath
     ){
-        def archiveCall = client.doGet(endpoint)
-        if( archiveCall.successful ){
-            def stream = archiveCall.body().byteStream()
-            def out = new FileOutputStream(outPath)
-            try{
+        try (def archiveCall = client.doGet(endpoint)) {
+            if (archiveCall.successful) {
+                def stream = archiveCall.body().byteStream()
+                def out = new FileOutputStream(outPath)
                 out << stream
-            }catch (Exception e){
-                e.printStackTrace()
-            } finally {
-                stream.close()
-                stream.close()
+            }else{
+                throw new IOException("Failed to request archive from rundeck: ${archiveCall.code()} ${archiveCall.body().string()}")
             }
         }
     }

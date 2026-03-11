@@ -2579,4 +2579,4 @@ if (typeof jQuery === 'undefined') {
 
 }(jQuery);
 
-$.fn.popover.Constructor.DEFAULTS.sanitize = false;
+$.fn.popover.Constructor.DEFAULTS.sanitize = true;

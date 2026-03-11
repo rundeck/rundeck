@@ -16,6 +16,8 @@ services:
       RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
       RUNDECK_MULTIURL_ENABLED: "true"
       RUNDECK_METRICS_ENABLED: "true"
+      MANAGEMENT_ENDPOINT_HEALTH_ENABLED: "true"
+      MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: "readinessState,rundeckDataSourceHealthIndicator"
       RUNDECK_FEATURE_FEATURETOTEST_ENABLED: "true"
       RUNDECK_FEATURE_FEATURETOTEST_NAME: ${TEST_RUNDECK_FEATURE_NAME}
     volumes:
@@ -32,6 +34,7 @@ services:
       - "../../../test-files/saved_searches-B.json:/home/option2/saved_searches.json"
       - "../../../test-files/saved_searches-C.json:/home/option3/saved_searches.json"
       - "../../../test-files/saved_searches-D.json:/home/option4/saved_searches.json"
+      - "../../../test-files/copyfile-test-files:/home/rundeck/copyfile-test-files"
       - "./executor:/home/rundeck/executor:rw"
       - "./mock-scripts:/home/rundeck/mock-scripts:rw"
     ports:

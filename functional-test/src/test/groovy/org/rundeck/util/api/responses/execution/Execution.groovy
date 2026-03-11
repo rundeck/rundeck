@@ -18,6 +18,8 @@ class Execution {
     String user
     RetriedExecution retriedExecution
     int retryAttempt
+    List<String> successfulNodes = []
+    List<String> failedNodes = []
 
     @JsonProperty("date-started")
     ExecutionDate dateStarted

@@ -1351,7 +1351,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     // Separating the Job's uuid
                                     String failedJobUuid = jobset.collect { it.job.uuid }
                                     // Separating the Job's Workflow details
-                                    String failedJobWorkflow = jobset.collect { it.job.workflow.toString() }
+                                    String failedJobWorkflow = jobset.collect { it.job.getWorkflowData()?.toString() }
                                     //Populate error object
                                     String loggingOutput = "There was a problem with the Job: " +
                                             "[ Name: ${cleanJobInfo}, UUID: ${failedJobUuid}, Workflow Data: ${failedJobWorkflow} ], error detail: ${it.errmsg}"
@@ -1795,10 +1795,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     log.error("[${execxmlmap[exml]}] Unable to save orchestrator for execution: ${e.orchestrator.errors}")
                     return
                 }
-                if (e.workflow && !e.workflow.save()) {
-                    execerrors << "[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}"
-                    log.error("[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}")
-                    return
+                // Note: Workflow is now stored as JSON within Execution, no separate save needed
+                // If workflow data exists in old format, migrate it to JSON
+                if (e.workflow) {
+                    e.setWorkflowData(e.workflow)
                 }
                 if (!e.save(flush: true)) {
                     execerrors << "[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}"

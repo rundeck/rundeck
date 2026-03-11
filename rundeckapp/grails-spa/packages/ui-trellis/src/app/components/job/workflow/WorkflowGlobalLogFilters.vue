@@ -8,10 +8,10 @@
   />
 </template>
 <script lang="ts">
-import { GlobalLogFiltersData } from "@/app/components/job/workflow/types/workflowTypes";
+import { GlobalLogFiltersData } from "./types/workflowTypes";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
-import LogFilters from "@/app/components/job/workflow/LogFilters.vue";
+import LogFilters from "./LogFilters.vue";
 export default defineComponent({
   name: "WorkflowGlobalLogFilters",
   components: {

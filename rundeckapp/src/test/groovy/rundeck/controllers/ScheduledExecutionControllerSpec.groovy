@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.http.RequestProcessor
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -47,6 +48,7 @@ import org.rundeck.app.authorization.domain.job.AuthorizingJob
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
+import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.gui.UISection
@@ -91,6 +93,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
         controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         defineBeans {
             configurationService(ConfigurationService) {
@@ -740,9 +747,14 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
-            getByIDorUUID(_)>>se
+            _*getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
@@ -829,9 +841,14 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
@@ -892,6 +909,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(_) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService = Mock(NotificationService)
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
@@ -900,6 +918,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
             1 * exportAs(format,[se],_)>>{
                 it[2]<<"format: $format"
+            }
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
             }
         }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
@@ -951,6 +972,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -961,7 +983,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1013,6 +1039,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1023,7 +1050,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1079,6 +1110,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1089,7 +1121,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1151,6 +1187,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1164,7 +1201,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             //assert the empty file will be uploaded
             1 * receiveFile(_,_,_,'afile.txt', 'OPT1',_,_,_,_) >> 'aref'
         }
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1224,6 +1265,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1234,7 +1276,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1310,6 +1356,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1322,7 +1369,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             ) >> [executionId: exec.id, id: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1381,6 +1432,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1393,7 +1445,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             ) >> [executionId: exec.id, id: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1468,6 +1524,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> true
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1479,7 +1536,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1530,6 +1591,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             0 * getByIDorUUID(_) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1594,6 +1656,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             2 * getByIDorUUID(_) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1603,7 +1666,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.fileUploadService = Mock(FileUploadService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1666,6 +1733,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(se.extid) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
@@ -1722,6 +1790,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(se.extid) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
@@ -1780,6 +1849,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             1 * prepareCreateEditJob(params, _, _,_) >> {
                 [scheduledExecution: it[1]]
             }
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         response.status == 200
         model.scheduledExecution != null
@@ -1829,6 +1899,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             2 * getByIDorUUID(_) >> se
             isProjectExecutionEnabled(_) >> false
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
 
 
@@ -1837,7 +1908,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -1941,12 +2016,17 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
             getRefExecCountStats(_)>>refTotal
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -2041,12 +2121,17 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -2145,12 +2230,17 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -2391,12 +2481,17 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -2470,12 +2565,17 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -2553,12 +2653,17 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -2641,12 +2746,17 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             getByIDorUUID(_) >> se
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         controller.notificationService = Mock(NotificationService)
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -2684,6 +2794,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 1 * issueJobChangeEvents(_)
                 1 * isScheduled(job)>>true
                 1 * nextExecutionTimes([job])>>[(job.id):new Date()]
+                _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
                 0 * _(*_)
             }
             controller.frameworkService = Mock(FrameworkService) {
@@ -2739,6 +2850,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                         ]
                 ]
                 1 * prepareCreateEditJob(_, job , AuthConstants.ACTION_CREATE, authContext)>>[:]
+                _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
                 0 * _(*_)
             }
             controller.frameworkService = Mock(FrameworkService) {
@@ -2790,6 +2902,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 ]
                 0 * loadImportedJobs(_,_,_,_,_,false)
                 0 * issueJobChangeEvents(_)
+                _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
             }
             controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
@@ -3004,6 +3117,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         sec.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> sec
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3042,7 +3156,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -3091,6 +3209,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         sec.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> sec
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3128,7 +3247,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -3177,6 +3300,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         sec.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> sec
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3214,7 +3338,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -3262,6 +3390,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         sec.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> sec
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3297,7 +3426,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -3362,6 +3495,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> job
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3404,7 +3538,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -3446,6 +3584,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         job.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> job
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3489,7 +3628,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -3520,6 +3663,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         job.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             getByIDorUUID(_) >> job
+            _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
         }
         def auth = Mock(UserAndRolesAuthContext){
             getUsername() >> 'bob'
@@ -3563,7 +3707,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
-        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            validateJobForExport(_,_)>>Mock(Validator.Report){
+                isValid()>>true
+            }
+        }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
 
 
@@ -3996,7 +4144,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.frameworkService = Mock(FrameworkService) {
                 1 * isFrameworkProjectDisabled(_) >> false
             }
-            controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+            controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+                validateJobForExport(_,_)>>Mock(Validator.Report){
+                    isValid()>>true
+                }
+            }
             params.id='testUUID'
             response.format = format
             request.api_version=apiVers
@@ -4022,7 +4174,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 1 * requireApi(_, _) >> true
             }
 
-            controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+            controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+                validateJobForExport(_,_)>>Mock(Validator.Report){
+                    isValid()>>true
+                }
+            }
             params.id='testUUID'
             response.format = format
             request.api_version=apiVers

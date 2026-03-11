@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class RundeckProject implements IRundeckProject{
     private final ProjectManagerService projectService;
-    private IRundeckProjectConfig projectConfig;
+    private volatile IRundeckProjectConfig projectConfig;
     private IProjectInfo info;
     private IProjectNodesFactory nodesFactory;
     private final RdProject projectData;
@@ -146,7 +146,11 @@ public class RundeckProject implements IRundeckProject{
 
     public IRundeckProjectConfig getProjectConfig() {
         if (null == projectConfig) {
-            this.projectConfig = projectService.loadProjectConfig(this.getName());
+            synchronized (this) {
+                if (null == projectConfig) {
+                    this.projectConfig = projectService.loadProjectConfig(this.getName());
+                }
+            }
         }
         return projectConfig;
     }

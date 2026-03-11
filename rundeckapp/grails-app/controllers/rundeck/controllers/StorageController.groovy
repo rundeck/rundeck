@@ -478,7 +478,7 @@ Authorization required: `create` for the `key` resource.
  
 Authorization under the key path `project/{project}` can be granted at the project context.
 ''',
-        tags = ['key storage'],
+        tags = ['Key Storage'],
         parameters = @Parameter(
             name = 'path',
             in = ParameterIn.PATH,
@@ -608,7 +608,7 @@ Authorization required: `delete` for the `key` resource.
 
 Authorization under the key path `project/{project}` can be granted at the project context.
 ''',
-        tags = ['key storage'],
+        tags = ['Key Storage'],
         parameters = @Parameter(
             name = 'path',
             in = ParameterIn.PATH,
@@ -691,7 +691,7 @@ Authorization required: `update` for the `key` resource.
 
 Authorization under the key path `project/{project}` can be granted at the project context.
 ''',
-        tags = ['key storage'],
+        tags = ['Key Storage'],
         parameters = @Parameter(
             name = 'path',
             in = ParameterIn.PATH,
@@ -813,7 +813,7 @@ Authorization required: `read` for the `key` resource
 
 Authorization under the key path `project/{project}` can be granted at the project context.
 ''',
-        tags = ['key storage'],
+        tags = ['Key Storage'],
         parameters = @Parameter(
             name = 'path',
             in = ParameterIn.PATH,

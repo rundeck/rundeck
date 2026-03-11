@@ -642,8 +642,8 @@ void testDecodeBasic__no_group(){
         def jobs = JobsXMLCodec.decode(xml)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
-        assertEquals "incorrect steps",4, jobs[0].workflow.commands.size()
-        jobs[0].workflow.commands.eachWithIndex{v,i->
+        assertEquals "incorrect steps",4, jobs[0].getWorkflowData().commands.size()
+        jobs[0].getWorkflowData().commands.eachWithIndex{v,i->
             assertEquals ("a test${i+1}".toString(),v.description)
         }
     }
@@ -1738,38 +1738,38 @@ void testDecodeBasic__no_group(){
 """)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
-        assertNotNull "incorrect workflow", jobs[0].workflow
-        assertEquals "incorrect workflow strategy", "node-first", jobs[0].workflow.strategy
-        assertNotNull "incorrect workflow strategy", jobs[0].workflow.commands
-        assertEquals "incorrect workflow strategy", 7, jobs[0].workflow.commands.size()
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData()
+        assertEquals "incorrect workflow strategy", "node-first", jobs[0].getWorkflowData().strategy
+        assertNotNull "incorrect workflow strategy", jobs[0].getWorkflowData().commands
+        assertEquals "incorrect workflow strategy", 7, jobs[0].getWorkflowData().commands.size()
 
         assertJobExec(
-                jobs[0].workflow.commands[0],
-                [argString: null, jobName: 'bob', jobGroup: null, nodeStep: false, nodeKeepgoing: null, nodeFilter: null, nodeThreadcount: null, nodeRankAttribute: null, nodeRankOrder: null]
+                jobs[0].getWorkflowData().commands[0],
+                [argString: null, jobName: 'bob', jobGroup: "", nodeStep: false, nodeKeepgoing: null, nodeFilter: null, nodeThreadcount: null, nodeRankAttribute: null, nodeRankOrder: null]
         )
         assertJobExec(
-                jobs[0].workflow.commands[1],
-                [argString: null, jobName: 'blang', jobGroup: null, nodeStep: false, nodeKeepgoing: null, nodeFilter: 'abc def', nodeThreadcount: null, nodeRankAttribute: null, nodeRankOrder: null]
+                jobs[0].getWorkflowData().commands[1],
+                [argString: null, jobName: 'blang', jobGroup: "", nodeStep: false, nodeKeepgoing: null, nodeFilter: 'abc def', nodeThreadcount: null, nodeRankAttribute: null, nodeRankOrder: null]
         )
         assertJobExec(
-                jobs[0].workflow.commands[2],
-                [argString: null, jobName: 'blang2', jobGroup: null, nodeStep: false, nodeKeepgoing: null, nodeFilter: 'abc def2', nodeThreadcount: 2, nodeRankAttribute: null, nodeRankOrder: null]
+                jobs[0].getWorkflowData().commands[2],
+                [argString: null, jobName: 'blang2', jobGroup: "", nodeStep: false, nodeKeepgoing: null, nodeFilter: 'abc def2', nodeThreadcount: 2, nodeRankAttribute: null, nodeRankOrder: null]
         )
         assertJobExec(
-                jobs[0].workflow.commands[3],
-                [argString: null, jobName: 'blang3', jobGroup: null, nodeStep: false, nodeKeepgoing: true, nodeFilter: 'abc def3', nodeThreadcount: 3, nodeRankAttribute: null, nodeRankOrder: null]
+                jobs[0].getWorkflowData().commands[3],
+                [argString: null, jobName: 'blang3', jobGroup: "", nodeStep: false, nodeKeepgoing: true, nodeFilter: 'abc def3', nodeThreadcount: 3, nodeRankAttribute: null, nodeRankOrder: null]
         )
         assertJobExec(
-                jobs[0].workflow.commands[4],
-                [argString: null, jobName: 'blang4', jobGroup: null, nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def4', nodeThreadcount: 2, nodeRankAttribute: null, nodeRankOrder: null]
+                jobs[0].getWorkflowData().commands[4],
+                [argString: null, jobName: 'blang4', jobGroup: "", nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def4', nodeThreadcount: 2, nodeRankAttribute: null, nodeRankOrder: null]
         )
         assertJobExec(
-                jobs[0].workflow.commands[5],
-                [argString: null, jobName: 'blang5', jobGroup: null, nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def5', nodeThreadcount: 2, nodeRankAttribute: 'rank', nodeRankOrder: null]
+                jobs[0].getWorkflowData().commands[5],
+                [argString: null, jobName: 'blang5', jobGroup: "", nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def5', nodeThreadcount: 2, nodeRankAttribute: 'rank', nodeRankOrder: null]
         )
         assertJobExec(
-                jobs[0].workflow.commands[6],
-                [argString: null, jobName: 'blang6', jobGroup: null, nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def6', nodeThreadcount: 2, nodeRankAttribute: 'rank', nodeRankOrder: 'descending']
+                jobs[0].getWorkflowData().commands[6],
+                [argString: null, jobName: 'blang6', jobGroup: "", nodeStep: false, nodeKeepgoing: false, nodeFilter: 'abc def6', nodeThreadcount: 2, nodeRankAttribute: 'rank', nodeRankOrder: 'descending']
         )
 
     }
@@ -1820,10 +1820,10 @@ void testDecodeBasic__no_group(){
 """)
             assertNotNull jobs
             assertEquals "incorrect size", 1, jobs.size()
-            assertNotNull "incorrect workflow", jobs[0].workflow
-            assertNotNull "incorrect workflow", jobs[0].workflow.commands
-            assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
-            def cmd1 = jobs[0].workflow.commands[0]
+            assertNotNull "incorrect workflow", jobs[0].getWorkflowData()
+            assertNotNull "incorrect workflow", jobs[0].getWorkflowData().commands
+            assertEquals "incorrect workflow size", 1, jobs[0].getWorkflowData().commands.size()
+            def cmd1 = jobs[0].getWorkflowData().commands[0]
             assertNotNull "incorrect workflow", cmd1
             assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof JobExec)
             assertNull "incorrect adhocRemoteString", cmd1.argString
@@ -1886,10 +1886,10 @@ void testDecodeBasic__no_group(){
 """)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
-        assertNotNull "incorrect workflow", jobs[0].workflow
-        assertNotNull "incorrect workflow", jobs[0].workflow.commands
-        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
-        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData()
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData().commands
+        assertEquals "incorrect workflow size", 1, jobs[0].getWorkflowData().commands.size()
+        def cmd1 = jobs[0].getWorkflowData().commands[0]
         assertNotNull "incorrect workflow", cmd1
         assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
         assertNotNull("incorrect nodeStep", cmd1.nodeStep)
@@ -1936,10 +1936,10 @@ void testDecodeBasic__no_group(){
 """)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
-        assertNotNull "incorrect workflow", jobs[0].workflow
-        assertNotNull "incorrect workflow", jobs[0].workflow.commands
-        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
-        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData()
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData().commands
+        assertEquals "incorrect workflow size", 1, jobs[0].getWorkflowData().commands.size()
+        def cmd1 = jobs[0].getWorkflowData().commands[0]
         assertNotNull "incorrect workflow", cmd1
         assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
         assertNotNull("incorrect nodeStep", cmd1.nodeStep)
@@ -1984,10 +1984,10 @@ void testDecodeBasic__no_group(){
 """)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
-        assertNotNull "incorrect workflow", jobs[0].workflow
-        assertNotNull "incorrect workflow", jobs[0].workflow.commands
-        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
-        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData()
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData().commands
+        assertEquals "incorrect workflow size", 1, jobs[0].getWorkflowData().commands.size()
+        def cmd1 = jobs[0].getWorkflowData().commands[0]
         assertNotNull "incorrect workflow", cmd1
         assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
         assertNotNull("incorrect nodeStep", cmd1.nodeStep)
@@ -2036,10 +2036,10 @@ void testDecodeBasic__no_group(){
 """)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
-        assertNotNull "incorrect workflow", jobs[0].workflow
-        assertNotNull "incorrect workflow", jobs[0].workflow.commands
-        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
-        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData()
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData().commands
+        assertEquals "incorrect workflow size", 1, jobs[0].getWorkflowData().commands.size()
+        def cmd1 = jobs[0].getWorkflowData().commands[0]
         assertNotNull "incorrect workflow", cmd1
         assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
         assertFalse("incorrect nodeStep", cmd1.nodeStep)
@@ -2084,10 +2084,10 @@ void testDecodeBasic__no_group(){
 """)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
-        assertNotNull "incorrect workflow", jobs[0].workflow
-        assertNotNull "incorrect workflow", jobs[0].workflow.commands
-        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
-        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData()
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData().commands
+        assertEquals "incorrect workflow size", 1, jobs[0].getWorkflowData().commands.size()
+        def cmd1 = jobs[0].getWorkflowData().commands[0]
         assertNotNull "incorrect workflow", cmd1
         assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
         assertFalse("incorrect nodeStep", cmd1.nodeStep)
@@ -2130,10 +2130,10 @@ void testDecodeBasic__no_group(){
 """)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
-        assertNotNull "incorrect workflow", jobs[0].workflow
-        assertNotNull "incorrect workflow", jobs[0].workflow.commands
-        assertEquals "incorrect workflow size", 1, jobs[0].workflow.commands.size()
-        def cmd1 = jobs[0].workflow.commands[0]
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData()
+        assertNotNull "incorrect workflow", jobs[0].getWorkflowData().commands
+        assertEquals "incorrect workflow size", 1, jobs[0].getWorkflowData().commands.size()
+        def cmd1 = jobs[0].getWorkflowData().commands[0]
         assertNotNull "incorrect workflow", cmd1
         assertTrue "incorrect type: ${cmd1}", (cmd1 instanceof PluginStep)
         assertFalse("incorrect nodeStep", cmd1.nodeStep)
@@ -6013,7 +6013,54 @@ void testDecodeBasic__no_group(){
 
 
         then: "job should keep same options values quantity as the original xml"
-        job.options.getAt("OPTION").getAt("values").size() == 3
+        assertEquals(3,job.options.getAt("OPTION").getAt("values").size())
+    }
+
+    @Test
+    public void "import a job from xml where valueListDelimiter is a |"() {
+
+        given: "a job with 3 values and a valueListDelimiter that is a special character"
+        Map job
+
+
+        def linkedHashMap = new LinkedHashMap([
+                context           : [
+                        options: [
+                                preserveOrder: true,
+                                option       : [
+                                        enforcedvalues       : true,
+                                        multivalueAllSelected: true,
+                                        multivalued          : true,
+                                        name                 : 'OPTION',
+                                        required             : true,
+                                        values               : 'one|two|three',
+                                        valuesListDelimiter  : '|'
+                                ]
+                        ]
+                ],
+                description       : 'test descrip',
+                executionEnabled  : true,
+                loglevel          : 'INFO',
+                name              : 'test job 1',
+                nodeFilterEditable: false,
+                scheduleEnabled   : true,
+                sequence          : [
+                        keepgoing: true,
+                        strategy : 'node-first',
+                        command  : [
+                                jobref: [
+                                        group: '/some/path',
+                                        name : 'a Job'
+                                ]
+                        ]
+                ]
+        ])
+        when: "the job is imported using a ( | ) as jobXmlValueListDelimiter"
+        job = JobsXMLCodec.convertXMapToJobMap(linkedHashMap, "|")
+
+
+        then: "job should keep same options values quantity as the original xml"
+        assertEquals(3,job.options.getAt("OPTION").getAt("values").size())
     }
 
     @Test

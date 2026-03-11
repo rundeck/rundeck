@@ -78,6 +78,7 @@ import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -303,29 +304,6 @@ class ScheduledExecutionController  extends ControllerBase{
          offset               : params.offset ? params.offset : 0
         ]
     }
-    def detailFragment () {
-        log.debug("ScheduledExecutionController: detailFragment : params: " + params)
-        Framework framework = frameworkService.getRundeckFramework()
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
-        if(notFoundResponse(scheduledExecution,'Job',params.id)){
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeProjectJobAny(
-                authContext, scheduledExecution,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
-                scheduledExecution.project
-            ),
-            AuthConstants.ACTION_VIEW,
-            'Job', params.id
-        )) {
-            return
-        }
-        def model=jobDetailData()
-
-        return render(view:'jobDetailFragment',model: model)
-    }
     def detailFragmentAjax () {
         if (requireAjax(action: 'show', controller: 'scheduledExecution', params: params)) {
             return
@@ -379,9 +357,15 @@ class ScheduledExecutionController  extends ControllerBase{
     @Get(uri = "/job/{id}/components")
     @Operation(
             method = 'GET',
-            summary = 'Get Job Definition Components Values',
-            description = '''Get the values for job definition components for a job. Since: v53''',
-            tags = ['jobs'],
+            summary = 'Get Job Definition Component Values',
+            description = '''Retrieves the current values for configurable job definition components for a specific job.
+
+Job definition components are modular configuration elements such as schedules, node selectors, and other job-specific settings that can be dynamically configured. This endpoint returns the serialized JSON values for each component, allowing clients to understand the current job configuration and potentially modify it through other API endpoints.
+
+The response includes component-specific JSON data that can be used to reconstruct the job's configuration or display current settings in a user interface.
+
+Since: v53''',
+            tags = ['Jobs'],
             parameters = [
                     @Parameter(
                             name = 'id',
@@ -423,7 +407,7 @@ class ScheduledExecutionController  extends ControllerBase{
             method = 'GET',
             summary = 'Get Job Definition Components',
             description = '''Get job definition components properties. Since: v53''',
-            tags = ['jobs'],
+            tags = ['Jobs'],
             responses = @ApiResponse(
                     responseCode = '200',
                     description = '''Job Definition Components response.
@@ -509,6 +493,11 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
+        if(response.format == "xml" && !rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView(g.message(code: 'api.error.export.format.unsupported', args: ['xml']))
+        }
+
         if (!params.project || params.project != scheduledExecution.project) {
             flash.info = infoMessage
             return redirect(controller: 'scheduledExecution', action: 'show',
@@ -574,10 +563,12 @@ class ScheduledExecutionController  extends ControllerBase{
         if (params.opt && (params.opt instanceof Map)) {
             dataMap.selectedoptsmap = params.opt
         }
-
+        def controller = this
         withFormat{
             html{
-                dataMap
+                def stats = scheduledExecutionService.calculateJobStats(scheduledExecution)
+                def statsMap = [successrate: stats.successRate, execCount: stats.execCount, avgduration: stats.averageDuration]
+                statsMap + dataMap
             }
             yaml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.yaml\"")
@@ -597,15 +588,17 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
                 flush(response)
             }
-            xml{
-                response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
-                response.contentType='text/xml; charset=UTF-8'
+            //if(controller.rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
+                xml {
+                    response.setHeader("Content-Disposition", "attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
+                    response.contentType = 'text/xml; charset=UTF-8'
 
-                response.outputStream.withWriter('UTF-8') { writer ->
-                    rundeckJobDefinitionManager.exportAs('xml', [scheduledExecution], writer)
+                    response.outputStream.withWriter('UTF-8') { writer ->
+                        rundeckJobDefinitionManager.exportAs('xml', [scheduledExecution], writer)
+                    }
+                    flush(response)
                 }
-                flush(response)
-            }
+            //}
         }
     }
     private static String getFname(name){
@@ -688,7 +681,7 @@ The authorization level affects the response data.
 * `view` - basic information and description is included for each step
 
 Since: v34''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(
                 name = 'id',
@@ -800,7 +793,8 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
             [AuthConstants.ACTION_READ],
             scheduledExecution.project
         )
-        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,readAuth,maxDepth)
+        def workflowData = scheduledExecution.getWorkflowData()
+        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,workflowData,readAuth,maxDepth)
         def controller = this
         withFormat {
             '*' {
@@ -809,7 +803,7 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
                 }
             }
 
-            if (controller.isAllowXml()) {
+            if (controller.isAllowXml() && controller.rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
                 xml {
                     render(contentType: 'application/xml') {
                         workflow wfdata
@@ -1242,7 +1236,7 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
 Authorization required: `toggle_execution` action for a job.
 
 Since: V14''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
 
         parameters = @Parameter(
             name = "id",
@@ -1272,7 +1266,7 @@ Since: V14''',
 Authorization required: `toggle_execution` action for a job.
 
 Since: V14''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
 
         parameters = @Parameter(
             name = "id",
@@ -1356,7 +1350,7 @@ Since: V14''',
 Authorization required: `toggle_schedule` action for a job.
 
 Since: V14''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
 
         parameters = @Parameter(
             name = "id",
@@ -1386,7 +1380,7 @@ Since: V14''',
 Authorization required: `toggle_schedule` action for a job.
 
 Since: V14''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
 
         parameters = @Parameter(
             name = "id",
@@ -1678,7 +1672,7 @@ Since: V14''',
 Authorization required: `toggle_execution` action for each job.
 
 Since: v16''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='ids',
@@ -1747,7 +1741,7 @@ Failed results will contain:
 Authorization required: `toggle_execution` action for each job.
 
 Since: v16''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='ids',
@@ -1897,7 +1891,7 @@ Failed results will contain:
 Authorization required: `toggle_schedule` action for each job.
 
 Since: v16''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='ids',
@@ -1966,7 +1960,7 @@ Failed results will contain:
 Authorization required: `toggle_schedule` action for each job.
 
 Since: v16''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name='ids',
@@ -2123,7 +2117,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         method="DELETE",
         summary=API_DOC_JOB_DELETE_TITLE,
         description = API_DOC_JOB_DELETE_DESC,
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters = [
             @Parameter(
                 name = "ids",
@@ -2157,7 +2151,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         method = "POST",
         summary = API_DOC_JOB_DELETE_TITLE,
         description = API_DOC_JOB_DELETE_DESC,
-        tags = ['jobs']
+        tags = ['Jobs']
     )
     @ApiResponse(
         responseCode='200',
@@ -2443,7 +2437,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         //set session new workflow
-        WorkflowController.getSessionWorkflow(session,null,new Workflow(scheduledExecution.workflow))
+        def origWorkflowData = scheduledExecution.getWorkflowData()
+        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? WorkflowDataImpl.fromMap(origWorkflowData.toMap()) : new WorkflowDataImpl())
         if(scheduledExecution.options){
             def editopts = [:]
 
@@ -2498,7 +2493,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
         def props=[:]
         props.putAll(execution.properties)
-        props.workflow=new Workflow(execution.workflow)
+        def execWorkflowData = execution.getWorkflowData()
+        props.workflow=execWorkflowData ? WorkflowDataImpl.fromMap(execWorkflowData.toMap()) : new WorkflowDataImpl()
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
             props = props.findAll{!(it.key=~/^node(In|Ex)clude.*$/)}
@@ -2733,7 +2729,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
-        params.workflow=new Workflow(scheduledExecution.workflow)
+        def jobWorkflowData = scheduledExecution.getWorkflowData()
+        params.workflow=jobWorkflowData ? new WorkflowDataImpl().fromMap(jobWorkflowData.toMap()) : new WorkflowDataImpl()
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch
         params.filter=scheduledExecution.asFilter()
@@ -2843,7 +2840,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                 newScheduledExecution.id=null
                 newScheduledExecution.uuid=null
                 //set session new workflow
-                WorkflowController.getSessionWorkflow(session,null,new Workflow(newScheduledExecution.workflow))
+                WorkflowController.getSessionWorkflow(session,null, WorkflowDataImpl.fromMap(newScheduledExecution.getWorkflowData()?.toMap()))
                 if(newScheduledExecution.options){
                     def editopts = [:]
 
@@ -3691,7 +3688,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 
 
 Since: v14''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3816,7 +3813,6 @@ Each job entry contains:
             )
         ]
     )
-    @Tag(name = "jobs")
     /**
      * API: /api/14/project/NAME/jobs/import
      */
@@ -3987,7 +3983,7 @@ Authorization required: `read` for the Job.''',
             )
         ]
     )
-    @Tag(name = "jobs")
+    @Tag(name = "Jobs")
 
     /**
      * API: export job definition: /job/{id}, version 1
@@ -4001,6 +3997,7 @@ Authorization required: `read` for the Job.''',
         if(request.api_version > ApiVersions.V43){
             supportedFormats << 'json'
         }
+
         if (!(response.format in supportedFormats)) {
             return apiService.renderErrorFormat(
                 response,
@@ -4011,6 +4008,7 @@ Authorization required: `read` for the Job.''',
                 ]
             )
         }
+
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
@@ -4024,6 +4022,17 @@ Authorization required: `read` for the Job.''',
 
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
             return
+        }
+
+        if(!rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args: [response.format]
+                    ]
+            )
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
@@ -4060,7 +4069,7 @@ Parameters can be specified in the request body, instead of as query parameters
 
 Authorization required: `run` for the Job resource.
 ''',
-        tags=['jobs'],
+        tags=['Jobs'],
         requestBody = @RequestBody(
             description = '''Parameters can be specified in the request body, instead of as query parameters.
 
@@ -4338,7 +4347,7 @@ Authorization required: `run` for the Job resource, and `read` or `view` for the
 
 Since: v24
 ''',
-        tags=['jobs'],
+        tags=['Jobs'],
         requestBody = @RequestBody(
             description = '''Parameters can be specified in the request body, instead of as query parameters.
 
@@ -4532,7 +4541,7 @@ For multiple files, use a Multi-part request.  For each file, specify the field 
 is the option name. The filename is specified normally within the multi-part request.
 
 Since: v19''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name = "id",
@@ -4573,7 +4582,7 @@ Each uploaded file is assigned a unique "file key" identifier.
 You can then Run the Job using the "file key" as the option value.
 
 Since: v19''',
-        tags=['jobs'],
+        tags=['Jobs'],
         parameters=[
             @Parameter(
                 name = "id",
@@ -4792,7 +4801,7 @@ Since: v19''',
         method = "GET",
         summary = 'Get Info About an Uploaded File',
         description = '''Get info about an uploaded file given its ID.''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = @Parameter(
             name = "id",
             description = "File ID",
@@ -4946,7 +4955,7 @@ Since: v19''',
         description = '''Delete a single job definition.
 
 Authorization required: `delete` for the job.''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(
                 name = "id",
@@ -5038,7 +5047,7 @@ Authorization required: `delete` for the job.''',
         method = 'DELETE',
         summary = 'Delete all Executions for a Job',
         description = '''Delete all executions for a Job.''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(name = 'id', description = 'Job ID', in = ParameterIn
                 .PATH, required = true, schema = @Schema(type = 'string'))
@@ -5095,10 +5104,14 @@ Authorization required: `delete` for the job.''',
         summary='Run Adhoc Command',
         description='''Run a command string.
 
+This endpoint accepts parameters either as query parameters or as a JSON request body. Query parameters are recommended for simplicity.
+
+Example using query parameters: `POST /api/56/project/myproject/run/command?exec=echo+test&filter=.*`
+
 Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
 
 Since: v14''',
-        tags = ['adhoc'],
+        tags = ['Ad Hoc'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -5231,10 +5244,14 @@ Since: v14''',
         summary='Run Adhoc Script',
         description='''Run a script.
 
+This endpoint accepts parameters as query parameters, with the script content submitted in the request body. The script can be submitted as multipart/form-data, application/x-www-form-urlencoded (with `scriptFile` parameter), or as a JSON document.
+
+Example using query parameters: `POST /api/56/project/myproject/run/script?filter=.*` with script content in body
+
 Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
 
 Since: v14''',
-        tags = ['adhoc'],
+        tags = ['Ad Hoc'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -5487,7 +5504,7 @@ For Content-Type: `multipart/form-data`
 Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
 
 Since: v14''',
-        tags = ['adhoc'],
+        tags = ['Ad Hoc'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -5645,7 +5662,7 @@ Since: v14''',
 
 Authorizations required: `read` or `view` for the Job, and `read` for the project resource type `execution`.
 ''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
             @Parameter(name = 'id', description = 'Job ID', in = ParameterIn
                 .PATH, required = true, schema = @Schema(type = 'string')),
@@ -5843,7 +5860,7 @@ Alternately, specify one or more job IDs to takeover certain Jobs' schedules.
 Authorization required: `ops_admin` for resource type `job`
 
 Since: v14''',
-        tags=['scheduler'],
+        tags=['Cluster'],
         requestBody = @RequestBody(
             description='''Takeover Request.
 
@@ -6171,7 +6188,7 @@ Since: v14''',
 Authorization required: `read` or `view` for the Job.
 
 Since: v46''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         parameters = [
 
         ],
@@ -6229,7 +6246,7 @@ and the names of job Groups starting at that path.
 Authorization required: `read` or `view` for the Jobs.
 
 Since: v46''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         requestBody = @RequestBody(
             description = '''Query parameters''',
             content = [
@@ -6340,7 +6357,7 @@ breakpoint are available, no metadata will be loaded''',
 Authorization required: `read` or `view` for the Job.
 
 Since: v46''',
-        tags = ['jobs'],
+        tags = ['Jobs'],
         responses = [
             @ApiResponse(
                 responseCode = '200',

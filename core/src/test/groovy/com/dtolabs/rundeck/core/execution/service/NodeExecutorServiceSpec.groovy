@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.service
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -33,7 +34,7 @@ class NodeExecutorServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> true
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig){
+                getFrameworkProject(_) >> Mock(IRundeckProject){
                     getProperty(_) >> null
                 }
             }
@@ -65,7 +66,7 @@ class NodeExecutorServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> false
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
+                getFrameworkProject(_) >> Mock(IRundeckProject)
             }
         }
         NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){
@@ -98,7 +99,7 @@ class NodeExecutorServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> true
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
+                getFrameworkProject(_) >> Mock(IRundeckProject)
             }
         }
         NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){
@@ -131,7 +132,7 @@ class NodeExecutorServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> false
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
+                getFrameworkProject(_) >> Mock(IRundeckProject)
             }
         }
         NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){

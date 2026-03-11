@@ -26,7 +26,7 @@ import grails.gorm.transactions.Transactional
 import grails.web.JSONBuilder
 import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
-import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
@@ -889,7 +889,7 @@ class ApiService implements WebUtilService{
     def removeAllTokensByUser(String userId) {
         log.debug("Attempting to remove tokens for user: ${userId}")
 
-        List<AuthenticationToken> tokenlist = tokenDataProvider.findAllByUser(userId)
+        List<AuthenticationToken> tokenlist = tokenDataProvider.findAllByUserAndType(userId, AuthTokenType.USER)
 
         if(tokenlist) {
             tokenlist.forEach { token -> tokenDataProvider.delete(token.uuid)}

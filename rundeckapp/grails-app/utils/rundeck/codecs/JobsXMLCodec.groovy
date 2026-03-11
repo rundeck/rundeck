@@ -24,6 +24,8 @@ import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.controllers.JobXMLException
 
+import java.util.regex.Pattern
+
 /*
 * JobsXMLCodec encapsulates encoding and decoding of the Jobs XML format.
 *
@@ -221,7 +223,7 @@ class JobsXMLCodec {
                         }
                         map.options[optm.name.toString()] = optm
                         if (optm.values instanceof String) {
-                            optm.values = optm.values.split(listDelimiter) as List
+                            optm.values = optm.values.split(Pattern.quote(listDelimiter)) as List
                         } else if (optm.values) {
                             optm.values = [optm.values.toString()]
                         }

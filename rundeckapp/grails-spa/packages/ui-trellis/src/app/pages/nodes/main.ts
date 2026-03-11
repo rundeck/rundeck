@@ -151,16 +151,20 @@ function init() {
           data() {
             return {
               project: rundeckContext.projectName,
-              nodeFilterStore: new NodeFilterStore(),
+              nodeFilterStore: new NodeFilterStore({
+                filter: this.itemData.filter,
+              }),
             };
           },
           methods: {
             updateNodeFilter(val: any) {
               const filterName = val && val.filter ? val.filter : val;
-              if(filterName ===".*" || this.nodeFilterStore.filter === ".*") {
+              if (filterName === ".*" || this.nodeFilterStore.filter === ".*") {
                 this.nodeFilterStore.setSelectedFilter(filterName);
               } else {
-                this.nodeFilterStore.setSelectedFilter([this.nodeFilterStore.filter, filterName].join(" "));
+                this.nodeFilterStore.setSelectedFilter(
+                  [this.nodeFilterStore.filter, filterName].join(" "),
+                );
               }
             },
           },

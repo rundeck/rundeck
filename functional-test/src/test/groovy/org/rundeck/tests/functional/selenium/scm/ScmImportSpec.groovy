@@ -12,7 +12,7 @@ import org.rundeck.util.gui.pages.scm.ConfigureScmPage
 import org.rundeck.util.gui.pages.scm.PerformScmActionPage
 
 @SeleniumCoreTest
-class ScmImportSpec extends SeleniumBase  {
+class ScmImportSpec extends ScmSeleniumBase  {
     private static String REPO_NAME = "importScmTest"
     private static String PROJECT_LOCATION = "/projects-import/scm/PScmImportTest.rdproject"
     private static String PROJECT_NAME = 'PScmImportTest'

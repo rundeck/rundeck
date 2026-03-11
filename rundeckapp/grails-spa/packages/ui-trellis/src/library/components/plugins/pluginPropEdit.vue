@@ -216,7 +216,8 @@
               :name="`${rkey}prop_` + pindex"
               :lang="prop.options['codeSyntaxMode']"
               :code-syntax-selectable="
-                prop.options['codeSyntaxSelectable'] === 'true' && !renderReadOnly
+                prop.options['codeSyntaxSelectable'] === 'true' &&
+                !renderReadOnly
               "
               height="200"
               width="100%"
@@ -414,7 +415,8 @@
   </div>
 </template>
 <script lang="ts">
-import { defineComponent } from "vue";
+import { ContextVariable } from "../../../library/stores/contextVariables";
+import { defineComponent, type PropType } from "vue";
 import JobConfigPicker from "./JobConfigPicker.vue";
 import KeyStorageSelector from "./KeyStorageSelector.vue";
 
@@ -422,15 +424,15 @@ import AceEditorVue from "../utils/AceEditorVue.vue";
 import PluginPropVal from "./pluginPropVal.vue";
 import { client } from "../../modules/rundeckClient";
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
-import type { PropType } from "vue";
 import { getRundeckContext } from "../../rundeckService";
-import { EventBus } from "@/library";
+import { EventBus } from "../../../library";
 import UiSocket from "../utils/UiSocket.vue";
-import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
+import PluginDetails from "./PluginDetails.vue";
 import PtAutoComplete from "../primeVue/PtAutoComplete/PtAutoComplete.vue";
 import {
   getContextVariables,
   isAutoCompleteField,
+  transformVariables,
   WorkflowStepType,
 } from "../utils/contextVariableUtils";
 
@@ -445,7 +447,6 @@ interface Prop {
   desc: string;
   staticTextDefaultValue: string;
 }
-
 export default defineComponent({
   components: {
     PluginDetails,
@@ -530,6 +531,11 @@ export default defineComponent({
       required: false,
       default: null,
     },
+    extraAutocompleteVars: {
+      type: Array as PropType<ContextVariable[]>,
+      required: false,
+      default: () => [],
+    },
   },
   emits: ["update:modelValue", "pluginPropsMounted"],
   data() {
@@ -559,11 +565,25 @@ export default defineComponent({
     },
     inputTypeContextVariables(): any {
       if (!this.isAutoCompleteField) return [];
-      return getContextVariables("input", this.stepType, this.pluginType);
+      return [
+        ...getContextVariables("input", this.stepType, this.pluginType),
+        ...transformVariables(
+          "input",
+          this.extraAutocompleteVars,
+          this.pluginType,
+        ),
+      ];
     },
     scriptTypeContextVariables(): any {
       if (!this.isAutoCompleteField) return [];
-      return getContextVariables("script", this.stepType, this.pluginType);
+      return [
+        ...getContextVariables("script", this.stepType, this.pluginType),
+        ...transformVariables(
+          "script",
+          this.extraAutocompleteVars,
+          this.pluginType,
+        ),
+      ];
     },
   },
   watch: {
@@ -651,7 +671,7 @@ export default defineComponent({
 });
 </script>
 <style scoped lang="scss">
-@import "~vue3-markdown/dist/style.css";
+@import "~vue3-markdown/dist/vue3-markdown.css";
 
 .longlist {
   max-height: 500px;

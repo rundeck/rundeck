@@ -12,7 +12,7 @@ import org.rundeck.util.container.BaseContainer
 
 @APITest
 @ExcludePro
-class ScmPluginStatusSpec extends BaseContainer {
+class ScmPluginStatusSpec extends ScmBaseContainer {
     static final String PROJECT_NAME = UUID.randomUUID().toString()
     static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo(PROJECT_NAME)
 
