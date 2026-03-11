@@ -42,10 +42,9 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
         def arr = OptsUtil.burst(adhocRemoteString)
 
         // Track which arguments contain property references BEFORE replacement
-        // Use hasOptionsInString() which uses .find() to detect embedded references
+        // Use the same pattern that replaceDataReferences uses for consistency
         def containsPropertyRef = arr.collect { arg ->
-            arg.contains('${') && (DataContextUtils.hasOptionsInString(arg) || 
-                SharedDataContextUtils.PROPERTY_REF_PATTERN.matcher(arg).find())
+            arg.contains('${') && SharedDataContextUtils.PROPERTY_REF_PATTERN.matcher(arg).find()
         }
 
         def result = SharedDataContextUtils.replaceDataReferencesInObject(
