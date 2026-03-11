@@ -1,7 +1,4 @@
-import en_US from "./en_US";
-
 const messages = {
-  ...en_US,
   Edit: "Bearbeiten",
   Save: "Speichern",
   Delete: "Löschen",
@@ -9,7 +6,6 @@ const messages = {
   Revert: "Zurücksetzen",
   Search: "Suchen",
   search: "Suchen",
-  add: "hinzufügen",
   yes: "Ja",
   no: "Nein",
   Yes: "Ja",
@@ -275,7 +271,6 @@ const messages = {
   "message_cancel": "Abbrechen",
 
   notifications: {
-    ...en_US.notifications,
     helpText:
       "Benachrichtigungen können durch verschiedene Ereignisse während der Job-Ausführung ausgelöst werden.",
     emptyText:
@@ -348,13 +343,11 @@ const messages = {
     "Keine Nodes ausgewählt. Wählen Sie Nodes durch Auswahl oder Eingabe eines Filters.",
 
   resourcesEditor: {
-    ...en_US.resourcesEditor,
     "Dispatch to Nodes": "Auf Nodes ausführen",
     "Execute locally": "Lokal ausführen",
     Nodes: "Nodes",
   },
   "job-edit-page": {
-    ...(en_US["job-edit-page"] || {}),
     "node-dispatch-true-label": "Auf Nodes über Runner ausführen",
     "node-dispatch-false-label": "Auf Runner ausführen",
     "section-title": "Ausführung",
@@ -362,29 +355,17 @@ const messages = {
   },
 
   Workflow: {
-    ...en_US.Workflow,
     property: {
-      ...(en_US.Workflow?.property || {}),
       keepgoing: {
-        ...((en_US.Workflow?.property && en_US.Workflow.property.keepgoing) || {}),
         true: {
-          ...((en_US.Workflow?.property &&
-            en_US.Workflow.property.keepgoing &&
-            en_US.Workflow.property.keepgoing.true) ||
-            {}),
           description: "Verbleibende Schritte vor dem Fehlschlag ausführen.",
         },
         false: {
-          ...((en_US.Workflow?.property &&
-            en_US.Workflow.property.keepgoing &&
-            en_US.Workflow.property.keepgoing.false) ||
-            {}),
           description: "Beim fehlgeschlagenen Schritt stoppen.",
         },
         prompt: "Wenn ein Schritt fehlschlägt:",
       },
       strategy: {
-        ...((en_US.Workflow?.property && en_US.Workflow.property.strategy) || {}),
         label: "Strategie",
       },
     },
@@ -405,9 +386,7 @@ const messages = {
   },
 
   period: {
-    ...en_US.period,
     label: {
-      ...(en_US.period?.label || {}),
       All: "jederzeit",
       Hour: "in der letzten Stunde",
       Day: "am letzten Tag",
