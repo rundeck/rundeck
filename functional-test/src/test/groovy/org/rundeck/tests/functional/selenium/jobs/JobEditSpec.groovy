@@ -74,7 +74,8 @@ class JobEditSpec extends SeleniumBase{
             jobShowPage.closeDefinitionModalButton.click()
             jobCreatePage.go()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
-            jobCreatePage.removeStepByIndex(1)
+            jobCreatePage.waitForNumberOfElementsToBeMoreThan(jobCreatePage.duplicateWfStepBy, 0)
+            jobCreatePage.removeStepByIndex(0)
             hold(2)
             jobCreatePage.expectNumberOfStepsToBe(1)
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.getUpdateJobButton()
@@ -133,7 +134,7 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.nodeDispatchTrueCheck.click()
         jobCreatePage.refreshNodesButton.click()
         jobCreatePage.lastNodeInListSpan.click()
-        jobCreatePage.selectTabAddFilterByName("testBoth").click()
+        jobCreatePage.selectTabAddFilterByName("testBoth").click():q
         jobCreatePage.getNodeInListSpan(1).click()
         jobCreatePage.selectTabAddFilterByName("test").click()
 

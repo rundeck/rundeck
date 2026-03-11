@@ -666,7 +666,7 @@ class JobsSpec extends SeleniumBase {
 
         when:
         setupProject(projectName)
-        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
+        JobCreatePage jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
         jobCreatePage.waitForElementVisible(By.id("schedJobName"))
         jobCreatePage.jobNameInput.sendKeys("test-duplication")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
@@ -682,6 +682,7 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.editJobLink.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.tab(JobTab.WORKFLOW))
         jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.waitForNumberOfElementsToBeMoreThan(jobCreatePage.duplicateWfStepBy, 0)
         jobCreatePage.duplicateWfStepButton.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.getWfStepByListPosition(1))
         jobCreatePage.updateBtn.click()
