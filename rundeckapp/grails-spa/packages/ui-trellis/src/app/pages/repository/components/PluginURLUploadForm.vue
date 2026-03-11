@@ -18,18 +18,23 @@
 </template>
 <script>
 import { defineComponent } from "vue";
-import { mapActions } from "vuex";
+import { useOverlayStore } from "../stores/overlay.store";
 
 import { client } from "../../../../library/modules/rundeckClient";
 export default defineComponent({
   name: "PluginUrlUploadForm",
+  setup() {
+    const overlayStore = useOverlayStore();
+    return {
+      openOverlay: (properties) => overlayStore.openOverlay(properties),
+    };
+  },
   data() {
     return {
       pluginURL: "",
     };
   },
   methods: {
-    ...mapActions("overlay", ["openOverlay"]),
     submitUrl() {
       this.openOverlay({
         loadingMessage: "Installing",
