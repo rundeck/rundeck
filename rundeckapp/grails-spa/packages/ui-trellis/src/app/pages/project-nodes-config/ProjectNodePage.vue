@@ -52,7 +52,7 @@
                   >
                     <tab>
                       <template #title>
-                        <div><i class="fas fa-pencil-alt"></i> Edit</div>
+                        <div><i class="fas fa-pencil-alt"></i> {{ $t("Edit") }}</div>
                       </template>
                       <div class="help-block">
                         {{ $t("modifiable.node.sources.will.appear.here") }}
@@ -159,7 +159,7 @@
                     </tab>
                     <tab>
                       <template #title>
-                        <div><i class="fas fa-cog"></i>Configuration</div>
+                        <div><i class="fas fa-cog"></i>{{ $t("Configuration") }}</div>
                       </template>
                       <project-configurable-form
                         :category="'resourceModelSource'"

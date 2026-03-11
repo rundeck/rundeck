@@ -40,4 +40,46 @@ export default {
       },
     },
   },
+  nl_NL: {
+    edit: {
+      readme: {
+        label: "Readme bewerken",
+      },
+      motd: {
+        label: "MOTD bewerken",
+      },
+      file: {
+        project: "{0} bewerken voor {1}",
+      },
+    },
+    file: {
+      readme: {
+        help: {
+          markdown:
+            "Bewerk de Readme voor het project. Dit wordt op de startpagina weergegeven.",
+          html: "Je kunt",
+          linkText: "Markdown",
+        },
+      },
+      warning: {
+        not: {
+          displayed: {
+            admin: {
+              message:
+                "Waarschuwing: dit bestand wordt nergens getoond. Je kunt dit inschakelen in:",
+            },
+            nonadmin: {
+              message:
+                "Waarschuwing: dit bestand wordt nergens getoond. Vraag een beheerder om dit in de projectconfiguratie in te schakelen.",
+            },
+          },
+        },
+      },
+    },
+    project: {
+      configuration: {
+        label: "Projectconfiguratie",
+      },
+    },
+  },
 };
