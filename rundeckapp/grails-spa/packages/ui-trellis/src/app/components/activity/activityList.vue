@@ -22,6 +22,7 @@
           v-if="pagination.total >= 0"
           class="summary-count"
           :class="{
+
             'text-strong': pagination.total < 1,
             'text-info': pagination.total > 0,
           }"
@@ -281,7 +282,10 @@
               v-tooltip.bottom="runningStatusTooltip(exec)"
               class="right date"
             >
-              <span v-if="exec.dateStarted.date" class="spacing-x-2">
+              <span
+                v-if="exec.dateStarted && exec.dateStarted.date"
+                class="spacing-x-2"
+              >
                 <i class=" ">
                   {{ momentJobFormatDate(exec.dateStarted.date) }}
                 </i>
@@ -308,9 +312,11 @@
                 type="default"
                 label
                 :label-text="
-                  $t('job.execution.starting.0', [
-                    runningStartedDisplay(exec.dateStarted.date),
-                  ])
+                  exec.dateStarted && exec.dateStarted.date
+                    ? $t('job.execution.starting.0', [
+                        runningStartedDisplay(exec.dateStarted.date),
+                      ])
+                    : ''
                 "
               ></progress-bar>
               <progress-bar
@@ -331,7 +337,7 @@
                 min-width
               ></progress-bar>
               <progress-bar
-                v-else-if="exec.dateStarted.date"
+                v-else-if="exec.dateStarted && exec.dateStarted.date"
                 :model-value="100"
                 striped
                 active
@@ -399,17 +405,17 @@
         <tbody v-if="reports.length > 0" class="history-executions">
           <tr
             v-for="rpt in reports"
-            :key="rpt.execution.id"
+            :key="rpt.id"
             class="link activity_row autoclickable"
             :class="[
-              `ali-${rpt.execution.id}`,
+              `ali-${rpt.id}`,
               {
-                succeed: rpt.status === 'succeed',
-                fail: rpt.status === 'fail',
+                succeed: rpt.status === 'succeeded',
+                fail: rpt.status === 'failed',
                 missed: rpt.status === 'missed',
-                highlight: highlightExecutionId == rpt.executionId,
-                job: rpt.jobId,
-                adhoc: !rpt.jobId,
+                highlight: highlightExecutionId == rpt.id,
+                job: rpt.job,
+                adhoc: !rpt.job,
               },
             ]"
             data-testid="report-row-item"
@@ -421,7 +427,7 @@
                 v-model="bulkSelectedIds"
                 type="checkbox"
                 name="bulk_edit"
-                :value="rpt.executionId"
+                :value="rpt.id"
                 class="_defaultInput"
                 data-testid="bulk-delete-checkbox"
               />
@@ -435,31 +441,37 @@
             </td>
             <td
               v-tooltip.bottom="{
-                text: $t(
-                  rpt.status === 'missed'
-                    ? 'info.missed.0.1'
-                    : 'info.completed.0.1',
-                  [
-                    jobCompletedISOFormat(rpt.dateCompleted),
-                    jobCompletedFromNow(rpt.dateCompleted),
-                  ],
-                ),
-                viewport: `.ali-${rpt.execution.id}`,
+                text:
+                  rpt.dateEnded && rpt.dateEnded.date
+                    ? $t(
+                        rpt.status === 'missed'
+                          ? 'info.missed.0.1'
+                          : 'info.completed.0.1',
+                        [
+                          jobCompletedISOFormat(rpt.dateEnded),
+                          jobCompletedFromNow(rpt.dateEnded),
+                        ],
+                      )
+                    : '',
+                viewport: `.ali-${rpt.id}`,
               }"
               class="date"
             >
-              <span v-if="rpt.dateCompleted" class="spacing-x-2">
+              <span
+                v-if="rpt.dateEnded && rpt.dateEnded.date"
+                class="spacing-x-2"
+              >
                 <span class="timeabs">
-                  {{ momentJobFormatDate(rpt.dateCompleted) }}
+                  {{ momentJobFormatDate(rpt.dateEnded.date) }}
                 </span>
                 <span
-                  v-if="isRecentCalendarDate(rpt.dateCompleted)"
+                  v-if="isRecentCalendarDate(rpt.dateEnded.date)"
                   class="timerel text-muted"
                 >
-                  {{ momentCalendarFormat(rpt.dateCompleted) }}
+                  {{ momentCalendarFormat(rpt.dateEnded.date) }}
                 </span>
                 <span v-else class="timerel text-muted">
-                  {{ momentFromNow(rpt.dateCompleted) }}
+                  {{ momentFromNow(rpt.dateEnded.date) }}
                 </span>
               </span>
             </td>
@@ -477,33 +489,32 @@
                 >missed</span
               >
               <span v-else class="duration">{{
-                formatDurationMomentHumanize(rpt.duration)
+                formatDurationMomentHumanize(rpt)
               }}</span>
             </td>
             <td class="user text-right" style="white-space: nowrap">
               <em>{{ $t("by") }}</em>
               {{ rpt.user }}
             </td>
-            <td
-              class="eventtitle"
-              :class="{ job: rpt.jobId, adhoc: !rpt.jobId }"
-            >
+            <td class="eventtitle" :class="{ job: rpt.job, adhoc: !rpt.job }">
               <span
-                v-if="!rpt.jobDeleted && rpt.jobId"
+                v-if="!rpt.jobDeleted && rpt.job"
                 v-tooltip="
-                  purify(rpt.jobGroup ? rpt.jobGroup + '/' + rpt.jobName : '')
+                  purify(
+                    rpt.job.group ? rpt.job.group + '/' + rpt.job.name : '',
+                  )
                 "
               >
-                {{ rpt.jobName }}
+                {{ rpt.job.group ? rpt.job.group + '/' + rpt.job.name : rpt.job.name }}
               </span>
               <span v-else>
-                {{ rpt.executionString }}
+                {{ rpt.description }}
               </span>
               <span
                 v-if="
                   query.jobIdFilter &&
-                  rpt.jobUuid &&
-                  query.jobIdFilter !== rpt.jobUuid &&
+                  rpt.job &&
+                  query.jobIdFilter !== rpt.job.id &&
                   query.jobIdFilter !== '!null'
                 "
                 class="text-secondary"
@@ -513,43 +524,26 @@
               </span>
 
               <span v-if="rpt.jobDeleted" class="text-strong">
-                {{ $t("job.has.been.deleted.0", [rpt.jobName]) }}
+                {{ $t("job.has.been.deleted.0", [""]) }}
               </span>
 
               <span v-if="isCustomReportStatus(rpt)">
                 <span class="exec-status-text custom-status">{{
-                  rpt.execution.status
+                  rpt.customStatus
                 }}</span>
               </span>
             </td>
             <td class="activity-list__eventargs">
               <span
-                v-if="rpt.execution.jobArguments"
+                v-if="rpt.argstring"
                 class="activity-list__eventargs-string"
-              >
-                <span
-                  v-for="(value, key) in rpt.execution.jobArguments"
-                  :key="key"
-                >
-                  {{ key }}:
-                  <code class="optvalue">{{ value }}</code>
-                </span>
-              </span>
-
-              <span
-                v-if="!rpt.execution.jobArguments"
-                class="activity-list__eventargs-string"
-                >{{ rpt.execution.argString }}</span
+                >{{ rpt.argstring }}</span
               >
             </td>
 
             <td class="text-right">
-              <a
-                class="link-quiet"
-                :href="rpt.executionHref"
-                @click.middle.stop
-              >
-                #{{ rpt.executionId }}
+              <a class="link-quiet" :href="rpt.permalink" @click.middle.stop>
+                #{{ rpt.id }}
               </a>
             </td>
           </tr>
@@ -586,20 +580,19 @@
 </template>
 
 <script lang="ts">
-import { queryRunning } from "../../../library/services/executions";
+import {getExecutions, PagedResult, queryRunning,} from "../../../library/services/executions";
 import axios from "axios";
-import { defineComponent, PropType } from "vue";
-import moment, { MomentInput } from "moment";
+import {defineComponent, PropType} from "vue";
+import moment, {MomentInput} from "moment";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
 
-import { getRundeckContext } from "../../../library";
-import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
-import { Execution } from "../../../library/types/executions/Execution";
+import {EventBus, getRundeckContext} from "../../../library";
+import {ExecutionBulkDeleteResponse} from "@rundeck/client/dist/lib/models";
+import {Execution, ExecutionDate, Status} from "../../../library/types/executions/Execution";
 import DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
-import { EventBus } from "../../../library";
-import { api } from "../../../library/services/api";
+import {api} from "../../../library/services/api";
 
 /**
  * Generate a URL
@@ -643,18 +636,24 @@ const knownStatusList = [
   "fail",
 ];
 
-function nodeStats(node: string) {
+function nodeStats(execution: any) {
   const info = {
-    total: 1,
-    succeeded: 1,
+    total: 0,
+    succeeded: 0,
     failed: 0,
   } as { [key: string]: number };
-  const match = node.match(/(\d+)\/(\d+)\/(\d+)/);
-  if (match) {
-    info.succeeded = parseInt(match[1]);
-    info.failed = parseInt(match[2]);
-    info.total = parseInt(match[3]);
+
+  // Parse new format with successfulNodes and failedNodes arrays
+  if (execution.successfulNodes && Array.isArray(execution.successfulNodes)) {
+    info.succeeded = execution.successfulNodes.length;
   }
+
+  if (execution.failedNodes && Array.isArray(execution.failedNodes)) {
+    info.failed = execution.failedNodes.length;
+  }
+
+  info.total = info.succeeded + info.failed;
+
   return info;
 }
 
@@ -680,7 +679,7 @@ export default defineComponent({
       projectName: "",
       activityPageHref: "",
       sinceUpdatedUrl: "",
-      reports: [],
+      reports: [] as Execution[],
       running: null as null | { executions: any[]; paging: any },
       lastDate: -1,
       pagination: {
@@ -736,6 +735,9 @@ export default defineComponent({
     };
   },
   computed: {
+    Status() {
+      return Status;
+    },
     activityHref(): string {
       return _genUrl(this.activityPageHref, this.fullQueryParams());
     },
@@ -854,17 +856,17 @@ export default defineComponent({
       }
       return moment(date).format(this.momentJobFormat);
     },
-    jobCompletedISOFormat(date: string) {
+    jobCompletedISOFormat(date: ExecutionDate) {
       if (!date) {
         return "";
       }
-      return moment(date).toISOString();
+      return moment(date.date).toISOString();
     },
-    jobCompletedFromNow(date: string) {
+    jobCompletedFromNow(date: ExecutionDate) {
       if (!date) {
         return "";
       }
-      return moment(date).fromNow();
+      return moment(date.date).fromNow();
     },
     isRecentCalendarDate(date: string) {
       if (!date) {
@@ -919,22 +921,14 @@ export default defineComponent({
         this.bulkSelectedIds.splice(ndx, 1);
       }
     },
-    middleClickRow(rpt: any) {
-      if (rpt.executionHref) {
-        window.open(rpt.executionHref, "_blank");
-      } else if (rpt.permalink) {
-        window.open(rpt.permalink, "_blank");
-      }
+    middleClickRow(rpt: Execution) {
+      window.open(rpt.permalink, "_blank");
     },
-    autoBulkEdit(rpt: any) {
+    autoBulkEdit(rpt: Execution) {
       if (!this.bulkEditMode) {
-        if (rpt.executionHref) {
-          window.location = rpt.executionHref;
-        } else if (rpt.permalink) {
-          window.location = rpt.permalink;
-        }
-      } else if (rpt.executionId) {
-        this.toggleSelectId(rpt.executionId);
+        window.location = rpt.permalink;
+      } else if (rpt.id) {
+        this.toggleSelectId(rpt.id);
       } else if (
         rpt.id &&
         rpt.status !== "running" &&
@@ -945,10 +939,10 @@ export default defineComponent({
       }
     },
     bulkEditSelectAll() {
-      this.reports.forEach((val: any) => this.selectId(val.executionId));
+      this.reports.forEach((val: Execution) => this.selectId(val.id));
     },
     bulkEditDeselectAll() {
-      this.reports.forEach((val: any) => this.deselectId(val.executionId));
+      this.reports.forEach((val: Execution) => this.deselectId(val.id));
     },
     bulkEditDeselectAllPages() {
       this.bulkSelectedIds = [];
@@ -965,13 +959,50 @@ export default defineComponent({
     reportStateCss(rpt: any) {
       return this.executionStateCss(this.reportState(rpt));
     },
-    formatDurationMomentHumanize(ms: any) {
+    formatDurationMomentHumanize(execution: any) {
+      // Calculate duration from dateStarted and dateEnded
+      let ms = 0;
+
+      if (execution.dateStarted && execution.dateEnded) {
+        // New format: unixtime in milliseconds
+        const startTime = execution.dateStarted.unixtime;
+        const endTime = execution.dateEnded.unixtime;
+        ms = endTime - startTime;
+      }
+
       moment.relativeTimeThreshold("ss", -1);
       if (ms < 0) {
         return "";
       }
       const duration = moment.duration(ms);
       return duration.humanize();
+    },
+    calculateLastDate(
+      query: { [key: string]: string },
+      offset: number,
+    ): number {
+      // Calculate lastDate based on query filters (replicating backend logic)
+      const curdate = new Date();
+      let calculatedLastDate = curdate.getTime();
+
+      // Apply filter-based logic for lastDate calculation
+      if (query.recentFilter || query.doendafterFilter) {
+        if (query.doendbeforeFilter && query.endbeforeFilter) {
+          const endbeforeTime = new Date(query.endbeforeFilter).getTime();
+          // Use current time only if it's before the endbeforeFilter
+          if (curdate.getTime() >= endbeforeTime) {
+            calculatedLastDate = -1;
+          }
+        }
+        // Otherwise, calculatedLastDate remains as current time
+      }
+
+      // If offset > 0, reset lastDate
+      if (offset && offset > 0) {
+        calculatedLastDate = -1;
+      }
+
+      return calculatedLastDate;
     },
     executionState(status: string) {
       if (status == "scheduled") {
@@ -1003,13 +1034,11 @@ export default defineComponent({
       }
       return "other";
     },
-    reportState(rpt: any) {
-      return rpt.execution.cancelled
-        ? this.executionState("cancel")
-        : this.executionState(rpt.execution.status);
+    reportState(rpt: Execution) {
+      return this.executionState(rpt.status);
     },
     reload() {
-      this.reports = [];
+      this.reports = [] as Execution[];
       this.pagination.total = -1;
       this.lastDate = -1;
       this.sincecount = 0;
@@ -1085,6 +1114,7 @@ export default defineComponent({
       if (this.query.jobIdFilter) {
         qparams.jobIdFilter = this.query.jobIdFilter;
       }
+
       try {
         const response = await queryRunning(this.projectName, qparams);
         this.running = {
@@ -1106,39 +1136,55 @@ export default defineComponent({
     async loadActivity(offset: number) {
       this.loading = true;
       this.pagination.offset = offset;
-      const xquery: { [key: string]: string } = {};
-      if (this.query.jobIdFilter) {
-        xquery["includeJobRef"] = "true";
-      }
-
-      Object.assign(xquery, this.query);
+      const xquery = this.parseToExecutionQuery();
 
       try {
-        const response = await axios.get(this.activityUrl, {
-          headers: { "x-rundeck-ajax": true },
-          params: Object.assign(
-            { offset: offset, max: this.pagination.max },
-            xquery,
-          ),
-          withCredentials: true,
-        });
+        const response = await getExecutions(
+          this.projectName,
+          Object.assign({ offset: offset, max: this.pagination.max }, xquery),
+        );
         this.loading = false;
-        if (response.data) {
-          this.pagination.offset = response.data.offset;
-          this.pagination.total = response.data.total;
-          this.lastDate = response.data.lastDate;
-          this.reports = response.data.reports.map((rpt: any) => {
-            rpt.node = nodeStats(rpt.node);
+        if (response) {
+          this.pagination.offset = response.paging.offset;
+          this.pagination.total = response.paging.total;
+
+          this.lastDate = this.calculateLastDate(xquery, offset);
+          this.reports = response.results.map((rpt: Execution) => {
+            rpt.node = nodeStats(rpt);
             return rpt;
           });
           this.eventBus &&
-            this.eventBus.emit("activity-query-result", response.data);
+            this.eventBus.emit("activity-query-result", response);
         }
       } catch (error) {
         this.loading = false;
         //@ts-ignore
         this.loadError = error.message;
       }
+    },
+    parseToExecutionQuery() {
+      const xquery: { [key: string]: string } = {};
+
+      if (this.query.jobIdFilter) {
+        xquery["includeJobRef"] = "true";
+        xquery["jobIdListFilter"] = this.query.jobIdFilter;
+      }
+      //map query to ExecutionQuery
+      if (this.query.statFilter !== undefined && this.query.statFilter !== "") {
+        xquery["statusFilter"] = this.executionState(this.query.statFilter);
+      }
+      if (this.query.titleFilter) {
+        xquery["adhocStringFilter"] = this.query.titleFilter;
+      }
+      if (this.query.execnodeFilter) {
+        xquery["nodeFilter"] = this.query.execnodeFilter;
+      }
+
+      //exclude running executions from history list
+      xquery["excludeRunning"] = "true";
+
+      Object.assign(xquery, this.query);
+      return xquery;
     },
     changePageOffset(offset: number) {
       if (this.loading) {
