@@ -273,7 +273,7 @@ search
                                     code="run.on.count.nodes"/></span>
                             <span class="glyphicon glyphicon-play"></span>
                           </span>
-                          <span data-bind="if: nodefilter.total()==0 ">No Nodes</span>
+                          <span data-bind="if: nodefilter.total()==0 "><g:message code="no.nodes"/></span>
                           </span>
                           <span data-bind="if: running">
                             <g:message code="running1"/>
