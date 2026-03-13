@@ -7,7 +7,7 @@
           (prop.defaultValue === 'true' && innerValue === 'false')
         "
       >
-        <span data-testid="boolean-prop-title" :title="prop.desc">{{ prop.title }}: </span>
+        <span data-testid="boolean-prop-title" :title="$t(prop.desc)">{{ $t(prop.title) }}: </span>
         <span
           v-if="innerValue === 'true'"
           data-testid="boolean-true-value"
@@ -37,8 +37,8 @@
       </template>
     </span>
     <span v-else-if="prop.type === 'Integer'" class="configpair">
-      <span :title="prop.desc" data-testid="integer-prop-title">
-        {{ prop.title }}:
+      <span :title="$t(prop.desc)" data-testid="integer-prop-title">
+        {{ $t(prop.title) }}:
       </span>
       <span
         style="font-family: Courier, monospace"
@@ -52,7 +52,7 @@
       class="configpair"
     >
       <span>
-        <span data-testid="options-prop-title" :title="prop.desc">{{ prop.title }}:</span>
+        <span data-testid="options-prop-title" :title="$t(prop.desc)">{{ $t(prop.title) }}:</span>
         <template v-if="prop.type !== 'Options'">
           <span class="text-success copiable-text" @click="copyText(innerValue)">
             <plugin-prop-val :prop="prop" :value="innerValue" />
@@ -93,13 +93,12 @@
           </span>
         </template>
       </span>
-
     </span>
     <span v-else class="configpair">
       <template v-if="prop.options && prop.options['displayType'] === 'CODE'">
         <expandable>
           <template #label>
-            <span data-testid="code-prop-title" :title="prop.desc">{{ prop.title }}:</span>
+            <span data-testid="code-prop-title" :title="$t(prop.desc)">{{ $t(prop.title) }}:</span>
             <span data-testid="code-line-count" class="text-info">
               {{ innerValue.split(/\r?\n/).length }} lines
             </span>
@@ -118,7 +117,7 @@
       >
         <expandable>
           <template #label
-            ><span data-testid="multiline-prop-title" :title="prop.desc">{{ prop.title }}:</span>
+            ><span data-testid="multiline-prop-title" :title="$t(prop.desc)">{{ $t(prop.title) }}:</span>
             <span data-testid="multiline-line-count" class="text-info"
               >{{ `${innerValue}`.split(/\r?\n/).length }} lines</span
             ></template
@@ -155,7 +154,7 @@
         </span>
       </template>
       <span class="" v-else>
-        <span data-testid="string-prop-title" :title="prop.desc">{{ prop.title }}:</span>
+        <span data-testid="string-prop-title" :title="$t(prop.desc)">{{ $t(prop.title) }}:</span>
         <span
           v-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
           data-testid="password-prop-value"

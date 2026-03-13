@@ -119,9 +119,9 @@
                           onchange='cleanerchkbox(this)'
                           checked="${isSelected}"/>
                   <label for="${nkey+'enable_cleaner_input'}">
-                      <b><g:enc>Enable</g:enc></b>
+                      <b><g:message code="execution.history.cleanup.enable.label" default="Enable"/></b>
                   </label>
-                  <span class="help-block"><g:enc>Enable cleaner executions history</g:enc></span>
+                  <span class="help-block"><g:message code="execution.history.cleanup.enable.help" default="Enable cleaner executions history"/></span>
               </div>
           </div>
       </div>
@@ -354,6 +354,7 @@
     </div>
 
 </g:each>
+<feature:enabled name="pluginGroups">
 <div class="tab-pane form-horizontal" id="tab_pluginGroups">
 
     <div class="form-group">
@@ -377,3 +378,4 @@
         </div>
     </div>
 </div>
+</feature:enabled>
