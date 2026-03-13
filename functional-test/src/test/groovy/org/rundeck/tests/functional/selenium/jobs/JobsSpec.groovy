@@ -893,6 +893,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.tab(JobTab.WORKFLOW).click()
 
         then:
+        jobCreatePage.waitForNumberOfElementsToBe(jobCreatePage.loaderClass, 0)
         jobCreatePage.addGlobalLogFilter.click()
         jobCreatePage.waitForModal(1)
         jobCreatePage.fillHighlightLogFilter()
