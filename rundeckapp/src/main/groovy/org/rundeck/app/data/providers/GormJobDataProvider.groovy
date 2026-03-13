@@ -20,7 +20,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.data.ScheduledExecutionDataService
 
-import javax.persistence.EntityNotFoundException
+import jakarta.persistence.EntityNotFoundException
 
 @GrailsCompileStatic
 @Transactional

@@ -69,6 +69,14 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
 
     def cleanup() {
         if(_driver){
+            try {
+                // Logout to clear server-side session before quitting browser
+                // This ensures each test starts with a clean session state
+                driver.get("${client.baseUrl}/user/logout")
+            } catch (Exception ignored) {
+                // Ignore if logout fails (test may have already logged out or never logged in)
+            }
+            
             specificationContext.currentSpec.listeners
                     .findAll { it instanceof TestResultExtension.ErrorListener }
                     .each {

@@ -1,7 +1,8 @@
 RDECK_BASE=/home/rundeck
 export RDECK_BASE
 
-JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64/jre
+# Grails 7: Java 17 required
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 export JAVA_HOME
 
 PATH=$JAVA_HOME/bin:$PATH

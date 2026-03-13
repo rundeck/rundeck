@@ -83,7 +83,7 @@ export default defineComponent({
       return this.$t(raw) as string;
     },
     title(): string {
-      return this.$t(this.detail.title) as string;
+      return this.detail && this.detail?.title ? this.$t(this.detail?.title) : "";
     },
   },
 });

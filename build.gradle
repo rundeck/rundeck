@@ -38,18 +38,18 @@ buildscript {
     }
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
-        classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
+        classpath 'com.google.gradle:osdetector-gradle-plugin:1.7.0'
         classpath group: 'org.yaml', name: 'snakeyaml', version: "${snakeyamlVersion}"
-        classpath 'org.owasp:dependency-check-gradle:5.3.2'
+        classpath 'org.owasp:dependency-check-gradle:10.0.4'
     }
 }
 
 plugins {
     id "org.dvaske.gradle.git-build-info" version "0.8"
     id "com.dorongold.task-tree" version "1.5"
-    id "org.ajoberstar.grgit" version "2.2.1"
+    id "org.ajoberstar.grgit" version "5.2.2"
     id "signing"
-    id 'io.github.gradle-nexus.publish-plugin' version "1.1.0"
+    id 'io.github.gradle-nexus.publish-plugin' version "2.0.0"
 }
 
 apply plugin: 'java'
@@ -170,8 +170,28 @@ allprojects {
     // Global dependency constraints to fix security vulnerabilities
     configurations.all {
         resolutionStrategy {
-            force "commons-io:commons-io:${commonsIoVersion}"
+            // Force Groovy 4 for any transitive dependencies still using old Groovy 3/codehaus coords
+            eachDependency { details ->
+                if (details.requested.group == 'org.codehaus.groovy') {
+                    details.useTarget(group: 'org.apache.groovy', 
+                                    name: details.requested.name, 
+                                    version: groovyVersion)
+                }
+            }
+            
+            // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+            
+            // Force centralized versions to prevent duplicates in WAR
+            force "org.apache.ant:ant:${antVersion}"
+            force "org.apache.ant:ant-launcher:${antVersion}"
+            force "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
+            force "io.micrometer:micrometer-observation:${micrometerVersion}"
+            force "io.micrometer:micrometer-commons:${micrometerVersion}"
+            force "jaxen:jaxen:${jaxenVersion}"
+            // NOTE: Micronaut version now matches Grails BOM (4.10.8)
+            // TODO: Future cleanup - remove explicit ${micronautVersion} from build files and let BOM manage
+            // NOTE: guava and failureaccess excluded - cause variant resolution conflicts
         }
     }
 }
@@ -194,6 +214,15 @@ subprojects {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven { url "https://repo.grails.org/grails/restricted" }
+    
+    // PackageCloud com.rundeck.plugins repositories
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeckpro-test/maven2"
+    }
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeckpro/maven2"
+    }
 }
 
 configurations{
@@ -205,8 +234,8 @@ dependencies{
 
     // dependencies for running groovy scripts
     groovyScript localGroovy()
-    groovyScript "org.codehaus.groovy:groovy-cli-commons:${groovyVersion}"
-    groovyScript "org.codehaus.groovy:groovy-yaml:${groovyVersion}"
+    groovyScript "org.apache.groovy:groovy-cli-commons:${groovyVersion}"
+    groovyScript "org.apache.groovy:groovy-yaml:${groovyVersion}"
 }
 
 

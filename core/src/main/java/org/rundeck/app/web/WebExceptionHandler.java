@@ -1,7 +1,7 @@
 package org.rundeck.app.web;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Possibly handle exeptions within a Servlet request context

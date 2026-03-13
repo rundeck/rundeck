@@ -23,11 +23,13 @@
 */
 package com.dtolabs.rundeck.jetty.jaas;
 
-import org.eclipse.jetty.jaas.callback.ObjectCallback;
-import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
-import org.eclipse.jetty.jaas.spi.UserInfo;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.security.Credential;
+import org.rundeck.jaas.AbstractLoginModule;
+import org.rundeck.jaas.AbstractLoginModule.JAASUserInfo;
+import org.rundeck.jaas.PasswordCredential;
+import org.rundeck.jaas.UserInfo;
+import org.rundeck.jaas.callback.ObjectCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
@@ -52,7 +54,7 @@ import javax.naming.directory.*;
  * @version $Revision$
  */
 public class JNDILoginModule extends AbstractLoginModule {
-    private static final org.eclipse.jetty.util.log.Logger log = Log.getLogger(JNDILoginModule.class);
+    private static final Logger log = LoggerFactory.getLogger(JNDILoginModule.class);
 
     /**
      * Get the UserInfo for a specified username
@@ -64,7 +66,7 @@ public class JNDILoginModule extends AbstractLoginModule {
         DirContext dir = context();
         ArrayList roleList = new ArrayList(getUserRoles(username));
         String credentials = getUserCredentials(username);
-        return new UserInfo(username, Credential.getCredential(credentials), roleList);
+        return new UserInfo(username, PasswordCredential.getCredential(credentials), roleList);
 
     }
 
@@ -198,8 +200,12 @@ public class JNDILoginModule extends AbstractLoginModule {
                     setAuthenticated(false);
                     return isAuthenticated();
                 }
-                ArrayList roleList = new ArrayList(getUserRoles(webUserName));
-                UserInfo userInfo= new UserInfo(webUserName, null, roleList);
+                
+                // Normalize username if case-insensitive feature is enabled
+                String normalizedUserName = normalizeUsername(webUserName);
+                
+                ArrayList roleList = new ArrayList(getUserRoles(normalizedUserName));
+                UserInfo userInfo= new UserInfo(normalizedUserName, null, roleList);
 
                 log.debug("userRoles: " + roleList);
                 if (userInfo == null) {
@@ -215,15 +221,15 @@ public class JNDILoginModule extends AbstractLoginModule {
                 return isAuthenticated();
             }
             catch (IOException e) {
-                log.warn(e);
+                log.warn("IO error during login", e);
                 throw new LoginException(e.toString());
             }
             catch (UnsupportedCallbackException e) {
-                log.warn(e);
+                log.warn("Callback not supported", e);
                 throw new LoginException(e.toString());
             }
             catch (Exception e) {
-                log.warn(e);
+                log.warn("Login exception", e);
                 throw new LoginException(e.toString());
             }
         } else {

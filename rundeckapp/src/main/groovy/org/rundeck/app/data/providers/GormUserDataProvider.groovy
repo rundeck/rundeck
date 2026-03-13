@@ -25,7 +25,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.data.UserDataService
 import com.dtolabs.rundeck.core.config.FeatureService
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @GrailsCompileStatic(TypeCheckingMode.SKIP)
 @Slf4j

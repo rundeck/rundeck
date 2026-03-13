@@ -77,7 +77,7 @@ export default {
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
-        url: `${rdBase}repository/${this.repo}/install/${this.plugin.object_id}`,
+        url: `${rdBase}/repository/${this.repo}/install/${this.plugin.object_id}`,
         withCredentials: true,
       })
         .then((response) => {
@@ -94,7 +94,7 @@ export default {
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
-        url: `${rdBase}api/${apiVer}/plugins/uninstall/${this.plugin.object_id}`,
+        url: `${rdBase}/api/${apiVer}/plugins/uninstall/${this.plugin.object_id}`,
         withCredentials: true,
       })
         .then((response) => {

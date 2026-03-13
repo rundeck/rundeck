@@ -64,6 +64,7 @@ class JobCreatePage extends BasePage {
     By workflowContentControlLabelBy = By.xpath("//section[@id='workflowContent']//div[contains(@class, 'control-label')]")
     By workflowAlphaUiButton = By.id("addButton")
     By workflowSaveStepButton = By.xpath('//div[contains(@class, \'in\') and contains(@class, \'modal\')]//button[@data-testid="save-button"]')
+    By loaderClass = By.className("loader")
 
     static class NextUi {
         static By jobNameInputBy = By.id("schedJobName")
