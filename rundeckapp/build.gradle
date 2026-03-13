@@ -449,8 +449,8 @@ bootRun {
             '-Dspring.output.ansi.enabled=always',
             '-noverify',
             '-XX:TieredStopAtLevel=1',
-            '-Xmx3072m',
-            '-XX:MaxMetaspaceSize=512m')
+            '-Xmx4096m',
+            '-XX:MaxMetaspaceSize=1024m')
     systemProperties(System.properties)
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
@@ -489,7 +489,9 @@ tasks.register('copyApiSpecFiles', Copy){
     mustRunAfter(':grails-repository:compileGroovy')
     mustRunAfter(':grails-job-kill-handler:compileGroovy')
     mustRunAfter(':grails-metricsweb:compileGroovy')
-    
+
+
+    /*
     // Add Pro plugin compile dependencies (only those with integration tests)
     // Only add these dependencies if the plugins exist (Pro repo)
     def proPluginsWithIntTests = [
@@ -520,6 +522,7 @@ tasks.register('copyApiSpecFiles', Copy){
             mustRunAfter("${pluginPath}:compileIntegrationTestGroovy")
         }
     }
+    */
 }
 
 tasks.register('fixOpenApiSpec') {
