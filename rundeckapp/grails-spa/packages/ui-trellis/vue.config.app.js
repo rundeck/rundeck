@@ -7,7 +7,6 @@ const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Righ
 process.env.VUE_APP_BUILD_COPYRIGHT = BUILD_COPYRIGHT;
 
 module.exports = {
-  lintOnSave: true,
   pages: {
     "components/central": { entry: "./src/app/components/central/main.ts" },
     "components/community-news-notification": {
