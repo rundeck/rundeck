@@ -79,13 +79,10 @@ export default defineComponent({
   },
   computed: {
     description(): string {
-      if(!this.detail || Object.keys(this.detail).length == 0){
-        return "";
-      }
-      return this.$t(this.detail.description || this.detail.desc);
+      return this.detail?.description || this.detail?.desc || "";
     },
     title(): string {
-      return this.detail && this.detail?.title ? this.$t(this.detail?.title) : "";
+      return this.detail && this.detail?.title ? this.detail?.title : "";
     },
   },
 });
