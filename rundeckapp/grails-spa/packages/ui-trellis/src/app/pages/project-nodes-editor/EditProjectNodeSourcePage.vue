@@ -17,7 +17,7 @@
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { EventBus, getRundeckContext } from "../../../library";
+import { EventBus } from "../../../library";
 import { NodeSource } from "../../../library/stores/NodeSourceFile";
 import EditProjectNodeSourceFile from "./EditProjectNodeSourceFile.vue";
 
@@ -61,7 +61,6 @@ export default defineComponent({
     },
   },
   async mounted() {
-    const context = getRundeckContext();
     if (this.index >= 0) {
       this.nodeSourceFile.index = this.index;
       await this.nodeSourceFile.load();
@@ -93,7 +92,7 @@ export default defineComponent({
       this.nodesText = newVal;
       this.saving = true;
       try {
-        const resp = await this.nodeSourceFile.storeSourceContent(
+        await this.nodeSourceFile.storeSourceContent(
           this.nodesText,
         );
         this.eventBus.emit("page-reset", "nodes");

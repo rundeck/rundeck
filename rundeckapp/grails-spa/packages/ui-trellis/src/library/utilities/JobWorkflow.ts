@@ -310,7 +310,6 @@ function _wfStringForStep(step: WorkflowStep) {
       string = "URL";
     } else if (step["type"]) {
       //plugin
-      const title = "Plugin " + step["type"];
       // TODO: Figure out how to get this data without relying on it being in the window
       // if (step['nodeStep'] && RDWorkflow.nodeSteppluginDescriptions && RDWorkflow.nodeSteppluginDescriptions[step['type']]) {
       //     title = RDWorkflow.nodeSteppluginDescriptions[step['type']].title || title;

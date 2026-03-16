@@ -104,7 +104,7 @@ function mount(e) {
   });
 
   /** Removes line number from url hash */
-  window._rundeck.eventBus.on("line-deselect", (e) => {
+  window._rundeck.eventBus.on("line-deselect", () => {
     const newHash = `${window.location.hash.split("L")[0]}`;
 
     const panel = document.getElementById("section-main");

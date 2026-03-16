@@ -742,13 +742,13 @@ export default defineComponent({
   },
   watch: {
     query: {
-      handler(newValue, oldValue) {
+      handler() {
         this.reload();
       },
       deep: true,
     },
     autorefresh: {
-      handler(newValue, oldValue) {
+      handler(newValue) {
         if (newValue) {
           //turn on
           this.startAutorefresh();

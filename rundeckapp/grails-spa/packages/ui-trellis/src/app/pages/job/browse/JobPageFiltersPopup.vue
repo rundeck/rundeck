@@ -55,7 +55,7 @@ import { defineComponent, inject, ref } from "vue";
 export default defineComponent({
   name: "JobPageFiltersPopup",
   emits: ["select", "delete"],
-  setup(props) {
+  setup() {
     const jobListFilterStore: JobListFilterStore = inject(
       JobListFilterStoreInjectionKey,
     ) as JobListFilterStore;

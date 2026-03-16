@@ -70,13 +70,9 @@ import NodeFilterLink from "../../job/resources/NodeFilterLink.vue";
 import NodeIcon from "../../job/resources/NodeIcon.vue";
 import NodeStatus from "../../job/resources/NodeStatus.vue";
 
-import { getRundeckContext } from "../../../../library";
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
 import { styleForNode } from "../../../utilities/nodeUi";
-
-const rdBase = getRundeckContext().rdBase;
-const project = getRundeckContext().projectName;
 
 export default defineComponent({
   name: "NodeShowEmbed",

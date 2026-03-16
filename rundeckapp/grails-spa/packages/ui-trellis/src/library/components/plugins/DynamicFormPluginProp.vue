@@ -318,7 +318,7 @@ export default defineComponent({
       this.customFields = fields;
       this.refreshPlugin();
     },
-    changeField(field: CustomField) {
+    changeField() {
       this.refreshPlugin();
     },
     refreshPlugin() {

@@ -266,7 +266,7 @@ function init() {
 }
 window.addEventListener("DOMContentLoaded", init);
 
-window.addEventListener("DOMContentLoaded", (event) => {
+window.addEventListener("DOMContentLoaded", () => {
   const elem = document.querySelector("#execDiv");
   if (elem) {
     observer.observe(elem, { subtree: true, childList: true });

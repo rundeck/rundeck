@@ -240,7 +240,6 @@ export class RundeckVersion {
 
   splitUUID(versionString: string) {
     const partsa = String(versionString).split("-");
-    const apart = partsa.length > 0 ? partsa[0].substring(0, 2) : versionString;
     const data: { [key: string]: any } = { uuid: versionString };
     for (let i = 0; i < partsa.length; i++) {
       data["uuid" + i] = parseInt(partsa[i].substring(0, 2), 16);

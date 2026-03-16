@@ -67,14 +67,9 @@
 import { getRundeckContext } from "@/library";
 import { scmProjectToggle } from "@/library/services/jobBrowse";
 import {
-  JobBrowserStore,
-  JobBrowserStoreInjectionKey,
-} from "@/library/stores/JobBrowser";
-import {
   JobPageStore,
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
-import { JobBrowseMeta } from "@/library/types/jobs/JobBrowse";
 import { defineComponent, inject, ref } from "vue";
 
 interface ScmIntegrationMeta {
@@ -91,7 +86,7 @@ interface ScmAction {
 
 export default defineComponent({
   name: "JobListScmActions",
-  setup(props) {
+  setup() {
     const jobPageStore: JobPageStore = inject(
       JobPageStoreInjectionKey,
     ) as JobPageStore;
@@ -132,7 +127,7 @@ export default defineComponent({
     },
     async actionToggleScm(enabled: boolean) {
       this.toggleModal = false;
-      const result = await scmProjectToggle(
+      await scmProjectToggle(
         getRundeckContext().projectName,
         enabled,
       );

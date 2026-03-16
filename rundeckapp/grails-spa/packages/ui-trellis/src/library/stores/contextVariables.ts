@@ -1,5 +1,3 @@
-import { RundeckContext as RundeckContextType } from "../interfaces/rundeckWindow";
-import { getRundeckContext } from "../rundeckService";
 import { JobOption } from "../types/jobs/JobEdit";
 
 export type ContextVariable = {

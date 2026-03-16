@@ -6,7 +6,7 @@ export class JobTree implements GroupedJobs {
   constructor() {
     this.groups[""] = new TreeItem("");
   }
-  subPath(item: TreeItem, part: string, create: boolean = true): TreeItem {
+  subPath(item: TreeItem, part: string): TreeItem {
     if (part === "") {
       return item;
     }

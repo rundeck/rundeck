@@ -47,9 +47,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 
-import { NavBar, NavContainer, NavItem } from "../../stores/NavBar";
+import { NavItem } from "../../stores/NavBar";
 
 import NavBarItem from "./NavBarItem.vue";
 import NavBarContainer from "./NavBarContainer.vue";

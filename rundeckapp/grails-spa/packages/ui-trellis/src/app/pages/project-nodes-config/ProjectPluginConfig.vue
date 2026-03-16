@@ -415,7 +415,7 @@ export default defineComponent({
     this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
   },
   methods: {
-    notifyError(msg: string, args: any[]) {
+    notifyError(msg: string) {
       Notification.notify({
         type: "danger",
         title: "An Error Occurred",
@@ -461,7 +461,7 @@ export default defineComponent({
     setFocus(focus: number) {
       this.editFocus = focus;
     },
-    async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
+    async savePlugin(plugin: ProjectPluginConfigEntry) {
       //validate
       const validation: PluginValidation =
         await pluginService.validatePluginConfig(
@@ -479,7 +479,7 @@ export default defineComponent({
       this.setPluginConfigsModified();
       this.setFocus(-1);
     },
-    removePlugin(plugin: ProjectPluginConfigEntry, index: number) {
+    removePlugin(plugin: ProjectPluginConfigEntry) {
       const found = this.pluginConfigs.indexOf(plugin);
       this.pluginConfigs.splice(found, 1);
       if (!plugin.create) {
@@ -499,7 +499,7 @@ export default defineComponent({
       this.setPluginConfigsModified();
       this.editFocus = -1;
     },
-    didSave(success: boolean) {
+    didSave() {
       if (this.modeToggle) {
         this.mode = "show";
       }

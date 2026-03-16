@@ -207,7 +207,7 @@ export class ExecutionOutput {
     if (this.backoff == 0) {
       return void 0;
     } else {
-      return new Promise<void>((res, rej) => {
+      return new Promise<void>((res) => {
         setTimeout(res, this.backoff);
       });
     }

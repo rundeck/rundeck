@@ -1,9 +1,5 @@
 import * as moment from "moment";
 
-import { getRundeckContext } from "../../../../../library";
-
-const rundeckContext = getRundeckContext();
-
 export interface StandardResponse {
   messages: string[];
   success: boolean;

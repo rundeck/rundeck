@@ -121,13 +121,13 @@ export default defineComponent({
     };
   },
   watch: {
-    valueInternal(newValue, oldValue) {
+    valueInternal(newValue) {
       this.$emit("update:modelValue", newValue);
     },
-    modelValue(newValue, oldValue) {
+    modelValue(newValue) {
       this.valueInternal = newValue;
     },
-    lang(newValue, oldValue) {
+    lang(newValue) {
       this.modeInternal = newValue;
     },
   },

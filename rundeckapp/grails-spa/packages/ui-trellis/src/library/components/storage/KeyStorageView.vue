@@ -446,7 +446,7 @@ export default defineComponent({
         this.selectKey(newValue);
       }
     },
-    rootPath: function (newValue: string) {
+    rootPath: function () {
       // Reset current path when rootPath changed.
 
       this.path = "";

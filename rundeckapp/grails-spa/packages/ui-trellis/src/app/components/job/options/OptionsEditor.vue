@@ -91,7 +91,7 @@
 </template>
 <script lang="ts">
 import { getRundeckContext } from "../../../../library";
-import { cloneDeep, clone } from "lodash";
+import { cloneDeep } from "lodash";
 import {
   JobOption,
   JobOptionEdit,

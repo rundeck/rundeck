@@ -36,6 +36,7 @@ export default {
     updatedData: {
       handler() {
         this.eventBus.emit("job-edit-schedules-changed", this.updatedData);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { timeZones, ...other } = this.updatedData;
         this.outputData = other;
         this.eventBus.emit("jobedit.page.confirm", true);
@@ -51,6 +52,7 @@ export default {
       if (rundeck && rundeck.data) {
         this.schedulesData = rundeck.data.schedulesData;
         this.updatedData = Object.assign({}, this.schedulesData);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { timeZones, ...other } = this.updatedData;
         this.outputData = other;
       }

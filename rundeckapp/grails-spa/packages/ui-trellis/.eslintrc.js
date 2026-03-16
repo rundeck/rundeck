@@ -21,9 +21,6 @@ module.exports = {
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-explicit-any": "off",
     // All rules as warnings for now
-    "vue/enforce-style-attribute": ["warn", { allow: ["scoped"] }],
-    "prettier/prettier": "warn",
-    "@typescript-eslint/no-unused-vars": "warn",
     "@typescript-eslint/ban-types": "warn",
     "@typescript-eslint/no-var-requires": "warn",
     "vuejs-accessibility/label-has-for": "warn",
@@ -50,6 +47,8 @@ module.exports = {
     "prefer-const": "warn",
     "storybook/story-exports": "warn",
     "storybook/context-in-play-function": "warn",
+    "vue/enforce-style-attribute": ["warn", { allow: ["scoped"] }],
+    "prettier/prettier": "warn",
   },
   ignorePatterns: ["build", "test", ".storybook"],
   extends: [

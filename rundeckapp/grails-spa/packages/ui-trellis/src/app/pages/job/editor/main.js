@@ -12,7 +12,6 @@ import SchedulesEditorSection from "./SchedulesEditorSection.vue";
 import OtherEditorSection from "./OtherEditorSection.vue";
 import { initI18n, updateLocaleMessages } from "../../../utilities/i18n";
 import { observer } from "../../../utilities/uiSocketObserver";
-import OptionsEditorSection from "./OptionsEditorSection.vue";
 import { getRundeckContext } from "@/library";
 import { loadJsonData } from "@/app/utilities/loadJsonData";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
@@ -131,7 +130,7 @@ const mountSection = (section) => {
 };
 
 //on job edit page listen for dom content changes and install UI Sockets
-window.addEventListener("DOMContentLoaded", (event) => {
+window.addEventListener("DOMContentLoaded", () => {
   // Job Editing page - Workflow Tab
   jobSections.forEach((section) => section.visible && mountSection(section));
 

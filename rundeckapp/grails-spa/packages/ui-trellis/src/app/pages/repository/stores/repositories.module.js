@@ -102,7 +102,7 @@ const actions = {
       url: `${this.state.repositories.rdBase}repository/${properties.repo.repositoryName}/install/${properties.plugin.installId}`,
       withCredentials: true,
     })
-      .then((response) => {
+      .then(() => {
         const repo = this.state.repositories.repositories.find(
           (r) => r.repositoryName === properties.repo.repositoryName,
         );
@@ -151,7 +151,7 @@ const actions = {
       url: `${this.state.repositories.rdBase}repository/uninstall/${properties.plugin.installId}`,
       withCredentials: true,
     })
-      .then((response) => {
+      .then(() => {
         const repo = this.state.repositories.repositories.find(
           (r) => r.repositoryName === properties.repo.repositoryName,
         );

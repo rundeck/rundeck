@@ -240,7 +240,6 @@
 import {storageKeyCreate, storageKeyExists, storageKeyGetMetadata, storageKeyUpdate,} from '../../services/storage'
 import type {PropType} from 'vue'
 import {defineComponent} from 'vue'
-import {getRundeckContext} from '../../index'
 import InputType from '../../types/InputType'
 import KeyType from '../../types/KeyType'
 
@@ -313,12 +312,10 @@ export default defineComponent({
       }
     },
     async handleUploadKey() {
-      const rundeckContext = getRundeckContext();
-
       const fullPath = this.calcBrowsePath(this.getKeyPath());
 
+      /* eslint-disable @typescript-eslint/no-unused-vars */
       let contentType = "application/pgp-keys";
-
       let value = null as any;
 
       switch (this.uploadSetting.keyType) {
@@ -353,6 +350,7 @@ export default defineComponent({
           }
           break;
       }
+      /* eslint-enable @typescript-eslint/no-unused-vars */
 
       const exists = await storageKeyExists(fullPath);
 
@@ -374,7 +372,7 @@ export default defineComponent({
       } else {
         try{
           let response=await storageKeyCreate(fullPath, value, {type: this.uploadSetting.keyType})
-          this.getCreatedKey(fullPath).then((r: any) => {
+          this.getCreatedKey(fullPath).then(() => {
             this.$emit("keyCreated", this.createdKey);
             this.$emit("finishEditing", response);
           });
@@ -417,7 +415,7 @@ export default defineComponent({
           this.uploadSetting.errorMsg = null;
         }
       };
-      reader.onerror = (event: any) => {
+      reader.onerror = () => {
         this.uploadSetting.errorMsg = "file cannot be read";
         this.uploadSetting.file = null;
       };

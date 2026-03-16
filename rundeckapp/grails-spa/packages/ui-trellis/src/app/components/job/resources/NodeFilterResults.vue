@@ -57,10 +57,7 @@ import { _genUrl } from "../../../../library/utilities/genUrl";
 import axios from "axios";
 import { defineComponent, ref } from "vue";
 
-import { getRundeckContext, getAppLinks } from "../../../../library";
-
-const rdBase = getRundeckContext().rdBase;
-const project = getRundeckContext().projectName;
+import { getAppLinks } from "../../../../library";
 
 export default defineComponent({
   name: "NodeFilterResults",
@@ -152,7 +149,6 @@ export default defineComponent({
       const filterExcludedata = this.nodeExcludeFilter
         ? { filterExclude: this.nodeExcludeFilter }
         : {};
-      const excludeFilterUncheck = this.excludeFilterUncheck;
       const page = this.page;
       const view = this.view ? this.view : "table";
       const basedata: any = {

@@ -361,7 +361,7 @@ export default defineComponent({
     return suggestionPrefixes.some((prefix) => normalizedInput.endsWith(prefix));
     },
 
-    handleOptionSelect(event: any): void {
+    handleOptionSelect(): void {
       // If replaceOnSelect is true, use default PrimeVue behavior (replace entire value)
       // PrimeVue will automatically update the v-model value
       if (this.replaceOnSelect) {

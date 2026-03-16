@@ -47,7 +47,7 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue"],
-  data(props) {
+  data() {
     return {
       data: {} as BasicData,
     };
