@@ -50,6 +50,13 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
       'dev:library:build'
 
     args = ['run', npmCommand]
+
+    execOverrides {
+        def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
+        if (token) {
+            it.environment('CLOUDSMITH_NPM_TOKEN', token)
+        }
+    }
 }
 
 /** Takes package.json and sets the version in it */
@@ -201,6 +208,13 @@ tasks.register('runNpmTest', NpmTask) {
                      'dev:test:unit'
 
     args = ['run', npmCommand]
+
+    execOverrides {
+        def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
+        if (token) {
+            it.environment('CLOUDSMITH_NPM_TOKEN', token)
+        }
+    }
 }
 //check.dependsOn runNpmTest
 
