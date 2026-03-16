@@ -479,6 +479,31 @@ tasks.register('copyApiSpecFiles', Copy){
     from configurations.apiSpecFiles
     into additionalSpecDir
 
+    // Fix Gradle 8 implicit dependency detection for core Grails plugins
+    // Gradle 8 detects that test compilation tasks MAY write to same output dirs
+    // Must depend on ALL compilation tasks to prevent implicit dependency errors
+    def coreGrailsPluginsWithSwagger = [
+        ':grails-webhooks',
+        ':grails-execution-mode-timer',
+        ':grails-repository',
+        ':grails-job-kill-handler',
+        ':grails-metricsweb'
+    ]
+
+    coreGrailsPluginsWithSwagger.each { pluginPath ->
+        def pluginProject = project.findProject(pluginPath)
+        if (pluginProject) {
+            // Depend on all compilation tasks (main, test, integrationTest)
+            dependsOn("${pluginPath}:compileGroovy")
+            // Only add test dependencies if the tasks exist
+            if (pluginProject.tasks.findByName('compileTestGroovy')) {
+                dependsOn("${pluginPath}:compileTestGroovy")
+            }
+            if (pluginProject.tasks.findByName('compileIntegrationTestGroovy')) {
+                dependsOn("${pluginPath}:compileIntegrationTestGroovy")
+            }
+        }
+    }
 
     /*
     // Add Pro plugin compile dependencies (only those with integration tests)
