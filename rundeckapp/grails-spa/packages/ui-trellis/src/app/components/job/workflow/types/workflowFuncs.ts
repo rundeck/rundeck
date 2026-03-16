@@ -55,11 +55,11 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
         interpreterArgsQuoted: cmd.interpreterArgsQuoted,
         fileExtension: cmd.fileExtension,
       } as ScriptInlinePluginConfig;
-    } else if (cmd.scriptfile || cmd.scripturl) {
+    } else if (cmd.scriptfile != null || cmd.scripturl != null) {
       editData.nodeStep = true;
       editData.type = "script-file-url";
       editData.config = {
-        adhocFilepath: cmd.scriptfile || cmd.scripturl,
+        adhocFilepath: cmd.scriptfile ?? cmd.scripturl,
         expandTokenInScriptFile: cmd.expandTokenInScriptFile,
         argString: cmd.args,
         scriptInterpreter: cmd.scriptInterpreter,
@@ -106,7 +106,7 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
     data.fileExtension = scriptInline.fileExtension;
   } else if (plugin.type === "script-file-url") {
     let scriptFile = plugin.config as ScriptFilePluginConfig;
-    if (scriptFile.adhocFilepath) {
+    if (scriptFile.adhocFilepath != null) {
       const isUrl = /^(https?|file):.*$/i.test(scriptFile.adhocFilepath);
       if (isUrl) {
         data.scripturl = scriptFile.adhocFilepath;

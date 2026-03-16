@@ -337,8 +337,8 @@ export default defineComponent({
 
       await this.loadProvider();
     },
-    pluginDetails() {
-      this.loadProvider();
+    async pluginDetails() {
+      await this.loadProvider();
     }
   }
 });
