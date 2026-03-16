@@ -1,5 +1,3 @@
-import * as Util from "util";
-
 import * as Joint from "jointjs";
 
 import {

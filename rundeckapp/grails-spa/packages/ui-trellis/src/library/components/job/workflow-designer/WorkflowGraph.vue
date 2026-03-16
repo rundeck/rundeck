@@ -496,7 +496,7 @@ export default defineComponent({
           )[0] as any as SVGGraphicsElement;
 
           /** Detect change in label element size */
-          const reszObs = new ResizeObserver((entries) => {});
+          const reszObs = new ResizeObserver(() => {});
           reszObs.observe(elLabel);
         },
         importEdge: (edge: any, gl: Graph, g: Joint.dia.Graph) => {
@@ -507,9 +507,6 @@ export default defineComponent({
             // @ts-ignore
 
             if (g.getNeighbors(target).indexOf(src) > -1) {
-              const link = g
-                .getConnectedLinks(target)
-                .filter((l) => l.getSourceElement() === src);
               return;
             }
           }
@@ -687,15 +684,15 @@ export default defineComponent({
 
     // rules()
 
-    dia.on("remove", (cell) => {
+    dia.on("remove", () => {
       // TODO: Something
     });
 
-    dia.on("add", function (cell) {
+    dia.on("add", function () {
       // TODO: Update graph
     });
 
-    dia.on("transition:end", (...args) => {
+    dia.on("transition:end", () => {
       transitions--;
       if (!transitions) {
         this.scaleContentToFit();
@@ -703,7 +700,7 @@ export default defineComponent({
     });
 
     paper.on({
-      scale: function (...args) {
+      scale: function () {
         // TODO: Some action on scale event
       },
 
@@ -715,7 +712,7 @@ export default defineComponent({
         this.handleCanvasMouseWheel(e, x, y, delta);
       },
 
-      "blank:pointermove": (evt, x, y) => {
+      "blank:pointermove": (evt) => {
         const deltaX = (<PointerEvent>evt.originalEvent)?.movementX;
         const deltaY = (<PointerEvent>evt.originalEvent)?.movementY;
 
@@ -734,7 +731,7 @@ export default defineComponent({
         // this.paper.scaleContentToFit({padding: 25})
       },
 
-      "element:pointerclick": (elementView: Joint.dia.ElementView, evt) => {
+      "element:pointerclick": (elementView: Joint.dia.ElementView) => {
         if (!this.interactive) return;
 
         if (["START", "END"].includes(elementView.model.id as string)) return;
@@ -765,9 +762,6 @@ export default defineComponent({
 
       "element:pointermove": (
         elementView: Joint.dia.ElementView,
-        evt,
-        x,
-        y,
       ) => {
         if (!this.interactive) return;
 
@@ -917,8 +911,6 @@ export default defineComponent({
       this.editorElm.parentElement?.removeChild(this.editorElm);
       const editor = this.$refs.editor as HTMLElement;
       editor.appendChild(this.editorElm);
-
-      const win = window as any;
 
       setTimeout(() => {
         const win = window as any;
