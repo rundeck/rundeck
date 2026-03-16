@@ -106,7 +106,14 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
     data.fileExtension = scriptInline.fileExtension;
   } else if (plugin.type === "script-file-url") {
     let scriptFile = plugin.config as ScriptFilePluginConfig;
-    data.scriptfile = scriptFile.adhocFilepath;
+    if (scriptFile.adhocFilepath) {
+      const isUrl = /^(https?|file):.*$/i.test(scriptFile.adhocFilepath);
+      if (isUrl) {
+        data.scripturl = scriptFile.adhocFilepath;
+      } else {
+        data.scriptfile = scriptFile.adhocFilepath;
+      }
+    }
     data.expandTokenInScriptFile = scriptFile.expandTokenInScriptFile;
     data.args = scriptFile.argString;
     data.scriptInterpreter = scriptFile.scriptInterpreter;
