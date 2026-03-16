@@ -55,11 +55,11 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
         interpreterArgsQuoted: cmd.interpreterArgsQuoted,
         fileExtension: cmd.fileExtension,
       } as ScriptInlinePluginConfig;
-    } else if (cmd.scriptfile) {
+    } else if (cmd.scriptfile || cmd.scripturl) {
       editData.nodeStep = true;
       editData.type = "script-file-url";
       editData.config = {
-        adhocFilepath: cmd.scriptfile,
+        adhocFilepath: cmd.scriptfile || cmd.scripturl,
         expandTokenInScriptFile: cmd.expandTokenInScriptFile,
         argString: cmd.args,
         scriptInterpreter: cmd.scriptInterpreter,
