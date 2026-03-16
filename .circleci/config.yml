@@ -713,7 +713,7 @@ workflows:
           <<: *cloudsmith-slack-defaults
       - test-gradle:
           name: T Unit Gradle
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
       - test-gui:
           name: T Unit UI
           <<: *cloudsmith-slack-defaults
