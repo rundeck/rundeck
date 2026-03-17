@@ -172,8 +172,8 @@ class JobsXMLCodecSpec extends Specification {
             jobs[0].getWorkflowData().commands[1].configuration==[adhocLocalString: 'true', argString: 'true',scriptInterpreter: 'bash -c',interpreterArgsQuoted:'false']
             jobs[0].getWorkflowData().commands[2].configuration==[adhocLocalString: 'false', argString: 'false',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'true']
             jobs[0].getWorkflowData().commands[3].configuration==[adhocLocalString: '0', argString: '0',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'false']
-            jobs[0].getWorkflowData().commands[4].configuration==[adhocFilepath: 'false', argString: 'false',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'false']
-            jobs[0].getWorkflowData().commands[4].errorHandler.configuration==[adhocFilepath: 'false', argString: '0']
+            jobs[0].getWorkflowData().commands[4].configuration==[adhocFilepath: 'false', argString: 'false',scriptInterpreter: 'bash -c',interpreterArgsQuoted: 'false', expandTokenInScriptFile:'false']
+            jobs[0].getWorkflowData().commands[4].errorHandler.configuration==[adhocFilepath: 'false', argString: '0', expandTokenInScriptFile:'false',interpreterArgsQuoted:'false']
 
     }
 
@@ -270,7 +270,9 @@ class JobsXMLCodecSpec extends Specification {
             cmds[2].errorHandler.type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
             cmds[2].errorHandler.configuration == [
                 adhocFilepath          : 'test3err',
-                argString              : 'blah3 blah3 err'
+                argString              : 'blah3 blah3 err',
+                expandTokenInScriptFile:'false',
+                interpreterArgsQuoted:'false'
             ]
             !cmds[2].errorHandler.keepgoingOnSuccess
 
@@ -490,7 +492,9 @@ class JobsXMLCodecSpec extends Specification {
             cmd1 != null
             cmd1.configuration == [
                 adhocFilepath          : '/a/path/to/a/script',
-                argString              : '-some args -to the -script'
+                argString              : '-some args -to the -script',
+                interpreterArgsQuoted:"false",
+                expandTokenInScriptFile:"false"
             ]
             cmd1.type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
             //
@@ -779,7 +783,9 @@ class JobsXMLCodecSpec extends Specification {
             cmd1 != null
             cmd1.configuration == [
                 adhocFilepath          : 'http://example.com/a/path/to/a/script',
-                argString              : '-some args -to the -script'
+                argString              : '-some args -to the -script',
+                expandTokenInScriptFile:"false",
+                interpreterArgsQuoted:"false"
             ]
 
     }

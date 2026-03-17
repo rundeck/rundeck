@@ -649,11 +649,15 @@ class JobsYAMLCodecSpec extends Specification {
 
             def cmd2 = se.getWorkflowData().commands[2]
             cmd2.class == PluginStep.class
-            cmd2.configuration == [adhocFilepath: 'file path',  argString: 'file args']
+            cmd2.configuration == [adhocFilepath: 'file path',  argString: 'file args',
+                                                                expandTokenInScriptFile:'false',
+                                                                interpreterArgsQuoted:'false']
 
             cmd2.errorHandler
             cmd2.errorHandler.class == PluginStep.class
-            cmd2.errorHandler.configuration == [adhocFilepath: 'err file',  argString: 'err file args']
+            cmd2.errorHandler.configuration == [adhocFilepath: 'err file',  argString: 'err file args',
+                                                                            expandTokenInScriptFile:'false',
+                                                                            interpreterArgsQuoted:'false']
             !cmd2.errorHandler.keepgoingOnSuccess
 
 
