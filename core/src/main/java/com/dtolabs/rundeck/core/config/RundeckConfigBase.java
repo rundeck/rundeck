@@ -457,6 +457,7 @@ public class RundeckConfigBase {
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
         Enabled earlyAccessJobConditional = new Enabled();
+        Enabled vueKeyStorage = new Enabled(true);
 
         @Data
         public static class Repository {

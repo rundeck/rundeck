@@ -380,6 +380,8 @@ rundeck:
             enabled: true
         fileUploadPlugin:
             enabled: true
+        vueKeyStorage:
+            enabled: true
     health:
         databaseValidationQuery: "SELECT 1"
 ---
