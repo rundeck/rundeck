@@ -623,4 +623,142 @@ describe("EditStepCard", () => {
       expect(wrapper.emitted("update:modelValue")).toBeTruthy();
     });
   });
+
+  describe("Async pluginDetails prop updates", () => {
+    it("renders pluginConfig when pluginDetails prop is provided after mount", async () => {
+      // Simulate ChoosePluginsEAModal scenario:
+      // Component mounts without pluginDetails, API returns nothing initially
+      mockGetServiceProviderDescription.mockResolvedValueOnce(null);
+
+      const wrapper = shallowMount(EditStepCard, {
+        props: {
+          modelValue: { type: "script-file-url", config: {}, nodeStep: true, id: "test-1" },
+          serviceName: "WorkflowNodeStep",
+          pluginDetails: null,
+        },
+        global: {
+          stubs: {
+            BaseStepCard: BaseStepCardStub,
+            JobRefFormFields: JobRefFormFieldsStub,
+            pluginConfig: pluginConfigStub,
+            PtButton: PtButtonStub,
+            PtInput: PtInputStub,
+          },
+        },
+      });
+
+      await wrapper.vm.$nextTick();
+      await flushPromises();
+
+      // Initially: no plugin config should render (API returned null)
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(false);
+      expect(wrapper.find('[data-testid="plugin-info"]').exists()).toBe(false);
+
+      // Parent component finishes async fetch and provides pluginDetails
+      const asyncLoadedPluginDetails = {
+        name: "script-file-url",
+        title: "Script file or URL",
+        description: "Execute a local script file or a script from a URL",
+        iconUrl: "http://localhost:4440/plugin/icon/WorkflowNodeStep/script-file-url",
+        props: {},
+      };
+
+      await wrapper.setProps({ pluginDetails: asyncLoadedPluginDetails });
+      await flushPromises();
+
+      // Now pluginConfig should render (form is interactive)
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(true);
+      expect(wrapper.find('[data-testid="plugin-info"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="loading-container"]').exists()).toBe(false);
+    });
+
+    it("transitions from loading state to form when pluginDetails arrives", async () => {
+      const wrapper = shallowMount(EditStepCard, {
+        props: {
+          modelValue: { type: "script-file-url", config: {}, nodeStep: true, id: "dkzxn" },
+          serviceName: "WorkflowNodeStep",
+          pluginDetails: undefined,
+        },
+        global: {
+          stubs: {
+            BaseStepCard: BaseStepCardStub,
+            pluginConfig: pluginConfigStub,
+            PtButton: PtButtonStub,
+          },
+        },
+      });
+
+      await wrapper.vm.$nextTick();
+
+      // Before pluginDetails arrives: either loading or no content
+      const hasPluginConfigBefore = wrapper.findComponent({ name: "pluginConfig" }).exists();
+      expect(hasPluginConfigBefore).toBe(false);
+
+      // Parent provides pluginDetails
+      const pluginDetails = {
+        title: "Script file or URL",
+        description: "Execute a local script file or a script from a URL",
+        props: {},
+      };
+
+      await wrapper.setProps({ pluginDetails });
+      await flushPromises();
+
+      // After pluginDetails arrives: form renders
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(true);
+      expect(wrapper.find('[data-testid="plugin-info"]').exists()).toBe(true);
+    });
+
+    it("does not call API when pluginDetails prop updates from null to defined", async () => {
+      const wrapper = shallowMount(EditStepCard, {
+        props: {
+          modelValue: { type: "script-file-url", config: {}, nodeStep: true, id: "test-1" },
+          serviceName: "WorkflowNodeStep",
+          pluginDetails: null,
+        },
+        global: {
+          stubs: {
+            BaseStepCard: BaseStepCardStub,
+            pluginConfig: pluginConfigStub,
+            PtButton: PtButtonStub,
+          },
+        },
+      });
+
+      await wrapper.vm.$nextTick();
+      await flushPromises();
+
+      // Clear any mount-time API calls
+      mockGetServiceProviderDescription.mockClear();
+
+      const pluginDetails = {
+        name: "script-file-url",
+        title: "Script file or URL",
+        props: {},
+      };
+
+      await wrapper.setProps({ pluginDetails });
+      await flushPromises();
+
+      // Should use prop, not fetch from API
+      expect(mockGetServiceProviderDescription).not.toHaveBeenCalled();
+      expect(wrapper.findComponent({ name: "pluginConfig" }).exists()).toBe(true);
+    });
+
+    it("updates step description input when modelValue description changes", async () => {
+      const wrapper = await createWrapper({
+        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1", description: "Original" },
+        pluginDetails: mockPluginProvider,
+      });
+
+      expect((wrapper.find('[data-testid="step-description"]').element as HTMLInputElement).value).toBe("Original");
+
+      await wrapper.setProps({
+        modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1", description: "Updated" },
+      });
+      await flushPromises();
+
+      expect((wrapper.find('[data-testid="step-description"]').element as HTMLInputElement).value).toBe("Updated");
+    });
+  });
 });

@@ -324,6 +324,23 @@ export default defineComponent({
       }
     },
   },
+  watch: {
+    async modelValue(newVal) {
+      this.stepDescription = newVal.description || "";
+
+      if (newVal.jobref) {
+        this.editModel = merge(cloneDeep(this.jobRefDefaults), newVal);
+      } else {
+        const { description, ...rest } = newVal;
+        this.editModel = cloneDeep(rest);
+      }
+
+      await this.loadProvider();
+    },
+    async pluginDetails() {
+      await this.loadProvider();
+    }
+  }
 });
 </script>
 
