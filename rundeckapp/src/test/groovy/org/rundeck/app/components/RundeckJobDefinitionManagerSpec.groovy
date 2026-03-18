@@ -187,13 +187,13 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         format | input                                            | additional
         "xml"  | getJobXmlScriptURL('http://example.com', true)   | [expandTokenInScriptFile: 'true', argString: '', interpreterArgsQuoted: 'false']
         "xml"  | getJobXmlScriptURL('http://example.com', false)  | [expandTokenInScriptFile: 'false', argString: '', interpreterArgsQuoted: 'false']
-        "xml"  | getJobXmlScriptURL('http://example.com', null)   | [argString: '', expandTokenInScriptFile: 'false', interpreterArgsQuoted: 'false']
+        "xml"  | getJobXmlScriptURL('http://example.com', null)   | [argString: '', interpreterArgsQuoted: 'false', expandTokenInScriptFile:'false']
         "yaml" | getJobYamlScriptURL('http://example.com', true)  | [expandTokenInScriptFile: 'true', interpreterArgsQuoted: 'false']
-        "yaml" | getJobYamlScriptURL('http://example.com', false) | [expandTokenInScriptFile: 'false', interpreterArgsQuoted: 'false']
+        "yaml" | getJobYamlScriptURL('http://example.com', false) | [interpreterArgsQuoted: 'false', expandTokenInScriptFile:'false']
         "yaml" | getJobYamlScriptURL('http://example.com', null)  | [expandTokenInScriptFile: 'false', interpreterArgsQuoted: 'false']
         "json" | getJobJsonScriptURL('http://example.com', true)  | [expandTokenInScriptFile: 'true', interpreterArgsQuoted: 'false']
         "json" | getJobJsonScriptURL('http://example.com', false) | [expandTokenInScriptFile: 'false', interpreterArgsQuoted: 'false']
-        "json" | getJobJsonScriptURL('http://example.com', null)  | [expandTokenInScriptFile: 'false', interpreterArgsQuoted: 'false']
+        "json" | getJobJsonScriptURL('http://example.com', null)  | [interpreterArgsQuoted: 'false', expandTokenInScriptFile:'false']
     }
 
     def "test decode command step"() {
