@@ -85,7 +85,8 @@ class CommandLineSetup implements Runnable {
     @Option(names = ['--testauth'], description = 'Test Jaas authentication configuration.')
     boolean testAuth
 
-    @Option(names = ['--encryptpwd'], description = 'Encrypt a password for use in a property file using the specified service. Available services: ${COMPLETION-CANDIDATES}', paramLabel = 'ENCRYPTION-SERVICE')
+    @Option(names = ['--encryptpwd'], description = 'Encrypt a password for use in a property file using the specified service. Available services: ${COMPLETION-CANDIDATES}', paramLabel = 'ENCRYPTION-SERVICE',
+        completionCandidates = EncrypterCandidates.class)
     String encryptPwdService
 
     @Option(names = ['-r', '--rollback'], description = 'Down migrate or rollback to previous db versions.', paramLabel = 'TAGNAME')
@@ -108,6 +109,11 @@ class CommandLineSetup implements Runnable {
 
     CommandLineSetup(final IntConsumer exitHandler) {
         this.exitHandler = exitHandler
+    }
+    static class EncrypterCandidates extends ArrayList<String>{
+        EncrypterCandidates() {
+            addAll(encrypters.keySet())
+        }
     }
 
     RundeckCliOptions runSetup(String[] args) {
