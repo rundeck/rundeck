@@ -209,6 +209,7 @@ class CommandLineSetup implements Runnable {
         PasswordUtilityEncrypter encrypter = encrypters[service.toUpperCase()]
         if(!encrypter) {
             System.err.println("No encryption service named: ${service}")
+            System.err.println("Available services: ${encrypters.keySet()}")
             exitHandler.accept(1)
             return false
         }
