@@ -86,9 +86,6 @@ class CommandLineSetup implements Runnable {
     @Option(names = ['-m', '--migrate-only'], description = 'Run database migrations then exit.')
     boolean migrate
 
-    private static final String USAGE_HEADER = "\nRun the rundeck server, installing the " +
-                                                                               "necessary components if they do not exist.\n"
-    private static final String USAGE_FOOTER = "\nhttp://rundeck.org\n"
 
     void run() {
         // This method is required by picocli, but not used directly.
