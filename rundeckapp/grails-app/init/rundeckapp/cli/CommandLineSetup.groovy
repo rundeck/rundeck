@@ -70,9 +70,6 @@ class CommandLineSetup implements Runnable {
     @Option(names = ['-p', '--projectdir'], description = 'The location of Rundeck\'s project data.', paramLabel = 'PATH')
     String projectDir
 
-    @Option(names = ['-h', '--help'], usageHelp = true, description = 'Display this message.')
-    boolean helpRequested
-
     @Option(names = ['-d'], description = 'Show debug information')
     boolean debug
 
@@ -127,7 +124,7 @@ class CommandLineSetup implements Runnable {
             exitHandler.accept(1)
             return
         }
-        if (helpRequested) {
+        if (cmd.usageHelpRequested) {
             cmd.usage(System.out)
             exitHandler.accept(0)
             return
