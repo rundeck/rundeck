@@ -140,9 +140,9 @@ class CommandLineSetup implements Runnable {
         cliOptions.rewrite = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_REWRITE)
         cliOptions.baseDir = baseDir ?: System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, getLaunchLocationParentDir())
         cliOptions.serverBaseDir = serverBaseDir ?: System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR, cliOptions.baseDir+ "/server")
-        cliOptions.logDir = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR, cliOptions.serverBaseDir+ "/logs")
+        cliOptions.logDir = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR, cliOptions.serverBaseDir+ "/logs")
         cliOptions.configDir = configDir ?: System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, cliOptions.serverBaseDir + "/config")
-        cliOptions.dataDir = dataDir ?: System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_WORK_DIR, cliOptions.serverBaseDir + "/data")
+        cliOptions.dataDir = dataDir ?: System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR, cliOptions.serverBaseDir + "/data")
         cliOptions.projectDir = projectDir
         cliOptions.skipInstall = skipInstall
         cliOptions.installOnly = installOnly

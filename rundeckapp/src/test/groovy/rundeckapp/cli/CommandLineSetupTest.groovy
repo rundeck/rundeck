@@ -135,4 +135,24 @@ class CommandLineSetupTest extends Specification {
         opts.logDir == "/tmp/base/server/logs"
         opts.dataDir == "/tmp/base/server/data"
     }
+
+    def "Test cli system props #prop #sysprop"() {
+        setup:
+            System.setProperty(sysprop, expected)
+        when:
+
+            int result = -1
+            CommandLineSetup setup = new CommandLineSetup({ result = it })
+            RundeckCliOptions opts = setup.runSetup()
+
+        then:
+            opts."${prop}" == expected
+        where:
+            prop            | sysprop                                              | expected
+            "baseDir"       | RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR          | "/tmp/dir"
+            "configDir"     | RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR | "/tmp/config"
+            "serverBaseDir" | RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR | "/tmp/base/server"
+            "dataDir"       | RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR   | "/tmp/data"
+            "logDir"        | RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR    | "/tmp/logs"
+    }
 }
