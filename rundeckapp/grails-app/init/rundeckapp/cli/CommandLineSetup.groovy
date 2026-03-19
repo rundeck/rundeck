@@ -55,12 +55,6 @@ class CommandLineSetup implements Runnable {
     @Option(names = ['--serverdir'], description = 'The base directory for the server', paramLabel = 'PATH')
     String serverBaseDir
 
-    @Option(names = ['-x', '--bindir'], description = 'The install directory for the tools used by users.', paramLabel = 'PATH')
-    String binDir
-
-    @Option(names = ['-s', '--sbindir'], description = 'The install directory for the tools used by administrators.', paramLabel = 'PATH')
-    String sbinDir
-
     @Option(names = ['-c', '--configdir'], description = 'The location of the configuration.', paramLabel = 'PATH')
     String configDir
 
@@ -149,7 +143,6 @@ class CommandLineSetup implements Runnable {
         cliOptions.logDir = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR, cliOptions.serverBaseDir+ "/logs")
         cliOptions.configDir = configDir ?: System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, cliOptions.serverBaseDir + "/config")
         cliOptions.dataDir = dataDir ?: System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_WORK_DIR, cliOptions.serverBaseDir + "/data")
-        cliOptions.binDir = binDir ?: cliOptions.baseDir+"/"+TOOL_ROOT_DIR + "/bin"
         cliOptions.projectDir = projectDir
         cliOptions.skipInstall = skipInstall
         cliOptions.installOnly = installOnly
