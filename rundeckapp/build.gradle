@@ -242,8 +242,12 @@ dependencies {
     // Defined by create-app
     implementation "org.apache.grails:grails-data-hibernate5"
     // hibernate-jcache needed for Hibernate 5.6.15 caching (Grails 7.0.4 → GORM 7.x → Hibernate 5.6.15 Jakarta)
-    implementation "org.hibernate:hibernate-jcache:5.6.15.Final"
+    implementation "org.hibernate:hibernate-jcache:${hibernateVersion}"
     implementation('org.ehcache:ehcache:3.8.1')
+
+    // JAXB implementation for Java 11+ (Ehcache XmlConfiguration parses jcache.xml with javax.xml.bind)
+    implementation "javax.xml.bind:jaxb-api:${jaxbApiVersion}"
+    implementation "org.glassfish.jaxb:jaxb-runtime:${jaxbRuntimeVersion}"
 
     implementation ('org.hibernate.validator:hibernate-validator:8.0.1.Final')
 

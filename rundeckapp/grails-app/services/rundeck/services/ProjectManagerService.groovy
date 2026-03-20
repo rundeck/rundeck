@@ -192,7 +192,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     
     IRundeckProject getFrameworkProject(final String name) {
         if (null==projectCache.getIfPresent(name) && !existsFrameworkProject(name)) {
-            throw new IllegalArgumentException("Project does not exist: " + name)
+            throw new IllegalArgumentException("Project not found in cache or DB: " + name)
         }
         def result = projectCache.get(name)
         if (!result) {
