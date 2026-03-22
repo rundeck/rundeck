@@ -243,6 +243,7 @@ A comprehensive form component for creating and editing job options in Rundeck. 
 export default meta;
 
 type Story = StoryObj<typeof OptionEdit>;
+type OptionEditArgs = typeof meta.args;
 
 export const Playground: Story = {
   parameters: {
@@ -253,7 +254,7 @@ export const Playground: Story = {
   },
   name: "Playground",
   tags: ["!dev"],
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref(args.modelValue);
@@ -294,7 +295,7 @@ export const NewTextOption: Story = {
         "Basic text option with minimal configuration in creation mode. Shows the standard option fields without any advanced features enabled.",
     },
   },
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref({
@@ -343,7 +344,7 @@ export const EditSecureOption: Story = {
         "A secure option that uses key storage for the option value. The input will be hidden in logs and execution output.",
     },
   },
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref({
@@ -393,7 +394,7 @@ export const MultilineOption: Story = {
         "A multiline text option that supports entering multi-paragraph text with line breaks. Requires the multilineJobOptions feature to be enabled.",
     },
   },
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref({
@@ -446,7 +447,7 @@ export const FileUploadOption: Story = {
         "A file upload option that allows uploading files during job execution. Requires the fileUploadPlugin feature to be enabled.",
     },
   },
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref({
@@ -498,7 +499,7 @@ export const OptionWithValidationErrors: Story = {
         "An option with validation errors demonstrating error handling and display within the component.",
     },
   },
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref({
@@ -557,7 +558,7 @@ export const OptionWithAllowedValues: Story = {
         "An option with a predefined list of allowed values that creates a dropdown/select input for the user.",
     },
   },
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref({
@@ -607,7 +608,7 @@ export const OptionWithRemoteValues: Story = {
         "An option that loads allowed values from a remote URL endpoint at runtime.",
     },
   },
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref({
@@ -657,7 +658,7 @@ export const OptionWithPluginValues: Story = {
         "An option that uses a plugin to provide its allowed values dynamically.",
     },
   },
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref({
@@ -717,7 +718,7 @@ export const DateOption: Story = {
         "A date input option with configurable date format for selecting dates and times.",
     },
   },
-  render: (args) => ({
+  render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
       const optionData = ref({

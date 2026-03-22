@@ -48,12 +48,13 @@ const meta: Meta<typeof OptionView> = {
 export default meta;
 
 type Story = StoryObj<typeof OptionView>;
+type OptionViewArgs = typeof meta.args;
 
 // TODO: manually wire the props to the component name, so that the source will update correctly in the story
 export const Playground: Story = {
   name: "Playground",
   tags: ["!dev"],
-  render: (args) => ({
+  render: (args: OptionViewArgs) => ({
     components: { OptionView },
     setup: () => ({ args }),
     template: `<OptionView v-bind="args"></OptionView>`,
@@ -67,7 +68,7 @@ const generateTemplate = (args: Record<string, any>) => {
 };
 
 export const Default: Story = {
-  render: (args) => ({
+  render: (args: OptionViewArgs) => ({
     props: Object.keys(args),
     components: { OptionView },
     setup() {
@@ -80,7 +81,7 @@ export const Default: Story = {
 };
 
 export const TypeMultiLine: Story = {
-  render: (args) => ({
+  render: (args: OptionViewArgs) => ({
     props: Object.keys(args),
     components: { OptionView },
     setup() {
@@ -100,7 +101,7 @@ export const TypeMultiLine: Story = {
 };
 
 export const TypeFile: Story = {
-  render: (args) => ({
+  render: (args: OptionViewArgs) => ({
     props: Object.keys(args),
     components: { OptionView },
     setup() {

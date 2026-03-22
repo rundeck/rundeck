@@ -62,12 +62,13 @@ const meta: Meta<typeof OptionItem> = {
 export default meta;
 
 type Story = StoryObj<typeof OptionItem>;
+type OptionItemArgs = typeof meta.args;
 
 // TODO: manually wire the props to the component name, so that the source will update correctly in the story
 export const Playground: Story = {
   name: "Playground",
   tags: ["!dev"],
-  render: (args) => ({
+  render: (args: OptionItemArgs) => ({
     components: { OptionItem },
     setup: () => ({ args }),
     template: `<OptionItem v-bind="args"></OptionItem>`,
@@ -81,7 +82,7 @@ const generateTemplate = (args: Record<string, any>) => {
 };
 
 export const Default: Story = {
-  render: (args) => ({
+  render: (args: OptionItemArgs) => ({
     props: Object.keys(args),
     components: { OptionItem },
     setup() {
@@ -94,7 +95,7 @@ export const Default: Story = {
 };
 
 export const TypeMultiLine: Story = {
-  render: (args) => ({
+  render: (args: OptionItemArgs) => ({
     props: Object.keys(args),
     components: { OptionItem },
     setup() {
@@ -114,7 +115,7 @@ export const TypeMultiLine: Story = {
 };
 
 export const TypeFile: Story = {
-  render: (args) => ({
+  render: (args: OptionItemArgs) => ({
     props: Object.keys(args),
     components: { OptionItem },
     setup() {
