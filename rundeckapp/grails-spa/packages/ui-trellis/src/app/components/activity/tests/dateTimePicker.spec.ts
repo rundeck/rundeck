@@ -82,7 +82,7 @@ describe("DateTimePicker.vue", () => {
     expect(timePicker.attributes("role")).toBe("combobox");
 
     const receivedTime = new Date(
-      timePicker.attributes("modelvalue"),
+      timePicker.attributes("modelvalue")!,
     ).toISOString();
 
     const expectedTime = new Date(wrapper.vm.time).toISOString();
