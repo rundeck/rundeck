@@ -83,12 +83,12 @@ const generateTemplate = (args: Record<string, any>) => {
 
 export const Default: Story = {
   render: (args: OptionItemArgs) => ({
-    props: Object.keys(args),
+    props: Object.keys(args || {}),
     components: { OptionItem },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {},
   parameters: {},
@@ -96,12 +96,12 @@ export const Default: Story = {
 
 export const TypeMultiLine: Story = {
   render: (args: OptionItemArgs) => ({
-    props: Object.keys(args),
+    props: Object.keys(args || {}),
     components: { OptionItem },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {
@@ -116,12 +116,12 @@ export const TypeMultiLine: Story = {
 
 export const TypeFile: Story = {
   render: (args: OptionItemArgs) => ({
-    props: Object.keys(args),
+    props: Object.keys(args || {}),
     components: { OptionItem },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {

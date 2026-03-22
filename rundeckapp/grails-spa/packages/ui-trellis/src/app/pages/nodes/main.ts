@@ -21,7 +21,7 @@ const FilterInputComp = defineComponent({
       queryFieldPlaceholderText: this.itemData["queryFieldPlaceholderText"],
       koFieldName: this.itemData["koFieldName"],
       koParam: this.itemData["koParam"],
-      subs: [],
+      subs: [] as any[],
     };
   },
   computed: {

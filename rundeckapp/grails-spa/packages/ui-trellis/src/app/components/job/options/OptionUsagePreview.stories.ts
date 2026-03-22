@@ -56,24 +56,24 @@ const generateTemplate = (args: Record<string, any>) => {
 
 export const Default: Story = {
   render: (args: OptionUsagePreviewArgs) => ({
-    props: Object.keys(args),
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {},
   parameters: {},
 };
 export const Secure: Story = {
   render: (args: OptionUsagePreviewArgs) => ({
-    props: Object.keys(args),
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {
@@ -86,12 +86,12 @@ export const Secure: Story = {
 
 export const PlaintextWithPasswordInput: Story = {
   render: (args: OptionUsagePreviewArgs) => ({
-    props: Object.keys(args),
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {
@@ -105,12 +105,12 @@ export const PlaintextWithPasswordInput: Story = {
 
 export const TypeFile: Story = {
   render: (args: OptionUsagePreviewArgs) => ({
-    props: Object.keys(args),
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {
@@ -123,12 +123,12 @@ export const TypeFile: Story = {
 };
 export const TypeMultiline: Story = {
   render: (args: OptionUsagePreviewArgs) => ({
-    props: Object.keys(args),
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {

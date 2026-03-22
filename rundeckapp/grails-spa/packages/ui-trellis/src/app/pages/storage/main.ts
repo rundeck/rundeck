@@ -26,4 +26,6 @@ vue.provide("addUiMessages", async (messages: UiMessage[]) => {
   const lang = window._rundeck.language || "en";
   return updateLocaleMessages(i18n, locale, lang, newMessages);
 });
-vue.mount(elm);
+if (elm) {
+  vue.mount(elm);
+}
