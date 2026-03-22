@@ -61,7 +61,7 @@ describe("DetailsEditor.vue", () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.emitted("update:modelValue")).toBeTruthy();
-    expect(wrapper.emitted("update:modelValue")[0]).toEqual([
+    expect(wrapper.emitted("update:modelValue")![0]).toEqual([
       expect.objectContaining({
         description: "newDescription",
         groupPath: "testGroup/newGroup",

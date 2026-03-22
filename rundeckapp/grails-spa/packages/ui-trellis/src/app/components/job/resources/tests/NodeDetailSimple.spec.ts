@@ -124,8 +124,8 @@ describe("NodeDetailsSimple Component", () => {
     const wrapper = await mountNodeDetailsSimple();
     const tags = wrapper.findAll(".label-muted");
     expect(tags.length).toBe(2);
-    expect(tags.at(0).text()).toContain("Tag1");
-    expect(tags.at(1).text()).toContain("Tag2");
+    expect(tags.at(0)!.text()).toContain("Tag1");
+    expect(tags.at(1)!.text()).toContain("Tag2");
   });
 
   it("renders expandable attributes using class", async () => {

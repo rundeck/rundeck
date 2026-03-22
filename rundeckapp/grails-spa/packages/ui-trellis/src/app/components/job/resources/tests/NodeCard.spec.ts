@@ -105,13 +105,13 @@ describe("NodeCard Component", () => {
       const wrapper = await mountNodeCard();
       const tags = wrapper.findAll(".label-muted");
       expect(tags.length).toBe(mockNodeSummary.tags.length);
-      expect(tags.at(0).text()).toContain("Tag1 (5)");
-      expect(tags.at(1).text()).toContain("Tag2 (3)");
+      expect(tags.at(0)!.text()).toContain("Tag1 (5)");
+      expect(tags.at(1)!.text()).toContain("Tag2 (3)");
     });
     it("emits filter event when a tag is clicked", async () => {
       const wrapper = await mountNodeCard();
       const tagLink = wrapper.findAllComponents(NodeFilterLink).at(0);
-      await tagLink.trigger("click");
+      await tagLink!.trigger("click");
       const emittedEvent = wrapper.emitted().filter;
       expect(emittedEvent).toBeTruthy();
       expect(emittedEvent.length).toBe(1);

@@ -104,10 +104,10 @@ describe("ExecutionEditor", () => {
 
     // as checkboxes were clicked first and then the plugin data updated, update:modelValue is triggered at first with empty objects
     // therefore for will check that the last event emitted has all the plugin data
-    const numberOfEventsEmitted = wrapper.emitted("update:modelValue").length;
+    const numberOfEventsEmitted = wrapper.emitted("update:modelValue")!.length;
 
     expect(
-      wrapper.emitted("update:modelValue")[numberOfEventsEmitted - 1],
+      wrapper.emitted("update:modelValue")![numberOfEventsEmitted - 1],
     ).toEqual([
       expect.objectContaining({
         ExecutionLifecycle: executionLifecycle,

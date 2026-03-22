@@ -160,7 +160,7 @@ describe("WorkflowSteps", () => {
       editModal.vm.$emit("save");
 
       await flushPromises();
-      expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
+      expect(wrapper.emitted("update:modelValue")![1][0]).toEqual({
         commands: [
           {
             configuration: {
@@ -188,7 +188,7 @@ describe("WorkflowSteps", () => {
       const mockEventBus = getRundeckContext().eventBus;
       const removeButton = wrapper.find('[data-test="remove-step"]');
       await removeButton.trigger("click");
-      expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
+      expect(wrapper.emitted("update:modelValue")![1][0]).toEqual({
         commands: [],
       });
       expect(mockEventBus.emit).toBeCalledWith(
@@ -214,7 +214,7 @@ describe("WorkflowSteps", () => {
       editModal.vm.$emit("save");
       await flushPromises();
 
-      expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
+      expect(wrapper.emitted("update:modelValue")![1][0]).toEqual({
         commands: [
           {
             description: "echo test",
@@ -240,7 +240,7 @@ describe("WorkflowSteps", () => {
       const duplicateBtn = wrapper.find("[title='Workflow.duplicateStep']");
       await duplicateBtn.trigger("click");
 
-      const emitted = wrapper.emitted("update:modelValue")[1][0];
+      const emitted = wrapper.emitted("update:modelValue")![1][0];
       expect(emitted["commands"]).toHaveLength(2);
       expect(emitted["commands"]).toEqual([
         { ...baseCommand, nodeStep: true },
@@ -357,7 +357,7 @@ describe("WorkflowSteps", () => {
         await flushPromises();
 
         expect(
-          wrapper.emitted("update:modelValue")[1][0]["commands"][0],
+          wrapper.emitted("update:modelValue")![1][0]!["commands"][0],
         ).toMatchObject({
           ...baseCommand,
           errorhandler: {
@@ -387,7 +387,7 @@ describe("WorkflowSteps", () => {
       editModal.vm.$emit("save");
       await flushPromises();
 
-      expect(wrapper.emitted("update:modelValue")[1][0]["commands"]).toEqual([
+      expect(wrapper.emitted("update:modelValue")![1][0]!["commands"]).toEqual([
         { ...baseCommand, nodeStep: true },
         {
           description: "echo test",
