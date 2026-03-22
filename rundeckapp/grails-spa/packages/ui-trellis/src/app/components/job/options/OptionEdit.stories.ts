@@ -7,6 +7,7 @@ import { RootStore } from "../../../../library/stores/RootStore";
 import OptionEdit from "./OptionEdit.vue";
 import { JobOption } from "../../../../library/types/jobs/JobEdit";
 import { EventBus } from "../../../../library/utilities/vueEventBus";
+import { RundeckBrowser } from "@rundeck/client";
 import * as uiv from "uiv";
 
 setup((app) => {

@@ -34,7 +34,7 @@ function init() {
 
             jobPageStore
               .getJobBrowser()
-              .loadJobMeta(scmItemData.job.id)
+              .loadJobMeta(scmItemData.job.id!)
               .then((jobMeta) => {
                 scmItemData.job.meta = jobMeta;
                 loading.value = false;

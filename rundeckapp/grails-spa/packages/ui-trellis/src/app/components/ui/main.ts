@@ -85,7 +85,7 @@ function initUiComponents(elmElement: any) {
   try {
     vue.mount(elmElement);
   } catch (e) {
-    console.error("Error mounting vue app", e.message, e);
+    console.error("Error mounting vue app", (e as Error).message, e);
   }
   rootStore.ui.registerComponent = vue.component;
 }
