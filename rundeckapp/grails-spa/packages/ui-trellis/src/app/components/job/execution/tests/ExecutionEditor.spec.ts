@@ -93,7 +93,8 @@ describe("ExecutionEditor", () => {
     // emitting data from pluginConfig that differs from the original data, to simulate editing behaviour
     const pluginConfigs = wrapper.findAllComponents(PluginConfig);
     pluginConfigs.forEach((pluginComponent) => {
-      const configToEmit = executionLifecycle[pluginComponent.vm.provider];
+      const provider = pluginComponent.vm.provider as keyof typeof executionLifecycle;
+      const configToEmit = executionLifecycle[provider];
       pluginComponent.vm.$emit("update:modelValue", {
         config: configToEmit,
         type: undefined,

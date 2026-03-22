@@ -240,7 +240,7 @@ describe("WorkflowSteps", () => {
       const duplicateBtn = wrapper.find("[title='Workflow.duplicateStep']");
       await duplicateBtn.trigger("click");
 
-      const emitted = wrapper.emitted("update:modelValue")![1][0];
+      const emitted = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
       expect(emitted["commands"]).toHaveLength(2);
       expect(emitted["commands"]).toEqual([
         { ...baseCommand, nodeStep: true },
@@ -356,8 +356,9 @@ describe("WorkflowSteps", () => {
         editModal.vm.$emit("save");
         await flushPromises();
 
+        const emittedValue = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
         expect(
-          wrapper.emitted("update:modelValue")![1][0]!["commands"][0],
+          (emittedValue["commands"] as unknown[])[0],
         ).toMatchObject({
           ...baseCommand,
           errorhandler: {
@@ -387,7 +388,8 @@ describe("WorkflowSteps", () => {
       editModal.vm.$emit("save");
       await flushPromises();
 
-      expect(wrapper.emitted("update:modelValue")![1][0]!["commands"]).toEqual([
+      const emittedValue = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
+      expect(emittedValue["commands"]).toEqual([
         { ...baseCommand, nodeStep: true },
         {
           description: "echo test",

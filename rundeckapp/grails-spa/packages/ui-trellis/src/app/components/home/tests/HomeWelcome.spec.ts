@@ -33,7 +33,7 @@ const mountHomeWelcome = async (
           }
           return messages[baseString].replace(
             /{(\d+)}/g,
-            (match: string, index: string) => replacements[index],
+            (match: string, index: string) => replacements[parseInt(index)],
           );
         },
       },

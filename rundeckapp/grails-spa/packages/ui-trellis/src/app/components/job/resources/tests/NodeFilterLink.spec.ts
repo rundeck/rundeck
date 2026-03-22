@@ -27,7 +27,7 @@ describe("NodeFilterLink Component", () => {
     };
   });
   afterAll(() => {
-    delete window._rundeck;
+    Reflect.deleteProperty(window, '_rundeck');
   });
   const mountNodeFilterLink = async (propsData = {}) => {
     const wrapper = mount(NodeFilterLink, {
