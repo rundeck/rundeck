@@ -148,14 +148,15 @@ describe("NodeDetailsSimple Component", () => {
       "[data-testid='node-attribute-link-hostname']",
     );
     await usernameLink.trigger("click");
-    expect(wrapper.emitted().filter).toBeTruthy();
-    expect(wrapper.emitted().filter[0][0]).toEqual({
+    const filterEmitted = wrapper.emitted("filter");
+    expect(filterEmitted).toBeTruthy();
+    expect(filterEmitted![0][0]).toEqual({
       filter: 'username: "user"',
     });
     await hostnameLink.trigger("click");
-    expect(wrapper.emitted().filter).toBeTruthy();
-    expect(wrapper.emitted().filter.length).toBe(2);
-    expect(wrapper.emitted().filter[1][0]).toEqual({
+    expect(filterEmitted).toBeTruthy();
+    expect(filterEmitted!.length).toBe(2);
+    expect(filterEmitted![1][0]).toEqual({
       filter: 'hostname: "host"',
     });
   });

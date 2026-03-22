@@ -47,8 +47,9 @@ describe("NodeFilterLink Component", () => {
     const wrapper = await mountNodeFilterLink();
     await wrapper.trigger("click");
     await wrapper.vm.$nextTick();
-    expect(wrapper.emitted().nodefilterclick).toBeTruthy();
-    expect(wrapper.emitted().nodefilterclick[0][0]).toEqual({
+    const emitted = wrapper.emitted("nodefilterclick");
+    expect(emitted).toBeTruthy();
+    expect(emitted![0][0]).toEqual({
       filter: 'tags: "testTag"',
     });
   });
@@ -65,7 +66,8 @@ describe("NodeFilterLink Component", () => {
     const wrapper = await mountNodeFilterLink({ exclude: true });
     await wrapper.trigger("click");
     await wrapper.vm.$nextTick();
-    expect(wrapper.emitted().nodefilterclick[0][0]).toEqual({
+    const emitted = wrapper.emitted("nodefilterclick");
+    expect(emitted![0][0]).toEqual({
       filterExclude: 'tags: "testTag"',
     });
   });
@@ -80,7 +82,8 @@ describe("NodeFilterLink Component", () => {
     });
     await wrapper.trigger("click");
     await wrapper.vm.$nextTick();
-    expect(wrapper.emitted().nodefilterclick[0][0]).toEqual({
+    const emitted = wrapper.emitted("nodefilterclick");
+    expect(emitted![0][0]).toEqual({
       filter: "hostname: node1",
     });
   });
