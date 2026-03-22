@@ -86,7 +86,7 @@ A comprehensive form component for creating and editing job options in Rundeck. 
         eventBus: {} as typeof EventBus,
         activeTour: "",
         activeTourStep: "",
-        rundeckClient: null,
+        rundeckClient: {} as RundeckBrowser,
       };
     },
   },
@@ -257,7 +257,7 @@ export const Playground: Story = {
   render: (args: OptionEditArgs) => ({
     components: { OptionEdit },
     setup() {
-      const optionData = ref(args.modelValue);
+      const optionData = ref(args?.modelValue);
 
       const onSave = () => {
         console.log("Save clicked", optionData.value);

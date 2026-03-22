@@ -3,7 +3,7 @@ import { getRundeckContext } from "../../../../../library";
 
 import moment from "moment";
 import JobScmStatus from "@/app/pages/job/browse/tree/JobScmStatus.vue";
-import { JobBrowseMeta } from "../../../../../library/types/jobs/JobBrowse";
+import { JobBrowseItem, JobBrowseMeta } from "../../../../../library/types/jobs/JobBrowse";
 
 function init() {
   const rootStore = getRundeckContext().rootStore;
@@ -28,8 +28,7 @@ function init() {
                 job: true,
                 groupPath: "",
                 id: props.itemData.jobUuid,
-                meta: undefined,
-              },
+              } as JobBrowseItem,
             });
             let loading = ref(true);
 

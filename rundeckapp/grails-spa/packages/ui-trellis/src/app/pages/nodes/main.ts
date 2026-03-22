@@ -159,11 +159,11 @@ function init() {
           methods: {
             updateNodeFilter(val: any) {
               const filterName = val && val.filter ? val.filter : val;
-              if (filterName === ".*" || this.nodeFilterStore.filter === ".*") {
+              if (filterName === ".*" || this.nodeFilterStore.selectedFilter === ".*") {
                 this.nodeFilterStore.setSelectedFilter(filterName);
               } else {
                 this.nodeFilterStore.setSelectedFilter(
-                  [this.nodeFilterStore.filter, filterName].join(" "),
+                  [this.nodeFilterStore.selectedFilter, filterName].join(" "),
                 );
               }
             },
