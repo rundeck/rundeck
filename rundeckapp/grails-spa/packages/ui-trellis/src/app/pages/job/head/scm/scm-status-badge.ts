@@ -3,6 +3,7 @@ import { getRundeckContext } from "../../../../../library";
 
 import moment from "moment";
 import JobScmStatus from "@/app/pages/job/browse/tree/JobScmStatus.vue";
+import { JobBrowseMeta } from "../../../../../library/types/jobs/JobBrowse";
 
 function init() {
   const rootStore = getRundeckContext().rootStore;

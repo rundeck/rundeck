@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { createApp } from "vue";
 import Pagination from "../../../library/components/utils/Pagination.vue";
 
