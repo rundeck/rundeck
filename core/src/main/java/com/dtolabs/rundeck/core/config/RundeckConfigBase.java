@@ -458,6 +458,7 @@ public class RundeckConfigBase {
         Enabled defaultExecutionCleanup = new Enabled();
         Enabled earlyAccessJobConditional = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
+        Enabled pluginGroups = new Enabled(true);
 
         @Data
         public static class Repository {

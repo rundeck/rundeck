@@ -31,6 +31,7 @@ public enum Features implements FeaturesDefinition{
     NOTIFICATIONS_OWN_THREAD("notificationsOwnThread"),
     PLUGIN_SECURITY("pluginSecurity"),
     FILE_UPLOAD_PLUGIN("fileUploadPlugin"),
+    PLUGIN_GROUPS("pluginGroups"),
     LEGACY_UI("legacyUi"),
     LEGACY_XML("legacyXml"),
     CASE_INSENSITIVE_USERNAME("caseInsensitiveUsername"),
