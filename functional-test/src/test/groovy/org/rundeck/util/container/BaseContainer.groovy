@@ -713,6 +713,26 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     /**
+     * Returns all system configuration entries from the Configuration Management API
+     * (config/list endpoint) as a map of property name to value.
+     * Requires Rundeck Enterprise and admin API access.
+     *
+     * @return map of {@code name} to {@code value}; if the same name appears more than once, the last entry wins
+     */
+    Map<String, String> getSystemConfigProperties() {
+        List<Map> entries = get("/config/list", List)
+        Map<String, String> result = new LinkedHashMap<>()
+        entries.each { Map entry ->
+            def name = entry?.get('name')
+            if (name != null) {
+                def v = entry.get('value')
+                result[name.toString()] = v != null ? v.toString() : null
+            }
+        }
+        return result
+    }
+
+    /**
      * Maps successful  responses to the specified type.
      * Successful responses are the ones that fall into the [200..300) range.
      *  Unsuccessful responses are passed to the unsuccessfulResponseHandler.
