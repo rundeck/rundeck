@@ -508,8 +508,10 @@ export default defineComponent({
             this.inputValues[prop.name] === "true"
           ) {
             values[prop.name] = "true";
-          } else if (prop.defaultValue === "true") {
-            //explicit value set if the default would be true
+          } else if (
+            prop.defaultValue === "true" ||
+            this.inputValues[prop.name] === false
+          ) {
             values[prop.name] = "false";
           }
         } else {
