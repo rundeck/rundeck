@@ -4911,5 +4911,39 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
     }
 
+    def "apiJobBrowse uses resolveJobBrowseMetaKeys when metaExclude is set"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _) >> true
+            requireApi(_, _, 46) >> true
+            requireApi(_, _, 54) >> false
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+        }
+        def query = new RdJobQueryInput()
+        params.project = 'test'
+        params.metaExclude = 'stats'
+        request.method = 'GET'
+        request.api_version = 46
+        request.subject = new Subject()
+        session.subject = new Subject()
+
+        when:
+        controller.apiJobBrowse('test', '', '*', null, null, query)
+
+        then:
+        1 * controller.scheduledExecutionService.basicQueryJobs('test', _, _) >> []
+        1 * controller.scheduledExecutionService.resolveJobBrowseMetaKeys('*', 'stats') >> ['authz', 'schedule'].toSet()
+        1 * controller.scheduledExecutionService.loadJobMetaItems(
+            'test',
+            '',
+            ['authz', 'schedule'].toSet(),
+            [],
+            _,
+        ) >> [:]
+    }
+
 }
 
