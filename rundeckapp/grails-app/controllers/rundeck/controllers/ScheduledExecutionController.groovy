@@ -45,6 +45,7 @@ import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
+import groovy.transform.CompileDynamic
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
@@ -6229,7 +6230,7 @@ Since: v46''',
         @Parameter(
             name = 'metaExclude',
             in = ParameterIn.QUERY,
-            description = '''Since API v58: Comma-separated metadata names to omit. When set, if meta includes "*", 
+            description = '''Since API v58: Comma-separated metadata names to omit. Ignored when the request API version is below 58. When set, if meta includes "*", 
 it is expanded to all names from registered JobMetadataComponent beans, then exclusions are applied (literal "*" is not passed to loaders). 
 For an explicit meta list, excluded names are removed from that list.''',
             schema = @Schema(type = 'string')
@@ -6268,7 +6269,12 @@ Since: v46''',
             ]
         ),
         parameters = [
-
+            @Parameter(
+                name = 'metaExclude',
+                in = ParameterIn.QUERY,
+                description = '''Since API v58: Same as GET /project/{project}/jobs/browse. Ignored when the request API version is below 58.''',
+                schema = @Schema(type = 'string')
+            )
         ],
         responses = [
             @ApiResponse(
@@ -6318,7 +6324,15 @@ breakpoint are available, no metadata will be loaded''',
             description = 'Since v54: Maximum number of jobs to retrieve. If not specified, all jobs will be returned.',
             schema = @Schema(type = 'integer')
         ) Integer max,
-        @Parameter(hidden = true) RdJobQueryInput query
+        @Parameter(hidden = true) RdJobQueryInput query,
+        @Parameter(
+            name = 'metaExclude',
+            in = ParameterIn.QUERY,
+            description = '''Since API v58: Comma-separated metadata names to omit. Ignored when the request API version is below 58. When set, if meta includes "*", 
+it is expanded to all names from registered JobMetadataComponent beans, then exclusions are applied (literal "*" is not passed to loaders). 
+For an explicit meta list, excluded names are removed from that list.''',
+            schema = @Schema(type = 'string')
+        ) String metaExclude
     ) {
         if (!apiService.requireApi(request, response, ApiVersions.V46)) {
             return
@@ -6338,7 +6352,11 @@ breakpoint are available, no metadata will be loaded''',
         Map<String, List<ItemMeta>> jobMetaItems = [:]
         if (meta && (!breakpoint || breakpoint>result.size())) {
             Set<String> metaKeys
-            String metaExcludeParam = params.get('metaExclude') as String
+            Integer apiVer = parseRequestApiVersion()
+            String metaExcludeParam = null
+            if (apiVer != null && apiVer >= ApiVersions.V58) {
+                metaExcludeParam = (metaExclude ?: params.get('metaExclude')) as String
+            }
             if (metaExcludeParam?.trim()) {
                 metaKeys = scheduledExecutionService.resolveJobBrowseMetaKeys(meta, metaExcludeParam.trim())
             } else {
@@ -6408,7 +6426,7 @@ Since: v46''',
         @Parameter(
             name = 'metaExclude',
             in = ParameterIn.QUERY,
-            description = '''Since API v58: Comma-separated metadata names to omit. When set, if meta includes "*", 
+            description = '''Since API v58: Comma-separated metadata names to omit. Ignored when the request API version is below 58. When set, if meta includes "*", 
 it is expanded to all names from registered JobMetadataComponent beans, then exclusions are applied.''',
             schema = @Schema(type = 'string')
         ) String metaExclude
@@ -6421,7 +6439,11 @@ it is expanded to all names from registered JobMetadataComponent beans, then exc
         }
         def job = authorizingJob
         Set<String> metaKeys
-        String metaExcludeParam = (metaExclude ?: params.metaExclude) as String
+        Integer apiVer = parseRequestApiVersion()
+        String metaExcludeParam = null
+        if (apiVer != null && apiVer >= ApiVersions.V58) {
+            metaExcludeParam = (metaExclude ?: params.metaExclude) as String
+        }
         if (metaExcludeParam?.trim()) {
             metaKeys = scheduledExecutionService.resolveJobBrowseMetaKeys(meta, metaExcludeParam.trim())
         } else {
@@ -6434,6 +6456,21 @@ it is expanded to all names from registered JobMetadataComponent beans, then exc
         ) : []
 
         respond result
+    }
+
+    /**
+     * Request API version (e.g. from /api/{version}/...), for versioned query parameters.
+     */
+    @CompileDynamic
+    protected Integer parseRequestApiVersion() {
+        def rav = request?.api_version
+        if (rav instanceof Integer) {
+            return (Integer) rav
+        }
+        if (rav instanceof String && rav.isInteger()) {
+            return Integer.valueOf(rav)
+        }
+        return null
     }
 
 }
