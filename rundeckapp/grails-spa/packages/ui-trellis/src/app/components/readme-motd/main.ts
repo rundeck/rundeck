@@ -1,6 +1,5 @@
 import { defineComponent, markRaw } from "vue";
 import { getRundeckContext } from "../../../library";
-import { UiMessage } from "../../../library/stores/UIStore";
 import EditProjectFile from "./EditProjectFile.vue";
 
 import messages from "./i18n";

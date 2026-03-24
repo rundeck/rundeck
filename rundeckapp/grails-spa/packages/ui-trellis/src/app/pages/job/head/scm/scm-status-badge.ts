@@ -1,9 +1,9 @@
-import { defineComponent, markRaw, provide, reactive, ref } from "vue";
+import { defineComponent, markRaw, reactive, ref } from "vue";
 import { getRundeckContext } from "../../../../../library";
 
 import moment from "moment";
 import JobScmStatus from "@/app/pages/job/browse/tree/JobScmStatus.vue";
-import { JobBrowseItem, JobBrowseMeta } from "../../../../../library/types/jobs/JobBrowse";
+import { JobBrowseItem } from "../../../../../library/types/jobs/JobBrowse";
 
 function init() {
   const rootStore = getRundeckContext().rootStore;
