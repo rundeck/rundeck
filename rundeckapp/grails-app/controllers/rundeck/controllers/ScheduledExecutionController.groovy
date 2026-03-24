@@ -6346,6 +6346,14 @@ Since: v46''',
             schema = @Schema(type = 'string')
         ) String meta,
         @Parameter(
+            name = 'metaExclude',
+            in = ParameterIn.QUERY,
+            description = '''Since API v58: Comma-separated metadata names to omit. When set, if meta includes "*", 
+it is expanded to all names from registered JobMetadataComponent beans, then exclusions are applied (literal "*" is not passed to loaders). 
+For an explicit meta list, excluded names are removed from that list.''',
+            schema = @Schema(type = 'string')
+        ) String metaExclude,
+        @Parameter(
             name = 'breakpoint',
             in = ParameterIn.QUERY,
             description = '''Breakpoint, max number of jobs to load with metadata, if more results than the 
@@ -6361,6 +6369,8 @@ breakpoint are available, no metadata will be loaded''',
         summary = 'Project Job Group browse',
         description = '''Query the jobs at a specific group path. Response includes the list of immediate jobs matching the query in the exact path, 
 and the names of job Groups starting at that path.
+
+Query parameters `meta`, `metaExclude`, `breakpoint`, and `max` are the same as for the GET jobs browse endpoint. Since API v58, optional `metaExclude` omits metadata keys after resolving `meta` (including expanding `*`).
 
 Authorization required: `read` or `view` for the Jobs.
 
@@ -6449,16 +6459,22 @@ breakpoint are available, no metadata will be loaded''',
         )
         Map<String, List<ItemMeta>> jobMetaItems = [:]
         if (meta && (!breakpoint || breakpoint>result.size())) {
-            //long start = System.currentTimeMillis()
-            jobMetaItems = scheduledExecutionService.loadJobMetaItems(
-                project,
-                path,
-                new HashSet<>(meta.split(',').toList()),
-                result,
-                projectAuthContext
-            )
-            //long end=System.currentTimeMillis()-start
-//            log.warn("Loaded ${jobMetaItems.size()} job metadata items in ${end}ms")
+            Set<String> metaKeys
+            String metaExcludeParam = params.get('metaExclude') as String
+            if (metaExcludeParam?.trim()) {
+                metaKeys = scheduledExecutionService.resolveJobBrowseMetaKeys(meta, metaExcludeParam.trim())
+            } else {
+                metaKeys = new HashSet<>(meta.split(',').toList())
+            }
+            if (metaKeys) {
+                jobMetaItems = scheduledExecutionService.loadJobMetaItems(
+                    project,
+                    path,
+                    metaKeys,
+                    result,
+                    projectAuthContext
+                )
+            }
         }
         respond(
             new JobBrowseResponse(
@@ -6507,7 +6523,14 @@ Since: v46''',
             in = ParameterIn.QUERY,
             description = 'Comma-separated list of metadata item names to include, or "*" for all (default)',
             schema = @Schema(type = 'string')
-        ) String meta
+        ) String meta,
+        @Parameter(
+            name = 'metaExclude',
+            in = ParameterIn.QUERY,
+            description = '''Since API v58: Comma-separated metadata names to omit. When set, if meta includes "*", 
+it is expanded to all names from registered JobMetadataComponent beans, then exclusions are applied.''',
+            schema = @Schema(type = 'string')
+        ) String metaExclude
     ) {
         if (!apiService.requireApi(request, response, ApiVersions.V46)) {
             return
@@ -6516,11 +6539,18 @@ Since: v46''',
             meta = '*'
         }
         def job = authorizingJob
-        def result = scheduledExecutionService.loadJobMetaItems(
-            new HashSet<>(meta.split(',').toList()),
+        Set<String> metaKeys
+        String metaExcludeParam = (metaExclude ?: params.metaExclude) as String
+        if (metaExcludeParam?.trim()) {
+            metaKeys = scheduledExecutionService.resolveJobBrowseMetaKeys(meta, metaExcludeParam.trim())
+        } else {
+            metaKeys = new HashSet<>(meta.split(',').toList())
+        }
+        def result = metaKeys ? scheduledExecutionService.loadJobMetaItems(
+            metaKeys,
             id,
             rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(getSubject(), job.resource.project)
-        )
+        ) : []
 
         respond result
     }

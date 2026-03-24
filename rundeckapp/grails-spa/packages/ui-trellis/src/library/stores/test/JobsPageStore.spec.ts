@@ -284,6 +284,12 @@ describe('JobPageStore', () => {
             const browser2 = store.getJobBrowser();
             expect(browser1).toBe(browser2);
         });
+
+        it('should default job browser metaExclude to stats for browse API', () => {
+            const browser = store.getJobBrowser();
+            expect(browser.meta).toBe('*');
+            expect(browser.metaExclude).toBe('stats');
+        });
     });
 
     describe('loadProjAuthz', () => {
