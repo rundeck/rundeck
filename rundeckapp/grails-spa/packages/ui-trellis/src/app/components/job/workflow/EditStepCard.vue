@@ -284,10 +284,25 @@ export default defineComponent({
   },
   methods: {
     handleSave() {
-      // Merge description back into editModel before emitting
+      if (this.isJobRef) {
+        const saveData = {
+          ...cloneDeep(this.modelValue),
+          description: this.stepDescription,
+          type: this.editModel.type,
+          nodeStep: this.editModel.nodeStep,
+          config: this.editModel.config ?? {},
+          jobref: cloneDeep(this.editModel.jobref),
+        };
+        this.$emit("update:modelValue", saveData);
+        this.$emit("save");
+        return;
+      }
+
       const saveData = {
-        ...this.editModel,
+        ...cloneDeep(this.modelValue),
         description: this.stepDescription,
+        type: this.editModel.type,
+        config: this.editModel.config ?? {},
       };
       this.$emit("update:modelValue", saveData);
       this.$emit("save");

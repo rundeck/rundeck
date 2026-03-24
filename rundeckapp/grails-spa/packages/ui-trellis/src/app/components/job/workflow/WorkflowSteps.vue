@@ -543,7 +543,19 @@ export default defineComponent({
             saveData.description = this.editModel.description;
           }
           if (!stepForValidation.jobref && !this.isErrorHandler) {
-            saveData.filters = [];
+            if (saveData.filters == null) {
+              saveData.filters =
+                this.editExtra?.filters != null
+                  ? cloneDeep(this.editExtra.filters)
+                  : [];
+            } else if (
+              Array.isArray(saveData.filters) &&
+              saveData.filters.length === 0 &&
+              Array.isArray(this.editExtra?.filters) &&
+              this.editExtra.filters.length > 0
+            ) {
+              saveData.filters = cloneDeep(this.editExtra.filters);
+            }
           }
           this.handleSuccessOnValidation(saveData);
         } else {
