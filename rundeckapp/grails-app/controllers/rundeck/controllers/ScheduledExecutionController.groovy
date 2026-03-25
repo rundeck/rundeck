@@ -1256,10 +1256,7 @@ Since: V14''',
             )
         )
     )
-    protected def apiFlipExecutionDisabled() {
-        params.status = false
-        return apiFlipExecutionEnabled()
-    }
+    protected def apiFlipExecutionDisabled(){}
 
     @Post(uri = '/job/{id}/execution/enable')
     @Operation(
@@ -1373,10 +1370,7 @@ Since: V14''',
             )
         )
     )
-    protected def apiFlipScheduleDisabled() {
-        params.status = false
-        return apiFlipScheduleEnabled()
-    }
+    protected def apiFlipScheduleDisabled() {}
 
     @Post(uri = '/job/{id}/schedule/enable')
     @Operation(
@@ -1737,10 +1731,7 @@ Failed results will contain:
             )
         )
             ApiBulkJobDeleteRequest deleteRequest
-    ) {
-        params.status = false
-        return apiFlipExecutionEnabledBulk(deleteRequest)
-    }
+    ){}
 
     @Post(uri='/jobs/execution/enable')
     @Operation(
@@ -1959,10 +1950,7 @@ Failed results will contain:
             )
         )
             ApiBulkJobDeleteRequest deleteRequest
-    ) {
-        params.status = false
-        return apiFlipScheduleEnabledBulk(deleteRequest)
-    }
+    ){}
 
     @Post(uri='/jobs/schedule/enable')
     @Operation(
