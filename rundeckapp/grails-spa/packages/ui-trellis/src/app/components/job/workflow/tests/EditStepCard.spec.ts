@@ -5,8 +5,8 @@ import { shallowMount, flushPromises, VueWrapper } from "@vue/test-utils";
 const mockGetServiceProviderDescription = jest.fn();
 
 jest.mock("@/library/modules/pluginService", () => ({
-  getServiceProviderDescription: (...args: any[]) =>
-    mockGetServiceProviderDescription(...args),
+  getServiceProviderDescription: (svcName: string, provider: string) =>
+    mockGetServiceProviderDescription(svcName, provider),
   validatePluginConfig: jest.fn(),
   getPluginProvidersForService: jest.fn(),
 }));
@@ -77,6 +77,10 @@ jest.mock("@/app/utilities/loadJsonData", () => ({
 }));
 
 // --- Import component after mocks ---
+import type { EditStepData } from "../types/workflowTypes";
+import type { PluginConfig } from "../../../../../library/interfaces/PluginConfig";
+import type { ContextVariable } from "../../../../../library/stores/contextVariables";
+import type { PluginDetails } from "../stepEditorUtils";
 import EditStepCard from "../EditStepCard.vue";
 
 // BaseStepCard must render its slots for the test to see inner content.
@@ -103,6 +107,7 @@ const JobRefFormFieldsStub = {
   emits: ['update:modelValue'],
 };
 
+/** Minimal shell so EditStepCard mounts; plugin behavior is driven via $emit in tests when full plugin-config setup is not feasible. */
 const pluginConfigStub = {
   name: "pluginConfig",
   template: `<div data-testid="plugin-info"></div>`,
@@ -133,10 +138,21 @@ const PtInputStub = {
   props: ["modelValue", "placeholder"],
 };
 
+type EditStepCardTestProps = {
+  modelValue?: EditStepData;
+  serviceName?: string;
+  pluginDetails?: PluginDetails | null;
+  validation?: { valid: boolean; errors: Record<string, string> };
+  extraAutocompleteVars?: ContextVariable[];
+  showNavigation?: boolean;
+  depth?: number;
+  shouldScrollIntoView?: boolean;
+};
+
 // --- Helper to create wrapper ---
 const createWrapper = async (
-  props: Record<string, any> = {},
-): Promise<VueWrapper<any>> => {
+  props: EditStepCardTestProps = {},
+): Promise<VueWrapper<InstanceType<typeof EditStepCard>>> => {
   const wrapper = shallowMount(EditStepCard, {
     props: {
       modelValue: {
@@ -164,11 +180,11 @@ const createWrapper = async (
 };
 
 // --- Mock provider data ---
-const mockPluginProvider = {
-  name: "script-inline",
+const mockPluginProvider: PluginDetails = {
   title: "Inline Script",
   description: "Execute an inline script",
-  props: {},
+  iconUrl: "",
+  tooltip: "",
 };
 
 // --- Tests ---
@@ -232,14 +248,21 @@ describe("EditStepCard", () => {
     });
 
     it("shows loading state while provider is being fetched", async () => {
-      let resolveProvider: (val: any) => void;
+      let resolveProvider!: (value: PluginDetails) => void;
       mockGetServiceProviderDescription.mockReturnValue(
-        new Promise((r) => { resolveProvider = r; }),
+        new Promise<PluginDetails>((resolve) => {
+          resolveProvider = resolve;
+        }),
       );
 
       const wrapper = shallowMount(EditStepCard, {
         props: {
-          modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
+          modelValue: {
+            type: "script-inline",
+            config: {},
+            nodeStep: true,
+            id: "test-1",
+          } satisfies EditStepData,
           serviceName: "WorkflowNodeStep",
         },
         global: {
@@ -280,10 +303,11 @@ describe("EditStepCard", () => {
   });
 
   describe("Job reference step rendering", () => {
-    const jobRefModelValue = {
+    const jobRefModelValue: EditStepData = {
       type: "job.reference",
       id: "test-jobref-1",
       nodeStep: true,
+      config: {},
       description: "Run another job",
       jobref: {
         name: "My Job",
@@ -394,8 +418,39 @@ describe("EditStepCard", () => {
       await wrapper.find('[data-testid="step-description"]').setValue("Updated step name");
       await wrapper.find('[data-testid="save-button"]').trigger("click");
 
-      const emittedData = wrapper.emitted("update:modelValue")![0][0] as any;
+      const emittedData = wrapper.emitted("update:modelValue")![0][0] as EditStepData;
       expect(emittedData.description).toBe("Updated step name");
+    });
+
+    it("keeps log filters on Save when plugin-config emits a narrowed model (filters cleared)", async () => {
+      const filterEntry: PluginConfig = {
+        type: "log-filter",
+        config: { pattern: ".*" },
+      };
+      const modelValue: EditStepData = {
+        type: "script-inline",
+        config: { adhocLocalString: "echo x" },
+        nodeStep: true,
+        id: "step-with-filters",
+        description: "Named step",
+        filters: [filterEntry],
+      };
+      const wrapper = await createWrapper({
+        modelValue,
+        pluginDetails: mockPluginProvider,
+      });
+
+      const pluginCfg = wrapper.findComponent({ name: "pluginConfig" });
+      const current = pluginCfg.props("modelValue") as EditStepData;
+      const narrowed: EditStepData = { ...current, filters: [] };
+      await pluginCfg.vm.$emit("update:modelValue", narrowed);
+      await wrapper.vm.$nextTick();
+
+      await wrapper.find('[data-testid="save-button"]').trigger("click");
+
+      const emittedData = wrapper.emitted("update:modelValue")![0][0] as EditStepData;
+      expect(emittedData.filters).toEqual([filterEntry]);
+      expect(emittedData.id).toBe("step-with-filters");
     });
 
     it("emits save for job reference with valid name", async () => {
@@ -404,6 +459,7 @@ describe("EditStepCard", () => {
           type: "job.reference",
           id: "test-jobref-1",
           nodeStep: true,
+          config: {},
           jobref: { name: "My Job", uuid: "", group: "", project: "testProject", args: "", nodeStep: true },
         },
         serviceName: "WorkflowNodeStep",
@@ -421,6 +477,7 @@ describe("EditStepCard", () => {
           type: "job.reference",
           id: "test-jobref-1",
           nodeStep: true,
+          config: {},
           jobref: { name: "", uuid: "abc-123-def", group: "", project: "testProject", args: "", nodeStep: true },
         },
         serviceName: "WorkflowNodeStep",
@@ -504,7 +561,7 @@ describe("EditStepCard", () => {
       await wrapper.find('[data-testid="step-description"]').setValue("New description");
       await wrapper.find('[data-testid="save-button"]').trigger("click");
 
-      const emittedData = wrapper.emitted("update:modelValue")![0][0] as any;
+      const emittedData = wrapper.emitted("update:modelValue")![0][0] as EditStepData;
       expect(emittedData.description).toBe("New description");
     });
   });
@@ -525,6 +582,7 @@ describe("EditStepCard", () => {
           type: "job.reference",
           id: "test-jobref-1",
           nodeStep: true,
+          config: {},
           jobref: {
             name: "My Job",
             uuid: "",
@@ -569,7 +627,9 @@ describe("EditStepCard", () => {
     });
 
     it("accepts extraAutocompleteVars prop", async () => {
-      const vars = [{ name: "myVar", type: "option", title: "My Var" }];
+      const vars: ContextVariable[] = [
+        { name: "myVar", type: "option", title: "My Var" },
+      ];
       const wrapper = await createWrapper({
         modelValue: { type: "script-inline", config: {}, nodeStep: true, id: "test-1" },
         pluginDetails: mockPluginProvider,
@@ -728,7 +788,7 @@ describe("EditStepCard", () => {
       await wrapper.vm.$nextTick();
       await flushPromises();
 
-      // Clear any mount-time API calls
+      // Clear mount-time API calls
       mockGetServiceProviderDescription.mockClear();
 
       const pluginDetails = {

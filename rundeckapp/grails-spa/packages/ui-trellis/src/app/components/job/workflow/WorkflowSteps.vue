@@ -240,6 +240,7 @@
 import {
   commandsToEditData,
   editCommandsToStepsData,
+  mergePreservedLogFiltersIntoSaveData,
   mkid,
 } from "./types/workflowFuncs";
 import {
@@ -543,7 +544,7 @@ export default defineComponent({
             saveData.description = this.editModel.description;
           }
           if (!stepForValidation.jobref && !this.isErrorHandler) {
-            saveData.filters = [];
+            mergePreservedLogFiltersIntoSaveData(saveData, this.editExtra?.filters);
           }
           this.handleSuccessOnValidation(saveData);
         } else {

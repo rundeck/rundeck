@@ -3,6 +3,7 @@ import {
   commandToEditConfig,
   editCommandsToStepsData,
   editToCommandConfig,
+  mergePreservedLogFiltersIntoSaveData,
   mkid,
 } from "../workflowFuncs";
 import type {
@@ -408,6 +409,37 @@ describe("workflowFuncs", () => {
       const result = editCommandsToStepsData(editData);
 
       expect(result.commands).toEqual([]);
+    });
+  });
+
+  describe("mergePreservedLogFiltersIntoSaveData", () => {
+    it("fills filters from original when saveData.filters is undefined", () => {
+      const orig = [{ type: "mask-passwords", config: {} }] as EditStepData["filters"];
+      const saveData: Pick<EditStepData, "filters"> = {};
+      mergePreservedLogFiltersIntoSaveData(saveData, orig);
+      expect(saveData.filters).toEqual(orig);
+      expect(saveData.filters).not.toBe(orig);
+    });
+
+    it("uses empty array when original has no filters and saveData.filters is undefined", () => {
+      const saveData: Pick<EditStepData, "filters"> = {};
+      mergePreservedLogFiltersIntoSaveData(saveData, undefined);
+      expect(saveData.filters).toEqual([]);
+    });
+
+    it("restores from original when save has empty array but original had filters", () => {
+      const orig = [{ type: "mask-passwords", config: { a: 1 } }] as EditStepData["filters"];
+      const saveData: Pick<EditStepData, "filters"> = { filters: [] };
+      mergePreservedLogFiltersIntoSaveData(saveData, orig);
+      expect(saveData.filters).toEqual(orig);
+    });
+
+    it("does not overwrite when save already has filters", () => {
+      const kept = [{ type: "quiet-output", config: {} }] as EditStepData["filters"];
+      const saveData: Pick<EditStepData, "filters"> = { filters: kept };
+      const orig = [{ type: "mask-passwords", config: {} }] as EditStepData["filters"];
+      mergePreservedLogFiltersIntoSaveData(saveData, orig);
+      expect(saveData.filters).toEqual(kept);
     });
   });
 });
