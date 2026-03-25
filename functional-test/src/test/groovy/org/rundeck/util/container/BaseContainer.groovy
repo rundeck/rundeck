@@ -713,16 +713,31 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     /**
-     * Returns all system configuration entries from the Configuration Management API
-     * (config/list endpoint) as a map of property name to value.
+     * Returns all known system configuration properties as a key-value map by combining
+     * two API endpoints:
+     * <ul>
+     *   <li>{@code /config/metaList} — all known config keys with their default values</li>
+     *   <li>{@code /config/list} — values explicitly stored in the database (overrides)</li>
+     * </ul>
+     * The DB-stored values take precedence over defaults.
      * Requires Rundeck Enterprise and admin API access.
      *
-     * @return map of {@code name} to {@code value}; if the same name appears more than once, the last entry wins
+     * @return ordered map of config key to its effective value ({@code null} when no value
+     *         or default is defined; {@code "*****"} for encrypted fields)
      */
     Map<String, String> getSystemConfigProperties() {
-        List<Map> entries = get("/config/list", List)
+        List<Map> metadata = get("/config/metaList", List)
         Map<String, String> result = new LinkedHashMap<>()
-        entries.each { Map entry ->
+        metadata.each { Map entry ->
+            def key = entry?.get('key')
+            if (key != null) {
+                def v = entry.get('defaultValue')
+                result[key.toString()] = (v != null && v.toString() != '') ? v.toString() : null
+            }
+        }
+
+        List<Map> stored = get("/config/list", List)
+        stored.each { Map entry ->
             def name = entry?.get('name')
             if (name != null) {
                 def v = entry.get('value')
