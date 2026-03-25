@@ -165,7 +165,8 @@
     "axios": "$axios",
     "form-data": "^4.0.4",
     "cross-spawn": "^7.0.6",
-    "glob": "^10.5.0"
+    "glob": "^10.5.0",
+    "underscore": "^1.13.8"
   },
   "jest-junit": {
     "outputDirectory": "./build/test-results",
