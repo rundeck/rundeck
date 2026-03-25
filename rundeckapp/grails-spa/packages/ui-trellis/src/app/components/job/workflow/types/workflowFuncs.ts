@@ -1,3 +1,4 @@
+import { cloneDeep } from "lodash";
 import {
   CommandEditData,
   CommandExecPluginConfig,
@@ -9,6 +10,27 @@ import {
   StepsData,
   StepsEditData,
 } from "./workflowTypes";
+
+/**
+ * When saving a workflow step, plugin edit UIs may omit `filters` or emit `[]` while the step
+ * still had log filters configured. Merge from the original step so filters are not dropped.
+ */
+export function mergePreservedLogFiltersIntoSaveData(
+  saveData: Pick<EditStepData, "filters">,
+  originalFilters: EditStepData["filters"] | undefined | null,
+): void {
+  if (saveData.filters == null) {
+    saveData.filters =
+      originalFilters != null ? cloneDeep(originalFilters) : [];
+  } else if (
+    Array.isArray(saveData.filters) &&
+    saveData.filters.length === 0 &&
+    Array.isArray(originalFilters) &&
+    originalFilters.length > 0
+  ) {
+    saveData.filters = cloneDeep(originalFilters);
+  }
+}
 
 /**
  * Convert input data to edit data format
