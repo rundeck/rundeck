@@ -49,6 +49,18 @@ import java.util.regex.Pattern;
 public class ScriptExecUtil {
 
     /**
+     * Time in milliseconds to wait for stream copy threads to drain buffered output after the
+     * parent process exits before assuming a background process (started via {@code &}) has
+     * inherited the process file descriptors and is keeping the streams open indefinitely.
+     * <p>
+     * When the shell exits normally, any pending output in the kernel pipe buffer is readable
+     * immediately, so legitimate output drains well within this window. If the threads are still
+     * alive after this timeout it means a background child process holds the write-end of a
+     * pipe open, and the streams are forcibly closed to unblock the threads.
+     */
+    static final long STREAM_DRAIN_TIMEOUT_MS = 500;
+
+    /**
      * @return instance of the helper interface
      */
     public static ScriptExecHelper helper() {
@@ -338,18 +350,45 @@ public class ScriptExecUtil {
                 outputStream1.close();
             }
 
-            errthread.join();
-            outthread.join();
-            exec.getInputStream().close();
-            exec.getErrorStream().close();
+            // Give stream threads a brief window to drain any buffered output that
+            // remains in the kernel pipe after the shell process exits. When the shell
+            // exits normally this drains almost instantly.
+            // If threads are still alive after the window it means a background process
+            // (started via '&') has inherited the pipe file descriptors and is keeping
+            // them open indefinitely. In that case, forcibly close the streams to unblock
+            // the threads — this mirrors Ant's PumpStreamHandler behavior, which stopped
+            // stream pumping when the parent process exited rather than waiting for all
+            // descended processes to exit.
+            errthread.join(STREAM_DRAIN_TIMEOUT_MS);
+            outthread.join(STREAM_DRAIN_TIMEOUT_MS);
+
+            final boolean backgroundProcessDetected = errthread.isAlive() || outthread.isAlive();
+            if (backgroundProcessDetected) {
+                // Close streams to release background processes holding inherited FDs.
+                // IOExceptions thrown in the stream threads as a result are expected
+                // ("Stream closed") and should not be treated as errors.
+                try { exec.getInputStream().close(); } catch (IOException ignored) {}
+                try { exec.getErrorStream().close(); } catch (IOException ignored) {}
+                errthread.join();
+                outthread.join();
+            } else {
+                exec.getInputStream().close();
+                exec.getErrorStream().close();
+            }
+
             if (null != inthread && null != inthread.getException()) {
                 throw inthread.getException();
             }
-            if (null != outthread.getException()) {
-                throw outthread.getException();
-            }
-            if (null != errthread.getException()) {
-                throw errthread.getException();
+            // Only propagate stream thread exceptions when they completed naturally.
+            // After an intentional close (backgroundProcessDetected == true), the threads
+            // will have an expected "Stream closed" IOException that is not a real error.
+            if (!backgroundProcessDetected) {
+                if (null != outthread.getException()) {
+                    throw outthread.getException();
+                }
+                if (null != errthread.getException()) {
+                    throw errthread.getException();
+                }
             }
             return result;
         } catch (InterruptedException e) {
