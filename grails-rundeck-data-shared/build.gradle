@@ -55,7 +55,8 @@ dependencies {
     implementation "org.apache.grails:grails-async"
     implementation "org.apache.grails:grails-scaffolding"
     implementation "org.apache.grails:grails-gsp"
-    implementation 'org.quartz-scheduler:quartz:2.3.2'
+    // quartz is provided at runtime by grails-quartz in rundeckapp; compileOnly for this module
+    compileOnly "org.quartz-scheduler:quartz:${quartzVersion}"
     implementation project(":core")
     implementation project(':rundeck-app-util')
     profile "org.grails.profiles:web-plugin"

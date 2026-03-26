@@ -56,8 +56,9 @@ dependencies {
     implementation platform("org.apache.grails:grails-bom:${grailsVersion}")
     implementation project(":core")
 
-    implementation 'org.quartz-scheduler:quartz:2.3.2'
-    implementation 'org.apache.grails:grails-quartz:4.0.0'
+    // grails-quartz brings quartz transitively; compileOnly for quartz API access
+    compileOnly "org.quartz-scheduler:quartz:${quartzVersion}"
+    implementation "org.apache.grails:grails-quartz:${grailsQuartzVersion}"
 
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
