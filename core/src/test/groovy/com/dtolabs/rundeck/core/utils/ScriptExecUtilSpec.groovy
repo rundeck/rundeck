@@ -88,31 +88,6 @@ class ScriptExecUtilSpec extends Specification {
     }
 
     /**
-     * Verifies that a command using the shell background operator ({@code &}) completes
-     * without hanging, even though the background process keeps the inherited pipe FDs open.
-     * <p>
-     * Prior to the fix, {@code errthread.join()} / {@code outthread.join()} would block
-     * indefinitely because the background {@code sleep} process held the write-end of the
-     * stderr pipe open. After the fix, the streams are forcibly closed after
-     * {@link ScriptExecUtil#STREAM_DRAIN_TIMEOUT_MS} and the step completes successfully.
-     */
-    @Timeout(10)
-    def "background command with & operator completes without hanging"() {
-        given:
-        Map<String, String> envMap = [:]
-        // sleep 60 keeps inherited FDs open — without the fix this would hang for 60s
-        String[] command = ["/bin/sh", "-c", "sleep 60 &"]
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream()
-        ByteArrayOutputStream errStream = new ByteArrayOutputStream()
-
-        when:
-        int result = ScriptExecUtil.runLocalCommand(command, envMap, null, outStream, errStream)
-
-        then: "shell exits with code 0 and execution does not hang"
-        result == 0
-    }
-
-    /**
      * Verifies that stdout output produced before the {@code &} background operator
      * is captured correctly, confirming that the drain window is sufficient.
      */
@@ -169,52 +144,6 @@ class ScriptExecUtilSpec extends Specification {
         then:
         result == 0
         errStream.toString().trim() == "error-output"
-    }
-
-
-    /**
-     * Verifies that a command using the shell background operator ({@code &}) completes
-     * without hanging, even though the background process keeps the inherited pipe FDs open.
-     * <p>
-     * Prior to the fix, {@code errthread.join()} / {@code outthread.join()} would block
-     * indefinitely because the background {@code sleep} process held the write-end of the
-     * stderr pipe open. After the fix, the streams are forcibly closed after
-     * {@link ScriptExecUtil#STREAM_DRAIN_TIMEOUT_MS} and the step completes successfully.
-     */
-    @Timeout(10)
-    def "background command with & operator completes without hanging"() {
-        given:
-        Map<String, String> envMap = [:]
-        // sleep keeps the inherited FDs open for 60s — without the fix this would hang
-        String[] command = ["/bin/sh", "-c", "sleep 60 &"]
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream()
-        ByteArrayOutputStream errStream = new ByteArrayOutputStream()
-
-        when:
-        int result = ScriptExecUtil.runLocalCommand(command, envMap, null, outStream, errStream)
-
-        then: "shell exits with code 0 and execution does not hang"
-        result == 0
-    }
-
-    /**
-     * Verifies that a background command that also produces stdout output before
-     * backgrounding completes correctly and the output is captured.
-     */
-    @Timeout(10)
-    def "background command output before & is captured"() {
-        given:
-        Map<String, String> envMap = [:]
-        String[] command = ["/bin/sh", "-c", "echo hello; sleep 60 &"]
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream()
-        ByteArrayOutputStream errStream = new ByteArrayOutputStream()
-
-        when:
-        int result = ScriptExecUtil.runLocalCommand(command, envMap, null, outStream, errStream)
-
-        then: "exit code is 0 and stdout output from the foreground echo is captured"
-        result == 0
-        outStream.toString().trim() == "hello"
     }
 
     /**
