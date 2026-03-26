@@ -650,6 +650,34 @@ require-build: &require-build
   requires:
     - Build
 
+# Stage 2: Unit tests gate — blocks expensive machines until core code is verified
+require-unit-tests: &require-unit-tests
+  requires:
+    - T Unit Gradle
+    - T Unit UI
+
+# Stage 3: All API/integration tests must pass before Selenium starts
+require-api-integration: &require-api-integration
+  requires:
+    - T Integration SSL
+    - T Integration Ansible
+    - T Integration LDAP
+    - T Integration LDAP Bind
+    - T Integration PAM
+    - T Functional API
+    - T Functional Plugin Blocklist
+    - T Feature NodeExecutorSecureInput
+
+# Stage 4: All Selenium must pass before packaging/security/validation/enterprise trigger
+require-selenium: &require-selenium
+  requires:
+    - T Selenium - Auth & Login
+    - T Selenium - Projects
+    - T Selenium - Jobs Core
+    - T Selenium - Jobs Advanced
+    - T Selenium - Execution & Other
+    - T Selenium Alpha UI
+
 require-build-jre-17: &require-build-jre-17
   requires:
     - Build with Docker image using JRE 17
@@ -708,36 +736,128 @@ workflows:
               value: << pipeline.git.branch >>
 
     jobs:
+      # Stage 1: Build
       - build-rundeck:
           name: Build
           <<: *cloudsmith-slack-defaults
+
+      # Stage 2: Unit tests — fast gate before integration and functional machines spin up
       - test-gradle:
           name: T Unit Gradle
+          <<: *require-build
           <<: *cloudsmith-slack-defaults
       - test-gui:
           name: T Unit UI
+          <<: *require-build
           <<: *cloudsmith-slack-defaults
-      - trigger-enterprise:
-          name: Enterprise Snapshot
-          <<: *require-build
-          filters:
-            branches: { only: main }
-      - test-openapi:
-          name: OpenAPI Spec Validation
-          <<: *require-build
+
+      # Stage 3: Integration and functional API tests in parallel (require unit tests)
+      - test-docker:
+          name: T Integration SSL
+          command: bash test/run-docker-ssl-tests.sh
+          <<: *require-unit-tests
           <<: *slack-defaults
+      - test-docker:
+          name: T Integration Ansible
+          command: bash test/run-docker-ansible-tests.sh
+          <<: *require-unit-tests
+          <<: *slack-defaults
+      - test-machine:
+          name: T Integration LDAP
+          command: bash test/run-docker-ldap-tests.sh
+          <<: *require-unit-tests
+          <<: *slack-defaults
+      - test-machine:
+          name: T Integration LDAP Bind
+          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          <<: *require-unit-tests
+          <<: *slack-defaults
+      - test-docker:
+          name: T Integration PAM
+          command: bash test/run-docker-pam-tests.sh
+          <<: *require-unit-tests
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Functional API
+          gradle-task: apiTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
+          parallelism: 3
+          <<: *require-unit-tests
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Functional Plugin Blocklist
+          gradle-task: pluginBlocklistTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
+          <<: *require-unit-tests
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Feature NodeExecutorSecureInput
+          gradle-task: apiTestNodeExecutorSecureInput
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
+          <<: *require-unit-tests
+          <<: *slack-defaults
+
+      # Stage 4: Selenium — only after all integration and functional API tests pass
+      # Grails 7: Split Selenium into logical groups for faster feedback
+      - test-gradle-functional:
+          name: T Selenium - Auth & Login
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Projects
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Jobs Core
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Jobs Advanced
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Execution & Other
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium Alpha UI
+          gradle-task: alphaUiSeleniumCoreTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+
+      # Stage 5: Packaging, security scans, validation, and enterprise trigger
+      # Nothing here matters if build and tests don't pass. Enterprise Snapshot only
+      # triggers Pro CI after all OSS tests are green — broken OSS means broken Pro.
       - packaging-test:
           name: T Packaging
-          <<: *require-build
+          <<: *require-selenium
           <<: *slack-defaults
       - test-snyk:
           name: Snyk Security Scan
+          <<: *require-selenium
           context:
             - Snyk
             - Cloudsmith
       - wizcli-scan:
           name: WizCLI Scan Preview
-          <<: *require-build
+          <<: *require-selenium
           continue: true
           context:
             - WizCLI
@@ -746,100 +866,22 @@ workflows:
       - wizcli-scan:
           name: WizCLI Scan
           continue: << pipeline.parameters.disable-wizcli-scan >>
+          <<: *require-selenium
           context:
             - WizCLI
             - slack-secrets
           filters:
             branches: { only: main }
-          <<: *require-build
           <<: *slack-fail-post-step
-      - test-docker:
-          name: T Integration SSL
-          command: bash test/run-docker-ssl-tests.sh
-          <<: *require-build
+      - test-openapi:
+          name: OpenAPI Spec Validation
+          <<: *require-selenium
           <<: *slack-defaults
-      - test-docker:
-          name: T Integration Ansible
-          command: bash test/run-docker-ansible-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-machine:
-          name: T Integration LDAP
-          command: bash test/run-docker-ldap-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-machine:
-          name: T Integration LDAP Bind
-          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-docker:
-          name: T Integration PAM
-          command: bash test/run-docker-pam-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      # Grails 7: Split Selenium into logical groups for faster feedback
-      - test-gradle-functional:
-          name: T Selenium - Auth & Login
-          gradle-task: seleniumCoreTest
-          resource_class: xlarge
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Selenium - Projects
-          gradle-task: seleniumCoreTest
-          resource_class: xlarge
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Selenium - Jobs Core
-          gradle-task: seleniumCoreTest
-          resource_class: xlarge
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Selenium - Jobs Advanced
-          gradle-task: seleniumCoreTest
-          resource_class: xlarge
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Selenium - Execution & Other
-          gradle-task: seleniumCoreTest
-          resource_class: xlarge
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Functional API
-          gradle-task: apiTest
-          resource_class: xlarge
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
-          parallelism: 3
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Functional Plugin Blocklist
-          gradle-task: pluginBlocklistTest
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Feature NodeExecutorSecureInput
-          gradle-task: apiTestNodeExecutorSecureInput
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Selenium Alpha UI
-          gradle-task: alphaUiSeleniumCoreTest
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
+      - trigger-enterprise:
+          name: Enterprise Snapshot
+          <<: *require-selenium
+          filters:
+            branches: { only: main }
 
   build_and_test_with_jre_17:
     triggers:
