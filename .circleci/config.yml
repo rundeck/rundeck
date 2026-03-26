@@ -405,7 +405,20 @@ jobs:
           no_output_timeout: 30m
           command: |
             source scripts/circleci/setup.sh
-            snyk test --severity-threshold=medium --all-projects --detection-depth=10 --scan-all-unmanaged || true
+            snyk test --severity-threshold=medium --all-projects --detection-depth=10 --scan-all-unmanaged --json > snyk-results.json || true
+      - run:
+          name: CVE Summary
+          command: |
+            if [ -f snyk-results.json ]; then
+              echo "=== CVEs Found ==="
+              jq -r '.[].vulnerabilities[] | select(.identifiers.CVE | length > 0) | [(.identifiers.CVE | join(",")), .severity, .title] | @csv' snyk-results.json | sort -u
+              echo "=================="
+            else
+              echo "No snyk-results.json found — skipping CVE summary"
+            fi
+      - store_artifacts:
+          path: snyk-results.json
+          destination: snyk-results.json
 
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
