@@ -3,6 +3,7 @@ import {
   commandToEditConfig,
   editCommandsToStepsData,
   editToCommandConfig,
+  mergePreservedLogFiltersIntoSaveData,
   mkid,
 } from "../workflowFuncs";
 import type {
@@ -190,7 +191,7 @@ describe("workflowFuncs", () => {
       expect(result.fileExtension).toBe(".sh");
     });
 
-    it("converts a script-file-url step back to StepData", () => {
+    it("converts a script-file-url step with file path to StepData", () => {
       const plugin: EditStepData = {
         type: "script-file-url",
         config: {
@@ -205,8 +206,79 @@ describe("workflowFuncs", () => {
       const result = editToCommandConfig(plugin);
 
       expect(result.scriptfile).toBe("/path/to/script.sh");
+      expect(result.scripturl).toBeUndefined();
       expect(result.expandTokenInScriptFile).toBe(true);
       expect(result.args).toBe("--flag");
+    });
+
+    it("converts a script-file-url step with http URL to StepData", () => {
+      const plugin: EditStepData = {
+        type: "script-file-url",
+        config: {
+          adhocFilepath: "http://example.com/script.sh",
+          expandTokenInScriptFile: false,
+          argString: "--flag",
+        },
+        nodeStep: true,
+        id: "3a",
+      };
+
+      const result = editToCommandConfig(plugin);
+
+      expect(result.scripturl).toBe("http://example.com/script.sh");
+      expect(result.scriptfile).toBeUndefined();
+      expect(result.expandTokenInScriptFile).toBe(false);
+      expect(result.args).toBe("--flag");
+    });
+
+    it("converts a script-file-url step with https URL to StepData", () => {
+      const plugin: EditStepData = {
+        type: "script-file-url",
+        config: {
+          adhocFilepath: "https://example.com/script.sh",
+          argString: "-v",
+        },
+        nodeStep: true,
+        id: "3b",
+      };
+
+      const result = editToCommandConfig(plugin);
+
+      expect(result.scripturl).toBe("https://example.com/script.sh");
+      expect(result.scriptfile).toBeUndefined();
+      expect(result.args).toBe("-v");
+    });
+
+    it("converts a script-file-url step with file:// URL to StepData", () => {
+      const plugin: EditStepData = {
+        type: "script-file-url",
+        config: {
+          adhocFilepath: "file:///usr/local/bin/script.sh",
+        },
+        nodeStep: true,
+        id: "3c",
+      };
+
+      const result = editToCommandConfig(plugin);
+
+      expect(result.scripturl).toBe("file:///usr/local/bin/script.sh");
+      expect(result.scriptfile).toBeUndefined();
+    });
+
+    it("converts a script-file-url step with uppercase HTTP URL to StepData (case insensitive)", () => {
+      const plugin: EditStepData = {
+        type: "script-file-url",
+        config: {
+          adhocFilepath: "HTTP://example.com/script.sh",
+        },
+        nodeStep: true,
+        id: "3d",
+      };
+
+      const result = editToCommandConfig(plugin);
+
+      expect(result.scripturl).toBe("HTTP://example.com/script.sh");
+      expect(result.scriptfile).toBeUndefined();
     });
 
     it("converts a job reference step back to StepData", () => {
@@ -337,6 +409,37 @@ describe("workflowFuncs", () => {
       const result = editCommandsToStepsData(editData);
 
       expect(result.commands).toEqual([]);
+    });
+  });
+
+  describe("mergePreservedLogFiltersIntoSaveData", () => {
+    it("fills filters from original when saveData.filters is undefined", () => {
+      const orig = [{ type: "mask-passwords", config: {} }] as EditStepData["filters"];
+      const saveData: Pick<EditStepData, "filters"> = {};
+      mergePreservedLogFiltersIntoSaveData(saveData, orig);
+      expect(saveData.filters).toEqual(orig);
+      expect(saveData.filters).not.toBe(orig);
+    });
+
+    it("uses empty array when original has no filters and saveData.filters is undefined", () => {
+      const saveData: Pick<EditStepData, "filters"> = {};
+      mergePreservedLogFiltersIntoSaveData(saveData, undefined);
+      expect(saveData.filters).toEqual([]);
+    });
+
+    it("restores from original when save has empty array but original had filters", () => {
+      const orig = [{ type: "mask-passwords", config: { a: 1 } }] as EditStepData["filters"];
+      const saveData: Pick<EditStepData, "filters"> = { filters: [] };
+      mergePreservedLogFiltersIntoSaveData(saveData, orig);
+      expect(saveData.filters).toEqual(orig);
+    });
+
+    it("does not overwrite when save already has filters", () => {
+      const kept = [{ type: "quiet-output", config: {} }] as EditStepData["filters"];
+      const saveData: Pick<EditStepData, "filters"> = { filters: kept };
+      const orig = [{ type: "mask-passwords", config: {} }] as EditStepData["filters"];
+      mergePreservedLogFiltersIntoSaveData(saveData, orig);
+      expect(saveData.filters).toEqual(kept);
     });
   });
 });
