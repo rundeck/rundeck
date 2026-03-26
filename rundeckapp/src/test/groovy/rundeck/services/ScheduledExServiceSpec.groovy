@@ -711,6 +711,11 @@ class FakeScheduler implements Scheduler{
     }
 
     @Override
+    List<JobDetail> getJobDetails(GroupMatcher<JobKey> groupMatcher) throws SchedulerException {
+        return null
+    }
+
+    @Override
     List<? extends Trigger> getTriggersOfJob(JobKey jobKey) throws SchedulerException {
         return null
     }

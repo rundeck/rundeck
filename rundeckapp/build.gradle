@@ -188,9 +188,11 @@ dependencies {
         }
     }
 
-    // From BuildConfig.groovy.
-    implementation 'org.quartz-scheduler:quartz:2.3.2'
-    implementation 'org.apache.grails:grails-quartz:4.0.0'
+    // grails-quartz brings quartz transitively (CVE-2026-27727, CVE-2026-27830 fixes)
+    implementation "org.apache.grails:grails-quartz:${grailsQuartzVersion}"
+    // Force CVE-patched mchange libraries (transitively brought by quartz:2.5.x)
+    implementation "com.mchange:mchange-commons-java:${mchangeCommonsJavaVersion}"
+    implementation "com.mchange:c3p0:${c3p0Version}"
     implementation 'org.grails.plugins:mail:3.0.0'
     
     // Liquibase for compile-time exception classes (runtime provided by Spring Boot)
@@ -242,7 +244,12 @@ dependencies {
     // Defined by create-app
     implementation "org.apache.grails:grails-data-hibernate5"
     // hibernate-jcache needed for Hibernate 5.6.15 caching (Grails 7.0.4 → GORM 7.x → Hibernate 5.6.15 Jakarta)
-    implementation "org.hibernate:hibernate-jcache:${hibernateVersion}"
+    // Exclude non-jakarta hibernate-core to avoid classpath collision with hibernate-core-jakarta.
+    // GrailsDomainBinder calls AccessType.getAccessStrategy(jakarta.persistence.AccessType) which only exists
+    // in hibernate-core-jakarta. When both are on the classpath, ordering determines which is loaded.
+    implementation("org.hibernate:hibernate-jcache:${hibernateVersion}") {
+        exclude group: 'org.hibernate', module: 'hibernate-core'
+    }
     implementation('org.ehcache:ehcache:3.8.1')
 
     // JAXB implementation for Java 11+ (Ehcache XmlConfiguration parses jcache.xml with javax.xml.bind)
@@ -350,7 +357,9 @@ dependencies {
     runtimeOnly "com.microsoft.sqlserver:mssql-jdbc:${mssqlJdbcVersion}"
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     runtimeOnly 'org.postgresql:postgresql:42.7.2'
-    runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.1'
+    runtimeOnly('org.rundeck.hibernate:rundeck-oracle-dialect:1.0.1') {
+        exclude group: 'org.hibernate', module: 'hibernate-core'
+    }
 
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.89"
     runtimeOnly "org.springframework:spring-jcl"  // Version managed by Spring Boot BOM

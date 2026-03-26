@@ -189,7 +189,7 @@ allprojects {
             force "io.micrometer:micrometer-observation:${micrometerVersion}"
             force "io.micrometer:micrometer-commons:${micrometerVersion}"
             force "jaxen:jaxen:${jaxenVersion}"
-            // NOTE: Micronaut version now matches Grails BOM (4.10.8)
+            // NOTE: Micronaut forced to ${micronautVersion} (CVE-2026-33013 fix)
             // TODO: Future cleanup - remove explicit ${micronautVersion} from build files and let BOM manage
             // NOTE: guava and failureaccess excluded - cause variant resolution conflicts
         }
