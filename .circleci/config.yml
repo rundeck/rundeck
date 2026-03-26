@@ -383,9 +383,8 @@ jobs:
       - checkout
       - restore-build-cache
       - install-build-dependencies
-      - run-build-step:
-          step-name: Assemble rundeck
-          command: rundeck_assemble_build
+      - attach_workspace:
+          at: ~/workspace
       - snyk/install
       - run-build-step:
           step-name: Configure Snyk
@@ -656,9 +655,11 @@ require-unit-tests: &require-unit-tests
     - T Unit Gradle
     - T Unit UI
 
-# Stage 3: All API/integration tests must pass before Selenium starts
+# Row 2: All tests run in parallel after Build — all must pass before Selenium starts
 require-api-integration: &require-api-integration
   requires:
+    - T Unit Gradle
+    - T Unit UI
     - T Integration SSL
     - T Integration Ansible
     - T Integration LDAP
@@ -741,7 +742,8 @@ workflows:
           name: Build
           <<: *cloudsmith-slack-defaults
 
-      # Stage 2: Unit tests — fast gate before integration and functional machines spin up
+      # Row 2: Unit tests, integration tests, and functional API tests all run in parallel after Build
+      # All must complete before Selenium starts (see require-api-integration anchor)
       - test-gradle:
           name: T Unit Gradle
           <<: *require-build
@@ -750,32 +752,30 @@ workflows:
           name: T Unit UI
           <<: *require-build
           <<: *cloudsmith-slack-defaults
-
-      # Stage 3: Integration and functional API tests in parallel (require unit tests)
       - test-docker:
           name: T Integration SSL
           command: bash test/run-docker-ssl-tests.sh
-          <<: *require-unit-tests
+          <<: *require-build
           <<: *slack-defaults
       - test-docker:
           name: T Integration Ansible
           command: bash test/run-docker-ansible-tests.sh
-          <<: *require-unit-tests
+          <<: *require-build
           <<: *slack-defaults
       - test-machine:
           name: T Integration LDAP
           command: bash test/run-docker-ldap-tests.sh
-          <<: *require-unit-tests
+          <<: *require-build
           <<: *slack-defaults
       - test-machine:
           name: T Integration LDAP Bind
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
-          <<: *require-unit-tests
+          <<: *require-build
           <<: *slack-defaults
       - test-docker:
           name: T Integration PAM
           command: bash test/run-docker-pam-tests.sh
-          <<: *require-unit-tests
+          <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
           name: T Functional API
@@ -783,22 +783,22 @@ workflows:
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
-          <<: *require-unit-tests
+          <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
           name: T Functional Plugin Blocklist
           gradle-task: pluginBlocklistTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
-          <<: *require-unit-tests
+          <<: *require-build
           <<: *slack-defaults
       - test-gradle-functional:
           name: T Feature NodeExecutorSecureInput
           gradle-task: apiTestNodeExecutorSecureInput
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
-          <<: *require-unit-tests
+          <<: *require-build
           <<: *slack-defaults
 
-      # Stage 4: Selenium — only after all integration and functional API tests pass
+      # Row 3: Selenium — only after all Row 2 tests pass
       # Grails 7: Split Selenium into logical groups for faster feedback
       - test-gradle-functional:
           name: T Selenium - Auth & Login
@@ -842,7 +842,7 @@ workflows:
           <<: *require-api-integration
           <<: *slack-defaults
 
-      # Stage 5: Packaging, security scans, validation, and enterprise trigger
+      # Row 4: Packaging, security scans, validation, and enterprise trigger
       # Nothing here matters if build and tests don't pass. Enterprise Snapshot only
       # triggers Pro CI after all OSS tests are green — broken OSS means broken Pro.
       - packaging-test:
