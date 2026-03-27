@@ -1,9 +1,12 @@
 # Build remco from specific commit
 ##################################
-FROM golang:1.24.6 as remco
+FROM golang:1.24.6 AS remco
 
-# REMCO_VERSION can be a release version "v0.XX.X", commit id, tag or branch name.
-ENV REMCO_VERSION=a1eb2cf0da84096a3904c1d86afb726358a8b530
+# Pinned to HEAD of HeavyHorst/remco master (2025-09-19).
+# CVE-2025-47914, CVE-2025-61727, CVE-2026-33186 fixes are pending in upstream
+# PR #115 (https://github.com/HeavyHorst/remco/pull/115). Once that PR merges
+# or an org fork is available, update this commit to pull in those fixes.
+ENV REMCO_VERSION=be848fe56c2a44530e422b5f7442b0854eaaafac
 
 RUN go install github.com/HeavyHorst/remco/cmd/remco@$REMCO_VERSION
 
