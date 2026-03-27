@@ -66,6 +66,7 @@ import org.rundeck.app.components.jobs.JobDefinitionException
 import org.hibernate.sql.JoinType
 import org.rundeck.app.components.jobs.ComponentMeta
 import org.rundeck.app.components.jobs.JobMetadataComponent
+import org.rundeck.app.jobs.browse.JobBrowseMetaKeysResolver
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
@@ -552,6 +553,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             customFilters: totalCustomFilters
             ]
 
+    }
+
+    /**
+     * Resolves metadata key set for jobs/browse (and job meta) when {@code metaExclude} is used.
+     * @see JobBrowseMetaKeysResolver
+     */
+    Set<String> resolveJobBrowseMetaKeys(String meta, String metaExclude) {
+        Map<String, JobMetadataComponent> components = applicationContext.getBeansOfType(JobMetadataComponent) ?: [:]
+        JobBrowseMetaKeysResolver.resolve(meta, metaExclude, components)
     }
 
     /**

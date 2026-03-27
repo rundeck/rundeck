@@ -2,6 +2,9 @@ import { getRundeckContext } from "../rundeckService";
 import { api } from "./api";
 import { JobBrowseList, JobBrowseMeta } from "../types/jobs/JobBrowse";
 
+/** Passed as `metaExclude` on jobs/browse and job meta API (API v58+). */
+export const JOB_BROWSE_META_EXCLUDE_STATS = "stats";
+
 export async function getProjectMeta(
   project: string,
   meta: string = "*",
@@ -37,8 +40,12 @@ export async function queryPath(
   meta: string = "*",
   breakpoint: number = 100,
   query: { [key: string]: any },
+  metaExclude?: string | null,
 ): Promise<JobBrowseList> {
   const params = Object.assign({}, query, { path, meta, breakpoint });
+  if (metaExclude != null && metaExclude !== "") {
+    params.metaExclude = metaExclude;
+  }
   const resp = await api.get(`project/${project}/jobs/browse/`, { params });
   if (resp.status !== 200) {
     throw { message: resp.data.message, response: resp };
@@ -50,9 +57,14 @@ export async function getJobMeta(
   project: string,
   id: string,
   meta: string = "*",
+  metaExclude?: string | null,
 ): Promise<JobBrowseMeta[]> {
+  const qp = new URLSearchParams({ meta });
+  if (metaExclude != null && metaExclude !== "") {
+    qp.set("metaExclude", metaExclude);
+  }
   const resp = await getRundeckContext().rootStore.cachedApi(
-    `job/${id}/meta?meta=${encodeURIComponent(meta)}`,
+    `job/${id}/meta?${qp.toString()}`,
   );
   if (resp.status !== 200) {
     throw { message: resp.data.message, response: resp };

@@ -4882,7 +4882,7 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         session.subject=new Subject()
         
         when:
-        controller.apiJobBrowse('test', null, null, null, 5, query)
+        controller.apiJobBrowse('test', null, null, null, 5, query, null)
         
         then:
         1 * controller.apiService.requireApi(_,_,46) >> true
@@ -4914,7 +4914,7 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         session.subject=new Subject()
         
         when:
-        controller.apiJobBrowse('test', null, null, null, null, query)
+        controller.apiJobBrowse('test', null, null, null, null, query, null)
         
         then:
         1 * controller.apiService.requireApi(_,_,46) >> true
@@ -4923,6 +4923,74 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
             assert q.max == -1
             return []
         }
+    }
+
+    def "apiJobBrowse uses resolveJobBrowseMetaKeys when metaExclude is set and API is v58+"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _) >> true
+            requireApi(_, _, 46) >> true
+            requireApi(_, _, 54) >> false
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+        }
+        def query = new RdJobQueryInput()
+        params.project = 'test'
+        params.metaExclude = 'stats'
+        request.method = 'GET'
+        request.api_version = ApiVersions.V58
+        request.subject = new Subject()
+        session.subject = new Subject()
+
+        when:
+        controller.apiJobBrowse('test', '', '*', null, null, query, null)
+
+        then:
+        1 * controller.scheduledExecutionService.basicQueryJobs('test', _, _) >> []
+        1 * controller.scheduledExecutionService.resolveJobBrowseMetaKeys('*', 'stats') >> ['authz', 'schedule'].toSet()
+        1 * controller.scheduledExecutionService.loadJobMetaItems(
+            'test',
+            '',
+            ['authz', 'schedule'].toSet(),
+            [],
+            _,
+        ) >> [:]
+    }
+
+    def "apiJobBrowse ignores metaExclude when API version is below v58"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _) >> true
+            requireApi(_, _, 46) >> true
+            requireApi(_, _, 54) >> false
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+        }
+        def query = new RdJobQueryInput()
+        params.project = 'test'
+        params.metaExclude = 'stats'
+        request.method = 'GET'
+        request.api_version = ApiVersions.V57
+        request.subject = new Subject()
+        session.subject = new Subject()
+
+        when:
+        controller.apiJobBrowse('test', '', '*', null, null, query, null)
+
+        then:
+        1 * controller.scheduledExecutionService.basicQueryJobs('test', _, _) >> []
+        0 * controller.scheduledExecutionService.resolveJobBrowseMetaKeys(_, _)
+        1 * controller.scheduledExecutionService.loadJobMetaItems(
+            'test',
+            '',
+            ['*'].toSet(),
+            [],
+            _,
+        ) >> [:]
     }
 
 }
