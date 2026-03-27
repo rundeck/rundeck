@@ -167,7 +167,8 @@
     "cross-spawn": "^7.0.6",
     "glob": "^10.5.0",
     "underscore": "^1.13.8",
-    "xml2js": "^0.5.0"
+    "xml2js": "^0.5.0",
+    "lodash": "^4.17.23"
   },
   "jest-junit": {
     "outputDirectory": "./build/test-results",
