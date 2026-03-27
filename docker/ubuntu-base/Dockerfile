@@ -11,7 +11,7 @@ ENV REMCO_COMMIT=dd15086e958dd83f334fb857ecd29bb1615fa179
 RUN git clone https://github.com/rundeck/remco.git /tmp/remco && \
     cd /tmp/remco && \
     git checkout $REMCO_COMMIT && \
-    go build -o /go/bin/remco ./cmd/remco
+    GOTOOLCHAIN=auto go build -o /go/bin/remco ./cmd/remco
 
 # Build base container
 ######################
