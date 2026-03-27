@@ -3,7 +3,7 @@
 FROM golang:1.24.6 as remco
 
 # REMCO_VERSION can be a release version "v0.XX.X", commit id, tag or branch name.
-ENV REMCO_VERSION=be848fe56c2a44530e422b5f7442b0854eaaafac
+ENV REMCO_VERSION=a1eb2cf0da84096a3904c1d86afb726358a8b530
 
 RUN go install github.com/HeavyHorst/remco/cmd/remco@$REMCO_VERSION
 
