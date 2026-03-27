@@ -61,6 +61,17 @@ public class ScriptExecUtil {
     static final long STREAM_DRAIN_TIMEOUT_MS = 500;
 
     /**
+     * Time in milliseconds to wait after forcibly closing streams for the stream copy threads
+     * to notice the close and exit. On Linux, closing the read-end of a pipe from one thread
+     * does not reliably interrupt another thread already blocked in a native {@code read()}
+     * syscall on that same file descriptor. If threads are still alive after this window,
+     * we stop waiting — the parent shell has already exited and we have its exit code.
+     * Threads will terminate on their own when the background process eventually closes its
+     * inherited pipe descriptors. This matches Ant's PumpStreamHandler behavior.
+     */
+    static final long BACKGROUND_PROCESS_STOP_WAIT_MS = 1000;
+
+    /**
      * @return instance of the helper interface
      */
     public static ScriptExecHelper helper() {
@@ -369,8 +380,14 @@ public class ScriptExecUtil {
                 // ("Stream closed") and should not be treated as errors.
                 try { exec.getInputStream().close(); } catch (IOException ignored) {}
                 try { exec.getErrorStream().close(); } catch (IOException ignored) {}
-                errthread.join();
-                outthread.join();
+                // On Linux, closing the read-end of a pipe from one thread does not
+                // reliably interrupt another thread blocked in a native read() on that
+                // same FD. Give threads a brief window to notice the close; if they are
+                // still alive we stop waiting — the shell has exited and we have its exit
+                // code. The threads will terminate on their own when the background
+                // process eventually closes its inherited pipe descriptors.
+                errthread.join(BACKGROUND_PROCESS_STOP_WAIT_MS);
+                outthread.join(BACKGROUND_PROCESS_STOP_WAIT_MS);
             } else {
                 exec.getInputStream().close();
                 exec.getErrorStream().close();
