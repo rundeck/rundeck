@@ -62,7 +62,7 @@ dependencies {
     implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}")
     // Grails 7: BC 1.80 requires bcutil for CryptlibObjectIdentifiers
     implementation ("org.bouncycastle:bcutil-jdk18on:${bouncyCastleVersion}")
-    testImplementation 'junit:junit:4.8.1',
+    testImplementation "junit:junit:${junitVersion}",
                 'org.mockito:mockito-all:1.10.19'
 
     testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"

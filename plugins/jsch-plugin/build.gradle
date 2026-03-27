@@ -30,7 +30,7 @@ dependencies {
         exclude(group: 'com.jcraft', module: 'jsch')
     }
 
-    testImplementation 'junit:junit:4.13.2'
+    testImplementation "junit:junit:${junitVersion}"
     
     // Spock + Mockito mocking dependencies (Pattern #10 & #74)
     testImplementation "org.mockito:mockito-core:${mockitoInlineVersion}"

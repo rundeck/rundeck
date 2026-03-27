@@ -52,7 +52,7 @@
     "core-js": "^3.6.5",
     "dagre": "^0.8.5",
     "deep-object-diff": "^1.1.9",
-    "dompurify": "^3.2.4",
+    "dompurify": "^3.3.2",
     "fuse.js": "^6.6.2",
     "graphlib": "^2.1.8",
     "jointjs": "^3.2.0",

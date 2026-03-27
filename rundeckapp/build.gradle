@@ -361,7 +361,7 @@ dependencies {
         exclude group: 'org.hibernate', module: 'hibernate-core'
     }
 
-    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.89"
+    runtimeOnly "org.apache.tomcat:tomcat-jdbc:${tomcatJdbcVersion}"
     runtimeOnly "org.springframework:spring-jcl"  // Version managed by Spring Boot BOM
     runtimeOnly "org.apache.groovy:groovy-dateutil"  // Version managed by Grails BOM
     api ("cloud.wondrify:asset-pipeline-grails:$assetPluginVersion")

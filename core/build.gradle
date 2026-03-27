@@ -96,7 +96,7 @@ dependencies {
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
-    testImplementation 'junit:junit:4.8.1'
+    testImplementation "junit:junit:${junitVersion}"
     testImplementation "org.mockito:mockito-core:${mockitoInlineVersion}"
     testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
     testImplementation "org.objenesis:objenesis:${objenesisVersion}"
