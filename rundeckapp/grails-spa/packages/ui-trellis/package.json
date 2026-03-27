@@ -168,7 +168,8 @@
     "glob": "^10.5.0",
     "underscore": "^1.13.8",
     "xml2js": "^0.5.0",
-    "lodash": "^4.17.23"
+    "lodash": "^4.17.23",
+    "@babel/runtime": "^7.26.10"
   },
   "jest-junit": {
     "outputDirectory": "./build/test-results",
