@@ -411,7 +411,7 @@ jobs:
           command: |
             if [ -f snyk-results.json ]; then
               echo "=== CVEs Found ==="
-              jq -r '.[] | select(type == "object") | .vulnerabilities[] | select(.identifiers.CVE | length > 0) | [(.identifiers.CVE | join(",")), .severity, .moduleName, .title] | @csv' snyk-results.json | sort -u
+              jq -r '.[] | select(type == "object") | .vulnerabilities[] | select(.identifiers.CVE | length > 0) | [(.identifiers.CVE | join(",")), .severity, .moduleName, .title] | @csv' snyk-results.json | sort -u | tee snyk-summary.csv
               echo "=================="
             else
               echo "No snyk-results.json found — skipping CVE summary"
@@ -419,6 +419,9 @@ jobs:
       - store_artifacts:
           path: snyk-results.json
           destination: snyk-results.json
+      - store_artifacts:
+          path: snyk-summary.csv
+          destination: snyk-summary.csv
 
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
