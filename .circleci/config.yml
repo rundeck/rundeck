@@ -827,6 +827,7 @@ workflows:
           name: T Selenium - Projects
           gradle-task: seleniumCoreTest
           resource_class: xlarge
+          parallelism: 2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
           <<: *require-api-integration
           <<: *slack-defaults
@@ -834,6 +835,7 @@ workflows:
           name: T Selenium - Jobs Core
           gradle-task: seleniumCoreTest
           resource_class: xlarge
+          parallelism: 2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
           <<: *require-api-integration
           <<: *slack-defaults
@@ -848,6 +850,7 @@ workflows:
           name: T Selenium - Execution & Other
           gradle-task: seleniumCoreTest
           resource_class: xlarge
+          parallelism: 2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
           <<: *require-api-integration
           <<: *slack-defaults
