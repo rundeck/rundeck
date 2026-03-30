@@ -21,7 +21,7 @@ const FilterInputComp = defineComponent({
       queryFieldPlaceholderText: this.itemData["queryFieldPlaceholderText"],
       koFieldName: this.itemData["koFieldName"],
       koParam: this.itemData["koParam"],
-      subs: [] as any[],
+      subs: [] as Array<{ dispose(): void }>,
     };
   },
   computed: {
@@ -39,8 +39,6 @@ const FilterInputComp = defineComponent({
     },
   },
   beforeUnmount() {
-    //note: this removes subscriptions from knockout observable
-    //@ts-ignore
     this.subs.forEach((s) => s.dispose());
   },
   mounted() {
