@@ -160,6 +160,21 @@ allprojects {
     } else {
         ext.isDevBuild=true
     }
+
+    // Component metadata rule to fix Grails 7.0.9+ groovy-bom issue
+    dependencies {
+        components {
+            withModule('org.apache.grails:grails-gradle-bom') {
+                allVariants {
+                    withDependencies {
+                        // Remove the problematic groovy-bom dependency from grails-gradle-bom
+                        removeAll { it.group == 'org.codehaus.groovy' && it.name == 'groovy-bom' }
+                    }
+                }
+            }
+        }
+    }
+
     configurations.all {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
         exclude group: 'ch.qos.logback', module: 'logback-classic'
@@ -172,9 +187,14 @@ allprojects {
         resolutionStrategy {
             // Force Groovy 4 for any transitive dependencies still using old Groovy 3/codehaus coords
             eachDependency { details ->
+                // Special handling for groovy-bom to fix Grails 7.0.9 platform vs library issue
+                if (details.requested.group == 'org.codehaus.groovy' && details.requested.name == 'groovy-bom') {
+                    details.useTarget group: 'org.apache.groovy', name: 'groovy-bom', version: groovyVersion
+                    details.because 'Grails 7 uses Apache Groovy 4.x'
+                }
                 if (details.requested.group == 'org.codehaus.groovy') {
-                    details.useTarget(group: 'org.apache.groovy', 
-                                    name: details.requested.name, 
+                    details.useTarget(group: 'org.apache.groovy',
+                                    name: details.requested.name,
                                     version: groovyVersion)
                 }
             }
