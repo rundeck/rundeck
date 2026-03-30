@@ -762,11 +762,9 @@ workflows:
       # All must complete before Selenium starts (see require-api-integration anchor)
       - test-gradle:
           name: T Unit Gradle
-          <<: *require-build
           <<: *cloudsmith-slack-defaults
       - test-gui:
           name: T Unit UI
-          <<: *require-build
           <<: *cloudsmith-slack-defaults
       - test-docker:
           name: T Integration SSL
