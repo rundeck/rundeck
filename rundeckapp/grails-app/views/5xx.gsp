@@ -77,7 +77,8 @@
               </h5>
             </div>
             <div>
-              <a href="${grailsApplication.config.getProperty('rundeck.gui.titleLink', String) ? enc(attr:grailsApplication.config.getProperty('rundeck.gui.titleLink', String)) : g.createLink(uri: '/')}"
+              <g:set var="titleLink" value="${grailsApplication.config.getProperty('rundeck.gui.titleLink', String)}"/>
+              <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}"
                 class="
                 btn btn-lg return-button">Return to Home Page</a>
             </div>
