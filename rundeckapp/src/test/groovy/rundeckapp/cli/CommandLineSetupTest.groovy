@@ -35,6 +35,9 @@ class CommandLineSetupTest extends Specification {
 
     def cleanup() {
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR)
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR)
     }
 
@@ -121,7 +124,11 @@ class CommandLineSetupTest extends Specification {
 
     def "Test cli options"() {
         setup:
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR)
         when:
 
         int result=-1
