@@ -1,5 +1,4 @@
-//@ts-nocheck
-import { createApp } from "vue";
+import { createApp, defineComponent, PropType } from "vue";
 import Pagination from "../../../library/components/utils/Pagination.vue";
 
 interface KoPagerPage {
@@ -20,21 +19,13 @@ interface KoPaginationEvent {
   pager: KoPager;
 }
 
-const template = `
-    <Pagination 
-        v-model="activePage"
-        :totalPages="totalPages"
-        @change="handlePageChange"
-    />
-    `;
-
 /** Adapt KO Pager with Paginator wrapper */
-const KoPaginator = {
-  template,
+const KoPaginator = defineComponent({
+  name: "KoPaginator",
   components: { Pagination },
   props: {
     pager: {
-      type: Object as () => KoPager,
+      type: Object as PropType<KoPager>,
       required: true,
     },
   },
@@ -63,7 +54,14 @@ const KoPaginator = {
       this.pager.setPage(page - 1);
     },
   },
-};
+  template: `
+    <Pagination 
+        v-model="activePage"
+        :totalPages="totalPages"
+        @change="handlePageChange"
+    />
+    `,
+});
 
 const mounted = new Map<string, boolean>();
 
