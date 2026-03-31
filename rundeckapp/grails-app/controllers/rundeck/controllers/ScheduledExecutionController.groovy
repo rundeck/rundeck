@@ -4025,7 +4025,7 @@ Authorization required: `read` for the Job.''',
             return
         }
 
-        if(!rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
+        if(!rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, response.format).isValid()){
             return apiService.renderErrorFormat(
                     response,
                     [
