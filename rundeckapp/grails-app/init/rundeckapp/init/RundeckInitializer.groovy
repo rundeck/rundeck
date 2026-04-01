@@ -418,7 +418,7 @@ class RundeckInitializer {
 
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, forwardSlashPath(config.baseDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR, forwardSlashPath(config.serverBaseDir));
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR, forwardSlashPath(config.dataDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR, forwardSlashPath(config.logDir));
         if(config.cliOptions.projectDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_PROJECTS_DIR, config.cliOptions.projectDir);

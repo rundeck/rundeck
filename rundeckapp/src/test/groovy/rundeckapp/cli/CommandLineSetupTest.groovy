@@ -30,69 +30,57 @@ class CommandLineSetupTest extends Specification {
     def setup() {
         System.out = pout
         System.err = perr
-        System.metaClass.static.exit = { int status ->
-            throw new Exception("system.exit "+status)
-        }
+
     }
 
     def cleanup() {
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR)
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR)
     }
 
     def "EncryptPassword fails without specifying service"() {
         when:
-        CommandLineSetup setup = new CommandLineSetup()
-        Exception ex
-        try {
-            setup.runSetup("--encryptpwd")
-        } catch(Exception tex) {
-            ex = tex
-        }
+        int result=-1
+        CommandLineSetup setup = new CommandLineSetup({result=it})
+
+        setup.runSetup("--encryptpwd")
 
         then:
-        ex.message == "system.exit 1"
-        sysErr.toString().contains("Parsing failed.  Reason: Missing argument for option: encryptpwd")
+        result==1
+        sysErr.toString().contains("Missing required parameter for option '--encryptpwd'")
     }
 
     def "EncryptPassword fails specifying unknown service"() {
         when:
-        CommandLineSetup setup = new CommandLineSetup()
-        Exception ex
-        try {
-            setup.runSetup("--encryptpwd", "Unknown")
-        } catch(Exception tex) {
-            ex = tex
-        }
+        int result=-1
+        CommandLineSetup setup = new CommandLineSetup({result=it})
+
+
+        setup.runSetup("--encryptpwd", "Unknown")
+
 
         then:
-        ex.message == "system.exit 1"
+        result==1
         sysErr.toString().contains("No encryption service named: Unknown")
     }
 
     def "EncryptPassword with Jetty"() {
         when:
-        int linesWritten = 0
-        // Modern Groovy approach: Use Expando to create a mock Console without instantiating the final class
-        def console = new Expando()
-        console.readLine = { ->
-            if(linesWritten++ == 0) return "username\n"
-            if(linesWritten++ == 1) return "thepassword\n"
-            return "\n"
+
+        int result=-1
+        CommandLineSetup setup = new CommandLineSetup({result=it})
+        setup.console=Mock(CommandLineSetup.ConsoleI){
+            2 * readLine() >>> [ "username","thepassword"]
         }
-        System.metaClass.static.console = { -> console }
-        CommandLineSetup setup = new CommandLineSetup()
-        Exception ex
-        try {
-            setup.runSetup("--encryptpwd", "Jetty")
-        } catch(Exception tex) {
-            ex = tex
-        }
+        setup.runSetup("--encryptpwd", "Jetty")
 
         def output = sysOut.toString().split('\\n').toList()
 
         then:
-        ex.message == "system.exit 0"
+        result==0
         output.find { it.startsWith("==ENCRYPTED OUTPUT==") }
         output.find { it.startsWith("bcrypt:") }
         output.find { it.startsWith("obfuscate:") }
@@ -103,27 +91,18 @@ class CommandLineSetupTest extends Specification {
 
     def "EncryptPassword with Hidden Input"() {
         when:
-        int linesWrittenRL = 0
-        // Modern Groovy approach: Use Expando to create a mock Console without instantiating the final class
-        def console = new Expando()
-        console.readLine = { ->
-            if(linesWrittenRL++ == 0) return "username\n"
-            return "\n"
+        int result=-1
+        CommandLineSetup setup = new CommandLineSetup({result=it})
+        setup.console=Mock(CommandLineSetup.ConsoleI){
+            1 * readLine() >> "username"
+            _ * readPassword() >>  "thepassword".toCharArray()
         }
-        console.readPassword = { -> return "thepassword".toCharArray() }
-        System.metaClass.static.console = { -> console }
-        CommandLineSetup setup = new CommandLineSetup()
-        Exception ex
-        try {
-            setup.runSetup("--encryptpwd", "Hidden Input")
-        } catch(Exception tex) {
-            ex = tex
-        }
+        setup.runSetup("--encryptpwd", "Hidden Input")
 
         def output = sysOut.toString().split('\\n').toList()
 
         then:
-        ex.message == "system.exit 0"
+        result==0
         output.find { it.startsWith("==ENCRYPTED OUTPUT==") }
         output.find { it.startsWith("bcrypt:") }
         output.find { it.startsWith("obfuscate:") }
@@ -134,8 +113,10 @@ class CommandLineSetupTest extends Specification {
 
     def "Ensure cli option -c sets config directory"() {
         when:
-        CommandLineSetup cliSetup = new CommandLineSetup()
-        RundeckCliOptions opts = cliSetup.runSetup("-c","/tmp/config")
+
+        int result=-1
+        CommandLineSetup setup = new CommandLineSetup({result=it})
+        RundeckCliOptions opts = setup.runSetup("-c","/tmp/config")
 
         then:
         opts.configDir == "/tmp/config"
@@ -143,10 +124,16 @@ class CommandLineSetupTest extends Specification {
 
     def "Test cli options"() {
         setup:
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR)
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR)
         when:
-        CommandLineSetup cliSetup = new CommandLineSetup()
-        RundeckCliOptions opts = cliSetup.runSetup("-b","/tmp/base")
+
+        int result=-1
+        CommandLineSetup setup = new CommandLineSetup({result=it})
+        RundeckCliOptions opts = setup.runSetup("-b","/tmp/base")
 
         then:
         opts.baseDir == "/tmp/base"
@@ -154,5 +141,25 @@ class CommandLineSetupTest extends Specification {
         opts.configDir == "/tmp/base/server/config"
         opts.logDir == "/tmp/base/server/logs"
         opts.dataDir == "/tmp/base/server/data"
+    }
+
+    def "Test cli system props #prop #sysprop"() {
+        setup:
+            System.setProperty(sysprop, expected)
+        when:
+
+            int result = -1
+            CommandLineSetup setup = new CommandLineSetup({ result = it })
+            RundeckCliOptions opts = setup.runSetup()
+
+        then:
+            opts."${prop}" == expected
+        where:
+            prop            | sysprop                                              | expected
+            "baseDir"       | RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR          | "/tmp/dir"
+            "configDir"     | RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR | "/tmp/config"
+            "serverBaseDir" | RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR | "/tmp/base/server"
+            "dataDir"       | RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR   | "/tmp/data"
+            "logDir"        | RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_LOG_DIR    | "/tmp/logs"
     }
 }
