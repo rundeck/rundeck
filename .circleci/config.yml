@@ -758,14 +758,16 @@ workflows:
           name: Build
           <<: *cloudsmith-slack-defaults
 
-      # Row 2: Unit tests, integration tests, and functional API tests all run in parallel after Build
-      # All must complete before Selenium starts (see require-api-integration anchor)
+      # Step 1: Unit tests run in parallel with Build (no gates for fast feedback)
       - test-gradle:
           name: T Unit Gradle
           <<: *cloudsmith-slack-defaults
       - test-gui:
           name: T Unit UI
           <<: *cloudsmith-slack-defaults
+      
+      # Step 2: Integration and functional tests require Build for WAR artifact
+      # All must complete before Selenium starts (see require-api-integration anchor)
       - test-docker:
           name: T Integration SSL
           command: bash test/run-docker-ssl-tests.sh
@@ -812,7 +814,7 @@ workflows:
           <<: *require-build
           <<: *slack-defaults
 
-      # Row 3: Selenium — only after all Row 2 tests pass
+      # Step 3: Selenium — only after all Step 1 (unit) and Step 2 (integration/functional) tests pass
       # Grails 7: Split Selenium into logical groups for faster feedback
       - test-gradle-functional:
           name: T Selenium - Auth & Login
