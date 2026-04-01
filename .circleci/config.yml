@@ -307,8 +307,6 @@ jobs:
       - checkout
       - install-build-dependencies
       - restore-build-cache
-      - attach_workspace:
-          at: ~/workspace
       - run-build-step:
           step-name: Run Gradle Tests
           command: rundeck_gradle_tests
@@ -324,8 +322,6 @@ jobs:
       - setup_docker
       - checkout
       - install-node
-      - attach_workspace:
-          at: ~/workspace
       - run-build-step:
           step-name: Run GUI Tests
           command: rundeck_gui_tests
