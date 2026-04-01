@@ -162,13 +162,16 @@ allprojects {
     }
 
     // Component metadata rule to fix Grails 7.0.9+ groovy-bom issue
+    // Remove the problematic groovy-bom dependency from grails-gradle-bom
     dependencies {
         components {
             withModule('org.apache.grails:grails-gradle-bom') {
                 allVariants {
                     withDependencies {
-                        // Remove the problematic groovy-bom dependency from grails-gradle-bom
-                        removeAll { it.group == 'org.codehaus.groovy' && it.name == 'groovy-bom' }
+                        removeAll {
+                            it.group == 'org.codehaus.groovy' &&
+                            it.name == 'groovy-bom'
+                        }
                     }
                 }
             }
@@ -186,16 +189,15 @@ allprojects {
     configurations.all {
         resolutionStrategy {
             // Force Groovy 4 for any transitive dependencies still using old Groovy 3/codehaus coords
+            // Skip Groovy 3.x dependencies (which come from grails-gradle-bom for Gradle plugins)
+            // Per Grails team recommendation: https://github.com/apache/grails-core/issues/15539
             eachDependency { details ->
-                // Special handling for groovy-bom to fix Grails 7.0.9 platform vs library issue
-                if (details.requested.group == 'org.codehaus.groovy' && details.requested.name == 'groovy-bom') {
-                    details.useTarget group: 'org.apache.groovy', name: 'groovy-bom', version: groovyVersion
-                    details.because 'Grails 7 uses Apache Groovy 4.x'
-                }
-                if (details.requested.group == 'org.codehaus.groovy') {
+                if (details.requested.group == 'org.codehaus.groovy'
+                        && !details.requested.version.startsWith('3.')) {
                     details.useTarget(group: 'org.apache.groovy',
                                     name: details.requested.name,
                                     version: groovyVersion)
+                    details.because 'Grails 7 uses Apache Groovy 4.x; skip Groovy 3.x for Gradle plugins'
                 }
             }
             
