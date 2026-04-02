@@ -1,0 +1,37 @@
+name: Update packaging submodule to main
+
+on:
+  pull_request:
+    types:
+      - labeled
+
+permissions:
+  contents: write
+
+jobs:
+  update-gitmodules:
+    if: contains(github.event.label.name, 'packaging-submodule-to-main')
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        ref: ${{github.event.pull_request.head.ref}}
+        token: ${{secrets.CI_BUILD_PAT}}
+
+    - name: Modify .gitmodules file
+      run: |
+        echo 'Modifying .gitmodules file'
+        git config set -f .gitmodules  submodule.packaging/packaging.branch main
+        git diff --exit-code .gitmodules || echo "submodule_changed=true" >> "$GITHUB_ENV"
+        
+    - name: Commit and push changes
+      if: env.submodule_changed == 'true'
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add .
+        git commit -m 'Update packaging submodule to main [bot]'
+        git push
