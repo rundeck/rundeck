@@ -115,6 +115,8 @@ management:
         export:
             prometheus:
                 enabled: true  # Enable Prometheus registry bean
+            jmx:
+                enabled: true  # Export Micrometer metrics as JMX MBeans (jetty.threads.*, etc.) for dd-java-agent
 
 ---
 

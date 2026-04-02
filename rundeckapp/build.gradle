@@ -266,6 +266,7 @@ dependencies {
     developmentOnly "io.methvin:directory-watcher:0.15.1"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "io.micrometer:micrometer-registry-prometheus"  // Prometheus metrics endpoint
+    implementation "io.micrometer:micrometer-registry-jmx"  // Export Micrometer metrics (jetty.threads.*, etc.) as JMX MBeans for dd-java-agent
     implementation "org.springframework.boot:spring-boot-starter-mail"  // Jakarta Mail API for Spring Boot 3
     // Temporarily removed explicit micronaut-spring-context to see what Spring Security provides
     // implementation "io.micronaut.spring:micronaut-spring-context:4.6.1"
