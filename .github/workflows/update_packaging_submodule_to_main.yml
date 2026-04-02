@@ -19,7 +19,7 @@ jobs:
       with:
         fetch-depth: 0
         ref: ${{github.event.pull_request.head.ref}}
-        token: ${{secrets.CI_BUILD_PAT}}
+        token: ${{ secrets.CI_BUILD_PAT != '' && secrets.CI_BUILD_PAT || github.token }}
 
     - name: Modify .gitmodules file
       run: |
