@@ -4094,6 +4094,17 @@ Authorization required: `read` for the Job.''',
             return
         }
 
+        if(!rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, response.format).isValid()){
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args: [response.format]
+                    ]
+            )
+        }
+
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
             return apiService.renderErrorFormat(response,[status:HttpServletResponse.SC_FORBIDDEN,
