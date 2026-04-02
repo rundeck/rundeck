@@ -506,6 +506,11 @@ Since: v53''',
             return
         }
 
+        if(response.format == "xml" && !rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()){
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+            return renderErrorView(g.message(code: 'api.error.export.format.unsupported', args: ['xml']))
+        }
+
         if (!params.project || params.project != scheduledExecution.project) {
             flash.info = infoMessage
             return redirect(controller: 'scheduledExecution', action: 'show',
