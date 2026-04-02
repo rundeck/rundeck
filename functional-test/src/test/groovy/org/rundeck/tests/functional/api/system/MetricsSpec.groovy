@@ -11,7 +11,7 @@ import org.rundeck.util.container.BaseContainer
  * - Modern Spring Boot Actuator endpoints: /monitoring/* (enabled by default)
  * 
  * Pattern #52-54: Metrics Servlet Endpoints Migration
- * See: GRAILS7_HANDOFF/METRICS_SERVLET_ENDPOINTS.md
+ * See: architecture/metrics.md
  */
 @APITest
 class MetricsSpec extends BaseContainer {
