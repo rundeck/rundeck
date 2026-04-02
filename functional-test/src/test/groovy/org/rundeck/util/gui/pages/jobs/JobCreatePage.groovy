@@ -393,11 +393,14 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getLastNodeInListSpan(){
+        waitForElementVisible(lastNodeInList)
         el lastNodeInList
     }
 
     WebElement getNodeInListSpan(int idx) {
-        el By.cssSelector(".col-xs-6:nth-child(${idx}) span:nth-child(2)")
+        def selector = By.cssSelector(".col-xs-6:nth-child(${idx}) span:nth-child(2)")
+        waitForElementVisible(selector)
+        el selector
     }
 
     WebElement getSelectNodeArrowElement(){

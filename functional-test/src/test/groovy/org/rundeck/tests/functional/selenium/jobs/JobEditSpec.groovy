@@ -109,6 +109,7 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.tab JobTab.NODES click()
         jobCreatePage.nodeDispatchTrueCheck.click()
         jobCreatePage.refreshNodesButton.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.nodeMatchedCountBy)
         jobCreatePage.lastNodeInListSpan.click()
         jobCreatePage.selectNodeArrowElement.click()
 
@@ -133,6 +134,7 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.tab JobTab.NODES click()
         jobCreatePage.nodeDispatchTrueCheck.click()
         jobCreatePage.refreshNodesButton.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.nodeMatchedCountBy)
         jobCreatePage.lastNodeInListSpan.click()
         jobCreatePage.selectTabAddFilterByName("testBoth").click()
         jobCreatePage.getNodeInListSpan(1).click()
