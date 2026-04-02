@@ -226,7 +226,6 @@ class ScheduledExecutionControllerConditionalSpec extends Specification implemen
         controller.apiJobExport()
 
         then:
-  //      1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.apiService.renderErrorFormat(_, _) >> { args ->
             assert args[1].status == HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE
             assert args[1].code == 'api.error.item.unsupported-format'

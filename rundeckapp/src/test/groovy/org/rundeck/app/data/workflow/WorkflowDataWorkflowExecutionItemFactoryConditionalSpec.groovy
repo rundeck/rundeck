@@ -128,7 +128,7 @@ class WorkflowDataWorkflowExecutionItemFactoryConditionalSpec extends Specificat
         def stepItem = result.workflow.commands[0]
         stepItem.conditions != null
         if (stepItem instanceof BaseExecutionItem) {
-            ((BaseExecutionItem) stepItem).conditions != null
+            assert ((BaseExecutionItem) stepItem).conditions != null
         }
     }
 
@@ -161,7 +161,7 @@ class WorkflowDataWorkflowExecutionItemFactoryConditionalSpec extends Specificat
         def stepItem = result.workflow.commands[0]
         stepItem.conditions != null
         if (stepItem instanceof PluginStepExecutionItemImpl) {
-            ((PluginStepExecutionItemImpl) stepItem).conditions != null
+            assert ((PluginStepExecutionItemImpl) stepItem).conditions != null
         }
     }
 

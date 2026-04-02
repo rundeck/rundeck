@@ -1,6 +1,5 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.config.FeatureService
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -76,7 +75,7 @@ class WorkflowControllerConditionalSpec extends Specification implements Control
 
     def "_validateConditionalStep fails when plugin not found for subStep"() {
         given:
-        def condDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
 
@@ -88,8 +87,6 @@ class WorkflowControllerConditionalSpec extends Specification implements Control
         conditionalStep.conditionSet = condSet
         conditionalStep.subSteps = [pluginStep]
         conditionalStep.nodeStep = false
-
-        controller.frameworkService.getPluginStepDescription(false, 'nonexistent-plugin') >> null
 
         when:
         def result = WorkflowController._validateConditionalStep(controller.frameworkService, conditionalStep)
@@ -114,7 +111,6 @@ class WorkflowControllerConditionalSpec extends Specification implements Control
         conditionalStep.subSteps = [pluginStep]
         conditionalStep.nodeStep = false
 
-        controller.frameworkService.getPluginStepDescription(false, 'exec') >> [:]
         controller.frameworkService.validateDescription(_, _, _, _, _, _) >> [valid: false, report: 'Invalid config']
 
         when:
