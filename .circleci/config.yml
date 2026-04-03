@@ -672,6 +672,13 @@ require-unit-tests: &require-unit-tests
     - T Unit Gradle
     - T Unit UI
 
+# Build + unit tests must pass before integration/functional tests start
+require-build-and-units: &require-build-and-units
+  requires:
+    - Build
+    - T Unit Gradle
+    - T Unit UI
+
 # Row 2: All tests run in parallel after Build — all must pass before Selenium starts
 require-api-integration: &require-api-integration
   requires:
@@ -767,32 +774,32 @@ workflows:
           name: T Unit UI
           <<: *cloudsmith-slack-defaults
       
-      # Step 2: Integration and functional tests require Build for WAR artifact
-      # All must complete before Selenium starts (see require-api-integration anchor)
+      # Step 2: Integration and functional tests require Build + unit tests
+      # Don't waste CI dollars on expensive tests if unit tests are broken
       - test-docker:
           name: T Integration SSL
           command: bash test/run-docker-ssl-tests.sh
-          <<: *require-build
+          <<: *require-build-and-units
           <<: *slack-defaults
       - test-docker:
           name: T Integration Ansible
           command: bash test/run-docker-ansible-tests.sh
-          <<: *require-build
+          <<: *require-build-and-units
           <<: *slack-defaults
       - test-machine:
           name: T Integration LDAP
           command: bash test/run-docker-ldap-tests.sh
-          <<: *require-build
+          <<: *require-build-and-units
           <<: *slack-defaults
       - test-machine:
           name: T Integration LDAP Bind
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
-          <<: *require-build
+          <<: *require-build-and-units
           <<: *slack-defaults
       - test-docker:
           name: T Integration PAM
           command: bash test/run-docker-pam-tests.sh
-          <<: *require-build
+          <<: *require-build-and-units
           <<: *slack-defaults
       - test-gradle-functional:
           name: T Functional API
@@ -800,19 +807,19 @@ workflows:
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
-          <<: *require-build
+          <<: *require-build-and-units
           <<: *slack-defaults
       - test-gradle-functional:
           name: T Functional Plugin Blocklist
           gradle-task: pluginBlocklistTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
-          <<: *require-build
+          <<: *require-build-and-units
           <<: *slack-defaults
       - test-gradle-functional:
           name: T Feature NodeExecutorSecureInput
           gradle-task: apiTestNodeExecutorSecureInput
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
-          <<: *require-build
+          <<: *require-build-and-units
           <<: *slack-defaults
 
       # Step 3: Selenium — only after all Step 1 (unit) and Step 2 (integration/functional) tests pass
