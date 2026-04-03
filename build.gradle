@@ -273,6 +273,17 @@ if (enableIncremental) {
     }
 }
 
+/**
+ * Disable invokedynamic for Groovy 4 (default-on since Groovy 4, but not well-optimized until Groovy 5/6).
+ * Grails 7.1 will do this automatically. Remove when upgrading to Groovy 5+.
+ * See: https://github.com/apache/grails-core/issues/13658
+ */
+getAllprojects().findAll() { proj ->
+    proj.tasks.withType(GroovyCompile).configureEach {
+        groovyOptions.optimizationOptions.indy = false
+    }
+}
+
 
 def buildConf  = new org.yaml.snakeyaml.Yaml().load( file('./build.yaml').newDataInputStream() )
 project(':rundeckapp') {
