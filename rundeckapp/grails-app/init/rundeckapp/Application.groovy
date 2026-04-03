@@ -134,6 +134,8 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static RundeckInitConfig rundeckConfig = null
     static ConfigurableApplicationContext ctx;
     static String[] startArgs = []
+    static Closure exitWithCodeOverride
+    static Closure execRunAppOverride
     static void main(String[] args) {
         // Spring Boot 3: Disable legacy Spring Cloud Bootstrap context
         // Grails 7 Option B: Database config is now loaded via ConfigServiceRefresher after DataSource initialization
@@ -169,10 +171,18 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     }
 
     static void execRunApp(String[] args) {
+        if (execRunAppOverride) {
+            execRunAppOverride.call(args)
+            return
+        }
         ctx = GrailsApp.run(Application, args)
     }
 
     static void exitWithCode(Integer code) {
+        if (exitWithCodeOverride) {
+            exitWithCodeOverride.call(code)
+            return
+        }
         System.exit(code)
     }
 

@@ -891,9 +891,12 @@ beans={
         }
     } else {
         jettyCompatiblePasswordEncoder(JettyCompatibleSpringSecurityPasswordEncoder)
-        //if not using jaas for security provide a simple default
         Properties realmProperties = new Properties()
-        realmProperties.load(new File(grailsApplication.config.getProperty("rundeck.security.fileUserDataSource",String.class)).newInputStream())
+        String realmFilePath = grailsApplication.config.getProperty("rundeck.security.fileUserDataSource", String.class)
+        File realmFile = realmFilePath ? new File(realmFilePath) : null
+        if (realmFile?.exists()) {
+            realmProperties.load(realmFile.newInputStream())
+        }
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
         realmAuthProvider(DaoAuthenticationProvider) {
             passwordEncoder = ref("jettyCompatiblePasswordEncoder")

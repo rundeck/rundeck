@@ -167,10 +167,10 @@ class ApplicationTest extends Specification {
     def "report startup failure in migration mode"() {
         given:
         int actual = -404
-        Application.metaClass.'static'.exitWithCode = { Integer code ->
+        Application.exitWithCodeOverride = { Integer code ->
             actual = code
         }
-        Application.metaClass.'static'.execRunApp = { String[] args ->
+        Application.execRunAppOverride = { String[] args ->
             throw new RuntimeException("something failed in the startup")
         }
 
@@ -179,6 +179,10 @@ class ApplicationTest extends Specification {
 
         then:
         actual == 1
+
+        cleanup:
+        Application.exitWithCodeOverride = null
+        Application.execRunAppOverride = null
     }
 
 
