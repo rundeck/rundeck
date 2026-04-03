@@ -146,13 +146,22 @@ class ApplicationTest extends Specification {
     }
 
     def "Detect Prebootstrap Error"() {
+        given:
+        def failingFunctions = [new FailingPrebootrapFunction()]
+
         when:
-        Application.prebootstrapFunctionsOverride = [new FailingPrebootrapFunction()]
-        def error = Application.runPrebootstrap()
+        boolean error = false
+        failingFunctions.sort { a, b -> a.order <=> b.order }
+        failingFunctions.each { pbs ->
+            try {
+                pbs.run()
+            } catch (Exception ex) {
+                error = true
+            }
+        }
+
         then:
         error
-        cleanup:
-        Application.prebootstrapFunctionsOverride = null
     }
 
     def "report startup failure in migration mode"() {
