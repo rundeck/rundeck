@@ -79,7 +79,7 @@ const actions = {
           headers: {
             "x-rundeck-ajax": true,
           },
-          url: `${state.rdBase}plugin/detail/${provider.serviceName}/${provider.providerName}`,
+          url: `${state.rdBase}/plugin/detail/${provider.serviceName}/${provider.providerName}`,
           withCredentials: true,
         });
         providersDetails.push({
@@ -112,7 +112,7 @@ const actions = {
         headers: {
           "x-rundeck-ajax": true,
         },
-        url: `${state.rdBase}plugin/detail/${properties.serviceName}/${properties.providerName}`,
+        url: `${state.rdBase}/plugin/detail/${properties.serviceName}/${properties.providerName}`,
         withCredentials: true,
       })
       .then((response) => {
@@ -143,7 +143,7 @@ const actions = {
             headers: {
               "x-rundeck-ajax": true,
             },
-            url: `${rdBase}api/${apiVersion}/plugins/types`,
+            url: `${rdBase}/api/${apiVersion}/plugins/types`,
             withCredentials: true,
           })
           .then((response) => {
@@ -162,7 +162,7 @@ const actions = {
           headers: {
             "x-rundeck-ajax": true,
           },
-          url: `${rdBase}plugin/listByService`,
+          url: `${rdBase}/plugin/listByService`,
           withCredentials: true,
         })
         .then((response) => {
@@ -190,7 +190,7 @@ const actions = {
             headers: {
               "x-rundeck-ajax": true,
             },
-            url: `${rdBase}plugin/list`,
+            url: `${rdBase}/plugin/list`,
             withCredentials: true,
           })
           .then((response) => {
@@ -227,7 +227,7 @@ const actions = {
         headers: {
           "x-rundeck-ajax": true,
         },
-        url: `${window._rundeck.rdBase}repository/uninstall/${properties.id}/${properties.service}/${properties.name}`,
+        url: `${window._rundeck.rdBase}/repository/uninstall/${properties.id}/${properties.service}/${properties.name}`,
         withCredentials: true,
       })
       .then((response) => {

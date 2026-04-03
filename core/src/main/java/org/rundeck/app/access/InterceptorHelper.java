@@ -15,7 +15,7 @@
  */
 package org.rundeck.app.access;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface InterceptorHelper {
     boolean matchesAllowedAsset(String controllerName, HttpServletRequest request);

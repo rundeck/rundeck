@@ -49,7 +49,7 @@ import org.springframework.context.NoSuchMessageException
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.services.feature.FeatureService
 
-import javax.servlet.ServletContext
+import jakarta.servlet.ServletContext
 
 class PluginApiService {
 
@@ -83,20 +83,23 @@ class PluginApiService {
         pluginDescs[ses.name] = pluginService.listPlugins(StepExecutor, ses)
                 .findAll { it.value.description != null }
                 .collect { it.value.description }
-                .sort {a,b -> a.name <=> b.name }
+                .sort {a,b -> a?.name <=> b?.name }
 
         NodeExecutorService nes = framework.getNodeExecutorService()
         pluginDescs[nes.name] = pluginService.listPlugins(NodeExecutor, nes)
+                .findAll { it.value.description != null }
                 .collect { it.value.description }
-                .sort { a, b -> a.name <=> b.name }
+                .sort { a, b -> a?.name <=> b?.name }
 
         NodeStepExecutionService nses = framework.getNodeStepExecutorService()
         pluginDescs[nses.name] = pluginService.listPlugins(NodeStepExecutor, nses)
+                .findAll { it.value.description != null }
                 .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
         FileCopierService fcs = framework.getFileCopierService()
         pluginDescs[fcs.name] = pluginService.listPlugins(FileCopier, fcs)
+                .findAll { it.value.description != null }
                 .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
@@ -106,100 +109,124 @@ class PluginApiService {
                 .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
-        pluginDescs[ServiceNameConstants.NodeEnhancer]=pluginService.listPlugins(NodeEnhancerPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[ServiceNameConstants.NodeEnhancer]=pluginService.listPlugins(NodeEnhancerPlugin)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         ResourceFormatParserService rfps = framework.getResourceFormatParserService()
         pluginDescs[rfps.name] = pluginService.listPlugins(ResourceFormatParser, rfps)
+                .findAll { it.value.description != null }
                 .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
         ResourceFormatGeneratorService rfgs = framework.getResourceFormatGeneratorService()
         pluginDescs[rfgs.name] = pluginService.listPlugins(ResourceFormatGenerator, rfgs)
+                .findAll { it.value.description != null }
                 .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
         OrchestratorService os = framework.getOrchestratorService()
         pluginDescs[os.name] = pluginService.listPlugins(OrchestratorPlugin, os)
+                .findAll { it.value.description != null }
                 .collect { it.value.description }
                 .sort { a, b -> a.name <=> b.name }
 
-        if(featureService.featurePresent(Features.OPTION_VALUES_PLUGIN)) {
-            pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
-                it.value.description
-            }.sort { a, b -> a.name <=> b.name }
-        }
+        pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
-        pluginDescs['PasswordUtilityEncrypter'] = pluginService.listPlugins(PasswordUtilityEncrypterPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['PasswordUtilityEncrypter'] = pluginService.listPlugins(PasswordUtilityEncrypterPlugin)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         //web-app level plugin descriptions
-        if(featureService.featurePresent(Features.JOB_LIFECYCLE_PLUGIN)) {
-            pluginDescs[jobLifecycleComponentService.jobLifecyclePluginProviderService.name]=jobLifecycleComponentService.listJobLifecyclePlugins().collect {
-                it.value.description
-            }.sort { a, b -> a.name <=> b.name }
-        }
-        if(featureService.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN)) {
-            pluginDescs[executionLifecycleComponentService.executionLifecyclePluginProviderService.name]=executionLifecycleComponentService.listExecutionLifecyclePlugins().collect {
-                it.value.description
-            }.sort { a, b -> a.name <=> b.name }
-        }
-        pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[loggingService.streamingLogReaderPluginProviderService.name]=loggingService.listStreamingReaderPlugins().collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[loggingService.streamingLogWriterPluginProviderService.name]=loggingService.listStreamingWriterPlugins().collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[logFileStorageService.executionFileStoragePluginProviderService.name]= logFileStorageService.listLogFileStoragePlugins().collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[storagePluginProviderService.name]= pluginService.listPlugins(StoragePlugin.class, storagePluginProviderService).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[storageConverterPluginProviderService.name] = pluginService.listPlugins(StorageConverterPlugin.class, storageConverterPluginProviderService).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[scmService.scmExportPluginProviderService.name]=scmService.listPlugins('export').collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[scmService.scmImportPluginProviderService.name]=scmService.listPlugins('import').collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        def jobLifecyclePlugins = jobLifecycleComponentService.listJobLifecyclePlugins()
+        pluginDescs[jobLifecycleComponentService.jobLifecyclePluginProviderService.name] = jobLifecyclePlugins ?
+                jobLifecyclePlugins
+                        .findAll { it.value.description != null }
+                        .collect { it.value.description }
+                        .sort { a, b -> a?.name <=> b?.name } : []
+
+        def executionLifecyclePlugins = executionLifecycleComponentService.listExecutionLifecyclePlugins()
+        pluginDescs[executionLifecycleComponentService.executionLifecyclePluginProviderService.name] = executionLifecyclePlugins ?
+                executionLifecyclePlugins
+                        .findAll { it.value.description != null }
+                        .collect { it.value.description }
+                        .sort { a, b -> a?.name <=> b?.name } : []
+        pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins()
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs[loggingService.streamingLogReaderPluginProviderService.name]=loggingService.listStreamingReaderPlugins()
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs[loggingService.streamingLogWriterPluginProviderService.name]=loggingService.listStreamingWriterPlugins()
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs[logFileStorageService.executionFileStoragePluginProviderService.name]= logFileStorageService.listLogFileStoragePlugins()
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs[storagePluginProviderService.name]= pluginService.listPlugins(StoragePlugin.class, storagePluginProviderService)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs[storageConverterPluginProviderService.name] = pluginService.listPlugins(StorageConverterPlugin.class, storageConverterPluginProviderService)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs[scmService.scmExportPluginProviderService.name]=scmService.listPlugins('export')
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs[scmService.scmImportPluginProviderService.name]=scmService.listPlugins('import')
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
         if(featureService.featurePresent(Features.FILE_UPLOAD_PLUGIN)) {
-            pluginDescs['FileUpload'] = pluginService.listPlugins(FileUploadPlugin).collect {
-                it.value.description
-            }.sort { a, b -> a.name <=> b.name }
+            pluginDescs['FileUpload'] = pluginService.listPlugins(FileUploadPlugin)
+                    .findAll { it.value.description != null }
+                    .collect { it.value.description }
+                    .sort { a, b -> a.name <=> b.name }
         }
-        pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs['ContentConverter']=pluginService.listPlugins(ContentConverterPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs['TourLoader']=pluginService.listPlugins(TourLoaderPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs['UserGroupSource']=pluginService.listPlugins(UserGroupSourcePlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs['UI']= pluginService.listPlugins(UIPlugin, uiPluginProviderService).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs['WebhookEvent']=pluginService.listPlugins(WebhookEventPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[ServiceNameConstants.AuditEventListener] = pluginService.listPlugins(AuditEventListenerPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[ServiceNameConstants.PluginGroup] = pluginService.listPlugins(PluginGroup).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs['ContentConverter']=pluginService.listPlugins(ContentConverterPlugin)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs['TourLoader']=pluginService.listPlugins(TourLoaderPlugin)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs['UserGroupSource']=pluginService.listPlugins(UserGroupSourcePlugin)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs['UI']= pluginService.listPlugins(UIPlugin, uiPluginProviderService)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs['WebhookEvent']=pluginService.listPlugins(WebhookEventPlugin)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs[ServiceNameConstants.AuditEventListener] = pluginService.listPlugins(AuditEventListenerPlugin)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
+        pluginDescs[ServiceNameConstants.PluginGroup] = pluginService.listPlugins(PluginGroup)
+                .findAll { it.value.description != null }
+                .collect { it.value.description }
+                .sort { a, b -> a.name <=> b.name }
 
 
         Map<String,Map> uiPluginProfiles = [:]

@@ -74,7 +74,8 @@ class JobEditSpec extends SeleniumBase{
             jobShowPage.closeDefinitionModalButton.click()
             jobCreatePage.go()
             jobCreatePage.tab(JobTab.WORKFLOW).click()
-            jobCreatePage.removeStepByIndex(1)
+            jobCreatePage.waitForNumberOfElementsToBeMoreThan(jobCreatePage.duplicateWfStepBy, 0)
+            jobCreatePage.removeStepByIndex(0)
             hold(2)
             jobCreatePage.expectNumberOfStepsToBe(1)
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.getUpdateJobButton()
@@ -108,7 +109,8 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.tab JobTab.NODES click()
         jobCreatePage.nodeDispatchTrueCheck.click()
         jobCreatePage.refreshNodesButton.click()
-        jobCreatePage.lastNodeInListSpan.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.nodeMatchedCountBy)
+        jobCreatePage.getNodeByName("test-node2").click()
         jobCreatePage.selectNodeArrowElement.click()
 
         then:
@@ -132,9 +134,10 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.tab JobTab.NODES click()
         jobCreatePage.nodeDispatchTrueCheck.click()
         jobCreatePage.refreshNodesButton.click()
-        jobCreatePage.lastNodeInListSpan.click()
+        jobCreatePage.waitForElementVisible(jobCreatePage.nodeMatchedCountBy)
+        jobCreatePage.getNodeByName("test-node2").click()
         jobCreatePage.selectTabAddFilterByName("testBoth").click()
-        jobCreatePage.getNodeInListSpan(1).click()
+        jobCreatePage.getNodeByName("test-node").click()
         jobCreatePage.selectTabAddFilterByName("test").click()
 
 

@@ -44,7 +44,7 @@ import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 
 /**
  * Created by greg on 8/14/15.

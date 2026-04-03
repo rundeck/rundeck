@@ -8,7 +8,7 @@ import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import spock.lang.Specification
 
-import javax.mail.Session
+import jakarta.mail.Session
 
 class DynamicMailSenderSpec extends Specification implements AutowiredTest {
 

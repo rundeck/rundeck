@@ -424,7 +424,6 @@ form.option.valuesType.url.authType.bearerToken.label
                                 <g:message code="form.option.valuesType.url.label" />
                             </label>
                         </div>
-                <feature:enabled name="optionValuesPlugin">
                     <!--List OptionValuesPlugins here -->
                     <g:each in="${optionValuesPlugins}" var="optionValPlugin">
                         <div class="radio">
@@ -441,7 +440,6 @@ form.option.valuesType.url.authType.bearerToken.label
                             <wdgt:action target="vurl_${rkey}_section" visible="false"/>
                         </wdgt:eventHandler>
                     </g:each>
-                </feature:enabled>
                 </div>
 
             </div>

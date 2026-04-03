@@ -28,7 +28,6 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.app.data.model.v1.storage.SimpleStorageBuilder
 import org.rundeck.app.data.providers.v1.storage.StorageDataProvider
@@ -268,7 +267,12 @@ class DbStorageService implements NamespacedStorage{
                     }
                     saved = storageDataProvider.getData(id)
                 } catch (DataAccessException e) {
-                    def causeMessage = ExceptionUtils.getRootCause(e).message
+                    // Get root cause manually (Apache Commons Lang3 not available in Grails 7)
+                    Throwable rootCause = e
+                    while (rootCause.cause != null && rootCause.cause != rootCause) {
+                        rootCause = rootCause.cause
+                    }
+                    def causeMessage = rootCause.message
                     throw new StorageException("Failed to save content at path ${path.getPath()}: validation error: " +
                             causeMessage,
                             StorageException.Event.valueOf(event.toUpperCase()),

@@ -19,7 +19,7 @@ import grails.core.GrailsApplication
 import org.grails.testing.GrailsUnitTest
 import spock.lang.Specification
 
-import javax.servlet.ServletContext
+import jakarta.servlet.ServletContext
 
 
 class BootStrapTest extends Specification implements GrailsUnitTest {
