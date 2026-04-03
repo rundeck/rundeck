@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpSession
 
 class OptionsUtil {
     static Logger logger = LoggerFactory.getLogger(OptionsUtil)
+    static FrameworkService frameworkServiceInstance
+    static HttpSession httpSessionInstance
 
     /**
      * Map of descriptive property name to ScheduledExecution domain class property names
@@ -115,10 +117,12 @@ class OptionsUtil {
     }
 
     protected static FrameworkService getFrameworkServiceInstance(){
+        if (frameworkServiceInstance) return frameworkServiceInstance
         return Holders.applicationContext.getBean('frameworkService') as FrameworkService
     }
 
     protected static HttpSession getHttpSessionInstance(){
+        if (httpSessionInstance) return httpSessionInstance
         return RequestContextHolder.currentRequestAttributes().getSession()
     }
 }

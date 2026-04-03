@@ -36,6 +36,11 @@ class OptionsParserUtilsSpec extends Specification implements ControllerUnitTest
         mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats, User)
     }
 
+    def cleanup() {
+        OptionsUtil.frameworkServiceInstance = null
+        OptionsUtil.httpSessionInstance = null
+    }
+
     private Map createJobParams(Map overrides=[:]){
         [
                 jobName: 'blue',
@@ -56,8 +61,7 @@ class OptionsParserUtilsSpec extends Specification implements ControllerUnitTest
         def optsmap = [:]
         def ishttp = true
         def frameworkService = Mock(FrameworkService)
-        OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return frameworkService}
-        OptionsUtil.metaClass.static.frameworkServiceInstance = { return frameworkService}
+        OptionsUtil.frameworkServiceInstance = frameworkService
         GormUserDataProvider provider = new GormUserDataProvider()
 
         when:
@@ -89,9 +93,8 @@ class OptionsParserUtilsSpec extends Specification implements ControllerUnitTest
         def optsmap = [:]
         def ishttp = true
         def frameworkService = Mock(FrameworkService)
-        OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return frameworkService}
-        OptionsUtil.metaClass.static.frameworkServiceInstance = { return frameworkService}
-        OptionsUtil.metaClass.static.getHttpSessionInstance = { return null }
+        OptionsUtil.frameworkServiceInstance = frameworkService
+        OptionsUtil.httpSessionInstance = null
         GormUserDataProvider provider = Mock(GormUserDataProvider) {
             getEmailWithNewSession(_) >> { String login -> 
                 // Return email only if we have a real username (not null/anonymous)

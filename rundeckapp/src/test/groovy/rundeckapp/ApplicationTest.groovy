@@ -147,10 +147,12 @@ class ApplicationTest extends Specification {
 
     def "Detect Prebootstrap Error"() {
         when:
-        Application.metaClass.'static'.getPrebootstrapFunctions = { -> [new FailingPrebootrapFunction()]}
+        Application.prebootstrapFunctionsOverride = [new FailingPrebootrapFunction()]
         def error = Application.runPrebootstrap()
         then:
         error
+        cleanup:
+        Application.prebootstrapFunctionsOverride = null
     }
 
     def "report startup failure in migration mode"() {

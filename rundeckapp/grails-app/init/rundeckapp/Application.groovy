@@ -250,8 +250,10 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     void doWithDynamicMethods() {
     }
+    static List<PreBootstrap> prebootstrapFunctionsOverride
+
     static boolean runPrebootstrap() {
-        List<PreBootstrap> preboostraplist = getPrebootstrapFunctions()
+        List<PreBootstrap> preboostraplist = prebootstrapFunctionsOverride ?: getPrebootstrapFunctions()
         preboostraplist.sort { a,b -> a.order <=> b.order }
         boolean error = false;
         preboostraplist.each { pbs ->
