@@ -397,6 +397,12 @@ class JobCreatePage extends BasePage {
         el lastNodeInList
     }
 
+    WebElement getNodeByName(String nodeName) {
+        def selector = By.cssSelector("a[data-node='${nodeName}']")
+        waitForElementVisible(selector)
+        el selector
+    }
+
     WebElement getNodeInListSpan(int idx) {
         def selector = By.cssSelector(".col-xs-6:nth-child(${idx}) span:nth-child(2)")
         waitForElementVisible(selector)
