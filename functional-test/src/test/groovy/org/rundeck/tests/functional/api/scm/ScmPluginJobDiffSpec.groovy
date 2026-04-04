@@ -36,9 +36,21 @@ class ScmPluginJobDiffSpec extends ScmBaseContainer {
                 "2-args": "echo hello there 2",
                 "uuid": DUMMY_JOB_ID
         ]
-        JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, initialArgs) as String, client)
-        GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(ScmIntegration.EXPORT).forProject(PROJECT_NAME)
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(PROJECT_NAME).withRepo(remoteRepo))
+        JobUtils.jobImportFile(PROJECT_NAME,
+                JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, initialArgs) as String,
+                client)
+        GitScmApiClient scmClient = new GitScmApiClient(clientProvider)
+                .forIntegration(ScmIntegration.EXPORT)
+                .forProject(PROJECT_NAME)
+        // Retry setup integration to handle transient filesystem issues in test environment
+        def setupRequest = GitExportSetupRequest.defaultRequest()
+                .forProject(PROJECT_NAME)
+                .withRepo(remoteRepo)
+        waitFor(
+                { scmClient.callSetupIntegration(setupRequest, 200..499).response },
+                { it.success },
+                WaitingTime.MODERATE
+        )
         ScmJobStatusResponse initialStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         ScmActionPerformRequest actionRequest = new ScmActionPerformRequest([
                 input: [message: "Commit msg example"],
