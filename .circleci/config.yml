@@ -417,6 +417,16 @@ jobs:
             else
               echo "No snyk-results.json found — skipping CVE summary"
             fi
+      - run:
+          name: Convert Snyk results to JUnit XML
+          when: always
+          command: |
+            if [ -f snyk-results.json ]; then
+              mkdir -p test-results/junit
+              bash scripts/convert_snyk_junit.sh snyk-results.json > test-results/junit/snyk-junit.xml
+            fi
+      - store_test_results:
+          path: test-results
       - store_artifacts:
           path: snyk-results.json
           destination: snyk-results.json
