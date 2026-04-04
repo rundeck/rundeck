@@ -10,6 +10,7 @@ import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.common.scm.ScmIntegration
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
 
 @APITest
