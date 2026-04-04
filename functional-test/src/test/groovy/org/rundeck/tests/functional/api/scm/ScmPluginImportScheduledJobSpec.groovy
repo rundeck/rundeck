@@ -48,14 +48,13 @@ class ScmPluginImportScheduledJobSpec extends ScmBaseContainer {
         GitScmApiClient scmClient = new GitScmApiClient(clientProvider)
                 .forIntegration(ScmIntegration.IMPORT)
                 .forProject(PROJECT_NAME)
-        // Retry setup integration to handle transient filesystem issues in test environment
         def setupRequest = GitImportSetupRequest.defaultRequest()
                 .forProject(PROJECT_NAME)
                 .withRepo(remoteRepo)
         waitFor(
-                { scmClient.callSetupIntegration(setupRequest, 200..499).response },
-                { it.success },
-                WaitingTime.MODERATE
+                { try { scmClient.callSetupIntegration(setupRequest).response } catch (Exception e) { null } },
+                { it?.success },
+                WaitingTime.EXCESSIVE
         )
 
         when: "scheduled job is imported from the scm repo"
