@@ -230,8 +230,8 @@ dependencies {
     implementation "commons-beanutils:commons-beanutils:${beanutilsVersion}"
     // BOMs for dependency management
     implementation platform("org.apache.grails:grails-bom:$grailsVersion")
-    // Force Jackson 2.18.6 (Spring Boot 3.5.9 brings 2.19.4 which has binary incompatibilities)
-    implementation platform("com.fasterxml.jackson:jackson-bom:2.18.6")
+    // Jackson BOM aligns with Spring Boot 3.5.13 managed version; declared first to allow override if needed
+    implementation platform("com.fasterxml.jackson:jackson-bom:${jacksonDatabindVersion}")
     implementation platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
     implementation platform("org.apache.groovy:groovy-bom:${groovyVersion}")
     
