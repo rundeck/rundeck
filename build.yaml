@@ -1,7 +1,7 @@
 ---
 rundeck:
   plugins: # Extra plugins to bundle
-  - "com.rundeck.plugins:ansible-plugin:4.0.19-grails7"
+  - "com.rundeck.plugins:ansible-plugin:5.0.0"
   - "com.rundeck.plugins:aws-s3-model-source:1.0.15-grails7"
   - "com.rundeck.plugins:py-winrm-plugin:2.1.8-grails7"
   - "com.rundeck.plugins:openssh-node-execution:2.0.12-grails7"
