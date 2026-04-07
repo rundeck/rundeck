@@ -238,7 +238,7 @@ repositories {
     mavenCentral()
     maven { url "https://repo.grails.org/grails/restricted" }
     
-    // PackageCloud com.rundeck.plugins repositories
+    // PackageCloud plugin repositories
     maven {
         url "https://packagecloud.io/pagerduty/rundeckpro-test/maven2"
     }
