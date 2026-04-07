@@ -203,6 +203,13 @@ commands:
           step-name: Install Java JDK
           command: dependencies_install_zulu17jdk
 
+  install-java-jdk-25:
+    description: Install JDK 25 for host-side tests (BASH_ENV JAVA_HOME)
+    steps:
+      - run-build-step:
+          step-name: Install Java JDK 25
+          command: dependencies_install_zulu25jdk
+
   ## Dependency groups
 
   # Install base dependencies
@@ -233,6 +240,14 @@ commands:
     description: Install TestDeck Dependencies
     steps:
       - install-base-dependencies
+      - run-build-step:
+          step-name: Install TestDeck Dependencies
+          command: dependencies_testdeck_setup
+
+  install-testdeck-dependencies-jdk25:
+    description: JDK 25 on host + TestDeck extras (orchestration only; app still in Docker)
+    steps:
+      - install-java-jdk-25
       - run-build-step:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
@@ -570,10 +585,24 @@ jobs:
       command:
         description: Command that will execute the docker tests
         type: string
+      host_jdk_for_tests:
+        description: JDK on the CI host (Docker image still uses JRE from build job)
+        type: enum
+        enum: ["17", "25"]
+        default: "17"
     steps:
       - setup_docker
       - checkout
-      - install-testdeck-dependencies
+      - when:
+          condition:
+            equal: [ "25", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-testdeck-dependencies-jdk25
+      - when:
+          condition:
+            equal: [ "17", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-testdeck-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -598,10 +627,24 @@ jobs:
       command:
         description: Command that will execute the docker tests
         type: string
+      host_jdk_for_tests:
+        description: JDK on the CI host (Docker image still uses JRE from build job)
+        type: enum
+        enum: [ "17", "25" ]
+        default: "17"
     steps:
 
       - checkout
-      - install-testdeck-dependencies
+      - when:
+          condition:
+            equal: [ "25", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-testdeck-dependencies-jdk25
+      - when:
+          condition:
+            equal: [ "17", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-testdeck-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -634,10 +677,26 @@ jobs:
         default: medium
       test_file_pattern:
         type: string
+      host_jdk_for_tests:
+        description: JDK for Gradle on the CI host (test image JRE comes from build job)
+        type: enum
+        enum: [ "17", "25" ]
+        default: "17"
     steps:
       - checkout
       - restore-build-cache
-      - install-base-dependencies
+      - when:
+          condition:
+            equal: [ "25", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - run-build-step:
+                step-name: Install Java JDK 25 (host Gradle)
+                command: dependencies_install_zulu25jdk
+      - when:
+          condition:
+            equal: [ "17", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-base-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -920,6 +979,7 @@ workflows:
           filters:
             branches: { only: main }
 
+  # Build Rundeck Docker images with JRE 17; run downstream tests with JDK 25 on the host (Gradle / CI orchestration).
   build_and_test_with_jre_17:
     triggers:
       - schedule:
@@ -931,7 +991,7 @@ workflows:
     when:
       or:
         - matches:
-            pattern: release/5\..*
+            pattern: release/6\..*
             value: << pipeline.git.branch >>
         - equal: [ main, << pipeline.git.branch >> ]
     jobs:
@@ -939,75 +999,89 @@ workflows:
           name: Build with Docker image using JRE 17
           jreVersion: "openjdk-17-jre-headless"
       - test-docker:
-          name: T Integration SSL running JRE 17
+          name: T Integration SSL (host JDK 25, image JRE 17)
           command: bash test/run-docker-ssl-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-docker:
-          name: T Integration Ansible running JRE 17
+          name: T Integration Ansible (host JDK 25, image JRE 17)
           command: bash test/run-docker-ansible-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-machine:
-          name: T Integration LDAP running JRE 17
+          name: T Integration LDAP (host JDK 25, image JRE 17)
           command: bash test/run-docker-ldap-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-machine:
-          name: T Integration LDAP Bind running JRE 17
+          name: T Integration LDAP Bind (host JDK 25, image JRE 17)
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-docker:
-          name: T Integration PAM running JRE 17
+          name: T Integration PAM (host JDK 25, image JRE 17)
           command: bash test/run-docker-pam-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       # Grails 7: Split Selenium into logical groups for faster feedback
       - test-gradle-functional:
-          name: T Selenium - Auth & Login (JRE 17)
+          name: T Selenium - Auth & Login (host JDK 25)
           gradle-task: seleniumCoreTest
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium - Projects (JRE 17)
+          name: T Selenium - Projects (host JDK 25)
           gradle-task: seleniumCoreTest
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium - Jobs Core (JRE 17)
+          name: T Selenium - Jobs Core (host JDK 25)
           gradle-task: seleniumCoreTest
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium - Jobs Advanced (JRE 17)
+          name: T Selenium - Jobs Advanced (host JDK 25)
           gradle-task: seleniumCoreTest
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium - Execution & Other (JRE 17)
+          name: T Selenium - Execution & Other (host JDK 25)
           gradle-task: seleniumCoreTest
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Functional API running JRE 17
+          name: T Functional API (host JDK 25)
           gradle-task: apiTest
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Functional Plugin Blocklist running JRE 17
+          name: T Functional Plugin Blocklist (host JDK 25)
           gradle-task: pluginBlocklistTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Feature NodeExecutorSecureInput running JRE 17
+          name: T Feature NodeExecutorSecureInput (host JDK 25)
           gradle-task: apiTestNodeExecutorSecureInput
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium Alpha UI running JRE 17
+          name: T Selenium Alpha UI (host JDK 25)
           gradle-task: alphaUiSeleniumCoreTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
