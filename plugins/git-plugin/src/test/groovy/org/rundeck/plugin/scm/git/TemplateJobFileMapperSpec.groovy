@@ -124,4 +124,48 @@ class TemplateJobFileMapperSpec extends Specification {
         cleanup:
         baseDir.deleteDir()
     }
+
+    def "pathForJob rejects path traversal"() {
+        given:
+        def baseDir = Files.createTempDirectory("test").toFile()
+        def mapper = new TemplateJobFileMapper('${job.group}/${job.name}.xml', baseDir)
+        def job = Mock(JobReference) {
+            getGroupPath() >> '../../../../../tmp'
+            getJobName() >> "test"
+            getProject() >> "proj"
+            getId() >> "123"
+        }
+
+        when:
+        mapper.pathForJob(job)
+
+        then:
+        IOException e = thrown()
+        e.message.contains("Path traversal detected")
+
+        cleanup:
+        baseDir.deleteDir()
+    }
+
+    def "pathForJob returns valid path for legitimate input"() {
+        given:
+        def baseDir = Files.createTempDirectory("test").toFile()
+        def mapper = new TemplateJobFileMapper('${job.group}/${job.name}.xml', baseDir)
+        def job = Mock(JobReference) {
+            getGroupPath() >> "mygroup"
+            getJobName() >> "myjob"
+            getProject() >> "proj"
+            getId() >> "123"
+        }
+
+        when:
+        def path = mapper.pathForJob(job)
+
+        then:
+        // groupPath includes trailing slash, so result is "mygroup/myjob.xml"
+        path == 'mygroup/myjob.xml' || path.endsWith('myjob.xml')
+
+        cleanup:
+        baseDir.deleteDir()
+    }
 }
