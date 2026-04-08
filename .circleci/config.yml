@@ -426,9 +426,14 @@ jobs:
                 echo "Snyk scan failed - see snyk-results.json for details"
                 exit 0
               fi
-              echo "=== CVEs Found ==="
-              jq -r '.[] | select(type == "object") | select(.vulnerabilities != null) | .vulnerabilities[] | select(.identifiers.CVE | length > 0) | [(.identifiers.CVE | join(",")), .severity, .moduleName, .title] | @csv' snyk-results.json | sort -u | tee snyk-summary.csv || echo "No CVEs found - clean scan!"
-              echo "=================="
+              cve_count=$(jq '[.[] | select(type == "object") | select(.vulnerabilities != null) | .vulnerabilities[] | select( (.identifiers.CVE | length > 0 ) or (.identifiers.GHSA | length > 0) or (.identifiers.CWE | length > 0 ) )] | length' snyk-results.json)
+              if [ "$cve_count" -gt 0 ]; then
+                echo "=== CVEs Found ==="
+                jq -r '.[] | select(type == "object") | select(.vulnerabilities != null) | .vulnerabilities[] | select( (.identifiers.CVE | length > 0) or (.identifiers.GHSA | length > 0) or (.identifiers.CWE | length > 0 ) ) | [( [.identifiers.CVE,.identifiers.GHSA,.identifiers.CWE] | map(select(.!=null and .!=[])) | flatten | join(",")), .severity, .moduleName, .title] | @csv' snyk-results.json | sort -u | tee snyk-summary.csv
+                echo "=================="
+              else
+                echo "No CVEs found - clean scan!"
+              fi
             else
               echo "No snyk-results.json found — skipping CVE summary"
             fi
