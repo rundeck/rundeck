@@ -26,5 +26,5 @@ import java.io.IOException;
  */
 public interface JobFileMapper {
     public File fileForJob(JobReference jobReference) throws IOException;
-    public String pathForJob(JobReference jobReference);
+    public String pathForJob(JobReference jobReference) throws IOException;
 }

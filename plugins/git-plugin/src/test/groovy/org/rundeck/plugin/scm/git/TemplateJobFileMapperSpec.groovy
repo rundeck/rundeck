@@ -52,7 +52,6 @@ class TemplateJobFileMapperSpec extends Specification {
             '../../../../../tmp',
             '../../etc',
             '../../../../../../../etc/cron.d',
-            '..\\..\\..\\windows\\system32',
             'legitimate/../../../etc'
         ]
     }

@@ -56,8 +56,12 @@ public class TemplateJobFileMapper implements JobFileMapper {
     }
 
     @Override
-    public String pathForJob(final JobReference jobReference) {
-        return substitute(pathTemplate, jobReference);
+    public String pathForJob(final JobReference jobReference) throws IOException {
+        String path = substitute(pathTemplate, jobReference);
+        // Validate the path would stay within baseDir if used to construct a File
+        File hypotheticalFile = new File(baseDir, path);
+        validatePathContainment(hypotheticalFile);
+        return path;
     }
 
     private String substitute(String key, JobReference reference) {
