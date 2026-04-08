@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.jobs.JobReference;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,8 +37,22 @@ public class TemplateJobFileMapper implements JobFileMapper {
     }
 
     @Override
-    public File fileForJob(JobReference jobReference) {
-        return new File(baseDir, substitute(pathTemplate, jobReference));
+    public File fileForJob(JobReference jobReference) throws IOException {
+        File file = new File(baseDir, substitute(pathTemplate, jobReference));
+        validatePathContainment(file);
+        return file;
+    }
+
+    private void validatePathContainment(File resolvedFile) throws IOException {
+        File canonicalBase = baseDir.getCanonicalFile();
+        File canonicalTarget = resolvedFile.getCanonicalFile();
+
+        if (!canonicalTarget.getPath().startsWith(canonicalBase.getPath() + File.separator) &&
+            !canonicalTarget.equals(canonicalBase)) {
+            throw new IOException("Path traversal detected: resolved path '" +
+                canonicalTarget.getPath() + "' is outside base directory '" +
+                canonicalBase.getPath() + "'");
+        }
     }
 
     @Override
