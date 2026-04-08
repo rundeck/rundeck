@@ -30,7 +30,7 @@ repositories {
     maven { url "https://repo.grails.org/grails/core" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     
-    // PackageCloud com.rundeck.plugins repositories
+    // PackageCloud plugin repositories
     maven {
         url "https://packagecloud.io/pagerduty/rundeckpro-test/maven2"
     }

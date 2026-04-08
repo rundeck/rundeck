@@ -1,9 +1,9 @@
 const esModules = [
   "vue-virtual-scroller",
   "uuid",
-    "primevue/.*",
-    "@primevue/.*",
-    "@primeuix/.*",
+  "primevue/.*",
+  "@primevue/.*",
+  "@primeuix/.*",
 ].join("|");
 
 module.exports = {

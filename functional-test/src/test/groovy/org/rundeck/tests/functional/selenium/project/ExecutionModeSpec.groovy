@@ -286,7 +286,8 @@ class ExecutionModeSpec extends SeleniumBase{
         // This ensures the schedule change has propagated and any pending executions are cancelled
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
                 verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
-        sideBarPage.goTo NavLinkTypes.JOBS
+        // Navigate directly to jobs page to get a fresh DOM reflecting current server state
+        jobListPage.go("/project/${projectName}/jobs")
         then:
         jobListPage.expectScheduleDisabled()
         when:
