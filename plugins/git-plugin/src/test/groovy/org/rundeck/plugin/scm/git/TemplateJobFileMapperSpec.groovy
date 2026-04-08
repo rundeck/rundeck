@@ -41,7 +41,7 @@ class TemplateJobFileMapperSpec extends Specification {
         mapper.fileForJob(job)
 
         then:
-        IOException e = thrown()
+        UncheckedIOException e = thrown()
         e.message.contains("Path traversal detected")
 
         cleanup:
@@ -96,7 +96,7 @@ class TemplateJobFileMapperSpec extends Specification {
         mapper.fileForJob(job)
 
         then:
-        IOException e = thrown()
+        UncheckedIOException e = thrown()
         e.message.contains("Path traversal detected")
 
         cleanup:
@@ -140,7 +140,7 @@ class TemplateJobFileMapperSpec extends Specification {
         mapper.pathForJob(job)
 
         then:
-        IOException e = thrown()
+        UncheckedIOException e = thrown()
         e.message.contains("Path traversal detected")
 
         cleanup:
@@ -162,8 +162,7 @@ class TemplateJobFileMapperSpec extends Specification {
         def path = mapper.pathForJob(job)
 
         then:
-        // groupPath includes trailing slash, so result is "mygroup/myjob.xml"
-        path == 'mygroup/myjob.xml' || path.endsWith('myjob.xml')
+        path == 'mygroup//myjob.xml'
 
         cleanup:
         baseDir.deleteDir()

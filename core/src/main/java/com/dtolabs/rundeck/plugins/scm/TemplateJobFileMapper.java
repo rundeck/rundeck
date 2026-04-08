@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.jobs.JobReference;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,28 +39,31 @@ public class TemplateJobFileMapper implements JobFileMapper {
     }
 
     @Override
-    public File fileForJob(JobReference jobReference) throws IOException {
+    public File fileForJob(JobReference jobReference) {
         File file = new File(baseDir, substitute(pathTemplate, jobReference));
         validatePathContainment(file);
         return file;
     }
 
-    private void validatePathContainment(File resolvedFile) throws IOException {
-        File canonicalBase = baseDir.getCanonicalFile();
-        File canonicalTarget = resolvedFile.getCanonicalFile();
+    private void validatePathContainment(File resolvedFile) {
+        try {
+            Path canonicalBase = baseDir.getCanonicalFile().toPath();
+            Path canonicalTarget = resolvedFile.getCanonicalFile().toPath();
 
-        if (!canonicalTarget.getPath().startsWith(canonicalBase.getPath() + File.separator) &&
-            !canonicalTarget.equals(canonicalBase)) {
-            throw new IOException("Path traversal detected: resolved path '" +
-                canonicalTarget.getPath() + "' is outside base directory '" +
-                canonicalBase.getPath() + "'");
+            if (!canonicalTarget.startsWith(canonicalBase)) {
+                throw new UncheckedIOException(new IOException(
+                    "Path traversal detected: resolved path '" +
+                    canonicalTarget + "' is outside base directory '" +
+                    canonicalBase + "'"));
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
     @Override
-    public String pathForJob(final JobReference jobReference) throws IOException {
+    public String pathForJob(final JobReference jobReference) {
         String path = substitute(pathTemplate, jobReference);
-        // Validate the path would stay within baseDir if used to construct a File
         File hypotheticalFile = new File(baseDir, path);
         validatePathContainment(hypotheticalFile);
         return path;

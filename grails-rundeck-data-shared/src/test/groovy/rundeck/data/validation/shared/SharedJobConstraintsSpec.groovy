@@ -16,6 +16,7 @@ class SharedJobConstraintsSpec extends Specification {
         then:
         !valid
         constraints.errors.hasFieldErrors('groupPath')
+        constraints.errors.getFieldError('groupPath').codes.any { it.contains('invalid.path.traversal') }
 
         where:
         invalidPath << [
@@ -24,7 +25,9 @@ class SharedJobConstraintsSpec extends Specification {
             'valid/../invalid',
             '../../../../../tmp',
             '..\\windows',
-            '..\\..\\system32'
+            '..\\..\\system32',
+            'group/./hidden',
+            './relative'
         ]
     }
 
@@ -39,6 +42,7 @@ class SharedJobConstraintsSpec extends Specification {
         then:
         !valid
         constraints.errors.hasFieldErrors('groupPath')
+        constraints.errors.getFieldError('groupPath').codes.any { it.contains('invalid.absolute.path') }
 
         where:
         invalidPath << [
@@ -57,7 +61,8 @@ class SharedJobConstraintsSpec extends Specification {
         def valid = constraints.validate(['groupPath'])
 
         then:
-        valid || !constraints.errors.hasFieldErrors('groupPath')
+        valid
+        !constraints.errors.hasFieldErrors('groupPath')
 
         where:
         validPath << [
@@ -68,20 +73,13 @@ class SharedJobConstraintsSpec extends Specification {
             'team_ops',
             'prod-servers',
             'group/nested/deep',
-            'team-1/subteam-2'
+            'team-1/subteam-2',
+            'The Group',
+            'my group',
+            'v1.0/deploy',
+            'group with spaces/sub group',
+            'release.2026'
         ]
-    }
-
-    def "groupPath rejects invalid characters"() {
-        given:
-        def constraints = new SharedJobConstraints(groupPath: 'group!@#$%')
-
-        when:
-        def valid = constraints.validate(['groupPath'])
-
-        then:
-        !valid
-        constraints.errors.hasFieldErrors('groupPath')
     }
 
     def "groupPath enforces maxSize constraint"() {

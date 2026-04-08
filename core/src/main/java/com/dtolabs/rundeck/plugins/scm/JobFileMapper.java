@@ -19,12 +19,11 @@ package com.dtolabs.rundeck.plugins.scm;
 import com.dtolabs.rundeck.core.jobs.JobReference;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Created by greg on 5/1/15.
  */
 public interface JobFileMapper {
-    public File fileForJob(JobReference jobReference) throws IOException;
-    public String pathForJob(JobReference jobReference) throws IOException;
+    public File fileForJob(JobReference jobReference);
+    public String pathForJob(JobReference jobReference);
 }
