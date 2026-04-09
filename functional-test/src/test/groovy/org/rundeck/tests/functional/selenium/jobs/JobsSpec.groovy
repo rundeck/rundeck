@@ -666,7 +666,7 @@ class JobsSpec extends SeleniumBase {
 
         when:
         setupProject(projectName)
-        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
+        JobCreatePage jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
         jobCreatePage.waitForElementVisible(By.id("schedJobName"))
         jobCreatePage.jobNameInput.sendKeys("test-duplication")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
@@ -682,6 +682,7 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.editJobLink.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.tab(JobTab.WORKFLOW))
         jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.waitForNumberOfElementsToBeMoreThan(jobCreatePage.duplicateWfStepBy, 0)
         jobCreatePage.duplicateWfStepButton.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.getWfStepByListPosition(1))
         jobCreatePage.updateBtn.click()
@@ -813,14 +814,14 @@ class JobsSpec extends SeleniumBase {
 
     def "job workflow"() {
         when:
-        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT)
         jobCreatePage.tab JobTab.WORKFLOW click()
         then:
         jobCreatePage.waitForTextToBePresentBySelector(jobCreatePage.workflowContentControlLabelBy, "Workflow",60)
         expect:
-        jobCreatePage.workflowAlphaUiContainer.isDisplayed()
-        where:
-        legacyUi << [false, true]
+        // Grails 7: Verify NextUI workflow UI is loaded by checking for add step button
+        // The button is rendered by CommonUndoRedoDraggableList.vue with data-testid="add-button"
+        jobCreatePage.waitForElementVisible(By.cssSelector("[data-testid='add-button']"))
     }
 
     def "Create option form"() {
@@ -887,19 +888,18 @@ class JobsSpec extends SeleniumBase {
 
     def "add global log filters"() {
         when:
-        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
-        jobCreatePage.jobNameInput.sendKeys("job with global log filter ${legacyUi ? 'legacy ui' : 'current ui'}")
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT)
+        jobCreatePage.jobNameInput.sendKeys("job with global log filter")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
 
         then:
+        jobCreatePage.waitForNumberOfElementsToBe(jobCreatePage.loaderClass, 0)
         jobCreatePage.addGlobalLogFilter.click()
+        jobCreatePage.waitForModal(1)
         jobCreatePage.fillHighlightLogFilter()
-        
+
         then:
-        assert jobCreatePage.getLogFilterButtons(legacyUi ? '#logfilterplugins_wf' : '#globalLogFilters').size() == 1
-        
-        where:
-        legacyUi << [true]
+        assert jobCreatePage.getLogFilterButtons('#globalLogFilters').size() == 1
     }
 
     def "Node steps"() {

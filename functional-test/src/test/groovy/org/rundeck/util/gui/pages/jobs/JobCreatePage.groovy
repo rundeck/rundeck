@@ -64,6 +64,7 @@ class JobCreatePage extends BasePage {
     By workflowContentControlLabelBy = By.xpath("//section[@id='workflowContent']//div[contains(@class, 'control-label')]")
     By workflowAlphaUiButton = By.id("addButton")
     By workflowSaveStepButton = By.xpath('//div[contains(@class, \'in\') and contains(@class, \'modal\')]//button[@data-testid="save-button"]')
+    By loaderClass = By.className("loader")
 
     static class NextUi {
         static By jobNameInputBy = By.id("schedJobName")
@@ -392,11 +393,20 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getLastNodeInListSpan(){
+        waitForElementVisible(lastNodeInList)
         el lastNodeInList
     }
 
+    WebElement getNodeByName(String nodeName) {
+        def selector = By.cssSelector("a[data-node='${nodeName}']")
+        waitForElementVisible(selector)
+        el selector
+    }
+
     WebElement getNodeInListSpan(int idx) {
-        el By.cssSelector(".col-xs-6:nth-child(${idx}) span:nth-child(2)")
+        def selector = By.cssSelector(".col-xs-6:nth-child(${idx}) span:nth-child(2)")
+        waitForElementVisible(selector)
+        el selector
     }
 
     WebElement getSelectNodeArrowElement(){

@@ -1,6 +1,6 @@
 package rundeck
 
-import asset.pipeline.grails.LinkGenerator
+import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
@@ -6068,7 +6068,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getNodes()>> nodeSet
             getFramework() >> Mock(Framework)
             getExecutionListener() >> executionListener
-            getUserAndRolesAuthContext()> userAndRolesAuthContext
+            getUserAndRolesAuthContext() >> userAndRolesAuthContext
 
         }
         JobRefCommand item = ExecutionItemFactory.createJobRef(

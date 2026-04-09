@@ -20,7 +20,8 @@ import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.codehaus.groovy.runtime.InvokerHelper
 
 
-class ScriptOptionValuesPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<OptionValuesPlugin> {
+class ScriptOptionValuesPluginBuilder extends ScriptPluginBuilder {
+    // Groovy 4: Cannot re-implement PluginBuilder with different type parameter
     Map<String, Closure> handlers = [:]
     /**
      * Create a builder for a plugin with the specified plugin/provider name.

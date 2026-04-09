@@ -3,7 +3,7 @@ package rundeck.interceptors
 import grails.web.servlet.mvc.GrailsParameterMap
 import groovy.transform.builder.Builder
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 
 /**

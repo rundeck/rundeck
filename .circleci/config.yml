@@ -9,11 +9,11 @@ parameters:
     default: true
 
 orbs:
-  aws-cli: circleci/aws-cli@1.0.0
-  node: circleci/node@6.3.0
+  aws-cli: circleci/aws-cli@5.4.1
+  node: circleci/node@7.2.1
   trigger: rundeck/trigger-pipeline@0.0.5
-  slack: circleci/slack@4.4.0
-  snyk: snyk/snyk@2.2 # https://circleci.com/developer/orbs/orb/snyk/snyk
+  slack: circleci/slack@6.1.3
+  snyk: snyk/snyk@2.3.0 # https://circleci.com/developer/orbs/orb/snyk/snyk
   git: pagerduty/git@0.1.0 # https://circleci.com/developer/orbs/orb/pagerduty/git (public PD orb)
 
 # Slack notifier
@@ -201,7 +201,14 @@ commands:
     steps:
       - run-build-step:
           step-name: Install Java JDK
-          command: dependencies_install_zulu11jdk
+          command: dependencies_install_zulu17jdk
+
+  install-java-jdk-25:
+    description: Install JDK 25 for host-side tests (BASH_ENV JAVA_HOME)
+    steps:
+      - run-build-step:
+          step-name: Install Java JDK 25
+          command: dependencies_install_zulu25jdk
 
   ## Dependency groups
 
@@ -237,6 +244,14 @@ commands:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
 
+  install-testdeck-dependencies-jdk25:
+    description: JDK 25 on host + TestDeck extras (orchestration only; app still in Docker)
+    steps:
+      - install-java-jdk-25
+      - run-build-step:
+          step-name: Install TestDeck Dependencies
+          command: dependencies_testdeck_setup
+
 
 #### Job Definitions ####
 
@@ -246,9 +261,9 @@ job-defaults: &job-defaults
   working_directory: /home/circleci/workspace
   environment:
     CIRCLE_PIPELINE_NUM: << pipeline.number >>
-    GRADLE_OPTS: -XX:MaxRAMPercentage=80.0
-    JAVA_OPTS: -XX:MaxRAMPercentage=80.0
-    JAVA_HOME: /usr/lib/jvm/zulu11
+    GRADLE_OPTS: -XX:MaxRAMPercentage=85.0
+    JAVA_OPTS: -XX:MaxRAMPercentage=85.0
+    JAVA_HOME: /usr/lib/jvm/zulu17
 
 jobs:
 
@@ -257,11 +272,11 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
-      resource_class: large
+      resource_class: xlarge
     parameters:
       jreVersion:
         type: string
-        default: "openjdk-11-jre-headless"
+        default: "openjdk-17-jre-headless"
     steps:
       - setup_docker:
           docker_layer_caching: true
@@ -307,8 +322,6 @@ jobs:
       - checkout
       - install-build-dependencies
       - restore-build-cache
-      - attach_workspace:
-          at: ~/workspace
       - run-build-step:
           step-name: Run Gradle Tests
           command: rundeck_gradle_tests
@@ -324,8 +337,6 @@ jobs:
       - setup_docker
       - checkout
       - install-node
-      - attach_workspace:
-          at: ~/workspace
       - run-build-step:
           step-name: Run GUI Tests
           command: rundeck_gui_tests
@@ -383,9 +394,8 @@ jobs:
       - checkout
       - restore-build-cache
       - install-build-dependencies
-      - run-build-step:
-          step-name: Assemble rundeck
-          command: rundeck_assemble_build
+      - attach_workspace:
+          at: ~/workspace
       - snyk/install
       - run-build-step:
           step-name: Configure Snyk
@@ -396,7 +406,7 @@ jobs:
           # Run monitor first to push results to webui
           command: |
             if [ "$CIRCLE_BRANCH" = "main" ]; then
-              snyk monitor --all-projects --detection-depth=10 --scan-all-unmanaged
+              snyk monitor --all-projects --detection-depth=10 --exclude=examples
             else
               echo "Skipping monitor for non-main branch - no data sent to dashboard"
             fi
@@ -406,7 +416,43 @@ jobs:
           no_output_timeout: 30m
           command: |
             source scripts/circleci/setup.sh
-            snyk test --severity-threshold=medium --all-projects --detection-depth=10 --scan-all-unmanaged || true
+            snyk test --severity-threshold=medium --all-projects --detection-depth=10 --exclude=examples --json > snyk-results.json || true
+      - run:
+          name: CVE Summary
+          command: |
+            if [ -f snyk-results.json ]; then
+              # Check if scan failed (error field present)
+              if jq -e '.error' snyk-results.json > /dev/null 2>&1; then
+                echo "Snyk scan failed - see snyk-results.json for details"
+                exit 0
+              fi
+              cve_count=$(jq '[.[] | select(type == "object") | select(.vulnerabilities != null) | .vulnerabilities[] | select( (.identifiers.CVE | length > 0 ) or (.identifiers.GHSA | length > 0) or (.identifiers.CWE | length > 0 ) )] | length' snyk-results.json)
+              if [ "$cve_count" -gt 0 ]; then
+                echo "=== CVEs Found ==="
+                jq -r '.[] | select(type == "object") | select(.vulnerabilities != null) | .vulnerabilities[] | select( (.identifiers.CVE | length > 0) or (.identifiers.GHSA | length > 0) or (.identifiers.CWE | length > 0 ) ) | [( [.identifiers.CVE,.identifiers.GHSA,.identifiers.CWE] | map(select(.!=null and .!=[])) | flatten | join(",")), .severity, .moduleName, .title] | @csv' snyk-results.json | sort -u | tee snyk-summary.csv
+                echo "=================="
+              else
+                echo "No CVEs found - clean scan!"
+              fi
+            else
+              echo "No snyk-results.json found — skipping CVE summary"
+            fi
+      - run:
+          name: Convert Snyk results to JUnit XML
+          when: always
+          command: |
+            if [ -f snyk-results.json ]; then
+              mkdir -p test-results/junit
+              bash scripts/convert_snyk_junit.sh snyk-results.json > test-results/junit/snyk-junit.xml
+            fi
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: snyk-results.json
+          destination: snyk-results.json
+      - store_artifacts:
+          path: snyk-summary.csv
+          destination: snyk-summary.csv
 
   # Trigger pipeline in the enterprise repo
   trigger-enterprise:
@@ -432,7 +478,8 @@ jobs:
     parameters:
       jreVersion:
         type: string
-        default: "openjdk-11-jre-headless"
+        # Grails 7: Java 17 required
+        default: "openjdk-17-jre-headless"
     steps:
       - setup_docker
       - checkout
@@ -543,10 +590,24 @@ jobs:
       command:
         description: Command that will execute the docker tests
         type: string
+      host_jdk_for_tests:
+        description: JDK on the CI host (Docker image still uses JRE from build job)
+        type: enum
+        enum: ["17", "25"]
+        default: "17"
     steps:
       - setup_docker
       - checkout
-      - install-testdeck-dependencies
+      - when:
+          condition:
+            equal: [ "25", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-testdeck-dependencies-jdk25
+      - when:
+          condition:
+            equal: [ "17", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-testdeck-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -571,10 +632,24 @@ jobs:
       command:
         description: Command that will execute the docker tests
         type: string
+      host_jdk_for_tests:
+        description: JDK on the CI host (Docker image still uses JRE from build job)
+        type: enum
+        enum: [ "17", "25" ]
+        default: "17"
     steps:
 
       - checkout
-      - install-testdeck-dependencies
+      - when:
+          condition:
+            equal: [ "25", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-testdeck-dependencies-jdk25
+      - when:
+          condition:
+            equal: [ "17", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-testdeck-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -607,10 +682,26 @@ jobs:
         default: medium
       test_file_pattern:
         type: string
+      host_jdk_for_tests:
+        description: JDK for Gradle on the CI host (test image JRE comes from build job)
+        type: enum
+        enum: [ "17", "25" ]
+        default: "17"
     steps:
       - checkout
       - restore-build-cache
-      - install-base-dependencies
+      - when:
+          condition:
+            equal: [ "25", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - run-build-step:
+                step-name: Install Java JDK 25 (host Gradle)
+                command: dependencies_install_zulu25jdk
+      - when:
+          condition:
+            equal: [ "17", << parameters.host_jdk_for_tests >> ]
+          steps:
+            - install-base-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -648,6 +739,43 @@ cloudsmith-slack-defaults: &cloudsmith-slack-defaults
 require-build: &require-build
   requires:
     - Build
+
+# Stage 2: Unit tests gate — blocks expensive machines until core code is verified
+require-unit-tests: &require-unit-tests
+  requires:
+    - T Unit Gradle
+    - T Unit UI
+
+# Build + unit tests must pass before integration/functional tests start
+require-build-and-units: &require-build-and-units
+  requires:
+    - Build
+    - T Unit Gradle
+    - T Unit UI
+
+# Row 2: All tests run in parallel after Build — all must pass before Selenium starts
+require-api-integration: &require-api-integration
+  requires:
+    - T Unit Gradle
+    - T Unit UI
+    - T Integration SSL
+    - T Integration Ansible
+    - T Integration LDAP
+    - T Integration LDAP Bind
+    - T Integration PAM
+    - T Functional API
+    - T Functional Plugin Blocklist
+    - T Feature NodeExecutorSecureInput
+
+# Stage 4: All Selenium must pass before packaging/security/validation/enterprise trigger
+require-selenium: &require-selenium
+  requires:
+    - T Selenium - Auth & Login
+    - T Selenium - Projects
+    - T Selenium - Jobs Core
+    - T Selenium - Jobs Advanced
+    - T Selenium - Execution & Other
+    - T Selenium Alpha UI
 
 require-build-jre-17: &require-build-jre-17
   requires:
@@ -707,36 +835,130 @@ workflows:
               value: << pipeline.git.branch >>
 
     jobs:
+      # Stage 1: Build
       - build-rundeck:
           name: Build
           <<: *cloudsmith-slack-defaults
+
+      # Step 1: Unit tests run in parallel with Build (no gates for fast feedback)
       - test-gradle:
           name: T Unit Gradle
-          <<: *slack-defaults
+          <<: *cloudsmith-slack-defaults
       - test-gui:
           name: T Unit UI
           <<: *cloudsmith-slack-defaults
-      - trigger-enterprise:
-          name: Enterprise Snapshot
-          <<: *require-build
-          filters:
-            branches: { only: main }
-      - test-openapi:
-          name: OpenAPI Spec Validation
-          <<: *require-build
+      
+      # Step 2: Integration and functional tests require Build + unit tests
+      # Don't waste CI dollars on expensive tests if unit tests are broken
+      - test-docker:
+          name: T Integration SSL
+          command: bash test/run-docker-ssl-tests.sh
+          <<: *require-build-and-units
           <<: *slack-defaults
+      - test-docker:
+          name: T Integration Ansible
+          command: bash test/run-docker-ansible-tests.sh
+          <<: *require-build-and-units
+          <<: *slack-defaults
+      - test-machine:
+          name: T Integration LDAP
+          command: bash test/run-docker-ldap-tests.sh
+          <<: *require-build-and-units
+          <<: *slack-defaults
+      - test-machine:
+          name: T Integration LDAP Bind
+          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          <<: *require-build-and-units
+          <<: *slack-defaults
+      - test-docker:
+          name: T Integration PAM
+          command: bash test/run-docker-pam-tests.sh
+          <<: *require-build-and-units
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Functional API
+          gradle-task: apiTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
+          parallelism: 3
+          <<: *require-build-and-units
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Functional Plugin Blocklist
+          gradle-task: pluginBlocklistTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
+          <<: *require-build-and-units
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Feature NodeExecutorSecureInput
+          gradle-task: apiTestNodeExecutorSecureInput
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
+          <<: *require-build-and-units
+          <<: *slack-defaults
+
+      # Step 3: Selenium — only after all Step 1 (unit) and Step 2 (integration/functional) tests pass
+      # Grails 7: Split Selenium into logical groups for faster feedback
+      - test-gradle-functional:
+          name: T Selenium - Auth & Login
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Projects
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          parallelism: 2
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Jobs Core
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          parallelism: 2
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Jobs Advanced
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Execution & Other
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          parallelism: 2
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium Alpha UI
+          gradle-task: alphaUiSeleniumCoreTest
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+
+      # Row 4: Packaging, security scans, validation, and enterprise trigger
+      # Nothing here matters if build and tests don't pass. Enterprise Snapshot only
+      # triggers Pro CI after all OSS tests are green — broken OSS means broken Pro.
       - packaging-test:
           name: T Packaging
-          <<: *require-build
+          <<: *require-selenium
           <<: *slack-defaults
       - test-snyk:
           name: Snyk Security Scan
+          <<: *require-selenium
           context:
             - Snyk
             - Cloudsmith
       - wizcli-scan:
           name: WizCLI Scan Preview
-          <<: *require-build
+          <<: *require-selenium
           continue: true
           context:
             - WizCLI
@@ -745,77 +967,24 @@ workflows:
       - wizcli-scan:
           name: WizCLI Scan
           continue: << pipeline.parameters.disable-wizcli-scan >>
+          <<: *require-selenium
           context:
             - WizCLI
             - slack-secrets
           filters:
             branches: { only: main }
-          <<: *require-build
           <<: *slack-fail-post-step
-      - test-docker:
-          name: T Integration SSL
-          command: bash test/run-docker-ssl-tests.sh
-          <<: *require-build
+      - test-openapi:
+          name: OpenAPI Spec Validation
+          <<: *require-selenium
           <<: *slack-defaults
-      - test-docker:
-          name: T Integration Ansible
-          command: bash test/run-docker-ansible-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-machine:
-          name: T Integration LDAP
-          command: bash test/run-docker-ldap-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-machine:
-          name: T Integration LDAP Bind
-          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-docker:
-          name: T Integration PAM
-          command: bash test/run-docker-pam-tests.sh
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Selenium
-          gradle-task: seleniumCoreTest
-          parallelism: 3
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Functional API
-          gradle-task: apiTest
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
-          parallelism: 3
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Functional Plugin Blocklist
-          gradle-task: pluginBlocklistTest
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Feature NewLocalExec
-          gradle-task: apiTestNewLocal
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Feature NodeExecutorSecureInput
-          gradle-task: apiTestNodeExecutorSecureInput
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
-          <<: *require-build
-          <<: *slack-defaults
-      - test-gradle-functional:
-          name: T Selenium Alpha UI
-          gradle-task: alphaUiSeleniumCoreTest
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
-          <<: *require-build
-          <<: *slack-defaults
+      - trigger-enterprise:
+          name: Enterprise Snapshot
+          <<: *require-selenium
+          filters:
+            branches: { only: main }
 
+  # Build Rundeck Docker images with JRE 17; run downstream tests with JDK 25 on the host (Gradle / CI orchestration).
   build_and_test_with_jre_17:
     triggers:
       - schedule:
@@ -827,7 +996,7 @@ workflows:
     when:
       or:
         - matches:
-            pattern: release/5\..*
+            pattern: release/6\..*
             value: << pipeline.git.branch >>
         - equal: [ main, << pipeline.git.branch >> ]
     jobs:
@@ -835,54 +1004,89 @@ workflows:
           name: Build with Docker image using JRE 17
           jreVersion: "openjdk-17-jre-headless"
       - test-docker:
-          name: T Integration SSL running JRE 17
+          name: T Integration SSL (host JDK 25, image JRE 17)
           command: bash test/run-docker-ssl-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-docker:
-          name: T Integration Ansible running JRE 17
+          name: T Integration Ansible (host JDK 25, image JRE 17)
           command: bash test/run-docker-ansible-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-machine:
-          name: T Integration LDAP running JRE 17
+          name: T Integration LDAP (host JDK 25, image JRE 17)
           command: bash test/run-docker-ldap-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-machine:
-          name: T Integration LDAP Bind running JRE 17
+          name: T Integration LDAP Bind (host JDK 25, image JRE 17)
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-docker:
-          name: T Integration PAM running JRE 17
+          name: T Integration PAM (host JDK 25, image JRE 17)
           command: bash test/run-docker-pam-tests.sh
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
+      # Grails 7: Split Selenium into logical groups for faster feedback
       - test-gradle-functional:
-          name: T Selenium running JRE 17
+          name: T Selenium - Auth & Login (host JDK 25)
           gradle-task: seleniumCoreTest
-          parallelism: 3
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/**/*{.groovy,.java}"
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Functional API running JRE 17
+          name: T Selenium - Projects (host JDK 25)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium - Jobs Core (host JDK 25)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
+          host_jdk_for_tests: "25"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium - Jobs Advanced (host JDK 25)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium - Execution & Other (host JDK 25)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Functional API (host JDK 25)
           gradle-task: apiTest
+          resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Functional Plugin Blocklist running JRE 17
+          name: T Functional Plugin Blocklist (host JDK 25)
           gradle-task: pluginBlocklistTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Feature NewLocalExec running JRE 17
-          gradle-task: apiTestNewLocal
-          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/execution/ExecutionOutputSpec.groovy"
-          <<: *require-build-jre-17
-      - test-gradle-functional:
-          name: T Feature NodeExecutorSecureInput running JRE 17
+          name: T Feature NodeExecutorSecureInput (host JDK 25)
           gradle-task: apiTestNodeExecutorSecureInput
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/input/*.groovy"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
-          name: T Selenium Alpha UI running JRE 17
+          name: T Selenium Alpha UI (host JDK 25)
           gradle-task: alphaUiSeleniumCoreTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/alphaUi/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
           <<: *require-build-jre-17

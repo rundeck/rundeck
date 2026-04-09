@@ -270,8 +270,9 @@ class JobUtils {
         Duration checkPeriod = WaitingTime.LOW
     ) {
         Closure<String> acceptanceFailureOutputProducer = { String id ->
+            def currentExecution = callSilently { ExecutionUtils.Retrievers.executionById(client, id).get() }
             def execOutput = callSilently { getExecutionOutputText(id, client) }
-            return "Execution output was: \n${execOutput}\n".toString()
+            return "Expected states: ${expectedStates}, but current status was: '${currentExecution?.status}'\nExecution output was: \n${execOutput}\n".toString()
         }
 
         return WaitUtils.waitForResourceOrReject(

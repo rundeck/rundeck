@@ -46,7 +46,7 @@ dependencies {
     implementation(group: 'org.bouncycastle', name: 'bcprov-jdk18on', version: bouncyCastleVersion)
     pluginLibs([group: 'org.jasypt', name: 'jasypt', version: '1.9.3'])
     testImplementation(
-        [group: 'junit', name: 'junit', version: '4.8.1',ext:'jar']
+        [group: 'junit', name: 'junit', version: junitVersion, ext:'jar']
     )
 }
 

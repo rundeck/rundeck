@@ -175,18 +175,54 @@ class CommandLineSetup implements Runnable {
             try {
                 //spring boot launched jar scenario
                 //The location the jar is launched from is assumed to be the desired root
-                Class baseClass = ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.Launcher")
-                return new File(baseClass.getProtectionDomain().getCodeSource().getLocation().getFile()).getParentFile().absolutePath
+                Class baseClass = ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.launch.Launcher")
+                File launcherLocation = new File(baseClass.getProtectionDomain().getCodeSource().getLocation().getFile())
+                // Grails 7: Handle Spring Boot 3 nested: protocol in JAR paths
+                File actualLocation = stripNestedProtocol(launcherLocation)
+                return actualLocation.getParentFile().absolutePath
             } catch(Exception ex) {}
             //War file scenario, the exploded class should be in WEB-INF/classes which is why we back up two directories then create the root
-            File rundeckParent = new File(Application.class.getProtectionDomain().getCodeSource().getLocation().getFile()).parentFile.parentFile
+            File appLocation = new File(Application.class.getProtectionDomain().getCodeSource().getLocation().getFile())
+            // Grails 7: Handle Spring Boot 3 nested: protocol in JAR paths
+            File actualLocation = stripNestedProtocol(appLocation)
+            File rundeckParent = actualLocation.parentFile.parentFile
             File rundeckRoot = new File(rundeckParent,"rundeck")
             rundeckRoot.mkdirs()
             rundeckRoot.absolutePath
         }
 
     }
-    static interface ConsoleI{
+
+    /**
+     * Grails 7: Strip Spring Boot 3 nested: protocol prefix from file paths.
+     * Spring Boot 3 uses nested: URIs like "nested:/path/to/app.war/!WEB-INF/..."
+     * Extract the actual filesystem path.
+     */
+    private File stripNestedProtocol(File file) {
+        String path = file.getAbsolutePath()
+        if (path.contains("nested:")) {
+            path = path.replaceFirst(".*nested:", "")
+            int warIndex = path.indexOf(".war")
+            int zipIndex = path.indexOf(".zip")
+            if (warIndex >= 0 && (zipIndex < 0 || warIndex < zipIndex)) {
+                path = path.substring(0, warIndex + 4)
+            } else if (zipIndex >= 0) {
+                path = path.substring(0, zipIndex + 4)
+            }
+            path = path.replaceFirst('/!.*\\z', '')
+            return new File(path)
+        }
+        return file
+    }
+
+    Class tryToLoadCorrectBaseClass() {
+        try {
+            return ClassLoader.getSystemClassLoader().loadClass("org.springframework.boot.loader.launch.Launcher")
+        } catch(Exception ex) {}
+        return Application.class
+    }
+
+    static interface ConsoleI {
         String readLine()
         char[] readPassword()
     }

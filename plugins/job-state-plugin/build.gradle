@@ -27,10 +27,10 @@ apply from: "../../gradle/java-version.gradle"
 
 dependencies{
 
-    testImplementation 'junit:junit:4.8.1',
-                'org.mockito:mockito-all:1.10.19'
+    testImplementation "junit:junit:${junitVersion}",
+                "org.mockito:mockito-all:${mockitoAllVersion}"
 
-    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
 }
 jar {

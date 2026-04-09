@@ -22,7 +22,9 @@ import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class ContentConverterPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<ContentConverterPlugin> {
+class ContentConverterPluginBuilder extends ScriptPluginBuilder {
+    // Groovy 4: Cannot re-implement PluginBuilder with different type parameter
+    // ScriptPluginBuilder already implements PluginBuilder
     static Logger logger = LoggerFactory.getLogger(StreamingLogWriterPluginBuilder)
     Map<String, Closure> handlers = [:]
     List<Converter> converters = []

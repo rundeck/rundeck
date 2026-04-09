@@ -17,7 +17,7 @@ import rundeck.services.FrameworkService
 import spock.lang.Specification
 import testhelper.TestDomainFactory
 
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 
 class GormExecutionDataProviderSpec extends Specification implements DataTest {
     GormExecutionDataProvider provider = new GormExecutionDataProvider()

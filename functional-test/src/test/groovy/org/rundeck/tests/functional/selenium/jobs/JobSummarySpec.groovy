@@ -4,6 +4,7 @@ import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.api.responses.execution.Execution
 import org.rundeck.util.common.jobs.JobUtils
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
@@ -29,7 +30,8 @@ class JobSummarySpec extends SeleniumBase{
         def result = JobUtils.executeJobWithOptions(jobUuid, client, null)
         assert result.successful
         Execution execution = MAPPER.readValue(result.body().string(), Execution.class)
-        waitForExecutionFinish(execution.id)
+        // Use EXCESSIVE timeout (60s) - job execution can take longer than MODERATE (5s) in CI
+        waitForExecutionFinish(execution.id, WaitingTime.EXCESSIVE)
         JobShowPage jobShowPage = page(JobShowPage, projectName).forJob(jobUuid)
         when:
         jobShowPage.go()
