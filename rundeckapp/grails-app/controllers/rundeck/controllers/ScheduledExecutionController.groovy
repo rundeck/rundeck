@@ -80,6 +80,7 @@ import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -810,7 +811,8 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
             [AuthConstants.ACTION_READ],
             scheduledExecution.project
         )
-        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,readAuth,maxDepth)
+        def workflowData = scheduledExecution.getWorkflowData()
+        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,workflowData,readAuth,maxDepth)
         def controller = this
         withFormat {
             '*' {
@@ -819,7 +821,7 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
                 }
             }
 
-            if (controller.isAllowXml()) {
+            if (controller.isAllowXml() && controller.rundeckJobDefinitionManager.validateJobForExport(scheduledExecution, "xml").isValid()) {
                 xml {
                     render(contentType: 'application/xml') {
                         workflow wfdata
@@ -2564,7 +2566,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }
         def props=[:]
         props.putAll(execution.properties)
-        props.workflow=new Workflow(execution.workflow as WorkflowData)
+        def execWorkflowData = execution.getWorkflowData()
+        props.workflow=execWorkflowData ? WorkflowDataImpl.fromMap(execWorkflowData.toMap()) : new WorkflowDataImpl()
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
             props = props.findAll{!(it.key=~/^node(In|Ex)clude.*$/)}
@@ -2799,9 +2802,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
-        if (scheduledExecution.workflow) {
-            params.workflow=new Workflow(scheduledExecution.workflow as WorkflowData)
-        }
+        def jobWorkflowData = scheduledExecution.getWorkflowData()
+        params.workflow=jobWorkflowData ? new WorkflowDataImpl().fromMap(jobWorkflowData.toMap()) : new WorkflowDataImpl()
         params.argString=scheduledExecution.argString
         params.doNodedispatch=scheduledExecution.doNodedispatch
         params.filter=scheduledExecution.asFilter()
@@ -2911,7 +2913,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                 newScheduledExecution.id=null
                 newScheduledExecution.uuid=null
                 //set session new workflow
-                WorkflowController.getSessionWorkflow(session,null,new Workflow(newScheduledExecution.workflow as WorkflowData))
+                WorkflowController.getSessionWorkflow(session,null, WorkflowDataImpl.fromMap(newScheduledExecution.getWorkflowData()?.toMap()))
                 if(newScheduledExecution.options){
                     def editopts = [:]
 
