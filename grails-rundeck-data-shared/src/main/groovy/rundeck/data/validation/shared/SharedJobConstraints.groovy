@@ -34,7 +34,7 @@ class SharedJobConstraints implements Validateable {
         jobName(blank: false, nullable: false, matches: "[^/]+", maxSize: 1024)
         groupPath(nullable: true, maxSize: 2048, validator: { val, obj ->
             if (val == null || val.isEmpty()) return true
-            if (val.startsWith('/') || val.startsWith('\\')) {
+            if (val.startsWith('/') || val.startsWith('\\') || val ==~ /^[a-zA-Z]:[\\\/].*/) {
                 return ['invalid.absolute.path']
             }
             def segments = val.split(/[\/\\]/)

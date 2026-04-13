@@ -48,7 +48,11 @@ class SharedJobConstraintsSpec extends Specification {
         invalidPath << [
             '/absolute/path',
             '/etc/passwd',
-            '\\windows\\path'
+            '\\windows\\path',
+            'C:\\Windows\\System32',
+            'C:/Program Files',
+            'D:\\etc\\passwd',
+            'Z:/secret'
         ]
     }
 
