@@ -48,7 +48,7 @@
     "@primeuix/themes": "^1.0.0",
     "@rundeck/client": "^0.2.5",
     "ace-builds": "^1.23.4",
-    "axios": "1.13.6",
+    "axios": "1.15.0",
     "core-js": "^3.6.5",
     "dagre": "^0.8.5",
     "deep-object-diff": "^1.1.9",
@@ -168,7 +168,7 @@
     "glob": "^10.5.0",
     "underscore": "^1.13.8",
     "xml2js": "^0.5.0",
-    "lodash": "^4.17.23",
+    "lodash": "4.18.1",
     "@babel/runtime": "^7.26.10",
     "tough-cookie": "^4.1.3"
   },
