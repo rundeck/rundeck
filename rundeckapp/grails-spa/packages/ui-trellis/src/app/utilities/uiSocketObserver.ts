@@ -1,10 +1,10 @@
 //on job edit page list for dom content changes
-
 import * as uiv from "uiv";
 import { getRundeckContext } from "../../library";
 import UiSocket from "../../library/components/utils/UiSocket.vue";
 import { initI18n, updateLocaleMessages } from "./i18n";
 import { createApp } from "vue";
+import { configurePrimeVue } from "../../library/utilities/primeVueConfig";
 
 export const observer = new MutationObserver(function (mutations_list) {
   mutations_list.forEach(function (mutation) {
@@ -48,6 +48,7 @@ export const observer = new MutationObserver(function (mutations_list) {
 
           vue.use(i18n);
           vue.use(uiv);
+          configurePrimeVue(vue, { includeTooltip: true });
           vue.mount(socketElem, true);
         }
       }

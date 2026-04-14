@@ -28,6 +28,8 @@ abstract class WorkflowStep implements WorkflowStepData {
     Boolean keepgoingOnSuccess
     String description
     String pluginConfigData
+    String runnerNode
+
     static belongsTo = [Workflow, WorkflowStep]
     static constraints = {
         importFrom SharedWorkflowStepConstraints
@@ -35,7 +37,7 @@ abstract class WorkflowStep implements WorkflowStepData {
         pluginConfigData(nullable: true, blank: true)
     }
     //ignore fake property 'configuration' and do not store it
-    static transients = ['pluginConfig']
+    static transients = ['pluginConfig','runnerNode']
     static mapping = {
         pluginConfigData(type: 'text')
         errorHandler lazy: false
@@ -95,5 +97,19 @@ abstract class WorkflowStep implements WorkflowStepData {
 
     abstract WorkflowStep createClone()
 
-    abstract Map toMap()
+    Map toMap() {
+        def map = [:]
+        if (description) {
+            map.description = description
+        }
+        if (errorHandler) {
+            map.errorhandler = errorHandler.toMap()
+        } else if (keepgoingOnSuccess != null) {
+            map.keepgoingOnSuccess = keepgoingOnSuccess
+        }
+        if (pluginConfig) {
+            map.plugins = pluginConfig
+        }
+        return map
+    }
 }

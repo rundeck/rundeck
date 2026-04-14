@@ -103,7 +103,7 @@
                 v-model="uploadSetting.password"
                 name="uploadPassword"
                 type="password"
-                placeholder="Enter a password"
+                :placeholder="$t('storage.enter.password')"
                 autocomplete="new-password"
                 class="form-control"
               />
@@ -130,7 +130,7 @@
                 :disabled="uploadSetting.modifyMode === true"
                 name="relativePath"
                 class="form-control"
-                placeholder="Enter the directory name"
+                :placeholder="$t('storage.enter.directory.name')"
               />
               <input
                 id="uploadResourcePath3"
@@ -170,7 +170,7 @@
               name="fileName"
               class="form-control"
               data-testid="key-name-input"
-              placeholder="Specify a name."
+              :placeholder="$t('storage.specify.name')"
             />
             <div v-if="uploadSetting.inputType === 'file'" class="help-block">
               If not set, the name of the uploaded file is used.
@@ -364,10 +364,10 @@ export default defineComponent({
         try {
           let response=await storageKeyUpdate(fullPath, value, {type: this.uploadSetting.keyType})
           this.$emit("finishEditing", response);
-        } catch (err) {
+        } catch (err: unknown) {
           let errorMessage = "";
-          if (err?.message) {
-            errorMessage = err?.message;
+          if (err && typeof err === 'object' && 'message' in err) {
+            errorMessage = (err as Error).message;
           }
           this.uploadSetting.errorMsg = errorMessage;
         }
@@ -378,10 +378,10 @@ export default defineComponent({
             this.$emit("keyCreated", this.createdKey);
             this.$emit("finishEditing", response);
           });
-        }catch(err){
+        }catch(err: unknown){
             let errorMessage = "";
-            if (err?.message) {
-              errorMessage = err?.message;
+            if (err && typeof err === 'object' && 'message' in err) {
+              errorMessage = (err as Error).message;
             }
             this.uploadSetting.errorMsg = errorMessage;
           }

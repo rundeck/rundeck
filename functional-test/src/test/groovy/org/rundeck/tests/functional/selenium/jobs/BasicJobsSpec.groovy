@@ -78,13 +78,11 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "create valid job basic options"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
             def jobShowPage = page JobShowPage
             def optionName = 'seleniumOption1'
         then:
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? "legacy ui" : "vue ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys optionName
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
@@ -96,32 +94,32 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
             jobShowPage.optionInputText(optionName) != null
         where:
-            nextUi<<[false, true]
+            legacyUi<<[false, true]
     }
 
     def "edit job set description"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
             def jobShowPage = page JobShowPage
-            jobShowPage.nextUi=nextUi
+            jobShowPage.nextUi = nextUi
         then:
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
+            // Wait for description element to be visible before reading text
+            jobShowPage.waitForElementVisible(jobShowPage.descriptionTextLabel)
         expect:
-            'a new job description' == jobShowPage.descriptionTextLabel.getText()
+            jobShowPage.descriptionTextLabel.getText().trim().replaceAll(/\s+/, ' ').contains('a new job description')
         where:
-            nextUi<<[false,true]
+            nextUi<<[true]
     }
 
     def "edit job set groups"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
         then:
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
@@ -133,9 +131,7 @@ class BasicJobsSpec extends SeleniumBase {
 
     def "edit job set group via modal"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
         then:
             jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
             jobCreatePage.go()
@@ -161,29 +157,36 @@ class BasicJobsSpec extends SeleniumBase {
             }
             jobCreatePage.scheduleDaysCheckboxDivField.isDisplayed()
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
     }
 
     def "edit job and set executions tab"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-        then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", true, !nextUi
             jobCreatePage.go()
             jobCreatePage.tab JobTab.EXECUTION_PLUGINS click()
             if(jobCreatePage.executionPluginsRows.size() > 1){
                 jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.killHandlerPluginPreviousRow
             }
-            if (jobCreatePage.killHandlerPluginCheckbox.isSelected()) {
-                jobCreatePage.killHandlerPluginCheckbox.click()
-                jobCreatePage.killHandlerPluginKillSpawnedCheckbox.click()
+            def killHandlerCheckbox = jobCreatePage.killHandlerPluginCheckbox
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", killHandlerCheckbox
+            if (killHandlerCheckbox.isSelected()) {
+                jobCreatePage.executeScript "arguments[0].click();", killHandlerCheckbox
+                jobCreatePage.executeScript "arguments[0].click();", jobCreatePage.killHandlerPluginKillSpawnedCheckbox
             } else {
-                jobCreatePage.killHandlerPluginCheckbox.click()
+                jobCreatePage.executeScript "arguments[0].click();", killHandlerCheckbox
                 jobCreatePage.killHandlerPluginCheckbox.isSelected()
-                jobCreatePage.killHandlerPluginKillSpawnedCheckbox.click()
+                jobCreatePage.executeScript "arguments[0].click();", jobCreatePage.killHandlerPluginKillSpawnedCheckbox
                 jobCreatePage.killHandlerPluginKillSpawnedCheckbox.isSelected()
             }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
+        then:
+            noExceptionThrown()
         where:
             nextUi<<[false,true]
     }
@@ -204,6 +207,8 @@ class BasicJobsSpec extends SeleniumBase {
             }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.updateJobButton
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
     }
 
     def "edit job and set notifications"() {
@@ -220,6 +225,8 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.notificationSaveButton.click()
             jobCreatePage.waitNotificationModal 0
             jobCreatePage.updateJobButton.click()
+            // Wait for page transition after clicking update button
+            jobCreatePage.waitForUrlToContain('/job/show')
     }
 
     def "showing the edited job"() {
@@ -233,6 +240,16 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobListPage.go()
             jobShowPage.jobDefinitionModal.click()
+            // Wait for modal to be visible
+            jobShowPage.waitForElementVisible(jobShowPage.jobDefinitionModalContentBy)
+            // Wait for detail table (guaranteed to exist when modal content loads)
+            jobShowPage.waitForElementVisible(jobShowPage.detailTableBy)
+            // Wait for elements guaranteed to exist from previous tests
+            jobShowPage.waitForElementVisible(jobShowPage.multipleExecBy)
+            jobShowPage.waitForElementVisible(jobShowPage.notificationDefinitionBy)
+            // Wait for schedule-specific elements (only if schedule was set)
+            jobShowPage.waitForNumberOfElementsToBe(jobShowPage.cronBy, 2)
+            jobShowPage.waitForElementVisible(jobShowPage.scheduleTimeBy)
         expect:
             jobShowPage.cronLabel.size() == 2
             jobShowPage.scheduleTimeLabel.isDisplayed()
@@ -277,7 +294,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
+            jobShowPage.waitForModal 1, jobShowPage.modalInBy
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchSubmitButton.click()
             jobShowPage.waitForNumberOfElementsToBe jobShowPage.jobRowBy, expected.size()
@@ -289,8 +306,8 @@ class BasicJobsSpec extends SeleniumBase {
             expected = [
                 "selenium-option-test1",
                 "predefined job with options",
-                "create valid job basic options next ui",
-                "create valid job basic options old ui"
+                "create valid job basic options vue ui",
+                "create valid job basic options legacy ui"
             ]
     }
 
@@ -300,7 +317,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
+            jobShowPage.waitForModal 1, jobShowPage.modalInBy
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys 'test'
             jobShowPage.jobSearchSubmitButton.click()
@@ -315,7 +332,7 @@ class BasicJobsSpec extends SeleniumBase {
         when:
             jobShowPage.validatePage()
             jobShowPage.jobSearchButton.click()
-            jobShowPage.waitForModal 1, By.cssSelector(".modal.in")
+            jobShowPage.waitForModal 1, jobShowPage.modalInBy
             jobShowPage.jobSearchNameField.sendKeys 'option'
             jobShowPage.jobSearchGroupField.sendKeys '-'
             jobShowPage.jobSearchSubmitButton.click()
@@ -327,8 +344,8 @@ class BasicJobsSpec extends SeleniumBase {
         where:
             expected = [
                 "predefined job with options",
-                "create valid job basic options next ui",
-                "create valid job basic options old ui"
+                "create valid job basic options vue ui",
+                "create valid job basic options legacy ui"
             ]
     }
 

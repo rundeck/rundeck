@@ -37,11 +37,12 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
     @Delegate
     WebDriver getDriver() {
         if (null == _driver) {
-            def prefs = ["download.default_directory": downloadFolder]
+            def prefs = ["download.default_directory": downloadFolder, "profile.password_manager_leak_detection": false]
             LoggingPreferences logPrefs = new LoggingPreferences()
             logPrefs.enable(LogType.BROWSER, Level.ALL)
 
-            ChromeOptions options = new ChromeOptions()
+            ChromeOptions options = new ChromeOptions();
+            options.setBrowserVersion("140"); // Pinned to Chrome 140 major version (uses latest stable 140.x)
             options.setCapability("goog:loggingPrefs", logPrefs);
             options.setImplicitWaitTimeout(Duration.ofSeconds(5))
             options.setExperimentalOption("prefs", prefs)
@@ -68,20 +69,33 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
 
     def cleanup() {
         if(_driver){
-            specificationContext.currentSpec.listeners
-                    .findAll { it instanceof TestResultExtension.ErrorListener }
-                    .each {
-                        def errorInfo = (it as TestResultExtension.ErrorListener).errorInfo
-                        if(errorInfo){
-                            File screenshot = ((TakesScreenshot) _driver).getScreenshotAs(OutputType.FILE)
-                            File testResourcesDir = new File("build/test-results/images")
-                            if (!testResourcesDir.exists()) {
-                                testResourcesDir.mkdirs()
+            // Capture failure screenshots before logout — navigating away destroys the UI state
+            // that caused the assertion failure (otherwise screenshots show the logout page).
+            try {
+                specificationContext.currentSpec.listeners
+                        .findAll { it instanceof TestResultExtension.ErrorListener }
+                        .each {
+                            def errorInfo = (it as TestResultExtension.ErrorListener).errorInfo
+                            if(errorInfo){
+                                File screenshot = ((TakesScreenshot) _driver).getScreenshotAs(OutputType.FILE)
+                                File testResourcesDir = new File("build/test-results/images")
+                                if (!testResourcesDir.exists()) {
+                                    testResourcesDir.mkdirs()
+                                }
+                                File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}-${specificationContext.currentIteration.iterationIndex}" + ".png")
+                                screenshot.renameTo(destination)
                             }
-                            File destination = new File(testResourcesDir, "${specificationContext.currentSpec.filename}-${specificationContext.currentIteration.name}-${specificationContext.currentIteration.iterationIndex}" + ".png")
-                            screenshot.renameTo(destination)
                         }
-                    }
+            } catch (Exception ignored) {
+                // Screenshot may fail if the browser session is already invalid
+            }
+            try {
+                // Logout to clear server-side session before quitting browser
+                // This ensures each test starts with a clean session state
+                driver.get("${client.baseUrl}/user/logout")
+            } catch (Exception ignored) {
+                // Ignore if logout fails (test may have already logged out or never logged in)
+            }
             _driver?.quit()
         }
     }
@@ -104,6 +118,20 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
         return clazz.getDeclaredConstructor(SeleniumContext, args.getClass()).newInstance(this, args)
     }
 
+    /**
+     * Page with flags applied before return. Use for create-with-flags in one call.
+     */
+    <T extends BasePage> T page(Class<T> clazz, Object args, Map<String, Object> flags) {
+        T p = page(clazz, args)
+        flags?.each { k, v -> p.withFlag(k, v) }
+        return p
+    }
+
+    <T extends BasePage> T page(Class<T> clazz, Map<String, Object> flags) {
+        T p = page(clazz)
+        flags?.each { k, v -> p.withFlag(k, v) }
+        return p
+    }
 
     /**
      * Load the page and return the page object
@@ -125,6 +153,21 @@ class SeleniumBase extends BaseContainer implements WebDriver, SeleniumContext {
         T page = page(clazz, args)
         page.go()
         return page
+    }
+
+    /**
+     * Go to page with flags. One-liner: go(JobCreatePage, project, [nextUi: true])
+     */
+    <T extends BasePage> T go(Class<T> clazz, Object args, Map<String, Object> flags) {
+        T p = page(clazz, args, flags)
+        p.go()
+        return p
+    }
+
+    <T extends BasePage> T go(Class<T> clazz, Map<String, Object> flags) {
+        T p = page(clazz, flags)
+        p.go()
+        return p
     }
 
     /**

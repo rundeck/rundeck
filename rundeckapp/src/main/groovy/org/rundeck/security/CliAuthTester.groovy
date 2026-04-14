@@ -15,7 +15,6 @@
  */
 package org.rundeck.security
 
-import org.eclipse.jetty.jaas.JAASLoginService
 import rundeckapp.init.RundeckInitConfig
 
 import javax.security.auth.callback.Callback
@@ -45,9 +44,8 @@ class CliAuthTester {
         LoginContext ctx = new LoginContext(loginModule,getCallbackHandler())
 
         try {
-            def jls = new JAASLoginService()
-            jls.start()
-            JAASLoginService.INSTANCE.set(jls)
+            // Removed Jetty JAASLoginService setup - no longer needed
+            // with standard Java JAAS implementation
             ctx.login()
             println "Login Succeeded!"
             return true

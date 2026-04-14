@@ -36,14 +36,15 @@ import {
   GlobalLogFiltersData,
   StepsData,
   WorkflowData,
-} from "@/app/components/job/workflow/types/workflowTypes";
-import WorkflowBasic from "@/app/components/job/workflow/WorkflowBasic.vue";
-import WorkflowGlobalLogFilters from "@/app/components/job/workflow/WorkflowGlobalLogFilters.vue";
-import WorkflowSteps from "@/app/components/job/workflow/WorkflowSteps.vue";
-import WorkflowStrategy from "@/app/components/job/workflow/WorkflowStrategy.vue";
-import { PluginConfig } from "@/library/interfaces/PluginConfig";
-import { defineComponent } from "vue";
+} from "./types/workflowTypes";
+import WorkflowBasic from "./WorkflowBasic.vue";
+import WorkflowGlobalLogFilters from "./WorkflowGlobalLogFilters.vue";
+import WorkflowSteps from "./WorkflowSteps.vue";
+import WorkflowStrategy from "./WorkflowStrategy.vue";
+import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
+import { defineComponent, type PropType } from "vue";
 import OptionsEditorSection from "@/app/pages/job/editor/OptionsEditorSection.vue";
+import { getFeatureEnabled } from "@/library/services/feature";
 
 export default defineComponent({
   name: "WorkflowEditor",
@@ -56,7 +57,7 @@ export default defineComponent({
   },
   props: {
     modelValue: {
-      type: Object,
+      type: Object as PropType<WorkflowData>,
       required: true,
       default: () => ({}) as WorkflowData,
     },
@@ -97,11 +98,15 @@ export default defineComponent({
       deep: true,
     },
   },
-  mounted() {
+  async mounted() {
     this.basicData = createBasicData(this.modelValue);
     this.strategyData = createStrategyData(this.modelValue);
     this.logFiltersData = createLogFiltersData(this.modelValue);
-    this.stepsData = createStepsData(this.modelValue);
+
+    // Filter conditional steps when feature flag is disabled
+    const isConditionalEnabled = await getFeatureEnabled('earlyAccessJobConditional');
+    this.stepsData = createStepsData(this.modelValue, !isConditionalEnabled);
+
     this.loaded = true;
   },
   methods: {

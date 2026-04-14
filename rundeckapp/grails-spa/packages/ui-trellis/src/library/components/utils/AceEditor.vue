@@ -30,7 +30,7 @@
     <div v-if="softWrapControl" class="checkbox ace_text_controls">
       <input id="ace_wrap" v-model="wrapInternal" type="checkbox" /><label
         for="ace_wrap"
-        >Soft Wrap</label
+        >{{ $t("soft.wrap") }}</label
       >
     </div>
     <ace

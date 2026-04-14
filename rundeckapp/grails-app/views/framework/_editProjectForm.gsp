@@ -100,7 +100,7 @@
     </div>
     <g:if test="${enableCleanHistory}">
         <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> <g:message code="project.execution.cleanup.default.enabled" default="Execution cleanup is enabled by default for new projects"/>
+            <i class="fas fa-info-circle"></i> <g:message code="project.execution.cleanup.default.enabled" default="Execution cleanup is now enabled for this project"/>
         </div>
     </g:if>
   </div>
@@ -119,9 +119,9 @@
                           onchange='cleanerchkbox(this)'
                           checked="${isSelected}"/>
                   <label for="${nkey+'enable_cleaner_input'}">
-                      <b><g:enc>Enable</g:enc></b>
+                      <b><g:message code="execution.history.cleanup.enable.label" default="Enable"/></b>
                   </label>
-                  <span class="help-block"><g:enc>Enable cleaner executions history</g:enc></span>
+                  <span class="help-block"><g:message code="execution.history.cleanup.enable.help" default="Enable cleaner executions history"/></span>
               </div>
           </div>
       </div>

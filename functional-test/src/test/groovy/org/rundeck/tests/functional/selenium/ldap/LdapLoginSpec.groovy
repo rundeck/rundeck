@@ -24,9 +24,15 @@ class LdapLoginSpec extends SeleniumBase {
         //first login
         loginPage.login("user", "user")
         topMenuPage.logOut()
+        // Wait for logout to complete and logged out page to load
+        loggedOutPage.waitForUrlToContain("/user/loggedout")
         loggedOutPage.getLoginAgainField().click()
+        // Wait for login page to load after clicking "Login Again"
+        loginPage.waitForUrlToContain("/user/login")
         //second login
         loginPage.login("jdoe", "jdoe")
+        // Wait for login to complete before navigating to user summary
+        topMenuPage.waitForUrlToNotContain("/user/login")
         userSummaryPage.go()
         then:"only two users should appear on the user summary page"
         userSummaryPage.waitForTextToBePresentBySelector(userSummaryPage.userCountFieldBy,"2",5)

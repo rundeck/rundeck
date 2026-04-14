@@ -27,12 +27,6 @@ class KeyStoragePage extends BasePage {
         super(context)
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on key storage page: " + driver.currentUrl)
-        }
-    }
-
     def goToKey(String name, String storagePath) {
         By storageBy = By.xpath("//*[@class=\"action\"]//*[contains(.,'$storagePath')]")
         waitForElementVisible storageBy

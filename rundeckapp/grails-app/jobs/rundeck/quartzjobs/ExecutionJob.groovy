@@ -150,17 +150,25 @@ class ExecutionJob implements InterruptableJob {
         }
         RunResult result = null
         def statusString=null
+        boolean metricEmitted = false
         try {
             if(!wasInterrupted){
                 result = executeCommand(initMap, context)
                 success=result?.success
                 statusString=Execution.isCustomStatusString(result?.result?.statusString)?result?.result?.statusString:null
+                // If result is null, executeCommand already called meterStartExecutionFailure
+                if (!result) {
+                    metricEmitted = true
+                }
             }
         } catch (Throwable t) {
             log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
         }
         if(!result){
-            //failed to start
+            //failed to start - emit metric if not already emitted by executeCommand
+            if (!metricEmitted) {
+                meterStartExecutionFailure(context)
+            }
         }else if (success) {
             meterExecutionSuccess(context)
         } else if (wasInterrupted) {
@@ -675,8 +683,8 @@ class ExecutionJob implements InterruptableJob {
                 executionService.triggerJobCompleteNotifications(execmap, executionCompleteEvent)
             }
         }
-        if (!isTemp && scheduledExecutionId && success) {
-            //update ScheduledExecution statistics for successful execution
+        if (!isTemp && scheduledExecutionId) {
+            //update ScheduledExecution statistics
             def time = dateCompleted.time - execution.dateStarted.time
             def savedJobState = false
             withRetry(
@@ -685,7 +693,7 @@ class ExecutionJob implements InterruptableJob {
                 "Execution ${execution.id} update job stats (${scheduledExecutionId}):",
                 executionService.&isApplicationShutdown
             ) {
-                savedJobState = executionService.updateScheduledExecStatistics(scheduledExecutionId, execution.id, time)
+                savedJobState = executionService.updateScheduledExecStatistics(scheduledExecutionId, execution.id, time, resultMap.status as String, dateCompleted)
                 savedJobState
             }
             if (!savedJobState) {

@@ -4,6 +4,31 @@ const messages = {
   Delete: "Delete",
   Cancel: "Cancel",
   Revert: "Revert",
+  Configuration: "Configuration",
+
+  "Add a new Node Source": "Add a new Node Source",
+  "Add a new Node Enhancer": "Add a new Node Enhancer",
+  "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)":
+    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)",
+  "Node Enhancers can modify the data loaded from Node Sources.":
+    "Node Enhancers can modify the data loaded from Node Sources.",
+  "None configured. Click NodeEnhancer to add a new plugin.":
+    "None configured. Click NodeEnhancer to add a new plugin.",
+  "Scans a directory and loads all resource document files":
+    "Scans a directory and loads all resource document files",
+  "Reads a file containing node definitions in a supported format":
+    "Reads a file containing node definitions in a supported format",
+  "Provides the local node as the single resource":
+    "Provides the local node as the single resource",
+  "Run a script to produce resource model data":
+    "Run a script to produce resource model data",
+  "Retrieves a URL containing node definitions in a supported format":
+    "Retrieves a URL containing node definitions in a supported format",
+  "storage.enter.path": "Enter a path",
+  "storage.enter.password": "Enter a password",
+  "storage.enter.directory.name": "Enter the directory name",
+  "storage.specify.name": "Specify a name.",
+  "soft.wrap": "Soft Wrap",
   jobAverageDurationPlaceholder: "leave blank for Job Average duration",
   resourcesEditor: {
     "Dispatch to Nodes": "Dispatch to Nodes",
@@ -71,6 +96,17 @@ const messages = {
   message_userSummary: {
     desc: "This is a list of User Profiles which have logged in to Rundeck.",
   },
+  notifications: {
+    helpText:
+      "Notifications can be triggered by different events during the Job Execution.",
+    emptyText:
+      "No Notifications are defined. Click an event below to add a Notification for that Trigger.",
+    addButton: "Add Notification",
+    triggerLabel: "Trigger",
+    selectTrigger: "Select a Trigger",
+    typeLabel: "Notification Type",
+    selectNotification: "Select a Notification",
+  },
   message_webhookPageTitle: "Webhooks",
   message_webhookListTitle: "Webhooks",
   message_webhookDetailTitle: "Webhook Detail",
@@ -102,6 +138,11 @@ const messages = {
   message_webhookRegenClicked:
     "A new authorization string will be generated and displayed when the webhook is saved.",
   message_webhookPluginLabel: "Choose Webhook Plugin",
+  message_webhookFilterListPlaceholder: "Filter Webhooks",
+  message_webhookTabGeneral: "General",
+  message_webhookTabHandlerConfiguration: "Handler Configuration",
+  message_webhookButtonRegenerate: "Regenerate",
+  message_webhookNewHookName: "New Hook",
   message_hello: "hello world",
   message_sidebarNotificationText: "Rundeck update available",
   message_updateAvailable: "Update Available",
@@ -129,6 +170,9 @@ const messages = {
     "Clear all {0} selected items, or only items shown on this page?",
   "bulk.selected.count": "{0} selected",
   "results.empty.text": "No results for the query",
+  "noResultsFound": "No results found",
+  "noMatchesFound": "No matches found",
+  "noMatchesFoundSecondary": "Please try another search.",
   "Only shown executions": "Only shown executions",
   "Clear bulk selection": "Clear Bulk Selection",
   "Click to edit Search Query": "Click to edit Search Query",
@@ -615,6 +659,26 @@ const messages = {
   "page.section.Activity.for.jobs": "Activity for Jobs",
   "widget.theme.title": "Theme",
   "widget.nextUi.title": "Enable Next UI",
+  "settings.support.title": "Support",
+  "settings.support.label": "Support",
+  "settings.theme.title": "Theme",
+  "settings.theme.description": "Select your preferred visual theme for the interface.",
+  "settings.theme.options.system": "System",
+  "settings.theme.options.light": "Light",
+  "settings.theme.options.dark": "Dark",
+  "settings.tabs.theme": "Theme",
+  "settings.tabs.uiEarlyAccess": "UI Early Access",
+  "settings.nextUi.indicatorTitle": "Next UI Mode",
+  "settings.nextUi.available": "Next UI available",
+  "settings.nextUi.enabled": "Next UI enabled",
+  "settings.uiEarlyAccess.title": "UI Early Access",
+  "settings.uiEarlyAccess.description": "We're incrementally improving the Rundeck UI. Enable early access below to try new features as they're released. Please note: Early access features may contain bugs or incomplete functionality. We strongly encourage you to submit feedback or report issues through a support ticket.",
+  "settings.uiEarlyAccess.enableLabel": "Enable Next UI",
+  "settings.uiEarlyAccess.feature1": "When enabled, you'll see experimental UI updates throughout the product. A small indicator at the bottom of the page will show when you're viewing an early access feature.",
+  "settings.uiEarlyAccess.learnMore": "Learn more",
+  "settings.uiEarlyAccess.feedbackLink": "Give feedback on Early Access",
+  "settings.uiEarlyAccess.toast.enabled": "Next UI early access enabled. You can switch back anytime.",
+  "settings.uiEarlyAccess.toast.disabled": "Next UI has been turned off. You can switch back anytime.",
   "page.section.title.AllJobs": "All Jobs",
   "advanced.search": "Advanced",
   "jobs.advanced.search.title": "Click to modify filter",
@@ -656,6 +720,10 @@ const messages = {
     "Project search: name, label or /regex/",
   "page.home.search.project.title": "{n} Project found | {n} Projects found",
   "button.Action": "Action",
+  Any: "Any",
+  "Any Time": "Any Time",
+  "Other...": "Other...",
+  "Search Activity": "Search Activity",
   "edit.configuration": "Edit Configuration",
   "page.home.new.project.button.label": "New Project",
   Execution: "{n} Executions | {n} Execution | {n} Executions",
@@ -904,6 +972,12 @@ const messages = {
   Workflow: {
     label: "Workflow",
     property: {
+      executionBehavior: {
+        label: "Execution Behavior",
+      },
+      stepFailureBehavior: {
+        label: "Step Failure Behavior",
+      },
       keepgoing: {
         true: { description: "Run remaining steps before failing." },
         false: { description: "Stop at the failed step." },
@@ -911,10 +985,17 @@ const messages = {
       },
       strategy: {
         label: "Strategy",
+        description: "Select the chronology strategy of steps in the workflow.",
+        learnMore: "Learn more",
+        selectPlaceholder: "Select a strategy",
       },
     },
     addStep: "Add a step",
+    jobSteps: {
+      label: "Job Steps",
+    },
     logFilters: "Log Filters",
+    logFiltersTooltip: "Filters that will affect the logs produced by these steps",
     addLogFilter: "Add Log Filter",
     clickToEdit: "Click to edit",
     edit: "Edit",
@@ -924,13 +1005,43 @@ const messages = {
     dragToReorder: "Drag to reorder",
     clickOnStepType: "Click on a step type to add",
     editStep: "Edit step",
+    saveStep: "Save Step",
+    setSteps: "Set the Steps",
+    conditional: {
+      defineCondition: "Define the Condition",
+      conditionDescription: "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
+      conditionGroups: "Condition Set",
+      addCondition: "+ Add",
+      addconditionGroups: "+ Add Condition Set",
+      removeconditionGroups: "Remove Condition Set",
+      removeCondition: "Remove Condition",
+      selectField: "Select Field",
+      selectOperator: "Select Operator",
+      enterValue: "Enter Value",
+      operator: {
+        equals: "Equal",
+        notEquals: "Does not equal",
+        contains: "Contains",
+        notContains: "Does not contain",
+        matches: "Matches",
+        greaterThan: "Greater than",
+        greaterThanOrEqual: "Greater than or equal",
+        lessThan: "Less than",
+        lessThanOrEqual: "Less than or equal"
+      },
+    },
     stepLabel: "Step label",
     noSteps: "No workflow steps",
+    clickAddStep: "Add steps to define what this job will do. Click “Add Step” to get started.",
     addErrorHandler: "Add Error Handler",
     errorHandler: "Error handler",
     errorHandlerDescription:
       "The error handler will execute if the step fails.",
     editErrorHandler: "Edit error handler",
+    nodeStep: "Node Step",
+    workflowStep: "Workflow Step",
+    collapse: "Collapse",
+    expand: "Expand",
   },
   "plugin.choose.title": "Choose a Plugin",
   "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
@@ -939,7 +1050,7 @@ const messages = {
   "plugin.type.WorkflowNodeStep.title": "Node Step",
   "JobExec.nodeStep.true.label": "Node Step",
   "step.plugins.filter.prompt": "Search step",
-  "enter.a.step.filter.override": "Enter a step filter string.",
+  "enter.a.step.filter.override": "Search",
   "workflow.search.help.string1": "Basic search:",
   "workflow.search.help.string2": "mystep1",
   "workflow.search.help.string3":
@@ -961,6 +1072,8 @@ const messages = {
   "workflow.search.help.string17": "property:name=value",
   "node.step.plugin.plural": "{0} Node Step Plugins",
   "workflow.step.plugin.plural": "{0} Workflow Step Plugins",
+  "job.label": "Job",
+  "Project": "Project",
   "Workflow.Step.jobreference.title": "Select job by",
   "Workflow.Step.jobreference.name.label": "Name",
   "Workflow.Step.jobreference.name.description":
@@ -1020,6 +1133,8 @@ const messages = {
     "Enter UUID, e.g. 5910b723-2436-4497-96d5-49a08db95d2b",
   "select.an.existing.job.to.use": "Select an existing Job to use",
   "plugin.edit.title": "Edit step",
+  "Workflow.step.property.description.label": "Step Name",
+  "Workflow.step.property.description.help": "Name for this step",
   "Workflow.step.property.description.placeholder":
     "Label or description of this step",
   "enter.a.node.filter.override":
@@ -1047,6 +1162,8 @@ const messages = {
   "Workflow.stepErrorHandler.label.on.error": "on error",
   "Workflow.stepErrorHandler.label.keep.going.on.success":
     "keep going on success",
+  "Workflow.validation.oneError": "1 error",
+  "Workflow.validation.multipleErrors": "{count} errors",
   "framework.service.WorkflowNodeStep.description":
     "Runs once for each node in the workflow.",
   "framework.service.WorkflowStep.description": "Runs only once in a workflow.",
@@ -1142,6 +1259,22 @@ const messages = {
       },
     },
   },
+  searchForStep: "Search for a step",
+  learnMoreSearchPatterns: "to search using specific patterns",
+  nodeSteps: "Node Steps",
+  nodeStepsDescription: "Node steps execute once for each node targeted by the Job's node-filter.",
+  workflowSteps: "Workflow Steps",
+  workflowStepsDescription: "Workflow Steps execute once per Job execution.",
+  commonNodeSteps: "Common Node Steps",
+  commonWorkflowSteps: "Common Workflow Steps",
+  learnMore: "Learn more",
+  plugins: "plugins",
+  earlyAccess: "Early Access",
+  earlyAccessDescriptionWorkflow: "We've made some improvements to the \"Workflow\" authoring experience! Try the updated experience - you can switch back anytime.",
+  earlyAccessTryNow: "Try Now",
+  earlyAccessRemindMeLater: "Remind me later",
+  earlyAccessRemindLaterToast: "Got it! We'll remind you next time you return to this page.",
+  earlyAccessGoToSettings: "You can try the updated experience by enabling early access on the system configuration page."
 };
 
 export default messages;

@@ -13,7 +13,7 @@ import java.util.stream.Collectors
 @SeleniumCoreTest
 class ExecutorSpec extends SeleniumBase {
 
-    private static final List<String> availableExecutors = Arrays.asList(new String[] { "SSH", "Local", "Local (New)", "SSHJ-SSH", "Script Execution", "Stub", "Ansible Ad-Hoc Node Executor", "WinRM Node Executor Python", "openssh / executor" });
+    private static final List<String> availableExecutors = Arrays.asList(new String[] { "SSH", "Local", "SSHJ-SSH", "Script Execution", "Stub", "Ansible Ad-Hoc Node Executor", "WinRM Node Executor Python", "openssh / executor" });
     private static final int EXPECTED_EXECUTORS_SIZE = availableExecutors.size()
     /**
      * Checks if the node executor list renders.
@@ -31,9 +31,8 @@ class ExecutorSpec extends SeleniumBase {
         when: "We check the node executors length"
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.loadProjectEditForProject(projectName)
-        projectEditPage.go()
+        projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
         projectEditPage.waitForElementVisible(projectEditPage.openedNodeExecutorDropdown)
@@ -68,9 +67,9 @@ class ExecutorSpec extends SeleniumBase {
         when: "We check if the configuration of the SSH node exec is persisted"
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.loadProjectEditForProject(projectName)
-        projectEditPage.go()
+        dashboardPage.loadDashboardForProject(projectName)
+        projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
         projectEditPage.waitForElementVisible(projectEditPage.openedNodeExecutorDropdown)
@@ -87,7 +86,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.sshBindAddress.sendKeys("example/bind/address")
         projectEditPage.passRdEnv.click()
         projectEditPage.save()
-        dashboardPage.validatePage()
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go()
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
@@ -126,14 +125,14 @@ class ExecutorSpec extends SeleniumBase {
         when: "We check if the configuration of the SSH node exec is persisted"
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.loadProjectEditForProject(projectName)
-        projectEditPage.go()
+        dashboardPage.loadDashboardForProject(projectName)
+        projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
         projectEditPage.localExecutorListItem.click()
         projectEditPage.save()
-        dashboardPage.validatePage()
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go()
         projectEditPage.defaultNodeExecutorLink.click()
 
@@ -162,9 +161,9 @@ class ExecutorSpec extends SeleniumBase {
         when: "We check if the configuration of the script node exec is persisted"
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.loadProjectEditForProject(projectName)
-        projectEditPage.go()
+        dashboardPage.loadDashboardForProject(projectName)
+        projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
         projectEditPage.scriptExecutorListItem.click()
@@ -172,7 +171,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.scriptExecutorConfigInterpreter.sendKeys("exampleInterpreter")
         projectEditPage.scriptExecutorConfigDirectory.sendKeys("/example/dir")
         projectEditPage.save()
-        dashboardPage.validatePage()
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go()
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
@@ -205,9 +204,9 @@ class ExecutorSpec extends SeleniumBase {
         when: "We check if the configuration of the SSHJ node exec is persisted"
         loginPage.go()
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.loadProjectEditForProject(projectName)
-        projectEditPage.go()
+        dashboardPage.loadDashboardForProject(projectName)
+        projectEditPage.go(projectEditPage.loadPath)
         projectEditPage.defaultNodeExecutorLink.click()
         projectEditPage.nodeExecutorDropdown.click()
         projectEditPage.defaultConfigKeyStoragePathInput.sendKeys(samplePath)
@@ -218,7 +217,7 @@ class ExecutorSpec extends SeleniumBase {
         projectEditPage.retryCounterInput.clear()
         projectEditPage.retryCounterInput.sendKeys("3000")
         projectEditPage.save()
-        dashboardPage.validatePage()
+        projectEditPage.validatePage(dashboardPage.loadPath)
         projectEditPage.go()
         projectEditPage.defaultNodeExecutorLink.click()
 

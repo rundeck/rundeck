@@ -56,11 +56,13 @@ class PerformScmActionPage extends BasePage {
     }
 
     private WebElement waitForResultMessageBox(){
-        new WebDriverWait(driver, Duration.ofSeconds(15))
+        // Wait up to 30 seconds for SCM commit result (Git push can be slow in CI)
+        // Use visibilityOfElementLocated instead of elementToBeClickable since alerts are informational
+        new WebDriverWait(driver, Duration.ofSeconds(30))
                 .ignoring(StaleElementReferenceException.class)
                 .until(ExpectedConditions.or(
-                        ExpectedConditions.elementToBeClickable(ERROR_MESSAGE_BOX_LOCATOR),
-                        ExpectedConditions.elementToBeClickable(INFO_MESSAGE_BOX_LOCATOR))
+                        ExpectedConditions.visibilityOfElementLocated(ERROR_MESSAGE_BOX_LOCATOR),
+                        ExpectedConditions.visibilityOfElementLocated(INFO_MESSAGE_BOX_LOCATOR))
                 )
 
         try {
@@ -75,12 +77,5 @@ class PerformScmActionPage extends BasePage {
      */
     @Override
     void go() {
-    }
-
-    @Override
-    void validatePage() {
-        if (!driver.currentUrl.endsWith(loadPath)) {
-            throw new IllegalStateException("Couldn't browse Perform SCM Action Page. Expected: ${loadPath} Actual: ${driver.currentUrl}")
-        }
     }
 }

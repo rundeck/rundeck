@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderSer
 import grails.async.Promises
 import grails.converters.JSON
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import grails.util.Holders
 import grails.web.JSONBuilder
@@ -78,7 +79,7 @@ import java.util.concurrent.TimeoutException
  * $Id$
  */
 
-public class NotificationService implements ApplicationContextAware{
+public class NotificationService implements ApplicationContextAware, EventBusAware{
     boolean transactional = false
 
     static final String POST = "post"
@@ -992,17 +993,21 @@ public class NotificationService implements ApplicationContextAware{
         if(evt.jobUuid) {
             ScheduledExecution.withNewSession {
                 def job = ScheduledExecution.findByUuid(evt.jobUuid)
+                def execution = Execution.findByUuid(evt.executionUuid)
                 if (job.notificationSet) {
                     def contextBuilder = ExecutionContextImpl.builder()
                     contextBuilder.with {
                         storageTree(storageService.storageTreeWithContext(evt.authContext))
                         framework(frameworkService.rundeckFramework)
                         frameworkProject(job.project)
+                        if(job.getWorkflowData()) {
+                            workflowData(execution.getWorkflowData())
+                        }
                     }
                     contextBuilder.authContext(evt.authContext)
                     triggerJobNotification(
                             evt.trigger, job,
-                            [execution: Execution.findByUuid(evt.executionUuid),
+                            [execution: execution,
                              context  : contextBuilder.build()]
                     )
                 }

@@ -72,7 +72,7 @@ fetch_ci_shared_resources() {
 }
 
 wizcli_install(){
-  curl -Lo wizcli https://wizcli.app.wiz.io/latest/wizcli-linux-amd64
+  curl -Lo wizcli https://downloads.wiz.io/v1/wizcli/latest/wizcli-linux-amd64
   chmod +x wizcli
   sudo cp ./wizcli /usr/local/bin
 }
@@ -96,31 +96,65 @@ wizcli_scan() {
 
     docker pull "${RUNDECK_IMAGE_TAG}"
 
-    #login to wizcli
-    wizcli auth --id="${WIZCLI_ID}" --secret="${WIZCLI_SECRET}"
+    # Verify CircleCI context variables are set
+    if [ -z "$WIZCLI_ID" ] || [ -z "$WIZCLI_SECRET" ]; then
+        echo "ERROR: WIZCLI_ID and WIZCLI_SECRET must be set in CircleCI context"
+        return 1
+    fi
 
-    # Scan showing only results that make policy fail.
-    wizcli docker scan --image "${RUNDECK_IMAGE_TAG}" \
-      --policy-hits-only \
-      --format human \
-      --show-vulnerability-details \
-      --output "wizcli_scan_result.json,json,true" \
-      --log wizcli.log
+    # Set Wiz environment variables (required for authentication in v1.0)
+    export WIZ_CLIENT_ID="${WIZCLI_ID}"
+    export WIZ_CLIENT_SECRET="${WIZCLI_SECRET}"
+
+    # Scan with v1.0 API
+    wizcli scan container-image "${RUNDECK_IMAGE_TAG}" \
+        --assist-migration \
+        --json-output-file="${PWD}/wizcli_scan_result.json"
 
     wizexitcode=$?
     echo "WizExitCode: $wizexitcode"
 
+    if [ $wizexitcode -eq 4 ]; then
+        echo "Wiz scan completed with policy failure (exit code 4). Treating as non-blocking."
+    elif [ $wizexitcode -ne 0 ]; then
+        echo "Wiz docker scan failed with exit code $wizexitcode"
+    fi
+
+    sudo chown "${CURRENT_USER}" "${PWD}/wizcli_scan_result.json" || true
+
     mkdir -p test-results/junit
     bash "${RUNDECK_CORE_DIR}/scripts/convert_wiz_junit.sh" wizcli_scan_result.json > test-results/junit/wizcli-junit.xml
 
-    return $wizexitcode
+    # Aggregate high and critical vulnerabilities from osPackages and libraries
+    local high_vulns=$(jq '[.result.osPackages[]?.vulnerabilities[]?, .result.libraries[]?.vulnerabilities[]? | select(.severity == "HIGH") | .name] | length' "${PWD}/wizcli_scan_result.json")
+    local crit_vulns=$(jq '[.result.osPackages[]?.vulnerabilities[]?, .result.libraries[]?.vulnerabilities[]? | select(.severity == "CRITICAL") | .name] | length' "${PWD}/wizcli_scan_result.json")
+
+    echo "High Vulnerabilities: $high_vulns"
+    echo "Critical Vulnerabilities: $crit_vulns"
+
+    # Check if there are any high or critical vulnerabilities and return a non-zero exit code if found
+    if [[ $high_vulns -gt 0 || $crit_vulns -gt 0 ]]; then
+        echo "==> Security Alert: Found high or critical vulnerabilities."
+        return 1
+    else
+        echo "==> No high or critical vulnerabilities found."
+        return 0
+    fi
+}
+
+# Extract OpenAPI spec from WAR file to the specified folder
+# Usage: extract_openapi_spec_from_war [target_folder]
+# Default: enterprise/build/war-contents/WEB-INF/classes/META-INF/swagger
+extract_openapi_spec_from_war() {
+    local targetDir="${1:-enterprise/build/war-contents/WEB-INF/classes/META-INF/swagger}"
+    mkdir -p "${targetDir}"
+    find "${RUNDECK_WAR_DIR}" -name '*.war' -exec jar xvf \{\} WEB-INF/classes/META-INF/swagger/rundeck-api.yml \;
+    mv WEB-INF/classes/META-INF/swagger/rundeck-api.yml "${targetDir}/"
 }
 
 openapi_tests() {
     # Extract openapi spec
-    mkdir -p openapi
-    find "${RUNDECK_WAR_DIR}" -name '*.war' -exec jar xvf \{\} WEB-INF/classes/META-INF/swagger/rundeck-api.yml \;
-    mv WEB-INF/classes/META-INF/swagger/rundeck-api.yml openapi/
+    extract_openapi_spec_from_war openapi
 
     # Redocly OpenAPI Linting
     npx -y @redocly/cli lint \

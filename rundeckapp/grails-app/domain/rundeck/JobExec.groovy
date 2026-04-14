@@ -108,7 +108,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(!useName && uuid){
             return uuid
         }
-        return (null==jobGroup?'':jobGroup+"/")+jobName;
+        return (!jobGroup?'':jobGroup+"/")+jobName;
     }
     public void setJobIdentifier(){
         //noop

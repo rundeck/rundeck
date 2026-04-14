@@ -117,9 +117,11 @@ export default defineComponent({
 
     const shouldEnableAutoCompletion =
       this.contextVariableSuggestions && this.contextVariableSuggestions.length > 0;
+    const autoCompleteDelay = shouldEnableAutoCompletion ? 150 : undefined;
     editor.setOptions({
       ...(this.options || {}),
       enableLiveAutocompletion: shouldEnableAutoCompletion,
+      liveAutocompletionDelay: autoCompleteDelay,
     });
 
     if (this.modelValue) editor.setValue(this.resolveValue(this.modelValue), 1);
@@ -233,7 +235,6 @@ export default defineComponent({
               meta: type[0].toUpperCase() + type.slice(1),
             }),
           );
-
           callback(null, suggestions);
         },
       };

@@ -43,7 +43,7 @@ class CliAuthTesterTest extends Specification {
 
         testRealmProps << "test:test,user"
         testLoginModule << """${LOGIN_MODULE_NAME} {
-                                org.eclipse.jetty.jaas.spi.PropertyFileLoginModule required
+                                org.rundeck.jaas.PropertyFileLoginModule required
                                 file="${testRealmProps.absolutePath}";
                               };
                            """

@@ -5,7 +5,7 @@ import { Popover, Tabs, Tab } from "uiv";
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },
-    rdBase: "http://localhost:4440/",
+    rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
@@ -121,5 +121,18 @@ describe("ChoosePluginModal", () => {
     const divider = wrapper.findAll('[data-testid="divider"]');
     expect(divider.length).toBe(1);
     expect(divider[0].text()).toBe("workflow.step.plugin.plural");
+  });
+
+  it("excludes providers specified in excludeProviders prop", async () => {
+    const wrapper = await createWrapper({ excludeProviders: ["provider1"] });
+    const buttons = wrapper.findAll('[data-test="provider-button"]');
+
+    // Should have 2 buttons instead of 3 (provider1 excluded)
+    expect(buttons.length).toBe(2);
+
+    // Verify provider1 is not in the list
+    const buttonTexts = buttons.map(btn => btn.text());
+    expect(buttonTexts.some(text => text.includes("plugin1"))).toBe(false);
+    expect(buttonTexts.some(text => text.includes("plugin2"))).toBe(true);
   });
 });

@@ -1,6 +1,14 @@
 import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
 import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
+import type { PluginConfig } from "../../../../../library/interfaces/PluginConfig";
+import type {
+  EditStepData,
+  ErrorHandlerDefinition,
+  JobRefDefinition,
+  StepData,
+  StepsData,
+} from "../types/workflowTypes";
 import WorkflowSteps from "../WorkflowSteps.vue";
 import { createTestingPinia } from "@pinia/testing";
 import { getRundeckContext } from "../../../../../library";
@@ -22,12 +30,19 @@ jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
 }));
 jest.mock("@/library/rundeckService", () => {
-  const eventBus = { on: jest.fn(), off: jest.fn(), emit: jest.fn() };
+  const mittLib = require("mitt");
+  const mittFn = mittLib.default || mittLib;
+  const _bus = mittFn();
+  const eventBus = {
+    on: jest.fn(_bus.on.bind(_bus)),
+    off: jest.fn(_bus.off.bind(_bus)),
+    emit: jest.fn(_bus.emit.bind(_bus)),
+  };
   return {
     getRundeckContext: jest.fn().mockImplementation(() => ({
       client: {},
       eventBus,
-      rdBase: "http://localhost:4440/",
+      rdBase: "http://localhost:4440",
       projectName: "testProject",
       apiVersion: "44",
       rootStore: {
@@ -39,13 +54,39 @@ jest.mock("@/library/rundeckService", () => {
     })),
   };
 });
-jest.mock("../../../../../library/services/projects");
+jest.mock("@/library/services/projects");
 jest.mock("@/library/modules/pluginService");
 jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: jest.fn().mockImplementation(() => ({})),
 }));
 
-const baseCommand = {
+/**
+ * Persisted workflow JSON for simple exec steps: nested errorhandler uses the exec branch in
+ * commandToEditConfig (see StepData.errorhandler vs ErrorHandlerDefinition in workflowTypes).
+ */
+interface PersistedWorkflowCommand {
+  description?: string;
+  exec?: string;
+  jobref?: JobRefDefinition;
+  nodeStep?: boolean;
+  plugins?: { LogFilter?: PluginConfig[] };
+  errorhandler?:
+    | {
+        description?: string;
+        nodeStep: boolean;
+        jobref?: JobRefDefinition;
+        exec: string;
+        keepgoingOnSuccess?: boolean;
+      }
+    | ErrorHandlerDefinition;
+}
+
+type WorkflowStepsTestProps = Partial<Omit<StepsData, "commands">> & {
+  commands?: Array<PersistedWorkflowCommand | StepData>;
+};
+
+/** Fixture matching persisted workflow JSON shape used by these tests (see editCommandsToStepsData output). */
+const baseCommand: PersistedWorkflowCommand = {
   description: "echo test",
   errorhandler: {
     description: undefined,
@@ -58,15 +99,15 @@ const baseCommand = {
   exec: "echo test",
 };
 const createWrapper = async (
-  props = {},
-  stubs = {},
-): Promise<VueWrapper<any>> => {
+  props: WorkflowStepsTestProps = {},
+  stubs: Record<string, boolean | object> = {},
+): Promise<VueWrapper<InstanceType<typeof WorkflowSteps>>> => {
   const wrapper = mount(WorkflowSteps, {
     props: {
       modelValue: {
         commands: [{ ...baseCommand }],
         ...props,
-      },
+      } as StepsData,
     },
     global: {
       stubs: {
@@ -87,7 +128,7 @@ const createWrapper = async (
 };
 
 describe("WorkflowSteps", () => {
-  let wrapper: VueWrapper<any>;
+  let wrapper: VueWrapper<InstanceType<typeof WorkflowSteps>>;
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -205,6 +246,57 @@ describe("WorkflowSteps", () => {
         { ...baseCommand, nodeStep: true },
         { ...baseCommand, nodeStep: true },
       ]);
+    });
+  });
+
+  describe("log filters preserved on edit save (saveEditStep)", () => {
+    it("keeps plugins.LogFilter on the step after opening edit and saving plugin config changes", async () => {
+      const logFilterEntry: PluginConfig = {
+        type: "key-value-data",
+        config: { regex: "preserved" },
+      };
+      const commandWithFilters: StepData = {
+        description: "echo test",
+        exec: "echo original",
+        nodeStep: true,
+        plugins: {
+          LogFilter: [logFilterEntry],
+        },
+      };
+      const localWrapper = await createWrapper({ commands: [commandWithFilters] });
+
+      const editStep = localWrapper.find('[data-test="edit-step-item"]');
+      await editStep.trigger("click");
+      await localWrapper.vm.$nextTick();
+
+      // Same modal index pattern as "emits update:modelValue when a step is updated"
+      const editModal = localWrapper.findAllComponents(EditPluginModal)[1];
+      const updatedEditStep: EditStepData = {
+        id: "edit-modal-step",
+        type: "exec-command",
+        nodeStep: true,
+        config: {
+          adhocRemoteString: "echo updated",
+        },
+      };
+      editModal.vm.$emit("update:modelValue", updatedEditStep);
+      editModal.vm.$emit("save");
+      await flushPromises();
+
+      const emissions = localWrapper.emitted("update:modelValue");
+      expect(emissions).toBeDefined();
+      const lastPayload = emissions![emissions!.length - 1][0] as StepsData;
+
+      // saveEditStep must not clear filters (previously saveData.filters = []); they map
+      // from edit model via commandToEditConfig(plugins.LogFilter) and back in editToCommandConfig.
+      expect(lastPayload.commands[0]).toMatchObject({
+        description: "echo test",
+        exec: "echo updated",
+        nodeStep: true,
+        plugins: {
+          LogFilter: [logFilterEntry],
+        },
+      });
     });
   });
 

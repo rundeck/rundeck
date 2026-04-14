@@ -44,6 +44,7 @@ class PluginApiServiceIntegrationSpec extends Specification {
                             ServiceNameConstants.Orchestrator,
                             ServiceNameConstants.OptionValues,
                             ServiceNameConstants.ExecutionLifecycle,
+                            ServiceNameConstants.JobLifecycle,
                             ServiceNameConstants.Notification,
                             ServiceNameConstants.StreamingLogReader,
                             ServiceNameConstants.StreamingLogWriter,
@@ -63,41 +64,6 @@ class PluginApiServiceIntegrationSpec extends Specification {
                             ServiceNameConstants.PluginGroup
                     ]
             )
-        pluginList.descriptions.size() == 29
-        pluginList.serviceDefaultScopes.size() == 2
-        pluginList.bundledPlugins.size() == 7
-        pluginList.embeddedFilenames != null
-        pluginList.specialConfiguration.size() == 7
-        pluginList.specialScoping.size() == 2
-        pluginList.uiPluginProfiles != null
-
-    }
-
-    void "list plugins option value plugin enabled"() {
-        when:
-        pluginApiService.featureService.toggleFeature(Features.OPTION_VALUES_PLUGIN,true)
-        def pluginList = pluginApiService.listPluginsDetailed()
-
-        then:
-        pluginList.descriptions.size() == 29
-        pluginList.serviceDefaultScopes.size() == 2
-        pluginList.bundledPlugins.size() == 7
-        pluginList.embeddedFilenames != null
-        pluginList.specialConfiguration.size() == 7
-        pluginList.specialScoping.size() == 2
-        pluginList.uiPluginProfiles != null
-
-    }
-
-    void "list plugins life cycle plugins enabled"() {
-        setup:
-        pluginApiService.featureService.toggleFeature(Features.JOB_LIFECYCLE_PLUGIN, true)
-        pluginApiService.featureService.toggleFeature(Features.EXECUTION_LIFECYCLE_PLUGIN, true)
-
-        when:
-        def pluginList = pluginApiService.listPluginsDetailed()
-
-        then:
         pluginList.descriptions.size() == 30
         pluginList.serviceDefaultScopes.size() == 2
         pluginList.bundledPlugins.size() == 7

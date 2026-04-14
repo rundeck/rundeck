@@ -18,7 +18,9 @@ package rundeck.services
 
 
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowImpl
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStateDataLoader
+import com.dtolabs.rundeck.core.jobs.JobReferenceItem
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
@@ -62,14 +64,16 @@ class WorkflowServiceSpec extends Specification implements ServiceUnitTest<Workf
     def "scheduled execution for the exec job is retrieved from the exec job"() {
         setup:
         final jobProject = 'proj1'
-        def jobExecMock = Mock(JobExec)
-        Workflow workflow = new Workflow(keepgoing: true, commands: [jobExecMock])
+        def jobExecMock = Mock(JobReferenceItem)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+        WorkflowImpl workflow = new WorkflowImpl( [jobExecMock], 0, false, "")
 
         when:
         service.createStateForWorkflow(workflow, jobProject, "dummyFrameworkNodeName", null, null)
 
         then:
-        1 * jobExecMock.findJob(jobProject)
+        1 * service.scheduledExecutionService.findJobFromJobReference(_,jobProject)
     }
 
     def "state mapping"(){
@@ -88,60 +92,6 @@ class WorkflowServiceSpec extends Specification implements ServiceUnitTest<Workf
         resp.nodeSteps.get('nodea')
         resp.nodeSteps.get('nodea').size()==5
     }
-
-    def "execute the correction of ruleset with errors when importing error"(){
-        given:
-        Workflow workflow = new Workflow(strategy:'ruleset',
-                pluginConfig: "{\"WorkflowStrategy\":{\"ruleset\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}}",
-                commands: [new CommandExec(adhocRemoteString: 'test')])
-
-        workflow.save()
-
-        Workflow workflowWithNoError1 = new Workflow(strategy:'aplugin', commands: [new CommandExec(adhocRemoteString: 'test')])
-
-        workflowWithNoError1.save()
-
-        Workflow workflowWithNoError2 = new Workflow(strategy:'ruleset',
-                pluginConfig: "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"ruleset description\"}}}",
-                commands: [new CommandExec(adhocRemoteString: 'test')])
-
-        workflowWithNoError2.save()
-
-        when:
-        def resp = service.applyWorkflowConfigFix973()
-
-        then:
-        resp
-        resp.success
-        resp.invalidCount == 1
-        resp.changesetList.size() == 1
-        resp.changesetList[0].before == "{\"WorkflowStrategy\":{\"ruleset\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}}"
-        resp.changesetList[0].after == "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}"
-        workflow.pluginConfig == "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}"
-        workflow.validatePluginConfigMap()
-        workflowWithNoError1.pluginConfig == null
-        workflowWithNoError2.pluginConfig == "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"ruleset description\"}}}"
-    }
-
-    def "validate plugin config"(){
-        given:
-        Workflow workflow = new Workflow(strategy:'ruleset',
-                pluginConfig: wfStrategy,
-                commands: [new CommandExec(adhocRemoteString: 'test')])
-
-
-        when:
-        def result = workflow.validatePluginConfigMap()
-
-        then:
-        result == isValid
-
-        where:
-        isValid                               | wfStrategy
-        false                                 | "{\"WorkflowStrategy\":{\"ruleset\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}}"
-        true                                  | "{\"WorkflowStrategy\":{\"ruleset\":{\"rules\":\"[*] run-in-sequence\\r\\n[5] if:option.env==QA\\r\\n[6] unless:option.env==PRODUCTION\"}}}"
-    }
-
 
     private Map execMap(){
         def map = [executionId:2008,

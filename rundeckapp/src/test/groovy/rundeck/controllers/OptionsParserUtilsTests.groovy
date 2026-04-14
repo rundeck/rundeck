@@ -44,10 +44,22 @@ class OptionsParserUtilsTests extends Specification implements ControllerUnitTes
         return mock.proxyInstance()
     }
     def setup(){
-
         mockCodec(URIComponentCodec)
-        OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return mockFrameworkService()}
-        OptionsUtil.metaClass.static.frameworkServiceInstance = { return mockFrameworkService()}
+        OptionsUtil.frameworkServiceInstance = createMockFrameworkService()
+    }
+
+    def cleanup(){
+        OptionsUtil.frameworkServiceInstance = null
+        OptionsUtil.httpSessionInstance = null
+    }
+
+    private FrameworkService createMockFrameworkService(boolean ishttp = true) {
+        Mock(FrameworkService) {
+            getFrameworkNodeName() >> 'server1'
+            getServerUUID() >> 'xyz'
+            getRundeckBase() >> '/a/path'
+            getProjectGlobals(_) >> [:]
+        }
     }
 
     private void assertMap(key, map, value) {
@@ -140,8 +152,7 @@ class OptionsParserUtilsTests extends Specification implements ControllerUnitTes
     public void testExpandUrlJobUsername() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        OptionsUtil.metaClass.static.getHttpSessionInstance = { return mockHttpSession('bob')}
-        OptionsUtil.metaClass.static.httpSessionInstance = { return mockHttpSession('bob')}
+        OptionsUtil.httpSessionInstance = mockHttpSession('bob')
         then:
         assertEquals 'bob', OptionsUtil.expandUrl(option, '${job.user.name}', se, provider)
     }
@@ -175,8 +186,7 @@ class OptionsParserUtilsTests extends Specification implements ControllerUnitTes
     public void testExpandUrlJobRundeckBasedir() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller,false)
-        OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return mockFrameworkService(false)}
-        OptionsUtil.metaClass.static.frameworkServiceInstance = { return mockFrameworkService(false)}
+        OptionsUtil.frameworkServiceInstance = createMockFrameworkService(false)
         then:
         assertEquals '/a/path', OptionsUtil.expandUrl(option, '${job.rundeck.basedir}', se, provider, [:],false)
     }
@@ -184,8 +194,7 @@ class OptionsParserUtilsTests extends Specification implements ControllerUnitTes
     public void testExpandUrlJobRundeckBasedir2() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller,false)
-        OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return mockFrameworkService(false)}
-        OptionsUtil.metaClass.static.frameworkServiceInstance = { return mockFrameworkService(false)}
+        OptionsUtil.frameworkServiceInstance = createMockFrameworkService(false)
 
         then:
         assertEquals '/a/path', OptionsUtil.expandUrl(option, '${rundeck.basedir}', se, provider, [:],false)
@@ -223,10 +232,8 @@ class OptionsParserUtilsTests extends Specification implements ControllerUnitTes
     }
 
     protected def mockHttpSession(String user){
-        mockWith(GrailsHttpSession) {
-            getUser() {->
-                user
-            }
+        Mock(jakarta.servlet.http.HttpSession) {
+            getAttribute("user") >> user
         }
     }
 }

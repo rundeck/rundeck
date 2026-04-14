@@ -24,6 +24,8 @@ import rundeck.BaseReport
 import rundeck.ScheduledExecution
 import rundeck.services.ReportService
 
+import static org.junit.Assert.*
+
 /*
  * ReportServiceTests.java
  * 
@@ -33,7 +35,7 @@ import rundeck.services.ReportService
  */
 @Integration
 @Rollback
-class ReportServiceTests extends GroovyTestCase {
+class ReportServiceTests {
     ReportService reportService
     ExecReportDataProvider execReportDataProvider
     def sessionFactory

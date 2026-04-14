@@ -46,6 +46,9 @@ class ScmStatusBadgeSpec extends ScmSeleniumBase {
 
         JobShowPage jobShowPage = page(JobShowPage, PROJECT_NAME).forJob("740791d7-8734-4d8a-a77d-465aa2ccfe63")
         jobShowPage.go()
+        
+        // Wait for SCM status badge to be present and loaded before retrieving it
+        ScmStatusBadge.waitForStatusBadgeAndReturn(jobShowPage, true)
 
         when:
         ScmStatusBadge scmStatusBadge = jobShowPage.getScmStatusBadge()

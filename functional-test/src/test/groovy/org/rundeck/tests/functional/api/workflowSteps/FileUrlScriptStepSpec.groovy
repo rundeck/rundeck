@@ -10,11 +10,14 @@ import org.rundeck.util.container.BaseContainer
 @APITest
 class FileUrlScriptStepSpec extends BaseContainer{
 
-    public static final String TEST_PROJECT = "core-jsch-executor-test"
+    public static final String TEST_PROJECT = "core-jsch-fileurl-test"
     public static final String TEST_SSH_ARCHIVE_DIR = "/projects-import/core-jsch-executor-test"
     public static final String NODE_KEY_PASSPHRASE = "testpassphrase123"
     public static final String NODE_USER_PASSWORD  = "testpassword123"
     public static final String USER_VAULT_PASSWORD = "vault123"
+
+    static String localScriptJobId
+    static String nodeScriptJobId
 
     @Override
     def setupSpec() {
@@ -29,10 +32,21 @@ class FileUrlScriptStepSpec extends BaseContainer{
                         "importConfig": "true",
                         "importACL": "true",
                         "importNodesSources": "true",
-                        "jobUuidOption": "preserve"
+                        "jobUuidOption": "remove"
                 ]
         )
         waitingResourceEnabled(TEST_PROJECT, "ssh-node")
+
+        def jobs = JobUtils.getJobsForProject(client, TEST_PROJECT)
+        localScriptJobId = jobs.find { it.name == "Run script from URL" }?.id
+        nodeScriptJobId = jobs.find { it.name == "Run script through URL and filesystem on node" }?.id
+
+        if (!localScriptJobId || !nodeScriptJobId) {
+            throw new IllegalStateException(
+                "Required jobs not found in project ${TEST_PROJECT}. " +
+                "Found: ${jobs.collect { it.name }}"
+            )
+        }
     }
 
     def cleanupSpec(){
@@ -41,13 +55,12 @@ class FileUrlScriptStepSpec extends BaseContainer{
 
     def "test execute script from URL running locally"() {
         given:
-        def jobId = "1c496173-f9ec-4991-b93f-4761c2cf947e"
         def jobConfig = [
                 "loglevel": "DEBUG"
         ]
 
         when:
-        def response = doPost("/job/${jobId}/executions",jobConfig)
+        def response = doPost("/job/${localScriptJobId}/executions",jobConfig)
         then:
         verifyAll {
             response != null
@@ -72,13 +85,12 @@ class FileUrlScriptStepSpec extends BaseContainer{
 
     def "test execute script from URL running on node and run file on node"() {
         given:
-        def jobId = "c14c992d-4738-44b8-945e-9349ae487b77"
         def jobConfig = [
                 "loglevel": "DEBUG"
         ]
 
         when:
-        def response = doPost("/job/${jobId}/executions",jobConfig)
+        def response = doPost("/job/${nodeScriptJobId}/executions",jobConfig)
         then:
         verifyAll {
             response != null

@@ -14,7 +14,7 @@
             :name="`${rkey}prop_` + pindex"
             value="true"
           />
-          <label :for="`${rkey}prop_` + pindex">{{ prop.title }}</label>
+          <label :for="`${rkey}prop_` + pindex">{{ translatedTitle(prop) }}</label>
         </div>
       </div>
       <label
@@ -23,7 +23,7 @@
           'col-sm-2 control-label input-sm ' + (prop.required ? 'required' : '')
         "
         :for="`${rkey}prop_` + pindex"
-        >{{ prop.title }}</label
+        >{{ translatedTitle(prop) }}</label
       >
       <div v-if="prop.defaultValue === 'true'" class="col-xs-10">
         <label :for="`${rkey}prop_true_` + pindex" class="radio-inline">
@@ -81,7 +81,7 @@
           'col-sm-2 control-label input-sm ' + (prop.required ? 'required' : '')
         "
         :for="`${rkey}prop_` + pindex"
-        >{{ prop.title }}</label
+        >{{ translatedTitle(prop) }}</label
       >
       <div v-if="prop.type === 'Select'" class="col-sm-10">
         <select
@@ -394,7 +394,7 @@
 
     <div v-if="prop.desc" class="col-sm-10 col-sm-offset-2 help-block">
       <plugin-details
-        :description="prop.desc"
+        :description="translatedDesc(prop)"
         :extended-css="extendedCss"
         description-css="more-info"
         markdown-container-css="m-0 p-0"
@@ -402,7 +402,7 @@
         allow-html
       >
         <template #extraDescriptionText>
-          <div class="help-block">{{ prop.desc }}</div>
+          <div class="help-block">{{ translatedDesc(prop) }}</div>
         </template>
       </plugin-details>
     </div>
@@ -415,7 +415,7 @@
   </div>
 </template>
 <script lang="ts">
-import { ContextVariable } from "@/library/stores/contextVariables";
+import { ContextVariable } from "../../../library/stores/contextVariables";
 import { defineComponent, type PropType } from "vue";
 import JobConfigPicker from "./JobConfigPicker.vue";
 import KeyStorageSelector from "./KeyStorageSelector.vue";
@@ -425,9 +425,9 @@ import PluginPropVal from "./pluginPropVal.vue";
 import { client } from "../../modules/rundeckClient";
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 import { getRundeckContext } from "../../rundeckService";
-import { EventBus } from "@/library";
+import { EventBus } from "../../../library";
 import UiSocket from "../utils/UiSocket.vue";
-import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
+import PluginDetails from "./PluginDetails.vue";
 import PtAutoComplete from "../primeVue/PtAutoComplete/PtAutoComplete.vue";
 import {
   getContextVariables,
@@ -628,6 +628,12 @@ export default defineComponent({
       (this.prop.options && this.prop.options["displayType"] === "READONLY");
   },
   methods: {
+    translatedTitle(prop: any): string {
+      return (this.$t(prop?.title || "") as string) || "";
+    },
+    translatedDesc(prop: any): string {
+      return (this.$t(prop?.desc || "") as string) || "";
+    },
     inputColSize(prop: any) {
       let size = 10;
       if (prop.options && prop.options["labelHidden"] === "true") {
@@ -671,7 +677,7 @@ export default defineComponent({
 });
 </script>
 <style scoped lang="scss">
-@import "~vue3-markdown/dist/style.css";
+@import "~vue3-markdown/dist/vue3-markdown.css";
 
 .longlist {
   max-height: 500px;

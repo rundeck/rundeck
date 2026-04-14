@@ -3,7 +3,7 @@ package org.rundeck.web
 import groovy.transform.CompileStatic
 import org.rundeck.app.web.RequestIdProvider
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 /**
  * Provides a default RequestId when no other provider has been wired up to do so.
