@@ -312,10 +312,31 @@ export default defineComponent({
         return file ? true : false;
       }
     },
+    validateKeyPath(): string | null {
+      const path = this.getKeyPath();
+      const validPattern = /^[a-zA-Z0-9,\.+_\/-]+$/;
+
+      if (!validPattern.test(path)) {
+        // Find first invalid character
+        const invalidChar = path.split('').find(char => !validPattern.test(char));
+        return `The character '${invalidChar}' is not allowed. Key storage paths can only contain: letters, numbers, / . + _ - ,`;
+      }
+
+      return null;
+    },
     async handleUploadKey() {
       const rundeckContext = getRundeckContext();
 
       const fullPath = this.calcBrowsePath(this.getKeyPath());
+
+      // Validate path for new items only (skip for legacy items being edited)
+      if (!this.uploadSetting.modifyMode) {
+        const pathError = this.validateKeyPath();
+        if (pathError) {
+          this.uploadSetting.errorMsg = pathError;
+          return;
+        }
+      }
 
       let contentType = "application/pgp-keys";
 
