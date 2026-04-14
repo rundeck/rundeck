@@ -130,6 +130,7 @@
                 :disabled="uploadSetting.modifyMode === true"
                 name="relativePath"
                 class="form-control"
+                data-testid="key-path-input"
                 :placeholder="$t('storage.enter.directory.name')"
               />
               <input
