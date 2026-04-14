@@ -216,4 +216,107 @@ describe("KeyStorageEdit", () => {
     // Verify that the finishEditing event is emitted with the correct data
     expect(wrapper.emitted().finishEditing[0]).toEqual(expectedEmittedEvent);
   });
+
+  describe("Path validation", () => {
+    it("validates path and shows error when path contains invalid character (@)", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          inputPath: "test@path",
+          fileName: "mykey",
+          textArea: "some-text",
+        },
+      });
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.text()).toContain("The character '@' is not allowed");
+      expect(errorMsg.text()).toContain("Key storage paths can only contain: letters, numbers, / . + _ - ,");
+      expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
+    });
+
+    it("displays specific error message format with the invalid character", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "password",
+          inputPath: "",
+          fileName: "test#key",
+          password: "mypassword",
+          inputType: "text",
+        },
+      });
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.text()).toBe("The character '#' is not allowed. Key storage paths can only contain: letters, numbers, / . + _ - ,");
+    });
+
+    it("allows valid characters in path including forward slashes", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          inputPath: "project/subdir",
+          fileName: "valid-key_name.123",
+          textArea: "some-text",
+        },
+      });
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="error-msg"]').exists()).toBe(false);
+      expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("validates path for create operations", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          modifyMode: false,
+          keyType: "password",
+          inputPath: "invalid@path",
+          fileName: "mykey",
+          password: "mypassword",
+          inputType: "text",
+        },
+      });
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.exists()).toBe(true);
+      expect(errorMsg.text()).toContain("@");
+      expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
+    });
+
+    it("skips validation for edit operations (modifyMode=true)", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          modifyMode: true,
+          keyType: "password",
+          inputPath: "legacy@path",
+          fileName: "mykey",
+          password: "mypassword",
+        },
+      });
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      // No validation error should appear for legacy items in edit mode
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.exists()).toBe(false);
+    });
+  });
 });

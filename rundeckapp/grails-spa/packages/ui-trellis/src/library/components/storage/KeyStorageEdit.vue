@@ -314,12 +314,18 @@ export default defineComponent({
     },
     validateKeyPath(): string | null {
       const path = this.getKeyPath();
+
+      // Skip validation if path is empty (will be caught by validInput check)
+      if (!path || path.trim() === '') {
+        return null;
+      }
+
       const validPattern = /^[a-zA-Z0-9,\.+_\/-]+$/;
 
       if (!validPattern.test(path)) {
         // Find first invalid character
         const invalidChar = path.split('').find(char => !validPattern.test(char));
-        return `The character '${invalidChar}' is not allowed. Key storage paths can only contain: letters, numbers, / . + _ - ,`;
+        return `The character '${invalidChar || 'invalid'}' is not allowed. Key storage paths can only contain: letters, numbers, / . + _ - ,`;
       }
 
       return null;
