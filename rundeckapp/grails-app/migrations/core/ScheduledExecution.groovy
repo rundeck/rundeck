@@ -261,6 +261,101 @@ databaseChangeLog = {
         }
     }
 
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-1-pg", dbms: "postgresql") {
+        comment { 'rename month to "MONTH" for PostgreSQL' }
+        preConditions(onFail: "MARK_RAN"){
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) AS num FROM information_schema.columns WHERE table_name = 'scheduled_execution' AND column_name = 'month'").num
+                    if (count == 0) fail('precondition is not satisfied')
+                }
+            }
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN month TO \"MONTH\";")
+            }
+            rollback {
+            }
+        }
+    }
+
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-2-pg", dbms: "postgresql") {
+        comment { 'rename hour to "HOUR" for PostgreSQL' }
+        preConditions(onFail: "MARK_RAN"){
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) AS num FROM information_schema.columns WHERE table_name = 'scheduled_execution' AND column_name = 'hour'").num
+                    if (count == 0) fail('precondition is not satisfied')
+                }
+            }
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN hour TO \"HOUR\";")
+            }
+            rollback {
+            }
+        }
+    }
+
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-3-pg", dbms: "postgresql") {
+        comment { 'rename year to "YEAR" for PostgreSQL' }
+        preConditions(onFail: "MARK_RAN"){
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) AS num FROM information_schema.columns WHERE table_name = 'scheduled_execution' AND column_name = 'year'").num
+                    if (count == 0) fail('precondition is not satisfied')
+                }
+            }
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN year TO \"YEAR\";")
+            }
+            rollback {
+            }
+        }
+    }
+
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-4-pg", dbms: "postgresql") {
+        comment { 'rename minute to "MINUTE" for PostgreSQL' }
+        preConditions(onFail: "MARK_RAN"){
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) AS num FROM information_schema.columns WHERE table_name = 'scheduled_execution' AND column_name = 'minute'").num
+                    if (count == 0) fail('precondition is not satisfied')
+                }
+            }
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN minute TO \"MINUTE\";")
+            }
+            rollback {
+            }
+        }
+    }
+
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-5-pg", dbms: "postgresql") {
+        comment { 'rename seconds to "SECONDS" for PostgreSQL' }
+        preConditions(onFail: "MARK_RAN"){
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) AS num FROM information_schema.columns WHERE table_name = 'scheduled_execution' AND column_name = 'seconds'").num
+                    if (count == 0) fail('precondition is not satisfied')
+                }
+            }
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN seconds TO \"SECONDS\";")
+            }
+            rollback {
+            }
+        }
+    }
+
 
     changeSet(author: "rundeckdev", id: "4.11.0-add-job-uuid-to-stats-mssql", dbms: "mssql") {
         preConditions(onFail: "MARK_RAN") {
