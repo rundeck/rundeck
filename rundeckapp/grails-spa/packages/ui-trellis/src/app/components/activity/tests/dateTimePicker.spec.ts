@@ -50,7 +50,7 @@ describe("DateTimePicker.vue", () => {
     await wrapper.vm.$nextTick();
 
     const emitted = wrapper.emitted("update:modelValue");
-    expect(emitted.pop()).toEqual([newTimeFormatted]);
+    expect(emitted!.pop()).toEqual([newTimeFormatted]);
   });
   it("updates time and dateString when modelValue changes", async () => {
     const wrapper = await mountDateTimePicker();
@@ -82,7 +82,7 @@ describe("DateTimePicker.vue", () => {
     expect(timePicker.attributes("role")).toBe("combobox");
 
     const receivedTime = new Date(
-      timePicker.attributes("modelvalue"),
+      timePicker.attributes("modelvalue")!,
     ).toISOString();
 
     const expectedTime = new Date(wrapper.vm.time).toISOString();

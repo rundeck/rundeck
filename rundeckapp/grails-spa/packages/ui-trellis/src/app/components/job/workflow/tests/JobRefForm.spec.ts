@@ -318,7 +318,7 @@ describe("JobRefForm", () => {
       await wrapper.setProps({ modalActive: false });
 
       expect(wrapper.emitted("update:modalActive")).toBeTruthy();
-      expect(wrapper.emitted("update:modalActive")[0]).toEqual([false]);
+      expect(wrapper.emitted("update:modalActive")![0]).toEqual([false]);
     });
   });
 

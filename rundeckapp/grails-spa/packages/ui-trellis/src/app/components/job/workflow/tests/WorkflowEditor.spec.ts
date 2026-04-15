@@ -78,8 +78,8 @@ describe("WorkflowEditor", () => {
     await wrapper.vm.$nextTick();
 
     expect(
-      wrapper.emitted("update:modelValue")[
-        wrapper.emitted("update:modelValue").length - 1
+      wrapper.emitted("update:modelValue")![
+        wrapper.emitted("update:modelValue")!.length - 1
       ][0],
     ).toMatchObject(
       expect.objectContaining({

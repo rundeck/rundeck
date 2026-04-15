@@ -25,7 +25,7 @@ rootStore.ui.addItems([
                     provide(JobPageStoreInjectionKey, jobPageStore);
 
                     jobPageStore.load()
-                    jobPageStore.getJobBrowser().loadJobMeta(job.id).then(jobMeta => job.meta = jobMeta)
+                    jobPageStore.getJobBrowser().loadJobMeta(job.id!).then(jobMeta => job.meta = jobMeta)
 
                     return { jobPageStore, job }
                 },

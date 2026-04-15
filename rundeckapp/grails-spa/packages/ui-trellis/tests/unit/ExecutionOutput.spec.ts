@@ -6,7 +6,7 @@ import { api, apiClient } from "../../src/library/services/api";
 import { ExecutionOutputStore } from "../../src/library/stores/ExecutionOutput";
 
 import { observe } from "mobx";
-import { RundeckBrowser } from "@rundeck/client";
+import { RundeckBrowser, RundeckClient } from "@rundeck/client";
 import { RootStore } from "../../src/library/stores/RootStore";
 import { RundeckToken } from "../../src/library/interfaces/rundeckWindow";
 import { EventBus } from "../../src/library";
@@ -119,7 +119,7 @@ describe("ExecutionOutput Store", () => {
 
     const executionOutputStore = new ExecutionOutputStore(
       window._rundeck.rootStore,
-      null,
+      {} as RundeckClient,
     );
 
     const output = executionOutputStore.createOrGet("900");
