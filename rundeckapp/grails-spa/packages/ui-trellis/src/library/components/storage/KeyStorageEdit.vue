@@ -316,17 +316,38 @@ export default defineComponent({
     validateKeyPath(): string | null {
       const path = this.getKeyPath();
 
-      // Skip validation if path is empty (will be caught by validInput check)
       if (!path || path.trim() === '') {
         return null;
       }
 
-      const validPattern = /^[a-zA-Z0-9,\.+_\/-]+$/;
+      // Match backend regex: ^\/?((?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][\sa-zA-Z0-9,\.+_-]*?\/?)+$
+      // - First char of each component: [a-zA-Z0-9,.+_-] (no space)
+      // - Subsequent chars: [\sa-zA-Z0-9,.+_-] (space allowed)
+      // - Prevents ".." directory traversal
+      const backendPattern = /^\/?((?!\.\.(\/|$))[a-zA-Z0-9,.+_-][\sa-zA-Z0-9,.+_-]*?\/?)+$/;
 
-      if (!validPattern.test(path)) {
+      if (!backendPattern.test(path)) {
+        // Check for ".." directory traversal
+        if (path.includes('..')) {
+          return "Directory traversal '..' is not allowed in key storage paths.";
+        }
+
+        // Check for path component starting with space
+        const components = path.split('/').filter(c => c.length > 0);
+        for (const component of components) {
+          if (component.startsWith(' ')) {
+            return "Path components cannot start with a space.";
+          }
+        }
+
         // Find first invalid character
-        const invalidChar = path.split('').find(char => !validPattern.test(char));
-        return `The character '${invalidChar || 'invalid'}' is not allowed. Key storage paths can only contain: letters, numbers, / . + _ - ,`;
+        const validChars = /^[a-zA-Z0-9,.+_\s/-]$/;
+        const invalidChar = path.split('').find(char => !validChars.test(char));
+        if (invalidChar) {
+          return `The character '${invalidChar}' is not allowed. Key storage paths can only contain: letters, numbers, spaces (not at start), / . + _ - ,`;
+        }
+
+        return "Invalid key storage path format.";
       }
 
       return null;

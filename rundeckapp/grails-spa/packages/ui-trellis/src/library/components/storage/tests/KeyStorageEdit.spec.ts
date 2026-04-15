@@ -240,7 +240,6 @@ describe("KeyStorageEdit", () => {
 
       const errorMsg = wrapper.find('[data-testid="error-msg"]');
       expect(errorMsg.text()).toContain("The character '@' is not allowed");
-      expect(errorMsg.text()).toContain("Key storage paths can only contain: letters, numbers, / . + _ - ,");
       expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
     });
 
@@ -262,7 +261,7 @@ describe("KeyStorageEdit", () => {
       await flushPromises();
 
       const errorMsg = wrapper.find('[data-testid="error-msg"]');
-      expect(errorMsg.text()).toBe("The character '#' is not allowed. Key storage paths can only contain: letters, numbers, / . + _ - ,");
+      expect(errorMsg.text()).toContain("The character '#' is not allowed");
     });
 
     it("allows valid characters including forward slashes", async () => {
@@ -287,6 +286,80 @@ describe("KeyStorageEdit", () => {
 
       expect(wrapper.find('[data-testid="error-msg"]').exists()).toBe(false);
       expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows spaces after first character (matching backend)", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue("my project/sub dir");
+      await nameInput.setValue("my key");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="error-msg"]').exists()).toBe(false);
+      expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("rejects path component starting with space", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue(" startsWithSpace");
+      await nameInput.setValue("mykey");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.text()).toContain("cannot start with a space");
+      expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
+    });
+
+    it("rejects directory traversal with '..'", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue("project/../secret");
+      await nameInput.setValue("mykey");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.text()).toContain("Directory traversal '..' is not allowed");
+      expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
     });
 
     it("skips validation when editing existing item (modifyMode=true)", async () => {
