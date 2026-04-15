@@ -16,10 +16,10 @@
 package rundeckapp.init.servlet
 
 import com.dtolabs.rundeck.core.init.CustomWebAppInitializer
-import org.eclipse.jetty.security.ConstraintSecurityHandler
+import org.eclipse.jetty.ee10.security.ConstraintSecurityHandler
 import org.eclipse.jetty.security.SecurityHandler
-import org.eclipse.jetty.security.authentication.FormAuthenticator
-import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.ee10.security.authentication.FormAuthenticator
+import org.eclipse.jetty.ee10.webapp.WebAppContext
 import spock.lang.Specification
 
 

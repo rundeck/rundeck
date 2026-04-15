@@ -35,6 +35,7 @@ public class ZipResourceLoader implements PluginResourceLoader {
     List<String> resourcesList;
     String resourcesBasedir;
     List<String> basedirListing;
+    Properties assetManifest; // Grails 7: asset-pipeline manifest for hashed filenames
 
     public ZipResourceLoader(
             final File cacheDir,
@@ -104,15 +105,68 @@ public class ZipResourceLoader implements PluginResourceLoader {
                     zipFile.getAbsolutePath()
             ));
         }
-        File resfile = new File(cacheDir, path);
+        
+        // Grails 7: Try resolving path via asset manifest for hashed filenames
+        String resolvedPath = resolveAssetPath(path);
+        
+        File resfile = new File(cacheDir, resolvedPath);
+        
         if (!resfile.isFile()) {
             throw new PluginException(String.format(
-                    "Resource path %s did not exist in the file: %s",
+                    "Resource path %s (resolved to %s) did not exist in the file: %s",
                     path,
+                    resolvedPath,
                     zipFile.getAbsolutePath()
             ));
         }
         return new FileInputStream(resfile);
+    }
+    
+    /**
+     * Resolve asset path via manifest.properties for Grails 7 hashed filenames.
+     * Falls back to original path if manifest not found or path not in manifest.
+     * 
+     * Handles subdirectory paths: plugin.yaml may reference "js/common.js" while
+     * manifest.properties contains "common.js=common-HASH.js". Asset-pipeline puts
+     * hashed files at the root of resources/, not in subdirectories.
+     * 
+     * @param path Original path from plugin.yaml (e.g., "js/common.js" or "common.js")
+     * @return Resolved path (e.g., "common-HASH.js") or original path if not in manifest
+     */
+    private String resolveAssetPath(String path) {
+        // Load manifest on first use (lazy initialization)
+        if (assetManifest == null) {
+            assetManifest = new Properties();
+            File manifestFile = new File(cacheDir, "manifest.properties");
+            if (manifestFile.isFile()) {
+                try (FileInputStream fis = new FileInputStream(manifestFile)) {
+                    assetManifest.load(fis);
+                } catch (IOException e) {
+                    // Manifest load failed, continue without it (backwards compatible)
+                }
+            }
+        }
+        
+        // Try direct lookup first (for backwards compatibility with pre-Grails 7 plugins)
+        String resolved = assetManifest.getProperty(path);
+        if (resolved != null) {
+            return resolved;
+        }
+        
+        // Try stripping subdirectory for Grails 7 asset-pipeline manifests
+        // Example: "js/common.js" -> lookup "common.js" in manifest -> "common-HASH.js"
+        // Note: Asset-pipeline places hashed files at ROOT of resources/, so we DON'T re-add subdir
+        int lastSlash = path.lastIndexOf('/');
+        if (lastSlash >= 0) {
+            String filename = path.substring(lastSlash + 1); // "common.js"
+            String hashedFilename = assetManifest.getProperty(filename);
+            if (hashedFilename != null) {
+                return hashedFilename; // "common-HASH.js" (at root, no subdir prefix)
+            }
+        }
+        
+        // Fallback: return original path (backwards compatible for non-hashed assets)
+        return path;
     }
 
     /**

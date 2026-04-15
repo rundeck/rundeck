@@ -17,18 +17,20 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.utils.ResourceAcceptanceTimeoutException
 import com.dtolabs.rundeck.core.utils.WaitUtils
+import grails.validation.Validateable
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.data.workflow.ConditionalStep
 import org.rundeck.app.data.workflow.WorkflowDataImpl
-import org.rundeck.app.data.workflow.WorkflowStepDataImpl
 import org.springframework.jdbc.core.RowCallbackHandler
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
-import org.springframework.validation.ObjectError
 import rundeck.data.job.reference.JobReferenceImpl
 import rundeck.data.job.reference.JobRevReferenceImpl
 import rundeck.data.util.JobTakeoverQueryBuilder
@@ -64,6 +66,7 @@ import org.rundeck.app.components.jobs.JobDefinitionException
 import org.hibernate.sql.JoinType
 import org.rundeck.app.components.jobs.ComponentMeta
 import org.rundeck.app.components.jobs.JobMetadataComponent
+import org.rundeck.app.jobs.browse.JobBrowseMetaKeysResolver
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
@@ -142,7 +145,7 @@ import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.utils.OptionsUtil
 import org.rundeck.app.spi.AuthorizedServicesProvider
 
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 import java.sql.ResultSet
 import java.sql.SQLException
 import java.text.MessageFormat
@@ -550,6 +553,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             customFilters: totalCustomFilters
             ]
 
+    }
+
+    /**
+     * Resolves metadata key set for jobs/browse (and job meta) when {@code metaExclude} is used.
+     * @see JobBrowseMetaKeysResolver
+     */
+    Set<String> resolveJobBrowseMetaKeys(String meta, String metaExclude) {
+        Map<String, JobMetadataComponent> components = applicationContext.getBeansOfType(JobMetadataComponent) ?: [:]
+        JobBrowseMetaKeysResolver.resolve(meta, metaExclude, components)
     }
 
     /**
@@ -1252,7 +1264,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def getWorkflowDescriptionTree(String project,WorkflowData workflow,readAuth,maxDepth=3){
         def jobids=[:]
         def cmdData={}
-        cmdData={x,WorkflowStep step->
+        cmdData={x,WorkflowStepData step->
             def map=readAuth?step.toMap():step.toDescriptionMap()
             map.remove('plugins')
             if(map.type){
@@ -2418,6 +2430,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
                 return false
             }
+        } else if(step instanceof ConditionalStep){
+            def validation = WorkflowController._validateConditionalStep(frameworkService, step)
+            if (!validation.valid) {
+                step.errors.rejectValue(
+                        'type',
+                        'Workflow.step.conditional.configuration.invalid',
+                        [validation.report.toString()].toArray(),
+                        'Invalid configuration for conditional step: {0}'
+                )
+                return false
+            }
         }
 
         def pluginConfig = step.getPluginConfigListForType(ServiceNameConstants.LogFilter)
@@ -2815,6 +2838,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //v4
         failed |=validateDefinitionWFStrategy(scheduledExecution, params, validation)
 
+        //v4.5
+        failed |= validateDefinitionConditionalStrategy(scheduledExecution, validation)
+
         //v5
         failed |= validateDefinitionLogFilterPlugins(scheduledExecution,params, validation)
 
@@ -3012,6 +3038,43 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
+     * Validate that conditional steps are only used with sequential or parallel workflow strategies.
+     * @param scheduledExecution The scheduled execution to validate
+     * @param validationMap Map to store validation errors
+     * @return true if validation failed
+     */
+    @CompileStatic
+    public boolean validateDefinitionConditionalStrategy(ScheduledExecution scheduledExecution, Map validationMap) {
+        boolean failed = false
+        def workflowData = scheduledExecution.getWorkflowData()
+        
+        if (workflowData) {
+            String strategy = workflowData.strategy
+            boolean hasConditionalSteps = false
+            
+            // Check if workflow has any conditional steps
+            if (workflowData.getSteps()) {
+                hasConditionalSteps = workflowData.getSteps().any {
+                    it.getConditionSet() != null
+                }
+            }
+            
+            // If conditional steps exist, strategy must be sequential or parallel
+            if (hasConditionalSteps && strategy != null && strategy != "sequential" && strategy != "parallel") {
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                    'workflow',
+                    'scheduledExecution.workflow.conditional.strategy.invalid.message',
+                    [strategy] as Object[],
+                    "Conditional steps can only be used with 'sequential' or 'parallel' workflow strategy. Current strategy: {0}"
+                )
+            }
+        }
+        
+        return failed
+    }
+
+    /**
      *
      * @param scheduledExecution
      * @param userAndRoles
@@ -3030,7 +3093,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             workflowData.getSteps()?.each {WorkflowStepData cexec ->
                 if (!validateWorkflowStep(cexec, fprojects, validateJobref, scheduledExecution.project)) {
                     wfitemfailed = true
-                    failedlist << "$i: " + (cexec as WorkflowStep).errors.allErrors.collect {
+                    failedlist << "$i: " + (cexec as Validateable).errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
                     }
                 }
@@ -3038,7 +3101,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if (cexec.errorHandler) {
                     if (!validateWorkflowStep(cexec.errorHandler, fprojects, validateJobref, scheduledExecution.project)) {
                         wfitemfailed = true
-                        failedlist << "$i: " + (cexec as WorkflowStep).errorHandler.errors.allErrors.collect {
+                        failedlist << "$i: " + (cexec.errorHandler as Validateable).errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)
                         }
                     }
@@ -3461,8 +3524,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public void jobDefinitionWorkflow(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         if(input){
             def inputWorkflow = input.getWorkflowData()
-            final Workflow workflow = new Workflow(inputWorkflow)
-            scheduledExecution.setWorkflowData(workflow)
+            scheduledExecution.setWorkflowData(inputWorkflow)
         } else if (params['_sessionwf'] == 'true' && params['_sessionEditWFObject']) {
             //use session-stored workflow
             def WorkflowData wf = params['_sessionEditWFObject']
@@ -3479,10 +3541,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.setWorkflowData(workflow)
             }
         } else if (params.jobWorkflowJson) {
-            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString())
+            def jobWorkflowData = JSON.parse(params.jobWorkflowJson.toString()) //check json workflow format is valid
 
             if(jobWorkflowData instanceof JSONObject) {
-                scheduledExecution.setWorkflowData(Workflow.fromMap(jobWorkflowData))
+                scheduledExecution.setWorkflowJson(params.jobWorkflowJson.toString())
             }
         } else if (params.workflow && params.workflow instanceof Workflow) {
             scheduledExecution.setWorkflowData(new WorkflowDataImpl().fromWorkflow(params.workflow))
@@ -3502,7 +3564,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.setWorkflowData(workflow)
         }
         if(!scheduledExecution.getWorkflowData()){
-            scheduledExecution.setWorkflowData(new Workflow())
+            scheduledExecution.setWorkflowData(new WorkflowDataImpl())
         }
     }
 
@@ -3946,7 +4008,28 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     boolean validateWorkflow(WorkflowData workflow, ScheduledExecution scheduledExecution){
         def valid=true
         //validate error handler types
-        if (workflow?.strategy == 'node-first') {
+        if(workflow?.hasConditionalSteps()){
+            boolean featureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
+            if(featureEnabled) {
+                def workflowStrategyService = frameworkService.rundeckFramework.workflowStrategyService
+                def workflowItem = executionUtilService.createExecutionItemForWorkflow(workflow)
+                def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
+                def projectProps = frameworkProject.getProperties()
+                def strategyConfig = workflow.pluginConfigMap?.get(ServiceNameConstants.WorkflowStrategy)?.get(workflow.strategy) ?: [:]
+
+                PropertyResolver resolver = frameworkService.getFrameworkPropertyResolverWithProps(
+                        projectProps,
+                        strategyConfig
+                )
+                def workflowStrategy = workflowStrategyService.getStrategyForWorkflow(workflowItem, resolver)
+
+                if (!workflowStrategy.supportsConditionalSteps()) {
+                    workflow.errors.rejectValue('strategy', 'Workflow.strategy.conditionalSteps.unsupported', [workflow.strategy] as Object[], "Workflow strategy {0} does not support conditional steps")
+                    scheduledExecution.errors.rejectValue('workflow', 'Workflow.strategy.conditionalSteps.unsupported', [workflow.strategy] as Object[], "Workflow strategy {0} does not support conditional steps")
+                    valid = false
+                }
+            }
+        }else if (workflow?.strategy == 'node-first') {
             //if a step is a Node step and has an error handler
             def cmdi = 1
             workflow.getSteps().each { WorkflowStepData step ->
@@ -4489,17 +4572,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(se.isEmpty()) return [:]
         Date now = new Date()
         Map item = [:]
-        Execution.createCriteria().list() {
-            createAlias("scheduledExecution", "se", JoinType.LEFT_OUTER_JOIN)
-            projections {
-                property('se.id')
-                property('dateStarted')
-            }
-            and {
-                'in'('se.id', se*.id)
-                gt("dateStarted", now)
-                isNull("dateCompleted")
-            }
+        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+        String hql = '''
+            SELECT se.id, e.dateStarted
+            FROM Execution e
+            LEFT JOIN e.scheduledExecution se
+            WHERE se.id IN (:seIds)
+            AND e.dateStarted > :now
+            AND e.dateCompleted IS NULL
+        '''
+        Execution.withSession { session ->
+            def query = session.createQuery(hql)
+            query.setParameterList('seIds', se*.id)
+            query.setParameter('now', now)
+            query.list()
         }?.collect{ row ->
             if(row && row[0]){
                 item[row[0]] = new Date(row[1]?.getTime())
@@ -5133,8 +5219,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def refsuccesscount = referencedExecutionDataProvider.countByJobUuidAndStatus(scheduledExecution.uuid, 'succeeded')
         def execCount = Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution)
         def refexecCount = referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid)
-        def totalCount = execCount + refexecCount
-        double successrate = (totalCount) > 0 ? ((successcount + refsuccesscount) / ((double)totalCount)) : -1d
+        long total1 = execCount
+        long total2 = refexecCount
+        def totalCount = total1 + total2
+        long success1 = successcount
+        long success2 = refsuccesscount
+        long successTotal = success1 + success2
+        double successrate = (totalCount) > 0 ? (successTotal / ((double)totalCount)) : -1d
         JobStats.with(
             successrate,
             totalCount,

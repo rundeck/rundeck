@@ -147,25 +147,25 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         jobList.size() == 1
         ScheduledExecution se = jobList.first().getJob()
         se
-        se.workflow.commands.size() == 1
-        se.workflow.commands.first() instanceOf PluginStep
-        se.workflow.commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        se.getWorkflowData().commands.size() == 1
+        se.getWorkflowData().commands.first() instanceOf PluginStep
+        se.getWorkflowData().commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
 
-        se.workflow.commands.first().configuration == [
+        se.getWorkflowData().commands.first().configuration == [
             adhocFilepath          : 'path/to/file.sh'
         ] + additional
 
         where:
         format | input                       | additional
-        "xml"  | getJobXmlScriptfile(true)   | [expandTokenInScriptFile: 'true', argString: '']
-        "xml"  | getJobXmlScriptfile(false)  | [expandTokenInScriptFile: 'false', argString: '']
-        "xml"  | getJobXmlScriptfile(null)   | [argString: '']
-        "yaml" | getJobYamlScriptfile(true)  | [expandTokenInScriptFile: 'true']
-        "yaml" | getJobYamlScriptfile(false) | [expandTokenInScriptFile: 'false']
-        "yaml" | getJobYamlScriptfile(null)  | [:]
-        "json" | getJobJsonScriptfile(true)  | [expandTokenInScriptFile: 'true']
-        "json" | getJobJsonScriptfile(false) | [expandTokenInScriptFile: 'false']
-        "json" | getJobJsonScriptfile(null)  | [:]
+        "xml"  | getJobXmlScriptfile(true)   | [expandTokenInScriptFile: 'true',interpreterArgsQuoted:'false', argString: '']
+        "xml"  | getJobXmlScriptfile(false)  | [expandTokenInScriptFile: 'false', interpreterArgsQuoted:'false', argString: '']
+        "xml"  | getJobXmlScriptfile(null)   | [expandTokenInScriptFile:'false', interpreterArgsQuoted:'false', argString: '']
+        "yaml" | getJobYamlScriptfile(true)  | [expandTokenInScriptFile: 'true', interpreterArgsQuoted:'false']
+        "yaml" | getJobYamlScriptfile(false) | [expandTokenInScriptFile: 'false', interpreterArgsQuoted:'false']
+        "yaml" | getJobYamlScriptfile(null)  | [expandTokenInScriptFile:'false', interpreterArgsQuoted:'false']
+        "json" | getJobJsonScriptfile(true)  | [expandTokenInScriptFile: 'true', interpreterArgsQuoted:'false']
+        "json" | getJobJsonScriptfile(false) | [expandTokenInScriptFile: 'false', interpreterArgsQuoted:'false']
+        "json" | getJobJsonScriptfile(null)  | [expandTokenInScriptFile:'false', interpreterArgsQuoted:'false']
     }
     def "test decode script URL step with/without expandTokenInScriptFile field"() {
         when:
@@ -175,25 +175,25 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
         jobList.size() == 1
         ScheduledExecution se = jobList.first().getJob()
         se
-        se.workflow.commands.size() == 1
-        se.workflow.commands.first() instanceOf PluginStep
-        se.workflow.commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
+        se.getWorkflowData().commands.size() == 1
+        se.getWorkflowData().commands.first() instanceOf PluginStep
+        se.getWorkflowData().commands.first().type == ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE
 
-        se.workflow.commands.first().configuration == [
+        se.getWorkflowData().commands.first().configuration == [
             adhocFilepath          : 'http://example.com'
         ] + additional
 
         where:
         format | input                                            | additional
-        "xml"  | getJobXmlScriptURL('http://example.com', true)   | [expandTokenInScriptFile: 'true', argString: '']
-        "xml"  | getJobXmlScriptURL('http://example.com', false)  | [expandTokenInScriptFile: 'false', argString: '']
-        "xml"  | getJobXmlScriptURL('http://example.com', null)   | [argString: '']
-        "yaml" | getJobYamlScriptURL('http://example.com', true)  | [expandTokenInScriptFile: 'true']
-        "yaml" | getJobYamlScriptURL('http://example.com', false) | [expandTokenInScriptFile: 'false']
-        "yaml" | getJobYamlScriptURL('http://example.com', null)  | [:]
-        "json" | getJobJsonScriptURL('http://example.com', true)  | [expandTokenInScriptFile: 'true']
-        "json" | getJobJsonScriptURL('http://example.com', false) | [expandTokenInScriptFile: 'false']
-        "json" | getJobJsonScriptURL('http://example.com', null)  | [:]
+        "xml"  | getJobXmlScriptURL('http://example.com', true)   | [expandTokenInScriptFile: 'true', argString: '', interpreterArgsQuoted: 'false']
+        "xml"  | getJobXmlScriptURL('http://example.com', false)  | [expandTokenInScriptFile: 'false', argString: '', interpreterArgsQuoted: 'false']
+        "xml"  | getJobXmlScriptURL('http://example.com', null)   | [argString: '', interpreterArgsQuoted: 'false', expandTokenInScriptFile:'false']
+        "yaml" | getJobYamlScriptURL('http://example.com', true)  | [expandTokenInScriptFile: 'true', interpreterArgsQuoted: 'false']
+        "yaml" | getJobYamlScriptURL('http://example.com', false) | [interpreterArgsQuoted: 'false', expandTokenInScriptFile:'false']
+        "yaml" | getJobYamlScriptURL('http://example.com', null)  | [expandTokenInScriptFile: 'false', interpreterArgsQuoted: 'false']
+        "json" | getJobJsonScriptURL('http://example.com', true)  | [expandTokenInScriptFile: 'true', interpreterArgsQuoted: 'false']
+        "json" | getJobJsonScriptURL('http://example.com', false) | [expandTokenInScriptFile: 'false', interpreterArgsQuoted: 'false']
+        "json" | getJobJsonScriptURL('http://example.com', null)  | [interpreterArgsQuoted: 'false', expandTokenInScriptFile:'false']
     }
 
     def "test decode command step"() {
@@ -205,11 +205,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ExecCommand.EXEC_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ExecCommand.EXEC_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocRemoteString: 'some command',
             ]
 
@@ -229,11 +229,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocLocalString: 'some script',
             ] + (emptyargs ? [argString: ''] : [:])
 
@@ -252,11 +252,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocLocalString: 'some script',
                 argString: "oi",
                 fileExtension: "sh",
@@ -280,11 +280,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocLocalString: script,
             ] + (emptyargs ? [argString: ''] : [:])
 
@@ -322,11 +322,11 @@ class RundeckJobDefinitionManagerSpec extends Specification implements DataTest 
             jobList.size() == 1
             ScheduledExecution se = jobList.first().getJob()
             se
-            se.workflow.commands.size() == 1
-            se.workflow.commands.first() instanceOf PluginStep
-            se.workflow.commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
+            se.getWorkflowData().commands.size() == 1
+            se.getWorkflowData().commands.first() instanceOf PluginStep
+            se.getWorkflowData().commands.first().type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
-            se.workflow.commands.first().configuration == [
+            se.getWorkflowData().commands.first().configuration == [
                 adhocLocalString: script,
             ]
 

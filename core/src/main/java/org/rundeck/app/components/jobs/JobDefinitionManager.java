@@ -105,7 +105,7 @@ public interface JobDefinitionManager<J> {
      * @param options options
      * @param list    job list
      */
-    void exportImportedAs(String format, List<ImportedJob<J>> list, JobFormat.Options options, Writer writer);
+    void exportImportedAs(String format, List<ImportedJob<J>> list, JobFormat.Options options, Writer writer)  throws JobDefinitionException;
 
     /**
      * Serialize imported list as format
@@ -121,7 +121,7 @@ public interface JobDefinitionManager<J> {
      * @param format format
      * @param list   job list
      */
-    void exportAs(String format, List<J> list, JobFormat.Options options, Writer writer);
+    void exportAs(String format, List<J> list, JobFormat.Options options, Writer writer) throws JobDefinitionException;
 
     /**
      * Serialize imported list as format

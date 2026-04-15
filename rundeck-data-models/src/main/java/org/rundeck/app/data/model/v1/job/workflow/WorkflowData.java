@@ -164,4 +164,8 @@ public interface WorkflowData {
         }
         return true;
     }
+
+    default boolean hasConditionalSteps(){
+        return getSteps() != null && getSteps().stream().anyMatch(WorkflowStepData::isConditional);
+    }
 }

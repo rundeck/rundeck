@@ -168,13 +168,23 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
         if (null != script.getCommand()) {
             //execute the command
             boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
+            // Default true: quoting enabled (secure). Set to false to disable (not recommended).
+            String execQuotingEnabledProp = context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.exec.quoting.enabled");
+            boolean execQuotingEnabled = (execQuotingEnabledProp == null || execQuotingEnabledProp.isEmpty())
+                    ? true
+                    : Boolean.parseBoolean(execQuotingEnabledProp);
+
+            String[] command = script.getCommand();
+            ExecArgList.Builder builder = ExecArgList.builder();
+            for (String arg : command) {
+                // Quote all arguments when quoting is enabled (default). Protects against command injection in option values.
+                boolean shouldQuote = execQuotingEnabled;
+                builder.arg(arg, shouldQuote, featureQuotingBackwardCompatible);
+            }
+            
             return executionService.executeCommand(
                     context,
-                    ExecArgList.fromStrings(
-                            featureQuotingBackwardCompatible,
-                            DataContextUtils.stringContainsPropertyReferencePredicate,
-                            script.getCommand()
-                    ),
+                    builder.build(),
                     node
             );
         } else if (null != script.getScript()) {

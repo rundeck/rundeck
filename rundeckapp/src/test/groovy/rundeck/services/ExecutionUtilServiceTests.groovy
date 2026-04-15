@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
@@ -48,7 +48,15 @@ import static org.junit.Assert.*
  */
 class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest<ExecutionUtilService>, DataTest, GrailsWebUnitTest{
 
-    def setupSpec() { mockDomains Execution, CommandExec, JobExec, Workflow, PluginStep, ScheduledExecution }
+    def setupSpec() {
+        mockDomains Execution, CommandExec, JobExec, Workflow, PluginStep, ScheduledExecution
+    }
+
+    def setup() {
+        service.featureService = Mock(FeatureService){
+            featurePresent(_) >> false
+        }
+    }
 
 
     void "itemForWFCmdItem command step basics"(){

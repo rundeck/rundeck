@@ -21,6 +21,8 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.app.data.workflow.WorkflowStepDataImpl
+import org.rundeck.app.data.workflow.ConditionalStep
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.core.execution.ExecCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import org.rundeck.core.execution.ScriptCommand
@@ -39,7 +41,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.PluginService
 import rundeck.services.StorageService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 class WorkflowController extends ControllerBase {
     def frameworkService
@@ -123,7 +125,7 @@ class WorkflowController extends ControllerBase {
         def newitemDescription
         def dynamicProperties
         AuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(request.subject)
-        if(item && item.instanceOf(PluginStep)){
+        if(item && item.instanceOf(PluginStep) ){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
             dynamicProperties = getDynamicProperties(params.project,
@@ -245,8 +247,10 @@ class WorkflowController extends ControllerBase {
             config = params.pluginConfig
             validation = _validateLogFilter(config, filtertype)
         } else if (params.editconfig) {
-            if(request.JSON){
-                config=request.JSON.pluginConfig
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def jsonBody = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+            if(jsonBody){
+                config=jsonBody.pluginConfig
             }else{
                 config = params.pluginConfig
             }
@@ -466,7 +470,7 @@ class WorkflowController extends ControllerBase {
                 return renderErrorFragment("num parameter is invalid: ${numi} no error handler")
             }
         }
-        def itemDescription = item.instanceOf(PluginStep)?getPluginStepDescription(item.nodeStep, item.type):null
+        def itemDescription = (item.instanceOf(PluginStep) || item.instanceOf(ConditionalStep))?getPluginStepDescription(item.nodeStep, item.type):null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum:numi, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, isErrorHandler: isErrorHandler, itemDescription: itemDescription])
     }
 
@@ -515,7 +519,7 @@ class WorkflowController extends ControllerBase {
 
             def itemDescription
             def dynamicProperties
-            if(item && item.instanceOf(PluginStep)){
+            if(item && (item.instanceOf(PluginStep))){
                 itemDescription = getPluginStepDescription(item.nodeStep, item.type)
                 dynamicProperties = getDynamicProperties(params.project,
                         item.type,
@@ -553,7 +557,7 @@ class WorkflowController extends ControllerBase {
         if(isErrorHandler){
             item=item.errorHandler
         }
-        def itemDescription = item.instanceOf(PluginStep) ? getPluginStepDescription(item.nodeStep, item.type) : null
+        def itemDescription = (item.instanceOf(PluginStep) || item.instanceOf(ConditionalStep)) ? getPluginStepDescription(item.nodeStep, item.type) : null
         return render(template: "/execution/wflistitemContent", model: [workflow: editwf, item: item, i: params.key, stepNum: numi, scheduledExecutionId: params.scheduledExecutionId, edit: true,isErrorHandler: isErrorHandler,itemDescription: itemDescription])
         }.invalidToken {
             response.status=HttpServletResponse.SC_BAD_REQUEST
@@ -875,9 +879,6 @@ class WorkflowController extends ControllerBase {
         } else if (input.action == 'remove') {
             def numi = input.num
             def item = editwf.commands.remove(numi)
-            if (editwf.commands.size() < 1) {
-                editwf.commands = new ArrayList()
-            }
 
             result['undo'] = [action: 'insert', num: numi, params: item.properties]
         } else if (input.action == 'insert') {
@@ -1304,6 +1305,51 @@ class WorkflowController extends ControllerBase {
             )
         } else {
             return [valid: true]
+        }
+    }
+
+    static Map _validateConditionalStep(FrameworkService frameworkService, WorkflowStepData conditinalStep){
+        Map validationResult = [valid: true]
+        if (conditinalStep instanceof ConditionalStep) {
+            ConditionalStep item = conditinalStep as ConditionalStep
+            item.getSubSteps().each { WorkflowStepData subStep ->
+                if(conditinalStep.nodeStep!=subStep.nodeStep){
+                    validationResult = [valid: false, report: "Conditional step substeps must all be ${subStep.nodeStep ? 'node steps' : 'workflow steps'} as the conditional step"]
+                    return
+                }
+
+                PluginStep step
+                if (subStep instanceof PluginStep) {
+                    step = subStep as PluginStep
+                    //set configuration based on parsed props
+                    def description = WorkflowController.getPluginStepDescription(frameworkService, item.nodeStep, subStep.getPluginType())
+                    if (!description) {
+                        validationResult = [valid: false, report: "Substep ${item.nodeStep ? "Node Step" : "Workflow Step"} Plugin not found: " + subStep.getPluginType()]
+                        return
+                    }
+                    def validation = _validatePluginStep(frameworkService, subStep)
+                    if (!validation.valid) {
+                        validationResult = [valid: false, report: "Conditional substep plugin configuration was not valid: ${validation.report}", item: subStep, report: validation.report]
+                        return
+                    }
+
+                    step.configuration=validation.props
+
+                    validationResult = frameworkService.validateDescription(
+                            description,
+                            '',
+                            step.configuration,
+                            null,
+                            PropertyScope.Instance,
+                            PropertyScope.Project
+                    )
+                }
+            }
+
+            return validationResult
+
+        } else {
+            return validationResult
         }
     }
     /**

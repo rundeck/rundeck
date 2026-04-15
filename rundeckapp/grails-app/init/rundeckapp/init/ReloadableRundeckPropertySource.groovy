@@ -34,7 +34,9 @@ class ReloadableRundeckPropertySource {
     }
 
     private static void refreshRundeckPropertyFile() {
-        if (!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION).endsWith(".groovy")) {
+        String configLocation = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
+        
+        if (configLocation && !configLocation.endsWith(".groovy")) {
             CoreConfigurationPropertiesLoader rundeckConfigPropertyFileLoader = new DefaultRundeckConfigPropertyLoader()
             ServiceLoader<CoreConfigurationPropertiesLoader> rundeckPropertyLoaders = ServiceLoader.load(
                     CoreConfigurationPropertiesLoader

@@ -137,11 +137,13 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
 
     private volatile StandardPBEByteEncryptor standardPBEByteEncryptor = null;
 
+    public JasyptEncryptionConverterPlugin() {
+    }
+
     private StandardPBEByteEncryptor getEncryptor() {
         if (null == standardPBEByteEncryptor) {
             synchronized (this) {
                 if (null == standardPBEByteEncryptor) {
-                    logger.debug("JasyptEncryptionConverterPlugin begin setup...");
                     EnvironmentPBEConfig config = new EnvironmentPBEConfig();
 
                     addPasswordValue(config, password, passwordEnvVarName, passwordSysPropName, true, "password");
@@ -223,20 +225,18 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     )
     {
         if (notBlank(directValue)) {
-            logger.debug("JasyptEncryptionConverterPlugin use value for " + description);
             config.setPassword(directValue);
         } else if (notBlank(envVarValue)) {
-            logger.debug("JasyptEncryptionConverterPlugin use env var for " + description);
             config.setPasswordEnvName(envVarValue);
         } else if (notBlank(sysPropValue)) {
             config.setPasswordSysPropertyName(sysPropValue);
-            logger.debug("JasyptEncryptionConverterPlugin use sys prop for " + description);
             System.clearProperty(sysPropValue);
         } else if (required) {
             throw new IllegalStateException(
                     description + ", " + description + "EnvVarName, or " + description + "SysPropName is required"
             );
         } else {
+            logger.info("  No value provided, not required");
             return false;
         }
         return true;
@@ -400,11 +400,44 @@ public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
     }
 
     private HasInputStream encrypt(final HasInputStream hasInputStream) {
-        return new EncryptStream(hasInputStream, getEncryptor());
+        try {
+            return new EncryptStream(hasInputStream, getEncryptor());
+        } catch (Exception e) {
+            String errorMsg = "Encryption failed. This usually means the encryption password is not set, " +
+                "BouncyCastle is not available, or the configured algorithm is incompatible. " +
+                "Check rundeck-config.properties for encryption settings: " +
+                "rundeck.storage.converter.1.config.password (for keys) and " +
+                "rundeck.config.storage.converter.1.config.password (for project config).";
+            
+            if (algorithm != null) {
+                errorMsg += " Algorithm: " + algorithm + ".";
+            }
+            if (provider != null) {
+                errorMsg += " Provider: " + provider + ".";
+            }
+            
+            logger.error(errorMsg, e);
+            throw new RuntimeException(errorMsg, e);
+        }
     }
 
     private HasInputStream decrypt(final HasInputStream hasInputStream) {
-        return new DecryptStream(hasInputStream, getEncryptor());
+        try {
+            return new DecryptStream(hasInputStream, getEncryptor());
+        } catch (Exception e) {
+            String errorMsg = "Decryption failed. This usually means the wrong encryption password was provided, " +
+                "or the data was encrypted with a different algorithm/provider.";
+            
+            if (algorithm != null) {
+                errorMsg += " Algorithm: " + algorithm + ".";
+            }
+            if (provider != null) {
+                errorMsg += " Provider: " + provider + ".";
+            }
+            
+            logger.error(errorMsg, e);
+            throw new RuntimeException(errorMsg, e);
+        }
     }
 
 

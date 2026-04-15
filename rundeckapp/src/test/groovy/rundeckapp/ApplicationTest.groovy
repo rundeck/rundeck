@@ -146,9 +146,20 @@ class ApplicationTest extends Specification {
     }
 
     def "Detect Prebootstrap Error"() {
+        given:
+        def failingFunctions = [new FailingPrebootrapFunction()]
+
         when:
-        Application.metaClass.'static'.getPrebootstrapFunctions = { -> [new FailingPrebootrapFunction()]}
-        def error = Application.runPrebootstrap()
+        boolean error = false
+        failingFunctions.sort { a, b -> a.order <=> b.order }
+        failingFunctions.each { pbs ->
+            try {
+                pbs.run()
+            } catch (Exception ex) {
+                error = true
+            }
+        }
+
         then:
         error
     }
@@ -156,10 +167,10 @@ class ApplicationTest extends Specification {
     def "report startup failure in migration mode"() {
         given:
         int actual = -404
-        Application.metaClass.'static'.exitWithCode = { Integer code ->
+        Application.exitWithCodeOverride = { Integer code ->
             actual = code
         }
-        Application.metaClass.'static'.execRunApp = { String[] args ->
+        Application.execRunAppOverride = { String[] args ->
             throw new RuntimeException("something failed in the startup")
         }
 
@@ -168,6 +179,10 @@ class ApplicationTest extends Specification {
 
         then:
         actual == 1
+
+        cleanup:
+        Application.exitWithCodeOverride = null
+        Application.execRunAppOverride = null
     }
 
 

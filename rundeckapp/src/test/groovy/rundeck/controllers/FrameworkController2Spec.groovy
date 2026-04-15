@@ -34,6 +34,8 @@ import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.app.data.workflow.WorkflowDataImpl
+import org.rundeck.core.execution.ExecCommand
 import rundeck.*
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
@@ -50,7 +52,7 @@ import static org.junit.Assert.*
  */
 class FrameworkController2Spec extends Specification implements ControllerUnitTest<FrameworkController>, DataTest {
 
-    def setupSpec() { mockDomains ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project}
+    def setupSpec() { mockDomains ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project, PluginStep}
 
     /**
      * utility method to mock a class
@@ -297,15 +299,15 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         _ * fwk.getDefaultFileCopyService()
         _ * fwk.getNodeExecConfigurationForType(*_)
         _ * fwk.getFileCopyConfigurationForType(*_)
-        (pgFeatureEnabled?1:0)*fwk.listPluginGroupDescriptions()>>[
+        1*fwk.listPluginGroupDescriptions()>>[
             DescriptionBuilder.
                 builder().
                 name('somePlugin').
                 stringProperty('aprop','blah',false,'title','desc').
                 build()
         ]
-            (pgFeatureEnabled?1:0)*fwk.hasPluginGroupConfigurationForType('somePlugin',_)>>true
-            (pgFeatureEnabled?1:0)*fwk.getPluginGroupConfigurationForType('somePlugin',_)>>[
+            1*fwk.hasPluginGroupConfigurationForType('somePlugin',_)>>true
+            1*fwk.getPluginGroupConfigurationForType('somePlugin',_)>>[
                 aprop:'avalue'
             ]
         _ * fwk.loadProjectConfigurableInput(*_)>>[:]
@@ -329,7 +331,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def pluginPFmck = Mock(PasswordFieldsService)
 
         1 * pluginPFmck.reset()
-        (pgFeatureEnabled?1:0) * pluginPFmck.track([[type: 'somePlugin', props: [aprop:'avalue']]], true,_)
+        1 * pluginPFmck.track([[type: 'somePlugin', props: [aprop:'avalue']]], true,_)
         1 * execPFmck.reset()
         1 * execPFmck.track(_, _)
         1 * fcopyPFmck.reset()
@@ -350,9 +352,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectConfigure(*_)>>true
         }
-        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService){
-            1 * featurePresent(Features.PLUGIN_GROUPS) >> pgFeatureEnabled
-        }
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
         when:
         def model = controller.editProject()
 
@@ -360,9 +360,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         assertEquals("plugin", model["prefixKey"])
         assertEquals(model["project"], "edit_test_project")
         assertEquals(1, passwordFieldsService.fields.size())
-        model.pluginGroupConfig == (pgFeatureEnabled?[[type: 'somePlugin', config: [aprop:'avalue']]]:[])
-        where:
-            pgFeatureEnabled<<[true,false]
+        model.pluginGroupConfig == [[type: 'somePlugin', config: [aprop:'avalue']]]
     }
 
 
@@ -1004,7 +1002,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         }
 
         def fwk = Mock(FrameworkService) {
-            1*getFrameworkProject (_)>> proj
+            2*getFrameworkProject (_)>> proj
             1*listDescriptions()>>  [[withPasswordFieldDescription], null, null]
 
             1*getDefaultNodeExecutorService (_)>> "TestPluginsNodeExecutor"
@@ -1013,6 +1011,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             1*getNodeExecConfigurationForType (_,_)
             1*getFileCopyConfigurationForType (_,_)>> [:]
             1*loadProjectConfigurableInput (_,_)>>[:]
+            1*listPluginGroupDescriptions()>>[]
         }
         controller.frameworkService = fwk
 
@@ -1055,6 +1054,134 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             false         | true            | ['domain.project.edit.plugin.missing.message']
             true         | false            | ['domain.project.edit.plugin.missing.message']
             false         | false            | ['domain.project.edit.plugin.missing.message','domain.project.edit.plugin.missing.message']
+    }
+
+    public void testAdhocRetryFailedExecId_withPluginStep(){
+        given:
+        def workflowData = new WorkflowDataImpl()
+        def pluginStep = new PluginStep(
+                type: ExecCommand.EXEC_COMMAND_TYPE,
+                configuration: [adhocRemoteString: 'a remote string from plugin step'],
+                nodeStep: false
+        )
+        workflowData.steps = [pluginStep]
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                failedNodeList: "abc,xyz"
+        )
+        exec.setWorkflowData(workflowData)
+        assertNotNull exec.save()
+        params.retryFailedExecId=exec.id
+
+        def fwkControl = new MockFor(FrameworkService, true)
+
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.projects { return [] }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        controller.frameworkService = fwkControl.proxyInstance()
+
+        def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
+        scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
+        controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
+            1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
+        }
+        when:
+        def result=controller.adhoc(new ExtNodeFilters())
+
+        then:
+        assertNotNull(result.query)
+        assertEquals("name: abc,xyz",result.query.filter)
+        assertNotNull(result.runCommand)
+        assertEquals("a remote string from plugin step",result.runCommand)
+    }
+
+    public void testAdhocFromExecId_nodeDispatch_withPluginStep(){
+        when:
+        def workflowData = new WorkflowDataImpl()
+        def pluginStep = new PluginStep(
+                type: ExecCommand.EXEC_COMMAND_TYPE,
+                configuration: [adhocRemoteString: 'a remote string from plugin step'],
+                nodeStep: false
+        )
+        workflowData.steps = [pluginStep]
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                doNodedispatch: true,
+                nodeIncludeName: "abc",
+                nodeIncludeTags: "xyz"
+        )
+        exec.setWorkflowData(workflowData)
+        assertNotNull exec.save()
+        params.fromExecId=exec.id
+
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.projects { return [] }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        controller.frameworkService = fwkControl.proxyInstance()
+        def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
+        scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
+        controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
+            1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
+        }
+
+        def result=controller.adhoc(new ExtNodeFilters())
+
+        then:
+        assertNotNull(result.query)
+        assertEquals("name: abc tags: xyz",result.query.filter)
+        assertNotNull(result.runCommand)
+        assertEquals("a remote string from plugin step",result.runCommand)
+    }
+
+    public void testAdhocFromExecId_local_withPluginStep(){
+
+        when:
+        def workflowData = new WorkflowDataImpl()
+        def pluginStep = new PluginStep(
+                type: ExecCommand.EXEC_COMMAND_TYPE,
+                configuration: [adhocRemoteString: 'a remote string from plugin step'],
+                nodeStep: false
+        )
+        workflowData.steps = [pluginStep]
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                doNodedispatch: false,
+        )
+        exec.setWorkflowData(workflowData)
+        assertNotNull exec.save()
+        params.fromExecId=exec.id
+
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.getFrameworkNodeName { -> return "monkey1" }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        controller.frameworkService = fwkControl.proxyInstance()
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
+            1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
+        }
+        def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
+        scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
+        controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+        def result=controller.adhoc(new ExtNodeFilters())
+
+        then:
+        assertNotNull(result.query)
+        assertEquals("name: monkey1",result.query.filter)
+        assertNotNull(result.runCommand)
+        assertEquals("a remote string from plugin step",result.runCommand)
     }
 
 

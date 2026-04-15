@@ -190,6 +190,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         pluginConfig(type: 'text')
         workflowJson(type: 'text')
         lastModifiedBy(type: 'string')
+        // Escape SQL reserved words with backticks for H2 compatibility
+        minute column: "`MINUTE`"
+        hour column: "`HOUR`"
+        month column: "`MONTH`"
+        seconds column: "`SECONDS`"
+        year column: "`YEAR`"
 
         DomainIndexHelper.generate(delegate) {
             index 'JOB_IDX_PROJECT', ['project']
@@ -446,8 +452,8 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
             se.options=options
         }
         if(data.sequence){
-            Workflow wf = Workflow.fromMap(data.sequence as Map)
-            se.workflow=wf
+            WorkflowData wf = WorkflowDataImpl.fromMap(data.sequence as Map)
+            se.setWorkflowData(wf)
         }
         if(data.schedule){
             se.scheduled=true
@@ -1330,7 +1336,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         try {
             this.workflow = new Workflow(workflowData)
         } catch (Exception e) {
-            log.warn("Failed to convert WorkflowData to Workflow domain class for ScheduledExecution ${id}, storing only in workflowJson", e)
+            log.debug("Failed to convert WorkflowData to Workflow domain class for ScheduledExecution ${id}, storing only in workflowJson", e)
             this.workflow = null
         }
     }
