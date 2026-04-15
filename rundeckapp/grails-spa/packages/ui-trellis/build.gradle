@@ -50,11 +50,26 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
       'dev:library:build'
 
     args = ['run', npmCommand]
+
+    execOverrides {
+        def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
+        if (token) {
+            it.environment('CLOUDSMITH_NPM_TOKEN', token)
+        }
+    }
 }
 
 /** Takes package.json and sets the version in it */
 def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
     t.dependsOn runNpmBuild
+    // Gradle 8.14 strictness: Since lib/ is in sourceDirs, must declare dependency
+    // even though Java's build/lib/classes and NPM's lib/ are actually different directories
+    if (tasks.findByName('compileJava')) {
+        t.dependsOn compileJava
+    }
+    if (tasks.findByName('jar')) {
+        t.dependsOn jar
+    }
 
     sourceDirs.each {t.inputs.dir it }
     t.inputs.files sourceFiles
@@ -193,10 +208,27 @@ tasks.register('runNpmTest', NpmTask) {
                      'dev:test:unit'
 
     args = ['run', npmCommand]
+
+    execOverrides {
+        def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
+        if (token) {
+            it.environment('CLOUDSMITH_NPM_TOKEN', token)
+        }
+    }
 }
 //check.dependsOn runNpmTest
 
 artifacts {
   lib(file: file(buildDir), name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
   packages(file: file("$projectDir/build/package/rundeck-ui-trellis.tgz"), type: 'file', builtBy: runNpmPack)
+}
+
+// Gradle 8.14 strictness: Handle optional Java plugin tasks if they exist
+// Core applies base plugin which creates jar task, Pro doesn't
+afterEvaluate {
+    if (tasks.findByName('jar')) {
+        tasks.named('jar').configure {
+            dependsOn runNpmBuild
+        }
+    }
 }

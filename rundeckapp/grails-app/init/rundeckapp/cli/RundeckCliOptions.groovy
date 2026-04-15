@@ -31,8 +31,6 @@ class RundeckCliOptions {
 
     String baseDir
     String serverBaseDir
-    String binDir
-    String sbinDir
     String configDir
     String dataDir
     String projectDir

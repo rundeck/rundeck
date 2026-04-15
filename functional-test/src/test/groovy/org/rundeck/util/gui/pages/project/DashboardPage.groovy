@@ -49,7 +49,7 @@ class DashboardPage extends BasePage {
     }
 
     def getCheckReadme() {
-        (el readmeMarkDownBy).getText()
+        waitForElementVisible(readmeMarkDownBy).getText()
     }
 
     WebElement getProjectSummary() {

@@ -40,6 +40,14 @@ management:
         jmx:
             unique-names: true
 
+# Legacy Metrics Configuration (Rundeck 6.0+)
+# Default: OFF (opt-in only) - Will be removed in Rundeck 7.0
+# Customers should migrate to /monitoring/prometheus or /monitoring/metrics
+rundeck:
+    metrics:
+        legacy:
+            enabled: false  # Default OFF - opt-in only
+
 ---
 grails:
     mime:

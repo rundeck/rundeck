@@ -161,7 +161,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     void setupProject(String name, Map config = [:]) {
         try (def getProject = client.doGet("/project/${name}")) {
             if (getProject.code() == 404) {
-                def result = client.post("/projects", config + [name: name])
+                // Grails 7: Project creation API requires name at top-level and config as nested object
+                def projectConfig = [
+                    "name": name,
+                    "config": config + ["project.name": name]
+                ]
+                def result = client.post("/projects", projectConfig)
             } else if (!getProject.successful) {
                 throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
             }
@@ -362,7 +367,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         }
         try (Response getProject = client.doGet("/project/${name}")) {
             if (getProject.code() == 404) {
-                try (def post = client.doPost("/projects", [name: name])) {
+                // Grails 7: Project creation API requires name at top-level and config as nested object
+                def projectConfig = [
+                    "name": name,
+                    "config": ["project.name": name]
+                ]
+                try (def post = client.doPost("/projects", projectConfig)) {
                     if (!post.successful) {
                         throw new RuntimeException("Failed to create project: ${post.body().string()}")
                     }
@@ -532,7 +542,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
      * @param body An object representing the job run request options. Must be serializable to JSON.
      * @return A wrapper containing the final execution and the output of the execution.
      */
-    RunJobOutput runJobGetOutput(String jobId, Object body = null) {
+    RunJobOutput runJobGetOutput(String jobId, Object body = null, Duration waitingTime = WaitingTime.EXCESSIVE) {
         Execution execution
         try (def r = JobUtils.executeJobWithOptions(jobId, client, body)) {
             if (!r.successful) {
@@ -541,7 +551,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
             execution = jsonValue(r.body(), Execution.class)
         }
-        execution = waitForExecutionFinish(execution.id as String, WaitingTime.EXCESSIVE)
+        execution = waitForExecutionFinish(execution.id as String, waitingTime)
         def output=JobUtils.getExecutionOutput(execution.id, client)
         return new RunJobOutput(execution: execution, output: output)
     }
@@ -703,6 +713,41 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
     }
 
     /**
+     * Returns all known system configuration properties as a key-value map by combining
+     * two API endpoints:
+     * <ul>
+     *   <li>{@code /config/metaList} — all known config keys with their default values</li>
+     *   <li>{@code /config/list} — values explicitly stored in the database (overrides)</li>
+     * </ul>
+     * The DB-stored values take precedence over defaults.
+     * Requires Rundeck Enterprise and admin API access.
+     *
+     * @return ordered map of config key to its effective value ({@code null} when no value
+     *         or default is defined; {@code "*****"} for encrypted fields)
+     */
+    Map<String, String> getSystemConfigProperties() {
+        List<Map> metadata = get("/config/metaList", List)
+        Map<String, String> result = new LinkedHashMap<>()
+        metadata.each { Map entry ->
+            def key = entry?.get('key')
+            if (key != null) {
+                def v = entry.get('defaultValue')
+                result[key.toString()] = (v != null && v.toString() != '') ? v.toString() : null
+            }
+        }
+
+        List<Map> stored = get("/config/list", List)
+        stored.each { Map entry ->
+            def name = entry?.get('name')
+            if (name != null) {
+                def v = entry.get('value')
+                result[name.toString()] = v != null ? v.toString() : null
+            }
+        }
+        return result
+    }
+
+    /**
      * Maps successful  responses to the specified type.
      * Successful responses are the ones that fall into the [200..300) range.
      *  Unsuccessful responses are passed to the unsuccessfulResponseHandler.
@@ -735,10 +780,12 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
         def checkIsRundeckApiResponding = {
             //use httpClient directly to invoke a non-api path
+            // Use /monitoring/health/readiness instead of /actuator/health/readiness
+            // Spring Boot Actuator web endpoints are disabled, MonitoringController provides the endpoint
             try (def response =
                 client.httpClient.newCall(
                     new Request.Builder().
-                        url("${client.baseUrl}/actuator/health/readiness").
+                        url("${client.baseUrl}/monitoring/health/readiness").
                         header('Accept', 'application/json').
                         get().
                         build()

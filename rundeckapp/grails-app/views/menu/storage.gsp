@@ -26,17 +26,12 @@ implied. - See the License for the specific language governing permissions and -
                 downloadenabled: downloadenabled
 
         ]"/>
-        <feature:disabled name="vueKeyStorage">
-            <asset:javascript src="menu/storage.js"/>
-        </feature:disabled>
-        <feature:enabled name="vueKeyStorage">
-            <asset:javascript src="static/pages/storage.js" defer="defer"/>
-            <g:javascript>
-                window._rundeck = Object.assign(window._rundeck || {}, {
-                    data: { }
-                });
-            </g:javascript>
-        </feature:enabled>
+        <asset:javascript src="static/pages/storage.js" defer="defer"/>
+        <g:javascript>
+            window._rundeck = Object.assign(window._rundeck || {}, {
+                data: { }
+            });
+        </g:javascript>
       </head>
 
     <feature:disabled name="vueKeyStorage">

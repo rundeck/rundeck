@@ -100,7 +100,7 @@
     </div>
     <g:if test="${enableCleanHistory}">
         <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> <g:message code="project.execution.cleanup.default.enabled" default="Execution cleanup is enabled by default for new projects"/>
+            <i class="fas fa-info-circle"></i> <g:message code="project.execution.cleanup.default.enabled" default="Execution cleanup is now enabled for this project"/>
         </div>
     </g:if>
   </div>

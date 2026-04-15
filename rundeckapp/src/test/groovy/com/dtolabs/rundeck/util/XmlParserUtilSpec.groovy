@@ -15,6 +15,8 @@
  */
 
 package com.dtolabs.rundeck.util
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import spock.lang.Specification
 import spock.lang.Unroll

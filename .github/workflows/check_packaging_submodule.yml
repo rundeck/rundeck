@@ -1,0 +1,26 @@
+name: Check Packaging Submodule Branch
+
+on: [pull_request]
+
+jobs:
+  check-submodule:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Check gitmodules packaging branch name should match target
+        run: |
+          pkgbranch=$(git config -f .gitmodules --get submodule.packaging/packaging.branch)
+          
+          if [[ "$GITHUB_BASE_REF" == "main" ]] && [[ "$pkgbranch" != "main" ]] ; then
+            echo "Merge to main requires packaging submodule is also main"
+            echo "Submodule for Packaging must be '$GITHUB_BASE_REF' before merging, but saw: $pkgbranch"
+            exit 2
+          elif [[ "$GITHUB_BASE_REF" =~ ^release/ ]]  && [[ "$pkgbranch" != "$GITHUB_BASE_REF" ]] ; then
+            echo "Merge to a release branch requires packaging submodule matches"
+            echo "Submodule for Packaging must be '$GITHUB_BASE_REF' before merging, but saw: $pkgbranch"
+            exit 2
+          fi

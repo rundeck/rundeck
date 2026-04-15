@@ -17,7 +17,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 import testhelper.TestDomainFactory
 
-import javax.persistence.EntityNotFoundException
+import jakarta.persistence.EntityNotFoundException
 
 class GormExecReportDataProviderSpec extends Specification implements DataTest {
     GormExecReportDataProvider provider = new GormExecReportDataProvider()

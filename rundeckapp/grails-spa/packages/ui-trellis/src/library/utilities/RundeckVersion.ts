@@ -197,6 +197,40 @@ export class RundeckVersion {
     "Wycheproof",
   ];
 
+  /** Rundeck 6.x release codenames (constellations) */
+  static names6 = [
+    "Andromeda",
+    "Aquila",
+    "Auriga",
+    "Carina",
+    "Cassiopeia",
+    "Centaurus",
+    "Columba",
+    "Cygnus",
+    "Delphinus",
+    "Draco",
+    "Eridanus",
+    "Fornax",
+    "Hercules",
+    "Hydrus",
+    "Indus",
+    "Lacerta",
+    "Lupus",
+    "Lyra",
+    "Monoceros",
+    "Octans",
+    "Ophiuchus",
+    "Orion",
+    "Pavo",
+    "Pegasus",
+    "Perseus",
+    "Phoenix",
+    "Pyxis",
+    "Sagittarius",
+    "Vela",
+    "Volans",
+  ];
+
   splitVersion(versionString: string): { [p: string]: any } {
     const partsa = String(versionString).split(" ");
     const version = partsa.length > 1 ? partsa[0] : versionString;
@@ -290,8 +324,13 @@ export class RundeckVersion {
     return this.inList(RundeckVersion.csscolors, val);
   }
 
+  private static nameListForMajor(major: number) {
+    return major >= 6 ? RundeckVersion.names6 : RundeckVersion.names5;
+  }
+
   nameForVersion(val: number) {
-    return this.inList(RundeckVersion.names5, val);
+    const major = this.versionData.major as number;
+    return this.inList(RundeckVersion.nameListForMajor(major), val);
   }
   nameForVersion4(val: number) {
     return this.inList(RundeckVersion.names4, val);

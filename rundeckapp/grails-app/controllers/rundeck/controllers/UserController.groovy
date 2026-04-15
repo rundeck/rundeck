@@ -52,7 +52,7 @@ import rundeck.data.paging.RdPageable
 import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.UserService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 @Controller
 class UserController extends ControllerBase{
@@ -281,23 +281,26 @@ Since: v21''',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                examples = @ExampleObject('''{
+                examples = [
+                    @ExampleObject(
+                        name='update-user-profile-example',
+                        description='Update user profile information',
+                        value='''{
     "firstName":"Name",
     "lastName":"LastName",
     "email":"user@server.com"
-}''')
+}'''
+                    )
+                ]
             )
-        ),
-        responses=[
-            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='200',description = 'User Profile Data',
-                content=@Content(
-                        mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
-                )
-            )
-        ]
-
+        )
+    )
+    @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='200',description = 'User Profile Data',
+        content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+        )
     )
     protected def apiOtherUserDataPost_docs(){}
 
@@ -314,23 +317,26 @@ Since: v21''',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                examples = @ExampleObject('''{
+                examples = [
+                    @ExampleObject(
+                        name='modify-own-profile-example',
+                        description='Modify current user profile',
+                        value='''{
     "firstName":"Name",
     "lastName":"LastName",
     "email":"user@server.com"
-}''')
-            )
-        ),
-        responses=[
-            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='200',description = 'User Profile Data',
-                    content=@Content(
-                            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+}'''
                     )
+                ]
             )
-        ]
-
+        )
+    )
+    @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='200',description = 'User Profile Data',
+            content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+            )
     )
     protected def apiUserDataPost_docs(){}
 
@@ -341,23 +347,26 @@ Since: v21''',
         description='''Get the user profile data for current user.
 
 Since: v21''',
-        tags = ['User'],
-        responses=[
-            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='200',description = 'User Profile Data',
-                content=@Content(
-                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
-                    examples = @ExampleObject('''{
+        tags = ['User']
+    )
+    @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='200',description = 'User Profile Data',
+        content=@Content(
+            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object'),
+            examples = [
+                @ExampleObject(
+                    name = 'user-profile',
+                    description = 'User profile data',
+                    value = '''{
   "login": "username",
   "firstName": "first name",
   "lastName": "last name",
   "email": "email@domain"
-}''')
+}'''
                 )
-            )
-        ]
-
+            ]
+        )
     )
     protected def apiUserData_docs(){}
 
@@ -379,16 +388,14 @@ Since: v21''',
                 description = 'Username, for a different user',
                 schema = @Schema(type = 'string')
             )
-        ],
-        responses=[
-            @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse))),
-            @ApiResponse(responseCode='200',description = 'User Profile Data',
-                    content=@Content(
-                            mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
-                    )
-            )
         ]
+    )
+    @ApiResponse(responseCode='403',description = 'Unauthorized',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='404',description = 'Not found',content=@Content(mediaType=MediaType.APPLICATION_JSON,schema=@Schema(implementation = ApiErrorResponse)))
+    @ApiResponse(responseCode='200',description = 'User Profile Data',
+            content=@Content(
+                    mediaType=MediaType.APPLICATION_JSON,schema=@Schema(type='object')
+            )
     )
     def apiUserData(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {
@@ -471,27 +478,31 @@ Since: v21''',
         }
     }
 
-    @Get(uri='/user/roles')
+    @Get(uri='/user/roles', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'List Authorized Roles',
         description = '''Get a list of the authenticated user's roles.
 
 Since: v30''',
-        tags = ['User'],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = '''Success response, with a list of roles.''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(type = 'object'),
-                    examples = @ExampleObject('''{
+        tags = ['User']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Success response, with a list of roles.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = [
+                @ExampleObject(
+                    name = 'roles-list',
+                    description = 'User roles list',
+                    value = '''{
     "roles":["admin","user"]
-}''')
+}'''
                 )
-            )
-        ]
+            ]
+        )
     )
     def apiListRoles() {
         if (!apiService.requireVersion(request, response, ApiVersions.V30)) {
@@ -520,7 +531,7 @@ Since: v30''',
         }
     }
 
-    @Get(uri='/user/list')
+    @Get(uri='/user/list', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'List users',
@@ -529,11 +540,11 @@ Since: v30''',
 Authorization required: `app_admin` for `system` resource
 
 Since: v21''',
-        tags = ['User'],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = '''Success Response, with a list of users.
+        tags = ['User']
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Success Response, with a list of users.
 
 For APIv27+, the results will contain additional fields:
 * `created` creation date
@@ -543,10 +554,14 @@ For APIv27+, the results will contain additional fields:
 For APIv53+, the results will also include: 
 * `lastLogin` last login time
 ''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    array = @ArraySchema(schema = @Schema(type = 'object')),
-                    examples = @ExampleObject('''[{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(type = 'object')),
+            examples = [
+                @ExampleObject(
+                    name = 'users-list',
+                    description = 'List of users with details',
+                    value = '''[{
     "login":"user",
     "firstName":"Name",
     "lastName":"LastName",
@@ -567,10 +582,10 @@ For APIv53+, the results will also include:
     "last_login": "2024-03-01T17:00:00Z",
     "lastJob": "2018-08-28T13:31:00Z",
     "tokens": 6
-}]''')
+}]'''
                 )
-            )
-        ]
+            ]
+        )
     )
     def apiUserList(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {

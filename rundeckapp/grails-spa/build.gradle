@@ -58,6 +58,10 @@ tasks.register("runNpmBuild", NpmTask) {
 
     execOverrides {
       it.workingDir = './packages/ui-trellis/src/app'
+      def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
+      if (token) {
+          it.environment('CLOUDSMITH_NPM_TOKEN', token)
+      }
     }
 }
 

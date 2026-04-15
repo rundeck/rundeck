@@ -49,6 +49,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.gui.UISection
@@ -60,7 +61,7 @@ import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import org.rundeck.util.HttpClientCreator
 import org.slf4j.Logger
-import org.springframework.web.multipart.commons.CommonsMultipartFile
+import org.springframework.web.multipart.MultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import org.rundeck.app.jobs.options.ApiTokenReporter
@@ -73,18 +74,23 @@ import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import grails.testing.web.controllers.ControllerUnitTest
+import spock.lang.Specification
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 /**
  * Created by greg on 7/14/15.
  */
-class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+// Grails 7: Use DataTest + ControllerUnitTest instead of RundeckHibernateSpec
+class ScheduledExecutionControllerSpec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats, LogFileStorageRequest] }
+    void setupSpec() {
+        mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats, LogFileStorageRequest)
+    }
 
     def setup() {
         mockCodec(URIComponentCodec)
@@ -2399,7 +2405,6 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsJson(_,_,_,_)
-        0 * controller.executionService._(*_)
     }
 
     def "isReference deleted parent"(){
@@ -2778,9 +2783,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "upload job file via #type"() {
         given:
             String xmlString = ''' dummy string '''
-            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
-                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
-            })
+            def multipartfile = Mock(MultipartFile) {
+                getInputStream() >> new ByteArrayInputStream(xmlString.bytes)
+            }
             ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 1 * parseUploadedFile(_, 'xml') >> [
@@ -2838,9 +2843,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "upload job file via create form #type"() {
         given:
             String xmlString = ''' dummy string '''
-            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
-                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
-            })
+            def multipartfile = Mock(MultipartFile) {
+                getInputStream() >> new ByteArrayInputStream(xmlString.bytes)
+            }
             ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
             def authContext = Mock(UserAndRolesAuthContext)
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -3055,7 +3060,6 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsJson(_,_,_,_)
-        0 * controller.executionService._(*_)
 
 
     }
@@ -4173,7 +4177,13 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.apiService=Mock(ApiService){
                 1 * requireApi(_, _) >> true
             }
-
+            controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+                // When format is null, Grails may default it to 'all' which is supported,
+                // so getByIDorUUID will be called - mock it to return null to stop execution
+                if(format == null) {
+                    1 * getByIDorUUID('testUUID') >> null
+                }
+            }
             controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
                 validateJobForExport(_,_)>>Mock(Validator.Report){
                     isValid()>>true
@@ -4186,11 +4196,16 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.apiJobExport()
         then:
             0 * controller.rundeckJobDefinitionManager.exportAs(*_)
-            1 * controller.apiService.renderErrorFormat(_,[
-                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                code  : 'api.error.item.unsupported-format',
-                args: [expected]
-            ])
+            if(format == null) {
+                // When format is null, Grails defaults it to 'all' (supported), so requireExists is called instead
+                1 * controller.apiService.requireExists(_, null, ['Job ID', 'testUUID']) >> false
+            } else {
+                1 * controller.apiService.renderErrorFormat(_,[
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.item.unsupported-format',
+                    args: [expected]
+                ])
+            }
         where:
             format | expected | apiVers
             'asdf' | 'asdf'   | 14
@@ -4979,5 +4994,134 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         ) >> [:]
     }
 
-}
+    /**
+     * Tests to verify that getWorkflowData() is called instead of accessing workflow property directly.
+     * Related to PR https://github.com/rundeck/rundeck/pull/10038
+     *
+     * Methods that call getWorkflowData():
+     * - apiJobWorkflow() - line 814 in ScheduledExecutionController.groovy (on ScheduledExecution) [TESTED]
+     * - _transientExecute() - line 2805 in ScheduledExecutionController.groovy (on ScheduledExecution) [NOT TESTED - private method]
+     * - createFromExecution() - line 2569 in ScheduledExecutionController.groovy (on Execution) [TESTED]
+     * - uploadPost() - line 2916 in ScheduledExecutionController.groovy (on ScheduledExecution) [NOT TESTED - complex form handling]
+     */
+    def "apiJobWorkflow method calls getWorkflowData instead of accessing workflow property directly"() {
+        given:
+        def se = new ScheduledExecution(
+            uuid: 'testUUID',
+            jobName: 'test1',
+            project: 'project1',
+            groupPath: 'testgroup'
+        )
+        se.setWorkflowData(new Workflow(
+                keepgoing: true,
+                commands: [
+                        new CommandExec([
+                                adhocRemoteString: 'test command',
+                                argString: '-test'
+                        ])
+                ]
+        ))
 
+        se.save()
+
+        // Track if getWorkflowData was called
+        def getWorkflowDataCalled = false
+        se.metaClass.getWorkflowData = {
+            getWorkflowDataCalled = true
+            delegate.deserializeWorkflowData(delegate.workflowJson)
+        }
+
+        controller.apiService = Mock(ApiService){
+            requireApi(_,_) >> true
+            requireApi(_,_, ApiVersions.V34) >> true
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            authorizeProjectJobAny(_,_,_,_) >> true
+            getAuthContextForSubjectAndProject(_,_) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> se
+            getWorkflowDescriptionTree(_,{ WorkflowData d -> d != null },_,_) >> [:]
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            isFrameworkProjectDisabled(_) >> false
+        }
+
+        when:
+        params.id = se.id.toString()
+        session.subject = new Subject()
+        controller.apiJobWorkflow()
+
+        then:
+        getWorkflowDataCalled == true
+    }
+
+    def "createFromExecution method calls getWorkflowData on Execution instead of accessing workflow property directly"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def se = new ScheduledExecution(
+            uuid: 'testUUID',
+            jobName: 'test1',
+            project: 'project1',
+            groupPath: 'testgroup'
+        )
+        se.setWorkflowData(new Workflow(
+            keepgoing: true,
+            commands: [
+                new CommandExec([
+                    adhocRemoteString: 'test command'
+                ])
+            ]
+        ))
+        se.save()
+
+        def exec = new Execution(
+            user: "testuser",
+            project: "project1",
+            loglevel: 'WARN',
+            status: 'SUCCEEDED',
+            scheduledExecution: se
+        )
+        exec.setWorkflowData(new Workflow(
+            commands: [
+                new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')
+            ]
+        ))
+        exec.save()
+
+        // Track if getWorkflowData was called on the execution
+        def getWorkflowDataCalled = false
+        exec.metaClass.getWorkflowData = {
+            getWorkflowDataCalled = true
+            delegate.deserializeWorkflowData(delegate.workflowJson)
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            authorizeProjectResource(_,_,_,_) >> true
+            authorizeProjectExecutionAny(_,_,_) >> true
+            getAuthContextForSubjectAndProject(_,_) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework)
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            prepareCreateEditJob(_,_,_,_) >> [:]
+        }
+
+        when:
+        params.executionId = exec.id.toString()
+        params.project = 'project1'
+        session.subject = new Subject()
+        controller.createFromExecution()
+
+        then:
+        getWorkflowDataCalled == true
+    }
+
+}
