@@ -32,7 +32,7 @@ environments {
 	test {
 		dataSource {
 			dbCreate = "none"
-			url = "jdbc:h2:file:./db/testDb"
+			url = "jdbc:h2:file:./db/testDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
 		}
 	}
 	production {
