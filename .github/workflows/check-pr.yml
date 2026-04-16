@@ -33,8 +33,9 @@ jobs:
         if: (github.event.action == 'edited' && github.event.changes.title) || contains(fromJSON('["opened", "reopened", "synchronize"]'), github.event.action)
         run: |
           TITLE="${{ github.event.pull_request.title }}"
-          if [[ ! "$TITLE" =~ ^(\[?RUN-[0-9]{3,6}\]?( \[?RUN-[0-9]{3,6}\]?)*):? ]]; then
-            echo "::error::PR title must start with ticket number(s) in format 'RUN-####:' or '[RUN-####]'. Multiple tickets can be separated by space (e.g., 'RUN-2921: Title', '[RUN-2921] Title', or 'RUN-2921 RUN-2922: Title')."
+          # Match either: RUN-###: Title OR [RUN-###] Title (balanced brackets, proper separators)
+          if [[ ! "$TITLE" =~ ^(RUN-[0-9]{3,6}( RUN-[0-9]{3,6})*:\ |\[RUN-[0-9]{3,6}\](\ \[RUN-[0-9]{3,6}\])*\ )[^[:space:]].* ]]; then
+            echo "::error::PR title must start with ticket number(s) followed by a separator and non-empty title. Accepted formats: 'RUN-####: Title' (colon+space required) or '[RUN-####] Title' (space required). Multiple tickets: 'RUN-123 RUN-456: Title' or '[RUN-123] [RUN-456] Title'."
             exit 1
           fi
           echo "::notice::PR title format is valid"
