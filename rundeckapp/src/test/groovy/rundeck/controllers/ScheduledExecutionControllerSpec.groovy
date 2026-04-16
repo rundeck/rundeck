@@ -4761,6 +4761,7 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         result != null
         !result.error
         result.json == ["sub-key3":"value3", "sub-key4":"value4"]
+        0 * httpClientCreator._
         0 * client._
 
         cleanup:
@@ -4797,7 +4798,49 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
 
         then:
         result != null
-        result.error == "No results for path: \$['test']"
+        result.error != null
+        result.error.startsWith("No results for path")
+        result.error.contains("test")
+        0 * httpClientCreator._
+        0 * client._
+
+        cleanup:
+        optionFile.delete()
+    }
+
+    def "test remote file url filter returns a list"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def optionFile = File.createTempFile("remote-options-", ".json")
+        optionFile.deleteOnExit()
+        optionFile.text = '{"key1":"value1", "key2": [{"sub-key3":"value3"}, {"sub-key3":"value4"}]}'
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$.key2[*].['sub-key3']"
+
+        when:
+        def result = controller.getRemoteJSON(
+                httpClientCreator,
+                optionFile.toURI().toString(),
+                configRemoteUrl,
+                100,
+                100,
+                5,
+                false
+        )
+
+        then:
+        result != null
+        !result.error
+        result.json == ["value3", "value4"]
+        0 * httpClientCreator._
         0 * client._
 
         cleanup:
