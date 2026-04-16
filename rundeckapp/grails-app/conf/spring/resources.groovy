@@ -184,7 +184,6 @@ import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeck.services.workflow.DefaultStateExecutionFileProducer
 import rundeck.services.workflow.DefaultWorkflowStateDataLoader
-import rundeckapp.init.AssetPipelineResourceConfigurer
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
@@ -282,7 +281,8 @@ beans={
     }
 
     // Grails 7 / Jetty 12: Explicit resource handler for asset pipeline
-    assetPipelineResourceConfigurer(AssetPipelineResourceConfigurer)
+    // DISABLED: This hardcodes /assets/** which breaks server.servlet.context-path (RUN-4332)
+    // assetPipelineResourceConfigurer(AssetPipelineResourceConfigurer)
 
     def serverLibextDir = application.config.getProperty("rundeck.server.plugins.dir",String.class,"${rdeckBase}/libext")
     File pluginDir = new File(serverLibextDir)
