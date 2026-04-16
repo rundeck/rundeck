@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.rules.Condition;
+import com.dtolabs.rundeck.core.rules.MutableStateObj;
 import com.dtolabs.rundeck.core.rules.StateObj;
 
 import java.util.Set;
@@ -49,5 +50,21 @@ public interface WorkflowStrategyProfile {
             boolean isFirstStep
     );
 
+    /**
+     * Update conditional states for future steps after a step completes.
+     * This method is called after each step execution to evaluate conditionals for all
+     * subsequent steps that have conditional logic, using the updated SharedDataContext.
+     *
+     * @param completedStepNum  the step number that just completed
+     * @param sharedContext     shared data context containing data from all executed steps
+     * @param stateChanges      mutable state object to add conditional evaluation results to
+     */
+    default void updateConditionalStatesAfterStep(
+            int completedStepNum,
+            WFSharedContext sharedContext,
+            MutableStateObj stateChanges
+    ) {
+        // Default: no-op (no conditionals to update)
+    }
 
 }
