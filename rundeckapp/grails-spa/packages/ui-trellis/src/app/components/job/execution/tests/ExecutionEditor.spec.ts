@@ -93,7 +93,8 @@ describe("ExecutionEditor", () => {
     // emitting data from pluginConfig that differs from the original data, to simulate editing behaviour
     const pluginConfigs = wrapper.findAllComponents(PluginConfig);
     pluginConfigs.forEach((pluginComponent) => {
-      const configToEmit = executionLifecycle[pluginComponent.vm.provider];
+      const provider = pluginComponent.vm.provider as keyof typeof executionLifecycle;
+      const configToEmit = executionLifecycle[provider];
       pluginComponent.vm.$emit("update:modelValue", {
         config: configToEmit,
         type: undefined,
@@ -104,10 +105,10 @@ describe("ExecutionEditor", () => {
 
     // as checkboxes were clicked first and then the plugin data updated, update:modelValue is triggered at first with empty objects
     // therefore for will check that the last event emitted has all the plugin data
-    const numberOfEventsEmitted = wrapper.emitted("update:modelValue").length;
+    const numberOfEventsEmitted = wrapper.emitted("update:modelValue")!.length;
 
     expect(
-      wrapper.emitted("update:modelValue")[numberOfEventsEmitted - 1],
+      wrapper.emitted("update:modelValue")![numberOfEventsEmitted - 1],
     ).toEqual([
       expect.objectContaining({
         ExecutionLifecycle: executionLifecycle,

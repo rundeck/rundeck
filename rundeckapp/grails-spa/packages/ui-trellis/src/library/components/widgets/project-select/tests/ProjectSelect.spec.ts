@@ -70,7 +70,7 @@ describe("ProjectSelect.vue", () => {
     };
   });
   afterAll(() => {
-    delete window._rundeck;
+    Reflect.deleteProperty(window, '_rundeck');
   });
   afterEach(() => {
     jest.clearAllMocks();
@@ -106,7 +106,7 @@ describe("ProjectSelect.vue", () => {
     await flushPromises();
     const emittedEvents = wrapper.emitted("update:selection");
     expect(emittedEvents).toBeTruthy();
-    expect(emittedEvents[0]).toEqual([["Project A"]]);
+    expect(emittedEvents![0]).toEqual([["Project A"]]);
   });
   it("navigates correctly when clicking 'View All' and 'Click Project' button", async () => {
     const wrapper = await createWrapper();

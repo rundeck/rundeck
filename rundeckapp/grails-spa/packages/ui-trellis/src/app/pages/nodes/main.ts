@@ -21,7 +21,7 @@ const FilterInputComp = defineComponent({
       queryFieldPlaceholderText: this.itemData["queryFieldPlaceholderText"],
       koFieldName: this.itemData["koFieldName"],
       koParam: this.itemData["koParam"],
-      subs: [],
+      subs: [] as Array<{ dispose(): void }>,
     };
   },
   computed: {
@@ -39,8 +39,6 @@ const FilterInputComp = defineComponent({
     },
   },
   beforeUnmount() {
-    //note: this removes subscriptions from knockout observable
-    //@ts-ignore
     this.subs.forEach((s) => s.dispose());
   },
   mounted() {
@@ -159,11 +157,11 @@ function init() {
           methods: {
             updateNodeFilter(val: any) {
               const filterName = val && val.filter ? val.filter : val;
-              if (filterName === ".*" || this.nodeFilterStore.filter === ".*") {
+              if (filterName === ".*" || this.nodeFilterStore.selectedFilter === ".*") {
                 this.nodeFilterStore.setSelectedFilter(filterName);
               } else {
                 this.nodeFilterStore.setSelectedFilter(
-                  [this.nodeFilterStore.filter, filterName].join(" "),
+                  [this.nodeFilterStore.selectedFilter, filterName].join(" "),
                 );
               }
             },
