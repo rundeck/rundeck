@@ -39,8 +39,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
  */
 @Slf4j
 @CompileStatic
-@Configuration
-@Order(Ordered.HIGHEST_PRECEDENCE)
+// @Configuration - DISABLED for RUN-4332: hardcodes /assets/** which breaks server.servlet.context-path
+// @Order(Ordered.HIGHEST_PRECEDENCE)
 class AssetPipelineResourceConfigurer implements WebMvcConfigurer {
 
     @PostConstruct

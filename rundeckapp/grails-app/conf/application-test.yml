@@ -7,8 +7,7 @@ server:
 
 grails:
     assets:
-        url: /assets/  # Match production config - trailing slash required
-        mapping: /assets/**  # URL pattern for asset serving
+        # url and mapping removed - let Grails derive from context-path (RUN-4332)
 
 spring:
     liquibase:
