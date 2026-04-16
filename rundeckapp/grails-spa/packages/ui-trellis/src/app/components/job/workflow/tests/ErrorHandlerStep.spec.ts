@@ -89,7 +89,7 @@ describe("ErrorHandlerStep", () => {
     await removeButton.trigger("click");
 
     expect(wrapper.emitted("removeHandler")).toBeTruthy();
-    expect(wrapper.emitted("removeHandler")[0][0]).toEqual(step);
+    expect(wrapper.emitted("removeHandler")![0][0]).toEqual(step);
   });
 
   it("renders plugin config for non-job-ref error handlers", async () => {

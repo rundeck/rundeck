@@ -93,7 +93,8 @@ describe("CommonUndoRedoDraggableList", () => {
     await draggable.vm.$emit("update", { oldIndex: 0, newIndex: 1 });
 
     await wrapper.vm.$nextTick();
-    expect(wrapper.emitted()["update:modelValue"][0][0]).toEqual(
+    const emitted = wrapper.emitted("update:modelValue");
+    expect(emitted![0][0]).toEqual(
       expectedResult,
     );
   });

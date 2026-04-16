@@ -35,12 +35,13 @@ const meta: Meta<typeof OptionUsagePreview> = {
 export default meta;
 
 type Story = StoryObj<typeof OptionUsagePreview>;
+type OptionUsagePreviewArgs = typeof meta.args;
 
 // TODO: manually wire the props to the component name, so that the source will update correctly in the story
 export const Playground: Story = {
   name: "Playground",
   tags: ["!dev"],
-  render: (args) => ({
+  render: (args: OptionUsagePreviewArgs) => ({
     components: { OptionUsagePreview },
     setup: () => ({ args }),
     template: `<OptionUsagePreview v-bind="args"></OptionUsagePreview>`,
@@ -54,25 +55,25 @@ const generateTemplate = (args: Record<string, any>) => {
 };
 
 export const Default: Story = {
-  render: (args) => ({
-    props: Object.keys(args),
+  render: (args: OptionUsagePreviewArgs) => ({
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {},
   parameters: {},
 };
 export const Secure: Story = {
-  render: (args) => ({
-    props: Object.keys(args),
+  render: (args: OptionUsagePreviewArgs) => ({
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {
@@ -84,13 +85,13 @@ export const Secure: Story = {
 };
 
 export const PlaintextWithPasswordInput: Story = {
-  render: (args) => ({
-    props: Object.keys(args),
+  render: (args: OptionUsagePreviewArgs) => ({
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {
@@ -103,13 +104,13 @@ export const PlaintextWithPasswordInput: Story = {
 };
 
 export const TypeFile: Story = {
-  render: (args) => ({
-    props: Object.keys(args),
+  render: (args: OptionUsagePreviewArgs) => ({
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {
@@ -121,13 +122,13 @@ export const TypeFile: Story = {
   parameters: {},
 };
 export const TypeMultiline: Story = {
-  render: (args) => ({
-    props: Object.keys(args),
+  render: (args: OptionUsagePreviewArgs) => ({
+    props: Object.keys(args || {}),
     components: { OptionUsagePreview },
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {

@@ -1,4 +1,5 @@
 import { api } from "../../../library/services/api";
+import { AxiosError } from "axios";
 
 export async function saveProjectFile(
   project: string,
@@ -29,7 +30,7 @@ export async function getFileText(project: string, filename: string) {
     }
   } catch (error) {
     // If it's a 404, we need to maintain the warning flag
-    if (error.response && error.response.status === 404) {
+    if ((error as AxiosError).response?.status === 404) {
       throw { success: false, warning: true };
     }
     throw error;
