@@ -181,50 +181,54 @@
             prop.options && prop.options['displayType'] === 'MULTI_LINE'
           "
         >
-          <textarea
-            v-if="!renderReadOnly"
-            :id="`${rkey}prop_` + pindex"
-            v-model="currentValue"
-            :name="`${rkey}prop_` + pindex"
-            rows="10"
-            cols="100"
-            class="form-control input-sm"
-            :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
-          ></textarea>
-          <textarea
-            v-else
-            :id="`${rkey}prop_` + pindex"
-            v-model="currentValue"
-            :name="`${rkey}prop_` + pindex"
-            rows="10"
-            cols="100"
-            class="form-control input-sm"
-            :disabled="true"
-          ></textarea>
+          <div class="plugin-prop-input-container">
+            <textarea
+              v-if="!renderReadOnly"
+              :id="`${rkey}prop_` + pindex"
+              v-model="currentValue"
+              :name="`${rkey}prop_` + pindex"
+              rows="10"
+              cols="100"
+              class="form-control input-sm"
+              :class="contextAutocomplete ? 'context_var_autocomplete' : ''"
+            ></textarea>
+            <textarea
+              v-else
+              :id="`${rkey}prop_` + pindex"
+              v-model="currentValue"
+              :name="`${rkey}prop_` + pindex"
+              rows="10"
+              cols="100"
+              class="form-control input-sm"
+              :disabled="true"
+            ></textarea>
+          </div>
         </template>
         <template
           v-else-if="prop.options && prop.options['displayType'] === 'CODE'"
         >
-          <ui-socket
-            v-model="currentValue"
-            section="plugin-prop-edit-textarea-code"
-            :location="`property:${prop.name}:${prop.options ? prop.options['CUSTOM_PROP_SOCKET_SECTION'] : ''}`"
-          >
-            <ace-editor-vue
-              :id="`${rkey}prop_` + pindex"
+          <div class="plugin-prop-input-container">
+            <ui-socket
               v-model="currentValue"
-              :name="`${rkey}prop_` + pindex"
-              :lang="prop.options['codeSyntaxMode']"
-              :code-syntax-selectable="
-                prop.options['codeSyntaxSelectable'] === 'true' &&
-                !renderReadOnly
-              "
-              height="200"
-              width="100%"
-              :read-only="renderReadOnly"
-              :context-variable-suggestions="scriptTypeContextVariables"
-            />
-          </ui-socket>
+              section="plugin-prop-edit-textarea-code"
+              :location="`property:${prop.name}:${prop.options ? prop.options['CUSTOM_PROP_SOCKET_SECTION'] : ''}`"
+            >
+              <ace-editor-vue
+                :id="`${rkey}prop_` + pindex"
+                v-model="currentValue"
+                :name="`${rkey}prop_` + pindex"
+                :lang="prop.options['codeSyntaxMode']"
+                :code-syntax-selectable="
+                  prop.options['codeSyntaxSelectable'] === 'true' &&
+                  !renderReadOnly
+                "
+                height="200"
+                width="100%"
+                :read-only="renderReadOnly"
+                :context-variable-suggestions="scriptTypeContextVariables"
+              />
+            </ui-socket>
+          </div>
         </template>
         <template
           v-else-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
@@ -682,5 +686,17 @@ export default defineComponent({
 .longlist {
   max-height: 500px;
   overflow-y: auto;
+}
+
+.plugin-prop-input-container {
+  max-width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
+
+  textarea,
+  .ace_editor {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 }
 </style>
