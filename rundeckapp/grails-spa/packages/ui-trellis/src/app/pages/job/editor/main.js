@@ -1,6 +1,6 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import { createApp, defineComponent, markRaw } from "vue";
+import { createApp, markRaw } from "vue";
 import { createPinia } from "pinia";
 import VueCookies from "vue-cookies";
 import * as uiv from "uiv";
