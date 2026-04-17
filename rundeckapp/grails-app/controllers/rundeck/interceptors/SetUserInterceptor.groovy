@@ -83,7 +83,7 @@ class SetUserInterceptor {
             boolean webhookType = controllerName == "webhook" && actionName == "post"
 
             AuthenticationToken foundToken = lookupToken(authtoken, servletContext, webhookType)
-            Set<String> roles = lookupTokenRoles(foundToken, servletContext)
+            Set<String> roles = lookupTokenRoles(foundToken, servletContext) ?: ([] as Set<String>)
             String user = foundToken?.getOwnerName()
 
             if(request.getAttribute(RUNNER_RQ_ATTRIB) && foundToken?.type == AuthTokenType.RUNNER) {
