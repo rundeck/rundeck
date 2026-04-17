@@ -6,8 +6,7 @@ server:
         context-path: "/"  # Explicit context path for asset pipeline
 
 grails:
-    assets:
-        # url and mapping removed - let Grails derive from context-path (RUN-4332)
+    # url and mapping removed from assets config - let Grails derive from context-path (RUN-4332)
 
 spring:
     liquibase:

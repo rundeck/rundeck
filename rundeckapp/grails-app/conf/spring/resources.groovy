@@ -281,9 +281,10 @@ beans={
     }
 
     // Grails 7 / Jetty 12: Asset pipeline resource handler
-    // DISABLED for RUN-4332: The @Configuration annotation in AssetPipelineResourceConfigurer
-    // has been commented out to prevent hardcoded /assets/** mapping that breaks context-path.
-    // Assets now served by Grails default mechanism, which respects server.servlet.context-path.
+    // Intentionally not registered for RUN-4332. Registering AssetPipelineResourceConfigurer
+    // here reintroduces a hardcoded /assets/** mapping that breaks context-path handling.
+    // Assets are served by the default Grails mechanism, which respects
+    // server.servlet.context-path.
     // assetPipelineResourceConfigurer(AssetPipelineResourceConfigurer)
 
     def serverLibextDir = application.config.getProperty("rundeck.server.plugins.dir",String.class,"${rdeckBase}/libext")
