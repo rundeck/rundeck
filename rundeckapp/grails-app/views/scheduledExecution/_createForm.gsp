@@ -63,8 +63,7 @@
                                     class="btn btn-cta reset_page_confirm" />
 
                 <span class="vue-ui-socket">
-                  <ui-socket section="job-editor" location="workflow-edit-warning"
-                    socket-data="${enc(attr: g.message(code: 'job.editor.workflow.unsavedchanges.warning'))}">
+                  <ui-socket section="job-editor" location="workflow-edit-warning">
                     <span data-bind="if: errorTabs().length" class="text-warning">
                       <g:message code="job.editor.workflow.unsavedchanges.warning" />
                     </span>

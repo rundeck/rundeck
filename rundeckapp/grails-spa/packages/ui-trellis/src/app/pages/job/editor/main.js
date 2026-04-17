@@ -149,14 +149,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         section: "job-editor",
         location: "workflow-edit-warning",
         visible: true,
-        widget: markRaw(
-          defineComponent({
-            name: "WorkflowEditWarningWrapper",
-            components: { WorkflowEditWarning },
-            props: ["itemData"],
-            template: `<WorkflowEditWarning :item-data="itemData" />`,
-          }),
-        ),
+        widget: markRaw(WorkflowEditWarning),
       },
     ]);
   }
