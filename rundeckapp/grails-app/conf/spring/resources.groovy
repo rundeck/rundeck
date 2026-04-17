@@ -15,6 +15,7 @@
  */
 
 
+import asset.pipeline.grails.AssetProcessorService
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
@@ -240,6 +241,11 @@ beans={
         if (serverURL && (contextPath && "/" != contextPath)) {
             log.info("RequestAwareLinkGenerator using url ${serverURL} and context-path ${contextPath}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL, contextPath) {}
+            // RUN-4332: When overriding grailsLinkGenerator, fix assetProcessorService contextPath null
+            // See: https://github.com/wondrify/asset-pipeline/issues/444#issuecomment-3958024443
+            assetProcessorService(AssetProcessorService) { bean ->
+                bean.autowire = true
+            }
         } else if (serverURL) {
             log.info("context-path not set, RequestAwareLinkGenerator using url ${serverURL}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL) {}
@@ -279,13 +285,6 @@ beans={
             resourceUriLocation = filesystemLocation?.isEmpty() ? "file:${rdeckBase}/user-assets/" : filesystemLocation
         }
     }
-
-    // Grails 7 / Jetty 12: Asset pipeline resource handler
-    // Intentionally not registered for RUN-4332. Registering AssetPipelineResourceConfigurer
-    // here reintroduces a hardcoded /assets/** mapping that breaks context-path handling.
-    // Assets are served by the default Grails mechanism, which respects
-    // server.servlet.context-path.
-    // assetPipelineResourceConfigurer(AssetPipelineResourceConfigurer)
 
     def serverLibextDir = application.config.getProperty("rundeck.server.plugins.dir",String.class,"${rdeckBase}/libext")
     File pluginDir = new File(serverLibextDir)
