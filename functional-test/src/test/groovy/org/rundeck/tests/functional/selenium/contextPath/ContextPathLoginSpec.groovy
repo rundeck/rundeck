@@ -1,4 +1,4 @@
-package org.rundeck.tests.functional.selenium.login
+package org.rundeck.tests.functional.selenium.contextPath
 
 import org.openqa.selenium.By
 import org.rundeck.util.annotations.SeleniumCoreTest
