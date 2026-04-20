@@ -1,6 +1,6 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
-import { createApp } from "vue";
+import { createApp, markRaw } from "vue";
 import { createPinia } from "pinia";
 import VueCookies from "vue-cookies";
 import * as uiv from "uiv";
@@ -18,6 +18,7 @@ import { loadJsonData } from "@/app/utilities/loadJsonData";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
 import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
+import WorkflowEditWarning from "@/app/pages/job/editor/WorkflowEditWarning.vue";
 import "primeicons/primeicons.css";
 import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
 import { configurePrimeVue } from "@/library/utilities/primeVueConfig";
@@ -138,5 +139,18 @@ window.addEventListener("DOMContentLoaded", (event) => {
   const elem = document.querySelector("#workflowContent .pflowlist.edit");
   if (elem) {
     observer.observe(elem, { subtree: true, childList: true });
+  }
+
+  // Register workflow-edit-warning UiSocket widget
+  const rootStore = getRundeckContext()?.rootStore;
+  if (rootStore) {
+    rootStore.ui.addItems([
+      {
+        section: "job-editor",
+        location: "workflow-edit-warning",
+        visible: true,
+        widget: markRaw(WorkflowEditWarning),
+      },
+    ]);
   }
 });
