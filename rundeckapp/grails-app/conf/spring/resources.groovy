@@ -237,7 +237,7 @@ beans={
     if (application.config.getProperty("rundeck.multiURL.enabled", Boolean.class, false)) {
         Class requestAwareLinkGeneratorClass = RequestAwareLinkGenerator
         String serverURL = application.config.getProperty("grails.serverURL",String.class)
-        String contextPath = application.config.server.servlet["context-path"]
+        String contextPath = application.config.getProperty("server.servlet.context-path", String.class, "")
         if (serverURL && (contextPath && "/" != contextPath)) {
             log.info("RequestAwareLinkGenerator using url ${serverURL} and context-path ${contextPath}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL, contextPath) {}
@@ -249,6 +249,11 @@ beans={
         } else if (serverURL) {
             log.info("context-path not set, RequestAwareLinkGenerator using url ${serverURL}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL) {}
+            // RUN-4332: When overriding grailsLinkGenerator, fix assetProcessorService contextPath null
+            // See: https://github.com/wondrify/asset-pipeline/issues/444#issuecomment-3958024443
+            assetProcessorService(AssetProcessorService) { bean ->
+                bean.autowire = true
+            }
         } else {
             log.warn("rundeck.multiURL enabled but no grails.serverURL found. This feature will be disabled.")
         }
