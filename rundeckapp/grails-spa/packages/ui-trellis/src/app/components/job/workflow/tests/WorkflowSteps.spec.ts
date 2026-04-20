@@ -422,4 +422,72 @@ describe("WorkflowSteps", () => {
       );
     });
   });
+
+  describe("editing state", () => {
+    it("emits workflow-editing-state-changed with isEditing true when a step edit opens", async () => {
+      const mockEventBus = getRundeckContext().eventBus;
+      wrapper = await createWrapper({ commands: [] });
+
+      await wrapper.find('[data-testid="add-button"]').trigger("click");
+      const chooseModal = wrapper.findComponent(ChoosePluginModal);
+      chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+      await wrapper.vm.$nextTick();
+
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        "workflow-editing-state-changed",
+        { isEditing: true },
+      );
+    });
+
+    it("sets window._workflowEditState.isEditing true when a step edit opens", async () => {
+      wrapper = await createWrapper({ commands: [] });
+
+      await wrapper.find('[data-testid="add-button"]').trigger("click");
+      const chooseModal = wrapper.findComponent(ChoosePluginModal);
+      chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+      await wrapper.vm.$nextTick();
+
+      expect((window as any)._workflowEditState).toEqual({
+        isEditing: true,
+        hasUnsavedChanges: true,
+      });
+    });
+
+    it("emits workflow-editing-state-changed with isEditing false when a step edit is cancelled", async () => {
+      const mockEventBus = getRundeckContext().eventBus;
+      wrapper = await createWrapper({ commands: [] });
+
+      await wrapper.find('[data-testid="add-button"]').trigger("click");
+      const chooseModal = wrapper.findComponent(ChoosePluginModal);
+      chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+      await wrapper.vm.$nextTick();
+
+      const editModal = wrapper.findComponent(EditPluginModal);
+      editModal.vm.$emit("cancel");
+      await wrapper.vm.$nextTick();
+
+      expect(mockEventBus.emit).toHaveBeenLastCalledWith(
+        "workflow-editing-state-changed",
+        { isEditing: false },
+      );
+    });
+
+    it("sets window._workflowEditState.isEditing false when a step edit is cancelled", async () => {
+      wrapper = await createWrapper({ commands: [] });
+
+      await wrapper.find('[data-testid="add-button"]').trigger("click");
+      const chooseModal = wrapper.findComponent(ChoosePluginModal);
+      chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+      await wrapper.vm.$nextTick();
+
+      const editModal = wrapper.findComponent(EditPluginModal);
+      editModal.vm.$emit("cancel");
+      await wrapper.vm.$nextTick();
+
+      expect((window as any)._workflowEditState).toEqual({
+        isEditing: false,
+        hasUnsavedChanges: false,
+      });
+    });
+  });
 });
