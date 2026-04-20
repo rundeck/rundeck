@@ -43,24 +43,36 @@ rundeck_docker_build() {
     #Build image
     ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT -PjreVersion=${jreVersion}
 
-    docker tag "${DOCKER_REPO}:latest" "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
+    # Append -j25 suffix to tags when JRE version contains 25
+    local TAG_SUFFIX=""
+    if [[ "${jreVersion}" == *"25"* ]]; then
+        TAG_SUFFIX="-j25"
+    fi
+
+    docker tag "${DOCKER_REPO}:latest" "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}${TAG_SUFFIX}"
 
     # CircleCI tag builds do not have a branch set
     if [[ -n "${RUNDECK_BRANCH_CLEAN}" ]]; then
-        local CI_BRANCH_TAG=${DOCKER_CI_REPO}:${RUNDECK_BRANCH_CLEAN}
+        local CI_BRANCH_TAG=${DOCKER_CI_REPO}:${RUNDECK_BRANCH_CLEAN}${TAG_SUFFIX}
         docker tag "${DOCKER_REPO}:latest" "$CI_BRANCH_TAG"
     fi
 
 }
 
 rundeck_docker_push() {
+    local jreVersion=${1}
+    local TAG_SUFFIX=""
+    if [[ "${jreVersion}" == *"25"* ]]; then
+        TAG_SUFFIX="-j25"
+    fi
+
     docker_login
 
-    docker push "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
+    docker push "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}${TAG_SUFFIX}"
 
     # CircleCI tag builds do not have a branch set
     if [[ -n "${RUNDECK_BRANCH_CLEAN}" ]]; then
-        local CI_BRANCH_TAG=${DOCKER_CI_REPO}:${RUNDECK_BRANCH_CLEAN}
+        local CI_BRANCH_TAG=${DOCKER_CI_REPO}:${RUNDECK_BRANCH_CLEAN}${TAG_SUFFIX}
         docker push "$CI_BRANCH_TAG"
     fi
 

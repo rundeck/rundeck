@@ -203,12 +203,6 @@ commands:
           step-name: Install Java JDK
           command: dependencies_install_zulu17jdk
 
-  install-java-jdk-25:
-    description: Install JDK 25 for host-side tests (BASH_ENV JAVA_HOME)
-    steps:
-      - run-build-step:
-          step-name: Install Java JDK 25
-          command: dependencies_install_zulu25jdk
 
   ## Dependency groups
 
@@ -244,13 +238,6 @@ commands:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
 
-  install-testdeck-dependencies-jdk25:
-    description: JDK 25 on host + TestDeck extras (orchestration only; app still in Docker)
-    steps:
-      - install-java-jdk-25
-      - run-build-step:
-          step-name: Install TestDeck Dependencies
-          command: dependencies_testdeck_setup
 
 
 #### Job Definitions ####
@@ -277,6 +264,10 @@ jobs:
       jreVersion:
         type: string
         default: "openjdk-17-jre-headless"
+      jre25Publish:
+        description: Also build and push a Docker image with JRE 25
+        type: boolean
+        default: false
     steps:
       - setup_docker:
           docker_layer_caching: true
@@ -290,7 +281,15 @@ jobs:
           step-name: Build And Push Docker Images
           command: |
             rundeck_docker_build << parameters.jreVersion >>
-            rundeck_docker_push
+            rundeck_docker_push << parameters.jreVersion >>
+      - when:
+          condition: << parameters.jre25Publish >>
+          steps:
+            - run-build-step:
+                step-name: Build And Push Docker Images (JRE 25)
+                command: |
+                  rundeck_docker_build openjdk-25-jre-headless
+                  rundeck_docker_push openjdk-25-jre-headless
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build
@@ -599,16 +598,7 @@ jobs:
     steps:
       - setup_docker
       - checkout
-      - when:
-          condition:
-            equal: [ "25", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - install-testdeck-dependencies-jdk25
-      - when:
-          condition:
-            equal: [ "17", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - install-testdeck-dependencies
+      - install-testdeck-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -634,23 +624,13 @@ jobs:
         description: Command that will execute the docker tests
         type: string
       host_jdk_for_tests:
-        description: JDK on the CI host (Docker image still uses JRE from build job)
+        description: JDK version for selecting the Docker test image
         type: enum
         enum: [ "17", "25" ]
         default: "17"
     steps:
-
       - checkout
-      - when:
-          condition:
-            equal: [ "25", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - install-testdeck-dependencies-jdk25
-      - when:
-          condition:
-            equal: [ "17", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - install-testdeck-dependencies
+      - install-testdeck-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -691,23 +671,12 @@ jobs:
     steps:
       - checkout
       - restore-build-cache
-      - when:
-          condition:
-            equal: [ "25", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - run-build-step:
-                step-name: Install Java JDK 25 (host Gradle)
-                command: dependencies_install_zulu25jdk
-      - when:
-          condition:
-            equal: [ "17", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - install-base-dependencies
+      - install-base-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
           step-name: Pull images
-          command: rundeck_pull_image
+          command: rundeck_pull_image << parameters.host_jdk_for_tests >>
       - run-build-step:
           step-name: Runs gradle test task << parameters.gradle-task >>
           command: |
@@ -839,6 +808,7 @@ workflows:
       # Stage 1: Build
       - build-rundeck:
           name: Build
+          jre25Publish: true
           <<: *cloudsmith-slack-defaults
 
       # Step 1: Unit tests run in parallel with Build (no gates for fast feedback)
@@ -1004,6 +974,7 @@ workflows:
       - build-rundeck:
           name: Build with Docker image using JRE 17
           jreVersion: "openjdk-17-jre-headless"
+          jre25Publish: true
       - test-docker:
           name: T Integration SSL (host JDK 25, image JRE 17)
           command: bash test/run-docker-ssl-tests.sh
