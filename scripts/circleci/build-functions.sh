@@ -41,7 +41,7 @@ rundeck_docker_build() {
     fi
 
     #Build image
-    ./gradlew ${GRADLE_BASE_OPTS} officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT -PjreVersion=${jreVersion}
+    ./gradlew ${GRADLE_BASE_OPTS} cleanOfficialBuild officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT -PjreVersion=${jreVersion}
 
     # Append -j25 suffix to tags when JRE version contains 25
     local TAG_SUFFIX=""
