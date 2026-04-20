@@ -100,12 +100,6 @@ export default defineComponent({
   border-radius: var(--radii-md);
   border: 1px solid var(--colors-gray-300-original);
 
-  p,
-  a,
-  span:not(.glyphicon, .fa, .pi, .ace_identifier) {
-    font-family: Inter, var(--fonts-body2) !important;
-  }
-
   .p-card-body {
     padding: var(--sizes-4);
   }
