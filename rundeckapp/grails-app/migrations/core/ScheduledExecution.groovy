@@ -282,6 +282,25 @@ databaseChangeLog = {
     }
 
 
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-5", dbms: "h2") {
+        comment { 'rename seconds to SECONDS' }
+        preConditions(onFail: "CONTINUE") {
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'seconds'").cnt
+                    if (count == 0) fail('Column "seconds" (lowercase) not found, skipping rename')
+                }
+            }
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN \"seconds\" TO SECONDS;")
+            }
+            rollback {
+            }
+        }
+    }
+
     changeSet(author: "rundeckdev", id: "4.11.0-add-job-uuid-to-stats-mssql", dbms: "mssql") {
         preConditions(onFail: "MARK_RAN") {
             not {
