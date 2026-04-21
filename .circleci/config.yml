@@ -317,6 +317,7 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
+      resource_class: medium
     steps:
       - setup_docker
       - checkout
