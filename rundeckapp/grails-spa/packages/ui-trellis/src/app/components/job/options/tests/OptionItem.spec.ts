@@ -147,7 +147,7 @@ describe("OptionItem", () => {
       expect(editBtn.length).toBe(1);
       await editBtn[0].trigger("click");
       expect(wrapper.emitted(action)).toBeTruthy();
-      expect(wrapper.emitted(action)[0][0]).toStrictEqual(option);
+      expect(wrapper.emitted(action)![0][0]).toStrictEqual(option);
     },
   );
   it("emits edit event when item view is clicked", async () => {
@@ -160,6 +160,6 @@ describe("OptionItem", () => {
     expect(content.length).toBe(1);
     await content[0].trigger("click");
     expect(wrapper.emitted("edit")).toBeTruthy();
-    expect(wrapper.emitted("edit")[0][0]).toStrictEqual(option);
+    expect(wrapper.emitted("edit")![0][0]).toStrictEqual(option);
   });
 });

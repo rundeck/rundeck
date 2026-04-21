@@ -204,7 +204,7 @@ describe('KeyStorageSelector', () => {
     expect(keys.length).toBe(2)
     let found = keys.find((e) => e.text() === keyName)
     expect(found).not.toBeNull()
-    await found.trigger('click')
+    await found!.trigger('click')
     await wrapper.vm.$nextTick()
     await wrapper.find('[data-testid="overwrite-key-btn"]').trigger('click')
     const uploadModal = wrapper.get('#storageuploadkey')
@@ -255,14 +255,14 @@ describe('KeyStorageSelector', () => {
     expect(keys.length).toBe(2)
     let found = keys.find((e) => e.text() === keyName)
     expect(found).not.toBeNull()
-    await found.trigger('click')
+    await found!.trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.vm.selectedKey).toBe(`/keys/${keyName}`)
     //click save button
     await wrapper.find('.modal-footer button.btn-primary').trigger('click')
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.emitted('update:modelValue')[0][0]).toBe(`/keys/${keyName}`)
+    expect(wrapper.emitted('update:modelValue')![0][0]).toBe(`/keys/${keyName}`)
 
   })
 })

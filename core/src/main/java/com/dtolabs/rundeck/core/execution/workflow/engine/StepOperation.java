@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior;
 import com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyProfile;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.*;
 import lombok.Getter;
@@ -39,6 +40,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
     private StateObj skipTriggerState;
     @Getter private boolean didRun = false;
     @Getter private final String identity;
+    private final WorkflowStrategyProfile profile;
 
     public StepOperation(
             final int stepNum,
@@ -47,7 +49,8 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
             final StateObj startTriggerState,
             final StateObj skipTriggerState,
             final Set<Condition> startTriggerConditions,
-            final Set<Condition> skipTriggerConditions
+            final Set<Condition> skipTriggerConditions,
+            final WorkflowStrategyProfile profile
     )
     {
         this.stepNum = stepNum;
@@ -58,6 +61,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
         this.startTriggerConditions = startTriggerConditions;
         this.skipTriggerConditions = skipTriggerConditions;
         this.skipTriggerState = skipTriggerState;
+        this.profile = profile;
     }
 
     @Override
@@ -136,6 +140,13 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
                         stepNum
                 ), statusString);
             }
+        }
+
+        // After step completes, evaluate conditionals for future steps
+        // Get the updated SharedDataContext from the step result
+        WFSharedContext updatedContext = stepResultCapture.getResultData();
+        if (updatedContext != null && profile != null) {
+            profile.updateConditionalStatesAfterStep(stepNum, updatedContext, stateChanges);
         }
 
         return new OperationCompleted(getIdentity(), stepNum, stateChanges, stepResultCapture, success);

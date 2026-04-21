@@ -32,7 +32,7 @@ describe("workflowTypes", () => {
   );
   it("exportPluginData includes strategy data", () => {
     const strategy = { type: "s", config: { a: "b" } };
-    expect(exportPluginData(strategy, null)).toEqual({
+    expect(exportPluginData(strategy, {})).toEqual({
       pluginConfig: {
         WorkflowStrategy: {
           s: {

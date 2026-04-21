@@ -956,6 +956,8 @@ const messages = {
   "scheduledExecution.jobName.label": "Job Name",
   "scheduledExecution.property.description.label": "Description",
   "job.editor.preview.runbook": "Preview Readme",
+  "job.editor.workflow.unsavedchanges.warning":
+    "Some changes to the workflow have not been completed.",
   "choose.action.label": "Choose",
   "scheduledExecution.property.description.plain.description":
     "The description will be shown in plain text",

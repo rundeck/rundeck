@@ -103,9 +103,9 @@ describe("ExecutionOutput", () => {
 
       // Filter by node
       const node1Entries = executionOutput.getEntriesFiltered("node1");
-      expect(node1Entries.length).toBe(2);
-      expect(node1Entries[0]).toBe(entry1);
-      expect(node1Entries[1]).toBe(entry3);
+      expect(node1Entries!.length).toBe(2);
+      expect(node1Entries![0]).toBe(entry1);
+      expect(node1Entries![1]).toBe(entry3);
     });
 
     it("should get filtered entries by node and step context", () => {

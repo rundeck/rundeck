@@ -7,5 +7,9 @@ declare global {
     _rundeck: RundeckContext;
     appLinks: AppLinks;
     ProWebhookComponents: Component[];
+    _workflowEditState: {
+      isEditing: boolean;
+      hasUnsavedChanges: boolean;
+    };
   }
 }

@@ -7,7 +7,7 @@ import { ExecutionOutputEntry } from "../../../stores/ExecutionOutput";
 jest.mock("vue-virtual-scroller", () => ({
   DynamicScroller: {
     name: "DynamicScroller",
-    render() {
+    render(this: { $slots: Record<string, Function | undefined> }) {
       return this.$slots.default
         ? this.$slots.default({
             item: {},
@@ -19,7 +19,7 @@ jest.mock("vue-virtual-scroller", () => ({
   },
   DynamicScrollerItem: {
     name: "DynamicScrollerItem",
-    render() {
+    render(this: { $slots: Record<string, Function | undefined> }) {
       return this.$slots.default ? this.$slots.default() : null;
     },
   },

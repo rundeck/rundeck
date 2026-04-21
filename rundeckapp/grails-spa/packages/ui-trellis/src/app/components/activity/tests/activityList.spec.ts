@@ -72,7 +72,7 @@ const shallowMountActivityList = async (
   await wrapper.vm.$nextTick();
   return wrapper as VueWrapper<ActivityListInstance>;
 };
-let reports: any;
+let reports: typeof mockReports;
 describe("ActivityList", () => {
   beforeAll(() => {
     // Use real timers by default
