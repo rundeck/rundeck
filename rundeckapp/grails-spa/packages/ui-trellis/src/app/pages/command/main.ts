@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
+import { UiMessage } from "../../../library/stores/UIStore";
 import { RootStore } from "../../../library/stores/RootStore";
 import { initI18n, commonAddUiMessages } from "../../utilities/i18n";
 
@@ -61,7 +62,7 @@ eventBus.on("ko-adhoc-running", (data: any) => {
     },
   );
   vue.use(i18n);
-  vue.provide("addUiMessages", async (messages) =>
+  vue.provide("addUiMessages", async (messages: UiMessage[]) =>
     commonAddUiMessages(i18n, messages),
   );
   vue.mount(elm);
