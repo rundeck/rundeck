@@ -203,6 +203,12 @@ commands:
           step-name: Install Java JDK
           command: dependencies_install_zulu17jdk
 
+  install-java-jdk-25:
+    description: Install JDK 25 for host-side tests (BASH_ENV JAVA_HOME)
+    steps:
+      - run-build-step:
+          step-name: Install Java JDK 25
+          command: dependencies_install_zulu25jdk
 
   ## Dependency groups
 
@@ -238,7 +244,13 @@ commands:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
 
-
+  install-testdeck-dependencies-jdk25:
+    description: JDK 25 on host + TestDeck extras (orchestration only; app still in Docker)
+    steps:
+      - install-java-jdk-25
+      - run-build-step:
+          step-name: Install TestDeck Dependencies
+          command: dependencies_testdeck_setup
 
 #### Job Definitions ####
 
