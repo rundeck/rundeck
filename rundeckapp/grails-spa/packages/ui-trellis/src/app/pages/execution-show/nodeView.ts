@@ -6,6 +6,7 @@ import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import { getRundeckContext } from "../../../library";
 import * as uiv from "uiv";
 import { initI18n, commonAddUiMessages } from "../../utilities/i18n";
+import { UiMessage } from "../../../library/stores/UIStore";
 
 const rootStore = getRundeckContext().rootStore;
 
@@ -60,7 +61,7 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
   });
   vue.use(uiv);
   vue.use(i18n);
-  vue.provide("addUiMessages", async (messages) =>
+  vue.provide("addUiMessages", async (messages: UiMessage[]) =>
     commonAddUiMessages(i18n, messages),
   );
   vue.mount(elm);
