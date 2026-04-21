@@ -62,8 +62,12 @@
                 <g:submitButton name="Create" value="${g.message(code: 'button.action.Create')}"
                                     class="btn btn-cta reset_page_confirm" />
 
-                <span data-bind="if: errorTabs().length" class="text-warning">
-                    <g:message code="job.editor.workflow.unsavedchanges.warning" />
+                <span class="vue-ui-socket">
+                  <ui-socket section="job-editor" location="workflow-edit-warning">
+                    <span data-bind="if: errorTabs().length" class="text-warning">
+                      <g:message code="job.editor.workflow.unsavedchanges.warning" />
+                    </span>
+                  </ui-socket>
                 </span>
             </div>
             <div id="schedCreateSpinner" class="spinner block" style="display:none;">

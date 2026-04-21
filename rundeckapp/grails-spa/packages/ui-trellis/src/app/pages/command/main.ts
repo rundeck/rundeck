@@ -2,6 +2,8 @@ import { createApp } from "vue";
 
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import { RootStore } from "../../../library/stores/RootStore";
+import { initI18n, commonAddUiMessages } from "../../utilities/i18n";
+import { UiMessage } from "../../../library/stores/UIStore";
 
 const eventBus = window._rundeck.eventBus;
 
@@ -21,6 +23,8 @@ eventBus.on("ko-adhoc-running", (data: any) => {
         ref="viewer"
     />
     `;
+
+  const i18n = initI18n();
 
   const vue = createApp(
     {
@@ -56,6 +60,10 @@ eventBus.on("ko-adhoc-running", (data: any) => {
         stats: false,
       },
     },
+  );
+  vue.use(i18n);
+  vue.provide("addUiMessages", async (messages: UiMessage[]) =>
+    commonAddUiMessages(i18n, messages),
   );
   vue.mount(elm);
 });
