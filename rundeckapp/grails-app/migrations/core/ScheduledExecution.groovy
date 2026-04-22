@@ -207,7 +207,7 @@ databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-1", dbms: "h2") {
         comment { 'rename month to MONTH' }
-        preConditions(onFail: "CONTINUE") {
+        preConditions(onFail: "MARK_RAN") {
             grailsPrecondition {
                 check {
                     def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'month'").cnt
@@ -226,7 +226,7 @@ databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-2", dbms: "h2") {
         comment { 'rename hour to HOUR' }
-        preConditions(onFail: "CONTINUE") {
+        preConditions(onFail: "MARK_RAN") {
             grailsPrecondition {
                 check {
                     def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'hour'").cnt
@@ -245,7 +245,7 @@ databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-3", dbms: "h2") {
         comment { 'rename year to YEAR' }
-        preConditions(onFail: "CONTINUE") {
+        preConditions(onFail: "MARK_RAN") {
             grailsPrecondition {
                 check {
                     def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'year'").cnt
@@ -264,7 +264,7 @@ databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-4", dbms: "h2") {
         comment { 'rename minute to MINUTE' }
-        preConditions(onFail: "CONTINUE") {
+        preConditions(onFail: "MARK_RAN") {
             grailsPrecondition {
                 check {
                     def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'minute'").cnt
@@ -284,7 +284,7 @@ databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-5", dbms: "h2") {
         comment { 'rename seconds to SECONDS' }
-        preConditions(onFail: "CONTINUE") {
+        preConditions(onFail: "MARK_RAN") {
             grailsPrecondition {
                 check {
                     def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'seconds'").cnt
