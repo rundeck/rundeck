@@ -66,6 +66,11 @@ const mountKeyStorageEdit = async (props = {}) => {
       ...defaultProps,
       ...props,
     },
+    global: {
+      mocks: {
+        $t: (msg: string) => msg,
+      },
+    },
   });
 };
 
@@ -215,5 +220,199 @@ describe("KeyStorageEdit", () => {
 
     // Verify that the finishEditing event is emitted with the correct data
     expect(wrapper.emitted().finishEditing[0]).toEqual(expectedEmittedEvent);
+  });
+
+  describe("Path validation", () => {
+    it("validates path and shows error when user enters @ in path", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue("test@path");
+      await nameInput.setValue("mykey");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.text()).toContain("storage.keyPath.error.invalidChar");
+      expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
+    });
+
+    it("displays specific error message with # character", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "password",
+          inputType: "text",
+          password: "mypassword"
+        },
+      });
+
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+      await nameInput.setValue("test#key");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.text()).toContain("storage.keyPath.error.invalidChar");
+    });
+
+    it("allows valid characters including forward slashes", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue("project/subdir");
+      await nameInput.setValue("valid-key_name.123");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="error-msg"]').exists()).toBe(false);
+      expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows spaces after first character (matching backend)", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue("my project/sub dir");
+      await nameInput.setValue("my key");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="error-msg"]').exists()).toBe(false);
+      expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("rejects path component starting with space", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue(" startsWithSpace");
+      await nameInput.setValue("mykey");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.text()).toContain("storage.keyPath.error.leadingSpace");
+      expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
+    });
+
+    it("rejects directory traversal with '..'", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue("project/../secret");
+      await nameInput.setValue("mykey");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.text()).toContain("storage.keyPath.error.traversal");
+      expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
+    });
+
+    // Regression: the backend regex accepts paths where ".." is embedded inside a
+    // component (e.g. "bonanza..double"), but only rejects ".." as a standalone
+    // component. The frontend must match this exactly.
+    it.each([
+      ["bonanza..double"],
+      ["foo..bar"],
+      ["project/bonanza..double/sub"],
+    ])("accepts embedded '..' inside a component (%s)", async (pathValue) => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue(pathValue);
+      await nameInput.setValue("mykey");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      expect(wrapper.find('[data-testid="error-msg"]').exists()).toBe(false);
+      expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
+    });
+
+    it("skips validation when editing existing item (modifyMode=true)", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          modifyMode: true,
+          keyType: "password",
+          password: "mypassword",
+        },
+      });
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.exists()).toBe(false);
+    });
   });
 });

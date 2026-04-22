@@ -130,6 +130,7 @@
                 :disabled="uploadSetting.modifyMode === true"
                 name="relativePath"
                 class="form-control"
+                data-testid="key-path-input"
                 :placeholder="$t('storage.enter.directory.name')"
               />
               <input
@@ -314,15 +315,42 @@ export default defineComponent({
     },
     validateKeyPath(): string | null {
       const path = this.getKeyPath();
-      const validPattern = /^[a-zA-Z0-9,\.+_\/-]+$/;
 
-      if (!validPattern.test(path)) {
-        // Find first invalid character
-        const invalidChar = path.split('').find(char => !validPattern.test(char));
-        return `The character '${invalidChar}' is not allowed. Key storage paths can only contain: letters, numbers, / . + _ - ,`;
+      if (!path || path.trim() === '') {
+        return null;
       }
 
-      return null;
+      // Backend regex (StorageParams.groovy):
+      //   ^\/?((?!\.\.(\/|$))[a-zA-Z0-9,.+_-][\sa-zA-Z0-9,.+_-]*?\/?)+$
+      // Rules, per path component:
+      //   - cannot be exactly ".." (directory traversal)
+      //   - first char: [a-zA-Z0-9,.+_-] (no leading space)
+      //   - subsequent chars: [\sa-zA-Z0-9,.+_-] (space allowed)
+      const backendPattern = /^\/?((?!\.\.(\/|$))[a-zA-Z0-9,.+_-][\sa-zA-Z0-9,.+_-]*?\/?)+$/;
+
+      if (backendPattern.test(path)) {
+        return null;
+      }
+
+      const components = path.split('/').filter(c => c.length > 0);
+
+      // Only flag ".." when it is a full path component (matches backend behavior).
+      // Strings like "foo..bar" are valid and must not be reported as traversal.
+      if (components.some(component => component === '..')) {
+        return this.$t('storage.keyPath.error.traversal');
+      }
+
+      if (components.some(component => component.startsWith(' '))) {
+        return this.$t('storage.keyPath.error.leadingSpace');
+      }
+
+      const validChars = /^[a-zA-Z0-9,.+_\s/-]$/;
+      const invalidChar = path.split('').find(char => !validChars.test(char));
+      if (invalidChar) {
+        return this.$t('storage.keyPath.error.invalidChar', [invalidChar]);
+      }
+
+      return this.$t('storage.keyPath.error.invalidFormat');
     },
     async handleUploadKey() {
       const rundeckContext = getRundeckContext();
