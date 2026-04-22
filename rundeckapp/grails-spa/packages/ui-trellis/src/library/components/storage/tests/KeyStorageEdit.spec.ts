@@ -398,6 +398,32 @@ describe("KeyStorageEdit", () => {
       expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
     });
 
+    it("rejects whitespace-only path instead of silently bypassing to server", async () => {
+      const wrapper = await mountKeyStorageEdit({
+        uploadSetting: {
+          keyType: "privateKey",
+          inputType: "text",
+          textArea: "some-text",
+        },
+      });
+
+      const pathInput = wrapper.find('[data-testid="key-path-input"]');
+      const nameInput = wrapper.find('[data-testid="key-name-input"]');
+
+      await pathInput.setValue("   ");
+      await nameInput.setValue("mykey");
+      await wrapper.vm.$nextTick();
+
+      const saveButton = wrapper.find('[data-testid="save-btn"]');
+      await saveButton.trigger("click");
+      await flushPromises();
+
+      const errorMsg = wrapper.find('[data-testid="error-msg"]');
+      expect(errorMsg.exists()).toBe(true);
+      expect(errorMsg.text()).toContain("storage.keyPath.error.leadingSpace");
+      expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
+    });
+
     it("skips validation when editing existing item (modifyMode=true)", async () => {
       const wrapper = await mountKeyStorageEdit({
         uploadSetting: {

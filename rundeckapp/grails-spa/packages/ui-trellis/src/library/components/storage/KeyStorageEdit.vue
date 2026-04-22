@@ -316,7 +316,11 @@ export default defineComponent({
     validateKeyPath(): string | null {
       const path = this.getKeyPath();
 
-      if (!path || path.trim() === '') {
+      // A truly empty path is handled by the Save-button's validInput() / backend
+      // "too short" check, so we don't flag it here. Whitespace-only input,
+      // however, must NOT be short-circuited — it falls through to the backend
+      // pattern check below and is caught by the leading-space branch.
+      if (!path) {
         return null;
       }
 
