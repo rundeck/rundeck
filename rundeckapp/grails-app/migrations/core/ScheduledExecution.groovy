@@ -207,8 +207,13 @@ databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-1", dbms: "h2") {
         comment { 'rename month to MONTH' }
-        preConditions(onFail: "CONTINUE"){
-            columnExists(tableName: "scheduled_execution", columnName: "month")
+        preConditions(onFail: "MARK_RAN") {
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'month'").cnt
+                    if (count == 0) fail('Column "month" (lowercase) not found, skipping rename')
+                }
+            }
         }
         grailsChange {
             change {
@@ -218,11 +223,16 @@ databaseChangeLog = {
             }
         }
     }
-    
+
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-2", dbms: "h2") {
         comment { 'rename hour to HOUR' }
-        preConditions(onFail: "CONTINUE"){
-            columnExists(tableName: "scheduled_execution", columnName: "hour")
+        preConditions(onFail: "MARK_RAN") {
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'hour'").cnt
+                    if (count == 0) fail('Column "hour" (lowercase) not found, skipping rename')
+                }
+            }
         }
         grailsChange {
             change {
@@ -232,11 +242,16 @@ databaseChangeLog = {
             }
         }
     }
-    
+
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-3", dbms: "h2") {
         comment { 'rename year to YEAR' }
-        preConditions(onFail: "CONTINUE"){
-            columnExists(tableName: "scheduled_execution", columnName: "year")
+        preConditions(onFail: "MARK_RAN") {
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'year'").cnt
+                    if (count == 0) fail('Column "year" (lowercase) not found, skipping rename')
+                }
+            }
         }
         grailsChange {
             change {
@@ -249,8 +264,13 @@ databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-4", dbms: "h2") {
         comment { 'rename minute to MINUTE' }
-        preConditions(onFail: "CONTINUE"){
-            columnExists(tableName: "scheduled_execution", columnName: "minute")
+        preConditions(onFail: "MARK_RAN") {
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'minute'").cnt
+                    if (count == 0) fail('Column "minute" (lowercase) not found, skipping rename')
+                }
+            }
         }
         grailsChange {
             change {
@@ -261,6 +281,25 @@ databaseChangeLog = {
         }
     }
 
+
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-5", dbms: "h2") {
+        comment { 'rename seconds to SECONDS' }
+        preConditions(onFail: "MARK_RAN") {
+            grailsPrecondition {
+                check {
+                    def count = sql.firstRow("SELECT COUNT(*) as cnt FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SCHEDULED_EXECUTION' AND COLUMN_NAME = 'seconds'").cnt
+                    if (count == 0) fail('Column "seconds" (lowercase) not found, skipping rename')
+                }
+            }
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN \"seconds\" TO SECONDS;")
+            }
+            rollback {
+            }
+        }
+    }
 
     changeSet(author: "rundeckdev", id: "4.11.0-add-job-uuid-to-stats-mssql", dbms: "mssql") {
         preConditions(onFail: "MARK_RAN") {

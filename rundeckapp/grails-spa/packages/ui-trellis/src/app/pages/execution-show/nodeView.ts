@@ -5,6 +5,8 @@ import { autorun } from "mobx";
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import { getRundeckContext } from "../../../library";
 import * as uiv from "uiv";
+import { initI18n, commonAddUiMessages } from "../../utilities/i18n";
+import { UiMessage } from "../../../library/stores/UIStore";
 
 const rootStore = getRundeckContext().rootStore;
 
@@ -36,6 +38,8 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
     />
     `;
 
+  const i18n = initI18n();
+
   const vue = createApp({
     name: "NodeLogViewerApp",
     components: { LogViewer },
@@ -56,6 +60,10 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
     template: template,
   });
   vue.use(uiv);
+  vue.use(i18n);
+  vue.provide("addUiMessages", async (messages: UiMessage[]) =>
+    commonAddUiMessages(i18n, messages),
+  );
   vue.mount(elm);
 
   /** Update the KO code when this views output starts showing up */
