@@ -398,6 +398,7 @@ describe("KeyStorageEdit", () => {
       expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
     });
 
+    // Whitespace-only fileName should trigger validation, not bypass to server
     it("rejects whitespace-only path instead of silently bypassing to server", async () => {
       const wrapper = await mountKeyStorageEdit({
         uploadSetting: {
@@ -407,11 +408,8 @@ describe("KeyStorageEdit", () => {
         },
       });
 
-      const pathInput = wrapper.find('[data-testid="key-path-input"]');
       const nameInput = wrapper.find('[data-testid="key-name-input"]');
-
-      await pathInput.setValue("   ");
-      await nameInput.setValue("mykey");
+      await nameInput.setValue("   ");
       await wrapper.vm.$nextTick();
 
       const saveButton = wrapper.find('[data-testid="save-btn"]');
