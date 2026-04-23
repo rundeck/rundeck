@@ -83,6 +83,16 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         return null
     }
 
+    /**
+     * Override this method to provide a custom Rundeck URL for docker-compose tests.
+     * This allows tests to override the default TEST_RUNDECK_GRAILS_URL value.
+     *
+     * @return Custom Rundeck URL or null to use default
+     */
+    String getCustomRundeckUrl() {
+        return null
+    }
+
     ClientProvider getClientProvider() {
         //fine logging for http client closeable leaks
         Logger.getLogger(OkHttpClient.name).setLevel(Level.FINEST)
@@ -92,6 +102,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 return CLIENT_PROVIDER
             }
 
+            // TEST_RUNDECK_URL is used when connecting to an external Rundeck instance (not starting containers)
             if (TEST_RUNDECK_URL != null) {
                 CLIENT_PROVIDER = new ClientProvider() {
                     @Override
@@ -112,6 +123,9 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 RUNDECK_CONTAINER_ID = rdDockerContainer.containerId
 
             } else {
+                // Get custom Rundeck URL if defined by subclass (only for docker-compose tests)
+                String customRundeckUrl = getCustomRundeckUrl()
+
                 URI resource
                 if (getCustomDockerComposeLocation() != null && !getCustomDockerComposeLocation().isBlank()) {
                     resource = getClass().getClassLoader().getResource(getCustomDockerComposeLocation()).toURI()
@@ -128,10 +142,11 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                 log.info("Starting testcontainer: ${resource}")
                 log.info("Starting testcontainer: RUNDECK_IMAGE: ${RdComposeContainer.RUNDECK_IMAGE}")
                 log.info("Starting testcontainer: LICENSE_LOCATION: ${RdComposeContainer.LICENSE_LOCATION}")
-                log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${RdComposeContainer.TEST_RUNDECK_GRAILS_URL}")
+                log.info("Starting testcontainer: TEST_RUNDECK_GRAILS_URL: ${customRundeckUrl ?: RdComposeContainer.TEST_RUNDECK_GRAILS_URL}")
                 var rundeckComposeContainer = new RdComposeContainer(
                     resource,
                     featureName,
+                    customRundeckUrl,
                     clientConfig
                 )
                 composeContainer(rundeckComposeContainer)
