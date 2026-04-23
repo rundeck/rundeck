@@ -117,7 +117,7 @@ describe("MainbarMenu", () => {
       expect(wrapper.vm.enabledLinks).toBeDefined();
       expect(wrapper.vm.enabledLinks.length).toBe(2); // Only 2 of 3 are enabled
       expect(
-        wrapper.vm.enabledLinks.every((link) => link.enabled !== false),
+        wrapper.vm.enabledLinks.every((link: any) => link.enabled !== false),
       ).toBe(true);
 
       // Verify that only enabled links are rendered
