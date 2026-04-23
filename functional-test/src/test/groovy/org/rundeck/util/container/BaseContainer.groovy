@@ -54,7 +54,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
 
         SLF4JBridgeHandler.install()
         //fine logging for http client closeable leaks
-        Logger.getLogger(OkHttpClient.name).setLevel(Level.FINEST)
+        Logger.getLogger(OkHttpClient.name).setLevel(Level.FINE)
     }
 
     @Shared
