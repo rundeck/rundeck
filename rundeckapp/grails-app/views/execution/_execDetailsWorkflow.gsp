@@ -45,13 +45,7 @@
         <div class="form-group ${hasErrors(bean: workflow, field: 'strategy', 'has-error')}">
             <label class="col-sm-12" title="Strategy for iteration">
                 <g:message code="strategy"/>:
-                <g:select name="workflow.strategy" from="${strategyPlugins}" optionKey="name"
-                          optionValue="${{plugin ->
-                              message(
-                                  code: 'Workflow.strategy.label.' + plugin.name,
-                                  default: plugin.title
-                              )
-                          }}"
+                <g:select name="workflow.strategy" from="${strategyPlugins}" optionKey="name" optionValue="title"
                           value="${wfstrat}"
                           class="form-control"/>
             </label>
@@ -75,10 +69,7 @@
               class="strategyPlugin">
             <span class="text-info">
                 <g:render template="/scheduledExecution/description"
-                          model="[description: message(
-                                  code: 'Workflow.strategy.description.' + pluginName,
-                                  default: pluginDescription.description
-                              ),
+                          model="[description: pluginDescription.description,
                                   textCss: '',
                                   mode: 'collapsed',
                                   moreText:'More Information',
