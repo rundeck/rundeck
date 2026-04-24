@@ -24,7 +24,7 @@ dependencies {
     implementation(project(":core"))
     pluginLibs('com.kohlschutter.junixsocket:junixsocket-core:2.10.1')
     pluginLibs("com.github.mwiede:jsch:${mwiedeJschVersion}")
-    pluginLibs('org.apache.ant:ant-jsch:1.10.17'){
+    pluginLibs("org.apache.ant:ant-jsch:${antVersion}"){
         //ant is part of core
         exclude(group: 'org.apache.ant', module: 'ant')
         exclude(group: 'com.jcraft', module: 'jsch')
