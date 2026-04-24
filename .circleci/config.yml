@@ -830,7 +830,6 @@ workflows:
       # Stage 1: Build
       - build-rundeck:
           name: Build
-          jre25Publish: true
           <<: *cloudsmith-slack-defaults
 
       # Step 1: Unit tests run in parallel with Build (no gates for fast feedback)
