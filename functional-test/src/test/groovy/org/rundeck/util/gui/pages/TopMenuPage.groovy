@@ -15,7 +15,7 @@ class TopMenuPage extends BasePage {
 
     By settingsButtonBy = By.id("appAdmin")
     By systemConfigurationMenuBy = By.linkText("System Configuration")
-    By appUserDropdownBy = By.id("userLabel")
+    By appUserDropdownBy = By.id("appUserMenu")
     By logOutMenuBy = By.linkText("Logout")
     By divHomeIconTag = By.cssSelector("#nav-rd-home i")
 

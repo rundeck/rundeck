@@ -1,5 +1,6 @@
 <template>
   <mainbar-menu
+    id="appUserMenu"
     :sub-header="subHeader"
     icon-css="fas fa-user fa-lg"
     :links="links"
