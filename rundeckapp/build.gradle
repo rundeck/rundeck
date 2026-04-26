@@ -351,7 +351,7 @@ dependencies {
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     implementation "io.micronaut:micronaut-core"
 
-    runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
+    runtimeOnly 'org.aspectj:aspectjweaver:1.9.25.1'
 
     // Database drivers
     runtimeOnly "com.h2database:h2:2.2.220"
@@ -385,7 +385,7 @@ dependencies {
     testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver:${seleniumJavaVersion}"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-api:${seleniumJavaVersion}"
     testRuntimeOnly "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
-    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.7'
+    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.25.1'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     // transitive dependencies constraints.
     constraints {
