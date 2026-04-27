@@ -570,10 +570,14 @@ class JobCreatePage extends BasePage {
         el By.xpath("//*[contains(@${stepType.getStepType()}, '$dataNodeStepType')]")
     }
 
-    WebElement getAdhocRemoteStringBy() {
-        el legacyUi ? adhocRemoteStringBy : NextUi.adhocRemoteStringBy
-    }
-
+    /**
+     * Returns the adhoc remote-string command input element.
+     *
+     * <p>Note: there is no companion {@code getAdhocRemoteStringBy()} method by design —
+     * a getter named {@code getAdhocRemoteStringBy} would shadow Groovy property access
+     * to the {@link #adhocRemoteStringBy} {@link By} field, breaking call-sites like
+     * {@code jobCreatePage.byAndWaitClickable(jobCreatePage.adhocRemoteStringBy)}.
+     */
     WebElement getAdhocRemoteStringField() {
         el legacyUi ? adhocRemoteStringBy : NextUi.adhocRemoteStringBy
     }

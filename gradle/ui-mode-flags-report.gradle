@@ -24,7 +24,7 @@
  */
 buildscript {
     repositories { mavenCentral() }
-    dependencies { classpath 'org.ow2.asm:asm:9.7' }
+    dependencies { classpath "org.ow2.asm:asm:${asmVersion}" }
 }
 
 ext.uiModeFlagsReportTitle = ext.has('uiModeFlagsReportTitle') ?

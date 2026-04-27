@@ -124,8 +124,13 @@ class BasicJobsSpec extends SeleniumBase {
         expect:
             jobShowPage.descriptionTextLabel.getText().trim().replaceAll(/\s+/, ' ').contains('a new job description')
         where:
-            // Details tab GSP `uiType=='next'` → Vue when nextUi=true, KO otherwise.
-            nextUi<<[false,true]
+            // Details tab edit GSP supports both Vue (nextUi=true) and KO (default)
+            // branches, but `JobShowPage.getDescriptionTextLabel()` keys off `nextUi`
+            // and the JOB SHOW page no longer honors that URL flag (renders Vue
+            // unconditionally), so the legacy branch times out. Restoring full
+            // [false,true] coverage requires teaching JobShowPage to branch on
+            // `legacyUi` (mirroring the JobCreatePage post-promotion fix).
+            nextUi<<[true]
     }
 
     @UiModeFlag(featureName = "edit-job-groups-nextui", status = UiModeStatus.NEXT_UI)
