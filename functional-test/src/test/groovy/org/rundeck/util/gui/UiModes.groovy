@@ -42,10 +42,24 @@ class UiModes {
     /**
      * Single-mode: only the promoted default, no flag needed.
      * Use after the legacy branch has been removed.
+     * Pair with {@code @UiModeFlag(status = DEPRECATED)} during the deletion grace
+     * period, or no annotation at all once the feature is fully gone.
      *
      * @return {@code [[false]]}
      */
     static List<List<Object>> defaultOnly() {
         [[false]]
+    }
+
+    /**
+     * Single-mode: only the legacy path is exercised. Iteration variable is
+     * typically {@code legacyUi} (held at {@code true}).
+     * Use when {@code @UiModeFlag(status = LEGACY)} and the spec is intentionally
+     * pinned to the legacy code path (migration deferred).
+     *
+     * @return {@code [[true]]}
+     */
+    static List<List<Object>> legacyOnly() {
+        [[true]]
     }
 }

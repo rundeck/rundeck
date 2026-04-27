@@ -1,0 +1,228 @@
+/**
+ * Shared {@code reportUiFlags} Gradle task.
+ *
+ * Scans compiled test classes (under {@code build/classes/groovy/test}) for
+ * {@code @org.rundeck.util.annotations.UiModeFlag} annotations using ASM
+ * bytecode visiting — no reflection, no Selenium class initialization.
+ * Prints a console table, lists status↔helper mismatches, and writes
+ * {@code build/reports/ui-mode-flags/report.md}.
+ *
+ * <h3>Usage</h3>
+ *
+ * <pre>{@code
+ *   // build.gradle
+ *   ext.uiModeFlagsReportTitle = 'UI Mode Flag Coverage Report (Pro)' // optional override
+ *   apply from: "${rootDir}/rundeck/gradle/ui-mode-flags-report.gradle"
+ * }</pre>
+ *
+ * <h3>Why a separate script and not buildSrc</h3>
+ *
+ * Keeping this as an applied script avoids the {@code buildSrc} compilation
+ * step (which would force a full project rebuild on every script edit) and
+ * matches the pattern already used by sibling scripts in {@code rundeck/gradle/}
+ * (e.g. {@code java-version.gradle}, {@code grailsopenapispec.gradle}).
+ */
+buildscript {
+    repositories { mavenCentral() }
+    dependencies { classpath 'org.ow2.asm:asm:9.7' }
+}
+
+ext.uiModeFlagsReportTitle = ext.has('uiModeFlagsReportTitle') ?
+        ext.uiModeFlagsReportTitle : 'UI Mode Flag Coverage Report'
+
+task reportUiFlags {
+    dependsOn compileTestGroovy
+    description = 'Scan compiled test classes for @UiModeFlag and print a UI-mode coverage report'
+
+    doLast {
+        final String ANNOTATION_DESC = 'Lorg/rundeck/util/annotations/UiModeFlag;'
+        final String FEATURE_METADATA_DESC = 'Lorg/spockframework/runtime/model/FeatureMetadata;'
+        final String UI_MODES_OWNER = 'org/rundeck/util/gui/UiModes'
+
+        // Expected helper per status — used to detect mismatches between
+        // @UiModeFlag.status and the UiModes.<helper>() bound to UI_MODES.
+        final Map STATUS_TO_HELPER = [
+            NEXT_UI   : 'nextUiAndDefault',
+            PROMOTED  : 'defaultAndLegacy',
+            LEGACY    : 'legacyOnly',
+            DEPRECATED: 'defaultOnly'
+        ]
+
+        def classDir = file("${buildDir}/classes/groovy/test")
+        if (!classDir.exists()) {
+            println "[reportUiFlags] No compiled test classes found — run compileTestGroovy first."
+            return
+        }
+
+        // Builds an AnnotationVisitor that fills the supplied Map with @UiModeFlag attributes
+        def annotationCollector = { Map target ->
+            target.found = true
+            return new org.objectweb.asm.AnnotationVisitor(org.objectweb.asm.Opcodes.ASM9) {
+                @Override
+                void visit(String name, Object value) {
+                    if (name && target.containsKey(name)) target[name] = value?.toString() ?: ''
+                }
+                @Override
+                void visitEnum(String name, String desc, String value) {
+                    if (name && target.containsKey(name)) target[name] = value ?: ''
+                }
+            }
+        }
+
+        def newAnnotationInfo = {
+            [found: false, featureName: null, status: 'NEXT_UI', mechanism: 'URL_PARAM',
+             jiraTicket: '']
+        }
+
+        def entries = []
+        def warnings = []
+
+        classDir.eachFileRecurse { File f ->
+            // Skip inner/anonymous classes and non-class files
+            if (!f.name.endsWith('.class') || f.name.contains('$')) return
+
+            // State containers (Maps so anonymous inner classes can safely mutate them)
+            def classState = [className: '']
+            def classAnno  = newAnnotationInfo()
+            def methodAnnos = []  // List of [methodCtx, info]
+            def helperCalls = []  // UiModes.<helper>() invocations seen in <clinit>
+
+            def visitor = new org.objectweb.asm.ClassVisitor(org.objectweb.asm.Opcodes.ASM9) {
+                @Override
+                void visit(int version, int access, String name, String signature,
+                           String superName, String[] interfaces) {
+                    classState.className = name.replace('/', '.')
+                }
+
+                @Override
+                org.objectweb.asm.AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                    if (descriptor != ANNOTATION_DESC) return null
+                    return annotationCollector(classAnno)
+                }
+
+                @Override
+                org.objectweb.asm.MethodVisitor visitMethod(int access, String mName, String mDesc,
+                                                            String mSig, String[] exceptions) {
+                    // Track display name per-method; Spock's @FeatureMetadata exposes the original
+                    // def "..." string under attribute "name". Fallback to bytecode method name.
+                    def methodCtx = [displayName: mName, info: null]
+                    final boolean isClinit = (mName == '<clinit>')
+                    return new org.objectweb.asm.MethodVisitor(org.objectweb.asm.Opcodes.ASM9) {
+                        @Override
+                        org.objectweb.asm.AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                            if (descriptor == ANNOTATION_DESC) {
+                                methodCtx.info = newAnnotationInfo()
+                                methodAnnos << [methodCtx, methodCtx.info]
+                                return annotationCollector(methodCtx.info)
+                            }
+                            if (descriptor == FEATURE_METADATA_DESC) {
+                                return new org.objectweb.asm.AnnotationVisitor(org.objectweb.asm.Opcodes.ASM9) {
+                                    @Override
+                                    void visit(String name, Object value) {
+                                        if (name == 'name' && value) {
+                                            methodCtx.displayName = value.toString()
+                                        }
+                                    }
+                                }
+                            }
+                            return null
+                        }
+                        @Override
+                        void visitMethodInsn(int opcode, String owner, String iName,
+                                             String iDesc, boolean isInterface) {
+                            if (isClinit && owner == UI_MODES_OWNER) {
+                                helperCalls << iName
+                            }
+                        }
+                    }
+                }
+            }
+
+            new org.objectweb.asm.ClassReader(f.bytes).accept(visitor,
+                org.objectweb.asm.ClassReader.SKIP_DEBUG | org.objectweb.asm.ClassReader.SKIP_FRAMES)
+
+            def sourceRelPath = "src/test/groovy/${classState.className.replace('.', '/')}.groovy"
+            def age = 'uncommitted'
+            try {
+                def proc = ['git', 'log', '-1', '--follow', '--format=%cr', '--', sourceRelPath]
+                    .execute(null, projectDir)
+                proc.waitFor()
+                def out = proc.text.trim()
+                if (out) age = out
+            } catch (ignored) {}
+
+            def specName = classState.className.tokenize('.').last()
+
+            if (classAnno.found && classAnno.featureName) {
+                entries << [
+                    feature  : classAnno.featureName,
+                    mechanism: classAnno.mechanism,
+                    status   : classAnno.status,
+                    jira     : classAnno.jiraTicket ?: '-',
+                    spec     : specName,
+                    age      : age
+                ]
+                String expectedHelper = STATUS_TO_HELPER[classAnno.status]
+                if (expectedHelper && helperCalls && !helperCalls.contains(expectedHelper)) {
+                    warnings << "${specName}: status=${classAnno.status} expects UiModes.${expectedHelper}() but found UiModes.${helperCalls.unique().join(', UiModes.')}()"
+                }
+            }
+
+            methodAnnos.each { entry ->
+                Map ctx = entry[0]
+                Map info = entry[1]
+                if (!info.featureName) return
+                entries << [
+                    feature  : info.featureName,
+                    mechanism: info.mechanism,
+                    status   : info.status,
+                    jira     : info.jiraTicket ?: '-',
+                    spec     : "${specName}#${ctx.displayName}",
+                    age      : age
+                ]
+            }
+        }
+
+        if (entries.isEmpty()) {
+            println '[reportUiFlags] No @UiModeFlag annotations found in compiled test classes.'
+            return
+        }
+
+        def headers = ['Feature', 'Mechanism', 'Status', 'Jira', 'Spec', 'Age']
+        def rows = entries.collect { e ->
+            [e.feature, e.mechanism, e.status, e.jira, e.spec, e.age]
+        }
+        def widths = (0..<headers.size()).collect { i ->
+            ([headers[i].length()] + rows.collect { it[i].length() }).max()
+        }
+        def separator = widths.collect { '─' * it }.join('  ')
+        def fmt = { List<String> cols -> widths.withIndex().collect { w, i -> cols[i].padRight(w) }.join('  ') }
+
+        println ''
+        println fmt(headers)
+        println separator
+        rows.each { println fmt(it) }
+        println ''
+
+        if (warnings) {
+            println '[reportUiFlags] Status / UI_MODES helper mismatches:'
+            warnings.each { println "  ⚠ ${it}" }
+            println ''
+        }
+
+        def reportDir = file("${buildDir}/reports/ui-mode-flags")
+        reportDir.mkdirs()
+        def reportFile = new File(reportDir, 'report.md')
+        def md = new StringBuilder()
+        md << "# ${project.uiModeFlagsReportTitle}\n\n"
+        md << "| ${headers.join(' | ')} |\n"
+        md << "| ${headers.collect { '-' * it.length() }.join(' | ')} |\n"
+        rows.each { row -> md << "| ${row.join(' | ')} |\n" }
+        if (warnings) {
+            md << "\n## Warnings\n\n"
+            warnings.each { md << "- ⚠ ${it}\n" }
+        }
+        reportFile.text = md.toString()
+        println "[reportUiFlags] Report written to ${reportFile.canonicalPath}"
+    }
+}

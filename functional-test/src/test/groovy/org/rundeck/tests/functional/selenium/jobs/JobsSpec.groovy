@@ -946,6 +946,8 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.expectNumberOfStepsToBe(2)
         where:
+        // Default-only sweep: this method exercises the promoted UI only;
+        // legacy parity covered by other methods that iterate UI_MODES.
         legacyUi << [false]
     }
 
@@ -973,6 +975,8 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.expectNumberOfStepsToBe(3) // it counts the error handler as a step due to class
         where:
+        // Default-only sweep: this method exercises the promoted UI only;
+        // legacy parity covered by other methods that iterate UI_MODES.
         legacyUi << [false]
     }
 

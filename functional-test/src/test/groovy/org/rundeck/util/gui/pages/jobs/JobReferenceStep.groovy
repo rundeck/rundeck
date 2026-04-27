@@ -42,6 +42,7 @@ class JobReferenceStep implements JobStep {
         }
 
         if (childJobUuid) {
+            // @UiModeFlag-ref: job-reference (JobReferenceSpec — UUID input field selector)
             if(nextUi) {
                 WebElement jobUuidField = jobCreatePage.driver.findElement(jobUuidFieldBy)
                 jobUuidField.click()
