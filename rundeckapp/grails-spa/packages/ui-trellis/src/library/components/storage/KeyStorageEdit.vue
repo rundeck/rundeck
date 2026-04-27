@@ -130,6 +130,7 @@
                 :disabled="uploadSetting.modifyMode === true"
                 name="relativePath"
                 class="form-control"
+                data-testid="key-path-input"
                 :placeholder="$t('storage.enter.directory.name')"
               />
               <input
@@ -312,10 +313,62 @@ export default defineComponent({
         return file ? true : false;
       }
     },
+    validateKeyPath(): string | null {
+      const path = this.getKeyPath();
+
+      // A truly empty path is handled by the Save-button's validInput() / backend
+      // "too short" check, so we don't flag it here. Whitespace-only input,
+      // however, must NOT be short-circuited — it falls through to the backend
+      // pattern check below and is caught by the leading-space branch.
+      if (!path) {
+        return null;
+      }
+
+      // Backend regex (StorageParams.groovy):
+      //   ^\/?((?!\.\.(\/|$))[a-zA-Z0-9,.+_-][\sa-zA-Z0-9,.+_-]*?\/?)+$
+      // Rules, per path component:
+      //   - cannot be exactly ".." (directory traversal)
+      //   - first char: [a-zA-Z0-9,.+_-] (no leading space)
+      //   - subsequent chars: [\sa-zA-Z0-9,.+_-] (space allowed)
+      const backendPattern = /^\/?((?!\.\.(\/|$))[a-zA-Z0-9,.+_-][\sa-zA-Z0-9,.+_-]*?\/?)+$/;
+
+      if (backendPattern.test(path)) {
+        return null;
+      }
+
+      const components = path.split('/').filter(c => c.length > 0);
+
+      // Only flag ".." when it is a full path component (matches backend behavior).
+      // Strings like "foo..bar" are valid and must not be reported as traversal.
+      if (components.some(component => component === '..')) {
+        return this.$t('storage.keyPath.error.traversal');
+      }
+
+      if (components.some(component => component.startsWith(' '))) {
+        return this.$t('storage.keyPath.error.leadingSpace');
+      }
+
+      const validChars = /^[a-zA-Z0-9,.+_\s/-]$/;
+      const invalidChar = path.split('').find(char => !validChars.test(char));
+      if (invalidChar) {
+        return this.$t('storage.keyPath.error.invalidChar', [invalidChar]);
+      }
+
+      return this.$t('storage.keyPath.error.invalidFormat');
+    },
     async handleUploadKey() {
       const rundeckContext = getRundeckContext();
 
       const fullPath = this.calcBrowsePath(this.getKeyPath());
+
+      // Validate path for new items only (skip for legacy items being edited)
+      if (!this.uploadSetting.modifyMode) {
+        const pathError = this.validateKeyPath();
+        if (pathError) {
+          this.uploadSetting.errorMsg = pathError;
+          return;
+        }
+      }
 
       let contentType = "application/pgp-keys";
 

@@ -27,6 +27,13 @@ const messages = {
   "storage.enter.password": "Enter a password",
   "storage.enter.directory.name": "Enter the directory name",
   "storage.specify.name": "Specify a name.",
+  "storage.keyPath.error.traversal":
+    "Directory traversal '..' is not allowed in key storage paths.",
+  "storage.keyPath.error.leadingSpace":
+    "Path components cannot start with a space.",
+  "storage.keyPath.error.invalidChar":
+    "The character '{0}' is not allowed. Key storage paths can only contain: letters, numbers, spaces (not at start), / . + _ - ,",
+  "storage.keyPath.error.invalidFormat": "Invalid key storage path format.",
   "soft.wrap": "Soft Wrap",
   jobAverageDurationPlaceholder: "leave blank for Job Average duration",
   resourcesEditor: {
