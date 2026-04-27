@@ -1,3 +1,13 @@
+import org.objectweb.asm.AnnotationVisitor
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassVisitor
+import org.objectweb.asm.Opcodes
+
+buildscript {
+    repositories { mavenCentral() }
+    dependencies { classpath 'org.ow2.asm:asm:9.7' }
+}
+
 plugins {
     id 'groovy'
     id "com.adarshr.test-logger" version "4.0.0"
@@ -105,6 +115,20 @@ def explicitTestIncluder(String testFiles) {
     }
 }
 
+/**
+ * Lightweight unit test task that runs plain Spock Specification classes without
+ * starting Docker or a Rundeck instance. Used for POC validation scenarios.
+ * Only picks up specs under org.rundeck.util (smoke/unit specs), excludes
+ * all API and selenium integration specs under org.rundeck.tests.functional.
+ */
+task unitTest(type: Test) {
+    useJUnitPlatform()
+    maxParallelForks = 1
+    exclude '**/selenium/**'
+    exclude '**/tests/functional/**'
+    description = "Run unit-level Spock specs (no docker, no selenium)"
+}
+
 task apiTest(type: Test){
     useJUnitPlatform()
     // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
@@ -180,3 +204,114 @@ task ldapTest(type: Test){
     systemProperty('spock.configuration', 'spock-configs/IncludeLdapTestsConfig.groovy')
     description = "Run Rundeck OSS LDAP Tests"
 }
+
+/**
+ * Scans compiled test classes for {@code @UiModeFlag} annotations via ASM (no reflection,
+ * no Selenium class initialization). Prints a console table and writes
+ * {@code build/reports/ui-mode-flags/report.md}. Run with {@code ./gradlew reportUiFlags}.
+ */
+task reportUiFlags {
+    dependsOn compileTestGroovy
+    description = 'Scan compiled test classes for @UiModeFlag and print a UI-mode coverage report'
+
+    doLast {
+        final String ANNOTATION_DESC = 'Lorg/rundeck/util/annotations/UiModeFlag;'
+        def classDir = file("${buildDir}/classes/groovy/test")
+        def entries = []
+
+        if (!classDir.exists()) {
+            println "[reportUiFlags] No compiled test classes found — run compileTestGroovy first."
+            return
+        }
+
+        classDir.eachFileRecurse { File f ->
+            // Skip inner/anonymous classes and non-class files
+            if (!f.name.endsWith('.class') || f.name.contains('$')) return
+
+            // Use a Map for all state — Maps are reference types, safely mutable from inner classes
+            def info = [found: false, featureName: null, status: 'NEXT_UI', mechanism: 'URL_PARAM',
+                        jiraTicket: '', className: '']
+
+            def visitor = new ClassVisitor(Opcodes.ASM9) {
+                @Override
+                void visit(int version, int access, String name, String signature,
+                           String superName, String[] interfaces) {
+                    info.className = name.replace('/', '.')
+                }
+
+                @Override
+                AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                    if (descriptor != ANNOTATION_DESC) return null
+                    info.found = true
+                    return new AnnotationVisitor(Opcodes.ASM9) {
+                        @Override
+                        void visit(String name, Object value) {
+                            if (name && info.containsKey(name)) info[name] = value?.toString() ?: ''
+                        }
+                        @Override
+                        void visitEnum(String name, String desc, String value) {
+                            if (name && info.containsKey(name)) info[name] = value ?: ''
+                        }
+                    }
+                }
+            }
+
+            new ClassReader(f.bytes).accept(visitor,
+                ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES)
+
+            if (!info.found || !info.featureName) return
+
+            def sourceRelPath = "src/test/groovy/${info.className.replace('.', '/')}.groovy"
+            def age = 'uncommitted'
+            try {
+                def proc = ['git', 'log', '-1', '--follow', '--format=%cr', '--', sourceRelPath]
+                    .execute(null, projectDir)
+                proc.waitFor()
+                def out = proc.text.trim()
+                if (out) age = out
+            } catch (ignored) {}
+
+            entries << [
+                feature  : info.featureName,
+                mechanism: info.mechanism,
+                status   : info.status,
+                jira     : info.jiraTicket ?: '-',
+                spec     : info.className.tokenize('.').last(),
+                age      : age
+            ]
+        }
+
+        if (entries.isEmpty()) {
+            println '[reportUiFlags] No @UiModeFlag annotations found in compiled test classes.'
+            return
+        }
+
+        def headers = ['Feature', 'Mechanism', 'Status', 'Jira', 'Spec', 'Age']
+        def rows = entries.collect { e ->
+            [e.feature, e.mechanism, e.status, e.jira, e.spec, e.age]
+        }
+        def widths = (0..<headers.size()).collect { i ->
+            ([headers[i].length()] + rows.collect { it[i].length() }).max()
+        }
+        def separator = widths.collect { '─' * it }.join('  ')
+        def fmt = { List<String> cols -> widths.withIndex().collect { w, i -> cols[i].padRight(w) }.join('  ') }
+
+        println ''
+        println fmt(headers)
+        println separator
+        rows.each { println fmt(it) }
+        println ''
+
+        def reportDir = file("${buildDir}/reports/ui-mode-flags")
+        reportDir.mkdirs()
+        def reportFile = new File(reportDir, 'report.md')
+        def md = new StringBuilder()
+        md << "# UI Mode Flag Coverage Report\n\n"
+        md << "| ${headers.join(' | ')} |\n"
+        md << "| ${headers.collect { '-' * it.length() }.join(' | ')} |\n"
+        rows.each { row -> md << "| ${row.join(' | ')} |\n" }
+        reportFile.text = md.toString()
+        println "[reportUiFlags] Report written to ${reportFile.canonicalPath}"
+    }
+}
+

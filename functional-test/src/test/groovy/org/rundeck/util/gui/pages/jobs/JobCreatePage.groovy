@@ -220,6 +220,10 @@ class JobCreatePage extends BasePage {
         loadCreatePath(projectName)
     }
 
+    /**
+     * @deprecated Use {@link #loadEditPath(String, String, UiMode)} instead.
+     */
+    @Deprecated
     void loadEditPath(String projectName, String jobId, Boolean nextUi = false) {
         this.edit=true
         this.projectName=projectName
@@ -227,6 +231,10 @@ class JobCreatePage extends BasePage {
         withFlag('nextUi', nextUi)
     }
 
+    /**
+     * @deprecated Use {@link #loadEditPath(String, String, UiMode)} instead.
+     */
+    @Deprecated
     void loadEditPath(String projectName, String jobId, Boolean legacyUi, Boolean isLegacy) {
         this.edit=true
         this.projectName=projectName
@@ -236,6 +244,21 @@ class JobCreatePage extends BasePage {
         } else {
             withFlag('nextUi', legacyUi)  // For backward compat
         }
+    }
+
+    /**
+     * Loads the job edit path with an explicit UI mode.
+     *
+     * @param projectName the project name
+     * @param jobId the job ID
+     * @param mode the UI mode to activate; defaults to {@link UiMode#DEFAULT}
+     */
+    void loadEditPath(String projectName, String jobId, UiMode mode) {
+        this.edit = true
+        this.projectName = projectName
+        this.jobId = jobId
+        withFlag('nextUi',   mode == UiMode.NEXT_UI)
+        withFlag('legacyUi', mode == UiMode.LEGACY)
     }
 
     void loadCreatePath(String projectName) {
