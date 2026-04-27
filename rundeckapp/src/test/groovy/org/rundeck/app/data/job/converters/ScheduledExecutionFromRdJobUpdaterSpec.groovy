@@ -24,7 +24,6 @@ class ScheduledExecutionFromRdJobUpdaterSpec extends Specification implements Da
         mockDomains(ScheduledExecution, Workflow, CommandExec, Option, Notification, Orchestrator)
     }
 
-    @Unroll
     def "updateNodeConfig resets nodesSelectedByDefault to true when doNodedispatch is false (Execute Locally)"() {
         given: "a node config that switches to Execute Locally but still carries the explicit-selection flag"
         def nodeConfig = new RdNodeConfig(
