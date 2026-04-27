@@ -27,6 +27,12 @@ Generated: 2026-04-24
 
 ## Migration Playbook
 
+> **Superseded.** The migration workflow now lives in the
+> `promote-ui-mode-feature` skill (`.claude/skills/promote-ui-mode-feature/SKILL.md`),
+> and the reference data (lifecycle, file map, mechanism enum) lives in
+> `.claude/docs/ui-mode-flags.md`. The original POC steps are kept below for
+> historical traceability only — do not follow them; use the skill.
+
 ### Step 1 — Classify the target spec
 
 Run:

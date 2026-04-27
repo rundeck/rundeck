@@ -32,7 +32,7 @@ import java.util.stream.Collectors
 @UiModeFlag(
     featureName = "jobs-options-workflow",
     status      = UiModeStatus.PROMOTED,
-    description = "@Stepwise spec; class-level captures the dominant legacyUi sweep (PROMOTED). Methods that exercise nextUi-only step-editor flows are annotated individually with NEXT_UI status."
+    description = "@Stepwise spec covering the workflow tab (uiType!='legacy') and its step editor; iterates legacyUi via UI_MODES (default→Vue, legacy→KO)."
 )
 class JobsSpec extends SeleniumBase {
 
@@ -980,23 +980,24 @@ class JobsSpec extends SeleniumBase {
         legacyUi << [false]
     }
 
-    @UiModeFlag(featureName = "edit-step-command-nextui", status = UiModeStatus.NEXT_UI)
     def "edit existing step - change command and save"() {
+        // Workflow-tab step editor — same `uiType!='legacy'` GSP gate as the parent
+        // `jobs-options-workflow` feature; iterate `[legacyUi] << UI_MODES`.
         when:
-            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
             def jobShowPage = page JobShowPage
         then:
-            jobCreatePage.fillBasicJob "edit step regression ${nextUi ? 'next ui' : 'legacy'}"
+            jobCreatePage.fillBasicJob "edit step regression ${legacyUi ? 'legacy' : 'default'}"
             jobCreatePage.expectNumberOfStepsToBe(1)
         when: "edit step and change command"
             jobCreatePage.clickStepToEdit(0)
-            jobCreatePage.waitForElementVisible (nextUi ? JobCreatePage.NextUi.adhocRemoteStringBy : jobCreatePage.adhocRemoteStringBy)
+            jobCreatePage.waitForElementVisible (legacyUi ? jobCreatePage.adhocRemoteStringBy : JobCreatePage.NextUi.adhocRemoteStringBy)
             jobCreatePage.adhocRemoteStringField.clear()
             jobCreatePage.adhocRemoteStringField.sendKeys 'echo updated command'
-            if (nextUi) {
-                jobCreatePage.workflowSaveStepButton.click()
-            } else {
+            if (legacyUi) {
                 jobCreatePage.saveStep(0)
+            } else {
+                jobCreatePage.workflowSaveStepButton.click()
             }
         then:
             jobCreatePage.createJobButton.click()
@@ -1005,50 +1006,50 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo updated command') }
         where:
-            nextUi << [true]
+            [legacyUi] << UI_MODES
     }
 
-    @UiModeFlag(featureName = "cancel-new-step-nextui", status = UiModeStatus.NEXT_UI)
     def "cancel editing new step - step not added"() {
+        // Workflow-tab step editor — covered by class-level `jobs-options-workflow` PROMOTED.
         when:
-            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi, legacyUi: !nextUi])
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         then:
-            jobCreatePage.jobNameInput.sendKeys "cancel new step ${nextUi ? 'next ui' : 'legacy'}"
+            jobCreatePage.jobNameInput.sendKeys "cancel new step ${legacyUi ? 'legacy' : 'default'}"
             jobCreatePage.tab(JobTab.WORKFLOW).click()
         when: "add step, configure, then cancel"
-            if (nextUi) {
+            if (legacyUi) {
+                jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
+                jobCreatePage.stepLink('exec-command', StepType.NODE).click()
+                jobCreatePage.byAndWaitClickable jobCreatePage.adhocRemoteStringBy
+                jobCreatePage.adhocRemoteStringField.sendKeys 'echo should not appear'
+                jobCreatePage.byAndWaitClickable(jobCreatePage.cancelNewStepFormBy).click()
+            } else {
                 jobCreatePage.clickAddStep()
                 jobCreatePage.byAndWaitClickable(By.xpath("//*[@${StepType.NODE.getStepType()}='exec-command']"))
                 jobCreatePage.stepLink('exec-command', StepType.NODE).click()
                 jobCreatePage.byAndWaitClickable JobCreatePage.NextUi.adhocRemoteStringBy
                 jobCreatePage.adhocRemoteStringField.sendKeys 'echo should not appear'
                 jobCreatePage.clickCancelStepEdit()
-            } else {
-                jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
-                jobCreatePage.stepLink('exec-command', StepType.NODE).click()
-                jobCreatePage.byAndWaitClickable jobCreatePage.adhocRemoteStringBy
-                jobCreatePage.adhocRemoteStringField.sendKeys 'echo should not appear'
-                jobCreatePage.byAndWaitClickable(jobCreatePage.cancelNewStepFormBy).click()
             }
         then:
-            jobCreatePage.waitForNumberOfElementsToBe(jobCreatePage.nextUi ? JobCreatePage.NextUi.numberOfStepsBy : jobCreatePage.numberOfStepsBy, 0)
+            jobCreatePage.waitForNumberOfElementsToBe(legacyUi ? jobCreatePage.numberOfStepsBy : JobCreatePage.NextUi.numberOfStepsBy, 0)
         expect:
             jobCreatePage.workFlowList.size() == 0
         where:
-            nextUi << [true]
+            [legacyUi] << UI_MODES
     }
 
-    @UiModeFlag(featureName = "cancel-edit-step-nextui", status = UiModeStatus.NEXT_UI)
     def "cancel editing existing step - changes discarded"() {
+        // Workflow-tab step editor — covered by class-level `jobs-options-workflow` PROMOTED.
         when:
-            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi, legacyUi: !nextUi])
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
             def jobShowPage = page JobShowPage
         then:
-            jobCreatePage.fillBasicJob "cancel edit step ${nextUi ? 'next ui' : 'legacy'}"
+            jobCreatePage.fillBasicJob "cancel edit step ${legacyUi ? 'legacy' : 'default'}"
             jobCreatePage.expectNumberOfStepsToBe(1)
         when: "edit step, change command, cancel"
             jobCreatePage.clickStepToEdit(0)
-            jobCreatePage.waitForElementVisible (nextUi ? JobCreatePage.NextUi.adhocRemoteStringBy : jobCreatePage.adhocRemoteStringBy)
+            jobCreatePage.waitForElementVisible (legacyUi ? jobCreatePage.adhocRemoteStringBy : JobCreatePage.NextUi.adhocRemoteStringBy)
             jobCreatePage.adhocRemoteStringField.clear()
             jobCreatePage.adhocRemoteStringField.sendKeys 'echo discarded change'
             jobCreatePage.clickCancelStepEdit()
@@ -1059,6 +1060,6 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo selenium test') }
         where:
-            nextUi << [true]
+            [legacyUi] << UI_MODES
     }
 }

@@ -119,14 +119,13 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.go()
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()
-            // Wait for page transition after clicking update button
             jobCreatePage.waitForUrlToContain('/job/show')
-            // Wait for description element to be visible before reading text
             jobShowPage.waitForElementVisible(jobShowPage.descriptionTextLabel)
         expect:
             jobShowPage.descriptionTextLabel.getText().trim().replaceAll(/\s+/, ' ').contains('a new job description')
         where:
-            nextUi<<[true]
+            // Details tab GSP `uiType=='next'` → Vue when nextUi=true, KO otherwise.
+            nextUi<<[false,true]
     }
 
     @UiModeFlag(featureName = "edit-job-groups-nextui", status = UiModeStatus.NEXT_UI)

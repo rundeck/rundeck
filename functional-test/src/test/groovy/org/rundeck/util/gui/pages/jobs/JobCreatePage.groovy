@@ -1160,9 +1160,11 @@ class JobCreatePage extends BasePage {
     }
 
     /**
-     * Clicks the step at index to open edit modal (nextUi mode only).
-     * The step item with id wfitem_${index} is clickable and opens EditPluginModal.
+     * Clicks the step at index to open the step editor.
+     * The step item id `wfitem_${index}` is shared across legacy KO and Vue;
+     * legacy opens the inline edit form, default/nextUi opens EditPluginModal.
      */
+    // @UiModeFlag-ref: workflow-tab (step editor open)
     void clickStepToEdit(int index) {
         def stepEl = el(By.id("wfitem_${index}"))
         executeScript "arguments[0].scrollIntoView(true);", stepEl
@@ -1172,10 +1174,11 @@ class JobCreatePage extends BasePage {
 
     /**
      * Clicks the cancel button when editing a step.
-     * nextUi: modal cancel. Legacy: inline form discard button.
+     * Legacy: inline form discard button. Default/nextUi (post workflow-tab promotion): modal cancel.
      */
+    // @UiModeFlag-ref: workflow-tab (step editor cancel)
     void clickCancelStepEdit() {
-        def cancelBy = nextUi ? NextUi.stepEditModalCancelBy : cancelEditStepFormBy
+        def cancelBy = legacyUi ? cancelEditStepFormBy : NextUi.stepEditModalCancelBy
         def cancelBtn = waitForElementVisible(cancelBy)
         executeScript "arguments[0].scrollIntoView(true);", cancelBtn
         waitForElementToBeClickable(cancelBtn)
