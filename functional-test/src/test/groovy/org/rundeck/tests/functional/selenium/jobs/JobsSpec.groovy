@@ -912,12 +912,13 @@ class JobsSpec extends SeleniumBase {
         assert jobCreatePage.getLogFilterButtons('#globalLogFilters').size() == 1
     }
 
+    // Default-only: legacy parity is covered by the other workflow-step methods that iterate UI_MODES.
     def "Node steps"() {
         when: "Create a new job and add a node step"
-        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT)
         String jobUuid = JobUtils.jobImportFile(SELENIUM_BASIC_PROJECT, '/test-files/simple-job-ref.xml', client).succeeded.first().id
         def jobShowPage = page JobShowPage
-        jobCreatePage.fillBasicJob "job with node steps ${legacyUi ? 'legacy ui' : 'current ui'}"
+        jobCreatePage.fillBasicJob "job with node steps"
         jobCreatePage.expectNumberOfStepsToBe(1)
         then: "Duplicate a step"
         jobCreatePage.waitForElementToBeClickable jobCreatePage.duplicateWfStepButton
@@ -945,15 +946,12 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.waitForElementToBeClickable jobShowPage.jobDefinitionModal
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.expectNumberOfStepsToBe(2)
-        where:
-        // Default-only sweep: this method exercises the promoted UI only;
-        // legacy parity covered by other methods that iterate UI_MODES.
-        legacyUi << [false]
     }
 
+    // Default-only: legacy parity is covered by the other workflow-step methods that iterate UI_MODES.
     def "Error handlers"() {
         when:
-        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT)
         def jobShowPage = page JobShowPage
         jobCreatePage.fillBasicJob 'job with error handlers'
         then: "Add error handler and check that its not possible to add more error handlers to same step"
@@ -974,10 +972,6 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.waitForElementToBeClickable jobShowPage.jobDefinitionModal
         jobShowPage.jobDefinitionModal.click()
         jobShowPage.expectNumberOfStepsToBe(3) // it counts the error handler as a step due to class
-        where:
-        // Default-only sweep: this method exercises the promoted UI only;
-        // legacy parity covered by other methods that iterate UI_MODES.
-        legacyUi << [false]
     }
 
     def "edit existing step - change command and save"() {

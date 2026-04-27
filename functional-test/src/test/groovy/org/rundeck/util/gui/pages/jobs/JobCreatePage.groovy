@@ -196,7 +196,6 @@ class JobCreatePage extends BasePage {
         }
     }
 
-    // @UiModeFlag-ref: url-flag-routing (infrastructure — every spec that loads with legacyUi/nextUi)
     private String getUiParam() {
         if(legacyUi) {
             return '?legacyUi=true'
@@ -241,7 +240,6 @@ class JobCreatePage extends BasePage {
         this.edit=false
     }
     
-    // @UiModeFlag-ref: basic-jobs / workflow-step (BasicJobsSpec, JobsSpec)
     void fillBasicJob(String name) {
         jobNameInput.sendKeys name
         tab JobTab.WORKFLOW click()
@@ -259,7 +257,6 @@ class JobCreatePage extends BasePage {
      * @param stepIndexNumber it starts from 0
      * @return
      */
-    // @UiModeFlag-ref: workflow-add-command-step (BasicJobsSpec, JobsSpec, ExportImportSpec)
     JobCreatePage addSimpleCommandStep(String command, int stepIndexNumber) {
         def execCommandBy = By.xpath("//*[contains(@${StepType.NODE.getStepType()}, 'exec-command')]")
         if (legacyUi) {
@@ -300,7 +297,6 @@ class JobCreatePage extends BasePage {
         return this
     }
 
-    // @UiModeFlag-ref: workflow-add-step (workflow-tab — used by JobReferenceSpec, ConditionalStepSpec, JobEditSpec)
     JobCreatePage addStep(JobStep step, int stepNumber = 0){
         def stepName = step.STEP_NAME
         tab(JobTab.WORKFLOW).click()
@@ -481,7 +477,6 @@ class JobCreatePage extends BasePage {
         el groupNameOption
     }
 
-    // @UiModeFlag-ref: edit-job-description-nextui (BasicJobsSpec)
     WebElement getDescriptionTextarea() {
         if(legacyUi) {
             def element = el descriptionTextareaBy
@@ -514,7 +509,6 @@ class JobCreatePage extends BasePage {
         driver.findElements(executionPluginsRows)
     }
 
-    // @UiModeFlag-ref: kill-handler-plugin-config (JobsSpec — kill handler step config)
     WebElement getKillHandlerPluginPreviousRow() {
         if(legacyUi){
             el killHandlerPluginPreviousRow
@@ -526,7 +520,6 @@ class JobCreatePage extends BasePage {
         }
     }
 
-    // @UiModeFlag-ref: kill-handler-plugin-config (JobsSpec)
     WebElement getKillHandlerPluginCheckbox() {
         if(legacyUi){
             el killHandlerPluginCheckbox
@@ -538,7 +531,6 @@ class JobCreatePage extends BasePage {
         }
     }
 
-    // @UiModeFlag-ref: kill-handler-plugin-config
     WebElement getKillHandlerPluginKillSpawnedCheckbox() {
         el legacyUi ? killHandlerPluginKillSpawnedCheckbox : NextUi.killHandlerPluginKillSpawnedCheckbox
     }
@@ -551,7 +543,6 @@ class JobCreatePage extends BasePage {
         el multiExecTrueBy
     }
 
-    // @UiModeFlag-ref: workflow-strategy (JobsSpec — strategy plugin selector)
     WebElement getWorkFlowStrategyField() {
         el legacyUi ? workFlowStrategyBy : NextUi.workFlowStrategyBy
     }
@@ -560,12 +551,10 @@ class JobCreatePage extends BasePage {
         el strategyPluginParallelBy
     }
 
-    // @UiModeFlag-ref: workflow-strategy
     WebElement getStrategyPluginParallelMsgField() {
         el legacyUi ? strategyPluginParallelMsgBy : NextUi.strategyPluginParallelMsgBy
     }
 
-    // @UiModeFlag-ref: workflow-step-link (used by addStep/addErrorHandler — workflow tab routing)
     WebElement stepLink(String dataNodeStepType, StepType stepType) {
         if(stepType == StepType.WORKFLOW) {
             if(legacyUi) {
@@ -581,12 +570,10 @@ class JobCreatePage extends BasePage {
         el By.xpath("//*[contains(@${stepType.getStepType()}, '$dataNodeStepType')]")
     }
 
-    // @UiModeFlag-ref: workflow-add-command-step (adhoc remote string field)
     WebElement getAdhocRemoteStringBy() {
         el legacyUi ? adhocRemoteStringBy : NextUi.adhocRemoteStringBy
     }
 
-    // @UiModeFlag-ref: workflow-add-command-step
     WebElement getAdhocRemoteStringField() {
         el legacyUi ? adhocRemoteStringBy : NextUi.adhocRemoteStringBy
     }
@@ -606,7 +593,6 @@ class JobCreatePage extends BasePage {
         btn.click()
     }
 
-    // @UiModeFlag-ref: workflow-error-handler (JobsSpec — "Error handlers")
     void clickAddErrorHandler(int position){
         stepDropdownTrigger(position).click()
         def errorHandlerOptionBy = legacyUi ? 
@@ -616,7 +602,6 @@ class JobCreatePage extends BasePage {
         (el errorHandlerOptionBy).click()
     }
 
-    // @UiModeFlag-ref: workflow-log-filter (JobsSpec — log filter on step)
     def clickAddLogFilter(int position) {
         stepDropdownTrigger(position).click()
         def logFilterOptionBy = legacyUi ? 
@@ -634,12 +619,10 @@ class JobCreatePage extends BasePage {
         el cancelBy
     }
 
-    // @UiModeFlag-ref: job-options (DuplicateOptionsSpec — pinned LEGACY; JobsSpec)
     WebElement getOptionButton() {
         el legacyUi ? optionBy : NextUi.optionBy
     }
 
-    // @UiModeFlag-ref: job-options
     WebElement optionNameNew(int index=0) {
         if(legacyUi){
             return byAndWait(optionNameNewBy)
@@ -647,14 +630,12 @@ class JobCreatePage extends BasePage {
             return byAndWait(By.cssSelector("#optitem_new input[type=text][name=name]"))
         }
     }
-    // @UiModeFlag-ref: job-options
     WebElement optionName(int index) {
         byAndWait legacyUi?
                   By.cssSelector("#optvis_$index > div.optEditForm input[type=text][name=name]"):
                   By.cssSelector("#optitem_new input[type=text][name=name], #optitem_$index input[type=text][name=name]")
     }
 
-    // @UiModeFlag-ref: job-options
     WebElement getUsageSection() {
         el legacyUi ? usageSectionBy : NextUi.usageSectionBy
     }
@@ -969,7 +950,6 @@ class JobCreatePage extends BasePage {
         (el By.id("wfitem_${position}"))
     }
 
-    // @UiModeFlag-ref: workflow-step (save button — used by every workflow-step spec)
     void saveStep(Integer stepNumber) {
         def button
         if(legacyUi) {
@@ -982,7 +962,6 @@ class JobCreatePage extends BasePage {
         waitForElementVisible By.id("wfitem_${stepNumber}")
     }
 
-    // @UiModeFlag-ref: workflow-remove-step (JobsSpec)
     void removeStepByIndex(int stepIndex){
         if(legacyUi) {
             (els deleteStepBy).get(stepIndex).click()
@@ -991,7 +970,6 @@ class JobCreatePage extends BasePage {
         }
     }
 
-    // @UiModeFlag-ref: workflow-step (step count selector — shared)
     def expectNumberOfStepsToBe(int numberSteps){
         new WebDriverWait(driver,  Duration.ofSeconds(5)).until(
                 ExpectedConditions.numberOfElementsToBe(this.legacyUi ? numberOfStepsBy : NextUi.numberOfStepsBy, numberSteps)
@@ -1047,12 +1025,10 @@ class JobCreatePage extends BasePage {
         el By.id("wfitem_${number}")
     }
 
-    // @UiModeFlag-ref: job-options
     List<WebElement> getOptions(){
         els legacyUi ? optionsBy : optionsByNextUi
     }
 
-    // @UiModeFlag-ref: job-options
     List<WebElement> getOptDetails(){
         els legacyUi ? optDetailBy : optDetailByNextUi
     }
@@ -1065,7 +1041,6 @@ class JobCreatePage extends BasePage {
         el workflowAlphaUiContainer
     }
 
-    // @UiModeFlag-ref: workflow-log-filter (filter modal item lookup)
     WebElement getListItemIndex(int position) {
         if (legacyUi) {
             // Legacy UI uses knockout modal for filter selection
@@ -1079,7 +1054,6 @@ class JobCreatePage extends BasePage {
         getElementByDataPropName(value, childElement)
     }
 
-    // @UiModeFlag-ref: workflow-log-filter (global log filter add button)
     WebElement getAddGlobalLogFilter() {
         def by = legacyUi ? addGlobalLogFilterLegacy : addGlobalLogFilter
         def button = el(by)
@@ -1088,7 +1062,6 @@ class JobCreatePage extends BasePage {
         return button
     }
 
-    // @UiModeFlag-ref: workflow-log-filter (highlight filter form fill)
     def fillHighlightLogFilter() {
         if (legacyUi) {
             def highlightItem = el(By.xpath("//div[@id='addLogFilterPluginModal']//a[contains(., 'Highlight')]"))
@@ -1127,7 +1100,6 @@ class JobCreatePage extends BasePage {
         el By.cssSelector(".item-container:nth-child(${index+1}) button[data-testid='remove-handler-button']");
     }
 
-    // @UiModeFlag-ref: workflow-step (per-step dropdown trigger — shared)
     WebElement stepDropdownTrigger(int index) {
         if (legacyUi) {
             el By.cssSelector("#pfctrls_${index} .btn-group .dropdown-toggle")
@@ -1136,7 +1108,6 @@ class JobCreatePage extends BasePage {
         }
     }
 
-    // @UiModeFlag-ref: workflow-error-handler (used by JobsSpec to assert dropdown options)
     def doesntHasDropdownOption(int index, String dataTest) {
         if (legacyUi) {
             // In legacy UI, check for classes like 'wfitem_add_errorhandler' in the dropdown
@@ -1164,7 +1135,6 @@ class JobCreatePage extends BasePage {
      * The step item id `wfitem_${index}` is shared across legacy KO and Vue;
      * legacy opens the inline edit form, default/nextUi opens EditPluginModal.
      */
-    // @UiModeFlag-ref: workflow-tab (step editor open)
     void clickStepToEdit(int index) {
         def stepEl = el(By.id("wfitem_${index}"))
         executeScript "arguments[0].scrollIntoView(true);", stepEl
@@ -1176,7 +1146,6 @@ class JobCreatePage extends BasePage {
      * Clicks the cancel button when editing a step.
      * Legacy: inline form discard button. Default/nextUi (post workflow-tab promotion): modal cancel.
      */
-    // @UiModeFlag-ref: workflow-tab (step editor cancel)
     void clickCancelStepEdit() {
         def cancelBy = legacyUi ? cancelEditStepFormBy : NextUi.stepEditModalCancelBy
         def cancelBtn = waitForElementVisible(cancelBy)
