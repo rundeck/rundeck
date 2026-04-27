@@ -3,6 +3,8 @@ package org.rundeck.tests.functional.selenium.jobs
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobOption
@@ -12,6 +14,11 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import java.text.SimpleDateFormat
 
 @SeleniumCoreTest
+@UiModeFlag(
+    featureName = "duplicate-options",
+    status      = UiModeStatus.LEGACY,
+    description = "Pinned to legacyUi=true; only the legacy code path is exercised here. Migration deferred."
+)
 class DuplicateOptionsSpec extends SeleniumBase {
 
     final static String PROJECT_NAME = 'DuplicateOptionsSpec'

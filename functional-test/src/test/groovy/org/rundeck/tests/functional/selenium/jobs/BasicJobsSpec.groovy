@@ -11,12 +11,22 @@ import org.rundeck.util.gui.pages.jobs.NotificationEvent
 import org.rundeck.util.gui.pages.jobs.NotificationType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.UiModes
 import spock.lang.Stepwise
 
 @SeleniumCoreTest
 @Stepwise
+@UiModeFlag(
+    featureName = "basic-jobs",
+    status      = UiModeStatus.PROMOTED,
+    description = "@Stepwise spec; class-level captures the dominant legacyUi sweep (PROMOTED). Methods that exercise nextUi-only or 4-arg legacy/next swaps are annotated individually with NEXT_UI status."
+)
 class BasicJobsSpec extends SeleniumBase {
+
+    static final UI_MODES = UiModes.defaultAndLegacy()
 
     def setupSpec() {
         setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
@@ -94,9 +104,10 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
             jobShowPage.optionInputText(optionName) != null
         where:
-            legacyUi<<[false, true]
+            [legacyUi] << UI_MODES
     }
 
+    @UiModeFlag(featureName = "edit-job-description-nextui", status = UiModeStatus.NEXT_UI)
     def "edit job set description"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
@@ -117,6 +128,7 @@ class BasicJobsSpec extends SeleniumBase {
             nextUi<<[true]
     }
 
+    @UiModeFlag(featureName = "edit-job-groups-nextui", status = UiModeStatus.NEXT_UI)
     def "edit job set groups"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
@@ -129,6 +141,7 @@ class BasicJobsSpec extends SeleniumBase {
             nextUi<<[false,true]
     }
 
+    @UiModeFlag(featureName = "edit-job-group-modal-nextui", status = UiModeStatus.NEXT_UI)
     def "edit job set group via modal"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
@@ -161,6 +174,11 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.waitForUrlToContain('/job/show')
     }
 
+    @UiModeFlag(
+        featureName = "edit-job-executions-tab-nextui",
+        status      = UiModeStatus.NEXT_UI,
+        description = "4-arg loadEditPath sweep alternates next-ui vs legacy paths (no plain default)"
+    )
     def "edit job and set executions tab"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT

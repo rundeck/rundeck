@@ -224,33 +224,73 @@ task reportUiFlags {
             return
         }
 
+        // Builds an AnnotationVisitor that fills the supplied Map with @UiModeFlag attributes
+        def annotationCollector = { Map target ->
+            target.found = true
+            return new AnnotationVisitor(Opcodes.ASM9) {
+                @Override
+                void visit(String name, Object value) {
+                    if (name && target.containsKey(name)) target[name] = value?.toString() ?: ''
+                }
+                @Override
+                void visitEnum(String name, String desc, String value) {
+                    if (name && target.containsKey(name)) target[name] = value ?: ''
+                }
+            }
+        }
+
+        def newAnnotationInfo = {
+            [found: false, featureName: null, status: 'NEXT_UI', mechanism: 'URL_PARAM',
+             jiraTicket: '']
+        }
+
         classDir.eachFileRecurse { File f ->
             // Skip inner/anonymous classes and non-class files
             if (!f.name.endsWith('.class') || f.name.contains('$')) return
 
-            // Use a Map for all state — Maps are reference types, safely mutable from inner classes
-            def info = [found: false, featureName: null, status: 'NEXT_UI', mechanism: 'URL_PARAM',
-                        jiraTicket: '', className: '']
+            // State containers (Maps so anonymous inner classes can safely mutate them)
+            def classState = [className: '']
+            def classAnno  = newAnnotationInfo()
+            def methodAnnos = []  // List of [methodName, info]
 
             def visitor = new ClassVisitor(Opcodes.ASM9) {
                 @Override
                 void visit(int version, int access, String name, String signature,
                            String superName, String[] interfaces) {
-                    info.className = name.replace('/', '.')
+                    classState.className = name.replace('/', '.')
                 }
 
                 @Override
                 AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                     if (descriptor != ANNOTATION_DESC) return null
-                    info.found = true
-                    return new AnnotationVisitor(Opcodes.ASM9) {
+                    return annotationCollector(classAnno)
+                }
+
+                @Override
+                org.objectweb.asm.MethodVisitor visitMethod(int access, String mName, String mDesc,
+                                                            String mSig, String[] exceptions) {
+                    // Track display name per-method; Spock's @FeatureMetadata exposes the original
+                    // def "..." string under attribute "name". Fallback to bytecode method name.
+                    def methodCtx = [displayName: mName, info: null]
+                    return new org.objectweb.asm.MethodVisitor(Opcodes.ASM9) {
                         @Override
-                        void visit(String name, Object value) {
-                            if (name && info.containsKey(name)) info[name] = value?.toString() ?: ''
-                        }
-                        @Override
-                        void visitEnum(String name, String desc, String value) {
-                            if (name && info.containsKey(name)) info[name] = value ?: ''
+                        AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                            if (descriptor == ANNOTATION_DESC) {
+                                methodCtx.info = newAnnotationInfo()
+                                methodAnnos << [methodCtx, methodCtx.info]
+                                return annotationCollector(methodCtx.info)
+                            }
+                            if (descriptor == 'Lorg/spockframework/runtime/model/FeatureMetadata;') {
+                                return new AnnotationVisitor(Opcodes.ASM9) {
+                                    @Override
+                                    void visit(String name, Object value) {
+                                        if (name == 'name' && value) {
+                                            methodCtx.displayName = value.toString()
+                                        }
+                                    }
+                                }
+                            }
+                            return null
                         }
                     }
                 }
@@ -259,9 +299,7 @@ task reportUiFlags {
             new ClassReader(f.bytes).accept(visitor,
                 ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES)
 
-            if (!info.found || !info.featureName) return
-
-            def sourceRelPath = "src/test/groovy/${info.className.replace('.', '/')}.groovy"
+            def sourceRelPath = "src/test/groovy/${classState.className.replace('.', '/')}.groovy"
             def age = 'uncommitted'
             try {
                 def proc = ['git', 'log', '-1', '--follow', '--format=%cr', '--', sourceRelPath]
@@ -271,14 +309,32 @@ task reportUiFlags {
                 if (out) age = out
             } catch (ignored) {}
 
-            entries << [
-                feature  : info.featureName,
-                mechanism: info.mechanism,
-                status   : info.status,
-                jira     : info.jiraTicket ?: '-',
-                spec     : info.className.tokenize('.').last(),
-                age      : age
-            ]
+            def specName = classState.className.tokenize('.').last()
+
+            if (classAnno.found && classAnno.featureName) {
+                entries << [
+                    feature  : classAnno.featureName,
+                    mechanism: classAnno.mechanism,
+                    status   : classAnno.status,
+                    jira     : classAnno.jiraTicket ?: '-',
+                    spec     : specName,
+                    age      : age
+                ]
+            }
+
+            methodAnnos.each { entry ->
+                Map ctx = entry[0]
+                Map info = entry[1]
+                if (!info.featureName) return
+                entries << [
+                    feature  : info.featureName,
+                    mechanism: info.mechanism,
+                    status   : info.status,
+                    jira     : info.jiraTicket ?: '-',
+                    spec     : "${specName}#${ctx.displayName}",
+                    age      : age
+                ]
+            }
         }
 
         if (entries.isEmpty()) {

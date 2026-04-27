@@ -224,7 +224,7 @@ class JobCreatePage extends BasePage {
      * @deprecated Use {@link #loadEditPath(String, String, UiMode)} instead.
      */
     @Deprecated
-    void loadEditPath(String projectName, String jobId, Boolean nextUi = false) {
+    void loadEditPath(String projectName, String jobId, Boolean nextUi) {
         this.edit=true
         this.projectName=projectName
         this.jobId=jobId
@@ -253,7 +253,7 @@ class JobCreatePage extends BasePage {
      * @param jobId the job ID
      * @param mode the UI mode to activate; defaults to {@link UiMode#DEFAULT}
      */
-    void loadEditPath(String projectName, String jobId, UiMode mode) {
+    void loadEditPath(String projectName, String jobId, UiMode mode = UiMode.DEFAULT) {
         this.edit = true
         this.projectName = projectName
         this.jobId = jobId

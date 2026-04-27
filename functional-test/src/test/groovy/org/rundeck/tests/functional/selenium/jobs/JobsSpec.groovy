@@ -17,7 +17,10 @@ import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.UiModes
 import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
@@ -26,7 +29,14 @@ import java.util.stream.Collectors
 
 @SeleniumCoreTest
 @Stepwise
+@UiModeFlag(
+    featureName = "jobs-options-workflow",
+    status      = UiModeStatus.PROMOTED,
+    description = "@Stepwise spec; class-level captures the dominant legacyUi sweep (PROMOTED). Methods that exercise nextUi-only step-editor flows are annotated individually with NEXT_UI status."
+)
 class JobsSpec extends SeleniumBase {
+
+    static final UI_MODES = UiModes.defaultAndLegacy()
 
     def setupSpec() {
         setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
@@ -230,7 +240,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            legacyUi << [false, true]
+            [legacyUi] << UI_MODES
     }
     def "job options config - check storage session"() {
         given:
@@ -256,7 +266,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.waitForOptionsToBe 1, 0
             jobCreatePage.optionLis 0 isEmpty()
         where:
-            legacyUi << [false, true]
+            [legacyUi] << UI_MODES
     }
     def "job option simple redo"() {
         when:
@@ -291,7 +301,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            legacyUi << [false, true]
+            [legacyUi] << UI_MODES
     }
     def "No default value field shown in secure job option section"() {
         given:
@@ -314,7 +324,7 @@ class JobsSpec extends SeleniumBase {
         then:
         driver.findElements(jobCreatePage.defaultValueBy).isEmpty() || !jobCreatePage.defaultValueInput.isDisplayed()
         where:
-        legacyUi << [false, true]
+        [legacyUi] << UI_MODES
     }
     def "job option revert all"() {
         given:
@@ -354,7 +364,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionLis 0 isEmpty()
             jobCreatePage.optionLis 1 isEmpty()
         where:
-            legacyUi << [false, true]
+            [legacyUi] << UI_MODES
     }
     def "job option undo redo"() {
         when:
@@ -393,7 +403,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            legacyUi << [false, true]
+            [legacyUi] << UI_MODES
     }
 
     def "job workflow step context variables autocomplete"() {
@@ -430,7 +440,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.workFlowList.size() == 1
             jobCreatePage.createJobButton.click()
         where:
-            legacyUi << [false, true]
+            [legacyUi] << UI_MODES
     }
 
     def "job workflow undo redo"() {
@@ -451,7 +461,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.workFlowList.size() == 2
             jobCreatePage.createJobButton.click()
         where:
-            legacyUi << [false, true]
+            [legacyUi] << UI_MODES
     }
 
     def "job workflow revert all"() {
@@ -476,7 +486,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.addSimpleCommandStep 'echo selenium test', 0
             jobCreatePage.createJobButton.click()
         where:
-            legacyUi << [false, true]
+            [legacyUi] << UI_MODES
     }
 
     def "job timeout should finish job with timeout status and step marked as failed"() {
@@ -703,7 +713,7 @@ class JobsSpec extends SeleniumBase {
         deleteProject(projectName)
 
         where:
-        legacyUi << [false, true]
+        [legacyUi] << UI_MODES
     }
 
     /**
@@ -835,7 +845,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameNew() displayed
         jobCreatePage.saveOptionButton.displayed
         where:
-        legacyUi << [false, true]
+        [legacyUi] << UI_MODES
     }
 
     def "Duplicate option create form"() {
@@ -883,7 +893,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.optionNameSaved(1).getText() == (legacyUi ? optName + '_1' : optName + '_copy')
         
         where:
-        legacyUi << [false, true]
+        [legacyUi] << UI_MODES
     }
 
     def "add global log filters"() {
@@ -966,6 +976,7 @@ class JobsSpec extends SeleniumBase {
         legacyUi << [false]
     }
 
+    @UiModeFlag(featureName = "edit-step-command-nextui", status = UiModeStatus.NEXT_UI)
     def "edit existing step - change command and save"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
@@ -993,6 +1004,7 @@ class JobsSpec extends SeleniumBase {
             nextUi << [true]
     }
 
+    @UiModeFlag(featureName = "cancel-new-step-nextui", status = UiModeStatus.NEXT_UI)
     def "cancel editing new step - step not added"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi, legacyUi: !nextUi])
@@ -1022,6 +1034,7 @@ class JobsSpec extends SeleniumBase {
             nextUi << [true]
     }
 
+    @UiModeFlag(featureName = "cancel-edit-step-nextui", status = UiModeStatus.NEXT_UI)
     def "cancel editing existing step - changes discarded"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi, legacyUi: !nextUi])
