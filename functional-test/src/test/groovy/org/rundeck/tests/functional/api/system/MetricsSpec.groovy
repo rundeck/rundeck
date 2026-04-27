@@ -85,6 +85,8 @@ class MetricsSpec extends BaseContainer {
             def response = client.doGetAcceptAll("/metrics/healthcheck")
         then:
             response.code() == 404
+        cleanup:
+            response.close()
     }
 
     def "Test legacy threads disabled by default"() {
@@ -92,6 +94,8 @@ class MetricsSpec extends BaseContainer {
             def response = client.doGetAcceptAll("/metrics/threads")
         then:
             response.code() == 404
+        cleanup:
+            response.close()
     }
 
     // ========================================================================

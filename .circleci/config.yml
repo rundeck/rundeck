@@ -762,6 +762,7 @@ require-api-integration: &require-api-integration
 require-selenium: &require-selenium
   requires:
     - T Selenium - Auth & Login
+    - T Selenium - Context Path
     - T Selenium - Projects
     - T Selenium - Jobs Core
     - T Selenium - Jobs Advanced
@@ -829,7 +830,6 @@ workflows:
       # Stage 1: Build
       - build-rundeck:
           name: Build
-          jre25Publish: true
           <<: *cloudsmith-slack-defaults
 
       # Step 1: Unit tests run in parallel with Build (no gates for fast feedback)
@@ -895,6 +895,14 @@ workflows:
           gradle-task: seleniumCoreTest
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Context Path
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          parallelism: 1
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/contextPath/**/*{.groovy,.java}"
           <<: *require-api-integration
           <<: *slack-defaults
       - test-gradle-functional:
@@ -1027,6 +1035,14 @@ workflows:
           gradle-task: seleniumCoreTest
           resource_class: xlarge
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium - Context Path  (host JDK 25)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge
+          parallelism: 1
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/contextPath/**/*{.groovy,.java}"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:

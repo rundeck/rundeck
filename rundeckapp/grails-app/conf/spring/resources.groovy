@@ -15,6 +15,7 @@
  */
 
 
+import asset.pipeline.grails.AssetProcessorService
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
@@ -184,7 +185,6 @@ import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
 import rundeck.services.workflow.DefaultStateExecutionFileProducer
 import rundeck.services.workflow.DefaultWorkflowStateDataLoader
-import rundeckapp.init.AssetPipelineResourceConfigurer
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
@@ -237,13 +237,23 @@ beans={
     if (application.config.getProperty("rundeck.multiURL.enabled", Boolean.class, false)) {
         Class requestAwareLinkGeneratorClass = RequestAwareLinkGenerator
         String serverURL = application.config.getProperty("grails.serverURL",String.class)
-        String contextPath = application.config.server.servlet["context-path"]
+        String contextPath = application.config.getProperty("server.servlet.context-path", String.class, "")
         if (serverURL && (contextPath && "/" != contextPath)) {
             log.info("RequestAwareLinkGenerator using url ${serverURL} and context-path ${contextPath}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL, contextPath) {}
+            // RUN-4332: When overriding grailsLinkGenerator, fix assetProcessorService contextPath null
+            // See: https://github.com/wondrify/asset-pipeline/issues/444#issuecomment-3958024443
+            assetProcessorService(AssetProcessorService) { bean ->
+                bean.autowire = true
+            }
         } else if (serverURL) {
             log.info("context-path not set, RequestAwareLinkGenerator using url ${serverURL}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL) {}
+            // RUN-4332: When overriding grailsLinkGenerator, fix assetProcessorService contextPath null
+            // See: https://github.com/wondrify/asset-pipeline/issues/444#issuecomment-3958024443
+            assetProcessorService(AssetProcessorService) { bean ->
+                bean.autowire = true
+            }
         } else {
             log.warn("rundeck.multiURL enabled but no grails.serverURL found. This feature will be disabled.")
         }
@@ -280,9 +290,6 @@ beans={
             resourceUriLocation = filesystemLocation?.isEmpty() ? "file:${rdeckBase}/user-assets/" : filesystemLocation
         }
     }
-
-    // Grails 7 / Jetty 12: Explicit resource handler for asset pipeline
-    assetPipelineResourceConfigurer(AssetPipelineResourceConfigurer)
 
     def serverLibextDir = application.config.getProperty("rundeck.server.plugins.dir",String.class,"${rdeckBase}/libext")
     File pluginDir = new File(serverLibextDir)
