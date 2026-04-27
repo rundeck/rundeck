@@ -115,20 +115,6 @@ def explicitTestIncluder(String testFiles) {
     }
 }
 
-/**
- * Lightweight unit test task that runs plain Spock Specification classes without
- * starting Docker or a Rundeck instance. Used for POC validation scenarios.
- * Only picks up specs under org.rundeck.util (smoke/unit specs), excludes
- * all API and selenium integration specs under org.rundeck.tests.functional.
- */
-task unitTest(type: Test) {
-    useJUnitPlatform()
-    maxParallelForks = 1
-    exclude '**/selenium/**'
-    exclude '**/tests/functional/**'
-    description = "Run unit-level Spock specs (no docker, no selenium)"
-}
-
 task apiTest(type: Test){
     useJUnitPlatform()
     // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
