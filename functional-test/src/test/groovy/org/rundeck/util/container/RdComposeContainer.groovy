@@ -25,15 +25,29 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
     public static final boolean USE_LOCAL_DOCKER_COMPOSE = (System.getenv("USE_LOCAL_DOCKER_COMPOSE") ?: "true").toBoolean()
 
     private final Map<String, Integer> clientConfig
+    private final String rundeckUrl
 
     /**
-     *
+     * Constructor with feature name and clientConfig (backward compatibility)
      * @param composeFilePath
      * @param featureName an optional feature name to enable
+     * @param clientConfig optional client configuration
      */
     RdComposeContainer(URI composeFilePath, String featureName, Map<String, Integer> clientConfig = Collections.emptyMap()) {
+        this(composeFilePath, featureName, null, clientConfig)
+    }
+
+    /**
+     * Constructor with all parameters
+     * @param composeFilePath
+     * @param featureName an optional feature name to enable
+     * @param customRundeckUrl optional custom Rundeck URL to override TEST_RUNDECK_GRAILS_URL
+     * @param clientConfig optional client configuration
+     */
+    RdComposeContainer(URI composeFilePath, String featureName, String customRundeckUrl, Map<String, Integer> clientConfig) {
         super(new File(composeFilePath))
         this.clientConfig = clientConfig
+        this.rundeckUrl = customRundeckUrl ?: TEST_RUNDECK_GRAILS_URL
         if (CONTEXT_PATH && !CONTEXT_PATH.startsWith('/')) {
             throw new IllegalArgumentException("Context path must start with /")
         }
@@ -41,7 +55,7 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
         withExposedService(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(600)))
         withEnv("TEST_IMAGE", RUNDECK_IMAGE)
         withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
-        withEnv("TEST_RUNDECK_GRAILS_URL", TEST_RUNDECK_GRAILS_URL)
+        withEnv("TEST_RUNDECK_GRAILS_URL", rundeckUrl)
         withEnv("TEST_TARGET_PLATFORM", TEST_TARGET_PLATFORM)
         withEnv("TEST_RUNDECK_FEATURE_NAME", featureName ?: 'placeholderFeatureName')
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))
@@ -63,7 +77,7 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
     }
 
     RdClient clientWithToken(String token) {
-        RdClient.create(TEST_RUNDECK_GRAILS_URL, token, clientConfig)
+        RdClient.create(rundeckUrl, token, clientConfig)
     }
 
     @Override
