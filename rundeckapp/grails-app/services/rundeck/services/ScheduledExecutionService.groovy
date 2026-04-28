@@ -3691,6 +3691,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }else{
             scheduledExecution.filter = null
+            scheduledExecution.nodesSelectedByDefault = true
         }
     }
 
