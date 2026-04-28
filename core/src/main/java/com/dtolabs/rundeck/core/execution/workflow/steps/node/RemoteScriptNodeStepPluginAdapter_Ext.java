@@ -181,8 +181,16 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
             // Per-value quoting: expand each template arg with the OS-aware converter so
             // individual ${...} values are quoted while template-level shell operators stay free.
             // ${unquoted.*} refs are exempted from the converter inside replaceDataReferences.
+            // Derive the command interpreter from the node attribute first, then fall back to the
+            // project property — this ensures Windows cmd.exe nodes use WINDOWS_CMD_ESCAPE instead
+            // of single-quote wrapping.
+            String commandInterpreter = node.getAttributes().get("shell-escaping-interpreter") != null
+                    ? node.getAttributes().get("shell-escaping-interpreter")
+                    : context.getIFramework().getFrameworkProjectMgr()
+                            .getFrameworkProject(context.getFrameworkProject())
+                            .getProperty("project.plugin.Shell.Escaping.interpreter");
             Converter<String, String> valueConverter = execQuotingEnabled
-                    ? CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily())
+                    ? CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily(), commandInterpreter)
                     : null;
             String[] expanded = SharedDataContextUtils.replaceDataReferences(
                     command,

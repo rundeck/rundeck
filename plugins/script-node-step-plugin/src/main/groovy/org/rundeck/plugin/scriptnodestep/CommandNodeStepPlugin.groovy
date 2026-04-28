@@ -42,12 +42,22 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
 
         def arr = OptsUtil.burst(adhocRemoteString)
 
+        // Derive the command interpreter from the node attribute first, then fall back to the
+        // project-level property — matching the same resolution order used in ExecutionServiceImpl.
+        // For Windows cmd.exe nodes the interpreter must be "cmd" to select WINDOWS_CMD_ESCAPE
+        // (caret-prefix escaping) instead of single-quote wrapping.
+        String commandInterpreter = entry.getAttributes()?.get("shell-escaping-interpreter") ?:
+                context.getExecutionContext().getIFramework()
+                        .getFrameworkProjectMgr()
+                        .getFrameworkProject(context.getExecutionContext().getFrameworkProject())
+                        .getProperty("project.plugin.Shell.Escaping.interpreter")
+
         // Per-value quoting: each ${...} expanded value is individually quoted using the
         // OS-aware converter. ${unquoted.*} refs are exempted from the converter during
         // SharedDataContextUtils.replaceDataReferences(...). Template-level shell operators
         // (;, &&, |) written by the job author stay outside any quoted value and are preserved.
         def valueConverter = execQuotingEnabled
-                ? CLIUtils.argumentQuoteForOperatingSystem(entry.getOsFamily())
+                ? CLIUtils.argumentQuoteForOperatingSystem(entry.getOsFamily(), commandInterpreter)
                 : null
 
         def result = SharedDataContextUtils.replaceDataReferences(

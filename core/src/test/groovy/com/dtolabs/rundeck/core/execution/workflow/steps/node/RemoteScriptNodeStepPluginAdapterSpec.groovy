@@ -21,7 +21,9 @@ import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IFrameworkServices
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.data.DataContext
 import com.dtolabs.rundeck.core.data.MultiDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
@@ -436,6 +438,64 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
             captured[1] == '/workspace/exec123;'
     }
 
+
+    def "Windows cmd interpreter: values with shell-special chars use cmd escaping not single-quote wrapping"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def mockProject = Mock(IRundeckProject) {
+                getProperty("project.plugin.Shell.Escaping.interpreter") >> null
+            }
+            def mockProjectMgr = Mock(ProjectManager) {
+                getFrameworkProject(PROJECT_NAME) >> mockProject
+            }
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getFrameworkProjectMgr() >> mockProjectMgr
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+            sharedContext.merge(
+                    com.dtolabs.rundeck.core.dispatcher.ContextView.global(),
+                    DataContextUtils.context("option", [dest: 'C:\\temp&dangerous'])
+            )
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getFrameworkProject() >> PROJECT_NAME
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('windows')
+            // Signal that cmd.exe is the interpreter via node attribute
+            node.getAttributes().put('shell-escaping-interpreter', 'cmd')
+
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['copy', '${option.dest}'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'windows')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            // WINDOWS_CMD_ESCAPE prepends '^' before each CMD-special char; it must NOT wrap with single quotes
+            !captured[1].startsWith("'")
+            // '&' in the value must be escaped as '^&'
+            captured[1].contains('^&')
+    }
 
     def "per-value quoting does not quote unquoted refs"() {
         given:

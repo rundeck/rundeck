@@ -1,8 +1,11 @@
 package org.rundeck.plugin.scriptnodestep
 
+import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -23,8 +26,15 @@ class CommandNodeStepPluginSpec extends Specification {
                     'rundeck.feature.quoting.backwardCompatible': 'false',
                     'rundeck.feature.exec.quoting.enabled'      : 'true',
             ]
+            def projectMock = Mock(IRundeckProject) {
+                getProperty("project.plugin.Shell.Escaping.interpreter") >> null
+            }
+            def projectMgrMock = Mock(ProjectManager) {
+                getFrameworkProject(_) >> projectMock
+            }
             def iFrameworkMock = Mock(IFramework) {
                 getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getFrameworkProjectMgr() >> projectMgrMock
             }
 
             WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
@@ -34,6 +44,7 @@ class CommandNodeStepPluginSpec extends Specification {
             def execCtx = Mock(ExecutionContext) {
                 getIFramework() >> iFrameworkMock
                 getSharedDataContext() >> sharedContext
+                getFrameworkProject() >> 'testProject'
             }
             def execService = Mock(ExecutionService)
             // PluginStepContext.getFramework() returns Framework (concrete) — mock the concrete class
@@ -71,8 +82,15 @@ class CommandNodeStepPluginSpec extends Specification {
                     'rundeck.feature.quoting.backwardCompatible': 'false',
                     'rundeck.feature.exec.quoting.enabled'      : 'true',
             ]
+            def projectMock = Mock(IRundeckProject) {
+                getProperty("project.plugin.Shell.Escaping.interpreter") >> null
+            }
+            def projectMgrMock = Mock(ProjectManager) {
+                getFrameworkProject(_) >> projectMock
+            }
             def iFrameworkMock = Mock(IFramework) {
                 getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getFrameworkProjectMgr() >> projectMgrMock
             }
 
             WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
@@ -81,6 +99,7 @@ class CommandNodeStepPluginSpec extends Specification {
             def execCtx = Mock(ExecutionContext) {
                 getIFramework() >> iFrameworkMock
                 getSharedDataContext() >> sharedContext
+                getFrameworkProject() >> 'testProject'
             }
             def execService = Mock(ExecutionService)
             def framework = Mock(Framework) {
@@ -116,8 +135,15 @@ class CommandNodeStepPluginSpec extends Specification {
                     'rundeck.feature.quoting.backwardCompatible': 'false',
                     'rundeck.feature.exec.quoting.enabled'      : 'true',
             ]
+            def projectMock = Mock(IRundeckProject) {
+                getProperty("project.plugin.Shell.Escaping.interpreter") >> null
+            }
+            def projectMgrMock = Mock(ProjectManager) {
+                getFrameworkProject(_) >> projectMock
+            }
             def iFrameworkMock = Mock(IFramework) {
                 getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getFrameworkProjectMgr() >> projectMgrMock
             }
 
             WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
@@ -129,6 +155,7 @@ class CommandNodeStepPluginSpec extends Specification {
             def execCtx = Mock(ExecutionContext) {
                 getIFramework() >> iFrameworkMock
                 getSharedDataContext() >> sharedContext
+                getFrameworkProject() >> 'testProject'
             }
             def execService = Mock(ExecutionService)
             def framework = Mock(Framework) {
@@ -175,8 +202,15 @@ class CommandNodeStepPluginSpec extends Specification {
                     'rundeck.feature.quoting.backwardCompatible': 'false',
                     'rundeck.feature.exec.quoting.enabled'      : 'true',
             ]
+            def projectMock = Mock(IRundeckProject) {
+                getProperty("project.plugin.Shell.Escaping.interpreter") >> null
+            }
+            def projectMgrMock = Mock(ProjectManager) {
+                getFrameworkProject(_) >> projectMock
+            }
             def iFrameworkMock = Mock(IFramework) {
                 getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getFrameworkProjectMgr() >> projectMgrMock
             }
 
             WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
@@ -185,6 +219,7 @@ class CommandNodeStepPluginSpec extends Specification {
             def execCtx = Mock(ExecutionContext) {
                 getIFramework() >> iFrameworkMock
                 getSharedDataContext() >> sharedContext
+                getFrameworkProject() >> 'testProject'
             }
             def execService = Mock(ExecutionService)
             def framework = Mock(Framework) {
@@ -212,5 +247,65 @@ class CommandNodeStepPluginSpec extends Specification {
             captured != null
             // ${unquoted.*} refs must NOT be quoted by the converter
             captured[1] == '80 && whoami'
+    }
+
+    def "Windows cmd interpreter: values with shell-special chars use cmd escaping not single-quote wrapping"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            // No project-level property needed — node attribute takes precedence
+            def projectMock = Mock(IRundeckProject) {
+                getProperty("project.plugin.Shell.Escaping.interpreter") >> null
+            }
+            def projectMgrMock = Mock(ProjectManager) {
+                getFrameworkProject(_) >> projectMock
+            }
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getFrameworkProjectMgr() >> projectMgrMock
+            }
+
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+            sharedContext.merge(ContextView.global(), DataContextUtils.context("option", [val: 'foo & whoami']))
+
+            def execCtx = Mock(ExecutionContext) {
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+                getFrameworkProject() >> 'testProject'
+            }
+            def execService = Mock(ExecutionService)
+            def framework = Mock(Framework) {
+                getExecutionService() >> execService
+            }
+            def context = Mock(PluginStepContext) {
+                getExecutionContext() >> execCtx
+                getFramework() >> framework
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('windows')
+            // Signal that this node uses cmd.exe as the command interpreter
+            node.setAttribute('shell-escaping-interpreter', 'cmd')
+
+            def plugin = new CommandNodeStepPlugin()
+            plugin.adhocRemoteString = 'echo ${option.val}'
+
+        when:
+            List<String> captured = null
+            execService.executeCommand(_, _, node) >> { args ->
+                captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'windows')
+                Mock(NodeExecutorResult) { isSuccess() >> true }
+            }
+            plugin.executeNodeStep(context, [:], node)
+
+        then:
+            captured != null
+            // WINDOWS_CMD_ESCAPE prefixes each cmd-special character with '^'.
+            // The '&' in 'foo & whoami' must become '^&', giving 'foo ^& whoami'.
+            // The result must NOT be single-quote wrapped (that would indicate
+            // WINDOWS_ARGUMENT_QUOTE was used instead of WINDOWS_CMD_ESCAPE).
+            !captured[1].startsWith("'")
+            captured[1] == CLIUtils.escapeWindowsCMDChars('foo & whoami')
     }
 }
