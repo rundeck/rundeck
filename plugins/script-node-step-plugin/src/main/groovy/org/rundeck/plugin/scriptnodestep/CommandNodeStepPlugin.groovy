@@ -46,11 +46,13 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
         // project-level property — matching the same resolution order used in ExecutionServiceImpl.
         // For Windows cmd.exe nodes the interpreter must be "cmd" to select WINDOWS_CMD_ESCAPE
         // (caret-prefix escaping) instead of single-quote wrapping.
-        String commandInterpreter = entry.getAttributes()?.get("shell-escaping-interpreter") ?:
-                context.getExecutionContext().getIFramework()
-                        .getFrameworkProjectMgr()
-                        .getFrameworkProject(context.getExecutionContext().getFrameworkProject())
-                        .getProperty("project.plugin.Shell.Escaping.interpreter")
+        String commandInterpreter = entry.getAttributes()?.get("shell-escaping-interpreter")
+        if (commandInterpreter == null && context.getExecutionContext().getFrameworkProject() != null) {
+            commandInterpreter = context.getExecutionContext().getIFramework()
+                    .getFrameworkProjectMgr()
+                    .getFrameworkProject(context.getExecutionContext().getFrameworkProject())
+                    .getProperty("project.plugin.Shell.Escaping.interpreter")
+        }
 
         // Per-value quoting: each ${...} expanded value is individually quoted using the
         // OS-aware converter. ${unquoted.*} refs are exempted from the converter during
