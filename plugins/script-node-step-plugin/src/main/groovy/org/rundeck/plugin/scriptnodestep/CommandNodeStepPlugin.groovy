@@ -43,9 +43,9 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
         def arr = OptsUtil.burst(adhocRemoteString)
 
         // Per-value quoting: each ${...} expanded value is individually quoted using the
-        // OS-aware converter. ${unquoted.*} refs are exempted from the converter inside
-        // replaceDataReferencesInObject. Template-level shell operators (;, &&, |) written
-        // by the job author stay outside any quoted value and are preserved.
+        // OS-aware converter. ${unquoted.*} refs are exempted from the converter during
+        // SharedDataContextUtils.replaceDataReferences(...). Template-level shell operators
+        // (;, &&, |) written by the job author stay outside any quoted value and are preserved.
         def valueConverter = execQuotingEnabled
                 ? CLIUtils.argumentQuoteForOperatingSystem(entry.getOsFamily())
                 : null

@@ -219,7 +219,7 @@ public class ExecCommandInjectionTest {
     }
 
     // -------------------------------------------------------------------------
-    // RUN-4179 Problem 1 — Per-value quoting / semicolon regression
+    // RUN-4416 — Per-value quoting / semicolon regression
     // -------------------------------------------------------------------------
 
     /**
