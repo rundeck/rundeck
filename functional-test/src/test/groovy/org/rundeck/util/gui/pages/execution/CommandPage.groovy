@@ -45,6 +45,29 @@ class CommandPage extends BasePage {
         this.loadPath = "/project/${project}/command/run"
     }
 
+    /**
+     * After URL matches, wait for the adhoc run form (inside g:ifExecutionMode) so KO can bind.
+     */
+    private void waitForAdhocRunFormReady() {
+        if (loadPath?.contains('/command/run')) {
+            waitForElementToBeClickable(commandInputTextBy)
+        }
+    }
+
+    @Override
+    void validatePage() {
+        super.validatePage()
+        waitForAdhocRunFormReady()
+    }
+
+    @Override
+    void validatePage(String path) {
+        super.validatePage(path)
+        if (path?.contains('/command/run')) {
+            waitForElementToBeClickable(commandInputTextBy)
+        }
+    }
+
     WebElement getNodeFilterTextField() {
         waitForElementToBeClickable nodeFilterTextBy
         el nodeFilterTextBy

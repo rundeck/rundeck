@@ -3,7 +3,11 @@ package org.rundeck.util.gui.pages
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.rundeck.util.container.SeleniumContext
+
+import java.time.Duration
 
 /**
  * Top Menu page
@@ -41,8 +45,13 @@ class TopMenuPage extends BasePage {
     void logOut() {
         openAppUserMenu()
         clickElementSafely(logOutMenuBy)
-        waitForElementVisible(By.partialLinkText("Log In Again"))
-        waitForUrlToContain("/user/loggedout")
+        // Rely on post-logout navigation (context-path and product builds vary link markup).
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until(
+            ExpectedConditions.or(
+                ExpectedConditions.urlContains("/user/loggedout"),
+                ExpectedConditions.urlContains("/user/login")
+            )
+        )
     }
 
     void clickHomeButton(){
