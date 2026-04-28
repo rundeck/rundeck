@@ -110,6 +110,65 @@ class CommandNodeStepPluginSpec extends Specification {
             captured[1] == "'80; whoami'"
     }
 
+    def "full multi-command string: semicolon separates commands and option value with special chars is quoted"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+            sharedContext.merge(ContextView.global(), DataContextUtils.context("data", [home_dir: '/workspace']))
+            sharedContext.merge(ContextView.global(), DataContextUtils.context("job", [execid: 'exec123']))
+            // option.json value contains a semicolon — a common injection attempt
+            sharedContext.merge(ContextView.global(), DataContextUtils.context("option", [json: '{"key": "val; whoami"}']))
+
+            def execCtx = Mock(ExecutionContext) {
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+            }
+            def execService = Mock(ExecutionService)
+            def framework = Mock(Framework) {
+                getExecutionService() >> execService
+            }
+            def context = Mock(PluginStepContext) {
+                getExecutionContext() >> execCtx
+                getFramework() >> framework
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+
+            def plugin = new CommandNodeStepPlugin()
+            // Full two-command string as a job author would write it.
+            // OptsUtil.burst() splits on whitespace only, so the semicolon stays glued
+            // to the end of the second token: ['cd', '${data.home_dir}/${job.execid};', 'echo', '${option.json}']
+            plugin.adhocRemoteString = 'cd ${data.home_dir}/${job.execid}; echo ${option.json}'
+
+        when:
+            List<String> captured = null
+            execService.executeCommand(_, _, node) >> { args ->
+                captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                Mock(NodeExecutorResult) { isSuccess() >> true }
+            }
+            plugin.executeNodeStep(context, [:], node)
+
+        then:
+            captured != null
+            // burst splits into 4 tokens
+            captured.size() == 4
+            // First command: 'cd' + safe path, semicolon stays on the path token
+            captured[0] == 'cd'
+            captured[1] == '/workspace/exec123;'
+            // Second command is captured as its own elements — not swallowed by 'cd'
+            captured[2] == 'echo'
+            // option.json contains shell-special chars → must be single-quoted (injection blocked)
+            captured[3].startsWith("'") && captured[3].endsWith("'")
+            captured[3].contains('val; whoami')
+    }
+
     def "per-value quoting does not quote unquoted refs"() {
         given:
             def fwkProps = [

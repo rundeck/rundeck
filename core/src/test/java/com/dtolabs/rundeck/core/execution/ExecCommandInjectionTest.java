@@ -340,4 +340,41 @@ public class ExecCommandInjectionTest {
                 cmd.get(1)
         );
     }
+
+    /**
+     * Multi-command template end-to-end: option value containing shell-special chars
+     * is single-quoted, while the template-level '; echo ' between the two commands
+     * stays outside any quoted value and remains a literal shell separator.
+     *
+     * This covers the exact reported scenario: cd ${data.home_dir}/${job.execid}; echo ${option.json}
+     * where option.json carries user-supplied input that must not break out of its argument.
+     */
+    @Test
+    public void testMultiCommandStringBlocksInjectionInOptionValue() {
+        WFSharedContext ctx = new WFSharedContext();
+        ctx.merge(ContextView.global(), DataContextUtils.context("data",
+                Collections.singletonMap("home_dir", "/workspace")));
+        ctx.merge(ContextView.global(), DataContextUtils.context("job",
+                Collections.singletonMap("execid", "exec123")));
+        ctx.merge(ContextView.global(), DataContextUtils.context("option",
+                Collections.singletonMap("json", "{\"key\": \"val; whoami\"}")));
+
+        String result = SharedDataContextUtils.replaceDataReferences(
+                "${data.home_dir}/${job.execid}; echo ${option.json}",
+                ctx,
+                ContextView.global(),
+                ContextView::nodeStep,
+                CLIUtils.argumentQuoteForOperatingSystem("unix"),
+                false,
+                true
+        );
+
+        // Safe path values pass through unquoted; option.json has shell-special chars so
+        // it is single-quoted. Template-level '; echo ' is never inside a substituted value.
+        Assert.assertEquals(
+                "Template semicolon must stay free; option value with special chars must be single-quoted",
+                "/workspace/exec123; echo '{\"key\": \"val; whoami\"}'",
+                result
+        );
+    }
 }
