@@ -47,10 +47,13 @@ class CommandPage extends BasePage {
 
     /**
      * After URL matches, wait for the adhoc run form (inside g:ifExecutionMode) so KO can bind.
+     *
+     * @param path resolved path segment (e.g. from {@link #go(String)}); when null, uses {@link #loadPath}
      */
-    private void waitForAdhocRunFormReady() {
-        if (loadPath?.contains('/command/run')) {
-            waitForElementToBeClickable(commandInputTextBy)
+    private void waitForAdhocRunFormReady(String path = null) {
+        String resolved = path != null ? path : loadPath
+        if (resolved?.contains('/command/run')) {
+            waitIgnoringForElementToBeClickable(commandInputTextBy)
         }
     }
 
@@ -63,9 +66,7 @@ class CommandPage extends BasePage {
     @Override
     void validatePage(String path) {
         super.validatePage(path)
-        if (path?.contains('/command/run')) {
-            waitForElementToBeClickable(commandInputTextBy)
-        }
+        waitForAdhocRunFormReady(path)
     }
 
     WebElement getNodeFilterTextField() {

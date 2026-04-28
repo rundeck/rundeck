@@ -120,18 +120,20 @@ abstract class BasePage {
                 .until(ExpectedConditions.numberOfElementsToBe(locator, 1))
     }
 
+    /**
+     * Waits until the element located by {@code locator} is present and clickable.
+     * Uses {@link ExpectedConditions#elementToBeClickable(By)} so the wait is actually evaluated
+     * (unlike returning a condition object from a raw closure).
+     */
     void waitForElementToBeClickable(By locator) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
-        wait.until {
-            WebDriver d ->
-                def elementLocator = d.findElement(locator)
-                ExpectedConditions.elementToBeClickable(elementLocator)
-        }
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.elementToBeClickable(locator))
     }
 
+    /** @see #waitForElementToBeClickable(By) */
     void waitForElementToBeClickable(WebElement locator) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
-        wait.until { ExpectedConditions.elementToBeClickable(locator) }
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.elementToBeClickable(locator))
     }
 
     void waitForTextToBePresentInElement(WebElement locator, String text) {
