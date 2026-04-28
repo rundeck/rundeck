@@ -354,7 +354,7 @@ dependencies {
     runtimeOnly "org.aspectj:aspectjweaver:${aspectjweaverVersion}"
 
     // Database drivers
-    runtimeOnly "com.h2database:${h2Version}"
+    runtimeOnly "com.h2database:h2:${h2Version}"
     runtimeOnly "com.microsoft.sqlserver:mssql-jdbc:${mssqlJdbcVersion}"
     runtimeOnly "org.mariadb.jdbc:mariadb-java-client:${mariadbVersion}"
     runtimeOnly "org.postgresql:postgresql:${postgresVersion}"
