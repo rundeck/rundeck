@@ -338,7 +338,7 @@ dependencies {
         exclude group:'org.ow2.asm', module: 'asm'
     }
 
-    implementation ("net.minidev:json-smart:2.5.2")
+    implementation ("net.minidev:json-smart:${jsonSmartVersion}")
     
     // OpenApi Dependencies
     compileOnly "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
@@ -351,14 +351,14 @@ dependencies {
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     implementation "io.micronaut:micronaut-core"
 
-    runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
+    runtimeOnly "org.aspectj:aspectjweaver:${aspectjweaverVersion}"
 
     // Database drivers
-    runtimeOnly "com.h2database:h2:2.2.220"
+    runtimeOnly "com.h2database:h2:${h2Version}"
     runtimeOnly "com.microsoft.sqlserver:mssql-jdbc:${mssqlJdbcVersion}"
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
-    runtimeOnly 'org.postgresql:postgresql:42.7.2'
-    runtimeOnly('org.rundeck.hibernate:rundeck-oracle-dialect:1.0.1') {
+    runtimeOnly "org.mariadb.jdbc:mariadb-java-client:${mariadbVersion}"
+    runtimeOnly "org.postgresql:postgresql:${postgresVersion}"
+    runtimeOnly("org.rundeck.hibernate:rundeck-oracle-dialect:${oracleDialectVersion}") {
         exclude group: 'org.hibernate', module: 'hibernate-core'
     }
 
@@ -385,7 +385,7 @@ dependencies {
     testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver:${seleniumJavaVersion}"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-api:${seleniumJavaVersion}"
     testRuntimeOnly "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
-    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.7'
+    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.25.1'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     // transitive dependencies constraints.
     constraints {
