@@ -3250,7 +3250,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         //remove node filters
         [doNodedispatch: true, filter: 'something',] |
             [:] |
-            [doNodedispatch: false, filter: null,]
+            [doNodedispatch: false, filter: null, nodesSelectedByDefault: true]
         //override filters
         [doNodedispatch: true, nodeInclude: "monkey.*", nodeExcludeOsFamily: 'windows', nodeIncludeTags: 'something',] |
 

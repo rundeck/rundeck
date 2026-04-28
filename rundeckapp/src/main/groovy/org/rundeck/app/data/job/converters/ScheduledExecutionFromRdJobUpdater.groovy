@@ -165,7 +165,7 @@ class ScheduledExecutionFromRdJobUpdater {
         se.nodeExcludeOsVersion = nodeConfig.nodeExcludeOsVersion
         se.nodeExcludePrecedence = nodeConfig.nodeExcludePrecedence
         se.successOnEmptyNodeFilter = nodeConfig.successOnEmptyNodeFilter
-        se.nodesSelectedByDefault = nodeConfig.nodesSelectedByDefault
+        se.nodesSelectedByDefault = nodeConfig.doNodedispatch ? nodeConfig.nodesSelectedByDefault : true
         se.nodeKeepgoing = nodeConfig.nodeKeepgoing
         se.doNodedispatch = nodeConfig.doNodedispatch
         se.nodeRankAttribute = nodeConfig.nodeRankAttribute
