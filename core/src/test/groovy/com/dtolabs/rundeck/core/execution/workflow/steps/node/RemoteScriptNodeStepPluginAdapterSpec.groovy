@@ -384,4 +384,101 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
             1 * fileCopyScriptContent(_, _, node, _) >> { args -> args[3] }
         }
     }
+
+    def "per-value quoting preserves template semicolon for safe values"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+            sharedContext.merge(
+                    com.dtolabs.rundeck.core.dispatcher.ContextView.global(),
+                    DataContextUtils.context("data", [home_dir: '/workspace'])
+            )
+            sharedContext.merge(
+                    com.dtolabs.rundeck.core.dispatcher.ContextView.global(),
+                    DataContextUtils.context("job", [execid: 'exec123'])
+            )
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            // Command template: two tokens, second has a trailing semicolon (shell separator)
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['cd', '${data.home_dir}/${job.execid};'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            captured[0] == 'cd'
+            // Safe values contain no shell-special chars; semicolon is a template-level separator, stays free
+            captured[1] == '/workspace/exec123;'
+    }
+
+
+    def "per-value quoting does not quote unquoted refs"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+            sharedContext.merge(
+                    com.dtolabs.rundeck.core.dispatcher.ContextView.global(),
+                    DataContextUtils.context("option", [port: '80 && whoami'])
+            )
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['echo', '${unquotedoption.port}'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            // ${unquoted.*} values must pass through the converter unmodified
+            captured[1] == '80 && whoami'
+    }
 }

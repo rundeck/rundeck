@@ -1,5 +1,6 @@
 package org.rundeck.plugin.scriptnodestep
 
+import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
@@ -41,28 +42,29 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
 
         def arr = OptsUtil.burst(adhocRemoteString)
 
-        // Track which arguments contain property references BEFORE replacement
-        // Use the same pattern that replaceDataReferences uses for consistency
-        def containsPropertyRef = arr.collect { arg ->
-            arg.contains('${') && SharedDataContextUtils.PROPERTY_REF_PATTERN.matcher(arg).find()
-        }
+        // Per-value quoting: each ${...} expanded value is individually quoted using the
+        // OS-aware converter. ${unquoted.*} refs are exempted from the converter inside
+        // replaceDataReferencesInObject. Template-level shell operators (;, &&, |) written
+        // by the job author stay outside any quoted value and are preserved.
+        def valueConverter = execQuotingEnabled
+                ? CLIUtils.argumentQuoteForOperatingSystem(entry.getOsFamily())
+                : null
 
-        def result = SharedDataContextUtils.replaceDataReferencesInObject(
+        def result = SharedDataContextUtils.replaceDataReferences(
                 arr,
+                context.getExecutionContext().getSharedDataContext(),
                 ContextView.node(entry.getNodename()),
                 ContextView::nodeStep,
-                null,
-                context.getExecutionContext().getSharedDataContext(),
+                valueConverter,
                 false,
                 true
-        ) as String[]
+        )
 
-        // Build ExecArgList with proper quoting based on original property references
+        // Quoting is already baked into each value — pass shouldQuote=false to avoid
+        // double-quoting at the token level.
         def execArgListBuilder = ExecArgList.builder()
         for (int i = 0; i < result.length; i++) {
-            // Quote if: original contained property ref AND quoting enabled
-            boolean shouldQuote = containsPropertyRef[i] && execQuotingEnabled
-            execArgListBuilder.arg(result[i], shouldQuote, featureQuotingBackwardCompatible)
+            execArgListBuilder.arg(result[i], false, featureQuotingBackwardCompatible)
         }
 
         NodeExecutorResult nodeExecutorResult =  context.getFramework().getExecutionService().executeCommand(

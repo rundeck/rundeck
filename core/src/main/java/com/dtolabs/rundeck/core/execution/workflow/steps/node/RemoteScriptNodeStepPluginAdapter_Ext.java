@@ -16,7 +16,10 @@
 
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
+import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
@@ -175,13 +178,27 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
                     : Boolean.parseBoolean(execQuotingEnabledProp);
 
             String[] command = script.getCommand();
+            // Per-value quoting: expand each template arg with the OS-aware converter so
+            // individual ${...} values are quoted while template-level shell operators stay free.
+            // ${unquoted.*} refs are exempted from the converter inside replaceDataReferences.
+            Converter<String, String> valueConverter = execQuotingEnabled
+                    ? CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily())
+                    : null;
+            String[] expanded = SharedDataContextUtils.replaceDataReferences(
+                    command,
+                    context.getSharedDataContext(),
+                    ContextView.node(node.getNodename()),
+                    ContextView::nodeStep,
+                    valueConverter,
+                    false,
+                    true
+            );
             ExecArgList.Builder builder = ExecArgList.builder();
-            for (String arg : command) {
-                // Quote all arguments when quoting is enabled (default). Protects against command injection in option values.
-                boolean shouldQuote = execQuotingEnabled;
-                builder.arg(arg, shouldQuote, featureQuotingBackwardCompatible);
+            for (String arg : expanded) {
+                // Quoting is already baked into each value — pass shouldQuote=false
+                builder.arg(arg, false, featureQuotingBackwardCompatible);
             }
-            
+
             return executionService.executeCommand(
                     context,
                     builder.build(),
