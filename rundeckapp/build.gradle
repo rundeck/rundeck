@@ -154,7 +154,7 @@ dependencies {
     annotationProcessor "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
 
     // Jakarta Validation implementation for tests
-    testImplementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
+    testImplementation "org.hibernate.validator:hibernate-validator:${hibernateValidatorVersion}"
     testImplementation "org.glassfish.expressly:expressly:5.0.0" // EL implementation required by Hibernate Validator
 
     testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '3.0.0'
@@ -256,7 +256,7 @@ dependencies {
     implementation "javax.xml.bind:jaxb-api:${jaxbApiVersion}"
     implementation "org.glassfish.jaxb:jaxb-runtime:${jaxbRuntimeVersion}"
 
-    implementation ('org.hibernate.validator:hibernate-validator:8.0.1.Final')
+    implementation ("org.hibernate.validator:hibernate-validator:${hibernateValidatorVersion}")
 
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
