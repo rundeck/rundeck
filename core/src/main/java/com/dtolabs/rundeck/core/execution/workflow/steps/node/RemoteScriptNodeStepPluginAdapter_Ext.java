@@ -184,11 +184,16 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
             // Derive the command interpreter from the node attribute first, then fall back to the
             // project property — this ensures Windows cmd.exe nodes use WINDOWS_CMD_ESCAPE instead
             // of single-quote wrapping.
-            String commandInterpreter = node.getAttributes().get("shell-escaping-interpreter") != null
-                    ? node.getAttributes().get("shell-escaping-interpreter")
-                    : context.getIFramework().getFrameworkProjectMgr()
-                            .getFrameworkProject(context.getFrameworkProject())
-                            .getProperty("project.plugin.Shell.Escaping.interpreter");
+            String commandInterpreter;
+            if (node.getAttributes().get("shell-escaping-interpreter") != null) {
+                commandInterpreter = node.getAttributes().get("shell-escaping-interpreter");
+            } else if (context.getFrameworkProject() != null) {
+                commandInterpreter = context.getIFramework().getFrameworkProjectMgr()
+                        .getFrameworkProject(context.getFrameworkProject())
+                        .getProperty("project.plugin.Shell.Escaping.interpreter");
+            } else {
+                commandInterpreter = null;
+            }
             Converter<String, String> valueConverter = execQuotingEnabled
                     ? CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily(), commandInterpreter)
                     : null;
