@@ -345,7 +345,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     WebElement getRunJobBtn(){
-        el runJobBtnBy
+        waitIgnoringForElementToBeClickable(runJobBtnBy)
     }
 
     WebElement getLogOutputBtn(){
