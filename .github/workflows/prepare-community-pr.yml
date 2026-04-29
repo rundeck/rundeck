@@ -8,12 +8,10 @@
 # - Do NOT checkout the PR branch as the workspace root (no execution of PR-supplied
 #   Action config from the PR ref as the checked-out tree for later steps).
 # - Use only numeric PR id, default base branch, and a 40-hex SHA from the event.
-# - Approval is enforced via github.event.pull_request.review_decision (see job if:).
-#   That field is populated when the repository uses required reviews / review decision
-#   on the PR; if the job never runs after labeling, check branch protection settings.
-# - pull_request_target is required so GITHUB_TOKEN can push for fork-based PRs (read-only
-#   on pull_request / pull_request_review for forks per GitHub docs).
-# - Changed paths are enumerated with git diff (no gh api); merge uses refs/pull/<N>/head.
+# - Require at least one APPROVED review for the current head commit before proceeding.
+# - Approval is verified via 'gh pr view --json reviews' (no manual API pagination).
+# - Changed files are enumerated with 'git diff' (no API calls, path traversal checks).
+# - pull_request_target is required so GITHUB_TOKEN can push for fork-based PRs.
 name: Prepare community PR
 
 on:
@@ -31,8 +29,7 @@ jobs:
       github.event.pull_request.state == 'open' &&
       github.event.pull_request.draft == false &&
       github.event.label.name == 'prepare-community-pr' &&
-      github.event.pull_request.base.ref == github.event.repository.default_branch &&
-      github.event.pull_request.review_decision == 'APPROVED'
+      github.event.pull_request.base.ref == github.event.repository.default_branch
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -56,6 +53,39 @@ jobs:
             exit 1
           fi
 
+      - name: Verify approval for current PR head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          head_lc="${HEAD_SHA,,}"
+          
+          # Use gh pr view to get all reviews without manual pagination
+          reviews_json="$(gh pr view "${PR_NUMBER}" --repo "${REPO_FULL}" --json reviews,headRefOid)"
+          
+          # Verify the PR head matches what we expect
+          pr_head="$(jq -r '.headRefOid // ""' <<<"${reviews_json}")"
+          pr_head_lc="${pr_head,,}"
+          if [[ "${pr_head_lc}" != "${head_lc}" ]]; then
+            echo "PR head from view (${pr_head}) does not match event head.sha ${HEAD_SHA}." >&2
+            exit 1
+          fi
+          
+          # Count APPROVED reviews for the current head commit
+          approved_for_head="$(
+            jq --arg head "${head_lc}" '
+              [.reviews[]? | select(.state == "APPROVED" and (((.commit.oid // "") | ascii_downcase) == $head))]
+              | length
+            ' <<<"${reviews_json}"
+          )"
+          
+          if [[ "${approved_for_head}" -lt 1 ]]; then
+            echo "PR #${PR_NUMBER} has no APPROVED review recorded for head ${HEAD_SHA}." >&2
+            echo "Push a new commit or re-request review, then remove and re-apply the label." >&2
+            exit 1
+          fi
+
       - name: Check out default base branch (trusted ref only)
         uses: actions/checkout@v4
         with:
@@ -63,7 +93,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Verify changed files (git only), merge PR head, push integration branch
+      - name: Verify changed files and merge PR head
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -84,12 +114,14 @@ jobs:
             exit 1
           fi
 
+          # Verify changed files using git diff (no API pagination needed)
           diff_file="$(mktemp)"
           if ! git diff --name-only "origin/${BASE_REF}...FETCH_HEAD" >"${diff_file}"; then
             echo "git diff --name-only failed (bad refs?)." >&2
             rm -f "${diff_file}"
             exit 1
           fi
+          
           mapfile -t files <"${diff_file}"
           rm -f "${diff_file}"
 
@@ -98,6 +130,7 @@ jobs:
             exit 1
           fi
 
+          # Check for path traversal attacks
           for f in "${files[@]}"; do
             if [[ -z "${f}" ]]; then
               continue
