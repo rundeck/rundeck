@@ -12,6 +12,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
+import org.springframework.beans.factory.annotation.Autowired
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.ToDoubleFunction
@@ -26,6 +27,7 @@ import java.util.function.ToDoubleFunction
 class DropwizardMicrometerBridgeService {
 
     MetricRegistry metricRegistry
+    @Autowired
     MeterRegistry meterRegistry
     ConfigurationService configurationService
 
