@@ -17,6 +17,7 @@ export interface RundeckContext {
   };
   rundeckClient: RundeckBrowser;
   data: { [key: string]: any };
+  profile?: { [key: string]: any };
   feature: { [key: string]: RundeckFeature };
   navbar: {
     items: Array<NavItem>;

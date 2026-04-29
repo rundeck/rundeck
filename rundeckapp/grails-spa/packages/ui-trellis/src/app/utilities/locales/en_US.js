@@ -1388,6 +1388,8 @@ const messages = {
       },
     },
   },
+  profile: "Profile",
+  logout: "Logout",
   searchForStep: "Search for a step",
   learnMoreSearchPatterns: "to search using specific patterns",
   nodeSteps: "Node Steps",
