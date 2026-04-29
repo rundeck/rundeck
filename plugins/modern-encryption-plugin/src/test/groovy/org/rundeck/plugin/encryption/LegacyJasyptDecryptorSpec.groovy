@@ -1,8 +1,6 @@
 package org.rundeck.plugin.encryption
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.jasypt.encryption.pbe.StandardPBEByteEncryptor
-import org.jasypt.encryption.pbe.config.SimplePBEConfig
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -17,21 +15,12 @@ class LegacyJasyptDecryptorSpec extends Specification {
     }
 
     /**
-     * Encrypt data using the real Jasypt library (test dependency only).
-     * This produces authentic Jasypt-format bytes that the decryptor must handle.
+     * Encrypt data using our Jasypt-compatible encryptor.
+     * Produces the same format as Jasypt's StandardPBEByteEncryptor.
      */
     private byte[] jasyptEncrypt(byte[] plaintext, String password, String algorithm, String provider, int iterations) {
-        def config = new SimplePBEConfig()
-        config.setPassword(password)
-        config.setAlgorithm(algorithm)
-        if (provider) {
-            config.setProviderName(provider)
-        }
-        config.setKeyObtentionIterations(iterations)
-
-        def encryptor = new StandardPBEByteEncryptor()
-        encryptor.setConfig(config)
-        return encryptor.encrypt(plaintext)
+        def encryptor = new LegacyJasyptEncryptor(algorithm, provider, iterations)
+        return encryptor.encrypt(password, plaintext)
     }
 
     @Unroll

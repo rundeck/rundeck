@@ -1,8 +1,6 @@
 package org.rundeck.plugin.encryption
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.jasypt.encryption.pbe.StandardPBEByteEncryptor
-import org.jasypt.encryption.pbe.config.SimplePBEConfig
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.Path
 import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder
@@ -62,15 +60,8 @@ class ModernEncryptionConverterPluginSpec extends Specification {
     }
 
     private byte[] jasyptEncrypt(byte[] plaintext, String password, String algorithm, String provider) {
-        def encryptor = new StandardPBEByteEncryptor()
-        def config = new SimplePBEConfig()
-        config.setPassword(password)
-        config.setAlgorithm(algorithm)
-        config.setProviderName(provider)
-        config.setKeyObtentionIterations(1000)
-        encryptor.setConfig(config)
-        encryptor.initialize()
-        return encryptor.encrypt(plaintext)
+        def encryptor = new LegacyJasyptEncryptor(algorithm, provider, 1000)
+        return encryptor.encrypt(password, plaintext)
     }
 
     // --- createResource tests ---
