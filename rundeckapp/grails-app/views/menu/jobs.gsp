@@ -456,7 +456,7 @@ search
                         </g:if>
                     </g:if>
                     <g:else>
-                        All Jobs
+                        <g:message code="page.section.title.AllJobs" />
                     </g:else>
 
                 </a>

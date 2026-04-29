@@ -191,14 +191,14 @@ jQuery(function(){
     </ol>
 
     <div class="empty note ${error?'error':''}" id="wfempty" style="${wdgt.styleVisible(unless:workflow && workflow?.commands)}">
-        No Workflow ${g.message(code:'Workflow.step.label')}s
+        <g:message code="Workflow.noSteps" default="No Workflow ${g.message(code:'Workflow.step.label')}s"/>
     </div>
     <g:if test="${edit}">
     <div >
     <div id="wfnewbutton" style="margin-top:5px;">
-        <span class="btn btn-default btn-sm ready" onclick="jQuery('#wfnewtypes').show();jQuery('#wfnewbutton').hide();" title="Add a new Workflow ${g.message(code:'Workflow.step.label')} to the end">
+        <span class="btn btn-default btn-sm ready" onclick="jQuery('#wfnewtypes').show();jQuery('#wfnewbutton').hide();" title="${message(code:'Workflow.step.label.add')}">
             <b class="glyphicon glyphicon-plus"></b>
-            Add a ${g.message(code:'Workflow.step.label')}
+            <g:message code="Workflow.step.label.add"/>
         </span>
     </div>
     <div id="wfnewtypes" style="display:none; margin-top:10px; margin-left:20px;" class="panel panel-default">

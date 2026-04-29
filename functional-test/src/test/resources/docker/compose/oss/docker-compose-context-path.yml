@@ -1,0 +1,101 @@
+services:
+  rundeck:
+    build:
+      context: "."
+      args:
+        IMAGE: ${TEST_IMAGE:-rundeck/rundeck:SNAPSHOT}
+    platform: ${TEST_TARGET_PLATFORM:-linux/arm64}
+    hostname: rundeck-oss-server-node
+    environment:
+      RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
+      RUNDECK_DATABASE_USERNAME: rundeck
+      RUNDECK_DATABASE_PASSWORD: rundeck
+      RUNDECK_DATABASE_URL: jdbc:mysql://rundeck-db/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL:-http://localhost:4440/rundeck}
+      RUNDECK_SERVER_FORWARDED: 'true'
+      # RUN-4332: Test with context-path configured
+      RUNDECK_SERVER_CONTEXTPATH: "/rundeck"
+      RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
+      RUNDECK_MULTIURL_ENABLED: "true"
+      RUNDECK_METRICS_ENABLED: "true"
+      MANAGEMENT_ENDPOINT_HEALTH_ENABLED: "true"
+      MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: "readinessState,rundeckDataSourceHealthIndicator"
+      MANAGEMENT_ENDPOINT_HEALTH_VALIDATE_GROUP_MEMBERSHIP: "false"
+      RUNDECK_FEATURE_FEATURETOTEST_ENABLED: "true"
+      RUNDECK_FEATURE_FEATURETOTEST_NAME: ${TEST_RUNDECK_FEATURE_NAME}
+      # Grails 7: Increase Hikari connection pool for Selenium tests
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "20"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "5"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "60000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "300000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "600000"
+    volumes:
+      - ./ansible:/home/rundeck/ansible:rw
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "../../../tokens.properties:/home/rundeck/server/config/tokens.properties"
+      - "../../../realm.properties:/home/rundeck/server/config/realm.properties"
+      - "../../../resource-model:/home/resource-model"
+      - "../../../test-files/job-run-steps-test-script1.txt:/home/rundeck/job-run-steps-test-script1.txt"
+      - "../../../test-files/simpleScript.sh:/home/rundeck/simpleScript.sh"
+      - "../../../test-files/test-resources.xml:/home/rundeck/test-resources.xml"
+      - "../../../test-files/saved_searches-A.json:/home/option1/saved_searches.json"
+      - "../../../test-files/saved_searches-B.json:/home/option2/saved_searches.json"
+      - "../../../test-files/saved_searches-C.json:/home/option3/saved_searches.json"
+      - "../../../test-files/saved_searches-D.json:/home/option4/saved_searches.json"
+      - "../../../test-files/copyfile-test-files:/home/rundeck/copyfile-test-files"
+      - "./executor:/home/rundeck/executor:rw"
+      - "./mock-scripts:/home/rundeck/mock-scripts:rw"
+    ports:
+      - "4440:4440"
+      - "5005:5005"
+      - "9012:9012"
+    command:
+      - "-Dcom.sun.management.jmxremote"
+      - "-Dcom.sun.management.jmxremote.port=9012"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9012"
+      - "-Djava.rmi.server.hostname=localhost"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+  rundeck-db:
+    image: mysql:8
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=rundeck
+      - MYSQL_USER=rundeck
+      - MYSQL_PASSWORD=rundeck
+    ports:
+      - "3307:3306"
+
+  gitea:
+    build:
+      context: gitea
+      args:
+        IMAGE: gitea/gitea
+    environment:
+      USER_UID: 1000
+      USER_GID: 1000
+      GITEA_ADMIN_USER: 'rundeckgitea'
+      GITEA_ADMIN_PASSWORD: 'rundeckgitea'
+    restart: always
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "./gitea/gitea-cfg.ini:/data/gitea/conf/app.ini"
+    ports:
+      - "3000:3000"
+
+  ssh-node:
+    build:
+      context: node
+    platform: linux/arm64
+    environment:
+      NODE_USER_PASSWORD: testpassword123
+    ports:
+      - "22"
+    volumes:
+      - ./keys:/configuration:rw
+      - ./mock-scripts:/mock-scripts:rw

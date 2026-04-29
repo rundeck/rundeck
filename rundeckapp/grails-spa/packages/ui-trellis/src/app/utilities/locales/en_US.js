@@ -5,7 +5,6 @@ const messages = {
   Cancel: "Cancel",
   Revert: "Revert",
   Configuration: "Configuration",
-
   "Add a new Node Source": "Add a new Node Source",
   "Add a new Node Enhancer": "Add a new Node Enhancer",
   "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use ${project.name} inside configuration values to substitute the project name.)":
@@ -28,6 +27,13 @@ const messages = {
   "storage.enter.password": "Enter a password",
   "storage.enter.directory.name": "Enter the directory name",
   "storage.specify.name": "Specify a name.",
+  "storage.keyPath.error.traversal":
+    "Directory traversal '..' is not allowed in key storage paths.",
+  "storage.keyPath.error.leadingSpace":
+    "Path components cannot start with a space.",
+  "storage.keyPath.error.invalidChar":
+    "The character '{0}' is not allowed. Key storage paths can only contain: letters, numbers, spaces (not at start), / . + _ - ,",
+  "storage.keyPath.error.invalidFormat": "Invalid key storage path format.",
   "soft.wrap": "Soft Wrap",
   jobAverageDurationPlaceholder: "leave blank for Job Average duration",
   resourcesEditor: {
@@ -389,6 +395,123 @@ const messages = {
   "scheduledExecution.property.timezone.prompt": "Time Zone",
   "scheduledExecution.property.timezone.description":
     'A valid Time Zone, either an abbreviation such as "PST", a full name such as "America/Los_Angeles",or a custom ID such as "GMT-8{\':\'}00".',
+  "scheduledExecution.crontab.tab.simple": "Simple",
+  "scheduledExecution.crontab.tab.crontab": "Crontab",
+  "scheduledExecution.crontab.field.hour": "Hour",
+  "scheduledExecution.crontab.field.minute": "Minute",
+  "scheduledExecution.crontab.everyDay": "Every Day",
+  "scheduledExecution.crontab.everyMonth": "Every Month",
+  "scheduledExecution.crontab.help.ranges": "Ranges:",
+  "scheduledExecution.crontab.help.lists": "Lists:",
+  "scheduledExecution.crontab.help.increments": "Increments:",
+  "scheduledExecution.crontab.help.increments.description":
+    '"every 15 units starting at 0".',
+  "scheduledExecution.crontab.help.validDayOfWeek":
+    "Valid values of Day of Week: 1-7 or SUN-SAT",
+  "scheduledExecution.crontab.help.validMonth":
+    "Valid values of Month: 1-12 or JAN-DEC",
+  "scheduledExecution.crontab.help.see": "See:",
+  "scheduledExecution.crontab.help.formatting": "for formatting help",
+  "Activity for Jobs": "Activity for Jobs",
+  "Add Notification": "Add Notification",
+  "Add an option": "Add an option",
+  "All Jobs": "All Jobs",
+  "Also kill processes whose process SID matches the tracked PIDs":
+    "Also kill processes whose process SID matches the tracked PIDs",
+  "Collapse All": "Collapse All",
+  "Execute locally": "Execute locally",
+  "Execution.plural": "Executions",
+  Executions: "Executions",
+  "Expand All": "Expand All",
+  Explain: "Explain",
+  "Global Log Filters": "Global Log Filters",
+  "Kill all processes collected by the 'Capture Process IDs' log filter":
+    "Kill all processes collected by the 'Capture Process IDs' log filter",
+  "Kill processes only if job failed or is killed":
+    "Kill processes only if job failed or is killed",
+  "Kill spawned processes": "Kill spawned processes",
+  "Kill tracked processes after execution":
+    "Kill tracked processes after execution",
+  Modules: "Modules",
+  "More...": "More...",
+  "No Options": "No Options",
+  "No Workflow steps": "No Workflow steps",
+  "Node First": "Node First",
+  "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use  {'${project.name}'} inside configuration values to substitute the project name.)":
+    "Node Sources for the project. Sources are loaded in the defined order, with later sources overriding earlier sources. (You can use  {'${project.name}'} inside configuration values to substitute the project name.)",
+  "None configured. Click ResourceModelSource to add a new plugin.":
+    "None configured. Click ResourceModelSource to add a new plugin.",
+  "Save Filter": "Save Filter",
+  "Save as a Filter...": "Save as a Filter...",
+  "Selected Plugins will be enabled for this Job.":
+    "Selected Plugins will be enabled for this Job.",
+  "This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windows commands. These commands must be available at the node.":
+    "This operation will use the 'kill' and 'pkill' for Unix and 'taskkill' for Windows commands. These commands must be available at the node.",
+  "Workflow.noSteps": "No Workflow steps",
+  "Workflow.property.keepgoing.prompt": "If a step fails:",
+  "Workflow.property.strategy.label": "Strategy",
+  "Workflow.strategy.description.node-first":
+    "Execute all steps on a node before proceeding to the next node.",
+  "Workflow.strategy.description.step-first":
+    "Execute each step across all nodes before proceeding to the next step.",
+  "Workflow.strategy.label.node-first": "Node First",
+  "Workflow.strategy.label.parallel": "Parallel",
+  "Workflow.strategy.label.step-first": "Step First",
+  "access.control": "Access Control",
+  "all.nodes.menu.item": "-All Nodes-",
+  "button.action.Create": "Create",
+  "button.cancel": "Cancel",
+  "button.create": "Create",
+  "collapse.all": "Collapse All",
+  "delete.project": "Delete Project",
+  "delete.project.ellipsis": "Delete Project...",
+  "dispatch.to.nodes": "Dispatch to Nodes",
+  "edit.message.of.the.day": "Edit Message of the Day",
+  "edit.nodes": "Edit Nodes",
+  "edit.nodes.title": "Edit Nodes",
+  "edit.readme": "Edit Readme",
+  "edit.readme.ellipsis": "Edit Readme...",
+  "expand.all": "Expand All",
+  "export.archive": "Export Archive",
+  "export.archive.ellipsis": "Export Archive...",
+  "gui.menu.AccessControl": "Access Control",
+  "gui.menu.KeyStorage": "Key Storage",
+  "gui.menu.Scm": "Setup SCM",
+  "import.archive": "Import Archive",
+  "import.archive.ellipsis": "Import Archive...",
+  "message_cancel": "Cancel",
+  "no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter":
+    "No Nodes selected. Match nodes by selecting or entering a filter.",
+  "none.configured.click.plugin.to.add.a.new.plugin":
+    "None configured. Click {0} to add a new plugin.",
+  "notifications.addButton": "Add Notification",
+  "notifications.emptyText":
+    "No Notifications are defined. Click an event below to add a Notification for that Trigger.",
+  "notifications.helpText":
+    "Notifications can be triggered by different events during the Job Execution.",
+  "project.admin.menu.Scm.title": "Setup SCM",
+  "project.node.sources.title": "Node Sources",
+  "schedule.to.run.repeatedly": "Schedule to run repeatedly?",
+  "scheduledExecution.property.doNodedispatch.description":
+    "Choose whether to execute this job on filtered nodes or locally.",
+  "scheduledExecution.property.excludeFilter.description":
+    "Secondary filter to exclude nodes from results of the node filter.",
+  "scheduledExecution.property.loglevel.label": "Log level",
+  "scheduledExecution.property.multipleExecutions.label":
+    "Multiple Executions?",
+  "scheduledExecution.property.retry.delay.label": "Retry Delay",
+  "scheduledExecution.property.retry.label": "Retry",
+  "scheduledExecution.property.timeout.label": "Timeout",
+  "scheduledExecution.property.timeout.title": "Timeout",
+  "step.type.jobreference.nodestep.description":
+    "Run a job on the remote node",
+  "step.type.jobreference.title": "Job Reference",
+  Enhancers: "Enhancers",
+  Yes: "Yes",
+  No: "No",
+  add: "add",
+  description: "description",
+  explain: "Explain",
   "documentation.reference.cron.url":
     "https{':'}//www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html",
   "set.as.default.filter": "Set as Default Filter",
@@ -748,8 +871,12 @@ const messages = {
     "Warning! Relying on unquoted arguments could make this job vulnerable to command injection. Use with care.",
   "add.new.option": "Add New Option",
   "add.an.option": "Add an option",
+  "global.log.filters": "Global Log Filters",
+  "workflow.all.steps": "All workflow steps",
   "option.values.c": "1 Value|{n} Values",
   "no.options.message": "No Options",
+  "Allow this Job to be scheduled?": "Allow this Job to be scheduled?",
+  "Allow this Job to be executed?": "Allow this Job to be executed?",
   "the.option.values.will.be.available.to.scripts.in.these.forms":
     "The option values will be available to scripts in these forms:",
   "option.usage.multiline.note":
