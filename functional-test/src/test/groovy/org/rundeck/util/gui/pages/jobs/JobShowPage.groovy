@@ -288,6 +288,18 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         el runFormBy
     }
 
+    /**
+     * Waits until the 'change target nodes' checkbox ({@link #nodeFilterInputBy}) is clickable.
+     * The parent nodes section stays {@code display:none} until the server returns matched nodes
+     * ({@code scheduledExecution/_execOptionsForm.gsp} {@code wdgt.styleVisible}), so the run button
+     * can become ready before this control on slow or clustered stacks.
+     *
+     * @param timeout max wait (default 90s for enterprise CI)
+     */
+    void waitForNodeFilterReplaceCheckboxClickable(Duration timeout = Duration.ofSeconds(90)) {
+        waitIgnoringForElementToBeClickable(nodeFilterInputBy, timeout)
+    }
+
     WebElement getOptionValidationWarningText() {
         el optionValidationWarningBy
     }

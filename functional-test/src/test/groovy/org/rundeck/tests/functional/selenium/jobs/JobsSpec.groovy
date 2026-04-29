@@ -384,7 +384,9 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
             jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
-            jobCreatePage.waitForElementToBeClickable jobCreatePage.optionRedoButton
+            // Re-find by locator each poll: WebElement from getter goes stale after undo reflows the bar
+            jobCreatePage.waitForElementToBeClickable(
+                    jobCreatePage.legacyUi ? jobCreatePage.optionRedoBy : JobCreatePage.NextUi.optionRedoBy)
             sleep 1000
             jobCreatePage.optionRedoButton.click()
         expect:
