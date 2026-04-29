@@ -233,15 +233,10 @@ class DropwizardMicrometerBridgeService {
             return
         }
 
-        log.debug("Initializing Dropwizard->Micrometer metrics bridge")
+        log.info("Initializing Dropwizard->Micrometer metrics bridge")
 
         if (!metricRegistry) {
             log.warn("Cannot initialize bridge: metricRegistry is null")
-            return
-        }
-
-        if (!meterRegistry) {
-            log.warn("Cannot initialize bridge: meterRegistry is null")
             return
         }
 
