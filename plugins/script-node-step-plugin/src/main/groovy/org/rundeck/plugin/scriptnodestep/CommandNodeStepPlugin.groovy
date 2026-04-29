@@ -59,7 +59,8 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
         // SharedDataContextUtils.replaceDataReferences(...). Template-level shell operators
         // (;, &&, |) written by the job author stay outside any quoted value and are preserved.
         def valueConverter = execQuotingEnabled
-                ? CLIUtils.argumentQuoteForOperatingSystem(entry.getOsFamily(), commandInterpreter)
+                ? DataContextUtils.wrapWithOptionBlanking(
+                        CLIUtils.argumentQuoteForOperatingSystem(entry.getOsFamily(), commandInterpreter))
                 : null
 
         def result = SharedDataContextUtils.replaceDataReferences(
@@ -69,7 +70,7 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
                 ContextView::nodeStep,
                 valueConverter,
                 false,
-                true
+                false
         )
 
         // Quoting is already baked into each value — pass shouldQuote=false to avoid

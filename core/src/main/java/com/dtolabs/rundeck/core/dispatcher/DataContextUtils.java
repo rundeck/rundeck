@@ -66,6 +66,15 @@ public class DataContextUtils {
      */
     public static final Converter<String, String> replaceMissingOptionsWithBlank
             = s -> optionPattern.matcher(s).matches() ? "" : s;
+    public static Converter<String, String> wrapWithOptionBlanking(final Converter<String, String> osConverter) {
+        return value -> {
+            if (stringContainsPropertyReferencePredicate.test(value)
+                    && replaceMissingOptionsWithBlank.convert(value).isEmpty()) {
+                return ""; // unresolved ${option.*} ref — blank
+            }
+            return osConverter.convert(value); // resolved values and non-option unresolved refs
+        };
+    }
     /**
      * @return Flattens the data context into a simple key/value pair, using a "." separator for keys.
      *

@@ -199,8 +199,12 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                 commandInterpreter = null;
             }
 
+            // blankIfUnexpanded=false so the converter handles unresolved refs: blank only
+            // missing ${option.*} refs (matching legacy behavior); all other unresolved refs
+            // (${data.*}, ${job.*}, ${node.*}, etc.) are passed through unchanged.
             Converter<String, String> valueConverter = execQuotingEnabled
-                    ? CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily(), commandInterpreter)
+                    ? DataContextUtils.wrapWithOptionBlanking(
+                            CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily(), commandInterpreter))
                     : null;
             String[] expanded = SharedDataContextUtils.replaceDataReferences(
                     command,
@@ -209,7 +213,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                     ContextView::nodeStep,
                     valueConverter,
                     false,
-                    true
+                    false
             );
             ExecArgList.Builder builder = ExecArgList.builder();
             for (String arg : expanded) {

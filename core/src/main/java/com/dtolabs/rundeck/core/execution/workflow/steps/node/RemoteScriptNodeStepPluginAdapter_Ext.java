@@ -195,7 +195,8 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
                 commandInterpreter = null;
             }
             Converter<String, String> valueConverter = execQuotingEnabled
-                    ? CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily(), commandInterpreter)
+                    ? DataContextUtils.wrapWithOptionBlanking(
+                            CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily(), commandInterpreter))
                     : null;
             String[] expanded = SharedDataContextUtils.replaceDataReferences(
                     command,
@@ -204,7 +205,7 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
                     ContextView::nodeStep,
                     valueConverter,
                     false,
-                    true
+                    false
             );
             ExecArgList.Builder builder = ExecArgList.builder();
             for (String arg : expanded) {
