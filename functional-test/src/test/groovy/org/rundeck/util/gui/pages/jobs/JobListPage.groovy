@@ -48,7 +48,13 @@ class JobListPage extends BasePage implements ActivityListTrait {
     By bodyNextUIBy = By.cssSelector('body.ui-type-next')
     By runJobButtonDisabled = By.cssSelector(".btn.btn-default.btn-xs.disabled")
     By executionPausedIcon = By.cssSelector(".glyphicon.glyphicon-pause")
-    By scheduleDisabledIcon = By.cssSelector(".glyphicon.glyphicon-ban-circle")
+    /**
+     * Pause icon inside the job list schedule column when schedules cannot run
+     * (project schedule off, job schedule off, or execution off — see {@code menu/_jobslist.gsp}).
+     * Scoped to {@code .jobslist} so navbar or other glyphs do not affect the count.
+     */
+    private static final By JOB_LIST_SCHEDULE_COLUMN_PAUSE =
+            By.cssSelector(".jobslist span.scheduletime.disabled i.glyphicon.glyphicon-pause")
     By jobRunLinkBy = By.cssSelector(".btn.btn-success.btn-simple.btn-hover.btn-xs.act_execute_job")
     By alertMessageBy = By.cssSelector(".alert.alert-info")
     By jobListGroupTree = By.id("job_group_tree")
@@ -145,12 +151,15 @@ class JobListPage extends BasePage implements ActivityListTrait {
     }
 
     /**
-     * It validates this by looking for the run job button to be disabled
+     * Project-level schedule disable: run remains enabled, schedule column shows paused state.
+     * Uses a jobs-list-scoped pause glyph; a global {@link #executionPausedIcon} count is flaky when
+     * the schedule block is still rendering or when other pages add extra glyphs.
+     * No ban-circle assertion: project schedule-off is represented by pause in {@code scheduletime}
+     * (see {@code menu/_jobslist.gsp}), not {@code glyphicon-ban-circle}.
      */
     def expectScheduleDisabled(){
         waitForNumberOfElementsToBe(runJobButtonDisabled, 0)
-        waitForNumberOfElementsToBe(executionPausedIcon, 1)
-        waitForNumberOfElementsToBe(scheduleDisabledIcon, 1)
+        waitForNumberOfElementsToBeMoreThan(JOB_LIST_SCHEDULE_COLUMN_PAUSE, 0)
         return true
     }
 

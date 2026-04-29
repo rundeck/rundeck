@@ -279,6 +279,8 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.runJobLink '7a0d71b2-e096-4fbd-9efb-21bcbe826c0e' click()
+            // execute -> show redirect loads KO run form; #doReplaceFilters stays non-clickable until form is ready
+            jobShowPage.waitForElementToBeClickable jobShowPage.runFormButton
             jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterInput
             jobShowPage.nodeFilterInput.click()
             jobShowPage.waitForElementToBeClickable jobShowPage.nodeFilterOverride
