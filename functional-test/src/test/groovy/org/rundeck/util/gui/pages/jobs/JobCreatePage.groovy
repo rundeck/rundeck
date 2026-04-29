@@ -220,22 +220,19 @@ class JobCreatePage extends BasePage {
         loadCreatePath(projectName)
     }
 
-    void loadEditPath(String projectName, String jobId, Boolean nextUi = false) {
-        this.edit=true
-        this.projectName=projectName
-        this.jobId=jobId
-        withFlag('nextUi', nextUi)
-    }
-
-    void loadEditPath(String projectName, String jobId, Boolean legacyUi, Boolean isLegacy) {
-        this.edit=true
-        this.projectName=projectName
-        this.jobId=jobId
-        if(isLegacy) {
-            withFlag('legacyUi', legacyUi)
-        } else {
-            withFlag('nextUi', legacyUi)  // For backward compat
-        }
+    /**
+     * Loads the job edit path with an explicit UI mode.
+     *
+     * @param projectName the project name
+     * @param jobId the job ID
+     * @param mode the UI mode to activate; defaults to {@link UiMode#DEFAULT}
+     */
+    void loadEditPath(String projectName, String jobId, UiMode mode = UiMode.DEFAULT) {
+        this.edit = true
+        this.projectName = projectName
+        this.jobId = jobId
+        withFlag('nextUi',   mode == UiMode.NEXT_UI)
+        withFlag('legacyUi', mode == UiMode.LEGACY)
     }
 
     void loadCreatePath(String projectName) {
@@ -573,10 +570,14 @@ class JobCreatePage extends BasePage {
         el By.xpath("//*[contains(@${stepType.getStepType()}, '$dataNodeStepType')]")
     }
 
-    WebElement getAdhocRemoteStringBy() {
-        el legacyUi ? adhocRemoteStringBy : NextUi.adhocRemoteStringBy
-    }
-
+    /**
+     * Returns the adhoc remote-string command input element.
+     *
+     * <p>Note: there is no companion {@code getAdhocRemoteStringBy()} method by design —
+     * a getter named {@code getAdhocRemoteStringBy} would shadow Groovy property access
+     * to the {@link #adhocRemoteStringBy} {@link By} field, breaking call-sites like
+     * {@code jobCreatePage.byAndWaitClickable(jobCreatePage.adhocRemoteStringBy)}.
+     */
     WebElement getAdhocRemoteStringField() {
         el legacyUi ? adhocRemoteStringBy : NextUi.adhocRemoteStringBy
     }
@@ -1134,8 +1135,9 @@ class JobCreatePage extends BasePage {
     }
 
     /**
-     * Clicks the step at index to open edit modal (nextUi mode only).
-     * The step item with id wfitem_${index} is clickable and opens EditPluginModal.
+     * Clicks the step at index to open the step editor.
+     * The step item id `wfitem_${index}` is shared across legacy KO and Vue;
+     * legacy opens the inline edit form, default/nextUi opens EditPluginModal.
      */
     void clickStepToEdit(int index) {
         def stepEl = el(By.id("wfitem_${index}"))
@@ -1146,10 +1148,10 @@ class JobCreatePage extends BasePage {
 
     /**
      * Clicks the cancel button when editing a step.
-     * nextUi: modal cancel. Legacy: inline form discard button.
+     * Legacy: inline form discard button. Default/nextUi (post workflow-tab promotion): modal cancel.
      */
     void clickCancelStepEdit() {
-        def cancelBy = nextUi ? NextUi.stepEditModalCancelBy : cancelEditStepFormBy
+        def cancelBy = legacyUi ? cancelEditStepFormBy : NextUi.stepEditModalCancelBy
         def cancelBtn = waitForElementVisible(cancelBy)
         executeScript "arguments[0].scrollIntoView(true);", cancelBtn
         waitForElementToBeClickable(cancelBtn)

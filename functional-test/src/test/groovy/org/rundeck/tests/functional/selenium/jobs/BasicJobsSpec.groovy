@@ -4,6 +4,7 @@ import org.openqa.selenium.By
 import org.rundeck.util.annotations.ExcludePro
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
+import org.rundeck.util.gui.pages.jobs.UiMode
 import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.jobs.JobTab
@@ -11,12 +12,22 @@ import org.rundeck.util.gui.pages.jobs.NotificationEvent
 import org.rundeck.util.gui.pages.jobs.NotificationType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.UiModes
 import spock.lang.Stepwise
 
 @SeleniumCoreTest
 @Stepwise
+@UiModeFlag(
+    featureName = "basic-jobs",
+    status      = UiModeStatus.PROMOTED,
+    description = "@Stepwise spec; class-level captures the dominant legacyUi sweep (PROMOTED). Methods that exercise nextUi-only or 4-arg legacy/next swaps are annotated individually with NEXT_UI status."
+)
 class BasicJobsSpec extends SeleniumBase {
+
+    static final UI_MODES = UiModes.defaultAndLegacy()
 
     def setupSpec() {
         setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
@@ -94,34 +105,40 @@ class BasicJobsSpec extends SeleniumBase {
             jobShowPage.jobLinkTitleLabel.getText().contains('create valid job basic options')
             jobShowPage.optionInputText(optionName) != null
         where:
-            legacyUi<<[false, true]
+            [legacyUi] << UI_MODES
     }
 
+    @UiModeFlag(featureName = "edit-job-description-nextui", status = UiModeStatus.NEXT_UI)
     def "edit job set description"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
             def jobShowPage = page JobShowPage
             jobShowPage.nextUi = nextUi
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi ? UiMode.NEXT_UI : UiMode.DEFAULT
             jobCreatePage.go()
             jobCreatePage.descriptionTextarea.sendKeys 'a new job description'
             jobCreatePage.updateJobButton.click()
-            // Wait for page transition after clicking update button
             jobCreatePage.waitForUrlToContain('/job/show')
-            // Wait for description element to be visible before reading text
             jobShowPage.waitForElementVisible(jobShowPage.descriptionTextLabel)
         expect:
             jobShowPage.descriptionTextLabel.getText().trim().replaceAll(/\s+/, ' ').contains('a new job description')
         where:
+            // Details tab edit GSP supports both Vue (nextUi=true) and KO (default)
+            // branches, but `JobShowPage.getDescriptionTextLabel()` keys off `nextUi`
+            // and the JOB SHOW page no longer honors that URL flag (renders Vue
+            // unconditionally), so the legacy branch times out. Restoring full
+            // [false,true] coverage requires teaching JobShowPage to branch on
+            // `legacyUi` (mirroring the JobCreatePage post-promotion fix).
             nextUi<<[true]
     }
 
+    @UiModeFlag(featureName = "edit-job-groups-nextui", status = UiModeStatus.NEXT_UI)
     def "edit job set groups"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi ? UiMode.NEXT_UI : UiMode.DEFAULT
             jobCreatePage.go()
             jobCreatePage.jobGroupField.clear()
             jobCreatePage.jobGroupField.sendKeys 'testGroup'
@@ -129,11 +146,12 @@ class BasicJobsSpec extends SeleniumBase {
             nextUi<<[false,true]
     }
 
+    @UiModeFlag(featureName = "edit-job-group-modal-nextui", status = UiModeStatus.NEXT_UI)
     def "edit job set group via modal"() {
         when:
             def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [nextUi: nextUi])
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi ? UiMode.NEXT_UI : UiMode.DEFAULT
             jobCreatePage.go()
             jobCreatePage.groupChooseButton.click()
             jobCreatePage.waitForElementToBeClickable jobCreatePage.groupNameOption
@@ -161,10 +179,15 @@ class BasicJobsSpec extends SeleniumBase {
             jobCreatePage.waitForUrlToContain('/job/show')
     }
 
+    @UiModeFlag(
+        featureName = "edit-job-executions-tab-nextui",
+        status      = UiModeStatus.NEXT_UI,
+        description = "4-arg loadEditPath sweep alternates next-ui vs legacy paths (no plain default)"
+    )
     def "edit job and set executions tab"() {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", true, !nextUi
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", nextUi ? UiMode.NEXT_UI : UiMode.LEGACY
             jobCreatePage.go()
             jobCreatePage.tab JobTab.EXECUTION_PLUGINS click()
             if(jobCreatePage.executionPluginsRows.size() > 1){
@@ -215,7 +238,7 @@ class BasicJobsSpec extends SeleniumBase {
         when:
             def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
         then:
-            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de", false
+            jobCreatePage.loadEditPath SELENIUM_BASIC_PROJECT, "b7b68386-3a52-46dc-a28b-1a4bf6ed87de"
             jobCreatePage.go()
             jobCreatePage.tab JobTab.NOTIFICATIONS click()
             jobCreatePage.addNotificationButtonByType NotificationEvent.START click()
