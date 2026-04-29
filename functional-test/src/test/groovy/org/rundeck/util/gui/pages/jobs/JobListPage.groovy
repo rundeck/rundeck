@@ -49,9 +49,19 @@ class JobListPage extends BasePage implements ActivityListTrait {
     By runJobButtonDisabled = By.cssSelector(".btn.btn-default.btn-xs.disabled")
     By executionPausedIcon = By.cssSelector(".glyphicon.glyphicon-pause")
     /**
-     * Pause icon inside the job list schedule column when schedules cannot run
-     * (project schedule off, job schedule off, or execution off — see {@code menu/_jobslist.gsp}).
-     * Scoped to {@code .jobslist} so navbar or other glyphs do not affect the count.
+     * Global ban-circle (not used by {@link #expectScheduleDisabled()} after GSP verification).
+     * Kept for callers that assert execution-disabled or other ban-circle UI with an explicit scope.
+     */
+    By scheduleDisabledIcon = By.cssSelector(".glyphicon.glyphicon-ban-circle")
+    /**
+     * Schedule column when schedules cannot run (see {@code menu/_jobslist.gsp}:
+     * {@code span.scheduletime.disabled} for project schedule off, job schedule off, or execution off).
+     */
+    private static final By JOB_LIST_SCHEDULE_COLUMN_DISABLED =
+            By.cssSelector(".jobslist span.scheduletime.disabled")
+    /**
+     * Pause glyph inside that column for the same states (e.g. project schedule off uses
+     * {@code glyphicon-pause}, not {@code glyphicon-ban-circle}).
      */
     private static final By JOB_LIST_SCHEDULE_COLUMN_PAUSE =
             By.cssSelector(".jobslist span.scheduletime.disabled i.glyphicon.glyphicon-pause")
@@ -151,14 +161,16 @@ class JobListPage extends BasePage implements ActivityListTrait {
     }
 
     /**
-     * Project-level schedule disable: run remains enabled, schedule column shows paused state.
-     * Uses a jobs-list-scoped pause glyph; a global {@link #executionPausedIcon} count is flaky when
-     * the schedule block is still rendering or when other pages add extra glyphs.
-     * No ban-circle assertion: project schedule-off is represented by pause in {@code scheduletime}
-     * (see {@code menu/_jobslist.gsp}), not {@code glyphicon-ban-circle}.
+     * Asserts project-level 'schedules off' on the jobs list: run is still allowed, and the
+     * schedule column shows the disabled strip (pause icon). Verified against
+     * {@code rundeckapp/grails-app/views/menu/_jobslist.gsp} ({@code span.scheduletime.disabled} /
+     * {@code glyphicon-pause} for {@code !projectScheduleModeActive}); that template does not render
+     * {@code glyphicon-ban-circle} for this case, so the older global {@code scheduleDisabledIcon}
+     * count was not a reliable contract and matched unrelated UI elsewhere on some pages.
      */
     def expectScheduleDisabled(){
         waitForNumberOfElementsToBe(runJobButtonDisabled, 0)
+        waitForNumberOfElementsToBeMoreThan(JOB_LIST_SCHEDULE_COLUMN_DISABLED, 0)
         waitForNumberOfElementsToBeMoreThan(JOB_LIST_SCHEDULE_COLUMN_PAUSE, 0)
         return true
     }
