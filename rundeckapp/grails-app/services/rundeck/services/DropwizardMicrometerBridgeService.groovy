@@ -7,7 +7,6 @@ import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.MetricRegistryListener
 import com.codahale.metrics.Snapshot
 import com.codahale.metrics.Timer
-import grails.core.GrailsApplication
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -27,8 +26,8 @@ import java.util.function.ToDoubleFunction
 class DropwizardMicrometerBridgeService {
 
     MetricRegistry metricRegistry
+    MeterRegistry meterRegistry
     ConfigurationService configurationService
-    GrailsApplication grailsApplication
 
     // Cache snapshots to avoid recomputing during Prometheus scrapes
     // Key: metric object identity, Value: cached snapshot with timestamp
@@ -238,15 +237,6 @@ class DropwizardMicrometerBridgeService {
 
         if (!metricRegistry) {
             log.warn("Cannot initialize bridge: metricRegistry is null")
-            return
-        }
-
-        // Get the composite MeterRegistry from Spring Boot's auto-configuration
-        MeterRegistry meterRegistry = null
-        try {
-            meterRegistry = grailsApplication.mainContext.getBean(MeterRegistry)
-        } catch (Exception e) {
-            log.error("Cannot find MeterRegistry bean", e)
             return
         }
 

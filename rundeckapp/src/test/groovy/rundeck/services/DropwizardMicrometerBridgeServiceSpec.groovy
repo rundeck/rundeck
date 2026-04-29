@@ -5,10 +5,8 @@ import com.codahale.metrics.Histogram
 import com.codahale.metrics.Meter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
-import grails.core.GrailsApplication
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
-import org.springframework.context.ApplicationContext
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -19,26 +17,20 @@ class DropwizardMicrometerBridgeServiceSpec extends Specification {
     MetricRegistry metricRegistry
     MeterRegistry meterRegistry
     ConfigurationService configurationService
-    GrailsApplication grailsApplication
-    ApplicationContext applicationContext
 
     def setup() {
         metricRegistry = new MetricRegistry()
         meterRegistry = new SimpleMeterRegistry()
         configurationService = Mock(ConfigurationService)
-        grailsApplication = Mock(GrailsApplication)
-        applicationContext = Mock(ApplicationContext)
 
         service = new DropwizardMicrometerBridgeService()
         service.metricRegistry = metricRegistry
+        service.meterRegistry = meterRegistry
         service.configurationService = configurationService
-        service.grailsApplication = grailsApplication
     }
 
     void setupBridgeEnabled() {
         configurationService.getBoolean('metrics.micrometer.bridge.enabled', true) >> true
-        grailsApplication.mainContext >> applicationContext
-        applicationContext.getBean(MeterRegistry) >> meterRegistry
     }
 
     def "bridge is disabled when configuration is false"() {
