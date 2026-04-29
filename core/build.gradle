@@ -58,7 +58,7 @@ dependencies {
     api project(":rundeck-authz:rundeck-authz-yaml")
     api project(":rundeck-data-models")
 
-    api ('com.google.guava:guava:33.6.0-jre') {
+    api ("com.google.guava:guava:${guavaVersion}") {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group:'org.checkerframework', module: 'checker-compat-qual'
         exclude group:'com.google.errorprone', module: 'error_prone_annotations'
@@ -72,12 +72,12 @@ dependencies {
         exclude group: 'pull-parser'
     }
 
-    api 'org.apache.ant:ant:1.10.14',
-        'org.slf4j:slf4j-api:1.7.32',
+    api "org.apache.ant:ant:${antVersion}",
+        "org.slf4j:slf4j-api:${slf4jVersion}",
         "commons-codec:commons-codec:${commonsCodecVersion}",
         'commons-collections:commons-collections:3.2.2',
         "org.apache.commons:commons-lang3:${commonsLang3Version}",
-        'jaxen:jaxen:1.2.0',
+        "jaxen:jaxen:${jaxenVersion}",
         "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
         "org.yaml:snakeyaml:${snakeyamlVersion}",
         "com.squareup.retrofit2:retrofit:3.0.0",
@@ -107,7 +107,7 @@ dependencies {
     testImplementation "org.spockframework:spock-junit4"
     testImplementation "com.squareup.retrofit2:retrofit-mock:3.0.0"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
-    testImplementation "cglib:cglib-nodep:2.2.2"
+    testImplementation "cglib:cglib-nodep:${cglibNoDepVersion}"
 
 
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
@@ -115,7 +115,7 @@ dependencies {
 
     // Add constraints to fix transitive dependency conflicts
     constraints {
-        implementation ("org.jetbrains.kotlin:kotlin-stdlib:1.6.21")
+        implementation ("org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}")
     }
 }
 
