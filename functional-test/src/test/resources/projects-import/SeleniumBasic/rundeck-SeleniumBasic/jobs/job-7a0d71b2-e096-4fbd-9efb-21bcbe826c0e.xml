@@ -20,10 +20,6 @@
     </nodefilters>
     <nodesSelectedByDefault>true</nodesSelectedByDefault>
     <plugins />
-    <runnerSelector>
-      <runnerFilterMode>LOCAL</runnerFilterMode>
-      <runnerFilterType>LOCAL_RUNNER</runnerFilterType>
-    </runnerSelector>
     <scheduleEnabled>true</scheduleEnabled>
     <schedules />
     <sequence keepgoing='false' strategy='node-first'>

@@ -48,20 +48,33 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By closeDefinitionModalBy = By.cssSelector("div[id='job-definition-modal_footer'] button[data-dismiss='modal']")
     By jobActionBy = By.xpath("//div[contains(@class, 'job-action-button')]")
     By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
-    /** Scoped: jobs list loads the run form under {@code #execDiv}; job show uses {@code #runjob}. */
-    By nodeFilterInputBy = By.cssSelector("#execDiv #doReplaceFilters, #runjob #doReplaceFilters")
-    By nodeFilterOverrideBy = By.cssSelector("#filterradio")
-    By nodeFilterInputValueBy = By.cssSelector('input[name="extra.nodefilter"]')
+    /**
+     * Scoped to a visible run UI: jobs list uses Bootstrap modal {@code #execDiv} (must have {@code .in}/{@code .show});
+     * hidden {@code #execDiv} can still contain a stale fragment whose controls are not clickable. Job show uses
+     * {@code #runjob}.
+     */
+    By nodeFilterInputBy = By.cssSelector(
+            "#execDiv.modal.in #doReplaceFilters, #execDiv.modal.show #doReplaceFilters, #runjob #doReplaceFilters")
+    By nodeFilterOverrideBy = By.cssSelector(
+            "#execDiv.modal.in #filterradio, #execDiv.modal.show #filterradio, #runjob #filterradio")
+    By nodeFilterInputValueBy = By.cssSelector(
+            "#execDiv.modal.in input[name=\"extra.nodefilter\"], #execDiv.modal.show input[name=\"extra.nodefilter\"], #runjob input[name=\"extra.nodefilter\"]")
     By dropDownToggleBy = By.cssSelector("button[data-testid='nfi-toggle']")
     By selectAllNodesLinkBy = By.cssSelector("a.xnodefilterlink.job_edit__node_filter__filter_select_all")
     By localhostNodeBy = By.cssSelector(".col-xs-6.node_ident.embedded_node.tight.server .fas.fa-hdd")
     By popoverContentBy = By.cssSelector("div.popover-content")
     By nodeFilterLinkBy = By.cssSelector("node-filter-link[params*='linkicon']")
     By arrowIconBy = By.cssSelector("i.glyphicon-circle-arrow-right")
-    By schedJobNodeFilterBy = By.cssSelector("div[class='input-group nodefilters multiple-control-input-group']")
+    By schedJobNodeFilterBy = By.cssSelector(
+            "#execDiv.modal.in div.input-group.nodefilters.multiple-control-input-group, " +
+                    "#execDiv.modal.show div.input-group.nodefilters.multiple-control-input-group, " +
+                    "#runjob div.input-group.nodefilters.multiple-control-input-group")
     By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
     By autocompleteJobStepDefinitionBy = By.cssSelector("#wfitem_0 > span > div > div > span > span > span.text-success")
-    By runFormBy = By.cssSelector("#execDiv #exec_options_form #formbuttons #execFormRunButton")
+    By runFormBy = By.cssSelector(
+            "#execDiv.modal.in #exec_options_form #formbuttons #execFormRunButton, " +
+                    "#execDiv.modal.show #exec_options_form #formbuttons #execFormRunButton, " +
+                    "#runjob #exec_options_form #formbuttons #execFormRunButton")
     By optionValidationWarningBy = By.cssSelector("#execDiv #exec_options_form #optionSelect #_commandOptions div.form-group.has-warning p.text-warning")
     By jobRowBy = By.cssSelector("#job_group_tree .jobname.job_list_row[data-job-id] > a[data-job-id]")
     By jobSearchBy = By.xpath("//span[@title='Click to modify filter']")
@@ -290,14 +303,13 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     /**
-     * After clicking a run link, waits until run options appear: either navigation to {@code /job/show/}
-     * or (typical on jobs list) the exec form in {@code #execDiv} becomes clickable without a URL change.
+     * After clicking a run link, waits until the run form is actually usable: visible modal exec on jobs list
+     * ({@code #execDiv.modal.in|.show}) or embedded run on job show ({@code #runjob}), with a clickable Run button.
+     * Do not rely on URL alone — {@code /job/show} can match before the run tab markup is ready, and {@code #execDiv}
+     * can exist in the DOM while hidden (stale fragment, not clickable).
      */
     void waitForRunJobExecFormReady(Duration timeout = Duration.ofSeconds(60)) {
-        new WebDriverWait(driver, timeout).until(
-                ExpectedConditions.or(
-                        ExpectedConditions.urlContains('/job/show'),
-                        ExpectedConditions.elementToBeClickable(runFormBy)))
+        new WebDriverWait(driver, timeout).until(ExpectedConditions.elementToBeClickable(runFormBy))
     }
 
     /**

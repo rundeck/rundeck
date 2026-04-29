@@ -895,11 +895,12 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobOptionAllowedValuesRemoteUrlInput(){
-        // Next UI: OptionsEditor mounts only one OptionEdit at a time inside .edit-option-item (not [last()] on
-        // all data-test blocks). Legacy: only the open editor has .optEditForm with these radios.
+        // Next UI: unsaved options are edited in the footer row whose root id is optitem_new (OptionEdit), not every
+        // .edit-option-item (collapsed rows lack valuesType). Legacy: ajax-added rows use optvis_<n> (jobedit.js);
+        // take the last open optEditForm so first vs second new option both resolve.
         By by = legacyUi
-                ? By.cssSelector("#optionsContent .optEditForm input[name='valuesType'][value='url']")
-                : By.cssSelector("#optionsContent .edit-option-item [data-test='option.valuesType'] input[value='url']")
+                ? By.xpath("(//div[starts-with(@id,'optvis_')]//div[contains(@class,'optEditForm')]//input[@name='valuesType' and @value='url'])[last()]")
+                : By.cssSelector("#optionsContent #optitem_new input[name='valuesType'][value='url']")
         def optionsSectionBy = By.id("optionsContent")
         waitForElementVisible(optionsSectionBy)
         executeScript("arguments[0].scrollIntoView({block: 'center'});", el(optionsSectionBy))
