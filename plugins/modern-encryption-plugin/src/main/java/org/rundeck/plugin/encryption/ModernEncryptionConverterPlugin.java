@@ -85,6 +85,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
     String passwordSysPropName;
 
     @PluginProperty(
+            name = "encryptorType",
             title = "Legacy Encryptor Type",
             description = "Jasypt encryptor type used previously.\n\n" +
                     "* 'custom' — algorithm PBEWITHSHA256AND128BITAES-CBC-BC with BC provider (Rundeck default)\n" +
@@ -97,6 +98,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
     String legacyEncryptorType;
 
     @PluginProperty(
+            name = "algorithm",
             title = "Legacy Algorithm",
             description = "(optional) Override the legacy Jasypt algorithm. Only used when legacyEncryptorType is 'custom'.",
             required = false
@@ -104,6 +106,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
     String legacyAlgorithm;
 
     @PluginProperty(
+            name = "provider",
             title = "Legacy Provider",
             description = "(optional) Override the legacy JCE provider name for Jasypt decryption. Default: 'BC'.",
             required = false
@@ -111,6 +114,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
     String legacyProvider;
 
     @PluginProperty(
+            name = "keyObtentionIterations",
             title = "Legacy Key Obtention Iterations",
             description = "(optional) Number of PBE iterations used by the previous Jasypt config. Default: 1000.",
             required = false
@@ -221,6 +225,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
         }
         if (notBlank(passwordSysPropName)) {
             String propVal = System.getProperty(passwordSysPropName);
+            System.clearProperty(passwordSysPropName);
             passwordSysPropName = null;
             if (notBlank(propVal)) {
                 return propVal.toCharArray();

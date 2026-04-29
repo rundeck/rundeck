@@ -123,7 +123,7 @@ class ModernEncryptionConverterPluginSpec extends Specification {
         then:
         result != null
         meta.getResourceMeta()["modern-encryption:encrypted"] == "true"
-        !meta.getResourceMeta().containsKey("jasypt-encryption:encrypted")
+        meta.getResourceMeta()["jasypt-encryption:encrypted"] == "false"
 
         and: "output is AES-256-GCM format"
         def encrypted = readAllBytes(result)
@@ -233,7 +233,7 @@ class ModernEncryptionConverterPluginSpec extends Specification {
 
         then: "metadata migrated"
         updateMeta.getResourceMeta()["modern-encryption:encrypted"] == "true"
-        !updateMeta.getResourceMeta().containsKey("jasypt-encryption:encrypted")
+        updateMeta.getResourceMeta()["jasypt-encryption:encrypted"] == "false"
 
         when: "read the modern-encrypted data"
         def readMeta2 = metaWith(updateMeta.getResourceMeta())
