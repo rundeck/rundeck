@@ -1,0 +1,211 @@
+# pull_request_target runs this workflow file from the base branch (e.g. main), not the PR
+# branch. Edits here only affect CI after they land on the default branch.
+#
+# Prepares an integration branch + PR so full CI runs (including jobs that need repo
+# secrets) for approved community PRs that are difficult to validate directly from forks.
+#
+# Security model:
+# - Do NOT checkout the PR branch as the workspace root (no execution of PR-supplied
+#   Action config from the PR ref as the checked-out tree for later steps).
+# - Use only numeric PR id, default base branch, and a 40-hex SHA from the event.
+# - Require at least one APPROVED review for the current head commit before proceeding.
+# - Approval is verified via 'gh pr view --json reviews' (no manual API pagination).
+# - Changed files are enumerated with 'git diff' (no API calls, path traversal checks).
+# - pull_request_target is required so GITHUB_TOKEN can push for fork-based PRs.
+name: Prepare community PR
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+concurrency:
+  group: prepare-community-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Open integration PR
+    if: >-
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.draft == false &&
+      github.event.label.name == 'prepare-community-pr' &&
+      github.event.pull_request.base.ref == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+      REPO_FULL: ${{ github.repository }}
+    steps:
+      - name: Validate event inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "${HEAD_SHA}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "head.sha is not a 40-hex SHA; refusing to continue." >&2
+            exit 1
+          fi
+          if [[ ! "${PR_NUMBER}" =~ ^[0-9]+$ ]]; then
+            echo "pull_request.number is not numeric; refusing to continue." >&2
+            exit 1
+          fi
+
+      - name: Verify approval for current PR head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          head_lc="${HEAD_SHA,,}"
+          
+          # Use gh pr view to get all reviews without manual pagination
+          reviews_json="$(gh pr view "${PR_NUMBER}" --repo "${REPO_FULL}" --json reviews,headRefOid)"
+          
+          # Verify the PR head matches what we expect
+          pr_head="$(jq -r '.headRefOid // ""' <<<"${reviews_json}")"
+          pr_head_lc="${pr_head,,}"
+          if [[ "${pr_head_lc}" != "${head_lc}" ]]; then
+            echo "PR head from view (${pr_head}) does not match event head.sha ${HEAD_SHA}." >&2
+            exit 1
+          fi
+          
+          # Count APPROVED reviews for the current head commit
+          approved_for_head="$(
+            jq --arg head "${head_lc}" '
+              [.reviews[]? | select(.state == "APPROVED" and (((.commit.oid // "") | ascii_downcase) == $head))]
+              | length
+            ' <<<"${reviews_json}"
+          )"
+          
+          if [[ "${approved_for_head}" -lt 1 ]]; then
+            echo "PR #${PR_NUMBER} has no APPROVED review recorded for head ${HEAD_SHA}." >&2
+            echo "Push a new commit or re-request review, then remove and re-apply the label." >&2
+            exit 1
+          fi
+
+      - name: Check out default base branch (trusted ref only)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Verify changed files and merge PR head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin "${BASE_REF}"
+          git reset --hard "origin/${BASE_REF}"
+
+          git fetch origin "pull/${PR_NUMBER}/head"
+          fetched="$(git rev-parse FETCH_HEAD)"
+          head_lc="${HEAD_SHA,,}"
+          fetched_lc="${fetched,,}"
+          if [[ "${fetched_lc}" != "${head_lc}" ]]; then
+            echo "Fetched PR head ${fetched} does not match event head.sha ${HEAD_SHA}; refusing to merge." >&2
+            exit 1
+          fi
+
+          # Verify changed files using git diff with NUL delimiter (prevents newline injection)
+          diff_file="$(mktemp)"
+          if ! git diff --name-only -z "origin/${BASE_REF}...FETCH_HEAD" >"${diff_file}"; then
+            echo "git diff --name-only failed (bad refs?)." >&2
+            rm -f "${diff_file}"
+            exit 1
+          fi
+          
+          mapfile -d '' -t files <"${diff_file}"
+          rm -f "${diff_file}"
+
+          if [[ "${#files[@]}" -eq 0 || ( "${#files[@]}" -eq 1 && -z "${files[0]}" ) ]]; then
+            echo "PR has no changed files relative to ${BASE_REF}; nothing to prepare." >&2
+            exit 1
+          fi
+
+          # Security checks on changed files
+          for f in "${files[@]}"; do
+            if [[ -z "${f}" ]]; then
+              continue
+            fi
+            
+            # Block path traversal attacks
+            if [[ "${f}" == *".."* ]]; then
+              echo "SECURITY: Rejecting path containing '..': ${f}" >&2
+              exit 1
+            fi
+            
+            # Block workflow/action file changes (prevents secret exfiltration)
+            if [[ "${f}" == .github/workflows/* ]] || [[ "${f}" == .github/actions/* ]]; then
+              echo "SECURITY: Rejecting workflow/action file change: ${f}" >&2
+              echo "Workflow changes from community PRs are not allowed." >&2
+              echo "Submit workflow changes in a separate PR from a rundeck org member." >&2
+              exit 1
+            fi
+          done
+
+          prep_branch="bot/prep-community-pr-${PR_NUMBER}"
+          git checkout -B "${prep_branch}"
+
+          merge_msg="Prepare CI: merge community PR #${PR_NUMBER}"
+          if ! git merge --no-ff FETCH_HEAD -m "${merge_msg}"; then
+            body_file="$(mktemp)"
+            {
+              printf '%s\n\n' "The \`prepare-community-pr\` workflow could not merge this PR into \`${prep_branch}\`."
+              printf '%s\n' "Resolve conflicts against the default branch, then remove and re-apply the label."
+            } >"${body_file}"
+            gh pr comment "${PR_NUMBER}" --repo "${REPO_FULL}" --body-file "${body_file}"
+            rm -f "${body_file}"
+            exit 1
+          fi
+
+          git push --force-with-lease origin "HEAD:${prep_branch}"
+
+      - name: Open or refresh integration pull request
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          prep_branch="bot/prep-community-pr-${PR_NUMBER}"
+          origin_url="https://github.com/${REPO_FULL}/pull/${PR_NUMBER}"
+          title="Prepare CI for community PR #${PR_NUMBER}"
+          body_file="$(mktemp)"
+          {
+            printf '%s\n\n' "This PR was opened automatically so default-branch CI (including jobs that need repository secrets) can run on the merged result."
+            printf '%s\n' "Source (community) PR: ${origin_url}"
+          } >"${body_file}"
+
+          existing="$(
+            gh pr list \
+              --repo "${REPO_FULL}" \
+              --head "${prep_branch}" \
+              --base "${BASE_REF}" \
+              --state open \
+              --json number \
+              --jq '.[0].number // empty'
+          )"
+
+          if [[ -n "${existing}" ]]; then
+            gh pr edit "${existing}" \
+              --repo "${REPO_FULL}" \
+              --title "${title}" \
+              --body-file "${body_file}"
+            echo "Updated existing PR #${existing}."
+          else
+            gh pr create \
+              --repo "${REPO_FULL}" \
+              --base "${BASE_REF}" \
+              --head "${prep_branch}" \
+              --title "${title}" \
+              --body-file "${body_file}"
+          fi
+          rm -f "${body_file}"
