@@ -279,7 +279,7 @@ class BasicJobsSpec extends SeleniumBase {
         then:
             jobShowPage.validatePage()
             jobShowPage.runJobLink '7a0d71b2-e096-4fbd-9efb-21bcbe826c0e' click()
-            jobShowPage.waitForUrlToContain('/job/show/')
+            // Jobs list uses AJAX + #execDiv modal (menu/jobs.gsp); URL stays /project/.../jobs — do not wait for /job/show/
             jobShowPage.waitForElementToBeClickable jobShowPage.runFormButton
             // Nodes panel (and #doReplaceFilters) hidden until matched nodes; longer wait than run button
             jobShowPage.waitForNodeFilterReplaceCheckboxClickable()

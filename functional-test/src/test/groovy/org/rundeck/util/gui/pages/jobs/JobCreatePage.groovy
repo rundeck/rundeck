@@ -899,11 +899,11 @@ class JobCreatePage extends BasePage {
         def optionsSectionBy = By.id("optionsContent")
         waitForElementVisible(optionsSectionBy)
         executeScript("arguments[0].scrollIntoView({block: 'center'});", el(optionsSectionBy))
-        def element = new WebDriverWait(driver, Duration.ofSeconds(30))
-                .until(ExpectedConditions.presenceOfElementLocated(by))
-        executeScript("arguments[0].scrollIntoView({block: 'center'});", element)
-        waitForElementToBeClickable(element)
-        element
+        waitForElementVisible(by)
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", el(by))
+        // Wait by locator so each poll re-finds the node (option editor re-renders can stale a WebElement)
+        waitIgnoringForElementToBeClickable(by, Duration.ofSeconds(45))
+        el(by)
     }
 
     void scrollToElement(WebElement el){
