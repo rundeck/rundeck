@@ -5,6 +5,7 @@ import com.codahale.metrics.Histogram
 import com.codahale.metrics.Meter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.MetricRegistryListener
+import com.codahale.metrics.Snapshot
 import com.codahale.metrics.Timer
 import grails.core.GrailsApplication
 import grails.events.annotation.Subscriber
@@ -13,6 +14,7 @@ import groovy.util.logging.Slf4j
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.ToDoubleFunction
 /**
  * Bridges Dropwizard MetricRegistry to Micrometer MeterRegistry.
@@ -27,6 +29,43 @@ class DropwizardMicrometerBridgeService {
     MetricRegistry metricRegistry
     ConfigurationService configurationService
     GrailsApplication grailsApplication
+
+    // Cache snapshots to avoid recomputing during Prometheus scrapes
+    // Key: metric object identity, Value: cached snapshot with timestamp
+    private static final ConcurrentHashMap<Object, CachedSnapshot> snapshotCache = new ConcurrentHashMap<>()
+    private static final long SNAPSHOT_CACHE_TTL_MS = 1000L // 1 second
+
+    /**
+     * Wrapper to cache Timer/Histogram snapshots to avoid redundant computations during scrapes.
+     * Each timer/histogram registers 4-5 gauges (mean, p50, p95, p99, etc). Without caching,
+     * Prometheus scrape triggers 4-5 snapshot computations per metric. With caching, only 1 per second.
+     */
+    private static class CachedSnapshot {
+        final Snapshot snapshot
+        final long timestamp
+
+        CachedSnapshot(Snapshot snapshot, long timestamp) {
+            this.snapshot = snapshot
+            this.timestamp = timestamp
+        }
+
+        boolean isExpired(long now) {
+            return (now - timestamp) > SNAPSHOT_CACHE_TTL_MS
+        }
+    }
+
+    private static Snapshot getCachedSnapshot(Object metricObject, Closure<Snapshot> snapshotSupplier) {
+        long now = System.currentTimeMillis()
+        CachedSnapshot cached = snapshotCache.get(metricObject)
+
+        if (cached != null && !cached.isExpired(now)) {
+            return cached.snapshot
+        }
+
+        Snapshot freshSnapshot = snapshotSupplier.call()
+        snapshotCache.put(metricObject, new CachedSnapshot(freshSnapshot, now))
+        return freshSnapshot
+    }
 
     // Helper methods to create ToDoubleFunction for each metric type
     private static ToDoubleFunction<com.codahale.metrics.Gauge> gaugeValueExtractor() {
@@ -82,7 +121,8 @@ class DropwizardMicrometerBridgeService {
         return new ToDoubleFunction<Timer>() {
             @Override
             double applyAsDouble(Timer t) {
-                return t.snapshot.mean / 1_000_000.0 // ns to ms
+                Snapshot snapshot = getCachedSnapshot(t, { -> t.snapshot })
+                return snapshot.mean / 1_000_000.0 // ns to ms
             }
         }
     }
@@ -91,7 +131,8 @@ class DropwizardMicrometerBridgeService {
         return new ToDoubleFunction<Timer>() {
             @Override
             double applyAsDouble(Timer t) {
-                return t.snapshot.median / 1_000_000.0 // ns to ms
+                Snapshot snapshot = getCachedSnapshot(t, { -> t.snapshot })
+                return snapshot.median / 1_000_000.0 // ns to ms
             }
         }
     }
@@ -100,7 +141,8 @@ class DropwizardMicrometerBridgeService {
         return new ToDoubleFunction<Timer>() {
             @Override
             double applyAsDouble(Timer t) {
-                return t.snapshot.get95thPercentile() / 1_000_000.0 // ns to ms
+                Snapshot snapshot = getCachedSnapshot(t, { -> t.snapshot })
+                return snapshot.get95thPercentile() / 1_000_000.0 // ns to ms
             }
         }
     }
@@ -109,7 +151,8 @@ class DropwizardMicrometerBridgeService {
         return new ToDoubleFunction<Timer>() {
             @Override
             double applyAsDouble(Timer t) {
-                return t.snapshot.get99thPercentile() / 1_000_000.0 // ns to ms
+                Snapshot snapshot = getCachedSnapshot(t, { -> t.snapshot })
+                return snapshot.get99thPercentile() / 1_000_000.0 // ns to ms
             }
         }
     }
@@ -127,7 +170,8 @@ class DropwizardMicrometerBridgeService {
         return new ToDoubleFunction<Histogram>() {
             @Override
             double applyAsDouble(Histogram h) {
-                return h.snapshot.mean
+                Snapshot snapshot = getCachedSnapshot(h, { -> h.snapshot })
+                return snapshot.mean
             }
         }
     }
@@ -136,7 +180,8 @@ class DropwizardMicrometerBridgeService {
         return new ToDoubleFunction<Histogram>() {
             @Override
             double applyAsDouble(Histogram h) {
-                return h.snapshot.median
+                Snapshot snapshot = getCachedSnapshot(h, { -> h.snapshot })
+                return snapshot.median
             }
         }
     }
@@ -145,7 +190,8 @@ class DropwizardMicrometerBridgeService {
         return new ToDoubleFunction<Histogram>() {
             @Override
             double applyAsDouble(Histogram h) {
-                return h.snapshot.get95thPercentile()
+                Snapshot snapshot = getCachedSnapshot(h, { -> h.snapshot })
+                return snapshot.get95thPercentile()
             }
         }
     }
@@ -154,7 +200,8 @@ class DropwizardMicrometerBridgeService {
         return new ToDoubleFunction<Histogram>() {
             @Override
             double applyAsDouble(Histogram h) {
-                return h.snapshot.get99thPercentile()
+                Snapshot snapshot = getCachedSnapshot(h, { -> h.snapshot })
+                return snapshot.get99thPercentile()
             }
         }
     }
