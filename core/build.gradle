@@ -58,7 +58,7 @@ dependencies {
     api project(":rundeck-authz:rundeck-authz-yaml")
     api project(":rundeck-data-models")
 
-    api ('com.google.guava:guava:32.0.1-jre') {
+    api ('com.google.guava:guava:32.1.3-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group:'org.checkerframework', module: 'checker-compat-qual'
         exclude group:'com.google.errorprone', module: 'error_prone_annotations'
