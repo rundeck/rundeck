@@ -895,13 +895,16 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobOptionAllowedValuesRemoteUrlInput(){
-        def by = (legacyUi ? jobOptionAllowedValuesRemoteUrlBy : jobOptionAllowedValuesRemoteUrlByNextUi)
+        // OptionEdit.vue repeats static ids (e.g. vtrurl_) per option; a global [data-test] css match
+        // hits the first option's block. Target the last editor / list row (active or most recently added).
+        By by = legacyUi
+                ? By.xpath("(//li[starts-with(@id,'optli_')])[last()]//input[@name='valuesType' and @value='url']")
+                : By.xpath("(//*[@data-test='option.valuesType'])[last()]//input[@name='valuesType' and @value='url']")
         def optionsSectionBy = By.id("optionsContent")
         waitForElementVisible(optionsSectionBy)
         executeScript("arguments[0].scrollIntoView({block: 'center'});", el(optionsSectionBy))
         waitForElementVisible(by)
         executeScript("arguments[0].scrollIntoView({block: 'center'});", el(by))
-        // Wait by locator so each poll re-finds the node (option editor re-renders can stale a WebElement)
         waitIgnoringForElementToBeClickable(by, Duration.ofSeconds(45))
         el(by)
     }

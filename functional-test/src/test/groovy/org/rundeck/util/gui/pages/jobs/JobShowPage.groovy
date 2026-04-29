@@ -289,6 +289,17 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     /**
+     * After clicking a run link, waits until run options appear: either navigation to {@code /job/show/}
+     * or (typical on jobs list) the exec form in {@code #execDiv} becomes clickable without a URL change.
+     */
+    void waitForRunJobExecFormReady(Duration timeout = Duration.ofSeconds(60)) {
+        new WebDriverWait(driver, timeout).until(
+                ExpectedConditions.or(
+                        ExpectedConditions.urlContains('/job/show'),
+                        ExpectedConditions.elementToBeClickable(runFormBy)))
+    }
+
+    /**
      * Waits until the 'change target nodes' checkbox ({@link #nodeFilterInputBy}) is clickable.
      * The parent nodes section stays {@code display:none} until the server returns matched nodes
      * ({@code scheduledExecution/_execOptionsForm.gsp} {@code wdgt.styleVisible}), so the run button
