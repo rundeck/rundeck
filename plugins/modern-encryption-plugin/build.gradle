@@ -23,6 +23,14 @@ ext.pluginClassNames = 'org.rundeck.plugin.encryption.ModernEncryptionConverterP
 ext.pluginName = 'Modern Encryption Plugin'
 ext.pluginDescription = 'Modern encryption using AES-256-GCM with legacy Jasypt read support'
 
+configurations {
+    pluginLibs
+
+    implementation {
+        extendsFrom pluginLibs
+    }
+}
+
 apply from: "../../gradle/java-version.gradle"
 apply plugin: 'groovy'
 
@@ -33,7 +41,9 @@ repositories {
 
 dependencies {
     implementation project(":core")
-    implementation project(":encryption-core")
+    pluginLibs(project(":encryption-core")) {
+        transitive = false
+    }
 
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
@@ -44,10 +54,19 @@ test {
     useJUnitPlatform()
 }
 
+def copyToLib = tasks.register('copyToLib', Copy) {
+    into layout.buildDirectory.dir("output/lib")
+    from configurations.pluginLibs
+}
+
 jar {
+    dependsOn copyToLib
+    from layout.buildDirectory.dir("output")
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames
         attributes 'Rundeck-Plugin-Name': pluginName
         attributes 'Rundeck-Plugin-Description': pluginDescription
+        def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
+        attributes 'Rundeck-Plugin-Libs': "${libList}"
     }
 }
