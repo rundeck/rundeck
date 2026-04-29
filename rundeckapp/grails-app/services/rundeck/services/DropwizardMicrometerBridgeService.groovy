@@ -230,12 +230,11 @@ class DropwizardMicrometerBridgeService {
         )
 
         if (!enabled) {
-            log.info("Dropwizard->Micrometer bridge disabled")
+            log.debug("Dropwizard->Micrometer bridge disabled")
             return
         }
 
-        log.info("=== Initializing Dropwizard->Micrometer metrics bridge ===")
-        log.info("MetricRegistry: ${metricRegistry?.class?.name}")
+        log.debug("Initializing Dropwizard->Micrometer metrics bridge")
 
         if (!metricRegistry) {
             log.warn("Cannot initialize bridge: metricRegistry is null")
@@ -246,7 +245,6 @@ class DropwizardMicrometerBridgeService {
         MeterRegistry meterRegistry = null
         try {
             meterRegistry = grailsApplication.mainContext.getBean(MeterRegistry)
-            log.info("Found MeterRegistry: ${meterRegistry?.class?.name}")
         } catch (Exception e) {
             log.error("Cannot find MeterRegistry bean", e)
             return
@@ -265,12 +263,8 @@ class DropwizardMicrometerBridgeService {
         int histogramCount = metricRegistry.histograms.size()
         int totalMetrics = gaugeCount + counterCount + meterCount + timerCount + histogramCount
 
-        log.info("Dropwizard metrics found: ${totalMetrics} total")
-        log.info("  - ${gaugeCount} gauges")
-        log.info("  - ${counterCount} counters")
-        log.info("  - ${meterCount} meters")
-        log.info("  - ${timerCount} timers")
-        log.info("  - ${histogramCount} histograms")
+        log.debug("Dropwizard metrics found: {} total (gauges: {}, counters: {}, meters: {}, timers: {}, histograms: {})",
+                  totalMetrics, gaugeCount, counterCount, meterCount, timerCount, histogramCount)
 
         // Bridge Dropwizard metrics to Micrometer by registering them directly
         int bridged = 0
@@ -300,12 +294,10 @@ class DropwizardMicrometerBridgeService {
             try {
                 Gauge.builder("${name}.count", meter, meterCountExtractor()).register(meterRegistry)
                 Gauge.builder("${name}.rate.mean", meter, meterRateExtractor()).register(meterRegistry)
-                if (name.contains('execution')) {
-                    log.info("✅ Bridged execution meter: ${name} → ${name}.count (${meter.count})")
-                }
                 bridged += 2
+                log.debug("Bridged meter: {} -> {}.count, {}.rate.mean", name, name, name)
             } catch (Exception e) {
-                log.warn("❌ Failed to bridge meter ${name}: ${e.message}", e)
+                log.debug("Failed to bridge meter {}: {}", name, e.message)
             }
         }
 
@@ -416,7 +408,7 @@ class DropwizardMicrometerBridgeService {
                         Gauge.builder("${name}.count", meter, meterCountExtractor()).register(meterRegistry)
                     } catch (IllegalArgumentException iae) {
                         // Already registered, that's okay
-                        log.debug("Meter ${name}.count already registered")
+                        log.trace("Meter {}.count already registered", name)
                     }
 
                     // Try to register rate
@@ -424,12 +416,12 @@ class DropwizardMicrometerBridgeService {
                         Gauge.builder("${name}.rate.mean", meter, meterRateExtractor()).register(meterRegistry)
                     } catch (IllegalArgumentException iae) {
                         // Already registered, that's okay
-                        log.debug("Meter ${name}.rate.mean already registered")
+                        log.trace("Meter {}.rate.mean already registered", name)
                     }
 
-                    log.info("✅ Dynamically bridged meter: ${name} → ${name}.count, ${name}.rate.mean")
+                    log.debug("Dynamically bridged meter: {} -> {}.count, {}.rate.mean", name, name, name)
                 } catch (Exception e) {
-                    log.warn("❌ Failed to bridge meter ${name}: ${e.message}", e)
+                    log.debug("Failed to bridge meter {}: {}", name, e.message)
                 }
             }
 
@@ -453,9 +445,9 @@ class DropwizardMicrometerBridgeService {
                     Gauge.builder("${name}.50thpercentile", timer, timerP50Extractor()).register(meterRegistry)
                     Gauge.builder("${name}.95thpercentile", timer, timerP95Extractor()).register(meterRegistry)
                     Gauge.builder("${name}.99thpercentile", timer, timerP99Extractor()).register(meterRegistry)
-                    log.info("Dynamically bridged timer: ${name} with percentiles")
+                    log.debug("Dynamically bridged timer: {} with percentiles", name)
                 } catch (Exception e) {
-                    log.debug("Failed to bridge timer ${name}: ${e.message}")
+                    log.debug("Failed to bridge timer {}: {}", name, e.message)
                 }
             }
 
@@ -475,21 +467,7 @@ class DropwizardMicrometerBridgeService {
             }
         })
 
-        // Log execution-related meters for debugging
-        def executionMeters = metricRegistry.meters.keySet().findAll { it.contains('execution') }
-        if (executionMeters) {
-            log.info("📊 Found ${executionMeters.size()} execution meters:")
-            executionMeters.each { name ->
-                log.info("   - ${name}")
-            }
-        } else {
-            log.warn("⚠️  No execution meters found in MetricRegistry yet!")
-            log.warn("   Execution meters will be bridged dynamically when jobs run")
-        }
-
-        log.info("=== Dropwizard->Micrometer bridge initialized successfully ===")
-        log.info("Bridged ${bridged} existing metrics to Micrometer")
-        log.info("Listener registered to bridge new metrics dynamically")
-        log.info("Metrics will be available at /monitoring/prometheus")
+        // Single info-level summary
+        log.info("Dropwizard->Micrometer bridge initialized: bridged {} metrics, dynamic listener enabled", bridged)
     }
 }
