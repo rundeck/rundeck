@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
+import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
@@ -182,13 +183,44 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                     : Boolean.parseBoolean(execQuotingEnabledProp);
 
             String[] command = script.getCommand();
-            ExecArgList.Builder builder = ExecArgList.builder();
-            for (String arg : command) {
-                // Quote all arguments when quoting is enabled (default). Protects against command injection in option values.
-                boolean shouldQuote = execQuotingEnabled;
-                builder.arg(arg, shouldQuote, featureQuotingBackwardCompatible);
+            // Per-value quoting: expand each template arg with the OS-aware converter so
+            // individual ${...} values are quoted while template-level shell operators stay free.
+            // ${unquoted.*} refs are exempted from the converter inside replaceDataReferences.
+            // Derive the command interpreter from the node attribute first, then the project property,
+            // mirroring the same lookup done by ExecutionServiceImpl (lines 421-424).
+            String commandInterpreter;
+            if (node.getAttributes().get("shell-escaping-interpreter") != null) {
+                commandInterpreter = node.getAttributes().get("shell-escaping-interpreter");
+            } else if (context.getFrameworkProject() != null) {
+                commandInterpreter = context.getIFramework().getFrameworkProjectMgr()
+                        .getFrameworkProject(context.getFrameworkProject())
+                        .getProperty("project.plugin.Shell.Escaping.interpreter");
+            } else {
+                commandInterpreter = null;
             }
-            
+
+            // blankIfUnexpanded=false so the converter handles unresolved refs: blank only
+            // missing ${option.*} refs (matching legacy behavior); all other unresolved refs
+            // (${data.*}, ${job.*}, ${node.*}, etc.) are passed through unchanged.
+            Converter<String, String> valueConverter = execQuotingEnabled
+                    ? DataContextUtils.wrapWithOptionBlanking(
+                            CLIUtils.argumentQuoteForOperatingSystem(node.getOsFamily(), commandInterpreter))
+                    : null;
+            String[] expanded = SharedDataContextUtils.replaceDataReferences(
+                    command,
+                    context.getSharedDataContext(),
+                    ContextView.node(node.getNodename()),
+                    ContextView::nodeStep,
+                    valueConverter,
+                    false,
+                    false
+            );
+            ExecArgList.Builder builder = ExecArgList.builder();
+            for (String arg : expanded) {
+                // Quoting is already baked into each value — pass shouldQuote=false
+                builder.arg(arg, false, featureQuotingBackwardCompatible);
+            }
+
             return executionService.executeCommand(
                     context,
                     builder.build(),

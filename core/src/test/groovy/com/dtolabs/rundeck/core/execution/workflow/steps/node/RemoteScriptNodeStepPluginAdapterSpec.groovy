@@ -21,7 +21,9 @@ import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IFrameworkServices
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.data.DataContext
 import com.dtolabs.rundeck.core.data.MultiDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
@@ -383,5 +385,244 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
         _ * framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
             1 * fileCopyScriptContent(_, _, node, _) >> { args -> args[3] }
         }
+    }
+
+    def "per-value quoting preserves template semicolon for safe values"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+            sharedContext.merge(
+                    com.dtolabs.rundeck.core.dispatcher.ContextView.global(),
+                    DataContextUtils.context("data", [home_dir: '/workspace'])
+            )
+            sharedContext.merge(
+                    com.dtolabs.rundeck.core.dispatcher.ContextView.global(),
+                    DataContextUtils.context("job", [execid: 'exec123'])
+            )
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            // Command template: two tokens, second has a trailing semicolon (shell separator)
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['cd', '${data.home_dir}/${job.execid};'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            captured[0] == 'cd'
+            // Safe values contain no shell-special chars; semicolon is a template-level separator, stays free
+            captured[1] == '/workspace/exec123;'
+    }
+
+
+    def "Windows cmd interpreter: values with shell-special chars use cmd escaping not single-quote wrapping"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def mockProject = Mock(IRundeckProject) {
+                getProperty("project.plugin.Shell.Escaping.interpreter") >> null
+            }
+            def mockProjectMgr = Mock(ProjectManager) {
+                getFrameworkProject(PROJECT_NAME) >> mockProject
+            }
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getFrameworkProjectMgr() >> mockProjectMgr
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+            sharedContext.merge(
+                    com.dtolabs.rundeck.core.dispatcher.ContextView.global(),
+                    DataContextUtils.context("option", [dest: 'C:\\temp&dangerous'])
+            )
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getFrameworkProject() >> PROJECT_NAME
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('windows')
+            // Signal that cmd.exe is the interpreter via node attribute
+            node.getAttributes().put('shell-escaping-interpreter', 'cmd')
+
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['copy', '${option.dest}'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'windows')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            // WINDOWS_CMD_ESCAPE prepends '^' before each CMD-special char; it must NOT wrap with single quotes
+            !captured[1].startsWith("'")
+            // '&' in the value must be escaped as '^&'
+            captured[1].contains('^&')
+    }
+
+    def "unresolved option ref is blanked when exec quoting is enabled"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            // No option context — ${option.missing} is unresolved
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['echo', '${option.missing}'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            captured[1] == ''
+    }
+
+    def "unresolved non-option ref is not blanked when exec quoting is enabled"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            // No data context — ${data.missing} is unresolved
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['echo', '${data.missing}'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            // Non-option unresolved refs pass through (not blanked), possibly shell-quoted
+            !captured[1].empty
+            captured[1].contains('data.missing')
+    }
+
+    def "per-value quoting does not quote unquoted refs"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+            sharedContext.merge(
+                    com.dtolabs.rundeck.core.dispatcher.ContextView.global(),
+                    DataContextUtils.context("option", [port: '80 && whoami'])
+            )
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['echo', '${unquotedoption.port}'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            // ${unquoted.*} values must pass through the converter unmodified
+            captured[1] == '80 && whoami'
     }
 }
