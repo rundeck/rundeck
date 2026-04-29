@@ -67,6 +67,22 @@ class DropwizardMicrometerBridgeService {
         return freshSnapshot
     }
 
+    /**
+     * Safely removes a metric from the Micrometer registry.
+     * Handles cases where the metric may not exist or has already been removed.
+     */
+    private void removeMetricSafely(String metricName, MeterRegistry registry) {
+        try {
+            def meter = registry.find(metricName).meter()
+            if (meter != null) {
+                registry.remove(meter.id)
+            }
+        } catch (Exception e) {
+            // Metric doesn't exist or already removed - this is fine
+            log.trace("Could not remove metric ${metricName}: ${e.message}")
+        }
+    }
+
     // Helper methods to create ToDoubleFunction for each metric type
     private static ToDoubleFunction<com.codahale.metrics.Gauge> gaugeValueExtractor() {
         return new ToDoubleFunction<com.codahale.metrics.Gauge>() {
@@ -335,7 +351,12 @@ class DropwizardMicrometerBridgeService {
 
             @Override
             void onGaugeRemoved(String name) {
-                log.debug("Gauge removed from Dropwizard: ${name}")
+                try {
+                    meterRegistry.remove(meterRegistry.get(name).meter().id)
+                    log.debug("Removed bridged gauge from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove gauge ${name} from Micrometer: ${e.message}")
+                }
             }
 
             @Override
@@ -350,7 +371,12 @@ class DropwizardMicrometerBridgeService {
 
             @Override
             void onCounterRemoved(String name) {
-                log.debug("Counter removed from Dropwizard: ${name}")
+                try {
+                    meterRegistry.remove(meterRegistry.get(name).meter().id)
+                    log.debug("Removed bridged counter from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove counter ${name} from Micrometer: ${e.message}")
+                }
             }
 
             @Override
@@ -369,7 +395,17 @@ class DropwizardMicrometerBridgeService {
 
             @Override
             void onHistogramRemoved(String name) {
-                log.debug("Histogram removed from Dropwizard: ${name}")
+                try {
+                    // Remove all 5 histogram gauges: count, mean, p50, p95, p99
+                    removeMetricSafely("${name}.count", meterRegistry)
+                    removeMetricSafely("${name}.mean", meterRegistry)
+                    removeMetricSafely("${name}.50thpercentile", meterRegistry)
+                    removeMetricSafely("${name}.95thpercentile", meterRegistry)
+                    removeMetricSafely("${name}.99thpercentile", meterRegistry)
+                    log.debug("Removed bridged histogram metrics from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove histogram ${name} from Micrometer: ${e.message}")
+                }
             }
 
             @Override
@@ -399,7 +435,14 @@ class DropwizardMicrometerBridgeService {
 
             @Override
             void onMeterRemoved(String name) {
-                log.debug("Meter removed from Dropwizard: ${name}")
+                try {
+                    // Remove both meter gauges: count and rate.mean
+                    removeMetricSafely("${name}.count", meterRegistry)
+                    removeMetricSafely("${name}.rate.mean", meterRegistry)
+                    log.debug("Removed bridged meter metrics from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove meter ${name} from Micrometer: ${e.message}")
+                }
             }
 
             @Override
@@ -418,7 +461,17 @@ class DropwizardMicrometerBridgeService {
 
             @Override
             void onTimerRemoved(String name) {
-                log.debug("Timer removed from Dropwizard: ${name}")
+                try {
+                    // Remove all 5 timer gauges: count, mean, p50, p95, p99
+                    removeMetricSafely("${name}.count", meterRegistry)
+                    removeMetricSafely("${name}.mean", meterRegistry)
+                    removeMetricSafely("${name}.50thpercentile", meterRegistry)
+                    removeMetricSafely("${name}.95thpercentile", meterRegistry)
+                    removeMetricSafely("${name}.99thpercentile", meterRegistry)
+                    log.debug("Removed bridged timer metrics from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove timer ${name} from Micrometer: ${e.message}")
+                }
             }
         })
 
