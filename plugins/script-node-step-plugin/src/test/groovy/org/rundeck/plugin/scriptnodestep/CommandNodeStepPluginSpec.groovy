@@ -249,6 +249,110 @@ class CommandNodeStepPluginSpec extends Specification {
             captured[1] == '80 && whoami'
     }
 
+    def "unresolved option ref is blanked when exec quoting is enabled"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def projectMock = Mock(IRundeckProject) {
+                getProperty("project.plugin.Shell.Escaping.interpreter") >> null
+            }
+            def projectMgrMock = Mock(ProjectManager) {
+                getFrameworkProject(_) >> projectMock
+            }
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getFrameworkProjectMgr() >> projectMgrMock
+            }
+            // No option context — ${option.missing} is unresolved
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+
+            def execCtx = Mock(ExecutionContext) {
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+                getFrameworkProject() >> 'testProject'
+            }
+            def execService = Mock(ExecutionService)
+            def framework = Mock(Framework) {
+                getExecutionService() >> execService
+            }
+            def context = Mock(PluginStepContext) {
+                getExecutionContext() >> execCtx
+                getFramework() >> framework
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+
+            def plugin = new CommandNodeStepPlugin()
+            plugin.adhocRemoteString = 'echo ${option.missing}'
+
+        when:
+            List<String> captured = null
+            execService.executeCommand(_, _, node) >> { args ->
+                captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                Mock(NodeExecutorResult) { isSuccess() >> true }
+            }
+            plugin.executeNodeStep(context, [:], node)
+
+        then:
+            captured != null
+            captured[1] == ''
+    }
+
+    def "unresolved non-option ref is not blanked when exec quoting is enabled"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def projectMock = Mock(IRundeckProject) {
+                getProperty("project.plugin.Shell.Escaping.interpreter") >> null
+            }
+            def projectMgrMock = Mock(ProjectManager) {
+                getFrameworkProject(_) >> projectMock
+            }
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+                getFrameworkProjectMgr() >> projectMgrMock
+            }
+            // No data context — ${data.missing} is unresolved
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+
+            def execCtx = Mock(ExecutionContext) {
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+                getFrameworkProject() >> 'testProject'
+            }
+            def execService = Mock(ExecutionService)
+            def framework = Mock(Framework) {
+                getExecutionService() >> execService
+            }
+            def context = Mock(PluginStepContext) {
+                getExecutionContext() >> execCtx
+                getFramework() >> framework
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+
+            def plugin = new CommandNodeStepPlugin()
+            plugin.adhocRemoteString = 'echo ${data.missing}'
+
+        when:
+            List<String> captured = null
+            execService.executeCommand(_, _, node) >> { args ->
+                captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                Mock(NodeExecutorResult) { isSuccess() >> true }
+            }
+            plugin.executeNodeStep(context, [:], node)
+
+        then:
+            captured != null
+            // Non-option unresolved refs are passed through (not blanked), possibly shell-quoted
+            !captured[1].empty
+            captured[1].contains('data.missing')
+    }
+
     def "Windows cmd interpreter: values with shell-special chars use cmd escaping not single-quote wrapping"() {
         given:
             def fwkProps = [

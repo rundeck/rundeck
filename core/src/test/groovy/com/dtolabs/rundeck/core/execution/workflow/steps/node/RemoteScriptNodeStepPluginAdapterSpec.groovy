@@ -497,6 +497,90 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
             captured[1].contains('^&')
     }
 
+    def "unresolved option ref is blanked when exec quoting is enabled"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            // No option context — ${option.missing} is unresolved
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['echo', '${option.missing}'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            captured[1] == ''
+    }
+
+    def "unresolved non-option ref is not blanked when exec quoting is enabled"() {
+        given:
+            def fwkProps = [
+                    'rundeck.feature.quoting.backwardCompatible': 'false',
+                    'rundeck.feature.exec.quoting.enabled'      : 'true',
+            ]
+            def iFrameworkMock = Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+            framework.frameworkServices = Mock(IFrameworkServices)
+
+            // No data context — ${data.missing} is unresolved
+            WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+
+            StepExecutionContext context = Mock(StepExecutionContext) {
+                getFramework() >> framework
+                getIFramework() >> iFrameworkMock
+                getSharedDataContext() >> sharedContext
+            }
+            def node = new NodeEntryImpl('node')
+            node.setOsFamily('unix')
+            def script = Mock(FileExtensionGeneratedScript) {
+                getCommand() >> ['echo', '${data.missing}'].toArray()
+            }
+            def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        when:
+            List<String> captured = null
+            framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+                executeCommand(_, _, node) >> { args ->
+                    captured = ((ExecArgList) args[1]).buildCommandForNode([:], 'unix')
+                    Mock(NodeExecutorResult) { isSuccess() >> true }
+                }
+            }
+            adapter.executeRemoteScript(context, node, script, 'exec123', 'testProvider')
+
+        then:
+            captured != null
+            // Non-option unresolved refs pass through (not blanked), possibly shell-quoted
+            !captured[1].empty
+            captured[1].contains('data.missing')
+    }
+
     def "per-value quoting does not quote unquoted refs"() {
         given:
             def fwkProps = [
