@@ -114,15 +114,15 @@ jobs:
             exit 1
           fi
 
-          # Verify changed files using git diff (no API pagination needed)
+          # Verify changed files using git diff with NUL delimiter (prevents newline injection)
           diff_file="$(mktemp)"
-          if ! git diff --name-only "origin/${BASE_REF}...FETCH_HEAD" >"${diff_file}"; then
+          if ! git diff --name-only -z "origin/${BASE_REF}...FETCH_HEAD" >"${diff_file}"; then
             echo "git diff --name-only failed (bad refs?)." >&2
             rm -f "${diff_file}"
             exit 1
           fi
           
-          mapfile -t files <"${diff_file}"
+          mapfile -d '' -t files <"${diff_file}"
           rm -f "${diff_file}"
 
           if [[ "${#files[@]}" -eq 0 || ( "${#files[@]}" -eq 1 && -z "${files[0]}" ) ]]; then
@@ -130,13 +130,23 @@ jobs:
             exit 1
           fi
 
-          # Check for path traversal attacks
+          # Security checks on changed files
           for f in "${files[@]}"; do
             if [[ -z "${f}" ]]; then
               continue
             fi
+            
+            # Block path traversal attacks
             if [[ "${f}" == *".."* ]]; then
-              echo "Rejecting suspicious path containing '..': ${f}" >&2
+              echo "SECURITY: Rejecting path containing '..': ${f}" >&2
+              exit 1
+            fi
+            
+            # Block workflow/action file changes (prevents secret exfiltration)
+            if [[ "${f}" == .github/workflows/* ]] || [[ "${f}" == .github/actions/* ]]; then
+              echo "SECURITY: Rejecting workflow/action file change: ${f}" >&2
+              echo "Workflow changes from community PRs are not allowed." >&2
+              echo "Submit workflow changes in a separate PR from a rundeck org member." >&2
               exit 1
             fi
           done
