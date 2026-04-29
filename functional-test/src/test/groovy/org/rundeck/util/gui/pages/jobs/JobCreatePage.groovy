@@ -895,11 +895,11 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobOptionAllowedValuesRemoteUrlInput(){
-        // OptionEdit.vue repeats static ids (e.g. vtrurl_) per option; a global [data-test] css match
-        // hits the first option's block. Target the last editor / list row (active or most recently added).
+        // Next UI: OptionsEditor mounts only one OptionEdit at a time inside .edit-option-item (not [last()] on
+        // all data-test blocks). Legacy: only the open editor has .optEditForm with these radios.
         By by = legacyUi
-                ? By.xpath("(//li[starts-with(@id,'optli_')])[last()]//input[@name='valuesType' and @value='url']")
-                : By.xpath("(//*[@data-test='option.valuesType'])[last()]//input[@name='valuesType' and @value='url']")
+                ? By.cssSelector("#optionsContent .optEditForm input[name='valuesType'][value='url']")
+                : By.cssSelector("#optionsContent .edit-option-item [data-test='option.valuesType'] input[value='url']")
         def optionsSectionBy = By.id("optionsContent")
         waitForElementVisible(optionsSectionBy)
         executeScript("arguments[0].scrollIntoView({block: 'center'});", el(optionsSectionBy))

@@ -48,7 +48,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By closeDefinitionModalBy = By.cssSelector("div[id='job-definition-modal_footer'] button[data-dismiss='modal']")
     By jobActionBy = By.xpath("//div[contains(@class, 'job-action-button')]")
     By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
-    By nodeFilterInputBy = By.cssSelector("#doReplaceFilters")
+    /** Scoped: jobs list loads the run form under {@code #execDiv}; job show uses {@code #runjob}. */
+    By nodeFilterInputBy = By.cssSelector("#execDiv #doReplaceFilters, #runjob #doReplaceFilters")
     By nodeFilterOverrideBy = By.cssSelector("#filterradio")
     By nodeFilterInputValueBy = By.cssSelector('input[name="extra.nodefilter"]')
     By dropDownToggleBy = By.cssSelector("button[data-testid='nfi-toggle']")

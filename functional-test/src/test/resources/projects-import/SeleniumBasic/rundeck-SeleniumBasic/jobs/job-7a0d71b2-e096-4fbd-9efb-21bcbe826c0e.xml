@@ -15,7 +15,8 @@
     <name>RUN-2383</name>
     <nodeFilterEditable>true</nodeFilterEditable>
     <nodefilters>
-      <filter>name: RunnerBBB </filter>
+      <!-- Match any node so exec form node panel renders in OSS and enterprise (RunnerBBB is not universal). -->
+      <filter>name: .*</filter>
     </nodefilters>
     <nodesSelectedByDefault>true</nodesSelectedByDefault>
     <plugins />
