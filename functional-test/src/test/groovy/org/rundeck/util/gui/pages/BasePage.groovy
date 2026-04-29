@@ -276,6 +276,17 @@ abstract class BasePage {
                 .until(ExpectedConditions.not(ExpectedConditions.urlContains(text)))
     }
 
+    /**
+     * Waits for a typical post-logout landing URL when {@link #waitForUrlToNotContain(String)} cannot
+     * be keyed off the pre-logout path (see {@link org.rundeck.util.gui.pages.TopMenuPage#logOut()}).
+     */
+    void waitForLogoutLandingUrl() {
+        new WebDriverWait(context.driver, Duration.ofSeconds(30)).until(
+                ExpectedConditions.or(
+                        ExpectedConditions.urlContains('/user/loggedout'),
+                        ExpectedConditions.urlContains('/user/login')))
+    }
+
     boolean waitForAttributeContains(WebElement locator, String attribute, String value) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.attributeContains(locator, attribute, value))
