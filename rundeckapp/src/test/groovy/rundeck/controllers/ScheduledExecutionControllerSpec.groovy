@@ -89,7 +89,7 @@ import java.lang.annotation.Annotation
 class ScheduledExecutionControllerSpec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
 
     void setupSpec() {
-        mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats)
+        mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats, LogFileStorageRequest)
     }
 
     def setup() {
@@ -5125,4 +5125,3 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
     }
 
 }
-

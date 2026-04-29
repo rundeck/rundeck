@@ -823,6 +823,7 @@ class ApiService implements WebUtilService{
                 if(execdata.retryExecution){
                     execMap.retriedExecution=execdata.retryExecution
                 }
+                execMap.jobDeleted = e.isJobDeleted()
                 execMap
             }
 
