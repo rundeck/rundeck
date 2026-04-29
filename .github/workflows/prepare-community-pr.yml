@@ -8,7 +8,12 @@
 # - Do NOT checkout the PR branch as the workspace root (no execution of PR-supplied
 #   Action config from the PR ref as the checked-out tree for later steps).
 # - Use only numeric PR id, default base branch, and a 40-hex SHA from the event.
-# - Require at least one APPROVED review for the current head commit before proceeding.
+# - Approval is enforced via github.event.pull_request.review_decision (see job if:).
+#   That field is populated when the repository uses required reviews / review decision
+#   on the PR; if the job never runs after labeling, check branch protection settings.
+# - pull_request_target is required so GITHUB_TOKEN can push for fork-based PRs (read-only
+#   on pull_request / pull_request_review for forks per GitHub docs).
+# - Changed paths are enumerated with git diff (no gh api); merge uses refs/pull/<N>/head.
 name: Prepare community PR
 
 on:
@@ -26,7 +31,8 @@ jobs:
       github.event.pull_request.state == 'open' &&
       github.event.pull_request.draft == false &&
       github.event.label.name == 'prepare-community-pr' &&
-      github.event.pull_request.base.ref == github.event.repository.default_branch
+      github.event.pull_request.base.ref == github.event.repository.default_branch &&
+      github.event.pull_request.review_decision == 'APPROVED'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -50,77 +56,6 @@ jobs:
             exit 1
           fi
 
-      - name: Verify approval for current PR head
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          head_lc="${HEAD_SHA,,}"
-          page=1
-          approved_for_head=0
-          while true; do
-            chunk="$(
-              gh api "repos/${REPO_FULL}/pulls/${PR_NUMBER}/reviews?per_page=100&page=${page}"
-            )"
-            n="$(jq 'length' <<<"${chunk}")"
-            if [[ "${n}" -eq 0 ]]; then
-              break
-            fi
-            cnt="$(
-              jq --arg head "${head_lc}" '
-                [.[] | select(.state == "APPROVED" and (((.commit_id // "") | ascii_downcase) == $head))]
-                | length
-              ' <<<"${chunk}"
-            )"
-            approved_for_head=$((approved_for_head + cnt))
-            if [[ "${n}" -lt 100 ]]; then
-              break
-            fi
-            page=$((page + 1))
-          done
-          if [[ "${approved_for_head}" -lt 1 ]]; then
-            echo "PR #${PR_NUMBER} has no APPROVED review recorded for head ${HEAD_SHA}." >&2
-            echo "Push a new commit or re-request review, then remove and re-apply the label." >&2
-            exit 1
-          fi
-
-      - name: Verify PR lists at least one changed file
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          page=1
-          total=0
-          while true; do
-            mapfile -t files < <(
-              gh api "repos/${REPO_FULL}/pulls/${PR_NUMBER}/files?per_page=100&page=${page}" --jq '.[].filename'
-            )
-            if [[ "${#files[@]}" -eq 0 ]]; then
-              if [[ "${page}" -eq 1 ]]; then
-                echo "PR has no changed files; nothing to prepare." >&2
-                exit 1
-              fi
-              break
-            fi
-            for f in "${files[@]}"; do
-              if [[ "${f}" == *".."* ]]; then
-                echo "Rejecting suspicious path containing '..': ${f}" >&2
-                exit 1
-              fi
-            done
-            total=$((total + ${#files[@]}))
-            if [[ "${#files[@]}" -lt 100 ]]; then
-              break
-            fi
-            page=$((page + 1))
-          done
-          if [[ "${total}" -lt 1 ]]; then
-            echo "PR has no changed files; nothing to prepare." >&2
-            exit 1
-          fi
-
       - name: Check out default base branch (trusted ref only)
         uses: actions/checkout@v4
         with:
@@ -128,7 +63,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Fast-forward to latest base and merge PR head
+      - name: Verify changed files (git only), merge PR head, push integration branch
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -148,6 +83,30 @@ jobs:
             echo "Fetched PR head ${fetched} does not match event head.sha ${HEAD_SHA}; refusing to merge." >&2
             exit 1
           fi
+
+          diff_file="$(mktemp)"
+          if ! git diff --name-only "origin/${BASE_REF}...FETCH_HEAD" >"${diff_file}"; then
+            echo "git diff --name-only failed (bad refs?)." >&2
+            rm -f "${diff_file}"
+            exit 1
+          fi
+          mapfile -t files <"${diff_file}"
+          rm -f "${diff_file}"
+
+          if [[ "${#files[@]}" -eq 0 || ( "${#files[@]}" -eq 1 && -z "${files[0]}" ) ]]; then
+            echo "PR has no changed files relative to ${BASE_REF}; nothing to prepare." >&2
+            exit 1
+          fi
+
+          for f in "${files[@]}"; do
+            if [[ -z "${f}" ]]; then
+              continue
+            fi
+            if [[ "${f}" == *".."* ]]; then
+              echo "Rejecting suspicious path containing '..': ${f}" >&2
+              exit 1
+            fi
+          done
 
           prep_branch="bot/prep-community-pr-${PR_NUMBER}"
           git checkout -B "${prep_branch}"
