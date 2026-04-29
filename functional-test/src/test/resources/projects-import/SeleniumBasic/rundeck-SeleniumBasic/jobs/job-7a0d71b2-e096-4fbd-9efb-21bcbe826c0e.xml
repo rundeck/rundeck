@@ -15,11 +15,14 @@
     <name>RUN-2383</name>
     <nodeFilterEditable>true</nodeFilterEditable>
     <nodefilters>
-      <!-- Match any node so exec form node panel renders in OSS and enterprise (RunnerBBB is not universal). -->
-      <filter>name: .*</filter>
+      <filter>name: RunnerBBB </filter>
     </nodefilters>
     <nodesSelectedByDefault>true</nodesSelectedByDefault>
     <plugins />
+    <runnerSelector>
+      <runnerFilterMode>LOCAL</runnerFilterMode>
+      <runnerFilterType>LOCAL_RUNNER</runnerFilterType>
+    </runnerSelector>
     <scheduleEnabled>true</scheduleEnabled>
     <schedules />
     <sequence keepgoing='false' strategy='node-first'>

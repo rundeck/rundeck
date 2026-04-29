@@ -895,19 +895,15 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobOptionAllowedValuesRemoteUrlInput(){
-        // Next UI: unsaved options are edited in the footer row whose root id is optitem_new (OptionEdit), not every
-        // .edit-option-item (collapsed rows lack valuesType). Legacy: ajax-added rows use optvis_<n> (jobedit.js);
-        // take the last open optEditForm so first vs second new option both resolve.
-        By by = legacyUi
-                ? By.xpath("(//div[starts-with(@id,'optvis_')]//div[contains(@class,'optEditForm')]//input[@name='valuesType' and @value='url'])[last()]")
-                : By.cssSelector("#optionsContent #optitem_new input[name='valuesType'][value='url']")
+        def by = (legacyUi ? jobOptionAllowedValuesRemoteUrlBy : jobOptionAllowedValuesRemoteUrlByNextUi)
         def optionsSectionBy = By.id("optionsContent")
         waitForElementVisible(optionsSectionBy)
         executeScript("arguments[0].scrollIntoView({block: 'center'});", el(optionsSectionBy))
-        waitForElementVisible(by)
-        executeScript("arguments[0].scrollIntoView({block: 'center'});", el(by))
-        waitIgnoringForElementToBeClickable(by, Duration.ofSeconds(45))
-        el(by)
+        def element = new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.presenceOfElementLocated(by))
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", element)
+        waitForElementToBeClickable(element)
+        element
     }
 
     void scrollToElement(WebElement el){
