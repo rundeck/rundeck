@@ -292,6 +292,7 @@ a.text-danger:hover,
   src: url("../fonts/Mulish-VariableFont_wght.woff2") format("woff2");
   font-weight: 200 900;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -299,12 +300,14 @@ a.text-danger:hover,
   src: url("../fonts/Mulish-Italic-VariableFont_wght.woff2") format("woff2");
   font-weight: 200 900;
   font-style: italic;
+  font-display: swap;
 }
 @font-face {
   font-family: "Jost";
   src: url("../fonts/Jost-VariableFont_wght.woff2") format("woff2");
   font-weight: 200 900;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -312,6 +315,7 @@ a.text-danger:hover,
   src: url("../fonts/Jost-Italic-VariableFont_wght.woff2") format("woff2");
   font-weight: 200 900;
   font-style: italic;
+  font-display: swap;
 }
 
 .download-text {
