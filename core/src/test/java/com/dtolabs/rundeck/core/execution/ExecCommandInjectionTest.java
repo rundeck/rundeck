@@ -1,11 +1,17 @@
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.cli.CLIUtils;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -203,12 +209,172 @@ public class ExecCommandInjectionTest {
         // Argument that never contained a property reference
         builder.arg("literal text", false, false);
         ExecArgList execArgList = builder.build();
-        
+
         Map<String, Map<String, String>> dataContext = new HashMap<>();
         ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "unix");
-        
+
         Assert.assertEquals(2, result.size());
         Assert.assertEquals("echo", result.get(0));
         Assert.assertEquals("literal text", result.get(1));
+    }
+
+    // -------------------------------------------------------------------------
+    // RUN-4416 — Per-value quoting / semicolon regression
+    // -------------------------------------------------------------------------
+
+    /**
+     * FAILS before fix: ${unquotedoption.*} refs must be exempted from the converter
+     * in SharedDataContextUtils.replaceDataReferences.
+     *
+     * Before fix: converter is applied to ALL resolved values, including ${unquoted.*},
+     * quoting values that users deliberately chose not to quote — a breaking change.
+     *
+     * After fix: the unquoted prefix is detected before calling converter.convert(),
+     * so the value passes through unmodified.
+     */
+    @Test
+    public void testUnquotedRefNotQuotedByConverter() {
+        WFSharedContext ctx = new WFSharedContext();
+        ctx.merge(ContextView.global(), DataContextUtils.context("option",
+                Collections.singletonMap("port", "80 && whoami")));
+
+        String result = SharedDataContextUtils.replaceDataReferences(
+                "${unquotedoption.port}",
+                ctx,
+                ContextView.global(),
+                ContextView::nodeStep,
+                CLIUtils.argumentQuoteForOperatingSystem("unix"),
+                false,
+                true
+        );
+
+        Assert.assertEquals(
+                "${unquotedoption.*} values must NOT be quoted by the converter (breaking change otherwise)",
+                "80 && whoami",
+                result
+        );
+    }
+
+    /**
+     * Regression guard: per-value quoting leaves template-level semicolons outside
+     * the quoted values so the shell can interpret them as command separators.
+     *
+     * Simulates per-value quoting of safe values: quoteUnixShellArg passes /workspace
+     * and exec123 through unchanged, so the template semicolon is never wrapped.
+     * Passes both before and after the fix (documents the correct approach).
+     */
+    @Test
+    public void testPerValueQuotingPreservesSemicolonForSafeValues() {
+        WFSharedContext ctx = new WFSharedContext();
+        ctx.merge(ContextView.global(), DataContextUtils.context("data",
+                Collections.singletonMap("home_dir", "/workspace")));
+        ctx.merge(ContextView.global(), DataContextUtils.context("job",
+                Collections.singletonMap("execid", "exec123")));
+
+        // Simulate what the fixed plugin does: expand with OS-aware converter
+        String expanded = SharedDataContextUtils.replaceDataReferences(
+                "${data.home_dir}/${job.execid};",
+                ctx,
+                ContextView.global(),
+                ContextView::nodeStep,
+                CLIUtils.argumentQuoteForOperatingSystem("unix"),
+                false,
+                true
+        );
+
+        // Safe values contain no shell-special chars; quoteUnixShellArg passes through
+        Assert.assertEquals("/workspace/exec123;", expanded);
+
+        // Feed into ExecArgList with shouldQuote=false (quoting already done)
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("cd", false, false);
+        builder.arg(expanded, false, false);
+        ArrayList<String> cmd = builder.build().buildCommandForNode(new HashMap<>(), "unix");
+
+        Assert.assertEquals("cd", cmd.get(0));
+        Assert.assertEquals(
+                "Semicolon must remain a shell separator after per-value quoting of safe values",
+                "/workspace/exec123;",
+                cmd.get(1)
+        );
+    }
+
+    /**
+     * Security guard: per-value quoting blocks injection via data.* context even
+     * when the template-level semicolon stays free.
+     *
+     * If data.home_dir contains an injection payload, the converter wraps that value
+     * in single quotes, trapping the injected operator inside the quoted value.
+     * The template-level trailing semicolon is outside the quoted value and remains free.
+     */
+    @Test
+    public void testPerValueQuotingBlocksDataContextInjection() {
+        WFSharedContext ctx = new WFSharedContext();
+        ctx.merge(ContextView.global(), DataContextUtils.context("data",
+                Collections.singletonMap("home_dir", "/workspace; rm -rf /")));
+        ctx.merge(ContextView.global(), DataContextUtils.context("job",
+                Collections.singletonMap("execid", "exec123")));
+
+        String expanded = SharedDataContextUtils.replaceDataReferences(
+                "${data.home_dir}/${job.execid};",
+                ctx,
+                ContextView.global(),
+                ContextView::nodeStep,
+                CLIUtils.argumentQuoteForOperatingSystem("unix"),
+                false,
+                true
+        );
+
+        // Injected value is quoted; exec123 has no special chars so it stays unquoted;
+        // template ';' at the end stays outside any quoted value → free as separator
+        Assert.assertEquals("'/workspace; rm -rf /'/exec123;", expanded);
+
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("cd", false, false);
+        builder.arg(expanded, false, false);
+        ArrayList<String> cmd = builder.build().buildCommandForNode(new HashMap<>(), "unix");
+
+        Assert.assertEquals(
+                "Injected value must be quoted; template semicolon must remain free",
+                "'/workspace; rm -rf /'/exec123;",
+                cmd.get(1)
+        );
+    }
+
+    /**
+     * Multi-command template end-to-end: option value containing shell-special chars
+     * is single-quoted, while the template-level '; echo ' between the two commands
+     * stays outside any quoted value and remains a literal shell separator.
+     *
+     * This covers the exact reported scenario: cd ${data.home_dir}/${job.execid}; echo ${option.json}
+     * where option.json carries user-supplied input that must not break out of its argument.
+     */
+    @Test
+    public void testMultiCommandStringBlocksInjectionInOptionValue() {
+        WFSharedContext ctx = new WFSharedContext();
+        ctx.merge(ContextView.global(), DataContextUtils.context("data",
+                Collections.singletonMap("home_dir", "/workspace")));
+        ctx.merge(ContextView.global(), DataContextUtils.context("job",
+                Collections.singletonMap("execid", "exec123")));
+        ctx.merge(ContextView.global(), DataContextUtils.context("option",
+                Collections.singletonMap("json", "{\"key\": \"val; whoami\"}")));
+
+        String result = SharedDataContextUtils.replaceDataReferences(
+                "${data.home_dir}/${job.execid}; echo ${option.json}",
+                ctx,
+                ContextView.global(),
+                ContextView::nodeStep,
+                CLIUtils.argumentQuoteForOperatingSystem("unix"),
+                false,
+                true
+        );
+
+        // Safe path values pass through unquoted; option.json has shell-special chars so
+        // it is single-quoted. Template-level '; echo ' is never inside a substituted value.
+        Assert.assertEquals(
+                "Template semicolon must stay free; option value with special chars must be single-quoted",
+                "/workspace/exec123; echo '{\"key\": \"val; whoami\"}'",
+                result
+        );
     }
 }

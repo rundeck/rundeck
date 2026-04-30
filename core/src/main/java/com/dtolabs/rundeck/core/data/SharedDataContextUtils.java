@@ -153,7 +153,9 @@ public class SharedDataContextUtils {
                     variableRef
             );
             if (null != value) {
-                if (null != converter) {
+                // ${unquoted.*} refs opt out of the converter — caller explicitly chose no quoting
+                boolean isUnquotedRef = m.group(1).startsWith(SharedDataContextUtils.UNQUOTEDPROPERTY_PREFIX);
+                if (null != converter && !isUnquotedRef) {
                     value = converter.convert(value);
                 }
                 m.appendReplacement(sb, Matcher.quoteReplacement(value));
