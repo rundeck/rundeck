@@ -16,7 +16,7 @@
 
 package com.dtolabs.rundeck.core.dispatcher
 
-
+import com.dtolabs.rundeck.core.utils.Converter
 import spock.lang.Specification
 /**
  * @author greg
@@ -288,6 +288,34 @@ class DataContextUtilsSpec extends Specification {
         result.get('test2').size() == 1
         result.get('test2').get('key2') != null
         result.get('test2').get('key2') == 'value2'
+    }
+
+    def "wrapWithOptionBlanking blanks an unresolved option ref"() {
+        given:
+            def inner = { String s -> "INNER:" + s } as Converter
+            def wrapped = DataContextUtils.wrapWithOptionBlanking(inner)
+        expect:
+            wrapped.convert('${option.foo}') == ''
+            wrapped.convert('${option.port}') == ''
+    }
+
+    def "wrapWithOptionBlanking passes non-option unresolved refs to inner converter"() {
+        given:
+            def inner = { String s -> "INNER:" + s } as Converter
+            def wrapped = DataContextUtils.wrapWithOptionBlanking(inner)
+        expect:
+            wrapped.convert('${data.foo}') == 'INNER:' + '${data.foo}'
+            wrapped.convert('${job.execid}') == 'INNER:' + '${job.execid}'
+            wrapped.convert('${node.hostname}') == 'INNER:' + '${node.hostname}'
+    }
+
+    def "wrapWithOptionBlanking passes resolved (plain) values to inner converter"() {
+        given:
+            def inner = { String s -> "INNER:" + s } as Converter
+            def wrapped = DataContextUtils.wrapWithOptionBlanking(inner)
+        expect:
+            wrapped.convert('somevalue') == 'INNER:somevalue'
+            wrapped.convert('/path/to/file') == 'INNER:/path/to/file'
     }
 
     def testHasOptionsInString() {
