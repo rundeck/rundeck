@@ -53,11 +53,6 @@ configurations.all {
                 details.useVersion springIntegrationVersion
                 details.because 'Spring Boot 3.5.8 requires Spring Integration 6.x'
             }
-            // Force BouncyCastle 1.79 (Spring Boot 3.5+ BOM manages BC and uses 1.80 which breaks Jasypt)
-            if (details.requested.group == 'org.bouncycastle') {
-                details.useVersion bouncyCastleVersion
-                details.because 'BC 1.80 breaks Jasypt encryption - staying on 1.79 until migration'
-            }
             // Force commons-lang3 3.20.0 (prevent duplicate versions in WAR)
             if (details.requested.group == 'org.apache.commons' && details.requested.name == 'commons-lang3') {
                 details.useVersion commonsLang3Version

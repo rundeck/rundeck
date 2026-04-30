@@ -1,0 +1,72 @@
+/*
+ * Copyright 2026 PagerDuty, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Modern Encryption plugin - AES-256-GCM via BouncyCastle.
+ * Replaces jasypt-encryption-plugin with dual-read support for legacy Jasypt data.
+ */
+
+ext.pluginClassNames = 'org.rundeck.plugin.encryption.ModernEncryptionConverterPlugin'
+ext.pluginName = 'Modern Encryption Plugin'
+ext.pluginDescription = 'Modern encryption using AES-256-GCM with legacy Jasypt read support'
+
+configurations {
+    pluginLibs
+
+    implementation {
+        extendsFrom pluginLibs
+    }
+}
+
+apply from: "../../gradle/java-version.gradle"
+apply plugin: 'groovy'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(":core")
+    pluginLibs(project(":encryption-core")) {
+        transitive = false
+    }
+
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
+    testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+def copyToLib = tasks.register('copyToLib', Copy) {
+    into layout.buildDirectory.dir("output/lib")
+    from configurations.pluginLibs
+}
+
+jar {
+    dependsOn copyToLib
+    from layout.buildDirectory.dir("output")
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
+        def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
+        attributes 'Rundeck-Plugin-Libs': "${libList}"
+    }
+}
