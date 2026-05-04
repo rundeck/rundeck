@@ -384,7 +384,9 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
             jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
-            jobCreatePage.waitForElementToBeClickable jobCreatePage.optionRedoButton
+            // Re-find by locator each poll: WebElement from getter goes stale after undo reflows the bar
+            jobCreatePage.waitForElementToBeClickable(
+                    jobCreatePage.legacyUi ? jobCreatePage.optionRedoBy : JobCreatePage.NextUi.optionRedoBy)
             sleep 1000
             jobCreatePage.optionRedoButton.click()
         expect:
@@ -613,7 +615,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.waitForElementToBeClickable(jobCreatePage.optionButton)
         jobCreatePage.optionButton.click()
         jobCreatePage.optionName(1).sendKeys(optionListOfValues)
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
+        jobCreatePage.clickJobOptionAllowedValuesRemoteUrlRadio()
         jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("file:/home/\${option.names.value}/saved_searches.json")
         jobCreatePage.jobOptionEnforcedInput.click()
         jobCreatePage.jobOptionRequiredInput.click()
@@ -633,10 +635,10 @@ class JobsSpec extends SeleniumBase {
         def jobUuid = jobShowPage.jobUuid.text
         jobShowPage.goToJob(jobUuid)
 
-        jobShowPage.waitForElementVisible(jobShowPage.getOptionSelectByName(optionListOfNames))
+        jobShowPage.waitForElementVisible(By.name("extra.option.${optionListOfNames}"))
 
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
-        jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
+        jobShowPage.waitIgnoringForElementToBeClickable(By.name("extra.option.${optionListOfValues}"))
         jobShowPage.waitForNumberOfElementsToBe(jobShowPage.extraOptionSearchBy, Integer.valueOf(selection))
         then:
         jobShowPage.waitForAllOptionsToBeSelected(optionListOfValues)
@@ -727,8 +729,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.optionButton.click()
         jobCreatePage.optionName(0).sendKeys("remote")
-        jobCreatePage.scrollToElement(jobCreatePage.jobOptionAllowedValuesRemoteUrlInput)
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
+        jobCreatePage.clickJobOptionAllowedValuesRemoteUrlRadio()
         jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys(remoteOptionsUrl)
         jobCreatePage.waitForElementVisible(jobCreatePage.saveOptionButton)
         jobCreatePage.scrollToElement(jobCreatePage.saveOptionButton)

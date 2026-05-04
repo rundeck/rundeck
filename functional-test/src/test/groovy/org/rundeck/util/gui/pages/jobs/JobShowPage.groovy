@@ -48,19 +48,32 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By closeDefinitionModalBy = By.cssSelector("div[id='job-definition-modal_footer'] button[data-dismiss='modal']")
     By jobActionBy = By.xpath("//div[contains(@class, 'job-action-button')]")
     By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
-    By nodeFilterInputBy = By.cssSelector("#doReplaceFilters")
-    By nodeFilterOverrideBy = By.cssSelector("#filterradio")
-    By nodeFilterInputValueBy = By.cssSelector('input[name="extra.nodefilter"]')
+    /**
+     * Run UI: jobs list loads the exec fragment in {@code #execDiv}; only match when the modal is visible
+     * ({@code .in} / {@code .show}) so a stale hidden fragment is not used. Job show embeds the form in {@code #runjob}.
+     */
+    By nodeFilterInputBy = By.cssSelector(
+            "#execDiv.modal.in #doReplaceFilters, #execDiv.modal.show #doReplaceFilters, #runjob #doReplaceFilters")
+    By nodeFilterOverrideBy = By.cssSelector(
+            "#execDiv.modal.in #filterradio, #execDiv.modal.show #filterradio, #runjob #filterradio")
+    By nodeFilterInputValueBy = By.cssSelector(
+            "#execDiv.modal.in input[name=\"extra.nodefilter\"], #execDiv.modal.show input[name=\"extra.nodefilter\"], #runjob input[name=\"extra.nodefilter\"]")
     By dropDownToggleBy = By.cssSelector("button[data-testid='nfi-toggle']")
     By selectAllNodesLinkBy = By.cssSelector("a.xnodefilterlink.job_edit__node_filter__filter_select_all")
     By localhostNodeBy = By.cssSelector(".col-xs-6.node_ident.embedded_node.tight.server .fas.fa-hdd")
     By popoverContentBy = By.cssSelector("div.popover-content")
     By nodeFilterLinkBy = By.cssSelector("node-filter-link[params*='linkicon']")
     By arrowIconBy = By.cssSelector("i.glyphicon-circle-arrow-right")
-    By schedJobNodeFilterBy = By.cssSelector("div[class='input-group nodefilters multiple-control-input-group']")
+    By schedJobNodeFilterBy = By.cssSelector(
+            "#execDiv.modal.in div.input-group.nodefilters.multiple-control-input-group, " +
+                    "#execDiv.modal.show div.input-group.nodefilters.multiple-control-input-group, " +
+                    "#runjob div.input-group.nodefilters.multiple-control-input-group")
     By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
     By autocompleteJobStepDefinitionBy = By.cssSelector("#wfitem_0 > span > div > div > span > span > span.text-success")
-    By runFormBy = By.cssSelector("#execDiv #exec_options_form #formbuttons #execFormRunButton")
+    By runFormBy = By.cssSelector(
+            "#execDiv.modal.in #exec_options_form #formbuttons #execFormRunButton, " +
+                    "#execDiv.modal.show #exec_options_form #formbuttons #execFormRunButton, " +
+                    "#runjob #exec_options_form #formbuttons #execFormRunButton")
     By optionValidationWarningBy = By.cssSelector("#execDiv #exec_options_form #optionSelect #_commandOptions div.form-group.has-warning p.text-warning")
     By jobRowBy = By.cssSelector("#job_group_tree .jobname.job_list_row[data-job-id] > a[data-job-id]")
     By jobSearchBy = By.xpath("//span[@title='Click to modify filter']")
@@ -288,6 +301,51 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         el runFormBy
     }
 
+    /**
+     * After clicking a job run link, waits until the run form is usable: visible jobs modal ({@code #execDiv.modal.in|.show})
+     * or job show {@code #runjob}, with a clickable Run button. Do not rely on URL alone — {@code /job/show} can match early.
+     */
+    void waitForRunJobExecFormReady(Duration timeout = Duration.ofSeconds(60)) {
+        new WebDriverWait(driver, timeout).until(ExpectedConditions.elementToBeClickable(runFormBy))
+    }
+
+    /**
+     * Waits until the "change target nodes" checkbox is visible in the exec modal or job show form.
+     * Does not require WebDriver "clickable" — radios in the jobs exec modal often fail that check in CI.
+     */
+    void waitForNodeFilterReplaceCheckboxClickable(Duration timeout = Duration.ofSeconds(90)) {
+        // Native checkbox inputs are styled with opacity:0 and zero dimensions (Bootstrap custom checkbox).
+        // visibilityOfElementLocated requires non-zero size — always times out on styled checkboxes.
+        // Use presenceOfElementLocated: the element is in the DOM, just visually replaced by its label.
+        new WebDriverWait(driver, timeout)
+                .ignoring(StaleElementReferenceException.class)
+                .until(ExpectedConditions.presenceOfElementLocated(nodeFilterInputBy))
+        def cb = driver.findElement(nodeFilterInputBy)
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", cb)
+    }
+
+    /**
+     * Toggles the "change the target nodes" checkbox via script click (avoids click-intercepted flakes in headless CI).
+     */
+    void clickNodeFilterReplaceCheckbox() {
+        def cb = driver.findElement(nodeFilterInputBy)
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", cb)
+        executeScript("arguments[0].click();", cb)
+    }
+
+    /**
+     * Waits for the node filter override radio to be present, then clicks it via JS.
+     * Like #doReplaceFilters, #filterradio is a Bootstrap-styled radio with zero dimensions.
+     */
+    void waitAndClickNodeFilterOverride(Duration timeout = Duration.ofSeconds(30)) {
+        new WebDriverWait(driver, timeout)
+                .ignoring(StaleElementReferenceException.class)
+                .until(ExpectedConditions.presenceOfElementLocated(nodeFilterOverrideBy))
+        def radio = driver.findElement(nodeFilterOverrideBy)
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", radio)
+        executeScript("arguments[0].click();", radio)
+    }
+
     WebElement getOptionValidationWarningText() {
         el optionValidationWarningBy
     }
@@ -345,7 +403,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     WebElement getRunJobBtn(){
-        el runJobBtnBy
+        waitIgnoringForElementToBeClickable(runJobBtnBy)
     }
 
     WebElement getLogOutputBtn(){
