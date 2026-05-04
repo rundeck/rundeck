@@ -1,26 +1,12 @@
 <template>
-  <div class="config-section" :class="{ 'has-chips': modelValue.length > 0 }">
-    <div class="header-row">
-      <p data-testid="config-section-title">
-        {{ title }}
-        <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i> :
-      </p>
-      <slot name="header">
-        <transition name="inline-button-fade">
-          <button
-            v-if="modelValue.length === 0"
-            @click.prevent="handleAdd"
-            class="inline-button link-button"
-            type="button"
-            data-testid="config-section-add-btn"
-          >
-            + Add
-          </button>
-        </transition>
-      </slot>
-    </div>
+  <div class="config-section" :class="{ 'has-chips': modelValue.length > 0, 'edit-view': isEditView }">
 
-    <transition name="chips-slide" mode="out-in">
+    <!-- Edit view: title + description grouped, then chips, then add button -->
+    <template v-if="isEditView">
+      <div class="section-header">
+        <p class="section-title" data-testid="config-section-title">{{ title }}</p>
+        <p v-if="tooltip" class="section-description" data-testid="config-section-description">{{ tooltip }}</p>
+      </div>
       <slot name="extra">
         <div v-if="modelValue.length > 0" class="chips-row" data-testid="config-section-chips-row">
           <transition-group name="chip-list" tag="div" class="chips-container">
@@ -34,20 +20,73 @@
               @click="handleEdit(index)"
             />
           </transition-group>
-          <button
-            v-if="!hideWhenSingle"
-            v-show="!hideWhenSingle || modelValue.length !== 1"
-            @click.prevent="handleAdd"
-            class="link-button"
-            data-testid="config-section-add-more-btn"
-            type="button"
-          >
-            + Add
-          </button>
         </div>
       </slot>
-    </transition>
-    <slot name="content" />
+      <button
+        v-if="modelValue.length === 0 || !hideWhenSingle"
+        @click.prevent="handleAdd"
+        class="edit-view-add-btn"
+        type="button"
+        data-testid="config-section-add-btn"
+      >
+        <i class="pi pi-plus" />
+        Add
+      </button>
+      <slot name="content" />
+    </template>
+
+    <!-- Default chip view: title inline with tooltip icon and add button -->
+    <template v-else>
+      <div class="header-row">
+        <p data-testid="config-section-title">
+          {{ title }}
+          <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i> :
+        </p>
+        <slot name="header">
+          <transition name="inline-button-fade">
+            <button
+              v-if="modelValue.length === 0"
+              @click.prevent="handleAdd"
+              class="inline-button link-button"
+              type="button"
+              data-testid="config-section-add-btn"
+            >
+              + Add
+            </button>
+          </transition>
+        </slot>
+      </div>
+
+      <transition name="chips-slide" mode="out-in">
+        <slot name="extra">
+          <div v-if="modelValue.length > 0" class="chips-row" data-testid="config-section-chips-row">
+            <transition-group name="chip-list" tag="div" class="chips-container">
+              <Chip
+                v-for="(element, index) in modelValue"
+                :key="element.name || element.type || index"
+                :label="getElementLabel(element)"
+                :icon="hideIcon ? undefined : getElementIcon(element)"
+                removable
+                @remove="handleRemove(index)"
+                @click="handleEdit(index)"
+              />
+            </transition-group>
+            <button
+              v-if="!hideWhenSingle"
+              v-show="!hideWhenSingle || modelValue.length !== 1"
+              @click.prevent="handleAdd"
+              class="link-button"
+              data-testid="config-section-add-more-btn"
+              type="button"
+            >
+              + Add
+            </button>
+          </div>
+        </slot>
+      </transition>
+      <slot name="content" />
+    </template>
+
   </div>
 </template>
 
@@ -65,7 +104,8 @@ export default defineComponent({
     },
     tooltip: {
       type: String,
-      required: true,
+      required: false,
+      default: "",
     },
     modelValue: {
       type: Array as PropType<object[]>,
@@ -76,6 +116,10 @@ export default defineComponent({
       default: false,
     },
     hideIcon: {
+      type: Boolean,
+      default: false,
+    },
+    isEditView: {
       type: Boolean,
       default: false,
     },
@@ -92,20 +136,16 @@ export default defineComponent({
       this.$emit("removeElement", index);
     },
     handleEdit(index: number) {
-      // Guard: check if element exists
       if (!this.modelValue[index]) {
         return;
       }
-      // Emit both the filter object and index so parent can use either
       const element = this.modelValue[index];
       this.$emit("editElement", element, index);
     },
     getElementLabel(element: any): string {
-      // Support both enriched data (title) and raw filter data (type)
       return element.title || element.type || "Unknown";
     },
     getElementIcon(element: any): string {
-      // Support both enriched data (providerMetadata.faicon) and raw data (default icon)
       const icon = element.providerMetadata?.faicon || "filter";
       return `fa fa-${icon}`;
     },
@@ -171,6 +211,55 @@ export default defineComponent({
   &:last-child {
     border-bottom: none;
     padding-bottom: 0;
+  }
+
+  &.edit-view {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .section-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 21px;
+      color: var(--colors-gray-800, #1a202c);
+    }
+
+    .section-description {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--colors-gray-600, #4a5568);
+    }
+
+    .edit-view-add-btn {
+      all: unset;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f5f9ff;
+      color: #0052cc;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+
+      .pi {
+        font-size: 10px;
+      }
+
+      &:hover {
+        opacity: 0.85;
+      }
+    }
   }
 
   .link-button {
