@@ -176,4 +176,60 @@ describe("ConfigSection", () => {
       expect(wrapper.emitted("addElement")).toHaveLength(1);
     });
   });
+
+  describe("isEditView layout", () => {
+    const createEditViewWrapper = async (props = {}) =>
+      createWrapper({ isEditView: true, ...props });
+
+    it("shows the title and description; hides description when no tooltip is provided", async () => {
+      const withTooltip = await createEditViewWrapper({
+        title: "Step Error Handler",
+        tooltip: "Runs after a step fails",
+      });
+      expect(withTooltip.find('[data-testid="config-section-title"]').text()).toBe("Step Error Handler");
+      expect(withTooltip.find('[data-testid="config-section-description"]').text()).toBe("Runs after a step fails");
+
+      const withoutTooltip = await createEditViewWrapper({
+        title: "Step Error Handler",
+        tooltip: "",
+      });
+      expect(withoutTooltip.find('[data-testid="config-section-description"]').exists()).toBe(false);
+    });
+
+    it("keeps the Add button visible when items are present, and hides it only when hideWhenSingle is true", async () => {
+      const withItem = await createEditViewWrapper({
+        modelValue: [{ type: "exec" }],
+      });
+      expect(withItem.find('[data-testid="config-section-add-btn"]').exists()).toBe(true);
+
+      const hiddenWhenSingle = await createEditViewWrapper({
+        modelValue: [{ type: "exec" }],
+        hideWhenSingle: true,
+      });
+      expect(hiddenWhenSingle.find('[data-testid="config-section-add-btn"]').exists()).toBe(false);
+    });
+
+    it("clicking a chip emits editElement with the element and its index", async () => {
+      const element = { type: "exec", config: { exec: "echo hello" } };
+      const wrapper = await createEditViewWrapper({ modelValue: [element] });
+
+      await wrapper.findAllComponents(Chip)[0].trigger("click");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("editElement")).toHaveLength(1);
+      expect(wrapper.emitted("editElement")![0]).toEqual([element, 0]);
+    });
+
+    it("removing a chip emits removeElement with the index and update:modelValue without that item", async () => {
+      const first = { type: "exec" };
+      const second = { type: "mask-passwords" };
+      const wrapper = await createEditViewWrapper({ modelValue: [first, second] });
+
+      await wrapper.findAllComponents(Chip)[0].vm.$emit("remove");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("removeElement")![0]).toEqual([0]);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([[second]]);
+    });
+  });
 });
