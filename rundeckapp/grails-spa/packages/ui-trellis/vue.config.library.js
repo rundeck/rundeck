@@ -116,10 +116,16 @@ module.exports = {
       },
     ];
 
-    /** Don't minimize or split chunks */
-    config.optimization.minimize = false;
+    /**
+     * This config came from the old ui-trellis component-library build.
+     * Keep split chunks disabled for now because downstream consumers may still assume
+     * per-entry outputs, but allow production builds to use the default minimizer again.
+     */
     config.optimization.splitChunks = false;
-    config.optimization.minimizer.shift();
+    if (process.env.NODE_ENV !== "production") {
+      config.optimization.minimize = false;
+      config.optimization.minimizer.shift();
+    }
 
     /**
      * Disable transpile only so types are emitted
