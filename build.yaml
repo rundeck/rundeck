@@ -1,7 +1,7 @@
 ---
 rundeck:
   plugins: # Extra plugins to bundle
-  - "org.rundeck.plugins:ansible-plugin:5.0.0"
+  - "org.rundeck.plugins:ansible-plugin:5.0.1"
   - "org.rundeck.plugins:aws-s3-model-source:2.0.0"
   - "org.rundeck.plugins:py-winrm-plugin:3.0.0"
   - "org.rundeck.plugins:openssh-node-execution:3.0.0"

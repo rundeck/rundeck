@@ -1857,11 +1857,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def buildDataKeys = []
         def buildMap = [:]
 
-        def properties = grailsApplication.metadata.getProperties("build")
-
-        properties.each {key, value->
-            buildDataKeys.add("build."+key)
-            buildMap.put("build."+key, value)
+        grailsApplication.metadata.getProperties().each { key, value ->
+            def k = key?.toString()
+            if (k?.startsWith('build.')) {
+                buildDataKeys << k
+                buildMap[k] = value
+            }
         }
 
         render(view:'welcome',model: [buildData: buildMap, buildDataKeys: buildDataKeys])

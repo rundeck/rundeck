@@ -3363,4 +3363,24 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
     }
 
+    def "welcome action renders without MissingMethodException"() {
+        when:
+        controller.welcome()
+
+        then:
+        noExceptionThrown()
+        model.buildData != null
+        model.buildDataKeys != null
+    }
+
+    def "welcome action model contains only build.* prefixed keys"() {
+        when:
+        controller.welcome()
+
+        then:
+        noExceptionThrown()
+        model.buildData.keySet().every { (it as String).startsWith('build.') }
+        model.buildDataKeys.every { (it as String).startsWith('build.') }
+        (model.buildDataKeys as Set) == model.buildData.keySet()
+    }
 }

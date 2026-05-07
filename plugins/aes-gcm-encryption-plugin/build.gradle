@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2026 PagerDuty, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,45 +14,54 @@
  * limitations under the License.
  */
 
-ext.pluginClassNames='org.rundeck.plugin.audit.AuditLoggerPlugin'
-ext.pluginName = 'Audit Logger plugin'
-ext.pluginDescription = 'Write audit events to the service log'
+/**
+ * AES-GCM storage encryption plugin - AES-256-GCM via BouncyCastle.
+ * Replaces jasypt-encryption-plugin with dual-read support for legacy Jasypt data.
+ */
 
-apply plugin: "groovy"
+ext.pluginClassNames = 'org.rundeck.plugin.encryption.ModernEncryptionConverterPlugin,org.rundeck.plugin.encryption.JasyptEncryptionAliasPlugin'
+ext.pluginName = 'AES-GCM Encryption Plugin'
+ext.pluginDescription = 'AES-GCM storage encryption with legacy Jasypt read support'
 
-apply from: "../../gradle/java-version.gradle"
-
-configurations{
+configurations {
     pluginLibs
 
-    //declare compile to extend from pluginLibs so it inherits the dependencies
     implementation {
         extendsFrom pluginLibs
     }
 }
+
+apply from: "../../gradle/java-version.gradle"
+apply plugin: 'groovy'
+
 repositories {
     mavenLocal()
-    maven{ //snapshot dependency
-        url='https://oss.sonatype.org/content/repositories/snapshots/'
-    }
     mavenCentral()
 }
 
 dependencies {
     implementation project(":core")
-    implementation "org.apache.groovy:groovy:${groovyVersion}"
-    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
+    pluginLibs(project(":encryption-core")) {
+        transitive = false
+    }
+
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
+    testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}"
 }
 
+test {
+    useJUnitPlatform()
+}
 
-// task to copy plugin libs to output/lib dir
-task copyToLib(type: Copy) {
-    into "$buildDir/output/lib"
+def copyToLib = tasks.register('copyToLib', Copy) {
+    into layout.buildDirectory.dir("output/lib")
     from configurations.pluginLibs
 }
 
 jar {
-    from "$buildDir/output"
+    dependsOn copyToLib
+    from layout.buildDirectory.dir("output")
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames
         attributes 'Rundeck-Plugin-Name': pluginName
@@ -61,7 +70,3 @@ jar {
         attributes 'Rundeck-Plugin-Libs': "${libList}"
     }
 }
-
-//set jar task to depend on copyToLib
-jar.dependsOn(copyToLib)
-
