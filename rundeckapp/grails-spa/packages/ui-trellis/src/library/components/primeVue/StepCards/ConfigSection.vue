@@ -1,11 +1,10 @@
 <template>
   <div class="config-section" :class="{ 'has-chips': modelValue.length > 0, 'edit-view': isEditView }">
 
-    <!-- Edit view: title + description grouped, then chips, then add button -->
     <template v-if="isEditView">
       <div class="section-header">
-        <p class="section-title" data-testid="config-section-title">{{ title }}</p>
-        <p v-if="tooltip" class="section-description" data-testid="config-section-description">{{ tooltip }}</p>
+        <p class="section-title text-heading--md text-heading--semibold" data-testid="config-section-title">{{ title }}</p>
+        <p v-if="tooltip" class="section-description text-body text-body--secondary" data-testid="config-section-description">{{ tooltip }}</p>
       </div>
       <slot name="extra">
         <div v-if="modelValue.length > 0" class="chips-row" data-testid="config-section-chips-row">
@@ -25,7 +24,7 @@
       <button
         v-if="modelValue.length === 0 || !hideWhenSingle"
         @click.prevent="handleAdd"
-        class="edit-view-add-btn"
+        class="edit-view-add-btn text-body--sm text-body--medium text-body--primary"
         type="button"
         data-testid="config-section-add-btn"
       >
@@ -35,7 +34,6 @@
       <slot name="content" />
     </template>
 
-    <!-- Default chip view: title inline with tooltip icon and add button -->
     <template v-else>
       <div class="header-row">
         <p data-testid="config-section-title">
@@ -47,7 +45,7 @@
             <button
               v-if="modelValue.length === 0"
               @click.prevent="handleAdd"
-              class="inline-button link-button"
+              class="inline-button link-button text-body--sm text-body--primary"
               type="button"
               data-testid="config-section-add-btn"
             >
@@ -75,7 +73,7 @@
               v-if="!hideWhenSingle"
               v-show="!hideWhenSingle || modelValue.length !== 1"
               @click.prevent="handleAdd"
-              class="link-button"
+              class="link-button text-body--sm text-body--primary"
               data-testid="config-section-add-more-btn"
               type="button"
             >
@@ -226,28 +224,19 @@ export default defineComponent({
 
     .section-title {
       margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-      line-height: 21px;
-      color: var(--colors-gray-800, #1a202c);
     }
 
     .section-description {
       margin: 0;
-      font-size: 14px;
-      font-weight: 400;
-      color: var(--colors-gray-600, #4a5568);
     }
 
     .edit-view-add-btn {
       all: unset;
       display: inline-flex;
+      align-self: flex-start;
       align-items: center;
       gap: 4px;
       background: #f5f9ff;
-      color: #0052cc;
-      font-size: 12px;
-      font-weight: 500;
       padding: 5px 9px;
       border-radius: 6px;
       cursor: pointer;
@@ -264,10 +253,7 @@ export default defineComponent({
 
   .link-button {
     all: unset;
-    color: #0052CC;
     cursor: pointer;
-    font-weight: 400;
-    font-size: 12px;
 
     &:hover {
       text-decoration: underline;
@@ -275,7 +261,6 @@ export default defineComponent({
   }
 }
 
-// Transition animations
 .chips-slide-enter-active,
 .chips-slide-leave-active {
   transition: all 0.25s ease-out;

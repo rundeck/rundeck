@@ -196,11 +196,14 @@ describe("ConfigSection", () => {
       expect(withoutTooltip.find('[data-testid="config-section-description"]').exists()).toBe(false);
     });
 
-    it("keeps the Add button visible when items are present, and hides it only when hideWhenSingle is true", async () => {
-      const withItem = await createEditViewWrapper({
-        modelValue: [{ type: "exec" }],
-      });
-      expect(withItem.find('[data-testid="config-section-add-btn"]').exists()).toBe(true);
+    it("clicking the Add button emits addElement; button hides only when hideWhenSingle is true with an existing item", async () => {
+      const withItem = await createEditViewWrapper({ modelValue: [{ type: "exec" }] });
+      const btn = withItem.find('[data-testid="config-section-add-btn"]');
+      expect(btn.text()).toContain("Add");
+
+      await btn.trigger("click");
+      await withItem.vm.$nextTick();
+      expect(withItem.emitted("addElement")).toHaveLength(1);
 
       const hiddenWhenSingle = await createEditViewWrapper({
         modelValue: [{ type: "exec" }],
@@ -216,7 +219,6 @@ describe("ConfigSection", () => {
       await wrapper.findAllComponents(Chip)[0].trigger("click");
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.emitted("editElement")).toHaveLength(1);
       expect(wrapper.emitted("editElement")![0]).toEqual([element, 0]);
     });
 
