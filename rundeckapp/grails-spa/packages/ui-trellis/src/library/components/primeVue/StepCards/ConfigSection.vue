@@ -248,6 +248,11 @@ export default defineComponent({
       &:hover {
         opacity: 0.85;
       }
+
+      &:focus-visible {
+        outline: 2px solid var(--colors-blue-500, #0052cc);
+        outline-offset: 1px;
+      }
     }
   }
 
