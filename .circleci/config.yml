@@ -73,10 +73,10 @@ slack-fail-post-step: &slack-fail-post-step
 
 executors:
 
-  # Main docker executor
+  # Main docker executor (cimg/openjdk:17.0 includes Eclipse Temurin JDK 17)
   docker-builder:
     docker:
-      - image: cimg/base:current-22.04
+      - image: cimg/openjdk:17.0
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -195,9 +195,9 @@ commands:
           use-nvm-cache: true
           nvm-cache-key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-nvm-{{ checksum ".nvmrc" }}
 
-  # Install Java JDK
+  # Install/verify Java JDK (pre-installed on cimg/openjdk, installed via apt on machine executor)
   install-java-jdk:
-    description: Install JDK
+    description: Ensure JDK 17 is available
     steps:
       - run-build-step:
           step-name: Install Java JDK
@@ -262,7 +262,6 @@ job-defaults: &job-defaults
     CIRCLE_PIPELINE_NUM: << pipeline.number >>
     GRADLE_OPTS: -XX:MaxRAMPercentage=85.0
     JAVA_OPTS: -XX:MaxRAMPercentage=85.0
-    JAVA_HOME: /usr/lib/jvm/zulu17
 
 jobs:
 

@@ -45,9 +45,7 @@ class ContextPathLoginSpec extends SeleniumBase {
             currentUrl.contains("${contextPath}/user/login")
 
         and: "page has loaded successfully (no 404 or asset loading errors)"
-            pageSource.contains("Login") || pageSource.contains("login")
-            !pageSource.contains("404")
-            !pageSource.contains("Not Found")
+            loginPage.waitForElementVisible(loginPage.loginBtnBy).isDisplayed()
 
         and: "assets do NOT contain [:] placeholder (RUN-4332 fix verification)"
             !pageSource.contains("[:]")
