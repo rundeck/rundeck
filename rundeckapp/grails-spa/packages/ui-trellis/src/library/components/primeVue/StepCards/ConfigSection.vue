@@ -38,7 +38,9 @@
       <div class="header-row">
         <p data-testid="config-section-title">
           {{ title }}
-          <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i> :
+          <template v-if="tooltip">
+            <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i> :
+          </template>
         </p>
         <slot name="header">
           <transition name="inline-button-fade">
