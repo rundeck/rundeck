@@ -171,11 +171,6 @@ search
     <div id="loaderror"></div>
   </div>
   
-  <g:if test="${eventReadAuth}">
-    <div id="activity_section" class="vue-ui-socket">
-      <ui-socket section="project-activity" location="main"></ui-socket>
-    </div>
-  </g:if>
 </div>
 </div>
 </body>

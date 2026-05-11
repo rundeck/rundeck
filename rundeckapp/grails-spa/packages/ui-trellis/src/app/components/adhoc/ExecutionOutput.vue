@@ -18,7 +18,6 @@
       id="runcontent"
       ref="runcontentRef"
       class="card card-modified exec-output card-grey-header nodes_run_content execution-output-content"
-      @click="handleCloseOutputClick"
     >
       <!-- Card Header with Execution Info (only if showHeader prop is true) -->
       <div v-if="showHeader && executionId" class="card-header">
@@ -422,9 +421,7 @@ export default defineComponent({
           // Mark as completed to prevent further polling
           this.executionDetailsFetched = true;
           this.executionCompleted = true;
-          this.handleError(
-            "Execution polling timeout - execution may be stuck on server",
-          );
+          this.handleError(this.$t("adhoc.execution.polling.timeout"));
           return;
         }
 

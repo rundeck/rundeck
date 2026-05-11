@@ -1,5 +1,9 @@
 <template>
   <div class="col-xs-12">
+    <div v-if="error" class="alert alert-warning">
+      <span>{{ error }}</span>
+      <button type="button" class="close" @click="error = null">&times;</button>
+    </div>
     <div id="runtab" class="">
       <form
         id="runbox"
@@ -135,6 +139,7 @@
               {{ $t("node.dispatch.settings") }}
               <div class="pull-right">
                 <button
+                  type="button"
                   class="close"
                   data-toggle="collapse"
                   data-target="#runconfig"
@@ -566,9 +571,7 @@ export default defineComponent({
     },
     showError(message: string) {
       this.running = false;
-
-      // Error will be displayed by ExecutionOutput component if needed
-      // No need to emit error event since ExecutionOutput handles its own error state
+      this.error = message;
     },
   },
 });
