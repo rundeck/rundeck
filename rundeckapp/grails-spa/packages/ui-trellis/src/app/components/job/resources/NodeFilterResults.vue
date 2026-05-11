@@ -1,5 +1,5 @@
 <template>
-  <div class="well well-sm matchednodes node_filter_results__matched_nodes">
+  <div class="well well-sm matchednodes node_filter_results__matched_nodes" :class="{ 'no-margin-bottom': noMarginBottom }">
     <div class="row">
       <div class="col-sm-6">
         <span
@@ -26,8 +26,17 @@
       </div>
 
       <div class="col-sm-6">
+        <div class="pull-right" style="margin-top: -5px">
+          <a
+            v-if="loaded && !loading && nodeFilter"
+            :href="viewInNodesPageUrl"
+            class="text-muted"
+            style="margin-right: 10px"
+          >
+            {{ $t("view.in.nodes.page.prompt") }}
+          </a>
         <btn
-          type="default btn-sm refresh_nodes pull-right"
+            type="default btn-sm refresh_nodes"
           data-loading-text="${g.message(code: 'loading')}"
           :disabled="loading"
           :title="$t('click.to.refresh')"
@@ -36,6 +45,7 @@
           {{ $t("refresh") }}
           <i class="glyphicon glyphicon-refresh"></i>
         </btn>
+        </div>
       </div>
     </div>
     <div id="matchednodes" class="clearfix row">
@@ -54,8 +64,9 @@
 <script lang="ts">
 import NodeListEmbed from "../../job/resources/NodeListEmbed.vue";
 import { _genUrl } from "../../../../library/utilities/genUrl";
+import { url } from "../../../../library";
 import axios from "axios";
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, computed } from "vue";
 
 import { getRundeckContext, getAppLinks } from "../../../../library";
 
@@ -81,9 +92,19 @@ export default defineComponent({
       required: false,
       default: false,
     },
+    project: {
+      type: String,
+      required: false,
+      default: () => getRundeckContext().projectName,
+    },
+    noMarginBottom: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
-  emits: ["filter"],
-  setup() {
+  emits: ["filter", "update:total", "update:loading", "update:error"],
+  setup(props) {
     const paging = ref(true);
     const loaded = ref(false);
     const loading = ref(false);
@@ -98,6 +119,16 @@ export default defineComponent({
     const truncated = ref(false);
     const colkeys = ref([]);
     const nodeSet = ref({ nodes: [], tagsummary: {} });
+    
+    const viewInNodesPageUrl = computed(() => {
+      if (!props.nodeFilter) return "#";
+      const projectName = props.project || getRundeckContext().projectName;
+      const nodesUrl = _genUrl(`/project/${projectName}/nodes`, {
+        filter: props.nodeFilter,
+      });
+      return url(nodesUrl).href;
+    });
+    
     return {
       paging,
       loaded,
@@ -113,6 +144,7 @@ export default defineComponent({
       truncated,
       colkeys,
       nodeSet,
+      viewInNodesPageUrl,
     };
   },
   watch: {
@@ -124,6 +156,21 @@ export default defineComponent({
     },
     excludeFilterUncheck() {
       this.update();
+    },
+    total(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.$emit("update:total", newVal);
+      }
+    },
+    loading(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.$emit("update:loading", newVal);
+      }
+    },
+    error(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.$emit("update:error", newVal || null);
+      }
     },
   },
   mounted() {
@@ -226,3 +273,9 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.no-margin-bottom {
+  margin-bottom: 0 !important;
+}
+</style>
