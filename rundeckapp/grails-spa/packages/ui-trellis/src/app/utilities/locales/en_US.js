@@ -586,6 +586,7 @@ const messages = {
   "adhoc.server.response.invalid": "Server response was invalid",
   "adhoc.request.failed": "Request failed",
   "adhoc.execution.output.load.failed": "Failed to load execution output",
+  "adhoc.execution.polling.timeout": "Execution polling timeout - execution may be stuck on server",
   "no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter": "No nodes selected. Match nodes by selecting or entering a filter",
   "view.in.nodes.page.prompt": "View in Nodes page",
   Node: "Node",
