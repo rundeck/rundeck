@@ -21,12 +21,6 @@ jest.mock("../../../../library", () => ({
   }),
 }));
 
-jest.mock("vue-i18n", () => ({
-  useI18n: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 describe("ActivitySection", () => {
   const mockEventBus = {
     on: jest.fn(),

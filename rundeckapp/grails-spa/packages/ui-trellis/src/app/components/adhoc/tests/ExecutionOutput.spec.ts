@@ -30,7 +30,7 @@ jest.mock("../../../../library/rundeckService", () => ({
     rootStore: {
       theme: { theme: "dark" },
       executionOutputStore: {
-        createOrGet: jest.fn(),
+        createOrGet: jest.fn().mockReturnValue({ init: jest.fn() }),
       },
     },
   }),
@@ -44,7 +44,7 @@ jest.mock("../../../../library", () => ({
     rootStore: {
       theme: { theme: "dark" },
       executionOutputStore: {
-        createOrGet: jest.fn(),
+        createOrGet: jest.fn().mockReturnValue({ init: jest.fn() }),
       },
     },
   }),
@@ -94,6 +94,9 @@ describe("ExecutionOutput", () => {
         pageParams: mockPageParams,
         showHeader: false,
       },
+      global: {
+        stubs: { LogViewer: true },
+      },
     }) as VueWrapper<any>;
 
     // Wait for mounted hook to process the executionId
@@ -110,6 +113,9 @@ describe("ExecutionOutput", () => {
         eventBus: mockEventBus,
         pageParams: mockPageParams,
         showHeader: false,
+      },
+      global: {
+        stubs: { LogViewer: true },
       },
     }) as VueWrapper<any>;
 
