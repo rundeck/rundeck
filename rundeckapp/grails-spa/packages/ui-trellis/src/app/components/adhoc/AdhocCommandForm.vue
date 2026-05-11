@@ -445,6 +445,10 @@ export default defineComponent({
                   this.commandString = exec.title || "";
                   if (this.nodeFilterStore && exec.filter) {
                     this.nodeFilterStore.setSelectedFilter(exec.filter);
+                    // Sync NodeFilterInput search bar display with the selected filter
+                    this.eventBus.emit("nodefilter:value:changed", {
+                      filter: exec.filter,
+                    });
                   }
                   // Emit runner-filter-changed event
                   if (exec.extraMetadata) {
