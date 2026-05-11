@@ -76,23 +76,27 @@ export async function runAdhocCommand(
   // IMPORTANT: For runner-related meta fields, if they're empty, set them to LOCAL_RUNNER defaults
   // Empty runner fields cause executions to hang waiting for a runner that doesn't exist
   // When no runner is selected, we must explicitly indicate LOCAL_RUNNER to avoid timeouts
-  const runnerMetaFields = ['meta.jobRunnerFilter', 'meta.jobRunnerFilterType', 'meta.jobRunnerFilterMode'];
-  
+  const runnerMetaFields = [
+    "meta.jobRunnerFilter",
+    "meta.jobRunnerFilterType",
+    "meta.jobRunnerFilterMode",
+  ];
+
   // Track if we have any runner meta fields
   let hasRunnerFilter = false;
   let hasRunnerFilterType = false;
   let hasRunnerFilterMode = false;
   
   if (request.meta) {
-    Object.keys(request.meta).forEach(key => {
+    Object.keys(request.meta).forEach((key) => {
       const value = request.meta![key];
       const metaKey = `meta.${key}`;
       if (runnerMetaFields.includes(metaKey)) {
-        if (metaKey === 'meta.jobRunnerFilter') hasRunnerFilter = true;
-        if (metaKey === 'meta.jobRunnerFilterType') hasRunnerFilterType = true;
-        if (metaKey === 'meta.jobRunnerFilterMode') hasRunnerFilterMode = true;
+        if (metaKey === "meta.jobRunnerFilter") hasRunnerFilter = true;
+        if (metaKey === "meta.jobRunnerFilterType") hasRunnerFilterType = true;
+        if (metaKey === "meta.jobRunnerFilterMode") hasRunnerFilterMode = true;
         // Include runner fields if they have a non-empty value
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null && value !== "") {
           params[metaKey] = value;
         }
       } else {
@@ -103,17 +107,17 @@ export async function runAdhocCommand(
       }
     });
   }
-  
+
   // Also check for any other flat meta.* fields in the request object
-  Object.keys(request).forEach(key => {
-    if (key.startsWith('meta.') && !params[key]) {
+  Object.keys(request).forEach((key) => {
+    if (key.startsWith("meta.") && !params[key]) {
       const value = request[key];
       if (runnerMetaFields.includes(key)) {
-        if (key === 'meta.jobRunnerFilter') hasRunnerFilter = true;
-        if (key === 'meta.jobRunnerFilterType') hasRunnerFilterType = true;
-        if (key === 'meta.jobRunnerFilterMode') hasRunnerFilterMode = true;
+        if (key === "meta.jobRunnerFilter") hasRunnerFilter = true;
+        if (key === "meta.jobRunnerFilterType") hasRunnerFilterType = true;
+        if (key === "meta.jobRunnerFilterMode") hasRunnerFilterMode = true;
         // Include runner fields if they have a non-empty value
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null && value !== "") {
           params[key] = value;
         }
       } else {
@@ -124,24 +128,32 @@ export async function runAdhocCommand(
       }
     }
   });
-  
+
   // If runner meta fields are missing or empty, set LOCAL_RUNNER defaults
   // This prevents the server from waiting for runner reports that will never come
   // Default values match JobRunnerAdhocCommand.vue defaults:
   // - filter: "local" (but can be empty for LOCAL_RUNNER)
   // - runnerFilterType: "LOCAL_RUNNER"
   // - runnerFilterMode: "LOCAL"
-  if (!hasRunnerFilterType || !params['meta.jobRunnerFilterType'] || params['meta.jobRunnerFilterType'] === '') {
-    params['meta.jobRunnerFilterType'] = 'LOCAL_RUNNER';
+  if (
+    !hasRunnerFilterType ||
+    !params["meta.jobRunnerFilterType"] ||
+    params["meta.jobRunnerFilterType"] === ""
+  ) {
+    params["meta.jobRunnerFilterType"] = "LOCAL_RUNNER";
   }
-  if (!hasRunnerFilterMode || !params['meta.jobRunnerFilterMode'] || params['meta.jobRunnerFilterMode'] === '') {
-    params['meta.jobRunnerFilterMode'] = 'LOCAL';
+  if (
+    !hasRunnerFilterMode ||
+    !params["meta.jobRunnerFilterMode"] ||
+    params["meta.jobRunnerFilterMode"] === ""
+  ) {
+    params["meta.jobRunnerFilterMode"] = "LOCAL";
   }
   // jobRunnerFilter can be empty for LOCAL_RUNNER, so we only set it if it's explicitly provided
-  
+
   // Log params for debugging (remove in production)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[adhocService] Sending request params:', params);
+  if (process.env.NODE_ENV === "development") {
+    console.log("[adhocService] Sending request params:", params);
   }
 
   // Build URL with query parameters (matching original _genUrl behavior)
@@ -149,14 +161,14 @@ export async function runAdhocCommand(
   // which appends serialized form data as query parameters to the URL
   // IMPORTANT: Include ALL parameters, even empty strings (meta fields can be empty)
   const queryParams = new URLSearchParams();
-  Object.keys(params).forEach(key => {
+  Object.keys(params).forEach((key) => {
     const value = params[key];
     // Include all values except undefined and null (empty strings are valid, especially for meta fields)
     if (value !== undefined && value !== null) {
       queryParams.append(key, String(value));
     }
   });
-  
+
   const urlWithParams = `${url}?${queryParams.toString()}`;
 
   // Send as POST with query parameters in URL (matching original jQuery.ajax behavior)
@@ -170,35 +182,6 @@ export async function runAdhocCommand(
 
   if (!response.data.id) {
     throw new Error("No execution ID returned from server");
-  }
-
-  return response.data;
-}
-
-/**
- * Load execution follow fragment (HTML output)
- * This still uses the ajax endpoint as it returns HTML, not JSON
- * Note: This is not an API endpoint, so we use axios directly with full URL
- */
-export async function loadExecutionFollow(
-  executionId: string | number,
-  mode: string = "tail",
-): Promise<string> {
-  // Use the ajax endpoint for HTML output (not converting this to API endpoint)
-  const rundeckContext = getRundeckContext();
-  const url = `${rundeckContext.rdBase}execution/followFragment?id=${executionId}&mode=${mode}`;
-
-  // Use axios directly since this is not an API endpoint
-  const response = await axios.get<string>(url, {
-    headers: {
-      "x-rundeck-ajax": "true",
-      "Accept": "text/html",
-    },
-    responseType: "text",
-  });
-
-  if (response.status !== 200) {
-    throw new Error(`Failed to load execution output: ${response.statusText}`);
   }
 
   return response.data;
@@ -262,7 +245,11 @@ export async function getExecutionDetails(
 
   // The API returns { executions: [...] } when multiple, or flattened execution object when single:true
   let execution: any = null;
-  if (response.data && Array.isArray(response.data.executions) && response.data.executions.length > 0) {
+  if (
+    response.data &&
+    Array.isArray(response.data.executions) &&
+    response.data.executions.length > 0
+  ) {
     // Multiple executions format
     execution = response.data.executions[0];
   } else if (response.data && response.data.id) {
@@ -277,8 +264,13 @@ export async function getExecutionDetails(
   // Extract failedNodes from execution data (API returns as array from comma-separated string)
   const failedNodes: string[] = [];
   if (execution.failedNodes && Array.isArray(execution.failedNodes)) {
-    failedNodes.push(...execution.failedNodes.filter((n: string) => n && n.trim().length > 0));
-  } else if (execution.failedNodes && typeof execution.failedNodes === "string") {
+    failedNodes.push(
+      ...execution.failedNodes.filter((n: string) => n && n.trim().length > 0),
+    );
+  } else if (
+    execution.failedNodes &&
+    typeof execution.failedNodes === "string"
+  ) {
     // Handle comma-separated string (fallback)
     failedNodes.push(
       ...execution.failedNodes
@@ -312,7 +304,7 @@ export interface AdhocHistoryResponse {
  * Load recent adhoc command history
  * Uses: GET /execution/adhocHistoryAjax?project={project}&max={max}
  * Note: This is not an API endpoint, so we use axios directly with full URL
- * 
+ *
  * The original code uses: _genUrl(appLinks.adhocHistoryAjax, {max: self.loadMax})
  * The appLinks.adhocHistoryAjax URL already includes the project parameter from projParams,
  * so we use _genUrl to append max parameter correctly (using & if URL has ?, ? otherwise)
@@ -322,12 +314,12 @@ export async function loadAdhocHistory(
   max: number = 20,
 ): Promise<AdhocHistoryResponse> {
   const rundeckContext = getRundeckContext();
-  
+
   // Get appLinks - adhocHistoryAjax already includes project parameter from projParams
   // Format: /execution/adhocHistoryAjax?project={project}
   const appLinks = getAppLinks();
   const baseUrl = `${rundeckContext.rdBase}${appLinks.adhocHistoryAjax}`;
-  
+
   // Use _genUrl to append max parameter correctly (matches original behavior)
   // _genUrl checks if URL has ? and uses & or ? accordingly
   const url = _genUrl(baseUrl, { max });
@@ -336,7 +328,7 @@ export async function loadAdhocHistory(
   const response = await axios.get<AdhocHistoryResponse>(url, {
     headers: {
       "x-rundeck-ajax": "true",
-      "Accept": "application/json",
+      Accept: "application/json",
     },
   });
 

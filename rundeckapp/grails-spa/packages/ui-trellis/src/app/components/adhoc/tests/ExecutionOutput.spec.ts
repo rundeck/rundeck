@@ -121,4 +121,3 @@ describe("ExecutionOutput", () => {
     expect(wrapper.vm.showOutput).toBe(true);
   });
 });
-

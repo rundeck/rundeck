@@ -1,11 +1,7 @@
 <template>
   <div id="adhoc-app">
     <!-- Execution Mode Warning: Show when execution mode is inactive -->
-    <div
-      v-if="!executionModeActive"
-      class="alert alert-warning"
-      role="alert"
-    >
+    <div v-if="!executionModeActive" class="alert alert-warning" role="alert">
       <i class="glyphicon glyphicon-warning-sign"></i>
       <span>{{ $t("disabled.execution.run") }}</span>
     </div>
@@ -17,6 +13,7 @@
         :node-filter-store="nodeFilterStore"
         :max-shown="filterParams.matchedNodesMaxCount"
         :project="projectName"
+        :event-bus="EventBus"
         @node-total-changed="handleNodeTotalChanged"
         @node-error-changed="handleNodeErrorChanged"
       />
@@ -101,7 +98,10 @@ export default defineComponent({
     this.initializeStores();
     // Listen to filter changes from ui-socket component (when no NodeFilterStore is passed to it)
     if (this.EventBus && typeof this.EventBus.on === "function") {
-      this.EventBus.on("nodefilter:value:changed", this.handleFilterValueChanged);
+      this.EventBus.on(
+        "nodefilter:value:changed",
+        this.handleFilterValueChanged,
+      );
     }
     // Event listeners are set up via component props and event handlers
     // Node filter events are handled by handleNodeTotalChanged() and handleNodeErrorChanged()
@@ -109,7 +109,10 @@ export default defineComponent({
   beforeUnmount() {
     // Remove EventBus listener
     if (this.EventBus && typeof this.EventBus.off === "function") {
-      this.EventBus.off("nodefilter:value:changed", this.handleFilterValueChanged);
+      this.EventBus.off(
+        "nodefilter:value:changed",
+        this.handleFilterValueChanged,
+      );
     }
   },
   methods: {
@@ -182,14 +185,8 @@ export default defineComponent({
       // AdhocCommandForm now computes canRun locally based on nodeError prop
     },
     handleFilterValueChanged(data: { filter: string }) {
-      // Update our NodeFilterStore when filter changes from ui-socket component
-      console.log("[App.vue] Received nodefilter:value:changed event:", data);
       if (this.nodeFilterStore && data && data.filter !== undefined) {
-        console.log("[App.vue] Setting filter in NodeFilterStore:", data.filter);
         this.nodeFilterStore.setSelectedFilter(data.filter);
-        console.log("[App.vue] NodeFilterStore.selectedFilter is now:", this.nodeFilterStore.selectedFilter);
-      } else {
-        console.warn("[App.vue] Cannot set filter - nodeFilterStore:", !!this.nodeFilterStore, "data:", data);
       }
     },
     handleExecutionStarted(data: { id: string | number }) {
@@ -200,4 +197,3 @@ export default defineComponent({
   },
 });
 </script>
-

@@ -271,10 +271,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def adhoc(ExtNodeFilters query) {
-        // Check for nextUi cookie FIRST (similar to MenuController pattern) - before any other processing
-        // Match MenuController pattern exactly: request.getCookies().find { it.name == 'nextUi' }?.value == 'true'
         def cookieValue = request.getCookies()?.find { it.name == 'nextUi' }?.value
-        if (cookieValue == 'true' || params.nextUi == 'true') {
+        if (cookieValue == 'true' || params.boolean('nextUi')) {
             params.nextUi = true
             // Still need to process query for the model
             if (query.hasErrors()) {

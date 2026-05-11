@@ -8,7 +8,7 @@
           </h3>
         </div>
       </div>
-      <div class="card" id="activity_section">
+      <div id="activity_section" class="card">
         <div class="card-content">
           <div class="_history_content vue-project-activity">
             <activity-list :event-bus="eventBus"></activity-list>
@@ -40,4 +40,3 @@ export default defineComponent({
 <style scoped>
 /* Styles inherited from existing CSS */
 </style>
-
