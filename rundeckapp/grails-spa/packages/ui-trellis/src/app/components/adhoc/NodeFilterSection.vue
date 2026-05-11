@@ -100,13 +100,12 @@ export default defineComponent({
     },
   },
   watch: {
-    "nodeFilterStore.selectedFilter"(newFilter, oldFilter) {
-      // When filter changes, set loading state immediately
-      // This ensures loading indicator is visible before NodeFilterResults starts its request
-      if (newFilter && newFilter !== oldFilter) {
+    "nodeFilterStore.selectedFilter"(newFilter) {
+      // Immediately enter loading state so the empty-state warning doesn't flash
+      // while NodeFilterResults makes its request
+      if (newFilter) {
         this.loading = true;
       }
-      // Reset other state when filter changes
       this.total = 0;
       this.error = null;
     },
