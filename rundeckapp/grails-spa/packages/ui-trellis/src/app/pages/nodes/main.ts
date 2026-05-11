@@ -56,7 +56,7 @@ const FilterInputComp = defineComponent({
         this.extraAttrs.nodeFilterStore.setSelectedFilter(val);
       } else {
         // Emit EventBus event for adhoc page and other pages without NodeFilterStore
-        console.log("[FilterInputComp] Emitting nodefilter:value:changed event with filter:", val);
+        console.debug("[FilterInputComp] Emitting nodefilter:value:changed event with filter:", val);
         rundeckContext.eventBus.emit("nodefilter:value:changed", { filter: val });
       }
     },
@@ -98,7 +98,7 @@ const FilterInputComp = defineComponent({
       } else if (retry > 0) {
         setTimeout(() => this.attachKnockout(retry - 1), 1000);
       } else {
-        console.log(
+        console.debug(
           "Did not find ko component: ",
           this.koFieldName,
           this.koParam,
