@@ -231,6 +231,7 @@ export default defineComponent({
       }
       params.nodeExcludePrecedence = "true";
       this.loading = true;
+      this.total = 0;
 
       axios
         .request({
