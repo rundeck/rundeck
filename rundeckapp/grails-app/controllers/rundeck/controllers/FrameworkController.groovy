@@ -298,8 +298,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
                     def cmd = e.workflow.commands[0]
-                    if (cmd.adhocRemoteString) {
-                        runCommand = cmd.adhocRemoteString
+                    String adhocRemoteString = null
+                    if (cmd instanceof CommandExec) {
+                        adhocRemoteString = cmd.adhocRemoteString
+                    } else if (cmd instanceof PluginStep) {
+                        Map config = cmd.getConfiguration() ?: [:]
+                        adhocRemoteString = config.adhocRemoteString
+                    }
+                    if (adhocRemoteString) {
+                        runCommand = adhocRemoteString
                         //configure node filters
                         if (params.retryFailedExecId) {
                             query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)

@@ -395,7 +395,7 @@ export default defineComponent({
       // Track when polling started to prevent infinite loops
       this.completionCheckStartTime = Date.now();
 
-      this.completionCheckInterval = window.setInterval(async () => {
+      const checkFn = async () => {
         // CRITICAL: Check if execution already completed BEFORE making any API calls
         // This prevents infinite loops when handleExecutionComplete() has already been called
         if (this.executionDetailsFetched || this.executionCompleted) {
@@ -505,7 +505,11 @@ export default defineComponent({
             err,
           );
         }
-      }, 1500); // Check every 1.5 seconds (matches original reloadInterval: 1500 for adhoc)
+      };
+
+      // Fire immediately so the status header populates without waiting for the first interval
+      checkFn();
+      this.completionCheckInterval = window.setInterval(checkFn, 1500);
     },
     async handleExecutionComplete() {
       // Prevent multiple calls to this method (guard against infinite loop)
