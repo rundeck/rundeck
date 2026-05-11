@@ -77,6 +77,7 @@ import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
+import rundeck.PluginStep
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
@@ -158,19 +159,26 @@ class ExecutionController extends ControllerBase{
             offset+=res.size()
             res.each{exec->
                 def workflow = exec.getWorkflowData()
-                if(execs.size()<max
-                        && workflow && workflow.commands.size()==1
-                        && workflow.commands[0] instanceof CommandExec
-                        && workflow.commands[0].adhocRemoteString){
-
-                    def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                    def str=workflow.commands[0].adhocRemoteString+";"+appliedFilter
-                    if(query && query.size()>4 && !str.contains(query)){
-                        return
+                if(execs.size()<max && workflow && workflow.commands.size()==1) {
+                    def cmd = workflow.commands[0]
+                    String adhocRemoteString = null
+                    if (cmd instanceof CommandExec) {
+                        adhocRemoteString = cmd.adhocRemoteString
+                    } else if (cmd instanceof PluginStep) {
+                        // New JSON storage format deserializes exec commands as PluginStep
+                        Map config = cmd.getConfiguration() ?: [:]
+                        adhocRemoteString = config.adhocRemoteString
                     }
-                    if(!uniques.contains(str)){
-                        uniques<<str
-                        execs<<exec
+                    if (adhocRemoteString) {
+                        def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                        def str=adhocRemoteString+";"+appliedFilter
+                        if(query && query.size()>4 && !str.contains(query)){
+                            return
+                        }
+                        if(!uniques.contains(str)){
+                            uniques<<str
+                            execs<<exec
+                        }
                     }
                 }
             }
@@ -181,23 +189,33 @@ class ExecutionController extends ControllerBase{
 
         def elementList = execs.collect{Execution exec->
             def workflow = exec.getWorkflowData()
-            if(workflow && workflow.commands.size()==1 && workflow.commands[0].adhocRemoteString) {
-                def href=createLink(
-                        controller: 'framework',
-                        action: 'adhoc',
-                        params: [project: project, fromExecId: exec.id]
-                )
+            if(workflow && workflow.commands.size()==1) {
+                def cmd = workflow.commands[0]
+                String adhocRemoteString = null
+                if (cmd instanceof CommandExec) {
+                    adhocRemoteString = cmd.adhocRemoteString
+                } else if (cmd instanceof PluginStep) {
+                    Map config = cmd.getConfiguration() ?: [:]
+                    adhocRemoteString = config.adhocRemoteString
+                }
+                if (adhocRemoteString) {
+                    def href=createLink(
+                            controller: 'framework',
+                            action: 'adhoc',
+                            params: [project: project, fromExecId: exec.id]
+                    )
 
-                def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                return [
-                        status: exec.getExecutionState(),
-                        succeeded: exec.statusSucceeded(),
-                        href: href,
-                        execid: exec.id,
-                        title: workflow.commands[0].adhocRemoteString,
-                        filter: appliedFilter,
-                        extraMetadata: exec.extraMetadataMap
-                ]
+                    def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                    return [
+                            status: exec.getExecutionState(),
+                            succeeded: exec.statusSucceeded(),
+                            href: href,
+                            execid: exec.id,
+                            title: adhocRemoteString,
+                            filter: appliedFilter,
+                            extraMetadata: exec.extraMetadataMap
+                    ]
+                }
             }
         }
         render(contentType: 'application/json'){
