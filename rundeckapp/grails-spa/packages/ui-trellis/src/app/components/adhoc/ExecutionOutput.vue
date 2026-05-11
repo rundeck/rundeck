@@ -507,9 +507,10 @@ export default defineComponent({
         }
       };
 
-      // Fire immediately so the status header populates without waiting for the first interval
-      checkFn();
+      // Set interval FIRST so completionCheckInterval is non-null when checkFn runs immediately.
+      // The guard `if (!this.completionCheckInterval) return` would abort the first call otherwise.
       this.completionCheckInterval = window.setInterval(checkFn, 1500);
+      checkFn();
     },
     async handleExecutionComplete() {
       // Prevent multiple calls to this method (guard against infinite loop)
