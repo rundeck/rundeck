@@ -166,23 +166,16 @@ export default defineComponent({
     },
 
     initializeStores() {
-      // Initialize NodeFilterStore
       this.nodeFilterStore = new NodeFilterStore({
         filter: this.filterParams.filter,
       });
-
-      // AdhocCommandStore removed - state is now local to AdhocCommandForm
-      // Node filter total changes are handled via props passed to AdhocCommandForm
-      // which computes canRun state locally based on nodeTotal and nodeError
     },
 
     handleNodeTotalChanged(total: number) {
       this.nodeTotal = total;
-      // AdhocCommandForm now computes canRun locally based on nodeTotal prop
     },
     handleNodeErrorChanged(error: string | null) {
       this.nodeError = error;
-      // AdhocCommandForm now computes canRun locally based on nodeError prop
     },
     handleFilterValueChanged(data: { filter: string }) {
       if (this.nodeFilterStore && data && data.filter !== undefined) {
