@@ -20,8 +20,10 @@ jest.mock("@/library/rundeckService", () => {
   };
 });
 
-import { getRundeckContext } from "../../../rundeckService";
-const mockGetRundeckContext = getRundeckContext as jest.Mock;
+const { getRundeckContext } = jest.requireMock("@/library/rundeckService") as {
+  getRundeckContext: jest.Mock;
+};
+const mockGetRundeckContext = getRundeckContext;
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(pluginPropEdit, {
     props: {
