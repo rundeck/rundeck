@@ -5,27 +5,24 @@
         <div class="col-xs-12">
           <div
             v-if="showEmptyState"
-            class="spacing text-warning"
             id="emptyerror"
+            class="spacing text-warning"
           >
             <span class="errormessage">
-              {{ $t("no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter") }}
+              {{
+                $t(
+                  "no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter",
+                )
+              }}
             </span>
           </div>
 
-          <div
-            v-if="loading"
-            class="spacing text-info"
-          >
+          <div v-if="loading" class="spacing text-info">
             <i class="glyphicon glyphicon-time"></i>
             {{ $t("loading.matched.nodes") }}
           </div>
 
-          <div
-            v-if="error"
-            class="spacing text-danger"
-            id="loaderror2"
-          >
+          <div v-if="error" id="loaderror2" class="spacing text-danger">
             <i class="glyphicon glyphicon-warning-sign"></i>
             <span class="errormessage">{{ error }}</span>
           </div>
@@ -33,6 +30,7 @@
           <node-filter-results
             v-if="hasFilter"
             :node-filter="nodeFilterStore.selectedFilter"
+            ref="nodeFilterResultsRef"
             :max-shown="maxShown"
             :project="project"
             empty-mode="blank"
@@ -43,7 +41,6 @@
             @update:total="handleTotalUpdate"
             @update:loading="handleLoadingUpdate"
             @update:error="handleErrorUpdate"
-            ref="nodeFilterResultsRef"
           />
         </div>
       </div>
@@ -77,6 +74,10 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    eventBus: {
+      type: Object,
+      required: true,
+    },
   },
   emits: ["node-total-changed", "node-error-changed"],
   data() {
@@ -88,22 +89,14 @@ export default defineComponent({
   },
   computed: {
     hasFilter(): boolean {
-      return !!(
-        this.nodeFilterStore && this.nodeFilterStore.selectedFilter
-      );
+      return !!(this.nodeFilterStore && this.nodeFilterStore.selectedFilter);
     },
     nodesTitle(): string {
-      return this.total === 1
-        ? this.$t("Node")
-        : this.$t("Node.plural");
+      return this.total === 1 ? this.$t("Node") : this.$t("Node.plural");
     },
     showEmptyState(): boolean {
       // Show warning when no nodes matched (either no filter entered, or filter returned 0 results)
-      return (
-        !this.loading &&
-        !this.error &&
-        (this.total === 0 || !this.total)
-      );
+      return !this.loading && !this.error && (this.total === 0 || !this.total);
     },
   },
   watch: {
@@ -145,14 +138,14 @@ export default defineComponent({
       }
     },
     handleFilter(filterData: any) {
-      // Handle filter changes from NodeFilterResults
       if (filterData && filterData.filter) {
         this.nodeFilterStore.setSelectedFilter(filterData.filter);
+        // Sync to event bus so the NodeFilterInput search bar updates its displayed value
+        this.eventBus.emit("nodefilter:value:changed", {
+          filter: filterData.filter,
+        });
       }
     },
   },
 });
 </script>
-
-
-

@@ -1,12 +1,12 @@
 <template>
   <div class="col-xs-12">
-    <div class="" id="runtab">
+    <div id="runtab" class="">
       <form
-        ref="runboxFormRef"
         id="runbox"
-        @submit.prevent="handleSubmit"
+        ref="runboxFormRef"
         action="adhoc"
         :data-project="project"
+        @submit.prevent="handleSubmit"
       >
         <input type="hidden" name="doNodedispatch" value="true" />
 
@@ -52,20 +52,14 @@
               >
                 {{ $t("your.recently.executed.commands") }}
               </li>
-              <li
-                v-for="(cmd, index) in recentCommands"
-                :key="index"
-              >
+              <li v-for="(cmd, index) in recentCommands" :key="index">
                 <a
                   href="#"
                   :title="cmd.filter || ''"
-                  @click.prevent="cmd.fillCommand()"
                   class="act_fill_cmd"
+                  @click.prevent="cmd.fillCommand()"
                 >
-                  <i
-                    class="exec-status icon"
-                    :class="cmd.statusClass"
-                  ></i>
+                  <i class="exec-status icon" :class="cmd.statusClass"></i>
                   <span>{{ cmd.title }}</span>
                 </a>
               </li>
@@ -73,13 +67,13 @@
           </span>
 
           <input
+            id="runFormExec"
             ref="commandInputRef"
             name="exec"
             size="50"
             type="text"
             :placeholder="$t('enter.a.command')"
             :value="commandString"
-            id="runFormExec"
             class="form-control"
             :disabled="isCommandInputDisabled"
             autofocus="true"
@@ -108,14 +102,23 @@
               class="btn btn-cta btn-fill runbutton"
               :class="{ disabled: isRunDisabled }"
               :disabled="isRunDisabled"
-              :aria-label="running ? $t('running1') : (nodeTotal > 0 ? $t('run.on.count.nodes', [nodeTotal, nodesTitle]) : $t('adhoc.no.nodes.matched'))"
+              :aria-label="
+                running
+                  ? $t('running1')
+                  : nodeTotal > 0
+                    ? $t('run.on.count.nodes', [nodeTotal, nodesTitle])
+                    : $t('adhoc.no.nodes.matched')
+              "
               :aria-disabled="isRunDisabled"
               @click.prevent="handleSubmit"
             >
               <span v-if="!running">
                 <span v-if="nodeTotal > 0">
                   {{ $t("run.on.count.nodes", [nodeTotal, nodesTitle]) }}
-                  <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+                  <span
+                    class="glyphicon glyphicon-play"
+                    aria-hidden="true"
+                  ></span>
                 </span>
                 <span v-else>{{ $t("adhoc.no.nodes.matched") }}</span>
               </span>
@@ -126,7 +129,7 @@
           </span>
         </span>
 
-        <div class="collapse well well-sm" id="runconfig">
+        <div id="runconfig" class="collapse well well-sm">
           <div class="form form-inline">
             <h5 style="margin-top: 0">
               {{ $t("node.dispatch.settings") }}
@@ -153,29 +156,32 @@
 
               <div class="form-group" style="margin-top: 6px">
                 <input
+                  id="runNodeThreadcount"
+                  v-model.number="threadCount"
                   min="1"
                   type="number"
                   name="nodeThreadcount"
-                  id="runNodeThreadcount"
                   size="2"
                   :placeholder="$t('maximum.threadcount.for.nodes')"
                   class="form-control input-sm"
-                  v-model.number="threadCount"
                 />
               </div>
 
-              <div class="form-group" style="margin-top: 6px; margin-left: 20px">
+              <div
+                class="form-group"
+                style="margin-top: 6px; margin-left: 20px"
+              >
                 {{ $t("on.node.failure") }}
               </div>
 
               <div class="form-group">
                 <div class="radio">
                   <input
+                    id="nodeKeepgoingTrue"
+                    v-model="nodeKeepgoing"
                     type="radio"
                     name="nodeKeepgoing"
                     value="true"
-                    id="nodeKeepgoingTrue"
-                    v-model="nodeKeepgoing"
                   />
                   <label
                     class="has_tooltip"
@@ -191,11 +197,11 @@
               <div class="form-group">
                 <div class="radio">
                   <input
+                    id="nodeKeepgoingFalse"
+                    v-model="nodeKeepgoing"
                     type="radio"
                     name="nodeKeepgoing"
                     value="false"
-                    id="nodeKeepgoingFalse"
-                    v-model="nodeKeepgoing"
                   />
                   <label
                     class="has_tooltip"
@@ -318,10 +324,7 @@ export default defineComponent({
     },
     isRunDisabled(): boolean {
       return (
-        this.nodeTotal < 1 ||
-        !!this.nodeError ||
-        this.running ||
-        !this.canRun
+        this.nodeTotal < 1 || !!this.nodeError || this.running || !this.canRun
       );
     },
     isCommandInputDisabled(): boolean {
@@ -352,23 +355,32 @@ export default defineComponent({
     this.$nextTick(() => {
       this.formMounted = true;
     });
-    
+
     // Listen for execution completion
     // In Vue 3 Options API, methods automatically have correct 'this' binding
     if (this.eventBus && typeof this.eventBus.on === "function") {
-      this.eventBus.on("adhoc-execution-complete", this.handleExecutionComplete);
+      this.eventBus.on(
+        "adhoc-execution-complete",
+        this.handleExecutionComplete,
+      );
     }
-    
+
     // Update canRun and allowInput based on initial props
     this.updateCanRunAndAllowInput();
   },
   beforeUnmount() {
     // Clean up event listeners
     if (this.eventBus && typeof this.eventBus.off === "function") {
-      this.eventBus.off("adhoc-execution-complete", this.handleExecutionComplete);
+      this.eventBus.off(
+        "adhoc-execution-complete",
+        this.handleExecutionComplete,
+      );
     }
     // Stop following execution output if active
-    if (this.followControl && typeof this.followControl.stopFollowingOutput === "function") {
+    if (
+      this.followControl &&
+      typeof this.followControl.stopFollowingOutput === "function"
+    ) {
       this.followControl.stopFollowingOutput();
     }
   },
@@ -380,8 +392,16 @@ export default defineComponent({
         return;
       }
 
-      const totalNum = typeof this.nodeTotal === "string" ? parseInt(this.nodeTotal as any, 10) : this.nodeTotal;
-      if (totalNum && totalNum !== 0 && this.nodeTotal !== "0" && !this.nodeError) {
+      const totalNum =
+        typeof this.nodeTotal === "string"
+          ? parseInt(this.nodeTotal as any, 10)
+          : this.nodeTotal;
+      if (
+        totalNum &&
+        totalNum !== 0 &&
+        this.nodeTotal !== "0" &&
+        !this.nodeError
+      ) {
         this.canRun = true;
         this.allowInput = true;
       } else {
@@ -428,9 +448,12 @@ export default defineComponent({
                   }
                   // Emit runner-filter-changed event
                   if (exec.extraMetadata) {
-                    const runnerEvent = new CustomEvent("runner-filter-changed", {
-                      detail: exec.extraMetadata,
-                    });
+                    const runnerEvent = new CustomEvent(
+                      "runner-filter-changed",
+                      {
+                        detail: exec.extraMetadata,
+                      },
+                    );
                     window.dispatchEvent(runnerEvent);
                   }
                 },
@@ -474,7 +497,7 @@ export default defineComponent({
       }
       const formData = new FormData(form);
       const data: Record<string, any> = {};
-      
+
       // Extract all form fields - keep meta.* fields as flat fields (not nested)
       // The service will send them as query parameters matching original jQuery.serialize() behavior
       for (const [key, value] of formData.entries()) {
@@ -486,7 +509,7 @@ export default defineComponent({
       if (this.nodeFilterStore.selectedExcludeFilter) {
         data.filterExclude = this.nodeFilterStore.selectedExcludeFilter;
       }
-      
+
       // Ensure doNodedispatch is set
       data.doNodedispatch = "true";
 
@@ -498,8 +521,11 @@ export default defineComponent({
           ...data,
           project: this.project,
           // Override fields that need type conversion
-          nodeThreadcount: data.nodeThreadcount ? parseInt(data.nodeThreadcount as string, 10) : undefined,
-          nodeKeepgoing: data.nodeKeepgoing === "true" || data.nodeKeepgoing === true,
+          nodeThreadcount: data.nodeThreadcount
+            ? parseInt(data.nodeThreadcount as string, 10)
+            : undefined,
+          nodeKeepgoing:
+            data.nodeKeepgoing === "true" || data.nodeKeepgoing === true,
         });
 
         // Emit execution started event with ID (not ko-adhoc-running)
@@ -509,7 +535,8 @@ export default defineComponent({
         this.$emit("execution-started", { id: executionId });
         this.$emit("submit", { id: executionId });
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         this.showError(this.$t("adhoc.request.failed") + ": " + errorMessage);
       } finally {
         // Running state will be cleared by ExecutionOutput when execution completes

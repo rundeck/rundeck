@@ -1,7 +1,7 @@
 import { createApp, markRaw } from "vue";
 
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
-import NextUiToggle from "../job/browse/NextUiToggle.vue";
+import NextUiToggle from "../../../library/components/widgets/settings-bar/NextUIIndicator.vue";
 import { RootStore } from "../../../library/stores/RootStore";
 import { initI18n, commonAddUiMessages } from "../../utilities/i18n";
 import { UiMessage } from "../../../library/stores/UIStore";
@@ -12,7 +12,7 @@ const rootStore = rundeckContext.rootStore;
 const eventBus = rundeckContext.eventBus;
 
 function init() {
-  // Add NextUiToggle to UI store (similar to adhoc/main.ts pattern)
+  // Add NextUIIndicator to UI store
   rootStore.ui.addItems([
     {
       section: "theme-select",

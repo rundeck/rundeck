@@ -65,4 +65,3 @@ describe("NodeFilterSection", () => {
     expect(wrapper.emitted("node-total-changed")?.[0]).toEqual([5]);
   });
 });
-
