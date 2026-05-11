@@ -14,7 +14,9 @@
             :name="`${rkey}prop_` + pindex"
             value="true"
           />
-          <label :for="`${rkey}prop_` + pindex">{{ translatedTitle(prop) }}</label>
+          <label :for="`${rkey}prop_` + pindex">{{
+            translatedTitle(prop)
+          }}</label>
         </div>
       </div>
       <label
@@ -223,6 +225,8 @@
               width="100%"
               :read-only="renderReadOnly"
               :context-variable-suggestions="scriptTypeContextVariables"
+              :min-lines="aceEditorMinLines"
+              :max-lines="aceEditorMaxLines"
             />
           </ui-socket>
         </template>
@@ -436,6 +440,9 @@ import {
   WorkflowStepType,
 } from "../utils/contextVariableUtils";
 
+const ACE_EDITOR_DEFAULT_MIN_LINES = 12;
+const ACE_EDITOR_DEFAULT_MAX_LINES = 0;
+
 interface Prop {
   type: string;
   defaultValue: any;
@@ -539,12 +546,15 @@ export default defineComponent({
   },
   emits: ["update:modelValue", "pluginPropsMounted"],
   data() {
+    const ctx = getRundeckContext();
     return {
+      ctx,
       jobName: "",
       keyPath: "",
       jobContext: [] as any,
       aceEditorEnabled: false,
       renderReadOnly: false,
+      appMeta: (ctx?.appMeta ?? {}) as Record<string, any>,
     };
   },
   computed: {
@@ -585,6 +595,13 @@ export default defineComponent({
         ),
       ];
     },
+    aceEditorMinLines(): number {
+      return this.appMeta.aceEditorMinLines ?? ACE_EDITOR_DEFAULT_MIN_LINES;
+    },
+    aceEditorMaxLines(): number {
+      const raw = this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
+      return raw === 0 ? Infinity : raw;
+    },
   },
   watch: {
     currentValue: function (newval) {
@@ -602,8 +619,8 @@ export default defineComponent({
   },
   mounted() {
     this.setJobName(this.modelValue);
-    if (getRundeckContext() && getRundeckContext().projectName) {
-      this.keyPath = "keys/project/" + getRundeckContext().projectName + "/";
+    if (this.ctx?.projectName) {
+      this.keyPath = "keys/project/" + this.ctx.projectName + "/";
     }
 
     if (this.autocompleteCallback && this.contextAutocomplete) {

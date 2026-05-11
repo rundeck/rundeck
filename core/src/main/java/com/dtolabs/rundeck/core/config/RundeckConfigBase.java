@@ -477,6 +477,8 @@ public class RundeckConfigBase {
         Enabled earlyAccessJobConditional = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
+        int guiAceEditorMinLines = 12;
+        int guiAceEditorMaxLines = 0;
 
         @Data
         public static class Repository {
