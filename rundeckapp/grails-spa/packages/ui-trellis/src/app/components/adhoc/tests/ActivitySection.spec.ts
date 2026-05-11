@@ -57,4 +57,3 @@ describe("ActivitySection", () => {
     expect(activityList.props("eventBus")).toStrictEqual(mockEventBus);
   });
 });
-

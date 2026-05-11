@@ -1,10 +1,6 @@
 <template>
   <div class="col-sm-12">
-    <div
-      v-if="error"
-      id="runerror"
-      class="alert alert-warning collapse show"
-    >
+    <div v-if="error" id="runerror" class="alert alert-warning collapse show">
       <span class="errormessage">{{ error }}</span>
       <a
         class="close"
@@ -86,26 +82,22 @@
 
       <!-- Original logic when showHeader is false -->
       <template v-if="!showHeader">
-        <div v-if="loading" class="card-content">
-          {{ loadingMessage }}
-        </div>
         <LogViewer
-          v-else-if="executionId"
-          :executionId="executionId"
-          :showSettings="false"
+          v-if="executionId"
+          :key="executionId"
+          :execution-id="executionId"
+          :show-settings="false"
           :config="logViewerConfig"
         />
       </template>
 
       <!-- New logic with header when showHeader is true -->
       <div v-else class="card-content">
-        <div v-if="loading">
-          {{ loadingMessage }}
-        </div>
         <LogViewer
-          v-else-if="executionId"
-          :executionId="executionId"
-          :showSettings="false"
+          v-if="executionId"
+          :key="executionId"
+          :execution-id="executionId"
+          :show-settings="false"
           :config="logViewerConfig"
         />
       </div>
@@ -149,8 +141,6 @@ export default defineComponent({
     return {
       showOutput: false,
       error: null as string | null,
-      loading: false,
-      loadingMessage: "",
       completionCheckInterval: null as number | null,
       completionCheckStartTime: null as number | null, // Track when polling started
       maxPollingDuration: 300000, // Maximum 5 minutes of polling (300000ms)
@@ -220,7 +210,9 @@ export default defineComponent({
       }
       const pageParams = this.pageParams as any;
       const adhocKillAllowed = pageParams?.adhocKillAllowed === true;
-      const isRunning = !this.executionCompleted && this.executionState?.toUpperCase() === "RUNNING";
+      const isRunning =
+        !this.executionCompleted &&
+        this.executionState?.toUpperCase() === "RUNNING";
       return adhocKillAllowed && isRunning;
     },
     retryFailedNodesHref(): string | null {
@@ -242,7 +234,9 @@ export default defineComponent({
       if (!this.showHeader || !this.executionId || !this.executionProject) {
         return false;
       }
-      const isFailed = this.executionCompleted && this.executionState?.toUpperCase() === "FAILED";
+      const isFailed =
+        this.executionCompleted &&
+        this.executionState?.toUpperCase() === "FAILED";
       const hasFailedNodes = this.failedNodes && this.failedNodes.length > 0;
       return isFailed && hasFailedNodes;
     },
@@ -252,19 +246,18 @@ export default defineComponent({
       if (newId) {
         this.handleExecutionStart(newId);
       } else {
-      // Reset state when executionId is cleared
-      this.showOutput = false;
-      this.loading = false;
-      this.error = null;
-      // Reset execution state data
-      this.executionState = null;
-      this.executionProject = null;
-      this.executionNodes = [];
-      this.executionCompleted = false;
-      this.executionStatusString = null;
-      this.failedNodes = [];
-      this.executionDetailsFetched = false;
-      this.completionEventEmitted = false;
+        // Reset state when executionId is cleared
+        this.showOutput = false;
+        this.error = null;
+        // Reset execution state data
+        this.executionState = null;
+        this.executionProject = null;
+        this.executionNodes = [];
+        this.executionCompleted = false;
+        this.executionStatusString = null;
+        this.failedNodes = [];
+        this.executionDetailsFetched = false;
+        this.completionEventEmitted = false;
       }
     },
   },
@@ -292,44 +285,51 @@ export default defineComponent({
         return;
       }
 
-      // Reset completion event flag for new execution
+      // Reset ALL per-execution state so second+ runs start clean
       this.completionEventEmitted = false;
+      this.executionCompleted = false;
+      this.executionDetailsFetched = false;
+      this.executionState = null;
+      this.executionStatusString = null;
+      this.executionProject = null;
+      this.executionNodes = [];
+      this.failedNodes = [];
+      this.killing = false;
 
+      // Pre-warm the ExecutionOutput store so LogViewer's init() is already
+      // in-flight by the time the component mounts, shaving off one round-trip.
+      const rootStore = getRundeckContext().rootStore;
+      const viewer = rootStore.executionOutputStore.createOrGet(executionId);
+      viewer.init();
+
+      // Show LogViewer immediately — no blocking HTTP round-trip before render.
+      // Header state (project, executionState) will populate via the first polling tick.
       this.showOutput = true;
       this.error = null;
-      this.loading = true;
-      this.loadingMessage = this.$t("adhoc.loading.execution.output") || "Loading Execution Output…";
 
-      try {
-        // Wait for first state response to confirm execution exists
-        await this.waitForExecutionState(executionId);
-        
-        // Start polling for completion (ajaxExecState returns JSON, not HTML)
-        this.startCompletionCheck(executionId);
-        
-        // Hide loading state - LogViewer will handle its own loading
-        this.loading = false;
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        this.handleError(errorMessage);
-      }
+      // Start polling for completion in the background
+      this.startCompletionCheck(executionId);
     },
-    
+
     async waitForExecutionState(executionId: string) {
       // Poll once to confirm execution exists and fetch execution details
       const { getAppLinks } = await import("../../../library");
       const { _genUrl } = await import("../../../library/utilities/genUrl");
       const appLinks = getAppLinks();
-      const stateUrl = _genUrl(appLinks.executionAjaxExecState, { id: executionId });
-      
+      const stateUrl = _genUrl(appLinks.executionAjaxExecState, {
+        id: executionId,
+      });
+
       const response = await fetch(stateUrl, {
         headers: { "x-rundeck-ajax": "true" },
       });
-      
+
       if (!response.ok) {
-        throw new Error(`Failed to load execution state: ${response.statusText}`);
+        throw new Error(
+          `Failed to load execution state: ${response.statusText}`,
+        );
       }
-      
+
       const data = await response.json();
       if (data.error) {
         throw new Error(data.error);
@@ -344,8 +344,10 @@ export default defineComponent({
       this.executionState = data.executionState || null;
       this.executionCompleted = data.completed === true;
       this.executionNodes = data.allNodes || data.targetNodes || [];
-      this.executionStatusString = this.getExecutionStatusString(data.executionState);
-      
+      this.executionStatusString = this.getExecutionStatusString(
+        data.executionState,
+      );
+
       // Get project from pageParams or try to extract from data
       if (this.pageParams && (this.pageParams as any).project) {
         this.executionProject = (this.pageParams as any).project;
@@ -367,10 +369,9 @@ export default defineComponent({
       };
       return statusMap[stateUpper] || state;
     },
-    
+
     handleError(message: string) {
       this.error = message;
-      this.loading = false;
       this.showOutput = false;
     },
     startCompletionCheck(executionId: string) {
@@ -379,7 +380,7 @@ export default defineComponent({
       // The executionAjaxExecState endpoint returns JSON: {completed: true/false, executionState: "...", ...}
       // We stop polling when completed === true (matching executionState.js line 245)
       // This endpoint is used ONLY for completion detection, NOT for HTML loading
-      
+
       // Clear any existing interval first
       if (this.completionCheckInterval) {
         clearInterval(this.completionCheckInterval);
@@ -404,11 +405,16 @@ export default defineComponent({
           }
           return;
         }
-        
+
         // CRITICAL: Check if we've exceeded maximum polling duration to prevent infinite loops
         // This handles cases where executions get stuck on the server side
-        if (this.completionCheckStartTime && (Date.now() - this.completionCheckStartTime) > this.maxPollingDuration) {
-          console.warn(`[ExecutionOutput] Polling exceeded maximum duration (${this.maxPollingDuration}ms), stopping to prevent infinite loop`);
+        if (
+          this.completionCheckStartTime &&
+          Date.now() - this.completionCheckStartTime > this.maxPollingDuration
+        ) {
+          console.warn(
+            `[ExecutionOutput] Polling exceeded maximum duration (${this.maxPollingDuration}ms), stopping to prevent infinite loop`,
+          );
           if (this.completionCheckInterval) {
             clearInterval(this.completionCheckInterval);
             this.completionCheckInterval = null;
@@ -416,15 +422,17 @@ export default defineComponent({
           // Mark as completed to prevent further polling
           this.executionDetailsFetched = true;
           this.executionCompleted = true;
-          this.handleError("Execution polling timeout - execution may be stuck on server");
+          this.handleError(
+            "Execution polling timeout - execution may be stuck on server",
+          );
           return;
         }
-        
+
         // Double-check interval still exists (may have been cleared)
         if (!this.completionCheckInterval) {
           return;
         }
-        
+
         // Verify executionId matches (prevent checking wrong execution)
         if (this.executionId !== executionId) {
           if (this.completionCheckInterval) {
@@ -441,14 +449,16 @@ export default defineComponent({
 
           // Check execution state (matches original FlowState.callUpdate() behavior)
           // ajaxExecState returns JSON: {completed: true/false, executionState: "...", ...}
-          const stateUrl = _genUrl(appLinks.executionAjaxExecState, { id: executionId });
+          const stateUrl = _genUrl(appLinks.executionAjaxExecState, {
+            id: executionId,
+          });
           const response = await fetch(stateUrl, {
             headers: { "x-rundeck-ajax": "true" },
           });
 
           if (response.ok) {
             const data = await response.json();
-            
+
             // CRITICAL: Check completion flag again AFTER async fetch (may have changed during fetch)
             if (this.executionDetailsFetched || this.executionCompleted) {
               if (this.completionCheckInterval) {
@@ -457,20 +467,21 @@ export default defineComponent({
               }
               return;
             }
-            
+
             // Check if execution is completed FIRST (before updating state)
             // The original FlowState.update() stops polling when json.completed === true (executionState.js line 245)
             // Also check executionState for ABORTED, FAILED, SUCCEEDED as completion states
             const executionState = data.executionState?.toUpperCase();
-            const isCompleted = data.completed === true || 
-                               executionState === 'ABORTED' || 
-                               executionState === 'FAILED' || 
-                               executionState === 'SUCCEEDED';
-            
+            const isCompleted =
+              data.completed === true ||
+              executionState === "ABORTED" ||
+              executionState === "FAILED" ||
+              executionState === "SUCCEEDED";
+
             // ALWAYS update execution state data (regardless of showHeader)
             // showHeader only controls UI visibility, not state tracking
             this.updateExecutionState(data);
-            
+
             if (isCompleted) {
               // Stop polling IMMEDIATELY before any async operations to prevent infinite loop
               if (this.completionCheckInterval) {
@@ -480,7 +491,7 @@ export default defineComponent({
               // Set flags immediately to prevent any other interval callbacks from proceeding
               this.executionDetailsFetched = true;
               this.executionCompleted = true;
-              
+
               // Then handle completion
               this.handleExecutionComplete();
               return; // CRITICAL: Return immediately to prevent any further processing
@@ -489,13 +500,16 @@ export default defineComponent({
         } catch (err) {
           // Silently handle errors - execution may still be running
           // But log for debugging
-          console.debug("[ExecutionOutput] Error checking execution state:", err);
+          console.debug(
+            "[ExecutionOutput] Error checking execution state:",
+            err,
+          );
         }
       }, 1500); // Check every 1.5 seconds (matches original reloadInterval: 1500 for adhoc)
     },
     async handleExecutionComplete() {
       // Prevent multiple calls to this method (guard against infinite loop)
-      // NOTE: executionDetailsFetched and executionCompleted are already set to true 
+      // NOTE: executionDetailsFetched and executionCompleted are already set to true
       // before this method is called from the polling callback (line 476-477),
       // so we need to check if we've already processed completion
       // Use a separate flag to track if we've already emitted the event
@@ -521,19 +535,27 @@ export default defineComponent({
       ) {
         try {
           const executionDetails = await getExecutionDetails(this.executionId);
-          if (executionDetails?.failedNodes && executionDetails.failedNodes.length > 0) {
+          if (
+            executionDetails?.failedNodes &&
+            executionDetails.failedNodes.length > 0
+          ) {
             this.failedNodes = executionDetails.failedNodes;
           }
         } catch (err) {
           // Silently handle errors - failed nodes list is optional
-          console.debug("[ExecutionOutput] Error fetching execution details:", err);
+          console.debug(
+            "[ExecutionOutput] Error fetching execution details:",
+            err,
+          );
         }
       }
 
       // Emit completion event for AdhocCommandForm to handle
       // Emit IMMEDIATELY (don't wait for nextTick) so button state updates promptly
       if (this.eventBus && typeof this.eventBus.emit === "function") {
-        this.eventBus.emit("adhoc-execution-complete", { executionId: this.executionId });
+        this.eventBus.emit("adhoc-execution-complete", {
+          executionId: this.executionId,
+        });
       }
     },
     handleCloseOutputClick(event: MouseEvent) {
@@ -547,11 +569,12 @@ export default defineComponent({
     },
     closeOutput() {
       this.showOutput = false;
-      this.loading = false;
       // Running state is now managed by AdhocCommandForm via event bus
       // Emit completion event so AdhocCommandForm can reset its state
       if (this.eventBus && typeof this.eventBus.emit === "function") {
-        this.eventBus.emit("adhoc-execution-complete", { executionId: this.executionId });
+        this.eventBus.emit("adhoc-execution-complete", {
+          executionId: this.executionId,
+        });
       }
       // Clear completion check interval when output is closed manually
       if (this.completionCheckInterval) {
@@ -572,9 +595,12 @@ export default defineComponent({
 
       try {
         const result = await killExecution(this.executionId, false);
-        
+
         // Check if abort was successful
-        if (result.abort?.status === "aborted" || result.abort?.status === "pending") {
+        if (
+          result.abort?.status === "aborted" ||
+          result.abort?.status === "pending"
+        ) {
           // Execution is being killed, update state
           // The polling will detect the state change and update accordingly
           // Force a state refresh to show the updated status
@@ -686,4 +712,3 @@ export default defineComponent({
   padding: 15px;
 }
 </style>
-

@@ -99,4 +99,3 @@ describe("AdhocCommandForm", () => {
     expect(wrapper.vm.isRunDisabled).toBe(false);
   });
 });
-
