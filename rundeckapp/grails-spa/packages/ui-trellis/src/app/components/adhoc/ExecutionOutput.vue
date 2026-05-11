@@ -664,7 +664,7 @@ export default defineComponent({
   font-weight: bold;
   color: #337ab7;
   text-decoration: none;
-  margin-left: 0;
+  margin: 0 4px;
   display: inline-block;
   vertical-align: middle;
 }
