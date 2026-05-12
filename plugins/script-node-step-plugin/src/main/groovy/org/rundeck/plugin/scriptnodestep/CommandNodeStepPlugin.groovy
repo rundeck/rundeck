@@ -1,6 +1,5 @@
 package org.rundeck.plugin.scriptnodestep
 
-import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
@@ -42,42 +41,28 @@ class CommandNodeStepPlugin extends ScriptProxyRunner implements NodeStepPlugin,
 
         def arr = OptsUtil.burst(adhocRemoteString)
 
-        // Derive the command interpreter from the node attribute first, then fall back to the
-        // project-level property — matching the same resolution order used in ExecutionServiceImpl.
-        // For Windows cmd.exe nodes the interpreter must be "cmd" to select WINDOWS_CMD_ESCAPE
-        // (caret-prefix escaping) instead of single-quote wrapping.
-        String commandInterpreter = entry.getAttributes()?.get("shell-escaping-interpreter")
-        if (commandInterpreter == null && context.getExecutionContext().getFrameworkProject() != null) {
-            commandInterpreter = context.getExecutionContext().getIFramework()
-                    .getFrameworkProjectMgr()
-                    .getFrameworkProject(context.getExecutionContext().getFrameworkProject())
-                    .getProperty("project.plugin.Shell.Escaping.interpreter")
+        // Track which arguments contain property references BEFORE replacement
+        // Use the same pattern that replaceDataReferences uses for consistency
+        def containsPropertyRef = arr.collect { arg ->
+            arg.contains('${') && SharedDataContextUtils.PROPERTY_REF_PATTERN.matcher(arg).find()
         }
 
-        // Per-value quoting: each ${...} expanded value is individually quoted using the
-        // OS-aware converter. ${unquoted.*} refs are exempted from the converter during
-        // SharedDataContextUtils.replaceDataReferences(...). Template-level shell operators
-        // (;, &&, |) written by the job author stay outside any quoted value and are preserved.
-        def valueConverter = execQuotingEnabled
-                ? DataContextUtils.wrapWithOptionBlanking(
-                        CLIUtils.argumentQuoteForOperatingSystem(entry.getOsFamily(), commandInterpreter))
-                : null
-
-        def result = SharedDataContextUtils.replaceDataReferences(
+        def result = SharedDataContextUtils.replaceDataReferencesInObject(
                 arr,
-                context.getExecutionContext().getSharedDataContext(),
                 ContextView.node(entry.getNodename()),
                 ContextView::nodeStep,
-                valueConverter,
+                null,
+                context.getExecutionContext().getSharedDataContext(),
                 false,
-                false
-        )
+                true
+        ) as String[]
 
-        // Quoting is already baked into each value — pass shouldQuote=false to avoid
-        // double-quoting at the token level.
+        // Build ExecArgList with proper quoting based on original property references
         def execArgListBuilder = ExecArgList.builder()
         for (int i = 0; i < result.length; i++) {
-            execArgListBuilder.arg(result[i], false, featureQuotingBackwardCompatible)
+            // Quote if: original contained property ref AND quoting enabled
+            boolean shouldQuote = containsPropertyRef[i] && execQuotingEnabled
+            execArgListBuilder.arg(result[i], shouldQuote, featureQuotingBackwardCompatible)
         }
 
         NodeExecutorResult nodeExecutorResult =  context.getFramework().getExecutionService().executeCommand(

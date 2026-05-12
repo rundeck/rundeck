@@ -347,5 +347,4 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
                 1 * fileCopyScriptContent(_, _, node, _) >> { args -> args[3] }
             }
     }
-
 }
