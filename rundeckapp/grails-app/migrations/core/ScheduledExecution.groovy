@@ -349,4 +349,32 @@ databaseChangeLog = {
             }
         }
     }
+
+    changeSet(author: "rundeckdev", id: "6.0.0-add-created-by-column") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "scheduled_execution", columnName: "created_by")
+            }
+        }
+
+        addColumn(tableName: "scheduled_execution") {
+            column(name: "created_by", type: '${varchar255.type}') {
+                constraints(nullable: "true")
+            }
+        }
+    }
+
+    changeSet(author: "rundeckdev", id: "6.0.0-backfill-created-by-from-rduser-mssql", dbms: "mssql") {
+        preConditions(onFail: "MARK_RAN") {
+            columnExists(tableName: "scheduled_execution", columnName: "created_by")
+        }
+        sql("UPDATE scheduled_execution SET created_by = rduser WHERE created_by IS NULL AND rduser IS NOT NULL")
+    }
+
+    changeSet(author: "rundeckdev", id: "6.0.0-backfill-created-by-from-rduser", dbms: "!mssql") {
+        preConditions(onFail: "MARK_RAN") {
+            columnExists(tableName: "scheduled_execution", columnName: "created_by")
+        }
+        sql("UPDATE scheduled_execution SET created_by = rduser WHERE created_by IS NULL AND rduser IS NOT NULL")
+    }
 }
