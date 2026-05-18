@@ -1115,16 +1115,19 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
             stream.close()
             writer.flush()
             final string = writer.toString()
-            final JSONElement parse = grails.converters.JSON.parse(string)
-            if (string) {
-                stats.contentSHA1 = string.encodeAsSHA1()
+            def parseResult = remoteUrlParse(string, configRemoteUrl)
+            if (parseResult.error) {
+                return [error: parseResult.error, stats: stats]
+            }
+            if (parseResult.string) {
+                stats.contentSHA1 = parseResult.string.encodeAsSHA1()
             }else{
                 stats.contentSHA1 = ""
             }
             stats.contentLength=srfile.length()
             stats.lastModifiedDate=new Date(srfile.lastModified())
             stats.lastModifiedDateTime=srfile.lastModified()
-            return [json:parse,stats:stats]
+            return [json:parseResult.jsonElement,stats:stats]
         } else {
             throw new Exception("Unsupported protocol: " + url)
         }
