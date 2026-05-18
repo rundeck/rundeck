@@ -4461,10 +4461,11 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def modifyingUser = 'user2'
 
             def se = new ScheduledExecution(
-                createJobParams(scheduled: false, user: originalUser)
+                createJobParams(scheduled: false, user: originalUser, createdBy: originalUser)
             ).save()
             assert se.id != null
             assert se.user == originalUser
+            assert se.createdBy == originalUser
 
             def auth = Mock(UserAndRolesAuthContext) {
                 getUsername() >> modifyingUser
@@ -4534,8 +4535,92 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         and: "lastModifiedBy is also set to user2"
             updatedJob.lastModifiedBy == modifyingUser
 
+        and: "createdBy still reflects the original creator (never changes on update)"
+            updatedJob.createdBy == originalUser
+
         and: "the modification was applied"
             updatedJob.description == 'Modified by user2'
+    }
+
+    def "createdBy is set once at job creation and never changed on subsequent updates"() {
+        given: "a job created by user1"
+            def params = [:]
+            def creatingUser = 'user1'
+            def modifyingUser = 'user2'
+
+            def se = new ScheduledExecution(
+                createJobParams(scheduled: false, user: creatingUser, createdBy: creatingUser)
+            ).save()
+            assert se.id != null
+            assert se.createdBy == creatingUser
+
+            def auth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> modifyingUser
+                getRoles() >> ['user']
+            }
+
+            setupDoUpdateJob()
+
+            service.frameworkService = Mock(FrameworkService) {
+                _ * existsFrameworkProject('AProject') >> true
+                _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                    getProperties() >> [:]
+                    getProjectProperties() >> [:]
+                }
+                _ * existsFrameworkProject('BProject') >> true
+                _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
+                _ * isClusterModeEnabled() >> false
+                _ * getServerUUID() >> null
+                _ * getRundeckFramework() >> Mock(Framework) {
+                    _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                        _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                            _ * validate(_)
+                        }
+                    }
+                }
+                _ * frameworkNodeName() >> null
+                _ * pluginConfigFactory(_, _) >> Mock(PropertyResolverFactory.Factory) {
+                    create(_, _) >> Mock(PropertyResolver)
+                }
+                _ * filterNodeSet(*_) >> null
+                _ * getNodeStepPluginDescription(_) >> Mock(Description)
+                _ * getStepPluginDescription(_) >> Mock(Description)
+                _ * validateDescription(_, '', _, _, _, _) >> [valid: true]
+            }
+
+            service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                0 * authorizeProjectJobAll(_, _, _, _)
+                _ * authorizeProjectResourceAll(*_) >> true
+                _ * filterAuthorizedNodes(*_) >> null
+                _ * getAuthContextWithProject(_, _) >> { args -> args[0] }
+            }
+            service.jobSchedulesService = Mock(SchedulesManager)
+            service.jobSchedulerService = Mock(JobSchedulerService)
+            1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
+            1 * service.jobSchedulesService.shouldScheduleExecution(_) >> false
+            1 * service.jobSchedulesService.isScheduled(_) >> false
+
+        and: "a modified job definition (user2 edits it multiple times)"
+            def modifiedJob = new ScheduledExecution(
+                createJobParams([scheduled: false, description: 'Modified by user2'])
+            )
+            def importedJob = RundeckJobDefinitionManager.importedJob(modifiedJob, [:])
+
+        when: "user2 saves the updated job"
+            def result = service._doupdateJobOrParams(se.id, importedJob, params, auth)
+
+        then: "update succeeds"
+            result.success
+
+        and: "schedule owner (user) is updated to the modifier"
+            def updatedJob = ScheduledExecution.get(se.id)
+            updatedJob.user == modifyingUser
+
+        and: "lastModifiedBy reflects the modifier"
+            updatedJob.lastModifiedBy == modifyingUser
+
+        and: "createdBy is still the original creator — immutable across any number of edits"
+            updatedJob.createdBy == creatingUser
     }
 
     @Unroll
@@ -6779,6 +6864,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 groupPath: 'test/group',
                 user: 'original_creator',
                 lastModifiedBy: 'original_modifier',
+                createdBy: 'original_creator',
                 description: 'original description'
             ])).save(flush: true)
 
@@ -6787,6 +6873,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def originalDateCreated = existingJob.dateCreated
             def originalUser = existingJob.user
             def originalLastModifiedBy = existingJob.lastModifiedBy
+            def originalCreatedBy = existingJob.createdBy
 
         and: "an imported job with same identity but different audit and regular fields"
             def importedJobData = new ScheduledExecution(createJobParams([
@@ -6795,6 +6882,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 groupPath: 'test/group',     // Same group - will trigger update
                 user: 'malicious_importer',  // Should NOT overwrite original_creator
                 lastModifiedBy: 'bad_modifier', // Should NOT overwrite original_modifier
+                createdBy: 'bad_creator',    // Should NOT overwrite original_creator
                 description: 'UPDATED description'  // Should be updated
             ]))
 
@@ -6823,6 +6911,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         and: "audit fields behave correctly"
             updatedJob.user == 'test_admin'            // schedule owner updated to current user
             updatedJob.lastModifiedBy == 'test_admin'  // updated to current user
+            updatedJob.createdBy == originalCreatedBy  // NEVER changes — preserved from original creator
             updatedJob.dateCreated == originalDateCreated // creation date unchanged
 
         and: "non-audit fields are properly updated"
@@ -6835,6 +6924,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def dbJob = ScheduledExecution.get(originalId)
             dbJob.user == 'test_admin'
             dbJob.lastModifiedBy == 'test_admin'
+            dbJob.createdBy == originalCreatedBy
             dbJob.dateCreated == originalDateCreated
             dbJob.description == 'UPDATED description'
     }
@@ -6884,6 +6974,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def createdJob = result.jobs[0]
             createdJob.user == 'creating_admin'        // Populated from current user
             createdJob.lastModifiedBy == 'creating_admin' // Populated from current user
+            createdJob.createdBy == 'creating_admin'   // Set once at creation
             createdJob.dateCreated != null             // Automatically set by Grails
             createdJob.description == 'new job description' // Regular fields preserved
 
@@ -6891,6 +6982,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def dbJob = ScheduledExecution.get(createdJob.id)
             dbJob.user == 'creating_admin'
             dbJob.lastModifiedBy == 'creating_admin'
+            dbJob.createdBy == 'creating_admin'
             dbJob.description == 'new job description'
     }
 
@@ -6939,6 +7031,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def createdJob = result.jobs[0]
             createdJob.user == 'creating_admin'        // Set to current user
             createdJob.lastModifiedBy == 'creating_admin' // Set to current user
+            createdJob.createdBy == 'creating_admin'   // Set to current user at creation
             createdJob.dateCreated != null             // Automatically set by Grails
             createdJob.description == 'new job with audit' // Regular fields preserved
 
@@ -6946,6 +7039,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def dbJob = ScheduledExecution.get(createdJob.id)
             dbJob.user == 'creating_admin'
             dbJob.lastModifiedBy == 'creating_admin'
+            dbJob.createdBy == 'creating_admin'
             dbJob.description == 'new job with audit'
     }
 
