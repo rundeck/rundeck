@@ -2514,7 +2514,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         //set session new workflow
-        WorkflowController.getSessionWorkflow(session,null,new Workflow(scheduledExecution.workflow as WorkflowData))
+        def origWorkflowData = scheduledExecution.getWorkflowData()
+        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? WorkflowDataImpl.fromMap(origWorkflowData.toMap()) : new WorkflowDataImpl())
         if(scheduledExecution.options){
             def editopts = [:]
 
