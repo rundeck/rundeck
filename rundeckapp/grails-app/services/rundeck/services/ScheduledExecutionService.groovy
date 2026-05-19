@@ -137,6 +137,7 @@ import rundeck.data.job.RdJobBrowseItem
 import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
+import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.audit.AuditEventsService
@@ -5055,8 +5056,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
 
+    /**
+     * Loads the remote URL configuration for a job option, resolving any key storage paths.
+     * Also infers the authenticationType from available fields when it is missing — this handles
+     * jobs saved before the authenticationType field was persisted correctly (regression fix).
+     */
     JobOptionConfigRemoteUrl getJobOptionConfigRemoteUrl(Option option, AuthContext authContext ){
         JobOptionConfigRemoteUrl configRemoteUrl = option.getConfigRemoteUrl()
+
+        if (configRemoteUrl != null && configRemoteUrl.authenticationType == null) {
+            // Infer authenticationType for jobs saved without it (backward compatibility)
+            if (configRemoteUrl.tokenStoragePath || configRemoteUrl.keyName || configRemoteUrl.apiTokenReporter) {
+                configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.API_KEY
+            } else if (configRemoteUrl.passwordStoragePath || configRemoteUrl.username) {
+                configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.BASIC
+            }
+        }
 
         if(configRemoteUrl?.getPasswordStoragePath()){
             if(executionService.canReadStoragePassword(authContext,configRemoteUrl.getPasswordStoragePath(), false )){
