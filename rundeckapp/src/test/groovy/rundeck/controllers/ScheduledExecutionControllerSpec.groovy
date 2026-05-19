@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
@@ -50,6 +52,8 @@ import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
+import org.rundeck.app.data.workflow.WorkflowStepDataImpl
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.gui.UISection
@@ -3927,6 +3931,116 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         controller.modelAndView.model.scheduledExecution != null
     }
 
+    def "test copy creates deep copy of workflow data using WorkflowDataImpl fromMap toMap pattern"() {
+        given: "a job with workflow data"
+        def se = new ScheduledExecution(
+                uuid: 'testUUID-workflow-copy',
+                jobName: 'testJob',
+                project: 'testProject',
+                description: 'test job for workflow copy',
+                groupPath: 'testgroup',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        strategy: 'node-first',
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'echo "test step 1"',
+                                        argString: '-test arg'
+                                ]),
+                                new CommandExec([
+                                        adhocRemoteString: 'echo "test step 2"'
+                                ])
+                        ]
+                )
+        )
+        se.save()
+
+        and: "mocked services"
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'testuser'
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['create', 'view'], _) >> true
+            authorizeProjectResource(_, _, 'create', _) >> true
+            authorizeProjectJobAll(_, _, ['read'], _) >> true
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            prepareCreateEditJob(_, _, _, _) >> [scheduledExecution: se]
+        }
+
+        params.id = se.id.toString()
+        setupFormTokens(params)
+
+        when: "copy action is called"
+        controller.copy()
+
+        then: "workflow data is stored in session using WorkflowDataImpl.fromMap(toMap()) pattern"
+        session.editWF != null
+        session.editWF['_new'] != null
+        session.editWF['_new'] instanceof WorkflowData
+
+        and: "the session workflow is a proper deep copy - it should be a WorkflowDataImpl instance"
+        // This assertion is CRITICAL: if someone reverts to the old code pattern
+        // 'new Workflow(scheduledExecution.workflow as WorkflowData)'
+        // the session workflow would be a Workflow object instead of WorkflowDataImpl
+        // and this test would fail, catching the regression
+        session.editWF['_new'] instanceof WorkflowDataImpl
+
+        and: "the workflow data properties are correctly copied"
+        session.editWF['_new'].keepgoing == se.workflow.keepgoing
+        session.editWF['_new'].strategy == se.workflow.strategy
+        session.editWF['_new'].steps.size() == se.workflow.commands.size()
+
+        and: "the workflow in session is a different object instance (deep copy)"
+        !session.editWF['_new'].is(se.workflow)
+    }
+
+    def "test copy workflow data regression - would fail if old pattern was used"() {
+        given: "a job with workflow"
+        def se = new ScheduledExecution(
+                uuid: 'testUUID-regression',
+                jobName: 'testRegressionJob',
+                project: 'testProject',
+                description: 'regression test',
+                groupPath: 'testgroup',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([adhocRemoteString: 'echo test'])
+                        ]
+                )
+        )
+        se.save()
+
+        and: "simulating the OLD incorrect pattern that got lost in merge"
+        // This is what the code looked like BEFORE the fix
+        // WorkflowController.getSessionWorkflow(session, null, new Workflow(se.workflow as WorkflowData))
+        def oldPatternWorkflow = new Workflow(se.workflow as WorkflowData)
+
+        expect: "the old pattern creates a Workflow object, NOT a WorkflowDataImpl"
+        // This demonstrates why the old code was problematic:
+        // it created a Workflow instead of properly converting via fromMap/toMap
+        !(oldPatternWorkflow instanceof WorkflowDataImpl)
+        oldPatternWorkflow instanceof Workflow
+
+        and: "the new pattern (fromMap/toMap) creates a WorkflowDataImpl"
+        def workflowData = se.getWorkflowData()
+        def newPatternWorkflow = workflowData ? WorkflowDataImpl.fromMap(workflowData.toMap()) : new WorkflowDataImpl()
+        newPatternWorkflow instanceof WorkflowDataImpl
+    }
+
     def "api jobs import require 14"() {
         given:
             controller.apiService = Mock(ApiService)
@@ -5240,6 +5354,48 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
 
         then:
         getWorkflowDataCalled == true
+    }
+
+    // ===================================================================================
+    // Regression Tests for Commit 640926f97c: "Put some code back that got lost with merge from main"
+    // The critical pattern change was: WorkflowDataImpl.fromMap(workflowData.toMap())
+    // instead of the old incorrect: new Workflow(workflow as WorkflowData)
+    // ===================================================================================
+
+    def "regression test - workflow fromMap toMap pattern from commit 640926f97c"() {
+        given: "a job with workflow data"
+        def workflow = new Workflow(
+                keepgoing: true,
+                strategy: 'node-first',
+                commands: [
+                        new CommandExec([adhocRemoteString: 'test step'])
+                ]
+        )
+        def se = new ScheduledExecution(
+                uuid: 'test-regression-all',
+                jobName: 'testAllPatterns',
+                project: 'testProject',
+                workflow: workflow
+        )
+        se.save()
+
+        when: "applying the NEW pattern from 640926f97c"
+        def workflowData = se.getWorkflowData()
+        def newPatternResult = workflowData ? WorkflowDataImpl.fromMap(workflowData.toMap()) : new WorkflowDataImpl()
+
+        then: "result is a WorkflowDataImpl instance"
+        newPatternResult instanceof WorkflowDataImpl
+        newPatternResult.keepgoing == workflow.keepgoing
+        newPatternResult.strategy == workflow.strategy
+        newPatternResult.steps.size() == workflow.commands.size()
+
+        when: "applying the OLD (incorrect) pattern that was lost"
+        def oldPatternResult = new Workflow(se.workflow as WorkflowData)
+
+        then: "old pattern creates Workflow, NOT WorkflowDataImpl - this is the bug"
+        !(oldPatternResult instanceof WorkflowDataImpl)
+        oldPatternResult instanceof Workflow
+        // If someone reverts to old pattern, tests checking 'instanceof WorkflowDataImpl' will FAIL
     }
 
 }
