@@ -5427,6 +5427,39 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             existingJob.description == 'updated description' // regular field updated
     }
 
+    def "job definition basic excludes audit fields even when null in imported job"() {
+        given: "existing job with audit fields set and imported job with null audit fields"
+            def existingJob = new ScheduledExecution(createJobParams([
+                user: 'original_creator',
+                lastModifiedBy: 'original_modifier',
+                createdBy: 'original_creator_by',
+                description: 'original description'
+            ]))
+            // Imported job has null values for audit fields - should NOT overwrite existing values
+            def importedJob = new ScheduledExecution(createJobParams([
+                user: null,
+                lastModifiedBy: null,
+                createdBy: null,
+                dateCreated: null,
+                lastUpdated: null,
+                description: 'updated description',
+                jobName: 'updated name'
+            ]))
+            def auth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'current_user'
+            }
+
+        when: "processing imported job through jobDefinitionBasic"
+            service.jobDefinitionBasic(existingJob, importedJob, [:], auth)
+
+        then: "audit fields with null values are excluded and preserve original values"
+            existingJob.user == 'original_creator'           // null audit field excluded
+            existingJob.lastModifiedBy == 'original_modifier' // null audit field excluded
+            existingJob.createdBy == 'original_creator_by'   // null audit field excluded
+            existingJob.description == 'updated description'  // regular field updated
+            existingJob.jobName == 'updated name'             // regular field updated
+    }
+
     def "job definition workflow should have not null workflow"() {
         given: "new job"
             def job = new ScheduledExecution()
