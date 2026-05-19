@@ -3,8 +3,7 @@ export default {
 };
 
 export const Wizard = () => ({
-  render(h) {
-    return (
+  template: `
       <div>
         <section class="breadcrumb-bar">
           <div class="breadcrumb-bar--navs">
@@ -55,13 +54,11 @@ export const Wizard = () => ({
           <div class="layout-wizard--footer">sd</div>
         </section>
       </div>
-    );
-  },
+    `,
 });
 
 export const WizardWithTabs = () => ({
-  render(h) {
-    return (
+  template: `
       <div>
         <section class="breadcrumb-bar">
           <div class="breadcrumb-bar--navs">
@@ -90,6 +87,5 @@ export const WizardWithTabs = () => ({
           <div class="layout-wizard--footer">sd</div>
         </section>
       </div>
-    );
-  },
+    `,
 });

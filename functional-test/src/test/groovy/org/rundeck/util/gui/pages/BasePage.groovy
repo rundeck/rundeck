@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.Dimension
 import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.NoSuchElementException
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
@@ -320,8 +321,8 @@ abstract class BasePage {
         waitForElementToBeClickable(locator)
         try {
             el(locator).click()
-        } catch (StaleElementReferenceException e) {
-            // Re-find and click if element became stale
+        } catch (StaleElementReferenceException | NoSuchElementException e) {
+            // Re-find and click if element became stale or was momentarily absent
             waitForElementToBeClickable(locator)
             el(locator).click()
         }

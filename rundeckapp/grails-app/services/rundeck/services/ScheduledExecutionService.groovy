@@ -3713,11 +3713,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        // Don't overwrite creator, but fix if missing. AuthContext may be null during
-        // job imports, SCM sync, or background tasks without authenticated user context.
-        if (!scheduledExecution.user && authContext?.username) {
-            scheduledExecution.user = authContext.username
-        }
+        scheduledExecution.user = authContext.username
         scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
         def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
@@ -3861,7 +3857,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        // Set user for new job creation only
+        scheduledExecution.user = authContext.username
         scheduledExecution.userRoles = authContext.roles as List<String>
 
         Map validation = [:]
@@ -3907,11 +3903,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
         }
 
-        // Set user for new job creation. AuthContext may be null during
-        // job imports, SCM sync, or background tasks without authenticated user context.
-        if (!scheduledExecution.user && authContext?.username) {
-            scheduledExecution.user = authContext.username
-        }
+        scheduledExecution.user = authContext.username
         // Set initial lastModifiedBy if not already set
         // Skip if no authenticated user available
         if (!scheduledExecution.lastModifiedBy && authContext?.username) {

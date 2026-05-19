@@ -4453,6 +4453,91 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             0 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
             0 * service.jobSchedulerService.updateScheduleOwner(_)
     }
+
+    def "schedule owner updates when different user modifies job"() {
+        given: "an existing job created by user1"
+            def params = [:]
+            def originalUser = 'user1'
+            def modifyingUser = 'user2'
+
+            def se = new ScheduledExecution(
+                createJobParams(scheduled: false, user: originalUser)
+            ).save()
+            assert se.id != null
+            assert se.user == originalUser
+
+            def auth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> modifyingUser
+                getRoles() >> ['user']
+            }
+
+            setupDoUpdateJob()
+
+            service.frameworkService = Mock(FrameworkService) {
+                _ * existsFrameworkProject('AProject') >> true
+                _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                    getProperties() >> [:]
+                    getProjectProperties() >> [:]
+                }
+                _ * existsFrameworkProject('BProject') >> true
+                _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
+                _ * isClusterModeEnabled() >> false
+                _ * getServerUUID() >> null
+                _ * getRundeckFramework() >> Mock(Framework) {
+                    _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                        _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                            _ * validate(_)
+                        }
+                    }
+                }
+                _ * frameworkNodeName() >> null
+                _ * pluginConfigFactory(_, _) >> Mock(PropertyResolverFactory.Factory) {
+                    create(_, _) >> Mock(PropertyResolver)
+                }
+                _ * filterNodeSet(*_) >> null
+                _ * getNodeStepPluginDescription(_) >> Mock(Description)
+                _ * getStepPluginDescription(_) >> Mock(Description)
+                _ * validateDescription(_, '', _, _, _, _) >> [valid: true]
+            }
+
+            service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                0 * authorizeProjectJobAll(_, _, _, _)
+                _ * authorizeProjectResourceAll(*_) >> true
+                _ * filterAuthorizedNodes(*_) >> null
+                _ * getAuthContextWithProject(_, _) >> { args -> args[0] }
+            }
+            service.jobSchedulesService = Mock(SchedulesManager)
+            service.jobSchedulerService = Mock(JobSchedulerService)
+            1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
+            1 * service.jobSchedulesService.shouldScheduleExecution(_) >> false
+            1 * service.jobSchedulesService.isScheduled(_) >> false
+
+        and: "a modified job definition"
+            def modifiedJob = new ScheduledExecution(
+                createJobParams([
+                    scheduled: false,
+                    description: 'Modified by user2'
+                ])
+            )
+            def importedJob = RundeckJobDefinitionManager.importedJob(modifiedJob, [:])
+
+        when: "user2 saves the updated job"
+            def result = service._doupdateJobOrParams(se.id, importedJob, params, auth)
+
+        then: "the job saves successfully"
+            result.success
+
+        and: "the schedule owner is updated to user2"
+            def updatedJob = ScheduledExecution.get(se.id)
+            updatedJob.user == modifyingUser
+
+        and: "lastModifiedBy is also set to user2"
+            updatedJob.lastModifiedBy == modifyingUser
+
+        and: "the modification was applied"
+            updatedJob.description == 'Modified by user2'
+    }
+
     @Unroll
     def "do update job, enabled execution should register quartz"() {
         def params = [:]
@@ -6736,7 +6821,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             updatedJob.id == originalId  // Critical: same job ID proves it was updated, not replaced
 
         and: "audit fields behave correctly"
-            updatedJob.user == originalUser            // creator unchanged
+            updatedJob.user == 'test_admin'            // schedule owner updated to current user
             updatedJob.lastModifiedBy == 'test_admin'  // updated to current user
             updatedJob.dateCreated == originalDateCreated // creation date unchanged
 
@@ -6748,7 +6833,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         and: "database reflects same values"
             def dbJob = ScheduledExecution.get(originalId)
-            dbJob.user == originalUser
+            dbJob.user == 'test_admin'
             dbJob.lastModifiedBy == 'test_admin'
             dbJob.dateCreated == originalDateCreated
             dbJob.description == 'UPDATED description'
