@@ -2515,7 +2515,8 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.uuid=null
         //set session new workflow
         def origWorkflowData = scheduledExecution.getWorkflowData()
-        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ? WorkflowDataImpl.fromMap(origWorkflowData.toMap()) : new WorkflowDataImpl())
+        // Pass the original workflow data through and let WorkflowController perform the single clone.
+        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ?: new WorkflowDataImpl())
         if(scheduledExecution.options){
             def editopts = [:]
 
