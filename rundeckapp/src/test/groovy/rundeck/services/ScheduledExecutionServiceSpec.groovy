@@ -65,6 +65,7 @@ import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 import rundeck.User
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
+import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.data.constants.NotificationConstants
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.reference.JobReferenceImpl
@@ -7197,6 +7198,64 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             result != null
             result.uuid == job1.uuid
             result.description == 'job found by UUID'
+    }
+
+    @Unroll
+    def "getJobOptionConfigRemoteUrl infers authenticationType as #expectedType when #scenario"() {
+        given: "an option with configRemoteUrl that has no authenticationType"
+        def mockExecService = Mock(ExecutionService)
+        service.executionServiceBean = mockExecService
+        def authContext = Mock(AuthContext)
+        def opt = new Option(name: 'test', configData: configData)
+        opt.save()
+        _ * mockExecService.canReadStoragePassword(_, _, _) >> false
+
+        when: "loading the remote URL config"
+        def result = service.getJobOptionConfigRemoteUrl(opt, authContext)
+
+        then: "the authenticationType is inferred from the available credential fields"
+        result != null
+        result.authenticationType == expectedType
+
+        where:
+        scenario                   | configData                                                                                                                                     | expectedType
+        'tokenStoragePath set'     | '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","tokenStoragePath":"keys/token"}}}' | RemoteUrlAuthenticationType.API_KEY
+        'keyName set'              | '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","keyName":"api-key"}}}'             | RemoteUrlAuthenticationType.API_KEY
+        'passwordStoragePath set'  | '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","passwordStoragePath":"keys/pass"}}}'| RemoteUrlAuthenticationType.BASIC
+        'username set'             | '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","username":"admin"}}}'              | RemoteUrlAuthenticationType.BASIC
+    }
+
+    def "getJobOptionConfigRemoteUrl does not override existing authenticationType"() {
+        given: "an option with configRemoteUrl that already has authenticationType set"
+        def mockExecService = Mock(ExecutionService)
+        service.executionServiceBean = mockExecService
+        def authContext = Mock(AuthContext)
+        def opt = new Option(
+                name: 'test',
+                configData: '{"jobOptionConfigEntries":{"remote-url":{"@class":"org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl","authenticationType":"BEARER_TOKEN","tokenStoragePath":"keys/token"}}}'
+        )
+        opt.save()
+        _ * mockExecService.canReadStoragePassword(_, _, _) >> false
+
+        when: "loading the remote URL config"
+        def result = service.getJobOptionConfigRemoteUrl(opt, authContext)
+
+        then: "the existing authenticationType is preserved"
+        result != null
+        result.authenticationType == RemoteUrlAuthenticationType.BEARER_TOKEN
+    }
+
+    def "getJobOptionConfigRemoteUrl returns null when option has no configRemoteUrl"() {
+        given: "an option with no remote URL configuration"
+        def authContext = Mock(AuthContext)
+        def opt = new Option(name: 'test')
+        opt.save()
+
+        when: "loading the remote URL config"
+        def result = service.getJobOptionConfigRemoteUrl(opt, authContext)
+
+        then: "null is returned"
+        result == null
     }
 
 
