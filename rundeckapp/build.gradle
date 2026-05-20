@@ -8,6 +8,16 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
         maven { url "https://repo.grails.org/grails/restricted" }
     }
+    // Force Liquibase to the same pinned version used at runtime.
+    // grails-bom:{strictly 4.27.0} wins in the buildscript context (ext["liquibase.version"]
+    // only applies to the application classpath). Without this force, the Grails plugin
+    // classloader in IntelliJ dev mode loads AbstractChange from liquibase-core:4.27.0, which
+    // references ChecksumVersion — a class that doesn't exist in the runtime 4.19.0 jar.
+    configurations.all {
+        resolutionStrategy {
+            force "org.liquibase:liquibase-core:${liquibaseVersion}"
+        }
+    }
     dependencies {
         classpath platform("org.apache.grails:grails-bom:$grailsVersion")
         classpath "org.apache.grails:grails-gradle-plugins"
@@ -189,10 +199,10 @@ dependencies {
     implementation "com.mchange:mchange-commons-java:${mchangeCommonsJavaVersion}"
     implementation "com.mchange:c3p0:${c3p0Version}"
     implementation 'org.grails.plugins:mail:3.0.0'
-    
+
     // Liquibase for compile-time exception classes (runtime provided by Spring Boot)
     compileOnly "org.liquibase:liquibase-core:${liquibaseVersion}"
-    
+
     // Groovy 4: XML parsing is a separate module
     implementation "org.apache.groovy:groovy-xml:${groovyVersion}"
     
@@ -472,6 +482,13 @@ bootRun {
     //    addResources = true
     // Full resources/main so classpath:/assets/ resolves; duplicateFileMode=WARN avoids Liquibase failure on duplicate migrations
     classpath += files("$buildDir/resources/main", "$buildDir/resources/main/META-INF")
+    // Strip liquibase-commercial: it ships LicenseValidationChange (extends AbstractChange)
+    // compiled against the 4.26 API, whose bytecode references liquibase.ChecksumVersion.
+    // We pin liquibase-core to 4.19.0 for DB compatibility, so 4.26's commercial jar causes
+    // NoClassDefFoundError: liquibase/ChecksumVersion during Change introspection.
+    // The WAR works because it doesn't include this artifact. liquibase-hibernate5 must
+    // stay on the classpath — Grails' dbmigration uses HibernateDatabase.
+    classpath = classpath.filter { f -> !f.name.startsWith("liquibase-commercial-") }
     System.setProperty("logRoot",System.getProperty("rdeck.base",System.getProperty("user.dir")+"/rundeck-runtime"))
     systemProperty "rundeck.server.logDir", System.getProperty("logRoot")+"/server/logs"
 }
