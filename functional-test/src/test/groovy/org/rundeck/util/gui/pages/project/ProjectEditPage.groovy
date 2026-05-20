@@ -54,6 +54,9 @@ class ProjectEditPage extends BasePage {
     By daysToKeepExecsBy = By.id("cleanperiod")
     By minimumExecsToKeepBy = By.id("minimumtokeep")
     By cronScheduleCleanerBy = By.id("cronTextField")
+    By exampleCronPeriodSelectBy = By.id("example_cron_period")
+    By cronTooltipBy = By.id("crontooltip")
+    By cronStringInfoBy = By.id("cronstrinfo")
     By fileCopierDivBy = By.id("tab_svc_FileCopier")
     By dropDownButtonBy = By.cssSelector(".btn.btn-primary.dropdown-toggle")
 
@@ -291,6 +294,45 @@ class ProjectEditPage extends BasePage {
         (el executionHistoryTabBy).click()
         (el enableCleanExecutionHistoryBy).click()
         waitForElementVisible(el daysToKeepExecsBy)
+    }
+
+    /**
+     * Selects a preset cron expression from the example dropdown and waits for the cron text field to update.
+     * @param value the option value to select (e.g. "0 0 * * * ?")
+     */
+    def selectExampleCronPeriod(String value) {
+        waitForElementToBeClickable(exampleCronPeriodSelectBy)
+        new Select(el exampleCronPeriodSelectBy).selectByValue(value)
+    }
+
+    /**
+     * Returns the current value of the cron expression text field.
+     */
+    String getCronTextFieldValue() {
+        (el cronScheduleCleanerBy).getAttribute("value")
+    }
+
+    /**
+     * Waits until the cron text field contains the given value.
+     */
+    boolean waitForCronTextFieldValue(String expectedValue) {
+        waitForElementAttributeToChange(el(cronScheduleCleanerBy), "value", expectedValue)
+    }
+
+    /**
+     * Clears the cron text field and types the given expression, triggering the keyup tooltip logic.
+     */
+    def typeCronExpression(String expression) {
+        def field = el cronScheduleCleanerBy
+        field.clear()
+        field.sendKeys(expression)
+    }
+
+    /**
+     * Returns the text of the cron section tooltip shown while editing the expression.
+     */
+    String getCronTooltipText() {
+        (el cronTooltipBy).getText()
     }
 
     def configureCleanExecutionHistory(int daysToKeepExecs, int minimumExecsToKeep, String cronSchedule){
