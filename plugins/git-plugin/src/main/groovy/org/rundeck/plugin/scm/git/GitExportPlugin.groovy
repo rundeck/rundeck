@@ -129,7 +129,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
             } catch (ScmPluginException e) {
                 branch = config.branch
-                if (e.message?.contains("not found in upstream")) {
+                if (isMissingRemoteBranch(e, config.baseBranch)) {
                     def remapped = new ScmPluginException("Non existent remote branch: ${config.baseBranch}")
                     remapped.initCause(e)
                     throw remapped
@@ -145,7 +145,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             logger.debug("branch differs")
             if (config.createBranch) {
                 if (config.baseBranch && existBranch("refs/remotes/${this.REMOTE_NAME}/${config.baseBranch}")) {
-                    if (!existBranch("refs/remotes/${this.REMOTE_NAME}/${config.branch}")) {
+                    if (!remoteBranchExists(context, config.url, config.branch)) {
                         createBranch(context, config.branch, config.baseBranch)
                     }
                     cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)

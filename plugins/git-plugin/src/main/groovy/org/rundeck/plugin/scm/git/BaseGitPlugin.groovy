@@ -30,6 +30,7 @@ import org.eclipse.jgit.api.RebaseResult
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.TransportCommand
 import org.eclipse.jgit.api.TransportConfigCallback
+import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.diff.RawTextComparator
 import org.eclipse.jgit.lib.BranchConfig
 import org.eclipse.jgit.lib.ConfigConstants
@@ -639,6 +640,39 @@ class BaseGitPlugin {
             if (remoteName == ref.getName()) {
                 return true
             }
+        }
+        return false
+    }
+
+    /**
+     * Query the remote for branch heads. Unlike {@link #existBranch(String)}, this does not rely on
+     * refs already present in the local clone (a single-branch clone may not have remote-tracking refs
+     * for other branches).
+     */
+    protected boolean remoteBranchExists(ScmOperationContext context, String url, String branchName)
+            throws ScmPluginException
+    {
+        def command = Git.lsRemoteRepository().setRemote(url).setHeads(true)
+        setupTransportAuthentication(sshConfig, context, command, url)
+        try {
+            return command.call().any { it.name == Constants.R_HEADS + branchName }
+        } catch (Exception e) {
+            logger.debug("Failed checking remote branch ${branchName}: ${e.message}", e)
+            throw new ScmPluginException("Failed checking remote branch ${branchName}: ${e.message}", e)
+        }
+    }
+
+    protected static boolean isMissingRemoteBranch(Throwable t, String branchName) {
+        Throwable current = t
+        while (current) {
+            if (current instanceof TransportException) {
+                def msg = current.message ?: ''
+                if (msg.contains('not found in upstream') &&
+                        (msg.contains("'${branchName}'") || msg.contains(branchName))) {
+                    return true
+                }
+            }
+            current = current.cause
         }
         return false
     }

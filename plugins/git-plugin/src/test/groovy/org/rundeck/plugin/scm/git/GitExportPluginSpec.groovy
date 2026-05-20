@@ -1827,8 +1827,11 @@ class GitExportPluginSpec extends Specification {
         Export config = createTestConfig(gitdir, origindir)
         def git = createGit(origindir)
         addCommitFile(origindir, git, 'testcommit.txt', 'blah')
-        // pre-create dev2 on the remote so it already exists
+        // pre-create dev2 on the remote with a distinct tip commit
         git.branchCreate().setName('dev2').call()
+        git.checkout().setName('dev2').call()
+        def dev2Commit = addCommitFile(origindir, git, 'dev2-marker.txt', 'only on dev2')
+        def dev2TipBefore = dev2Commit.name()
         git.close()
         new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
 
@@ -1846,6 +1849,10 @@ class GitExportPluginSpec extends Specification {
         then:
         noExceptionThrown()
         plugin.branch == 'dev2'
+        def remoteGit = openGit(origindir)
+        def dev2TipAfter = remoteGit.repository.resolve('refs/heads/dev2').name
+        remoteGit.close()
+        dev2TipAfter == dev2TipBefore
     }
 
     def "initialize plugin with unknown branch with create config and bad remote"() {
