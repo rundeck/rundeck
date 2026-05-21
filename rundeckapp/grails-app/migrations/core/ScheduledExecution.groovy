@@ -363,11 +363,4 @@ databaseChangeLog = {
             }
         }
     }
-
-    changeSet(author: "rundeckdev", id: "6.0.0-backfill-created-by-from-rduser") {
-        preConditions(onFail: "MARK_RAN") {
-            columnExists(tableName: "scheduled_execution", columnName: "created_by")
-        }
-        sql("UPDATE scheduled_execution SET created_by = rduser WHERE created_by IS NULL AND rduser IS NOT NULL")
-    }
 }
