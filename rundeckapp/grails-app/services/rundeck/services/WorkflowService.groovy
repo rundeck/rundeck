@@ -165,9 +165,9 @@ class WorkflowService implements ApplicationContextAware{
             StepIdentifier stepId = StateUtils.stepIdentifierAppend(parentId, StateUtils.stepIdentifier(logicalIdx))
             substeps[ndx] = buildStepStateForItem(step, stepId, project, frameworkNodeName, parent, secureOptions, parentId)
             if (substeps[ndx] == null) {
-                // a JobReferenceItem whose target job no longer exists — skip the slot.
-                substeps.remove(ndx)
-                logicalIdx--
+                // A JobReferenceItem whose target job no longer exists. Preserve the logical
+                // step slot so later steps keep their original logical numbering and remain
+                // aligned with listener-emitted step contexts.
             }
             i++
         }
