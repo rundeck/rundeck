@@ -64,14 +64,6 @@ class ConditionalStep implements WorkflowStepData, Validateable {
             if (obj.conditionSet && (!val || val.isEmpty())) {
                 errors.rejectValue("subSteps", 'WorkflowStep.conditional.subSteps.required', [errors.nestedPath] as Object[], "Step {0}: Conditional steps must have at least one sub-step")
             }
-            // Validate nesting depth (v1: max 1 level deep)
-            if (val) {
-                val.eachWithIndex { subStep, index ->
-                    if (subStep instanceof ConditionalStep) {
-                        errors.rejectValue("subSteps", 'WorkflowStep.conditional.nesting.depth', [errors.nestedPath, index] as Object[], "Step {0}: Sub-step {1} cannot be a conditional step (nesting limited to 1 level in v1)")
-                    }
-                }
-            }
         })
         errorHandler(nullable: true, validator: { val, obj, errors ->
             if(!val) return
@@ -115,15 +107,22 @@ class ConditionalStep implements WorkflowStepData, Validateable {
         if (stepMap.conditionGroups) {
             step.conditionSet = new ConditionalSetImpl().fromMap(stepMap as Map<String, Object>)
         }
-        // Handle subSteps - can be any WorkflowStepData type
+        // Handle subSteps - can be any WorkflowStepData type including nested ConditionalSteps
         if (stepMap.conditionGroups && stepMap.subSteps) {
             def subStepsList = []
             stepMap.subSteps.each { Map subStepMap ->
                 WorkflowStepData exec
-                if (subStepMap.jobref!=null) {
+                if (subStepMap.conditionGroups != null) {
+                    // Handle nested ConditionalStep recursively
+                    exec = ConditionalStep.fromMap(subStepMap)
+                } else if (subStepMap.jobref!=null) {
                     exec = JobExec.jobExecFromMap(subStepMap)
                 } else {
                     exec = PluginStep.fromMap(subStepMap)
+                    // PluginStep.fromMap() doesn't handle errorhandler, so we need to set it explicitly
+                    if (subStepMap.errorhandler) {
+                        exec.errorHandler = WorkflowStepDataImpl.fromMap(subStepMap.errorhandler as Map<String, Object>)
+                    }
                 }
                 subStepsList.add(exec)
             }

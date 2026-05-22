@@ -44,50 +44,96 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
 
     /**
      * Consolidate WorkflowStepData list into a flat list of StepExecutionItems, flattening any ConditionalSteps
-     * and attaching their ConditionSets to the resulting StepExecutionItems.
-     * @param steps
-     * @return
+     * (including nested ones) and attaching their combined ConditionSets to the resulting StepExecutionItems.
+     * @param steps List of workflow steps to flatten
+     * @param parentConditionSet Optional parent condition set to combine with nested conditionals
+     * @return Flattened list of StepExecutionItems with conditions attached
      */
-    List<StepExecutionItem> consolidateWorkflowSteps(List<WorkflowStepData> steps) {
+    List<StepExecutionItem> consolidateWorkflowSteps(
+        List<WorkflowStepData> steps,
+        ConditionalSet parentConditionSet = null
+    ) {
         List<StepExecutionItem> flattened = []
-        
+
         steps.each { WorkflowStepData step ->
             // Check if this is a ConditionalStep
             if (step instanceof ConditionalStep && featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)) {
                 ConditionalStep conditionalStep = (ConditionalStep) step
-                
+
                 // Convert data model ConditionalSet to core ConditionSet
                 ConditionalSet conditionSet = ConditionalSetImpl.fromDataModel(conditionalStep.conditionSet)
-                
-                // Flatten sub-steps and attach conditionSet to each
+
+                // Combine parent and current conditions (AND logic)
+                ConditionalSet combinedConditionSet = combineConditionSets(parentConditionSet, conditionSet)
+
+                // RECURSIVE: Process subSteps with combined condition
                 if (conditionalStep.subSteps) {
-                    conditionalStep.subSteps.each { WorkflowStepData subStep ->
-                        StepExecutionItem subStepItem = itemForWFCmdItem(
-                            subStep,
-                            subStep.errorHandler ? itemForWFCmdItem(subStep.errorHandler, null) : null
-                        )
-                        
-                        // Attach conditionSet to the sub-step
-                        if (subStepItem instanceof BaseExecutionItem) {
-                            ((BaseExecutionItem) subStepItem).setConditions(conditionSet)
-                        } else if (subStepItem instanceof PluginStepExecutionItemImpl) {
-                            ((PluginStepExecutionItemImpl) subStepItem).setConditions(conditionSet)
-                        }
-                        
-                        flattened.add(subStepItem)
-                    }
+                    List<StepExecutionItem> subItems = consolidateWorkflowSteps(
+                        conditionalStep.subSteps,
+                        combinedConditionSet
+                    )
+                    flattened.addAll(subItems)
                 }
             } else {
-                // Regular step - convert normally
+                // Leaf step - convert and attach combined conditions if any
                 StepExecutionItem stepItem = itemForWFCmdItem(
                     step,
                     step.errorHandler ? itemForWFCmdItem(step.errorHandler, null) : null
                 )
+
+                if (parentConditionSet != null) {
+                    attachConditionsToStep(stepItem, parentConditionSet)
+                }
+
                 flattened.add(stepItem)
             }
         }
-        
+
         return flattened
+    }
+
+    /**
+     * Combine two ConditionalSets using AND logic (Cartesian product of OR groups).
+     * @param parent Parent condition set (can be null)
+     * @param child Child condition set (can be null)
+     * @return Combined condition set, or null if both are null
+     */
+    private ConditionalSet combineConditionSets(ConditionalSet parent, ConditionalSet child) {
+        if (parent == null) return child
+        if (child == null) return parent
+
+        def combined = new ConditionalSetImpl()
+        combined.nodeStep = parent.nodeStep || child.nodeStep
+
+        // Cartesian product of OR groups to implement AND logic
+        // If parent has groups [A, B] and child has groups [C, D]
+        // Result: [A+C, A+D, B+C, B+D]
+        List combinedGroups = []
+        parent.conditionGroups.each { parentGroup ->
+            child.conditionGroups.each { childGroup ->
+                // Merge AND groups (concatenate conditions)
+                List mergedGroup = []
+                mergedGroup.addAll(parentGroup)
+                mergedGroup.addAll(childGroup)
+                combinedGroups.add(mergedGroup)
+            }
+        }
+        combined.conditionGroups = combinedGroups
+
+        return combined
+    }
+
+    /**
+     * Attach a ConditionalSet to a StepExecutionItem.
+     * @param stepItem The step item to attach conditions to
+     * @param conditionSet The condition set to attach
+     */
+    private void attachConditionsToStep(StepExecutionItem stepItem, ConditionalSet conditionSet) {
+        if (stepItem instanceof BaseExecutionItem) {
+            ((BaseExecutionItem) stepItem).setConditions(conditionSet)
+        } else if (stepItem instanceof PluginStepExecutionItemImpl) {
+            ((PluginStepExecutionItemImpl) stepItem).setConditions(conditionSet)
+        }
     }
 
     static StepExecutionItem itemForWFCmdItem(final WorkflowStepData step, final StepExecutionItem handler=null) throws FileNotFoundException {

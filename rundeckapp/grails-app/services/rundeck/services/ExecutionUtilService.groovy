@@ -187,44 +187,86 @@ class ExecutionUtilService {
     }
 
     private List<StepExecutionItem> consolidateWorkflowSteps(WorkflowData workflow, String parentProject, ConditionalSet conditionalSetParentJob) {
+        return consolidateWorkflowStepsRecursive(workflow.commands, parentProject, conditionalSetParentJob)
+    }
+
+    /**
+     * Recursively flatten conditional workflow steps, combining parent and child conditions
+     * @param steps list of workflow steps to process
+     * @param parentProject parent project for job references
+     * @param parentConditionSet combined conditions from all parent conditional steps
+     * @return flattened list of execution items with combined conditions
+     */
+    private List<StepExecutionItem> consolidateWorkflowStepsRecursive(
+            List<WorkflowStepData> steps,
+            String parentProject,
+            ConditionalSet parentConditionSet
+    ) {
         boolean conditionalFeatureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
-        
         List<StepExecutionItem> stepExecutionItems = []
-        
-        // Iterate through commands in order to preserve the original sequence
-        workflow.commands.each { command ->
-            if (!command.conditionSet) {
-                // Regular step: add it directly
+
+        steps.each { command ->
+            if (command instanceof ConditionalStep && conditionalFeatureEnabled && command.conditionSet) {
+                // Conditional step: combine conditions and recursively process subSteps
+                ConditionalSet combinedConditionSet = combineConditionSets(parentConditionSet, command.conditionSet)
+
+                if (command.subSteps) {
+                    // Recursively process nested subSteps with combined conditions
+                    List<StepExecutionItem> nestedItems = consolidateWorkflowStepsRecursive(
+                            command.subSteps,
+                            parentProject,
+                            combinedConditionSet
+                    )
+                    stepExecutionItems.addAll(nestedItems)
+                }
+            } else {
+                // Leaf step (non-conditional): create execution item and attach combined conditions
                 StepExecutionItem item = itemForWFCmdItem(
                         command,
                         command.errorHandler ? itemForWFCmdItem(command.errorHandler, null, parentProject) : null,
                         parentProject
                 )
-                if(conditionalSetParentJob){
-                    item.conditions = conditionalSetParentJob
+                if (parentConditionSet) {
+                    item.conditions = parentConditionSet
                 }
                 if (item != null) {
                     stepExecutionItems.add(item)
                 }
-            } else if (conditionalFeatureEnabled && command.conditionSet) {
-                // Conditional step: add its substeps in place
-                if (command.subSteps) {
-                    command.subSteps.each { subStep ->
-                        StepExecutionItem sei = itemForWFCmdItem(
-                                subStep,
-                                subStep.errorHandler ? itemForWFCmdItem(subStep.errorHandler, null, parentProject) : null,
-                                parentProject
-                        )
-                        if (sei != null) {
-                            sei.conditions = command.conditionSet
-                            stepExecutionItems.add(sei)
-                        }
-                    }
-                }
             }
         }
-        
+
         stepExecutionItems
+    }
+
+    /**
+     * Combine two ConditionalSets using Cartesian product of OR groups to implement AND logic.
+     * Example: Parent [A, B] + Child [C, D] → Combined [A+C, A+D, B+C, B+D]
+     * All conditions in a group must be true (AND), at least one group must match (OR)
+     * @param parent parent conditional set (may be null)
+     * @param child child conditional set (may be null)
+     * @return combined conditional set, or the non-null input if one is null
+     */
+    private ConditionalSet combineConditionSets(ConditionalSet parent, ConditionalSet child) {
+        if (parent == null) return child
+        if (child == null) return parent
+
+        // Create a new combined ConditionalSet
+        def combined = new org.rundeck.app.data.workflow.ConditionalSetImpl()
+        combined.nodeStep = parent.nodeStep || child.nodeStep
+
+        // Cartesian product of condition groups (implements AND logic between parent and child)
+        List combinedGroups = []
+        parent.conditionGroups.each { parentGroup ->
+            child.conditionGroups.each { childGroup ->
+                // Merge AND groups: all conditions must be true
+                List mergedGroup = []
+                mergedGroup.addAll(parentGroup)
+                mergedGroup.addAll(childGroup)
+                combinedGroups.add(mergedGroup)
+            }
+        }
+        combined.conditionGroups = combinedGroups
+        return combined
     }
 
 
