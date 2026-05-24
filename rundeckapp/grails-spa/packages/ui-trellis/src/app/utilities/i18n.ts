@@ -50,6 +50,13 @@ const updateLocaleMessages = async (i18n: I18n, locale: string, lang: string, me
   //include previously loaded messages
   const merged = mergeDeep((i18n.global.getLocaleMessage(locale) as Record<string, any>) || {}, messages);
   i18n.global.setLocaleMessage(locale, merged);
+  // Also register into the fallback locale (en_US) so that dynamically added
+  // messages (e.g. from plugins) are resolvable when a locale-specific
+  // translation is missing.
+  if (locale !== "en_US") {
+    const mergedFallback = mergeDeep((i18n.global.getLocaleMessage("en_US") as Record<string, any>) || {}, messages);
+    i18n.global.setLocaleMessage("en_US", mergedFallback);
+  }
   return nextTick();
 };
 /**
