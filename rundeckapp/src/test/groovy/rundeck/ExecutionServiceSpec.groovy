@@ -300,6 +300,69 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e2.user == 'testuser'
     }
 
+    @Unroll
+    void "create execution publishes audit RUN event with username from execution record"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'auditJob',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'audit test job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo test'])]
+                ),
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getNodes(_, _) >> null
+        }
+
+        // Capture the username passed to setUsername() on the builder
+        String capturedUsername = null
+        def auditSvc = Mock(rundeck.services.audit.AuditEventsService) {
+            _ * eventBuilder() >> new rundeck.services.audit.AuditEventsService().tap { svc ->
+                // We only need the builder to capture the username — stub publish() as no-op
+            }
+        }
+        // Use a simple Groovy metaClass trick: intercept via a real service instance with a listener
+        def realAuditSvc = new rundeck.services.audit.AuditEventsService()
+        realAuditSvc.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> 'test-uuid'
+            getServerHostname() >> 'test-host'
+        }
+        realAuditSvc.metaClass.dispatchEvent = { builder ->
+            capturedUsername = builder.username
+        }
+        service.auditEventsService = realAuditSvc
+
+        when: "execution is created — security context has no real user (simulates scheduled / anonymous contexts)"
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> contextUser
+        }
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                runAsUser,
+                [executionType: execType]
+        )
+
+        then: "audit event username is taken from execution.user, NOT from the security context"
+        e2 != null
+        e2.user == expectedUser
+        capturedUsername == expectedUser
+
+        where:
+        execType    | contextUser   | runAsUser      | expectedUser
+        'scheduled' | 'job-creator' | null           | 'job-creator'   // Quartz thread: job creator
+        'user'      | 'john.doe'    | null           | 'john.doe'      // interactive: auth user
+        'user'      | 'john.doe'    | 'run-as-user'  | 'run-as-user'   // run-as: override user
+    }
+
     void "create execution expand date strings"() {
 
         given:

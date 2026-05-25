@@ -2895,12 +2895,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Execution newExec = int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
 
         // Publish audit event for new job run.
+        // Explicitly set the username from the execution record so that the audit log
+        // always reflects the real user, even when there is no web session in the
+        // security context (e.g. Quartz-scheduled jobs, API/webhook calls).
         if(auditEventsService) {
             auditEventsService.eventBuilder()
                 .setResourceType(ResourceTypes.JOB)
-                .setResourceName("${jobReference.project}:${jobReference.jobAndGroup}")
                 .setResourceName("${se.project}:${se.uuid}:${se.generateFullName()}:${newExec.id}")
                 .setActionType(ActionTypes.RUN)
+                .setUsername(newExec.user)
                 .publish()
         }
 
