@@ -54,12 +54,19 @@ const FilterInputComp = defineComponent({
       this.nodeFilterKo()?.selectNodeFilter({ filter: val }, false);
       if (this.isNodeStoreAvailable) {
         this.extraAttrs.nodeFilterStore.setSelectedFilter(val);
+      } else {
+        // Emit EventBus event for adhoc page and other pages without NodeFilterStore
+        console.debug("[FilterInputComp] Emitting nodefilter:value:changed event with filter:", val);
+        rundeckContext.eventBus.emit("nodefilter:value:changed", { filter: val });
       }
     },
     filterClicked(filter: any) {
       this.nodeFilterKo()?.selectNodeFilter(filter, false);
       if (this.isNodeStoreAvailable) {
         this.extraAttrs.nodeFilterStore.setSelectedFilter(filter.filter);
+      } else {
+        // Emit EventBus event for adhoc page and other pages without NodeFilterStore
+        rundeckContext.eventBus.emit("nodefilter:value:changed", { filter: filter.filter || filter });
       }
     },
     nodeFilterKo() {
@@ -91,7 +98,7 @@ const FilterInputComp = defineComponent({
       } else if (retry > 0) {
         setTimeout(() => this.attachKnockout(retry - 1), 1000);
       } else {
-        console.log(
+        console.debug(
           "Did not find ko component: ",
           this.koFieldName,
           this.koParam,
@@ -107,6 +114,7 @@ const FilterInputComp = defineComponent({
                              :filterFieldName="filterFieldName"
                              :filter-field-id="filterFieldId"
                              :query-field-placeholder-text="queryFieldPlaceholderText"
+                             :help-button="itemData?.helpButton !== false"
                              search-btn-type="cta"
                              @update:value="updatedValue"
                              @filter="filterClicked"
