@@ -163,12 +163,15 @@ class WorkflowService implements ApplicationContextAware{
             logicalIdx++
             int ndx = logicalIdx - 1
             StepIdentifier stepId = StateUtils.stepIdentifierAppend(parentId, StateUtils.stepIdentifier(logicalIdx))
-            substeps[ndx] = buildStepStateForItem(step, stepId, project, frameworkNodeName, parent, secureOptions, parentId)
-            if (substeps[ndx] == null) {
-                // A JobReferenceItem whose target job no longer exists. Preserve the logical
-                // step slot so later steps keep their original logical numbering and remain
-                // aligned with listener-emitted step contexts.
+            def stepState = buildStepStateForItem(step, stepId, project, frameworkNodeName, parent, secureOptions, parentId)
+            if (stepState != null) {
+                substeps[ndx] = stepState
             }
+            // If stepState is null (e.g., a JobReferenceItem whose target job no longer exists),
+            // we skip adding it to the map. The MutableWorkflowStateImpl constructor will create
+            // a placeholder step for the missing index, preserving the logical step slot so later
+            // steps keep their original logical numbering and remain aligned with listener-emitted
+            // step contexts.
             i++
         }
         return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, logicalIdx,
