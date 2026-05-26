@@ -167,7 +167,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
     private static final List<String> EXCLUDED_AUDIT_FIELDS = [
-        'user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'id'
+        'user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'id', 'createdBy'
     ]
 
     def JobScheduleManager rundeckJobScheduleManager
@@ -3611,7 +3611,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             deleteExistingOptions(scheduledExecution)
             deleteExistingNotification(scheduledExecution)
-            // Exclude audit/system fields to prevent imported jobs from overwriting creator/dates
+            // Exclude audit/system fields to prevent imported jobs from overwriting creator/dates.
+            // NOTE: || !input.properties[it] must be INSIDE the parens — lower precedence than &&
+            // would otherwise bypass the EXCLUDED_AUDIT_FIELDS check for null-valued properties.
             final Collection foundprops = input.properties.keySet().findAll {
                 !(it in EXCLUDED_AUDIT_FIELDS) &&
                 !it.startsWith( 'nodeInclude') &&//deprecating these
@@ -3619,8 +3621,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 (
                         input.properties[it] instanceof String ||
                         input.properties[it] instanceof Boolean ||
-                        input.properties[it] instanceof Integer
-                ) || !input.properties[it]
+                        input.properties[it] instanceof Integer ||
+                        !input.properties[it]
+                )
             }
             basicProps = foundprops ? input.properties.subMap(foundprops) : [:]
         }
@@ -3800,6 +3803,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (authContext?.username) {
             scheduledExecution.lastModifiedBy = authContext.username
         }
+        // createdBy is intentionally not updated here — it is set once at creation and must not change
 
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
             scheduledExecution.discard()
@@ -3907,6 +3911,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         // Skip if no authenticated user available
         if (!scheduledExecution.lastModifiedBy && authContext?.username) {
             scheduledExecution.lastModifiedBy = authContext.username
+        }
+        // createdBy is set once at creation time and never changed thereafter
+        if (!scheduledExecution.createdBy && authContext?.username) {
+            scheduledExecution.createdBy = authContext.username
         }
 
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
