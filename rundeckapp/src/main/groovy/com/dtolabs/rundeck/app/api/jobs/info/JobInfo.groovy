@@ -103,6 +103,8 @@ class JobInfo {
 
     /**
      * User who created the job.
+     * Populated from {@code ScheduledExecution.createdBy} (set once at job creation).
+     * Falls back to {@code user} for jobs that existed before the createdBy field was introduced.
      */
     @ApiVersion(56)
     @Ignore(onlyIfNull = true)
@@ -156,7 +158,7 @@ class JobInfo {
                         scheduleEnabled: se.scheduleEnabled,
                         enabled        : se.executionEnabled,
                         created        : createdIso,
-                        createdBy      : se.user,
+                        createdBy      : se.createdBy ?: se.user,
                         lastModified   : lastModifiedIso,
                         lastModifiedBy : se.lastModifiedBy
                 ] + extra?.subMap(

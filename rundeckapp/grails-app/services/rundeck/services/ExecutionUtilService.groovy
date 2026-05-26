@@ -29,6 +29,8 @@ import org.rundeck.core.execution.ScriptCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.PluginStepExecutionItemImpl
+import com.dtolabs.rundeck.core.jobs.JobRefCommandBase
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
@@ -200,27 +202,37 @@ class ExecutionUtilService {
     private List<StepExecutionItem> consolidateWorkflowStepsRecursive(
             List<WorkflowStepData> steps,
             String parentProject,
-            ConditionalSet parentConditionSet
+            ConditionalSet parentConditionSet,
+            Integer parentStepNumber = null,
+            int[] subStepCounter = null
     ) {
         boolean conditionalFeatureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
+
         List<StepExecutionItem> stepExecutionItems = []
 
+        // Iterate through commands in order to preserve the original sequence.
+        // The "logical" step number tracks the index in the original (un-flattened) job
+        // definition; conditional sub-steps inherit it as their parent step number so the
+        // workflow listeners can emit a hierarchical stepctx (e.g. "2/1") that aligns with
+        // the job definition's step layout.
+        int logicalStepNumber = 0
         steps.each { command ->
+            logicalStepNumber++
             if (command instanceof ConditionalStep && conditionalFeatureEnabled && command.conditionSet) {
-                // Conditional step: combine conditions and recursively process subSteps
                 ConditionalSet combinedConditionSet = combineConditionSets(parentConditionSet, command.conditionSet)
-
                 if (command.subSteps) {
-                    // Recursively process nested subSteps with combined conditions
+                    Integer rootParentStep = parentStepNumber != null ? parentStepNumber : logicalStepNumber
+                    int[] counter = subStepCounter ?: [0] as int[]
                     List<StepExecutionItem> nestedItems = consolidateWorkflowStepsRecursive(
                             command.subSteps,
                             parentProject,
-                            combinedConditionSet
+                            combinedConditionSet,
+                            rootParentStep,
+                            counter
                     )
                     stepExecutionItems.addAll(nestedItems)
                 }
             } else {
-                // Leaf step (non-conditional): create execution item and attach combined conditions
                 StepExecutionItem item = itemForWFCmdItem(
                         command,
                         command.errorHandler ? itemForWFCmdItem(command.errorHandler, null, parentProject) : null,
@@ -230,6 +242,13 @@ class ExecutionUtilService {
                     item.conditions = parentConditionSet
                 }
                 if (item != null) {
+                    if (parentStepNumber != null) {
+                        int[] counter = subStepCounter ?: [0] as int[]
+                        counter[0] = counter[0] + 1
+                        markAsConditionalSubStep(item, parentStepNumber, counter[0])
+                    } else {
+                        markWithLogicalStepNumber(item, logicalStepNumber)
+                    }
                     stepExecutionItems.add(item)
                 }
             }
@@ -269,6 +288,42 @@ class ExecutionUtilService {
         return combined
     }
 
+    /**
+     * Promote a flattened conditional sub-step item so it implements
+     * {@link com.dtolabs.rundeck.core.execution.workflow.HasParentStepContext} with the
+     * given parent step number (1-based index in the original job definition) and sub-step
+     * number (1-based index within the parent's sub-step list).
+     * Also stamps {@code logicalStepNumber = parentStep} so the listener can map the
+     * flat engine index back to the correct logical step slot in the state tree.
+     *
+     * If the item type does not support promotion the call is a no-op; the item will be
+     * treated as a flat top-level step and produce non-hierarchical stepctx in logs.
+     */
+    private static void markAsConditionalSubStep(StepExecutionItem item, int parentStep, int subStep) {
+        if (item instanceof PluginStepExecutionItemImpl) {
+            ((PluginStepExecutionItemImpl) item).setParentStepNumber(parentStep)
+            ((PluginStepExecutionItemImpl) item).setSubStepNumber(subStep)
+            ((PluginStepExecutionItemImpl) item).setLogicalStepNumber(parentStep)
+        } else if (item instanceof JobRefCommandBase) {
+            ((JobRefCommandBase) item).setParentStepNumber(parentStep)
+            ((JobRefCommandBase) item).setSubStepNumber(subStep)
+            ((JobRefCommandBase) item).setLogicalStepNumber(parentStep)
+        }
+    }
+
+    /**
+     * Stamp a regular (non-conditional) step with its 1-based logical step number in the
+     * original job definition so that workflow listeners can emit the correct step context
+     * even when the flat engine step number differs (e.g., after conditional sub-steps
+     * were expanded into the engine list).
+     */
+    private static void markWithLogicalStepNumber(StepExecutionItem item, int logicalStep) {
+        if (item instanceof PluginStepExecutionItemImpl) {
+            ((PluginStepExecutionItemImpl) item).setLogicalStepNumber(logicalStep)
+        } else if (item instanceof JobRefCommandBase) {
+            ((JobRefCommandBase) item).setLogicalStepNumber(logicalStep)
+        }
+    }
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStepData step, final StepExecutionItem handler=null,final parentProject=null) throws FileNotFoundException {
         if(step.type == "conditional"){
