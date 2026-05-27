@@ -5399,10 +5399,10 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         // on the domain object keeps the fixture semantically consistent with reality.
         // Note: unlike detailFragmentAjax, the show action does NOT require
         // serverNodeUUID != localServerUUID to populate remoteClusterNodeUUID.
-        def remoteUUID = 'aaaa-bbbb-cccc-dddd'
-        def localUUID  = 'ffff-eeee-dddd-cccc'
+        def remoteUUID = 'aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb'
+        def localUUID  = 'ffffeeee-dddd-cccc-bbbb-aaaa11112222'
         def se = new ScheduledExecution(
-                uuid: 'test-cluster-uuid',
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'test1',
                 project: 'project1',
                 groupPath: 'testgroup',
@@ -5413,7 +5413,7 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
                         keepgoing: true,
                         commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
                 )
-        ).save()
+        ).save(failOnError: true)
 
         controller.frameworkService = Mock(FrameworkService) {
             filterNodeSet(_, _) >> null
@@ -5459,6 +5459,9 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
             }
         }
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        controller.configurationService = Mock(ConfigurationService) {
+            getString(_) >> null
+        }
 
         params.id = se.id.toString()
         params.project = 'project1'
@@ -5473,7 +5476,7 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
 
         where:
         clusterEnabled | scheduled | expectedUUID
-        true           | true      | 'aaaa-bbbb-cccc-dddd'
+        true           | true      | 'aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb'
         true           | false     | null
         false          | true      | null
         false          | false     | null
