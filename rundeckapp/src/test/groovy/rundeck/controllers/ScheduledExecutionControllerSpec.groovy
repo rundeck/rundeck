@@ -5383,6 +5383,49 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         getWorkflowDataCalled == true
     }
 
+    def "checkCrontab returns error when crontabString parameter is missing"() {
+        given:
+        views['/common/_messages.gsp'] = ''
+
+        when: "checkCrontab is called without the crontabString parameter"
+        controller.checkCrontab()
+
+        then: "the request error attribute is set"
+        request.error == "crontabString parameter is required"
+    }
+
+    @Unroll
+    def "checkCrontab sets warn for invalid cron expression: #scenario"() {
+        given:
+        views['/common/_messages.gsp'] = ''
+
+        when: "checkCrontab is called with an invalid cron expression"
+        params.crontabString = cronString
+        controller.checkCrontab()
+
+        then: "the request warn attribute is set"
+        request.warn != null
+
+        where:
+        scenario                              | cronString
+        'completely invalid string'           | 'not-a-cron'
+        'both day-of-month and day-of-week'   | '0 0 12 15 * 5 *'
+        'too few fields'                      | '0 0 12'
+    }
+
+    def "checkCrontab sets no error or warn for a valid cron expression"() {
+        given:
+        views['/common/_messages.gsp'] = ''
+
+        when: "checkCrontab is called with a valid cron expression"
+        params.crontabString = '0 0 0 1/1 * ? *'
+        controller.checkCrontab()
+
+        then: "no error or warning is set on the request"
+        !request.error
+        !request.warn
+    }
+
     // ===================================================================================
     // Regression Tests for Commit 640926f97c: "Put some code back that got lost with merge from main"
     // The critical pattern change was: WorkflowDataImpl.fromMap(workflowData.toMap())
