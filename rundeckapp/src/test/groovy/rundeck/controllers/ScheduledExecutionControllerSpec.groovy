@@ -5384,6 +5384,9 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
     }
 
     def "checkCrontab returns error when crontabString parameter is missing"() {
+        given:
+        views['/common/_messages.gsp'] = ''
+
         when: "checkCrontab is called without the crontabString parameter"
         controller.checkCrontab()
 
@@ -5393,6 +5396,9 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
 
     @Unroll
     def "checkCrontab sets warn for invalid cron expression: #scenario"() {
+        given:
+        views['/common/_messages.gsp'] = ''
+
         when: "checkCrontab is called with an invalid cron expression"
         params.crontabString = cronString
         controller.checkCrontab()
@@ -5408,6 +5414,9 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
     }
 
     def "checkCrontab sets no error or warn for a valid cron expression"() {
+        given:
+        views['/common/_messages.gsp'] = ''
+
         when: "checkCrontab is called with a valid cron expression"
         params.crontabString = '0 0 0 1/1 * ? *'
         controller.checkCrontab()
