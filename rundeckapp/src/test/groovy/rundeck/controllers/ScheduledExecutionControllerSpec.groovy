@@ -5432,6 +5432,103 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
     // instead of the old incorrect: new Workflow(workflow as WorkflowData)
     // ===================================================================================
 
+    @Unroll
+    def "show job includes remoteClusterNodeUUID in model when cluster mode is #clusterEnabled and job is scheduled=#scheduled"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
+
+        // The show action calls scheduledExecutionService.isScheduled() (mocked below)
+        // rather than reading scheduledExecution.scheduled directly. Setting scheduled
+        // on the domain object keeps the fixture semantically consistent with reality.
+        // Note: unlike detailFragmentAjax, the show action does NOT require
+        // serverNodeUUID != localServerUUID to populate remoteClusterNodeUUID.
+        def remoteUUID = 'aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb'
+        def localUUID  = 'ffffeeee-dddd-cccc-bbbb-aaaa11112222'
+        def se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: false,
+                scheduled: scheduled,
+                serverNodeUUID: remoteUUID,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
+                )
+        ).save(failOnError: true)
+
+        controller.frameworkService = Mock(FrameworkService) {
+            filterNodeSet(_, _) >> null
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+            isClusterModeEnabled() >> clusterEnabled
+            _ * serverUUID >> localUUID
+            _ * getServerUUID() >> localUUID
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * getAuthContextForSubjectAndProject(*_) >> Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'admin'
+            }
+            _ * authorizeProjectJobAny(_, _, _, _) >> true
+            _ * filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            isScheduled(se) >> scheduled
+            _ * calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
+        }
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService) {
+            listPlugins() >> []
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService) {
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            validateJobForExport(_, _) >> Mock(Validator.Report) {
+                isValid() >> true
+            }
+        }
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        controller.configurationService = Mock(ConfigurationService) {
+            getString(_) >> null
+        }
+
+        params.id = se.id.toString()
+        params.project = 'project1'
+
+        when:
+        def model = controller.show()
+
+        then:
+        response.redirectedUrl == null
+        model != null
+        model.remoteClusterNodeUUID == expectedUUID
+
+        where:
+        clusterEnabled | scheduled | expectedUUID
+        true           | true      | 'aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb'
+        true           | false     | null
+        false          | true      | null
+        false          | false     | null
+        // Note: the show action does not filter by serverNodeUUID == localServerUUID,
+        // so a job scheduled on a different cluster member always gets its UUID surfaced.
+    }
+
+    // ===================================================================================
+
     def "regression test - workflow fromMap toMap pattern from commit 640926f97c"() {
         given: "a job with workflow data stored in workflowJson via setWorkflowData"
         // Create a conditional step to test the scenario where workflow data
