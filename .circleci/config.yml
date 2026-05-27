@@ -639,7 +639,7 @@ jobs:
     parameters:
       resource_class:
         type: string
-        default: medium
+        default: medium.gen2
       command:
         description: Command that will execute the docker tests
         type: string
@@ -680,7 +680,7 @@ jobs:
         default: 1
       resource_class:
         type: string
-        default: medium
+        default: medium.gen2
       test_file_pattern:
         type: string
       host_jdk_for_tests:
