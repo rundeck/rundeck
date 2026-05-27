@@ -5394,14 +5394,21 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         given:
         ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
 
-        def clusterUUID = 'aaaa-bbbb-cccc-dddd'
+        // The show action calls scheduledExecutionService.isScheduled() (mocked below)
+        // rather than reading scheduledExecution.scheduled directly. Setting scheduled
+        // on the domain object keeps the fixture semantically consistent with reality.
+        // Note: unlike detailFragmentAjax, the show action does NOT require
+        // serverNodeUUID != localServerUUID to populate remoteClusterNodeUUID.
+        def remoteUUID = 'aaaa-bbbb-cccc-dddd'
+        def localUUID  = 'ffff-eeee-dddd-cccc'
         def se = new ScheduledExecution(
                 uuid: 'test-cluster-uuid',
                 jobName: 'test1',
                 project: 'project1',
                 groupPath: 'testgroup',
                 doNodedispatch: false,
-                serverNodeUUID: clusterUUID,
+                scheduled: scheduled,
+                serverNodeUUID: remoteUUID,
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
@@ -5414,7 +5421,8 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
                 getFrameworkNodeName() >> 'fwnode'
             }
             isClusterModeEnabled() >> clusterEnabled
-            _ * serverUUID >> clusterUUID
+            _ * serverUUID >> localUUID
+            _ * getServerUUID() >> localUUID
         }
 
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
@@ -5469,6 +5477,8 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         true           | false     | null
         false          | true      | null
         false          | false     | null
+        // Note: the show action does not filter by serverNodeUUID == localServerUUID,
+        // so a job scheduled on a different cluster member always gets its UUID surfaced.
     }
 
     // ===================================================================================
