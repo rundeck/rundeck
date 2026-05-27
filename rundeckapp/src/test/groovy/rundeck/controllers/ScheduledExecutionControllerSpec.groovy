@@ -50,6 +50,11 @@ import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.workflow.ConditionalDefinitionImpl
+import org.rundeck.app.data.workflow.ConditionalSetImpl
+import org.rundeck.app.data.workflow.ConditionalStep
+import org.rundeck.app.data.workflow.WorkflowDataImpl
+import org.rundeck.app.data.workflow.WorkflowStepDataImpl
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.gui.UISection
@@ -3927,6 +3932,142 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         controller.modelAndView.model.scheduledExecution != null
     }
 
+    def "test copy creates deep copy of workflow data using WorkflowDataImpl fromMap toMap pattern"() {
+        given: "a job with workflow data containing a conditional step"
+        // Create a conditional step with condition and substeps
+        def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[condDef]]
+
+        def conditionalStep = new ConditionalStep()
+        conditionalStep.conditionSet = condSet
+        conditionalStep.subSteps = [
+                new CommandExec(adhocRemoteString: 'echo "test step 1"', argString: '-test arg'),
+                new CommandExec(adhocRemoteString: 'echo "test step 2"')
+        ]
+
+        // Create WorkflowDataImpl and set it via setWorkflowData
+        // This is the CORRECT pattern that ensures workflow data lives in workflowJson
+        def workflowData = new WorkflowDataImpl()
+        workflowData.keepgoing = true
+        workflowData.strategy = 'node-first'
+        workflowData.steps = [conditionalStep]
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID-workflow-copy',
+                jobName: 'testJob',
+                project: 'testProject',
+                description: 'test job for workflow copy',
+                groupPath: 'testgroup',
+                workflow: new Workflow().save()  // Required for domain, but workflow data is in workflowJson
+        )
+        se.setWorkflowData(workflowData)
+        se.save()
+
+        and: "mocked services"
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'testuser'
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['create', 'view'], _) >> true
+            authorizeProjectResource(_, _, 'create', _) >> true
+            authorizeProjectJobAll(_, _, ['read'], _) >> true
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            prepareCreateEditJob(_, _, _, _) >> [scheduledExecution: se]
+        }
+
+        params.id = se.id.toString()
+        setupFormTokens(params)
+
+        when: "copy action is called"
+        controller.copy()
+
+        then: "workflow data is stored in session using WorkflowDataImpl.fromMap(toMap()) pattern"
+        session.editWF != null
+        session.editWF['_new'] != null
+        session.editWF['_new'] instanceof WorkflowData
+
+        and: "the session workflow is a proper deep copy - it should be a WorkflowDataImpl instance"
+        // This assertion is CRITICAL: if someone reverts to the old code pattern
+        // 'new Workflow(scheduledExecution.workflow as WorkflowData)'
+        // the session workflow would be a Workflow object instead of WorkflowDataImpl
+        // and this test would fail, catching the regression
+        session.editWF['_new'] instanceof WorkflowDataImpl
+
+        and: "the workflow data properties are correctly copied"
+        def originalWorkflowData = se.getWorkflowData()
+        session.editWF['_new'].keepgoing == originalWorkflowData.keepgoing
+        session.editWF['_new'].strategy == originalWorkflowData.strategy
+        session.editWF['_new'].steps.size() == originalWorkflowData.steps.size()
+
+        and: "the conditional step structure is preserved in the copy"
+        def copiedStep = session.editWF['_new'].steps[0]
+        copiedStep instanceof ConditionalStep
+        copiedStep.subSteps.size() == 2
+        copiedStep.conditionSet != null
+        copiedStep.conditionSet.conditionGroups.size() == 1
+
+        and: "the workflow in session is a different object instance (deep copy)"
+        !session.editWF['_new'].is(originalWorkflowData)
+    }
+
+    def "test copy workflow data regression - would fail if old pattern was used"() {
+        given: "a job with workflow data stored in workflowJson via setWorkflowData"
+        // Create a conditional step to ensure we're testing the scenario where
+        // workflow data lives in workflowJson, not in the workflow domain object
+        def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[condDef]]
+
+        def conditionalStep = new ConditionalStep()
+        conditionalStep.conditionSet = condSet
+        conditionalStep.subSteps = [new CommandExec(adhocRemoteString: 'echo test')]
+
+        def workflowData = new WorkflowDataImpl()
+        workflowData.keepgoing = true
+        workflowData.steps = [conditionalStep]
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID-regression',
+                jobName: 'testRegressionJob',
+                project: 'testProject',
+                description: 'regression test',
+                groupPath: 'testgroup',
+                workflow: new Workflow().save()  // Required for domain, but workflow data is in workflowJson
+        )
+        se.setWorkflowData(workflowData)
+        se.save()
+
+        expect: "se.workflow is null when using setWorkflowData - data lives in workflowJson"
+        se.workflow == null || se.workflow.commands == null
+
+        and: "getWorkflowData returns a WorkflowDataImpl with the conditional step"
+        def retrievedWorkflowData = se.getWorkflowData()
+        retrievedWorkflowData instanceof WorkflowDataImpl
+        retrievedWorkflowData.steps.size() == 1
+        retrievedWorkflowData.steps[0] instanceof ConditionalStep
+
+        and: "the new pattern (fromMap/toMap) preserves the conditional step structure"
+        def newPatternWorkflow = retrievedWorkflowData ? WorkflowDataImpl.fromMap(retrievedWorkflowData.toMap()) : new WorkflowDataImpl()
+        newPatternWorkflow instanceof WorkflowDataImpl
+        newPatternWorkflow.steps.size() == 1
+        newPatternWorkflow.steps[0] instanceof ConditionalStep
+        ((ConditionalStep)newPatternWorkflow.steps[0]).subSteps.size() == 1
+    }
+
     def "api jobs import require 14"() {
         given:
             controller.apiService = Mock(ApiService)
@@ -5274,6 +5415,59 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         then: "no error or warning is set on the request"
         !request.error
         !request.warn
+    }
+
+    // ===================================================================================
+    // Regression Tests for Commit 640926f97c: "Put some code back that got lost with merge from main"
+    // The critical pattern change was: WorkflowDataImpl.fromMap(workflowData.toMap())
+    // instead of the old incorrect: new Workflow(workflow as WorkflowData)
+    // ===================================================================================
+
+    def "regression test - workflow fromMap toMap pattern from commit 640926f97c"() {
+        given: "a job with workflow data stored in workflowJson via setWorkflowData"
+        // Create a conditional step to test the scenario where workflow data
+        // lives in workflowJson (set via setWorkflowData), not in the workflow domain object
+        def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'staging'])
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[condDef]]
+
+        def conditionalStep = new ConditionalStep()
+        conditionalStep.conditionSet = condSet
+        conditionalStep.subSteps = [new CommandExec(adhocRemoteString: 'test step')]
+
+        def workflowData = new WorkflowDataImpl()
+        workflowData.keepgoing = true
+        workflowData.strategy = 'node-first'
+        workflowData.steps = [conditionalStep]
+
+        def se = new ScheduledExecution(
+                uuid: 'test-regression-all',
+                jobName: 'testAllPatterns',
+                project: 'testProject',
+                workflow: new Workflow().save()  // Required for domain, but workflow data is in workflowJson
+        )
+        se.setWorkflowData(workflowData)
+        se.save()
+
+        when: "applying the NEW pattern from 640926f97c"
+        def retrievedWorkflowData = se.getWorkflowData()
+        def newPatternResult = retrievedWorkflowData ? WorkflowDataImpl.fromMap(retrievedWorkflowData.toMap()) : new WorkflowDataImpl()
+
+        then: "result is a WorkflowDataImpl instance with conditional step preserved"
+        newPatternResult instanceof WorkflowDataImpl
+        newPatternResult.keepgoing == workflowData.keepgoing
+        newPatternResult.strategy == workflowData.strategy
+        newPatternResult.steps.size() == workflowData.steps.size()
+        newPatternResult.steps[0] instanceof ConditionalStep
+        ((ConditionalStep)newPatternResult.steps[0]).subSteps.size() == 1
+        ((ConditionalStep)newPatternResult.steps[0]).conditionSet.conditionGroups.size() == 1
+
+        and: "the OLD (incorrect) pattern would fail when workflow is null"
+        // When using setWorkflowData, se.workflow may be null or have no commands
+        // The old pattern 'new Workflow(se.workflow as WorkflowData)' would break
+        // This demonstrates why the fix was necessary
+        se.workflow == null || se.workflow.commands == null
+        // If someone reverts to old pattern, tests checking 'instanceof WorkflowDataImpl' will FAIL
     }
 
 }

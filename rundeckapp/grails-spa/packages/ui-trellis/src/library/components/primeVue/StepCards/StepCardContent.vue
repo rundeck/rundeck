@@ -301,16 +301,7 @@ export default defineComponent({
   }
 
   span[title] {
-    color: var(--colors-gray-600);
     flex: 0 0 100px;
-  }
-
-  .copiable-text {
-    color: var(--colors-gray-800);
-
-    &:hover {
-      color: var(--colors-gray-800);
-    }
   }
 }
 

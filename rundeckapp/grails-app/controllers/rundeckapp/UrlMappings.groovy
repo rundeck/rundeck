@@ -359,9 +359,6 @@ class UrlMappings {
         "/tour/get/$loaderName/$tour"(controller:'tour',action:'getTour')
 
         "/community-news"(controller:'communityNews',action:'index')
-        "/community-news/register"(controller:'communityNews') {
-            action = [POST: 'register']
-        }
 
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
 

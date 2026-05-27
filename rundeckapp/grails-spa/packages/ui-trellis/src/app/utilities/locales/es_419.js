@@ -32,7 +32,6 @@ const messages = {
     "It appears an error occured when connecting to Community News.",
   message_readMore: "Read More",
   message_refresh: "Please refresh the page or visit us at",
-  message_subscribe: "Suscribir",
   message_delete: "Borrar el campo",
   message_duplicated: "El campo ya existe",
   message_select: "Seleccionar un nuevo campo",
