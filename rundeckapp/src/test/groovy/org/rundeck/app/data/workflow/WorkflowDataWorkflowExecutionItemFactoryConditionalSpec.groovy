@@ -328,5 +328,220 @@ class WorkflowDataWorkflowExecutionItemFactoryConditionalSpec extends Specificat
         result.workflow.commands[0].conditions != null
         result.workflow.commands[0].conditions.conditionGroups.size() == 1
     }
+
+    def "consolidateWorkflowSteps flattens 2-level nested conditionals"() {
+        given:
+        featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def outerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def outerCondSet = new ConditionalSetImpl()
+        outerCondSet.conditionGroups = [[outerCondDef]]
+
+        def innerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])
+        def innerCondSet = new ConditionalSetImpl()
+        innerCondSet.conditionGroups = [[innerCondDef]]
+
+        def innerConditionalStep = new ConditionalStep()
+        innerConditionalStep.conditionSet = innerCondSet
+        innerConditionalStep.subSteps = [
+            new CommandExec(adhocRemoteString: 'echo nested')
+        ]
+
+        def outerConditionalStep = new ConditionalStep()
+        outerConditionalStep.conditionSet = outerCondSet
+        outerConditionalStep.subSteps = [innerConditionalStep]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [outerConditionalStep]
+
+        when:
+        def result = factory.createExecutionItemForWorkflow(workflow)
+
+        then:
+        result != null
+        result.workflow.commands.size() == 1
+        result.workflow.commands[0].conditions != null
+        result.workflow.commands[0].conditions.conditionGroups.size() == 1
+        result.workflow.commands[0].conditions.conditionGroups[0].size() == 2 // both outer and inner conditions
+    }
+
+    def "consolidateWorkflowSteps combines nested conditions with AND logic"() {
+        given:
+        featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def outerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def outerCondSet = new ConditionalSetImpl()
+        outerCondSet.conditionGroups = [[outerCondDef]]
+
+        def innerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])
+        def innerCondSet = new ConditionalSetImpl()
+        innerCondSet.conditionGroups = [[innerCondDef]]
+
+        def innerConditionalStep = new ConditionalStep()
+        innerConditionalStep.conditionSet = innerCondSet
+        innerConditionalStep.subSteps = [
+            new CommandExec(adhocRemoteString: 'echo nested')
+        ]
+
+        def outerConditionalStep = new ConditionalStep()
+        outerConditionalStep.conditionSet = outerCondSet
+        outerConditionalStep.subSteps = [innerConditionalStep]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [outerConditionalStep]
+
+        when:
+        def result = factory.createExecutionItemForWorkflow(workflow)
+
+        then:
+        result != null
+        result.workflow.commands.size() == 1
+
+        // Verify both conditions are present (AND logic)
+        def stepItem = result.workflow.commands[0]
+        stepItem.conditions != null
+        stepItem.conditions.conditionGroups.size() == 1
+        stepItem.conditions.conditionGroups[0].size() == 2
+        stepItem.conditions.conditionGroups[0]*.key == ['option.env', 'option.region']
+    }
+
+    def "consolidateWorkflowSteps handles 3-level nesting"() {
+        given:
+        featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def level1CondDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def level1CondSet = new ConditionalSetImpl()
+        level1CondSet.conditionGroups = [[level1CondDef]]
+
+        def level2CondDef = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])
+        def level2CondSet = new ConditionalSetImpl()
+        level2CondSet.conditionGroups = [[level2CondDef]]
+
+        def level3CondDef = ConditionalDefinitionImpl.fromMap([key: 'option.datacenter', operator: '==', value: 'dc1'])
+        def level3CondSet = new ConditionalSetImpl()
+        level3CondSet.conditionGroups = [[level3CondDef]]
+
+        def level3ConditionalStep = new ConditionalStep()
+        level3ConditionalStep.conditionSet = level3CondSet
+        level3ConditionalStep.subSteps = [
+            new CommandExec(adhocRemoteString: 'echo deeply nested')
+        ]
+
+        def level2ConditionalStep = new ConditionalStep()
+        level2ConditionalStep.conditionSet = level2CondSet
+        level2ConditionalStep.subSteps = [level3ConditionalStep]
+
+        def level1ConditionalStep = new ConditionalStep()
+        level1ConditionalStep.conditionSet = level1CondSet
+        level1ConditionalStep.subSteps = [level2ConditionalStep]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [level1ConditionalStep]
+
+        when:
+        def result = factory.createExecutionItemForWorkflow(workflow)
+
+        then:
+        result != null
+        result.workflow.commands.size() == 1
+
+        // Verify all three conditions are combined
+        def stepItem = result.workflow.commands[0]
+        stepItem.conditions != null
+        stepItem.conditions.conditionGroups.size() == 1
+        stepItem.conditions.conditionGroups[0].size() == 3
+        stepItem.conditions.conditionGroups[0]*.key == ['option.env', 'option.region', 'option.datacenter']
+    }
+
+    def "consolidateWorkflowSteps preserves step order with nested conditionals"() {
+        given:
+        featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def outerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def outerCondSet = new ConditionalSetImpl()
+        outerCondSet.conditionGroups = [[outerCondDef]]
+
+        def innerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])
+        def innerCondSet = new ConditionalSetImpl()
+        innerCondSet.conditionGroups = [[innerCondDef]]
+
+        def innerConditionalStep = new ConditionalStep()
+        innerConditionalStep.conditionSet = innerCondSet
+        innerConditionalStep.subSteps = [
+            new CommandExec(adhocRemoteString: 'echo nested1'),
+            new CommandExec(adhocRemoteString: 'echo nested2')
+        ]
+
+        def outerConditionalStep = new ConditionalStep()
+        outerConditionalStep.conditionSet = outerCondSet
+        outerConditionalStep.subSteps = [innerConditionalStep]
+
+        def workflow = new WorkflowDataImpl()
+        def step1 = new CommandExec(adhocRemoteString: 'echo before')
+        def step2 = new CommandExec(adhocRemoteString: 'echo after')
+        workflow.steps = [step1, outerConditionalStep, step2]
+
+        when:
+        def result = factory.createExecutionItemForWorkflow(workflow)
+
+        then:
+        result != null
+        result.workflow.commands.size() == 4 // before, nested1, nested2, after
+
+        // Verify order and conditions
+        result.workflow.commands[0].conditions == null // before
+        result.workflow.commands[1].conditions != null // nested1
+        result.workflow.commands[2].conditions != null // nested2
+        result.workflow.commands[3].conditions == null // after
+    }
+
+    def "consolidateWorkflowSteps handles mixed nesting (conditional and non-conditional subSteps)"() {
+        given:
+        featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def outerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def outerCondSet = new ConditionalSetImpl()
+        outerCondSet.conditionGroups = [[outerCondDef]]
+
+        def innerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])
+        def innerCondSet = new ConditionalSetImpl()
+        innerCondSet.conditionGroups = [[innerCondDef]]
+
+        def innerConditionalStep = new ConditionalStep()
+        innerConditionalStep.conditionSet = innerCondSet
+        innerConditionalStep.subSteps = [
+            new CommandExec(adhocRemoteString: 'echo nested conditional')
+        ]
+
+        def outerConditionalStep = new ConditionalStep()
+        outerConditionalStep.conditionSet = outerCondSet
+        outerConditionalStep.subSteps = [
+            new CommandExec(adhocRemoteString: 'echo regular sub1'),
+            innerConditionalStep,
+            new CommandExec(adhocRemoteString: 'echo regular sub2')
+        ]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [outerConditionalStep]
+
+        when:
+        def result = factory.createExecutionItemForWorkflow(workflow)
+
+        then:
+        result != null
+        result.workflow.commands.size() == 3 // regular sub1, nested conditional, regular sub2
+
+        // All steps should have outer condition
+        result.workflow.commands[0].conditions != null
+        result.workflow.commands[0].conditions.conditionGroups[0].size() == 1 // only outer condition
+
+        // Middle step should have both conditions
+        result.workflow.commands[1].conditions != null
+        result.workflow.commands[1].conditions.conditionGroups[0].size() == 2 // outer + inner
+
+        // Last step should have outer condition
+        result.workflow.commands[2].conditions != null
+        result.workflow.commands[2].conditions.conditionGroups[0].size() == 1 // only outer condition
+    }
 }
 

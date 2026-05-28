@@ -189,6 +189,23 @@ class ExecutionUtilService {
     }
 
     private List<StepExecutionItem> consolidateWorkflowSteps(WorkflowData workflow, String parentProject, ConditionalSet conditionalSetParentJob) {
+        return consolidateWorkflowStepsRecursive(workflow.commands, parentProject, conditionalSetParentJob)
+    }
+
+    /**
+     * Recursively flatten conditional workflow steps, combining parent and child conditions
+     * @param steps list of workflow steps to process
+     * @param parentProject parent project for job references
+     * @param parentConditionSet combined conditions from all parent conditional steps
+     * @return flattened list of execution items with combined conditions
+     */
+    private List<StepExecutionItem> consolidateWorkflowStepsRecursive(
+            List<WorkflowStepData> steps,
+            String parentProject,
+            ConditionalSet parentConditionSet,
+            Integer parentStepNumber = null,
+            int[] subStepCounter = null
+    ) {
         boolean conditionalFeatureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
 
         List<StepExecutionItem> stepExecutionItems = []
@@ -199,44 +216,76 @@ class ExecutionUtilService {
         // workflow listeners can emit a hierarchical stepctx (e.g. "2/1") that aligns with
         // the job definition's step layout.
         int logicalStepNumber = 0
-        workflow.commands.each { command ->
+        steps.each { command ->
             logicalStepNumber++
-            if (!command.conditionSet) {
-                // Regular step: add it directly
+            if (command instanceof ConditionalStep && conditionalFeatureEnabled && command.conditionSet) {
+                ConditionalSet combinedConditionSet = combineConditionSets(parentConditionSet, command.conditionSet)
+                if (command.subSteps) {
+                    Integer rootParentStep = parentStepNumber != null ? parentStepNumber : logicalStepNumber
+                    int[] counter = subStepCounter ?: [0] as int[]
+                    List<StepExecutionItem> nestedItems = consolidateWorkflowStepsRecursive(
+                            command.subSteps,
+                            parentProject,
+                            combinedConditionSet,
+                            rootParentStep,
+                            counter
+                    )
+                    stepExecutionItems.addAll(nestedItems)
+                }
+            } else {
                 StepExecutionItem item = itemForWFCmdItem(
                         command,
                         command.errorHandler ? itemForWFCmdItem(command.errorHandler, null, parentProject) : null,
                         parentProject
                 )
-                if(conditionalSetParentJob){
-                    item.conditions = conditionalSetParentJob
+                if (parentConditionSet) {
+                    item.conditions = parentConditionSet
                 }
                 if (item != null) {
-                    markWithLogicalStepNumber(item, logicalStepNumber)
-                    stepExecutionItems.add(item)
-                }
-            } else if (conditionalFeatureEnabled && command.conditionSet) {
-                // Conditional step: add its substeps in place
-                if (command.subSteps) {
-                    int subStepIndex = 0
-                    command.subSteps.each { subStep ->
-                        subStepIndex++
-                        StepExecutionItem sei = itemForWFCmdItem(
-                                subStep,
-                                subStep.errorHandler ? itemForWFCmdItem(subStep.errorHandler, null, parentProject) : null,
-                                parentProject
-                        )
-                        if (sei != null) {
-                            sei.conditions = command.conditionSet
-                            markAsConditionalSubStep(sei, logicalStepNumber, subStepIndex)
-                            stepExecutionItems.add(sei)
-                        }
+                    if (parentStepNumber != null) {
+                        int[] counter = subStepCounter ?: [0] as int[]
+                        counter[0] = counter[0] + 1
+                        markAsConditionalSubStep(item, parentStepNumber, counter[0])
+                    } else {
+                        markWithLogicalStepNumber(item, logicalStepNumber)
                     }
+                    stepExecutionItems.add(item)
                 }
             }
         }
 
         stepExecutionItems
+    }
+
+    /**
+     * Combine two ConditionalSets using Cartesian product of OR groups to implement AND logic.
+     * Example: Parent [A, B] + Child [C, D] → Combined [A+C, A+D, B+C, B+D]
+     * All conditions in a group must be true (AND), at least one group must match (OR)
+     * @param parent parent conditional set (may be null)
+     * @param child child conditional set (may be null)
+     * @return combined conditional set, or the non-null input if one is null
+     */
+    private ConditionalSet combineConditionSets(ConditionalSet parent, ConditionalSet child) {
+        if (parent == null) return child
+        if (child == null) return parent
+
+        // Create a new combined ConditionalSet
+        def combined = new org.rundeck.app.data.workflow.ConditionalSetImpl()
+        combined.nodeStep = parent.nodeStep || child.nodeStep
+
+        // Cartesian product of condition groups (implements AND logic between parent and child)
+        List combinedGroups = []
+        parent.conditionGroups.each { parentGroup ->
+            child.conditionGroups.each { childGroup ->
+                // Merge AND groups: all conditions must be true
+                List mergedGroup = []
+                mergedGroup.addAll(parentGroup)
+                mergedGroup.addAll(childGroup)
+                combinedGroups.add(mergedGroup)
+            }
+        }
+        combined.conditionGroups = combinedGroups
+        return combined
     }
 
     /**
@@ -275,7 +324,6 @@ class ExecutionUtilService {
             ((JobRefCommandBase) item).setLogicalStepNumber(logicalStep)
         }
     }
-
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStepData step, final StepExecutionItem handler=null,final parentProject=null) throws FileNotFoundException {
         if(step.type == "conditional"){
