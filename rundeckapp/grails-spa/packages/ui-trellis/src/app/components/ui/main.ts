@@ -27,7 +27,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const elm = document.getElementsByClassName("vue-ui-socket");
   for (const elmElement of elm) {
     if (closest(elmElement, "vue-ui-socket-deferred")) {
-      return;
+      continue;
     }
     const eventName = elmElement.getAttribute("vue-socket-on");
     if (eventName) {
