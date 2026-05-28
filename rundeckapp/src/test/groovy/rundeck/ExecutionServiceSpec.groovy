@@ -97,11 +97,17 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import com.dtolabs.rundeck.core.audit.AuditEvent
+import com.dtolabs.rundeck.plugins.audit.AuditEventListener
+import rundeck.services.audit.AuditEventsService
+
 import java.sql.Timestamp
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by greg on 2/17/15.
@@ -322,25 +328,25 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getNodes(_, _) >> null
         }
 
-        // Capture the username passed to setUsername() on the builder
-        String capturedUsername = null
-        def auditSvc = Mock(rundeck.services.audit.AuditEventsService) {
-            _ * eventBuilder() >> new rundeck.services.audit.AuditEventsService().tap { svc ->
-                // We only need the builder to capture the username — stub publish() as no-op
-            }
-        }
-        // Use a simple Groovy metaClass trick: intercept via a real service instance with a listener
-        def realAuditSvc = new rundeck.services.audit.AuditEventsService()
-        realAuditSvc.frameworkService = Stub(FrameworkService) {
+        AuditEvent capturedEvent = null
+        CountDownLatch latch = new CountDownLatch(1)
+
+        def auditSvc = new AuditEventsService()
+        auditSvc.frameworkService = Stub(FrameworkService) {
             getServerUUID() >> 'test-uuid'
             getServerHostname() >> 'test-host'
         }
-        realAuditSvc.metaClass.dispatchEvent = { builder ->
-            capturedUsername = builder.username
-        }
-        service.auditEventsService = realAuditSvc
+        auditSvc.installedPlugins = [:]
+        auditSvc.addListener(new AuditEventListener() {
+            @Override
+            void onEvent(AuditEvent event) {
+                capturedEvent = event
+                latch.countDown()
+            }
+        })
+        service.auditEventsService = auditSvc
 
-        when: "execution is created — security context has no real user (simulates scheduled / anonymous contexts)"
+        when: "execution is created — security context has no real user (simulates scheduled/API/webhook contexts)"
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> contextUser
         }
@@ -350,11 +356,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 runAsUser,
                 [executionType: execType]
         )
+        latch.await(3, TimeUnit.SECONDS)
 
-        then: "audit event username is taken from execution.user, NOT from the security context"
+        then: "audit event username is taken from execution.user, not from the security context"
         e2 != null
         e2.user == expectedUser
-        capturedUsername == expectedUser
+        capturedEvent != null
+        capturedEvent.userInfo.username == expectedUser
 
         where:
         execType    | contextUser   | runAsUser      | expectedUser

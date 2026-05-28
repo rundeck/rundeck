@@ -2901,6 +2901,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(auditEventsService) {
             auditEventsService.eventBuilder()
                 .setResourceType(ResourceTypes.JOB)
+                .setResourceName("${jobReference.project}:${jobReference.jobAndGroup}")
                 .setResourceName("${se.project}:${se.uuid}:${se.generateFullName()}:${newExec.id}")
                 .setActionType(ActionTypes.RUN)
                 .setUsername(newExec.user)
