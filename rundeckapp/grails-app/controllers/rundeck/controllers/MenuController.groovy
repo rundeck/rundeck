@@ -2772,8 +2772,8 @@ Since: V18''',
                             if (scheduledExecution.dateCreated) {
                                 created(apiService.w3cDateValue(scheduledExecution.dateCreated))
                             }
-                            if (scheduledExecution.user) {
-                                createdBy(scheduledExecution.user)
+                            if (scheduledExecution.createdBy ?: scheduledExecution.user) {
+                                createdBy(scheduledExecution.createdBy ?: scheduledExecution.user)
                             }
                             if (scheduledExecution.lastUpdated) {
                                 lastModified(apiService.w3cDateValue(scheduledExecution.lastUpdated))
@@ -3055,8 +3055,8 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                                 description(se.description)
                                 if (request.api_version >= ApiVersions.V56) {
                                     created(apiService.w3cDateValue(se.dateCreated))
-                                    if (se.user) {
-                                        createdBy(se.user)
+                                    if (se.createdBy ?: se.user) {
+                                        createdBy(se.createdBy ?: se.user)
                                     }
                                     if (se.lastUpdated) {
                                         lastModified(apiService.w3cDateValue(se.lastUpdated))

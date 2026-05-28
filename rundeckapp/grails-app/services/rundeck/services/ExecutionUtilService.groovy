@@ -29,6 +29,8 @@ import org.rundeck.core.execution.ScriptCommand
 import org.rundeck.core.execution.ScriptFileCommand
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.PluginStepExecutionItemImpl
+import com.dtolabs.rundeck.core.jobs.JobRefCommandBase
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
@@ -188,11 +190,17 @@ class ExecutionUtilService {
 
     private List<StepExecutionItem> consolidateWorkflowSteps(WorkflowData workflow, String parentProject, ConditionalSet conditionalSetParentJob) {
         boolean conditionalFeatureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
-        
+
         List<StepExecutionItem> stepExecutionItems = []
-        
-        // Iterate through commands in order to preserve the original sequence
+
+        // Iterate through commands in order to preserve the original sequence.
+        // The "logical" step number tracks the index in the original (un-flattened) job
+        // definition; conditional sub-steps inherit it as their parent step number so the
+        // workflow listeners can emit a hierarchical stepctx (e.g. "2/1") that aligns with
+        // the job definition's step layout.
+        int logicalStepNumber = 0
         workflow.commands.each { command ->
+            logicalStepNumber++
             if (!command.conditionSet) {
                 // Regular step: add it directly
                 StepExecutionItem item = itemForWFCmdItem(
@@ -204,12 +212,15 @@ class ExecutionUtilService {
                     item.conditions = conditionalSetParentJob
                 }
                 if (item != null) {
+                    markWithLogicalStepNumber(item, logicalStepNumber)
                     stepExecutionItems.add(item)
                 }
             } else if (conditionalFeatureEnabled && command.conditionSet) {
                 // Conditional step: add its substeps in place
                 if (command.subSteps) {
+                    int subStepIndex = 0
                     command.subSteps.each { subStep ->
+                        subStepIndex++
                         StepExecutionItem sei = itemForWFCmdItem(
                                 subStep,
                                 subStep.errorHandler ? itemForWFCmdItem(subStep.errorHandler, null, parentProject) : null,
@@ -217,14 +228,52 @@ class ExecutionUtilService {
                         )
                         if (sei != null) {
                             sei.conditions = command.conditionSet
+                            markAsConditionalSubStep(sei, logicalStepNumber, subStepIndex)
                             stepExecutionItems.add(sei)
                         }
                     }
                 }
             }
         }
-        
+
         stepExecutionItems
+    }
+
+    /**
+     * Promote a flattened conditional sub-step item so it implements
+     * {@link com.dtolabs.rundeck.core.execution.workflow.HasParentStepContext} with the
+     * given parent step number (1-based index in the original job definition) and sub-step
+     * number (1-based index within the parent's sub-step list).
+     * Also stamps {@code logicalStepNumber = parentStep} so the listener can map the
+     * flat engine index back to the correct logical step slot in the state tree.
+     *
+     * If the item type does not support promotion the call is a no-op; the item will be
+     * treated as a flat top-level step and produce non-hierarchical stepctx in logs.
+     */
+    private static void markAsConditionalSubStep(StepExecutionItem item, int parentStep, int subStep) {
+        if (item instanceof PluginStepExecutionItemImpl) {
+            ((PluginStepExecutionItemImpl) item).setParentStepNumber(parentStep)
+            ((PluginStepExecutionItemImpl) item).setSubStepNumber(subStep)
+            ((PluginStepExecutionItemImpl) item).setLogicalStepNumber(parentStep)
+        } else if (item instanceof JobRefCommandBase) {
+            ((JobRefCommandBase) item).setParentStepNumber(parentStep)
+            ((JobRefCommandBase) item).setSubStepNumber(subStep)
+            ((JobRefCommandBase) item).setLogicalStepNumber(parentStep)
+        }
+    }
+
+    /**
+     * Stamp a regular (non-conditional) step with its 1-based logical step number in the
+     * original job definition so that workflow listeners can emit the correct step context
+     * even when the flat engine step number differs (e.g., after conditional sub-steps
+     * were expanded into the engine list).
+     */
+    private static void markWithLogicalStepNumber(StepExecutionItem item, int logicalStep) {
+        if (item instanceof PluginStepExecutionItemImpl) {
+            ((PluginStepExecutionItemImpl) item).setLogicalStepNumber(logicalStep)
+        } else if (item instanceof JobRefCommandBase) {
+            ((JobRefCommandBase) item).setLogicalStepNumber(logicalStep)
+        }
     }
 
 

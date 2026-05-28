@@ -17,6 +17,7 @@
 package rundeck.services
 
 
+import com.dtolabs.rundeck.core.execution.PluginNodeStepExecutionItemImpl
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowImpl
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStateDataLoader
@@ -74,6 +75,76 @@ class WorkflowServiceSpec extends Specification implements ServiceUnitTest<Workf
 
         then:
         1 * service.scheduledExecutionService.findJobFromJobReference(_,jobProject)
+    }
+
+    def "createStateForWorkflow groups flattened conditional sub-steps under a single parent slot"() {
+        given:
+        // Simulate the output of ExecutionUtilService.consolidateWorkflowSteps for a job with
+        // [step1, conditional(sub1, sub2), step3]: a flat 4-item list where sub1 and sub2 carry
+        // the parent/sub-step indices that should produce a hierarchical state tree.
+        def step1 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'step1', null)
+
+        def sub1 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'sub1', null)
+        sub1.parentStepNumber = 2
+        sub1.subStepNumber = 1
+
+        def sub2 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'sub2', null)
+        sub2.parentStepNumber = 2
+        sub2.subStepNumber = 2
+
+        def step3 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'step3', null)
+
+        WorkflowImpl workflow = new WorkflowImpl([step1, sub1, sub2, step3], 0, false, "")
+
+        when:
+        def state = service.createStateForWorkflow(workflow, 'proj1', 'frameworkNode', null, null)
+
+        then:
+        // Three logical slots (not four) — the conditional collapses sub1+sub2 into one slot.
+        state.stepCount == 3
+        state.mutableStepStates.size() == 3
+        // Slot 1 (index 0): step1 - plain step, no sub-workflow
+        !state.mutableStepStates[0].hasSubWorkflow()
+        state.mutableStepStates[0].stepIdentifier.context*.step == [1]
+        // Slot 2 (index 1): conditional group at logical step 2, has sub-workflow
+        state.mutableStepStates[1].hasSubWorkflow()
+        state.mutableStepStates[1].stepIdentifier.context*.step == [2]
+        def innerWf = state.mutableStepStates[1].mutableSubWorkflowState
+        innerWf.stepCount == 2
+        // Inner sub-workflow steps use LOCAL 1-based identifiers ([1], [2]).
+        // The serializer concatenates the outer parent context to produce stepctx "2/1", "2/2".
+        innerWf.mutableStepStates[0].stepIdentifier.context*.step == [1]
+        innerWf.mutableStepStates[1].stepIdentifier.context*.step == [2]
+        // Slot 3: step3 lives at logical step 3, NOT at flat step 4
+        !state.mutableStepStates[2].hasSubWorkflow()
+        state.mutableStepStates[2].stepIdentifier.context*.step == [3]
+    }
+
+    def "createStateForWorkflow handles two consecutive conditional groups"() {
+        given:
+        def c1Sub1 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'c1-a', null)
+        c1Sub1.parentStepNumber = 1
+        c1Sub1.subStepNumber = 1
+
+        def c2Sub1 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'c2-a', null)
+        c2Sub1.parentStepNumber = 2
+        c2Sub1.subStepNumber = 1
+
+        def c2Sub2 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'c2-b', null)
+        c2Sub2.parentStepNumber = 2
+        c2Sub2.subStepNumber = 2
+
+        WorkflowImpl workflow = new WorkflowImpl([c1Sub1, c2Sub1, c2Sub2], 0, false, "")
+
+        when:
+        def state = service.createStateForWorkflow(workflow, 'proj1', 'frameworkNode', null, null)
+
+        then:
+        state.stepCount == 2
+        state.mutableStepStates[0].hasSubWorkflow()
+        state.mutableStepStates[0].mutableSubWorkflowState.stepCount == 1
+        state.mutableStepStates[1].hasSubWorkflow()
+        state.mutableStepStates[1].mutableSubWorkflowState.stepCount == 2
     }
 
     def "state mapping"(){
