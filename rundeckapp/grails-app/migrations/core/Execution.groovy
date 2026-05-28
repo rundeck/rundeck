@@ -191,4 +191,38 @@ databaseChangeLog = {
             column(name: "job_uuid")
         }
     }
+
+
+    changeSet(author: "rundeckdev", id: "add-project-stat-canc-status-index") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(indexName: "EXEC_IDX_PROJ_STAT_CANC_DATE", tableName: "execution")
+            }
+        }
+
+        createIndex(indexName: "EXEC_IDX_PROJ_STAT_CANC_DATE", tableName: "execution", unique: false) {
+            column(name: "project")
+            column(name: "status")
+            column(name: "cancelled")
+            column(name: "date_completed")
+        }
+    }
+
+    changeSet(author: "rundeckdev", id: "add-job-stat-canc-status-index") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(indexName: "EXEC_IDX_JOB_PROJ_DATE", tableName: "execution")
+            }
+        }
+
+        createIndex(indexName: "EXEC_IDX_JOB_PROJ_DATE", tableName: "execution", unique: false) {
+            column(name: "job_uuid")
+            column(name: "project")
+            column(name: "date_completed")
+            column(name: "status")
+            column(name: "cancelled")
+        }
+    }
+
+
 }
