@@ -78,10 +78,12 @@ class MainbarMenuPage extends BasePage {
     }
 
     boolean isSysConfigDropdownOpen() {
-        els(sysConfigOpenBy).size() > 0
+        waitForElementVisible(sysConfigOpenBy)
+        el(sysConfigOpenBy).isDisplayed()
     }
 
     boolean isUserMenuDropdownOpen() {
-        els(userMenuOpenBy).size() > 0
+        waitForElementVisible(userMenuOpenBy)
+        el(userMenuOpenBy).isDisplayed()
     }
 }
