@@ -28,6 +28,7 @@ import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
 import rundeck.ExecReport
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ConfigurationService
@@ -119,6 +120,46 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         execIds.size() == sucessTotal
         0 == Execution.countByProject(projName)
         0 == ExecReport.countByProject(projName)
+    }
+
+    def "deleteByExecutionList removes LogFileStorageRequest before deleting Execution to avoid FK constraint"() {
+        given:
+        String projName = 'projectTestLogStorage'
+        def logFileStorageService = Mock(LogFileStorageService)
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+        Date execDate = new Date(2015 - 1900, 02, 03)
+
+        ScheduledExecution se = setupJob(projName)
+        FrameworkService frameworkService = initNonClusterFrameworkService()
+        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
+
+        Execution.withTransaction {
+            new LogFileStorageRequest(
+                execution: Execution.get(execution.id),
+                pluginName: 'com.rundeck.rundeckpro.amazon-s3',
+                filetype: '*',
+                completed: true
+            ).save(flush: true, failOnError: true)
+        }
+
+        expect:
+        1 == Execution.countByProject(projName)
+        1 == LogFileStorageRequest.countByExecution(execution)
+
+        when:
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
+        int deleted = job.deleteByExecutionList(
+            [execution.id],
+            new FileUploadService(),
+            logFileStorageService,
+            referencedExecutionDataProvider,
+            reportService
+        )
+
+        then:
+        deleted == 1
+        0 == Execution.countByProject(projName)
+        0 == LogFileStorageRequest.countByExecution(execution)
     }
 
     private FrameworkService initNonClusterFrameworkService() {
