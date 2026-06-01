@@ -812,6 +812,19 @@ class LogFileStorageService
         )
         return logFileStorageRequestProvider.create(newData)
     }
+
+    /**
+     * Remove the LogFileStorageRequest associated with the execution, if any.
+     * Must be called before deleting an Execution, since there is no GORM
+     * cascade from Execution to LogFileStorageRequest and a foreign key
+     * references the execution id.
+     * @param e execution
+     */
+    void removeStorageRequestForExecution(Execution e) {
+        if (e?.uuid) {
+            logFileStorageRequestProvider.delete(e.uuid)
+        }
+    }
     public Map getStorageStats() {
         def props=frameworkService.getFrameworkProperties()
         def countMissing = props.getProperty('framework.storage.missing')

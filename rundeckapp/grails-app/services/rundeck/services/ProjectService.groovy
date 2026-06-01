@@ -74,6 +74,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import retrofit2.Converter
 import rundeck.Execution
@@ -81,11 +83,13 @@ import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.data.util.ExecReportUtil
+import com.dtolabs.rundeck.core.config.Features
 import rundeck.services.asyncimport.AsyncImportEvents
 import rundeck.services.asyncimport.AsyncImportException
 import rundeck.services.asyncimport.AsyncImportMilestone
 import rundeck.services.asyncimport.AsyncImportService
 import rundeck.services.asyncimport.AsyncImportStatusDTO
+import rundeck.services.feature.FeatureService
 import rundeck.services.logging.ProducedExecutionFile
 import webhooks.component.project.WebhooksProjectComponent
 
@@ -126,6 +130,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
     ExecReportDataProvider execReportDataProvider
+    FeatureService featureService
 
     static transactional = false
 
@@ -1901,6 +1906,25 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         log.error("Failed to move temp state file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
                     }
                 }
+
+                //materialize {newId}.execution.xml so that the configured log storage
+                //plugin can upload it alongside the rdlog/state.json. At runtime this
+                //is created by ExecutionUtilService.finishExecutionLogging; on import
+                //we have to produce it ourselves since it isn't part of the archive.
+                if (configurationService.getBoolean('execution.logs.fileStorage.generateExecutionXml', true)) {
+                    try {
+                        File xmlFile = logFileStorageService.getFileForExecutionFiletype(
+                                e,
+                                EXECUTION_XML_LOG_FILETYPE,
+                                false,
+                                false
+                        )
+                        executionUtilService.getExecutionXmlFileForExecution(e, xmlFile)
+                    } catch (Exception exc) {
+                        execerrors << "Failed to generate execution.xml for imported execution ${e.id}: ${exc.message}"
+                        log.error("Failed to generate execution.xml for imported execution ${e.id}", exc)
+                    }
+                }
             }
         }
         //reassign retry execution links
@@ -1918,6 +1942,32 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     execerrors << "Failed to link retry for ${e.id} to ${retryexecs[e]}"
                     log.error("Failed to link retry for ${e.id} to ${retryexecs[e]}")
                 }
+            }
+        }
+        //queue imported executions for upload to the configured log storage plugin
+        //after the import transaction commits, so the async storage workers can
+        //find the new Execution rows in the database.
+        def submitImportedForStorage = featureService.featurePresent(Features.IMPORT_EXECUTIONS_LOG_STORAGE, false)
+        if (submitImportedForStorage && !loadexecresults.isEmpty()) {
+            List<String> importedExecutionUuids = loadexecresults*.uuid
+            Runnable submitImportedExecutionsForStorage = {
+                importedExecutionUuids.each { String uuid ->
+                    try {
+                        logFileStorageService.submitForStorage(uuid)
+                    } catch (Exception exc) {
+                        log.error("Failed to submit imported execution ${uuid} for log storage", exc)
+                    }
+                }
+            }
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    void afterCommit() {
+                        submitImportedExecutionsForStorage.run()
+                    }
+                })
+            } else {
+                submitImportedExecutionsForStorage.run()
             }
         }
         log.info("Loaded ${loadexecresults.size()} executions, map: ${execidmap}")

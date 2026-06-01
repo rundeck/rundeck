@@ -2215,6 +2215,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             log.debug("${files.size()} files from execution will be deleted")
             logExecutionLog4j(e, "delete", username)
+            //remove the log file storage request (no GORM cascade from Execution)
+            logFileStorageService.removeStorageRequestForExecution(e)
             //delete execution
             //find an execution that this is a retry for
             Execution.findAllByRetryExecution(e).each{e2->

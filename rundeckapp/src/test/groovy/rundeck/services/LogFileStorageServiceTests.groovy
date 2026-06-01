@@ -25,6 +25,7 @@ import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.junit.Ignore
 import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
+import org.rundeck.app.data.providers.v1.logstorage.LogFileStorageRequestProvider
 import org.springframework.core.task.TaskExecutor
 import spock.lang.Specification
 
@@ -91,6 +92,32 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
     @org.junit.Before
     void before() {
         LogFileStorageRequest.metaClass.static.withNewSession = {Closure c -> c.call() }
+    }
+
+    def "removeStorageRequestForExecution deletes the storage request by execution uuid"() {
+        given:
+        def exec = new Execution(uuid: 'test-uuid-123')
+        service.logFileStorageRequestProvider = Mock(LogFileStorageRequestProvider)
+
+        when:
+        service.removeStorageRequestForExecution(exec)
+
+        then:
+        1 * service.logFileStorageRequestProvider.delete('test-uuid-123')
+    }
+
+    def "removeStorageRequestForExecution is a no-op when execution or uuid is null"() {
+        given:
+        service.logFileStorageRequestProvider = Mock(LogFileStorageRequestProvider)
+
+        when:
+        service.removeStorageRequestForExecution(execution)
+
+        then:
+        0 * service.logFileStorageRequestProvider.delete(_)
+
+        where:
+        execution << [null, new Execution(uuid: null)]
     }
 
 

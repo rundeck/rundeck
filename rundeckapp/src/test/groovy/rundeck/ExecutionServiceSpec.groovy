@@ -1385,6 +1385,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getExecutionFiles(execution, [], false) >> executionFiles
             1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
             1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
+            1 * removeStorageRequestForExecution(execution)
             0 * _(*_)
         }
 
@@ -1450,6 +1451,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getExecutionFiles(execution, [], false) >> executionFiles
             1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
             1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
+            1 * removeStorageRequestForExecution(execution)
             0 * _(*_)
         }
 

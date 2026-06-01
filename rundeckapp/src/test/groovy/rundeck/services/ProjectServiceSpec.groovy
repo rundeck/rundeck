@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.config.Features
+import rundeck.services.feature.FeatureService
 import com.dtolabs.rundeck.net.api.RundeckApi
 import com.dtolabs.rundeck.net.api.RundeckClient
 import com.dtolabs.rundeck.net.model.ProjectImportStatus
@@ -94,6 +96,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         mockDomain ExecReport
         mockDomain ScheduledExecution
         mockDomain Execution
+        mockDomain Workflow
         mockDomain LogFileStorageRequest
         mockDomain CommandExec
         mockDomain JobExec
@@ -2740,6 +2743,116 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         assertEquals 2,result.executions.size()
 
     }
+
+    private Map setupImportExecutionsTest() {
+        File xmlFile = File.createTempFile("execution-import", ".xml")
+        xmlFile.deleteOnExit()
+        xmlFile.text = EXEC_XML_TEST2
+
+        File rdlog = File.createTempFile("output-import", ".rdlog")
+        rdlog.deleteOnExit()
+        rdlog.text = 'imported log contents'
+
+        //destination for the moved rdlog: must not exist for FileUtils.moveFile
+        File rdlogDest = File.createTempFile("output-dest", ".rdlog")
+        rdlogDest.delete()
+
+        [
+            xmlFile   : xmlFile,
+            rdlog     : rdlog,
+            rdlogDest : rdlogDest,
+            execout   : ['output-1.rdlog': rdlog] as Map<String, File>,
+            execxmlmap: [(xmlFile): 'executions/execution-1.xml']
+        ]
+    }
+
+    def "importExecutionsToProject submits imported executions for log storage when feature enabled"() {
+        given:
+        def f = setupImportExecutionsTest()
+        service.featureService = Mock(FeatureService)
+        service.configurationService = Mock(ConfigurationService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.logFileStorageService = Mock(LogFileStorageService)
+
+        when:
+        def result = service.importExecutionsToProject(
+            [f.xmlFile], f.execout, 'testproj', Mock(IFramework), null, [], f.execxmlmap, []
+        )
+
+        then:
+        result.size() == 1
+        1 * service.featureService.featurePresent(Features.IMPORT_EXECUTIONS_LOG_STORAGE, false) >> true
+        _ * service.configurationService.getBoolean('execution.logs.fileStorage.generateExecutionXml', _) >> false
+        1 * service.logFileStorageService.getFileForExecutionFiletype(_, 'rdlog', false, false) >> f.rdlogDest
+        1 * service.logFileStorageService.submitForStorage(_ as String)
+    }
+
+    def "importExecutionsToProject does not submit for log storage when feature disabled"() {
+        given:
+        def f = setupImportExecutionsTest()
+        service.featureService = Mock(FeatureService)
+        service.configurationService = Mock(ConfigurationService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.logFileStorageService = Mock(LogFileStorageService)
+
+        when:
+        def result = service.importExecutionsToProject(
+            [f.xmlFile], f.execout, 'testproj', Mock(IFramework), null, [], f.execxmlmap, []
+        )
+
+        then:
+        result.size() == 1
+        1 * service.featureService.featurePresent(Features.IMPORT_EXECUTIONS_LOG_STORAGE, false) >> false
+        _ * service.configurationService.getBoolean('execution.logs.fileStorage.generateExecutionXml', _) >> false
+        1 * service.logFileStorageService.getFileForExecutionFiletype(_, 'rdlog', false, false) >> f.rdlogDest
+        0 * service.logFileStorageService.submitForStorage(_)
+    }
+
+    def "importExecutionsToProject materializes execution.xml when generateExecutionXml enabled"() {
+        given:
+        def f = setupImportExecutionsTest()
+        File xmlDest = File.createTempFile("execution-xml-dest", ".execution.xml")
+        xmlDest.deleteOnExit()
+        service.featureService = Mock(FeatureService)
+        service.configurationService = Mock(ConfigurationService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.logFileStorageService = Mock(LogFileStorageService)
+
+        when:
+        def result = service.importExecutionsToProject(
+            [f.xmlFile], f.execout, 'testproj', Mock(IFramework), null, [], f.execxmlmap, []
+        )
+
+        then:
+        result.size() == 1
+        _ * service.featureService.featurePresent(Features.IMPORT_EXECUTIONS_LOG_STORAGE, false) >> false
+        1 * service.configurationService.getBoolean('execution.logs.fileStorage.generateExecutionXml', _) >> true
+        1 * service.logFileStorageService.getFileForExecutionFiletype(_, 'rdlog', false, false) >> f.rdlogDest
+        1 * service.logFileStorageService.getFileForExecutionFiletype(_, 'execution.xml', false, false) >> xmlDest
+        1 * service.executionUtilService.getExecutionXmlFileForExecution(_, xmlDest)
+    }
+
+    def "importExecutionsToProject does not materialize execution.xml when generateExecutionXml disabled"() {
+        given:
+        def f = setupImportExecutionsTest()
+        service.featureService = Mock(FeatureService)
+        service.configurationService = Mock(ConfigurationService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.logFileStorageService = Mock(LogFileStorageService)
+
+        when:
+        def result = service.importExecutionsToProject(
+            [f.xmlFile], f.execout, 'testproj', Mock(IFramework), null, [], f.execxmlmap, []
+        )
+
+        then:
+        result.size() == 1
+        _ * service.featureService.featurePresent(Features.IMPORT_EXECUTIONS_LOG_STORAGE, false) >> false
+        1 * service.configurationService.getBoolean('execution.logs.fileStorage.generateExecutionXml', _) >> false
+        1 * service.logFileStorageService.getFileForExecutionFiletype(_, 'rdlog', false, false) >> f.rdlogDest
+        0 * service.executionUtilService.getExecutionXmlFileForExecution(_, _)
+    }
+
     public void  assertPropertiesEquals(Map data, Object obj){
         data.each{k,v->
             def test=obj[k]

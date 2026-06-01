@@ -119,6 +119,8 @@ class ExecutionsCleanUp implements InterruptableJob {
             fileUploadService.deleteRecordsForExecution(e)
 
             logger.debug("${files.size()} files from execution will be deleted")
+            //remove the log file storage request (no GORM cascade from Execution)
+            logFileStorageService.removeStorageRequestForExecution(e)
             //delete execution
             //find an execution that this is a retry for
             Execution.findAllByRetryExecution(e).each{e2->
