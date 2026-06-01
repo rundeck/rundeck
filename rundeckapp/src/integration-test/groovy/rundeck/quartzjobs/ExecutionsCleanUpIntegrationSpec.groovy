@@ -136,7 +136,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         Execution.withTransaction {
             new LogFileStorageRequest(
                 execution: Execution.get(execution.id),
-                pluginName: 'com.rundeck.rundeckpro.amazon-s3',
+                pluginName: 'test1',
                 filetype: '*',
                 completed: true
             ).save(flush: true, failOnError: true)
