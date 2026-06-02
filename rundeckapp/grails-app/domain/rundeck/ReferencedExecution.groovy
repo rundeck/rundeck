@@ -26,48 +26,21 @@ class ReferencedExecution implements RdReferencedExecution{
     }
 
     static List<JobDataSummary> parentJobSummaries(String jobUuid, int max = 0){
-        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
-        // Fallback to criteria for DataTest compatibility
-        try {
-            String hql = '''
-                SELECT DISTINCT e.scheduledExecution 
-                FROM ReferencedExecution re 
-                LEFT JOIN re.execution e 
-                WHERE re.jobUuid = :jobUuid 
-                AND e.scheduledExecution IS NOT NULL
-            '''
-            def results = executeQuery(hql, [jobUuid: jobUuid])
-            if (max > 0 && results.size() > max) {
-                results = results[0..<max]
-            }
-            return results*.toJobDataSummary()
-        } catch (UnsupportedOperationException e) {
-            // DataTest fallback: Load objects and extract scheduledExecution values
-            def results = findAllByJobUuid(jobUuid, [max: max > 0 ? max : null])
-            return results*.execution*.scheduledExecution.findAll { it != null }.unique()*.toJobDataSummary()
+        List refs = findAllByJobUuid(jobUuid)
+        List seList = refs*.execution*.scheduledExecution.findAll { it != null }.unique()
+        if (max > 0 && seList.size() > max) {
+            seList = seList[0..<max]
         }
+        return seList*.toJobDataSummary()
     }
 
     static List<String> executionProjectList(String jobUuid, int max = 0){
-        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
-        // Fallback to criteria for DataTest compatibility
-        try {
-            String hql = '''
-                SELECT DISTINCT e.project 
-                FROM ReferencedExecution re 
-                LEFT JOIN re.execution e 
-                WHERE re.jobUuid = :jobUuid
-            '''
-            def results = executeQuery(hql, [jobUuid: jobUuid])
-            if (max > 0 && results.size() > max) {
-                results = results[0..<max]
-            }
-            return results as List<String>
-        } catch (UnsupportedOperationException e) {
-            // DataTest fallback: Load objects and extract project values
-            def results = findAllByJobUuid(jobUuid, [max: max > 0 ? max : null])
-            return results*.execution*.project.findAll { it != null }.unique() as List<String>
+        List refs = findAllByJobUuid(jobUuid)
+        List projects = refs*.execution*.project.findAll { it != null }.unique()
+        if (max > 0 && projects.size() > max) {
+            projects = projects[0..<max]
         }
+        return projects as List<String>
     }
 
     Serializable getExecutionId(){
