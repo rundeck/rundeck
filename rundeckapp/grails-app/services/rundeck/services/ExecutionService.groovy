@@ -2220,6 +2220,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
+            LogFileStorageRequest.findByExecution(e)?.delete(flush: true)
             e.delete()
             //delete all files
             def deletedfiles = 0
