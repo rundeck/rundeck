@@ -125,13 +125,14 @@ public class ZipResourceLoader implements PluginResourceLoader {
     /**
      * Resolve asset path via manifest.properties for Grails 7 hashed filenames.
      * Falls back to original path if manifest not found or path not in manifest.
-     * 
-     * Handles subdirectory paths: plugin.yaml may reference "js/common.js" while
-     * manifest.properties contains "common.js=common-HASH.js". Asset-pipeline puts
-     * hashed files at the root of resources/, not in subdirectories.
-     * 
-     * @param path Original path from plugin.yaml (e.g., "js/common.js" or "common.js")
-     * @return Resolved path (e.g., "common-HASH.js") or original path if not in manifest
+     *
+     * Asset-pipeline strips the top-level type directory (js/, css/, …) when writing
+     * manifest keys, so plugin.yaml "js/menu/aclmanager.js" maps to manifest key
+     * "menu/aclmanager.js". This method strips leading segments progressively until
+     * a manifest entry is found.
+     *
+     * @param path Original path from plugin.yaml (e.g., "js/menu/aclmanager.js")
+     * @return Resolved path (e.g., "menu/aclmanager-HASH.js") or original if not in manifest
      */
     private String resolveAssetPath(String path) {
         // Load manifest on first use (lazy initialization)
@@ -146,26 +147,28 @@ public class ZipResourceLoader implements PluginResourceLoader {
                 }
             }
         }
-        
-        // Try direct lookup first (for backwards compatibility with pre-Grails 7 plugins)
+
+        // Try direct lookup first (backwards compatible with pre-Grails 7 plugins)
         String resolved = assetManifest.getProperty(path);
         if (resolved != null) {
             return resolved;
         }
-        
-        // Try stripping subdirectory for Grails 7 asset-pipeline manifests
-        // Example: "js/common.js" -> lookup "common.js" in manifest -> "common-HASH.js"
-        // Note: Asset-pipeline places hashed files at ROOT of resources/, so we DON'T re-add subdir
-        int lastSlash = path.lastIndexOf('/');
-        if (lastSlash >= 0) {
-            String filename = path.substring(lastSlash + 1); // "common.js"
-            String hashedFilename = assetManifest.getProperty(filename);
-            if (hashedFilename != null) {
-                return hashedFilename; // "common-HASH.js" (at root, no subdir prefix)
+
+        // Progressively strip leading path segments until a manifest entry is found.
+        // "js/menu/aclmanager.js" -> try "menu/aclmanager.js" -> found -> "menu/aclmanager-HASH.js"
+        // "js/common.js"          -> try "common.js"          -> found -> "common-HASH.js"
+        String remaining = path;
+        int slash = remaining.indexOf('/');
+        while (slash >= 0) {
+            remaining = remaining.substring(slash + 1);
+            String hashedPath = assetManifest.getProperty(remaining);
+            if (hashedPath != null) {
+                return hashedPath;
             }
+            slash = remaining.indexOf('/');
         }
-        
-        // Fallback: return original path (backwards compatible for non-hashed assets)
+
+        // Fallback: return original path (non-hashed static assets)
         return path;
     }
 
