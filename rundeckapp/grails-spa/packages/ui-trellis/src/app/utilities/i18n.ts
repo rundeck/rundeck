@@ -46,9 +46,17 @@ const initI18n = (options = {}) => {
   });
 };
 
-const updateLocaleMessages = async (i18n: I18n, locale: string, lang: string, messages: Record<string, any>) => {
+const updateLocaleMessages = async (
+  i18n: I18n,
+  locale: string,
+  lang: string,
+  messages: Record<string, any>,
+) => {
   //include previously loaded messages
-  const merged = mergeDeep((i18n.global.getLocaleMessage(locale) as Record<string, any>) || {}, messages);
+  const merged = mergeDeep(
+    (i18n.global.getLocaleMessage(locale) as Record<string, any>) || {},
+    messages,
+  );
   i18n.global.setLocaleMessage(locale, merged);
   return nextTick();
 };

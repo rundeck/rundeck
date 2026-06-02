@@ -67,6 +67,7 @@ module.exports = {
     "pages/job/head/scm-status-badge": {
       entry: "./src/app/pages/job/head/scm/scm-status-badge.ts",
     },
+    "pages/user-list": { entry: "./src/app/pages/user-list/main.ts" },
   },
   publicPath: "/assets/static/",
   outputDir: process.env.VUE_APP_OUTPUT_DIR,

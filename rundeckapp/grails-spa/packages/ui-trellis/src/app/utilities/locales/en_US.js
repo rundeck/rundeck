@@ -1,4 +1,8 @@
 const messages = {
+  "user.list.title": "User List",
+  "user.list.heading": "Users",
+  "user.list.newProfile": "New Profile …",
+  "button.action.edit": "edit",
   Edit: "Edit",
   Save: "Save",
   Delete: "Delete",
@@ -175,9 +179,9 @@ const messages = {
     "Clear all {0} selected items, or only items shown on this page?",
   "bulk.selected.count": "{0} selected",
   "results.empty.text": "No results for the query",
-  "noResultsFound": "No results found",
-  "noMatchesFound": "No matches found",
-  "noMatchesFoundSecondary": "Please try another search.",
+  noResultsFound: "No results found",
+  noMatchesFound: "No matches found",
+  noMatchesFoundSecondary: "Please try another search.",
   "Only shown executions": "Only shown executions",
   "Clear bulk selection": "Clear Bulk Selection",
   "Click to edit Search Query": "Click to edit Search Query",
@@ -479,7 +483,7 @@ const messages = {
   "gui.menu.Scm": "Setup SCM",
   "import.archive": "Import Archive",
   "import.archive.ellipsis": "Import Archive...",
-  "message_cancel": "Cancel",
+  message_cancel: "Cancel",
   "no.nodes.selected.match.nodes.by.selecting.or.entering.a.filter":
     "No Nodes selected. Match nodes by selecting or entering a filter.",
   "none.configured.click.plugin.to.add.a.new.plugin":
@@ -503,8 +507,7 @@ const messages = {
   "scheduledExecution.property.retry.label": "Retry",
   "scheduledExecution.property.timeout.label": "Timeout",
   "scheduledExecution.property.timeout.title": "Timeout",
-  "step.type.jobreference.nodestep.description":
-    "Run a job on the remote node",
+  "step.type.jobreference.nodestep.description": "Run a job on the remote node",
   "step.type.jobreference.title": "Job Reference",
   Enhancers: "Enhancers",
   Yes: "Yes",
@@ -786,7 +789,8 @@ const messages = {
   "settings.support.title": "Support",
   "settings.support.label": "Support",
   "settings.theme.title": "Theme",
-  "settings.theme.description": "Select your preferred visual theme for the interface.",
+  "settings.theme.description":
+    "Select your preferred visual theme for the interface.",
   "settings.theme.options.system": "System",
   "settings.theme.options.light": "Light",
   "settings.theme.options.dark": "Dark",
@@ -796,13 +800,17 @@ const messages = {
   "settings.nextUi.available": "Next UI available",
   "settings.nextUi.enabled": "Next UI enabled",
   "settings.uiEarlyAccess.title": "UI Early Access",
-  "settings.uiEarlyAccess.description": "We're incrementally improving the Rundeck UI. Enable early access below to try new features as they're released. Please note: Early access features may contain bugs or incomplete functionality. We strongly encourage you to submit feedback or report issues through a support ticket.",
+  "settings.uiEarlyAccess.description":
+    "We're incrementally improving the Rundeck UI. Enable early access below to try new features as they're released. Please note: Early access features may contain bugs or incomplete functionality. We strongly encourage you to submit feedback or report issues through a support ticket.",
   "settings.uiEarlyAccess.enableLabel": "Enable Next UI",
-  "settings.uiEarlyAccess.feature1": "When enabled, you'll see experimental UI updates throughout the product. A small indicator at the bottom of the page will show when you're viewing an early access feature.",
+  "settings.uiEarlyAccess.feature1":
+    "When enabled, you'll see experimental UI updates throughout the product. A small indicator at the bottom of the page will show when you're viewing an early access feature.",
   "settings.uiEarlyAccess.learnMore": "Learn more",
   "settings.uiEarlyAccess.feedbackLink": "Give feedback on Early Access",
-  "settings.uiEarlyAccess.toast.enabled": "Next UI early access enabled. You can switch back anytime.",
-  "settings.uiEarlyAccess.toast.disabled": "Next UI has been turned off. You can switch back anytime.",
+  "settings.uiEarlyAccess.toast.enabled":
+    "Next UI early access enabled. You can switch back anytime.",
+  "settings.uiEarlyAccess.toast.disabled":
+    "Next UI has been turned off. You can switch back anytime.",
   "page.section.title.AllJobs": "All Jobs",
   "advanced.search": "Advanced",
   "jobs.advanced.search.title": "Click to modify filter",
@@ -1125,7 +1133,8 @@ const messages = {
       label: "Job Steps",
     },
     logFilters: "Log Filters",
-    logFiltersTooltip: "Filters that will affect the logs produced by these steps",
+    logFiltersTooltip:
+      "Filters that will affect the logs produced by these steps",
     addLogFilter: "Add Log Filter",
     clickToEdit: "Click to edit",
     edit: "Edit",
@@ -1139,7 +1148,8 @@ const messages = {
     setSteps: "Set the Steps",
     conditional: {
       defineCondition: "Define the Condition",
-      conditionDescription: "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
+      conditionDescription:
+        "All of the following conditions must be met. Add a Condition Set to incorporate OR logic.",
       conditionGroups: "Condition Set",
       addCondition: "+ Add",
       addconditionGroups: "+ Add Condition Set",
@@ -1157,12 +1167,13 @@ const messages = {
         greaterThan: "Greater than",
         greaterThanOrEqual: "Greater than or equal",
         lessThan: "Less than",
-        lessThanOrEqual: "Less than or equal"
+        lessThanOrEqual: "Less than or equal",
       },
     },
     stepLabel: "Step label",
     noSteps: "No workflow steps",
-    clickAddStep: "Add steps to define what this job will do. Click “Add Step” to get started.",
+    clickAddStep:
+      "Add steps to define what this job will do. Click “Add Step” to get started.",
     addErrorHandler: "Add Error Handler",
     errorHandler: "Error handler",
     errorHandlerDescription:
@@ -1203,7 +1214,7 @@ const messages = {
   "node.step.plugin.plural": "{0} Node Step Plugins",
   "workflow.step.plugin.plural": "{0} Workflow Step Plugins",
   "job.label": "Job",
-  "Project": "Project",
+  Project: "Project",
   "Workflow.Step.jobreference.title": "Select job by",
   "Workflow.Step.jobreference.name.label": "Name",
   "Workflow.Step.jobreference.name.description":
@@ -1397,7 +1408,8 @@ const messages = {
   searchForStep: "Search for a step",
   learnMoreSearchPatterns: "to search using specific patterns",
   nodeSteps: "Node Steps",
-  nodeStepsDescription: "Node steps execute once for each node targeted by the Job's node-filter.",
+  nodeStepsDescription:
+    "Node steps execute once for each node targeted by the Job's node-filter.",
   workflowSteps: "Workflow Steps",
   workflowStepsDescription: "Workflow Steps execute once per Job execution.",
   commonNodeSteps: "Common Node Steps",
@@ -1405,11 +1417,14 @@ const messages = {
   learnMore: "Learn more",
   plugins: "plugins",
   earlyAccess: "Early Access",
-  earlyAccessDescriptionWorkflow: "We've made some improvements to the \"Workflow\" authoring experience! Try the updated experience - you can switch back anytime.",
+  earlyAccessDescriptionWorkflow:
+    'We\'ve made some improvements to the "Workflow" authoring experience! Try the updated experience - you can switch back anytime.',
   earlyAccessTryNow: "Try Now",
   earlyAccessRemindMeLater: "Remind me later",
-  earlyAccessRemindLaterToast: "Got it! We'll remind you next time you return to this page.",
-  earlyAccessGoToSettings: "You can try the updated experience by enabling early access on the system configuration page."
+  earlyAccessRemindLaterToast:
+    "Got it! We'll remind you next time you return to this page.",
+  earlyAccessGoToSettings:
+    "You can try the updated experience by enabling early access on the system configuration page.",
 };
 
 export default messages;
