@@ -26,21 +26,39 @@ class ReferencedExecution implements RdReferencedExecution{
     }
 
     static List<JobDataSummary> parentJobSummaries(String jobUuid, int max = 0){
-        List refs = findAllByJobUuid(jobUuid)
-        List seList = refs*.execution*.scheduledExecution.findAll { it != null }.unique()
-        if (max > 0 && seList.size() > max) {
-            seList = seList[0..<max]
+        final int PAGE_SIZE = 100
+        def seen = new LinkedHashSet()
+        int offset = 0
+        while (true) {
+            List page = findAllByJobUuid(jobUuid, [max: PAGE_SIZE, offset: offset, sort: 'id', order: 'asc'])
+            if (!page) break
+            for (ref in page) {
+                def se = ref.execution?.scheduledExecution
+                if (se != null) seen << se
+                if (max > 0 && seen.size() >= max) return seen.toList()*.toJobDataSummary()
+            }
+            if (page.size() < PAGE_SIZE) break
+            offset += PAGE_SIZE
         }
-        return seList*.toJobDataSummary()
+        return seen.toList()*.toJobDataSummary()
     }
 
     static List<String> executionProjectList(String jobUuid, int max = 0){
-        List refs = findAllByJobUuid(jobUuid)
-        List projects = refs*.execution*.project.findAll { it != null }.unique()
-        if (max > 0 && projects.size() > max) {
-            projects = projects[0..<max]
+        final int PAGE_SIZE = 100
+        def seen = new LinkedHashSet<String>()
+        int offset = 0
+        while (true) {
+            List page = findAllByJobUuid(jobUuid, [max: PAGE_SIZE, offset: offset, sort: 'id', order: 'asc'])
+            if (!page) break
+            for (ref in page) {
+                def project = ref.execution?.project
+                if (project != null) seen << project
+                if (max > 0 && seen.size() >= max) return seen.toList() as List<String>
+            }
+            if (page.size() < PAGE_SIZE) break
+            offset += PAGE_SIZE
         }
-        return projects as List<String>
+        return seen.toList() as List<String>
     }
 
     Serializable getExecutionId(){
