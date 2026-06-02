@@ -35,7 +35,7 @@ public class ZipResourceLoader implements PluginResourceLoader {
     List<String> resourcesList;
     String resourcesBasedir;
     List<String> basedirListing;
-    Properties assetManifest; // Grails 7: asset-pipeline manifest for hashed filenames
+    volatile Properties assetManifest; // Grails 7: asset-pipeline manifest for hashed filenames
 
     public ZipResourceLoader(
             final File cacheDir,
@@ -135,21 +135,21 @@ public class ZipResourceLoader implements PluginResourceLoader {
      * @return Resolved path (e.g., "menu/aclmanager-HASH.js") or original if not in manifest
      */
     private String resolveAssetPath(String path) {
-        // Load manifest on first use (lazy initialization)
-        if (assetManifest == null) {
-            assetManifest = new Properties();
-            File manifestFile = new File(cacheDir, "manifest.properties");
-            if (manifestFile.isFile()) {
-                try (FileInputStream fis = new FileInputStream(manifestFile)) {
-                    assetManifest.load(fis);
-                } catch (IOException e) {
-                    // Manifest load failed, continue without it (backwards compatible)
+        // Double-checked locking: volatile field + synchronized block ensure the manifest
+        // is fully loaded before any concurrent caller can read it.
+        Properties manifest = assetManifest;
+        if (manifest == null) {
+            synchronized (this) {
+                manifest = assetManifest;
+                if (manifest == null) {
+                    manifest = loadAssetManifest();
+                    assetManifest = manifest;
                 }
             }
         }
 
         // Try direct lookup first (backwards compatible with pre-Grails 7 plugins)
-        String resolved = assetManifest.getProperty(path);
+        String resolved = manifest.getProperty(path);
         if (resolved != null) {
             return resolved;
         }
@@ -161,7 +161,7 @@ public class ZipResourceLoader implements PluginResourceLoader {
         int slash = remaining.indexOf('/');
         while (slash >= 0) {
             remaining = remaining.substring(slash + 1);
-            String hashedPath = assetManifest.getProperty(remaining);
+            String hashedPath = manifest.getProperty(remaining);
             if (hashedPath != null) {
                 return hashedPath;
             }
@@ -170,6 +170,23 @@ public class ZipResourceLoader implements PluginResourceLoader {
 
         // Fallback: return original path (non-hashed static assets)
         return path;
+    }
+
+    /**
+     * Loads manifest.properties from the cache directory.
+     * Returns an empty Properties if the file does not exist or cannot be read.
+     */
+    private Properties loadAssetManifest() {
+        Properties manifest = new Properties();
+        File manifestFile = new File(cacheDir, "manifest.properties");
+        if (manifestFile.isFile()) {
+            try (FileInputStream fis = new FileInputStream(manifestFile)) {
+                manifest.load(fis);
+            } catch (IOException e) {
+                // Manifest load failed; fall through with empty manifest (backwards compatible)
+            }
+        }
+        return manifest;
     }
 
     /**
