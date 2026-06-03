@@ -39,9 +39,9 @@ class ReferencedExecution implements RdReferencedExecution{
         // Fallback to criteria for DataTest compatibility
         try {
             String hql = '''
-                SELECT DISTINCT e.project
-                FROM ReferencedExecution re
-                LEFT JOIN re.execution e
+                SELECT DISTINCT e.project 
+                FROM ReferencedExecution re 
+                LEFT JOIN re.execution e 
                 WHERE re.jobUuid = :jobUuid
             '''
             def results = executeQuery(hql, [jobUuid: jobUuid])
