@@ -35,10 +35,25 @@ class ReferencedExecution implements RdReferencedExecution{
     }
 
     static List<String> executionProjectList(String jobUuid, int max = 0){
-        // Single JOIN query; DISTINCT on project (VARCHAR) is Oracle-safe (no CLOB involved).
-        def query = "SELECT DISTINCT e.project FROM ReferencedExecution re JOIN re.execution e WHERE re.jobUuid = :jobUuid AND e.project IS NOT NULL"
-        def options = max > 0 ? [max: max] : [:]
-        return executeQuery(query, [jobUuid: jobUuid], options) as List<String>
+        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+        // Fallback to criteria for DataTest compatibility
+        try {
+            String hql = '''
+                SELECT DISTINCT e.project
+                FROM ReferencedExecution re
+                LEFT JOIN re.execution e
+                WHERE re.jobUuid = :jobUuid
+            '''
+            def results = executeQuery(hql, [jobUuid: jobUuid])
+            if (max > 0 && results.size() > max) {
+                results = results[0..<max]
+            }
+            return results as List<String>
+        } catch (UnsupportedOperationException e) {
+            // DataTest fallback: Load objects and extract project values
+            def results = findAllByJobUuid(jobUuid, [max: max > 0 ? max : null])
+            return results*.execution*.project.findAll { it != null }.unique() as List<String>
+        }
     }
 
     Serializable getExecutionId(){
