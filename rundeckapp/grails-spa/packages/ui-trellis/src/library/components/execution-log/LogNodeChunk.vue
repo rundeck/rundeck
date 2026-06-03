@@ -245,10 +245,20 @@ export default defineComponent({
     },
     onScrollerScroll(ev: Event) {
       const el = ev.target as HTMLElement;
-      // If the user scrolled away from the bottom, notify the parent to disable follow.
-      const atBottom =
-        el.scrollTop + el.clientHeight >= el.scrollHeight - 10;
-      if (!atBottom && this.follow) {
+      const prevScrollTop = (this as any)._prevScrollTop as number | undefined;
+      const currentScrollTop = el.scrollTop;
+      (this as any)._prevScrollTop = currentScrollTop;
+
+      // Only disable follow when the user is actively scrolling UP.
+      // Programmatic scrollToBottom() increases scrollTop (downward), so it
+      // will NOT trigger this condition. Relying on direction instead of
+      // position prevents follow from being disabled during scroll animations
+      // triggered by our own scrollToBottom() calls.
+      if (
+        prevScrollTop !== undefined &&
+        currentScrollTop < prevScrollTop &&
+        this.follow
+      ) {
         this.$emit("follow-change", false);
       }
     },
