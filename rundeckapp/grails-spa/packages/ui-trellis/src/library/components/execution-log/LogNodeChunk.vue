@@ -166,18 +166,19 @@ export default defineComponent({
       this.$emit("line-select", this.jumpToLine);
       this.$emit("jumped");
     }
-    // Detect manual scrolling inside the DynamicScroller so the parent can
-    // disable follow when the user scrolls away from the bottom.
-    const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
-    if (scrollerEl) {
-      scrollerEl.addEventListener("scroll", this.onScrollerScroll);
-    }
+    this._tryAttachScrollListener();
+  },
+  updated() {
+    // The DynamicScroller is inside a v-if, so it may not exist at mounted().
+    // Re-try attaching the listener on every update until it succeeds.
+    this._tryAttachScrollListener();
   },
   beforeUnmount() {
     const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
     if (scrollerEl) {
       scrollerEl.removeEventListener("scroll", this.onScrollerScroll);
     }
+    (this as any)._scrollListenerAdded = false;
   },
   methods: {
     entryTitle(newEntry: ExecutionOutputEntry) {
@@ -230,6 +231,14 @@ export default defineComponent({
         selected: this.selectedLine === index + 1,
       };
       return newEntry;
+    },
+    _tryAttachScrollListener() {
+      if ((this as any)._scrollListenerAdded) return;
+      const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+      if (scrollerEl) {
+        scrollerEl.addEventListener("scroll", this.onScrollerScroll);
+        (this as any)._scrollListenerAdded = true;
+      }
     },
     onSelectLine(index: number) {
       this.$emit("line-select", index);
