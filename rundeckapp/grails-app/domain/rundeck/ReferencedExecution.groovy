@@ -36,13 +36,10 @@ class ReferencedExecution implements RdReferencedExecution{
     }
 
     static List<String> executionProjectList(String jobUuid, int max = 0){
-        def seen = new LinkedHashSet<String>()
-        for (ref in findAllByJobUuid(jobUuid)) {
-            def project = ref.execution?.project
-            if (project != null) seen << project
-            if (max > 0 && seen.size() >= max) break
-        }
-        return seen.toList() as List<String>
+        // Single JOIN query; DISTINCT on project (VARCHAR) is Oracle-safe (no CLOB involved).
+        def query = "SELECT DISTINCT e.project FROM ReferencedExecution re JOIN re.execution e WHERE re.jobUuid = :jobUuid AND e.project IS NOT NULL"
+        def options = max > 0 ? [max: max] : [:]
+        return executeQuery(query, [jobUuid: jobUuid], options) as List<String>
     }
 
     Serializable getExecutionId(){
