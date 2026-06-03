@@ -110,7 +110,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["line-select", "jumped"],
+  emits: ["line-select", "jumped", "follow-change"],
   data() {
     return {
       emitResize: true as boolean,
@@ -118,11 +118,14 @@ export default defineComponent({
   },
   watch: {
     entries(newEntries: ExecutionOutputEntry[] | undefined) {
-      if (this.follow && newEntries && newEntries.length > 0) {
-        this.$nextTick(() => {
+      if (!this.follow || !newEntries || newEntries.length === 0) return;
+      this.$nextTick(() => {
+        // Re-check inside $nextTick: the user may have toggled follow off
+        // between when this watcher fired and when the DOM updated.
+        if (this.follow) {
           (this.$refs.scroller as any)?.scrollToBottom?.();
-        });
-      }
+        }
+      });
     },
   },
   computed: {
@@ -162,6 +165,18 @@ export default defineComponent({
     if (this.jumpToLine && !this.jumped) {
       this.$emit("line-select", this.jumpToLine);
       this.$emit("jumped");
+    }
+    // Detect manual scrolling inside the DynamicScroller so the parent can
+    // disable follow when the user scrolls away from the bottom.
+    const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+    if (scrollerEl) {
+      scrollerEl.addEventListener("scroll", this.onScrollerScroll);
+    }
+  },
+  beforeUnmount() {
+    const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+    if (scrollerEl) {
+      scrollerEl.removeEventListener("scroll", this.onScrollerScroll);
     }
   },
   methods: {
@@ -218,6 +233,15 @@ export default defineComponent({
     },
     onSelectLine(index: number) {
       this.$emit("line-select", index);
+    },
+    onScrollerScroll(ev: Event) {
+      const el = ev.target as HTMLElement;
+      // If the user scrolled away from the bottom, notify the parent to disable follow.
+      const atBottom =
+        el.scrollTop + el.clientHeight >= el.scrollHeight - 10;
+      if (!atBottom && this.follow) {
+        this.$emit("follow-change", false);
+      }
     },
     scrollToLine() {
       if (this.follow) {

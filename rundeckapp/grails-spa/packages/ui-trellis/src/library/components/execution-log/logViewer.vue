@@ -188,6 +188,7 @@
           :follow="mfollow"
           @line-select="handleLineSelect"
           @jumped="jumped = true"
+          @follow-change="mfollow = $event"
         />
       </div>
     </div>
@@ -453,7 +454,14 @@ export default defineComponent({
     await this.viewer.init();
 
     this.startTime = Date.now();
-    this.addScrollBlocker();
+    // In node view the outer scroller has overflow:hidden and the DynamicScroller
+    // handles its own scrolling. Applying addScrollBlocker there would call
+    // ev.preventDefault() on bubbled wheel events and prevent the DynamicScroller
+    // from scrolling. The LogNodeChunk handles follow detection via its own scroll
+    // listener and emits 'follow-change' instead.
+    if (!this.node) {
+      this.addScrollBlocker();
+    }
 
     this.updateProgress();
 
