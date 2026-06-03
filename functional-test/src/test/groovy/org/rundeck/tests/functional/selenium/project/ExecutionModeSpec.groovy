@@ -293,17 +293,22 @@ class ExecutionModeSpec extends SeleniumBase{
         when:
         sideBarPage.goTo NavLinkTypes.ACTIVITY
         def executions = activityPage.getActivityRowsByJobName(jobName).size()
+        // Capture API execution count before re-enabling so we can detect new executions by count.
+        // We cannot rely on the "running" state: the echo job completes in milliseconds and may
+        // already be finished before the first poll fires on a slow CI runner.
+        def executionCountBeforeEnable = ExecutionUtils.Retrievers.executionsForProject(client, projectName).get().size()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickScheduleMode()
         projectEditPage.save()
-        // Waits for at least one execution to start running
+        // Wait for at least one new execution to appear (running or already finished)
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                { List<Execution> execs ->  execs.any(ExecutionUtils.Verifiers.executionRunning()) },
+                { List<Execution> execs -> execs.size() > executionCountBeforeEnable },
                 WaitingTime.EXCESSIVE)
         // Waits for all executions to finish
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()),
+                WaitingTime.EXCESSIVE)
         sideBarPage.goTo NavLinkTypes.ACTIVITY
         then:
         executions < activityPage.getActivityRowsByJobName(jobName).size()
