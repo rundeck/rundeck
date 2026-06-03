@@ -31,7 +31,8 @@ class ReferencedExecution implements RdReferencedExecution{
         def idQuery = "SELECT DISTINCT se.id FROM ReferencedExecution re JOIN re.execution e JOIN e.scheduledExecution se WHERE re.jobUuid = :jobUuid"
         def options = max > 0 ? [max: max] : [:]
         List<Long> ids = executeQuery(idQuery, [jobUuid: jobUuid], options)
-        return ScheduledExecution.getAll(ids)*.toJobDataSummary()
+        if (!ids) return []
+        return ScheduledExecution.findAllByIdInList(ids)*.toJobDataSummary()
     }
 
     static List<String> executionProjectList(String jobUuid, int max = 0){
