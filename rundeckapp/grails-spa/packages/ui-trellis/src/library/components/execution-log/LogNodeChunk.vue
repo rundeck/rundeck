@@ -116,6 +116,15 @@ export default defineComponent({
       emitResize: true as boolean,
     };
   },
+  watch: {
+    entries(newEntries: ExecutionOutputEntry[] | undefined) {
+      if (this.follow && newEntries && newEntries.length > 0) {
+        this.$nextTick(() => {
+          (this.$refs.scroller as any)?.scrollToBottom?.();
+        });
+      }
+    },
+  },
   computed: {
     opts() {
       return {
