@@ -10,6 +10,7 @@ import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvid
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.services.*
 import rundeck.services.jobs.ResolvedAuthJobService
 
@@ -124,6 +125,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
+            LogFileStorageRequest.findByExecution(e)?.delete(flush: true)
             e.delete(flush: true)
             //delete all files
             def deletedfiles = 0

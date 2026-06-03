@@ -1512,6 +1512,57 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result.success
 
     }
+
+    def "delete execution removes associated LogFileStorageRequest to avoid FK constraint"() {
+        given:
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.fileUploadService = Mock(FileUploadService)
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getExecutionFiles(_, _, _) >> [:]
+        }
+        def auth = Mock(AuthContext)
+        def execution = new Execution(
+            user: 'userB',
+            project: 'AProject',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec(
+                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+            ),
+        )
+        execution.dateStarted = new Date()
+        execution.dateCompleted = new Date()
+        execution.status = 'succeeded'
+        assert execution.save()
+
+        def storageRequest = new LogFileStorageRequest(
+            execution: execution,
+            pluginName: 'test1',
+            filetype: '*',
+            completed: true
+        )
+        assert storageRequest.save()
+
+        expect:
+        LogFileStorageRequest.findByExecution(execution) != null
+
+        when:
+        def result = service.deleteExecution(execution, auth, 'bob')
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * service.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            auth, _,
+            [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        ) >> true
+        1 * service.reportService.deleteByExecution(execution)
+
+        result.success
+        LogFileStorageRequest.findByExecution(execution) == null
+    }
+
     def "loadSecureOptionStorageDefaults"() {
         given:
         ScheduledExecution job = new ScheduledExecution(
