@@ -169,6 +169,7 @@
           <h5>No output</h5>
         </div>
         <LogNodeChunk
+          v-if="!overSize"
           ref="logEntryChunk"
           class="execution-log__node-chunk"
           :event-bus="eventBus"
