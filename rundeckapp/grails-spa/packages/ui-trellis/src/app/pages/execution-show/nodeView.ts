@@ -48,7 +48,7 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
         class="wfnodestep"
         executionId="${execId}"
         node="${node}"
-        stepCtx="${stepCtx}"
+        ${stepCtx ? `stepCtx="${stepCtx}"` : ""}
         :showSettings="false"
         ref="viewer"
         :config="config"
@@ -95,7 +95,14 @@ window._rundeck.eventBus.on("ko-exec-show-output", (nodeStep: any) => {
       if (execOutput.completed) {
         reaction.dispose();
         nodeStep.outputLineCount(0);
-        vue._container!.remove();
+        // Unmount the app and restore the elm container so Knockout can reuse it.
+        // Do NOT call vue._container!.remove() since _container is elm itself
+        // (.wfnodeoutput), and removing it from the DOM breaks subsequent
+        // expand/collapse cycles in the nodes view.
+        vue.unmount();
+        mountedNodeApps.delete(appKey);
+        elm.style.height = "";
+        elm.style.overflow = "";
         return;
       } else {
         return;
