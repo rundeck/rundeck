@@ -188,7 +188,7 @@
           :follow="mfollow"
           @line-select="handleLineSelect"
           @jumped="jumped = true"
-          @follow-change="mfollow = $event"
+          @follow-change="onNodeFollowChange"
         />
       </div>
     </div>
@@ -557,6 +557,14 @@ export default defineComponent({
       }
 
       _scroller.scrollTop = offset - 24; // Insure under stick header
+    },
+    onNodeFollowChange(val: boolean) {
+      // Only honor follow-change events from LogNodeChunk when in node view.
+      // In the log output view, addScrollBlocker + the Follow button manage
+      // mfollow; the DynamicScroller scroll listener must not interfere.
+      if (this.node) {
+        this.mfollow = val;
+      }
     },
     handleLineSelect(idx: number) {
       if (this.overSize) {

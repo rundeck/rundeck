@@ -120,12 +120,21 @@ export default defineComponent({
     entries(newEntries: ExecutionOutputEntry[] | undefined) {
       if (!this.follow || !newEntries || newEntries.length === 0) return;
       this.$nextTick(() => {
-        // Re-check inside $nextTick: the user may have toggled follow off
-        // between when this watcher fired and when the DOM updated.
         if (this.follow) {
           (this.$refs.scroller as any)?.scrollToBottom?.();
         }
       });
+    },
+    follow(newVal: boolean) {
+      // Scroll to bottom immediately when follow is re-enabled, even if no
+      // new entries have arrived since the last update.
+      if (newVal) {
+        this.$nextTick(() => {
+          if (this.follow) {
+            (this.$refs.scroller as any)?.scrollToBottom?.();
+          }
+        });
+      }
     },
   },
   computed: {
@@ -249,17 +258,22 @@ export default defineComponent({
       const currentScrollTop = el.scrollTop;
       (this as any)._prevScrollTop = currentScrollTop;
 
-      // Only disable follow when the user is actively scrolling UP.
-      // Programmatic scrollToBottom() increases scrollTop (downward), so it
-      // will NOT trigger this condition. Relying on direction instead of
-      // position prevents follow from being disabled during scroll animations
-      // triggered by our own scrollToBottom() calls.
-      if (
-        prevScrollTop !== undefined &&
-        currentScrollTop < prevScrollTop &&
-        this.follow
-      ) {
+      if (prevScrollTop === undefined) return;
+
+      const scrollingUp = currentScrollTop < prevScrollTop;
+      const atBottom =
+        currentScrollTop + el.clientHeight >= el.scrollHeight - 10;
+
+      // Disable follow when the user scrolls UP (not from programmatic
+      // scrollToBottom, which increases scrollTop).
+      if (scrollingUp && this.follow) {
         this.$emit("follow-change", false);
+        return;
+      }
+      // Re-enable follow when the user scrolls back to the bottom.
+      // logViewer.vue only honors this in node view (onNodeFollowChange).
+      if (atBottom && !this.follow) {
+        this.$emit("follow-change", true);
       }
     },
     scrollToLine() {
