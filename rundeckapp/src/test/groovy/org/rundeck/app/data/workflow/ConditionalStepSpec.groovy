@@ -559,5 +559,37 @@ class ConditionalStepSpec extends Specification implements DataTest {
         nestedStep.subSteps.size() == 1
         nestedStep.subSteps[0].errorHandler != null
     }
+
+    def "ConditionalStep validation fails with two levels of nesting (depth=2)"() {
+        given: "A conditional with nested conditionals 2 levels deep"
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])]]
+
+        def level2CondSet = new ConditionalSetImpl()
+        level2CondSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])]]
+
+        def level3CondSet = new ConditionalSetImpl()
+        level3CondSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: 'option.datacenter', operator: '==', value: 'dc1'])]]
+
+        def level3Conditional = new ConditionalStep()
+        level3Conditional.conditionSet = level3CondSet
+        level3Conditional.subSteps = [new CommandExec(adhocRemoteString: 'echo deeply nested')]
+
+        def level2Conditional = new ConditionalStep()
+        level2Conditional.conditionSet = level2CondSet
+        level2Conditional.subSteps = [level3Conditional]
+
+        ConditionalStep step = new ConditionalStep()
+        step.conditionSet = condSet
+        step.subSteps = [level2Conditional]
+
+        when:
+        def valid = step.validate()
+
+        then: "Validation should fail for depth=2"
+        !valid
+        step.errors.hasFieldErrors('subSteps')
+        step.errors.getFieldError('subSteps').code == 'WorkflowStep.conditional.nesting.tooDeep'
+    }
 }
 
