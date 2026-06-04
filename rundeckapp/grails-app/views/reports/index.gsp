@@ -51,7 +51,7 @@
             'endbeforeFilter',
             'endafterFilter',
             'filterName'
-    ])}"/>
+    ]) + (defaultRecentFilter && !params.recentFilter ? [recentFilter: defaultRecentFilter] : [:])}"/>
     <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
     <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
