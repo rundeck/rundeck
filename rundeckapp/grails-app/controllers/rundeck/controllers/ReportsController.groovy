@@ -63,6 +63,7 @@ class ReportsController extends ControllerBase{
     def scheduledExecutionService
     def MetricService metricService
     def ReferencedExecutionDataProvider referencedExecutionDataProvider
+    ConfigurationService configurationService
     static allowedMethods = [
 
     ]
@@ -88,7 +89,7 @@ class ReportsController extends ControllerBase{
         def defaultRecentFilter = null
         if (!params.find { it.key.endsWith('Filter') }) {
             if (featureService?.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
-                def configured = grailsApplication.config.getProperty('rundeck.gui.activity.defaultTimeFilter', String.class, '1m') ?: '1m'
+                def configured = configurationService.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
                 defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
             }
         }
@@ -141,7 +142,7 @@ class ReportsController extends ControllerBase{
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             if (featureService.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
-                def configured = grailsApplication.config.getProperty('rundeck.gui.activity.defaultTimeFilter', String.class, '1m') ?: '1m'
+                def configured = configurationService.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
                 def effectiveFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
                 params.recentFilter = effectiveFilter
                 query.recentFilter = effectiveFilter
