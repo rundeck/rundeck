@@ -144,6 +144,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
     public HasInputStream createResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
                                          HasInputStream hasInputStream) {
         resourceMetaBuilder.getResourceMeta().put(META_ENCRYPTED, "true");
+        resourceMetaBuilder.getResourceMeta().put(JASYPT_META_ENCRYPTED, "false");
         logger.debug("createResource {}", path);
         return encrypt(hasInputStream);
     }

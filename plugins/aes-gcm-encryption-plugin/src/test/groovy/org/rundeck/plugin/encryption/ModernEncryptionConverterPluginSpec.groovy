@@ -367,6 +367,42 @@ class ModernEncryptionConverterPluginSpec extends Specification {
         readAllBytes(result) == plaintext
     }
 
+    // --- RUN-4512: Prevention — metadata flags are always set consistently on write ---
+    //
+    // These tests verify that createResource() and updateResource() never leave the storage
+    // record in a state where both flags are true simultaneously, which was the root cause
+    // of the bug found in production (row id=130).
+
+    def "RUN-4512 prevention: createResource always sets jasypt flag to false"() {
+        given: "a resource that already has jasypt=true in its metadata (pre-existing Jasypt record)"
+        def plugin = createPlugin()
+        def plaintext = "new project config".bytes
+        def path = Mock(Path)
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "createResource is called (e.g. after a project re-creation)"
+        plugin.createResource(path, meta, mockHasInputStream(plaintext))
+
+        then: "aes-gcm flag is set and jasypt flag is explicitly cleared — never both true"
+        meta.getResourceMeta()["aes-gcm-encryption:encrypted"] == "true"
+        meta.getResourceMeta()["jasypt-encryption:encrypted"] == "false"
+    }
+
+    def "RUN-4512 prevention: updateResource always sets jasypt flag to false"() {
+        given: "a resource with jasypt=true (old Jasypt-encrypted record being updated)"
+        def plugin = createPlugin()
+        def plaintext = "updated project config".bytes
+        def path = Mock(Path)
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "updateResource is called (triggers lazy migration)"
+        plugin.updateResource(path, meta, mockHasInputStream(plaintext))
+
+        then: "aes-gcm flag is set and jasypt flag is explicitly cleared — never both true"
+        meta.getResourceMeta()["aes-gcm-encryption:encrypted"] == "true"
+        meta.getResourceMeta()["jasypt-encryption:encrypted"] == "false"
+    }
+
     // --- RUN-4512: Inconsistent metadata/content state (partial migration failure) ---
     //
     // These tests document the bug reported in RUN-4512:
