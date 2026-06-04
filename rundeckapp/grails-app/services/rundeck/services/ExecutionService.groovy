@@ -4831,7 +4831,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         StandardBasicTypes.LONG
             }
         }
-        return Arrays.asList(metricCriteriaA, metricCriteriaB)
+        // Oracle: DATE - DATE returns NUMBER (fractional days); multiply by 86400 for integer seconds
+        def metricCriteriaC = {
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                rowCount("count")
+                sqlProjection 'sum(round((date_completed - date_started) * 86400)) as durationSum',
+                        'durationSum',
+                        StandardBasicTypes.LONG
+                sqlProjection 'min(round((date_completed - date_started) * 86400)) as durationMin',
+                        'durationMin',
+                        StandardBasicTypes.LONG
+                sqlProjection 'max(round((date_completed - date_started) * 86400)) as durationMax',
+                        'durationMax',
+                        StandardBasicTypes.LONG
+
+                // Zero-overhead status count projections
+                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                        'succeededCount',
+                        StandardBasicTypes.LONG
+                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                        'failedCount',
+                        StandardBasicTypes.LONG
+            }
+        }
+        return Arrays.asList(metricCriteriaA, metricCriteriaB, metricCriteriaC)
     }
 
     /**
