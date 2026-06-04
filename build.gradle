@@ -203,6 +203,7 @@ allprojects {
             
             // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+            force "com.google.protobuf:protobuf-java:${protobufVersion}" // CVE-2024-7254 fix
             
             // Force centralized versions to prevent duplicates in WAR
             force "org.apache.ant:ant:${antVersion}"
