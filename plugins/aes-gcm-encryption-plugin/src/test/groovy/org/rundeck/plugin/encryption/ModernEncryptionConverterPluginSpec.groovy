@@ -367,6 +367,66 @@ class ModernEncryptionConverterPluginSpec extends Specification {
         readAllBytes(result) == plaintext
     }
 
+    // --- RUN-4512: Inconsistent metadata/content state (partial migration failure) ---
+    //
+    // These tests document the bug reported in RUN-4512:
+    // readResource() trusts metadata flags blindly. If the storage record has
+    // aes-gcm-encryption:encrypted=true but the actual bytes are Jasypt-encrypted
+    // (first byte 0x82 instead of 0x01), the AES-GCM decryptor throws:
+    //   EncryptionException: Unsupported encryption format version: -126
+    //
+    // Both scenarios below FAIL with the current code and must PASS after the fix
+    // that uses AesEncryptor.isAesFormat() to detect the real content format and
+    // falls back to legacy decryption when the metadata is inconsistent.
+
+    def "RUN-4512: readResource recovers data when both flags are true but content is Jasypt-encrypted"() {
+        given: "Jasypt-encrypted content (simulates storage row 130: both flags = true)"
+        def plugin = createPlugin()
+        def plaintext = "project.properties content".bytes
+        def path = Mock(Path)
+
+        and: "content was encrypted with Jasypt (first byte = 0x82, not 0x01)"
+        def jasyptEncrypted = jasyptEncrypt(plaintext, TEST_PASSWORD,
+                "PBEWITHSHA256AND128BITAES-CBC-BC", "BC")
+        assert jasyptEncrypted[0] != AesEncryptor.FORMAT_VERSION: "precondition: must be Jasypt format"
+
+        and: "metadata has BOTH flags true (the exact state found in production on row id=130)"
+        def meta = metaWith([
+            "aes-gcm-encryption:encrypted": "true",
+            "jasypt-encryption:encrypted" : "true"
+        ])
+
+        when: "readResource is called — should detect Jasypt content and use legacy decryptor"
+        def result = plugin.readResource(path, meta, mockHasInputStream(jasyptEncrypted))
+
+        then: "plaintext is recovered correctly without throwing"
+        readAllBytes(result) == plaintext
+    }
+
+    def "RUN-4512: readResource recovers data when aes flag is true but content is Jasypt-encrypted (partial write failure)"() {
+        given: "Jasypt-encrypted content (simulates partial write failure: metadata updated, content not re-encrypted)"
+        def plugin = createPlugin()
+        def plaintext = "project.properties content after partial write".bytes
+        def path = Mock(Path)
+
+        and: "content is still Jasypt-encrypted"
+        def jasyptEncrypted = jasyptEncrypt(plaintext, TEST_PASSWORD,
+                "PBEWITHSHA256AND128BITAES-CBC-BC", "BC")
+        assert jasyptEncrypted[0] != AesEncryptor.FORMAT_VERSION: "precondition: must be Jasypt format"
+
+        and: "metadata says AES-GCM only (updateResource committed metadata but content write failed)"
+        def meta = metaWith([
+            "aes-gcm-encryption:encrypted": "true",
+            "jasypt-encryption:encrypted" : "false"
+        ])
+
+        when: "readResource is called — should fall back to Jasypt decryptor"
+        def result = plugin.readResource(path, meta, mockHasInputStream(jasyptEncrypted))
+
+        then: "plaintext is recovered correctly without throwing"
+        readAllBytes(result) == plaintext
+    }
+
     // --- Wrong password test ---
 
     def "readResource with wrong password throws exception"() {

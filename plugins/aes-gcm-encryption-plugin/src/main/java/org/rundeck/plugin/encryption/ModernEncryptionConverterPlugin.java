@@ -130,7 +130,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
                                        HasInputStream hasInputStream) {
         if ("true".equals(resourceMetaBuilder.getResourceMeta().get(META_ENCRYPTED))) {
             logger.debug("readResource (aes-gcm-encrypted) {}", path);
-            return decrypt(hasInputStream);
+            return decryptWithFallback(hasInputStream, path);
         }
         if ("true".equals(resourceMetaBuilder.getResourceMeta().get(JASYPT_META_ENCRYPTED))) {
             logger.debug("readResource (jasypt-encrypted, legacy fallback) {}", path);
@@ -171,18 +171,36 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
         }
     }
 
-    private HasInputStream decrypt(HasInputStream input) {
-        try {
-            return new TransformStream(input) {
-                @Override
-                protected byte[] transform(byte[] data) {
+    /**
+     * Decrypts data tagged as AES-GCM in metadata, but falls back to legacy Jasypt decryption
+     * when the actual content bytes do not match the AES-GCM wire format.
+     *
+     * <p>This handles inconsistent storage state that can arise from two causes:
+     * <ul>
+     *   <li>Partial write failure during migration: metadata was updated to AES-GCM flags
+     *       but the content bytes were never re-encrypted (still Jasypt format).</li>
+     *   <li>Legacy migration records where both {@code aes-gcm-encryption:encrypted} and
+     *       {@code jasypt-encryption:encrypted} are {@code "true"} simultaneously.</li>
+     * </ul>
+     *
+     * @see <a href="https://pagerduty.atlassian.net/browse/RUN-4512">RUN-4512</a>
+     */
+    private HasInputStream decryptWithFallback(HasInputStream input, Path path) {
+        return new TransformStream(input) {
+            @Override
+            protected byte[] transform(byte[] data) {
+                if (AesEncryptor.isAesFormat(data)) {
                     return getAesEncryptor().decrypt(getResolvedPassword(), data);
                 }
-            };
-        } catch (Exception e) {
-            logger.error("AES-256-GCM decryption failed. Wrong password or tampered data.", e);
-            throw new RuntimeException("AES-256-GCM decryption failed", e);
-        }
+                logger.warn(
+                        "readResource: metadata indicates AES-GCM encryption but content at '{}' "
+                        + "is not AES-GCM format (first byte: 0x{})."
+                        + " Falling back to legacy Jasypt decryption."
+                        + " This record has inconsistent metadata/content state (see RUN-4512).",
+                        path, String.format("%02X", data[0] & 0xFF));
+                return getLegacyDecryptor().decrypt(getResolvedPassword(), data);
+            }
+        };
     }
 
     private HasInputStream decryptLegacy(HasInputStream input) {
