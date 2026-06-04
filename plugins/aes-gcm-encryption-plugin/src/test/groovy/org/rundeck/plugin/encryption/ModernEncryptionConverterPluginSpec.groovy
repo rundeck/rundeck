@@ -64,6 +64,25 @@ class ModernEncryptionConverterPluginSpec extends Specification {
         return encryptor.encrypt(password, plaintext)
     }
 
+    /**
+     * Encrypts with Jasypt and guarantees the result does NOT start with the AES-GCM
+     * version byte (0x01). Jasypt prepends random salt so the first byte is non-deterministic
+     * (~1/256 chance of colliding with FORMAT_VERSION). This helper retries up to 20 times,
+     * making a collision astronomically unlikely in practice while keeping the test deterministic.
+     */
+    private byte[] jasyptEncryptNotAesFormat(byte[] plaintext, String password, String algorithm, String provider) {
+        def encryptor = new LegacyJasyptEncryptor(algorithm, provider, 1000)
+        for (int attempt = 0; attempt < 20; attempt++) {
+            def result = encryptor.encrypt(password, plaintext)
+            if (result[0] != AesEncryptor.FORMAT_VERSION) {
+                return result
+            }
+        }
+        throw new IllegalStateException(
+            "Could not generate a Jasypt payload whose first byte differs from FORMAT_VERSION (0x01) " +
+            "after 20 attempts. This is extremely unlikely (~(1/256)^20) and indicates a bug.")
+    }
+
     // --- createResource tests ---
 
     def "createResource encrypts data and sets modern metadata"() {
@@ -408,11 +427,11 @@ class ModernEncryptionConverterPluginSpec extends Specification {
     // These tests document the bug reported in RUN-4512:
     // readResource() trusts metadata flags blindly. If the storage record has
     // aes-gcm-encryption:encrypted=true but the actual bytes are Jasypt-encrypted
-    // (first byte 0x82 instead of 0x01), the AES-GCM decryptor throws:
+    // (first byte != 0x01, e.g. random salt prepended by Jasypt), the AES-GCM
+    // decryptor throws:
     //   EncryptionException: Unsupported encryption format version: -126
     //
-    // Both scenarios below FAIL with the current code and must PASS after the fix
-    // that uses AesEncryptor.isAesFormat() to detect the real content format and
+    // The fix uses AesEncryptor.isAesFormat() to detect the real content format and
     // falls back to legacy decryption when the metadata is inconsistent.
 
     def "RUN-4512: readResource recovers data when both flags are true but content is Jasypt-encrypted"() {
@@ -421,10 +440,9 @@ class ModernEncryptionConverterPluginSpec extends Specification {
         def plaintext = "project.properties content".bytes
         def path = Mock(Path)
 
-        and: "content was encrypted with Jasypt (first byte = 0x82, not 0x01)"
-        def jasyptEncrypted = jasyptEncrypt(plaintext, TEST_PASSWORD,
+        and: "content encrypted with Jasypt — first byte is random salt (not the 0x01 AES-GCM version marker)"
+        def jasyptEncrypted = jasyptEncryptNotAesFormat(plaintext, TEST_PASSWORD,
                 "PBEWITHSHA256AND128BITAES-CBC-BC", "BC")
-        assert jasyptEncrypted[0] != AesEncryptor.FORMAT_VERSION: "precondition: must be Jasypt format"
 
         and: "metadata has BOTH flags true (the exact state found in production on row id=130)"
         def meta = metaWith([
@@ -445,10 +463,9 @@ class ModernEncryptionConverterPluginSpec extends Specification {
         def plaintext = "project.properties content after partial write".bytes
         def path = Mock(Path)
 
-        and: "content is still Jasypt-encrypted"
-        def jasyptEncrypted = jasyptEncrypt(plaintext, TEST_PASSWORD,
+        and: "content encrypted with Jasypt — first byte is random salt (not the 0x01 AES-GCM version marker)"
+        def jasyptEncrypted = jasyptEncryptNotAesFormat(plaintext, TEST_PASSWORD,
                 "PBEWITHSHA256AND128BITAES-CBC-BC", "BC")
-        assert jasyptEncrypted[0] != AesEncryptor.FORMAT_VERSION: "precondition: must be Jasypt format"
 
         and: "metadata says AES-GCM only (updateResource committed metadata but content write failed)"
         def meta = metaWith([

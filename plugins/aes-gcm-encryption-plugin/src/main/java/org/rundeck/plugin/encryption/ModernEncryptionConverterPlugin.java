@@ -193,12 +193,15 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
                 if (AesEncryptor.isAesFormat(data)) {
                     return getAesEncryptor().decrypt(getResolvedPassword(), data);
                 }
+                String firstByteHex = data.length > 0
+                        ? String.format("%02X", data[0] & 0xFF)
+                        : "empty";
                 logger.warn(
                         "readResource: metadata indicates AES-GCM encryption but content at '{}' "
                         + "is not AES-GCM format (first byte: 0x{})."
                         + " Falling back to legacy Jasypt decryption."
                         + " This record has inconsistent metadata/content state (see RUN-4512).",
-                        path, String.format("%02X", data[0] & 0xFF));
+                        path, firstByteHex);
                 return getLegacyDecryptor().decrypt(getResolvedPassword(), data);
             }
         };
