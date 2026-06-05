@@ -142,7 +142,8 @@ class ConditionalStep implements WorkflowStepData, Validateable {
             def subStepsList = []
             stepMap.subSteps.each { Map subStepMap ->
                 WorkflowStepData exec
-                if (subStepMap.conditionGroups != null) {
+                // Check for truthy conditionGroups (not just non-null) to detect nested conditionals
+                if (subStepMap.conditionGroups) {
                     // Handle nested ConditionalStep recursively
                     exec = ConditionalStep.fromMap(subStepMap)
                 } else if (subStepMap.jobref!=null) {
@@ -154,7 +155,10 @@ class ConditionalStep implements WorkflowStepData, Validateable {
                         exec.errorHandler = WorkflowStepDataImpl.fromMap(subStepMap.errorhandler as Map<String, Object>)
                     }
                 }
-                subStepsList.add(exec)
+                // Only add non-null steps to avoid NPE later
+                if (exec != null) {
+                    subStepsList.add(exec)
+                }
             }
             step.subSteps = subStepsList
         }

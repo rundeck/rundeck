@@ -289,14 +289,21 @@ class ExecutionUtilService {
         if (parent == null) return child
         if (child == null) return parent
 
+        // Guard against null or empty condition groups
+        def parentGroups = parent.conditionGroups
+        def childGroups = child.conditionGroups
+
+        if (parentGroups == null || parentGroups.isEmpty()) return child
+        if (childGroups == null || childGroups.isEmpty()) return parent
+
         // Create a new combined ConditionalSet
         def combined = new org.rundeck.app.data.workflow.ConditionalSetImpl()
         combined.nodeStep = parent.nodeStep || child.nodeStep
 
         // Cartesian product of condition groups (implements AND logic between parent and child)
         List combinedGroups = []
-        parent.conditionGroups.each { parentGroup ->
-            child.conditionGroups.each { childGroup ->
+        parentGroups.each { parentGroup ->
+            childGroups.each { childGroup ->
                 // Merge AND groups: all conditions must be true
                 List mergedGroup = []
                 mergedGroup.addAll(parentGroup)
