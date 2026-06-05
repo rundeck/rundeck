@@ -208,11 +208,14 @@ class ExecutionModeSpec extends SeleniumBase{
         projectEditPage.replaceConfiguration("project.disable.schedule=true", "project.disable.schedule=false")
         projectEditPage.save()
         projectEditPage.validateConfigFileSave()
-        //This is to allow at least one execution to finish
+        // Wait for at least one execution to start (proves schedule is re-enabled)
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
                 { List<Execution> execs ->  execs.any(ExecutionUtils.Verifiers.executionRunning()) },
                 WaitingTime.EXCESSIVE)
-        // Waits for all executions to finish
+        // Disable schedule via API to stop accumulation; the */2s schedule generates
+        // executions faster than the EXCESSIVE timeout can drain them otherwise.
+        updateConfigurationProject(projectName, ["project.disable.schedule": "true"])
+        // Waits for all executions to finish (finite now that no new ones are created)
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
                 verifyForAll(ExecutionUtils.Verifiers.executionFinished()),
                 WaitingTime.EXCESSIVE)
@@ -307,7 +310,10 @@ class ExecutionModeSpec extends SeleniumBase{
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName, "max=100"),
                 { List<Execution> execs -> execs.size() > executionCountBeforeEnable },
                 WaitingTime.EXCESSIVE)
-        // Waits for all executions to finish
+        // Disable schedule via API to stop accumulation; the */2s schedule generates
+        // executions faster than the EXCESSIVE timeout can drain them otherwise.
+        updateConfigurationProject(projectName, ["project.disable.schedule": "true"])
+        // Waits for all executions to finish (finite now that no new ones are created)
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName, "max=100"),
                 verifyForAll(ExecutionUtils.Verifiers.executionFinished()),
                 WaitingTime.EXCESSIVE)
