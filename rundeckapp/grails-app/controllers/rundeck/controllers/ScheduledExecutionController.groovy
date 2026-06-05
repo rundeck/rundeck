@@ -577,6 +577,9 @@ Since: v53''',
         if (params.opt && (params.opt instanceof Map)) {
             dataMap.selectedoptsmap = params.opt
         }
+        if (params.nodeFilter) {
+            dataMap.nodeFilterParam = params.nodeFilter
+        }
 
         withFormat{
             html{

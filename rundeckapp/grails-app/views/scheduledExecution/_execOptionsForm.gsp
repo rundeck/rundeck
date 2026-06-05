@@ -44,7 +44,7 @@
 
 </g:if>
     <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
-    <g:embedJSON id="filterParamsJSON" data="${[filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
+    <g:embedJSON id="filterParamsJSON" data="${[filter: nodeFilterParam ?: nodefilter ?: query?.filter, filterAll: params.showall in ['true', true]]}"/>
 
 
 
@@ -300,7 +300,7 @@
                 <div class="subfields nodeFilterFields ">
                     %{-- filter text --}%
                     <div class="">
-                        <g:set var="filtvalue" value="${nodefilter}"/>
+                        <g:set var="filtvalue" value="${nodeFilterParam ?: nodefilter}"/>
 
                         <div id="nodefilterViewArea" data-ko-bind="nodeFilter" data-bind="visible: nodeFiltersVisible">
                         <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
@@ -511,7 +511,7 @@
 
         var tmpfilt = {};
         jQuery.data( tmpfilt, "node-filter-name", "" );
-        jQuery.data( tmpfilt, "node-filter", "${nodefilter}" );
+        jQuery.data( tmpfilt, "node-filter", "${nodeFilterParam ?: nodefilter}" );
         nodeFilter.selectNodeFilterLink(tmpfilt);
 
         kocontrollers.nodeFilter = nodeFilter
@@ -522,9 +522,9 @@
         let selectedNodes=hasSelectedNodes?loadJsonData('selectedNodesJson'):hasSelectedByDefault?loadJsonData('allNodesJson'):[];
         kocontrollers.runformoptions = new JobRunFormOptions({
             debug:${enc(js:scheduledExecution?.loglevel=='DEBUG')},
-            changeTargetNodes:hasSelectedNodes||!hasSelectedByDefault,
+            changeTargetNodes:${enc(js:!!nodeFilterParam)} || hasSelectedNodes||!hasSelectedByDefault,
             canOverrideFilter:${enc(js:scheduledExecution.nodeFilterEditable|| nodefilter == '')},
-            nodeOverride: "${enc(js:!nodesetvariables && nodes?'cherrypick':'filter')}",
+            nodeOverride: "${enc(js: nodeFilterParam ? 'filter' : (!nodesetvariables && nodes?'cherrypick':'filter'))}",
             selectedNodes: selectedNodes,
             hasDynamicFilter: ${enc(js:!!nodesetvariables)},
             allNodes:loadJsonData('allNodesJson'),
