@@ -645,7 +645,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getSaveOptionButton() {
-        el saveOptionBy
+        byAndWaitClickable saveOptionBy
     }
     By optionItemBy(int index) {
         legacyUi ? By.cssSelector("#optli_$index") : NextUi.optionItemBy(index)
