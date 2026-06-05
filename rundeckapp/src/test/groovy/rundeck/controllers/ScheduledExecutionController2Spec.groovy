@@ -1782,7 +1782,7 @@ class ScheduledExecutionController2Spec extends Specification implements Control
             listPlugins(){[]}
         }
         sec.featureService=mockWith(FeatureService){
-            featurePresent(){name->false}
+            featurePresent(1..3){name->false}
         }
         sec.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
             validateJobForExport(_,_)>>Mock(Validator.Report){
