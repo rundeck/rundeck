@@ -227,8 +227,95 @@ class BackwardCompatibilityIntegrationSpec extends Specification {
     }
 
     // ========================================================================
-    // SCENARIO 6: Full lifecycle proving no data loss during upgrade
+    // SCENARIO 6: RUN-4512 — inconsistent metadata recovery via legacy flag precedence
+    //
+    // Reproduces the production incident where a storage record had BOTH
+    // aes-gcm-encryption:encrypted=true AND jasypt-encryption:encrypted=true
+    // while the content bytes were still Jasypt-encrypted (e.g. row id=130).
+    // The legacy Jasypt flag now takes precedence in readResource(), so the record
+    // is decrypted with the correct algorithm instead of crashing.
     // ========================================================================
+
+    @Unroll
+    def "RUN-4512 recovery: '#name' is readable when both flags are true but content is Jasypt"() {
+        given: "Jasypt-encrypted content (simulates production row id=130)"
+        def plugin = createModernPlugin()
+        def path = Mock(Path)
+
+        and: "metadata has BOTH flags true — the inconsistent state from production"
+        def meta = metaWith([
+            "aes-gcm-encryption:encrypted": "true",
+            "jasypt-encryption:encrypted" : "true"
+        ])
+
+        when: "readResource is called — legacy flag wins, Jasypt decryptor is used"
+        def result = plugin.readResource(path, meta, mockStream(jasyptFixtures[name]))
+
+        then: "plaintext is recovered without throwing"
+        readAllBytes(result) == plaintexts[name]
+
+        where:
+        name << ["simple-password", "ssh-private-key", "api-token",
+                 "unicode-password", "large-certificate"]
+    }
+
+    def "RUN-4512 self-healing: record with both flags true is re-encrypted to AES-GCM on next update"() {
+        given: "a resource in the inconsistent RUN-4512 state (both flags true, Jasypt content)"
+        def plugin = createModernPlugin()
+        def path = Mock(Path)
+        def plaintext = plaintexts["simple-password"]
+        def readMeta = metaWith([
+            "aes-gcm-encryption:encrypted": "true",
+            "jasypt-encryption:encrypted" : "true"
+        ])
+
+        when: "read is called — legacy flag wins, Jasypt decryptor is used"
+        def decrypted = plugin.readResource(path, readMeta, mockStream(jasyptFixtures["simple-password"]))
+        def decryptedBytes = readAllBytes(decrypted)
+
+        then: "original plaintext is recovered without throwing"
+        decryptedBytes == plaintext
+
+        when: "the resource is written back (simulates any project config save)"
+        def updateMeta = metaWith([
+            "aes-gcm-encryption:encrypted": "true",
+            "jasypt-encryption:encrypted" : "true"
+        ])
+        def reEncrypted = plugin.updateResource(path, updateMeta, mockStream(decryptedBytes))
+        def reEncryptedBytes = readAllBytes(reEncrypted)
+
+        then: "the ambiguous state is resolved: jasypt flag is cleared"
+        updateMeta.getResourceMeta()["aes-gcm-encryption:encrypted"] == "true"
+        updateMeta.getResourceMeta()["jasypt-encryption:encrypted"] == "false"
+
+        and: "content is now AES-GCM format"
+        reEncryptedBytes[0] == AesEncryptor.FORMAT_VERSION
+
+        when: "subsequent reads use the now-clean metadata"
+        def readMeta2 = metaWith(updateMeta.getResourceMeta())
+        def finalResult = plugin.readResource(path, readMeta2, mockStream(reEncryptedBytes))
+
+        then: "plaintext is still recovered correctly"
+        readAllBytes(finalResult) == plaintext
+    }
+
+    def "RUN-4512 alias: JasyptEncryptionAliasPlugin also recovers inconsistent records"() {
+        given: "the legacy alias plugin in use (existing rundeck-config.properties not updated)"
+        def plugin = createAliasPlugin()
+        def path = Mock(Path)
+
+        and: "both flags true, Jasypt content"
+        def meta = metaWith([
+            "aes-gcm-encryption:encrypted": "true",
+            "jasypt-encryption:encrypted" : "true"
+        ])
+
+        when:
+        def result = plugin.readResource(path, meta, mockStream(jasyptFixtures["api-token"]))
+
+        then:
+        readAllBytes(result) == plaintexts["api-token"]
+    }
 
     def "full upgrade lifecycle: multiple keys survive jasypt → aes-gcm migration"() {
         given: "simulate a storage tree with multiple Jasypt-encrypted keys"
