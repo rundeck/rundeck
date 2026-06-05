@@ -666,7 +666,7 @@ jobs:
     parallelism: << parameters.parallelism >>
     executor:
       name: machine-builder
-      docker_layer_caching: true
+      docker_layer_caching: false
       resource_class: << parameters.resource_class >>
     parameters:
       test-image:
