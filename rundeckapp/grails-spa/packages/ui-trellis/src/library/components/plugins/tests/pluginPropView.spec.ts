@@ -460,6 +460,42 @@ describe("pluginPropView", () => {
     });
   });
 
+  describe("prop.desc undefined — regression for RUN-4521", () => {
+    it("mounts without throwing when desc is undefined", async () => {
+      await expect(
+        createWrapper({
+          props: {
+            prop: { type: "String", title: "Runner Filter", desc: undefined },
+            value: "LOCAL",
+          },
+        }),
+      ).resolves.toBeDefined();
+    });
+
+    it("renders empty title attribute when desc is undefined", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          prop: { type: "String", title: "Runner Filter", desc: undefined },
+          value: "LOCAL",
+        },
+      });
+      const titleEl = wrapper.find('[data-testid="string-prop-title"]');
+      expect(titleEl.exists()).toBe(true);
+      expect(titleEl.attributes("title")).toBe("");
+    });
+
+    it("mounts without throwing when desc is undefined for Boolean type", async () => {
+      await expect(
+        createWrapper({
+          props: {
+            prop: { type: "Boolean", title: "Enable", desc: undefined },
+            value: "true",
+          },
+        }),
+      ).resolves.toBeDefined();
+    });
+  });
+
   describe("copy to clipboard (allowCopy)", () => {
     it("shows copy icon on string value when allowCopy is true", async () => {
       const wrapper = await createWrapper({
