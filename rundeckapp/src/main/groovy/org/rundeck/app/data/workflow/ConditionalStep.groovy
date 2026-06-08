@@ -125,6 +125,13 @@ class ConditionalStep implements WorkflowStepData, Validateable {
                 } else {
                     exec = PluginStep.fromMap(subStepMap)
                 }
+                // Wire errorhandler for each subStep (same pattern as top-level steps)
+                if (subStepMap.errorhandler) {
+                    Map mapEH = subStepMap.errorhandler as Map
+                    exec.errorHandler = mapEH.jobref != null
+                        ? JobExec.jobExecFromMap(mapEH)
+                        : PluginStep.fromMap(mapEH)
+                }
                 subStepsList.add(exec)
             }
             step.subSteps = subStepsList
