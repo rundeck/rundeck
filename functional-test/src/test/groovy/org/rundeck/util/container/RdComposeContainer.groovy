@@ -77,7 +77,17 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
     }
 
     RdClient clientWithToken(String token) {
-        RdClient.create(rundeckUrl, token, clientConfig)
+        RdClient.create(getEffectiveRundeckUrl(), token, clientConfig)
+    }
+
+    /** Returns the mapped host URL if the container is running (dynamic port), otherwise the configured URL. */
+    private String getEffectiveRundeckUrl() {
+        try {
+            int mappedPort = getServicePort(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT)
+            return "http://localhost:${mappedPort}${CONTEXT_PATH}"
+        } catch (Exception ignored) {
+            return rundeckUrl
+        }
     }
 
     @Override
