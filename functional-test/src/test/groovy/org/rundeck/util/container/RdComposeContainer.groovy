@@ -84,7 +84,9 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
     private String getEffectiveRundeckUrl() {
         try {
             int mappedPort = getServicePort(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT)
-            return "http://localhost:${mappedPort}${CONTEXT_PATH}"
+            // Preserve context-path from the configured URL (e.g. /rundeck for context-path tests)
+            String contextPath = new URI(rundeckUrl).path ?: ''
+            return "http://localhost:${mappedPort}${contextPath}"
         } catch (Exception ignored) {
             return rundeckUrl
         }
