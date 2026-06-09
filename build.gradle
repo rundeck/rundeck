@@ -151,6 +151,9 @@ logger.lifecycle("Building version {}", project.resolvedVersion)
 allprojects {
     version = project.resolvedVersion
     ext["spring.version"] = springVersion
+    // Spring Boot's dependency-management BOM overrides Spring Framework via this property name
+    // (ext["spring.version"] alone does NOT move the BOM-managed spring-framework version).
+    ext["spring-framework.version"] = springVersion
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
