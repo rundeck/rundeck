@@ -197,7 +197,9 @@ class ExecutionModeSpec extends SeleniumBase{
         // This ensures the schedule change has propagated and any pending executions are cancelled
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
                 verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
-        sideBarPage.goTo NavLinkTypes.JOBS
+        // Full page navigation (not SPA routing) to force Vue store cache invalidation so
+        // the updated projectSchedulesEnabled value is fetched from the API.
+        jobListPage.go()
         then:
         jobListPage.expectScheduleDisabled()
         when:
