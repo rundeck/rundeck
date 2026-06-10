@@ -157,8 +157,7 @@ class ExecutionsCleanUp implements InterruptableJob {
         List<Long> jobList = Execution.executeQuery(
             """select e.id from Execution e 
                where e.project = :project 
-               and e.dateCompleted <= :endDate 
-               order by e.id desc""",
+               and e.dateCompleted <= :endDate""",
             [
                 project: project,
                 endDate: endDate
