@@ -8,7 +8,7 @@
             : $t("yes")
         }}
       </template>
-      <template v-if="value === 'false' || value === false">
+      <template v-else-if="value === 'false' || value === false">
         {{
           prop.options && prop.options["booleanFalseDisplayValue"]
             ? prop.options["booleanFalseDisplayValue"]

@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.util.JsonUtil
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -1728,7 +1729,15 @@ Since: v55""",
         }
 
         // Grails 7: Parse body using Jackson instead of request.JSON
-        def body = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+        def body = JsonUtil.parseRequestBody(request)
+        if (body == null) {
+            render(
+                contentType: 'application/json',
+                status: HttpStatus.BAD_REQUEST.value(),
+                text: ([errors: ['Request body is missing or empty.']] as grails.converters.JSON) as String
+            )
+            return
+        }
         List plugins = (body?.plugins ?: []) as List
         List removedPlugins = (body?.removedPlugins ?: []) as List
 
