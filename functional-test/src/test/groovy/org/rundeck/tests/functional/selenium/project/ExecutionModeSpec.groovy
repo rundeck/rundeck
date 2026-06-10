@@ -401,6 +401,10 @@ class ExecutionModeSpec extends SeleniumBase{
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickScheduleMode()
         projectEditPage.save()
+        // Allow the post-save redirect to complete and any in-flight executions to finish
+        // before navigating — mirrors the pattern used in "disable schedules at project level UI"
+        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
 
         and: "load the Jobs page via direct URL so Vue store cache is cleared"
         jobListPage.go("/project/${projectName}/jobs")
