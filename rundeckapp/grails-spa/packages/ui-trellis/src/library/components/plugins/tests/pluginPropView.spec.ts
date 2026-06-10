@@ -5,21 +5,39 @@ import * as Clipboard from "../../../utilities/Clipboard";
 jest.mock("../../../utilities/Clipboard");
 const mockedClipboard = Clipboard as jest.Mocked<typeof Clipboard>;
 
+interface MountOptions {
+  props?: Record<string, any>;
+  stubs?: Record<string, boolean | object>;
+}
+
 let originalMutationObserver: typeof MutationObserver;
 
-const createWrapper = async (options: { props?: Record<string, any> } = {}) => {
+const createWrapper = async (options: MountOptions = {}) => {
   const wrapper = mount(PluginPropView, {
     props: {
       prop: { type: "String", title: "My Prop", desc: "Prop description" },
       value: "hello",
+      allowCopy: false,
       ...options.props,
+    },
+    global: {
+      stubs: {
+        "ace-editor": true,
+        expandable: {
+          template: '<div><slot name="label"></slot><slot></slot></div>',
+        },
+        ...options.stubs,
+      },
     },
   });
   await wrapper.vm.$nextTick();
   return wrapper;
 };
 
-describe("pluginPropView", () => {
+const findByTestId = (wrapper: ReturnType<typeof mount>, testId: string) =>
+  wrapper.find(`[data-testid="${testId}"]`);
+
+describe("PluginPropView", () => {
   beforeEach(() => {
     originalMutationObserver = global.MutationObserver;
     global.MutationObserver = jest
@@ -46,12 +64,10 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="boolean-prop-title"]').exists(),
-      ).toBe(true);
-      expect(
-        wrapper.find('[data-testid="boolean-prop-title"]').text(),
-      ).toContain("Enable Feature");
+      expect(findByTestId(wrapper, "boolean-prop-title").exists()).toBe(true);
+      expect(findByTestId(wrapper, "boolean-prop-title").text()).toContain(
+        "Enable Feature",
+      );
     });
 
     it("shows 'yes' text when value is true", async () => {
@@ -62,9 +78,9 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="boolean-true-value"]').text(),
-      ).toContain("yes");
+      expect(findByTestId(wrapper, "boolean-true-value").text()).toContain(
+        "yes",
+      );
     });
 
     it("applies custom booleanTrueDisplayValueClass to true value", async () => {
@@ -81,7 +97,7 @@ describe("pluginPropView", () => {
       });
 
       expect(
-        wrapper.find('[data-testid="boolean-true-value"]').classes(),
+        findByTestId(wrapper, "boolean-true-value").classes(),
       ).toContain("text-primary");
     });
 
@@ -94,7 +110,7 @@ describe("pluginPropView", () => {
       });
 
       expect(
-        wrapper.find('[data-testid="boolean-true-value"]').classes(),
+        findByTestId(wrapper, "boolean-true-value").classes(),
       ).toContain("text-success");
     });
 
@@ -111,12 +127,10 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="boolean-false-value"]').exists(),
-      ).toBe(true);
-      expect(
-        wrapper.find('[data-testid="boolean-false-value"]').text(),
-      ).toContain("no");
+      expect(findByTestId(wrapper, "boolean-false-value").exists()).toBe(true);
+      expect(findByTestId(wrapper, "boolean-false-value").text()).toContain(
+        "no",
+      );
     });
 
     it("hides boolean content when value is false and no defaultValue is true", async () => {
@@ -127,9 +141,7 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="boolean-prop-title"]').exists(),
-      ).toBe(false);
+      expect(findByTestId(wrapper, "boolean-prop-title").exists()).toBe(false);
     });
 
     it("applies custom booleanFalseDisplayValueClass to false value", async () => {
@@ -147,7 +159,7 @@ describe("pluginPropView", () => {
       });
 
       expect(
-        wrapper.find('[data-testid="boolean-false-value"]').classes(),
+        findByTestId(wrapper, "boolean-false-value").classes(),
       ).toContain("text-danger");
     });
   });
@@ -161,9 +173,9 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="integer-prop-title"]').text(),
-      ).toContain("Max Count");
+      expect(findByTestId(wrapper, "integer-prop-title").text()).toContain(
+        "Max Count",
+      );
     });
 
     it("shows integer value", async () => {
@@ -174,9 +186,7 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(wrapper.find('[data-testid="integer-prop-value"]').text()).toBe(
-        "42",
-      );
+      expect(findByTestId(wrapper, "integer-prop-value").text()).toBe("42");
     });
   });
 
@@ -189,9 +199,9 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="options-prop-title"]').text(),
-      ).toContain("Colors");
+      expect(findByTestId(wrapper, "options-prop-title").text()).toContain(
+        "Colors",
+      );
     });
 
     it("renders each comma-separated option as a separate value element", async () => {
@@ -202,8 +212,7 @@ describe("pluginPropView", () => {
         },
       });
 
-      const options = wrapper.findAll('[data-testid="option-value"]');
-      expect(options).toHaveLength(3);
+      expect(wrapper.findAll('[data-testid="option-value"]')).toHaveLength(3);
     });
 
     it("shows the text of each option value", async () => {
@@ -242,7 +251,7 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(wrapper.find('[data-testid="string-prop-title"]').text()).toContain(
+      expect(findByTestId(wrapper, "string-prop-title").text()).toContain(
         "My String",
       );
     });
@@ -255,7 +264,7 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(wrapper.find('[data-testid="string-prop-value"]').text()).toContain(
+      expect(findByTestId(wrapper, "string-prop-value").text()).toContain(
         "hello world",
       );
     });
@@ -275,15 +284,13 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="password-prop-value"]').exists(),
-      ).toBe(true);
-      expect(
-        wrapper.find('[data-testid="password-prop-value"]').text(),
-      ).not.toContain("mysecretpassword");
-      expect(
-        wrapper.find('[data-testid="password-prop-value"]').text(),
-      ).toContain("••••••••••••");
+      expect(findByTestId(wrapper, "password-prop-value").exists()).toBe(true);
+      expect(findByTestId(wrapper, "password-prop-value").text()).not.toContain(
+        "mysecretpassword",
+      );
+      expect(findByTestId(wrapper, "password-prop-value").text()).toContain(
+        "••••••••••••",
+      );
     });
 
     it("does not show the string-prop-value element for PASSWORD type", async () => {
@@ -299,9 +306,7 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="string-prop-value"]').exists(),
-      ).toBe(false);
+      expect(findByTestId(wrapper, "string-prop-value").exists()).toBe(false);
     });
   });
 
@@ -319,9 +324,9 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="code-prop-title"]').text(),
-      ).toContain("Script");
+      expect(findByTestId(wrapper, "code-prop-title").text()).toContain(
+        "Script",
+      );
     });
 
     it("shows the computed line count", async () => {
@@ -337,9 +342,9 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="code-line-count"]').text(),
-      ).toContain("3 lines");
+      expect(findByTestId(wrapper, "code-line-count").text()).toContain(
+        "3 lines",
+      );
     });
 
     it("shows 1 line for a single-line value", async () => {
@@ -355,9 +360,9 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="code-line-count"]').text(),
-      ).toContain("1 lines");
+      expect(findByTestId(wrapper, "code-line-count").text()).toContain(
+        "1 lines",
+      );
     });
   });
 
@@ -375,9 +380,9 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="multiline-prop-title"]').text(),
-      ).toContain("Description");
+      expect(findByTestId(wrapper, "multiline-prop-title").text()).toContain(
+        "Description",
+      );
     });
 
     it("shows the computed line count", async () => {
@@ -393,9 +398,9 @@ describe("pluginPropView", () => {
         },
       });
 
-      expect(
-        wrapper.find('[data-testid="multiline-line-count"]').text(),
-      ).toContain("4 lines");
+      expect(findByTestId(wrapper, "multiline-line-count").text()).toContain(
+        "4 lines",
+      );
     });
   });
 
@@ -416,8 +421,7 @@ describe("pluginPropView", () => {
         },
       });
 
-      const pairs = wrapper.findAll('[data-testid="configpair"]');
-      expect(pairs).toHaveLength(2);
+      expect(wrapper.findAll('[data-testid="configpair"]')).toHaveLength(2);
     });
 
     it("shows each attribute label and value", async () => {
@@ -479,9 +483,10 @@ describe("pluginPropView", () => {
           value: "LOCAL",
         },
       });
-      const titleEl = wrapper.find('[data-testid="string-prop-title"]');
-      expect(titleEl.exists()).toBe(true);
-      expect(titleEl.attributes("title")).toBe("");
+
+      expect(findByTestId(wrapper, "string-prop-title").attributes("title")).toBe(
+        "",
+      );
     });
 
     it("mounts without throwing when desc is undefined for Boolean type", async () => {
@@ -497,7 +502,7 @@ describe("pluginPropView", () => {
   });
 
   describe("copy to clipboard (allowCopy)", () => {
-    it("shows copy icon on string value when allowCopy is true", async () => {
+    it("shows copy icon when allowCopy is true", async () => {
       const wrapper = await createWrapper({
         props: {
           prop: { type: "String", title: "Field", desc: "desc" },
@@ -506,10 +511,21 @@ describe("pluginPropView", () => {
         },
       });
 
-      const copyIcon = wrapper
-        .find('[data-testid="string-prop-value"]')
-        .find(".pi-copy");
-      expect(copyIcon.exists()).toBe(true);
+      const icon = findByTestId(wrapper, "copy-icon").element as HTMLElement;
+      expect(icon.style.display).not.toBe("none");
+    });
+
+    it("hides copy icon when allowCopy is false", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          prop: { type: "String", title: "Field", desc: "desc" },
+          value: "copyable text",
+          allowCopy: false,
+        },
+      });
+
+      const icon = findByTestId(wrapper, "copy-icon").element as HTMLElement;
+      expect(icon.style.display).toBe("none");
     });
 
     it("copies the value to clipboard when clicking string prop value", async () => {
@@ -521,7 +537,7 @@ describe("pluginPropView", () => {
         },
       });
 
-      await wrapper.find('[data-testid="string-prop-value"]').trigger("click");
+      await findByTestId(wrapper, "string-prop-value").trigger("click");
       await flushPromises();
 
       expect(mockedClipboard.CopyToClipboard).toHaveBeenCalledWith(
@@ -538,7 +554,7 @@ describe("pluginPropView", () => {
         },
       });
 
-      await wrapper.find('[data-testid="boolean-true-value"]').trigger("click");
+      await findByTestId(wrapper, "boolean-true-value").trigger("click");
       await flushPromises();
 
       expect(mockedClipboard.CopyToClipboard).toHaveBeenCalledWith("true");
