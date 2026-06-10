@@ -48,12 +48,17 @@
             href="#"
             :class="navigationClass"
             :title="'Page ' + page.page"
+            :data-testid="`pagination-page-${page.page}`"
             @click.prevent="changePage(page.page)"
             >{{ page.page }}</a
           >
-          <span v-else :class="navigationClass" :title="'Page ' + page.page">{{
-            page.page
-          }}</span>
+          <span
+            v-else
+            :class="navigationClass"
+            :title="'Page ' + page.page"
+            data-testid="pagination-current-page"
+            >{{ page.page }}</span
+          >
         </li>
         <li :class="{ disabled: !hasNextButton || disabled }">
           <a

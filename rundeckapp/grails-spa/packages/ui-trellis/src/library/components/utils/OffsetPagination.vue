@@ -68,12 +68,8 @@ export default defineComponent({
     },
   },
   watch: {
-    "pagination.offset": {
-      handler(newVal) {
-        if (this.pagination.offset !== newVal) {
-          this.currentPage = this.pageNumberForOffset(newVal);
-        }
-      },
+    "pagination.offset"(newVal) {
+      this.currentPage = this.pageNumberForOffset(newVal);
     },
   },
   mounted() {
