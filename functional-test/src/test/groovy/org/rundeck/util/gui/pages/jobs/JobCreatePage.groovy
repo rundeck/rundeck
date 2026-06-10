@@ -415,7 +415,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement selectTabAddFilterByName(String tabName){
-        el(By.xpath("//span[normalize-space(text())=\"${tabName}\"]//*[@class='glyphicon glyphicon-plus text-success']"))
+        el(By.xpath("//span[normalize-space(.)=\"${tabName}\"]//*[@class='glyphicon glyphicon-plus text-success']"))
     }
 
     WebElement getNodeFilterInput(){

@@ -17,6 +17,7 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.DashboardPage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import org.rundeck.util.gui.pages.project.SideBarPage
+import spock.lang.Ignore
 
 @SeleniumCoreTest
 class ExecutionModeSpec extends SeleniumBase{
@@ -141,6 +142,7 @@ class ExecutionModeSpec extends SeleniumBase{
      * and pause icon to be shown (indicating that schedules are disabled)
      * then enables schedules and check the activity page
      */
+    @Ignore("Flaky: replaced by 'disable schedules at project level v2'")
     def "disable schedules at project level"(){
         given:
         def projectName = "disabledSchedulesProject"
@@ -331,6 +333,118 @@ class ExecutionModeSpec extends SeleniumBase{
         // Waits for all executions to finish
         waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
                 verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
+        deleteProject(projectName)
+    }
+
+    /**
+     * V2 — written from scratch.
+     *
+     * Verifies that disabling project-level schedules through the Execution Mode settings page
+     * causes the Jobs list to display the schedule-disabled indicator, and that re-enabling
+     * restores normal schedule execution.
+     *
+     * Flow (confirmed via code inspection of ProjectEditPage, JobScheduleInfo.vue, JobListPage):
+     *  1. Navigate to Project Configure → Execution Mode tab
+     *  2. Toggle "Disable Schedule" checkbox and save
+     *  3. Load the Jobs page via a direct URL (full page load) to clear the Vue JobPageStore
+     *     cachedApi() in-memory cache — SPA navigation would reuse the stale cached value
+     *  4. Assert span.scheduletime.disabled is present (schedule-off indicator)
+     *  5. Re-enable schedules via the same UI path
+     *  6. Wait (API) for at least one new execution proving the schedule fired
+     *  7. Stop accumulation via API and drain
+     *  8. Assert execution count grew
+     */
+    def "disable schedules at project level v2"() {
+        given:
+        def projectName = "scheduleDisableV2"
+        setupProject(projectName)
+        def projectEditPage = page ProjectEditPage
+        def loginPage      = page LoginPage
+        def jobListPage    = page JobListPage
+        def jobName = "v2-scheduled-job"
+        def yamlJob = """
+                        -
+                          project: ${projectName}
+                          loglevel: INFO
+                          sequence:
+                            keepgoing: false
+                            strategy: node-first
+                            commands:
+                            - exec: echo hello
+                          description: ''
+                          name: ${jobName}
+                          schedule:
+                            month: '*'
+                            time:
+                              hour: '*'
+                              minute: '*'
+                              seconds: '*/2'
+                            weekday:
+                              day: '*'
+                            year: '*'
+                          scheduleEnabled: true
+                        """
+        def pathToJob = JobUtils.generateFileToImport(yamlJob, "yaml")
+        client.postWithMultipart(
+            "/project/${projectName}/jobs/import?format=yaml&dupeOption=skip",
+            new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(pathToJob).name,
+                    RequestBody.create(new File(pathToJob), MultipartBody.FORM))
+                .build()
+        )
+
+        when: "navigate to Execution Mode settings and disable schedules"
+        loginPage.go()
+        loginPage.login(TEST_USER, TEST_PASS)
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
+        projectEditPage.clickScheduleMode()
+        projectEditPage.save()
+
+        and: "load the Jobs page via direct URL so Vue store cache is cleared"
+        jobListPage.go("/project/${projectName}/jobs")
+
+        then: "the job row shows the schedule-disabled indicator"
+        jobListPage.expectScheduleDisabled()
+
+        when: "re-enable schedules via Execution Mode settings"
+        def baselineCount = ExecutionUtils.Retrievers
+            .executionsForProject(client, projectName, "max=100").get().size()
+        projectEditPage.go("/project/${projectName}/configure")
+        projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
+        projectEditPage.clickScheduleMode()
+        projectEditPage.save()
+
+        and: "wait for the schedule to fire at least once"
+        waitFor(
+            ExecutionUtils.Retrievers.executionsForProject(client, projectName, "max=100"),
+            { List<Execution> execs -> execs.size() > baselineCount },
+            WaitingTime.EXCESSIVE
+        )
+
+        and: "stop accumulation and drain"
+        updateConfigurationProject(projectName, ["project.disable.schedule": "true"])
+        waitFor(
+            ExecutionUtils.Retrievers.executionsForProject(client, projectName, "max=100"),
+            verifyForAll(ExecutionUtils.Verifiers.executionFinished()),
+            WaitingTime.EXCESSIVE
+        )
+
+        then: "new executions were produced"
+        ExecutionUtils.Retrievers.executionsForProject(client, projectName, "max=100")
+            .get().size() > baselineCount
+
+        cleanup:
+        updateConfigurationProject(projectName, [
+            "project.disable.schedule"     : "true",
+            "project.later.schedule.enable": "false",
+            "project.disable.executions"   : "true"
+        ])
+        waitFor(
+            ExecutionUtils.Retrievers.executionsForProject(client, projectName),
+            verifyForAll(ExecutionUtils.Verifiers.executionFinished())
+        )
         deleteProject(projectName)
     }
 }
