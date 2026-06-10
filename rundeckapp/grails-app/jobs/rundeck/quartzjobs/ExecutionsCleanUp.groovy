@@ -158,7 +158,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             """select e.id from Execution e 
                where e.project = :project 
                and e.dateCompleted <= :endDate 
-               order by e.dateCompleted asc""",
+               order by e.id desc""",
             [
                 project: project,
                 endDate: endDate
