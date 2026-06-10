@@ -204,6 +204,14 @@ allprojects {
             // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
             force "com.google.protobuf:protobuf-java:${protobufVersion}" // CVE-2024-7254 fix
+            // CWE-770 (SNYK-JAVA-COMFASTERXMLJACKSONCORE-15365924): build-tooling configs such as
+            // groovyScript pull groovy-yaml -> jackson 2.19.2, which the jackson BOM only covers in
+            // app/plugin configs. Force jackson onto the managed version across ALL configurations.
+            force "com.fasterxml.jackson.core:jackson-core:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-annotations:${jacksonAnnotationsVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
             
             // Force centralized versions to prevent duplicates in WAR
             force "org.apache.ant:ant:${antVersion}"
