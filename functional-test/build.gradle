@@ -4,6 +4,7 @@ plugins {
 }
 
 apply from: "../gradle/java-version.gradle"
+apply from: "../gradle/ui-mode-flags-report.gradle"
 
 repositories {
     mavenLocal()
