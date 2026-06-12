@@ -1,5 +1,8 @@
 package org.rundeck.app.config;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Defines a system configuration property
  */
@@ -99,6 +102,13 @@ public interface SysConfigProp {
      * @return authorization level required, ops_admin, app_admin, admin
      */
     String getAuthRequired();
+
+    /**
+     * @return allowed values for select-type props; empty list means free-form input
+     */
+    default List<String> getValues() {
+        return Collections.emptyList();
+    }
 
     /**
      * @param prefix prefix string

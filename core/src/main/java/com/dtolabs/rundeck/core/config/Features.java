@@ -42,7 +42,8 @@ public enum Features implements FeaturesDefinition{
     GUI_HIDE_ROI_INSTRUCTIONS("guiHideRoiInstructions"),
     EXECUTION_CLEANUP_ENABLE("defaultExecutionCleanup"),
     MULTILINE_JOB_OPTIONS("multilineJobOptions"),
-    EARLY_ACCESS_JOB_CONDITIONAL("earlyAccessJobConditional");
+    EARLY_ACCESS_JOB_CONDITIONAL("earlyAccessJobConditional"),
+    ACTIVITY_DEFAULT_TIME_FILTER("activityDefaultTimeFilter");
 
     private final String propertyName;
 

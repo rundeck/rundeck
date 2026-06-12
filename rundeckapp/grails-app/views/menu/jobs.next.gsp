@@ -221,6 +221,7 @@
             pagination:{
                 max: ${enc(js:params.max?params.int('max',10):10)}
         },
+            query: ${raw(groovy.json.JsonOutput.toJson(defaultRecentFilter ? [recentFilter: defaultRecentFilter] : [:]))},
           filterOpts: {
               showFilter: false,
               showRecentFilter: true,

@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.config.Features
+import rundeck.services.ConfigurationService
 import grails.converters.JSON
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
@@ -62,6 +63,7 @@ class ReportsController extends ControllerBase{
     def scheduledExecutionService
     def MetricService metricService
     def ReferencedExecutionDataProvider referencedExecutionDataProvider
+    ConfigurationService configurationService
     static allowedMethods = [
 
     ]
@@ -83,6 +85,15 @@ class ReportsController extends ControllerBase{
         )) {
             return
         }
+
+        def defaultRecentFilter = null
+        if (!params.find { it.key.endsWith('Filter') }) {
+            if (featureService?.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+                def configured = configurationService.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+                defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+            }
+        }
+        return [defaultRecentFilter: defaultRecentFilter]
     }
     public def index_old (ExecQuery query) {
         //data binding allows '123' followed by any characters to bind as integer 123, prevent additional chars after the integer value
@@ -130,7 +141,12 @@ class ReportsController extends ControllerBase{
             params.recentFilter=null
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            //no default filter
+            if (featureService.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+                def configured = configurationService.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+                def effectiveFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+                params.recentFilter = effectiveFilter
+                query.recentFilter = effectiveFilter
+            }
         }
         if(query && !query.projFilter && params.project){
             query.projFilter = params.project
