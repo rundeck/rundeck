@@ -422,7 +422,7 @@ const messages = {
   "form.option.multivalued.description": "複数の値を選択できるか",
   "form.option.multivalued.secure-conflict.message": "セキュアな入力オプションは複数の値を許可しません。",
   "form.option.usage.secureAuth.message": "セキュア認証のオプション値はコマンドまたはスクリプトでは利用できません。",
-  "form.option.delimiter.description": "デミリタはすべての入力値を結合するのに利用します。どのような文字でも利用できます。: ' ' (space), ',' (comma), など。クォートは含められません。",
+  "form.option.delimiter.description": "デリミタはすべての入力値を結合するのに利用します。どのような文字でも利用できます。: ' ' (space), ',' (comma), など。クォートは含められません。",
   "form.option.secureInput.description": "Rundeckはセキュアな入力値を使用した後、保持しません。スクリプトまたはコマンド内で値がさらされた場合、出力ログにはその値が含まれている可能性があります。",
   "form.option.inputType.label": "入力タイプ",
   "form.option.secureInput.false.label": "平文",
