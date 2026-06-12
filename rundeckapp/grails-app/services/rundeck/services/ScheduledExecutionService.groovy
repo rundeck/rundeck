@@ -3059,14 +3059,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
             
-            // If conditional steps exist, strategy must be sequential or parallel
-            if (hasConditionalSteps && strategy != null && strategy != "sequential" && strategy != "parallel") {
+            // If conditional steps exist, strategy must be sequential, parallel, node-first, or step-first
+            final Set<String> supportedConditionalStrategies = [
+                    'sequential',
+                    'parallel',
+                    'node-first',
+                    'step-first'
+            ] as Set<String>
+
+            if (hasConditionalSteps && strategy != null && !supportedConditionalStrategies.contains(strategy)) {
                 failed = true
                 scheduledExecution.errors.rejectValue(
-                    'workflow',
-                    'scheduledExecution.workflow.conditional.strategy.invalid.message',
-                    [strategy] as Object[],
-                    "Conditional steps can only be used with 'sequential' or 'parallel' workflow strategy. Current strategy: {0}"
+                        'workflow',
+                        'scheduledExecution.workflow.conditional.strategy.invalid.message',
+                        [strategy] as Object[],
+                        "Conditional steps can only be used with 'sequential', 'parallel', 'node-first', or 'step-first' workflow strategy. Current strategy: {0}"
                 )
             }
         }
