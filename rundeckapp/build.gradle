@@ -71,6 +71,11 @@ configurations.all {
         }
     }
     exclude group: 'io.micronaut', module: 'micronaut-bom'
+    // mysql-connector-java registers com.mysql.jdbc.Driver via JDBC SPI, causing spurious HikariCP
+    // ERROR logs at startup even when org.mariadb.jdbc.Driver is configured. Rundeck ships
+    // mariadb-java-client for MySQL/MariaDB connectivity; mysql-connector-java is not needed.
+    exclude group: 'mysql', module: 'mysql-connector-java'
+    exclude group: 'com.mysql', module: 'mysql-connector-j'
 }
 
 //list of grails plugins to depend on in various ways
