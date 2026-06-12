@@ -87,7 +87,12 @@ const FilterInputComp = defineComponent({
             (val: string) => (this.filterValue = val),
           ),
         );
-        this.filterValue = this.nodeFilterKo().filter();
+        const koVal = this.nodeFilterKo().filter();
+        if (this.filterValue) {
+          this.nodeFilterKo().selectNodeFilter({ filter: this.filterValue }, false);
+        } else {
+          this.filterValue = koVal;
+        }
       } else if (retry > 0) {
         setTimeout(() => this.attachKnockout(retry - 1), 1000);
       } else {
