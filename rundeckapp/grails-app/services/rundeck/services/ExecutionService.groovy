@@ -4705,18 +4705,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     private boolean isSqlCompatible() {
         boolean isCompatible = false
-        try{
+        try {
+            def sessionFactory = applicationContext.getBean("sessionFactory")
+            def dialectName = sessionFactory.configurationProperties?.getProperty("hibernate.dialect") ?: ""
+            boolean isH2 = dialectName.contains("H2Dialect")
+
             Execution.createCriteria().list(max:1) {
-                projections{
-                    sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                projections {
+                    if (isH2) {
+                        sqlProjection 'DATEDIFF(\'SECOND\', date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else {
+                        sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                    }
                 }
             }
-
             isCompatible = true
-        } catch(JDBCException ex){
+        } catch(Exception ex) {
             isCompatible = false
         }
-
         return isCompatible
     }
 
