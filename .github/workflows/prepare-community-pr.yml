@@ -155,7 +155,7 @@ jobs:
           # GitHub marks it as "Merged", giving the contributor proper closure.
           prep_branch="bot/prep-community-pr-${PR_NUMBER}"
           git checkout -B "${prep_branch}"
-          git push --force origin "HEAD:${prep_branch}"
+          git push --force-with-lease origin "HEAD:${prep_branch}"
 
       - name: Retarget and merge community PR into prep branch
         shell: bash
@@ -168,11 +168,24 @@ jobs:
           # Re-target the original PR's base to the prep branch.
           # The bot branch has no branch-protection rules, so the merge proceeds
           # immediately without waiting for CI, giving the contributor a "Merged" badge.
-          gh pr edit "${PR_NUMBER}" --repo "${REPO_FULL}" --base "${prep_branch}"
+          if ! gh pr edit "${PR_NUMBER}" --repo "${REPO_FULL}" --base "${prep_branch}"; then
+            body_file="$(mktemp)"
+            {
+              printf 'The `prepare-community-pr` workflow could not retarget this PR to `%s`.\n\n' "${prep_branch}"
+              printf 'This can happen if the PR was closed before the workflow ran, or due to a transient API failure. '
+              printf 'Remove and re-apply the `prepare-community-pr` label to retry.\n'
+            } >"${body_file}"
+            gh pr comment "${PR_NUMBER}" --repo "${REPO_FULL}" --body-file "${body_file}" || true
+            rm -f "${body_file}"
+            exit 1
+          fi
 
+          # Pass --expected-head-sha to ensure we merge the exact SHA that was security-checked
+          # above, not a newer commit that may have been pushed to the fork in the interim.
           if ! gh pr merge "${PR_NUMBER}" \
                --repo "${REPO_FULL}" \
                --merge \
+               --expected-head-sha "${HEAD_SHA}" \
                --subject "Merge community PR #${PR_NUMBER} into CI prep branch" \
                --body "Merged by the prepare-community-pr workflow to enable full CI with repository secrets."; then
             # Restore the original base so the PR is not left in a broken state
