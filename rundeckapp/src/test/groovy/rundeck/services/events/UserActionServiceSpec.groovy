@@ -2,6 +2,7 @@ package rundeck.services.events
 
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.springframework.security.authentication.event.AuthenticationFailureServiceExceptionEvent
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
 import rundeck.services.UserService
@@ -24,6 +25,34 @@ class UserActionServiceSpec extends Specification implements ServiceUnitTest<Use
         service.handleAuthenticationSuccessEvent(event)
         then:
         true
+    }
+
+    void "handleAuthenticationFailureServiceExceptionEvent logs warning for JAAS login failure"() {
+        setup:
+        service.userService = Mock(UserService)
+        AuthenticationFailureServiceExceptionEvent event = Mock(AuthenticationFailureServiceExceptionEvent) {
+            getAuthentication() >> Mock(Authentication) { getName() >> "baduser" }
+        }
+
+        when:
+        service.handleAuthenticationFailureServiceExceptionEvent(event)
+
+        then:
+        noExceptionThrown()
+    }
+
+    void "handleAuthenticationFailureServiceExceptionEvent handles null authentication gracefully"() {
+        setup:
+        service.userService = Mock(UserService)
+        AuthenticationFailureServiceExceptionEvent event = Mock(AuthenticationFailureServiceExceptionEvent) {
+            getAuthentication() >> null
+        }
+
+        when:
+        service.handleAuthenticationFailureServiceExceptionEvent(event)
+
+        then:
+        noExceptionThrown()
     }
 
     void "logout"() {

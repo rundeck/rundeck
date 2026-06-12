@@ -2,6 +2,7 @@ package rundeck.services.events
 
 import grails.gorm.transactions.Transactional
 import org.springframework.context.event.EventListener
+import org.springframework.security.authentication.event.AuthenticationFailureServiceExceptionEvent
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.authentication.logout.LogoutHandler
@@ -26,6 +27,24 @@ class UserActionService implements LogoutHandler{
             userService.registerLogin(extractUsername(event.authentication), sessionId)
         }else{
             log.error("Null user name on handleAuthenticationSuccessEvent")
+        }
+    }
+
+    /**
+     * Handles failed authentication events produced by JAAS login providers.
+     * When {@code rundeck.jaaslogin=true}, Spring Security publishes
+     * {@code AuthenticationFailureServiceExceptionEvent} for failed logins instead of
+     * {@code AuthenticationFailureBadCredentialsEvent}, leaving a gap in login-failure tracking.
+     *
+     * @param event the JAAS authentication failure event
+     */
+    @EventListener
+    void handleAuthenticationFailureServiceExceptionEvent(AuthenticationFailureServiceExceptionEvent event) {
+        def username = extractUsername(event?.authentication)
+        if (username != null) {
+            log.warn("Failed login attempt (JAAS) for user: ${username}")
+        } else {
+            log.error("Null user name on handleAuthenticationFailureServiceExceptionEvent")
         }
     }
 
