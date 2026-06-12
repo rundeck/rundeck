@@ -428,7 +428,7 @@ const messages = {
   "form.option.secureInput.false.label": "平文",
   "form.option.secureExposed.false.label": "セキュアリモート認証",
   "form.option.secureExposed.true.description": "パスワード入力。スクリプトまたはコマンドで値が表示される。",
-  "form.option.secureExposed.false.description": "パスワード入力。スクリプトまたはコマンドでは値は表示されず、ノードエクズキュータだけが認証に利用する。",
+  "form.option.secureExposed.false.description": "パスワード入力。スクリプトまたはコマンドでは値は表示されず、ノードエグゼキュータだけが認証に利用する。",
   "Workflow.Step.argString.label": "引数",
   "delete.selected.jobs": "選択したジョブを削除",
   "Option.required.label": "必須",
