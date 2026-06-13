@@ -2802,7 +2802,6 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
                         jobs:[job]
                 ]
                 1 * issueJobChangeEvents(_)
-                1 * isScheduled(job)>>true
                 1 * nextExecutionTimes([job])>>[(job.id):new Date()]
                 _*calculateJobStats(_)>>Mock(JobStatsProvider.JobStats)
                 0 * _(*_)
