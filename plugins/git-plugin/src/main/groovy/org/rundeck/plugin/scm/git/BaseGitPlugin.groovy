@@ -662,6 +662,15 @@ class BaseGitPlugin {
         }
     }
 
+    /**
+     * Checks whether the given throwable (or any cause in its chain) indicates that the specified
+     * remote branch does not exist in the upstream repository.
+     *
+     * @param t          the throwable to inspect, including its cause chain
+     * @param branchName the remote branch name to look for in the error message
+     * @return {@code true} if a {@link TransportException} in the cause chain reports the branch
+     *         is not found in the upstream; {@code false} otherwise
+     */
     protected static boolean isMissingRemoteBranch(Throwable t, String branchName) {
         Throwable current = t
         while (current) {
