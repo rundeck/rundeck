@@ -1,9 +1,9 @@
 <template>
   <div class="flex justify-between items-center bulk_edit_header">
-    <div class="flex flex-justify-start">
+    <div class="flex">
       <ui-socket section="job-list-page" location="card-header" />
     </div>
-    <div class="flex flex-justify-end">
+    <div class="flex">
       <div v-if="showControls" class="bulk_edit_controls">
         <ui-socket section="job-list-page" location="status-item" />
 
