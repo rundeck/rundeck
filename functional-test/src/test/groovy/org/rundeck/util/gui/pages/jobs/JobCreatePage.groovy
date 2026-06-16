@@ -1162,6 +1162,36 @@ class JobCreatePage extends BasePage {
     }
 
     /**
+     * Waits until the given step dropdown option is absent.
+     *
+     * {@link #doesntHasDropdownOption} is a point-in-time DOM query, so asserting it directly
+     * right after an async mutation (e.g. saving an error handler, which triggers a Vue re-render
+     * that removes the "add error handler" option) is racy. This polls until the option is actually
+     * gone instead of checking once.
+     *
+     * @return true once the option is absent; throws TimeoutException if it never disappears
+     */
+    boolean waitForDropdownOptionAbsent(int index, String dataTest, int timeoutSeconds = 30) {
+        new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds))
+                .until { doesntHasDropdownOption(index, dataTest) }
+        return true
+    }
+
+    /**
+     * Waits until the given step dropdown option is present.
+     *
+     * Counterpart to {@link #waitForDropdownOptionAbsent} for the cases where an async mutation
+     * (e.g. removing an error handler) is expected to re-add the option.
+     *
+     * @return true once the option is present; throws TimeoutException if it never appears
+     */
+    boolean waitForDropdownOptionPresent(int index, String dataTest, int timeoutSeconds = 30) {
+        new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds))
+                .until { !doesntHasDropdownOption(index, dataTest) }
+        return true
+    }
+
+    /**
      * Clicks the step at index to open edit modal (nextUi mode only).
      * The step item with id wfitem_${index} is clickable and opens EditPluginModal.
      */
