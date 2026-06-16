@@ -15,7 +15,7 @@ import org.rundeck.util.container.BaseContainer
 @APITest
 class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
 
-    static final String PROJECT_NO_GLOBALS  = "run-4538-no-globals"
+    static final String PROJECT_NO_GLOBALS   = "run-4538-no-globals"
     static final String PROJECT_WITH_GLOBALS = "run-4538-with-globals"
 
     def setupSpec() {
@@ -53,10 +53,10 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
 """)
 
         when: "the job definition is fetched — triggers GORM hydration of URL-typed fields"
-        try (def response = client.doGet("/job/${jobId}")) {
-            then: "no MalformedURLException — response is 200"
-            response.code() == 200
-        }
+        def response = doGet("/job/${jobId}")
+
+        then: "no MalformedURLException — response is 200"
+        response.code() == 200
     }
 
     def "job definition endpoint returns 200 when option valuesUrl contains unexpanded global variables and project has globals defined"() {
@@ -79,10 +79,10 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
 """)
 
         when:
-        try (def response = client.doGet("/job/${jobId}")) {
-            then:
-            response.code() == 200
-        }
+        def response = doGet("/job/${jobId}")
+
+        then:
+        response.code() == 200
     }
 
     def "job definition endpoint returns 200 when option valuesUrl contains chained option variable references"() {
@@ -112,10 +112,10 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
 """)
 
         when:
-        try (def response = client.doGet("/job/${jobId}")) {
-            then:
-            response.code() == 200
-        }
+        def response = doGet("/job/${jobId}")
+
+        then:
+        response.code() == 200
     }
 
     def "project jobs listing returns 200 when jobs have options with unexpanded global variables in valuesUrl"() {
@@ -138,10 +138,10 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
 """)
 
         when: "all jobs in the project are listed"
-        try (def response = client.doGet("/project/${PROJECT_NO_GLOBALS}/jobs")) {
-            then: "listing returns 200 — no MalformedURLException during domain hydration"
-            response.code() == 200
-        }
+        def response = doGet("/project/${PROJECT_NO_GLOBALS}/jobs")
+
+        then: "listing returns 200 — no MalformedURLException during domain hydration"
+        response.code() == 200
     }
 
     // -------------------------------------------------------------------------
