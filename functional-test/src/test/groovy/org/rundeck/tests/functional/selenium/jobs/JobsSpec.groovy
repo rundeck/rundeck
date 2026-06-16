@@ -947,15 +947,15 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.fillBasicJob 'job with error handlers'
         then: "Add error handler and check that its not possible to add more error handlers to same step"
         jobCreatePage.addErrorHandler( 'exec-command',  StepType.NODE)
-        assert jobCreatePage.doesntHasDropdownOption(0, "add-error-handler")
+        assert jobCreatePage.waitForDropdownOptionAbsent(0, "add-error-handler")
         then: "Duplicate step and remove duplicated error handler"
         jobCreatePage.scrollToElement(jobCreatePage.duplicateWfStepButton)
         jobCreatePage.duplicateWfStepButton.click()
         jobCreatePage.expectNumberOfStepsToBe(2)
-        assert jobCreatePage.doesntHasDropdownOption(1, "add-error-handler")
+        assert jobCreatePage.waitForDropdownOptionAbsent(1, "add-error-handler")
         jobCreatePage.scrollToElement(jobCreatePage.workflowAlphaUiButton)
         jobCreatePage.removeErrorHandlerButton(1).click()
-        assert !jobCreatePage.doesntHasDropdownOption(1, "add-error-handler")
+        assert jobCreatePage.waitForDropdownOptionPresent(1, "add-error-handler")
         expect: "Save the job successfully"
         jobCreatePage.scrollToElement(jobCreatePage.createJobButton);
         jobCreatePage.waitForElementToBeClickable jobCreatePage.createJobButton
