@@ -741,4 +741,51 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
         0 * service.scmService.initProject(project, "import")
 
     }
+
+    @Unroll
+    def "SCM project loader does not persist enabled=false to disk when initialization fails after retries exhausted - integration: #integration"() {
+        given:
+        def project = "test"
+        def username = "admin"
+        def roles = ["admin"]
+
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> false
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            listWorkflows(_) >> ["schedlist": []]
+        }
+        def scmPluginConfigData = Mock(ScmPluginConfigData) {
+            getSetting("username") >> username
+            getSettingList("roles") >> roles
+            getEnabled() >> true
+            getProperties() >> [:]
+        }
+        service.scmService = Mock(ScmService) {
+            _* projectHasConfiguredExportPlugin(project) >> true
+            _* projectHasConfiguredImportPlugin(project) >> true
+            _* scmOperationContext(username, roles, project) >> Mock(ScmOperationContext)
+            // Every attempt to load the plugin throws — simulates git server unreachable
+            _* loadPluginWithConfig(_, _, _, _) >> { throw new RuntimeException("Connection refused: git server unreachable") }
+            1 * loadScmConfig(project, integration) >> scmPluginConfigData
+        }
+        service.configurationService = Mock(ConfigService) {
+            _* getLong('scmLoader.init.retry', _) >> 0L
+            _* getLong('scmLoader.init.delay', _) >> 0L
+        }
+
+        when:
+        service.createProjectLoader(project, integration).run()
+
+        then:
+        thrown(ScmLoaderService.CancelTaskException)
+        // Must NOT write enabled=false to disk — connectivity errors are transient.
+        // Writing enabled=false would require manual re-activation after recovery (RUN-4525).
+        0 * service.scmService.storeConfig(*_)
+
+        where:
+        integration       | _
+        ScmService.EXPORT | _
+        ScmService.IMPORT | _
+    }
 }

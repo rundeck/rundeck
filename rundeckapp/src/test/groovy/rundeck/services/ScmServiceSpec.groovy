@@ -1333,4 +1333,136 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
 
     }
 
+    @Unroll
+    def "projectHasConfiguredPlugin reads persisted config without triggering initProject - integration: #integration"() {
+        given:
+        service.frameworkService = Mock(FrameworkService) { isClusterModeEnabled() >> true }
+        service.pluginConfigService = Mock(PluginConfigService)
+        ScmPluginConfigData config = Mock(ScmPluginConfigData) {
+            getEnabled() >> enabled
+        }
+
+        when:
+        def result = integration == ScmService.EXPORT
+            ? service.projectHasConfiguredExportPlugin('test')
+            : service.projectHasConfiguredImportPlugin('test')
+
+        then:
+        1 * service.pluginConfigService.loadScmConfig(
+            'test',
+            "etc/scm-${integration}.properties",
+            "scm.${integration}"
+        ) >> config
+        result == enabled
+        // initProject is not triggered so no write to disk should occur
+        0 * service.pluginConfigService.storeConfig(*_)
+
+        where:
+        integration       | enabled
+        ScmService.EXPORT | true
+        ScmService.EXPORT | false
+        ScmService.IMPORT | true
+        ScmService.IMPORT | false
+    }
+
+    @Unroll
+    def "projectHasConfiguredPlugin does not unregister in-memory plugin when config is disabled - integration: #integration"() {
+        given:
+        service.frameworkService = Mock(FrameworkService) { isClusterModeEnabled() >> true }
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.jobEventsService = Mock(JobEventsService)
+        ScmPluginConfigData config = Mock(ScmPluginConfigData) {
+            getEnabled() >> false
+        }
+        // Simulate a plugin already loaded in memory
+        def loadedPlugin = Mock(CloseableProvider)
+        if (integration == ScmService.EXPORT) {
+            service.loadedExportPlugins['test'] = loadedPlugin
+        } else {
+            service.loadedImportPlugins['test'] = loadedPlugin
+        }
+
+        when:
+        def result = integration == ScmService.EXPORT
+            ? service.projectHasConfiguredExportPlugin('test')
+            : service.projectHasConfiguredImportPlugin('test')
+
+        then:
+        1 * service.pluginConfigService.loadScmConfig(*_) >> config
+        result == false
+        // In-memory plugin must remain — connectivity issues must not evict a live plugin
+        0 * service.jobEventsService.removeListener(_)
+        if (integration == ScmService.EXPORT) {
+            service.loadedExportPlugins['test'] != null
+        } else {
+            service.loadedImportPlugins['test'] != null
+        }
+
+        where:
+        integration       | _
+        ScmService.EXPORT | _
+        ScmService.IMPORT | _
+    }
+
+    def "projectHasConfiguredPlugin returns false when no config exists on disk"() {
+        given:
+        service.frameworkService = Mock(FrameworkService) { isClusterModeEnabled() >> true }
+        service.pluginConfigService = Mock(PluginConfigService)
+
+        when:
+        def exportResult = service.projectHasConfiguredExportPlugin('test')
+        def importResult = service.projectHasConfiguredImportPlugin('test')
+
+        then:
+        2 * service.pluginConfigService.loadScmConfig(*_) >> null
+        !exportResult
+        !importResult
+    }
+
+    @Unroll
+    def "exportPluginStatus throws ScmPluginException when plugin configured but not loaded - simulates git unavailable"() {
+        given:
+        service.frameworkService = Mock(FrameworkService) { isClusterModeEnabled() >> true }
+        service.pluginConfigService = Mock(PluginConfigService)
+        // No plugin loaded in memory (git server down)
+        ScmPluginConfigData config = Mock(ScmPluginConfigData) { getEnabled() >> true }
+
+        when:
+        service.exportPluginStatus(Mock(UserAndRolesAuthContext), 'test')
+
+        then:
+        // loadScmConfig called twice: once by getLoadedExportPluginFor->initProject, once by the availability check
+        _ * service.pluginConfigService.loadScmConfig(*_) >> config
+        thrown(ScmPluginException)
+    }
+
+    @Unroll
+    def "importPluginStatus throws ScmPluginException when plugin configured but not loaded - simulates git unavailable"() {
+        given:
+        service.frameworkService = Mock(FrameworkService) { isClusterModeEnabled() >> true }
+        service.pluginConfigService = Mock(PluginConfigService)
+        ScmPluginConfigData config = Mock(ScmPluginConfigData) { getEnabled() >> true }
+
+        when:
+        service.importPluginStatus(Mock(UserAndRolesAuthContext), 'test')
+
+        then:
+        _ * service.pluginConfigService.loadScmConfig(*_) >> config
+        thrown(ScmPluginException)
+    }
+
+    def "exportPluginStatus returns null when plugin not configured on disk"() {
+        given:
+        service.frameworkService = Mock(FrameworkService) { isClusterModeEnabled() >> true }
+        service.pluginConfigService = Mock(PluginConfigService)
+
+        when:
+        def result = service.exportPluginStatus(Mock(UserAndRolesAuthContext), 'test')
+
+        then:
+        _ * service.pluginConfigService.loadScmConfig(*_) >> null
+        result == null
+        noExceptionThrown()
+    }
+
 }
