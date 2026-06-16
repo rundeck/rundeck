@@ -524,9 +524,9 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                     se.successOnEmptyNodeFilter = data.nodefilters.dispatch.successOnEmptyNodeFilter
                 }
             }
-            if(data.nodefilters.filter){
+            if(data.nodefilters.containsKey('filter')){
                 se.doNodedispatch=true
-                se.filter= data.nodefilters.filter
+                se.filter= data.nodefilters.filter ?: ''
             }else{
                 def map = [include: [:], exclude: [:]]
                 if (data.nodefilters.include) {
