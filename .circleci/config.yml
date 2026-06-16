@@ -830,6 +830,7 @@ workflows:
       - build-rundeck:
           name: Build
           <<: *cloudsmith-slack-defaults
+          jre25Publish: true
 
       # Step 1: Unit tests run in parallel with Build (no gates for fast feedback)
       - test-gradle:
@@ -872,6 +873,15 @@ workflows:
           resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
+          <<: *require-build-and-units
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Functional RUN-4538 Java 25 regression
+          gradle-task: apiTest
+          resource_class: large.gen2
+          host_jdk_for_tests: "25"
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/job/JobOptionValuesUrlGlobalsSpec.groovy"
+          parallelism: 1
           <<: *require-build-and-units
           <<: *slack-defaults
       - test-gradle-functional:
