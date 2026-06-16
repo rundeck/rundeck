@@ -157,8 +157,11 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
                 tempFile,
                 "application/yaml"
             )) {
-                assert response.code() == 200, "Job import failed: ${response.body()?.string()}"
-                def result = client.jsonValue(response.body(), Map)
+                def bodyStr = response.body().string()
+                if (response.code() != 200) {
+                    throw new AssertionError("Job import failed with HTTP ${response.code()}: ${bodyStr}")
+                }
+                def result = new groovy.json.JsonSlurper().parseText(bodyStr) as Map
                 assert result.succeeded?.size() == 1, "Expected 1 succeeded import, got: ${result}"
                 return result.succeeded[0].id as String
             }
