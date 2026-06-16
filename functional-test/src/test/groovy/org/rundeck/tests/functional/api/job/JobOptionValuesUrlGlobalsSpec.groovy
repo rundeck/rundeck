@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.api.job
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.util.annotations.APITest
 import org.rundeck.util.container.BaseContainer
 
@@ -161,7 +162,7 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
                 if (response.code() != 200) {
                     throw new AssertionError("Job import failed with HTTP ${response.code()}: ${bodyStr}")
                 }
-                def result = new groovy.json.JsonSlurper().parseText(bodyStr) as Map
+                def result = new ObjectMapper().readValue(bodyStr, Map) as Map
                 assert result.succeeded?.size() == 1, "Expected 1 succeeded import, got: ${result}"
                 return result.succeeded[0].id as String
             }
