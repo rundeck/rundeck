@@ -162,10 +162,11 @@ class ScmLoaderService implements EventBusAware {
                             // Do not persist enabled=false to disk — the failure may be a transient
                             // connectivity issue (e.g. Git server temporarily unreachable). Writing
                             // enabled=false would require manual re-activation by the user even after
-                            // connectivity is restored. The next loader cycle will retry automatically.
+                            // connectivity is restored. The current loader task is cancelled; a new
+                            // loader task will be started on the next project activity or server restart.
                             log.warn(
-                                "SCM ${integration} for ${project} unavailable after ${retryTimes} retries: ${t.message}. " +
-                                "Plugin remains enabled and will be retried on the next loader cycle."
+                                "SCM ${integration} for ${project} failed to initialize after ${retryTimes} retries: ${t.message}. " +
+                                "Plugin remains enabled in configuration. Check connectivity and credentials."
                             )
                             service.removingLoaderProcess(
                                 project,
