@@ -1,6 +1,7 @@
 <template>
   <span class="col-xs-6">
     <popover
+      v-model="popoverVisible"
       trigger="click"
       :show-delay="0"
       :hide-delay="200"
@@ -98,11 +99,17 @@ export default defineComponent({
     },
   },
   emits: ["filter"],
+  data() {
+    return {
+      popoverVisible: false,
+    };
+  },
   methods: {
     styleForNode(node: any) {
       return styleForNode(node);
     },
     filterClick(filter: any) {
+      this.popoverVisible = false;
       this.$emit("filter", filter);
     },
   },
