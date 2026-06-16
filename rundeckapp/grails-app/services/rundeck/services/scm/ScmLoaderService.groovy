@@ -159,7 +159,14 @@ class ScmLoaderService implements EventBusAware {
                         if(retryCount>= retryTimes){
                             service.scmFailedProjectInit.put(projectIntegration, pluginConfigData)
                             process = true
-                            service.scmToFalse(pluginConfigData, project, integration)
+                            // Do not persist enabled=false to disk — the failure may be a transient
+                            // connectivity issue (e.g. Git server temporarily unreachable). Writing
+                            // enabled=false would require manual re-activation by the user even after
+                            // connectivity is restored. The next loader cycle will retry automatically.
+                            log.warn(
+                                "SCM ${integration} for ${project} unavailable after ${retryTimes} retries: ${t.message}. " +
+                                "Plugin remains enabled and will be retried on the next loader cycle."
+                            )
                             service.removingLoaderProcess(
                                 project,
                                 integration,
