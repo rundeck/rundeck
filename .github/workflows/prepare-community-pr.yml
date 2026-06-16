@@ -87,7 +87,7 @@ jobs:
           fi
 
       - name: Check out default base branch (trusted ref only)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
@@ -180,12 +180,12 @@ jobs:
             exit 1
           fi
 
-          # Pass --expected-head-sha to ensure we merge the exact SHA that was security-checked
+          # Pass --match-head-commit to ensure we merge the exact SHA that was security-checked
           # above, not a newer commit that may have been pushed to the fork in the interim.
           if ! gh pr merge "${PR_NUMBER}" \
                --repo "${REPO_FULL}" \
                --merge \
-               --expected-head-sha "${HEAD_SHA}" \
+               --match-head-commit "${HEAD_SHA}" \
                --subject "Merge community PR #${PR_NUMBER} into CI prep branch" \
                --body "Merged by the prepare-community-pr workflow to enable full CI with repository secrets."; then
             # Restore the original base so the PR is not left in a broken state
