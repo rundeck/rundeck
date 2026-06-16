@@ -90,7 +90,7 @@ executors:
   # Machine executor (gen2: up to 180% faster multi-threaded CPU vs gen1)
   machine-builder:
     machine:
-      image: ubuntu-2204:2026.05.1
+      image: ubuntu-2204:current
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
