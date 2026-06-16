@@ -303,7 +303,14 @@ public class Option implements Comparable, OptionData {
             data.secureExposed=false
         }
         def configRemoteUrlData = data.remove('configRemoteUrl')
+        // remoteUrlAuthenticationType is stored as a top-level field in the option JSON (separate from
+        // configRemoteUrl) when saved from the Vue SPA. Merge it into configRemoteUrl so it is
+        // persisted as part of JobOptionConfigRemoteUrl.authenticationType.
+        def remoteUrlAuthenticationType = data.remove('remoteUrlAuthenticationType')
         if(configRemoteUrlData!=null && configRemoteUrlData instanceof Map && configRemoteUrlData.size()>0){
+            if(remoteUrlAuthenticationType && !configRemoteUrlData.authenticationType){
+                configRemoteUrlData = new HashMap(configRemoteUrlData) + [authenticationType: remoteUrlAuthenticationType]
+            }
             def configRemoteUrl = JobOptionConfigRemoteUrl.fromMap(configRemoteUrlData)
             def configData = new JobOptionConfigData()
             configData.addConfig(configRemoteUrl)
