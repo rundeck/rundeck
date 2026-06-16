@@ -64,12 +64,12 @@ public class Option implements Comparable, OptionData {
     Boolean required
     Boolean isDate
     String dateFormat
-    URL valuesUrl
+    String valuesUrl
     String label
     /**
-     * supercedes valuesUrl and allows longer values. 
+     * supercedes valuesUrl and allows longer values.
      */
-    URL valuesUrlLong
+    String valuesUrlLong
     String regex
     String valuesList
     String valuesListDelimiter
@@ -200,7 +200,7 @@ public class Option implements Comparable, OptionData {
             map.storagePath=defaultStoragePath
         }
         if(getRealValuesUrl()){
-            map.valuesUrl=getRealValuesUrl().toExternalForm()
+            map.valuesUrl=getRealValuesUrl()
 
             if(configData){
                 JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = getOptionConfigData().getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
@@ -353,10 +353,10 @@ public class Option implements Comparable, OptionData {
             this.valuesUrl = null
         }
     }
-    public URL getRealValuesUrl(){
+    public String getRealValuesUrl(){
         return valuesUrl?:valuesUrlLong
     }
-    public void setRealValuesUrl(URL url){
+    public void setRealValuesUrl(String url){
         this.valuesUrl=null
         this.valuesUrlLong=url
     }

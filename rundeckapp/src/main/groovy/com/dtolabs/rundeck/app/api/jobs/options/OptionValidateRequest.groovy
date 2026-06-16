@@ -51,20 +51,13 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
     String valuesUrl
 
     @Override
-    URL getRealValuesUrl() {
-        if(valuesUrl){
-            try{
-                return new URL(this.valuesUrl)
-            }catch (MalformedURLException e){
-                return null
-            }
-        }
-        return null
+    String getRealValuesUrl() {
+        return valuesUrl ?: null
     }
 
     @Override
-    void setRealValuesUrl(final URL realValuesUrl) {
-        this.valuesUrl = realValuesUrl.toString()
+    void setRealValuesUrl(final String realValuesUrl) {
+        this.valuesUrl = realValuesUrl
     }
 
     /**
