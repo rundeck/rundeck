@@ -674,4 +674,32 @@ class GitImportPluginSpec extends Specification {
         status.content !=null
     }
 
+    def "get status fetch fails throws ScmPluginException"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir, [fetchAutomatically: 'true'])
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'test'
+        })
+
+        // Delete origin to make fetch fail
+        FileUtils.delete(origindir, FileUtils.RECURSIVE | FileUtils.IGNORE_ERRORS)
+
+        when:
+        plugin.getStatus(Mock(ScmOperationContext))
+
+        then:
+        // A fetch failure signals the remote is unreachable — throw so the caller can surface a
+        // clear "Git server unavailable" message instead of a misleading local-state status.
+        ScmPluginException e = thrown()
+        e.message.contains('Fetch from the repository failed')
+    }
+
 }

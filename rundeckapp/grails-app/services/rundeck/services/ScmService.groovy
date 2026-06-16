@@ -1112,12 +1112,12 @@ class ScmService {
                 return null
             }
         }
-        // Plugin is configured on disk but not loaded in memory — git server is likely unreachable.
+        // Plugin is configured on disk but not loaded in memory.
         // Signal callers explicitly rather than returning null (which would silently show stale status).
         if (loadScmConfig(project, EXPORT)?.enabled) {
             throw new ScmPluginException(
                 "SCM export plugin for project ${project} is configured but currently unavailable. " +
-                "The Git server may be unreachable. The plugin will recover automatically when connectivity is restored."
+                "Check Git server connectivity and credentials, or reconfigure the plugin."
             )
         }
         null
@@ -1132,11 +1132,11 @@ class ScmService {
         if (plugin) {
             return plugin.getStatus(scmOperationContext(auth, project))
         }
-        // Plugin is configured on disk but not loaded — git server is likely unreachable.
+        // Plugin is configured on disk but not loaded in memory.
         if (loadScmConfig(project, IMPORT)?.enabled) {
             throw new ScmPluginException(
                 "SCM import plugin for project ${project} is configured but currently unavailable. " +
-                "The Git server may be unreachable. The plugin will recover automatically when connectivity is restored."
+                "Check Git server connectivity and credentials, or reconfigure the plugin."
             )
         }
         null
