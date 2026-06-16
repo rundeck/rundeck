@@ -415,7 +415,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement selectTabAddFilterByName(String tabName){
-        el(By.xpath("//span[contains(text(), \"${tabName}\")]//*[@class='glyphicon glyphicon-plus text-success']"))
+        el(By.xpath("//span[normalize-space(.)=\"${tabName}\"]//*[@class='glyphicon glyphicon-plus text-success']"))
     }
 
     WebElement getNodeFilterInput(){
@@ -645,7 +645,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getSaveOptionButton() {
-        el saveOptionBy
+        byAndWaitClickable saveOptionBy
     }
     By optionItemBy(int index) {
         legacyUi ? By.cssSelector("#optli_$index") : NextUi.optionItemBy(index)

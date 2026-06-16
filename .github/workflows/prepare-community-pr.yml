@@ -93,7 +93,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Verify changed files and merge PR head
+      - name: Verify changed files and create prep branch
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -141,7 +141,6 @@ jobs:
               echo "SECURITY: Rejecting path containing '..': ${f}" >&2
               exit 1
             fi
-            
             # Block workflow/action file changes (prevents secret exfiltration)
             if [[ "${f}" == .github/workflows/* ]] || [[ "${f}" == .github/actions/* ]]; then
               echo "SECURITY: Rejecting workflow/action file change: ${f}" >&2
@@ -151,22 +150,55 @@ jobs:
             fi
           done
 
+          # Create and push the prep branch from base (no community changes yet).
+          # The original PR will be re-targeted to this branch so merging it via
+          # GitHub marks it as "Merged", giving the contributor proper closure.
           prep_branch="bot/prep-community-pr-${PR_NUMBER}"
           git checkout -B "${prep_branch}"
+          git push --force-with-lease origin "HEAD:${prep_branch}"
 
-          merge_msg="Prepare CI: merge community PR #${PR_NUMBER}"
-          if ! git merge --no-ff FETCH_HEAD -m "${merge_msg}"; then
+      - name: Retarget and merge community PR into prep branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          prep_branch="bot/prep-community-pr-${PR_NUMBER}"
+
+          # Re-target the original PR's base to the prep branch.
+          # The bot branch has no branch-protection rules, so the merge proceeds
+          # immediately without waiting for CI, giving the contributor a "Merged" badge.
+          if ! gh pr edit "${PR_NUMBER}" --repo "${REPO_FULL}" --base "${prep_branch}"; then
             body_file="$(mktemp)"
             {
-              printf '%s\n\n' "The \`prepare-community-pr\` workflow could not merge this PR into \`${prep_branch}\`."
-              printf '%s\n' "Resolve conflicts against the default branch, then remove and re-apply the label."
+              printf 'The `prepare-community-pr` workflow could not retarget this PR to `%s`.\n\n' "${prep_branch}"
+              printf 'This can happen if the PR was closed before the workflow ran, or due to a transient API failure. '
+              printf 'Remove and re-apply the `prepare-community-pr` label to retry.\n'
+            } >"${body_file}"
+            gh pr comment "${PR_NUMBER}" --repo "${REPO_FULL}" --body-file "${body_file}" || true
+            rm -f "${body_file}"
+            exit 1
+          fi
+
+          # Pass --expected-head-sha to ensure we merge the exact SHA that was security-checked
+          # above, not a newer commit that may have been pushed to the fork in the interim.
+          if ! gh pr merge "${PR_NUMBER}" \
+               --repo "${REPO_FULL}" \
+               --merge \
+               --expected-head-sha "${HEAD_SHA}" \
+               --subject "Merge community PR #${PR_NUMBER} into CI prep branch" \
+               --body "Merged by the prepare-community-pr workflow to enable full CI with repository secrets."; then
+            # Restore the original base so the PR is not left in a broken state
+            gh pr edit "${PR_NUMBER}" --repo "${REPO_FULL}" --base "${BASE_REF}" || true
+            body_file="$(mktemp)"
+            {
+              printf 'The `prepare-community-pr` workflow could not merge this PR into `%s`.\n\n' "${prep_branch}"
+              printf 'This is usually caused by merge conflicts. Resolve conflicts against `%s`, then remove and re-apply the `prepare-community-pr` label.\n' "${BASE_REF}"
             } >"${body_file}"
             gh pr comment "${PR_NUMBER}" --repo "${REPO_FULL}" --body-file "${body_file}"
             rm -f "${body_file}"
             exit 1
           fi
-
-          git push --force-with-lease origin "HEAD:${prep_branch}"
 
       - name: Open or refresh integration pull request
         if: success()
@@ -180,8 +212,8 @@ jobs:
           title="Prepare CI for community PR #${PR_NUMBER}"
           body_file="$(mktemp)"
           {
-            printf '%s\n\n' "This PR was opened automatically so default-branch CI (including jobs that need repository secrets) can run on the merged result."
-            printf '%s\n' "Source (community) PR: ${origin_url}"
+            printf '%s\n\n' "This PR was opened automatically so full CI (including jobs that require repository secrets) can run on the merged result."
+            printf '%s\n' "Community PR (already merged into this branch): ${origin_url}"
           } >"${body_file}"
 
           existing="$(

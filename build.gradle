@@ -151,6 +151,9 @@ logger.lifecycle("Building version {}", project.resolvedVersion)
 allprojects {
     version = project.resolvedVersion
     ext["spring.version"] = springVersion
+    // Spring Boot's dependency-management BOM overrides Spring Framework via this property name
+    // (ext["spring.version"] alone does NOT move the BOM-managed spring-framework version).
+    ext["spring-framework.version"] = springVersion
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
@@ -203,6 +206,9 @@ allprojects {
             
             // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+            force "com.google.protobuf:protobuf-java:${protobufVersion}" // CVE-2024-7254 fix
+            // CVE-2025-67030 - plexus-utils Directory Traversal (Expand.extractFile); pulled via grails-shell-cli
+            force "org.codehaus.plexus:plexus-utils:${plexusUtilsVersion}"
             
             // Force centralized versions to prevent duplicates in WAR
             force "org.apache.ant:ant:${antVersion}"

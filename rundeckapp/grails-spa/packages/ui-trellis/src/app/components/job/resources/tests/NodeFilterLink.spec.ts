@@ -87,4 +87,68 @@ describe("NodeFilterLink Component", () => {
       filter: "hostname: node1",
     });
   });
+
+  describe("getFilter — multi-attribute and quoting", () => {
+    const filterCases: [string, string, string][] = [
+      // [description, nodeFilter input, expected output]
+      [
+        "does not quote multi-attribute filter (no-space values)",
+        "osFamily: unix name:localhost",
+        "osFamily: unix name:localhost",
+      ],
+      [
+        "does not quote multi-attribute filter (space after colon)",
+        "osFamily: unix name: localhost",
+        "osFamily: unix name: localhost",
+      ],
+      [
+        "does not quote multi-attribute filter with three attributes",
+        "name: node1 tags: linux osFamily: unix",
+        "name: node1 tags: linux osFamily: unix",
+      ],
+      [
+        "does not double-quote when values are already quoted",
+        'osArch: "aarch64" osName: "Mac OS X"',
+        'osArch: "aarch64" osName: "Mac OS X"',
+      ],
+      [
+        "does not double-quote single attribute with quoted value",
+        'osName: "Mac OS X"',
+        'osName: "Mac OS X"',
+      ],
+      [
+        "quotes single attribute whose unquoted value contains spaces",
+        "osName: Mac OS X",
+        'osName: "Mac OS X"',
+      ],
+      [
+        "does not modify single attribute without spaces",
+        "osFamily: unix",
+        "osFamily: unix",
+      ],
+      [
+        "does not modify the all-nodes wildcard",
+        ".*",
+        ".*",
+      ],
+      [
+        "does not quote multi-attribute exclude filter",
+        "name: node1 !tags: windows",
+        "name: node1 !tags: windows",
+      ],
+      [
+        "does not quote namespace attribute with multi-attribute filter",
+        "ui:status:text: active name: node1",
+        "ui:status:text: active name: node1",
+      ],
+    ];
+
+    it.each(filterCases)("%s", async (_, nodeFilter, expected) => {
+      const wrapper = await mountNodeFilterLink({ nodeFilter });
+      await wrapper.trigger("click");
+      await wrapper.vm.$nextTick();
+      const emitted = wrapper.emitted("nodefilterclick");
+      expect(emitted![0][0]).toEqual({ filter: expected });
+    });
+  });
 });

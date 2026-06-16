@@ -2220,6 +2220,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
+            LogFileStorageRequest.findByExecution(e)?.delete(flush: true)
             e.delete()
             //delete all files
             def deletedfiles = 0
@@ -2895,12 +2896,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Execution newExec = int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
 
         // Publish audit event for new job run.
+        // Explicitly set the username from the execution record so that the audit log
+        // always reflects the real user, even when there is no web session in the
+        // security context (e.g. Quartz-scheduled jobs, API/webhook calls).
         if(auditEventsService) {
             auditEventsService.eventBuilder()
                 .setResourceType(ResourceTypes.JOB)
-                .setResourceName("${jobReference.project}:${jobReference.jobAndGroup}")
                 .setResourceName("${se.project}:${se.uuid}:${se.generateFullName()}:${newExec.id}")
                 .setActionType(ActionTypes.RUN)
+                .setUsername(newExec.user)
                 .publish()
         }
 
@@ -4830,7 +4834,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         StandardBasicTypes.LONG
             }
         }
-        return Arrays.asList(metricCriteriaA, metricCriteriaB)
+        // Oracle: DATE - DATE returns NUMBER (fractional days); multiply by 86400 for integer seconds
+        def metricCriteriaC = {
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                rowCount("count")
+                sqlProjection 'sum(round((date_completed - date_started) * 86400)) as durationSum',
+                        'durationSum',
+                        StandardBasicTypes.LONG
+                sqlProjection 'min(round((date_completed - date_started) * 86400)) as durationMin',
+                        'durationMin',
+                        StandardBasicTypes.LONG
+                sqlProjection 'max(round((date_completed - date_started) * 86400)) as durationMax',
+                        'durationMax',
+                        StandardBasicTypes.LONG
+
+                // Zero-overhead status count projections
+                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                        'succeededCount',
+                        StandardBasicTypes.LONG
+                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                        'failedCount',
+                        StandardBasicTypes.LONG
+            }
+        }
+        return Arrays.asList(metricCriteriaA, metricCriteriaB, metricCriteriaC)
     }
 
     /**
