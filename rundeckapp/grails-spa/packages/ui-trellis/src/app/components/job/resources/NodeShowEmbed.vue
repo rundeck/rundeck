@@ -1,7 +1,7 @@
 <template>
   <span class="col-xs-6">
     <popover
-      trigger="outside-click"
+      trigger="click"
       :show-delay="0"
       :hide-delay="200"
       placement="auto"
