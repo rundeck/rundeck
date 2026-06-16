@@ -211,7 +211,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
 
         def msgs = []
-        boolean fetchError = false
         if (performFetch) {
             try {
                 fetchFromRemote(context)
@@ -219,10 +218,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     actions[ACTION_PULL].performAction(context,this,null,null,null)
                 }
             } catch (Exception e) {
-                fetchError = true
-                msgs<<"Fetch from the repository failed: ${e.message}"
+                msgs << "Fetch from the repository failed: ${e.message}"
                 logger.error("Failed fetch from the repository: ${e.message}")
                 logger.debug("Failed fetch from the repository: ${e.message}", e)
+                // Short-circuit: skip expensive tree walk when the remote is unreachable.
+                throw new ScmPluginException(msgs.join(', '))
             }
         }
 
@@ -333,11 +333,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
         if (deleted) {
             msgs << "${deleted} tracked file(s) were deleted"
-        }
-        // A fetch error means the remote is unreachable. Throw so callers can show a clear
-        // "Git server unavailable" message rather than a misleading local-state status.
-        if (fetchError) {
-            throw new ScmPluginException(msgs.join(', '))
         }
         state.message = msgs.join(', ')
         return state
