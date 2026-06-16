@@ -121,19 +121,39 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         committerEmail = config.committerEmail
         File base = new File(config.dir)
         mapper = new TemplateJobFileMapper(expand(config.pathTemplate, [format: config.format], "config"), base)
-        cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
+        if (config.createBranch && config.baseBranch) {
+            // Clone baseBranch first since the target branch may not exist yet on the remote.
+            // This avoids a clone failure that would prevent the branch-creation logic from running.
+            branch = config.baseBranch
+            try {
+                cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
+            } catch (ScmPluginException e) {
+                branch = config.branch
+                if (isMissingRemoteBranch(e, config.baseBranch)) {
+                    def remapped = new ScmPluginException("Non existent remote branch: ${config.baseBranch}")
+                    remapped.initCause(e)
+                    throw remapped
+                }
+                throw e
+            }
+            branch = config.branch
+        } else {
+            cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
+        }
         //check clone was ok
         if (git?.repository.getFullBranch() != "refs/heads/$branch") {
             logger.debug("branch differs")
-            if(config.createBranch){
-                if(config.baseBranch && existBranch("refs/remotes/${this.REMOTE_NAME}/${config.baseBranch}")){
-                    createBranch(context, config.branch, config.baseBranch)
+            if (config.createBranch) {
+                if (config.baseBranch && existBranch("refs/remotes/${this.REMOTE_NAME}/${config.baseBranch}")) {
+                    if (!remoteBranchExists(context, config.url, config.branch)) {
+                        createBranch(context, config.branch, config.baseBranch)
+                    }
                     cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
-                }else{
+                } else {
                     logger.debug("Non existent remote branch: ${config.baseBranch}")
                     throw new ScmPluginException("Non existent remote branch: ${config.baseBranch}")
                 }
-            }else{
+            } else {
                 throw new ScmPluginException("Could not clone the remote branch: ${this.branch}, " +
                         "because it does not exist. To create it, you need to set the Create Branch option to true.")
             }
