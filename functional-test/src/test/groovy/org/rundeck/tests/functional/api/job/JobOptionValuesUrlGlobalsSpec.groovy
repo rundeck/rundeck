@@ -22,9 +22,9 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
         startEnvironment()
         setupProject(PROJECT_NO_GLOBALS)
         setupProject(PROJECT_WITH_GLOBALS, [
-            "project.globals.s3_host"  : "options-bucket.s3.amazonaws.com",
-            "project.globals.s3_stage" : "prod",
-            "project.globals.s3_bucket": "rundeck-options"
+            "project.globals.api_host"  : "internal-api.example.com",
+            "project.globals.env"       : "prod",
+            "project.globals.data_path" : "options"
         ])
     }
 
@@ -45,11 +45,11 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
     keepgoing: false
     strategy: node-first
   options:
-  - name: ACCOUNT_ID
-    label: Account ID
+  - name: DATA
+    label: Data
     required: true
     enforced: true
-    valuesUrl: 'https://\${globals.s3_host}/\${globals.s3_stage}/\${globals.s3_bucket}/options/accounts.json'
+    valuesUrl: 'https://\${globals.api_host}/\${globals.env}/\${globals.data_path}/values.json'
 """)
 
         when: "the job definition is fetched — triggers GORM hydration of URL-typed fields"
@@ -71,11 +71,11 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
     keepgoing: false
     strategy: node-first
   options:
-  - name: ACCOUNT_ID
-    label: Account ID
+  - name: DATA
+    label: Data
     required: true
     enforced: true
-    valuesUrl: 'https://\${globals.s3_host}/\${globals.s3_stage}/\${globals.s3_bucket}/options/accounts.json'
+    valuesUrl: 'https://\${globals.api_host}/\${globals.env}/\${globals.data_path}/values.json'
 """)
 
         when:
@@ -97,18 +97,18 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
     keepgoing: false
     strategy: node-first
   options:
-  - name: ACCOUNT_ID
-    label: Account ID
+  - name: ENV
+    label: Environment
     required: true
     enforced: true
-    valuesUrl: 'https://\${globals.s3_host}/\${globals.s3_bucket}/accounts.json'
-  - name: RESOURCE_IDS
-    label: Resource IDs
+    valuesUrl: 'https://\${globals.api_host}/\${globals.data_path}/envs.json'
+  - name: DATA
+    label: Data
     required: true
     enforced: true
     multivalued: true
     delimiter: ','
-    valuesUrl: 'https://\${globals.s3_host}/\${globals.s3_bucket}/inventory-\${option.ACCOUNT_ID.value}.json'
+    valuesUrl: 'https://\${globals.api_host}/\${globals.data_path}/data-\${option.ENV.value}.json'
 """)
 
         when:
@@ -130,11 +130,11 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
     keepgoing: false
     strategy: node-first
   options:
-  - name: ACCOUNT_ID
-    label: Account ID
+  - name: DATA
+    label: Data
     required: true
     enforced: true
-    valuesUrl: 'https://\${globals.s3_host}/\${globals.s3_bucket}/accounts.json'
+    valuesUrl: 'https://\${globals.api_host}/\${globals.data_path}/values.json'
 """)
 
         when: "all jobs in the project are listed"
