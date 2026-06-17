@@ -10,7 +10,7 @@ function usage {
     echo "Usage:"
     echo "  setversion.sh <version> [GA|rc#|alpha#]                                              - Update version in version.properties"
     echo "  setversion.sh --bump-minor                                                           - Bump minor version number"
-    echo "  setversion.sh --tag <version> [GA|rc#|alpha#] [--push] [--dry-run] [--debug]        - Create git tag for release directly on current branch"
+    echo "  setversion.sh --tag <version> [GA|rc#|alpha#] [--push] [--dry-run] [--debug]        - Create git tag; checks out release branch if one exists for the version"
     echo "  setversion.sh --create-release-branch <version> [<commit>] [--push] [--dry-run] [--debug]     - Create release branch for patch releases (branches from GA tag or specified commit)"
     echo ""
     echo "Flags:"
@@ -101,7 +101,7 @@ if [ "$1" == "--tag" ]; then
 
     RELEASE_BRANCH="release/$MAJOR.$MINOR.x"
     if git rev-parse --verify "$RELEASE_BRANCH" >/dev/null 2>&1 ||
-       git ls-remote --heads origin "$RELEASE_BRANCH" | grep -q "$RELEASE_BRANCH"; then
+       git ls-remote --heads origin "$RELEASE_BRANCH" | grep -q "refs/heads/${RELEASE_BRANCH}$"; then
         RELEASE_BRANCH_EXISTS=true
     else
         RELEASE_BRANCH_EXISTS=false
@@ -196,7 +196,7 @@ elif [ "$1" == "--create-release-branch" ]; then
 
     # Check if branch already exists locally or remotely
     if git rev-parse --verify "$BRANCH_NAME" >/dev/null 2>&1 ||
-       git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+       git ls-remote --heads origin "$BRANCH_NAME" | grep -q "refs/heads/${BRANCH_NAME}$"; then
         echo "Error: Branch $BRANCH_NAME already exists locally or remotely."
         echo "Use the tag process to create tags on the existing release branch."
         exit 11
