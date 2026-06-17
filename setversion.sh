@@ -159,12 +159,6 @@ elif [ "$1" == "--create-release-branch" ]; then
         exit 3
     fi
 
-    # Check if this is a patch version (patch > 0)
-    if [ "$PATCH" -eq 0 ]; then
-        echo "Error: Creating a patch release branch requires a patch version > 0 (e.g., 5.19.1, not 5.19.0)"
-        exit 3
-    fi
-
     BASE_VERSION="$MAJOR.$MINOR.0"
     BRANCH_NAME="release/$MAJOR.$MINOR.x"
     GA_TAG="v$BASE_VERSION"
