@@ -97,4 +97,70 @@ class StorageTreeFactorySpec extends Specification {
         !result
 
     }
+
+    def "extractConfiguredIndices returns sorted indices skipping gaps"() {
+        given: "config with provider indices 1, 3, 5 (gaps at 2 and 4)"
+        def config = [
+            'provider.1.type': 'db',
+            'provider.1.path': 'keys',
+            'provider.3.type': 'vault',
+            'provider.5.type': 'aws',
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then: "all three indices are returned even though 2 and 4 are absent"
+        result == [1, 3, 5]
+    }
+
+    def "extractConfiguredIndices returns empty list when no providers configured"() {
+        expect:
+        StorageTreeFactory.extractConfiguredIndices([:], 'provider') == []
+    }
+
+    def "extractConfiguredIndices ignores keys for a different prefix"() {
+        given:
+        def config = [
+            'provider.1.type'  : 'db',
+            'converter.1.type' : 'enc',  // different prefix — must not appear
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then:
+        result == [1]
+    }
+
+    def "extractConfiguredIndices ignores non-integer and nested index segments"() {
+        given:
+        def config = [
+            'provider.abc.type'   : 'bad', // non-numeric
+            'provider.1.config.type': 'bad', // nested — middle contains a dot
+            'provider.2.type'     : 'good',
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then:
+        result == [2]
+    }
+
+    def "extractConfiguredIndices does not double-count an index with multiple keys"() {
+        given:
+        def config = [
+            'provider.4.type': 'vault',
+            'provider.4.path': 'keys/vault',
+            'provider.4.config.token': 'secret',
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then:
+        result == [4]
+    }
+
 }
