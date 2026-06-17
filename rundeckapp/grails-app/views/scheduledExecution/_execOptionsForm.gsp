@@ -511,7 +511,7 @@
 
         var tmpfilt = {};
         jQuery.data( tmpfilt, "node-filter-name", "" );
-        jQuery.data( tmpfilt, "node-filter", "${nodeFilterParam ?: nodefilter}" );
+        jQuery.data( tmpfilt, "node-filter", "${enc(js: nodeFilterParam ?: nodefilter)}" );
         nodeFilter.selectNodeFilterLink(tmpfilt);
 
         kocontrollers.nodeFilter = nodeFilter
@@ -522,9 +522,9 @@
         let selectedNodes=hasSelectedNodes?loadJsonData('selectedNodesJson'):hasSelectedByDefault?loadJsonData('allNodesJson'):[];
         kocontrollers.runformoptions = new JobRunFormOptions({
             debug:${enc(js:scheduledExecution?.loglevel=='DEBUG')},
-            changeTargetNodes:${enc(js:!!nodeFilterParam)} || hasSelectedNodes||!hasSelectedByDefault,
+            changeTargetNodes:${enc(js:!!(nodeFilterParam && (scheduledExecution.nodeFilterEditable || nodefilter == '')))} || hasSelectedNodes||!hasSelectedByDefault,
             canOverrideFilter:${enc(js:scheduledExecution.nodeFilterEditable|| nodefilter == '')},
-            nodeOverride: "${enc(js: nodeFilterParam ? 'filter' : (!nodesetvariables && nodes?'cherrypick':'filter'))}",
+            nodeOverride: "${enc(js: (nodeFilterParam && (scheduledExecution.nodeFilterEditable || nodefilter == '')) ? 'filter' : (!nodesetvariables && nodes?'cherrypick':'filter'))}",
             selectedNodes: selectedNodes,
             hasDynamicFilter: ${enc(js:!!nodesetvariables)},
             allNodes:loadJsonData('allNodesJson'),

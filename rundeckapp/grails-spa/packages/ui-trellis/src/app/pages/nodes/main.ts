@@ -6,7 +6,7 @@ import NodeCard from "../../components/job/resources/NodeCard.vue";
 import { observer } from "../../utilities/uiSocketObserver";
 
 const rundeckContext = getRundeckContext();
-const FilterInputComp = defineComponent({
+export const FilterInputComp = defineComponent({
   name: "NodeFilter",
   components: { NodeFilterInput },
   props: ["itemData", "extraAttrs"],
