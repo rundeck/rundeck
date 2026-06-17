@@ -203,7 +203,7 @@ dependencies {
     // Force CVE-patched mchange libraries (transitively brought by quartz:2.5.x)
     implementation "com.mchange:mchange-commons-java:${mchangeCommonsJavaVersion}"
     implementation "com.mchange:c3p0:${c3p0Version}"
-    implementation 'org.grails.plugins:mail:3.0.0'
+    implementation 'org.grails.plugins:grails-mail:5.0.3'
 
     // Liquibase for compile-time exception classes (runtime provided by Spring Boot)
     compileOnly "org.liquibase:liquibase-core:${liquibaseVersion}"
