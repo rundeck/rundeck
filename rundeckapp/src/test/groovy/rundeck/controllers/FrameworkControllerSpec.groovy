@@ -2182,6 +2182,224 @@ project.label=A Label
                 errors : ['Project does not exist']
         ]
     }
+
+    /**
+     * RUN-4521 regression: reproduces the exact production payload where removing a node source
+     * with runner extra config (docker) while keeping only local caused all sources to be deleted.
+     *
+     * Run in debug mode and set a breakpoint in JsonUtil.parseRequestBody and
+     * FrameworkController.saveProjectPlugins to inspect the parsed body and configs list.
+     */
+    def "save project plugins — production payload RUN-4521: keep local remove docker with runner extra"() {
+        given:
+        def utilTagLib = mockTagLib(UtilityTagLib)
+        def project = "BadNodeSources"
+        def serviceName = "ResourceModelSource"
+        def configPrefix = "resources.source"
+
+        controller.frameworkService = Mock(FrameworkService) {
+            _ * getGrailsEventBus() >> Mock(grails.events.bus.EventBus) {
+                _ * notify(_, _)
+            }
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.pluginService = Mock(PluginService)
+        controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+        controller.featureService = Mock(FeatureService)
+
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, _) >> true
+            1 * requireParameters(_, _, ['serviceName', 'configPrefix']) >> true
+            1 * requireExists(_, _, ['project', project]) >> true
+            1 * requireAuthorized(_, _, ['configure', 'Project', project]) >> true
+        }
+
+        // Exact payload observed in production — 5 plugins, removedPlugins empty
+        def runnerExtra = { String providerType -> [runner: [
+            runnerFilterType     : 'LOCAL_RUNNER',
+            runnerFilterMode     : 'LOCAL',
+            checkProviders       : true,
+            providers            : [[provider: providerType, serviceName: 'ResourceModelSource', checkProvider: true]],
+            serviceProvidersFilter: ['ResourceModelSource']
+        ]]}
+        def inputData = [
+            plugins: [
+                [extra: [:],                            type: 'local',                      config: [description: 'Rundeck server node'], origIndex: 0],
+                [extra: runnerExtra('yaml-text-model-source'),  type: 'yaml-text-model-source',     config: ['yaml-text': '# hypothetical node, somenode2\nsomenode2:\n  tags: "pool,service"\n'], origIndex: 1],
+                [extra: runnerExtra('docker-container-model-source'), type: 'docker-container-model-source', config: [:],                            origIndex: 2],
+                [extra: runnerExtra('gcp-gke-clusters'), type: 'gcp-gke-clusters',          config: [usePodServiceAccount: 'false'],        origIndex: 3],
+                [extra: runnerExtra('file'),             type: 'file',                       config: [format: 'dsad', file: 'dsa', generateFileAutomatically: 'false', includeServerNode: 'false', requireFileExists: 'false', writeable: 'false']]
+                // note: last plugin has no origIndex — intentional to match production payload
+            ],
+            removedPlugins: []
+        ]
+        request.json = inputData
+        request.method = 'POST'
+        setupFormTokens(params)
+
+        when:
+        controller.saveProjectPlugins(project, serviceName, configPrefix)
+
+        then:
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+        1 * controller.obscurePasswordFieldsService.untrack(_, _, _)
+        1 * controller.obscurePasswordFieldsService.resetTrack(_, _, _)
+
+        // All 5 plugin types must be found and valid for save to succeed
+        1 * controller.pluginService.getPluginDescriptor('local', _) >>
+                new DescribedPlugin(null, null, 'local', null, null)
+        1 * controller.pluginService.validatePluginConfig(serviceName, 'local', [description: 'Rundeck server node']) >>
+                new ValidatedPlugin(valid: true)
+        1 * controller.pluginService.getPluginDescriptor('yaml-text-model-source', _) >>
+                new DescribedPlugin(null, null, 'yaml-text-model-source', null, null)
+        1 * controller.pluginService.validatePluginConfig(serviceName, 'yaml-text-model-source', _) >>
+                new ValidatedPlugin(valid: true)
+        1 * controller.pluginService.getPluginDescriptor('docker-container-model-source', _) >>
+                new DescribedPlugin(null, null, 'docker-container-model-source', null, null)
+        1 * controller.pluginService.validatePluginConfig(serviceName, 'docker-container-model-source', [:]) >>
+                new ValidatedPlugin(valid: true)
+        1 * controller.pluginService.getPluginDescriptor('gcp-gke-clusters', _) >>
+                new DescribedPlugin(null, null, 'gcp-gke-clusters', null, null)
+        1 * controller.pluginService.validatePluginConfig(serviceName, 'gcp-gke-clusters', [usePodServiceAccount: 'false']) >>
+                new ValidatedPlugin(valid: true)
+        1 * controller.pluginService.getPluginDescriptor('file', _) >>
+                new DescribedPlugin(null, null, 'file', null, null)
+        1 * controller.pluginService.validatePluginConfig(serviceName, 'file', _) >>
+                new ValidatedPlugin(valid: true)
+
+        // project config saved with 5 plugins — NOT empty
+        1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ["${configPrefix}."].toSet()) >>
+                [success: true]
+        response.status == 200
+        response.json.plugins.size() == 5
+    }
+
+    /**
+     * RUN-4521 fix: malformed/truncated JSON body causes ObjectMapper to throw JsonParseException
+     * (an IOException). saveProjectPlugins must catch it and return 400 with the exact error
+     * message instead of silently wiping all sources.
+     */
+    def "save project plugins — malformed JSON body returns 400 and does not delete sources RUN-4521"() {
+        given:
+        def utilTagLib = mockTagLib(UtilityTagLib)
+        def project = "BadNodeSources"
+        def serviceName = "ResourceModelSource"
+        def configPrefix = "resources.source"
+
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.pluginService = Mock(PluginService)
+        controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+        controller.featureService = Mock(FeatureService)
+
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, _) >> true
+            1 * requireParameters(_, _, ['serviceName', 'configPrefix']) >> true
+            1 * requireExists(_, _, ['project', project]) >> true
+            1 * requireAuthorized(_, _, ['configure', 'Project', project]) >> true
+        }
+
+        // Truncated JSON — Jackson throws JsonParseException (IOException subclass)
+        def truncatedJson = '{"plugins":[{"extra":{},"type":"local","config":{"description":"Rundeck server node"},"origIndex":0},{"extra":{"runner":{"runnerFilterType":"LOCAL_RUNNER"'
+        request.contentType = 'application/json'
+        request.content = truncatedJson.bytes
+        request.method = 'POST'
+        setupFormTokens(params)
+
+        when:
+        controller.saveProjectPlugins(project, serviceName, configPrefix)
+
+        then:
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+        // Fix: project config is NOT touched — sources are preserved
+        0 * controller.frameworkService.updateFrameworkProjectConfig(_, _, _)
+        // Malformed JSON → parseRequestBody returns null → 400 "body is missing or empty"
+        response.status == 400
+        response.json.errors == ['Request body is missing or empty.']
+    }
+
+    /**
+     * RUN-4521 fix: when parseRequestBody returns null (empty/absent body),
+     * saveProjectPlugins must return 400 instead of silently wiping all sources.
+     */
+    def "save project plugins — null request body returns 400 and does not delete sources RUN-4521"() {
+        given:
+        def utilTagLib = mockTagLib(UtilityTagLib)
+        def project = "BadNodeSources"
+        def serviceName = "ResourceModelSource"
+        def configPrefix = "resources.source"
+
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.pluginService = Mock(PluginService)
+        controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+        controller.featureService = Mock(FeatureService)
+
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, _) >> true
+            1 * requireParameters(_, _, ['serviceName', 'configPrefix']) >> true
+            1 * requireExists(_, _, ['project', project]) >> true
+            1 * requireAuthorized(_, _, ['configure', 'Project', project]) >> true
+        }
+
+        // No body → parseRequestBody returns null
+        request.method = 'POST'
+        setupFormTokens(params)
+
+        when:
+        controller.saveProjectPlugins(project, serviceName, configPrefix)
+
+        then:
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+        // Fix: project config is NOT touched — sources are preserved
+        0 * controller.frameworkService.updateFrameworkProjectConfig(_, _, _)
+        // Fix: returns 400 with meaningful message
+        response.status == 400
+        response.json.errors == ['Request body is missing or empty.']
+    }
+
+    /**
+     * RUN-4521 fix: when stream is consumed upstream (both getReader and getInputStream fail),
+     * parseRequestBody returns null and saveProjectPlugins returns 400 instead of wiping sources.
+     */
+    def "save project plugins — stream consumed upstream returns 400 and does not delete sources RUN-4521"() {
+        given:
+        def utilTagLib = mockTagLib(UtilityTagLib)
+        def project = "BadNodeSources"
+        def serviceName = "ResourceModelSource"
+        def configPrefix = "resources.source"
+
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.pluginService = Mock(PluginService)
+        controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+        controller.featureService = Mock(FeatureService)
+
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, _) >> true
+            1 * requireParameters(_, _, ['serviceName', 'configPrefix']) >> true
+            1 * requireExists(_, _, ['project', project]) >> true
+            1 * requireAuthorized(_, _, ['configure', 'Project', project]) >> true
+        }
+
+        // No body — both getReader() and getInputStream() return empty/null → parseRequestBody returns null
+        request.method = 'POST'
+        setupFormTokens(params)
+
+        when:
+        controller.saveProjectPlugins(project, serviceName, configPrefix)
+
+        then:
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
+        0 * controller.frameworkService.updateFrameworkProjectConfig(_, _, _)
+        response.status == 400
+        response.json.errors == ['Request body is missing or empty.']
+    }
+
     def "save node source file, catch IOException"() {
 
         setup:

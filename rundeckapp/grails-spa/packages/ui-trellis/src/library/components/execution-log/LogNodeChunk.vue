@@ -110,11 +110,32 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: ["line-select", "jumped"],
+  emits: ["line-select", "jumped", "follow-change"],
   data() {
     return {
       emitResize: true as boolean,
     };
+  },
+  watch: {
+    entries(newEntries: ExecutionOutputEntry[] | undefined) {
+      if (!this.follow || !newEntries || newEntries.length === 0) return;
+      this.$nextTick(() => {
+        if (this.follow) {
+          (this.$refs.scroller as any)?.scrollToBottom?.();
+        }
+      });
+    },
+    follow(newVal: boolean) {
+      // Scroll to bottom immediately when follow is re-enabled, even if no
+      // new entries have arrived since the last update.
+      if (newVal) {
+        this.$nextTick(() => {
+          if (this.follow) {
+            (this.$refs.scroller as any)?.scrollToBottom?.();
+          }
+        });
+      }
+    },
   },
   computed: {
     opts() {
@@ -154,6 +175,19 @@ export default defineComponent({
       this.$emit("line-select", this.jumpToLine);
       this.$emit("jumped");
     }
+    this._tryAttachScrollListener();
+  },
+  updated() {
+    // The DynamicScroller is inside a v-if, so it may not exist at mounted().
+    // Re-try attaching the listener on every update until it succeeds.
+    this._tryAttachScrollListener();
+  },
+  beforeUnmount() {
+    const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+    if (scrollerEl) {
+      scrollerEl.removeEventListener("scroll", this.onScrollerScroll);
+    }
+    (this as any)._scrollListenerAdded = false;
   },
   methods: {
     entryTitle(newEntry: ExecutionOutputEntry) {
@@ -207,8 +241,40 @@ export default defineComponent({
       };
       return newEntry;
     },
+    _tryAttachScrollListener() {
+      if ((this as any)._scrollListenerAdded) return;
+      const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+      if (scrollerEl) {
+        scrollerEl.addEventListener("scroll", this.onScrollerScroll);
+        (this as any)._scrollListenerAdded = true;
+      }
+    },
     onSelectLine(index: number) {
       this.$emit("line-select", index);
+    },
+    onScrollerScroll(ev: Event) {
+      const el = ev.target as HTMLElement;
+      const prevScrollTop = (this as any)._prevScrollTop as number | undefined;
+      const currentScrollTop = el.scrollTop;
+      (this as any)._prevScrollTop = currentScrollTop;
+
+      if (prevScrollTop === undefined) return;
+
+      const scrollingUp = currentScrollTop < prevScrollTop;
+      const atBottom =
+        currentScrollTop + el.clientHeight >= el.scrollHeight - 10;
+
+      // Disable follow when the user scrolls UP (not from programmatic
+      // scrollToBottom, which increases scrollTop).
+      if (scrollingUp && this.follow) {
+        this.$emit("follow-change", false);
+        return;
+      }
+      // Re-enable follow when the user scrolls back to the bottom.
+      // logViewer.vue only honors this in node view (onNodeFollowChange).
+      if (atBottom && !this.follow) {
+        this.$emit("follow-change", true);
+      }
     },
     scrollToLine() {
       if (this.follow) {

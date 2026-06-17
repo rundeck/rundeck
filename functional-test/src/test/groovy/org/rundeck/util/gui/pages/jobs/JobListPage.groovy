@@ -54,17 +54,17 @@ class JobListPage extends BasePage implements ActivityListTrait {
      */
     By scheduleDisabledIcon = By.cssSelector(".glyphicon.glyphicon-ban-circle")
     /**
-     * Schedule column when schedules cannot run (see {@code menu/_jobslist.gsp}:
-     * {@code span.scheduletime.disabled} for project schedule off, job schedule off, or execution off).
+     * Schedule column when schedules cannot run. Works for both legacy GSP (inside .jobslist)
+     * and Next UI (inside .job-list-row-item via vue-recycle-scroller — no .jobslist wrapper).
      */
     private static final By JOB_LIST_SCHEDULE_COLUMN_DISABLED =
-            By.cssSelector(".jobslist span.scheduletime.disabled")
+            By.cssSelector("span.scheduletime.disabled")
     /**
      * Pause glyph inside that column for the same states (e.g. project schedule off uses
      * {@code glyphicon-pause}, not {@code glyphicon-ban-circle}).
      */
     private static final By JOB_LIST_SCHEDULE_COLUMN_PAUSE =
-            By.cssSelector(".jobslist span.scheduletime.disabled i.glyphicon.glyphicon-pause")
+            By.cssSelector("span.scheduletime.disabled i.glyphicon.glyphicon-pause")
     By jobRunLinkBy = By.cssSelector(".btn.btn-success.btn-simple.btn-hover.btn-xs.act_execute_job")
     By alertMessageBy = By.cssSelector(".alert.alert-info")
     By jobListGroupTree = By.id("job_group_tree")
