@@ -77,20 +77,28 @@ public class StorageTreeFactory {
     static List<Integer> extractConfiguredIndices(Map<String, String> config, String prefix) {
         String indexedPrefix = prefix + SEP;
         String typeSuffix    = SEP + TYPE;
-        List<Integer> indices = new ArrayList<>();
+        // Use a Set to deduplicate: keys like "provider.4.type" and "provider.04.type"
+        // both parse to integer 4 and must not configure the same provider twice.
+        Set<Integer> indexSet = new HashSet<>();
         for (String key : config.keySet()) {
             if (key.startsWith(indexedPrefix) && key.endsWith(typeSuffix)) {
                 // Extract the middle segment — must be a plain integer with no extra dots
                 String middle = key.substring(indexedPrefix.length(), key.length() - typeSuffix.length());
                 if (!middle.contains(SEP)) {
                     try {
-                        indices.add(Integer.parseInt(middle));
+                        int index = Integer.parseInt(middle);
+                        // Only accept positive indices, consistent with the previous 1-based
+                        // sequential scan which never visited index 0 or below.
+                        if (index > 0) {
+                            indexSet.add(index);
+                        }
                     } catch (NumberFormatException ignored) {
                         // non-numeric segment — not a valid index key, skip
                     }
                 }
             }
         }
+        List<Integer> indices = new ArrayList<>(indexSet);
         Collections.sort(indices);
         return indices;
     }

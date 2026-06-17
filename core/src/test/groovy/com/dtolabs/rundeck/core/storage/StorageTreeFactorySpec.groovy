@@ -136,9 +136,9 @@ class StorageTreeFactorySpec extends Specification {
     def "extractConfiguredIndices ignores non-integer and nested index segments"() {
         given:
         def config = [
-            'provider.abc.type'   : 'bad', // non-numeric
+            'provider.abc.type'     : 'bad', // non-numeric
             'provider.1.config.type': 'bad', // nested — middle contains a dot
-            'provider.2.type'     : 'good',
+            'provider.2.type'       : 'good',
         ]
 
         when:
@@ -148,19 +148,34 @@ class StorageTreeFactorySpec extends Specification {
         result == [2]
     }
 
-    def "extractConfiguredIndices does not double-count an index with multiple keys"() {
-        given:
+    def "extractConfiguredIndices ignores non-positive indices"() {
+        given: "keys with index 0 and a negative index, which were never visited by the old 1-based while-loop"
         def config = [
-            'provider.4.type': 'vault',
-            'provider.4.path': 'keys/vault',
-            'provider.4.config.token': 'secret',
+            'provider.0.type' : 'zero',
+            'provider.-1.type': 'negative',
+            'provider.3.type' : 'valid',
         ]
 
         when:
         def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
 
-        then:
-        result == [4]
+        then: "only index 3 is returned; 0 and negative values are excluded"
+        result == [3]
+    }
+
+    def "extractConfiguredIndices deduplicates indices that differ only in leading zeros"() {
+        given: "provider.4.type and provider.04.type both parse to integer 4"
+        def config = [
+            'provider.4.type' : 'vault',
+            'provider.04.type': 'vault-duplicate',
+            'provider.2.type' : 'db',
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then: "index 4 appears exactly once despite two keys mapping to it"
+        result == [2, 4]
     }
 
 }
