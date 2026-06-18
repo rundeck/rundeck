@@ -8,8 +8,12 @@ import groovy.util.logging.Slf4j
 import org.rundeck.app.grails.events.AppEvents
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.context.properties.bind.Bindable
+import org.springframework.boot.context.properties.bind.Binder
+import org.springframework.boot.context.properties.bind.handler.IgnoreErrorsBindHandler
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.core.env.Environment
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 
@@ -48,11 +52,43 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
         if (!original) {
             original = delegate
         }
-        def config = grailsApplication.config.getProperty('grails.mail', Map)
+        def config = resolveMailConfig()
         if (config == null) {
             config = [:]
         }
         delegate = constructMailSender(config)
+    }
+
+    /**
+     * Resolves the {@code grails.mail} configuration map.
+     * <p>
+     * Reads live from the Spring {@link Environment} via {@link Binder} so that mail settings
+     * configured at runtime through System Configuration (database) are honored. Unlike the
+     * Spring Environment, {@code grailsApplication.config} only exposes a snapshot built at
+     * startup for prefix/Map lookups and does not reflect database values added later, which
+     * previously made DB-configured mail settings invisible to the mail sender (RUN-4548).
+     * <p>
+     * Falls back to {@code grailsApplication.config} when the application context/environment
+     * is unavailable (e.g. in unit tests) or when nothing could be bound from the environment.
+     *
+     * @return the resolved {@code grails.mail} configuration map, or {@code null} if none is found
+     */
+    @CompileDynamic
+    Map resolveMailConfig() {
+        if (applicationContext) {
+            try {
+                Environment env = applicationContext.environment
+                Map bound = Binder.get(env)
+                                  .bind('rundeck.grails.mail', Bindable.mapOf(String, Object), new IgnoreErrorsBindHandler())
+                                  .orElse(null)
+                if (bound != null) {
+                    return bound
+                }
+            } catch (Exception e) {
+                log.warn("Failed to read grails.mail from Spring Environment, falling back to grailsApplication.config: {}", e.message)
+            }
+        }
+        return grailsApplication.config.getProperty('grails.mail', Map)
     }
 
     /**
@@ -69,7 +105,7 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
         if (!keys) {
             return
         }
-        if (keys.any { it.startsWith('grails.mail') }) {
+        if (keys.any { it.startsWith('rundeck.grails.mail') }) {
             def mailKeys = keys.findAll { it.startsWith('grails.mail') }
             log.info("Mail configuration changed for keys: {} - updating mail sender", mailKeys)
             updateMailSender()
