@@ -99,8 +99,11 @@ import rundeck.Workflow
 import rundeck.WorkflowStep
 import rundeck.ReferencedExecution
 import rundeck.controllers.ScheduledExecutionController
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
+import rundeck.services.feature.FeatureService
 import spock.lang.Issue
 import spock.lang.Unroll
+import spock.util.mop.ConfineMetaClassChanges
 
 /**
  * Created by greg on 6/24/15.
@@ -5181,6 +5184,76 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             0        |  '-'          | 2     | 2
             1        |  '-'          | 2     | 1
     }
+
+    def "list workflows with 1001 job IDs in idlist returns all results without error"() {
+        given: "1001 jobs — verifies chunked IN queries for the idlist path (ORA-01795 fix)"
+            def jobs = (1..1001).collect { i ->
+                new ScheduledExecution(createJobParams(jobName: "bulk-job-${i}", uuid: "bulk-uuid-${i}")).save(flush: false)
+            }
+            ScheduledExecution.withSession { it.flush() }
+            def idlist = jobs*.id.join(',')
+            def input = Mock(JobQueryInput) {
+                getIdlist() >> idlist
+            }
+            service.applicationContext = applicationContext
+        when:
+            def result = service.listWorkflows(input, [:])
+        then:
+            result != null
+            result.schedlist.size() == 1001
+            result.total == 1001
+    }
+
+    @ConfineMetaClassChanges([Execution])
+    def "nextOneTimeScheduledExecutions batches HQL IN query into chunks of at most 1000 (ORA-01795 fix)"() {
+        given: "1001 scheduled executions and a captured Hibernate session/query"
+            def batchSizes = []
+            def query = new Expando()
+            query.setParameterList = { String name, Collection vals -> batchSizes << vals.size(); query }
+            query.setParameter = { String name, Object val -> query }
+            query.list = { -> [] }
+            def session = new Expando()
+            session.createQuery = { String hql -> query }
+            Execution.metaClass.static.withSession = { Closure c -> c.call(session) }
+
+            def seList = (1..1001).collect { i -> Mock(ScheduledExecution) { getId() >> (long) i } }
+        when:
+            def result = service.nextOneTimeScheduledExecutions(seList)
+        then: "the IN-list is split into batches of <=1000 covering every id"
+            batchSizes.size() == 2
+            batchSizes.every { it <= 1000 }
+            batchSizes.sum() == 1001
+            result == [:]
+    }
+
+    // getSchedulesExecutionLater chunking cannot be covered at unit-test level: the GORM DataTest
+    // environment uses a SimpleMap store that rejects the `property('scheduledExecution.id')`
+    // joined projection on the first Execution criteria, and the @Transactional AST transform
+    // prevents MetaClass interception of createCriteria() inside the service. The fix is verified
+    // by code review: both 'in'('se.uuid') and 'in'('id') sites use Lists.partition(..., 1000).
+
+    @ConfineMetaClassChanges([NamedParameterJdbcTemplate])
+    def "getSchedulesJobToClaim enhanced path batches jobids into chunks of at most 1000 (ORA-01795 fix)"() {
+        given: "a Spock mock of NamedParameterJdbcTemplate injected via constructor override"
+        def mockTemplate = Mock(NamedParameterJdbcTemplate)
+        NamedParameterJdbcTemplate.metaClass.constructor = { javax.sql.DataSource ds -> mockTemplate }
+        service.featureService = Mock(FeatureService) { featurePresent("enhancedJobTakeoverQuery") >> true }
+        service.dataSource = Mock(javax.sql.DataSource)
+        def uuids = (1..1001).collect { "uuid-${it}" }
+
+        when:
+        def result = service.getSchedulesJobToClaim("to-uuid", null, false, "testProject", uuids)
+
+        then: "query is called once per batch — 2 calls for 1001 UUIDs chunked into 1000+1"
+        2 * mockTemplate.query(_, _, _)
+        result == []
+    }
+
+    // getSchedulesJobToClaim legacy GORM path chunking cannot be covered at unit-test level:
+    // same @Transactional AST + GORM static dispatch issue as getSchedulesExecutionLater.
+    // The fix is verified by code review: 'in'('uuid', jobids) is wrapped with
+    // or { Lists.partition(jobids, 1000).each { 'in'('uuid', it) } }.
+
 
     @Unroll
     def "delete scheduled execution"() {

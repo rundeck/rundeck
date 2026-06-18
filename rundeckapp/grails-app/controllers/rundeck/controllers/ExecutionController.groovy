@@ -86,6 +86,7 @@ import rundeck.services.workflow.StateMapping
 
 import jakarta.servlet.http.HttpServletResponse
 import java.text.ParseException
+import com.google.common.collect.Lists
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
@@ -4220,7 +4221,9 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
             // Bulk fetch all stats for jobs in this project (optimization: single query instead of N queries)
             def jobUuids = jobs.collect { it.uuid }
-            def statsList = ScheduledExecutionStats.findAllByJobUuidInList(jobUuids)
+            def statsList = Lists.partition(jobUuids, 1000).collectMany { batch ->
+                ScheduledExecutionStats.findAllByJobUuidInList(batch)
+            }
 
             // Build a map from job UUID to stats for O(1) lookup
             def statsByJobUuid = statsList.collectEntries { [(it.jobUuid): it] }
