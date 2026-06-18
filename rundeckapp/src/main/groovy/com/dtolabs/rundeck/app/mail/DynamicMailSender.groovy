@@ -60,9 +60,10 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
     }
 
     /**
-     * Resolves the {@code grails.mail} configuration map.
+     * Resolves the mail configuration map.
      * <p>
-     * Reads live from the Spring {@link Environment} via {@link Binder} so that mail settings
+     * Reads live from the Spring {@link Environment} via {@link Binder} (binding {@code rundeck.grails.mail}
+     * and falling back to {@code grails.mail}) so that mail settings
      * configured at runtime through System Configuration (database) are honored. Unlike the
      * Spring Environment, {@code grailsApplication.config} only exposes a snapshot built at
      * startup for prefix/Map lookups and does not reflect database values added later, which
@@ -85,7 +86,7 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
                     return bound
                 }
             } catch (Exception e) {
-                log.warn("Failed to read grails.mail from Spring Environment, falling back to grailsApplication.config: {}", e.message)
+                log.warn("Failed to read rundeck.grails.mail from Spring Environment, falling back to grailsApplication.config: {}", e.message)
             }
         }
         return grailsApplication.config.getProperty('grails.mail', Map)
@@ -105,8 +106,8 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
         if (!keys) {
             return
         }
-        if (keys.any { it.startsWith('rundeck.grails.mail') }) {
-            def mailKeys = keys.findAll { it.startsWith('rundeck.grails.mail') }
+        if (keys.any { it.startsWith('rundeck.grails.mail') || it.startsWith('grails.mail') }) {
+            def mailKeys = keys.findAll { it.startsWith('rundeck.grails.mail') || it.startsWith('grails.mail')}
             log.info("Mail configuration changed for keys: {} - updating mail sender", mailKeys)
             updateMailSender()
         }
