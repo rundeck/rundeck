@@ -28,7 +28,7 @@ import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import spock.lang.Specification
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 /**
  * Tests for ScheduledExecutionController conditional step export validation
