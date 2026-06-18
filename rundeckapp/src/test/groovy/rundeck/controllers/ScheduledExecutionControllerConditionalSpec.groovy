@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
+import jakarta.servlet.http.HttpServletResponse
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
@@ -27,8 +28,6 @@ import rundeck.services.OrchestratorPluginService
 import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import spock.lang.Specification
-
-import javax.servlet.http.HttpServletResponse
 
 /**
  * Tests for ScheduledExecutionController conditional step export validation
