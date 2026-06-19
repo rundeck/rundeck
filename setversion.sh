@@ -10,8 +10,8 @@ function usage {
     echo "Usage:"
     echo "  setversion.sh <version> [GA|rc#|alpha#]                                              - Update version in version.properties"
     echo "  setversion.sh --bump-minor                                                           - Bump minor version number"
-    echo "  setversion.sh --tag <version> [GA|rc#|alpha#] [--push] [--dry-run] [--debug]        - Create git tag for release directly on current branch"
-    echo "  setversion.sh --create-release-branch <version> [<commit>] [--push] [--dry-run]     - Create release branch for patch releases (branches from GA tag or specified commit)"
+    echo "  setversion.sh --tag <version> [GA|rc#|alpha#] [--push] [--dry-run] [--debug]        - Create git tag; checks out release branch if one exists for the version"
+    echo "  setversion.sh --create-release-branch <version> [<commit>] [--push] [--dry-run] [--debug]     - Create release branch for patch releases (branches from GA tag or specified commit)"
     echo ""
     echo "Flags:"
     echo "  --push      Push changes to remote repository"
@@ -93,30 +93,35 @@ if [ "$1" == "--tag" ]; then
       exit 5
     fi
 
-    # For patch releases (patch != 0), checkout release branch
     IFS='.' read -r MAJOR MINOR PATCH <<< "$VNUM"
     if [ -z "$MAJOR" ] || [ -z "$MINOR" ] || [ -z "$PATCH" ]; then
         echo "Error: Version ($VNUM) must be in MAJOR.MINOR.PATCH format"
         exit 3
     fi
 
-    if [ "$PATCH" -ne 0 ]; then
-        RELEASE_BRANCH="release/$MAJOR.$MINOR.x"
+    RELEASE_BRANCH="release/$MAJOR.$MINOR.x"
+    if git rev-parse --verify "$RELEASE_BRANCH" >/dev/null 2>&1 ||
+       git ls-remote --heads origin "$RELEASE_BRANCH" | grep -q "refs/heads/${RELEASE_BRANCH}$"; then
+        RELEASE_BRANCH_EXISTS=true
+    else
+        RELEASE_BRANCH_EXISTS=false
+    fi
 
-        # Check if release branch exists
-        if ! git rev-parse --verify "$RELEASE_BRANCH" >/dev/null 2>&1 &&
-           ! git ls-remote --heads origin "$RELEASE_BRANCH" | grep -q "$RELEASE_BRANCH"; then
-            echo "Error: Release branch $RELEASE_BRANCH does not exist."
-            echo "Create it first with: setversion.sh --create-release-branch $VNUM"
-            exit 9
-        fi
+    if [ "$PATCH" -ne 0 ] && [ "$RELEASE_BRANCH_EXISTS" = false ]; then
+        echo "Error: Release branch $RELEASE_BRANCH does not exist."
+        echo "Create it first with: setversion.sh --create-release-branch $VNUM"
+        exit 9
+    fi
 
-        # Checkout release branch if not already on it
+    if [ "$RELEASE_BRANCH_EXISTS" = true ]; then
+        # Use the release branch (required for patch > 0; preferred for patch == 0 when a branch was cut early)
         CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
         if [ "$CURRENT_BRANCH" != "$RELEASE_BRANCH" ]; then
             echo "Checking out release branch: $RELEASE_BRANCH"
             git checkout "$RELEASE_BRANCH" || exit 10
         fi
+    else
+        echo "No release branch $RELEASE_BRANCH found, tagging from current HEAD"
     fi
 
     echo "Creating tag: $TAG_NAME"
@@ -165,6 +170,11 @@ elif [ "$1" == "--create-release-branch" ]; then
 
     # Optional commit ref: branch from this instead of the GA tag
     COMMIT_REF="$1"
+    [ $# -gt 0 ] && shift
+    if [ -n "$1" ]; then
+        echo "Error: Unexpected argument '$1'"
+        usage
+    fi
 
     # Determine the base ref to branch from
     if [ -n "$COMMIT_REF" ]; then
@@ -186,7 +196,7 @@ elif [ "$1" == "--create-release-branch" ]; then
 
     # Check if branch already exists locally or remotely
     if git rev-parse --verify "$BRANCH_NAME" >/dev/null 2>&1 ||
-       git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+       git ls-remote --heads origin "$BRANCH_NAME" | grep -q "refs/heads/${BRANCH_NAME}$"; then
         echo "Error: Branch $BRANCH_NAME already exists locally or remotely."
         echo "Use the tag process to create tags on the existing release branch."
         exit 11
