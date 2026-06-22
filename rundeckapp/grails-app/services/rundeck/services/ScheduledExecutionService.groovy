@@ -4801,8 +4801,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.info("Using enhanced job takeover query")
             List<ScheduledExecution> jobList = []
             NamedParameterJdbcTemplate jdbcTemplate = new NamedParameterJdbcTemplate(dataSource)
-            // Chunk jobids into batches of 1000 to avoid Oracle ORA-01795 (max 1000 IN-list expressions)
-            List batches = jobids ? Lists.partition(jobids, 1000) : [null]
+            // Chunk jobids into batches of 1000 to avoid Oracle ORA-01795 (max 1000 IN-list expressions).
+            // Dedupe first (unique(false) = non-mutating) so duplicate uuids spanning two batches
+            // can't produce duplicate rows in jobList, matching the original single DISTINCT IN query.
+            List batches = jobids ? Lists.partition(jobids.unique(false), 1000) : [null]
             for (def batch : batches) {
                 String qry = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, batch, ignoreInnerScheduled)
                 var qryParams = new MapSqlParameterSource()
