@@ -874,7 +874,7 @@ workflows:
           parallelism: 3
           <<: *require-build-and-units
           <<: *slack-defaults
-- test-gradle-functional:
+      - test-gradle-functional:
           name: T Functional Plugin Blocklist
           gradle-task: pluginBlocklistTest
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/integration/**/*{.groovy,.java}"
