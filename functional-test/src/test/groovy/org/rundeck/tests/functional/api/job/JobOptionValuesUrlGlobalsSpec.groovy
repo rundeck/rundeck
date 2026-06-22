@@ -170,6 +170,7 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
 """
         when: "the job is imported via API"
         def tempFile = File.createTempFile("run-4538-vars", ".yaml")
+        tempFile.deleteOnExit()
         tempFile.text = yaml.stripIndent()
         def response
         try {
@@ -209,6 +210,7 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
 """
         when: "the job is imported via API"
         def tempFile = File.createTempFile("run-4538-invalid", ".yaml")
+        tempFile.deleteOnExit()
         tempFile.text = yaml.stripIndent()
         def response
         try {
@@ -235,6 +237,7 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
 
     private String importJobYaml(String projectName, String yaml) {
         def tempFile = File.createTempFile("run-4538-job", ".yaml")
+        tempFile.deleteOnExit()
         try {
             tempFile.text = yaml.stripIndent()
             try (def response = client.doPost(
