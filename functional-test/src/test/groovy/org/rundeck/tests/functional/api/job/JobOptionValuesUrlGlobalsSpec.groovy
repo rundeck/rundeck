@@ -145,6 +145,90 @@ class JobOptionValuesUrlGlobalsSpec extends BaseContainer {
         response.code() == 200
     }
 
+    def "job import succeeds when option valuesUrl contains variable references"() {
+        given: "a job definition with globals and option variable references in valuesUrl"
+        def yaml = """
+- name: RUN-4538 Import With Variables
+  description: "Validation must accept templates with variable references"
+  loglevel: INFO
+  sequence:
+    commands:
+    - exec: echo hello
+    keepgoing: false
+    strategy: node-first
+  options:
+  - name: ENV
+    label: Environment
+    required: true
+    enforced: true
+    valuesUrl: 'https://\${globals.api_host}/\${globals.data_path}/envs.json'
+  - name: DATA
+    label: Data
+    required: true
+    enforced: true
+    valuesUrl: 'https://\${globals.api_host}/data-\${option.ENV.value}.json'
+"""
+        when: "the job is imported via API"
+        def tempFile = File.createTempFile("run-4538-vars", ".yaml")
+        tempFile.text = yaml.stripIndent()
+        def response
+        try {
+            response = client.doPost(
+                "/project/${PROJECT_NO_GLOBALS}/jobs/import?fileformat=yaml&dupeOption=update",
+                tempFile,
+                "application/yaml"
+            )
+        } finally {
+            tempFile.delete()
+        }
+
+        then: "import succeeds — variable references in valuesUrl are not rejected"
+        def body = new ObjectMapper().readValue(response.body().string(), Map)
+        response.code() == 200
+        body.succeeded?.size() == 1
+        body.failed?.size() == 0
+    }
+
+    def "job import fails when option valuesUrl is an invalid URL with no variable references"() {
+        given: "a job definition with a plain invalid valuesUrl (no variables)"
+        def yaml = """
+- name: RUN-4538 Import Invalid URL
+  description: "Plain invalid URLs without variables must be rejected"
+  loglevel: INFO
+  sequence:
+    commands:
+    - exec: echo hello
+    keepgoing: false
+    strategy: node-first
+  options:
+  - name: DATA
+    label: Data
+    required: true
+    enforced: true
+    valuesUrl: 'not-a-url'
+"""
+        when: "the job is imported via API"
+        def tempFile = File.createTempFile("run-4538-invalid", ".yaml")
+        tempFile.text = yaml.stripIndent()
+        def response
+        try {
+            response = client.doPost(
+                "/project/${PROJECT_NO_GLOBALS}/jobs/import?fileformat=yaml&dupeOption=update",
+                tempFile,
+                "application/yaml"
+            )
+        } finally {
+            tempFile.delete()
+        }
+
+        then: "import fails with a validation error for the invalid URL"
+        def body = new ObjectMapper().readValue(response.body().string(), Map)
+        response.code() == 200
+        body.succeeded?.size() == 0
+        body.failed?.size() == 1
+        body.failed[0].error?.contains('valid URL')
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
