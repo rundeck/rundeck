@@ -189,7 +189,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
                 defaultStoragePath: defstorageval,
                 enforced: false,
                 name: 'aname',
-                valuesUrlLong: urlval?new URL(urlval):null
+                valuesUrlLong: urlval
             )
 
         when:
@@ -576,7 +576,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         option.defaultValue == null
         ! option.enforced
         ! option.required
-        option.realValuesUrl.toExternalForm() == 'http://test.com'
+        option.realValuesUrl == 'http://test.com'
         option.regex == 'testregex'
         option.valuesList == null
 
@@ -622,7 +622,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         option.defaultValue == null
         ! option.enforced
         ! option.required
-        option.realValuesUrl.toExternalForm() == 'http://test.com'
+        option.realValuesUrl == 'http://test.com'
         option.regex == 'testregex'
         option.valuesList == null
     }
@@ -668,7 +668,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         option.defaultValue == null
         ! option.enforced
         ! option.required
-        option.realValuesUrl.toExternalForm() == 'http://test.com'
+        option.realValuesUrl == 'http://test.com'
         option.regex == 'testregex'
         option.valuesList == null
     }
