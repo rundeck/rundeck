@@ -92,8 +92,18 @@ public class Option implements Comparable, OptionData {
 
     static constraints={
         importFrom SharedJobOptionConstraints
-        valuesUrl(nullable:true)
-        valuesUrlLong(nullable:true)
+        valuesUrl(nullable:true, validator: { String val, Option obj ->
+            if (val && !val.contains('${')) {
+                try { new URL(val) } catch (java.net.MalformedURLException e) { return 'option.valuesUrl.invalid.message' }
+            }
+            true
+        })
+        valuesUrlLong(nullable:true, validator: { String val, Option obj ->
+            if (val && !val.contains('${')) {
+                try { new URL(val) } catch (java.net.MalformedURLException e) { return 'option.valuesUrl.invalid.message' }
+            }
+            true
+        })
         scheduledExecution(nullable:true)
     }
 
