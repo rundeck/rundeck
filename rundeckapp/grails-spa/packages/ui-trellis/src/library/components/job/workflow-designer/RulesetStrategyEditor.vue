@@ -33,14 +33,7 @@ import { getRundeckContext } from "../../../";
 import { defineComponent } from "vue";
 import WorkflowGraph from "./WorkflowGraph.vue";
 import messages from "./i18n";
-const localeData = getRundeckContext()?.locale || "en_US";
-const lang = getRundeckContext()?.language || "en";
-const i18nmessages = {
-  [localeData]: Object.assign(
-    {},
-    messages[localeData] || messages[lang] || messages["en_US"] || {},
-  ),
-};
+import type { LocalizedMessages } from "../../../app/utilities/i18n";
 
 interface GraphNode {
   identifier: string;
@@ -90,7 +83,9 @@ export default defineComponent({
     },
   },
   created() {
-    this.addUiMessages([i18nmessages[localeData]]);
+    (this.addUiMessages as (messages: LocalizedMessages) => Promise<void>)(
+      messages as LocalizedMessages,
+    );
     this.rulesInput = this.modelValue;
 
     eventBus.on("workflow-editor-workflowsteps-updated", async (data: any) => {
