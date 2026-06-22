@@ -1,5 +1,9 @@
 import { nextTick } from "vue";
-import { UiMessage } from "../../library/stores/UIStore";
+import {
+  UiMessage,
+  type LocaleMessageValue,
+  type LocalizedMessages,
+} from "../../library/stores/UIStore";
 import en_US from "./locales/en_US";
 import de_DE from "./locales/de_DE";
 import es_419 from "./locales/es_419";
@@ -10,8 +14,7 @@ import pt_BR from "./locales/pt_BR";
 import zh_CN from "./locales/zh_CN";
 import { createI18n, type I18n } from "vue-i18n";
 
-export type LocaleMessageValue = string | { [key: string]: LocaleMessageValue };
-export type LocalizedMessages = Record<string, Record<string, LocaleMessageValue>>;
+export type { LocaleMessageValue, LocalizedMessages };
 
 const internationalization: Record<string, any> = {
   en_US: en_US,
