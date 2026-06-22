@@ -147,9 +147,9 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
         storagePath(nullable: true)
         type(nullable: true, inList: ['text', 'file', 'multiline'])
         valuesUrl(nullable: true, blank:true, validator: { String val, OptionValidateRequest obj, Errors errors ->
-            if(val){
+            if(val && !val.contains('${')) {
                 try {
-                    def url = new URL(val)
+                    new URL(val)
                 } catch (MalformedURLException e) {
                     errors.rejectValue('valuesUrl', 'option.valuesUrl.invalid.message')
                     return false
