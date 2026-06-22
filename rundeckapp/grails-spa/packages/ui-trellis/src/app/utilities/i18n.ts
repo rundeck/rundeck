@@ -10,7 +10,8 @@ import pt_BR from "./locales/pt_BR";
 import zh_CN from "./locales/zh_CN";
 import { createI18n, type I18n } from "vue-i18n";
 
-export type LocalizedMessages = Record<string, Record<string, string>>;
+export type LocaleMessageValue = string | { [key: string]: LocaleMessageValue };
+export type LocalizedMessages = Record<string, Record<string, LocaleMessageValue>>;
 
 const internationalization: Record<string, any> = {
   en_US: en_US,
