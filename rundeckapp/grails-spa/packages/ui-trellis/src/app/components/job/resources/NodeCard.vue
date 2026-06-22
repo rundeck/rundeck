@@ -393,6 +393,7 @@ export default defineComponent({
         this.truncated = data.truncated;
         this.colKeys = data.colkeys;
         this.maxShown = data.max;
+        this.pagingMax = data.max || this.pagingMax;
       } catch (e) {
         this.error = e.message;
       } finally {
@@ -418,7 +419,7 @@ export default defineComponent({
       this.$emit("filter", selectedFilter);
     },
     async updatePage(page: number) {
-      this.page = page;
+      this.page = Number(page);
       await this.fetchNodes();
     },
     async updatePagingMax(pagingMax: number) {
