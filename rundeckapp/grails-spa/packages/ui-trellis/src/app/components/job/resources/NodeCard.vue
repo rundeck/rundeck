@@ -392,7 +392,6 @@ export default defineComponent({
         this.total = data.total;
         this.truncated = data.truncated;
         this.colKeys = data.colkeys;
-        this.maxShown = data.max;
         this.pagingMax = data.max || this.pagingMax;
       } catch (e) {
         this.error = e.message;
