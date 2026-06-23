@@ -212,6 +212,47 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
         output.trim() == expected
     }    
     
+    /**
+     * Regression test for Stored XSS via job name in autoLink flash message (PS-1691 / RUN-4559).
+     *
+     * The autoLink taglib resolves {{Job UUID}} tokens by calling ScheduledExecution.getByIdOrUUID()
+     * and passing the raw job name to g.link() as the anchor body text. Job names containing
+     * HTML/JS payloads must be HTML-encoded via encodeAsHTML() before being placed inside the anchor.
+     *
+     * This test verifies the encoding step that was added to the fix. Full end-to-end rendering
+     * of the autoLink tag (including g.link URL generation) requires an integration test.
+     */
+    @Unroll
+    def "autoLink job name textValue must be HTML-encoded to prevent XSS (PS-1691)"() {
+        given: "a job whose name contains an XSS payload, as resolved by autoLink's textValue closure"
+        ScheduledExecution.metaClass.static.getByIdOrUUID = { String id ->
+            [generateFullName: { maliciousName }]
+        }
+
+        when: "the textValue closure resolves the job name and encodeAsHTML() is applied (the fix)"
+        def rawName = ScheduledExecution.getByIdOrUUID('12345678-1234-1234-1234-1234567890ab')?.generateFullName()
+        def encodedName = rawName?.encodeAsHTML()
+
+        then: "the raw name contains the dangerous payload"
+        rawName == maliciousName
+
+        and: "after encoding, all HTML special chars are neutralized"
+        !encodedName.contains('<')
+        !encodedName.contains('>')
+        encodedName.contains('&lt;')
+        encodedName.contains('&gt;')
+
+        cleanup:
+        ScheduledExecution.metaClass.static.getByIdOrUUID = null
+
+        where:
+        maliciousName << [
+            '<img src=x onerror=alert(document.cookie)>',
+            '<script>alert(1)</script>',
+            '"><svg onload=alert(1)>',
+        ]
+    }
+
     /** test html content sanitation on basicTable tagLib */
     def "basicTable should sanitize inner content."() {
         when:

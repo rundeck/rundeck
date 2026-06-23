@@ -661,7 +661,7 @@ class UtilityTagLib{
                     def lparams= [:]+opts.linkParams
                     lparams.id=it[2]
                     def text = opts.textValue?opts.textValue(it[2]):it[1]
-                    return g.link(lparams,text)
+                    return g.link(lparams, text?.encodeAsHTML())
                 }else if(opts.hrefParams){
                     def lparams= [:]+opts.hrefParams
                     return g.createLink(lparams)
