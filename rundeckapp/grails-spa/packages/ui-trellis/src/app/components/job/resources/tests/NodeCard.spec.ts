@@ -132,9 +132,10 @@ describe("NodeCard Component", () => {
 
       await flushPromises();
 
-      expect((wrapper.vm as any).pagingMax).toBe(500);
+      const vm = wrapper.vm as InstanceType<typeof NodeCard>;
+      expect(vm.pagingMax).toBe(500);
       // maxPages = Math.ceil(total / pagingMax) = Math.ceil(600 / 500) = 2
-      expect((wrapper.vm as any).maxPages).toBe(2);
+      expect(vm.maxPages).toBe(2);
     });
   });
   describe("Browse Tags Functionality", () => {
