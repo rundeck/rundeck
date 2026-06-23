@@ -1,0 +1,14 @@
+# Selenium Rules
+
+Reference: `.claude/docs/selenium-best-practices.md`
+
+## Mandatory
+
+1. **Page Object Model**: Tests MUST NOT call `driver.findElement()` or interact with `By.*` locators directly. All element access goes through a Page Object method.
+2. **No `Thread.sleep()`**: Any use of `Thread.sleep()` is forbidden. Replace with `waitForElementVisible()`, `waitForElementClickable()`, or `waitForCondition()`.
+3. **Explicit waits only**: Every interaction that depends on dynamic state MUST be preceded by an explicit wait for the specific condition (visible, clickable, URL change, etc.).
+4. **Inherit base classes**: Page Objects MUST extend `BasePage` or `BaseComponent` — do not re-implement wait utilities.
+5. **No sleep-based flake fixes**: If a test is flaky, find the race condition. Adding any form of arbitrary delay is not an acceptable fix.
+
+## Before Completing
+Verify all 5 rules are satisfied in the file. Fix any violations before responding.
