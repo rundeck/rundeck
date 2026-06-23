@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { mount, flushPromises } from "@vue/test-utils";
 import NodeCard from "../NodeCard.vue";
 import NodeTable from "../NodeTable.vue";
 import NodeFilterLink from "../NodeFilterLink.vue";
@@ -99,6 +99,43 @@ describe("NodeCard Component", () => {
   });
   afterEach(() => {
     jest.clearAllMocks();
+  });
+  describe("Paging Behavior", () => {
+    it("syncs pagingMax from server response when getNodes returns a non-default max", async () => {
+      mockedGetNodes.mockResolvedValueOnce({
+        allnodes: mockNodeSet.nodes,
+        tagsummary: mockNodeSummary.tags,
+        allcount: 600,
+        total: 600,
+        truncated: false,
+        colkeys: ["name", "attributes"],
+        max: 500,
+      });
+
+      const wrapper = mount(NodeCard, {
+        props: {
+          project: "test-project",
+          runAuthorized: true,
+          jobCreateAuthorized: true,
+          nodeFilterStore: {
+            filter: "hostname:node1",
+            selectedFilter: "hostname:node1",
+          },
+        },
+        global: {
+          stubs: {
+            btn: true,
+            dropdown: true,
+          },
+        },
+      });
+
+      await flushPromises();
+
+      expect((wrapper.vm as any).pagingMax).toBe(500);
+      // maxPages = Math.ceil(total / pagingMax) = Math.ceil(600 / 500) = 2
+      expect((wrapper.vm as any).maxPages).toBe(2);
+    });
   });
   describe("Browse Tags Functionality", () => {
     it("displays the tags correctly", async () => {
