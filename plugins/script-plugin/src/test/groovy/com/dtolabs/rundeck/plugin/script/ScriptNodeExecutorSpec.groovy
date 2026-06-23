@@ -102,14 +102,19 @@ wait
 
         def childPid = pidFile.text.trim().toLong()
         execThread.interrupt()
-        executionDone.await(15, TimeUnit.SECONDS)
+        boolean executorFinished = executionDone.await(15, TimeUnit.SECONDS)
         // Allow a brief moment for the kill signal to propagate
         Thread.sleep(500)
 
-        then: "the child process (sleep 300) must be dead after abort — fails before the fix"
+        then: "the executor thread must have exited within the timeout"
+        executorFinished
+
+        and: "the child process (sleep 300) must be dead after abort — fails before the fix"
         !ProcessHandle.of(childPid).map { it.isAlive() }.orElse(false)
 
         cleanup:
+        // Kill the child if the test failed before the fix could do it, to avoid CI orphans
+        ProcessHandle.of(childPid).ifPresent { it.destroyForcibly() }
         pidFile.delete()
         scriptFile.delete()
     }

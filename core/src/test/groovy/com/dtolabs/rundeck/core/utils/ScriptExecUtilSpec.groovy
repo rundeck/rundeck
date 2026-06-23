@@ -21,6 +21,8 @@ import spock.lang.Timeout
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.stream.Stream
 
 /**
@@ -96,14 +98,22 @@ class ScriptExecUtilSpec extends Specification {
      * After the fix (awaitOrKill helper with grace period), destroyForcibly() is called on
      * any process still alive after KILL_GRACE_PERIOD_MS.
      */
-    @Timeout(30)
+    @Timeout(10)
     def "killProcessHandleDescend escalates to SIGKILL when process ignores SIGTERM"() {
-        given: "a child ProcessHandle that stays alive after destroy() (SIGTERM ignored)"
+        given: "a CompletableFuture whose get(timeout, unit) immediately throws TimeoutException"
+        // Using an immediate timeout avoids waiting the full KILL_GRACE_PERIOD_MS in the test
+        def immediateTimeout = new CompletableFuture<ProcessHandle>() {
+            @Override ProcessHandle get(long timeout, TimeUnit unit) throws TimeoutException {
+                throw new TimeoutException("immediate timeout for test")
+            }
+        }
+
+        and: "a child ProcessHandle that stays alive after destroy() (SIGTERM ignored)"
         def childHandle = Mock(ProcessHandle) {
-            isAlive() >> true          // never dies — simulates SIGTERM being ignored
+            isAlive() >> true
             destroy() >> false
             destroyForcibly() >> true
-            onExit() >> new CompletableFuture<ProcessHandle>() // never completes
+            onExit() >> immediateTimeout
         }
 
         and: "a parent ProcessHandle whose descendants() includes the stubborn child"
@@ -113,7 +123,7 @@ class ScriptExecUtilSpec extends Specification {
             isAlive() >> true
             destroy() >> false
             destroyForcibly() >> true
-            onExit() >> new CompletableFuture<ProcessHandle>() // never completes
+            onExit() >> immediateTimeout
         }
 
         when:
