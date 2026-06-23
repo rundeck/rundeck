@@ -23,6 +23,23 @@ ext.pluginName = 'Script Execution'
 ext.pluginDescription = 'Delegate command and script execution to another external script'
 
 apply from: "../../gradle/java-version.gradle"
+apply plugin: 'groovy'
+
+dependencies {
+    testImplementation "org.spockframework:spock-core:${spockVersion}"
+    testImplementation "org.objenesis:objenesis:${objenesisVersion}"
+    testImplementation "cglib:cglib-nodep:${cglibNoDepVersion}"
+    testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+    jvmArgs += [
+        '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+        '--add-opens=java.base/java.util=ALL-UNNAMED'
+    ]
+}
 
 jar {
     manifest {

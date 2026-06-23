@@ -39,13 +39,14 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.utils.Streams;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -198,46 +199,41 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
         final Map<String, Map<String, String>> newDataContext = DataContextUtils.addContext("exec", scptexec,
                                                                                             dataContext);
 
-        final Process exec;
-
         String remoteShell = framework.getProjectProperty(executionContext.getFrameworkProject(),
                                                           SCRIPT_EXEC_DEFAULT_REMOTE_SHELL);
         if (null != node.getAttributes().get(SHELL_ATTRIBUTE)) {
             remoteShell = node.getAttributes().get(SHELL_ATTRIBUTE);
         }
-        try {
-            if (null != remoteShell) {
-                exec = ScriptUtil.execShellProcess(executionContext.getExecutionListener(), workingdir, scriptargs,
-                                                   dataContext, newDataContext, remoteShell, "script-exec");
-            } else {
-                exec = ScriptUtil.execProcess(executionContext.getExecutionListener(), workingdir, scriptargs,
-                                              dataContext,
-                                              newDataContext, "script-exec");
-            }
-        } catch (IOException e) {
-            return NodeExecutorResultImpl.createFailure(StepFailureReason.IOFailure, e.getMessage(), e, node, -1);
+
+        final String[] execCommand;
+        final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(dataContext);
+        if (null != remoteShell) {
+            final ArrayList<String> shells = new ArrayList<>(Arrays.asList(remoteShell.split(" ")));
+            shells.add(DataContextUtils.replaceDataReferencesInString(scriptargs, newDataContext));
+            execCommand = shells.toArray(new String[0]);
+        } else {
+            execCommand = DataContextUtils.replaceDataReferencesInArray(scriptargs.split(" "), newDataContext);
         }
+        executionContext.getExecutionListener().log(3, "[script-exec] executing: " + Arrays.toString(execCommand));
 
         int result = -1;
         boolean success = false;
-        Thread errthread;
-        Thread outthread;
         FailureReason reason;
         String message;
         try {
-            exec.getOutputStream().close();
-            errthread = Streams.copyStreamThread(exec.getErrorStream(), System.err);
-            outthread = Streams.copyStreamThread(exec.getInputStream(), System.out);
-            errthread.start();
-            outthread.start();
-            result = exec.waitFor();
-            System.err.flush();
-            System.out.flush();
-            errthread.join();
-            outthread.join();
-            exec.getErrorStream().close();
-            exec.getInputStream().close();
-            if(null!=executionContext.getOutputContext()){
+            // Child processes are killed via killProcessHandleDescend on abort (SIGTERM → grace → SIGKILL).
+            // Limitation: processes that call setsid() escape the ProcessHandle tree and require
+            // the process-group approach (tracked in RUN-2781).
+            result = ScriptExecUtil.runLocalCommand(
+                    execCommand,
+                    envMap,
+                    workingdir,
+                    System.out,
+                    System.err,
+                    false,
+                    ScriptExecUtil::killProcessHandleDescend
+            );
+            if(null != executionContext.getOutputContext()){
                 executionContext.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
             }
             success = 0 == result;

@@ -19,7 +19,9 @@ package com.dtolabs.rundeck.core.utils
 import spock.lang.Specification
 import spock.lang.Timeout
 
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
+import java.util.stream.Stream
 
 /**
  * @author greg
@@ -85,5 +87,42 @@ class ScriptExecUtilSpec extends Specification {
 
         then:
         interruptedMessageExpected == interruptedMessage
+    }
+
+    /**
+     * Failing test (TDD): proves that before the fix, killProcessHandleDescend only sends
+     * SIGTERM and never escalates to SIGKILL for a process that ignores SIGTERM.
+     *
+     * After the fix (awaitOrKill helper with grace period), destroyForcibly() is called on
+     * any process still alive after KILL_GRACE_PERIOD_MS.
+     */
+    @Timeout(30)
+    def "killProcessHandleDescend escalates to SIGKILL when process ignores SIGTERM"() {
+        given: "a child ProcessHandle that stays alive after destroy() (SIGTERM ignored)"
+        def childHandle = Mock(ProcessHandle) {
+            isAlive() >> true          // never dies — simulates SIGTERM being ignored
+            destroy() >> false
+            destroyForcibly() >> true
+            onExit() >> new CompletableFuture<ProcessHandle>() // never completes
+        }
+
+        and: "a parent ProcessHandle whose descendants() includes the stubborn child"
+        def parentHandle = Mock(ProcessHandle) {
+            // Return a fresh stream each call — Java streams can only be consumed once
+            descendants() >> { Stream.of(childHandle) }
+            isAlive() >> true
+            destroy() >> false
+            destroyForcibly() >> true
+            onExit() >> new CompletableFuture<ProcessHandle>() // never completes
+        }
+
+        when:
+        ScriptExecUtil.killProcessHandleDescend(parentHandle)
+
+        then: "SIGKILL (destroyForcibly) must be called on the child that survived SIGTERM (fails before fix)"
+        1 * childHandle.destroyForcibly()
+
+        and: "SIGKILL must also be called on the parent (fails before fix)"
+        1 * parentHandle.destroyForcibly()
     }
 }

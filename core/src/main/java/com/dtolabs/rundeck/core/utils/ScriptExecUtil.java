@@ -35,6 +35,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -419,10 +422,52 @@ public class ScriptExecUtil {
         }
     }
 
+    /** Grace period between SIGTERM and SIGKILL when aborting a job. */
+    static final long KILL_GRACE_PERIOD_MS = 5000L;
+
+    /**
+     * Kills the given process and all its descendants.
+     * Sends SIGTERM first; after {@link #KILL_GRACE_PERIOD_MS} ms, sends SIGKILL to any survivors.
+     * Known limitation: processes that have called {@code setsid()} and joined a new session
+     * are not visible via {@code ProcessHandle.descendants()} and will not be killed by this method
+     * (tracked in RUN-2781). Windows behaviour depends on the JVM ProcessHandle implementation;
+     * prefer the Kill Handler plugin ({@code taskkill /T /F}) for reliable Windows support.
+     *
+     * @param handle the ProcessHandle of the top-level process to kill
+     */
     public static void killProcessHandleDescend(ProcessHandle handle) {
-        handle.descendants().forEach(ScriptExecUtil::killProcessHandle);
+        // Phase 1: SIGTERM all descendants then parent
+        handle.descendants().forEach(h -> h.destroy());
         handle.destroy();
+
+        // Phase 2: wait up to KILL_GRACE_PERIOD_MS, then SIGKILL survivors
+        long deadline = System.currentTimeMillis() + KILL_GRACE_PERIOD_MS;
+        handle.descendants().filter(ProcessHandle::isAlive).forEach(h -> awaitOrKill(h, deadline));
+        awaitOrKill(handle, deadline);
     }
+
+    /**
+     * Waits for a process to exit by the given deadline, then sends SIGKILL if it is still alive.
+     */
+    private static void awaitOrKill(ProcessHandle h, long deadlineMs) {
+        if (!h.isAlive()) {
+            return;
+        }
+        long remaining = deadlineMs - System.currentTimeMillis();
+        if (remaining > 0) {
+            try {
+                h.onExit().get(remaining, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // preserve interrupt status during abort
+            } catch (ExecutionException | TimeoutException e) {
+                // process did not exit within the grace period — fall through to forcible kill
+            }
+        }
+        if (h.isAlive()) {
+            h.destroyForcibly();
+        }
+    }
+
     public static void killProcessHandle(ProcessHandle handle) {
         handle.destroy();
     }
