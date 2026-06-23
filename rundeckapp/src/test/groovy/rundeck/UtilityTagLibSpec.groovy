@@ -250,7 +250,11 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
         output.contains('&lt;')        // encoding occurred
 
         cleanup:
-        ScheduledExecution.metaClass.static.getByIdOrUUID = null
+        // Remove the EMC entry entirely to prevent metaclass pollution across test classes.
+        // Setting = null is insufficient; it leaves a null-closure entry in the ExpandoMetaClass
+        // that blocks normal Groovy dispatch and causes TooFewInvocationsError in other specs
+        // (e.g. EditOptsControllerSpec) that call getByIdOrUUID in the same JVM.
+        GroovySystem.metaClassRegistry.removeMetaClass(ScheduledExecution)
 
         where:
         maliciousName << [
