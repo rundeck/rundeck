@@ -57,11 +57,15 @@ class UserActionService implements LogoutHandler{
         }
     }
 
-    private String extractUsername(Authentication authentication) {
-        if (!authentication){
-            log.error("Null authentication on event")
-            return null
-        }
-        return authentication.name ?: authentication.principal.name ?: null
+    /**
+     * Extracts the username from an authentication object without side effects.
+     * Returns null if authentication is null or no username can be determined;
+     * callers are responsible for logging when null is returned.
+     */
+    private static String extractUsername(Authentication authentication) {
+        if (!authentication) return null
+        if (authentication.name) return authentication.name
+        if (authentication.principal instanceof String) return authentication.principal as String
+        return authentication.principal?.name ?: null
     }
 }
