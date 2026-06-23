@@ -219,28 +219,35 @@ class UtilityTagLibSpec extends Specification implements TagLibUnitTest<UtilityT
      * and passing the raw job name to g.link() as the anchor body text. Job names containing
      * HTML/JS payloads must be HTML-encoded via encodeAsHTML() before being placed inside the anchor.
      *
-     * This test verifies the encoding step that was added to the fix. Full end-to-end rendering
-     * of the autoLink tag (including g.link URL generation) requires an integration test.
+     * This test exercises the full autoLink tag rendering pipeline. Removing encodeAsHTML() from the
+     * taglib causes this test to fail, validating the fix regression is caught.
+     *
+     * configurationService must be mocked because autoLink eagerly calls helpLinkUrl() when building
+     * the linkopts map, which calls configurationService.getString("gui.helpLink").
      */
     @Unroll
-    def "autoLink job name textValue must be HTML-encoded to prevent XSS (PS-1691)"() {
-        given: "a job whose name contains an XSS payload, as resolved by autoLink's textValue closure"
+    def "autoLink HTML-encodes XSS payloads in job names before rendering anchor body (PS-1691)"() {
+        given: "dependencies required by autoLink's eager helpLinkUrl() call"
+        tagLib.configurationService = Mock(ConfigurationService) {
+            getString("gui.helpLink") >> 'https://docs.rundeck.com'
+        }
+
+        and: "a job whose name contains an XSS payload, wired via ScheduledExecution static lookup"
+        def jobUuid = '12345678-1234-1234-1234-1234567890ab'
         ScheduledExecution.metaClass.static.getByIdOrUUID = { String id ->
             [generateFullName: { maliciousName }]
         }
 
-        when: "the textValue closure resolves the job name and encodeAsHTML() is applied (the fix)"
-        def rawName = ScheduledExecution.getByIdOrUUID('12345678-1234-1234-1234-1234567890ab')?.generateFullName()
-        def encodedName = rawName?.encodeAsHTML()
+        when: "autoLink renders a flash message containing a {{Job UUID}} token"
+        def output = applyTemplate(
+            "<g:autoLink>Deleted job {{Job ${jobUuid}}}</g:autoLink>"
+        )
 
-        then: "the raw name contains the dangerous payload"
-        rawName == maliciousName
-
-        and: "after encoding, all HTML special chars are neutralized"
-        !encodedName.contains('<')
-        !encodedName.contains('>')
-        encodedName.contains('&lt;')
-        encodedName.contains('&gt;')
+        then: "no raw unencoded HTML tags appear — XSS payload is safely HTML-encoded in the anchor body"
+        !output.contains('<img ')      // &lt;img is safe; raw <img is exploitable
+        !output.contains('<script')    // &lt;script is safe; raw <script is exploitable
+        !output.contains('<svg ')      // &lt;svg is safe; raw <svg is exploitable
+        output.contains('&lt;')        // encoding occurred
 
         cleanup:
         ScheduledExecution.metaClass.static.getByIdOrUUID = null
