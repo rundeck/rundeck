@@ -4707,8 +4707,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         boolean isCompatible = false
         try {
             def sessionFactory = applicationContext.getBean("sessionFactory")
-            def dialectName = sessionFactory.configurationProperties?.getProperty("hibernate.dialect") ?: ""
-            boolean isH2 = dialectName.contains("H2Dialect")
+            def dialectName = (sessionFactory?.properties?.get('hibernate.dialect') ?: '') as String
+            def dataSourceUrl = grailsApplication?.config?.getProperty('dataSource.url', String, '') ?: ''
+            boolean isH2 = dialectName.contains('H2Dialect') || dataSourceUrl.startsWith('jdbc:h2:')
 
             Execution.createCriteria().list(max:1) {
                 projections {
@@ -4720,7 +4721,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             }
             isCompatible = true
-        } catch(Exception ex) {
+        } catch (Exception ex) {
+            log.debug("Execution metrics SQL compatibility check failed, falling back to in-memory metrics calculation", ex)
             isCompatible = false
         }
         return isCompatible
