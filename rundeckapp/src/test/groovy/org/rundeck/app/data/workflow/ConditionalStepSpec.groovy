@@ -391,56 +391,6 @@ class ConditionalStepSpec extends Specification implements DataTest {
         nestedStep.subSteps[0] instanceof PluginStep
     }
 
-    def "fromMap with 3-level deeply nested conditionals"() {
-        given:
-        def stepMap = [
-            conditionGroups: [
-                [
-                    [key: 'option.env', operator: '==', value: 'prod']
-                ]
-            ],
-            subSteps: [
-                [
-                    type: 'conditional',
-                    conditionGroups: [
-                        [
-                            [key: 'option.region', operator: '==', value: 'us-east']
-                        ]
-                    ],
-                    subSteps: [
-                        [
-                            type: 'conditional',
-                            conditionGroups: [
-                                [
-                                    [key: 'option.datacenter', operator: '==', value: 'dc1']
-                                ]
-                            ],
-                            subSteps: [
-                                [type: 'exec', exec: 'echo deeply nested']
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
-
-        when:
-        ConditionalStep step = ConditionalStep.fromMap(stepMap)
-
-        then:
-        step != null
-        step.subSteps.size() == 1
-        step.subSteps[0] instanceof ConditionalStep
-
-        def level2 = (ConditionalStep) step.subSteps[0]
-        level2.subSteps.size() == 1
-        level2.subSteps[0] instanceof ConditionalStep
-
-        def level3 = (ConditionalStep) level2.subSteps[0]
-        level3.subSteps.size() == 1
-        level3.subSteps[0] instanceof PluginStep
-    }
-
     def "toMap round-trip with nested conditionals"() {
         given:
         def originalMap = [

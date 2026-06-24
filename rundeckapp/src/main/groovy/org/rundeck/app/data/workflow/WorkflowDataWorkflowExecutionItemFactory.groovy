@@ -47,11 +47,13 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
      * (including nested ones) and attaching their combined ConditionSets to the resulting StepExecutionItems.
      * @param steps List of workflow steps to flatten
      * @param parentConditionSet Optional parent condition set to combine with nested conditionals
+     * @param depth Current nesting depth (0 = top level, 1 = one level deep)
      * @return Flattened list of StepExecutionItems with conditions attached
      */
     List<StepExecutionItem> consolidateWorkflowSteps(
         List<WorkflowStepData> steps,
-        ConditionalSet parentConditionSet = null
+        ConditionalSet parentConditionSet = null,
+        int depth = 0
     ) {
         List<StepExecutionItem> flattened = []
 
@@ -59,6 +61,15 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
             // Check if this is a ConditionalStep
             if (step instanceof ConditionalStep && featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)) {
                 ConditionalStep conditionalStep = (ConditionalStep) step
+
+                // Enforce maximum nesting depth of 1
+                // depth=0: top level, depth=1: one level nested (allowed), depth=2+: too deep (reject)
+                if (depth >= 2) {
+                    throw new IllegalArgumentException(
+                        "Conditional steps cannot be nested more than one level deep. " +
+                        "Found conditional step at depth ${depth}."
+                    )
+                }
 
                 // Convert data model ConditionalSet to core ConditionSet
                 ConditionalSet conditionSet = ConditionalSetImpl.fromDataModel(conditionalStep.conditionSet)
@@ -70,7 +81,8 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
                 if (conditionalStep.subSteps) {
                     List<StepExecutionItem> subItems = consolidateWorkflowSteps(
                         conditionalStep.subSteps,
-                        combinedConditionSet
+                        combinedConditionSet,
+                        depth + 1
                     )
                     flattened.addAll(subItems)
                 }

@@ -465,55 +465,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
         cmd.conditions.conditionGroups[0]*.value == ['prod', 'us-east']
     }
 
-    def "consolidateWorkflowSteps flattens 3-level deeply nested conditionals"() {
-        given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
-        // Level 1: env == prod
-        def cond1 = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
-        def condSet1 = new ConditionalSetImpl()
-        condSet1.conditionGroups = [[cond1]]
-
-        // Level 2: region == us-east
-        def cond2 = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])
-        def condSet2 = new ConditionalSetImpl()
-        condSet2.conditionGroups = [[cond2]]
-
-        // Level 3: datacenter == dc1
-        def cond3 = ConditionalDefinitionImpl.fromMap([key: 'option.datacenter', operator: '==', value: 'dc1'])
-        def condSet3 = new ConditionalSetImpl()
-        condSet3.conditionGroups = [[cond3]]
-
-        // Build 3-level nested structure
-        def level3 = new ConditionalStep()
-        level3.conditionSet = condSet3
-        level3.subSteps = [new CommandExec(adhocRemoteString: 'echo level3')]
-
-        def level2 = new ConditionalStep()
-        level2.conditionSet = condSet2
-        level2.subSteps = [level3]
-
-        def level1 = new ConditionalStep()
-        level1.conditionSet = condSet1
-        level1.subSteps = [level2]
-
-        def workflow = new WorkflowDataImpl()
-        workflow.steps = [level1]
-
-        when:
-        def result = service.createExecutionItemForWorkflow(workflow, 'testProject')
-
-        then:
-        result != null
-        result.workflow.commands.size() == 1
-        def cmd = result.workflow.commands[0]
-        cmd.conditions != null
-        cmd.conditions.conditionGroups.size() == 1
-        cmd.conditions.conditionGroups[0].size() == 3 // all three conditions combined
-        cmd.conditions.conditionGroups[0]*.key == ['option.env', 'option.region', 'option.datacenter']
-        cmd.conditions.conditionGroups[0]*.value == ['prod', 'us-east', 'dc1']
-    }
-
     def "consolidateWorkflowSteps handles mixed nested and non-nested steps"() {
         given:
         service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
@@ -641,6 +592,46 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
         cmd.conditions.conditionGroups.size() == 4
         // Each group should have 2 conditions (one from parent, one from child)
         cmd.conditions.conditionGroups.every { it.size() == 2 }
+    }
+
+    def "consolidateWorkflowSteps throws exception for nesting depth >= 2"() {
+        given: "A workflow with 2-level nested conditionals"
+        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        // Create level 3 conditional (innermost)
+        def level3CondDef = ConditionalDefinitionImpl.fromMap([key: 'option.datacenter', operator: '==', value: 'dc1'])
+        def level3CondSet = new ConditionalSetImpl()
+        level3CondSet.conditionGroups = [[level3CondDef]]
+        def level3Conditional = new ConditionalStep()
+        level3Conditional.conditionSet = level3CondSet
+        level3Conditional.subSteps = [new CommandExec(adhocRemoteString: 'echo deeply nested')]
+
+        // Create level 2 conditional (middle)
+        def level2CondDef = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])
+        def level2CondSet = new ConditionalSetImpl()
+        level2CondSet.conditionGroups = [[level2CondDef]]
+        def level2Conditional = new ConditionalStep()
+        level2Conditional.conditionSet = level2CondSet
+        level2Conditional.subSteps = [level3Conditional]
+
+        // Create top-level conditional
+        def level1CondDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def level1CondSet = new ConditionalSetImpl()
+        level1CondSet.conditionGroups = [[level1CondDef]]
+        def level1Conditional = new ConditionalStep()
+        level1Conditional.conditionSet = level1CondSet
+        level1Conditional.subSteps = [level2Conditional]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [level1Conditional]
+
+        when: "Attempting to create execution item"
+        service.createExecutionItemForWorkflow(workflow, 'testProject')
+
+        then: "An IllegalArgumentException is thrown"
+        def ex = thrown(IllegalArgumentException)
+        ex.message.contains("Conditional steps cannot be nested more than one level deep")
+        ex.message.contains("depth 2")
     }
 }
 

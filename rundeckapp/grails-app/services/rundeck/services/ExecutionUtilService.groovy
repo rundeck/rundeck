@@ -230,6 +230,14 @@ class ExecutionUtilService {
 
                     if (parentStepPath != null) {
                         // We're already inside a conditional - this is a nested conditional
+                        // Enforce maximum nesting depth of 1
+                        // parentStepPath.size()=1: one level nested (allowed), size()=2+: too deep (reject)
+                        if (parentStepPath.size() >= 2) {
+                            throw new IllegalArgumentException(
+                                "Conditional steps cannot be nested more than one level deep. " +
+                                "Found conditional step at depth ${parentStepPath.size()}."
+                            )
+                        }
                         // Increment the counter at this level and append to the path
                         int[] counter = subStepCounter ?: [0] as int[]
                         counter[0] = counter[0] + 1
