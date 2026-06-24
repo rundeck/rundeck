@@ -1404,7 +1404,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.options[0].name == 'test3'
         results.scheduledExecution.options[0].defaultValue == 'val3'
         !results.scheduledExecution.options[0].enforced
-        results.scheduledExecution.options[0].realValuesUrl.toExternalForm() == 'http://test.com/test3'
+        results.scheduledExecution.options[0].realValuesUrl == 'http://test.com/test3'
     }
 
     def "validate options data json"() {
@@ -1428,7 +1428,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.options[0].name == 'test3'
         results.scheduledExecution.options[0].defaultValue == 'val3'
         !results.scheduledExecution.options[0].enforced
-        results.scheduledExecution.options[0].realValuesUrl.toExternalForm() == 'http://test.com/test3'
+        results.scheduledExecution.options[0].realValuesUrl == 'http://test.com/test3'
 
     }
     def "validate options data json test value"() {
@@ -1447,7 +1447,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.options[0].name == 'test3'
         results.scheduledExecution.options[0].defaultValue == 'val3'
         !results.scheduledExecution.options[0].enforced
-        results.scheduledExecution.options[0].realValuesUrl.toExternalForm() == 'http://test.com/test3'
+        results.scheduledExecution.options[0].realValuesUrl == 'http://test.com/test3'
 
     }
     def "validate scheduled job with required option without default"() {
@@ -2333,7 +2333,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         [options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]] |  1  | true
         //remove all options
         [_sessionopts: true, _sessionEditOPTSObject: [:] ] | null | true //empty session opts clears options
-        [_sessionopts: true, _sessionEditOPTSObject: ['options[0]': new Option(name: 'test1', defaultValue: 'val3Changed', enforced: false, valuesUrl: new URL("http://test.com/test3"))], useCrontabString: 'true',crontabString: "X 48 09 ? * * *" ] | 1 | false
+        [_sessionopts: true, _sessionEditOPTSObject: ['options[0]': new Option(name: 'test1', defaultValue: 'val3Changed', enforced: false, valuesUrl: "http://test.com/test3")], useCrontabString: 'true',crontabString: "X 48 09 ? * * *" ] | 1 | false
         //don't modify options
 //        [:] | 2 | true
 
@@ -2576,7 +2576,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         next.name=="test3"
         next.defaultValue=="val3"
         null!= next.realValuesUrl
-        next.realValuesUrl.toExternalForm()=="http://test.com/test3"
+        next.realValuesUrl=="http://test.com/test3"
         !next.enforced
     }
 
@@ -6536,7 +6536,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
             se.addToOptions(new Option(
                     name:'test',
-                    realValuesUrl: new URL('file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry)
+                    realValuesUrl: 'file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry
             ))
             se.save()
 
@@ -6589,7 +6589,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',
-                realValuesUrl: new URL('file://test')
+                realValuesUrl: 'file://test'
         ))
         se.save()
         def input=[:]
@@ -6648,7 +6648,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',
-                realValuesUrl: new URL('file://test')
+                realValuesUrl: 'file://test'
         ))
         se.save()
         _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){

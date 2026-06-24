@@ -64,12 +64,12 @@ public class Option implements Comparable, OptionData {
     Boolean required
     Boolean isDate
     String dateFormat
-    URL valuesUrl
+    String valuesUrl
     String label
     /**
-     * supercedes valuesUrl and allows longer values. 
+     * supercedes valuesUrl and allows longer values.
      */
-    URL valuesUrlLong
+    String valuesUrlLong
     String regex
     String valuesList
     String valuesListDelimiter
@@ -92,8 +92,18 @@ public class Option implements Comparable, OptionData {
 
     static constraints={
         importFrom SharedJobOptionConstraints
-        valuesUrl(nullable:true)
-        valuesUrlLong(nullable:true)
+        valuesUrl(nullable:true, validator: { String val, Option obj ->
+            if (val && !val.contains('${')) {
+                try { new URL(val) } catch (java.net.MalformedURLException e) { return 'option.valuesUrl.invalid.message' }
+            }
+            true
+        })
+        valuesUrlLong(nullable:true, validator: { String val, Option obj ->
+            if (val && !val.contains('${')) {
+                try { new URL(val) } catch (java.net.MalformedURLException e) { return 'option.valuesUrl.invalid.message' }
+            }
+            true
+        })
         scheduledExecution(nullable:true)
     }
 
@@ -200,7 +210,7 @@ public class Option implements Comparable, OptionData {
             map.storagePath=defaultStoragePath
         }
         if(getRealValuesUrl()){
-            map.valuesUrl=getRealValuesUrl().toExternalForm()
+            map.valuesUrl=getRealValuesUrl()
 
             if(configData){
                 JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = getOptionConfigData().getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
@@ -346,10 +356,10 @@ public class Option implements Comparable, OptionData {
             this.valuesUrl = null
         }
     }
-    public URL getRealValuesUrl(){
+    public String getRealValuesUrl(){
         return valuesUrl?:valuesUrlLong
     }
-    public void setRealValuesUrl(URL url){
+    public void setRealValuesUrl(String url){
         this.valuesUrl=null
         this.valuesUrlLong=url
     }
