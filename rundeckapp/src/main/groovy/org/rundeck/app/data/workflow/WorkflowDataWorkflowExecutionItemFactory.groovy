@@ -102,6 +102,13 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
         if (parent == null) return child
         if (child == null) return parent
 
+        // Guard against null or empty condition groups
+        def parentGroups = parent.conditionGroups
+        def childGroups = child.conditionGroups
+
+        if (parentGroups == null || parentGroups.isEmpty()) return child
+        if (childGroups == null || childGroups.isEmpty()) return parent
+
         def combined = new ConditionalSetImpl()
         combined.nodeStep = parent.nodeStep || child.nodeStep
 
@@ -109,8 +116,8 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
         // If parent has groups [A, B] and child has groups [C, D]
         // Result: [A+C, A+D, B+C, B+D]
         List combinedGroups = []
-        parent.conditionGroups.each { parentGroup ->
-            child.conditionGroups.each { childGroup ->
+        parentGroups.each { parentGroup ->
+            childGroups.each { childGroup ->
                 // Merge AND groups (concatenate conditions)
                 List mergedGroup = []
                 mergedGroup.addAll(parentGroup)

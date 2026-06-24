@@ -162,16 +162,21 @@ class WorkflowService implements ApplicationContextAware{
                         // (meaning they're nested under this conditional)
                         List<Integer> hPath = h.parentStepPath
                         if (hPath == null) {
-                            // Encountered a single-level conditional, end this group
-                            break
-                        }
-                        // Only include items at the same level (exact path match) or nested deeper
-                        if (!pathEquals(hPath, parentPath) && !pathStartsWith(hPath, parentPath)) {
-                            break
-                        }
-                        // Stop if we encounter a different top-level parent
-                        if (hPath[0] != parentStepNum) {
-                            break
+                            // Single-level conditional substep - check if it belongs to the same top-level parent
+                            // This handles mixed conditionals with both nested and direct substeps
+                            if (h.parentStepNumber != parentStepNum) {
+                                break  // Different top-level parent, end group
+                            }
+                            // Same parent, continue grouping
+                        } else {
+                            // Only include items at the same level (exact path match) or nested deeper
+                            if (!pathEquals(hPath, parentPath) && !pathStartsWith(hPath, parentPath)) {
+                                break
+                            }
+                            // Stop if we encounter a different top-level parent
+                            if (hPath[0] != parentStepNum) {
+                                break
+                            }
                         }
                     }
                     groupEnd++
