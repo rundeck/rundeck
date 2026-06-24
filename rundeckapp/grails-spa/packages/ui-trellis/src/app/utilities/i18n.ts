@@ -54,7 +54,7 @@ const initI18n = (options = {}) => {
 const updateLocaleMessages = async (
   i18n: I18n,
   locale: string,
-  lang: string,
+  _lang: string,
   messages: Record<string, any>,
 ) => {
   i18n.global.mergeLocaleMessage(locale, messages);
@@ -69,7 +69,9 @@ const isLocalizedMessages = (
  * update locale messages for the i18n instance
  * @param i18n vue-i18n instance
  * @param messages new messages data — pass a LocalizedMessages object to register
- *   both the active locale and en_US (fallback); pass UiMessage[] for legacy behavior
+ *   the active locale and, when an `en_US` bundle is present and the active locale
+ *   is not already `en_US`, also register `en_US` so vue-i18n's built-in fallback
+ *   chain resolves to English instead of raw keys; pass UiMessage[] for legacy behavior
  */
 const commonAddUiMessages = async (
   i18n: I18n,

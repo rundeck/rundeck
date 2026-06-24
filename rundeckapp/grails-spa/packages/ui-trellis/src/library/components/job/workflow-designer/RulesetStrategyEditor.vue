@@ -33,7 +33,7 @@ import { getRundeckContext } from "../../../";
 import { defineComponent } from "vue";
 import WorkflowGraph from "./WorkflowGraph.vue";
 import messages from "./i18n";
-import type { LocalizedMessages } from "../../../app/utilities/i18n";
+import type { LocalizedMessages } from "../../../";
 
 interface GraphNode {
   identifier: string;
