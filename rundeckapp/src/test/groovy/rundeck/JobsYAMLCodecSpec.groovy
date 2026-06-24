@@ -472,7 +472,7 @@ class JobsYAMLCodecSpec extends Specification {
             opt2.required==false
             opt2.optionValues==null
             opt2.realValuesUrl != null
-            opt2.realValuesUrl.toExternalForm() == "http://something.com"
+            opt2.realValuesUrl == "http://something.com"
             opt2.regex == "\\d+"
     }
 

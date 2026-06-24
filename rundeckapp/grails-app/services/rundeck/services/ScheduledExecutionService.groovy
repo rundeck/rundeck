@@ -4303,7 +4303,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username, AuthContext authContext) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
-        def realUrl = opt.realValuesUrl.toExternalForm()
+        def realUrl = opt.realValuesUrl
         JobOptionConfigRemoteUrl configRemoteUrl = getJobOptionConfigRemoteUrl(opt, authContext)
 
         String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
