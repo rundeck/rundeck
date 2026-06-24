@@ -1,3 +1,9 @@
+---
+globs: ["functional-test/src/test/groovy/**/*.groovy"]
+alwaysApply: false
+applyTo: "functional-test/src/test/groovy/**/*.groovy"
+---
+
 # Selenium Rules
 
 Reference: `.claude/docs/selenium-best-practices.md`

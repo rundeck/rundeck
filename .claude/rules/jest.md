@@ -1,3 +1,9 @@
+---
+globs: ["**/*.spec.ts", "**/*.test.ts"]
+alwaysApply: false
+applyTo: "**/*.{spec,test}.{ts,js}"
+---
+
 # Jest Rules
 
 All tests in this file must comply with the **Priority 1** and **Priority 2** rules defined in `.claude/docs/jest-testing-guidelines.md`.

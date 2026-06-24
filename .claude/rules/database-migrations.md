@@ -1,3 +1,9 @@
+---
+globs: ["rundeckapp/grails-app/migrations/**"]
+alwaysApply: false
+applyTo: "rundeckapp/grails-app/migrations/**"
+---
+
 # Database Migration Rules
 
 ## Mandatory

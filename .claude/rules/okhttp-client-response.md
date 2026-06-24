@@ -3,6 +3,7 @@ description: OkHttp Client usage in functional and selenium tests, cleanup respo
 globs:
   - functional-test/src/test/groovy/**/*.groovy
 alwaysApply: false
+applyTo: "functional-test/src/test/groovy/**/*.groovy"
 ---
 
 # Background

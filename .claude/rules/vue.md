@@ -1,3 +1,9 @@
+---
+globs: ["**/*.vue"]
+alwaysApply: false
+applyTo: "**/*.vue"
+---
+
 # Vue Component Rules
 
 ## 1. API Style — Options API by Default
