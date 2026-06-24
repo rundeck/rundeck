@@ -157,6 +157,11 @@ allprojects {
     // Override Spring Boot BOM-managed versions (eachDependency/force can't move Boot-managed deps).
     ext["micrometer.version"] = micrometerVersion          // CVE-2026-40983, CVE-2026-40984
     ext["spring-retry.version"] = springRetryVersion       // CVE-2026-41710
+    // CVE-2026-54512, CVE-2026-54513 (jackson-databind PolymorphicTypeValidator bypass). Grails/Spring
+    // Boot dependency management pins jackson to 2.21.2 and downgrades transitive 2.21.4; a plain
+    // platform import or resolutionStrategy.force does NOT override it. Overriding the Boot BOM property
+    // moves jackson onto the patched 2.21.4 across grails-* plugin modules and rundeckapp.
+    ext["jackson-bom.version"] = jacksonDatabindVersion
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
