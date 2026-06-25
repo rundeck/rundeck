@@ -169,11 +169,9 @@ class WorkflowService implements ApplicationContextAware{
                             }
                             // Same parent, continue grouping
                         } else {
-                            // Only include items at the same level (exact path match) or nested deeper
-                            if (!pathEquals(hPath, parentPath) && !pathStartsWith(hPath, parentPath)) {
-                                break
-                            }
                             // Stop if we encounter a different top-level parent
+                            // All substeps under the same top-level conditional should be grouped together,
+                            // with nested structure handled by buildConditionalSubWorkflowState
                             if (hPath[0] != parentStepNum) {
                                 break
                             }
