@@ -137,6 +137,7 @@ import rundeck.data.job.RdJobBrowseItem
 import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
+import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.audit.AuditEventsService
@@ -167,7 +168,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
     private static final List<String> EXCLUDED_AUDIT_FIELDS = [
-        'user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'id'
+        'user', 'dateCreated', 'lastModifiedBy', 'lastUpdated', 'id', 'createdBy'
     ]
 
     def JobScheduleManager rundeckJobScheduleManager
@@ -3059,14 +3060,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
             
-            // If conditional steps exist, strategy must be sequential or parallel
-            if (hasConditionalSteps && strategy != null && strategy != "sequential" && strategy != "parallel") {
+            // If conditional steps exist, strategy must be sequential, parallel, node-first, or step-first
+            final Set<String> supportedConditionalStrategies = [
+                    'sequential',
+                    'parallel',
+                    'node-first',
+                    'step-first'
+            ] as Set<String>
+
+            if (hasConditionalSteps && strategy != null && !supportedConditionalStrategies.contains(strategy)) {
                 failed = true
                 scheduledExecution.errors.rejectValue(
-                    'workflow',
-                    'scheduledExecution.workflow.conditional.strategy.invalid.message',
-                    [strategy] as Object[],
-                    "Conditional steps can only be used with 'sequential' or 'parallel' workflow strategy. Current strategy: {0}"
+                        'workflow',
+                        'scheduledExecution.workflow.conditional.strategy.invalid.message',
+                        [strategy] as Object[],
+                        "Conditional steps can only be used with 'sequential', 'parallel', 'node-first', or 'step-first' workflow strategy. Current strategy: {0}"
                 )
             }
         }
@@ -3611,7 +3619,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             deleteExistingOptions(scheduledExecution)
             deleteExistingNotification(scheduledExecution)
-            // Exclude audit/system fields to prevent imported jobs from overwriting creator/dates
+            // Exclude audit/system fields to prevent imported jobs from overwriting creator/dates.
+            // NOTE: || !input.properties[it] must be INSIDE the parens — lower precedence than &&
+            // would otherwise bypass the EXCLUDED_AUDIT_FIELDS check for null-valued properties.
             final Collection foundprops = input.properties.keySet().findAll {
                 !(it in EXCLUDED_AUDIT_FIELDS) &&
                 !it.startsWith( 'nodeInclude') &&//deprecating these
@@ -3619,8 +3629,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 (
                         input.properties[it] instanceof String ||
                         input.properties[it] instanceof Boolean ||
-                        input.properties[it] instanceof Integer
-                ) || !input.properties[it]
+                        input.properties[it] instanceof Integer ||
+                        !input.properties[it]
+                )
             }
             basicProps = foundprops ? input.properties.subMap(foundprops) : [:]
         }
@@ -3691,6 +3702,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }else{
             scheduledExecution.filter = null
+            scheduledExecution.nodesSelectedByDefault = true
         }
     }
 
@@ -3711,11 +3723,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        // Don't overwrite creator, but fix if missing. AuthContext may be null during
-        // job imports, SCM sync, or background tasks without authenticated user context.
-        if (!scheduledExecution.user && authContext?.username) {
-            scheduledExecution.user = authContext.username
-        }
+        scheduledExecution.user = authContext.username
         scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
         def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
@@ -3803,6 +3811,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (authContext?.username) {
             scheduledExecution.lastModifiedBy = authContext.username
         }
+        // createdBy is intentionally not updated here — it is set once at creation and must not change
 
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
             scheduledExecution.discard()
@@ -3859,7 +3868,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ) {
 
         def scheduledExecution = importedJob.job
-        // Set user for new job creation only
+        scheduledExecution.user = authContext.username
         scheduledExecution.userRoles = authContext.roles as List<String>
 
         Map validation = [:]
@@ -3905,15 +3914,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
         }
 
-        // Set user for new job creation. AuthContext may be null during
-        // job imports, SCM sync, or background tasks without authenticated user context.
-        if (!scheduledExecution.user && authContext?.username) {
-            scheduledExecution.user = authContext.username
-        }
+        scheduledExecution.user = authContext.username
         // Set initial lastModifiedBy if not already set
         // Skip if no authenticated user available
         if (!scheduledExecution.lastModifiedBy && authContext?.username) {
             scheduledExecution.lastModifiedBy = authContext.username
+        }
+        // createdBy is set once at creation time and never changed thereafter
+        if (!scheduledExecution.createdBy && authContext?.username) {
+            scheduledExecution.createdBy = authContext.username
         }
 
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
@@ -4302,7 +4311,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username, AuthContext authContext) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
-        def realUrl = opt.realValuesUrl.toExternalForm()
+        def realUrl = opt.realValuesUrl
         JobOptionConfigRemoteUrl configRemoteUrl = getJobOptionConfigRemoteUrl(opt, authContext)
 
         String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
@@ -5054,8 +5063,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
 
+    /**
+     * Loads the remote URL configuration for a job option, resolving any key storage paths.
+     * Also infers the authenticationType from available fields when it is missing — this handles
+     * jobs saved before the authenticationType field was persisted correctly (regression fix).
+     */
     JobOptionConfigRemoteUrl getJobOptionConfigRemoteUrl(Option option, AuthContext authContext ){
         JobOptionConfigRemoteUrl configRemoteUrl = option.getConfigRemoteUrl()
+
+        if (configRemoteUrl != null && configRemoteUrl.authenticationType == null) {
+            // Infer authenticationType for jobs saved without it (backward compatibility)
+            if (configRemoteUrl.tokenStoragePath || configRemoteUrl.keyName || configRemoteUrl.apiTokenReporter) {
+                configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.API_KEY
+            } else if (configRemoteUrl.passwordStoragePath || configRemoteUrl.username) {
+                configRemoteUrl.authenticationType = RemoteUrlAuthenticationType.BASIC
+            }
+        }
 
         if(configRemoteUrl?.getPasswordStoragePath()){
             if(executionService.canReadStoragePassword(authContext,configRemoteUrl.getPasswordStoragePath(), false )){

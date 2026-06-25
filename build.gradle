@@ -151,6 +151,12 @@ logger.lifecycle("Building version {}", project.resolvedVersion)
 allprojects {
     version = project.resolvedVersion
     ext["spring.version"] = springVersion
+    // Spring Boot's dependency-management BOM overrides Spring Framework via this property name
+    // (ext["spring.version"] alone does NOT move the BOM-managed spring-framework version).
+    ext["spring-framework.version"] = springVersion
+    // Override Spring Boot BOM-managed versions (eachDependency/force can't move Boot-managed deps).
+    ext["micrometer.version"] = micrometerVersion          // CVE-2026-40983, CVE-2026-40984
+    ext["spring-retry.version"] = springRetryVersion       // CVE-2026-41710
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
@@ -199,10 +205,50 @@ allprojects {
                                     version: groovyVersion)
                     details.because 'Grails 7 uses Apache Groovy 4.x; skip Groovy 3.x for Gradle plugins'
                 }
+                // Align Spring Framework across all configs (grails-bom pins older); plugin subprojects
+                // don't apply spring-boot dependency-management so ext["spring-framework.version"] alone
+                // doesn't reach them. CVE-2026-41839/41840/41845/41848/41850/41851/41852/41853/41854.
+                if (details.requested.group == 'org.springframework') {
+                    details.useVersion springVersion
+                    details.because 'Align Spring Framework to managed version across all configs'
+                }
+                // Align Spring Security (CVE-2026-41706, CVE-2026-47838). Exclude spring-security-rsa (1.x line).
+                if (details.requested.group == 'org.springframework.security' && details.requested.name != 'spring-security-rsa') {
+                    details.useVersion project.findProperty('spring-security.version')
+                    details.because 'Align Spring Security to managed version across all configs'
+                }
+                // Align Micrometer metrics modules (CVE-2026-40983, CVE-2026-40984). Exclude tracing/BOM.
+                if (details.requested.group == 'io.micrometer'
+                        && details.requested.name.startsWith('micrometer-')
+                        && !details.requested.name.contains('-bom')
+                        && !details.requested.name.startsWith('micrometer-tracing')) {
+                    details.useVersion micrometerVersion
+                    details.because 'Align Micrometer metrics modules to managed version'
+                }
+                // spring-integration 6.5.9 pulls spring-retry 2.0.13 (CVE-2026-41710)
+                if (details.requested.group == 'org.springframework.integration') {
+                    details.useVersion springIntegrationVersion
+                    details.because 'spring-integration 6.5.9 (spring-retry 2.0.13)'
+                }
+                if (details.requested.group == 'org.springframework.retry' && details.requested.name == 'spring-retry') {
+                    details.useVersion springRetryVersion
+                    details.because 'spring-retry 2.0.13 fixes CVE-2026-41710'
+                }
             }
             
             // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
+            force "com.google.protobuf:protobuf-java:${protobufVersion}" // CVE-2024-7254 fix
+            // CWE-770 (SNYK-JAVA-COMFASTERXMLJACKSONCORE-15365924): build-tooling configs such as
+            // groovyScript pull groovy-yaml -> jackson 2.19.2, which the jackson BOM only covers in
+            // app/plugin configs. Force jackson onto the managed version across ALL configurations.
+            force "com.fasterxml.jackson.core:jackson-core:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-annotations:${jacksonAnnotationsVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
+            // CVE-2025-67030 - plexus-utils Directory Traversal (Expand.extractFile); pulled via grails-shell-cli
+            force "org.codehaus.plexus:plexus-utils:${plexusUtilsVersion}"
             
             // Force centralized versions to prevent duplicates in WAR
             force "org.apache.ant:ant:${antVersion}"
@@ -297,7 +343,7 @@ project(':rundeckapp') {
         project(':plugins:copyfile-plugin'),
         project(':plugins:job-state-plugin'),
         project(':plugins:flow-control-plugin'),
-        project(':plugins:jasypt-encryption-plugin'),
+        project(':plugins:aes-gcm-encryption-plugin'),
         project(':plugins:object-store-plugin'),
         project(':plugins:orchestrator-plugin'),
         project(':plugins:git-plugin'),

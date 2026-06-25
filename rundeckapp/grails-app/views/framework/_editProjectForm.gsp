@@ -24,25 +24,26 @@
 <g:render template="/common/messages" model="[notDismissable:true]"/>
 <script type="text/javascript">
     function changeCronExpression(elem){
-        clearHtml($('crontooltip'));
-        var params={crontabString:$F(elem)};
-        new Ajax.Updater('cronstrinfo',
-            '${createLink(controller:'scheduledExecution',action:'checkCrontab')}',{
-                parameters:params,
-                evalScripts:true
+        clearHtml(document.getElementById('crontooltip'));
+        var params={crontabString:elem.value};
+        jQuery.ajax({
+            url: '${createLink(controller:'scheduledExecution',action:'checkCrontab')}',
+            data: params,
+            success: function(data){
+                jQuery('#cronstrinfo').html(data);
             }
-        );
+        });
     }
     var cronSects=['Second','Minute','Hour','Day of Month','Month','Day of Week','Year'];
     function tkeyup(el){
         clearHtml('cronstrinfo');
         var pos=getCaretPos(el);
-        var f =$F(el);
+        var f = el.value;
         //find # of space chars prior to pos
         var sub=f.substring(0,pos);
-        var c = sub.split(' ').size();
+        var c = sub.split(' ').length;
         if(c>=1&&c<=7){
-            setText($('crontooltip'),cronSects[c-1]);
+            setText(document.getElementById('crontooltip'),cronSects[c-1]);
         }else{
             clearHtml('crontooltip');
         }
@@ -202,7 +203,7 @@
                     <g:select name="${'example_cron_period_sel'}" from="${propSelectValues}" id="example_cron_period"
                               optionKey="key" optionValue="value"
                               noSelection="['':'-choose an example-']"
-                              onchange="if(this.value){\$('cronTextField').value=this.value;}"
+                              onchange="if(this.value){document.getElementById('cronTextField').value=this.value;}"
                               class="${formControlType} form-control"
                     />
                 </div>

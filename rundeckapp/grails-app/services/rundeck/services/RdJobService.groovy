@@ -270,6 +270,10 @@ class RdJobService {
         def authAction = se.id ? AuthConstants.ACTION_UPDATE : AuthConstants.ACTION_CREATE
         se.user = authContext.username
         se.userRoles = authContext.roles as List<String>
+        // Set createdBy once when a new job is first persisted — never on updates
+        if (!se.id && !se.createdBy && authContext?.username) {
+            se.createdBy = authContext.username
+        }
         if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [authAction], se.project)) {
             rdJob.errors.rejectValue('jobName', 'ScheduledExecution.jobName.unauthorized', [authAction, rdJob.jobName].toArray(), 'Unauthorized action: {0} for value: {1}')
             rdJob.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [ authAction, rdJob.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')

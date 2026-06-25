@@ -1,5 +1,5 @@
 <template>
-  <div :id="identifier" ref="root" :style="styleCss"></div>
+  <div :id="identifier" ref="root"></div>
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
@@ -28,6 +28,14 @@ export default defineComponent({
     lang: {
       type: String,
       default: "",
+    },
+    minLines: {
+      type: Number,
+      default: 12,
+    },
+    maxLines: {
+      type: Number,
+      default: Infinity,
     },
     softWrap: {
       type: Boolean,
@@ -64,14 +72,6 @@ export default defineComponent({
       jsonSpaces: 2,
     };
   },
-  computed: {
-    styleCss() {
-      const style = { height: "100%", width: "100%" };
-      if (this.height) style.height = this.px(this.height);
-      if (this.width) style.width = this.px(this.width);
-      return style;
-    },
-  },
   watch: {
     modelValue: function (val: string): void {
       if (this.contentBackup !== val) {
@@ -90,6 +90,12 @@ export default defineComponent({
     },
     options: function (newOption): void {
       this.editor!.setOptions(newOption);
+    },
+    minLines: function (val: number): void {
+      this.editor!.setOptions({ minLines: val });
+    },
+    maxLines: function (val: number): void {
+      this.editor!.setOptions({ maxLines: val });
     },
     height: function (): void {
       this.$nextTick(function () {
@@ -116,10 +122,13 @@ export default defineComponent({
     editor.setTheme(this.resolveTheme(theme));
 
     const shouldEnableAutoCompletion =
-      this.contextVariableSuggestions && this.contextVariableSuggestions.length > 0;
+      this.contextVariableSuggestions &&
+      this.contextVariableSuggestions.length > 0;
     const autoCompleteDelay = shouldEnableAutoCompletion ? 150 : undefined;
     editor.setOptions({
       ...(this.options || {}),
+      minLines: this.minLines,
+      maxLines: this.maxLines,
       enableLiveAutocompletion: shouldEnableAutoCompletion,
       liveAutocompletionDelay: autoCompleteDelay,
     });
@@ -164,9 +173,13 @@ export default defineComponent({
       let theme = document.documentElement.dataset.colorTheme || "light";
 
       if (theme == "system")
-        theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        theme = matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
 
-      return theme == "dark" ? this.darkTheme || "tomorrow_night_eighties" : this.theme || "chrome";
+      return theme == "dark"
+        ? this.darkTheme || "tomorrow_night_eighties"
+        : this.theme || "chrome";
     },
     px(value: string): string {
       if (/^\d*$/.test(value)) return `${value}px`;
@@ -243,7 +256,9 @@ export default defineComponent({
     buildDocTooltipProvider() {
       const lang = ace.require("ace/lib/lang");
       return {
-        getDocTooltip: (item: Ace.Completion & { title: string; desc?: string }) => {
+        getDocTooltip: (
+          item: Ace.Completion & { title: string; desc?: string },
+        ) => {
           const title = lang.escapeHTML(item.title);
           const desc = item.desc ? `<br><hr>${lang.escapeHTML(item.desc)}` : "";
           item.docHTML = `<b>${title}${desc}</b>`;

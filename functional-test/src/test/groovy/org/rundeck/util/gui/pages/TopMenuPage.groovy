@@ -5,6 +5,8 @@ import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.rundeck.util.container.SeleniumContext
 
+import java.net.URI
+
 /**
  * Top Menu page
  */
@@ -15,7 +17,7 @@ class TopMenuPage extends BasePage {
 
     By settingsButtonBy = By.id("appAdmin")
     By systemConfigurationMenuBy = By.linkText("System Configuration")
-    By appUserDropdownBy = By.id("userLabel")
+    By appUserDropdownBy = By.id("appUserMenu")
     By logOutMenuBy = By.linkText("Logout")
     By divHomeIconTag = By.cssSelector("#nav-rd-home i")
 
@@ -40,9 +42,23 @@ class TopMenuPage extends BasePage {
 
     void logOut() {
         openAppUserMenu()
+        String path = ''
+        try {
+            path = URI.create(driver.currentUrl).path ?: ''
+        } catch (Exception ignored) {
+            path = driver.currentUrl
+        }
         clickElementSafely(logOutMenuBy)
-        waitForElementVisible(By.partialLinkText("Log In Again"))
-        waitForUrlToContain("/user/loggedout")
+        // Prefer BasePage#waitForUrlToNotContain: leave an authenticated path segment (login / loggedout
+        // URLs omit these). Fallback for uncommon paths uses explicit logout landing wait.
+        List<String> markers = ['/project/', '/menu/home', '/job/', '/execution/', '/resources/',
+                                '/user/profile', '/activity', '/command/run', '/nodes']
+        String marker = markers.find { path.contains(it) }
+        if (marker != null) {
+            waitForUrlToNotContain(marker)
+        } else {
+            waitForLogoutLandingUrl()
+        }
     }
 
     void clickHomeButton(){

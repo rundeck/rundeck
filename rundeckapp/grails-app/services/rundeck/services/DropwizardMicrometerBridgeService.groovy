@@ -1,0 +1,460 @@
+package rundeck.services
+
+import com.codahale.metrics.Counter
+import com.codahale.metrics.Histogram
+import com.codahale.metrics.Meter
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.MetricRegistryListener
+import com.codahale.metrics.Snapshot
+import com.codahale.metrics.Timer
+import grails.events.annotation.Subscriber
+import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import io.micrometer.core.instrument.Gauge
+import io.micrometer.core.instrument.MeterRegistry
+import org.springframework.beans.factory.annotation.Autowired
+
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.ToDoubleFunction
+/**
+ * Bridges Dropwizard MetricRegistry to Micrometer MeterRegistry.
+ *
+ * This allows business metrics registered via Dropwizard (throughout Rundeck codebase)
+ * to be exposed through Spring Boot Actuator endpoints like /monitoring/prometheus.
+ */
+@Slf4j
+@CompileStatic
+class DropwizardMicrometerBridgeService {
+
+    MetricRegistry metricRegistry
+    @Autowired
+    MeterRegistry meterRegistry
+    ConfigurationService configurationService
+
+    // Cache snapshots to avoid recomputing during Prometheus scrapes
+    // Key: metric object identity, Value: cached snapshot with timestamp
+    private static final ConcurrentHashMap<Object, CachedSnapshot> snapshotCache = new ConcurrentHashMap<>()
+    private static final long SNAPSHOT_CACHE_TTL_MS = 1000L // 1 second
+
+    /**
+     * Wrapper to cache Timer/Histogram snapshots to avoid redundant computations during scrapes.
+     * Each timer/histogram registers 4-5 gauges (mean, p50, p95, p99, etc). Without caching,
+     * Prometheus scrape triggers 4-5 snapshot computations per metric. With caching, only 1 per second.
+     */
+    private static class CachedSnapshot {
+        final Snapshot snapshot
+        final long timestamp
+
+        CachedSnapshot(Snapshot snapshot, long timestamp) {
+            this.snapshot = snapshot
+            this.timestamp = timestamp
+        }
+
+        boolean isExpired(long now) {
+            return (now - timestamp) > SNAPSHOT_CACHE_TTL_MS
+        }
+    }
+
+    private static Snapshot getCachedSnapshot(Object metricObject, Closure<Snapshot> snapshotSupplier) {
+        long now = System.currentTimeMillis()
+        CachedSnapshot cached = snapshotCache.get(metricObject)
+
+        if (cached != null && !cached.isExpired(now)) {
+            return cached.snapshot
+        }
+
+        Snapshot freshSnapshot = snapshotSupplier.call()
+        snapshotCache.put(metricObject, new CachedSnapshot(freshSnapshot, now))
+        return freshSnapshot
+    }
+
+    /**
+     * Safely removes a metric from the Micrometer registry.
+     * Handles cases where the metric may not exist or has already been removed.
+     */
+    private void removeMetricSafely(String metricName, MeterRegistry registry) {
+        try {
+            def meter = registry.find(metricName).meter()
+            if (meter != null) {
+                registry.remove(meter.id)
+            }
+        } catch (Exception e) {
+            // Metric doesn't exist or already removed - this is fine
+            log.trace("Could not remove metric ${metricName}: ${e.message}")
+        }
+    }
+
+    // Helper methods to create ToDoubleFunction for each metric type
+    private static ToDoubleFunction<com.codahale.metrics.Gauge> gaugeValueExtractor() {
+        return new ToDoubleFunction<com.codahale.metrics.Gauge>() {
+            @Override
+            double applyAsDouble(com.codahale.metrics.Gauge g) {
+                Object value = g.value
+                if (value instanceof Number) {
+                    return ((Number) value).doubleValue()
+                }
+                return 0.0d
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Counter> counterValueExtractor() {
+        return new ToDoubleFunction<Counter>() {
+            @Override
+            double applyAsDouble(Counter c) {
+                return c.count as double
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Meter> meterCountExtractor() {
+        return new ToDoubleFunction<Meter>() {
+            @Override
+            double applyAsDouble(Meter m) {
+                return m.count as double
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Meter> meterRateExtractor() {
+        return new ToDoubleFunction<Meter>() {
+            @Override
+            double applyAsDouble(Meter m) {
+                return m.meanRate
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Timer> timerCountExtractor() {
+        return new ToDoubleFunction<Timer>() {
+            @Override
+            double applyAsDouble(Timer t) {
+                return t.count as double
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Timer> timerMeanExtractor() {
+        return new ToDoubleFunction<Timer>() {
+            @Override
+            double applyAsDouble(Timer t) {
+                Snapshot snapshot = getCachedSnapshot(t, { -> t.snapshot })
+                return snapshot.mean / 1_000_000.0 // ns to ms
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Timer> timerP50Extractor() {
+        return new ToDoubleFunction<Timer>() {
+            @Override
+            double applyAsDouble(Timer t) {
+                Snapshot snapshot = getCachedSnapshot(t, { -> t.snapshot })
+                return snapshot.median / 1_000_000.0 // ns to ms
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Timer> timerP95Extractor() {
+        return new ToDoubleFunction<Timer>() {
+            @Override
+            double applyAsDouble(Timer t) {
+                Snapshot snapshot = getCachedSnapshot(t, { -> t.snapshot })
+                return snapshot.get95thPercentile() / 1_000_000.0 // ns to ms
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Timer> timerP99Extractor() {
+        return new ToDoubleFunction<Timer>() {
+            @Override
+            double applyAsDouble(Timer t) {
+                Snapshot snapshot = getCachedSnapshot(t, { -> t.snapshot })
+                return snapshot.get99thPercentile() / 1_000_000.0 // ns to ms
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Histogram> histogramCountExtractor() {
+        return new ToDoubleFunction<Histogram>() {
+            @Override
+            double applyAsDouble(Histogram h) {
+                return h.count as double
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Histogram> histogramMeanExtractor() {
+        return new ToDoubleFunction<Histogram>() {
+            @Override
+            double applyAsDouble(Histogram h) {
+                Snapshot snapshot = getCachedSnapshot(h, { -> h.snapshot })
+                return snapshot.mean
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Histogram> histogramP50Extractor() {
+        return new ToDoubleFunction<Histogram>() {
+            @Override
+            double applyAsDouble(Histogram h) {
+                Snapshot snapshot = getCachedSnapshot(h, { -> h.snapshot })
+                return snapshot.median
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Histogram> histogramP95Extractor() {
+        return new ToDoubleFunction<Histogram>() {
+            @Override
+            double applyAsDouble(Histogram h) {
+                Snapshot snapshot = getCachedSnapshot(h, { -> h.snapshot })
+                return snapshot.get95thPercentile()
+            }
+        }
+    }
+
+    private static ToDoubleFunction<Histogram> histogramP99Extractor() {
+        return new ToDoubleFunction<Histogram>() {
+            @Override
+            double applyAsDouble(Histogram h) {
+                Snapshot snapshot = getCachedSnapshot(h, { -> h.snapshot })
+                return snapshot.get99thPercentile()
+            }
+        }
+    }
+
+    @Subscriber("rundeck.bootstrap")
+    void initialize() {
+        boolean enabled = configurationService.getBoolean(
+            'metrics.micrometer.bridge.enabled',
+            true
+        )
+
+        if (!enabled) {
+            log.debug("Dropwizard->Micrometer bridge disabled")
+            return
+        }
+
+        log.info("Initializing Dropwizard->Micrometer metrics bridge")
+
+        if (!metricRegistry) {
+            log.warn("Cannot initialize bridge: metricRegistry is null")
+            return
+        }
+
+        // Count existing Dropwizard metrics
+        int gaugeCount = metricRegistry.gauges.size()
+        int counterCount = metricRegistry.counters.size()
+        int meterCount = metricRegistry.meters.size()
+        int timerCount = metricRegistry.timers.size()
+        int histogramCount = metricRegistry.histograms.size()
+        int totalMetrics = gaugeCount + counterCount + meterCount + timerCount + histogramCount
+
+        log.debug("Dropwizard metrics found: {} total (gauges: {}, counters: {}, meters: {}, timers: {}, histograms: {})",
+                  totalMetrics, gaugeCount, counterCount, meterCount, timerCount, histogramCount)
+
+        // Bridge Dropwizard metrics to Micrometer by registering them directly
+        int bridged = 0
+
+        // Register Dropwizard Gauges as Micrometer Gauges
+        metricRegistry.gauges.each { String name, com.codahale.metrics.Gauge gauge ->
+            try {
+                Gauge.builder(name, gauge, gaugeValueExtractor()).register(meterRegistry)
+                bridged++
+            } catch (Exception e) {
+                log.debug("Failed to bridge gauge ${name}: ${e.message}")
+            }
+        }
+
+        // Register Dropwizard Counters as Micrometer Gauges (Dropwizard counters are not monotonic)
+        metricRegistry.counters.each { String name, Counter counter ->
+            try {
+                Gauge.builder(name, counter, counterValueExtractor()).register(meterRegistry)
+                bridged++
+            } catch (Exception e) {
+                log.debug("Failed to bridge counter ${name}: ${e.message}")
+            }
+        }
+
+        // Register Dropwizard Meters as Micrometer Gauges (count and rates)
+        metricRegistry.meters.each { String name, Meter meter ->
+            try {
+                Gauge.builder("${name}.count", meter, meterCountExtractor()).register(meterRegistry)
+                Gauge.builder("${name}.rate.mean", meter, meterRateExtractor()).register(meterRegistry)
+                bridged += 2
+                log.debug("Bridged meter: {} -> {}.count, {}.rate.mean", name, name, name)
+            } catch (Exception e) {
+                log.debug("Failed to bridge meter {}: {}", name, e.message)
+            }
+        }
+
+        // Register Dropwizard Timers as Micrometer Gauges
+        metricRegistry.timers.each { String name, Timer timer ->
+            try {
+                Gauge.builder("${name}.count", timer, timerCountExtractor()).register(meterRegistry)
+                Gauge.builder("${name}.mean", timer, timerMeanExtractor()).register(meterRegistry)
+                Gauge.builder("${name}.50thpercentile", timer, timerP50Extractor()).register(meterRegistry)
+                Gauge.builder("${name}.95thpercentile", timer, timerP95Extractor()).register(meterRegistry)
+                Gauge.builder("${name}.99thpercentile", timer, timerP99Extractor()).register(meterRegistry)
+                bridged += 5
+            } catch (Exception e) {
+                log.debug("Failed to bridge timer ${name}: ${e.message}")
+            }
+        }
+
+        // Register Dropwizard Histograms as Micrometer Gauges
+        metricRegistry.histograms.each { String name, Histogram histogram ->
+            try {
+                Gauge.builder("${name}.count", histogram, histogramCountExtractor()).register(meterRegistry)
+                Gauge.builder("${name}.mean", histogram, histogramMeanExtractor()).register(meterRegistry)
+                Gauge.builder("${name}.50thpercentile", histogram, histogramP50Extractor()).register(meterRegistry)
+                Gauge.builder("${name}.95thpercentile", histogram, histogramP95Extractor()).register(meterRegistry)
+                Gauge.builder("${name}.99thpercentile", histogram, histogramP99Extractor()).register(meterRegistry)
+                bridged += 5
+            } catch (Exception e) {
+                log.debug("Failed to bridge histogram ${name}: ${e.message}")
+            }
+        }
+
+        // Add listener to bridge new metrics dynamically
+        metricRegistry.addListener(new MetricRegistryListener() {
+            @Override
+            void onGaugeAdded(String name, com.codahale.metrics.Gauge<?> gauge) {
+                try {
+                    Gauge.builder(name, gauge, gaugeValueExtractor()).register(meterRegistry)
+                    log.debug("Dynamically bridged gauge: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to bridge gauge ${name}: ${e.message}")
+                }
+            }
+
+            @Override
+            void onGaugeRemoved(String name) {
+                try {
+                    meterRegistry.remove(meterRegistry.get(name).meter().id)
+                    log.debug("Removed bridged gauge from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove gauge ${name} from Micrometer: ${e.message}")
+                }
+            }
+
+            @Override
+            void onCounterAdded(String name, Counter counter) {
+                try {
+                    Gauge.builder(name, counter, counterValueExtractor()).register(meterRegistry)
+                    log.debug("Dynamically bridged counter: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to bridge counter ${name}: ${e.message}")
+                }
+            }
+
+            @Override
+            void onCounterRemoved(String name) {
+                try {
+                    meterRegistry.remove(meterRegistry.get(name).meter().id)
+                    log.debug("Removed bridged counter from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove counter ${name} from Micrometer: ${e.message}")
+                }
+            }
+
+            @Override
+            void onHistogramAdded(String name, Histogram histogram) {
+                try {
+                    Gauge.builder("${name}.count", histogram, histogramCountExtractor()).register(meterRegistry)
+                    Gauge.builder("${name}.mean", histogram, histogramMeanExtractor()).register(meterRegistry)
+                    Gauge.builder("${name}.50thpercentile", histogram, histogramP50Extractor()).register(meterRegistry)
+                    Gauge.builder("${name}.95thpercentile", histogram, histogramP95Extractor()).register(meterRegistry)
+                    Gauge.builder("${name}.99thpercentile", histogram, histogramP99Extractor()).register(meterRegistry)
+                    log.debug("Dynamically bridged histogram: ${name} with percentiles")
+                } catch (Exception e) {
+                    log.debug("Failed to bridge histogram ${name}: ${e.message}")
+                }
+            }
+
+            @Override
+            void onHistogramRemoved(String name) {
+                try {
+                    // Remove all 5 histogram gauges: count, mean, p50, p95, p99
+                    removeMetricSafely("${name}.count", meterRegistry)
+                    removeMetricSafely("${name}.mean", meterRegistry)
+                    removeMetricSafely("${name}.50thpercentile", meterRegistry)
+                    removeMetricSafely("${name}.95thpercentile", meterRegistry)
+                    removeMetricSafely("${name}.99thpercentile", meterRegistry)
+                    log.debug("Removed bridged histogram metrics from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove histogram ${name} from Micrometer: ${e.message}")
+                }
+            }
+
+            @Override
+            void onMeterAdded(String name, Meter meter) {
+                try {
+                    // Try to register count
+                    try {
+                        Gauge.builder("${name}.count", meter, meterCountExtractor()).register(meterRegistry)
+                    } catch (IllegalArgumentException iae) {
+                        // Already registered, that's okay
+                        log.trace("Meter {}.count already registered", name)
+                    }
+
+                    // Try to register rate
+                    try {
+                        Gauge.builder("${name}.rate.mean", meter, meterRateExtractor()).register(meterRegistry)
+                    } catch (IllegalArgumentException iae) {
+                        // Already registered, that's okay
+                        log.trace("Meter {}.rate.mean already registered", name)
+                    }
+
+                    log.debug("Dynamically bridged meter: {} -> {}.count, {}.rate.mean", name, name, name)
+                } catch (Exception e) {
+                    log.debug("Failed to bridge meter {}: {}", name, e.message)
+                }
+            }
+
+            @Override
+            void onMeterRemoved(String name) {
+                try {
+                    // Remove both meter gauges: count and rate.mean
+                    removeMetricSafely("${name}.count", meterRegistry)
+                    removeMetricSafely("${name}.rate.mean", meterRegistry)
+                    log.debug("Removed bridged meter metrics from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove meter ${name} from Micrometer: ${e.message}")
+                }
+            }
+
+            @Override
+            void onTimerAdded(String name, Timer timer) {
+                try {
+                    Gauge.builder("${name}.count", timer, timerCountExtractor()).register(meterRegistry)
+                    Gauge.builder("${name}.mean", timer, timerMeanExtractor()).register(meterRegistry)
+                    Gauge.builder("${name}.50thpercentile", timer, timerP50Extractor()).register(meterRegistry)
+                    Gauge.builder("${name}.95thpercentile", timer, timerP95Extractor()).register(meterRegistry)
+                    Gauge.builder("${name}.99thpercentile", timer, timerP99Extractor()).register(meterRegistry)
+                    log.debug("Dynamically bridged timer: {} with percentiles", name)
+                } catch (Exception e) {
+                    log.debug("Failed to bridge timer {}: {}", name, e.message)
+                }
+            }
+
+            @Override
+            void onTimerRemoved(String name) {
+                try {
+                    // Remove all 5 timer gauges: count, mean, p50, p95, p99
+                    removeMetricSafely("${name}.count", meterRegistry)
+                    removeMetricSafely("${name}.mean", meterRegistry)
+                    removeMetricSafely("${name}.50thpercentile", meterRegistry)
+                    removeMetricSafely("${name}.95thpercentile", meterRegistry)
+                    removeMetricSafely("${name}.99thpercentile", meterRegistry)
+                    log.debug("Removed bridged timer metrics from Micrometer: ${name}")
+                } catch (Exception e) {
+                    log.debug("Failed to remove timer ${name} from Micrometer: ${e.message}")
+                }
+            }
+        })
+
+        // Single info-level summary
+        log.info("Dropwizard->Micrometer bridge initialized: bridged {} metrics, dynamic listener enabled", bridged)
+    }
+}

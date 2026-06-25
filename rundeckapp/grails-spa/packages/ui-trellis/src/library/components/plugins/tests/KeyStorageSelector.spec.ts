@@ -226,6 +226,58 @@ describe('KeyStorageSelector', () => {
       })
 
   })
+  it('initializes selectedKey from modelValue when the selector is opened', async () => {
+    const modelValue = 'keys/existing-key'
+    const wrapper = await mountKeyStorageSelectorStub({ modelValue })
+
+    await wrapper.find('[data-testid="open-selector-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    const displayedValue = wrapper.find('[data-testid="modelValue"]')
+    expect(displayedValue.text()).toBe(modelValue)
+  })
+
+  it('does not emit stale key when selector is reopened after a cancelled selection', async () => {
+    const originalKey = 'keys/original-key'
+    const wrapper = mount(KeyStorageSelector, {
+      props: { modelValue: originalKey, readOnly: false, allowUpload: true },
+      global: {
+        components: { Modal },
+        stubs: {
+          KeyStorageView: {
+            name: 'KeyStorageView',
+            props: ['storageFilter', 'modelValue', 'readOnly', 'allowUpload', 'rootPath'],
+            emits: ['update:model-value'],
+            template:
+              '<div data-testid="mock-key-storage-view">' +
+              '<button data-testid="pick-key-btn" @click="$emit(\'update:model-value\', \'keys/temp-key\')">pick</button>' +
+              '</div>',
+          },
+          KeyStorageEdit: true,
+        },
+      },
+    })
+
+    // First open: simulate selecting a different key without saving
+    await wrapper.find('[data-testid="open-selector-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="pick-key-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // Cancel — close without saving
+    await wrapper.find('.modal-footer button.btn-default').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // Reopen and save immediately (no new selection)
+    await wrapper.find('[data-testid="open-selector-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('.modal-footer button.btn-primary').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // After clean() on reopen, selectedKey === modelValue so nothing should be emitted
+    expect(wrapper.emitted('update:modelValue')).toBeFalsy()
+  })
+
   it.each([
     'myKey',
     'key2'

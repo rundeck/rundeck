@@ -88,8 +88,7 @@ class GormLogFileStorageRequestProvider implements LogFileStorageRequestProvider
             return
         }
         def request = findByExecution(execution)
-        execution.setLogFileStorageRequest(null)
-        execution.save(flush:true)
+        // No need to set execution.logFileStorageRequest = null after removing hasOne
         request?.delete(flush:true)
     }
 

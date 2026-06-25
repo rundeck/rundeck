@@ -117,6 +117,7 @@ public class RundeckConfigBase {
     public static class RundeckApiConfig {
         ApiTokensConfig tokens;
         PaginateJobs paginatejobs;
+        ExecutionQueryConfig executionQueryConfig;
 
         @Data
         public static class PaginateJobs {
@@ -131,6 +132,23 @@ public class RundeckConfigBase {
         @Data
         public static class ApiTokensDuration {
             String max;
+        }
+
+        @Data
+        public static class ExecutionQueryConfig {
+            CountCache countCache;
+            CountPerformance countPerformance;
+        }
+
+        @Data
+        public static class CountCache {
+            Boolean enabled;
+            Long ttl;
+        }
+
+        @Data
+        public static class CountPerformance {
+            Boolean enabled;
         }
     }
 
@@ -459,6 +477,8 @@ public class RundeckConfigBase {
         Enabled earlyAccessJobConditional = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
+        int guiAceEditorMinLines = 12;
+        int guiAceEditorMaxLines = 0;
 
         @Data
         public static class Repository {

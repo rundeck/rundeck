@@ -1015,7 +1015,7 @@ Since: V47""",
         }else if(params.valuesType == 'url'){
             opt.valuesList=null
             if(valuesUrl){
-                opt.realValuesUrl=new URL(valuesUrl)
+                opt.realValuesUrl=valuesUrl
             }else{
                 opt.realValuesUrl = null
             }
@@ -1037,7 +1037,7 @@ Since: V47""",
             params.valuesType = 'list'
         } else if (params.valuesUrl) {
             params.valuesType = 'url'
-            params.valuesUrl = opt.realValuesUrl?.toExternalForm()
+            params.valuesUrl = opt.realValuesUrl
             params.remove('valuesUrlLong')
             params.remove('realValuesUrl')
         }

@@ -349,4 +349,18 @@ databaseChangeLog = {
             }
         }
     }
+
+    changeSet(author: "rundeckdev", id: "6.0.0-add-created-by-column") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "scheduled_execution", columnName: "created_by")
+            }
+        }
+
+        addColumn(tableName: "scheduled_execution") {
+            column(name: "created_by", type: '${varchar255.type}') {
+                constraints(nullable: "true")
+            }
+        }
+    }
 }

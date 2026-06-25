@@ -143,8 +143,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         // This respects Grails lifecycle and ensures DataSource is ready before querying database
         System.setProperty("spring.cloud.bootstrap.enabled", "false")
         
-        // Grails 7: Register BouncyCastle security provider for Jasypt encryption
-        // BC provider required for storage encryption (keys, projects) via Jasypt plugin
+        // Register BouncyCastle security provider for storage and config encryption
         try {
             java.security.Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider())
         } catch (Exception e) {

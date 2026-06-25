@@ -186,7 +186,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def model = metricService?.withTimer(MenuController.name, actionName+'.queryQueue') {
             executionService.queryQueue(query)
         } ?: executionService.queryQueue(query)
-        //        System.err.println("nowrunning: "+model.nowrunning);
         model = executionService.finishQueueQuery(query,params,model)
 
         //include id of last completed execution for the project
@@ -1858,11 +1857,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def buildDataKeys = []
         def buildMap = [:]
 
-        def properties = grailsApplication.metadata.getProperties("build")
-
-        properties.each {key, value->
-            buildDataKeys.add("build."+key)
-            buildMap.put("build."+key, value)
+        grailsApplication.metadata.getProperties().each { key, value ->
+            def k = key?.toString()
+            if (k?.startsWith('build.')) {
+                buildDataKeys << k
+                buildMap[k] = value
+            }
         }
 
         render(view:'welcome',model: [buildData: buildMap, buildDataKeys: buildDataKeys])
@@ -2772,8 +2772,8 @@ Since: V18''',
                             if (scheduledExecution.dateCreated) {
                                 created(apiService.w3cDateValue(scheduledExecution.dateCreated))
                             }
-                            if (scheduledExecution.user) {
-                                createdBy(scheduledExecution.user)
+                            if (scheduledExecution.createdBy ?: scheduledExecution.user) {
+                                createdBy(scheduledExecution.createdBy ?: scheduledExecution.user)
                             }
                             if (scheduledExecution.lastUpdated) {
                                 lastModified(apiService.w3cDateValue(scheduledExecution.lastUpdated))
@@ -3055,8 +3055,8 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                                 description(se.description)
                                 if (request.api_version >= ApiVersions.V56) {
                                     created(apiService.w3cDateValue(se.dateCreated))
-                                    if (se.user) {
-                                        createdBy(se.user)
+                                    if (se.createdBy ?: se.user) {
+                                        createdBy(se.createdBy ?: se.user)
                                     }
                                     if (se.lastUpdated) {
                                         lastModified(apiService.w3cDateValue(se.lastUpdated))

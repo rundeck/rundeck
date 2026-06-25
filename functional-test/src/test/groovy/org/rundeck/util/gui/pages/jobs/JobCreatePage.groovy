@@ -3,6 +3,7 @@ package org.rundeck.util.gui.pages.jobs
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.support.ui.ExpectedConditions
@@ -411,7 +412,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement selectTabAddFilterByName(String tabName){
-        el(By.xpath("//span[contains(text(), \"${tabName}\")]//*[@class='glyphicon glyphicon-plus text-success']"))
+        el(By.xpath("//span[normalize-space(.)=\"${tabName}\"]//*[@class='glyphicon glyphicon-plus text-success']"))
     }
 
     WebElement getNodeFilterInput(){
@@ -645,7 +646,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getSaveOptionButton() {
-        el saveOptionBy
+        byAndWaitClickable saveOptionBy
     }
     By optionItemBy(int index) {
         legacyUi ? By.cssSelector("#optli_$index") : NextUi.optionItemBy(index)
@@ -896,15 +897,42 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getJobOptionAllowedValuesRemoteUrlInput(){
-        def by = (legacyUi ? jobOptionAllowedValuesRemoteUrlBy : jobOptionAllowedValuesRemoteUrlByNextUi)
+        // Native radio inputs are styled with opacity:0 and zero dimensions (standard Bootstrap custom radio
+        // styling). Selenium's visibilityOfElementLocated requires non-zero size — always times out.
+        // Use presenceOfElementLocated: the element IS in the DOM, just visually replaced by its label.
         def optionsSectionBy = By.id("optionsContent")
-        waitForElementVisible(optionsSectionBy)
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.presenceOfElementLocated(optionsSectionBy))
         executeScript("arguments[0].scrollIntoView({block: 'center'});", el(optionsSectionBy))
-        def element = new WebDriverWait(driver, Duration.ofSeconds(30))
+        if (!legacyUi) {
+            By preferred = By.cssSelector("#optionsContent #optitem_new input[name='valuesType'][value='url']")
+            By fallback = By.cssSelector("#optionsContent [data-test='option.valuesType'] input[name='valuesType'][value='url']")
+            // ExpectedConditions.or returns Boolean, not WebElement — wait for presence then find the element
+            new WebDriverWait(driver, Duration.ofSeconds(60))
+                    .ignoring(StaleElementReferenceException.class)
+                    .until(ExpectedConditions.or(
+                            ExpectedConditions.presenceOfElementLocated(preferred),
+                            ExpectedConditions.presenceOfElementLocated(fallback)))
+            def inputs = driver.findElements(preferred)
+            WebElement input = inputs.isEmpty() ? driver.findElement(fallback) : inputs.first()
+            executeScript("arguments[0].scrollIntoView({block: 'center'});", input)
+            return input
+        }
+        By by = By.cssSelector(
+                "#optionsContent ul li:last-child .optEditForm input[name='valuesType'][value='url']")
+        WebElement input = new WebDriverWait(driver, Duration.ofSeconds(60))
+                .ignoring(StaleElementReferenceException.class)
                 .until(ExpectedConditions.presenceOfElementLocated(by))
-        executeScript("arguments[0].scrollIntoView({block: 'center'});", element)
-        waitForElementToBeClickable(element)
-        element
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", input)
+        return input
+    }
+
+    /**
+     * Selects the "Remote URL" allowed-values radio; uses a script click so CI does not fail on intercepted native clicks.
+     */
+    void clickJobOptionAllowedValuesRemoteUrlRadio() {
+        WebElement input = getJobOptionAllowedValuesRemoteUrlInput()
+        executeScript("arguments[0].click();", input)
     }
 
     void scrollToElement(WebElement el){
@@ -1135,7 +1163,38 @@ class JobCreatePage extends BasePage {
     }
 
     /**
-     * Clicks the step at index to open the step editor.
+     * Waits until the given step dropdown option is absent.
+     *
+     * {@link #doesntHasDropdownOption} is a point-in-time DOM query, so asserting it directly
+     * right after an async mutation (e.g. saving an error handler, which triggers a Vue re-render
+     * that removes the "add error handler" option) is racy. This polls until the option is actually
+     * gone instead of checking once.
+     *
+     * @return true once the option is absent; throws TimeoutException if it never disappears
+     */
+    boolean waitForDropdownOptionAbsent(int index, String dataTest, int timeoutSeconds = 30) {
+        new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds))
+                .until { doesntHasDropdownOption(index, dataTest) }
+        return true
+    }
+
+    /**
+     * Waits until the given step dropdown option is present.
+     *
+     * Counterpart to {@link #waitForDropdownOptionAbsent} for the cases where an async mutation
+     * (e.g. removing an error handler) is expected to re-add the option.
+     *
+     * @return true once the option is present; throws TimeoutException if it never appears
+     */
+    boolean waitForDropdownOptionPresent(int index, String dataTest, int timeoutSeconds = 30) {
+        new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds))
+                .until { !doesntHasDropdownOption(index, dataTest) }
+        return true
+    }
+
+    /**
+     * Clicks the step at index to open edit modal (nextUi mode only).
+     * The step item with id wfitem_${index} is clickable and opens EditPluginModal.
      * The step item id `wfitem_${index}` is shared across legacy KO and Vue;
      * legacy opens the inline edit form, default/nextUi opens EditPluginModal.
      */

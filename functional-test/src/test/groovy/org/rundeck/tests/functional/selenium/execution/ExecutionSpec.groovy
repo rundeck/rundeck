@@ -621,6 +621,87 @@ class ExecutionSpec extends SeleniumBase {
         executionShowPage.logNodeSettings.size() == 0
     }
 
+    /**
+     * Regression test for RUN-2759.
+     *
+     * Verifies that step numbers >= 10 are rendered correctly in the node view.
+     * The bug was caused by using string index notation ($data.stepctx[0]) which
+     * returned only the first character, so step 10 appeared as "1.", step 11 as "1.", etc.
+     * The fix uses parseInt($data.stepctx) to extract the full number.
+     *
+     * Steps:
+     * - Creates a job with 12 steps.
+     * - Runs the job and navigates to the Nodes tab.
+     * - Expands the node and reads the rendered step number labels.
+     * - Verifies that steps 10, 11, and 12 display the full two-digit number.
+     */
+    def "step numbers with two or more digits display correctly in node view"() {
+        setup:
+        def executionShowPage = page ExecutionShowPage
+        def jobUuid = "3de51941-605c-435b-b128-4dfa8142f210"
+        JobShowPage jobShowPage = page(JobShowPage, SELENIUM_EXEC_PROJECT).forJob(jobUuid)
+        def yaml = """
+            -
+              defaultTab: nodes
+              description: ''
+              executionEnabled: true
+              id: ${jobUuid}
+              loglevel: INFO
+              name: stepNumberRegressionJob
+              nodeFilterEditable: false
+              plugins:
+                ExecutionLifecycle: {}
+              scheduleEnabled: true
+              sequence:
+                commands:
+                - exec: echo 'step 1'
+                - exec: echo 'step 2'
+                - exec: echo 'step 3'
+                - exec: echo 'step 4'
+                - exec: echo 'step 5'
+                - exec: echo 'step 6'
+                - exec: echo 'step 7'
+                - exec: echo 'step 8'
+                - exec: echo 'step 9'
+                - exec: echo 'step 10'
+                - exec: echo 'step 11'
+                - exec: echo 'step 12'
+              keepgoing: false
+              strategy: node-first
+              uuid: ${jobUuid}
+        """
+        def pathToJob = JobUtils.generateFileToImport(yaml, "yaml")
+        def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
+                .build()
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+
+        when:
+        jobShowPage.go()
+        jobShowPage.runJobBtn.click()
+        executionShowPage.validateStatus 'SUCCEEDED'
+
+        then: "navigate to nodes tab and expand the first node"
+        def nodesView = executionShowPage.nodesView
+        nodesView.expandNode(0)
+
+        when:
+        def stepNumbers = nodesView.stepNumbers
+
+        then: "all 12 steps must be present"
+        stepNumbers.size() == 12
+
+        and: "single-digit steps display correctly"
+        stepNumbers[0].trim() == "1."
+        stepNumbers[8].trim() == "9."
+
+        and: "two-digit step numbers show the full number, not just the first digit"
+        stepNumbers[9].trim() == "10."
+        stepNumbers[10].trim() == "11."
+        stepNumbers[11].trim() == "12."
+    }
+
     def cleanup() {
         deleteProject(SELENIUM_EXEC_PROJECT)
     }

@@ -103,20 +103,20 @@ search
             sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
             pagination:{
                 max: ${enc(js:params.max?params.int('max',10):10)}
-    },
-    query:{
-        jobIdFilter:'null'
-      },
-      filterOpts: {
-          showFilter: false,
-          showRecentFilter: true,
-          showSavedFilter: false
-      },
-      runningOpts: {
-          loadRunning:false,
-          allowAutoRefresh: false
-      }
-}
+            },
+            query:{
+                adhoc: true
+            },
+            filterOpts: {
+                showFilter: false,
+                showRecentFilter: true,
+                showSavedFilter: false
+            },
+            runningOpts: {
+                loadRunning:false,
+                allowAutoRefresh: false
+            }
+        }
 })
   </g:javascript>
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>

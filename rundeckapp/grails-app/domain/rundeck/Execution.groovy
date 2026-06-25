@@ -72,8 +72,8 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
 
     boolean serverNodeUUIDChanged = false
 
-    static hasOne = [logFileStorageRequest: LogFileStorageRequest]
     static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap', 'serverNodeUUIDChanged', 'execIdForLogStore', 'workflowJsonMap', 'workflowData']
+
     static constraints = {
         importFrom SharedExecutionConstraints
         importFrom SharedNodeConfigConstraints
@@ -83,7 +83,6 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
                 return 'job.project.mismatch.error'
             }
         })
-        logFileStorageRequest(nullable:true)
         workflow(nullable:true)
         workflowJson(nullable:true, blank:true)
         scheduledExecution(nullable:true)
@@ -189,7 +188,14 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
 
     @Override
     Serializable getLogFileStorageRequestId() {
-        return logFileStorageRequest?.id
+        return LogFileStorageRequest.findByExecution(this)?.id
+    }
+
+    Boolean isJobDeleted() {
+        if (scheduledExecution == null && jobUuid != null) {
+            return true
+        }
+        return false
     }
 
     RdNodeConfig getNodeConfig() {

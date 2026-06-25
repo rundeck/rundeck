@@ -79,4 +79,49 @@ class ExecutionQuerySpec extends Specification {
         "1m"  | mkdate(2014, 11, 2, 12, 25, 20)
         "1y"  | mkdate(2014, 0, 2, 12, 25, 20)
     }
+
+    // ==================== escapeLikePattern Tests ====================
+
+    def "escapeLikePattern escapes percent wildcard"() {
+        expect:
+        ExecutionQuery.escapeLikePattern("test%value") == "test\\%value"
+        ExecutionQuery.escapeLikePattern("%") == "\\%"
+        ExecutionQuery.escapeLikePattern("%%") == "\\%\\%"
+        ExecutionQuery.escapeLikePattern("start%middle%end") == "start\\%middle\\%end"
+    }
+
+    def "escapeLikePattern escapes underscore wildcard"() {
+        expect:
+        ExecutionQuery.escapeLikePattern("test_value") == "test\\_value"
+        ExecutionQuery.escapeLikePattern("_") == "\\_"
+        ExecutionQuery.escapeLikePattern("__") == "\\_\\_"
+        ExecutionQuery.escapeLikePattern("a_b_c") == "a\\_b\\_c"
+    }
+
+    def "escapeLikePattern escapes backslash"() {
+        expect:
+        ExecutionQuery.escapeLikePattern("test\\value") == "test\\\\value"
+        ExecutionQuery.escapeLikePattern("\\") == "\\\\"
+        ExecutionQuery.escapeLikePattern("\\\\") == "\\\\\\\\"
+    }
+
+    def "escapeLikePattern escapes all special chars together"() {
+        expect:
+        ExecutionQuery.escapeLikePattern("test%_\\value") == "test\\%\\_\\\\value"
+        ExecutionQuery.escapeLikePattern("%_\\") == "\\%\\_\\\\"
+    }
+
+    def "escapeLikePattern handles null"() {
+        expect:
+        ExecutionQuery.escapeLikePattern(null) == null
+    }
+
+    def "escapeLikePattern returns unchanged for safe input"() {
+        expect:
+        ExecutionQuery.escapeLikePattern("simple") == "simple"
+        ExecutionQuery.escapeLikePattern("node1") == "node1"
+        ExecutionQuery.escapeLikePattern("test-value") == "test-value"
+        ExecutionQuery.escapeLikePattern("user@example.com") == "user@example.com"
+        ExecutionQuery.escapeLikePattern("") == ""
+    }
 }

@@ -172,13 +172,25 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     }
 
     public void beginWorkflowItem(int step, StepExecutionItem item) {
-        stepContext.beginStepContext(StateUtils.stepContextId(step, false));
+        HasParentStepContext parented = asHierarchical(item);
+        if (parented != null) {
+            stepContext.beginStepContext(StateUtils.stepContextId(parented.getParentStepNumber(), false));
+            stepContext.beginContext();
+            stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+        } else {
+            stepContext.beginStepContext(StateUtils.stepContextId(resolveStepNumber(step, item), false));
+        }
         notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.RUNNING), new Date());
     }
 
     @Override
     public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
-        stepContext.beginStepContext(StateUtils.stepContextId(step, true));
+        HasParentStepContext parented = asHierarchical(item);
+        if (parented != null) {
+            stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), true));
+        } else {
+            stepContext.beginStepContext(StateUtils.stepContextId(resolveStepNumber(step, item), true));
+        }
         HashMap<String,String> ehMap= new HashMap<>();
         ehMap.put("handlerTriggered", "true");
         notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.RUNNING_HANDLER, ehMap),
@@ -192,6 +204,37 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
             notifyAllStepState(createIdentifier(), createStepStateChange(result), new Date());
         }
         stepContext.finishStepContext();
+        if (asHierarchical(item) != null) {
+            stepContext.finishContext();
+            stepContext.finishStepContext();
+        }
+    }
+
+    /**
+     * Returns the logical step number for a flat (non-hierarchical) step. Prefers
+     * {@link HasParentStepContext#getLogicalStepNumber()} when positive so state
+     * updates are routed to the correct logical slot in the state tree even when the
+     * flat engine index diverges after conditional sub-step expansion.
+     */
+    private static int resolveStepNumber(int flatStep, StepExecutionItem item) {
+        if (item instanceof HasParentStepContext) {
+            int logical = ((HasParentStepContext) item).getLogicalStepNumber();
+            if (logical > 0) {
+                return logical;
+            }
+        }
+        return flatStep;
+    }
+
+    private static HasParentStepContext asHierarchical(StepExecutionItem item) {
+        if (!(item instanceof HasParentStepContext)) {
+            return null;
+        }
+        HasParentStepContext parented = (HasParentStepContext) item;
+        if (parented.getParentStepNumber() <= 0 || parented.getSubStepNumber() <= 0) {
+            return null;
+        }
+        return parented;
     }
 
     @Override
