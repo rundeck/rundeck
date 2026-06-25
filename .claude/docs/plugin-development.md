@@ -22,7 +22,7 @@ Updated plugin repositories that follow these guidelines:
 
 - **Build Tool**: Gradle with wrapper script
 - **Java Version**: Java 17
-- **Github Actions**:
+- **GitHub Actions**:
   - Gradle (CI)
   - Release
 

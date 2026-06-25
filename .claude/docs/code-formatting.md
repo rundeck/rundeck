@@ -98,5 +98,5 @@ Provides "Reformat with Spotless" in the Code menu.
 
 ## Resources
 
-- [Spotless Github](https://github.com/diffplug/spotless)
+- [Spotless GitHub](https://github.com/diffplug/spotless)
 - [Spotless Gradle Plugin](https://plugins.jetbrains.com/plugin/18321-spotless-gradle)

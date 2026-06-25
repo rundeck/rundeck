@@ -1,6 +1,6 @@
 # Development Guidelines
 
-**Source**: [Rundeck OSS Github Guidelines](https://github.com/rundeck/rundeck/wiki/Github-Guidelines)
+**Source**: [Rundeck OSS GitHub Guidelines](https://github.com/rundeck/rundeck/wiki/Github-Guidelines)
 
 ## Overview
 
@@ -133,6 +133,6 @@ Return `SysConfigProp` objects in `getSystemConfigProps()` method using `org.run
 - Write meaningful commit messages
 
 **Resources**:
-- [Rundeck Github Guidelines](https://github.com/rundeck/rundeck/wiki/Github-Guidelines)
+- [Rundeck GitHub Guidelines](https://github.com/rundeck/rundeck/wiki/Github-Guidelines)
 - [Spock Framework](https://spockframework.org/)
 - [Git Commit Guide](https://cbea.ms/git-commit/)
