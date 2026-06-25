@@ -683,7 +683,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
     def "api execution output compacted json v59 entries always objects"() {
         given:
 
-        def assetTaglib = mockTagLib(UtilityTagLib)
+        mockTagLib(UtilityTagLib)
         Execution e1 = new Execution(
                 project: 'test1',
                 user: 'bob',
