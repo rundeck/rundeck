@@ -150,7 +150,7 @@
 
         <strong>{{ $t("use.regular.expressions") }}</strong>
         <p>
-          <code>{{ $t("node.metadata.hostname") }}: dev(\d+).test.com</code>.
+          <code>hostname: dev(\d+).test.com</code>.
         </p>
 
         <strong>{{ $t("regex.syntax.checking") }}:</strong>
