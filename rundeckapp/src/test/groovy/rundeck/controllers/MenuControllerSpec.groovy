@@ -2001,6 +2001,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.executionService = Mock(ExecutionService)
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
@@ -2044,6 +2045,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.executionService = Mock(ExecutionService)
 
         def query = new ScheduledExecutionQuery()
         params.project='test'
@@ -2104,6 +2106,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.executionService = Mock(ExecutionService)
         controller.scheduledExecutionService.applicationContext = applicationContext
 
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
@@ -2281,6 +2284,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.executionService = Mock(ExecutionService)
         def query = new ScheduledExecutionQuery()
         params.project='test'
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID)).save()
@@ -2797,6 +2801,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         }
         controller.userService=Mock(UserService)
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.executionService = Mock(ExecutionService)
 
         if(explicitJobListType) params.jobListType = explicitJobListType
         params.project = "prj"
@@ -3146,6 +3151,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         controller.configurationService = Mock(ConfigurationService){
             getBoolean("gui.realJobTree",true)>>jobTree
         }
+        controller.executionService = Mock(ExecutionService)
 
         def query = new ScheduledExecutionQuery()
         params.project='test'

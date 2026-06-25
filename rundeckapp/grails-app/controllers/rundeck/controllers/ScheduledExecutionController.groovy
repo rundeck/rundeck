@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -553,6 +554,12 @@ Since: v53''',
 
         def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
         def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
+        def defaultRecentFilter = null
+        if (featureService.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+            def configured = configurationService.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+            defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+        }
+
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
@@ -573,7 +580,8 @@ Since: v53''',
                 jobComponents: jobComponents,
                 jobComponentValues: jobComponentValues,
                 max: params.int('max') ?: 10,
-                offset: params.int('offset') ?: 0] + model
+                offset: params.int('offset') ?: 0,
+                defaultRecentFilter: defaultRecentFilter] + model
         if (params.opt && (params.opt instanceof Map)) {
             dataMap.selectedoptsmap = params.opt
         }

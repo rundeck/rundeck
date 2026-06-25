@@ -334,7 +334,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def model = result//[query: query, params: params]
 
-        return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount()]
+        return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount(), defaultRecentFilter: executionService.getActivityDefaultTimeFilter(params)]
     }
 
     /**

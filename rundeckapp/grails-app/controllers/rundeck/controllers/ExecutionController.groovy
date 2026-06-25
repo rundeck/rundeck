@@ -278,6 +278,12 @@ class ExecutionController extends ControllerBase{
         Long trimOutput = Sizes.parseFileSize(max)
         Long maxLogSize = Sizes.parseFileSize(maxLogSizeConfig)
 
+        def defaultRecentFilter = null
+        if (featureService.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+            def configured = configurationService.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+            defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+        }
+
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
@@ -292,7 +298,8 @@ class ExecutionController extends ControllerBase{
                 inputFilesMap         : inputFilesMap,
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled(),
                 trimOutput            : trimOutput,
-                maxLogSize            : maxLogSize
+                maxLogSize            : maxLogSize,
+                defaultRecentFilter   : defaultRecentFilter
         ]
     }
 

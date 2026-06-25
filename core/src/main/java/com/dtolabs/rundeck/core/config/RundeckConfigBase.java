@@ -475,6 +475,7 @@ public class RundeckConfigBase {
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
         Enabled earlyAccessJobConditional = new Enabled();
+        Enabled activityDefaultTimeFilter = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
         int guiAceEditorMinLines = 12;
@@ -652,6 +653,7 @@ public class RundeckConfigBase {
         String logoSmall;
         Integer matchedNodesMaxCount;
         Keystorage keystorage;
+        Activity activity;
 
         @Data
         public static class GuiSystemConfig{
@@ -731,6 +733,13 @@ public class RundeckConfigBase {
         @Data
         public static class Keystorage{
             Boolean downloadenabled;
+        }
+
+        @Data
+        public static class Activity {
+            /** Default time filter for the activity/executions page when no filters are active.
+             *  Accepted values: 1h, 1d, 1w, 1m. Default: 1m */
+            String defaultTimeFilter;
         }
     }
 
