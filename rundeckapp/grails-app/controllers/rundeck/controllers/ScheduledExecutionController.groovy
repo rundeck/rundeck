@@ -2701,7 +2701,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
      * execute the job defined via input parameters, but do not store it.
      * REST API endpoint: /api/{api_version}/project/{project}/run/command/inline
      */
-    @Post(uri='/project/{project}/run/command/inline')
+    @Post(uri='/project/{project}/run/command/inline', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
         summary='Run Adhoc Command (Inline)',
@@ -2825,7 +2825,7 @@ Since: v56''',
      * REST API endpoint: /api/{api_version}/project/{project}/run/command/inline/api
      * This endpoint uses API authentication (for v56+)
      */
-    @Post(uri='/project/{project}/run/command/inline/api')
+    @Post(uri='/project/{project}/run/command/inline/api', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
         summary='Run Adhoc Command (Inline) - API Auth',
