@@ -6,7 +6,7 @@ import NodeCard from "../../components/job/resources/NodeCard.vue";
 import { observer } from "../../utilities/uiSocketObserver";
 
 const rundeckContext = getRundeckContext();
-const FilterInputComp = defineComponent({
+export const FilterInputComp = defineComponent({
   name: "NodeFilter",
   components: { NodeFilterInput },
   props: ["itemData", "extraAttrs"],
@@ -87,7 +87,12 @@ const FilterInputComp = defineComponent({
             (val: string) => (this.filterValue = val),
           ),
         );
-        this.filterValue = this.nodeFilterKo().filter();
+        const koVal = this.nodeFilterKo().filter();
+        if (this.filterValue) {
+          this.nodeFilterKo().selectNodeFilter({ filter: this.filterValue }, false);
+        } else {
+          this.filterValue = koVal;
+        }
       } else if (retry > 0) {
         setTimeout(() => this.attachKnockout(retry - 1), 1000);
       } else {
