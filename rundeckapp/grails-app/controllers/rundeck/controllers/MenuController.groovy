@@ -244,13 +244,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }
-        def defaultRecentFilter = null
-        if (!params.find { it.key.endsWith('Filter') }) {
-            if (featureService?.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
-                def configured = configurationService?.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
-                defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
-            }
-        }
+        def defaultRecentFilter = executionService.getActivityDefaultTimeFilter(params)
 
         if (request.getCookies().find { it.name == 'nextUi' }?.value == 'true' || params.nextUi == 'true') {
             params.nextUi = true

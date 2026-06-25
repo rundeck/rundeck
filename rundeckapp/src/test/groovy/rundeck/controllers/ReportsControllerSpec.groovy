@@ -18,7 +18,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
-import com.dtolabs.rundeck.core.config.Features
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
@@ -28,11 +27,10 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import rundeck.*
-import rundeck.services.ConfigurationService
+import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 import rundeck.services.UserService
-import rundeck.services.feature.FeatureService
 import spock.lang.Unroll
 
 /**
@@ -81,7 +79,7 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
         controller.reportService = Mock(ReportService){
             jobHistoryAuthorizations(_,_) >> authorizations
         }
-
+        controller.executionService = Mock(ExecutionService)
 
         when:
         params.doendafterFilter = 'true'
@@ -135,6 +133,7 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
             controller.reportService = Mock(ReportService) {
                 jobHistoryAuthorizations(_, _) >> authorizations
             }
+            controller.executionService = Mock(ExecutionService)
             def project = 'test'
             def wf = new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
 
@@ -217,6 +216,7 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
         }
         controller.metricService = Mock(MetricService)
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        controller.executionService = Mock(ExecutionService)
 
         def jobname = 'abc'
         def group = 'path'
@@ -289,15 +289,15 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
             _ * finishquery(_, _, _) >> { args -> args[2] }
         }
         controller.metricService = null
+        controller.executionService = Mock(ExecutionService)
     }
 
     def "index_old does not inject recentFilter when feature flag is disabled"() {
         given:
         setupBaseServicesForDefaultFilter()
-        controller.featureService = Mock(FeatureService) {
-            1 * featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER) >> false
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> null
         }
-        controller.configurationService = Mock(ConfigurationService)
 
         when:
         params.project = 'test'
@@ -310,11 +310,8 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
     def "index_old injects default recentFilter of 1m when feature enabled and config not set"() {
         given:
         setupBaseServicesForDefaultFilter()
-        controller.featureService = Mock(FeatureService) {
-            _ * featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER) >> true
-        }
-        controller.configurationService = Mock(ConfigurationService) {
-            1 * getString('gui.activity.defaultTimeFilter', '1m') >> '1m'
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> '1m'
         }
 
         when:
@@ -329,11 +326,8 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
     def "index_old injects configured recentFilter '#configValue' when feature is enabled"() {
         given:
         setupBaseServicesForDefaultFilter()
-        controller.featureService = Mock(FeatureService) {
-            _ * featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER) >> true
-        }
-        controller.configurationService = Mock(ConfigurationService) {
-            1 * getString('gui.activity.defaultTimeFilter', '1m') >> configValue
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> configValue
         }
 
         when:
@@ -353,11 +347,8 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
     def "index_old falls back to 1m when configured value is invalid"() {
         given:
         setupBaseServicesForDefaultFilter()
-        controller.featureService = Mock(FeatureService) {
-            _ * featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER) >> true
-        }
-        controller.configurationService = Mock(ConfigurationService) {
-            1 * getString('gui.activity.defaultTimeFilter', '1m') >> 'invalid'
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> '1m'
         }
 
         when:
@@ -371,10 +362,9 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
     def "index_old does not inject default when request already has a Filter param"() {
         given:
         setupBaseServicesForDefaultFilter()
-        controller.featureService = Mock(FeatureService) {
-            0 * featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> null
         }
-        controller.configurationService = Mock(ConfigurationService)
 
         when:
         params.project = 'test'
@@ -392,10 +382,9 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
             _ * getAuthContextForSubjectAndProject(*_) >> null
             _ * authorizeProjectResource(*_) >> true
         }
-        controller.featureService = Mock(FeatureService) {
-            1 * featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER) >> false
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> null
         }
-        controller.configurationService = Mock(ConfigurationService)
 
         when:
         params.project = 'test'
@@ -411,11 +400,8 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
             _ * getAuthContextForSubjectAndProject(*_) >> null
             _ * authorizeProjectResource(*_) >> true
         }
-        controller.featureService = Mock(FeatureService) {
-            _ * featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER) >> true
-        }
-        controller.configurationService = Mock(ConfigurationService) {
-            1 * getString('gui.activity.defaultTimeFilter', '1m') >> '1m'
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> '1m'
         }
 
         when:
@@ -432,10 +418,9 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
             _ * getAuthContextForSubjectAndProject(*_) >> null
             _ * authorizeProjectResource(*_) >> true
         }
-        controller.featureService = Mock(FeatureService) {
-            0 * featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> null
         }
-        controller.configurationService = Mock(ConfigurationService)
 
         when:
         params.project = 'test'
