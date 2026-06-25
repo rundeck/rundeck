@@ -71,7 +71,7 @@ graph LR
 **Data Access**: [Pattern used - e.g., JPA repository with transaction management]
 **API Integration**: [How external APIs are called - e.g., Via `HttpClient` with retry logic]
 **Error Handling**: [Error handling approach - e.g., Custom exceptions with @ControllerAdvice]
-**Testing**: [Testing approach - e.g., JUnit 5 with Mockito in `src/test/`]
+**Testing**: [Testing approach - e.g., Spock with Mockito in `src/test/`]
 **Validation**: [Validation approach - e.g., Bean Validation annotations]
 
 ## Critical Context

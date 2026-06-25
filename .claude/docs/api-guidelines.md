@@ -31,8 +31,7 @@ rundeckapp/build/classes/groovy/main/META-INF/swagger/rundeck-44.yml
 - **Never use lowercase tags** (e.g., use `Jobs` not `jobs`)
 - **Only 1 tag per endpoint** - Assign a single, appropriate tag to each endpoint
   - ❌ **Incorrect**: Using multiple tags like `tags = ["Project", "Configuration"]`
-  - ✅ **Correct**: Single `@Tag` annotation per method: `@Tag(name = "Project")`
-  - Use `@Tag` as a separate annotation on the method, not inside `@Operation`
+  - ✅ **Correct**: Single tag per method — either `@Tag(name = "Project")` or `@Operation(tags = ["Project"])`
 
 ### Tag Reference
 

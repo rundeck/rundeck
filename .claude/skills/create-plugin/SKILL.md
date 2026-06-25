@@ -278,7 +278,7 @@ cp build/libs/my-plugin-1.0.0.jar $RDECK_BASE/libext/
 
 ### Phase 7: Setup CI/CD (Optional, for standalone repos)
 
-**Github Actions**: `./github/workflows/build.yml`
+**GitHub Actions**: `./github/workflows/build.yml`
 ```yaml
 name: Build
 
@@ -398,13 +398,13 @@ Before considering plugin complete:
 **Repository Setup (if standalone repo):**
 - [ ] Gradle with wrapper
 - [ ] Java 17
-- [ ] Github Actions (build.yml + release.yml)
+- [ ] GitHub Actions (build.yml + release.yml)
 - [ ] Gradle Version Catalog for dependencies
 - [ ] Renovate bot enabled
 - [ ] Howto documentation in README
 
 **Publishing (if standalone, open source):**
-- [ ] Github secrets configured (SIGNING_KEY_B64, SIGNING_PASSWORD, SONATYPE_USERNAME, SONATYPE_PASSWORD)
+- [ ] GitHub secrets configured (SIGNING_KEY_B64, SIGNING_PASSWORD, SONATYPE_USERNAME, SONATYPE_PASSWORD)
 - [ ] Javadoc fixed (no errors)
 - [ ] Release workflow tested
 - [ ] Maven Central publishing verified

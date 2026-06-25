@@ -220,7 +220,7 @@ ls rundeckapp/build/classes/groovy/main/META-INF/swagger/rundeck-*.yml
 ```groovy
 @Get|@Post|@Put|@Delete(uri = "/path")    // Required - HTTP method
 @Operation(...)                             // Required - OpenAPI operation
-@Tag(name = "Category")                     // Required - Grouping
+@Tag(name = "Category")                     // Required - Grouping (or tags=["Category"] in @Operation)
 @ApiResponse(...)                           // Required - Response definition
 @Parameters([...])                          // Optional - Query/path params
 ```
@@ -246,7 +246,7 @@ ls rundeckapp/build/classes/groovy/main/META-INF/swagger/rundeck-*.yml
 - [ ] Annotated with `@Controller`
 - [ ] Each method has `@Get/@Post/@Put/@Delete`
 - [ ] Each method has `@Operation` with detailed description
-- [ ] Each method has `@Tag`
+- [ ] Each method has exactly one tag (`@Tag(name = "X")` or `tags = ["X"]` in `@Operation`)
 - [ ] Each method has `@ApiResponse`
 - [ ] Request body specified for POST/PUT
 - [ ] Parameters specified if needed

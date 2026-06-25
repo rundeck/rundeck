@@ -34,15 +34,15 @@ def "test login"() {
 }
 ```
 
-### 2. No Thread.sleep()
+### 2. Avoid Thread.sleep()
 
-**NEVER** use `Thread.sleep()` in Selenium tests.
+**Avoid** `Thread.sleep()` in Selenium tests. The only acceptable exception is using `Thread.sleep(WaitingTime.*.milliSeconds)` for special cases like external system initialization where explicit waits cannot be used (see [When to Use Thread.sleep()](#when-to-use-threadsleep)).
 
 **Why:** Makes tests slow and flaky. Wait times are arbitrary and may not match actual conditions.
 
 **Instead:** Use explicit waits from Page Object base classes:
-- `waitForElementVisible()`
-- `waitForElementClickable()`
+- `waitForElementVisible(By)`
+- `waitForElementToBeClickable(WebElement)`
 - `waitForCondition()`
 
 ### 3. Explicit Waits
@@ -55,7 +55,7 @@ Thread.sleep(5000)
 element.click()
 
 // ✅ GOOD
-waitForElementClickable(element)
+waitForElementToBeClickable(element)
 element.click()
 ```
 
@@ -287,9 +287,9 @@ Check `BasePage` for existing wait/interaction methods before creating new ones.
 
 **Common BasePage methods:**
 - `el(By)` - Find element
-- `waitForElement(By)` - Wait and find
-- `waitForUrlContains(String)` - Wait for URL change
-- `waitForPopoverToAppear()` - Wait for popover
+- `waitForElementVisible(By)` - Wait for element to be visible
+- `waitForElementToBeClickable(WebElement)` - Wait for element to be clickable
+- `waitForUrlToContain(String)` - Wait for URL change
 
 ### Test Structure
 
@@ -393,9 +393,8 @@ when: "using the new feature"
 
 Our Page Objects inherit common wait methods:
 - `BasePage` - Common functionality for all pages
-- `BaseComponent` - Reusable UI components
 
-Check existing Page Objects in `functional-test/src/test/groovy/pages/` for patterns.
+Check existing Page Objects in `functional-test/src/test/groovy/org/rundeck/util/gui/pages/` for patterns.
 
 ## Common Patterns
 
@@ -406,7 +405,7 @@ Check existing Page Objects in `functional-test/src/test/groovy/pages/` for patt
 waitForElementVisible(By.id("dynamicContent"))
 
 // Wait for element to be clickable
-waitForElementClickable(submitButton)
+waitForElementToBeClickable(submitButton)
 
 // Wait for custom condition
 waitForCondition { driver.findElements(By.className("item")).size() > 0 }
@@ -423,14 +422,14 @@ modalDialog.fillForm(data)
 modalDialog.clickSubmit()
 
 // Wait for modal to close
-waitForElementNotVisible(modalDialog)
+waitForElementIsInvisible(modalDialog)
 ```
 
 ### Verifying Test State
 
 ```groovy
 // Wait for page transition
-waitForUrlContains("/dashboard")
+waitForUrlToContain("/dashboard")
 
 // Verify element state
 assert waitForElementVisible(successMessage).isDisplayed()
@@ -443,7 +442,7 @@ assert waitForElementVisible(successMessage).isDisplayed()
 - **Naming**: `*Spec.groovy` (Spock convention)
 
 ### Page Object Location
-- **Path**: `functional-test/src/test/groovy/pages/`
+- **Path**: `functional-test/src/test/groovy/org/rundeck/util/gui/pages/`
 - **Naming**: `*Page.groovy` or `*Component.groovy`
 
 ## Debugging Failing Tests

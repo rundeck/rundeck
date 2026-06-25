@@ -41,7 +41,7 @@ Quick reference for where to find and create files in the codebase.
 ## Functional Tests
 
 - **API tests**: `functional-test/src/test/groovy/`
-- **Selenium page objects**: `functional-test/src/test/groovy/pages/`
+- **Selenium page objects**: `functional-test/src/test/groovy/org/rundeck/util/gui/pages/`
 
 ## Configuration
 

@@ -61,9 +61,9 @@ Define dependencies and versions using a Gradle Version Catalog
 
 ## CI Configuration
 
-### Use Github Actions
+### Use GitHub Actions
 
-Easiest integration with Github
+Easiest integration with GitHub
 
 ### build.yml
 
@@ -97,7 +97,7 @@ Enable Renovate bot for automatic dependency updates
 ### Setup
 
 1. **Add repo to Renovate**:
-   - Visit Github org Settings > Github Apps
+   - Visit GitHub org Settings > GitHub Apps
    - Mend Renovate - click "Configure"
    - Add the repository
 
@@ -143,7 +143,7 @@ git push v1.2.3
 
 **Setup Steps**:
 
-1. **Add release process to CI (Github Actions)**:
+1. **Add release process to CI (GitHub Actions)**:
    ```bash
    ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
    ```
@@ -173,7 +173,7 @@ git push v1.2.3
 4. **Fix javadoc issues**:
    - Required before publishing (javadoc step will fail otherwise)
 
-5. **Configure Github Org Secrets**:
+5. **Configure GitHub Org Secrets**:
    - [rundeck-plugins secrets](https://github.com/organizations/rundeck-plugins/settings/secrets/actions)
    - Required: `SIGNING_KEY_B64`, `SIGNING_PASSWORD`, `SONATYPE_PASSWORD`, `SONATYPE_USERNAME`
 
