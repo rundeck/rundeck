@@ -2776,20 +2776,18 @@ Since: v56''',
     "nodeKeepgoing": true
 }''')
             )
-        ),
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''Execution result with success flag and execution ID (backward compatible format).''',
-            content = [
-                @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema=@Schema(type='object'),
-                    examples=@ExampleObject('''{
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''Execution result with success flag and execution ID (backward compatible format).''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema=@Schema(type='object'),
+            examples=@ExampleObject('''{
   "success": "true",
   "id": 1
 }''')
-                )
-            ]
         )
     )
     def runAdhocInline(@Parameter(hidden = true) ApiRunAdhocRequest apiRunAdhocRequest){
@@ -2900,20 +2898,18 @@ Since: v56''',
     "nodeKeepgoing": true
 }''')
             )
-        ),
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''Execution result with success flag and execution ID (backward compatible format).''',
-            content = [
-                @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema=@Schema(type='object'),
-                    examples=@ExampleObject('''{
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''Execution result with success flag and execution ID (backward compatible format).''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema=@Schema(type='object'),
+            examples=@ExampleObject('''{
   "success": "true",
   "id": 1
 }''')
-                )
-            ]
         )
     )
     def runAdhocInlineApi(@Parameter(hidden = true) ApiRunAdhocRequest apiRunAdhocRequest){
