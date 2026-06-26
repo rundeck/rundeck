@@ -353,10 +353,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 }
             }
         }
-        synchState.message=msgs? msgs.join(', ') : null
-        if (fetchError && synchState.state == SynchState.CLEAN) {
-            synchState.state = SynchState.REFRESH_NEEDED
+        // A fetch error means the remote is unreachable. Throw so callers can show a clear
+        // "Git server unavailable" message rather than a misleading local-state status.
+        if (fetchError) {
+            throw new ScmPluginException(msgs.join(', '))
         }
+        synchState.message=msgs? msgs.join(', ') : null
 
         return synchState
     }

@@ -535,7 +535,7 @@ class GitExportPluginSpec extends Specification {
         status.message==null
 
     }
-    def "get status fetch fails"() {
+    def "get status fetch fails throws ScmPluginException"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
@@ -552,12 +552,13 @@ class GitExportPluginSpec extends Specification {
         FileUtils.delete(origindir, FileUtils.RECURSIVE | FileUtils.IGNORE_ERRORS)
 
         when:
-        def status = plugin.getStatus(Mock(ScmOperationContext))
+        plugin.getStatus(Mock(ScmOperationContext))
 
         then:
-        status!=null
-        status.state==SynchState.REFRESH_NEEDED
-        status.message=='Fetch from the repository failed: Invalid remote: origin'
+        // A fetch failure signals the remote is unreachable — throw so the caller can surface a
+        // clear "Git server unavailable" message instead of a misleading local-state status.
+        ScmPluginException e = thrown()
+        e.message == 'Fetch from the repository failed: Invalid remote: origin'
     }
 
     static RevCommit addCommitFile(final File gitdir, final Git git, final String path, final String content) {

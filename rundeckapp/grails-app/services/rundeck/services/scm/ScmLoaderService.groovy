@@ -157,9 +157,17 @@ class ScmLoaderService implements EventBusAware {
 
                     } catch (Throwable t) {
                         if(retryCount>= retryTimes){
-                            service.scmFailedProjectInit.put(projectIntegration, pluginConfigData)
                             process = true
-                            service.scmToFalse(pluginConfigData, project, integration)
+                            // Do not put into scmFailedProjectInit and do not persist enabled=false —
+                            // the failure may be a transient connectivity issue. scmFailedProjectInit
+                            // would block beginScmLoader() from restarting this loader (it only clears
+                            // on config change), preventing automatic recovery when Git comes back.
+                            // removingLoaderProcess() cancels the current task; beginScmLoader() will
+                            // start a fresh loader on the next periodic cycle when config is still enabled.
+                            log.warn(
+                                "SCM ${integration} for ${project} failed to initialize after ${retryTimes} retries: ${t.message}. " +
+                                "Plugin remains enabled in configuration. Check connectivity and credentials."
+                            )
                             service.removingLoaderProcess(
                                 project,
                                 integration,

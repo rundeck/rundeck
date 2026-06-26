@@ -223,19 +223,18 @@ class ScmService {
     }
 
     def projectHasConfiguredExportPlugin(String project) {
-        def loaded = initProject(project, EXPORT)
-        if(!loaded){
-            unregisterPlugin(project, EXPORT)
-        }
-        return loaded
+        // Check persisted config only — do not trigger initProject() here.
+        // initProject() calls the git plugin which requires network access; a transient
+        // connectivity failure would cause unregisterPlugin() to discard an otherwise valid
+        // configuration, forcing users to manually re-activate the plugin after recovery.
+        def pluginConfig = loadScmConfig(project, EXPORT)
+        return pluginConfig?.enabled ?: false
     }
 
     def projectHasConfiguredImportPlugin(String project) {
-        def loaded = initProject(project, IMPORT)
-        if(!loaded){
-            unregisterPlugin(project, IMPORT)
-        }
-        return loaded
+        // Check persisted config only — same reasoning as projectHasConfiguredExportPlugin.
+        def pluginConfig = loadScmConfig(project, IMPORT)
+        return pluginConfig?.enabled ?: false
     }
 
     BasicInputView getInputView(UserAndRolesAuthContext auth, String integration, String project, String actionId) {
@@ -1105,9 +1104,21 @@ class ScmService {
         if (plugin) {
             try{
                 return plugin.getStatus(scmOperationContext(auth, project))
+            }catch (ScmPluginException e){
+                // Propagate — includes git connectivity errors reported by the plugin
+                throw e
             }catch (Throwable t){
-                log.error("Failed to get status for SCM export plugin in project ${project}: $t",t);
+                log.error("Failed to get status for SCM export plugin in project ${project}: $t",t)
+                return null
             }
+        }
+        // Plugin is configured on disk but not loaded in memory.
+        // Signal callers explicitly rather than returning null (which would silently show stale status).
+        if (loadScmConfig(project, EXPORT)?.enabled) {
+            throw new ScmPluginException(
+                "SCM export plugin for project ${project} is configured but currently unavailable. " +
+                "Check Git server connectivity and credentials, or reconfigure the plugin."
+            )
         }
         null
     }
@@ -1120,6 +1131,13 @@ class ScmService {
         def plugin = getLoadedImportPluginFor project
         if (plugin) {
             return plugin.getStatus(scmOperationContext(auth, project))
+        }
+        // Plugin is configured on disk but not loaded in memory.
+        if (loadScmConfig(project, IMPORT)?.enabled) {
+            throw new ScmPluginException(
+                "SCM import plugin for project ${project} is configured but currently unavailable. " +
+                "Check Git server connectivity and credentials, or reconfigure the plugin."
+            )
         }
         null
     }

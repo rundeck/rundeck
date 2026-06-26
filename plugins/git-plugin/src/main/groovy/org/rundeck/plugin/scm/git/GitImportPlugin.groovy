@@ -218,9 +218,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     actions[ACTION_PULL].performAction(context,this,null,null,null)
                 }
             } catch (Exception e) {
-                msgs<<"Fetch from the repository failed: ${e.message}"
+                msgs << "Fetch from the repository failed: ${e.message}"
                 logger.error("Failed fetch from the repository: ${e.message}")
                 logger.debug("Failed fetch from the repository: ${e.message}", e)
+                // Short-circuit: skip expensive tree walk when the remote is unreachable.
+                throw new ScmPluginException(msgs.join(', '))
             }
         }
 
