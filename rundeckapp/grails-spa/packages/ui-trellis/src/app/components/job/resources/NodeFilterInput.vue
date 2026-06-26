@@ -97,6 +97,7 @@
       class="schedJobNodeFilter form-control"
       :autofocus="autofocus"
       :placeholder="queryFieldPlaceholderText || $t('enter.a.node.filter')"
+      :aria-label="queryFieldPlaceholderText || $t('enter.a.node.filter')"
       data-testid="filter-input"
       @keydown.enter.prevent="doSearch"
       @blur="doSearch"
@@ -192,10 +193,10 @@
     </div>
     <template #footer>
       <div>
-        <btn @click="saveFilterModal = false" data-testid="sfm-button-cancel">
+        <btn data-testid="sfm-button-cancel" @click="saveFilterModal = false">
           {{ $t("button.action.Cancel") }}
         </btn>
-        <btn type="primary" @click="saveFilter" data-testid="sfm-button-save">
+        <btn type="primary" data-testid="sfm-button-save" @click="saveFilter">
           {{ $t("save.filter.ellipsis") }}
         </btn>
       </div>
@@ -255,7 +256,6 @@ export default defineComponent({
     value: {
       type: String,
       required: true,
-
     },
     showTitle: {
       type: Boolean,
@@ -305,7 +305,7 @@ export default defineComponent({
       type: Boolean,
       required: false,
       default: false,
-      description: "if true, allow setting/removing default filter"
+      description: "if true, allow setting/removing default filter",
     },
   },
   emits: ["filters-updated", "filter", "update:value"],
@@ -393,17 +393,26 @@ export default defineComponent({
         if (newValue) {
           this.outputValue = newValue;
         }
-        if (this.selectedFilterName && this.selectedFilterName !== this.matchedFilter) {
+        if (
+          this.selectedFilterName &&
+          this.selectedFilterName !== this.matchedFilter
+        ) {
           this.selectedFilterName = "";
         } else if (this.matchedFilter) {
           this.selectedFilterName = this.matchedFilter;
         }
       },
-      immediate: true
+      immediate: true,
     },
     filterName() {
       this.selectedFilterName = this.filterName;
     },
+  },
+  unmounted() {
+    this.eventBus.off(
+      "nodefilter:value:changed",
+      this.handleExternalValueChange,
+    );
   },
   mounted() {
     this.onMount();
@@ -512,6 +521,20 @@ export default defineComponent({
         "nodefilter:action:removeDefault",
         this.removeDefaultFilter,
       );
+      this.eventBus.on(
+        "nodefilter:value:changed",
+        this.handleExternalValueChange,
+      );
+    },
+    handleExternalValueChange(data: { filter: string }) {
+      if (
+        data &&
+        data.filter !== undefined &&
+        data.filter !== this.outputValue
+      ) {
+        this.outputValue = data.filter;
+        this.selectedFilterName = this.matchedFilter || "";
+      }
     },
   },
 });
