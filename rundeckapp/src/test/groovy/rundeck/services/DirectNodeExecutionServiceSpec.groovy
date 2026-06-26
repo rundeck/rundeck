@@ -26,6 +26,10 @@ class DirectNodeExecutionServiceSpec extends Specification {
 
             sut.frameworkService = Mock(FrameworkService)
             sut.rundeckAuthContextEvaluator = Mock(AppAuthContextEvaluator)
+            
+            // Mock the injected NodeExecutionService (used by @Lazy @Autowired)
+            def mockNodeExecutionService = Mock(com.dtolabs.rundeck.core.execution.NodeExecutionService)
+            sut.nodeExecutionService = mockNodeExecutionService
 
             def expectResult = Mock(NodeExecutorResult)
         when:
@@ -46,11 +50,8 @@ class DirectNodeExecutionServiceSpec extends Specification {
                 authContext
             ) >> authorizedSet
             0 * sut.rundeckAuthContextEvaluator._(*_)
-            1 * sut.frameworkService.getRundeckFramework() >> Mock(IFramework) {
-                1 * getExecutionService() >> Mock(com.dtolabs.rundeck.core.execution.ExecutionService) {
-                    1 * executeCommand(ctx, command, node) >> expectResult
-                }
-            }
+            // Use the injected service instead of framework lookup
+            1 * mockNodeExecutionService.executeCommand(ctx, command, node) >> expectResult
 
     }
 }

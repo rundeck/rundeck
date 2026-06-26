@@ -11,10 +11,11 @@ import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import rundeck.services.data.UserDataService
 import com.dtolabs.rundeck.core.config.FeatureService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
-class GormUserDataProviderSpec extends RundeckHibernateSpec implements DataTest {
+// Grails 7: Use DataTest instead of RundeckHibernateSpec for GORM testing
+class GormUserDataProviderSpec extends Specification implements DataTest {
     GormUserDataProvider provider = new GormUserDataProvider()
 
     void setup() {

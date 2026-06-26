@@ -132,7 +132,7 @@ export default defineComponent({
       window._rundeck.projectName
     ) {
       const response = await axios.get(
-        `${window._rundeck.rdBase}menu/homeAjax`,
+        `${window._rundeck.rdBase}/menu/homeAjax`,
         {
           headers: { "x-rundeck-ajax": true },
           params: {

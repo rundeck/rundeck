@@ -46,7 +46,7 @@ import org.rundeck.core.auth.web.RdAuthorizeProject
 import rundeck.ScheduledExecution
 import rundeck.services.ScmService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 @Controller
 class ScmController extends ControllerBase {
@@ -137,7 +137,7 @@ class ScmController extends ControllerBase {
         return authContext
     }
 
-    @Get(uri='/project/{project}/scm/{integration}/plugins')
+    @Get(uri='/project/{project}/scm/{integration}/plugins', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'List SCM Plugins',
@@ -155,23 +155,23 @@ Since: v15
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'Result',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ScmPluginList)
-            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Result',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmPluginList)
         )
     )
     def apiPlugins(@Parameter(hidden=true) ScmIntegrationRequest apiPluginsRequest) {
@@ -196,7 +196,7 @@ Since: v15
         respond list, [formats: responseFormats]
     }
 
-    @Get(uri='/project/{project}/scm/{integration}/plugin/{type}/input')
+    @Get(uri='/project/{project}/scm/{integration}/plugin/{type}/input', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get SCM Plugin Input Fields',
@@ -214,30 +214,30 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'type',
                 in = ParameterIn.PATH,
                 description = 'Plugin Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''Input fields response.''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ScmPluginSetupInput)
-            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Input fields response.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmPluginSetupInput)
         )
     )
     /**
@@ -415,7 +415,7 @@ Since: v15''',
         }
         respond(actionResult, map)
     }
-    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/setup')
+    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/setup', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Setup SCM Plugin for a Project',
@@ -437,54 +437,58 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'type',
                 in = ParameterIn.PATH,
                 description = 'Plugin Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ],
         requestBody = @RequestBody(
           description='Configuration values for the plugin.',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
-                schema=@Schema(type='object'),
-                examples=@ExampleObject('''{
+                schema=@Schema(implementation = Object),
+                examples=[
+                    @ExampleObject(
+                        name='plugin-config-example',
+                        description='Configuration key-value pairs for the plugin',
+                        value='''{
     "config":{
         "key":"value",
         "key2":"value2..."
     }
-}''')
+}'''
+                    )
+                ]
             )
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = '''Success result.''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ScmActionResult)
-                )
-            ),
-            @ApiResponse(
-                responseCode = '400',
-                description = '''Validation or input error occurred.''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ScmActionResult)
-                )
-            )
-        ]
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Success result.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmActionResult)
+        )
+    )
+    @ApiResponse(
+        responseCode = '400',
+        description = '''Validation or input error occurred.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmActionResult)
+        )
     )
     /**
      * /api/15/project/$project/scm/$integration/plugin/$type/setup
@@ -548,7 +552,7 @@ Since: v15''',
         respondActionResult(scm, result)
     }
 
-    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/disable')
+    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/disable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Disable SCM Plugin for a Project',
@@ -564,30 +568,30 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'type',
                 in = ParameterIn.PATH,
                 description = 'Plugin Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
-        ],
-        responses = @ApiResponse(
-                responseCode = '200',
-                description = '''Success result.''',
-                content = @Content(
-                        mediaType = MediaType.APPLICATION_JSON,
-                        schema = @Schema(implementation = ScmActionResult)
-                )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Success result.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmActionResult)
         )
     )
     /**
@@ -634,7 +638,7 @@ Since: v15''',
         )
     }
 
-    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/enable')
+    @Post(uri='/project/{project}/scm/{integration}/plugin/{type}/enable', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Enable SCM Plugin for a Project',
@@ -650,30 +654,30 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'type',
                 in = ParameterIn.PATH,
                 description = 'Plugin Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''Success result.''',
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ScmActionResult)
-            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Success result.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmActionResult)
         )
     )
     /**
@@ -704,7 +708,7 @@ Since: v15''',
         )
     }
 
-    @Post(uri='/project/{project}/scm/toggle')
+    @Post(uri='/project/{project}/scm/toggle', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Toggle SCM for a Project',
@@ -723,19 +727,25 @@ Since: v46''',
             description='Configuration values for the plugin.',
             content=@Content(
                 mediaType=MediaType.APPLICATION_JSON,
-                schema=@Schema(type='object', implementation = ScmToggleRequest),
-                examples=@ExampleObject('''{
+                schema=@Schema(implementation = ScmToggleRequest),
+                examples=[
+                    @ExampleObject(
+                        name='enable-scm-example',
+                        description='Enable or disable SCM integration',
+                        value='''{
     "enabled": true
-}''')
+}'''
+                    )
+                ]
             )
-        ),
-        responses = @ApiResponse(
-            description="Success",
-            responseCode = "200",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ScmToggleResponse)
-            )
+        )
+    )
+    @ApiResponse(
+        description="Success",
+        responseCode = "200",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmToggleResponse)
         )
     )
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
@@ -745,7 +755,7 @@ Since: v46''',
             in = ParameterIn.PATH,
             description = 'Project Name',
             required = true,
-            schema = @Schema(type = 'string')
+            schema = @Schema(implementation = String)
         ) String project,
         @Parameter(hidden = true) ScmToggleRequest toggleRequest
     ) {
@@ -914,7 +924,7 @@ Since: v46''',
         redirect(action: 'index', params: [project: project])
     }
 
-    @Get(uri='/project/{project}/scm/{integration}/status')
+    @Get(uri='/project/{project}/scm/{integration}/status', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get Project SCM Status',
@@ -930,29 +940,27 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
-            )
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = '''Status''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ScmProjectStatus)
-                )
-            ),
-            @ApiResponse(
-                responseCode = '404', description = 'Not Found, plugin is not configured'
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
         ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Status''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmProjectStatus)
+        )
+    )
+    @ApiResponse(
+        responseCode = '404', description = 'Not Found, plugin is not configured'
     )
     /**
      * /api/15/project/$project/scm/$integration/status
@@ -1028,7 +1036,7 @@ Since: v15''',
         respond scmProjectStatus, [formats: responseFormats]
     }
 
-    @Get(uri='/project/{project}/scm/{integration}/config')
+    @Get(uri='/project/{project}/scm/{integration}/config', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get Project SCM Config',
@@ -1044,30 +1052,27 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
-            )
-        ],
-        responses = [
-
-            @ApiResponse(
-                responseCode = '200',
-                description = '''Status''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ScmProjectPluginConfig)
-                )
-            ),
-            @ApiResponse(
-                responseCode = '404', description = 'Not Found, plugin is not configured'
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
         ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Status''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmProjectPluginConfig)
+        )
+    )
+    @ApiResponse(
+        responseCode = '404', description = 'Not Found, plugin is not configured'
     )
     /**
      * /api/$api_version/project/$project/scm/$integration/config
@@ -1111,7 +1116,7 @@ Since: v15''',
     }
 
 
-    @Get(uri='/project/{project}/scm/{integration}/action/{actionId}/input')
+    @Get(uri='/project/{project}/scm/{integration}/action/{actionId}/input', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get Project SCM Action Input Fields',
@@ -1135,30 +1140,30 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'actionId',
                 in = ParameterIn.PATH,
                 description = 'Action ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''Action Input fields response.''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ScmActionInput)
-            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Action Input fields response.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmActionInput)
         )
     )
     /**
@@ -1386,7 +1391,7 @@ Since: v15''',
         return view
     }
 
-    @Post(uri='/project/{project}/scm/{integration}/action/{actionId}')
+    @Post(uri='/project/{project}/scm/{integration}/action/{actionId}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Perform Project SCM Action',
@@ -1418,21 +1423,21 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Project Name',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'Integration Name',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'actionId',
                 in = ParameterIn.PATH,
                 description = 'Action ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ],
         requestBody = @RequestBody(
@@ -1442,14 +1447,14 @@ Since: v15''',
                 mediaType=MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = ScmAction)
             )
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''Action response.''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ScmActionResult)
-            )
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''Action response.''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmActionResult)
         )
     )
     /**
@@ -1925,7 +1930,7 @@ Since: v15''',
         redirect(action: 'jobs', controller: 'menu', params: [project: params.project])
     }
 
-    @Get(uri='/job/{id}/scm/{integration}/status')
+    @Get(uri='/job/{id}/scm/{integration}/status', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get Job SCM Status',
@@ -1942,19 +1947,20 @@ Since: v15
                 in = ParameterIn.PATH,
                 description = 'Job ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'SCM integration type',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''SCM Status response.
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''SCM Status response.
 
 Note: `import` status will not include any actions for the job, refer to the Project status to list import actions.
 
@@ -1972,10 +1978,14 @@ Export plugin values for `$synchState`:
 * `REFRESH_NEEDED` - plugin needs to refresh
 * `EXPORT_NEEDED` - job changes need to be exported
 * `CREATE_NEEDED` - Job needs to be added to the repo''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ScmJobStatus),
-                examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmJobStatus),
+            examples = [
+                @ExampleObject(
+                    name = 'job-scm-status',
+                    description = 'Job SCM status response',
+                    value = '''{
   "actions": [
     "$action"
   ],
@@ -1993,8 +2003,9 @@ Export plugin values for `$synchState`:
   "message": "$statusMessage",
   "project": "$project",
   "synchState": "$synchState"
-}''')
-            )
+}'''
+                )
+            ]
         )
     )
     /**
@@ -2110,7 +2121,7 @@ Export plugin values for `$synchState`:
         )
     }
 
-    @Get(uri='/job/{id}/scm/{integration}/diff')
+    @Get(uri='/job/{id}/scm/{integration}/diff', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get Job SCM Diff',
@@ -2129,28 +2140,33 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Job ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'SCM integration type',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''SCM Diff response.
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''SCM Diff response.
 
 The `commit` info will be the same structure as in `/job/{id}/scm/{integration}/status` response.
 
 For `import` only, `incomingCommit` will indicate the to-be-imported change.
 ''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ScmJobDiff),
-                examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmJobDiff),
+            examples = [
+                @ExampleObject(
+                    name = 'job-scm-diff',
+                    description = 'Job SCM diff response',
+                    value = '''{
   "commit": {
   },
   "diffContent": "...",
@@ -2159,8 +2175,9 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
   },
   "integration": "$integration",
   "project": "$project"
-}''')
-            )
+}'''
+                )
+            ]
         )
     )
     /**
@@ -2271,7 +2288,7 @@ For `import` only, `incomingCommit` will indicate the to-be-imported change.
         }
         true
     }
-    @Get(uri='/job/{id}/scm/{integration}/action/{actionId}/input')
+    @Get(uri='/job/{id}/scm/{integration}/action/{actionId}/input', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Get Job SCM Action Input Fields',
@@ -2295,26 +2312,27 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Job ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'SCM integration type',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'actionId',
                 in = ParameterIn.PATH,
                 description = 'Action Name/ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''SCM Action Input response.
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''SCM Action Input response.
 
 `exportItems` values:
 
@@ -2352,10 +2370,9 @@ Input fields have a number of properties:
 * `values` if the type is `Select` or `FreeSelect`, a list of string values to choose from
 
 ''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ScmActionInput)
-            )
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmActionInput)
         )
     )
     /**
@@ -2390,7 +2407,7 @@ Input fields have a number of properties:
         respondApiActionInput(view, scheduledExecution.project, jobActInputActRequest, jobActInputActRequest.id)
     }
 
-    @Post(uri='/job/{id}/scm/{integration}/action/{actionId}')
+    @Post(uri='/job/{id}/scm/{integration}/action/{actionId}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Perform Job SCM Action',
@@ -2410,21 +2427,21 @@ Since: v15''',
                 in = ParameterIn.PATH,
                 description = 'Job ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             ),
             @Parameter(
                 name = 'integration',
                 in = ParameterIn.PATH,
                 description = 'SCM integration type',
                 required = true,
-                schema = @Schema(type = 'string', allowableValues = ['export', 'import'])
+                schema = @Schema(implementation = String, allowableValues = ["export", "import"])
             ),
             @Parameter(
                 name = 'actionId',
                 in = ParameterIn.PATH,
                 description = 'Action Name/ID',
                 required = true,
-                schema = @Schema(type = 'string')
+                schema = @Schema(implementation = String)
             )
         ],
         requestBody = @RequestBody(
@@ -2432,42 +2449,58 @@ Since: v15''',
             required=true,
             content=@Content(
                 mediaType = MediaType.APPLICATION_JSON,
-                schema=@Schema(type='object'),
-                examples = @ExampleObject('''{
+                schema=@Schema(implementation = Object),
+                examples = [
+                    @ExampleObject(
+                        name='scm-action-input-example',
+                        description='Input fields for SCM action',
+                        value='''{
 "input":{
    "field1":"value1",
    "field2":"value2"
-}}''')
+}}'''
+                    )
+                ]
             )
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = '200',
-                description = '''SCM Action success response.
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''SCM Action success response.
     
 If a follow-up **Action** is expected to be called, the action ID will be identified by the `nextAction` value.
     ''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ScmActionResult),
-                    examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmActionResult),
+            examples = [
+                @ExampleObject(
+                    name = 'scm-action-success',
+                    description = 'SCM action success response',
+                    value = '''{
                       "message": "Some message.",
                       "nextAction": "next-action",
                       "success": true,
                       "validationErrors": null
-                    }''')
+                    }'''
                 )
-            ),
-            @ApiResponse(
-                responseCode = '400',
-                description = '''SCM Action invalid response.
+            ]
+        )
+    )
+    @ApiResponse(
+        responseCode = '400',
+        description = '''SCM Action invalid response.
    
 The response will include information about the result.
 ''',
-                content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ScmActionResult),
-                    examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ScmActionResult),
+            examples = [
+                @ExampleObject(
+                    name = 'scm-action-error',
+                    description = 'SCM action error response',
+                    value = '''{
                       "message": "Some input was invalid.",
                       "nextAction": null,
                       "success": false,
@@ -2475,10 +2508,10 @@ The response will include information about the result.
                         "dir": "required",
                         "url": "required"
                       }
-                    }''')
+                    }'''
                 )
-            )
-        ]
+            ]
+        )
     )
     /**
      * /api/$api_version/job/$id/scm/$integration/action/$actionId

@@ -1,5 +1,7 @@
 package rundeckapp.init.servlet
 
+import jakarta.servlet.DispatcherType
+import jakarta.servlet.FilterRegistration
 import org.apache.http.HttpResponse
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpTrace
@@ -18,9 +20,24 @@ class BanConfigCustomizerTest extends Specification {
 
         given:
         JettyServletWebServerFactory factory = new JettyServletWebServerFactory("",port)
-        ServletContextInitializer initializer = Mock(ServletContextInitializer)
-        factory.addServerCustomizers(new BanHttpMethodCustomizer())
-        server = factory.getWebServer(initializer)
+        // Grails 7: Register filter instead of server customizer
+        ServletContextInitializer filterInitializer = { servletContext ->
+            FilterRegistration.Dynamic filterReg = servletContext.addFilter(
+                "httpMethodFilter",
+                new HttpMethodFilter(['TRACE'])
+            )
+            filterReg.addMappingForUrlPatterns(
+                EnumSet.of(
+                    DispatcherType.REQUEST,
+                    DispatcherType.FORWARD,
+                    DispatcherType.INCLUDE,
+                    DispatcherType.ERROR
+                ),
+                false,
+                "/*"
+            )
+        }
+        server = factory.getWebServer(filterInitializer)
         server.start()
 
         when:

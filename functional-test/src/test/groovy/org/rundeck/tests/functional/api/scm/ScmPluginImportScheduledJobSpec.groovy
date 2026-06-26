@@ -45,8 +45,17 @@ class ScmPluginImportScheduledJobSpec extends ScmBaseContainer {
         remoteRepo.createFile(jobItemId, jobXmlDefinition)
 
         // Configure the project to import from the git repo
-        GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(ScmIntegration.IMPORT).forProject(PROJECT_NAME)
-        scmClient.callSetupIntegration(GitImportSetupRequest.defaultRequest().forProject(PROJECT_NAME).withRepo(remoteRepo))
+        GitScmApiClient scmClient = new GitScmApiClient(clientProvider)
+                .forIntegration(ScmIntegration.IMPORT)
+                .forProject(PROJECT_NAME)
+        def setupRequest = GitImportSetupRequest.defaultRequest()
+                .forProject(PROJECT_NAME)
+                .withRepo(remoteRepo)
+        waitFor(
+                { try { scmClient.callSetupIntegration(setupRequest).response } catch (Exception e) { null } },
+                { it?.success },
+                WaitingTime.EXCESSIVE
+        )
 
         when: "scheduled job is imported from the scm repo"
         scmClient.callPerformAction("import-jobs", new ScmActionPerformRequest([ items: [jobItemId] ])).response

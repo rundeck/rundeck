@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.app.api.execution.MetricsQueryResponse
 import com.dtolabs.rundeck.app.api.executionmode.ExecutionModeResult
 import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
+import org.rundeck.app.api.model.ApiErrorResponse
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ExecutionQueryException
@@ -76,6 +77,7 @@ import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
+import rundeck.PluginStep
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
@@ -83,8 +85,9 @@ import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.workflow.StateMapping
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.text.ParseException
+import com.google.common.collect.Lists
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
@@ -157,19 +160,26 @@ class ExecutionController extends ControllerBase{
             offset+=res.size()
             res.each{exec->
                 def workflow = exec.getWorkflowData()
-                if(execs.size()<max
-                        && workflow && workflow.commands.size()==1
-                        && workflow.commands[0] instanceof CommandExec
-                        && workflow.commands[0].adhocRemoteString){
-
-                    def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                    def str=workflow.commands[0].adhocRemoteString+";"+appliedFilter
-                    if(query && query.size()>4 && !str.contains(query)){
-                        return
+                if(execs.size()<max && workflow && workflow.commands.size()==1) {
+                    def cmd = workflow.commands[0]
+                    String adhocRemoteString = null
+                    if (cmd instanceof CommandExec) {
+                        adhocRemoteString = cmd.adhocRemoteString
+                    } else if (cmd instanceof PluginStep) {
+                        // New JSON storage format deserializes exec commands as PluginStep
+                        Map config = cmd.getConfiguration() ?: [:]
+                        adhocRemoteString = config.adhocRemoteString
                     }
-                    if(!uniques.contains(str)){
-                        uniques<<str
-                        execs<<exec
+                    if (adhocRemoteString) {
+                        def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                        def str=adhocRemoteString+";"+appliedFilter
+                        if(query && query.size()>4 && !str.contains(query)){
+                            return
+                        }
+                        if(!uniques.contains(str)){
+                            uniques<<str
+                            execs<<exec
+                        }
                     }
                 }
             }
@@ -180,23 +190,33 @@ class ExecutionController extends ControllerBase{
 
         def elementList = execs.collect{Execution exec->
             def workflow = exec.getWorkflowData()
-            if(workflow && workflow.commands.size()==1 && workflow.commands[0].adhocRemoteString) {
-                def href=createLink(
-                        controller: 'framework',
-                        action: 'adhoc',
-                        params: [project: project, fromExecId: exec.id]
-                )
+            if(workflow && workflow.commands.size()==1) {
+                def cmd = workflow.commands[0]
+                String adhocRemoteString = null
+                if (cmd instanceof CommandExec) {
+                    adhocRemoteString = cmd.adhocRemoteString
+                } else if (cmd instanceof PluginStep) {
+                    Map config = cmd.getConfiguration() ?: [:]
+                    adhocRemoteString = config.adhocRemoteString
+                }
+                if (adhocRemoteString) {
+                    def href=createLink(
+                            controller: 'framework',
+                            action: 'adhoc',
+                            params: [project: project, fromExecId: exec.id]
+                    )
 
-                def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                return [
-                        status: exec.getExecutionState(),
-                        succeeded: exec.statusSucceeded(),
-                        href: href,
-                        execid: exec.id,
-                        title: workflow.commands[0].adhocRemoteString,
-                        filter: appliedFilter,
-                        extraMetadata: exec.extraMetadataMap
-                ]
+                    def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                    return [
+                            status: exec.getExecutionState(),
+                            succeeded: exec.statusSucceeded(),
+                            href: href,
+                            execid: exec.id,
+                            title: adhocRemoteString,
+                            filter: appliedFilter,
+                            extraMetadata: exec.extraMetadataMap
+                    ]
+                }
             }
         }
         render(contentType: 'application/json'){
@@ -276,12 +296,14 @@ class ExecutionController extends ControllerBase{
         String maxLogSizeConfig = getGrailsApplication().config.getProperty("rundeck.logviewer.maxLogSize", String)
         Long trimOutput = Sizes.parseFileSize(max)
         Long maxLogSize = Sizes.parseFileSize(maxLogSizeConfig)
-        def statsMap=[:]
-        if(e.scheduledExecution){
-            def stats = scheduledExecutionService.calculateJobStats(e.scheduledExecution)
-            statsMap= [successrate: stats.successRate, execCount: stats.execCount, avgduration: stats.averageDuration]
+
+        def defaultRecentFilter = null
+        if (featureService.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+            def configured = configurationService.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+            defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
         }
-        return statsMap + loadExecutionViewPlugins() + [
+
+        return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
                 execution             : e,
@@ -295,7 +317,8 @@ class ExecutionController extends ControllerBase{
                 inputFilesMap         : inputFilesMap,
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled(),
                 trimOutput            : trimOutput,
-                maxLogSize            : maxLogSize
+                maxLogSize            : maxLogSize,
+                defaultRecentFilter   : defaultRecentFilter
         ]
     }
 
@@ -504,11 +527,19 @@ class ExecutionController extends ControllerBase{
             filesize = file.length()
         }
         final state = e.executionState
-        return render(
-                view: "mailNotification/status",
-                model: loadExecutionViewPlugins() + [execstate: state, scheduledExecution: e.scheduledExecution, execution: e,
-                                                     filesize: filesize]
-        )
+        if(e.scheduledExecution){
+            def ScheduledExecution se = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
+            return render(
+                    view: "mailNotification/status",
+                    model: loadExecutionViewPlugins() + [execstate: state, scheduledExecution: se, execution: e,
+                                                         filesize: filesize]
+            )
+        }else{
+            return render(
+                    view: "mailNotification/status",
+                    model: loadExecutionViewPlugins() + [execstate: state, execution: e, filesize: filesize]
+            )
+        }
     }
     def executionMode(){
         withForm {
@@ -898,6 +929,7 @@ setTimeout(function(){
     @Operation(
         method="GET",
         summary="Execution Output",
+        tags = ["Job Executions"],
         description="""Get the output for an execution by ID. The execution can be currently running or may have already completed. Output can be filtered down to a specific node or workflow step.
 
 The log output for each execution is stored in a file on the Rundeck server, and this API endpoint allows you to retrieve some or all of the output, in several possible formats: json, and plain text. When retrieving the plain text output, some metadata about the log is included in HTTP Headers. JSON includes metadata about each output log line, as well as metadata about the state of the execution and log file, and your current index location in the file.
@@ -1017,7 +1049,7 @@ Contents:
 
 * `id`: ID of the execution
 * `message`: optional text message indicating why no entries were returned
-* `error`: optional text message indicating an error case. Note: A 200 response may include an `error` field (e.g., "The Execution Log could not be found") when log data is not available, which is normal for executions where logs have not been generated or stored yet.
+* `error`: optional text message indicating an error case
 * `unmodified`: true/false, (optional) "true" will be returned if the `lastmod` parameter was used and the file had not changed
 * `empty`: true/false, (optional) "true" will be returned if the log file does not exist or is empty, which may occur if the log data is requested before any output has been stored.
 * `offset`: Byte offset to read for the next set of data
@@ -1082,8 +1114,17 @@ one, in JSON this will be represented with a `null` value.""",
             @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(type = "object"),
-                examples=@ExampleObject(
-                    value="""{
+                examples=[
+                    @ExampleObject(
+                        name = 'log-output-compacted',
+                        description = """
+In this example, four log entries are included. The first includes all Log Entry fields.
+The second is only a String, indicating only `log` value changed.
+The third is an empty object, indicating the previous Log Entry was repeated identically.
+The fourth specifies a new value for `stepctx` and `log` and `level` to use.
+The fifth specifies a `node` and `stepctx` of `null`: indicating the `node` and `stepctx` values should be removed for
+this Log Entry.""",
+                        value="""{
   "id": 1,
   
   "compacted": "true",
@@ -1111,25 +1152,23 @@ one, in JSON this will be represented with a `null` value.""",
       "node": null
     }
   ]
-}""",
-                    description="""
-In this example, four log entries are included. The first includes all Log Entry fields.
-The second is only a String, indicating only `log` value changed.
-The third is an empty object, indicating the previous Log Entry was repeated identically.
-The fourth specifies a new value for `stepctx` and `log` and `level` to use.
-The fifth specifies a `node` and `stepctx` of `null`: indicating the `node` and `stepctx` values should be removed for
-this Log Entry.""")
+}"""
+                    )
+                ]
             ),
             @Content(
                 mediaType = MediaType.TEXT_PLAIN,
                 schema = @Schema(type = "string", description="Textual log output"),
-                examples = @ExampleObject(
-                    value = """Log output text..."""
-                )
+                examples = [
+                    @ExampleObject(
+                        name = 'log-output-text',
+                        description = 'Textual log output',
+                        value = """Log output text..."""
+                    )
+                ]
             )
         ]
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output, version 5
      */
@@ -1149,6 +1188,7 @@ this Log Entry.""")
     @Operation(
         method="GET",
         summary="Execution Output For Node",
+        tags = ["Job Executions"],
         description="""Get the output for an execution filtered for a specific node.""",
         parameters = [
             @Parameter(
@@ -1171,7 +1211,6 @@ this Log Entry.""")
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` parameter."""
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/node/{nodename}, version 5
      */
@@ -1183,6 +1222,7 @@ this Log Entry.""")
     @Operation(
         method="GET",
         summary="Execution Output For Node and Step",
+        tags = ["Job Executions"],
         description="""Get the output for an execution filtered for a specific node and step.""",
         parameters = [
             @Parameter(
@@ -1212,7 +1252,6 @@ this Log Entry.""")
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `nodename` and `stepctx` parameters."""
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/node/{nodename}/step/{stepctx}, version 5
      */
@@ -1224,6 +1263,7 @@ this Log Entry.""")
     @Operation(
         method="GET",
         summary="Execution Output For Step",
+        tags = ["Job Executions"],
         description="""Get the output for an execution filtered for a specific step.""",
         parameters = [
             @Parameter(
@@ -1246,7 +1286,6 @@ this Log Entry.""")
         responseCode = '200',
         description = """Log Output Response. This endpoint response is the same as the Execution Output `/execution/{id}/output` response using the `stepctx` parameter."""
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/step/{stepctx}, version 5
      */
@@ -1439,6 +1478,7 @@ this Log Entry.""")
     @Get(uri="/execution/{id}/output/state")
     @Operation(
         summary="Execution Output with State",
+        tags = ["Job Executions"],
         description = """Get the metadata associated with workflow step state changes along with the log output, optionally excluding log output.
 
 JSON response requires API v14.
@@ -1470,7 +1510,6 @@ JSON response requires API v14.
     - `nodeend` finishing of execution of a node for the given step
 * metadata about the entry may be included in the entry"""
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/output/state, version ?
      */
@@ -2082,6 +2121,7 @@ JSON response requires API v14.
         summary="Execution Info",
         description = "Get the status for an execution by ID.",
         method='GET',
+        tags = ["Job Executions"],
         parameters = @Parameter(
             name = "id",
             description = "Execution ID",
@@ -2093,10 +2133,13 @@ JSON response requires API v14.
     @ApiResponse(
         responseCode = '200',
         description = "See: Listing Running Executions. JSON response requires API v14.",
-        content=[
-            @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                examples = @ExampleObject("""{
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            examples = [
+                    @ExampleObject(
+                        name = 'execution-info',
+                        description = 'Execution info response',
+                        value = """{
   "id": 1,
   "href": "[url]",
   "permalink": "[url]",
@@ -2133,11 +2176,11 @@ JSON response requires API v14.
   "failedNodes": [
     "nodec","noded"
   ]
-}""")
+}"""
+                    )
+                ]
             )
-        ]
     )
-    @Tag(name = 'Job Executions')
     @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecution(){
         if (!apiService.requireApi(request, response)) {
@@ -2169,6 +2212,7 @@ JSON response requires API v14.
     @Get(uri="/execution/{id}/state")
     @Operation(
         summary="Execution State",
+        tags = ["Job Executions"],
         description = """Get detail about the node and step state of an execution by ID. The execution can be currently running or completed.
 
 JSON response requires API v14.
@@ -2327,11 +2371,14 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
 
 \\* these states only apply to steps/nodes and do not apply to the overall execution or workflow.
 """,
-        content=[
-            @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type='object'),
-                examples = @ExampleObject("""{
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type='object'),
+            examples = [
+                @ExampleObject(
+                    name = 'execution-state',
+                    description = 'Execution state response with workflow details',
+                    value = """{
   "completed": true,
   "executionState": "SUCCEEDED",
   "endTime": "2014-01-13T20:38:36Z",
@@ -2417,15 +2464,19 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
       "startTime": "2014-01-13T20:38:31Z"
     }
   ]
-}""")
+}"""
+                    )
+                ]
             )
-        ]
     )
     @ApiResponse(
         responseCode = '404',
-        description = 'Execution state not found. This occurs when the execution never started (e.g., status: missed, meaning the job was scheduled but conditions prevented it from starting) or when state data is not available for the execution.'
+        description = 'Execution state not found. This occurs when the execution never started (e.g., schedule conflict)',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/state , version 11
      */
@@ -2551,6 +2602,7 @@ The timestamp format is ISO8601: `yyyy-MM-dd'T'HH:mm:ss'Z'`
     @Post(uri="/execution/{id}/abort")
     @Operation(
         summary="Aborting Executions",
+        tags = ["Job Executions"],
         description = "Abort a running execution by ID.",
         method='POST',
         parameters = [
@@ -2589,10 +2641,13 @@ Authorization required:
 * action: `kill`, or `admin`, `app_admin`
 * resource: `execution`
 """,
-        content=[
-            @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                examples = @ExampleObject("""{
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            examples = [
+                    @ExampleObject(
+                        name = 'abort-execution',
+                        description = 'Abort execution response',
+                        value = """{
   "abort": {
     "status": "[abort-state]",
     "reason": "[reason]"
@@ -2602,11 +2657,11 @@ Authorization required:
     "status": "[execution status]",
     "href": "[API href]",
   }
-}""")
+}"""
+                    )
+                ]
             )
-        ]
     )
-    @Tag(name = 'Job Executions')
     /**
      * API: /api/execution/{id}/abort, version 1
      */
@@ -2697,6 +2752,7 @@ Authorization required:
     @Delete(uri="/execution/{id}")
     @Operation(
         summary="Delete an Execution",
+        tags = ["Job Executions"],
         description = """Delete an execution by ID.
 
 Authorization requirement: Requires the `delete_execution` action allowed for a `project` in the `application` context.
@@ -2717,7 +2773,6 @@ See: [Administration - Access Control Policy - Application Scope Resources and A
         responseCode = '204',
         description = "No Content"
     )
-    @Tag(name = 'Job Executions')
     /**
      * DELETE /api/14/execution/[ID]
      * @return
@@ -2761,6 +2816,7 @@ See: [Administration - Access Control Policy - Application Scope Resources and A
     @Operation(
         method="POST",
         summary="Bulk Delete Executions",
+        tags = ["Job Executions"],
         description = """Delete a set of Executions by their IDs.
 
 The IDs can be specified in two ways:
@@ -2776,18 +2832,16 @@ Note: the JSON schema also supports a basic JSON array
 """,
         requestBody = @RequestBody(
             description = "Delete Bulk IDs request.",
-            content=[
-                @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(oneOf = [
-                        DeleteBulkRequest, DeleteBulkRequestLong, List
-                    ]),
-                    examples = [
-                        @ExampleObject(value = """{"ids": [ 1, 2, 17 ] }""", name = "object"),
-                        @ExampleObject(value = """[ 1, 2, 17 ]""", name = "array")
-                    ]
-                )
-            ]
+            content=@Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(oneOf = [
+                    DeleteBulkRequest, DeleteBulkRequestLong, List
+                ]),
+                examples = [
+                    @ExampleObject(value = """{"ids": [ 1, 2, 17 ] }""", name = "object"),
+                    @ExampleObject(value = """[ 1, 2, 17 ]""", name = "array")
+                ]
+            )
         ),
         parameters = @Parameter(
             name = "ids",
@@ -2800,10 +2854,14 @@ Note: the JSON schema also supports a basic JSON array
     @ApiResponse(
         responseCode='200',
         description = """Summary of bulk delete results""",
-        content=[@Content(
+        content=@Content(
             mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = DeleteBulkResponse),
-            examples = @ExampleObject("""{
+            examples = [
+                @ExampleObject(
+                    name = 'bulk-delete-response',
+                    description = 'Bulk delete response with failures',
+                    value = """{
   "failures": [
     {
       "id": "82",
@@ -2822,11 +2880,12 @@ Note: the JSON schema also supports a basic JSON array
   "successCount": 2,
   "allsuccessful": false,
   "requestCount": 5
-}""")
-        )]
+}"""
+                )
+            ]
+        )
 
     )
-    @Tag(name = 'Job Executions')
     /**
      * Delete bulk API action
      * @return
@@ -2941,6 +3000,9 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
             @Parameter(in=ParameterIn.QUERY,name="useStats",description="""if true, use snapshot-based metrics from SCHEDULED_EXECUTION_STATS table (fast, returns empty metrics (all zeros) if no stats exist). if false or not provided, use execution table query (slow, always returns data). Since: v57""",schema=@Schema(type="boolean")),
             @Parameter(in=ParameterIn.QUERY,name="groupByJob",description="""if true with useStats=true, returns metrics for all jobs in the project (batch mode). Requires project parameter. Returns format: {jobs: {uuid1: metrics, uuid2: metrics, ...}}. RUN-3768 Phase 5. Since: v57""",schema=@Schema(type="boolean")),
+            @Parameter(in=ParameterIn.QUERY,name="adhocStringFilter",description="filter adhoc executions by command title (partial match).",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="nodeFilter",description="filter executions by node name or filter expression (partial match). Use 'name:nodename' for simple node name search, or a filter expression like 'tags:value' for complex filters.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="optionFilter",description="filter executions by option values (partial match, e.g. '-test 123').",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -2984,7 +3046,11 @@ The `job` section contains `options` if an `argstring` value is set.  Inside `op
 if executed in cluster mode.""",
         content = @Content(
             mediaType = MediaType.APPLICATION_JSON,
-            examples = @ExampleObject("""{
+            examples = [
+                @ExampleObject(
+                    name = 'executions-query',
+                    description = 'Executions query response',
+                    value = """{
   "paging": {
     "count": 2,
     "total": 2,
@@ -3030,7 +3096,9 @@ if executed in cluster mode.""",
       ]
     }
     ]
-}""")
+}"""
+                )
+            ]
         )
     )
     /**
@@ -3096,6 +3164,7 @@ if executed in cluster mode.""",
             if(null!=endDate){
                 query.endbeforeFilter = endDate
                 query.doendbeforeFilter = true
+                query.olderFilter = params.olderFilter
             } else {
                 return apiService.renderErrorFormat(
                         response,
@@ -3129,6 +3198,11 @@ if executed in cluster mode.""",
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 
+
+        if(query.includeJobRef && query.jobIdListFilter.size()==1){
+            query.execProjects = executionService.getAllowedProjects(query.projFilter,query.jobIdListFilter.get(0));
+        }
+
         def results
         try {
             results = executionService.queryExecutions(query, resOffset, resMax)
@@ -3152,7 +3226,7 @@ if executed in cluster mode.""",
         def controller = this
         withFormat {
             '*' {
-                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax])
+                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax], query)
             }
             if (controller.isAllowXml()) {
                 xml {
@@ -3180,38 +3254,36 @@ Authorization Required: `read` for `system` resource
 
 Since: V32
 """,
-        tags = "System",
-        parameters = @Parameter(
+        tags = ["System"],
+        parameters = [@Parameter(
             name="passiveAs503",
             description="if true, return 503 response when execution mode is passive. Since: v36",
             in=ParameterIn.QUERY,
             schema=@Schema(type="boolean")
-        ),
-        responses=[
-            @ApiResponse(
-                responseCode="200",
-                description="Execution Mode status result for API v36+, or for active status only for API<v36.",
-                content=[@Content(
-                    mediaType='application/json',
-                    schema = @Schema(implementation= ExecutionModeResult),
-                    examples=[
-                        @ExampleObject(name="active",value="{\"executionMode\":\"active\"}"),
-                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
-                    ]
-                )]
-            ),
-            @ApiResponse(
-                responseCode="503",
-                description="Service unavailable status result when execution mode is passive for API<v36, or for API v36+ when `passiveAs503=true`",
-                content=[@Content(
-                    mediaType='application/json',
-                    schema = @Schema(implementation= ExecutionModeResult),
-                    examples=[
-                        @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
-                    ]
-                )]
-            )
-        ]
+        )]
+    )
+    @ApiResponse(
+        responseCode="200",
+        description="Execution Mode status result for API v36+, or for active status only for API<v36.",
+        content=@Content(
+            mediaType='application/json',
+            schema = @Schema(implementation= ExecutionModeResult),
+            examples=[
+                @ExampleObject(name="active",value="{\"executionMode\":\"active\"}"),
+                @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+            ]
+        )
+    )
+    @ApiResponse(
+        responseCode="503",
+        description="Service unavailable status result when execution mode is passive for API<v36, or for API v36+ when `passiveAs503=true`",
+        content=@Content(
+            mediaType='application/json',
+            schema = @Schema(implementation= ExecutionModeResult),
+            examples=[
+                @ExampleObject(name="passive",value="{\"executionMode\":\"passive\"}")
+            ]
+        )
     )
     /**
      * /api/V/system/executions/status
@@ -3254,7 +3326,7 @@ Since: V32
      *
      * @return
      */
-    @Post(uri = "/system/executions/enable")
+    @Post(uri = "/system/executions/enable", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Set Execution Mode Active",
@@ -3269,14 +3341,14 @@ Authorization Required: `enable_executions` on `system` resource.
 
 Since: v14
 """,
-        tags = "System",
-        responses = @ApiResponse(
-            responseCode = "200",
-            description = "Execution Mode Status",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ExecutionModeResult)
-            )
+        tags = ["System"]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Execution Mode Status",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ExecutionModeResult)
         )
     )
     @RdAuthorizeSystem(
@@ -3289,7 +3361,7 @@ Since: v14
      *
      * @return
      */
-    @Post(uri = "/system/executions/disable")
+    @Post(uri = "/system/executions/disable", produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "POST",
         summary = "Set Execution Mode Passive",
@@ -3304,14 +3376,14 @@ Authorization Required: `disable_executions` on `system` resource.
 
 Since: v14
 """,
-        tags = "System",
-        responses = @ApiResponse(
-            responseCode = "200",
-            description = "Execution Mode Status",
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = ExecutionModeResult)
-            )
+        tags = ["System"]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Execution Mode Status",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ExecutionModeResult)
         )
     )
     @RdAuthorizeSystem(
@@ -3350,6 +3422,7 @@ Since: v14
     @Get(uri="/execution/{id}/input/files")
     @Operation(
         summary="List Input Files for an Execution",
+        tags = ["Job Executions"],
         description = "List input files used for an execution. Since: V19",
         method='GET',
         parameters = @Parameter(
@@ -3369,7 +3442,11 @@ Since: v14
                 schema = @Schema(
                     implementation = ExecutionFileInfoList
                 ),
-                examples = @ExampleObject("""{
+                examples = [
+                    @ExampleObject(
+                        name = 'input-files-list',
+                        description = 'Execution input files list',
+                        value = """{
   "files": [
     {
       "id": "382c7596-435b-4103-8781-6b32fbd629b2",
@@ -3385,11 +3462,12 @@ Since: v14
       "execId": 2837
     }
   ]
-}""")
+}"""
+                    )
+                ]
             )
         ]
     )
-    @Tag(name = 'Job Executions')
     /**
      * List input files for an execution
      */
@@ -3423,7 +3501,7 @@ Since: v14
         method = "GET",
         summary = "Execution Query Metrics",
         description = """Obtain metrics over the result set of an execution query.""",
-        tags = "Job Executions",
+        tags = ["Job Executions"],
         parameters = [
             @Parameter(in=ParameterIn.QUERY,name="project",description="Project name",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="statusFilter",description="Execution status",schema=@Schema(type="string",allowableValues = ["running","succeeded", "failed" , "aborted"])),
@@ -3477,16 +3555,22 @@ So a value of `2w` would return executions that completed within the last two we
         description="Metrics response",
         content=[
             @Content(
-                mediaType = "application/json",
+                mediaType = MediaType.APPLICATION_JSON,
                 schema = @Schema(implementation = MetricsQueryResponse),
-                examples = @ExampleObject("""{
+                examples = [
+                    @ExampleObject(
+                        name = 'execution-metrics',
+                        description = 'Execution metrics response',
+                        value = """{
     "duration": {
         "average": "1s",
         "min": "0s",
         "max": "3s"
     },
     "total": 1325
-}""")
+}"""
+                    )
+                ]
             )
         ]
     )
@@ -3510,7 +3594,7 @@ So a value of `2w` would return executions that completed within the last two we
 
 Note: This endpoint has the same query parameters and response as the `/executions/metrics` endpoint.
 """,
-        tags = "Job Executions",
+        tags = ["Job Executions"],
         parameters = [
             @Parameter(in=ParameterIn.PATH,name="project",description="Project name",schema=@Schema(type="string"),required = true)
         ]
@@ -3518,12 +3602,10 @@ Note: This endpoint has the same query parameters and response as the `/executio
     @ApiResponse(
         responseCode = "200",
         description="Metrics response",
-        content=[
-            @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = MetricsQueryResponse)
-            )
-        ]
+        content=@Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = MetricsQueryResponse)
+        )
     )
     /**
      * Placeholder method to annotate for openapi spec generation.
@@ -3542,7 +3624,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
         // Check if user wants stats-based metrics (needs to be checked before requireApi)
         def useStats = params.boolean('useStats', false)
         def groupByJob = params.boolean('groupByJob', false)
-        
+
         // When useStats or groupByJob are used, requireApi should be called with the current API version
         // (tests expect this behavior). Otherwise, require V29 as the minimum.
         if (useStats || groupByJob) {
@@ -3609,6 +3691,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
             if (null != endDate) {
                 query.endbeforeFilter = endDate
                 query.doendbeforeFilter = true
+                query.olderFilter = params.olderFilter
             } else {
                 return apiService.renderErrorFormat(
                     response,
@@ -4007,21 +4090,21 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
                 log.debug("[METRICS-API] Filtering metrics: beginDate=${beginDate}, endDate=${endDate}, beginHour=${beginHour}")
                 log.debug("[METRICS-API] Available dates in dailyMetrics: ${dailyMetrics.keySet().sort()}")
-                
+
                 filteredMetrics = dailyMetrics.findAll { dateStr, metrics ->
                     def date = LocalDate.parse(dateStr)
                     def inRange = true
-                    
+
                     // Exclude dates before beginDate (inclusive: date >= beginDate)
                     if (beginDate != null && date.isBefore(beginDate)) {
                         inRange = false
                     }
-                    
+
                     // Exclude dates after endDate (inclusive: date <= endDate)
                     if (endDate != null && date.isAfter(endDate)) {
                         inRange = false
                     }
-                    
+
                     return inRange
                 }
 
@@ -4163,7 +4246,9 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
             // Bulk fetch all stats for jobs in this project (optimization: single query instead of N queries)
             def jobUuids = jobs.collect { it.uuid }
-            def statsList = ScheduledExecutionStats.findAllByJobUuidInList(jobUuids)
+            def statsList = Lists.partition(jobUuids, 1000).collectMany { batch ->
+                ScheduledExecutionStats.findAllByJobUuidInList(batch)
+            }
 
             // Build a map from job UUID to stats for O(1) lookup
             def statsByJobUuid = statsList.collectEntries { [(it.jobUuid): it] }

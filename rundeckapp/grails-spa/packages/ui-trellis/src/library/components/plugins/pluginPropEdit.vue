@@ -14,7 +14,9 @@
             :name="`${rkey}prop_` + pindex"
             value="true"
           />
-          <label :for="`${rkey}prop_` + pindex">{{ prop.title }}</label>
+          <label :for="`${rkey}prop_` + pindex">{{
+            translatedTitle(prop)
+          }}</label>
         </div>
       </div>
       <label
@@ -23,7 +25,7 @@
           'col-sm-2 control-label input-sm ' + (prop.required ? 'required' : '')
         "
         :for="`${rkey}prop_` + pindex"
-        >{{ prop.title }}</label
+        >{{ translatedTitle(prop) }}</label
       >
       <div v-if="prop.defaultValue === 'true'" class="col-xs-10">
         <label :for="`${rkey}prop_true_` + pindex" class="radio-inline">
@@ -81,7 +83,7 @@
           'col-sm-2 control-label input-sm ' + (prop.required ? 'required' : '')
         "
         :for="`${rkey}prop_` + pindex"
-        >{{ prop.title }}</label
+        >{{ translatedTitle(prop) }}</label
       >
       <div v-if="prop.type === 'Select'" class="col-sm-10">
         <select
@@ -223,6 +225,8 @@
               width="100%"
               :read-only="renderReadOnly"
               :context-variable-suggestions="scriptTypeContextVariables"
+              :min-lines="aceEditorMinLines"
+              :max-lines="aceEditorMaxLines"
             />
           </ui-socket>
         </template>
@@ -394,7 +398,7 @@
 
     <div v-if="prop.desc" class="col-sm-10 col-sm-offset-2 help-block">
       <plugin-details
-        :description="prop.desc"
+        :description="translatedDesc(prop)"
         :extended-css="extendedCss"
         description-css="more-info"
         markdown-container-css="m-0 p-0"
@@ -402,7 +406,7 @@
         allow-html
       >
         <template #extraDescriptionText>
-          <div class="help-block">{{ prop.desc }}</div>
+          <div class="help-block">{{ translatedDesc(prop) }}</div>
         </template>
       </plugin-details>
     </div>
@@ -435,6 +439,9 @@ import {
   transformVariables,
   WorkflowStepType,
 } from "../utils/contextVariableUtils";
+
+const ACE_EDITOR_DEFAULT_MIN_LINES = 12;
+const ACE_EDITOR_DEFAULT_MAX_LINES = 0;
 
 interface Prop {
   type: string;
@@ -539,12 +546,15 @@ export default defineComponent({
   },
   emits: ["update:modelValue", "pluginPropsMounted"],
   data() {
+    const ctx = getRundeckContext();
     return {
+      ctx,
       jobName: "",
       keyPath: "",
       jobContext: [] as any,
       aceEditorEnabled: false,
       renderReadOnly: false,
+      appMeta: (ctx?.appMeta ?? {}) as Record<string, any>,
     };
   },
   computed: {
@@ -585,6 +595,13 @@ export default defineComponent({
         ),
       ];
     },
+    aceEditorMinLines(): number {
+      return this.appMeta.aceEditorMinLines ?? ACE_EDITOR_DEFAULT_MIN_LINES;
+    },
+    aceEditorMaxLines(): number {
+      const raw = this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
+      return raw === 0 ? Infinity : raw;
+    },
   },
   watch: {
     currentValue: function (newval) {
@@ -602,8 +619,8 @@ export default defineComponent({
   },
   mounted() {
     this.setJobName(this.modelValue);
-    if (getRundeckContext() && getRundeckContext().projectName) {
-      this.keyPath = "keys/project/" + getRundeckContext().projectName + "/";
+    if (this.ctx?.projectName) {
+      this.keyPath = "keys/project/" + this.ctx.projectName + "/";
     }
 
     if (this.autocompleteCallback && this.contextAutocomplete) {
@@ -628,6 +645,12 @@ export default defineComponent({
       (this.prop.options && this.prop.options["displayType"] === "READONLY");
   },
   methods: {
+    translatedTitle(prop: any): string {
+      return (this.$t(prop?.title || "") as string) || "";
+    },
+    translatedDesc(prop: any): string {
+      return (this.$t(prop?.desc || "") as string) || "";
+    },
     inputColSize(prop: any) {
       let size = 10;
       if (prop.options && prop.options["labelHidden"] === "true") {

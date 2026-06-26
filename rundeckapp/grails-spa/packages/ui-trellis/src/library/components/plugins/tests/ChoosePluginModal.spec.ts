@@ -5,7 +5,7 @@ import { Popover, Tabs, Tab } from "uiv";
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },
-    rdBase: "http://localhost:4440/",
+    rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
@@ -73,7 +73,7 @@ describe("ChoosePluginModal", () => {
   it('emits "selected" event with correct data when a provider button is clicked', async () => {
     const wrapper = await createWrapper();
     await wrapper.find('[data-test="provider-button"]').trigger("click");
-    expect(wrapper.emitted("selected")[0]).toEqual([
+    expect(wrapper.emitted("selected")![0]).toEqual([
       {
         provider: "provider1",
         service: "WorkflowStep",

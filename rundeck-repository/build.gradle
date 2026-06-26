@@ -19,8 +19,8 @@ subprojects {
     }
 
     dependencies {
-        implementation("org.codehaus.groovy:groovy:${groovyVersion}")
-        testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+        implementation("org.apache.groovy:groovy:${groovyVersion}")
+        testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
         testImplementation "org.spockframework:spock-core:${spockVersion}"
         testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
@@ -42,13 +42,15 @@ project(':rundeck-repository:rundeck-repository-client') {
 
     dependencies {
         // Use the latest Groovy version for building this library
-        implementation("org.codehaus.groovy:groovy-all:${groovyVersion}")
+        implementation("org.apache.groovy:groovy-all:${groovyVersion}")
         api project(":rundeck-repository:rundeck-repository-api")
         api project(":core")
         api project(":rundeck-storage:rundeck-storage-filesys")
         implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonDatabindVersion}"
         implementation "org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}"
         implementation "org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}"
+        // Grails 7: BC 1.80 requires bcutil for CryptlibObjectIdentifiers
+        implementation "org.bouncycastle:bcutil-jdk18on:${bouncyCastleVersion}"
         implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
         api "org.slf4j:slf4j-api:${slf4jVersion}"
         // Use the awesome Spock testing and specification framework

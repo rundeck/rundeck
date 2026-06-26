@@ -103,20 +103,18 @@ search
             sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
             pagination:{
                 max: ${enc(js:params.max?params.int('max',10):10)}
-    },
-    query:{
-        jobIdFilter:'null'
-      },
-      filterOpts: {
-          showFilter: false,
-          showRecentFilter: true,
-          showSavedFilter: false
-      },
-      runningOpts: {
-          loadRunning:false,
-          allowAutoRefresh: false
-      }
-}
+            },
+            query: Object.assign({adhoc: true}, ${raw(groovy.json.JsonOutput.toJson(defaultRecentFilter ? [recentFilter: defaultRecentFilter] : [:]))}),
+            filterOpts: {
+                showFilter: false,
+                showRecentFilter: true,
+                showSavedFilter: false
+            },
+            runningOpts: {
+                loadRunning:false,
+                allowAutoRefresh: false
+            }
+        }
 })
   </g:javascript>
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
@@ -273,7 +271,7 @@ search
                                     code="run.on.count.nodes"/></span>
                             <span class="glyphicon glyphicon-play"></span>
                           </span>
-                          <span data-bind="if: nodefilter.total()==0 ">No Nodes</span>
+                          <span data-bind="if: nodefilter.total()==0 "><g:message code="no.nodes"/></span>
                           </span>
                           <span data-bind="if: running">
                             <g:message code="running1"/>

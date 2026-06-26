@@ -15,27 +15,26 @@ class NodesSpec extends BaseContainer {
         setupProject(
             PROJECT,
             [
-                "config": [
-                    "resources.source.1.type"         : "local",
-                    "resources.source.2.config.count" : "2",
-                    "resources.source.2.config.prefix": "NodesSpec-",
-                    "resources.source.2.config.tags"  : "test,demo",
-                    "resources.source.2.config.attrs" : "foo=bar",
-                    "resources.source.2.type"         : "stub",
-                    "resources.source.3.config.count" : "3",
-                    "resources.source.3.config.prefix": "abc-",
-                    "resources.source.3.config.tags"  : "abc,common",
-                    "resources.source.3.type"         : "stub",
-                    "resources.source.4.config.count" : "3",
-                    "resources.source.4.config.suffix": "-xyz",
-                    "resources.source.4.config.tags"  : "xyz,common",
-                    "resources.source.4.type"         : "stub",
-                    "resources.source.5.config.count" : "3",
-                    "resources.source.5.config.prefix": "blah-",
-                    "resources.source.5.config.attrs" : "blah=blahblah,foo=bar",
-                    "resources.source.5.config.tags"  : "hijk",
-                    "resources.source.5.type"         : "stub",
-                ]]
+                "resources.source.1.type"         : "local",
+                "resources.source.2.config.count" : "2",
+                "resources.source.2.config.prefix": "NodesSpec-",
+                "resources.source.2.config.tags"  : "test,demo",
+                "resources.source.2.config.attrs" : "foo=bar",
+                "resources.source.2.type"         : "stub",
+                "resources.source.3.config.count" : "3",
+                "resources.source.3.config.prefix": "abc-",
+                "resources.source.3.config.tags"  : "abc,common",
+                "resources.source.3.type"         : "stub",
+                "resources.source.4.config.count" : "3",
+                "resources.source.4.config.suffix": "-xyz",
+                "resources.source.4.config.tags"  : "xyz,common",
+                "resources.source.4.type"         : "stub",
+                "resources.source.5.config.count" : "3",
+                "resources.source.5.config.prefix": "blah-",
+                "resources.source.5.config.attrs" : "blah=blahblah,foo=bar",
+                "resources.source.5.config.tags"  : "hijk",
+                "resources.source.5.type"         : "stub",
+            ]
         )
     }
 

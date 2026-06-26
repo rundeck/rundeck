@@ -5,7 +5,7 @@ export async function getSummary(): Promise<any> {
   const ctx = getRundeckContext();
   try {
     const response = await axios.get(
-      `${ctx.rdBase}api/${ctx.apiVersion}/home/summary`,
+      `${ctx.rdBase}/api/${ctx.apiVersion}/home/summary`,
       {
         method: "GET",
         headers: {
@@ -61,7 +61,7 @@ export async function getProjects(): Promise<any> {
   const ctx = getRundeckContext();
   try {
     const response = await axios.get(
-      `${ctx.rdBase}api/${ctx.apiVersion}/projects?meta=authz,config,message`,
+      `${ctx.rdBase}/api/${ctx.apiVersion}/projects?meta=authz,config,message`,
       {
         method: "GET",
         headers: {

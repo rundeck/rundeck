@@ -18,6 +18,15 @@ package rundeckapp
 class UrlMappings {
     static mappings = {
         "/favicon.ico"(redirect: [uri: "/static/images/favicon.ico"])
+        
+        // Monitoring endpoints (controlled by rundeck.metrics.monitoring.enabled)
+        "/monitoring/metrics"(controller: 'monitoring', action: 'metrics')
+        "/monitoring/prometheus"(controller: 'monitoring', action: 'prometheus')
+        "/monitoring/health"(controller: 'monitoring', action: 'health')
+        "/monitoring/health/readiness"(controller: 'monitoring', action: 'readiness')
+        "/monitoring/info"(controller: 'monitoring', action: 'info')
+        "/monitoring/threaddump"(controller: 'monitoring', action: 'threaddump')
+        
         "/$controller/$action?/$id?" {
             constraints {
                 // apply constraints here
@@ -179,6 +188,8 @@ class UrlMappings {
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
         "/api/$api_version/project/$project/resource/$name"(controller: 'framework',action:"apiResourcev14")
         "/api/$api_version/project/$project/run/command"(controller: 'scheduledExecution', action: 'apiRunCommandv14')
+        "/api/$api_version/project/$project/run/command/inline"(controller: 'scheduledExecution', action: 'runAdhocInline')
+        "/api/$api_version/project/$project/run/command/inline/api"(controller: 'scheduledExecution', action: 'runAdhocInlineApi')
         "/api/$api_version/project/$project/run/script"(controller: 'scheduledExecution', action: 'apiRunScriptv14')
         "/api/$api_version/project/$project/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrlv14')
         "/api/$api_version/project/$project/history"(controller: 'reports', action: 'apiHistoryv14')
@@ -257,6 +268,7 @@ class UrlMappings {
         }
 
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
+        "/api/$api_version/monitoring/$name**?"(controller: 'api', action: 'apiMonitoring')
 
         "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
         "/api/$api_version/plugin/detail/$service/$provider"(controller: 'plugin', action: 'apiPluginDetail')
@@ -349,9 +361,6 @@ class UrlMappings {
         "/tour/get/$loaderName/$tour"(controller:'tour',action:'getTour')
 
         "/community-news"(controller:'communityNews',action:'index')
-        "/community-news/register"(controller:'communityNews') {
-            action = [POST: 'register']
-        }
 
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
 

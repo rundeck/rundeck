@@ -138,19 +138,19 @@ export class JobPageStore {
   createProjectScmActionHref(id: string, integration: string) {
     ///project/demo/scm/export/performAction?actionId=project-commit
     const context = getRundeckContext();
-    return `${context.rdBase}project/${this.currentProject}/scm/${integration}/performAction?actionId=${id}`;
+    return `${context.rdBase}/project/${this.currentProject}/scm/${integration}/performAction?actionId=${id}`;
   }
   createJobHref() {
     const context = getRundeckContext();
-    return `${context.rdBase}project/${this.currentProject}/job/create`;
+    return `${context.rdBase}/project/${this.currentProject}/job/create`;
   }
   uploadJobHref() {
     const context = getRundeckContext();
-    return `${context.rdBase}project/${this.currentProject}/job/upload`;
+    return `${context.rdBase}/project/${this.currentProject}/job/upload`;
   }
   jobPagePathHref(path: string) {
     const context = getRundeckContext();
-    return `${context.rdBase}project/${this.currentProject}/jobs/${path}`;
+    return `${context.rdBase}/project/${this.currentProject}/jobs/${path}`;
   }
   getProject(): string {
     return this.currentProject;

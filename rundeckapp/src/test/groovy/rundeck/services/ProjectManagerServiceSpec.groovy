@@ -84,7 +84,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         IllegalArgumentException e=thrown()
-        e.message.contains('Project does not exist')
+        e.message.contains('Project not found in cache or DB')
     }
     void "get project exists no props"(){
         setup:

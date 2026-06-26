@@ -74,13 +74,13 @@ class GormLogFileStorageRequestProviderSpec extends Specification implements Dat
                 }
             )
         when:
-            def found = Execution.get(exec.id).logFileStorageRequest
+            def found = LogFileStorageRequest.findByExecution(Execution.get(exec.id))
         then:
             found != null
         when:
             provider.delete(execUuid)
         then:
-            Execution.get(exec.id).logFileStorageRequest == null
+            LogFileStorageRequest.findByExecution(Execution.get(exec.id)) == null
             LogFileStorageRequest.get(request.id) == null
             noExceptionThrown()
     }

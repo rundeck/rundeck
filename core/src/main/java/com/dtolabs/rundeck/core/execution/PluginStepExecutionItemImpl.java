@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.rundeck.core.execution.workflow.HasParentStepContext;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet;
 
@@ -38,7 +39,7 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PluginStepExecutionItemImpl implements StepExecutionItem, ConfiguredStepExecutionItem, HandlerExecutionItem,
-        HasFailureHandler, HasLoggingFilterConfiguration
+        HasFailureHandler, HasLoggingFilterConfiguration, HasParentStepContext
 {
     private String type;
     private Map stepConfiguration;
@@ -48,6 +49,13 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
     private List<PluginConfiguration> filterConfigurations;
     private String runnerNode;
     private ConditionalSet conditions;
+    /** -1 sentinel indicates this item is a flat top-level step (not a flattened conditional sub-step). */
+    private int parentStepNumber = -1;
+    private int subStepNumber = -1;
+    /** 1-based logical step number in the original job definition; -1 when not set. */
+    private int logicalStepNumber = -1;
+    /** Full parent step path for nested conditionals (e.g., [2, 2] for step "2/2/1"). Null for non-nested steps. */
+    private List<Integer> parentStepPath = null;
 
     public PluginStepExecutionItemImpl(
             final String type,
@@ -153,5 +161,41 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
 
     public void setConditions(ConditionalSet conditions) {
         this.conditions = conditions;
+    }
+
+    @Override
+    public int getParentStepNumber() {
+        return parentStepNumber;
+    }
+
+    public void setParentStepNumber(int parentStepNumber) {
+        this.parentStepNumber = parentStepNumber;
+    }
+
+    @Override
+    public int getSubStepNumber() {
+        return subStepNumber;
+    }
+
+    public void setSubStepNumber(int subStepNumber) {
+        this.subStepNumber = subStepNumber;
+    }
+
+    @Override
+    public int getLogicalStepNumber() {
+        return logicalStepNumber;
+    }
+
+    public void setLogicalStepNumber(int logicalStepNumber) {
+        this.logicalStepNumber = logicalStepNumber;
+    }
+
+    @Override
+    public List<Integer> getParentStepPath() {
+        return parentStepPath;
+    }
+
+    public void setParentStepPath(List<Integer> parentStepPath) {
+        this.parentStepPath = parentStepPath;
     }
 }

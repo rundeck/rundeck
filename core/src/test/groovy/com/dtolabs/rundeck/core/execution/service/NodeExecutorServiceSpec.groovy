@@ -9,7 +9,6 @@ import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor
-import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import spock.lang.Shared
 import spock.lang.Specification
@@ -136,7 +135,7 @@ class NodeExecutorServiceSpec extends Specification {
             }
         }
         NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){
-            providerOfType("local") >> new LocalNodeExecutor(framework)
+            providerOfType("local") >> new LocalNodeExecutor()
         }
 
 
@@ -172,7 +171,7 @@ class NodeExecutorServiceSpec extends Specification {
                 _ * getLocalRegistry() >> [(LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor]
             }
             NodeExecutorService service = Spy(new NodeExecutorService(framework, profile)) {
-                providerOfType("local") >> new LocalNodeExecutor(framework)
+                providerOfType("local") >> new LocalNodeExecutor()
             }
             def config = Mock(IRundeckProjectConfig){
                 _*getProperty('service.NodeExecutor.default.provider') >> pDefaultRemote

@@ -15,6 +15,7 @@
  */
 
 
+import asset.pipeline.grails.AssetProcessorService
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
@@ -25,13 +26,10 @@ import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupF
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.NodeExecutorServiceFactory
-import com.dtolabs.rundeck.app.internal.framework.FeatureToggleNodeExecutorProfile
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckNodeExecutorProfile
 import com.dtolabs.rundeck.app.mail.DynamicMailSender
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
-import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
-import com.dtolabs.rundeck.app.tree.JasyptEncryptionEnforcerUpdaterConfig
 import com.dtolabs.rundeck.app.tree.StorageTreeCreator
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
@@ -47,7 +45,6 @@ import com.dtolabs.rundeck.core.common.NodeSupport
 import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor
-import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
@@ -240,13 +237,23 @@ beans={
     if (application.config.getProperty("rundeck.multiURL.enabled", Boolean.class, false)) {
         Class requestAwareLinkGeneratorClass = RequestAwareLinkGenerator
         String serverURL = application.config.getProperty("grails.serverURL",String.class)
-        String contextPath = application.config.server.servlet["context-path"]
+        String contextPath = application.config.getProperty("server.servlet.context-path", String.class, "")
         if (serverURL && (contextPath && "/" != contextPath)) {
             log.info("RequestAwareLinkGenerator using url ${serverURL} and context-path ${contextPath}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL, contextPath) {}
+            // RUN-4332: When overriding grailsLinkGenerator, fix assetProcessorService contextPath null
+            // See: https://github.com/wondrify/asset-pipeline/issues/444#issuecomment-3958024443
+            assetProcessorService(AssetProcessorService) { bean ->
+                bean.autowire = true
+            }
         } else if (serverURL) {
             log.info("context-path not set, RequestAwareLinkGenerator using url ${serverURL}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL) {}
+            // RUN-4332: When overriding grailsLinkGenerator, fix assetProcessorService contextPath null
+            // See: https://github.com/wondrify/asset-pipeline/issues/444#issuecomment-3958024443
+            assetProcessorService(AssetProcessorService) { bean ->
+                bean.autowire = true
+            }
         } else {
             log.warn("rundeck.multiURL enabled but no grails.serverURL found. This feature will be disabled.")
         }
@@ -316,27 +323,13 @@ beans={
         frameworkNodes = ref('rundeckNodeSupport')
         nodeExecutorService = ref('rundeckNodeExecutorService')
     }
-    rundeckBaseNodeExecutorProfile(RundeckNodeExecutorProfile){
+    rundeckNodeExecutorProfile(RundeckNodeExecutorProfile){
         defaultLocalProvider = LocalNodeExecutor.SERVICE_PROVIDER_TYPE
         defaultRemoteProvider = "sshj-ssh"
         localRegistry = [
                 (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
-                (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
+                (LocalNodeExecutor.SERVICE_PROVIDER_TYPE_ALIAS): LocalNodeExecutor,
         ]
-    }
-    rundeckNewLocalNodeExecutorProfile(RundeckNodeExecutorProfile){
-        defaultLocalProvider = NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE
-        defaultRemoteProvider = "sshj-ssh"
-        localRegistry = [
-            (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
-            (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
-        ]
-    }
-    rundeckNodeExecutorProfile(FeatureToggleNodeExecutorProfile){
-        baseProfile = ref('rundeckBaseNodeExecutorProfile')
-        toggleProfile = ref('rundeckNewLocalNodeExecutorProfile')
-        featureService = ref('featureService')
-        feature = Features.NEW_LOCAL_NODE_EXECUTOR
     }
     rundeckNodeExecutorService(NodeExecutorServiceFactory)
     rundeckBaseFrameworkExecutionServices(BaseFrameworkExecutionServices){
@@ -681,17 +674,6 @@ beans={
         rundeckKeyStorageContextProvider(KeyStorageContextProvider)
     }
 
-    rundeckJasyptConverterUpdaterConfig(JasyptEncryptionEnforcerUpdaterConfig){
-        treeCreator = ref('rundeckStorageTreeCreator')
-    }
-
-    rundeckBootstrapStorageTreeUpdater(RundeckBootstrapStorageTreeUpdater){
-        storageTree = ref('rundeckStorageTree')
-        updaterConfig = ref('rundeckJasyptConverterUpdaterConfig')
-        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, false)
-        basePath = grailsApplication.config.getProperty('rundeck.storage.rewrite.basePath', String.class, 'keys')
-    }
-
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree, rundeckKeyStorageContextProvider)
 
     rundeckConfigStorageTreeCreator(StorageTreeCreator){
@@ -916,9 +898,12 @@ beans={
         }
     } else {
         jettyCompatiblePasswordEncoder(JettyCompatibleSpringSecurityPasswordEncoder)
-        //if not using jaas for security provide a simple default
         Properties realmProperties = new Properties()
-        realmProperties.load(new File(grailsApplication.config.getProperty("rundeck.security.fileUserDataSource",String.class)).newInputStream())
+        String realmFilePath = grailsApplication.config.getProperty("rundeck.security.fileUserDataSource", String.class)
+        File realmFile = realmFilePath ? new File(realmFilePath) : null
+        if (realmFile?.exists()) {
+            realmProperties.load(realmFile.newInputStream())
+        }
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
         realmAuthProvider(DaoAuthenticationProvider) {
             passwordEncoder = ref("jettyCompatiblePasswordEncoder")
@@ -1015,5 +1000,7 @@ beans={
     //defines feature flag metadata for system configuration
     rundeckFeatureFlagConfigurable(FeatureFlagConfigurable)
 
-    rundeckDynamicMailSender(DynamicMailSender)
+    rundeckDynamicMailSender(DynamicMailSender) { bean ->
+        bean.primary = true
+    }
 }

@@ -161,6 +161,17 @@ class ExecutionShowPage extends BasePage  implements ActivityListTrait{
         List<String> getExecStateForSteps(){
             expandedNode.findElements(By.cssSelector(".wfnodestep")).collect { it.findElement(By.cssSelector('.execstatedisplay')).getAttribute(ExecutionShowPage.execStateAttribute) }
         }
+
+        /**
+         * Returns the step number labels (e.g. "1. ", "10. ") shown for each step in the expanded node.
+         * Used to verify that multi-digit step numbers are displayed correctly (RUN-2759).
+         */
+        List<String> getStepNumbers(){
+            execPage.waitForElementVisible(By.cssSelector(".wfnodesteps .stepident"))
+            expandedNode.findElements(By.cssSelector(".wfnodestep")).collect {
+                it.findElement(By.cssSelector('.stepident > span:first-child')).getText()
+            }
+        }
     }
 
     List<WebElement> getAutoCaret() {

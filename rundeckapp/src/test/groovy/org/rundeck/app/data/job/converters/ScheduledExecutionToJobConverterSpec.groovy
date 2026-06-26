@@ -10,6 +10,7 @@ import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
@@ -37,7 +38,7 @@ class ScheduledExecutionToJobConverterSpec extends Specification implements Grai
     }
 
     def setupSpec() {
-        mockDomains(Execution, Option, ScheduledExecution, Workflow, CommandExec)
+        mockDomains(Execution, Option, ScheduledExecution, Workflow, CommandExec, LogFileStorageRequest)
     }
 
     def "ConvertJob"() {

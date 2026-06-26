@@ -25,6 +25,9 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+import com.dtolabs.rundeck.core.execution.workflow.HasParentStepContext;
+
+import java.util.List;
 
 
 /**
@@ -32,7 +35,14 @@ import com.dtolabs.rundeck.core.execution.HasFailureHandler;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class JobRefCommandBase extends JobRefCommand implements HasFailureHandler {
+public class JobRefCommandBase extends JobRefCommand implements HasFailureHandler, HasParentStepContext {
+    /** -1 sentinel indicates this item is a flat top-level step (not a flattened conditional sub-step). */
+    private int parentStepNumber = -1;
+    private int subStepNumber = -1;
+    /** 1-based logical step number in the original job definition; -1 when not set. */
+    private int logicalStepNumber = -1;
+    /** Full parent step path for nested conditionals (e.g., [2, 2] for step "2/2/1"). Null for non-nested steps. */
+    private List<Integer> parentStepPath = null;
     public String getJobIdentifier() {
         return null;
     }
@@ -101,4 +111,39 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
         return false;
     }
 
+    @Override
+    public int getParentStepNumber() {
+        return parentStepNumber;
+    }
+
+    public void setParentStepNumber(int parentStepNumber) {
+        this.parentStepNumber = parentStepNumber;
+    }
+
+    @Override
+    public int getSubStepNumber() {
+        return subStepNumber;
+    }
+
+    public void setSubStepNumber(int subStepNumber) {
+        this.subStepNumber = subStepNumber;
+    }
+
+    @Override
+    public int getLogicalStepNumber() {
+        return logicalStepNumber;
+    }
+
+    public void setLogicalStepNumber(int logicalStepNumber) {
+        this.logicalStepNumber = logicalStepNumber;
+    }
+
+    @Override
+    public List<Integer> getParentStepPath() {
+        return parentStepPath;
+    }
+
+    public void setParentStepPath(List<Integer> parentStepPath) {
+        this.parentStepPath = parentStepPath;
+    }
 }

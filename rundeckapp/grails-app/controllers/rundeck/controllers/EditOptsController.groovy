@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.jayway.jsonpath.JsonPath
 import groovy.transform.CompileStatic
+import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Operation
@@ -525,27 +526,9 @@ class EditOptsController extends ControllerBase{
     @Operation(
         method = "POST",
         requestBody = @RequestBody(description='Option validation request',content = @Content(
-            mediaType = "application/json",
+            mediaType = MediaType.APPLICATION_JSON,
             schema = @Schema(implementation = OptionValidateRequest)
         )),
-        responses=[
-            @ApiResponse(
-                responseCode = "200",
-                description = "Option validation with no errors",
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = OptionValidateResponse)
-                )
-            ),
-            @ApiResponse(
-                responseCode = "400",
-                description = "Option validation with errors, the messages will contain the validation errors keyed by input field path",
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = OptionValidateResponse)
-                )
-            )
-        ],
         description = """Validates an option defintion for a job, returns any validation errors.
 
 If any validation errors occur, the response will use code 400, otherwise 200 will be returned.
@@ -562,6 +545,22 @@ The data format corresponds with a Job Option definition in Job JSON format, wit
 
 Since: V47""",
         summary = "Validate an option"
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Option validation with no errors",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = OptionValidateResponse)
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Option validation with errors, the messages will contain the validation errors keyed by input field path",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = OptionValidateResponse)
+        )
     )
     def apiValidateOption(
         @Parameter(in= ParameterIn.PATH,description='Project name') String project,
@@ -1016,7 +1015,7 @@ Since: V47""",
         }else if(params.valuesType == 'url'){
             opt.valuesList=null
             if(valuesUrl){
-                opt.realValuesUrl=new URL(valuesUrl)
+                opt.realValuesUrl=valuesUrl
             }else{
                 opt.realValuesUrl = null
             }
@@ -1038,7 +1037,7 @@ Since: V47""",
             params.valuesType = 'list'
         } else if (params.valuesUrl) {
             params.valuesType = 'url'
-            params.valuesUrl = opt.realValuesUrl?.toExternalForm()
+            params.valuesUrl = opt.realValuesUrl
             params.remove('valuesUrlLong')
             params.remove('realValuesUrl')
         }

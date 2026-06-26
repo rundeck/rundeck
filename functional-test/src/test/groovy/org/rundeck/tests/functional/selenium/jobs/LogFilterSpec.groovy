@@ -167,7 +167,7 @@ class LogFilterSpec extends SeleniumBase{
         when:
         jobShowPage.go("/project/${projectName}/job/show/${jobUuid}")
         jobShowPage.getRunJobBtn().click()
-        executionShowPage.waitForFinalState()
+        executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
         executionShowPage.getViewButtonOutput().click()
 
         then: "Checks that the second steps has the right replacement value"

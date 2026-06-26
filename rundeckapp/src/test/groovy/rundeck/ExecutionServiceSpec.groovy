@@ -1,6 +1,6 @@
 package rundeck
 
-import asset.pipeline.grails.LinkGenerator
+import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
@@ -97,11 +97,17 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import com.dtolabs.rundeck.core.audit.AuditEvent
+import com.dtolabs.rundeck.plugins.audit.AuditEventListener
+import rundeck.services.audit.AuditEventsService
+
 import java.sql.Timestamp
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by greg on 2/17/15.
@@ -298,6 +304,71 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         e2 != null
         e2.user == 'testuser'
+    }
+
+    @Unroll
+    void "create execution publishes audit RUN event with username from execution record"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'auditJob',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'audit test job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo test'])]
+                ),
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getNodes(_, _) >> null
+        }
+
+        AuditEvent capturedEvent = null
+        CountDownLatch latch = new CountDownLatch(1)
+
+        def auditSvc = new AuditEventsService()
+        auditSvc.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> 'test-uuid'
+            getServerHostname() >> 'test-host'
+        }
+        auditSvc.installedPlugins = [:]
+        auditSvc.addListener(new AuditEventListener() {
+            @Override
+            void onEvent(AuditEvent event) {
+                capturedEvent = event
+                latch.countDown()
+            }
+        })
+        service.auditEventsService = auditSvc
+
+        when: "execution is created — security context has no real user (simulates scheduled/API/webhook contexts)"
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> contextUser
+        }
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                runAsUser,
+                [executionType: execType]
+        )
+        latch.await(3, TimeUnit.SECONDS)
+
+        then: "audit event username is taken from execution.user, not from the security context"
+        e2 != null
+        e2.user == expectedUser
+        capturedEvent != null
+        capturedEvent.userInfo.username == expectedUser
+
+        where:
+        execType    | contextUser   | runAsUser      | expectedUser
+        'scheduled' | 'job-creator' | null           | 'job-creator'   // Quartz thread: job creator
+        'user'      | 'john.doe'    | null           | 'john.doe'      // interactive: auth user
+        'user'      | 'john.doe'    | 'run-as-user'  | 'run-as-user'   // run-as: override user
     }
 
     void "create execution expand date strings"() {
@@ -1512,6 +1583,57 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result.success
 
     }
+
+    def "delete execution removes associated LogFileStorageRequest to avoid FK constraint"() {
+        given:
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.fileUploadService = Mock(FileUploadService)
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getExecutionFiles(_, _, _) >> [:]
+        }
+        def auth = Mock(AuthContext)
+        def execution = new Execution(
+            user: 'userB',
+            project: 'AProject',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec(
+                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+            ),
+        )
+        execution.dateStarted = new Date()
+        execution.dateCompleted = new Date()
+        execution.status = 'succeeded'
+        assert execution.save()
+
+        def storageRequest = new LogFileStorageRequest(
+            execution: execution,
+            pluginName: 'test1',
+            filetype: '*',
+            completed: true
+        )
+        assert storageRequest.save()
+
+        expect:
+        LogFileStorageRequest.findByExecution(execution) != null
+
+        when:
+        def result = service.deleteExecution(execution, auth, 'bob')
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authResourceForProject(_)
+        1 * service.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            auth, _,
+            [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        ) >> true
+        1 * service.reportService.deleteByExecution(execution)
+
+        result.success
+        LogFileStorageRequest.findByExecution(execution) == null
+    }
+
     def "loadSecureOptionStorageDefaults"() {
         given:
         ScheduledExecution job = new ScheduledExecution(
@@ -6068,7 +6190,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             getNodes()>> nodeSet
             getFramework() >> Mock(Framework)
             getExecutionListener() >> executionListener
-            getUserAndRolesAuthContext()> userAndRolesAuthContext
+            getUserAndRolesAuthContext() >> userAndRolesAuthContext
 
         }
         JobRefCommand item = ExecutionItemFactory.createJobRef(

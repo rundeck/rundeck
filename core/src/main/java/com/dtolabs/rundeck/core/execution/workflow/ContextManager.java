@@ -131,7 +131,30 @@ public class ContextManager extends NoopWorkflowExecutionListener implements Con
     }
 
     public void beginWorkflowItem(final int step, final StepExecutionItem item) {
-        stepContext.beginStepContext(StateUtils.stepContextId(step, false));
+        HasParentStepContext parented = asHierarchical(item);
+        if (parented != null) {
+            // Check if this has a multi-level parent path (nested conditionals)
+            List<Integer> parentPath = parented.getParentStepPath();
+            if (parentPath != null && !parentPath.isEmpty()) {
+                // Push all levels of the parent path onto the context stack
+                // For example, for step "2/2/1", parentPath=[2, 2] and subStep=1
+                // This will push: 2 → context → 2 → context → 1
+                for (Integer parentStepNum : parentPath) {
+                    stepContext.beginStepContext(StateUtils.stepContextId(parentStepNum, false));
+                    stepContext.beginContext();
+                }
+                stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+            } else {
+                // Single-level conditional substep (original behavior)
+                // push the parent step onto the context stack, then enter the sub-step.
+                // the resulting context produces a hierarchical stepctx (e.g. "2/1").
+                stepContext.beginStepContext(StateUtils.stepContextId(parented.getParentStepNumber(), false));
+                stepContext.beginContext();
+                stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+            }
+        } else {
+            stepContext.beginStepContext(StateUtils.stepContextId(resolveStepNumber(step, item), false));
+        }
         if(item.getRunner()!=null){
             //node step, begin node context as well
             stepContext.beginNodeContext(item.getRunner());
@@ -140,15 +163,75 @@ public class ContextManager extends NoopWorkflowExecutionListener implements Con
 
     @Override
     public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
-        stepContext.beginStepContext(StateUtils.stepContextId(step, true));
+        HasParentStepContext parented = asHierarchical(item);
+        if (parented != null) {
+            // only the leaf (sub-step) carries the error-handler aspect; the parent stays "main".
+            stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), true));
+        } else {
+            stepContext.beginStepContext(StateUtils.stepContextId(resolveStepNumber(step, item), true));
+        }
     }
 
     public void finishWorkflowItem(final int step, final StepExecutionItem item, StepExecutionResult result) {
         stepContext.finishStepContext();
+        HasParentStepContext parented = asHierarchical(item);
+        if (parented != null) {
+            // Check if this has a multi-level parent path (nested conditionals)
+            List<Integer> parentPath = parented.getParentStepPath();
+            if (parentPath != null && !parentPath.isEmpty()) {
+                // Pop all levels that were pushed for the parent path
+                for (int i = 0; i < parentPath.size(); i++) {
+                    stepContext.finishContext();
+                    stepContext.finishStepContext();
+                }
+            } else {
+                // Single-level conditional substep (original behavior)
+                // pop the parent off the stack and clear it so we return to the pre-step state.
+                stepContext.finishContext();
+                stepContext.finishStepContext();
+            }
+        }
     }
 
     @Override
     public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult result) {
-        stepContext.beginStepContext(StateUtils.stepContextId(step, false));
+        HasParentStepContext parented = asHierarchical(item);
+        if (parented != null) {
+            // Switch back from error handler aspect to main aspect for the leaf step
+            stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+        } else {
+            stepContext.beginStepContext(StateUtils.stepContextId(resolveStepNumber(step, item), false));
+        }
+    }
+
+    /**
+     * Returns the logical step number for a flat (non-hierarchical) step. Uses the
+     * {@link HasParentStepContext#getLogicalStepNumber()} when positive to map back from
+     * the flat engine index to the step's true position in the original job definition.
+     */
+    private static int resolveStepNumber(int flatStep, StepExecutionItem item) {
+        if (item instanceof HasParentStepContext) {
+            int logical = ((HasParentStepContext) item).getLogicalStepNumber();
+            if (logical > 0) {
+                return logical;
+            }
+        }
+        return flatStep;
+    }
+
+    /**
+     * @return the item viewed as a {@link HasParentStepContext} when it both implements the
+     * marker and has been promoted (positive parent and sub indices), or {@code null} when
+     * the item should be treated as a flat top-level step.
+     */
+    private static HasParentStepContext asHierarchical(StepExecutionItem item) {
+        if (!(item instanceof HasParentStepContext)) {
+            return null;
+        }
+        HasParentStepContext parented = (HasParentStepContext) item;
+        if (parented.getParentStepNumber() <= 0 || parented.getSubStepNumber() <= 0) {
+            return null;
+        }
+        return parented;
     }
 }

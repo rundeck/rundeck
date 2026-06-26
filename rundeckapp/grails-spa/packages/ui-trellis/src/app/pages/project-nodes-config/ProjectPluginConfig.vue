@@ -56,12 +56,7 @@
 
             <div v-if="additionalProps && additionalProps.props.length > 0">
               <plugin-config
-                :key="
-                  'additional_config_' +
-                  index +
-                  '/' +
-                  (editFocus === index ? 'true' : 'false')
-                "
+                :key="'additional_config_' + index"
                 v-model="plugin.extra"
                 :mode="
                   editFocus === index
@@ -131,7 +126,7 @@
                         >{{ $t("Edit") }}</a
                       >
                     </span>
-                    <span v-if="editFocus === index">
+                    <span v-else-if="editFocus === index">
                       <a
                         :key="'save'"
                         class="btn btn-cta btn-xs"
@@ -450,13 +445,14 @@ export default defineComponent({
     },
     addPlugin(provider: string) {
       this.modalAddOpen = false;
-      this.pluginConfigs.push({
-        entry: { type: provider, config: {} },
-        extra: { config: {} },
-        create: true,
-      } as ProjectPluginConfigEntry);
-
-      this.setFocus(this.pluginConfigs.length - 1);
+      this.$nextTick(() => {
+        this.pluginConfigs.push({
+          entry: { type: provider, config: {} },
+          extra: { config: {} },
+          create: true,
+        } as ProjectPluginConfigEntry);
+        this.setFocus(this.pluginConfigs.length - 1);
+      });
     },
     setFocus(focus: number) {
       this.editFocus = focus;
@@ -535,7 +531,7 @@ export default defineComponent({
       const response = await axios({
         method: "get",
         headers: { "x-rundeck-ajax": true },
-        url: `${this.rdBase}framework/projectPluginsAjax`,
+        url: `${this.rdBase}/framework/projectPluginsAjax`,
         params: {
           project: `${window._rundeck.projectName}`,
           configPrefix: this.configPrefix,

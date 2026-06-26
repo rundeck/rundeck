@@ -1,11 +1,17 @@
-# Build remco from specific commit
-##################################
-FROM golang:1.24.6 as remco
+# Build remco from org fork with CVE fixes applied
+###################################################
+FROM golang:1.24.6 AS remco
 
-# REMCO_VERSION can be a release version "v0.XX.X", commit id, tag or branch name.
-ENV REMCO_VERSION=be848fe56c2a44530e422b5f7442b0854eaaafac
+# Pinned to rundeck/remco @ v0.12.6 (synced to upstream HeavyHorst/remco).
+# Includes CVE fixes through v0.12.6: go-jose/go-jose/v4 4.1.4 for
+# CVE-2026-34986 (GHSA-78h2-9frx-2jm8), plus CVE-2025-47914,
+# CVE-2025-61727, CVE-2026-33186 (grpc v1.79.3).
+ENV REMCO_COMMIT=777d12eaff303faa220f7686cdfa583a84f9bda4
 
-RUN go install github.com/HeavyHorst/remco/cmd/remco@$REMCO_VERSION
+RUN git clone https://github.com/rundeck/remco.git /tmp/remco && \
+    cd /tmp/remco && \
+    git checkout $REMCO_COMMIT && \
+    GOTOOLCHAIN=auto go build -o /go/bin/remco ./cmd/remco
 
 # Build base container
 ######################

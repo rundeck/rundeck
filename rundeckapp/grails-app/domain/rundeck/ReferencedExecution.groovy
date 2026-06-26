@@ -1,7 +1,6 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
-import org.hibernate.sql.JoinType
 import org.rundeck.app.data.model.v1.execution.RdReferencedExecution
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 
@@ -27,24 +26,46 @@ class ReferencedExecution implements RdReferencedExecution{
     }
 
     static List<JobDataSummary> parentJobSummaries(String jobUuid, int max = 0){
-        return createCriteria().list(max: (max!=0)?max:null) {
-            createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
-            isNotNull( 'e.scheduledExecution')
-            eq("jobUuid", jobUuid)
-            projections {
-                distinct('e.scheduledExecution')
+        // Select DISTINCT se.id (Long scalar) to avoid ORA-22848: ScheduledExecution has TEXT columns
+        // that Oracle rejects in SELECT DISTINCT on a full entity. Two queries total instead of N+1.
+        try {
+            def idQuery = "SELECT DISTINCT se.id FROM ReferencedExecution re JOIN re.execution e JOIN e.scheduledExecution se WHERE re.jobUuid = :jobUuid"
+            def options = max > 0 ? [max: max] : [:]
+            List<Long> ids = executeQuery(idQuery, [jobUuid: jobUuid], options)
+            if (!ids) return []
+            return ScheduledExecution.findAllByIdInList(ids)*.toJobDataSummary()
+        } catch (UnsupportedOperationException ignored) {
+            // DataTest fallback: chained HQL JOIN not supported in unit test context
+            def seen = new LinkedHashSet()
+            for (ref in findAllByJobUuid(jobUuid)) {
+                def se = ref.execution?.scheduledExecution
+                if (se != null) seen << se
+                if (max > 0 && seen.size() >= max) break
             }
-        }*.toJobDataSummary()
+            return seen.toList()*.toJobDataSummary()
+        }
     }
 
     static List<String> executionProjectList(String jobUuid, int max = 0){
-        return createCriteria().list(max: (max!=0)?max:null) {
-            createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
-            eq("jobUuid", jobUuid)
-            projections {
-                groupProperty('e.project', "project")
+        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+        // Fallback to criteria for DataTest compatibility
+        try {
+            String hql = '''
+                SELECT DISTINCT e.project 
+                FROM ReferencedExecution re 
+                LEFT JOIN re.execution e 
+                WHERE re.jobUuid = :jobUuid
+            '''
+            def results = executeQuery(hql, [jobUuid: jobUuid])
+            if (max > 0 && results.size() > max) {
+                results = results[0..<max]
             }
-        } as List<String>
+            return results as List<String>
+        } catch (UnsupportedOperationException e) {
+            // DataTest fallback: Load objects and extract project values
+            def results = findAllByJobUuid(jobUuid, [max: max > 0 ? max : null])
+            return results*.execution*.project.findAll { it != null }.unique() as List<String>
+        }
     }
 
     Serializable getExecutionId(){

@@ -1,0 +1,120 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
+        classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
+        classpath "cloud.wondrify:asset-pipeline-gradle:${assetPluginVersion}"
+    }
+}
+
+plugins {
+    id "org.springframework.boot" version "${springBootVersion}"
+}
+
+group "webhooks"
+
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:"org.apache.grails.gradle.grails-plugin"
+apply plugin:"cloud.wondrify.asset-pipeline"
+apply plugin:"org.apache.grails.gradle.grails-gsp"
+
+apply from:'../gradle/grailsopenapispec.gradle'
+
+repositories {
+    mavenLocal()
+        mavenCentral()
+    maven { url "https://repo.grails.org/grails/core" }
+}
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
+apply from: "../gradle/java-version.gradle"
+
+dependencies {
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    implementation "org.springframework.boot:spring-boot-starter-log4j2"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
+    implementation("org.apache.grails:grails-core") {
+        exclude(group:"org.yaml",module:"snakeyaml")
+    }
+    implementation "org.apache.grails:grails-web-boot"
+    implementation "org.apache.grails:grails-logging"
+    implementation "org.apache.grails:grails-rest-transforms"
+    implementation "org.apache.grails:grails-databinding"
+    implementation "org.apache.grails:grails-core"
+    implementation "org.apache.grails:grails-services"
+    implementation "org.apache.grails:grails-url-mappings"
+    implementation "org.apache.grails:grails-interceptors"
+    implementation "org.apache.grails:grails-async"
+    implementation "org.apache.grails:grails-scaffolding"
+    implementation "org.apache.grails:grails-gsp"
+    compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
+    implementation "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
+    console "org.apache.grails:grails-console"
+    implementation project(":core")
+    implementation project(':rundeck-app-util')
+
+
+    implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
+    compileOnly "org.apache.grails:grails-domain-class"
+    runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
+    testImplementation "org.apache.grails:grails-testing-support-datamapping"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.apache.grails:grails-testing-support-web"
+    
+    constraints {
+        implementation("commons-fileupload:commons-fileupload:${commonsFileuploadVersion}") {
+            because "Fix CVE-2025-48976"
+        }
+    }
+}
+
+bootRun {
+    ignoreExitValue true
+    jvmArgs(
+            '-Dspring.output.ansi.enabled=always',
+            '-noverify',
+            '-XX:TieredStopAtLevel=1',
+            '-Xmx1024m')
+    sourceResources sourceSets.main
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+// Fix Gradle 8 task ordering for OpenAPI generation
+tasks.named("findMainClass") {
+    mustRunAfter tasks.named("compileTestGroovy")
+}
+tasks.named("jar") {
+    mustRunAfter tasks.named("compileTestGroovy")
+}
+tasks.named("compileGroovyPages") {
+    mustRunAfter tasks.named("compileTestGroovy")
+}
+
+// enable if you wish to package this plugin as a standalone application
+bootJar.enabled = false
+bootRun.enabled = false
+
+gradle.beforeProject {
+    file("grails-app/assets").mkdir()
+}
+
+assets {
+    packagePlugin = true
+}

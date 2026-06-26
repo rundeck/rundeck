@@ -1,11 +1,27 @@
-import { createApp } from "vue";
+import { createApp, markRaw } from "vue";
 
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
+import NextUiToggle from "../../../library/components/widgets/settings-bar/NextUIIndicator.vue";
 import { RootStore } from "../../../library/stores/RootStore";
+import { initI18n, commonAddUiMessages } from "../../utilities/i18n";
+import { UiMessage } from "../../../library/stores/UIStore";
+import { getRundeckContext } from "../../../library";
 
-const eventBus = window._rundeck.eventBus;
+const rundeckContext = getRundeckContext();
+const rootStore = rundeckContext.rootStore;
+const eventBus = rundeckContext.eventBus;
 
-const rootStore = new RootStore(window._rundeck.rundeckClient);
+function init() {
+  // Add NextUIIndicator to UI store
+  rootStore.ui.addItems([
+    {
+      section: "theme-select",
+      location: "after",
+      visible: true,
+      widget: markRaw(NextUiToggle),
+    },
+  ]);
+}
 
 eventBus.on("ko-adhoc-running", (data: any) => {
   const elm = document.querySelector(
@@ -21,6 +37,8 @@ eventBus.on("ko-adhoc-running", (data: any) => {
         ref="viewer"
     />
     `;
+
+  const i18n = initI18n();
 
   const vue = createApp(
     {
@@ -57,5 +75,11 @@ eventBus.on("ko-adhoc-running", (data: any) => {
       },
     },
   );
+  vue.use(i18n);
+  vue.provide("addUiMessages", async (messages: UiMessage[]) =>
+    commonAddUiMessages(i18n, messages),
+  );
   vue.mount(elm);
 });
+
+window.addEventListener("DOMContentLoaded", init);

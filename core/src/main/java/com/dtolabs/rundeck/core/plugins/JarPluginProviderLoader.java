@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
@@ -103,6 +104,7 @@ public class JarPluginProviderLoader implements ProviderLoader,
     @SuppressWarnings("rawtypes")
     private Map<ProviderIdent, Class> pluginProviderDefs = new HashMap<ProviderIdent, Class>();
     private AtomicInteger loadCount = new AtomicInteger();
+    private final Set<String> brokenClasses = new HashSet<>();
 
     public JarPluginProviderLoader(final File pluginJar, final File pluginJarCacheDirectory, final File cachedir) {
         this(pluginJar, pluginJarCacheDirectory, cachedir, true);

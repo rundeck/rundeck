@@ -16,10 +16,8 @@
 
 package org.rundeck.jaas.jetty;
 
-import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
-import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule;
-import org.eclipse.jetty.jaas.spi.UserInfo;
 import org.rundeck.jaas.AbstractSharedLoginModule;
+import org.rundeck.jaas.UserInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +31,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Augments Jetty property file login module {@link PropertyFileLoginModule}, to only perform authentication
- * via property file login, handles shared credentials logic, and does not use property file roles.
+ * Property file-based authentication module that only performs authentication
+ * (no role assignment) and supports shared credentials.
+ * 
+ * DESIGN CHANGE from Jetty JAAS implementation:
+ * - Previously used org.eclipse.jetty.jaas.spi.PropertyFileLoginModule
+ * - Now uses org.rundeck.jaas.jetty.ReloadablePropertyFileLoginModule (our implementation)
+ * - Same functionality, independent of Jetty JAAS packages
  */
 public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule {
     public static final Logger logger = LoggerFactory.getLogger(JettyAuthPropertyFileLoginModule.class.getName());
@@ -45,7 +48,7 @@ public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule 
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map shared, Map options) {
         super.initialize(subject, callbackHandler, shared, options);
         if(!options.containsKey("hotReload") || !options.get("hotReload").equals("true")) {
-            module.setReloadEnabled(false);
+            module.setHotReload(false);
         }
         module.initialize(subject, callbackHandler, shared, options);
     }
@@ -85,7 +88,7 @@ public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule 
                 debug(String.format("JettyAuthPropertyFileLoginModule: userInfo not found for %s", userName));
                 return false;
             }
-            boolean b = this.userInfo.checkCredential(new String(chars));
+            boolean b = this.userInfo.getCredential().check(new String(chars));
             debug(String.format("JettyAuthPropertyFileLoginModule: checkCredential? %s", b));
             return b;
         } catch (Exception e) {

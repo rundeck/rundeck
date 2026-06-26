@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.config.Features
+import rundeck.services.ConfigurationService
 import grails.converters.JSON
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
@@ -49,7 +49,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.regex.Matcher
@@ -62,6 +62,8 @@ class ReportsController extends ControllerBase{
     def scheduledExecutionService
     def MetricService metricService
     def ReferencedExecutionDataProvider referencedExecutionDataProvider
+    ConfigurationService configurationService
+    ExecutionService executionService
     static allowedMethods = [
 
     ]
@@ -83,6 +85,9 @@ class ReportsController extends ControllerBase{
         )) {
             return
         }
+
+        def defaultRecentFilter = executionService.getActivityDefaultTimeFilter(params)
+        return [defaultRecentFilter: defaultRecentFilter]
     }
     public def index_old (ExecQuery query) {
         //data binding allows '123' followed by any characters to bind as integer 123, prevent additional chars after the integer value
@@ -129,8 +134,12 @@ class ReportsController extends ControllerBase{
             //no default filter
             params.recentFilter=null
         }
-        if(null!=query && !params.find{ it.key.endsWith('Filter')}){
-            //no default filter
+        if (null != query) {
+            def effectiveFilter = executionService.getActivityDefaultTimeFilter(params)
+            if (effectiveFilter) {
+                params.recentFilter = effectiveFilter
+                query.recentFilter = effectiveFilter
+            }
         }
         if(query && !query.projFilter && params.project){
             query.projFilter = params.project
@@ -349,7 +358,7 @@ class ReportsController extends ControllerBase{
     }
 
 
-    @Get(uri='/project/{project}/history')
+    @Get(uri='/project/{project}/history', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'Listing History',
@@ -436,14 +445,19 @@ List the event history for a project.''',
                 description = '''indicate the 0-indexed offset for the first event to return''',
                 schema = @Schema(type = 'integer')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = 'History results',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'History results',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = [
+                @ExampleObject(
+                    name = 'history-events',
+                    description = 'History events response',
+                    value = '''{
   "paging": {
     "count": 10,
     "total": 110,
@@ -477,8 +491,9 @@ List the event history for a project.''',
   }
 }
   ]
-}''')
-            )
+}'''
+                )
+            ]
         )
     )
     /**

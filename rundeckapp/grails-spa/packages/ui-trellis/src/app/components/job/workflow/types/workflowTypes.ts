@@ -39,6 +39,7 @@ export interface ScriptInlinePluginConfig extends ScriptGeneralPluginConfig {
  */
 export interface ScriptFileData extends ScriptArgsData {
   scriptfile?: string;
+  scripturl?: string;
   expandTokenInScriptFile?: boolean;
 }
 

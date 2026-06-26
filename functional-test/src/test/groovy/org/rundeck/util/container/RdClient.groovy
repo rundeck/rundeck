@@ -33,7 +33,7 @@ class RdClient {
     /**
      *  The current (latest) released version of the Rundeck API
      */
-    public static final int API_CURRENT_VERSION = 57
+    public static final int API_CURRENT_VERSION = 58
 
     final ObjectMapper mapper = new ObjectMapper()
     String baseUrl
@@ -207,6 +207,8 @@ class RdClient {
         def builder = new Request.Builder()
                 .url(apiUrl(path))
                 .header('Accept', 'application/json')
+                // Grails 7: Explicitly set Content-Type for JSON requests
+                .header('Content-Type', 'application/json')
                 .method(method, requestBuilder)
 
         httpClient.newCall(

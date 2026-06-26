@@ -19,7 +19,7 @@ import rundeck.services.data.ScheduledExecutionDataService
 import spock.lang.Specification
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 
 class GormJobDataProviderSpec extends Specification implements DataTest {
     GormJobDataProvider provider = new GormJobDataProvider()

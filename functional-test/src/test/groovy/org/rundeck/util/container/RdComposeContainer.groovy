@@ -25,15 +25,29 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
     public static final boolean USE_LOCAL_DOCKER_COMPOSE = (System.getenv("USE_LOCAL_DOCKER_COMPOSE") ?: "true").toBoolean()
 
     private final Map<String, Integer> clientConfig
+    private final String rundeckUrl
 
     /**
-     *
+     * Constructor with feature name and clientConfig (backward compatibility)
      * @param composeFilePath
      * @param featureName an optional feature name to enable
+     * @param clientConfig optional client configuration
      */
     RdComposeContainer(URI composeFilePath, String featureName, Map<String, Integer> clientConfig = Collections.emptyMap()) {
+        this(composeFilePath, featureName, null, clientConfig)
+    }
+
+    /**
+     * Constructor with all parameters
+     * @param composeFilePath
+     * @param featureName an optional feature name to enable
+     * @param customRundeckUrl optional custom Rundeck URL to override TEST_RUNDECK_GRAILS_URL
+     * @param clientConfig optional client configuration
+     */
+    RdComposeContainer(URI composeFilePath, String featureName, String customRundeckUrl, Map<String, Integer> clientConfig) {
         super(new File(composeFilePath))
         this.clientConfig = clientConfig
+        this.rundeckUrl = customRundeckUrl ?: TEST_RUNDECK_GRAILS_URL
         if (CONTEXT_PATH && !CONTEXT_PATH.startsWith('/')) {
             throw new IllegalArgumentException("Context path must start with /")
         }
@@ -41,14 +55,12 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
         withExposedService(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(600)))
         withEnv("TEST_IMAGE", RUNDECK_IMAGE)
         withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
-        withEnv("TEST_RUNDECK_GRAILS_URL", TEST_RUNDECK_GRAILS_URL)
+        withEnv("TEST_RUNDECK_GRAILS_URL", rundeckUrl)
         withEnv("TEST_TARGET_PLATFORM", TEST_TARGET_PLATFORM)
         withEnv("TEST_RUNDECK_FEATURE_NAME", featureName ?: 'placeholderFeatureName')
         withLogConsumer(DEFAULT_SERVICE_TO_EXPOSE, new Slf4jLogConsumer(log))
         waitingFor(DEFAULT_SERVICE_TO_EXPOSE,
-            Wait.forHttp("${CONTEXT_PATH}/actuator/health/readiness")
-                .forPort(DEFAULT_PORT)
-                .forStatusCodeMatching(it -> it >= 200 && it < 500 && it != 404)
+            Wait.forLogMessage(".*Grails application running at.*", 1)
                 .withStartupTimeout(Duration.ofMinutes(10))
         )
 
@@ -65,7 +77,19 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
     }
 
     RdClient clientWithToken(String token) {
-        RdClient.create(TEST_RUNDECK_GRAILS_URL, token, clientConfig)
+        RdClient.create(getEffectiveRundeckUrl(), token, clientConfig)
+    }
+
+    /** Returns the mapped host URL if the container is running (dynamic port), otherwise the configured URL. */
+    private String getEffectiveRundeckUrl() {
+        try {
+            int mappedPort = getServicePort(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT)
+            // Preserve context-path from the configured URL (e.g. /rundeck for context-path tests)
+            String contextPath = new URI(rundeckUrl).path ?: ''
+            return "http://localhost:${mappedPort}${contextPath}"
+        } catch (Exception ignored) {
+            return rundeckUrl
+        }
     }
 
     @Override

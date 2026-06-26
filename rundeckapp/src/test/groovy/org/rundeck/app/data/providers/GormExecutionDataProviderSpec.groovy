@@ -5,6 +5,7 @@ import grails.testing.gorm.DataTest
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec
+import rundeck.LogFileStorageRequest
 import rundeck.PluginStep
 import rundeck.Workflow
 import rundeck.data.constants.WorkflowStepConstants
@@ -17,13 +18,13 @@ import rundeck.services.FrameworkService
 import spock.lang.Specification
 import testhelper.TestDomainFactory
 
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 
 class GormExecutionDataProviderSpec extends Specification implements DataTest {
     GormExecutionDataProvider provider = new GormExecutionDataProvider()
 
     def setupSpec() {
-        mockDomains(Execution, Workflow, CommandExec, PluginStep, JobExec)
+        mockDomains(Execution, Workflow, CommandExec, PluginStep, JobExec, LogFileStorageRequest)
     }
     def "Get"() {
         given:

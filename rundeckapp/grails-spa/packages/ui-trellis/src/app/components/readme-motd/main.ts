@@ -1,5 +1,6 @@
 import { defineComponent, markRaw } from "vue";
 import { getRundeckContext } from "../../../library";
+import { UiMessage } from "../../../library/stores/UIStore";
 import EditProjectFile from "./EditProjectFile.vue";
 
 import messages from "./i18n";
@@ -41,13 +42,16 @@ rundeckContext.rootStore.ui.addItems([
         data() {
           return {
             filename: "",
-            displayConfig: [],
+            displayConfig: [] as string[],
             project: "",
             authAdmin: false,
           };
         },
         created() {
-          this.addUiMessages([i18nMessages[locale]]);
+          (this.addUiMessages as (messages: UiMessage[]) => Promise<void>)([
+            i18nMessages[locale],
+          ]);
+
           this.filename = this.itemData.filename;
           // code to handle displayConfig
 

@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import org.openqa.selenium.By
 import org.openqa.selenium.Dimension
 import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.NoSuchElementException
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
@@ -120,18 +121,20 @@ abstract class BasePage {
                 .until(ExpectedConditions.numberOfElementsToBe(locator, 1))
     }
 
+    /**
+     * Waits until the element located by {@code locator} is present and clickable.
+     * Uses {@link ExpectedConditions#elementToBeClickable(By)} so the wait is actually evaluated
+     * (unlike returning a condition object from a raw closure).
+     */
     void waitForElementToBeClickable(By locator) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
-        wait.until {
-            WebDriver d ->
-                def elementLocator = d.findElement(locator)
-                ExpectedConditions.elementToBeClickable(elementLocator)
-        }
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.elementToBeClickable(locator))
     }
 
+    /** @see #waitForElementToBeClickable(By) */
     void waitForElementToBeClickable(WebElement locator) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30))
-        wait.until { ExpectedConditions.elementToBeClickable(locator) }
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.elementToBeClickable(locator))
     }
 
     void waitForTextToBePresentInElement(WebElement locator, String text) {
@@ -226,6 +229,39 @@ abstract class BasePage {
                 .until(ExpectedConditions.elementToBeClickable(locator))
     }
 
+    WebElement waitIgnoringForElementToBeClickable(By locator, Duration duration = Duration.ofSeconds(30)) {
+        new WebDriverWait(context.driver, duration)
+                .ignoring(StaleElementReferenceException.class)
+                .until(ExpectedConditions.elementToBeClickable(locator))
+    }
+
+    /**
+     * Check if an element is displayed, with retry logic to handle StaleElementReferenceException.
+     * Returns true if element is displayed, false if not displayed or not found.
+     * @param locator The By locator to find the element
+     * @param duration Optional timeout duration (default 1 second - this is a quick check)
+     * @return true if element is displayed, false otherwise
+     */
+    boolean isElementDisplayedIgnoringStale(By locator, Duration duration = Duration.ofSeconds(1)) {
+        try {
+            new WebDriverWait(context.driver, duration)
+                    .ignoring(StaleElementReferenceException.class)
+                    .until { driver ->
+                        try {
+                            WebElement element = driver.findElement(locator)
+                            return element != null && element.isDisplayed()
+                        } catch (org.openqa.selenium.NoSuchElementException ignored) {
+                            return false
+                        } catch (StaleElementReferenceException ignored) {
+                            return null // Will cause the wait to continue
+                        }
+                    }
+            return true
+        } catch (org.openqa.selenium.TimeoutException ignored) {
+            return false
+        }
+    }
+
     boolean waitForUrlToContain(String text) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.urlContains(text))
@@ -239,6 +275,17 @@ abstract class BasePage {
     boolean waitForUrlToNotContain(String text) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .until(ExpectedConditions.not(ExpectedConditions.urlContains(text)))
+    }
+
+    /**
+     * Waits for a typical post-logout landing URL when {@link #waitForUrlToNotContain(String)} cannot
+     * be keyed off the pre-logout path (see {@link org.rundeck.util.gui.pages.TopMenuPage#logOut()}).
+     */
+    void waitForLogoutLandingUrl() {
+        new WebDriverWait(context.driver, Duration.ofSeconds(30)).until(
+                ExpectedConditions.or(
+                        ExpectedConditions.urlContains('/user/loggedout'),
+                        ExpectedConditions.urlContains('/user/login')))
     }
 
     boolean waitForAttributeContains(WebElement locator, String attribute, String value) {
@@ -274,8 +321,8 @@ abstract class BasePage {
         waitForElementToBeClickable(locator)
         try {
             el(locator).click()
-        } catch (StaleElementReferenceException e) {
-            // Re-find and click if element became stale
+        } catch (StaleElementReferenceException | NoSuchElementException e) {
+            // Re-find and click if element became stale or was momentarily absent
             waitForElementToBeClickable(locator)
             el(locator).click()
         }

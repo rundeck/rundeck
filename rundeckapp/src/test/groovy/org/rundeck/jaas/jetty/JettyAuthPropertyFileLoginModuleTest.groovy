@@ -15,7 +15,7 @@
  */
 package org.rundeck.jaas.jetty
 
-import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule
+import org.rundeck.jaas.PropertyFileLoginModule
 import spock.lang.Specification
 
 import javax.security.auth.Subject
@@ -23,18 +23,28 @@ import javax.security.auth.Subject
 
 class JettyAuthPropertyFileLoginModuleTest extends Specification {
     def "Initialize without hotReload set"() {
+        given: "A temporary properties file"
+        def tempFile = File.createTempFile("test-realm", ".properties")
+        tempFile.deleteOnExit()
+        tempFile.text = "testuser:testpass,user"
+        
         when:
         JettyAuthPropertyFileLoginModule module = new JettyAuthPropertyFileLoginModule()
-        module.initialize(new Subject(),null,[:],[:])
+        module.initialize(new Subject(),null,[:],[file: tempFile.absolutePath])
 
         then:
         !module.module.isReloadEnabled()
     }
 
     def "Initialize hotReload set to true"() {
+        given: "A temporary properties file"
+        def tempFile = File.createTempFile("test-realm", ".properties")
+        tempFile.deleteOnExit()
+        tempFile.text = "testuser:testpass,user"
+        
         when:
         JettyAuthPropertyFileLoginModule module = new JettyAuthPropertyFileLoginModule()
-        module.initialize(new Subject(),null,[:],[hotReload:"true"])
+        module.initialize(new Subject(),null,[:],[hotReload:"true", file: tempFile.absolutePath])
 
         then:
         module.module.isReloadEnabled()

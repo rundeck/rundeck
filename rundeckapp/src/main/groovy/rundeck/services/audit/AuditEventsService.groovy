@@ -26,6 +26,7 @@ import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent
+import org.springframework.security.authentication.event.AuthenticationFailureServiceExceptionEvent
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
@@ -33,8 +34,8 @@ import org.springframework.security.web.authentication.logout.LogoutHandler
 import rundeck.services.FrameworkService
 
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Function
 import java.util.stream.Collectors
@@ -209,6 +210,32 @@ class AuditEventsService
             return
         }
 
+        eventBuilder()
+                .setUsername(extractUsername(event.authentication))
+                .setUserRoles(extractAuthorities(event.authentication))
+                .setActionType(ActionTypes.LOGIN_FAILED)
+                .setResourceType(ResourceTypes.USER)
+                .setResourceName(extractUsername(event.authentication))
+                .publish()
+    }
+
+    /**
+     * Handles authentication failure events produced by JAAS login providers.
+     * When {@code rundeck.jaaslogin=true}, Spring Security wraps the JAAS {@code LoginException}
+     * as an {@code AuthenticationServiceException} and publishes
+     * {@code AuthenticationFailureServiceExceptionEvent} — a different type than the
+     * {@code AuthenticationFailureBadCredentialsEvent} used by the built-in realm provider.
+     * Without this listener, JAAS login failures are silently dropped from the audit log.
+     *
+     * @param event the JAAS authentication failure event
+     */
+    @EventListener
+    void handleAuthenticationServiceExceptionFailureEvent(AuthenticationFailureServiceExceptionEvent event) {
+        userLoginFailure.inc()
+        if (!event.authentication) {
+            LOG.error("Null authentication on JAAS login failure event. Cancelling event dispatch.")
+            return
+        }
 
         eventBuilder()
                 .setUsername(extractUsername(event.authentication))
@@ -383,6 +410,9 @@ class AuditEventsService
         private String resourceType = null
         private String resourceName = null
         private GrailsWebRequest httpRequest = null;
+        // Grails 7/Jetty 12: Extract request values immediately to avoid async access issues
+        private String capturedUserAgent = null;
+        private String capturedSessionID = null;
 
         private AuditEventBuilder() {
         }
@@ -459,6 +489,16 @@ class AuditEventsService
          */
         AuditEventBuilder setHttpRequest(GrailsWebRequest httpRequest) {
             this.httpRequest = httpRequest
+            // Grails 7/Jetty 12: Extract request values NOW while request context is valid
+            // In Jetty 12, ServletApiRequest.getRequest() returns null after async dispatch
+            if (httpRequest != null) {
+                try {
+                    this.capturedUserAgent = httpRequest.getHeader("User-Agent")
+                    this.capturedSessionID = httpRequest.getSessionId()
+                } catch (Exception e) {
+                    LOG.debug("Failed to extract request metadata: " + e.getMessage(), e)
+                }
+            }
             return this
         }
 
@@ -478,11 +518,11 @@ class AuditEventsService
             final serverHostname = frameworkService.getServerHostname()
             final serverUUID = frameworkService.getServerUUID()
 
+            // Grails 7/Jetty 12: Use captured values extracted when request was set
             // We cannot reference the request from the event object impl directly because the request api doesn't work well on async scenarios.
-            // So we must extract any wanted value here while we are inside the request context (if any)
-            def request = AuditEventBuilder.this.httpRequest;
-            final sessionID = request?.getSessionId();
-            final userAgent = request?.getHeader("User-Agent");
+            // In Jetty 12, ServletApiRequest.getRequest() returns null after async dispatch, causing NPE
+            final sessionID = AuditEventBuilder.this.capturedSessionID;
+            final userAgent = AuditEventBuilder.this.capturedUserAgent;
 
             // build user info impl
             final userInfo = new UserInfo() {

@@ -35,6 +35,7 @@ public class ZipResourceLoader implements PluginResourceLoader {
     List<String> resourcesList;
     String resourcesBasedir;
     List<String> basedirListing;
+    volatile Properties assetManifest; // Grails 7: asset-pipeline manifest for hashed filenames
 
     public ZipResourceLoader(
             final File cacheDir,
@@ -104,15 +105,88 @@ public class ZipResourceLoader implements PluginResourceLoader {
                     zipFile.getAbsolutePath()
             ));
         }
-        File resfile = new File(cacheDir, path);
+        
+        // Grails 7: Try resolving path via asset manifest for hashed filenames
+        String resolvedPath = resolveAssetPath(path);
+        
+        File resfile = new File(cacheDir, resolvedPath);
+        
         if (!resfile.isFile()) {
             throw new PluginException(String.format(
-                    "Resource path %s did not exist in the file: %s",
+                    "Resource path %s (resolved to %s) did not exist in the file: %s",
                     path,
+                    resolvedPath,
                     zipFile.getAbsolutePath()
             ));
         }
         return new FileInputStream(resfile);
+    }
+    
+    /**
+     * Resolve asset path via manifest.properties for Grails 7 hashed filenames.
+     * Falls back to original path if manifest not found or path not in manifest.
+     *
+     * Asset-pipeline strips the top-level type directory (js/, css/, …) when writing
+     * manifest keys, so plugin.yaml "js/menu/aclmanager.js" maps to manifest key
+     * "menu/aclmanager.js". This method strips leading segments progressively until
+     * a manifest entry is found.
+     *
+     * @param path Original path from plugin.yaml (e.g., "js/menu/aclmanager.js")
+     * @return Resolved path (e.g., "menu/aclmanager-HASH.js") or original if not in manifest
+     */
+    private String resolveAssetPath(String path) {
+        // Double-checked locking: volatile field + synchronized block ensure the manifest
+        // is fully loaded before any concurrent caller can read it.
+        Properties manifest = assetManifest;
+        if (manifest == null) {
+            synchronized (this) {
+                manifest = assetManifest;
+                if (manifest == null) {
+                    manifest = loadAssetManifest();
+                    assetManifest = manifest;
+                }
+            }
+        }
+
+        // Try direct lookup first (backwards compatible with pre-Grails 7 plugins)
+        String resolved = manifest.getProperty(path);
+        if (resolved != null) {
+            return resolved;
+        }
+
+        // Progressively strip leading path segments until a manifest entry is found.
+        // "js/menu/aclmanager.js" -> try "menu/aclmanager.js" -> found -> "menu/aclmanager-HASH.js"
+        // "js/common.js"          -> try "common.js"          -> found -> "common-HASH.js"
+        String remaining = path;
+        int slash = remaining.indexOf('/');
+        while (slash >= 0) {
+            remaining = remaining.substring(slash + 1);
+            String hashedPath = manifest.getProperty(remaining);
+            if (hashedPath != null) {
+                return hashedPath;
+            }
+            slash = remaining.indexOf('/');
+        }
+
+        // Fallback: return original path (non-hashed static assets)
+        return path;
+    }
+
+    /**
+     * Loads manifest.properties from the cache directory.
+     * Returns an empty Properties if the file does not exist or cannot be read.
+     */
+    private Properties loadAssetManifest() {
+        Properties manifest = new Properties();
+        File manifestFile = new File(cacheDir, "manifest.properties");
+        if (manifestFile.isFile()) {
+            try (FileInputStream fis = new FileInputStream(manifestFile)) {
+                manifest.load(fis);
+            } catch (IOException e) {
+                // Manifest load failed; fall through with empty manifest (backwards compatible)
+            }
+        }
+        return manifest;
     }
 
     /**

@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderSer
 import grails.async.Promises
 import grails.converters.JSON
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import grails.util.Holders
 import grails.web.JSONBuilder
@@ -78,7 +79,7 @@ import java.util.concurrent.TimeoutException
  * $Id$
  */
 
-public class NotificationService implements ApplicationContextAware{
+public class NotificationService implements ApplicationContextAware, EventBusAware{
     boolean transactional = false
 
     static final String POST = "post"

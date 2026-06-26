@@ -47,9 +47,9 @@
   <asset:javascript src="bootstrap.js" />
 </head>
 
-<g:if test="${!exception && request.getAttribute('javax.servlet.error.exception')}">
+<g:if test="${!exception && request.getAttribute('jakarta.servlet.error.exception')}">
   <%
-    exception=request.getAttribute('javax.servlet.error.exception').cause
+    exception=request.getAttribute('jakarta.servlet.error.exception').cause
   %>
 </g:if>
 <body id="four-oh-four-page">
@@ -57,7 +57,7 @@
       <div style="padding-top:16vh;">
         <div>
           <div class="col-xs-12 col-sm-6 space-cat-container">
-            <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
+            <g:if test="${!grailsApplication.config.getProperty('rundeck.feature.fourOhFour.hideSpaceCat', Boolean, false)}">
               <asset:image src="spacecat/saucer-cat.png" class="img-responsive"
                 alt="Space Cat" />
             </g:if>
@@ -67,8 +67,8 @@
             <h3>There was an unexpected error</h3>
             <h4>Please check the service log for more details.</h4>
             <h4>At ${new Date()}</h4>
-            <g:if test="${request.getAttribute('javax.servlet.error.message')}">
-              <h5><g:enc>${request.getAttribute('javax.servlet.error.message')}</g:enc></h5>
+            <g:if test="${request.getAttribute('jakarta.servlet.error.message')}">
+              <h5><g:enc>${request.getAttribute('jakarta.servlet.error.message')}</g:enc></h5>
             </g:if>
             <h5><g:enc>${exception?.message}</g:enc></h5>
             <div>
@@ -77,7 +77,8 @@
               </h5>
             </div>
             <div>
-              <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+              <g:set var="titleLink" value="${grailsApplication.config.getProperty('rundeck.gui.titleLink', String)}"/>
+              <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}"
                 class="
                 btn btn-lg return-button">Return to Home Page</a>
             </div>

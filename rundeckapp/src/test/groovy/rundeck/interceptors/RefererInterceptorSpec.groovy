@@ -17,8 +17,6 @@ package rundeck.interceptors
 
 import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.app.config.RundeckConfig
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.gsp.GroovyPagesTemplateEngine

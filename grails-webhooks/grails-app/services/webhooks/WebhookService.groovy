@@ -43,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Propagation
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 import java.util.concurrent.TimeUnit
 
 @Transactional
@@ -81,15 +81,13 @@ class WebhookService {
 
         Services contextServices = rundeckAuthorizedServicesProvider.getServicesWith(authContext)
 
-        if (featureService.featurePresent(Features.EVENT_STORE)) {
-            def scopedStore = gormEventStoreService.scoped(
-                new Evt(projectName: data.project, subsystem: 'webhooks'),
-                new EvtQuery(projectName: data.project, subsystem: 'webhooks')
-            )
-            contextServices = contextServices.combine(
-                    new SimpleServiceProvider([(EventStoreService): new EventStoreServiceTxn(scopedStore)])
-            )
-        }
+        def scopedStore = gormEventStoreService.scoped(
+            new Evt(projectName: data.project, subsystem: 'webhooks'),
+            new EvtQuery(projectName: data.project, subsystem: 'webhooks')
+        )
+        contextServices = contextServices.combine(
+                new SimpleServiceProvider([(EventStoreService): new EventStoreServiceTxn(scopedStore)])
+        )
         def keyStorageService = storageService.storageTreeWithContext(authContext)
         contextServices = contextServices.combine(new SimpleServiceProvider([(KeyStorageTree): keyStorageService]))
 

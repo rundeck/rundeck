@@ -4,8 +4,8 @@ import grails.testing.web.interceptor.InterceptorUnitTest
 import rundeck.services.ConfigurationService
 import spock.lang.Specification
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 class ZZ_TimerInterceptorSpec extends Specification implements InterceptorUnitTest<ZZ_TimerInterceptor> {
     def "After"() {

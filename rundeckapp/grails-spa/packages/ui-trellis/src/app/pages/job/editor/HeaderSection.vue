@@ -41,7 +41,7 @@ export default defineComponent({
       return this.projAuthz?.types?.job?.create || false;
     },
     uploadHref() {
-      return `${rundeckContext.rdBase}project/${rundeckContext.projectName}/job/upload`;
+      return `${rundeckContext.rdBase}/project/${rundeckContext.projectName}/job/upload`;
     },
   },
   async mounted() {

@@ -4,6 +4,7 @@ const fse = require("fs-extra");
 const Path = require("path");
 const walk = require("walk");
 const webpack = require("webpack");
+const ESLintPlugin = require("eslint-webpack-plugin");
 
 const nodeExternals = require("webpack-node-externals");
 const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`;
@@ -138,6 +139,15 @@ module.exports = {
           }
         });
     });
+
+    config.plugins.push(
+      new ESLintPlugin({
+        extensions: ["js", "ts", "vue"],
+        emitError: true,
+        emitWarning: true,
+        failOnError: true,
+      })
+    );
 
     /**
      * Add plugin to fixup .d.ts locations after webpack emit

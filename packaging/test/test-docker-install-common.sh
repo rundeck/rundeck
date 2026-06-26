@@ -12,7 +12,7 @@ list_debs(){
 build(){
   echo "$PWD"
 	local TAG="rdpro-$COMMON"
-	docker build -t "$TAG-util" -f "${PACKAGING_DIR}/test/docker/installcommon/${COMMON}.Dockerfile" "${PACKAGING_DIR}/test/docker/installcommon"
+	docker build --no-cache -t "$TAG-util" -f "${PACKAGING_DIR}/test/docker/installcommon/${COMMON}.Dockerfile" "${PACKAGING_DIR}/test/docker/installcommon"
 }
 
 run(){

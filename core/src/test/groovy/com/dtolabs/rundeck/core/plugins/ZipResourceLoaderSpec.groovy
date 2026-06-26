@@ -69,6 +69,81 @@ class ZipResourceLoaderSpec extends Specification {
         result == ['a', 'b']
     }
 
+    // -------------------------------------------------------------------------
+    // resolveAssetPath / openResourceStreamFor — Grails 7 manifest resolution
+    // -------------------------------------------------------------------------
+
+    def "openResourceStreamFor resolves multi-segment path via manifest"() {
+        given: "manifest maps the stripped key to a hashed filename in a subdirectory"
+        new File(cachedir, "manifest.properties").text =
+            "menu/aclmanager.js=menu/aclmanager-abc123.js\n"
+        new File(cachedir, "menu").mkdirs()
+        new File(cachedir, "menu/aclmanager-abc123.js").text = "aclmanager content"
+
+        def zrl = new ZipResourceLoader(cachedir, new File(cachedir, "dummy.zip"), null, "resources")
+
+        when: "the original path has a leading type segment stripped by asset-pipeline"
+        def stream = zrl.openResourceStreamFor("js/menu/aclmanager.js")
+
+        then: "the hashed file is returned"
+        stream.text == "aclmanager content"
+
+        cleanup:
+        stream?.close()
+    }
+
+    def "openResourceStreamFor resolves single-segment path via manifest"() {
+        given: "manifest maps stripped key to hashed filename at root"
+        new File(cachedir, "manifest.properties").text =
+            "common.js=common-abc123.js\n"
+        new File(cachedir, "common-abc123.js").text = "common content"
+
+        def zrl = new ZipResourceLoader(cachedir, new File(cachedir, "dummy.zip"), null, "resources")
+
+        when:
+        def stream = zrl.openResourceStreamFor("js/common.js")
+
+        then:
+        stream.text == "common content"
+
+        cleanup:
+        stream?.close()
+    }
+
+    def "openResourceStreamFor falls back to original path when no manifest exists"() {
+        given: "no manifest.properties in the cache dir"
+        new File(cachedir, "images").mkdirs()
+        new File(cachedir, "images/logo.png").bytes = [0x89, 0x50] as byte[]
+
+        def zrl = new ZipResourceLoader(cachedir, new File(cachedir, "dummy.zip"), null, "resources")
+
+        when:
+        def stream = zrl.openResourceStreamFor("images/logo.png")
+
+        then: "original path is used and the file is opened successfully"
+        stream != null
+
+        cleanup:
+        stream?.close()
+    }
+
+    def "openResourceStreamFor falls back to original path when key not in manifest"() {
+        given: "manifest exists but does not contain the requested key"
+        new File(cachedir, "manifest.properties").text = "other.js=other-abc123.js\n"
+        new File(cachedir, "static.js").text = "static content"
+
+        def zrl = new ZipResourceLoader(cachedir, new File(cachedir, "dummy.zip"), null, "resources")
+
+        when:
+        def stream = zrl.openResourceStreamFor("static.js")
+
+        then:
+        stream.text == "static content"
+
+        cleanup:
+        stream?.close()
+    }
+
     def "listResources zip basepath"() {
         given:
         def reslist = null

@@ -127,7 +127,7 @@
                                 attr: { 'data-execstate': executionState },
                                 css: { 'auto-caret-container': followingOutput(), active: followingOutput() }
                                 ">
-                              <span data-bind="text: $data.stepctx[0] + '. '"></span>
+                              <span data-bind="text: parseInt($data.stepctx) + '. '"></span>
                               <i class="auto-caret text-muted"></i>
 
                               <feature:disabled name="workflowDynamicStepSummaryGUI">

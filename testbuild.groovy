@@ -1,4 +1,5 @@
 #!/usr/bin/env groovy
+import groovy.cli.commons.CliBuilder
 import java.util.function.Predicate
 import java.util.zip.ZipEntry
 
@@ -61,7 +62,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 //def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','orchestrator', 'source-refresh','upvar', 'audit-logging','jsch']
+def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','aes-gcm-encryption','git','object-store','orchestrator', 'source-refresh','upvar', 'audit-logging','jsch']
 //load build.yaml from rundeckcore
 def corebuild = new File('build.yaml').withReader{reader->
     new groovy.yaml.YamlSlurper().parse(reader)
@@ -124,7 +125,6 @@ def manifest=[
         "templates/config/rundeck-config.properties.template",
         "templates/config/ssl.properties.template",
         "templates/sbin/rundeckd.template",
-        "WEB-INF/lib/jetty-jaas-${versions.jetty}.jar",
         "WEB-INF/lib/jetty-server-${versions.jetty}.jar",
         "WEB-INF/lib/jetty-util-${versions.jetty}.jar",
 //        "WEB-INF/lib-provided/jetty-http-${versions.jetty}.jar", //XXX: not sure if these are needed
@@ -132,8 +132,8 @@ def manifest=[
         "WEB-INF/lib/jetty-security-${versions.jetty}.jar",
         "WEB-INF/lib/log4j-api-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-core-${versions.log4j}.jar",
-        "WEB-INF/lib/log4j-slf4j-impl-${versions.log4j}.jar",
-        "WEB-INF/lib/slf4j-api-1.7.36.jar",
+        "WEB-INF/lib/log4j-slf4j2-impl-.*\\.jar#~",  // Spring Boot managed version (2.x)
+        "WEB-INF/lib/slf4j-api-2\\..*\\.jar#~",  // Spring Boot 3 uses SLF4J 2.x
         "WEB-INF/lib/libpam4j-1.11.jar",
         ".*junit.*#!~"
     ],

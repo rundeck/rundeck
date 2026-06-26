@@ -1,10 +1,12 @@
 buildscript {
     repositories {
         mavenLocal()
+        mavenCentral()
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
+        classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
     }
 }
 
@@ -16,13 +18,14 @@ group "org.rundeck.grails.plugins.persistlocale"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
-apply plugin:"org.grails.grails-plugin"
-apply plugin:"org.grails.grails-gsp"
+apply plugin:"org.apache.grails.gradle.grails-plugin"
+apply plugin:"org.apache.grails.gradle.grails-gsp"
 
 apply from: "../gradle/java-version.gradle"
 
 repositories {
     mavenLocal()
+        mavenCentral()
     maven { url "https://repo.grails.org/grails/core" }
 }
 
@@ -35,40 +38,38 @@ configurations {
 
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    implementation ("org.grails:grails-core") {
+    implementation ("org.apache.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
-    implementation "org.grails:grails-web-boot"
-    implementation "org.grails:grails-logging"
-    implementation "org.grails:grails-plugin-rest"
-    implementation "org.grails:grails-plugin-databinding"
-    implementation "org.grails:grails-plugin-i18n"
-    implementation "org.grails:grails-plugin-services"
-    implementation "org.grails:grails-plugin-url-mappings"
-    implementation "org.grails:grails-plugin-interceptors"
-    implementation "org.grails.plugins:async"
-    implementation "org.grails.plugins:scaffolding"
-    implementation "org.grails.plugins:gsp"
+    implementation "org.apache.grails:grails-web-boot"
+    implementation "org.apache.grails:grails-logging"
+    implementation "org.apache.grails:grails-rest-transforms"
+    implementation "org.apache.grails:grails-databinding"
+    implementation "org.apache.grails:grails-core"
+    implementation "org.apache.grails:grails-services"
+    implementation "org.apache.grails:grails-url-mappings"
+    implementation "org.apache.grails:grails-interceptors"
+    implementation "org.apache.grails:grails-async"
+    implementation "org.apache.grails:grails-scaffolding"
+    implementation "org.apache.grails:grails-gsp"
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
     implementation "commons-io:commons-io:${commonsIoVersion}"
-    implementation "io.micronaut:micronaut-inject-groovy"
-    console "org.grails:grails-console"
+    implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
+    compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
+    console "org.apache.grails:grails-console"
     profile ("org.grails.profiles:web-plugin"){
         exclude(group:"org.grails.profiles",module:"web")
     }
-    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    testImplementation "org.grails:grails-gorm-testing-support"
+    runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
+    testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.mockito:mockito-core"
-    testImplementation "org.grails:grails-web-testing-support"
+    testImplementation "org.apache.grails:grails-testing-support-web"
     
     constraints {
-        implementation("commons-io:commons-io:${commonsIoVersion}") {
-            because "Fix CVE-2024-47554 - force newer version over transitive dependencies"
-        }
         implementation("commons-fileupload:commons-fileupload:${commonsFileuploadVersion}") {
-            because "Fix CVE-2025-48976 - force newer version over transitive dependencies from grails-web-fileupload"
+            because "Fix CVE-2025-48976"
         }
     }
 }

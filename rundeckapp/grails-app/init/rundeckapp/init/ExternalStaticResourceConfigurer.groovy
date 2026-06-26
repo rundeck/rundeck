@@ -18,10 +18,10 @@ package rundeckapp.init
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @CompileStatic
-class ExternalStaticResourceConfigurer extends WebMvcConfigurerAdapter implements InitializingBean {
+class ExternalStaticResourceConfigurer implements WebMvcConfigurer, InitializingBean {
 
     String resourceUriLocation
     String resourceWebPathPrefix = "/user-assets/**" //If this changes, the spring security conf must be updated

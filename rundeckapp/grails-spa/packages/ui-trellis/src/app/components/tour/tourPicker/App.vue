@@ -108,7 +108,7 @@ export default defineComponent({
         ).then(() => {
           if (tour.project) {
             window.location.replace(
-              `${context.rdBase}project/${tour.project}/home`,
+              `${context.rdBase}/project/${tour.project}/home`,
             );
           } else {
             this.eventBus.emit("tourSelected", tour);

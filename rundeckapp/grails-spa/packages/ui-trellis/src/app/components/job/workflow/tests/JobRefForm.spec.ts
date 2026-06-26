@@ -20,7 +20,7 @@ jest.mock("@/library/services/api", () => ({
 
 jest.mock("@/library", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
-    rdBase: "http://localhost:4440/",
+    rdBase: "http://localhost:4440",
     projectName: "TestProject",
     rootStore: {
       projects: {
@@ -318,7 +318,7 @@ describe("JobRefForm", () => {
       await wrapper.setProps({ modalActive: false });
 
       expect(wrapper.emitted("update:modalActive")).toBeTruthy();
-      expect(wrapper.emitted("update:modalActive")[0]).toEqual([false]);
+      expect(wrapper.emitted("update:modalActive")![0]).toEqual([false]);
     });
   });
 

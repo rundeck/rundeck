@@ -216,9 +216,18 @@ public abstract class DirPluginScanner implements PluginScanner, PluginDirChange
      * Test if a loader for this file matches the provider
      */
     private boolean test(final ProviderIdent ident, final File file) {
-        final ProviderLoader fileProviderLoader = filecache.get(file, this);
-        final boolean loaderFor = null != fileProviderLoader && fileProviderLoader.isLoaderFor(ident);
-        return null != fileProviderLoader && loaderFor;
+        try {
+            final ProviderLoader fileProviderLoader = filecache.get(file, this);
+            if (fileProviderLoader == null) {
+                return false;
+            }
+            final boolean loaderFor = fileProviderLoader.isLoaderFor(ident);
+            return loaderFor;
+        } catch (Exception e) {
+            // Plugin is broken or error occurred (e.g., class not found, I/O error) - log and skip it
+            log.error("Error testing plugin file {}: {}", file.getAbsolutePath(), e.getMessage(), e);
+            return false;
+        }
     }
     private List<ProviderIdent> listProviders(final File file){
         final ProviderLoader fileProviderLoader = filecache.get(file, this);

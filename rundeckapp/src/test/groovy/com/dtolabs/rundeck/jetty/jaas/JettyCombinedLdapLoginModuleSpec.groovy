@@ -1,8 +1,8 @@
 package com.dtolabs.rundeck.jetty.jaas
 
-import org.eclipse.jetty.jaas.JAASPrincipal
-import org.eclipse.jetty.jaas.JAASRole
-import org.eclipse.jetty.jaas.spi.AbstractLoginModule
+import org.rundeck.jaas.RundeckPrincipal
+import org.rundeck.jaas.RundeckRole
+import org.rundeck.jaas.AbstractLoginModule
 import spock.lang.Specification
 
 import javax.naming.NamingEnumeration
@@ -46,10 +46,9 @@ class JettyCombinedLdapLoginModuleSpec extends Specification {
             final AbstractLoginModule.JAASUserInfo userInfo = module.getCurrentUser();
             Subject subject = new Subject();
             userInfo.setJAASInfo(subject);
+            // Java 17: Use lambda instead of method reference to avoid Groovy type inference issues
             List<String> actualRoles = subject
-                .getPrincipals(JAASRole.class).stream().map(JAASPrincipal::getName).collect(
-                Collectors.toList()
-            )
+                .getPrincipals(RundeckRole.class).stream().map(p -> p.getName()).toList()
         then:
             actualRoles == expected
         where:

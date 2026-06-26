@@ -117,6 +117,7 @@ public class RundeckConfigBase {
     public static class RundeckApiConfig {
         ApiTokensConfig tokens;
         PaginateJobs paginatejobs;
+        ExecutionQueryConfig executionQueryConfig;
 
         @Data
         public static class PaginateJobs {
@@ -131,6 +132,23 @@ public class RundeckConfigBase {
         @Data
         public static class ApiTokensDuration {
             String max;
+        }
+
+        @Data
+        public static class ExecutionQueryConfig {
+            CountCache countCache;
+            CountPerformance countPerformance;
+        }
+
+        @Data
+        public static class CountCache {
+            Boolean enabled;
+            Long ttl;
+        }
+
+        @Data
+        public static class CountPerformance {
+            Boolean enabled;
         }
     }
 
@@ -428,34 +446,27 @@ public class RundeckConfigBase {
 
         Boolean enableAll;
         Repository repository = new Repository();
-        Enabled optionValuesPlugin = new Enabled();
         Enabled webhooks = new Enabled();
-        Enabled emailCSSFramework = new Enabled();
         Enabled enhancedNodes = new Enabled();
         Enabled cleanExecutionsHistoryJob = new Enabled();
         Enabled cleanExecutionsHistoryJobAsyncStart = new Enabled();
-        Enabled workflowDynamicStepSummaryGUI = new Enabled();
-        Enabled legacyProjectNodesUi = new Enabled();
-        Enabled jobLifecyclePlugin = new Enabled();
-        Enabled executionLifecyclePlugin = new Enabled();
+        Enabled workflowDynamicStepSummaryGUI = new Enabled(true);
+        Enabled jobLifecyclePlugin = new Enabled(true);
+        Enabled executionLifecyclePlugin = new Enabled(true);
         Enabled sidebarProjectListing = new Enabled(true);
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
         Enabled notificationsOwnThread = new Enabled(true);
         Enabled workflowDesigner = new Enabled(true);
-        Enabled eventStore = new Enabled(true);
-        Enabled projectKeyStorage = new Enabled(true);
         Enabled pluginSecurity = new Enabled();
         Enabled healthEndpoint = new Enabled(true);
         Enabled fileUploadPlugin = new Enabled(true);
-        Enabled pluginGroups = new Enabled(true);
-        Enabled vueKeyStorage = new Enabled(true);
         Enabled legacyUi = new Enabled();
-        Enabled legacyXml = new Enabled();
+        // XML API support disabled in 6.0 - JSON only
+        Enabled legacyXml = new Enabled(false);
         Enabled apiProjectConfigValidation = new Enabled();
         Enabled caseInsensitiveUsername = new Enabled();
-        Enabled newLocalNodeExecutor = new Enabled();
         Enabled nodeExecutorSecureInput = new Enabled();
         Enabled alphaUi = new Enabled();
         Enabled enhancedJobTakeoverQuery = new Enabled();
@@ -464,6 +475,11 @@ public class RundeckConfigBase {
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
         Enabled earlyAccessJobConditional = new Enabled();
+        Enabled activityDefaultTimeFilter = new Enabled();
+        Enabled vueKeyStorage = new Enabled(true);
+        Enabled pluginGroups = new Enabled(true);
+        int guiAceEditorMinLines = 12;
+        int guiAceEditorMaxLines = 0;
 
         @Data
         public static class Repository {
@@ -637,6 +653,7 @@ public class RundeckConfigBase {
         String logoSmall;
         Integer matchedNodesMaxCount;
         Keystorage keystorage;
+        Activity activity;
 
         @Data
         public static class GuiSystemConfig{
@@ -717,6 +734,13 @@ public class RundeckConfigBase {
         public static class Keystorage{
             Boolean downloadenabled;
         }
+
+        @Data
+        public static class Activity {
+            /** Default time filter for the activity/executions page when no filters are active.
+             *  Accepted values: 1h, 1d, 1w, 1m. Default: 1m */
+            String defaultTimeFilter;
+        }
     }
 
     @Data
@@ -774,7 +798,6 @@ public class RundeckConfigBase {
     }
 
     public static final Map<String,String> DEPRECATED_PROPS = ImmutableMap.of(
-            "feature.optionValuesPlugin.enabled","feature.option-values-plugin.enabled",
             "feature.enhancedNodes.enabled","feature.enhanced-nodes.enabled",
             "feature.enableAll","feature.*.enabled"
     );

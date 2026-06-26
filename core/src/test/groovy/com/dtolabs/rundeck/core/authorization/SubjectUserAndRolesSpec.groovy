@@ -15,12 +15,13 @@ class SubjectUserAndRolesSpec extends Specification {
     def "create"() {
         given:
             def subject = new Subject()
-            subject.principals = [
+            // Groovy 4: principals is read-only, use getPrincipals().addAll()
+            subject.getPrincipals().addAll([
                 new Username('auser'),
                 new Group('agroup'),
                 new Group('bgroup'),
                 new OtherPrincipal(name: 'bob')
-            ]
+            ])
         when:
             def result = new SubjectUserAndRoles(subject)
         then:

@@ -17,12 +17,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import grails.test.hibernate.HibernateSpec
 import grails.testing.gorm.DataTest
 import groovy.mock.interceptor.MockFor
-
-//import grails.test.GrailsUnitTestCase
-
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
 import rundeck.Execution
@@ -35,10 +31,13 @@ import spock.lang.Specification
  * User: greg
  * Date: 8/7/13
  * Time: 3:07 PM
+ *
+ * The ExecutionServiceTests contains tests for the ExecutionService class, focusing on querying job executions
+ * Cases that execute HQL directly (like ExecutionQuery.countExecutions) should be covered in integration tests
  */
 class ExecutionServiceTests extends Specification implements DataTest {
 
-    def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec }
+    def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec, Execution }
 
     private getAppCtxtMock(){
         def mockAppCtxt = new MockFor(ApplicationContext)
@@ -92,7 +91,7 @@ class ExecutionServiceTests extends Specification implements DataTest {
         Execution e1 = new Execution(
                 scheduledExecution: se1,
                 project: "Test",
-                status: "true",
+                status: "succeeded",
                 dateStarted: new Date(),
                 dateCompleted: new Date(),
                 user: 'adam',
@@ -104,7 +103,7 @@ class ExecutionServiceTests extends Specification implements DataTest {
         Execution e2 = new Execution(
                 scheduledExecution: se2,
                 project: "Test",
-                status: "true",
+                status: "succeeded",
                 dateStarted: new Date(),
                 dateCompleted: new Date(),
                 user: 'bob',
@@ -115,7 +114,7 @@ class ExecutionServiceTests extends Specification implements DataTest {
         Execution e3 = new Execution(
                 scheduledExecution: se3,
                 project: "Test",
-                status: "true",
+                status: "succeeded",
                 dateStarted: new Date(),
                 dateCompleted: new Date(),
                 user: 'chuck',
@@ -141,123 +140,6 @@ class ExecutionServiceTests extends Specification implements DataTest {
         [e1, e2, e3, schExec1]
     }
 
-    /**
-     * Test jobExecutions empty
-     */
-    public void testApiJobExecutions_empty() {
-        when:
-        def svc = new ExecutionService()
-
-        def execs = createTestExecs()
-
-        ScheduledExecution se4 = new ScheduledExecution(
-                uuid: 'test5',
-                jobName: 'blah',
-                project: 'Test',
-                groupPath: 'some',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]).save(),
-        )
-        assert null != se4.save(failOnError: true)
-        svc.applicationContext = getAppCtxtMock()
-        def result = svc.queryJobExecutions(se4, null)
-
-        then:
-        assert 0 == result.total
-    }
-    /**
-     * Test jobExecutions simple
-     */
-    public void testApiJobExecutions_simple() {
-        when:
-        def svc = new ExecutionService()
-
-        def execs = createTestExecs()
-
-        ScheduledExecution se=execs[0].scheduledExecution
-        assert null != se
-        svc.applicationContext = getAppCtxtMock()
-        def result = svc.queryJobExecutions(se, null)
-
-        then:
-        assert 1 == result.total
-    }
-    /**
-     * Test jobExecutions succeeded
-     */
-    public void testApiJobExecutions_success() {
-        when:
-        def svc = new ExecutionService()
-
-        def execs = createTestExecs()
-
-        ScheduledExecution se=execs[0].scheduledExecution
-        assert null != se
-        svc.applicationContext = getAppCtxtMock()
-        def result = svc.queryJobExecutions(se, 'succeeded')
-
-        then:
-        assert 1 == result.total
-    }
-    /**
-     * Test jobExecutions failed
-     */
-    public void testApiJobExecutions_failed() {
-        when:
-        def svc = new ExecutionService()
-
-        def execs = createTestExecs()
-        Execution e1 = new Execution(
-                scheduledExecution: execs[0].scheduledExecution,
-                project: "Test",
-                status: "false",
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
-                user: 'adam',
-                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
-
-        )
-        assert null != e1.save()
-        execs[0].delete()
-
-        ScheduledExecution se=execs[0].scheduledExecution
-        assert null != se
-        svc.applicationContext = getAppCtxtMock()
-        def result = svc.queryJobExecutions(se, 'failed',0,20)
-
-        then:
-        assert 1 == result.total
-    }
-    /**
-     * Test jobExecutions failed
-     */
-    public void testApiJobExecutions_custom() {
-        when:
-        def svc = new ExecutionService()
-
-        def execs = createTestExecs()
-        Execution e1 = new Execution(
-                scheduledExecution: execs[0].scheduledExecution,
-                project: "Test",
-                status: "custom status",
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
-                user: 'adam',
-                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
-
-        )
-        assert null != e1.save()
-        execs[0].delete()
-
-        ScheduledExecution se=execs[0].scheduledExecution
-        assert null != se
-        svc.applicationContext = getAppCtxtMock()
-        def result = svc.queryJobExecutions(se, 'custom status',0,20)
-
-        then:
-        assert 1 == result.total
-    }
     /**
      * Test groupPath
      */
@@ -516,19 +398,652 @@ class ExecutionServiceTests extends Specification implements DataTest {
         then:
         assert 2 == result.total
     }
+    // ==================== Execution Count Cache Tests ====================
+    // Note: Tests that require HQL (ExecutionQuery.countExecutions) need integration tests
+    // These unit tests focus on cache logic that can be tested with mocks
+
     /**
-     * Query for scheduled executions
+     * Test that cache is disabled by default (configurationService is null)
      */
-    public void testApiExecutionsGetScheduled() {
-        when:
+    void testExecutionCountCacheDisabledByDefault() {
+        given:
+        def svc = new ExecutionService()
+        svc.configurationService = null
+
+        expect:
+        svc.isExecutionCountCacheEnabled() == false
+    }
+
+    /**
+     * Test that cache is disabled when config says false
+     */
+    void testExecutionCountCacheDisabledByConfig() {
+        given:
+        def svc = new ExecutionService()
+        def mockConfigService = Mock(ConfigurationService) {
+            getBoolean('executionService.countCache.enabled', false) >> false
+        }
+        svc.configurationService = mockConfigService
+
+        expect:
+        svc.isExecutionCountCacheEnabled() == false
+    }
+
+    /**
+     * Test cache key generation with ExecutionCountCacheKey class
+     */
+    void testBuildCountCacheKey() {
+        given:
         def svc = new ExecutionService()
 
-        def execs = createTestExecs()
-        svc.applicationContext = getAppCtxtMock()
-        def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Future", statusFilter: "scheduled"), 0, 20)
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            statusFilter: "succeeded",
+            userFilter: "admin"
+        )
+        def cacheKey = svc.buildCountCacheKey(query)
 
         then:
-        assert 1 == result.total
+        cacheKey.project == "TestProject"
+        cacheKey.status == "succeeded"
+        cacheKey.user == "admin"
+    }
+
+    /**
+     * Test cache key generation with null values
+     */
+    void testBuildCountCacheKeyWithNulls() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(projFilter: "TestProject")
+        def cacheKey = svc.buildCountCacheKey(query)
+
+        then:
+        cacheKey.project == "TestProject"
+        cacheKey.status == null
+        cacheKey.user == null
+    }
+
+    /**
+     * Test cache key uses relative filter string (recentFilter) when available
+     */
+    void testBuildCountCacheKeyWithRecentFilter() {
+        given:
+        def svc = new ExecutionService()
+        def now = new Date()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            recentFilter: "60d",
+            endafterFilter: now,
+            doendafterFilter: true
+        )
+        def cacheKey = svc.buildCountCacheKey(query)
+
+        then:
+        cacheKey.project == "TestProject"
+        cacheKey.recentFilter == "60d"
+    }
+
+    /**
+     * Test cache key uses relative filter string (olderFilter) when available
+     */
+    void testBuildCountCacheKeyWithOlderFilter() {
+        given:
+        def svc = new ExecutionService()
+        def now = new Date()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            olderFilter: "30d",
+            endbeforeFilter: now,
+            doendbeforeFilter: true
+        )
+        def cacheKey = svc.buildCountCacheKey(query)
+
+        then:
+        cacheKey.project == "TestProject"
+        cacheKey.olderFilter == "30d"
+    }
+
+    /**
+     * Test that same relative filter produces same cache key regardless of timestamp
+     */
+    void testBuildCountCacheKeySameRelativeFilter() {
+        given:
+        def svc = new ExecutionService()
+        def time1 = new Date()
+        def time2 = new Date(time1.time + 3600000)  // 1 hour later
+
+        when:
+        // Two requests with same relative filter but different computed timestamps
+        def query1 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d", endbeforeFilter: time1, doendbeforeFilter: true)
+        def query2 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d", endbeforeFilter: time2, doendbeforeFilter: true)
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+
+        then:
+        // Keys should be the same because relative filter string is the same
+        key1 == key2
+    }
+
+    /**
+     * Test that different relative filters produce different cache keys
+     */
+    void testBuildCountCacheKeyDifferentRelativeFilters() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query1 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "30d")
+        def query2 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def query3 = new ExecutionQuery(projFilter: "TestProject", recentFilter: "24h")
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+        def key3 = svc.buildCountCacheKey(query3)
+
+        then:
+        key1 != key2
+        key1 != key3
+        key2 != key3
+    }
+
+    /**
+     * Test cache key generation with single job ID filter
+     */
+    void testBuildCountCacheKeyWithSingleJobId() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['uuid-123']
+        )
+        def cacheKey = svc.buildCountCacheKey(query)
+
+        then:
+        cacheKey.project == "TestProject"
+        cacheKey.jobId == 'uuid-123'
+    }
+
+    /**
+     * Test cache key with no job ID filter
+     */
+    void testBuildCountCacheKeyWithNoJobId() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(projFilter: "TestProject")
+        def cacheKey = svc.buildCountCacheKey(query)
+
+        then:
+        cacheKey.project == "TestProject"
+        cacheKey.jobId == null
+    }
+
+    /**
+     * Test isCacheableQuery returns false for multiple job IDs
+     */
+    void testIsCacheableQueryWithMultipleJobIds() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['uuid-1', 'uuid-2', 'uuid-3']
+        )
+
+        then:
+        svc.isCacheableQuery(query) == false
+    }
+
+    /**
+     * Test isCacheableQuery returns true for single job ID
+     */
+    void testIsCacheableQueryWithSingleJobId() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['uuid-123']
+        )
+
+        then:
+        svc.isCacheableQuery(query) == true
+    }
+
+    /**
+     * Test cache key equals() and hashCode() work correctly for HashMap/Cache lookups
+     */
+    void testCacheKeyEqualsAndHashCode() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        // Create two identical queries
+        def query1 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def query2 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+
+        then:
+        // equals() should return true
+        key1 == key2
+        key1.equals(key2)
+        // hashCode() should be the same
+        key1.hashCode() == key2.hashCode()
+        // toString() should be meaningful
+        key1.toString().contains("TestProject")
+        key1.toString().contains("60d")
+    }
+
+    /**
+     * Test cache key works correctly in a HashMap (simulates Guava Cache behavior)
+     */
+    void testCacheKeyWorksInHashMap() {
+        given:
+        def svc = new ExecutionService()
+        def map = new HashMap<ExecutionService.ExecutionCountCacheKey, Long>()
+
+        when:
+        def query1 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def query2 = new ExecutionQuery(projFilter: "TestProject", olderFilter: "60d")
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+        
+        // Store with key1
+        map.put(key1, 12345L)
+        // Retrieve with key2 (should find it because equals/hashCode match)
+        def retrieved = map.get(key2)
+
+        then:
+        retrieved == 12345L
+    }
+
+    /**
+     * Test cache key with single jobId works correctly in HashMap
+     */
+    void testCacheKeyWithJobIdWorksInHashMap() {
+        given:
+        def svc = new ExecutionService()
+        def map = new HashMap<ExecutionService.ExecutionCountCacheKey, Long>()
+
+        when:
+        def query1 = new ExecutionQuery(projFilter: "TestProject", jobIdListFilter: ['uuid-123'])
+        def query2 = new ExecutionQuery(projFilter: "TestProject", jobIdListFilter: ['uuid-123'])
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+        
+        map.put(key1, 999L)
+        def retrieved = map.get(key2)
+
+        then:
+        key1.jobId == key2.jobId
+        key1.hashCode() == key2.hashCode()
+        key1 == key2
+        retrieved == 999L
+    }
+
+    /**
+     * Test isCacheableQuery returns true for queries without date filters
+     */
+    void testIsCacheableQueryNoDateFilters() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(projFilter: "TestProject", statusFilter: "succeeded")
+
+        then:
+        svc.isCacheableQuery(query) == true
+    }
+
+    /**
+     * Test isCacheableQuery returns true for queries with relative filters
+     * recentFilter covers doendafterFilter, olderFilter covers doendbeforeFilter
+     */
+    void testIsCacheableQueryWithRelativeFilters() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        // recentFilter sets doendafterFilter - this is covered
+        def queryRecent = new ExecutionQuery(projFilter: "TestProject", recentFilter: "60d", doendafterFilter: true)
+        // olderFilter sets doendbeforeFilter - this is covered
+        def queryOlder = new ExecutionQuery(projFilter: "TestProject", olderFilter: "30d", doendbeforeFilter: true)
+        // Both relative filters
+        def queryBoth = new ExecutionQuery(projFilter: "TestProject", recentFilter: "7d", olderFilter: "1d", 
+                                           doendafterFilter: true, doendbeforeFilter: true)
+
+        then:
+        svc.isCacheableQuery(queryRecent) == true
+        svc.isCacheableQuery(queryOlder) == true
+        svc.isCacheableQuery(queryBoth) == true
+    }
+
+    /**
+     * Test isCacheableQuery returns false when relative filter has additional absolute dates
+     */
+    void testIsCacheableQueryWithMixedFilters() {
+        given:
+        def svc = new ExecutionService()
+        def now = new Date()
+
+        when:
+        // olderFilter=60d with additional begin date - not cacheable
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            olderFilter: "60d",
+            doendbeforeFilter: true,
+            // Additional absolute date filter
+            endafterFilter: now,
+            doendafterFilter: true
+        )
+
+        then:
+        // Not cacheable because doendafterFilter is set but recentFilter is not
+        svc.isCacheableQuery(query) == false
+    }
+
+    /**
+     * Test isCacheableQuery returns false for queries with absolute dates but no relative filter
+     */
+    void testIsCacheableQueryWithAbsoluteDatesOnly() {
+        given:
+        def svc = new ExecutionService()
+        def now = new Date()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            endafterFilter: now,
+            doendafterFilter: true
+            // No recentFilter or olderFilter
+        )
+
+        then:
+        svc.isCacheableQuery(query) == false
+    }
+
+    /**
+     * Test isCacheableQuery returns false for queries with start date filters but no relative filter
+     */
+    void testIsCacheableQueryWithStartDateFiltersOnly() {
+        given:
+        def svc = new ExecutionService()
+        def now = new Date()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            startafterFilter: now,
+            dostartafterFilter: true
+        )
+
+        then:
+        svc.isCacheableQuery(query) == false
+    }
+
+    /**
+     * Test canUseSimpleCount returns true when no job filters
+     */
+    void testCanUseSimpleCountNoJobFilters() {
+        given:
+        def svc = new ExecutionService()
+        svc.configurationService = Mock(ConfigurationService){
+            getBoolean('api.executionQueryConfig.countPerformance.enabled', false) >> true
+        }
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            statusFilter: "succeeded"
+        )
+
+        then:
+        svc.canUseSimpleCount(query) == true
+    }
+
+    /**
+     * Test canUseSimpleCount returns true when jobIdListFilter has UUID strings
+     * (can use execution.job_uuid column without JOIN)
+     */
+    void testCanUseSimpleCountWithJobUuidFilter() {
+        given:
+        def svc = new ExecutionService()
+        svc.configurationService = Mock(ConfigurationService){
+            getBoolean('api.executionQueryConfig.countPerformance.enabled', false) >> true
+        }
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['550e8400-e29b-41d4-a716-446655440000']
+        )
+
+        then:
+        svc.canUseSimpleCount(query) == true
+    }
+
+    /**
+     * Test canUseSimpleCount returns true with multiple UUID job IDs
+     */
+    void testCanUseSimpleCountWithMultipleJobUuids() {
+        given:
+        def svc = new ExecutionService()
+        svc.configurationService = Mock(ConfigurationService){
+            getBoolean('api.executionQueryConfig.countPerformance.enabled', false) >> true
+        }
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['uuid-1', 'uuid-2', 'uuid-3']
+        )
+
+        then:
+        svc.canUseSimpleCount(query) == true
+    }
+
+    /**
+     * Test canUseSimpleCount returns false when jobIdListFilter has Long IDs (legacy)
+     * (requires JOIN with scheduled_execution)
+     */
+    void testCanUseSimpleCountWithLongJobId() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobIdListFilter: ['12345']  // Numeric string = Long ID
+        )
+
+        then:
+        svc.canUseSimpleCount(query) == false
+    }
+
+    /**
+     * Test canUseSimpleCount returns false when groupPath present
+     */
+    void testCanUseSimpleCountWithGroupPath() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            groupPath: "some/path"
+        )
+
+        then:
+        svc.canUseSimpleCount(query) == false
+    }
+
+    /**
+     * Test canUseSimpleCount returns false when jobFilter present
+     */
+    void testCanUseSimpleCountWithJobFilter() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            jobFilter: "myJob"
+        )
+
+        then:
+        svc.canUseSimpleCount(query) == false
+    }
+
+    /**
+     * Test canUseSimpleCount returns false when adhoc is set
+     */
+    void testCanUseSimpleCountWithAdhoc() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query = new ExecutionQuery(
+            projFilter: "TestProject",
+            adhoc: true
+        )
+
+        then:
+        svc.canUseSimpleCount(query) == false
+    }
+
+    /**
+     * Test cache initialization with custom TTL
+     */
+    void testCacheInitializationWithCustomTTL() {
+        given:
+        def svc = new ExecutionService()
+        def mockConfigService = Mock(ConfigurationService) {
+            getBoolean('executionService.countCache.enabled', false) >> true
+            getInteger('executionService.countCache.ttlSeconds', 30) >> 60
+        }
+        svc.configurationService = mockConfigService
+
+        when:
+        def cache = svc.getExecutionCountCache()
+
+        then:
+        cache != null
+    }
+
+    /**
+     * Test cache put and get operations
+     */
+    void testCachePutAndGet() {
+        given:
+        def svc = new ExecutionService()
+        def mockConfigService = Mock(ConfigurationService) {
+            getBoolean('executionService.countCache.enabled', false) >> true
+            getInteger('executionService.countCache.ttlSeconds', 30) >> 30
+        }
+        svc.configurationService = mockConfigService
+
+        when:
+        def cache = svc.getExecutionCountCache()
+        cache.put("test-key", 42L)
+        def result = cache.getIfPresent("test-key")
+
+        then:
+        result == 42L
+    }
+
+    /**
+     * Test cache returns null for missing key
+     */
+    void testCacheMiss() {
+        given:
+        def svc = new ExecutionService()
+        def mockConfigService = Mock(ConfigurationService) {
+            getBoolean('executionService.countCache.enabled', false) >> true
+            getInteger('executionService.countCache.ttlSeconds', 30) >> 30
+        }
+        svc.configurationService = mockConfigService
+
+        when:
+        def cache = svc.getExecutionCountCache()
+        def result = cache.getIfPresent("non-existent-key")
+
+        then:
+        result == null
+    }
+
+    /**
+     * Test cache invalidation
+     */
+    void testCacheInvalidation() {
+        given:
+        def svc = new ExecutionService()
+        def mockConfigService = Mock(ConfigurationService) {
+            getBoolean('executionService.countCache.enabled', false) >> true
+            getInteger('executionService.countCache.ttlSeconds', 30) >> 30
+        }
+        svc.configurationService = mockConfigService
+
+        when:
+        def cache = svc.getExecutionCountCache()
+        cache.put("test-key", 42L)
+        cache.invalidate("test-key")
+        def result = cache.getIfPresent("test-key")
+
+        then:
+        result == null
+    }
+
+    /**
+     * Test that different queries produce different cache keys
+     */
+    void testDifferentQueriesProduceDifferentCacheKeys() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query1 = new ExecutionQuery(projFilter: "Project1")
+        def query2 = new ExecutionQuery(projFilter: "Project2")
+        def query3 = new ExecutionQuery(projFilter: "Project1", statusFilter: "failed")
+
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+        def key3 = svc.buildCountCacheKey(query3)
+
+        then:
+        key1 != key2
+        key1 != key3
+        key2 != key3
+    }
+
+    /**
+     * Test that same query produces same cache key
+     */
+    void testSameQueryProducesSameCacheKey() {
+        given:
+        def svc = new ExecutionService()
+
+        when:
+        def query1 = new ExecutionQuery(projFilter: "Project1", statusFilter: "succeeded")
+        def query2 = new ExecutionQuery(projFilter: "Project1", statusFilter: "succeeded")
+
+        def key1 = svc.buildCountCacheKey(query1)
+        def key2 = svc.buildCountCacheKey(query2)
+
+        then:
+        key1 == key2
     }
 
 }

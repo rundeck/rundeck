@@ -34,7 +34,7 @@ jar {
 }
 dependencies{
 
-    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "cglib:cglib-nodep:2.2.2"
 }

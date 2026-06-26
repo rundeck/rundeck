@@ -368,11 +368,8 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
                 if (entry.getKey() == null) {
                     throw new IllegalArgumentException("Resource definition cannot contain null property name.");
                 }
-                if (entry.getValue() == null) {
-                    throw new IllegalArgumentException(
-                            "Resource definition cannot contain null value.  Corresponding key: " + entry.getKey()
-                    );
-                }
+                // Allow null values - nodes may legitimately have unset properties (e.g., osName)
+                // The matching logic handles null values by returning false for predicates that require a value
             }
         }
 

@@ -1,9 +1,6 @@
 #loglevel.default is the default log level for jobs: ERROR,WARN,INFO,VERBOSE,DEBUG
 loglevel.default=INFO
 rdeck.base=${rdeck.base}
-
-#rss.enabled if set to true enables RSS feeds that are public (non-authenticated)
-rss.enabled=false
 server.address=localhost
 server.port=${server.http.port}
 grails.serverURL=http://localhost:${server.http.port}${server.web.context}

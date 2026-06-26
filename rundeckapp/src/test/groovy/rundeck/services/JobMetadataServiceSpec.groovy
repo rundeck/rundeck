@@ -16,21 +16,23 @@
 
 package rundeck.services
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import spock.lang.Specification
 import org.rundeck.app.data.providers.GormPluginMetaDataProvider
 import rundeck.LogFileStorageRequest
 import rundeck.PluginMeta
-import testhelper.RundeckHibernateSpec
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-class JobMetadataServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<JobMetadataService> {
+// Grails 7: Use DataTest + ServiceUnitTest instead of RundeckHibernateSpec
+class JobMetadataServiceSpec extends Specification implements ServiceUnitTest<JobMetadataService>, DataTest {
 
     GormPluginMetaDataProvider pluginMetaProvider = new GormPluginMetaDataProvider()
-    List<Class> getDomainClasses() {
-        [PluginMeta]
+    
+    void setupSpec() {
+        mockDomains(PluginMeta)
     }
 
     def setup() {

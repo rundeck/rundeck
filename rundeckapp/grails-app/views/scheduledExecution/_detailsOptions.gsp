@@ -62,14 +62,14 @@
 </g:javascript>
 
     <div class="empty note ${error?'error':''}" id="optempty" style="${wdgt.styleVisible(unless:options && options.size()>0)}">
-        No Options
+        <g:message code="no.options.message" />
     </div>
 
     <g:if test="${edit}">
         <div id="optnewbutton" style="margin:10px 0; ">
-            <span class="btn btn-default btn-sm ready" onclick="_optaddnew();" title="Add a new Option">
+            <span class="btn btn-default btn-sm ready" onclick="_optaddnew();" title="${message(code:'add.an.option')}">
                 <b class="glyphicon glyphicon-plus"></b>
-                Add an option
+                <g:message code="add.an.option" />
             </span>
         </div>
     </g:if>

@@ -15,16 +15,17 @@
  */
 
 package rundeck.services
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
 import grails.testing.gorm.DataTest
-import grails.testing.web.controllers.ControllerUnitTest
+import grails.testing.services.ServiceUnitTest
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
-import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.providers.GormTokenDataProvider
@@ -47,20 +48,24 @@ import java.time.ZoneId
 /**
  * Created by greg on 7/28/15.
  */
-class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiController>, DataTest {
+class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService>, DataTest {
 
     ApiService service
     GormTokenDataProvider provider = new GormTokenDataProvider()
 
     void setup() {
-        mockCodec(JSONCodec)
         mockDomains(AuthToken, User)
         mockDataService(AuthTokenDataService)
 
         provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
 
         provider.userDataProvider = Mock(GormUserDataProvider){
-            findOrCreateUser(_) >>  new User(login: 'auser').save()
+            findOrCreateUser(_) >> {
+                def user = new User(login: 'auser')
+                user.id = 1L  // Explicitly set id for unit test
+                user.save()
+                return user
+            }
         }
         service = new ApiService()
         service.tokenDataProvider = provider
@@ -78,18 +83,15 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
 
     }
     def "jsonRenderDirlist"(){
-        given:
-        def builder = new JSONBuilder()
         when:
-        def result=builder.build {
-            service.jsonRenderDirlist(
-                    '',
-                    {it},
-                    {"http://localhost:8080/api/14/project/test/acl/${it}"},
-                    ['blah.aclpolicy','adir/']
-            )
-        }
-        def parsed=JSON.parse(result.toString())
+        // Grails 7: Service returns Map directly, no need for JSONBuilder
+        def result = service.jsonRenderDirlist(
+                '',
+                {it},
+                {"http://localhost:8080/api/14/project/test/acl/${it}"},
+                ['blah.aclpolicy','adir/']
+        )
+        def parsed = result  // Already a Map
 
         then:
         parsed==[
@@ -141,20 +143,14 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
     }
 
     def "renderJsonAclpolicyValidation"(){
-        given:
-
-        def builder = new JSONBuilder()
         when:
         def validation=Stub(Validation){
             isValid()>>false
             getErrors()>>['file1[1]':['error1','error2'],'file2[1]':['error3','error4']]
         }
-        def result=builder.build {
-            service.renderJsonAclpolicyValidation(
-                    validation
-            )
-        }
-        def parsed=JSON.parse(result.toString())
+        // Grails 7: Service returns Map directly, no need for JSONBuilder
+        def result = service.renderJsonAclpolicyValidation(validation)
+        def parsed = result  // Already a Map
         then:
         parsed==[valid:false,
         policies:[
@@ -645,7 +641,22 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
 
     def "render success xml response unwrapped"() {
         given:
-        service.rundeckWebUtil= Mock(WebUtilService)
+        // Grails 7: Jakarta EE namespace (jakarta.servlet vs javax.servlet)
+        def response = Mock(jakarta.servlet.http.HttpServletResponse)
+        def byteArrayStream = new ByteArrayOutputStream()
+        def servletOutputStream = new jakarta.servlet.ServletOutputStream() {
+            @Override
+            void write(int b) throws IOException {
+                byteArrayStream.write(b)
+            }
+            
+            @Override
+            boolean isReady() { true }
+            
+            @Override
+            void setWriteListener(jakarta.servlet.WriteListener writeListener) {}
+        }
+        
         when:
         def closureCalled = false
         service.renderSuccessXml(response) {
@@ -656,13 +667,16 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         }
 
         then:
-            1 * service.rundeckWebUtil.respondOutput(_, 'application/xml', _) >> {
-                def slurper = new XmlSlurper()
-                def gpath = slurper.parseText(it[2])
-                assert gpath.name() == 'responseData'
-                assert gpath.'@test'.text() == 'true'
-                assert gpath.value.text() == 'something'
-            }
+        1 * response.outputStream >> servletOutputStream
+        1 * response.setContentType('application/xml')
+        1 * response.setCharacterEncoding('UTF-8')
+        1 * response.setHeader('X-Rundeck-API-Version', _)
+        
+        def slurper = new XmlSlurper()
+        def gpath = slurper.parseText(byteArrayStream.toString())
+        gpath.name() == 'responseData'
+        gpath.'@test'.text() == 'true'
+        gpath.value.text() == 'something'
         closureCalled
     }
 

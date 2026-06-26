@@ -65,7 +65,7 @@ export default defineComponent({
           "X-RUNDECK-TOKEN-URI": client.uri,
         },
         data: formData,
-        url: `${window._rundeck.rdBase}plugin/uploadPlugin`,
+        url: `${window._rundeck.rdBase}/plugin/uploadPlugin`,
         withCredentials: true,
       })
         .then((response) => {

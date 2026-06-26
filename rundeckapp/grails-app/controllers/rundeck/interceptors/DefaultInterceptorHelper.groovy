@@ -22,7 +22,7 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.ConfigurationService
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 @CompileStatic
 class DefaultInterceptorHelper implements InterceptorHelper, InitializingBean {
@@ -38,7 +38,7 @@ class DefaultInterceptorHelper implements InterceptorHelper, InitializingBean {
     }
 
     boolean matchesStaticServletPath(String servletPath, String pathInfo) {
-        return allowedPaths.contains(servletPath) || allowedPaths.contains(pathInfo)
+        return allowedPaths.any { path -> servletPath?.startsWith(path) || pathInfo?.startsWith(path) }
     }
 
     @Override

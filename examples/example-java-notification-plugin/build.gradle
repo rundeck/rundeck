@@ -1,4 +1,4 @@
-version = '5.6.1-20241014'
+version = '6.0.0-SNAPSHOT'
 defaultTasks 'clean','build'
 apply plugin: 'java-library'
 apply plugin: 'idea'
@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation( 'org.rundeck:rundeck-core:5.6.1-20241014')
+    implementation( 'org.rundeck:rundeck-core:6.0.0-SNAPSHOT')
     testImplementation(
         [group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
     )

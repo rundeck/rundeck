@@ -1,10 +1,11 @@
-
 import { nextTick } from "vue";
 import { UiMessage } from "../../library/stores/UIStore";
 import en_US from "./locales/en_US";
+import de_DE from "./locales/de_DE";
 import es_419 from "./locales/es_419";
 import fr_FR from "./locales/fr_FR";
 import ja_JP from "./locales/ja_JP";
+import nl_NL from "./locales/nl_NL";
 import pt_BR from "./locales/pt_BR";
 import zh_CN from "./locales/zh_CN";
 import { createI18n, type I18n } from "vue-i18n";
@@ -12,9 +13,11 @@ import { mergeDeep } from "./objectUtils";
 
 const internationalization: Record<string, any> = {
   en_US: en_US,
+  de_DE: de_DE,
   es_419: es_419,
   fr_FR: fr_FR,
   ja_JP: ja_JP,
+  nl_NL: nl_NL,
   pt_BR: pt_BR,
   zh_CN: zh_CN,
 };

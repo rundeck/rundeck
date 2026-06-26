@@ -3,7 +3,7 @@ FROM rundeck/ubuntu-base
 USER rundeck
 
 COPY --chown=rundeck:root .build .
-RUN java -jar rundeck.war --installonly
+RUN java -jar rundeck.war --installonly --basedir /home/rundeck
 
 # Directories and permissions
 RUN mkdir -p container-plugins libext etc var/logs \

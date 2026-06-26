@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
-import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
@@ -58,10 +57,10 @@ public class NodeExecutorService
     public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-node-executor";
 
     /**
-     * Legacy profile for old behavior
+     * Default profile for Java-based local executor
      */
     @Getter
-    static class LegacyProfile
+    static class DefaultProfile
             implements NodeExecutorServiceProfile
     {
         public static final String DEFAULT_REMOTE_PROVIDER = "sshj-ssh";
@@ -72,8 +71,8 @@ public class NodeExecutorService
                     Map.of(
                             LocalNodeExecutor.SERVICE_PROVIDER_TYPE,
                             LocalNodeExecutor.class,
-                            NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE,
-                            NewLocalNodeExecutor.class
+                            LocalNodeExecutor.SERVICE_PROVIDER_TYPE_ALIAS,
+                            LocalNodeExecutor.class
                     );
         }
 
@@ -82,7 +81,7 @@ public class NodeExecutorService
         private final Map<String, Class<? extends NodeExecutor>> localRegistry = PRESET_PROVIDERS;
     }
 
-    static final NodeExecutorServiceProfile LEGACY_PROFILE = new LegacyProfile();
+    static final NodeExecutorServiceProfile DEFAULT_PROFILE = new DefaultProfile();
 
     @Getter @Setter private NodeExecutorServiceProfile serviceProfile;
 
@@ -100,7 +99,7 @@ public class NodeExecutorService
     }
 
     public NodeExecutorService(Framework framework) {
-        this(framework, LEGACY_PROFILE);
+        this(framework, DEFAULT_PROFILE);
     }
 
     @Override

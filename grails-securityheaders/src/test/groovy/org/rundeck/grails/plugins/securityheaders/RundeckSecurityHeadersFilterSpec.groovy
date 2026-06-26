@@ -22,7 +22,7 @@ import org.springframework.mock.web.MockHttpServletResponse
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.FilterChain
+import jakarta.servlet.FilterChain
 
 class RundeckSecurityHeadersFilterSpec extends Specification {
 

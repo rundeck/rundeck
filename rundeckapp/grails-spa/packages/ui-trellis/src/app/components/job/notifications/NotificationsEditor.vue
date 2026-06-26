@@ -1,16 +1,14 @@
 <template>
   <div>
     <div class="help-block">
-      Notifications can be triggered by different events during the Job
-      Execution.
+      {{ $t("notifications.helpText") }}
     </div>
     <div>
       <undo-redo :event-bus="eventBus" />
 
       <div v-if="notifications.length < 1">
         <p class="text-muted">
-          No Notifications are defined. Click an event below to add a
-          Notification for that Trigger.
+          {{ $t("notifications.emptyText") }}
         </p>
       </div>
       <div class="main-section">
@@ -35,7 +33,7 @@
                 @click="addNotification(trigger)"
               >
                 <i class="fas fa-plus"></i>
-                Add Notification
+                {{ $t("notifications.addButton") }}
               </btn>
             </div>
             <div
@@ -136,7 +134,7 @@
                 </div>
 
                 <btn type="default" size="sm" @click="doEditNotification(notif)"
-                  >Edit</btn
+                  >{{ $t("Edit") }}</btn
                 >
               </div>
             </template>
@@ -154,7 +152,9 @@
     >
       <div>
         <div class="form-group">
-          <label class="col-sm-2 control-label"> Trigger </label>
+          <label class="col-sm-2 control-label">
+            {{ $t("notifications.triggerLabel") }}
+          </label>
           <div class="col-sm-10 form-control-static">
             <dropdown id="notification-edit-trigger-dropdown" ref="dropdown">
               <btn
@@ -170,7 +170,7 @@
                   ></i>
                   {{ $t("notification.event." + editNotificationTrigger) }}
                 </span>
-                <span v-else> Select a Trigger </span>
+                <span v-else> {{ $t("notifications.selectTrigger") }} </span>
               </btn>
               <template #dropdown>
                 <li
@@ -190,7 +190,9 @@
 
         <div v-if="editNotificationTrigger">
           <div class="form-group">
-            <label class="col-sm-2 control-label"> Notification Type </label>
+            <label class="col-sm-2 control-label">
+              {{ $t("notifications.typeLabel") }}
+            </label>
             <div class="col-sm-10 form-control-static">
               <dropdown id="notification-edit-type-dropdown" ref="dropdown">
                 <btn
@@ -213,7 +215,7 @@
                     >
                     </plugin-info>
                   </span>
-                  <span v-else> Select a Notification </span>
+                  <span v-else> {{ $t("notifications.selectNotification") }} </span>
                 </btn>
                 <template #dropdown>
                   <li v-for="plugin in sortedProviders" :key="plugin.name">

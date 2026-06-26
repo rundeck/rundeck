@@ -920,10 +920,9 @@ export default defineComponent({
 
       const win = window as any;
 
-      let self = this;
-      setTimeout(function () {
+      setTimeout(() => {
         const win = window as any;
-        self.editor = win.ace.edit(
+        this.editor = win.ace.edit(
           document.getElementById("_id1"),
         ) as Ace.Ace.Editor;
       }, 1000);

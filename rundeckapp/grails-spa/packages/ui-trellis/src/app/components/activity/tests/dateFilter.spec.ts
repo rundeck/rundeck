@@ -121,7 +121,7 @@ describe("DateFilter", () => {
       const emitted = wrapper.emitted("update:modelValue");
       expect(emitted).toBeTruthy();
 
-      expect(emitted[0]).toEqual([{ enabled: true, datetime: "" }]);
+      expect(emitted![0]).toEqual([{ enabled: true, datetime: "" }]);
     });
     it("emits update:modelValue event when datetime changes", async () => {
       const wrapper = mountDateFilter({
@@ -140,7 +140,7 @@ describe("DateFilter", () => {
       const emitted = wrapper.emitted("update:modelValue");
       expect(emitted).toBeTruthy();
 
-      expect(emitted[0]).toEqual([
+      expect(emitted![0]).toEqual([
         { enabled: true, datetime: "2022-01-03T00:00:00" },
       ]);
     });

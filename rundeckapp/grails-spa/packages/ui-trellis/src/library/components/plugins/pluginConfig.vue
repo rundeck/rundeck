@@ -71,18 +71,22 @@
         <span v-if="validation && !validation.valid" class="text-warning">
           <i class="fas fa-exclamation-circle"></i> {{ validationWarningText }}
         </span>
-        <span v-for="prop in props" :key="prop.name" class="configprop">
-          <plugin-prop-view
+        <template v-for="prop in props" :key="prop.name">
+          <span
             v-if="
               (prop.type === 'Boolean' || config[prop.name]) &&
               isPropInScope(prop) &&
               !isPropHidden(prop)
             "
-            :prop="prop"
-            :value="config[prop.name]"
-            :allow-copy="allowCopy"
-          />
-        </span>
+            class="configprop"
+          >
+            <plugin-prop-view
+              :prop="prop"
+              :value="config[prop.name]"
+              :allow-copy="allowCopy"
+            />
+          </span>
+        </template>
         <div class="col-sm-12">
           <slot name="extraProperties"></slot>
         </div>
@@ -508,8 +512,10 @@ export default defineComponent({
             this.inputValues[prop.name] === "true"
           ) {
             values[prop.name] = "true";
-          } else if (prop.defaultValue === "true") {
-            //explicit value set if the default would be true
+          } else if (
+            prop.defaultValue === "true" ||
+            this.inputValues[prop.name] === false
+          ) {
             values[prop.name] = "false";
           }
         } else {

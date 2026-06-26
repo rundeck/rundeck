@@ -25,19 +25,40 @@ import com.dtolabs.rundeck.core.execution.NodeExecutionService
 import com.dtolabs.rundeck.core.execution.service.FileCopierException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.annotation.Lazy
 
+@Slf4j
 @CompileStatic
 class DirectNodeExecutionService implements NodeExecutionService {
     @Autowired FrameworkService frameworkService
     @Autowired AppAuthContextEvaluator rundeckAuthContextEvaluator
+    
+    /**
+     * Injected Spring-managed NodeExecutionService bean.
+     * This will be the bean-replaced RunnerExecutionService when runners are enabled.
+     * @Lazy creates a proxy that resolves the bean at method call time, ensuring we get
+     * the bean AFTER BeanReplacementPostProcessor has replaced it with RunnerExecutionService.
+     * This fixes the Grails 7/Spring Boot 3 initialization order issue where bean replacement
+     * happens after dependency injection.
+     */
+    @Lazy
+    @Autowired 
+    @Qualifier('rundeckExecutionPluginService') 
+    NodeExecutionService nodeExecutionService
 
     @Override
     NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command, final INodeEntry node)
             throws ExecutionException {
-        def service = frameworkService.getRundeckFramework().getExecutionService()
-        return service.executeCommand(context, command, node)
+        // Use injected Spring bean instead of framework registry
+        // This ensures we get the bean-replaced RunnerExecutionService
+        log.info("[DIAG-DIRECT] DirectNodeExecutionService.executeCommand() called for node=${node.nodename}, " +
+                 "injected service class=${nodeExecutionService?.getClass()?.name}, " +
+                 "service toString=${nodeExecutionService?.toString()}")
+        return nodeExecutionService.executeCommand(context, command, node)
     }
 
     @Override
@@ -47,8 +68,8 @@ class DirectNodeExecutionService implements NodeExecutionService {
             final INodeEntry node,
             final String destinationPath
     ) throws FileCopierException {
-        def service = frameworkService.getRundeckFramework().getExecutionService()
-        return service.fileCopyFileStream(context, input, node, destinationPath)
+        // Use injected Spring bean instead of framework registry
+        return nodeExecutionService.fileCopyFileStream(context, input, node, destinationPath)
     }
 
     @Override
@@ -58,8 +79,8 @@ class DirectNodeExecutionService implements NodeExecutionService {
             final INodeEntry node,
             final String destinationPath
     ) throws FileCopierException {
-        def service = frameworkService.getRundeckFramework().getExecutionService()
-        return service.fileCopyFile(context, file, node, destinationPath)
+        // Use injected Spring bean instead of framework registry
+        return nodeExecutionService.fileCopyFile(context, file, node, destinationPath)
     }
 
     NodeExecutionService nodeExecutionServiceWithAuth(final UserAndRolesAuthContext authContext) {

@@ -16,6 +16,8 @@
  */
 
 package rundeck.controllers
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.jobs.browse.ItemMeta
@@ -60,8 +62,8 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 import static org.junit.Assert.*

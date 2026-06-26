@@ -1,4 +1,4 @@
-import { createApp } from "vue";
+import { createApp, Component } from "vue";
 import * as uiv from "uiv";
 import VueCookies from "vue-cookies";
 
@@ -27,7 +27,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const elm = document.getElementsByClassName("vue-ui-socket");
   for (const elmElement of elm) {
     if (closest(elmElement, "vue-ui-socket-deferred")) {
-      return;
+      continue;
     }
     const eventName = elmElement.getAttribute("vue-socket-on");
     if (eventName) {
@@ -69,12 +69,12 @@ function initUiComponents(elmElement: any) {
 
   configurePrimeVue(vue);
 
-  vue.provide("registerComponent", (name, comp) => {
+  vue.provide("registerComponent", (name: string, comp: Component) => {
     vue.component(name, comp);
   });
-  vue.provide("addUiMessages", async (messages) => {
+  vue.provide("addUiMessages", async (messages: UiMessage[]) => {
     const newMessages = messages.reduce(
-      (acc: any, message: UiMessage) =>
+      (acc: Record<string, any>, message: UiMessage) =>
         message ? { ...acc, ...message } : acc,
       {},
     );
@@ -85,7 +85,7 @@ function initUiComponents(elmElement: any) {
   try {
     vue.mount(elmElement);
   } catch (e) {
-    console.error("Error mounting vue app", e.message, e);
+    console.error("Error mounting vue app", (e as Error).message, e);
   }
   rootStore.ui.registerComponent = vue.component;
 }

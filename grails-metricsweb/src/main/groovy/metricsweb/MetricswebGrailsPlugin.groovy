@@ -132,10 +132,16 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
 
     def doWithSpring = {
 
-        rundeckMetricsDisablingAdminServlet(DisablingAdminServlet)
-        disablingAdminServletRegistrationBean(ServletRegistrationBean, ref('rundeckMetricsDisablingAdminServlet'), grailsApplication.config.getProperty("rundeck.metrics.servletUrlPattern", String.class)) {
-            loadOnStartup = 2
-        }
+        // TODO: Metrics servlet registration disabled for Grails 7 migration
+        // Dropwizard Metrics 4.2.37 uses javax.servlet, incompatible with Spring Boot 3 (jakarta.servlet)
+        // Metrics 5.x would support Jakarta but is marked "on pause" (not production-ready)
+        // Alternative: Spring Boot Actuator provides equivalent endpoints (/actuator/metrics, /actuator/health)
+        // Future: Re-enable when Metrics 5.x becomes stable or migrate to Actuator endpoints
+        // See: GRAILS7_MIGRATION_NOTES.md - "Metrics Servlet Endpoints Disabled"
+        // rundeckMetricsDisablingAdminServlet(DisablingAdminServlet)
+        // disablingAdminServletRegistrationBean(ServletRegistrationBean, ref('rundeckMetricsDisablingAdminServlet'), grailsApplication.config.getProperty("rundeck.metrics.servletUrlPattern", String.class)) {
+        //     loadOnStartup = 2
+        // }
 
         metricRegistry(MetricRegistry)
         healthCheckRegistry(HealthCheckRegistry)

@@ -8,6 +8,7 @@ import SettingsCogButton from "../../../library/components/widgets/settings-bar/
 import SettingsModal from "../../../library/components/widgets/settings-bar/SettingsModal.vue";
 
 import { UtilityBarItem } from "../../../library/stores/UtilityBar";
+import { UiMessage } from "../../../library/stores/UIStore";
 import { getRundeckContext, getAppLinks } from "../../../library";
 import { commonAddUiMessages, initI18n } from "../../utilities/i18n";
 import * as uiv from "uiv";
@@ -127,7 +128,7 @@ function initUtil() {
   vue.use(VueCookies);
   vue.use(i18n);
   vue.use(uiv);
-  vue.provide("addUiMessages", async (messages) => {
+  vue.provide("addUiMessages", async (messages: UiMessage[]) => {
     await commonAddUiMessages(i18n, messages);
   });
   vue.mount(elm);

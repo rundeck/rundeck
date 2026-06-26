@@ -50,7 +50,6 @@
                         </a>
                     </li>
                 </g:each>
-
                 <feature:enabled name="pluginGroups">
                     <li>
                         <a href="#tab_pluginGroups" data-toggle="tab">

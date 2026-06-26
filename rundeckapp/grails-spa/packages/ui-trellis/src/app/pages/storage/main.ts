@@ -17,13 +17,15 @@ const vue = createApp({
 });
 vue.use(uiv);
 vue.use(i18n);
-vue.provide("addUiMessages", async (messages) => {
+vue.provide("addUiMessages", async (messages: UiMessage[]) => {
   const newMessages = messages.reduce(
-    (acc: any, message: UiMessage) => (message ? { ...acc, ...message } : acc),
+    (acc: Record<string, any>, message: UiMessage) => (message ? { ...acc, ...message } : acc),
     {},
   );
   const locale = window._rundeck.locale || "en_US";
   const lang = window._rundeck.language || "en";
   return updateLocaleMessages(i18n, locale, lang, newMessages);
 });
-vue.mount(elm);
+if (elm) {
+  vue.mount(elm);
+}

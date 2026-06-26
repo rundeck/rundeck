@@ -45,5 +45,6 @@ class RundeckResponse<T> {
         Integer apiversion
         String message
         Boolean error
+        List<String> args  // Grails 7: Added to match API error response format
     }
 }

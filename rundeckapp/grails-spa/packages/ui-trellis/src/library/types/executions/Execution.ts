@@ -2,9 +2,9 @@
  * Note: migrated from @rundeck/client
  */
 /**
- * An interface representing ExecutionDateStarted.
+ * An interface representing ExecutionDate.
  */
-export interface ExecutionDateStarted {
+export interface ExecutionDate {
   unixtime?: number;
   date?: string;
 }
@@ -18,6 +18,8 @@ export declare enum Status {
   FailedWithRetry = "failed-with-retry",
   Scheduled = "scheduled",
   Other = "other",
+  Missed = "missed",
+  Queue = "queued",
 }
 
 export interface JobMetadata {
@@ -39,17 +41,25 @@ export interface Execution {
   href?: string;
   permalink?: string;
   /**
-   * Possible values include: 'running', 'succeeded', 'failed', 'aborted', 'timedout',
+   * Possible values include: 'running', 'succeeded', 'failed', 'aborted', 'timedout', 'missed'
    * 'failed-with-retry', 'scheduled', 'other'
    */
-  status?: Status;
+  status: Status;
   customStatus?: string;
   project?: string;
   user?: string;
   serverUUID?: string;
-  dateStarted?: ExecutionDateStarted;
+  dateStarted?: ExecutionDate;
+  dateEnded?: ExecutionDate;
   job?: JobMetadata;
   description?: string;
   argstring?: string;
   successfulNodes?: string[];
+  failedNodes?: string[];
+  /*
+  generated value with node response
+   */
+  node?: { [key: string]: number };
+  /*deprecated*/
+  jobDeleted?: boolean;
 }

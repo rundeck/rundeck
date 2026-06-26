@@ -181,8 +181,10 @@ class JobExecutionSpec extends BaseContainer {
     def "job/jobid/executions?status=aborted with 1 results"() {
         when:
             doPost("/execution/${execId3}/abort")
+        // Abort operations can take longer than the default 5 seconds
         List<Execution> execs =  waitFor(ExecutionUtils.Retrievers.executionsForJobId(client, jobId3, "status=aborted"),
-                { it.size() == 1 })
+                { it.size() == 1 },
+                WaitingTime.EXCESSIVE) // 60 seconds timeout for abort
         then:
         execs[0].id == execId3 as String
 

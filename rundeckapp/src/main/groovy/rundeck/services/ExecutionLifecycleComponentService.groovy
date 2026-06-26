@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -41,7 +42,7 @@ import rundeck.services.feature.FeatureService
  */
 @CompileStatic
 @Slf4j
-class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ExecutionLifecycleJobDataAdapter, ApplicationContextAware  {
+class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ExecutionLifecycleJobDataAdapter, ApplicationContextAware, EventBusAware  {
 
     @Autowired
     ExecutionLifecyclePluginProviderService executionLifecyclePluginProviderService
@@ -63,6 +64,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
     @Subscriber('rundeck.bootstrap')
     void init() throws Exception {
         beanComponents = applicationContext.getBeansOfType(ExecutionLifecycleComponent)
+        log.debug("[DIAG] ExecutionLifecycleComponentService.init: Loaded ${beanComponents?.size() ?: 0} ExecutionLifecycleComponent beans: ${beanComponents?.keySet()}")
     }
     
 
@@ -91,10 +93,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @return Map containing all of the ExecutionLifecyclePlugin implementations
      */
     Map listExecutionLifecyclePlugins(){
-        if(!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)){
-            return pluginService?.listPlugins(ExecutionLifecyclePlugin, executionLifecyclePluginProviderService)
-        }
-        return null
+        return getPluginService().listPlugins(ExecutionLifecyclePlugin, executionLifecyclePluginProviderService)
     }
 
     /**
@@ -104,7 +103,13 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @return ExecutionLifecycleStatus response from plugin implementation
      */
     ExecutionLifecycleStatus handleEvent(def event, EventType eventType, List<NamedExecutionLifecycleComponent> components) throws ExecutionLifecycleComponentException{
+        if (event instanceof JobExecutionEvent) {
+            log.debug("[DIAG] ExecutionLifecycleComponentService.handleEvent: Called for project: ${event.projectName}, eventType: ${eventType}, components: ${components?.size() ?: 0}, component names: ${components?.collect { it.name }}")
+        }
         if (!components) {
+            if (event instanceof JobExecutionEvent) {
+                log.debug("[DIAG] ExecutionLifecycleComponentService.handleEvent: No components found, returning null")
+            }
             return null
         }
         Map<String, Exception> errors = [:]
@@ -114,6 +119,9 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
         def prevEvent = event
         boolean success = true
         for (NamedExecutionLifecycleComponent component : components) {
+            if (event instanceof JobExecutionEvent) {
+                    log.debug("[DIAG] ExecutionLifecycleComponentService.handleEvent: Processing component: ${component.name} for project: ${event.projectName}")
+            }
             try {
 
                 def curEvent = mergeEvent(prevResult, prevEvent)
@@ -272,19 +280,25 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
 
     List<NamedExecutionLifecycleComponent> loadConfiguredComponents(PluginConfigSet configurations, String project) {
         List<NamedExecutionLifecycleComponent> compList = []
+        log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Called for project: ${project}, beanComponents size: ${beanComponents?.size() ?: 0}")
         if(beanComponents){
             List<NamedExecutionLifecycleComponent> namedComponents = beanComponents.collect {name, component->
                 new NamedExecutionLifecycleComponent(
                         component: component,
                         name: component.class.canonicalName)
             }
+            log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Created ${namedComponents.size()} named components: ${namedComponents.collect { "${it.name} (plugin=${it.isPlugin()})" }}")
 
             namedComponents.forEach {component->
                 if(!component.isPlugin()){
                     compList.add(component)
+                    log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Added bean component: ${component.name}")
+                } else {
+                    log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Skipped plugin component: ${component.name}")
                 }
             }
         }
+        log.debug("[DIAG] ExecutionLifecycleComponentService.loadConfiguredComponents: Returning ${compList.size()} components for project: ${project}")
         compList
     }
 
@@ -297,10 +311,6 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
     Map<String, DescribedPlugin<ExecutionLifecyclePlugin>> listEnabledExecutionLifecyclePlugins(
             PluginControlService pluginControlService
     ) {
-        if (!featureService.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
-            return null
-        }
-
         return getPluginService().listPlugins(ExecutionLifecyclePlugin).findAll { k, v ->
             !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.ExecutionLifecycle)
         }
@@ -313,9 +323,6 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      */
     @CompileDynamic
     PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(JobData job) {
-        if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
-            return null
-        }
         def pluginConfig = job.pluginConfigMap?.get ServiceNameConstants.ExecutionLifecycle
 
         if (!(pluginConfig instanceof Map)) {
@@ -350,13 +357,25 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @return execution event handler
      */
     ExecutionLifecycleComponentHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference) {
-        if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
+        log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Called for project: ${executionReference.project}")
+        
+        def components = loadConfiguredComponents(configurations, executionReference.project)
+        
+        if(configurations){
+            def plugins = createConfiguredPlugins(configurations, executionReference.project)
+            log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Adding ${plugins.size()} configured plugins")
+            components.addAll(plugins)
+        } else if(configurations) {
+            log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Feature flag disabled, skipping plugin components")
+        }
+        
+        // Only return null if there are no components at all (neither beans nor plugins)
+        if(components.isEmpty()) {
+            log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: No components found, returning null")
             return null
         }
-        def components = loadConfiguredComponents(configurations, executionReference.project)
-        if(configurations){
-            components.addAll(createConfiguredPlugins(configurations, executionReference.project))
-        }
+        
+        log.debug("[DIAG] ExecutionLifecycleComponentService.getExecutionHandler: Creating handler with ${components.size()} total components: ${components.collect { it.name }}")
         new ExecutionReferenceLifecycleComponentHandler(
                 executionReference: executionReference,
                 executionLifecycleComponentService: this,

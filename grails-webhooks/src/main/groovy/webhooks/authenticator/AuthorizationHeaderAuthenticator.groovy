@@ -3,7 +3,7 @@ package webhooks.authenticator
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 class AuthorizationHeaderAuthenticator implements WebhookAuthenticator {
     static final ObjectMapper mapper = new ObjectMapper()

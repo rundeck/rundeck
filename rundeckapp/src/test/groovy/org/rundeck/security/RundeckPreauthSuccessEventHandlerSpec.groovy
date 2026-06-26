@@ -22,9 +22,9 @@ import rundeck.services.UserService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletRequestWrapper
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequestWrapper
+import jakarta.servlet.http.HttpServletResponse
 
 class RundeckPreauthSuccessEventHandlerSpec extends Specification {
     @Unroll

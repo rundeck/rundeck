@@ -30,8 +30,14 @@ class ProjectSpec extends BaseContainer{
             json.name == (PROJECT_NAME)
             json.description == ""
             json.created != ""
-            json.config.size() == 5
-
+            // Assert specific expected default keys are present rather than an exact count.
+            // Exact count is fragile: runner plugin activation adds health check defaults
+            // non-deterministically depending on environment state.
+            json.config["project.name"] == PROJECT_NAME
+            json.config.containsKey("service.FileCopier.default.provider")
+            json.config.containsKey("service.NodeExecutor.default.provider")
+            json.config.containsKey("project.ssh-authentication")
+            json.config.containsKey("resources.source.1.type")
         }
     }
 

@@ -22,13 +22,14 @@ configurations.all {
         // Force safe commons-compress versions to fix CVE-2024-25710
         // Only force artifacts that exist for version 1.21
         force "org.apache.commons:commons-compress:${commonsCompressVersion}"
+        force "org.apache.commons:commons-lang3:${commonsLang3Version}"
     }
 }
 
 
 dependencies {
     // Use the latest Groovy version for building this library
-    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation "org.apache.groovy:groovy:${groovyVersion}"
     pluginLibs("io.minio:minio:${minioVersion}") {
         exclude(group: 'com.fasterxml.jackson.core')
         exclude(group: 'com.google.guava', module: 'guava')
@@ -37,6 +38,10 @@ dependencies {
     }
     // Force compatible OkHttp 4.x version for Kotlin 1.3.70 compatibility
     pluginLibs("com.squareup.okhttp3:okhttp:${okhttpVersion}")
+
+    // RUN-4336: Override minio's transitive bcprov with fixed version for CVE-2026-5598
+    implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
+    pluginLibs ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
 
     implementation "org.apache.commons:commons-compress:${commonsCompressVersion}"
 
@@ -71,4 +76,9 @@ jar {
 jar.dependsOn(copyToLib)
 tasks.withType(Test) {
     useJUnitPlatform()
+    jvmArgs += [
+        '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+        '--add-opens=java.base/java.util=ALL-UNNAMED'
+    ]
 }

@@ -116,6 +116,7 @@
             <div class="card-header" data-ko-bind="editProject">
               <h4 class="card-title"><g:message code="domain.Project.create.message" default="Create a new Project"/></h4>
             </div>
+            <g:render template="/common/messages"/>
             <div class="card-content">
 
                 <g:set var="serviceDefaultsList" value="${[

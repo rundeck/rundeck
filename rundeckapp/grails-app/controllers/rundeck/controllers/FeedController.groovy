@@ -19,7 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ExecQuery
 import rundeck.services.ReportService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 class FeedController  extends ControllerBase{
     ReportService reportService

@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.nodes.IModifiableNodeEntry
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
-import grails.test.mixin.TestFor
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
 import rundeck.services.FrameworkService

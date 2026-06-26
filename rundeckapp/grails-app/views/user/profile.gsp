@@ -99,8 +99,10 @@
                         <g:set var="supportedLangs" value="${
                             [
                                 en_US : 'English',
+                                de_DE : 'Deutsch',
                                 es_419: 'Español',
                                 fr_FR : 'Français',
+                                nl_NL : 'Nederlands',
                                 zh_CN : '简体中文',
                             ]
                         }"/>

@@ -34,10 +34,12 @@ cn: build
 
 dn: cn=deploy, ou=users,{{ LDAP_BASE_DN }}
 uid: deploy
-userPassword: {CRYPT}de01JmlU8XXTQ
+userPassword: deploy
 #####
-# CRYPT creds
-#userPassword: deploy
+# Grails 7: Changed from {CRYPT}de01JmlU8XXTQ to plain text
+# CRYPT scheme (DES-based) is deprecated and not reliably supported in modern OpenLDAP
+# TODO: Post-Grails 7 - Upgrade to modern LDAP image and use secure password schemes
+#userPassword: {CRYPT}de01JmlU8XXTQ
 objectClass: person
 objectClass: top
 objectClass: inetOrgPerson

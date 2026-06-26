@@ -1,11 +1,11 @@
 package rundeck.interceptors
 
 import grails.testing.web.interceptor.InterceptorUnitTest
+import jakarta.servlet.http.Cookie
 import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.http.Cookie
 
 class NextUiInterceptorSpec extends Specification implements InterceptorUnitTest<NextUiInterceptor> {
 

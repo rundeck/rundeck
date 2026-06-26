@@ -1,6 +1,6 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import { Btn } from "uiv";
-import { JobOptionsData } from "../../../../../library/types/jobs/JobEdit";
+import { JobOptionsData, JobOptionEdit } from "../../../../../library/types/jobs/JobEdit";
 import { Operation } from "../model/ChangeEvents";
 import OptionsEditor from "../OptionsEditor.vue";
 
@@ -434,40 +434,40 @@ describe("OptionsEditor", () => {
     const wrapper = await mountBasicOptionsEditor();
     //expect sortIndex to be set correctly after mount
     const intOptions = wrapper.vm.intOptions;
-    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    expect(intOptions.map((item: JobOptionEdit) => item.sortIndex)).toEqual([1, 2]);
     //remove first item
     wrapper.vm.doRemove(0);
-    expect(intOptions.map((item) => item.sortIndex)).toEqual([1]);
+    expect(intOptions.map((item: JobOptionEdit) => item.sortIndex)).toEqual([1]);
   });
   it("sortIndex is updated after doMoveUp", async () => {
     const wrapper = await mountBasicOptionsEditor();
     //expect sortIndex to be set correctly after mount
     const intOptions = wrapper.vm.intOptions;
-    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    expect(intOptions.map((item: JobOptionEdit) => item.sortIndex)).toEqual([1, 2]);
     //remove first item
     wrapper.vm.doMoveUp(1);
-    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    expect(intOptions.map((item: JobOptionEdit) => item.sortIndex)).toEqual([1, 2]);
   });
   it("sortIndex is updated after doMoveDown", async () => {
     const wrapper = await mountBasicOptionsEditor();
     //expect sortIndex to be set correctly after mount
     const intOptions = wrapper.vm.intOptions;
-    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    expect(intOptions.map((item: JobOptionEdit) => item.sortIndex)).toEqual([1, 2]);
     //remove first item
     wrapper.vm.doMoveDown(0);
-    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    expect(intOptions.map((item: JobOptionEdit) => item.sortIndex)).toEqual([1, 2]);
   });
   it("sortIndex is updated after saveNewOption", async () => {
     const wrapper = await mountBasicOptionsEditor();
     //expect sortIndex to be set correctly after mount
     const intOptions = wrapper.vm.intOptions;
-    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2]);
+    expect(intOptions.map((item: JobOptionEdit) => item.sortIndex)).toEqual([1, 2]);
     //remove first item
     wrapper.vm.saveNewOption({
       name: "newoption",
       type: "text",
       inputType: "plain",
     });
-    expect(intOptions.map((item) => item.sortIndex)).toEqual([1, 2, 3]);
+    expect(intOptions.map((item: JobOptionEdit) => item.sortIndex)).toEqual([1, 2, 3]);
   });
 });

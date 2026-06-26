@@ -15,6 +15,8 @@
  */
 
 package rundeck.services
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor
@@ -22,12 +24,11 @@ import org.junit.Test
 
 import static org.junit.Assert.*
 
-import grails.test.mixin.*
-import groovy.util.slurpersupport.GPathResult
+import groovy.xml.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
 import com.dtolabs.rundeck.app.api.ApiVersions
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 class ApiServiceTests implements ServiceUnitTest<ApiServiceTests> {
 

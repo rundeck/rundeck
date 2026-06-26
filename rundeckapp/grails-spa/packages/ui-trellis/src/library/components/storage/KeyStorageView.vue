@@ -20,7 +20,7 @@
                 type="text"
                 class="form-control bg-2"
                 style="padding-left: 18px"
-                placeholder="Enter a path"
+                :placeholder="$t('storage.enter.path')"
                 @keyup.enter="loadDirInputPath()"
               />
               <div

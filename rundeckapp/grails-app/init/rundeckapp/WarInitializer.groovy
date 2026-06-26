@@ -24,9 +24,9 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
 import org.springframework.web.servlet.DispatcherServlet
 import rundeckapp.init.RundeckInitConfig
 
-import javax.servlet.ServletContext
-import javax.servlet.ServletException
-import javax.servlet.ServletRegistration
+import jakarta.servlet.ServletContext
+import jakarta.servlet.ServletException
+import jakarta.servlet.ServletRegistration
 
 
 class WarInitializer implements WebApplicationInitializer, Ordered {

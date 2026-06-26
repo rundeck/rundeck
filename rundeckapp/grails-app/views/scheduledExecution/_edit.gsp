@@ -484,6 +484,16 @@ function getCurSEID(){
                  }
                  valid= false;
              }
+             
+             // Check Vue workflow editor state
+             if(window._workflowEditState && window._workflowEditState.isEditing && !wascancelled){
+                 jobeditor.addError('workflow');
+                 valid= false;
+             } else if(window._workflowEditState && !window._workflowEditState.isEditing){
+                 // Clear the error when not editing
+                 jobeditor.clearError('workflow');
+             }
+             
             var optedit= jQuery(form).find('div.optEditForm');
             if (optedit.length && !wascancelled) {
                 jobeditor.addError('option');

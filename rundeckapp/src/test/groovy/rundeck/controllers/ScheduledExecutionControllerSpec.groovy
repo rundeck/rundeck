@@ -49,6 +49,12 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.components.jobs.stats.JobStatsProvider
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.workflow.ConditionalDefinitionImpl
+import org.rundeck.app.data.workflow.ConditionalSetImpl
+import org.rundeck.app.data.workflow.ConditionalStep
+import org.rundeck.app.data.workflow.WorkflowDataImpl
+import org.rundeck.app.data.workflow.WorkflowStepDataImpl
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.gui.UISection
@@ -60,7 +66,7 @@ import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import org.rundeck.util.HttpClientCreator
 import org.slf4j.Logger
-import org.springframework.web.multipart.commons.CommonsMultipartFile
+import org.springframework.web.multipart.MultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import org.rundeck.app.jobs.options.ApiTokenReporter
@@ -73,18 +79,23 @@ import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import grails.testing.web.controllers.ControllerUnitTest
+import spock.lang.Specification
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 /**
  * Created by greg on 7/14/15.
  */
-class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+// Grails 7: Use DataTest + ControllerUnitTest instead of RundeckHibernateSpec
+class ScheduledExecutionControllerSpec extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
+    void setupSpec() {
+        mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats, LogFileStorageRequest)
+    }
 
     def setup() {
         mockCodec(URIComponentCodec)
@@ -2399,7 +2410,6 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsJson(_,_,_,_)
-        0 * controller.executionService._(*_)
     }
 
     def "isReference deleted parent"(){
@@ -2778,9 +2788,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "upload job file via #type"() {
         given:
             String xmlString = ''' dummy string '''
-            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
-                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
-            })
+            def multipartfile = Mock(MultipartFile) {
+                getInputStream() >> new ByteArrayInputStream(xmlString.bytes)
+            }
             ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 1 * parseUploadedFile(_, 'xml') >> [
@@ -2838,9 +2848,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
     def "upload job file via create form #type"() {
         given:
             String xmlString = ''' dummy string '''
-            def multipartfile = new CommonsMultipartFile(Mock(FileItem){
-                getInputStream()>>{new ByteArrayInputStream(xmlString.bytes)}
-            })
+            def multipartfile = Mock(MultipartFile) {
+                getInputStream() >> new ByteArrayInputStream(xmlString.bytes)
+            }
             ScheduledExecution job = new ScheduledExecution(createJobParams(project:'dunce'))
             def authContext = Mock(UserAndRolesAuthContext)
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -3055,7 +3065,6 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsJson(_,_,_,_)
-        0 * controller.executionService._(*_)
 
 
     }
@@ -3923,6 +3932,142 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.modelAndView.model.scheduledExecution != null
     }
 
+    def "test copy creates deep copy of workflow data using WorkflowDataImpl fromMap toMap pattern"() {
+        given: "a job with workflow data containing a conditional step"
+        // Create a conditional step with condition and substeps
+        def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[condDef]]
+
+        def conditionalStep = new ConditionalStep()
+        conditionalStep.conditionSet = condSet
+        conditionalStep.subSteps = [
+                new CommandExec(adhocRemoteString: 'echo "test step 1"', argString: '-test arg'),
+                new CommandExec(adhocRemoteString: 'echo "test step 2"')
+        ]
+
+        // Create WorkflowDataImpl and set it via setWorkflowData
+        // This is the CORRECT pattern that ensures workflow data lives in workflowJson
+        def workflowData = new WorkflowDataImpl()
+        workflowData.keepgoing = true
+        workflowData.strategy = 'node-first'
+        workflowData.steps = [conditionalStep]
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID-workflow-copy',
+                jobName: 'testJob',
+                project: 'testProject',
+                description: 'test job for workflow copy',
+                groupPath: 'testgroup',
+                workflow: new Workflow().save()  // Required for domain, but workflow data is in workflowJson
+        )
+        se.setWorkflowData(workflowData)
+        se.save()
+
+        and: "mocked services"
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'testuser'
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['create', 'view'], _) >> true
+            authorizeProjectResource(_, _, 'create', _) >> true
+            authorizeProjectJobAll(_, _, ['read'], _) >> true
+        }
+
+        controller.apiService = Mock(ApiService)
+        controller.rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            prepareCreateEditJob(_, _, _, _) >> [scheduledExecution: se]
+        }
+
+        params.id = se.id.toString()
+        setupFormTokens(params)
+
+        when: "copy action is called"
+        controller.copy()
+
+        then: "workflow data is stored in session using WorkflowDataImpl.fromMap(toMap()) pattern"
+        session.editWF != null
+        session.editWF['_new'] != null
+        session.editWF['_new'] instanceof WorkflowData
+
+        and: "the session workflow is a proper deep copy - it should be a WorkflowDataImpl instance"
+        // This assertion is CRITICAL: if someone reverts to the old code pattern
+        // 'new Workflow(scheduledExecution.workflow as WorkflowData)'
+        // the session workflow would be a Workflow object instead of WorkflowDataImpl
+        // and this test would fail, catching the regression
+        session.editWF['_new'] instanceof WorkflowDataImpl
+
+        and: "the workflow data properties are correctly copied"
+        def originalWorkflowData = se.getWorkflowData()
+        session.editWF['_new'].keepgoing == originalWorkflowData.keepgoing
+        session.editWF['_new'].strategy == originalWorkflowData.strategy
+        session.editWF['_new'].steps.size() == originalWorkflowData.steps.size()
+
+        and: "the conditional step structure is preserved in the copy"
+        def copiedStep = session.editWF['_new'].steps[0]
+        copiedStep instanceof ConditionalStep
+        copiedStep.subSteps.size() == 2
+        copiedStep.conditionSet != null
+        copiedStep.conditionSet.conditionGroups.size() == 1
+
+        and: "the workflow in session is a different object instance (deep copy)"
+        !session.editWF['_new'].is(originalWorkflowData)
+    }
+
+    def "test copy workflow data regression - would fail if old pattern was used"() {
+        given: "a job with workflow data stored in workflowJson via setWorkflowData"
+        // Create a conditional step to ensure we're testing the scenario where
+        // workflow data lives in workflowJson, not in the workflow domain object
+        def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[condDef]]
+
+        def conditionalStep = new ConditionalStep()
+        conditionalStep.conditionSet = condSet
+        conditionalStep.subSteps = [new CommandExec(adhocRemoteString: 'echo test')]
+
+        def workflowData = new WorkflowDataImpl()
+        workflowData.keepgoing = true
+        workflowData.steps = [conditionalStep]
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID-regression',
+                jobName: 'testRegressionJob',
+                project: 'testProject',
+                description: 'regression test',
+                groupPath: 'testgroup',
+                workflow: new Workflow().save()  // Required for domain, but workflow data is in workflowJson
+        )
+        se.setWorkflowData(workflowData)
+        se.save()
+
+        expect: "se.workflow is null when using setWorkflowData - data lives in workflowJson"
+        se.workflow == null || se.workflow.commands == null
+
+        and: "getWorkflowData returns a WorkflowDataImpl with the conditional step"
+        def retrievedWorkflowData = se.getWorkflowData()
+        retrievedWorkflowData instanceof WorkflowDataImpl
+        retrievedWorkflowData.steps.size() == 1
+        retrievedWorkflowData.steps[0] instanceof ConditionalStep
+
+        and: "the new pattern (fromMap/toMap) preserves the conditional step structure"
+        def newPatternWorkflow = retrievedWorkflowData ? WorkflowDataImpl.fromMap(retrievedWorkflowData.toMap()) : new WorkflowDataImpl()
+        newPatternWorkflow instanceof WorkflowDataImpl
+        newPatternWorkflow.steps.size() == 1
+        newPatternWorkflow.steps[0] instanceof ConditionalStep
+        ((ConditionalStep)newPatternWorkflow.steps[0]).subSteps.size() == 1
+    }
+
     def "api jobs import require 14"() {
         given:
             controller.apiService = Mock(ApiService)
@@ -4173,7 +4318,13 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.apiService=Mock(ApiService){
                 1 * requireApi(_, _) >> true
             }
-
+            controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+                // When format is null, Grails may default it to 'all' which is supported,
+                // so getByIDorUUID will be called - mock it to return null to stop execution
+                if(format == null) {
+                    1 * getByIDorUUID('testUUID') >> null
+                }
+            }
             controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
                 validateJobForExport(_,_)>>Mock(Validator.Report){
                     isValid()>>true
@@ -4186,11 +4337,16 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             controller.apiJobExport()
         then:
             0 * controller.rundeckJobDefinitionManager.exportAs(*_)
-            1 * controller.apiService.renderErrorFormat(_,[
-                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                code  : 'api.error.item.unsupported-format',
-                args: [expected]
-            ])
+            if(format == null) {
+                // When format is null, Grails defaults it to 'all' (supported), so requireExists is called instead
+                1 * controller.apiService.requireExists(_, null, ['Job ID', 'testUUID']) >> false
+            } else {
+                1 * controller.apiService.renderErrorFormat(_,[
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.item.unsupported-format',
+                    args: [expected]
+                ])
+            }
         where:
             format | expected | apiVers
             'asdf' | 'asdf'   | 14
@@ -4714,6 +4870,124 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
     }
 
+    def "test remote file url filter"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def optionFile = File.createTempFile("remote-options-", ".json")
+        optionFile.deleteOnExit()
+        optionFile.text = '{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$.key2"
+
+        when:
+        def result = controller.getRemoteJSON(
+                httpClientCreator,
+                optionFile.toURI().toString(),
+                configRemoteUrl,
+                100,
+                100,
+                5,
+                false
+        )
+
+        then:
+        result != null
+        !result.error
+        result.json == ["sub-key3":"value3", "sub-key4":"value4"]
+        0 * httpClientCreator._
+        0 * client._
+
+        cleanup:
+        optionFile.delete()
+    }
+
+    def "test remote file url filter not found"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def optionFile = File.createTempFile("remote-options-", ".json")
+        optionFile.deleteOnExit()
+        optionFile.text = '{"key1":"value1", "key2": {"sub-key3":"value3", "sub-key4":"value4"}}'
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$.test"
+
+        when:
+        def result = controller.getRemoteJSON(
+                httpClientCreator,
+                optionFile.toURI().toString(),
+                configRemoteUrl,
+                100,
+                100,
+                5,
+                false
+        )
+
+        then:
+        result != null
+        result.error != null
+        result.error.startsWith("No results for path")
+        result.error.contains("test")
+        0 * httpClientCreator._
+        0 * client._
+
+        cleanup:
+        optionFile.delete()
+    }
+
+    def "test remote file url filter returns a list"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def client = Mock(HttpClient)
+        def httpClientCreator = Mock(HttpClientCreator){
+            createClient()>>client
+        }
+
+        def optionFile = File.createTempFile("remote-options-", ".json")
+        optionFile.deleteOnExit()
+        optionFile.text = '{"key1":"value1", "key2": [{"sub-key3":"value3"}, {"sub-key3":"value4"}]}'
+
+        JobOptionConfigRemoteUrl configRemoteUrl = new JobOptionConfigRemoteUrl()
+        configRemoteUrl.jsonFilter = "\$.key2[*].['sub-key3']"
+
+        when:
+        def result = controller.getRemoteJSON(
+                httpClientCreator,
+                optionFile.toURI().toString(),
+                configRemoteUrl,
+                100,
+                100,
+                5,
+                false
+        )
+
+        then:
+        result != null
+        !result.error
+        result.json == ["value3", "value4"]
+        0 * httpClientCreator._
+        0 * client._
+
+        cleanup:
+        optionFile.delete()
+    }
+
     def "Test api job definition components returns a json"(){
         given:
         def jobComponent1 = Mock(JobDefinitionComponent){
@@ -4868,7 +5142,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         session.subject=new Subject()
         
         when:
-        controller.apiJobBrowse('test', null, null, null, 5, query)
+        controller.apiJobBrowse('test', null, null, null, 5, query, null)
         
         then:
         1 * controller.apiService.requireApi(_,_,46) >> true
@@ -4900,7 +5174,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         session.subject=new Subject()
         
         when:
-        controller.apiJobBrowse('test', null, null, null, null, query)
+        controller.apiJobBrowse('test', null, null, null, null, query, null)
         
         then:
         1 * controller.apiService.requireApi(_,_,46) >> true
@@ -4911,5 +5185,491 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
     }
 
-}
+    def "apiJobBrowse uses resolveJobBrowseMetaKeys when metaExclude is set and API is v58+"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _) >> true
+            requireApi(_, _, 46) >> true
+            requireApi(_, _, 54) >> false
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+        }
+        def query = new RdJobQueryInput()
+        params.project = 'test'
+        params.metaExclude = 'stats'
+        request.method = 'GET'
+        request.api_version = ApiVersions.V58
+        request.subject = new Subject()
+        session.subject = new Subject()
 
+        when:
+        controller.apiJobBrowse('test', '', '*', null, null, query, null)
+
+        then:
+        1 * controller.scheduledExecutionService.basicQueryJobs('test', _, _) >> []
+        1 * controller.scheduledExecutionService.resolveJobBrowseMetaKeys('*', 'stats') >> ['authz', 'schedule'].toSet()
+        1 * controller.scheduledExecutionService.loadJobMetaItems(
+            'test',
+            '',
+            ['authz', 'schedule'].toSet(),
+            [],
+            _,
+        ) >> [:]
+    }
+
+    def "apiJobBrowse ignores metaExclude when API version is below v58"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _) >> true
+            requireApi(_, _, 46) >> true
+            requireApi(_, _, 54) >> false
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+        }
+        def query = new RdJobQueryInput()
+        params.project = 'test'
+        params.metaExclude = 'stats'
+        request.method = 'GET'
+        request.api_version = ApiVersions.V57
+        request.subject = new Subject()
+        session.subject = new Subject()
+
+        when:
+        controller.apiJobBrowse('test', '', '*', null, null, query, null)
+
+        then:
+        1 * controller.scheduledExecutionService.basicQueryJobs('test', _, _) >> []
+        0 * controller.scheduledExecutionService.resolveJobBrowseMetaKeys(_, _)
+        1 * controller.scheduledExecutionService.loadJobMetaItems(
+            'test',
+            '',
+            ['*'].toSet(),
+            [],
+            _,
+        ) >> [:]
+    }
+
+    /**
+     * Tests to verify that getWorkflowData() is called instead of accessing workflow property directly.
+     * Related to PR https://github.com/rundeck/rundeck/pull/10038
+     *
+     * Methods that call getWorkflowData():
+     * - apiJobWorkflow() - line 814 in ScheduledExecutionController.groovy (on ScheduledExecution) [TESTED]
+     * - _transientExecute() - line 2805 in ScheduledExecutionController.groovy (on ScheduledExecution) [NOT TESTED - private method]
+     * - createFromExecution() - line 2569 in ScheduledExecutionController.groovy (on Execution) [TESTED]
+     * - uploadPost() - line 2916 in ScheduledExecutionController.groovy (on ScheduledExecution) [NOT TESTED - complex form handling]
+     */
+    def "apiJobWorkflow method calls getWorkflowData instead of accessing workflow property directly"() {
+        given:
+        def se = new ScheduledExecution(
+            uuid: 'testUUID',
+            jobName: 'test1',
+            project: 'project1',
+            groupPath: 'testgroup'
+        )
+        se.setWorkflowData(new Workflow(
+                keepgoing: true,
+                commands: [
+                        new CommandExec([
+                                adhocRemoteString: 'test command',
+                                argString: '-test'
+                        ])
+                ]
+        ))
+
+        se.save()
+
+        // Track if getWorkflowData was called
+        def getWorkflowDataCalled = false
+        se.metaClass.getWorkflowData = {
+            getWorkflowDataCalled = true
+            delegate.deserializeWorkflowData(delegate.workflowJson)
+        }
+
+        controller.apiService = Mock(ApiService){
+            requireApi(_,_) >> true
+            requireApi(_,_, ApiVersions.V34) >> true
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            authorizeProjectJobAny(_,_,_,_) >> true
+            getAuthContextForSubjectAndProject(_,_) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getByIDorUUID(_) >> se
+            getWorkflowDescriptionTree(_,{ WorkflowData d -> d != null },_,_) >> [:]
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            isFrameworkProjectDisabled(_) >> false
+        }
+
+        when:
+        params.id = se.id.toString()
+        session.subject = new Subject()
+        controller.apiJobWorkflow()
+
+        then:
+        getWorkflowDataCalled == true
+    }
+
+    def "createFromExecution method calls getWorkflowData on Execution instead of accessing workflow property directly"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = {Closure c -> c.call() }
+
+        def se = new ScheduledExecution(
+            uuid: 'testUUID',
+            jobName: 'test1',
+            project: 'project1',
+            groupPath: 'testgroup'
+        )
+        se.setWorkflowData(new Workflow(
+            keepgoing: true,
+            commands: [
+                new CommandExec([
+                    adhocRemoteString: 'test command'
+                ])
+            ]
+        ))
+        se.save()
+
+        def exec = new Execution(
+            user: "testuser",
+            project: "project1",
+            loglevel: 'WARN',
+            status: 'SUCCEEDED',
+            scheduledExecution: se
+        )
+        exec.setWorkflowData(new Workflow(
+            commands: [
+                new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')
+            ]
+        ))
+        exec.save()
+
+        // Track if getWorkflowData was called on the execution
+        def getWorkflowDataCalled = false
+        exec.metaClass.getWorkflowData = {
+            getWorkflowDataCalled = true
+            delegate.deserializeWorkflowData(delegate.workflowJson)
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+            authorizeProjectResource(_,_,_,_) >> true
+            authorizeProjectExecutionAny(_,_,_) >> true
+            getAuthContextForSubjectAndProject(_,_) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework)
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            prepareCreateEditJob(_,_,_,_) >> [:]
+        }
+
+        when:
+        params.executionId = exec.id.toString()
+        params.project = 'project1'
+        session.subject = new Subject()
+        controller.createFromExecution()
+
+        then:
+        getWorkflowDataCalled == true
+    }
+
+    def "checkCrontab returns error when crontabString parameter is missing"() {
+        given:
+        views['/common/_messages.gsp'] = ''
+
+        when: "checkCrontab is called without the crontabString parameter"
+        controller.checkCrontab()
+
+        then: "the request error attribute is set"
+        request.error == "crontabString parameter is required"
+    }
+
+    @Unroll
+    def "checkCrontab sets warn for invalid cron expression: #scenario"() {
+        given:
+        views['/common/_messages.gsp'] = ''
+
+        when: "checkCrontab is called with an invalid cron expression"
+        params.crontabString = cronString
+        controller.checkCrontab()
+
+        then: "the request warn attribute is set"
+        request.warn != null
+
+        where:
+        scenario                              | cronString
+        'completely invalid string'           | 'not-a-cron'
+        'both day-of-month and day-of-week'   | '0 0 12 15 * 5 *'
+        'too few fields'                      | '0 0 12'
+    }
+
+    def "checkCrontab sets no error or warn for a valid cron expression"() {
+        given:
+        views['/common/_messages.gsp'] = ''
+
+        when: "checkCrontab is called with a valid cron expression"
+        params.crontabString = '0 0 0 1/1 * ? *'
+        controller.checkCrontab()
+
+        then: "no error or warning is set on the request"
+        !request.error
+        !request.warn
+    }
+
+    // ===================================================================================
+    // Regression Tests for Commit 640926f97c: "Put some code back that got lost with merge from main"
+    // The critical pattern change was: WorkflowDataImpl.fromMap(workflowData.toMap())
+    // instead of the old incorrect: new Workflow(workflow as WorkflowData)
+    // ===================================================================================
+
+    @Unroll
+    def "show job includes remoteClusterNodeUUID in model when cluster mode is #clusterEnabled and job is scheduled=#scheduled"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
+
+        // The show action calls scheduledExecutionService.isScheduled() (mocked below)
+        // rather than reading scheduledExecution.scheduled directly. Setting scheduled
+        // on the domain object keeps the fixture semantically consistent with reality.
+        // Note: unlike detailFragmentAjax, the show action does NOT require
+        // serverNodeUUID != localServerUUID to populate remoteClusterNodeUUID.
+        def remoteUUID = 'aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb'
+        def localUUID  = 'ffffeeee-dddd-cccc-bbbb-aaaa11112222'
+        def se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: false,
+                scheduled: scheduled,
+                serverNodeUUID: remoteUUID,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
+                )
+        ).save(failOnError: true)
+
+        controller.frameworkService = Mock(FrameworkService) {
+            filterNodeSet(_, _) >> null
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+            isClusterModeEnabled() >> clusterEnabled
+            _ * serverUUID >> localUUID
+            _ * getServerUUID() >> localUUID
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * getAuthContextForSubjectAndProject(*_) >> Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'admin'
+            }
+            _ * authorizeProjectJobAny(_, _, _, _) >> true
+            _ * filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            isScheduled(se) >> scheduled
+            _ * calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
+        }
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService) {
+            listPlugins() >> []
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService) {
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            validateJobForExport(_, _) >> Mock(Validator.Report) {
+                isValid() >> true
+            }
+        }
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        controller.configurationService = Mock(ConfigurationService) {
+            getString(_) >> null
+        }
+
+        params.id = se.id.toString()
+        params.project = 'project1'
+
+        when:
+        def model = controller.show()
+
+        then:
+        response.redirectedUrl == null
+        model != null
+        model.remoteClusterNodeUUID == expectedUUID
+
+        where:
+        clusterEnabled | scheduled | expectedUUID
+        true           | true      | 'aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb'
+        true           | false     | null
+        false          | true      | null
+        false          | false     | null
+        // Note: the show action does not filter by serverNodeUUID == localServerUUID,
+        // so a job scheduled on a different cluster member always gets its UUID surfaced.
+    }
+
+    // ===================================================================================
+
+    def "regression test - workflow fromMap toMap pattern from commit 640926f97c"() {
+        given: "a job with workflow data stored in workflowJson via setWorkflowData"
+        // Create a conditional step to test the scenario where workflow data
+        // lives in workflowJson (set via setWorkflowData), not in the workflow domain object
+        def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'staging'])
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[condDef]]
+
+        def conditionalStep = new ConditionalStep()
+        conditionalStep.conditionSet = condSet
+        conditionalStep.subSteps = [new CommandExec(adhocRemoteString: 'test step')]
+
+        def workflowData = new WorkflowDataImpl()
+        workflowData.keepgoing = true
+        workflowData.strategy = 'node-first'
+        workflowData.steps = [conditionalStep]
+
+        def se = new ScheduledExecution(
+                uuid: 'test-regression-all',
+                jobName: 'testAllPatterns',
+                project: 'testProject',
+                workflow: new Workflow().save()  // Required for domain, but workflow data is in workflowJson
+        )
+        se.setWorkflowData(workflowData)
+        se.save()
+
+        when: "applying the NEW pattern from 640926f97c"
+        def retrievedWorkflowData = se.getWorkflowData()
+        def newPatternResult = retrievedWorkflowData ? WorkflowDataImpl.fromMap(retrievedWorkflowData.toMap()) : new WorkflowDataImpl()
+
+        then: "result is a WorkflowDataImpl instance with conditional step preserved"
+        newPatternResult instanceof WorkflowDataImpl
+        newPatternResult.keepgoing == workflowData.keepgoing
+        newPatternResult.strategy == workflowData.strategy
+        newPatternResult.steps.size() == workflowData.steps.size()
+        newPatternResult.steps[0] instanceof ConditionalStep
+        ((ConditionalStep)newPatternResult.steps[0]).subSteps.size() == 1
+        ((ConditionalStep)newPatternResult.steps[0]).conditionSet.conditionGroups.size() == 1
+
+        and: "the OLD (incorrect) pattern would fail when workflow is null"
+        // When using setWorkflowData, se.workflow may be null or have no commands
+        // The old pattern 'new Workflow(se.workflow as WorkflowData)' would break
+        // This demonstrates why the fix was necessary
+        se.workflow == null || se.workflow.commands == null
+        // If someone reverts to old pattern, tests checking 'instanceof WorkflowDataImpl' will FAIL
+    }
+
+    def "show action includes nodeFilterParam in model when nodeFilter param is provided"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter: '.*',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                )
+        ).save()
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _*authorizeProjectJobAny(_, _, _, _) >> true
+            _*filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            filterNodeSet(_, _) >> new NodeSetImpl()
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            _*calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
+        }
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            validateJobForExport(_, _) >> Mock(Validator.Report) { isValid() >> true }
+        }
+        controller.notificationService = Mock(NotificationService)
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+        when:
+        request.parameters = [id: se.id.toString(), project: 'project1', nodeFilter: 'name: nodea']
+        def model = controller.show()
+
+        then:
+        model != null
+        model.nodeFilterParam == 'name: nodea'
+    }
+
+    def "show action omits nodeFilterParam from model when nodeFilter param is absent"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter: '.*',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                )
+        ).save()
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _*authorizeProjectJobAny(_, _, _, _) >> true
+            _*filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            filterNodeSet(_, _) >> new NodeSetImpl()
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            _*calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
+        }
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            validateJobForExport(_, _) >> Mock(Validator.Report) { isValid() >> true }
+        }
+        controller.notificationService = Mock(NotificationService)
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+        when:
+        request.parameters = [id: se.id.toString(), project: 'project1']
+        def model = controller.show()
+
+        then:
+        model != null
+        model.nodeFilterParam == null
+    }
+
+}

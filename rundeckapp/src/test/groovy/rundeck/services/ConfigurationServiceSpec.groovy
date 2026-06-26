@@ -16,7 +16,6 @@
 
 package rundeck.services
 
-import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.config.SysConfigProp
 import spock.lang.Specification
@@ -258,7 +257,7 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.feature.'*'.enabled = false
-        grailsApplication.config.rundeck.feature.'option-values-plugin'.enabled = true
+        grailsApplication.config.rundeck.feature.'enhanced-nodes'.enabled = true
         service.setAppConfig(grailsApplication.config.rundeck)
         def sysconfigprop=Mock(SysConfigProp){
             1 * subKey(ConfigurationService.RUNDECK_PREFIX) >> prop
@@ -272,8 +271,8 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         val2 == expected
 
         where:
-        prop                                 | expected
-        "feature.optionValuesPlugin.enabled" | true
-        "feature.enableAll"                  | false
+        prop                                    | expected
+        "feature.enhancedNodes.enabled"         | true
+        "feature.enableAll"                     | false
     }
 }

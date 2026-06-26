@@ -129,6 +129,7 @@ class WebhooksSpec extends SeleniumBase {
         webhookPage.waitForElementToBeClickable(webhookPage.createWebhookButton)
 
         then:
+        webhookPage.waitForNumberOfElementsToBeMoreThan(webhookPage.webhookSelectItem, 0)
         containsName(webhookPage, webhookName)
 
         cleanup:
@@ -153,6 +154,8 @@ class WebhooksSpec extends SeleniumBase {
             webhookPage.waitForNumberOfElementsToBe(webhookPage.logEventsBy, 1)
             webhookPage.logEventsPlugin.click()
             webhookPage.saveButton.click()
+            // Grails 7: Wait for webhook to appear in sidebar after save
+            webhookPage.waitForElementVisible(webhookPage.webhookSelectItem)
         }
     }
 
