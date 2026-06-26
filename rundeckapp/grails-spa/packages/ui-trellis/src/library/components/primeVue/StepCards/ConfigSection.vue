@@ -1,26 +1,11 @@
 <template>
-  <div class="config-section" :class="{ 'has-chips': modelValue.length > 0 }">
-    <div class="header-row">
-      <p data-testid="config-section-title">
-        {{ title }}
-        <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i> :
-      </p>
-      <slot name="header">
-        <transition name="inline-button-fade">
-          <button
-            v-if="modelValue.length === 0"
-            @click.prevent="handleAdd"
-            class="inline-button link-button"
-            type="button"
-            data-testid="config-section-add-btn"
-          >
-            + Add
-          </button>
-        </transition>
-      </slot>
-    </div>
+  <div class="config-section" :class="{ 'has-chips': modelValue.length > 0, 'edit-view': isEditView }">
 
-    <transition name="chips-slide" mode="out-in">
+    <template v-if="isEditView">
+      <div class="section-header">
+        <p class="section-title text-heading--md text-heading--semibold" data-testid="config-section-title">{{ title }}</p>
+        <p v-if="tooltip" class="section-description text-body text-body--secondary" data-testid="config-section-description">{{ tooltip }}</p>
+      </div>
       <slot name="extra">
         <div v-if="modelValue.length > 0" class="chips-row" data-testid="config-section-chips-row">
           <transition-group name="chip-list" tag="div" class="chips-container">
@@ -36,18 +21,82 @@
           </transition-group>
           <button
             v-if="!hideWhenSingle"
-            v-show="!hideWhenSingle || modelValue.length !== 1"
             @click.prevent="handleAdd"
-            class="link-button"
-            data-testid="config-section-add-more-btn"
+            class="edit-view-add-btn text-body--sm text-body--medium text-body--primary"
             type="button"
+            data-testid="config-section-add-btn"
           >
-            + Add
+            <i class="pi pi-plus" />
+            Add
           </button>
         </div>
       </slot>
-    </transition>
-    <slot name="content" />
+      <button
+        v-if="modelValue.length === 0"
+        @click.prevent="handleAdd"
+        class="edit-view-add-btn text-body--sm text-body--medium text-body--primary"
+        type="button"
+        data-testid="config-section-add-btn"
+      >
+        <i class="pi pi-plus" />
+        Add
+      </button>
+      <slot name="content" />
+    </template>
+
+    <template v-else>
+      <div class="header-row">
+        <p data-testid="config-section-title">
+          {{ title }}
+          <template v-if="tooltip">
+            <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i> :
+          </template>
+        </p>
+        <slot name="header">
+          <transition name="inline-button-fade">
+            <button
+              v-if="modelValue.length === 0"
+              @click.prevent="handleAdd"
+              class="inline-button link-button text-body--sm text-body--primary"
+              type="button"
+              data-testid="config-section-add-btn"
+            >
+              + Add
+            </button>
+          </transition>
+        </slot>
+      </div>
+
+      <transition name="chips-slide" mode="out-in">
+        <slot name="extra">
+          <div v-if="modelValue.length > 0" class="chips-row" data-testid="config-section-chips-row">
+            <transition-group name="chip-list" tag="div" class="chips-container">
+              <Chip
+                v-for="(element, index) in modelValue"
+                :key="element.name || element.type || index"
+                :label="getElementLabel(element)"
+                :icon="hideIcon ? undefined : getElementIcon(element)"
+                removable
+                @remove="handleRemove(index)"
+                @click="handleEdit(index)"
+              />
+            </transition-group>
+            <button
+              v-if="!hideWhenSingle"
+              v-show="!hideWhenSingle || modelValue.length !== 1"
+              @click.prevent="handleAdd"
+              class="link-button text-body--sm text-body--primary"
+              data-testid="config-section-add-more-btn"
+              type="button"
+            >
+              + Add
+            </button>
+          </div>
+        </slot>
+      </transition>
+      <slot name="content" />
+    </template>
+
   </div>
 </template>
 
@@ -65,7 +114,8 @@ export default defineComponent({
     },
     tooltip: {
       type: String,
-      required: true,
+      required: false,
+      default: "",
     },
     modelValue: {
       type: Array as PropType<object[]>,
@@ -76,6 +126,10 @@ export default defineComponent({
       default: false,
     },
     hideIcon: {
+      type: Boolean,
+      default: false,
+    },
+    isEditView: {
       type: Boolean,
       default: false,
     },
@@ -92,20 +146,16 @@ export default defineComponent({
       this.$emit("removeElement", index);
     },
     handleEdit(index: number) {
-      // Guard: check if element exists
       if (!this.modelValue[index]) {
         return;
       }
-      // Emit both the filter object and index so parent can use either
       const element = this.modelValue[index];
       this.$emit("editElement", element, index);
     },
     getElementLabel(element: any): string {
-      // Support both enriched data (title) and raw filter data (type)
       return element.title || element.type || "Unknown";
     },
     getElementIcon(element: any): string {
-      // Support both enriched data (providerMetadata.faicon) and raw data (default icon)
       const icon = element.providerMetadata?.faicon || "filter";
       return `fa fa-${icon}`;
     },
@@ -173,20 +223,70 @@ export default defineComponent({
     padding-bottom: 0;
   }
 
+  &.edit-view {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+    border-bottom: none;
+
+    .section-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .section-title {
+      margin: 0;
+    }
+
+    .section-description {
+      margin: 0;
+    }
+
+    .edit-view-add-btn {
+      display: inline-flex;
+      align-self: flex-start;
+      align-items: center;
+      gap: 4px;
+      background: var(--colors-blue-50, #f5f9ff);
+      padding: 5px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      appearance: none;
+
+      .pi {
+        font-size: 12px;
+      }
+
+      &:hover {
+        opacity: 0.85;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--colors-blue-500, #0052cc);
+        outline-offset: 1px;
+      }
+    }
+  }
+
   .link-button {
     all: unset;
-    color: #0052CC;
     cursor: pointer;
-    font-weight: 400;
-    font-size: 12px;
 
     &:hover {
       text-decoration: underline;
     }
+
+    &:focus-visible {
+      outline: 2px solid var(--colors-blue-500, #0052cc);
+      outline-offset: 1px;
+      border-radius: 2px;
+    }
   }
 }
 
-// Transition animations
 .chips-slide-enter-active,
 .chips-slide-leave-active {
   transition: all 0.25s ease-out;
