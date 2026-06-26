@@ -112,7 +112,7 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
 
                 // When node-keepgoing is active, exclude nodes that already failed in previous
                 // sections so that subsequent steps do not execute on them.
-                StepExecutionContext sectionContext = buildSectionContext(executionContext, failures.keySet());
+                StepExecutionContext sectionContext = buildSectionContext(executionContext, trulyFailedNodes(failures));
 
                 StepExecutor
                         stepExecutor =
@@ -178,11 +178,30 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                 if (!workflowsuccess && !item.getWorkflow().isKeepgoing()) {
                     // With node-keepgoing enabled, continue subsequent sections for nodes that have
                     // not yet failed — mirroring the behavior when all steps are in a single dispatch
-                    // section. Only halt when node-keepgoing is off or every node has already failed.
+                    // section. The bypass only applies when:
+                    //   (a) the current section failed due to a node-dispatch failure (not a
+                    //       workflow-step failure), OR the current section succeeded but an earlier
+                    //       node-dispatch section failed, AND
+                    //   (b) node-keepgoing is active, AND
+                    //   (c) at least one node has not yet failed.
+                    boolean isSectionNodeDispatch =
+                            stepExecutor.isNodeDispatchStep(flowsection.getCommands().get(0));
+                    Set<String> failedNodes = trulyFailedNodes(failures);
                     INodeSet allNodes = executionContext.getNodes();
-                    boolean hasSurvivingNodes = executionContext.isKeepgoing()
-                            && allNodes != null
-                            && !failures.keySet().containsAll(allNodes.getNodeNames());
+                    boolean hasSurvivingNodes;
+                    if (!sectionSuccess.isSuccess()) {
+                        // Current section failed: only bypass for node-dispatch section failures
+                        hasSurvivingNodes = isSectionNodeDispatch
+                                && executionContext.isKeepgoing()
+                                && allNodes != null
+                                && !failedNodes.containsAll(allNodes.getNodeNames());
+                    } else {
+                        // Current section succeeded, but an earlier section failed:
+                        // continue as long as there are surviving nodes
+                        hasSurvivingNodes = executionContext.isKeepgoing()
+                                && allNodes != null
+                                && !failedNodes.containsAll(allNodes.getNodeNames());
+                    }
                     if (!hasSurvivingNodes) {
                         break;
                     }
@@ -375,6 +394,24 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
             stepFailures.put(integer, NodeDispatchStepExecutor.wrapDispatcherResult(r));
         }
         return wfSharedContext;
+    }
+
+    /**
+     * Returns the set of node names that have at least one recorded failure in the given map.
+     * Entries created via {@code computeIfAbsent} with empty collections (e.g. for successfully
+     * dispatched nodes) are excluded so that only genuinely-failed nodes are returned.
+     *
+     * @param failures accumulated node-failure map from the section loop
+     * @return set of node names with at least one failure
+     */
+    private static Set<String> trulyFailedNodes(Map<String, Collection<StepExecutionResult>> failures) {
+        Set<String> failed = new HashSet<>();
+        for (Map.Entry<String, Collection<StepExecutionResult>> entry : failures.entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                failed.add(entry.getKey());
+            }
+        }
+        return failed;
     }
 
     /**

@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException
-import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResultImpl
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher
 import com.dtolabs.rundeck.core.execution.dispatch.SequentialNodeDispatcher
