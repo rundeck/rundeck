@@ -548,7 +548,7 @@ export default defineComponent({
 
         if (result.valid) {
           if (stepForValidation.jobref) {
-            saveData.description = this.editModel.description;
+            saveData.description = this.editExtra.description;
           }
           if (!stepForValidation.jobref && !this.isErrorHandler) {
             mergePreservedLogFiltersIntoSaveData(saveData, this.editExtra?.filters);

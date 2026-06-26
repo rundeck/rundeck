@@ -423,6 +423,68 @@ describe("WorkflowSteps", () => {
     });
   });
 
+  describe("job reference step label (RUN-4445)", () => {
+    it("preserves description when saving an edited job ref step", async () => {
+      const jobRefCommand: PersistedWorkflowCommand = {
+        description: "my job ref label",
+        jobref: {
+          name: "some-job",
+          group: "",
+          uuid: "abc-123",
+          useName: false,
+        },
+        nodeStep: false,
+      };
+      const localWrapper = await createWrapper({ commands: [jobRefCommand] });
+
+      const editStep = localWrapper.find('[data-test="edit-step-item"]');
+      await editStep.trigger("click");
+      await localWrapper.vm.$nextTick();
+
+      // Simulate the JobRefForm emitting save (description stays in editExtra)
+      const jobRefForm = localWrapper.findComponent({ name: "JobRefForm" });
+      jobRefForm.vm.$emit("save");
+      await flushPromises();
+
+      const emissions = localWrapper.emitted("update:modelValue");
+      expect(emissions).toBeDefined();
+      const lastPayload = emissions![emissions!.length - 1][0] as StepsData;
+      expect(lastPayload.commands[0].description).toBe("my job ref label");
+    });
+
+    it("saves updated description when user edits label on a job ref step", async () => {
+      const jobRefCommand: PersistedWorkflowCommand = {
+        description: "original label",
+        jobref: {
+          name: "some-job",
+          group: "",
+          uuid: "abc-123",
+          useName: false,
+        },
+        nodeStep: false,
+      };
+      const localWrapper = await createWrapper({ commands: [jobRefCommand] });
+
+      const editStep = localWrapper.find('[data-test="edit-step-item"]');
+      await editStep.trigger("click");
+      await localWrapper.vm.$nextTick();
+
+      // Simulate user typing a new label into the description input (bound to editExtra.description)
+      const vm = localWrapper.vm as any;
+      vm.editExtra.description = "updated label";
+      await localWrapper.vm.$nextTick();
+
+      const jobRefForm = localWrapper.findComponent({ name: "JobRefForm" });
+      jobRefForm.vm.$emit("save");
+      await flushPromises();
+
+      const emissions = localWrapper.emitted("update:modelValue");
+      expect(emissions).toBeDefined();
+      const lastPayload = emissions![emissions!.length - 1][0] as StepsData;
+      expect(lastPayload.commands[0].description).toBe("updated label");
+    });
+  });
+
   describe("editing state", () => {
     it("emits workflow-editing-state-changed with isEditing true when a step edit opens", async () => {
       const mockEventBus = getRundeckContext().eventBus;
