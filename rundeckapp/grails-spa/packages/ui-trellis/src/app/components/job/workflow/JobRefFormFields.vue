@@ -841,22 +841,20 @@ export default defineComponent({
         url.searchParams.set("project", project);
         url.searchParams.set("runAuthRequired", "true");
         const resp = await fetch(url.toString(), { credentials: "include" });
-        this.jobNameSuggestions = await resp.json();
+        if (!resp.ok) {
+          this.jobNameSuggestions = [];
+          return;
+        }
+        const data = await resp.json();
+        this.jobNameSuggestions = Array.isArray(data) ? data : [];
       } catch {
         this.jobNameSuggestions = [];
       }
     },
 
-    onJobNameInput(val: string | { name: string; group: string; id: string }) {
-      if (typeof val === "string") {
-        this.jobNameInputText = val;
-        this.modelValue.name = val;
-      } else if (val && typeof val === "object") {
-        this.jobNameInputText = val.name;
-        this.modelValue.name = val.name;
-        this.modelValue.group = val.group || "";
-        this.modelValue.uuid = val.id;
-      }
+    onJobNameInput(val: string) {
+      this.jobNameInputText = val;
+      this.modelValue.name = val;
     },
 
     updatedValue(val: string) {
