@@ -27,7 +27,7 @@
             data-testid="config-section-add-btn"
           >
             <i class="pi pi-plus" />
-            Add
+            {{ $t('message_add') }}
           </button>
         </div>
       </slot>
@@ -39,7 +39,7 @@
         data-testid="config-section-add-btn"
       >
         <i class="pi pi-plus" />
-        Add
+        {{ $t('message_add') }}
       </button>
       <slot name="content" />
     </template>
@@ -61,7 +61,7 @@
               type="button"
               data-testid="config-section-add-btn"
             >
-              + Add
+              + {{ $t('message_add') }}
             </button>
           </transition>
         </slot>
@@ -89,7 +89,7 @@
               data-testid="config-section-add-more-btn"
               type="button"
             >
-              + Add
+              + {{ $t('message_add') }}
             </button>
           </div>
         </slot>
