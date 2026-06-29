@@ -1,6 +1,6 @@
 # Build remco from org fork with CVE fixes applied
 ###################################################
-FROM golang:1.24.6 AS remco
+FROM golang:1.26.4 AS remco
 
 # Pinned to rundeck/remco @ v0.12.6 (synced to upstream HeavyHorst/remco).
 # Includes CVE fixes through v0.12.6: go-jose/go-jose/v4 4.1.4 for
