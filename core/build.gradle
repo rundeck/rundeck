@@ -67,7 +67,7 @@ dependencies {
         exclude group:'org.checkerframework', module: 'checker-qual'
     }
 
-    api('org.dom4j:dom4j:2.1.3'){
+    api('org.dom4j:dom4j:2.2.0'){
         exclude group:'javax.xml.bind', module: 'jaxb-api'
         exclude group: 'pull-parser'
     }
