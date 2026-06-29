@@ -214,7 +214,7 @@ export default defineComponent({
   .chips-row {
     display: flex;
     align-items: center;
-    gap: var(--sizes-1);
+    gap: var(--sizes-1\.5);
     margin-top: var(--sizes-2);
     flex-wrap: wrap;
   }
@@ -256,7 +256,7 @@ export default defineComponent({
 
     + .config-section {
       margin-top: 24px;
-      padding-top: 24px;
+      padding: 24px 0;
       border-top: 1px solid var(--colors-gray-300-original);
     }
 
