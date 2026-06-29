@@ -1,13 +1,30 @@
 <template>
-  <div class="config-section" :class="{ 'has-chips': modelValue.length > 0, 'edit-view': isEditView }">
-
+  <div
+    class="config-section"
+    :class="{ 'has-chips': modelValue.length > 0, 'edit-view': isEditView }"
+  >
     <template v-if="isEditView">
       <div class="section-header">
-        <p class="section-title text-heading--md text-heading--semibold" data-testid="config-section-title">{{ title }}</p>
-        <p v-if="tooltip" class="section-description text-body text-body--secondary" data-testid="config-section-description">{{ tooltip }}</p>
+        <p
+          class="section-title text-heading--md text-heading--semibold"
+          data-testid="config-section-title"
+        >
+          {{ title }}
+        </p>
+        <p
+          v-if="tooltip"
+          class="section-description text-body text-body--secondary"
+          data-testid="config-section-description"
+        >
+          {{ tooltip }}
+        </p>
       </div>
       <slot name="extra">
-        <div v-if="modelValue.length > 0" class="chips-row" data-testid="config-section-chips-row">
+        <div
+          v-if="modelValue.length > 0"
+          class="chips-row"
+          data-testid="config-section-chips-row"
+        >
           <transition-group name="chip-list" tag="div" class="chips-container">
             <Chip
               v-for="(element, index) in modelValue"
@@ -21,25 +38,25 @@
           </transition-group>
           <button
             v-if="!hideWhenSingle"
-            @click.prevent="handleAdd"
             class="edit-view-add-btn text-body--sm text-body--medium text-body--primary"
             type="button"
             data-testid="config-section-add-btn"
+            @click.prevent="handleAdd"
           >
             <i class="pi pi-plus" />
-            {{ $t('message_add') }}
+            {{ $t("message_add") }}
           </button>
         </div>
       </slot>
       <button
         v-if="modelValue.length === 0"
-        @click.prevent="handleAdd"
         class="edit-view-add-btn text-body--sm text-body--medium text-body--primary"
         type="button"
         data-testid="config-section-add-btn"
+        @click.prevent="handleAdd"
       >
         <i class="pi pi-plus" />
-        {{ $t('message_add') }}
+        {{ $t("message_add") }}
       </button>
       <slot name="content" />
     </template>
@@ -49,19 +66,19 @@
         <p data-testid="config-section-title">
           {{ title }}
           <template v-if="tooltip">
-            <i class="pi pi-info-circle" v-tooltip="{ value: tooltip }"></i> :
+            <i v-tooltip="{ value: tooltip }" class="pi pi-info-circle"></i> :
           </template>
         </p>
         <slot name="header">
           <transition name="inline-button-fade">
             <button
               v-if="modelValue.length === 0"
-              @click.prevent="handleAdd"
               class="inline-button link-button text-body--sm text-body--primary"
               type="button"
               data-testid="config-section-add-btn"
+              @click.prevent="handleAdd"
             >
-              + {{ $t('message_add') }}
+              + {{ $t("message_add") }}
             </button>
           </transition>
         </slot>
@@ -69,8 +86,16 @@
 
       <transition name="chips-slide" mode="out-in">
         <slot name="extra">
-          <div v-if="modelValue.length > 0" class="chips-row" data-testid="config-section-chips-row">
-            <transition-group name="chip-list" tag="div" class="chips-container">
+          <div
+            v-if="modelValue.length > 0"
+            class="chips-row"
+            data-testid="config-section-chips-row"
+          >
+            <transition-group
+              name="chip-list"
+              tag="div"
+              class="chips-container"
+            >
               <Chip
                 v-for="(element, index) in modelValue"
                 :key="element.name || element.type || index"
@@ -84,19 +109,18 @@
             <button
               v-if="!hideWhenSingle"
               v-show="!hideWhenSingle || modelValue.length !== 1"
-              @click.prevent="handleAdd"
               class="link-button text-body--sm text-body--primary"
               data-testid="config-section-add-more-btn"
               type="button"
+              @click.prevent="handleAdd"
             >
-              + {{ $t('message_add') }}
+              + {{ $t("message_add") }}
             </button>
           </div>
         </slot>
       </transition>
       <slot name="content" />
     </template>
-
   </div>
 </template>
 
@@ -165,7 +189,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .config-section {
-  border-bottom: 1px solid var(--p-accordion-panel-border-color);
+  border-bottom: 1px solid var(--colors-gray-300-original);
   padding: var(--sizes-4) 0;
 
   .header-row {
@@ -226,9 +250,15 @@ export default defineComponent({
   &.edit-view {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 24px;
     padding: 0;
     border-bottom: none;
+
+    + .config-section {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--colors-gray-300-original);
+    }
 
     .section-header {
       display: flex;
@@ -249,7 +279,7 @@ export default defineComponent({
       align-self: flex-start;
       align-items: center;
       gap: 4px;
-      background: var(--colors-blue-50, #f5f9ff);
+      background: var(--colors-blue-50);
       padding: 5px 9px;
       border-radius: 6px;
       cursor: pointer;
@@ -280,7 +310,7 @@ export default defineComponent({
     }
 
     &:focus-visible {
-      outline: 2px solid var(--colors-blue-500, #0052cc);
+      outline: 2px solid var(--colors-blue-500);
       outline-offset: 1px;
       border-radius: 2px;
     }
