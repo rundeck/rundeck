@@ -260,7 +260,7 @@ dependencies {
     implementation("org.hibernate:hibernate-jcache:${hibernateVersion}") {
         exclude group: 'org.hibernate', module: 'hibernate-core'
     }
-    implementation('org.ehcache:ehcache:3.8.1')
+    implementation('org.ehcache:ehcache:3.12.0')
 
     // JAXB implementation for Java 11+ (Ehcache XmlConfiguration parses jcache.xml with javax.xml.bind)
     implementation "javax.xml.bind:jaxb-api:${jaxbApiVersion}"
