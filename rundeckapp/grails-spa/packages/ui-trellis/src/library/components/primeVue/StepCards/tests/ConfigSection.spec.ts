@@ -20,24 +20,34 @@ describe("ConfigSection", () => {
   describe("title", () => {
     it("shows the section title so users know what they are configuring", async () => {
       const wrapper = await createWrapper({ title: "Error Handlers" });
-      expect(wrapper.find('[data-testid="config-section-title"]').text()).toContain("Error Handlers");
+      expect(
+        wrapper.find('[data-testid="config-section-title"]').text(),
+      ).toContain("Error Handlers");
     });
   });
 
   describe("add button", () => {
     it("shows the add button when the list is empty so users can add the first item", async () => {
       const wrapper = await createWrapper({ modelValue: [] });
-      expect(wrapper.find('[data-testid="config-section-add-btn"]').exists()).toBe(true);
+      expect(
+        wrapper.find('[data-testid="config-section-add-btn"]').exists(),
+      ).toBe(true);
     });
 
     it("hides the add button when items are already present", async () => {
-      const wrapper = await createWrapper({ modelValue: [{ type: "logging/mask-passwords" }] });
-      expect(wrapper.find('[data-testid="config-section-add-btn"]').exists()).toBe(false);
+      const wrapper = await createWrapper({
+        modelValue: [{ type: "logging/mask-passwords" }],
+      });
+      expect(
+        wrapper.find('[data-testid="config-section-add-btn"]').exists(),
+      ).toBe(false);
     });
 
     it("emits addElement when the user clicks the add button", async () => {
       const wrapper = await createWrapper({ modelValue: [] });
-      await wrapper.find('[data-testid="config-section-add-btn"]').trigger("click");
+      await wrapper
+        .find('[data-testid="config-section-add-btn"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("addElement")).toHaveLength(1);
@@ -47,12 +57,18 @@ describe("ConfigSection", () => {
   describe("chips row", () => {
     it("does not show the chips row when the list is empty", async () => {
       const wrapper = await createWrapper({ modelValue: [] });
-      expect(wrapper.find('[data-testid="config-section-chips-row"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="config-section-chips-row"]').exists(),
+      ).toBe(false);
     });
 
     it("shows the chips row when items are present so users can see and manage them", async () => {
-      const wrapper = await createWrapper({ modelValue: [{ type: "logging/mask-passwords" }] });
-      expect(wrapper.find('[data-testid="config-section-chips-row"]').exists()).toBe(true);
+      const wrapper = await createWrapper({
+        modelValue: [{ type: "logging/mask-passwords" }],
+      });
+      expect(
+        wrapper.find('[data-testid="config-section-chips-row"]').exists(),
+      ).toBe(true);
     });
 
     it("renders one chip per item in the list", async () => {
@@ -71,14 +87,18 @@ describe("ConfigSection", () => {
       const wrapper = await createWrapper({
         modelValue: [{ title: "My Filter", type: "logging/mask-passwords" }],
       });
-      expect(wrapper.findAllComponents(Chip)[0].props("label")).toBe("My Filter");
+      expect(wrapper.findAllComponents(Chip)[0].props("label")).toBe(
+        "My Filter",
+      );
     });
 
     it("falls back to the element type as chip label when there is no title", async () => {
       const wrapper = await createWrapper({
         modelValue: [{ type: "logging/jsonData" }],
       });
-      expect(wrapper.findAllComponents(Chip)[0].props("label")).toBe("logging/jsonData");
+      expect(wrapper.findAllComponents(Chip)[0].props("label")).toBe(
+        "logging/jsonData",
+      );
     });
 
     it("shows Unknown as chip label when the element has neither title nor type", async () => {
@@ -154,7 +174,9 @@ describe("ConfigSection", () => {
         modelValue: [{ title: "First" }, { title: "Second" }],
         hideWhenSingle: false,
       });
-      expect(wrapper.find('[data-testid="config-section-add-more-btn"]').exists()).toBe(true);
+      expect(
+        wrapper.find('[data-testid="config-section-add-more-btn"]').exists(),
+      ).toBe(true);
     });
 
     it("hides the add more button entirely when hideWhenSingle is true", async () => {
@@ -162,7 +184,9 @@ describe("ConfigSection", () => {
         modelValue: [{ title: "First" }],
         hideWhenSingle: true,
       });
-      expect(wrapper.find('[data-testid="config-section-add-more-btn"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="config-section-add-more-btn"]').exists(),
+      ).toBe(false);
     });
 
     it("emits addElement when the user clicks the add more button", async () => {
@@ -170,7 +194,9 @@ describe("ConfigSection", () => {
         modelValue: [{ title: "First" }],
         hideWhenSingle: false,
       });
-      await wrapper.find('[data-testid="config-section-add-more-btn"]').trigger("click");
+      await wrapper
+        .find('[data-testid="config-section-add-more-btn"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("addElement")).toHaveLength(1);
@@ -186,20 +212,30 @@ describe("ConfigSection", () => {
         title: "Step Error Handler",
         tooltip: "Runs after a step fails",
       });
-      expect(withTooltip.find('[data-testid="config-section-title"]').text()).toBe("Step Error Handler");
-      expect(withTooltip.find('[data-testid="config-section-description"]').text()).toBe("Runs after a step fails");
+      expect(
+        withTooltip.find('[data-testid="config-section-title"]').text(),
+      ).toBe("Step Error Handler");
+      expect(
+        withTooltip.find('[data-testid="config-section-description"]').text(),
+      ).toBe("Runs after a step fails");
 
       const withoutTooltip = await createEditViewWrapper({
         title: "Step Error Handler",
         tooltip: "",
       });
-      expect(withoutTooltip.find('[data-testid="config-section-description"]').exists()).toBe(false);
+      expect(
+        withoutTooltip
+          .find('[data-testid="config-section-description"]')
+          .exists(),
+      ).toBe(false);
     });
 
     it("clicking the Add button emits addElement; button hides only when hideWhenSingle is true with an existing item", async () => {
-      const withItem = await createEditViewWrapper({ modelValue: [{ type: "exec" }] });
+      const withItem = await createEditViewWrapper({
+        modelValue: [{ type: "exec" }],
+      });
       const btn = withItem.find('[data-testid="config-section-add-btn"]');
-      expect(btn.text()).toContain("Add");
+      expect(btn.text()).toContain("message_add");
 
       await btn.trigger("click");
       await withItem.vm.$nextTick();
@@ -209,7 +245,11 @@ describe("ConfigSection", () => {
         modelValue: [{ type: "exec" }],
         hideWhenSingle: true,
       });
-      expect(hiddenWhenSingle.find('[data-testid="config-section-add-btn"]').exists()).toBe(false);
+      expect(
+        hiddenWhenSingle
+          .find('[data-testid="config-section-add-btn"]')
+          .exists(),
+      ).toBe(false);
     });
 
     it("clicking a chip emits editElement with the element and its index", async () => {
@@ -225,7 +265,9 @@ describe("ConfigSection", () => {
     it("removing a chip emits removeElement with the index and update:modelValue without that item", async () => {
       const first = { type: "exec" };
       const second = { type: "mask-passwords" };
-      const wrapper = await createEditViewWrapper({ modelValue: [first, second] });
+      const wrapper = await createEditViewWrapper({
+        modelValue: [first, second],
+      });
 
       await wrapper.findAllComponents(Chip)[0].vm.$emit("remove");
       await wrapper.vm.$nextTick();
