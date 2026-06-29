@@ -273,7 +273,7 @@ dependencies {
 
     implementation "org.apache.grails:grails-core"
     // Solo en dev: file watching de Grails en macOS (MacOsWatchServiceDirectoryWatcher); no se incluye en el WAR
-    developmentOnly "io.methvin:directory-watcher:0.15.1"
+    developmentOnly "io.methvin:directory-watcher:0.19.1"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "io.micrometer:micrometer-registry-prometheus"  // Prometheus metrics endpoint
     implementation "io.micrometer:micrometer-registry-jmx"  // Export Micrometer metrics (jetty.threads.*, etc.) as JMX MBeans for dd-java-agent
