@@ -233,7 +233,7 @@ dependencies {
     implementation ("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:${owaspHtmlSanitizerVersion}") { // CVE-2025-66021
         exclude(group:'com.google.guava',module:'guava')
     }
-    implementation 'org.owasp.encoder:encoder:1.2.1'
+    implementation 'org.owasp.encoder:encoder:1.4.0'
     implementation 'org.grails.plugins:external-config:2.0.0'
     implementation "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
     implementation "commons-io:commons-io:${commonsIoVersion}"
