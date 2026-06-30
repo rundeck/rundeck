@@ -1091,7 +1091,9 @@ the result data.
 In this mode, Log Entries are compacted by only including the changed values from the
 previous Log Entry in the list.  The first Log Entry in the results will always have complete information.  Subsequent entries may include only changed values.
 
-In JSON format, if the `compactedAttr` value is `log` in the response data, and only the `log` value changed relative to a previous Log Entry, the Log Entry may consist only of the log message string. That is, the array entry will be a string, not an object.
+In JSON format (API v21-v58), if the `compactedAttr` value is `log` in the response data, and only the `log` value changed relative to a previous Log Entry, the Log Entry may consist only of the log message string. That is, the array entry will be a string, not an object.
+
+As of API v59, compacted entries are always objects even when only the `log` value changed. This avoids mixed-type arrays and ensures clients can always treat each entry as an object.
 
 When no values changed from the previous Log Entry, the Log Entry will be an empty object.
 
@@ -1399,7 +1401,7 @@ this Log Entry.""",
         }
     }
     //Create a map that will be converted to JSON by the grails converter at the render phase
-    private def renderOutputFormatJson(Map data, List outputData, stateoutput = false) {
+    private def renderOutputFormatJson(Map data, List outputData, stateoutput = false, int apiVersion = 0) {
         def keys = [
                 'id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'pending', 'execCompleted',
                 'hasFailedNodes', 'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize',
@@ -1460,8 +1462,9 @@ this Log Entry.""",
                     }
                 }
                 prev = origmap
-                if (compactedAttr && datamap.size() == 1 && datamap[compactedAttr] != null) {
-                    //compact the single attribute into just the string
+                if (compactedAttr && datamap.size() == 1 && datamap[compactedAttr] != null
+                        && apiVersion < ApiVersions.V59) {
+                    //compact the single attribute into just the string (V58 and below)
                     datamap = datamap[compactedAttr]
                 }
             }
@@ -1960,7 +1963,7 @@ JSON response requires API v14.
 
         withFormat {
             '*' {
-                render renderOutputFormatJson(resultData,entry,stateoutput) as JSON
+                render renderOutputFormatJson(resultData,entry,stateoutput,apiVersion) as JSON
             }
             text{
                 response.addHeader('X-Rundeck-ExecOutput-Offset', storeoffset.toString())
