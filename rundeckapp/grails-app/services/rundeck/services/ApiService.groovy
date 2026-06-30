@@ -992,6 +992,10 @@ class ApiService implements WebUtilService{
             if (acceptHeader.contains('application/xml') && allowed.contains('xml')) {
                 return 'xml'
             }
+            boolean wantsYaml = acceptHeader.contains('application/yaml') || acceptHeader.contains('text/yaml')
+            if (wantsYaml && allowed.contains('yaml')) {
+                return 'yaml'
+            }
             if (acceptHeader.contains('text/plain') && allowed.contains('text')) {
                 return 'text'
             }
