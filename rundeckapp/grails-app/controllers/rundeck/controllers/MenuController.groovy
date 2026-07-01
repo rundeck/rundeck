@@ -529,7 +529,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         def finishq=scheduledExecutionService.finishquery(query,params,qres)
 
-        def allScheduled = schedlist.findAll { jobSchedulesService.isScheduled(it.uuid) }
+        def allScheduled = schedlist.findAll { it.scheduled }
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
         def nextOneTimeScheduledExecutions = query.runJobLaterFilter ? scheduledExecutionService.nextOneTimeScheduledExecutions(schedlist) : null
 

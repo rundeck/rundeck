@@ -3184,7 +3184,7 @@ Since: v56''',
                             jobs          : jobs,
                             errjobs       : errjobs,
                             skipjobs      : skipjobs,
-                            nextExecutions: scheduledExecutionService.nextExecutionTimes(jobs.grep { scheduledExecutionService.isScheduled(it) }),
+                            nextExecutions: scheduledExecutionService.nextExecutionTimes(jobs.grep { it.scheduled }),
                             messages      : msgs,
                             didupload     : true
                     ]

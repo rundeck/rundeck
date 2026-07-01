@@ -2049,8 +2049,8 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
 
         def query = new ScheduledExecutionQuery()
         params.project='test'
-        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
-        ScheduledExecution job2 = new ScheduledExecution(createJobParams(jobName: 'job2', uuid:testUUID2,scheduled:false))
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID, scheduled:aScheduled))
+        ScheduledExecution job2 = new ScheduledExecution(createJobParams(jobName: 'job2', uuid:testUUID2, scheduled:bScheduled))
 
         when:
         def model = controller.jobs(query)
@@ -2069,8 +2069,6 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
                                                                           offset        : 0,
                                                                           paginateParams: [:],
                                                                           displayParams : [:]]
-        1 * controller.jobSchedulesService.isScheduled(testUUID) >> aScheduled
-        1 * controller.jobSchedulesService.isScheduled(testUUID2) >> bScheduled
         model.jobListIds.size() == 2
         model.jobListIds.size() == model.nextScheduled.size()
         model.jobListIds == model.nextScheduled*.extid
@@ -2105,6 +2103,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.scheduledExecutionService.jobSchedulesService = controller.jobSchedulesService
         controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
         controller.executionService = Mock(ExecutionService)
         controller.scheduledExecutionService.applicationContext = applicationContext
@@ -2194,6 +2193,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         }
         controller.scheduledExecutionService = new ScheduledExecutionService()
         controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.scheduledExecutionService.jobSchedulesService = controller.jobSchedulesService
         controller.scheduledExecutionService.applicationContext = applicationContext
 
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
@@ -2303,7 +2303,6 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
                                                                           offset        : 0,
                                                                           paginateParams: [:],
                                                                           displayParams : [:]]
-        1 * controller.jobSchedulesService.isScheduled(testUUID) >> true
         1 * controller.scheduledExecutionService.nextExecutionTimes([job1]) >> [(job1.id):new Date()]
         model.nextExecutions!=null
         model.nextExecutions[job1.id]!=null
