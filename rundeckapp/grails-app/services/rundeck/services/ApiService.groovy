@@ -72,17 +72,8 @@ class ApiService implements WebUtilService{
 
     Clock systemClock = Clock.systemUTC()
     /**
-     * Generate the expiration date for a token given the duration string, and
-     * duration max string
-     * @param tokenDuration duration string
-     * @param maxDuration optional maximum duration time, if null then no maximum
-     * @return [date:Date] date is UTC time, or [error:'format'] if the input duration is not valid or [error:'max']
-     * if it exceeds the
-     * maximum
-     */
-    /**
      * Generate the expiration date for a token given the duration in seconds and an optional maximum.
-     * @param tokenDuration requested duration in seconds (0 or negative means use max)
+     * @param tokenDuration requested duration in seconds (0 means use max, negative is rejected)
      * @param maxDuration maximum allowed duration in seconds (0 means no maximum)
      * @return map with [date: Date or null, max: boolean, error: String or null]
      */
@@ -104,7 +95,7 @@ class ApiService implements WebUtilService{
             def currentDate = systemClock.instant()
             newDate = Date.from(currentDate.plusSeconds(useTokenTime))
         }
-        [date: newDate, max: max]
+        [date: newDate, max: max, error: null]
     }
 
     /**
@@ -370,7 +361,12 @@ class ApiService implements WebUtilService{
             log.warn("Invalid configuration for rundeck.api.tokens.duration.max: " + string + ", using 30d")
             string = "30d"
         }
-        string ? Sizes.parseTimeDuration(string) : 0L
+        try {
+            return string ? Sizes.parseTimeDuration(string) : 0L
+        } catch (ArithmeticException e) {
+            log.warn("Overflow in rundeck.api.tokens.duration.max: " + string + ", using 30d")
+            return Sizes.parseTimeDuration("30d")
+        }
     }
 
 

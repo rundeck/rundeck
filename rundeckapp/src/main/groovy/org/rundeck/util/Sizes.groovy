@@ -54,12 +54,6 @@ class Sizes {
 
     static final Map<String, Long> TIME_UNITS = [s: 1, m: 60, h: 60 * 60, d: 24 * 60 * 60,w: 7 * 24 * 60 * 60, y: 365 * 24 * 60 * 60]
     /**
-     * Return the timeout duration in seconds for a timeout string in the form "1d2h3m15s" etc
-     * @param time
-     * @param opts
-     * @return
-     */
-    /**
      * Return the timeout duration in seconds for a timeout string in the form "1d2h3m15s" etc.
      * @param time duration string
      * @param unit desired output time unit
@@ -84,11 +78,12 @@ class Sizes {
             }
         }
         return unit.convert(timeval, TimeUnit.SECONDS)
-    }/**
-     * Return the timeout duration in seconds for a timeout string in the form "1d2h3m15s" etc
-     * @param time
-     * @param opts
-     * @return
+    }
+
+    /**
+     * Validate the format of a timeout duration string (digits optionally followed by a unit letter).
+     * @param time duration string to validate
+     * @return true if the format is valid
      */
     public static boolean validTimeDuration(String time) {
         def matcher = (time =~ /(\d+)([smhdwy])?/)
