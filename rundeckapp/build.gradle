@@ -30,7 +30,7 @@ buildscript {
 plugins {
     id "org.springframework.boot" version "${springBootVersion}"
     id "org.dvaske.gradle.git-build-info"
-    id "com.github.node-gradle.node" version "7.1.0"
+    id "com.github.node-gradle.node" version "${nodeGradlePluginVersion}"
     id "java-library"
     id "war"
 }
