@@ -330,8 +330,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (query.daysAhead && query.daysAhead >= 0) {
             futureDate = new Date() + query.daysAhead
         } else if (params.future && Sizes.validTimeDuration(params.future)) {
-            def period = Sizes.parseTimeDuration(params.future, TimeUnit.MILLISECONDS)
-            futureDate = new Date(System.currentTimeMillis() + period)
+            try {
+                def period = Sizes.parseTimeDuration(params.future, TimeUnit.MILLISECONDS)
+                futureDate = new Date(System.currentTimeMillis() + period)
+            } catch (ArithmeticException ignored) {
+            }
         }
         def maxFutures = null
         if (params.maxFutures) {
