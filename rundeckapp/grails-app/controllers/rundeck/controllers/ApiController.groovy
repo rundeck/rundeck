@@ -830,7 +830,6 @@ Since: v11
         }
         AuthenticationToken token
 
-        Integer tokenDurationSeconds = tokenDuration ? Sizes.parseTimeDuration(tokenDuration) : 0
         if (tokenDuration && !Sizes.validTimeDuration(tokenDuration)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_BAD_REQUEST,
@@ -839,10 +838,21 @@ Since: v11
             ]
             )
         }
+        long tokenDurationSeconds
+        try {
+            tokenDurationSeconds = tokenDuration ? Sizes.parseTimeDuration(tokenDuration) : 0L
+        } catch (ArithmeticException e) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.parameter.invalid',
+                    args  : [tokenDuration, "duration", "Duration value is too large"]
+            ]
+            )
+        }
         try {
             token = apiService.generateUserToken(
                     authContext,
-                    tokenDurationSeconds ?: null,
+                    tokenDurationSeconds,
                     tokenuser,
                     rolesSet,
                     true,

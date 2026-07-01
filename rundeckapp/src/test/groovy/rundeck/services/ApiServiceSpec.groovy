@@ -205,6 +205,34 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
 
     }
 
+    @Unroll
+    def "generateTokenExpirationDate rejects non-positive duration #duration"() {
+        given:
+        service.systemClock = Clock.fixed(Instant.ofEpochMilli(1000), ZoneId.of("Z"))
+
+        when:
+        def result = service.generateTokenExpirationDate(duration, 2592000L)
+
+        then:
+        result.error != null
+        result.date == null
+
+        where:
+        duration << [-1668537728L, -1L, Long.MIN_VALUE]
+    }
+
+    def "generateTokenExpirationDate handles large duration exceeding max"() {
+        given:
+        service.systemClock = Clock.fixed(Instant.ofEpochMilli(1000), ZoneId.of("Z"))
+        long hugeDuration = 86_399_999_999_222_400L
+
+        when:
+        def result = service.generateTokenExpirationDate(hugeDuration, 2592000L)
+
+        then:
+        result.max == true
+    }
+
     def "generate user token unauthorized"() {
         given:
         def auth = Mock(UserAndRolesAuthContext) {

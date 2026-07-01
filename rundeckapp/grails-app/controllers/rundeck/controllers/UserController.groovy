@@ -874,9 +874,13 @@ For APIv53+, the results will also include:
             def result = [result: false, error: "Duration format was not valid"]
             return renderTokenGenerateResult(result, params.login)
         }
-        Integer tokenDurationSeconds = tokenTimeString ? Sizes.parseTimeDuration(tokenTimeString) : 0
-        //check auth to edit profile
-        //default to current user profile
+        long tokenDurationSeconds
+        try {
+            tokenDurationSeconds = tokenTimeString ? Sizes.parseTimeDuration(tokenTimeString) : 0L
+        } catch (ArithmeticException e) {
+            def result = [result: false, error: "Duration value is too large"]
+            return renderTokenGenerateResult(result, params.login)
+        }
         def result = [:]
         try {
             AuthenticationToken token = apiService.generateUserToken(
