@@ -151,6 +151,12 @@ export default defineComponent({
     modelValue(newVal: string) {
       this.value = newVal;
     },
+    suggestions() {
+      if (this.currentQuery !== "") {
+        this.filteredSuggestions = this.suggestions;
+        this.allSuggestions = this.suggestions;
+      }
+    },
   },
   computed: {
     tabFilteredSuggestions(): string[] | undefined {

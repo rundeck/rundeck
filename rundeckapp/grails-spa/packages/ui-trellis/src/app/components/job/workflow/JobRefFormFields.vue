@@ -91,16 +91,19 @@
       >
         <label class="col-sm-2 control-label"></label>
         <div class="col-sm-5">
-          <input
+          <PtAutoComplete
             :id="`jobNameField${rkey}`"
-            v-model="modelValue.name"
-            type="text"
+            v-model="jobNameInputText"
+            :suggestions="(jobNameSuggestions as any)"
+            option-label="name"
             name="jobName"
             data-testid="jobNameField"
             :placeholder="$t('scheduledExecution.jobName.label')"
-            class="form-control"
-            size="100"
-            :readonly="!isUseName"
+            class="form-control w-100"
+            :read-only="!isUseName"
+            :replace-on-select="true"
+            @update:model-value="onJobNameInput"
+            @onComplete="onSearchJobNames"
           />
         </div>
         <div class="col-sm-5">
@@ -716,6 +719,13 @@ export default defineComponent({
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       eventBus: eventBus,
+      jobNameInputText: "",
+      jobNameSuggestions: [] as Array<{
+        name: string;
+        group: string;
+        id: string;
+        project: string;
+      }>,
     };
   },
   computed: {
@@ -737,6 +747,14 @@ export default defineComponent({
     ]),
   },
   watch: {
+    "modelValue.name": {
+      immediate: true,
+      handler(val: string) {
+        if (typeof val === "string" && val !== this.jobNameInputText) {
+          this.jobNameInputText = val;
+        }
+      },
+    },
     "nodeFilterStore.filter": {
       async handler(val) {
         if (val !== this.modelValue.nodefilters.filter) {
@@ -810,6 +828,33 @@ export default defineComponent({
 
     handleFavoritesButton() {
       this.showFavoritesButton = false;
+    },
+
+    async onSearchJobNames(event: { query: string }) {
+      const project = this.modelValue.project || this.currentProject;
+      try {
+        const url = new URL(
+          rundeckContext.appLinks.menuJobSearchJson,
+          window.location.origin,
+        );
+        url.searchParams.set("jobFilter", event.query);
+        url.searchParams.set("project", project);
+        url.searchParams.set("runAuthRequired", "true");
+        const resp = await fetch(url.toString(), { credentials: "include" });
+        if (!resp.ok) {
+          this.jobNameSuggestions = [];
+          return;
+        }
+        const data = await resp.json();
+        this.jobNameSuggestions = Array.isArray(data) ? data : [];
+      } catch {
+        this.jobNameSuggestions = [];
+      }
+    },
+
+    onJobNameInput(val: string) {
+      this.jobNameInputText = val;
+      this.modelValue.name = val;
     },
 
     updatedValue(val: string) {
