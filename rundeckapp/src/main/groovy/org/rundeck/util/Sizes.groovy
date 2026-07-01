@@ -59,6 +59,13 @@ class Sizes {
      * @param opts
      * @return
      */
+    /**
+     * Return the timeout duration in seconds for a timeout string in the form "1d2h3m15s" etc.
+     * @param time duration string
+     * @param unit desired output time unit
+     * @return duration converted to the requested unit
+     * @throws ArithmeticException if the parsed value overflows a long
+     */
     public static long parseTimeDuration(String time, TimeUnit unit = TimeUnit.SECONDS) {
         long timeval = 0
         def matcher = (time =~ /(\d+)(.)?/)
@@ -67,12 +74,13 @@ class Sizes {
             try {
                 val = Long.parseLong(m[1])
             } catch (NumberFormatException e) {
-                return
+                throw new ArithmeticException("Duration value too large: " + m[1])
             }
             if (m[2] && TIME_UNITS[m[2]]) {
-                timeval += (val * TIME_UNITS[m[2]])
+                long product = Math.multiplyExact(val, TIME_UNITS[m[2]])
+                timeval = Math.addExact(timeval, product)
             } else if (!m[2]) {
-                timeval += val
+                timeval = Math.addExact(timeval, val)
             }
         }
         return unit.convert(timeval, TimeUnit.SECONDS)

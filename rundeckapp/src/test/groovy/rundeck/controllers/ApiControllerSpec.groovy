@@ -298,7 +298,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.apiService.generateUserToken(null, null, 'bob', roles, _, _, _) >> createdToken
+        1 * controller.apiService.generateUserToken(null, 0L, 'bob', roles, _, _, _) >> createdToken
         0 * controller.apiService._(*_)
 
         response.status == 201
@@ -350,7 +350,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             it[2].json(requestJson)
             true
         }
-        1 * controller.apiService.generateUserToken(_, null, 'bob', roles, _, _, _) >> createdToken
+        1 * controller.apiService.generateUserToken(_, 0L, 'bob', roles, _, _, _) >> createdToken
         0 * controller.apiService._(*_)
 
         response.status == 201
@@ -407,7 +407,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             it[2].json(requestJson)
             true
         }
-        1 * controller.apiService.generateUserToken(_, null, 'bob', null, _, _, _) >> createdToken
+        1 * controller.apiService.generateUserToken(_, 0L, 'bob', null, _, _, _) >> createdToken
         0 * controller.apiService._(*_)
 
         response.status == 201

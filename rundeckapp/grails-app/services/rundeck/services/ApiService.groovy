@@ -80,17 +80,26 @@ class ApiService implements WebUtilService{
      * if it exceeds the
      * maximum
      */
-    Map generateTokenExpirationDate(Integer tokenDuration, Integer maxDuration = null) {
-        int useTokenTime = maxDuration ?: 0
+    /**
+     * Generate the expiration date for a token given the duration in seconds and an optional maximum.
+     * @param tokenDuration requested duration in seconds (0 or negative means use max)
+     * @param maxDuration maximum allowed duration in seconds (0 means no maximum)
+     * @return map with [date: Date or null, max: boolean, error: String or null]
+     */
+    Map generateTokenExpirationDate(long tokenDuration, long maxDuration = 0L) {
+        if (tokenDuration < 0) {
+            return [date: null, max: false, error: "Invalid negative duration: ${tokenDuration}"]
+        }
+        long useTokenTime = maxDuration > 0 ? maxDuration : 0L
         boolean max = false
-        if (tokenDuration) {
-            if (tokenDuration <= useTokenTime || useTokenTime < 1) {
+        if (tokenDuration > 0) {
+            if (useTokenTime < 1 || tokenDuration <= useTokenTime) {
                 useTokenTime = tokenDuration
             } else {
                 max = true
             }
         }
-        def newDate = null;
+        def newDate = null
         if (useTokenTime > 0) {
             def currentDate = systemClock.instant()
             newDate = Date.from(currentDate.plusSeconds(useTokenTime))
@@ -185,7 +194,7 @@ class ApiService implements WebUtilService{
      */
     AuthenticationToken generateUserToken(
             UserAndRolesAuthContext authContext,
-            Integer tokenTimeSeconds,
+            long tokenTimeSeconds,
             String username,
             Set<String> roles,
             boolean forceExpiration = true,
@@ -206,7 +215,7 @@ class ApiService implements WebUtilService{
      */
     AuthenticationToken createUserToken(
             UserAndRolesAuthContext authContext,
-            Integer tokenTimeSeconds,
+            long tokenTimeSeconds,
             String token,
             String username,
             Set<String> roles,
@@ -214,8 +223,6 @@ class ApiService implements WebUtilService{
             AuthTokenType tokenType = null,
             String tokenName = null
     ) throws Exception {
-        //check auth to edit profile
-        //default to current user profile
         TokenRolesAuthCheck authed = checkTokenAuthorization(authContext, username, roles)
         if (!authed.authorized) {
             throw new Exception(authed.message)
@@ -225,8 +232,11 @@ class ApiService implements WebUtilService{
 
         Date newDate = null
         if (forceExpiration) {
-            Integer maxTokenDuration = maxTokenDurationConfig()
+            long maxTokenDuration = maxTokenDurationConfig()
             def generate = generateTokenExpirationDate(tokenTimeSeconds, maxTokenDuration)
+            if (generate.error) {
+                throw new Exception(generate.error as String)
+            }
             if (generate.max) {
                 throw new Exception("Duration exceeds maximum allowed: " + maxTokenDuration)
             }
@@ -351,13 +361,16 @@ class ApiService implements WebUtilService{
         )
     }
 
-    public int maxTokenDurationConfig() {
+    /**
+     * @return the configured max token duration in seconds, or 0 if unset
+     */
+    public long maxTokenDurationConfig() {
         def string = configurationService.getString("api.tokens.duration.max", null)
         if (!Sizes.validTimeDuration(string)) {
             log.warn("Invalid configuration for rundeck.api.tokens.duration.max: " + string + ", using 30d")
             string = "30d"
         }
-        string ? Sizes.parseTimeDuration(string) : 0
+        string ? Sizes.parseTimeDuration(string) : 0L
     }
 
 
