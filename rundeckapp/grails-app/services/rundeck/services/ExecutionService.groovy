@@ -4724,18 +4724,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     private boolean isSqlCompatible() {
         boolean isCompatible = false
-        try{
+        try {
+            def sessionFactory = applicationContext.getBean("sessionFactory")
+            def dialectName = (sessionFactory?.properties?.get('hibernate.dialect') ?: '') as String
+            def dataSourceUrl = grailsApplication?.config?.getProperty('dataSource.url', String, '') ?: ''
+            boolean isH2 = dialectName.contains('H2Dialect') || dataSourceUrl.startsWith('jdbc:h2:')
+
             Execution.createCriteria().list(max:1) {
-                projections{
-                    sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                projections {
+                    if (isH2) {
+                        sqlProjection 'DATEDIFF(\'SECOND\', date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else {
+                        sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                    }
                 }
             }
-
             isCompatible = true
-        } catch(JDBCException ex){
+        } catch (Exception ex) {
+            log.debug("Execution metrics SQL compatibility check failed, falling back to in-memory metrics calculation", ex)
             isCompatible = false
         }
-
         return isCompatible
     }
 
