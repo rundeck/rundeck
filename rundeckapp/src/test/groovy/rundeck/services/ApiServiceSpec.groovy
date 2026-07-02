@@ -197,12 +197,40 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
         result == expected
         where:
         duration | max | expected
-        123      | 200 | [date: new Date(124000), max: false]
-        123      | 100 | [date: new Date(101000), max: true]
-        0        | 100 | [date: new Date(101000), max: false]
-        200      | 0   | [date: new Date(201000), max: false]
-        0        | 0   | [date: null, max: false]
+        123      | 200 | [date: new Date(124000), max: false, error: null]
+        123      | 100 | [date: new Date(101000), max: true, error: null]
+        0        | 100 | [date: new Date(101000), max: false, error: null]
+        200      | 0   | [date: new Date(201000), max: false, error: null]
+        0        | 0   | [date: null, max: false, error: null]
 
+    }
+
+    @Unroll
+    def "generateTokenExpirationDate rejects negative duration #duration"() {
+        given:
+        service.systemClock = Clock.fixed(Instant.ofEpochMilli(1000), ZoneId.of("Z"))
+
+        when:
+        def result = service.generateTokenExpirationDate(duration, 2592000L)
+
+        then:
+        result.error != null
+        result.date == null
+
+        where:
+        duration << [-1668537728L, -1L, Long.MIN_VALUE]
+    }
+
+    def "generateTokenExpirationDate handles large duration exceeding max"() {
+        given:
+        service.systemClock = Clock.fixed(Instant.ofEpochMilli(1000), ZoneId.of("Z"))
+        long hugeDuration = 86_399_999_999_222_400L
+
+        when:
+        def result = service.generateTokenExpirationDate(hugeDuration, 2592000L)
+
+        then:
+        result.max == true
     }
 
     def "generate user token unauthorized"() {
