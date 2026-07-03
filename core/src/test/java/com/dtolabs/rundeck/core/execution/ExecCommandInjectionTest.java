@@ -211,4 +211,111 @@ public class ExecCommandInjectionTest {
         Assert.assertEquals("echo", result.get(0));
         Assert.assertEquals("literal text", result.get(1));
     }
+
+    @Test
+    public void testWindowsCommandInjectionPipeBlocked() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, false);
+        builder.arg("Scanning port: 80 | whoami", true, false);
+        ExecArgList execArgList = builder.build();
+
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "windows");
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("\"Scanning port: 80 | whoami\"", result.get(1));
+    }
+
+    @Test
+    public void testWindowsCommandInjectionAndOperatorBlocked() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, false);
+        builder.arg("test && del /q C:\\", true, false);
+        ExecArgList execArgList = builder.build();
+
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "windows");
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("\"test && del /q C:\\\"", result.get(1));
+    }
+
+    @Test
+    public void testWindowsCommandInjectionRedirectionBlocked() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, false);
+        builder.arg("data > C:\\tmp\\file", true, false);
+        ExecArgList execArgList = builder.build();
+
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "windows");
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("\"data > C:\\tmp\\file\"", result.get(1));
+    }
+
+    @Test
+    public void testWindowsPathWithSpacesQuoted() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("pwsh", false, false);
+        builder.arg("-File", false, false);
+        builder.arg("\\\\server\\share\\path with spaces\\script.ps1", true, false);
+        ExecArgList execArgList = builder.build();
+
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "windows");
+
+        Assert.assertEquals(3, result.size());
+        Assert.assertEquals("pwsh", result.get(0));
+        Assert.assertEquals("-File", result.get(1));
+        Assert.assertEquals("\"\\\\server\\share\\path with spaces\\script.ps1\"", result.get(2));
+    }
+
+    @Test
+    public void testWindowsEnvVarExpansionBlocked() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, false);
+        builder.arg("%PATH%", true, false);
+        ExecArgList execArgList = builder.build();
+
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "windows");
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("\"%%PATH%%\"", result.get(1));
+    }
+
+    @Test
+    public void testWindowsInternalDoubleQuotesEscaped() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, false);
+        builder.arg("say \"hello\"", true, false);
+        ExecArgList execArgList = builder.build();
+
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "windows");
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("\"say \\\"hello\\\"\"", result.get(1));
+    }
+
+    @Test
+    public void testWindowsSimpleValueNotQuoted() {
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, false);
+        builder.arg("80", true, false);
+        ExecArgList execArgList = builder.build();
+
+        Map<String, Map<String, String>> dataContext = new HashMap<>();
+        ArrayList<String> result = execArgList.buildCommandForNode(dataContext, "windows");
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("80", result.get(1));
+    }
 }
