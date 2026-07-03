@@ -144,14 +144,25 @@ public class CLIUtils {
     }
 
     /**
-     * Quote a Windows argument using double quotes. Single quotes have no quoting
+     * Quote a Windows argument using double quotes following the
+     * {@code CommandLineToArgvW} escaping rules. Single quotes have no quoting
      * semantics in cmd.exe and are passed literally, breaking arguments and providing
      * no injection protection. Double quotes correctly handle spaces and prevent
      * interpretation of most shell metacharacters ({@code |}, {@code &}, {@code >},
      * {@code <}, {@code ;}).
      *
-     * <p>Internal double-quote characters are escaped as {@code \"} and percent signs
-     * are doubled ({@code %%}) to prevent cmd.exe environment-variable expansion.</p>
+     * <p>Backslash handling follows the MSVC C-runtime convention used by
+     * {@code CommandLineToArgvW}:</p>
+     * <ul>
+     *   <li>{@code 2n} backslashes before {@code "} produce {@code n} literal
+     *       backslashes and the {@code "} acts as a delimiter/escape.</li>
+     *   <li>{@code 2n+1} backslashes before {@code "} produce {@code n} literal
+     *       backslashes plus a literal {@code "}.</li>
+     *   <li>Backslashes not followed by {@code "} are literal.</li>
+     * </ul>
+     *
+     * <p>Percent signs are doubled ({@code %%}) to prevent cmd.exe
+     * environment-variable expansion.</p>
      */
     private static void quoteWindowsCMDArg(StringBuilder sb, String arg) {
         if (StringUtils.containsNone(arg, WINDOWS_CMD_CHARS) &&
@@ -163,14 +174,38 @@ public class CLIUtils {
             return;
         }
         sb.append('"');
-        for (int i = 0; i < arg.length(); i++) {
-            char c = arg.charAt(i);
-            if (c == '"') {
+        int i = 0;
+        while (i < arg.length()) {
+            int numBackslashes = 0;
+            while (i < arg.length() && arg.charAt(i) == '\\') {
+                numBackslashes++;
+                i++;
+            }
+            if (i == arg.length()) {
+                // Trailing backslashes: double them so the closing " is not escaped
+                for (int j = 0; j < numBackslashes * 2; j++) {
+                    sb.append('\\');
+                }
+                break;
+            } else if (arg.charAt(i) == '"') {
+                // Backslashes before ": double them, then emit \"
+                for (int j = 0; j < numBackslashes * 2; j++) {
+                    sb.append('\\');
+                }
                 sb.append("\\\"");
-            } else if (c == '%') {
-                sb.append("%%");
+                i++;
             } else {
-                sb.append(c);
+                // Backslashes not before ": emit literally
+                for (int j = 0; j < numBackslashes; j++) {
+                    sb.append('\\');
+                }
+                char c = arg.charAt(i);
+                if (c == '%') {
+                    sb.append("%%");
+                } else {
+                    sb.append(c);
+                }
+                i++;
             }
         }
         sb.append('"');

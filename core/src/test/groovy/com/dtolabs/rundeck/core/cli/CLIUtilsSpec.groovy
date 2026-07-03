@@ -95,11 +95,22 @@ class CLIUtilsSpec extends Specification {
 
     def "quoteWindowsCMDArg blocks AND operator injection"() {
         expect:
-        CLIUtils.quoteWindowsCMDArg('test && del /q C:\\') == '"test && del /q C:\\"'
+        CLIUtils.quoteWindowsCMDArg('test && del /q C:\\') == '"test && del /q C:\\\\"'
     }
 
     def "quoteWindowsCMDArg blocks semicolon injection"() {
         expect:
         CLIUtils.quoteWindowsCMDArg('test; whoami') == '"test; whoami"'
+    }
+
+    def "quoteWindowsCMDArg doubles trailing backslashes before closing quote"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('path\\') == '"path\\\\"'
+        CLIUtils.quoteWindowsCMDArg('path\\\\') == '"path\\\\\\\\"'
+    }
+
+    def "quoteWindowsCMDArg doubles backslashes before internal quote"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('say\\"hi\\"') == '"say\\\\\\"hi\\\\\\""'
     }
 }
