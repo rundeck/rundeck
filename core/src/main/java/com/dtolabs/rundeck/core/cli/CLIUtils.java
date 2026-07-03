@@ -143,6 +143,16 @@ public class CLIUtils {
         return stringBuilder.toString();
     }
 
+    /**
+     * Quote a Windows argument using double quotes. Single quotes have no quoting
+     * semantics in cmd.exe and are passed literally, breaking arguments and providing
+     * no injection protection. Double quotes correctly handle spaces and prevent
+     * interpretation of most shell metacharacters ({@code |}, {@code &}, {@code >},
+     * {@code <}, {@code ;}).
+     *
+     * <p>Internal double-quote characters are escaped as {@code \"} and percent signs
+     * are doubled ({@code %%}) to prevent cmd.exe environment-variable expansion.</p>
+     */
     private static void quoteWindowsCMDArg(StringBuilder sb, String arg) {
         if (StringUtils.containsNone(arg, WINDOWS_CMD_CHARS) &&
                 StringUtils.containsNone(arg, WINDOWS_WS_CHARS) &&
@@ -152,9 +162,18 @@ public class CLIUtils {
             }
             return;
         }
-        sb.append("'");
-        sb.append(arg.replace("'", "'\"'\"'"));
-        sb.append("'");
+        sb.append('"');
+        for (int i = 0; i < arg.length(); i++) {
+            char c = arg.charAt(i);
+            if (c == '"') {
+                sb.append("\\\"");
+            } else if (c == '%') {
+                sb.append("%%");
+            } else {
+                sb.append(c);
+            }
+        }
+        sb.append('"');
     }
 
     private static void quoteUnixShellArg(StringBuilder sb, String arg) {
