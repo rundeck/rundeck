@@ -680,6 +680,95 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
 
     }
 
+    def "api execution output compacted json v59 entries always objects"() {
+        given:
+
+        mockTagLib(UtilityTagLib)
+        Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+        controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * isClusterModeEnabled()
+            1 * isFrameworkProjectDisabled(_) >> false
+            _ * getServerUUID()
+            0 * _(*_)
+        }
+
+        controller.apiService = Mock(ApiService) {
+            requireApi(*_) >> true
+            0 * _(*_)
+        }
+        session.subject = new Subject()
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+            1 * execution(_,_)>>Mock(AuthorizingExecution){
+                1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
+
+            }
+        }
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
+        def date1 = new Date(90000000)
+        def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
+        sdf.timeZone=TimeZone.getTimeZone('GMT')
+        def abstime=sdf.format(date1)
+        def sdf2=new SimpleDateFormat('HH:mm:ss')
+        def timestr=sdf2.format(date1)
+        reader.reader = new TestReader(logs:
+                                               [
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message1',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: '"quoted" message',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: '"quoted" message',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                               ]
+        )
+        when:
+        params.id = e1.id.toString()
+        params.compacted = 'true'
+        request.api_version = 59
+        response.format = 'json'
+        controller.apiExecutionOutput()
+        def json = response.json
+        then:
+        1 * controller.loggingService.getLogReader(e1) >> reader
+        json.compacted == true
+        json.compactedAttr == 'log'
+        json.entries.size() == 3
+        json.entries[0].log == 'message1'
+        json.entries[0].level == 'NORMAL'
+        json.entries[0].time == timestr
+        json.entries[0].absolute_time == abstime
+        // V59: log-only change returns object, not bare string
+        json.entries[1] instanceof Map
+        json.entries[1].log == '"quoted" message'
+        // identical to previous: empty object
+        json.entries[2] == [:]
+
+    }
+
     def "api execution log reader not found"() {
         given:
         messageSource.addMessage("execution.log.storage.state.NOT_FOUND",Locale.ENGLISH,"The Execution Log could not be found.")

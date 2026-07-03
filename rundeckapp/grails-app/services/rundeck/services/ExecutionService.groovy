@@ -358,6 +358,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         configurationService.executionModeActive
     }
 
+    /**
+     * Returns the configured default activity time filter value when the feature is enabled,
+     * or null if no filter should be applied. Used to avoid duplicating this logic across controllers.
+     * @param params request params — if any param ends with 'Filter', returns null (user already has a filter)
+     */
+    String getActivityDefaultTimeFilter(def params) {
+        if (params.find { it.key.endsWith('Filter') }) {
+            return null
+        }
+        if (featureService?.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+            def configured = configurationService?.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+            return (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+        }
+        return null
+    }
+
     void setExecutionsAreActive(boolean active){
         configurationService.executionModeActive=active
 

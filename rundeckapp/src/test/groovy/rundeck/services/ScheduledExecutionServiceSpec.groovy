@@ -101,6 +101,7 @@ import rundeck.ReferencedExecution
 import rundeck.controllers.ScheduledExecutionController
 import spock.lang.Issue
 import spock.lang.Unroll
+import spock.util.mop.ConfineMetaClassChanges
 
 /**
  * Created by greg on 6/24/15.
@@ -1405,7 +1406,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.options[0].name == 'test3'
         results.scheduledExecution.options[0].defaultValue == 'val3'
         !results.scheduledExecution.options[0].enforced
-        results.scheduledExecution.options[0].realValuesUrl.toExternalForm() == 'http://test.com/test3'
+        results.scheduledExecution.options[0].realValuesUrl == 'http://test.com/test3'
     }
 
     def "validate options data json"() {
@@ -1429,7 +1430,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.options[0].name == 'test3'
         results.scheduledExecution.options[0].defaultValue == 'val3'
         !results.scheduledExecution.options[0].enforced
-        results.scheduledExecution.options[0].realValuesUrl.toExternalForm() == 'http://test.com/test3'
+        results.scheduledExecution.options[0].realValuesUrl == 'http://test.com/test3'
 
     }
     def "validate options data json test value"() {
@@ -1448,7 +1449,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.options[0].name == 'test3'
         results.scheduledExecution.options[0].defaultValue == 'val3'
         !results.scheduledExecution.options[0].enforced
-        results.scheduledExecution.options[0].realValuesUrl.toExternalForm() == 'http://test.com/test3'
+        results.scheduledExecution.options[0].realValuesUrl == 'http://test.com/test3'
 
     }
     def "validate scheduled job with required option without default"() {
@@ -2334,7 +2335,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         [options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]] |  1  | true
         //remove all options
         [_sessionopts: true, _sessionEditOPTSObject: [:] ] | null | true //empty session opts clears options
-        [_sessionopts: true, _sessionEditOPTSObject: ['options[0]': new Option(name: 'test1', defaultValue: 'val3Changed', enforced: false, valuesUrl: new URL("http://test.com/test3"))], useCrontabString: 'true',crontabString: "X 48 09 ? * * *" ] | 1 | false
+        [_sessionopts: true, _sessionEditOPTSObject: ['options[0]': new Option(name: 'test1', defaultValue: 'val3Changed', enforced: false, valuesUrl: "http://test.com/test3")], useCrontabString: 'true',crontabString: "X 48 09 ? * * *" ] | 1 | false
         //don't modify options
 //        [:] | 2 | true
 
@@ -2577,7 +2578,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         next.name=="test3"
         next.defaultValue=="val3"
         null!= next.realValuesUrl
-        next.realValuesUrl.toExternalForm()=="http://test.com/test3"
+        next.realValuesUrl=="http://test.com/test3"
         !next.enforced
     }
 
@@ -5182,6 +5183,64 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             1        |  '-'          | 2     | 1
     }
 
+    def "list workflows with 1001 job IDs in idlist returns all results without error"() {
+        given: "1001 jobs — verifies chunked IN queries for the idlist path (ORA-01795 fix)"
+            def jobs = (1..1001).collect { i ->
+                new ScheduledExecution(createJobParams(jobName: "bulk-job-${i}", uuid: "bulk-uuid-${i}")).save(flush: false)
+            }
+            ScheduledExecution.withSession { it.flush() }
+            def idlist = jobs*.id.join(',')
+            def input = Mock(JobQueryInput) {
+                getIdlist() >> idlist
+            }
+            service.applicationContext = applicationContext
+        when:
+            def result = service.listWorkflows(input, [:])
+        then:
+            result != null
+            result.schedlist.size() == 1001
+            result.total == 1001
+    }
+
+    @ConfineMetaClassChanges([Execution])
+    def "nextOneTimeScheduledExecutions batches HQL IN query into chunks of at most 1000 (ORA-01795 fix)"() {
+        given: "1001 scheduled executions and a captured Hibernate session/query"
+            def batchSizes = []
+            def query = new Expando()
+            query.setParameterList = { String name, Collection vals -> batchSizes << vals.size(); query }
+            query.setParameter = { String name, Object val -> query }
+            query.list = { -> [] }
+            def session = new Expando()
+            session.createQuery = { String hql -> query }
+            Execution.metaClass.static.withSession = { Closure c -> c.call(session) }
+
+            def seList = (1..1001).collect { i -> Mock(ScheduledExecution) { getId() >> (long) i } }
+        when:
+            def result = service.nextOneTimeScheduledExecutions(seList)
+        then: "the IN-list is split into batches of <=1000 covering every id"
+            batchSizes.size() == 2
+            batchSizes.every { it <= 1000 }
+            batchSizes.sum() == 1001
+            result == [:]
+    }
+
+    // getSchedulesExecutionLater chunking cannot be covered at unit-test level: the GORM DataTest
+    // environment uses a SimpleMap store that rejects the `property('scheduledExecution.id')`
+    // joined projection on the first Execution criteria, and the @Transactional AST transform
+    // prevents MetaClass interception of createCriteria() inside the service. The fix is verified
+    // by code review: both 'in'('se.uuid') and 'in'('id') sites use Lists.partition(..., 1000).
+
+    // getSchedulesJobToClaim chunking is not unit-tested here, by design:
+    //  - Enhanced JDBC path: the only seam is `new NamedParameterJdbcTemplate(dataSource)`, and
+    //    intercepting it requires a MetaClass *constructor* override, which intermittently
+    //    corrupts the shared test-worker JVM (flaky "could not write test results" crashes).
+    //  - Legacy GORM path: same @Transactional AST + GORM static-dispatch limitation as
+    //    getSchedulesExecutionLater (createCriteria can't be intercepted in the unit context).
+    // The fix is verified by code review and JobTakeoverQueryBuilderSpec; both paths drive
+    // Lists.partition(jobids, 1000) so no IN-list exceeds 1000. A full guard belongs in an
+    // integration test (real Hibernate / DataSource).
+
+
     @Unroll
     def "delete scheduled execution"() {
         given:
@@ -6537,7 +6596,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
             se.addToOptions(new Option(
                     name:'test',
-                    realValuesUrl: new URL('file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry)
+                    realValuesUrl: 'file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry
             ))
             se.save()
 
@@ -6590,7 +6649,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',
-                realValuesUrl: new URL('file://test')
+                realValuesUrl: 'file://test'
         ))
         se.save()
         def input=[:]
@@ -6649,7 +6708,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',
-                realValuesUrl: new URL('file://test')
+                realValuesUrl: 'file://test'
         ))
         se.save()
         _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){

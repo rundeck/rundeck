@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 @Data
@@ -29,7 +27,7 @@ public class JobOptionImpl implements JobOption, Comparable {
     private Boolean isDate = false;
     private String dateFormat;
     private TreeSet<String> values;
-    private URL realValuesUrl;
+    private String realValuesUrl;
     private String label;
     private String regex;
     private String valuesList;
@@ -81,11 +79,7 @@ public class JobOptionImpl implements JobOption, Comparable {
             builder.defaultStoragePath((String) option.get("storagePath"));
         }
         if(option.containsKey("valuesUrl")){
-            try {
-                builder.realValuesUrl(new URL((String) option.get("valuesUrl")));
-            } catch (MalformedURLException e) {
-                throw new ValidationException(e.getMessage());
-            }
+            builder.realValuesUrl((String) option.get("valuesUrl"));
         }
         if(option.containsKey("regex")){
             builder.regex((String) option.get("regex"));

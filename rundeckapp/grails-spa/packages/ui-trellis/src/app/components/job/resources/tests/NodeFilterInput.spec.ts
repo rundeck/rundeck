@@ -81,9 +81,7 @@ describe("NodeFilterInput Component", () => {
     expect(wrapper.emitted()["update:value"][0]).toEqual(["new filter"]);
     await input.setValue("updated filter");
     await input.trigger("keydown.enter");
-    expect(wrapper.emitted()["update:value"][1]).toEqual([
-      "updated filter",
-    ]);
+    expect(wrapper.emitted()["update:value"][1]).toEqual(["updated filter"]);
   });
   it("saves a filter", async () => {
     const eventBus: Emitter<Record<EventType, any>> = mitt();
