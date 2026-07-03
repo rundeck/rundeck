@@ -239,7 +239,7 @@ public class ExecCommandInjectionTest {
 
         Assert.assertEquals(2, result.size());
         Assert.assertEquals("echo", result.get(0));
-        Assert.assertEquals("\"test && del /q C:\\\"", result.get(1));
+        Assert.assertEquals("\"test && del /q C:\\\\\"", result.get(1));
     }
 
     @Test
