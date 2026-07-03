@@ -97,4 +97,85 @@ class StorageTreeFactorySpec extends Specification {
         !result
 
     }
+
+    def "extractConfiguredIndices returns sorted indices skipping gaps"() {
+        given: "config with provider indices 1, 3, 5 (gaps at 2 and 4)"
+        def config = [
+            'provider.1.type': 'db',
+            'provider.1.path': 'keys',
+            'provider.3.type': 'vault',
+            'provider.5.type': 'aws',
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then: "all three indices are returned even though 2 and 4 are absent"
+        result == [1, 3, 5]
+    }
+
+    def "extractConfiguredIndices returns empty list when no providers configured"() {
+        expect:
+        StorageTreeFactory.extractConfiguredIndices([:], 'provider') == []
+    }
+
+    def "extractConfiguredIndices ignores keys for a different prefix"() {
+        given:
+        def config = [
+            'provider.1.type'  : 'db',
+            'converter.1.type' : 'enc',  // different prefix — must not appear
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then:
+        result == [1]
+    }
+
+    def "extractConfiguredIndices ignores non-integer and nested index segments"() {
+        given:
+        def config = [
+            'provider.abc.type'     : 'bad', // non-numeric
+            'provider.1.config.type': 'bad', // nested — middle contains a dot
+            'provider.2.type'       : 'good',
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then:
+        result == [2]
+    }
+
+    def "extractConfiguredIndices ignores non-positive indices"() {
+        given: "keys with index 0 and a negative index, which were never visited by the old 1-based while-loop"
+        def config = [
+            'provider.0.type' : 'zero',
+            'provider.-1.type': 'negative',
+            'provider.3.type' : 'valid',
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then: "only index 3 is returned; 0 and negative values are excluded"
+        result == [3]
+    }
+
+    def "extractConfiguredIndices deduplicates indices that differ only in leading zeros"() {
+        given: "provider.4.type and provider.04.type both parse to integer 4"
+        def config = [
+            'provider.4.type' : 'vault',
+            'provider.04.type': 'vault-duplicate',
+            'provider.2.type' : 'db',
+        ]
+
+        when:
+        def result = StorageTreeFactory.extractConfiguredIndices(config, 'provider')
+
+        then: "index 4 appears exactly once despite two keys mapping to it"
+        result == [2, 4]
+    }
+
 }

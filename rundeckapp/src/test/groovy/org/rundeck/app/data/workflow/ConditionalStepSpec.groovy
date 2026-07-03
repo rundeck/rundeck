@@ -213,29 +213,44 @@ class ConditionalStepSpec extends Specification implements DataTest {
         step.errors.hasFieldErrors('conditionSet')
     }
 
-    def "ConditionalStep validation fails when nested ConditionalStep in subSteps"() {
+    def "ConditionalStep accepts nested ConditionalStep in subSteps via fromMap"() {
         given:
-        def condDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
-        def condSet = new ConditionalSetImpl()
-        condSet.conditionGroups = [[condDef]]
-
-        def nestedCondSet = new ConditionalSetImpl()
-        nestedCondSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'dev'])]]
-
-        def nestedStep = new ConditionalStep()
-        nestedStep.conditionSet = nestedCondSet
-        nestedStep.subSteps = [new CommandExec(adhocRemoteString: 'echo nested')]
-
-        ConditionalStep step = new ConditionalStep()
-        step.conditionSet = condSet
-        step.subSteps = [nestedStep]
+        def stepMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod']
+                ]
+            ],
+            nodeStep: false,
+            subSteps: [
+                [
+                    type: 'conditional',
+                    conditionGroups: [
+                        [
+                            [key: 'option.region', operator: '==', value: 'us-east']
+                        ]
+                    ],
+                    nodeStep: false,
+                    subSteps: [
+                        [type: 'exec', exec: 'echo nested']
+                    ]
+                ]
+            ]
+        ]
 
         when:
-        def valid = step.validate()
+        ConditionalStep step = ConditionalStep.fromMap(stepMap)
 
         then:
-        !valid
-        step.errors.hasFieldErrors('subSteps')
+        step != null
+        step.subSteps != null
+        step.subSteps.size() == 1
+        step.subSteps[0] instanceof ConditionalStep
+
+        def nestedStep = (ConditionalStep) step.subSteps[0]
+        nestedStep.conditionSet != null
+        nestedStep.subSteps != null
+        nestedStep.subSteps.size() == 1
     }
 
     def "ConditionalStep getPluginType returns 'conditional'"() {
@@ -334,6 +349,197 @@ class ConditionalStepSpec extends Specification implements DataTest {
         step != null
         step.conditionSet.conditionGroups.size() == 1
         step.conditionSet.conditionGroups[0].size() == 2
+    }
+
+    def "fromMap with 2-level nested conditional subSteps"() {
+        given:
+        def stepMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod']
+                ]
+            ],
+            subSteps: [
+                [
+                    type: 'conditional',
+                    conditionGroups: [
+                        [
+                            [key: 'option.region', operator: '==', value: 'us-east']
+                        ]
+                    ],
+                    subSteps: [
+                        [type: 'exec', exec: 'echo nested']
+                    ]
+                ]
+            ]
+        ]
+
+        when:
+        ConditionalStep step = ConditionalStep.fromMap(stepMap)
+
+        then:
+        step != null
+        step.conditionSet != null
+        step.subSteps != null
+        step.subSteps.size() == 1
+        step.subSteps[0] instanceof ConditionalStep
+
+        def nestedStep = (ConditionalStep) step.subSteps[0]
+        nestedStep.conditionSet != null
+        nestedStep.subSteps != null
+        nestedStep.subSteps.size() == 1
+        nestedStep.subSteps[0] instanceof PluginStep
+    }
+
+    def "toMap round-trip with nested conditionals"() {
+        given:
+        def originalMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod']
+                ]
+            ],
+            subSteps: [
+                [
+                    type: 'conditional',
+                    conditionGroups: [
+                        [
+                            [key: 'option.region', operator: '==', value: 'us-east']
+                        ]
+                    ],
+                    subSteps: [
+                        [type: 'exec', exec: 'echo test']
+                    ]
+                ]
+            ]
+        ]
+
+        when:
+        ConditionalStep step = ConditionalStep.fromMap(originalMap)
+        Map exportedMap = step.toMap()
+
+        then:
+        exportedMap != null
+        exportedMap.type == 'conditional'
+        exportedMap.conditionGroups != null
+        exportedMap.subSteps != null
+        exportedMap.subSteps.size() == 1
+        exportedMap.subSteps[0].type == 'conditional'
+        exportedMap.subSteps[0].conditionGroups != null
+        exportedMap.subSteps[0].subSteps != null
+        exportedMap.subSteps[0].subSteps.size() == 1
+    }
+
+    def "fromMap with mixed subSteps (conditional and non-conditional)"() {
+        given:
+        def stepMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod']
+                ]
+            ],
+            subSteps: [
+                [type: 'exec', exec: 'echo regular step'],
+                [
+                    type: 'conditional',
+                    conditionGroups: [
+                        [
+                            [key: 'option.region', operator: '==', value: 'us-east']
+                        ]
+                    ],
+                    subSteps: [
+                        [type: 'exec', exec: 'echo nested']
+                    ]
+                ],
+                [type: 'exec', exec: 'echo another regular step']
+            ]
+        ]
+
+        when:
+        ConditionalStep step = ConditionalStep.fromMap(stepMap)
+
+        then:
+        step != null
+        step.subSteps != null
+        step.subSteps.size() == 3
+        step.subSteps[0] instanceof PluginStep
+        step.subSteps[1] instanceof ConditionalStep
+        step.subSteps[2] instanceof PluginStep
+    }
+
+    def "nested conditional with errorHandler"() {
+        given:
+        def stepMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod']
+                ]
+            ],
+            subSteps: [
+                [
+                    type: 'conditional',
+                    conditionGroups: [
+                        [
+                            [key: 'option.region', operator: '==', value: 'us-east']
+                        ]
+                    ],
+                    subSteps: [
+                        [
+                            type: 'exec',
+                            exec: 'echo test',
+                            errorhandler: [
+                                type: 'exec',
+                                exec: 'echo error handler'
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+        when:
+        ConditionalStep step = ConditionalStep.fromMap(stepMap)
+
+        then:
+        step != null
+        step.subSteps.size() == 1
+        step.subSteps[0] instanceof ConditionalStep
+
+        def nestedStep = (ConditionalStep) step.subSteps[0]
+        nestedStep.subSteps.size() == 1
+        nestedStep.subSteps[0].errorHandler != null
+    }
+
+    def "ConditionalStep validation fails with two levels of nesting (depth=2)"() {
+        given: "A conditional with nested conditionals 2 levels deep"
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])]]
+
+        def level2CondSet = new ConditionalSetImpl()
+        level2CondSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])]]
+
+        def level3CondSet = new ConditionalSetImpl()
+        level3CondSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: 'option.datacenter', operator: '==', value: 'dc1'])]]
+
+        def level3Conditional = new ConditionalStep()
+        level3Conditional.conditionSet = level3CondSet
+        level3Conditional.subSteps = [new CommandExec(adhocRemoteString: 'echo deeply nested')]
+
+        def level2Conditional = new ConditionalStep()
+        level2Conditional.conditionSet = level2CondSet
+        level2Conditional.subSteps = [level3Conditional]
+
+        ConditionalStep step = new ConditionalStep()
+        step.conditionSet = condSet
+        step.subSteps = [level2Conditional]
+
+        when:
+        def valid = step.validate()
+
+        then: "Validation should fail for depth=2"
+        !valid
+        step.errors.hasFieldErrors('subSteps')
+        step.errors.getFieldError('subSteps').code == 'WorkflowStep.conditional.nesting.tooDeep'
     }
 }
 

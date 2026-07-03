@@ -152,6 +152,7 @@ import java.sql.SQLException
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.time.Duration
+import com.google.common.collect.Lists
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import java.util.stream.Collectors
@@ -403,13 +404,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
             if(idlist){
+                def longIds = idlist.findAll { it instanceof Long } as List<Long>
+                def stringIds = idlist.findAll { !(it instanceof Long) } as List<String>
                 or{
-                    idlist.each{ theid->
-                        if(theid instanceof Long){
-                            eq("id",theid)
-                        }else{
-                            eq("uuid", theid)
-                        }
+                    for(def partition : Lists.partition(longIds, 1000)){
+                        'in'("id", partition)
+                    }
+                    for(def partition : Lists.partition(stringIds, 1000)){
+                        'in'("uuid", partition)
                     }
                 }
             }
@@ -491,13 +493,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             total = ScheduledExecution.createCriteria().count {
 
                 if (idlist) {
+                    def longIds = idlist.findAll { it instanceof Long } as List<Long>
+                    def stringIds = idlist.findAll { !(it instanceof Long) } as List<String>
                     or {
-                        idlist.each { theid ->
-                            if (theid instanceof Long) {
-                                eq("id", theid)
-                            } else {
-                                eq("uuid", theid)
-                            }
+                        for(def partition : Lists.partition(longIds, 1000)){
+                            'in'("id", partition)
+                        }
+                        for(def partition : Lists.partition(stringIds, 1000)){
+                            'in'("uuid", partition)
                         }
                     }
                 }
@@ -3060,14 +3063,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
             
-            // If conditional steps exist, strategy must be sequential or parallel
-            if (hasConditionalSteps && strategy != null && strategy != "sequential" && strategy != "parallel") {
+            // If conditional steps exist, strategy must be sequential, parallel, node-first, or step-first
+            final Set<String> supportedConditionalStrategies = [
+                    'sequential',
+                    'parallel',
+                    'node-first',
+                    'step-first'
+            ] as Set<String>
+
+            if (hasConditionalSteps && strategy != null && !supportedConditionalStrategies.contains(strategy)) {
                 failed = true
                 scheduledExecution.errors.rejectValue(
-                    'workflow',
-                    'scheduledExecution.workflow.conditional.strategy.invalid.message',
-                    [strategy] as Object[],
-                    "Conditional steps can only be used with 'sequential' or 'parallel' workflow strategy. Current strategy: {0}"
+                        'workflow',
+                        'scheduledExecution.workflow.conditional.strategy.invalid.message',
+                        [strategy] as Object[],
+                        "Conditional steps can only be used with 'sequential', 'parallel', 'node-first', or 'step-first' workflow strategy. Current strategy: {0}"
                 )
             }
         }
@@ -4304,7 +4314,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username, AuthContext authContext) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
-        def realUrl = opt.realValuesUrl.toExternalForm()
+        def realUrl = opt.realValuesUrl
         JobOptionConfigRemoteUrl configRemoteUrl = getJobOptionConfigRemoteUrl(opt, authContext)
 
         String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
@@ -4583,14 +4593,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             AND e.dateStarted > :now
             AND e.dateCompleted IS NULL
         '''
-        Execution.withSession { session ->
-            def query = session.createQuery(hql)
-            query.setParameterList('seIds', se*.id)
-            query.setParameter('now', now)
-            query.list()
-        }?.collect{ row ->
-            if(row && row[0]){
-                item[row[0]] = new Date(row[1]?.getTime())
+        // Batch into chunks of 1000 to avoid Oracle ORA-01795 (max 1000 IN-list expressions)
+        Lists.partition(se*.id, 1000).each { batch ->
+            Execution.withSession { session ->
+                def query = session.createQuery(hql)
+                query.setParameterList('seIds', batch)
+                query.setParameter('now', now)
+                query.list()
+            }?.each { row ->
+                if(row && row[0]){
+                    item[row[0]] = new Date(row[1]?.getTime())
+                }
             }
         }
 
@@ -4793,26 +4806,32 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     List<ScheduledExecution> getSchedulesJobToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, ignoreInnerScheduled = false) {
         if(featureService.featurePresent("enhancedJobTakeoverQuery")) {
             log.info("Using enhanced job takeover query")
-            String qry = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, jobids, ignoreInnerScheduled)
             List<ScheduledExecution> jobList = []
-            var qryParams = new MapSqlParameterSource()
-            qryParams.addValue("toServerUUID", toServerUUID)
-            if(fromServerUUID){
-                qryParams.addValue("fromServerUUID", fromServerUUID)
-            }
-            if(projectFilter){
-                qryParams.addValue("projectFilter", projectFilter)
-            }
-            if(jobids){
-                qryParams.addValue("jobids", jobids)
-            }
             NamedParameterJdbcTemplate jdbcTemplate = new NamedParameterJdbcTemplate(dataSource)
-            jdbcTemplate.query(qry, qryParams, new RowCallbackHandler() {
-                @Override
-                void processRow(ResultSet rs) throws SQLException {
-                    jobList.add(ScheduledExecution.read(rs.getLong("id") as Serializable))
+            // Chunk jobids into batches of 1000 to avoid Oracle ORA-01795 (max 1000 IN-list expressions).
+            // Dedupe first (unique(false) = non-mutating) so duplicate uuids spanning two batches
+            // can't produce duplicate rows in jobList, matching the original single DISTINCT IN query.
+            List batches = jobids ? Lists.partition(jobids.unique(false), 1000) : [null]
+            for (def batch : batches) {
+                String qry = JobTakeoverQueryBuilder.buildTakeoverQuery(toServerUUID, fromServerUUID, selectAll, projectFilter, batch, ignoreInnerScheduled)
+                var qryParams = new MapSqlParameterSource()
+                qryParams.addValue("toServerUUID", toServerUUID)
+                if(fromServerUUID){
+                    qryParams.addValue("fromServerUUID", fromServerUUID)
                 }
-            })
+                if(projectFilter){
+                    qryParams.addValue("projectFilter", projectFilter)
+                }
+                if(batch){
+                    qryParams.addValue("jobids", batch)
+                }
+                jdbcTemplate.query(qry, qryParams, new RowCallbackHandler() {
+                    @Override
+                    void processRow(ResultSet rs) throws SQLException {
+                        jobList.add(ScheduledExecution.read(rs.getLong("id") as Serializable))
+                    }
+                })
+            }
             return jobList
         }
         log.info("Using legacy job takeover query")
@@ -4836,7 +4855,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         }
                     }
                     if (jobids){
-                        'in'('uuid', jobids)
+                        or {
+                            for(def partition : Lists.partition(jobids, 1000)){
+                                'in'('uuid', partition)
+                            }
+                        }
                     }
                 }
             }
@@ -4860,7 +4883,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             if(jobids){
                 createAlias('scheduledExecution', 'se')
-                'in'('se.uuid', jobids)
+                or {
+                    for(def partition : Lists.partition(jobids, 1000)){
+                        'in'('se.uuid', partition)
+                    }
+                }
             }
 
             if (projectFilter) {
@@ -4884,7 +4911,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def scheduledExecutionRunLater = [] as List<ScheduledExecution>
         if (executionRunLater) {
             scheduledExecutionRunLater = ScheduledExecution.createCriteria().listDistinct {
-                inList('id', executionRunLater)
+                or {
+                    for(def partition : Lists.partition(executionRunLater, 1000)){
+                        'in'('id', partition)
+                    }
+                }
             }
         }
 

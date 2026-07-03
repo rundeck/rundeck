@@ -244,9 +244,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }
+        def defaultRecentFilter = executionService.getActivityDefaultTimeFilter(params)
+
         if (request.getCookies().find { it.name == 'nextUi' }?.value == 'true' || params.nextUi == 'true') {
             params.nextUi = true
-            return render(view: 'jobs.next', model: [:])
+            return render(view: 'jobs.next', model: [defaultRecentFilter: defaultRecentFilter])
         }
 
         if(configurationService.getBoolean('gui.paginatejobs.enabled',false)) {
@@ -276,7 +278,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
 
-        return results + [jobQueryComponents:jobQueryComponents]
+        return results + [jobQueryComponents: jobQueryComponents, defaultRecentFilter: defaultRecentFilter]
     }
     /**
      *

@@ -42,7 +42,7 @@ class DefaultJobOptionUrlExpander implements JobOptionUrlExpander {
                 'nodename':frameworkService.getFrameworkNodeName(),
                 'serverUUID':frameworkService.serverUUID?:''
         ]
-        def realUrl = opt.realValuesUrl.toExternalForm()
+        def realUrl = opt.realValuesUrl
         if(!urlToExpand.matches(/(?i)^https?:.*$/)) {
             rundeckProps.basedir= frameworkService.getRundeckBase()
         }
