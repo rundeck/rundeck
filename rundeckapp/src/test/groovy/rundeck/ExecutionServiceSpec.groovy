@@ -186,7 +186,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         '${DATE:HH:mm:ss:Asia/Tokyo}'                  | '17:20:30'
         // 1970-01-15 08:20:30 UTC = 1970-01-15 03:20:30 EST (UTC-5 in January)
         '${DATE+1:HH:mm:ss:America/New_York}'          | '03:20:30'
-        // Unknown TZ segment — silently falls back, IllegalArgumentException caught, token returned unexpanded
+        // Unknown TZ segment — falls back to treating full string as FORMAT; SimpleDateFormat rejects it, token left unexpanded
         '${DATE:HH:mm:ss:NotAZone}'                    | '${DATE:HH:mm:ss:NotAZone}'
     }
     void "retry execution otherwise running"() {

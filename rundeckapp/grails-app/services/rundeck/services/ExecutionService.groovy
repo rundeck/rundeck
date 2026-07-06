@@ -2408,11 +2408,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
             } catch (IllegalArgumentException e) {
-                log.warn(e.getMessage())
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             } catch (NumberFormatException e) {
-                log.warn(e.getMessage())
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             } catch (DateTimeException e) {
-                log.warn(e.getMessage())
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             }
 
 
