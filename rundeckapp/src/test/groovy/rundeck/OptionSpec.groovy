@@ -300,4 +300,40 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         opt.configRemoteUrl.authenticationType == null
         opt.configRemoteUrl.tokenStoragePath == 'keys/token'
     }
+
+    def "toMap includes remoteUrlAuthenticationType when configRemoteUrl has authenticationType"() {
+        given: "an option loaded from a map with authenticationType"
+        def opt = Option.fromMap('test', [
+                type                      : 'text',
+                valuesUrl                 : 'http://example.com/values',
+                remoteUrlAuthenticationType: 'BEARER_TOKEN',
+                configRemoteUrl           : [tokenStoragePath: 'keys/token']
+        ])
+
+        when:
+        def result = opt.toMap()
+
+        then: "toMap re-emits remoteUrlAuthenticationType at the top level"
+        result.remoteUrlAuthenticationType == 'BEARER_TOKEN'
+        result.configRemoteUrl != null
+    }
+
+    def "toMap round-trips remoteUrlAuthenticationType for all auth types"() {
+        given:
+        def opt = Option.fromMap('test', [
+                type                      : 'text',
+                valuesUrl                 : 'http://example.com/values',
+                remoteUrlAuthenticationType: authType,
+                configRemoteUrl           : [tokenStoragePath: 'keys/token']
+        ])
+
+        when:
+        def result = opt.toMap()
+
+        then:
+        result.remoteUrlAuthenticationType == authType
+
+        where:
+        authType << ['BEARER_TOKEN', 'BASIC', 'API_KEY']
+    }
 }

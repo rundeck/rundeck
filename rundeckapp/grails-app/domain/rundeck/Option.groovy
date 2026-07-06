@@ -206,6 +206,9 @@ public class Option implements Comparable, OptionData {
                 JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = getOptionConfigData().getJobOptionEntry(JobOptionConfigRemoteUrl.TYPE)
                 if(jobOptionConfigRemoteUrl){
                     map.configRemoteUrl = jobOptionConfigRemoteUrl.toMap()
+                    if(jobOptionConfigRemoteUrl.authenticationType){
+                        map.remoteUrlAuthenticationType = jobOptionConfigRemoteUrl.authenticationType.name()
+                    }
                 }
             }
         }
