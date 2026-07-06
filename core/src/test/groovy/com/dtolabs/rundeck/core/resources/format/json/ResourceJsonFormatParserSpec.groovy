@@ -251,4 +251,81 @@ class ResourceJsonFormatParserSpec extends Specification {
         basicJsonScalars   | ['test1', 'test2']
 
     }
+
+    def "nested attributes sub-object is merged into node attributes"() {
+        given:
+        def json = '''
+{
+  "mynode": {
+    "hostname": "host1",
+    "username": "admin",
+    "attributes": {
+      "custom-key": "custom-value",
+      "env": "prod"
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("mynode")
+
+        then:
+        node != null
+        node.getAttributes()["custom-key"] == "custom-value"
+        node.getAttributes()["env"] == "prod"
+        node.getAttributes()["hostname"] == "host1"
+    }
+
+    def "nested attributes coexist with top-level attributes when no key conflict"() {
+        given:
+        def json = '''
+{
+  "mynode": {
+    "hostname": "host1",
+    "username": "admin",
+    "top-level-key": "top-value",
+    "attributes": {
+      "nested-key": "nested-value"
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("mynode")
+
+        then:
+        node.getAttributes()["top-level-key"] == "top-value"
+        node.getAttributes()["nested-key"] == "nested-value"
+        !node.getAttributes().containsKey("attributes")
+    }
+
+    def "nested attributes override top-level attributes with the same key"() {
+        given:
+        def json = '''
+{
+  "mynode": {
+    "hostname": "host1",
+    "username": "admin",
+    "env": "staging",
+    "attributes": {
+      "env": "prod"
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("mynode")
+
+        then:
+        node.getAttributes()["env"] == "prod"
+    }
 }
