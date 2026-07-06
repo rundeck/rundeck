@@ -523,13 +523,13 @@ public class JettyCachingLdapLoginModuleTest2 {
     /**
      * Regression test for RUN-4599: LDAP role principals must be present in the Subject after commit().
      *
-     * JettyCachingLdapLoginModule.authenticate() overrides login() and stores the resolved user+roles
-     * via setCurrentUser(). commit() must read currentUser when rolePrincipals is null (the LDAP path).
+     * JettyCachingLdapLoginModule overrides login(), which calls authenticate() to fetch LDAP groups
+     * and stores them via setCurrentUser(). commit() must read currentUser when rolePrincipals is null (the LDAP path).
      *
      * Before the fix, commit() ignored currentUser entirely, so the Subject had zero RundeckRole
      * principals even after a successful LDAP authentication.
      *
-     * This test drives commit() directly by setting up the same state that authenticate() would leave
+     * This test drives commit() directly by setting up the same state that login() would leave
      * (currentUser set, authenticated=true, rolePrincipals=null) and verifies the Subject contains roles.
      */
     @Test

@@ -236,12 +236,26 @@ public abstract class AbstractLoginModule implements LoginModule {
     public boolean logout() throws LoginException {
         debug("AbstractLoginModule.logout() called");
         
-        // Remove principals from subject
-        if (userPrincipal != null) {
-            subject.getPrincipals().remove(userPrincipal);
-        }
-        if (rolePrincipals != null) {
-            subject.getPrincipals().removeAll(rolePrincipals);
+        // Mirror commit()'s two-path logic so the same principals that were added are removed
+        JAASUserInfo user = getCurrentUser();
+        if (user != null && userPrincipal == null && rolePrincipals == null) {
+            // LDAP path: principals were added via currentUser.setJAASInfo() in commit()
+            UserInfo ui = user.getUserInfo();
+            if (ui != null) {
+                subject.getPrincipals().remove(new RundeckPrincipal(ui.getUserName()));
+                if (ui.getRoleNames() != null) {
+                    for (String role : ui.getRoleNames()) {
+                        subject.getPrincipals().remove(new RundeckRole(role));
+                    }
+                }
+            }
+        } else {
+            if (userPrincipal != null) {
+                subject.getPrincipals().remove(userPrincipal);
+            }
+            if (rolePrincipals != null) {
+                subject.getPrincipals().removeAll(rolePrincipals);
+            }
         }
         
         clearPrincipals();
