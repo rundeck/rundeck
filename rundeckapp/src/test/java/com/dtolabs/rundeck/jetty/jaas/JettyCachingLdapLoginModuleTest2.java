@@ -558,11 +558,13 @@ public class JettyCachingLdapLoginModuleTest2 {
 
         // commit() must add RundeckRole principals to the Subject from currentUser
         assertTrue(module.commit());
-        assertTrue(
-            "Subject must contain a RundeckRole principal for '" + role1 + "' after commit()",
-            module.getSubject().getPrincipals().stream()
-                .anyMatch(p -> p instanceof RundeckRole && ((RundeckRole) p).getName().equals(role1))
-        );
+        for (String expectedRole : Arrays.asList(role1, role2)) {
+            assertTrue(
+                "Subject must contain a RundeckRole principal for '" + expectedRole + "' after commit()",
+                module.getSubject().getPrincipals().stream()
+                    .anyMatch(p -> p instanceof RundeckRole && ((RundeckRole) p).getName().equals(expectedRole))
+            );
+        }
     }
 
 

@@ -32,11 +32,11 @@ class LdapLoginSpec extends SeleniumBase {
 
         and: "the LDAP user profile shows expected authorization roles"
         userProfilePage.go()
-        def groupsText = userProfilePage.authGroupsText
+        def groups = userProfilePage.authGroupsText.split(/\s*,\s*/).findAll { it }.toSet()
 
         then: "LDAP user has expected authorization roles on profile"
-        !groupsText.trim().isEmpty()
-        EXPECTED_ROLES.every { groupsText.contains(it) }
+        !groups.isEmpty()
+        groups.containsAll(EXPECTED_ROLES)
 
         when: "opening user summary"
         userSummaryPage.go()
