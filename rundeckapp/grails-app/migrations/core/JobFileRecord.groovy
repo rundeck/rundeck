@@ -96,4 +96,21 @@ databaseChangeLog = {
             }
         }
     }
+
+    // Index to support FK validation during execution cleanup (DELETE on execution table).
+    // Without this index, PostgreSQL/MySQL perform a sequential scan of job_file_record for
+    // every deleted execution row, causing high DB CPU on large-scale deployments.
+    changeSet(author: "ltoledo", id: "5.15.0-1783252800") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(tableName: "job_file_record", indexName: "JFR_EXEC_ID_IDX")
+            }
+        }
+        createIndex(indexName: "JFR_EXEC_ID_IDX", tableName: "job_file_record") {
+            column(name: "execution_id")
+        }
+        rollback {
+            dropIndex(indexName: "JFR_EXEC_ID_IDX", tableName: "job_file_record")
+        }
+    }
 }
