@@ -47,7 +47,7 @@ buildscript {
 plugins {
     id "org.dvaske.gradle.git-build-info" version "0.8"
     id "com.dorongold.task-tree" version "1.5"
-    id "org.ajoberstar.grgit" version "5.2.2"
+    id "org.ajoberstar.grgit" version "5.3.3"
     id "signing"
     id 'io.github.gradle-nexus.publish-plugin' version "2.0.0"
 }
