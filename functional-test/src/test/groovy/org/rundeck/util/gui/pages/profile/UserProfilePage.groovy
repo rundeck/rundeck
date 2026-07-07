@@ -29,8 +29,6 @@ class UserProfilePage extends BasePage {
     /** Groups/roles cell on the signed-in user's profile (4th column of the user info table). */
     By authGroupsCellBy = By.cssSelector("#userProfilePage table.table-striped tr:nth-of-type(2) td:nth-child(4)")
 
-
-
     UserProfilePage(final SeleniumContext context) {
         super(context)
     }
