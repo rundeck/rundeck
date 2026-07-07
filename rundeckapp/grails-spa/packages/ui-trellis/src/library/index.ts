@@ -7,6 +7,7 @@ export { RundeckBrowser } from "@rundeck/client";
 export type { RundeckContext } from "./interfaces/rundeckWindow";
 export type { AppLinks } from "./interfaces/AppLinks";
 export { EventBus } from "./utilities/vueEventBus";
+export type { LocaleMessageValue, LocalizedMessages } from "./stores/UIStore";
 
 export default {
   FilterPrefs,

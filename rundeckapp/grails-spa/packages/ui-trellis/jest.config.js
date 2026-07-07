@@ -22,6 +22,7 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^primevue/(.*)": "<rootDir>/node_modules/primevue/$1",
     "^@primevue/(.*)": "<rootDir>/node_modules/@primevue/$1",
+    "^vue-i18n$": "<rootDir>/node_modules/vue-i18n/dist/vue-i18n.cjs",
   },
   modulePathIgnorePatterns: ["<rootDir>/public"],
   testMatch: ["**/*.test.ts", "**/*.spec.ts"],
