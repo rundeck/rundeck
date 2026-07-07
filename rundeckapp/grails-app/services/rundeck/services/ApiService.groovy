@@ -983,14 +983,19 @@ class ApiService implements WebUtilService{
             return requestFormat
         }
         
-        // Grails 7: request.format might not be set from Accept header, check it explicitly
-        String acceptHeader = request.getHeader('Accept')
+        // Grails 7: request.format might not be set from Accept header, check it explicitly.
+        // HTTP media types are case-insensitive (RFC 7231), so normalize before matching.
+        String acceptHeader = request.getHeader('Accept')?.toLowerCase()
         if (acceptHeader && allowed) {
             if (acceptHeader.contains('application/json') && allowed.contains('json')) {
                 return 'json'
             }
             if (acceptHeader.contains('application/xml') && allowed.contains('xml')) {
                 return 'xml'
+            }
+            boolean wantsYaml = acceptHeader.contains('application/yaml') || acceptHeader.contains('text/yaml')
+            if (wantsYaml && allowed.contains('yaml')) {
+                return 'yaml'
             }
             if (acceptHeader.contains('text/plain') && allowed.contains('text')) {
                 return 'text'
