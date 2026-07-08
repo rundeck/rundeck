@@ -217,4 +217,118 @@ class AbstractDescribableScriptPluginSpec extends Specification{
         result.properties.get(0).hasProperty("blankIfUnexpandable")
 
     }
+
+    def "blankIfUnexpandable parsed as false from plugin metadata"() {
+        given:
+        File basedir = File.createTempFile("test", "dir")
+        basedir.deleteOnExit()
+
+        def metaWithBlankIfUnexpandable = [
+                config: [
+                        [
+                                type               : 'String',
+                                name               : 'script',
+                                title              : 'Script',
+                                required           : true,
+                                blankIfUnexpandable: false,
+                                scope              : PropertyScope.Instance
+                        ],
+                        [
+                                type               : 'String',
+                                name               : 'arguments',
+                                title              : 'Arguments',
+                                required           : false,
+                                scope              : PropertyScope.Instance
+                        ]
+                ]
+        ]
+
+        def pluginMeta = Mock(PluginMeta) {
+            getRundeckPluginVersion() >> "1.2"
+        }
+        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
+            getName() >> 'testBlankIfUnexpandable'
+            getMetadata() >> metaWithBlankIfUnexpandable
+            getPluginMeta() >> pluginMeta
+            getContentsBasedir() >> basedir
+            getService() >> ServiceNameConstants.WorkflowNodeStep
+        }
+
+        when:
+        TestScriptPlugin plugin = new TestScriptPlugin(provider, framework)
+        def description = plugin.getPluginProperties(null, [:], [:], ServiceNameConstants.WorkflowNodeStep)
+
+        then:
+        description != null
+        description.properties.size() == 2
+        description.properties[0].name == 'script'
+        description.properties[0].isBlankIfUnexpandable() == false
+        description.properties[1].name == 'arguments'
+        description.properties[1].isBlankIfUnexpandable() == true
+    }
+
+    def "blankIfUnexpandable parsed as string false from plugin metadata"() {
+        given:
+        File basedir = File.createTempFile("test", "dir")
+        basedir.deleteOnExit()
+
+        def metaWithBlankIfUnexpandable = [
+                config: [
+                        [
+                                type               : 'String',
+                                name               : 'script',
+                                title              : 'Script',
+                                required           : true,
+                                blankIfUnexpandable: 'false',
+                                scope              : PropertyScope.Instance
+                        ]
+                ]
+        ]
+
+        def pluginMeta = Mock(PluginMeta) {
+            getRundeckPluginVersion() >> "1.2"
+        }
+        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
+            getName() >> 'testBlankIfUnexpandableString'
+            getMetadata() >> metaWithBlankIfUnexpandable
+            getPluginMeta() >> pluginMeta
+            getContentsBasedir() >> basedir
+            getService() >> ServiceNameConstants.WorkflowNodeStep
+        }
+
+        when:
+        TestScriptPlugin plugin = new TestScriptPlugin(provider, framework)
+        def description = plugin.getPluginProperties(null, [:], [:], ServiceNameConstants.WorkflowNodeStep)
+
+        then:
+        description != null
+        description.properties.size() == 1
+        description.properties[0].name == 'script'
+        description.properties[0].isBlankIfUnexpandable() == false
+    }
+
+    def "blankIfUnexpandable defaults to true when not specified"() {
+        given:
+        File basedir = File.createTempFile("test", "dir")
+        basedir.deleteOnExit()
+
+        def pluginMeta = Mock(PluginMeta) {
+            getRundeckPluginVersion() >> "1.2"
+        }
+        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
+            getName() >> 'testBlankIfUnexpandableDefault'
+            getMetadata() >> pluginMetaData
+            getPluginMeta() >> pluginMeta
+            getContentsBasedir() >> basedir
+            getService() >> ServiceNameConstants.WorkflowNodeStep
+        }
+
+        when:
+        TestScriptPlugin plugin = new TestScriptPlugin(provider, framework)
+        def description = plugin.getPluginProperties(null, [:], [:], ServiceNameConstants.WorkflowNodeStep)
+
+        then:
+        description != null
+        description.properties.every { it.isBlankIfUnexpandable() == true }
+    }
 }
