@@ -328,4 +328,39 @@ class ResourceJsonFormatParserSpec extends Specification {
         then:
         node.getAttributes()["env"] == "prod"
     }
+
+    def "all standard and custom attributes nested inside attributes sub-object are applied correctly"() {
+        given:
+        def json = '''
+{
+  "madmartigan.local": {
+    "tags": ["local", "server"],
+    "attributes": {
+      "nodename": "madmartigan.local",
+      "hostname": "madmartigan.local",
+      "osFamily": "unix",
+      "osName": "Mac OS X",
+      "osVersion": "10.10.3",
+      "osArch": "x86_64",
+      "username": "RODRIGO",
+      "description": "Rundeck server node",
+      "currentenv": "test"
+    }
+  }
+}
+'''
+        def parser = new ResourceJsonFormatParser()
+
+        when:
+        def result = parser.parseDocument(new ByteArrayInputStream(json.getBytes()))
+        def node = result.getNode("madmartigan.local")
+
+        then:
+        node != null
+        node.getAttributes()["hostname"] == "madmartigan.local"
+        node.getAttributes()["osFamily"] == "unix"
+        node.getAttributes()["username"] == "RODRIGO"
+        node.getAttributes()["currentenv"] == "test"
+        node.getTags() == ["local", "server"] as Set
+    }
 }
