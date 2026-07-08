@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.app.api.marshall.CustomJsonMarshaller
 import com.dtolabs.rundeck.app.api.marshall.CustomXmlMarshaller
 import grails.converters.JSON
 import grails.converters.XML
+import org.apache.commons.lang3.time.FastDateFormat
+import org.grails.web.converters.marshaller.ClosureObjectMarshaller
 
 import jakarta.annotation.PostConstruct
 
@@ -28,6 +30,26 @@ import jakarta.annotation.PostConstruct
  * Created by greg on 10/28/15.
  */
 class ApiMarshallerRegistrar {
+
+    /**
+     * Second-precision W3C/ISO-8601 date format (UTC) used for every {@link Date} value serialized
+     * in API JSON/XML responses, e.g. {@code 2026-03-25T21:16:50Z}.
+     *
+     * Grails 7 / Spring Boot 3 delegate {@code Date} serialization to Jackson, whose default ISO-8601
+     * output includes milliseconds (e.g. {@code 2026-03-25T21:16:50.022Z}). That is an undocumented
+     * breaking change for API consumers (RUN-4550). Registering an explicit marshaller for {@code Date}
+     * on each versioned converter config restores the previous, backward-compatible format for all
+     * API endpoints and versions at once.
+     */
+    static final FastDateFormat API_DATE_FORMAT = FastDateFormat.getInstance(
+            FormattedDate.DEFAULT_DATE_FORMAT,
+            TimeZone.getTimeZone("GMT"),
+            Locale.US
+    )
+
+    static String formatApiDate(Date date) {
+        date != null ? API_DATE_FORMAT.format(date) : null
+    }
     @PostConstruct
     void registerMarshallers() {
         XML.registerObjectMarshaller(CDataString) { data,XML xml->
@@ -67,9 +89,11 @@ class ApiMarshallerRegistrar {
         (1..ApiVersions.API_CURRENT_VERSION).each { apivers ->
             XML.createNamedConfig("v${apivers}") { cfg ->
                 cfg.registerObjectMarshaller(new CustomXmlMarshaller(api, apivers))
+                cfg.registerObjectMarshaller(new ClosureObjectMarshaller<XML>(Date, { Date d -> formatApiDate(d) }))
             }
             JSON.createNamedConfig("v${apivers}") { cfg ->
                 cfg.registerObjectMarshaller(new CustomJsonMarshaller(api, apivers))
+                cfg.registerObjectMarshaller(new ClosureObjectMarshaller<JSON>(Date, { Date d -> formatApiDate(d) }))
             }
         }
 

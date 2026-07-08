@@ -1,9 +1,12 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.FormattedDate
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.app.authorization.AppAuthContextProcessor
+
+import java.text.SimpleDateFormat
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
@@ -18,6 +21,11 @@ class RdExecutionController extends ControllerBase {
     static ObjectMapper mapper = new ObjectMapper()
     static {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        // RUN-4550: serialize dates as second-precision W3C/ISO-8601 in UTC (e.g. 2026-03-25T21:16:50Z),
+        // matching the Grails API converters instead of Jackson's default epoch-millis timestamps.
+        SimpleDateFormat df = new SimpleDateFormat(FormattedDate.DEFAULT_DATE_FORMAT)
+        df.setTimeZone(TimeZone.getTimeZone("GMT"))
+        mapper.setDateFormat(df)
     }
 
     AppAuthContextProcessor rundeckAuthContextProcessor

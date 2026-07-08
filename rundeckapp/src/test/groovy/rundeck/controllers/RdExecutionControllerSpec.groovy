@@ -29,6 +29,22 @@ class RdExecutionControllerSpec extends Specification implements ControllerUnitT
         response.status == 200
     }
 
+    def "get serializes execution dates without milliseconds (RUN-4550)"() {
+        given:
+        // Date carries millisecond precision (…50.022Z); response must expose second precision (…50Z)
+        Date d = Date.from(java.time.Instant.parse('2026-03-25T21:16:50.022Z'))
+        params.id = 'abc'
+
+        when:
+        controller.get()
+
+        then:
+        1 * controller.rdExecutionService.getExecutionByUuid('abc') >> new RdExecution(dateStarted: d, dateCompleted: d)
+        response.status == 200
+        response.text.contains('2026-03-25T21:16:50Z')
+        !response.text.contains('2026-03-25T21:16:50.022Z')
+    }
+
     def "test delete method"() {
         given:
         def executionId = "123"
