@@ -5,6 +5,8 @@ import org.springframework.validation.Errors
 import org.springframework.validation.Validator
 
 import java.text.SimpleDateFormat
+import java.time.DateTimeException
+import java.time.ZoneId
 
 class JobArgStringValidator implements Validator {
     @Override
@@ -20,7 +22,18 @@ class JobArgStringValidator implements Validator {
                 jobData.argString.replaceAll(
                         /\$\{DATE:(.*)\}/,
                         { all, String tstamp ->
-                            new SimpleDateFormat(tstamp).format(new Date())
+                            // Extract optional timezone from last colon-segment
+                            String fdate = tstamp
+                            final lastColon = tstamp.lastIndexOf(":")
+                            if (lastColon >= 0) {
+                                try {
+                                    ZoneId.of(tstamp.substring(lastColon + 1))
+                                    fdate = tstamp.substring(0, lastColon)
+                                } catch (DateTimeException ignored) {
+                                    // last segment is not a valid ZoneId; treat whole tstamp as FORMAT
+                                }
+                            }
+                            new SimpleDateFormat(fdate).format(new Date())
                         }
                 )
             } catch (IllegalArgumentException e) {

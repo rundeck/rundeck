@@ -156,6 +156,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     @Unroll
     def "expand date strings"() {
         given:
+        // Fix JVM timezone to UTC so expected values are portable across test environments
+        def originalTz = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
         def cal = new GregorianCalendar(1970, 0, 14, 8, 20, 30)
         Date thedate = cal.time
 
@@ -164,6 +167,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         result == expected
+
+        cleanup:
+        TimeZone.setDefault(originalTz)
+
         where:
         input                                          | expected
         ''                                             | ''
@@ -173,6 +180,14 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         '${DATE:yyyy-MM-dd} blah ${DATE+3:yyyy-MM-dd}' | '1970-01-14 blah 1970-01-17'
         '${DATE-7:yyyy-MM-dd}'                         | '1970-01-07'
         'invalid ${DATE-asdf7:yyyy-MM-dd}'             | 'invalid ${DATE-asdf7:yyyy-MM-dd}'
+        '${DATE:HH:mm:ss}'                             | '08:20:30'
+        '${DATE:yyyy-MM-dd HH:mm:ss}'                  | '1970-01-14 08:20:30'
+        // TZ-aware: Asia/Tokyo is UTC+9, so 08:20:30 UTC = 17:20:30 JST
+        '${DATE:HH:mm:ss:Asia/Tokyo}'                  | '17:20:30'
+        // 1970-01-15 08:20:30 UTC = 1970-01-15 03:20:30 EST (UTC-5 in January)
+        '${DATE+1:HH:mm:ss:America/New_York}'          | '03:20:30'
+        // Unknown TZ segment — falls back to treating full string as FORMAT; SimpleDateFormat rejects it, token left unexpanded
+        '${DATE:HH:mm:ss:NotAZone}'                    | '${DATE:HH:mm:ss:NotAZone}'
     }
     void "retry execution otherwise running"() {
 
