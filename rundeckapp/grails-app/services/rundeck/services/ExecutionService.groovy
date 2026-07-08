@@ -390,6 +390,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     private boolean applicationIsShutdown
+    private Boolean sqlCompatibleCache = null
 
     public boolean isApplicationShutdown() {
         return applicationIsShutdown
@@ -4723,6 +4724,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     private boolean isSqlCompatible() {
+        if (sqlCompatibleCache != null) {
+            return sqlCompatibleCache
+        }
         boolean isCompatible = false
         try{
             Execution.createCriteria().list(max:1) {
@@ -4736,6 +4740,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             isCompatible = false
         }
 
+        sqlCompatibleCache = isCompatible
         return isCompatible
     }
 
