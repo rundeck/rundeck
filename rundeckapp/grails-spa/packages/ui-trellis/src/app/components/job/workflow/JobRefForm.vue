@@ -102,10 +102,6 @@ export default defineComponent({
       showRequired: false,
     };
   },
-  mounted() {
-    // Initialize editModel with incoming modelValue on mount
-    this.editModel = merge(this.editModel, this.modelValue);
-  },
   watch: {
     modalActive(val) {
       this.showModal = val;
@@ -115,13 +111,26 @@ export default defineComponent({
     },
     modelValue(val) {
       this.editModel = merge(this.editModel, val);
+      this.inferUseName();
     },
   },
+  mounted() {
+    this.editModel = merge(this.editModel, this.modelValue);
+    this.inferUseName();
+  },
   methods: {
+    inferUseName() {
+      const ref = this.editModel.jobref;
+      if (ref && ref.useName === undefined) {
+        ref.useName = Boolean(ref.name && !ref.uuid);
+      }
+    },
     async saveChanges() {
       if (
-        (!this.editModel.jobref?.name || this.editModel.jobref.name.length === 0) &&
-        (!this.editModel.jobref?.uuid || this.editModel.jobref.uuid.length === 0)
+        (!this.editModel.jobref?.name ||
+          this.editModel.jobref.name.length === 0) &&
+        (!this.editModel.jobref?.uuid ||
+          this.editModel.jobref.uuid.length === 0)
       ) {
         this.error = true;
         this.errorMessage = this.$t("commandExec.jobName.blank.message");

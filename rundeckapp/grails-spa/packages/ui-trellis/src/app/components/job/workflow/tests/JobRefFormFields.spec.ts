@@ -9,13 +9,15 @@ const mockSetSelectedFilter = jest.fn();
 const mockFetchNodes = jest.fn();
 
 const createMockRootStore = () => {
-  const uiItems: Array<{ section: string; location: string; visible: boolean; widget?: unknown }> = [];
+  const uiItems: Array<{
+    section: string;
+    location: string;
+    visible: boolean;
+    widget?: unknown;
+  }> = [];
   return {
     projects: {
-      projects: [
-        { name: "testProject" },
-        { name: "otherProject" },
-      ],
+      projects: [{ name: "testProject" }, { name: "otherProject" }],
       loaded: true,
       load: jest.fn(),
     },
@@ -23,7 +25,8 @@ const createMockRootStore = () => {
       items: uiItems,
       itemsForLocation: (section: string, location: string) =>
         uiItems.filter(
-          (i) => i.section === section && (!location || i.location === location),
+          (i) =>
+            i.section === section && (!location || i.location === location),
         ),
       addWatcher: jest.fn(),
       removeWatcher: jest.fn(),
@@ -294,7 +297,7 @@ describe("JobRefFormFields", () => {
       expect(nodeStepTrue.element.checked).toBe(true);
     });
 
-    it("shows validation errors when showValidation is true", async () => {
+    it("shows validation errors when showValidation is true and name mode is selected", async () => {
       wrapper = createWrapper({
         showValidation: true,
         modelValue: {
@@ -318,16 +321,15 @@ describe("JobRefFormFields", () => {
               nodeIntersect: null,
             },
           },
+          useName: true,
         },
       });
       await flushPromises();
 
-      wrapper.vm.isUseName = true;
-      await wrapper.vm.$nextTick();
-
-      const nameGroup = wrapper.find('[data-testid="jobNameField"]').element
-        .closest(".form-group");
-      expect(nameGroup?.classList.contains("has-error")).toBe(true);
+      const nameGroup = wrapper
+        .find('[data-testid="jobNameField"]')
+        .element.closest(".form-group");
+      expect(nameGroup?.classList).toContain("has-error");
     });
   });
 
@@ -707,39 +709,124 @@ describe("JobRefFormFields", () => {
   });
 
   describe("Use name vs UUID toggle", () => {
-    it("defaults to using name", async () => {
+    it("shows name/group fields readonly by default (UUID mode)", async () => {
       wrapper = createWrapper();
       await flushPromises();
 
-      expect((wrapper.vm as any).isUseName).toBe(false);
+      expect(
+        wrapper.find('[data-testid="jobNameField"]').attributes("readonly"),
+      ).toBeDefined();
+      expect(
+        wrapper.find('[data-testid="jobGroupField"]').attributes("readonly"),
+      ).toBeDefined();
     });
 
-    it("disables name/group inputs when using UUID", async () => {
-      wrapper = createWrapper();
+    it("shows name/group fields editable when mounted with useName:true", async () => {
+      wrapper = createWrapper({
+        modelValue: {
+          nodeStep: false,
+          name: "",
+          uuid: "",
+          project: "testProject",
+          group: "",
+          args: "",
+          failOnDisable: false,
+          childNodes: false,
+          importOptions: false,
+          ignoreNotifications: false,
+          nodefilters: {
+            filter: "",
+            dispatch: {
+              threadcount: null,
+              keepgoing: null,
+              rankAttribute: null,
+              rankOrder: null,
+              nodeIntersect: null,
+            },
+          },
+          useName: true,
+        },
+      });
       await flushPromises();
 
-      (wrapper.vm as any).isUseName = false;
-      await wrapper.vm.$nextTick();
-
-      const nameField = wrapper.find('[data-testid="jobNameField"]');
-      const groupField = wrapper.find('[data-testid="jobGroupField"]');
-
-      expect((nameField.element as HTMLInputElement).readOnly).toBe(true);
-      expect((groupField.element as HTMLInputElement).readOnly).toBe(true);
+      expect(
+        wrapper.find('[data-testid="jobNameField"]').attributes("readonly"),
+      ).toBeUndefined();
+      expect(
+        wrapper.find('[data-testid="jobGroupField"]').attributes("readonly"),
+      ).toBeUndefined();
     });
 
-    it("enables name/group inputs when using name", async () => {
-      wrapper = createWrapper();
+    it("emits update:modelValue with useName:true when user selects name radio", async () => {
+      wrapper = createWrapper({
+        modelValue: {
+          nodeStep: false,
+          name: "",
+          uuid: "",
+          project: "testProject",
+          group: "",
+          args: "",
+          failOnDisable: false,
+          childNodes: false,
+          importOptions: false,
+          ignoreNotifications: false,
+          nodefilters: {
+            filter: "",
+            dispatch: {
+              threadcount: null,
+              keepgoing: null,
+              rankAttribute: null,
+              rankOrder: null,
+              nodeIntersect: null,
+            },
+          },
+          useName: false,
+        },
+      });
       await flushPromises();
 
-      (wrapper.vm as any).isUseName = true;
-      await wrapper.vm.$nextTick();
+      await wrapper.find('[data-testid="use-name-radio"]').setValue(true);
 
-      const nameField = wrapper.find('[data-testid="jobNameField"]');
-      const groupField = wrapper.find('[data-testid="jobGroupField"]');
+      const emitted = wrapper.emitted("update:modelValue");
+      expect(emitted).toBeTruthy();
+      expect((emitted?.[emitted.length - 1]?.[0] as any)?.useName).toBe(true);
+    });
 
-      expect((nameField.element as HTMLInputElement).readOnly).toBe(false);
-      expect((groupField.element as HTMLInputElement).readOnly).toBe(false);
+    it("emits update:modelValue with useName:false when user selects UUID radio", async () => {
+      wrapper = createWrapper({
+        modelValue: {
+          nodeStep: false,
+          name: "",
+          uuid: "",
+          project: "testProject",
+          group: "",
+          args: "",
+          failOnDisable: false,
+          childNodes: false,
+          importOptions: false,
+          ignoreNotifications: false,
+          nodefilters: {
+            filter: "",
+            dispatch: {
+              threadcount: null,
+              keepgoing: null,
+              rankAttribute: null,
+              rankOrder: null,
+              nodeIntersect: null,
+            },
+          },
+          useName: true,
+        },
+      });
+      await flushPromises();
+
+      const uuidRadio = wrapper.find('[data-testid="use-uuid-radio"]');
+      (uuidRadio.element as HTMLInputElement).checked = true;
+      await uuidRadio.trigger("change");
+
+      const emitted = wrapper.emitted("update:modelValue");
+      expect(emitted).toBeTruthy();
+      expect((emitted?.[emitted.length - 1]?.[0] as any)?.useName).toBe(false);
     });
   });
 });

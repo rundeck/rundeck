@@ -72,6 +72,7 @@ export interface JobRefDefinition {
   importOptions?: boolean;
   ignoreNotifications?: boolean;
   nodeStep?: boolean;
+  useName?: boolean;
   nodefilters?: {
     filter: string;
     dispatch?: {
@@ -160,17 +161,14 @@ export interface StepsEditData {
 }
 
 export interface WorkflowData
-  extends BasicData,
-    StrategyConfig,
-    WorkflowPluginConfig,
-    StepsData {}
+  extends BasicData, StrategyConfig, WorkflowPluginConfig, StepsData {}
 
 export function createBasicData({ keepgoing }: any): BasicData {
   return { keepgoing: !!keepgoing };
 }
 
 export function createStrategyData(workflowData: WorkflowData): PluginConfig {
-  const type = workflowData.strategy || '';
+  const type = workflowData.strategy || "";
   const strategyObj = workflowData.pluginConfig?.WorkflowStrategy;
   const config = strategyObj && type ? strategyObj[type] : {};
   return { type, config };
@@ -181,7 +179,10 @@ export function exportPluginData(
   logFilters: GlobalLogFiltersData,
 ): any {
   const obj: {
-    pluginConfig: { WorkflowStrategy: { [x: string]: any }; [key: string]: any };
+    pluginConfig: {
+      WorkflowStrategy: { [x: string]: any };
+      [key: string]: any;
+    };
     strategy: string;
   } = {
     pluginConfig: {
@@ -194,7 +195,9 @@ export function exportPluginData(
   }
   return obj;
 }
-export function createLogFiltersData({ pluginConfig }: any): GlobalLogFiltersData {
+export function createLogFiltersData({
+  pluginConfig,
+}: any): GlobalLogFiltersData {
   return { LogFilter: pluginConfig?.LogFilter || [] };
 }
 
@@ -214,8 +217,10 @@ function filterConditionalSteps(commands: StepData[]): StepData[] {
       // Remove entire conditional block (both wrapper and sub-steps)
       // Check type field OR duck-typing with conditionGroups/subSteps
       const cmdAny = cmd as any;
-      if (cmd.type === 'conditional' ||
-          (cmdAny.conditionGroups !== undefined && cmdAny.subSteps !== undefined)) {
+      if (
+        cmd.type === "conditional" ||
+        (cmdAny.conditionGroups !== undefined && cmdAny.subSteps !== undefined)
+      ) {
         return false;
       }
       return true;
@@ -235,14 +240,19 @@ function filterConditionalSteps(commands: StepData[]): StepData[] {
 
       // Recursively filter plugin configurations with nested commands
       if (cmd.configuration && (cmd.configuration as any).commands) {
-        (cmd.configuration as any).commands = filterConditionalSteps((cmd.configuration as any).commands);
+        (cmd.configuration as any).commands = filterConditionalSteps(
+          (cmd.configuration as any).commands,
+        );
       }
 
       return cmd;
     });
 }
 
-export function createStepsData({ commands }: Partial<StepsData>, filterConditionals: boolean = false): StepsData {
+export function createStepsData(
+  { commands }: Partial<StepsData>,
+  filterConditionals: boolean = false,
+): StepsData {
   if (filterConditionals && commands) {
     // Filter out conditional steps when feature is disabled
     const filteredCommands = filterConditionalSteps(commands);
