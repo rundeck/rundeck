@@ -502,7 +502,7 @@ class ExecutionJob implements InterruptableJob {
                     killcount++;
                 } else {
                     //reached pre-set kill limit, so shut down
-                    thread.stop()
+                    ((Thread) thread).interrupt()
                 }
             }
         }
