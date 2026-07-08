@@ -111,19 +111,24 @@ export default defineComponent({
     },
     modelValue(val) {
       this.editModel = merge(this.editModel, val);
-      this.inferUseName();
+      this.inferUseName(val);
     },
   },
   mounted() {
     this.editModel = merge(this.editModel, this.modelValue);
-    this.inferUseName();
+    this.inferUseName(this.modelValue);
   },
   methods: {
-    inferUseName() {
+    inferUseName(source) {
       const ref = this.editModel.jobref;
-      if (ref && ref.useName === undefined) {
-        ref.useName = Boolean(ref.name && !ref.uuid);
+      if (!ref) {
+        return;
       }
+      const incomingUseName = source?.jobref?.useName;
+      ref.useName =
+        incomingUseName === undefined
+          ? Boolean(ref.name && !ref.uuid)
+          : incomingUseName;
     },
     async saveChanges() {
       if (

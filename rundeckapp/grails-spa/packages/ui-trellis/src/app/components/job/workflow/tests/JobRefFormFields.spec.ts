@@ -119,34 +119,36 @@ const ModalStub = {
   emits: ["update:modelValue"],
 };
 
+const baseModelValue = {
+  nodeStep: false,
+  name: "",
+  uuid: "",
+  project: "testProject",
+  group: "",
+  args: "",
+  failOnDisable: false,
+  childNodes: false,
+  importOptions: false,
+  ignoreNotifications: false,
+  nodefilters: {
+    filter: "",
+    dispatch: {
+      threadcount: null,
+      keepgoing: null,
+      rankAttribute: null,
+      rankOrder: null,
+      nodeIntersect: null,
+    },
+  },
+};
+
 describe("JobRefFormFields", () => {
   let wrapper: VueWrapper<any>;
 
   const createWrapper = (props = {}) => {
     return shallowMount(JobRefFormFields, {
       props: {
-        modelValue: {
-          nodeStep: false,
-          name: "",
-          uuid: "",
-          project: "testProject",
-          group: "",
-          args: "",
-          failOnDisable: false,
-          childNodes: false,
-          importOptions: false,
-          ignoreNotifications: false,
-          nodefilters: {
-            filter: "",
-            dispatch: {
-              threadcount: null,
-              keepgoing: null,
-              rankAttribute: null,
-              rankOrder: null,
-              nodeIntersect: null,
-            },
-          },
-        },
+        modelValue: { ...baseModelValue },
         showValidation: false,
         extraAutocompleteVars: [],
         ...props,
@@ -260,10 +262,10 @@ describe("JobRefFormFields", () => {
     it("displays modelValue data in fields", async () => {
       wrapper = createWrapper({
         modelValue: {
+          ...baseModelValue,
           nodeStep: true,
           name: "Test Job",
           uuid: "abc-123",
-          project: "testProject",
           group: "test/group",
           args: "-flag value",
           failOnDisable: true,
@@ -329,7 +331,7 @@ describe("JobRefFormFields", () => {
       const nameGroup = wrapper
         .find('[data-testid="jobNameField"]')
         .element.closest(".form-group");
-      expect(nameGroup?.classList).toContain("has-error");
+      expect(nameGroup?.classList.contains("has-error")).toBe(true);
     });
   });
 
@@ -723,29 +725,7 @@ describe("JobRefFormFields", () => {
 
     it("shows name/group fields editable when mounted with useName:true", async () => {
       wrapper = createWrapper({
-        modelValue: {
-          nodeStep: false,
-          name: "",
-          uuid: "",
-          project: "testProject",
-          group: "",
-          args: "",
-          failOnDisable: false,
-          childNodes: false,
-          importOptions: false,
-          ignoreNotifications: false,
-          nodefilters: {
-            filter: "",
-            dispatch: {
-              threadcount: null,
-              keepgoing: null,
-              rankAttribute: null,
-              rankOrder: null,
-              nodeIntersect: null,
-            },
-          },
-          useName: true,
-        },
+        modelValue: { ...baseModelValue, useName: true },
       });
       await flushPromises();
 
@@ -759,29 +739,7 @@ describe("JobRefFormFields", () => {
 
     it("emits update:modelValue with useName:true when user selects name radio", async () => {
       wrapper = createWrapper({
-        modelValue: {
-          nodeStep: false,
-          name: "",
-          uuid: "",
-          project: "testProject",
-          group: "",
-          args: "",
-          failOnDisable: false,
-          childNodes: false,
-          importOptions: false,
-          ignoreNotifications: false,
-          nodefilters: {
-            filter: "",
-            dispatch: {
-              threadcount: null,
-              keepgoing: null,
-              rankAttribute: null,
-              rankOrder: null,
-              nodeIntersect: null,
-            },
-          },
-          useName: false,
-        },
+        modelValue: { ...baseModelValue, useName: false },
       });
       await flushPromises();
 
@@ -794,35 +752,11 @@ describe("JobRefFormFields", () => {
 
     it("emits update:modelValue with useName:false when user selects UUID radio", async () => {
       wrapper = createWrapper({
-        modelValue: {
-          nodeStep: false,
-          name: "",
-          uuid: "",
-          project: "testProject",
-          group: "",
-          args: "",
-          failOnDisable: false,
-          childNodes: false,
-          importOptions: false,
-          ignoreNotifications: false,
-          nodefilters: {
-            filter: "",
-            dispatch: {
-              threadcount: null,
-              keepgoing: null,
-              rankAttribute: null,
-              rankOrder: null,
-              nodeIntersect: null,
-            },
-          },
-          useName: true,
-        },
+        modelValue: { ...baseModelValue, useName: true },
       });
       await flushPromises();
 
-      const uuidRadio = wrapper.find('[data-testid="use-uuid-radio"]');
-      (uuidRadio.element as HTMLInputElement).checked = true;
-      await uuidRadio.trigger("change");
+      await wrapper.find('[data-testid="use-uuid-radio"]').setValue(true);
 
       const emitted = wrapper.emitted("update:modelValue");
       expect(emitted).toBeTruthy();
