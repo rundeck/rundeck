@@ -97,7 +97,10 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.Timestamp
+import javax.sql.DataSource
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -6273,6 +6276,43 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         val != null
         val.getNodeService() != null
       }
+
+    def "isH2Datasource returns true when databaseProductName is H2"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'H2' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            service.isH2Datasource()
+    }
+
+    def "isH2Datasource returns false when databaseProductName is not H2"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'PostgreSQL' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            !service.isH2Datasource()
+    }
+
+    def "isSqlCompatible returns false without propagating exception when criteria throws"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            Execution.metaClass.static.createCriteria = { -> throw new RuntimeException("SQL error") }
+        when:
+            def result = service.isSqlCompatible()
+        then:
+            !result
+            noExceptionThrown()
+        cleanup:
+            GroovySystem.metaClassRegistry.removeMetaClass(Execution)
+    }
 
     def "metrics data from criteria result"(){
         given:

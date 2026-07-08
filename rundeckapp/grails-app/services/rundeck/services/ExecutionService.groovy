@@ -134,6 +134,7 @@ import jakarta.servlet.http.HttpSession
 import java.nio.charset.Charset
 import java.sql.Time
 import java.sql.Timestamp
+import javax.sql.DataSource
 import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
@@ -4703,14 +4704,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return ((Long.parseLong(arr[0]) * 3600) + (Long.parseLong(arr[1]) * 60) + (Long.parseLong(arr[2]))) * 1000
     }
 
+    boolean isH2Datasource() {
+        def dataSource = applicationContext.getBean('dataSource', DataSource)
+        def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName
+        return databaseProductName == 'H2'
+    }
+
     private boolean isSqlCompatible() {
         boolean isCompatible = false
         try {
-            def sessionFactory = applicationContext.getBean("sessionFactory")
-            def dialectName = (sessionFactory?.properties?.get('hibernate.dialect') ?: '') as String
-            def dataSourceUrl = grailsApplication?.config?.getProperty('dataSource.url', String, '') ?: ''
-            boolean isH2 = dialectName.contains('H2Dialect') || dataSourceUrl.startsWith('jdbc:h2:')
-
+            boolean isH2 = isH2Datasource()
             Execution.createCriteria().list(max:1) {
                 projections {
                     if (isH2) {
@@ -4783,6 +4786,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * */
     List<Closure> getCriteriaScenarios(ExecutionQuery query){
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+
+        if (isH2Datasource()) {
+            def metricCriteriaH2 = {
+                def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+                baseQueryCriteria()
+                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+                projections {
+                    rowCount("count")
+                    sqlProjection 'sum(DATEDIFF(\'SECOND\', date_started, date_completed)) as durationSum',
+                            'durationSum', StandardBasicTypes.LONG
+                    sqlProjection 'min(DATEDIFF(\'SECOND\', date_started, date_completed)) as durationMin',
+                            'durationMin', StandardBasicTypes.LONG
+                    sqlProjection 'max(DATEDIFF(\'SECOND\', date_started, date_completed)) as durationMax',
+                            'durationMax', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                            'succeededCount', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                            'failedCount', StandardBasicTypes.LONG
+                }
+            }
+            return Arrays.asList(metricCriteriaH2)
+        }
+
         def metricCriteriaA = {
             def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
             baseQueryCriteria()
