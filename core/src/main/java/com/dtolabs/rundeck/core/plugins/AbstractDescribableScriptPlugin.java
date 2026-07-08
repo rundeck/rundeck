@@ -223,6 +223,13 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
 
                         dbuilder.frameworkMapping(propName, frameworkPropertyPrefix + propName);
                     }
+                    final Object blankIfUnexpandableValue = itemmeta.get("blankIfUnexpandable");
+                    if (blankIfUnexpandableValue instanceof Boolean) {
+                        pbuild.blankIfUnexpandable((Boolean) blankIfUnexpandableValue);
+                    } else if (blankIfUnexpandableValue instanceof String) {
+                        pbuild.blankIfUnexpandable(Boolean.parseBoolean((String) blankIfUnexpandableValue));
+                    }
+
                     //rendering options
                     final Object renderingOpts = itemmeta.get(CONFIG_RENDERING_OPTIONS);
                     if(null != renderingOpts && renderingOpts instanceof Map){
