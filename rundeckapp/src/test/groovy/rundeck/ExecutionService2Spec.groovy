@@ -2652,6 +2652,20 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         1 == 1
     }
 
+    def "isSqlCompatible returns cached value without running SQL probe"() {
+        given:
+        service.@sqlCompatibleCache = cachedValue
+
+        when:
+        boolean result = service.invokeMethod('isSqlCompatible', null) as boolean
+
+        then:
+        result == cachedValue
+
+        where:
+        cachedValue << [true, false]
+    }
+
     def "ensureExecutionOutputFilePath"() {
         given:
         Execution e = new Execution(uuid:"execution-uuid",project:"AProject",user:'bob',dateStarted: new Date(),dateCompleted: null,jobUuid: "job-uuid",workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
