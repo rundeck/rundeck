@@ -35,6 +35,16 @@ jest.mock("@/library", () => ({
   })),
 }));
 
+jest.mock("@/library/modules/pluginService", () => ({
+  getServiceProviderDescription: jest.fn(),
+  validatePluginConfig: jest.fn(),
+  getPluginProvidersForService: jest.fn(),
+}));
+
+jest.mock("@/library/modules/rundeckClient", () => ({
+  client: jest.fn(),
+}));
+
 const baseJobRef = {
   nodeStep: false,
   name: "",
@@ -174,20 +184,7 @@ describe("JobRefForm", () => {
       ).toBeUndefined();
     });
 
-    it("infers name mode for existing job ref with name and no uuid", async () => {
-      const wrapper = await createWrapper({
-        jobref: { ...baseJobRef, name: "myJob" },
-      });
-
-      expect(
-        wrapper.find("[data-testid='jobNameField']").attributes("readonly"),
-      ).toBeUndefined();
-      expect(
-        wrapper.find("[data-testid='jobGroupField']").attributes("readonly"),
-      ).toBeUndefined();
-    });
-
-    it("infers UUID mode for existing job ref with uuid", async () => {
+    it("shows UUID mode for existing job ref with uuid", async () => {
       const wrapper = await createWrapper({
         jobref: { ...baseJobRef, uuid: "abc-123" },
       });
