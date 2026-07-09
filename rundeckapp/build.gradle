@@ -306,7 +306,6 @@ dependencies {
     implementation "org.apache.grails:grails-codecs"
     implementation "org.apache.grails:grails-cache"
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
-    implementation "com.google.code.gson:gson:${gsonVersion}"
     // Jackson versions managed by Spring Boot BOM
     implementation "com.fasterxml.jackson.core:jackson-databind"
     implementation "com.fasterxml.jackson.core:jackson-core"
