@@ -16,7 +16,9 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
+import grails.converters.JSON
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.internal.framework.RundeckFramework
@@ -2423,10 +2425,17 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         controller.executionService = new ExecutionService()
         controller.executionService.jobStatsDataProvider = new GormJobStatsDataProvider()
 
+        // Register API marshallers and select the versioned converter config, as the
+        // ApiVersionInterceptor does for real /api requests (RUN-4550)
+        def registrar = new ApiMarshallerRegistrar()
+        registrar.registerMarshallers()
+        registrar.registerApiMarshallers()
+
         when:
         request.api_version = 48
         params.id=testUUID
         response.format='json'
+        JSON.use('v' + request.api_version)
         def result = controller.apiJobForecast()
 
         then:
@@ -2436,7 +2445,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         1 * controller.apiService.requireExists(_, job1, _) >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
-        1 * controller.scheduledExecutionService.nextExecutions(_,_,false) >> [new Date()]
+        1 * controller.scheduledExecutionService.nextExecutions(_,_,false) >> [Date.from(java.time.Instant.parse('2026-03-25T21:16:50.022Z'))]
 
         response.json != null
         response.json.id  == testUUID
@@ -2448,6 +2457,8 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         response.json.averageDuration  == 2000
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
+        // RUN-4550: date serialized with second-precision W3C/ISO-8601 (no milliseconds)
+        response.json.futureScheduledExecutions[0] == '2026-03-25T21:16:50Z'
         response.json.projectDisableExecutions == false
         response.json.projectDisableSchedule == false
     }
