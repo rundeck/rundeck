@@ -10,7 +10,11 @@ const mockedGetNodeSummary = nodeServices.getNodeSummary as jest.MockedFunction<
 const mockedGetNodes = nodeServices.getNodes as jest.MockedFunction<
   typeof nodeServices.getNodes
 >;
-jest.mock("@/library/rundeckService", () => ({
+jest.mock("@/library", () => ({
+  getAppLinks: jest.fn().mockReturnValue({
+    frameworkNodes: "/resources/nodes",
+    frameworkNodesQueryAjax: "/resources/nodes",
+  }),
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
     projectName: "test-project",
@@ -131,11 +135,12 @@ describe("NodeCard Component", () => {
       });
 
       await flushPromises();
+      await wrapper.vm.$nextTick();
 
-      const vm = wrapper.vm as InstanceType<typeof NodeCard>;
-      expect(vm.pagingMax).toBe(20);
+      const nodeTable = wrapper.findComponent(NodeTable);
+      expect(nodeTable.props("pagingMax")).toBe(500);
       // maxPages = Math.ceil(total / pagingMax) = Math.ceil(600 / 500) = 2
-      expect(vm.maxPages).toBe(0);
+      expect(nodeTable.props("maxPages")).toBe(2);
     });
   });
   describe("Browse Tags Functionality", () => {
