@@ -472,7 +472,7 @@ class JobsYAMLCodecSpec extends Specification {
             opt2.required==false
             opt2.optionValues==null
             opt2.realValuesUrl != null
-            opt2.realValuesUrl.toExternalForm() == "http://something.com"
+            opt2.realValuesUrl == "http://something.com"
             opt2.regex == "\\d+"
     }
 
@@ -673,5 +673,57 @@ class JobsYAMLCodecSpec extends Specification {
             cmd3.errorHandler.jobGroup == "err job group"
             cmd3.errorHandler.argString == "err job args"
             cmd3.errorHandler.keepgoingOnSuccess
+    }
+
+    def "decode YAML with dispatch block and empty filter sets doNodedispatch true (RUN-3132)"() {
+        given: "a YAML job definition with nodefilters.dispatch and an empty filter"
+            def yaml = """- name: test-dispatch-empty-filter
+  description: RUN-3132 regression test
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: echo hello
+  nodefilters:
+    dispatch:
+      threadcount: 1
+      keepgoing: false
+      excludePrecedence: true
+      successOnEmptyNodeFilter: false
+    filter: ''
+  nodesSelectedByDefault: true
+"""
+        when:
+            def list = JobsYAMLCodec.decode(yaml)
+        then:
+            list.size() == 1
+            ScheduledExecution se = list[0] as ScheduledExecution
+            se.doNodedispatch == true
+            se.filter == ''
+            se.nodesSelectedByDefault == true
+    }
+
+    def "decode YAML with dispatch block and no filter key keeps doNodedispatch false (backward compat)"() {
+        given: "a YAML job definition with nodefilters.dispatch but no filter key"
+            def yaml = """- name: test-local
+  description: backward compat test
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: echo hello
+  nodefilters:
+    dispatch:
+      threadcount: 1
+      keepgoing: false
+"""
+        when:
+            def list = JobsYAMLCodec.decode(yaml)
+        then:
+            list.size() == 1
+            ScheduledExecution se = list[0] as ScheduledExecution
+            se.doNodedispatch == false
     }
 }

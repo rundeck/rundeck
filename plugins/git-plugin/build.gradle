@@ -48,7 +48,7 @@ dependencies {
         exclude module: 'slf4j-api'
         exclude group: 'org.bouncycastle'
     }
-    implementation 'org.slf4j:slf4j-api:1.7.29'
+    implementation "org.slf4j:slf4j-api:${slf4jVersion}"
     implementation "org.apache.groovy:groovy:${groovyVersion}"
     implementation group: 'com.hierynomus', name: 'sshj', version: '0.40.0'
     implementation group: 'com.hierynomus', name: 'asn-one', version: '0.6.0'
@@ -62,6 +62,9 @@ dependencies {
     implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}")
     // Grails 7: BC 1.80 requires bcutil for CryptlibObjectIdentifiers
     implementation ("org.bouncycastle:bcutil-jdk18on:${bouncyCastleVersion}")
+    // RUN-4336: Override sshj's transitive bcpkix with fixed version for CVE-2026-5588
+    implementation ("org.bouncycastle:bcpkix-jdk18on:${bouncyCastleVersion}")
+    pluginLibs ("org.bouncycastle:bcpkix-jdk18on:${bouncyCastleVersion}")
     testImplementation "junit:junit:${junitVersion}",
                 'org.mockito:mockito-all:1.10.19'
 

@@ -31,7 +31,7 @@ describe("HomeSearchBar", () => {
     await wrapper.setData({ search: "Test Input" });
 
     expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
-    expect(wrapper.emitted("update:modelValue")[0]).toEqual(["Test Input"]);
+    expect(wrapper.emitted("update:modelValue")![0]).toEqual(["Test Input"]);
   });
 
   it('emits "onEnter" event when enter key is pressed in the search input', async () => {

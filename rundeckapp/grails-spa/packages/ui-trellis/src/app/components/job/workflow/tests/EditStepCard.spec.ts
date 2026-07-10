@@ -597,11 +597,11 @@ describe("EditStepCard", () => {
             nodefilters: {
               filter: "",
               dispatch: {
-                threadcount: null,
-                keepgoing: null,
-                rankAttribute: null,
-                rankOrder: null,
-                nodeIntersect: null,
+                threadcount: undefined,
+                keepgoing: undefined,
+                rankAttribute: undefined,
+                rankOrder: undefined,
+                nodeIntersect: undefined,
               },
             },
           },

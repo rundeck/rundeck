@@ -56,7 +56,7 @@ describe("PluginSearch", () => {
         .trigger("click");
 
       expect(wrapper.emitted("search")).toHaveLength(1);
-      expect(wrapper.emitted("search")[0]).toEqual(["my-filter"]);
+      expect(wrapper.emitted("search")![0]).toEqual(["my-filter"]);
     });
 
     it("emits search event with typed filter when Enter is pressed", async () => {
@@ -70,7 +70,7 @@ describe("PluginSearch", () => {
         .trigger("keydown.enter");
 
       expect(wrapper.emitted("search")).toHaveLength(1);
-      expect(wrapper.emitted("search")[0]).toEqual(["enter-filter"]);
+      expect(wrapper.emitted("search")![0]).toEqual(["enter-filter"]);
     });
 
     it("emits search with empty string when no value entered", async () => {
@@ -81,7 +81,7 @@ describe("PluginSearch", () => {
         .trigger("click");
 
       expect(wrapper.emitted("search")).toHaveLength(1);
-      expect(wrapper.emitted("search")[0]).toEqual([""]);
+      expect(wrapper.emitted("search")![0]).toEqual([""]);
     });
 
     it("does not emit searching event when typing", async () => {
@@ -127,7 +127,7 @@ describe("PluginSearch", () => {
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("searching")).toBeTruthy();
-      expect(wrapper.emitted("searching")[0]).toEqual([true]);
+      expect(wrapper.emitted("searching")![0]).toEqual([true]);
 
       jest.useRealTimers();
     });
@@ -145,7 +145,7 @@ describe("PluginSearch", () => {
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("search")).toHaveLength(1);
-      expect(wrapper.emitted("search")[0]).toEqual(["debounced-filter"]);
+      expect(wrapper.emitted("search")![0]).toEqual(["debounced-filter"]);
 
       jest.useRealTimers();
     });
@@ -187,7 +187,7 @@ describe("PluginSearch", () => {
 
       // Only one search emitted for the final value
       expect(wrapper.emitted("search")).toHaveLength(1);
-      expect(wrapper.emitted("search")[0]).toEqual(["first"]);
+      expect(wrapper.emitted("search")![0]).toEqual(["first"]);
 
       jest.useRealTimers();
     });

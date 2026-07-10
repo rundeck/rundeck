@@ -414,7 +414,7 @@ describe("PluginConfig", () => {
 
       const emitted = wrapper.emitted("update:modelValue");
       expect(emitted).toHaveLength(1);
-      expect((emitted[0][0] as any).config.enabled).toBe("true");
+      expect((emitted![0][0] as any).config.enabled).toBe("true");
     });
 
     it("emits the string 'false' in the config payload when a Boolean with a true default is set to false", async () => {
@@ -432,7 +432,7 @@ describe("PluginConfig", () => {
       await wrapper.vm.$nextTick();
 
       const emitted = wrapper.emitted("update:modelValue");
-      expect((emitted[emitted.length - 1][0] as any).config.enabled).toBe("false");
+      expect((emitted![emitted!.length - 1][0] as any).config.enabled).toBe("false");
     });
 
     it("emits the string 'false' in the config payload when a Boolean with no true default is explicitly set to false", async () => {
@@ -450,7 +450,7 @@ describe("PluginConfig", () => {
       await wrapper.vm.$nextTick();
 
       const emitted = wrapper.emitted("update:modelValue")!;
-      expect(emitted[emitted.length - 1][0]).toEqual(
+      expect(emitted![emitted.length - 1][0]).toEqual(
         expect.objectContaining({ config: expect.objectContaining({ enabled: "false" }) }),
       );
     });

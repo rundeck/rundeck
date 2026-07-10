@@ -77,6 +77,7 @@ import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
+import rundeck.PluginStep
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
@@ -86,6 +87,7 @@ import rundeck.services.workflow.StateMapping
 
 import jakarta.servlet.http.HttpServletResponse
 import java.text.ParseException
+import com.google.common.collect.Lists
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
@@ -158,19 +160,26 @@ class ExecutionController extends ControllerBase{
             offset+=res.size()
             res.each{exec->
                 def workflow = exec.getWorkflowData()
-                if(execs.size()<max
-                        && workflow && workflow.commands.size()==1
-                        && workflow.commands[0] instanceof CommandExec
-                        && workflow.commands[0].adhocRemoteString){
-
-                    def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                    def str=workflow.commands[0].adhocRemoteString+";"+appliedFilter
-                    if(query && query.size()>4 && !str.contains(query)){
-                        return
+                if(execs.size()<max && workflow && workflow.commands.size()==1) {
+                    def cmd = workflow.commands[0]
+                    String adhocRemoteString = null
+                    if (cmd instanceof CommandExec) {
+                        adhocRemoteString = cmd.adhocRemoteString
+                    } else if (cmd instanceof PluginStep) {
+                        // New JSON storage format deserializes exec commands as PluginStep
+                        Map config = cmd.getConfiguration() ?: [:]
+                        adhocRemoteString = config.adhocRemoteString
                     }
-                    if(!uniques.contains(str)){
-                        uniques<<str
-                        execs<<exec
+                    if (adhocRemoteString) {
+                        def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                        def str=adhocRemoteString+";"+appliedFilter
+                        if(query && query.size()>4 && !str.contains(query)){
+                            return
+                        }
+                        if(!uniques.contains(str)){
+                            uniques<<str
+                            execs<<exec
+                        }
                     }
                 }
             }
@@ -181,23 +190,33 @@ class ExecutionController extends ControllerBase{
 
         def elementList = execs.collect{Execution exec->
             def workflow = exec.getWorkflowData()
-            if(workflow && workflow.commands.size()==1 && workflow.commands[0].adhocRemoteString) {
-                def href=createLink(
-                        controller: 'framework',
-                        action: 'adhoc',
-                        params: [project: project, fromExecId: exec.id]
-                )
+            if(workflow && workflow.commands.size()==1) {
+                def cmd = workflow.commands[0]
+                String adhocRemoteString = null
+                if (cmd instanceof CommandExec) {
+                    adhocRemoteString = cmd.adhocRemoteString
+                } else if (cmd instanceof PluginStep) {
+                    Map config = cmd.getConfiguration() ?: [:]
+                    adhocRemoteString = config.adhocRemoteString
+                }
+                if (adhocRemoteString) {
+                    def href=createLink(
+                            controller: 'framework',
+                            action: 'adhoc',
+                            params: [project: project, fromExecId: exec.id]
+                    )
 
-                def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                return [
-                        status: exec.getExecutionState(),
-                        succeeded: exec.statusSucceeded(),
-                        href: href,
-                        execid: exec.id,
-                        title: workflow.commands[0].adhocRemoteString,
-                        filter: appliedFilter,
-                        extraMetadata: exec.extraMetadataMap
-                ]
+                    def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                    return [
+                            status: exec.getExecutionState(),
+                            succeeded: exec.statusSucceeded(),
+                            href: href,
+                            execid: exec.id,
+                            title: adhocRemoteString,
+                            filter: appliedFilter,
+                            extraMetadata: exec.extraMetadataMap
+                    ]
+                }
             }
         }
         render(contentType: 'application/json'){
@@ -278,6 +297,12 @@ class ExecutionController extends ControllerBase{
         Long trimOutput = Sizes.parseFileSize(max)
         Long maxLogSize = Sizes.parseFileSize(maxLogSizeConfig)
 
+        def defaultRecentFilter = null
+        if (featureService.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+            def configured = configurationService.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+            defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+        }
+
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
@@ -292,7 +317,8 @@ class ExecutionController extends ControllerBase{
                 inputFilesMap         : inputFilesMap,
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled(),
                 trimOutput            : trimOutput,
-                maxLogSize            : maxLogSize
+                maxLogSize            : maxLogSize,
+                defaultRecentFilter   : defaultRecentFilter
         ]
     }
 
@@ -1065,7 +1091,9 @@ the result data.
 In this mode, Log Entries are compacted by only including the changed values from the
 previous Log Entry in the list.  The first Log Entry in the results will always have complete information.  Subsequent entries may include only changed values.
 
-In JSON format, if the `compactedAttr` value is `log` in the response data, and only the `log` value changed relative to a previous Log Entry, the Log Entry may consist only of the log message string. That is, the array entry will be a string, not an object.
+In JSON format (API v21-v58), if the `compactedAttr` value is `log` in the response data, and only the `log` value changed relative to a previous Log Entry, the Log Entry may consist only of the log message string. That is, the array entry will be a string, not an object.
+
+As of API v59, compacted entries are always objects even when only the `log` value changed. This avoids mixed-type arrays and ensures clients can always treat each entry as an object.
 
 When no values changed from the previous Log Entry, the Log Entry will be an empty object.
 
@@ -1373,7 +1401,7 @@ this Log Entry.""",
         }
     }
     //Create a map that will be converted to JSON by the grails converter at the render phase
-    private def renderOutputFormatJson(Map data, List outputData, stateoutput = false) {
+    private def renderOutputFormatJson(Map data, List outputData, stateoutput = false, int apiVersion = 0) {
         def keys = [
                 'id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'pending', 'execCompleted',
                 'hasFailedNodes', 'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize',
@@ -1434,8 +1462,9 @@ this Log Entry.""",
                     }
                 }
                 prev = origmap
-                if (compactedAttr && datamap.size() == 1 && datamap[compactedAttr] != null) {
-                    //compact the single attribute into just the string
+                if (compactedAttr && datamap.size() == 1 && datamap[compactedAttr] != null
+                        && apiVersion < ApiVersions.V59) {
+                    //compact the single attribute into just the string (V58 and below)
                     datamap = datamap[compactedAttr]
                 }
             }
@@ -1934,7 +1963,7 @@ JSON response requires API v14.
 
         withFormat {
             '*' {
-                render renderOutputFormatJson(resultData,entry,stateoutput) as JSON
+                render renderOutputFormatJson(resultData,entry,stateoutput,apiVersion) as JSON
             }
             text{
                 response.addHeader('X-Rundeck-ExecOutput-Offset', storeoffset.toString())
@@ -2974,6 +3003,9 @@ So a value of `2w` would return executions that completed within the last two we
             @Parameter(in=ParameterIn.QUERY,name="executionTypeFilter",description="""specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger). Since: v20""",schema=@Schema(type="string",allowableValues = ['scheduled','user','user-scheduled'])),
             @Parameter(in=ParameterIn.QUERY,name="useStats",description="""if true, use snapshot-based metrics from SCHEDULED_EXECUTION_STATS table (fast, returns empty metrics (all zeros) if no stats exist). if false or not provided, use execution table query (slow, always returns data). Since: v57""",schema=@Schema(type="boolean")),
             @Parameter(in=ParameterIn.QUERY,name="groupByJob",description="""if true with useStats=true, returns metrics for all jobs in the project (batch mode). Requires project parameter. Returns format: {jobs: {uuid1: metrics, uuid2: metrics, ...}}. RUN-3768 Phase 5. Since: v57""",schema=@Schema(type="boolean")),
+            @Parameter(in=ParameterIn.QUERY,name="adhocStringFilter",description="filter adhoc executions by command title (partial match).",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="nodeFilter",description="filter executions by node name or filter expression (partial match). Use 'name:nodename' for simple node name search, or a filter expression like 'tags:value' for complex filters.",schema=@Schema(type="string")),
+            @Parameter(in=ParameterIn.QUERY,name="optionFilter",description="filter executions by option values (partial match, e.g. '-test 123').",schema=@Schema(type="string")),
             @Parameter(in=ParameterIn.QUERY,name="max",description="""maximum number of results to include in response. (default: 20)""",schema=@Schema(type="integer")),
             @Parameter(in=ParameterIn.QUERY,name="offset",description="""offset for first result to include. (default: 0)""",schema=@Schema(type="integer"))
         ]
@@ -3135,6 +3167,7 @@ if executed in cluster mode.""",
             if(null!=endDate){
                 query.endbeforeFilter = endDate
                 query.doendbeforeFilter = true
+                query.olderFilter = params.olderFilter
             } else {
                 return apiService.renderErrorFormat(
                         response,
@@ -3168,6 +3201,11 @@ if executed in cluster mode.""",
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 
+
+        if(query.includeJobRef && query.jobIdListFilter.size()==1){
+            query.execProjects = executionService.getAllowedProjects(query.projFilter,query.jobIdListFilter.get(0));
+        }
+
         def results
         try {
             results = executionService.queryExecutions(query, resOffset, resMax)
@@ -3191,7 +3229,7 @@ if executed in cluster mode.""",
         def controller = this
         withFormat {
             '*' {
-                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax])
+                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax], query)
             }
             if (controller.isAllowXml()) {
                 xml {
@@ -3589,7 +3627,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
         // Check if user wants stats-based metrics (needs to be checked before requireApi)
         def useStats = params.boolean('useStats', false)
         def groupByJob = params.boolean('groupByJob', false)
-        
+
         // When useStats or groupByJob are used, requireApi should be called with the current API version
         // (tests expect this behavior). Otherwise, require V29 as the minimum.
         if (useStats || groupByJob) {
@@ -3656,6 +3694,7 @@ Note: This endpoint has the same query parameters and response as the `/executio
             if (null != endDate) {
                 query.endbeforeFilter = endDate
                 query.doendbeforeFilter = true
+                query.olderFilter = params.olderFilter
             } else {
                 return apiService.renderErrorFormat(
                     response,
@@ -4054,21 +4093,21 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
                 log.debug("[METRICS-API] Filtering metrics: beginDate=${beginDate}, endDate=${endDate}, beginHour=${beginHour}")
                 log.debug("[METRICS-API] Available dates in dailyMetrics: ${dailyMetrics.keySet().sort()}")
-                
+
                 filteredMetrics = dailyMetrics.findAll { dateStr, metrics ->
                     def date = LocalDate.parse(dateStr)
                     def inRange = true
-                    
+
                     // Exclude dates before beginDate (inclusive: date >= beginDate)
                     if (beginDate != null && date.isBefore(beginDate)) {
                         inRange = false
                     }
-                    
+
                     // Exclude dates after endDate (inclusive: date <= endDate)
                     if (endDate != null && date.isAfter(endDate)) {
                         inRange = false
                     }
-                    
+
                     return inRange
                 }
 
@@ -4210,7 +4249,9 @@ Note: This endpoint has the same query parameters and response as the `/executio
 
             // Bulk fetch all stats for jobs in this project (optimization: single query instead of N queries)
             def jobUuids = jobs.collect { it.uuid }
-            def statsList = ScheduledExecutionStats.findAllByJobUuidInList(jobUuids)
+            def statsList = Lists.partition(jobUuids, 1000).collectMany { batch ->
+                ScheduledExecutionStats.findAllByJobUuidInList(batch)
+            }
 
             // Build a map from job UUID to stats for O(1) lookup
             def statsByJobUuid = statsList.collectEntries { [(it.jobUuid): it] }

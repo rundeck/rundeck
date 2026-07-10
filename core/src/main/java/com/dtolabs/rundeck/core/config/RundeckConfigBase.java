@@ -117,6 +117,7 @@ public class RundeckConfigBase {
     public static class RundeckApiConfig {
         ApiTokensConfig tokens;
         PaginateJobs paginatejobs;
+        ExecutionQueryConfig executionQueryConfig;
 
         @Data
         public static class PaginateJobs {
@@ -131,6 +132,23 @@ public class RundeckConfigBase {
         @Data
         public static class ApiTokensDuration {
             String max;
+        }
+
+        @Data
+        public static class ExecutionQueryConfig {
+            CountCache countCache;
+            CountPerformance countPerformance;
+        }
+
+        @Data
+        public static class CountCache {
+            Boolean enabled;
+            Long ttl;
+        }
+
+        @Data
+        public static class CountPerformance {
+            Boolean enabled;
         }
     }
 
@@ -457,8 +475,11 @@ public class RundeckConfigBase {
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
         Enabled earlyAccessJobConditional = new Enabled();
+        Enabled activityDefaultTimeFilter = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
+        int guiAceEditorMinLines = 12;
+        int guiAceEditorMaxLines = 0;
 
         @Data
         public static class Repository {
@@ -632,6 +653,7 @@ public class RundeckConfigBase {
         String logoSmall;
         Integer matchedNodesMaxCount;
         Keystorage keystorage;
+        Activity activity;
 
         @Data
         public static class GuiSystemConfig{
@@ -711,6 +733,13 @@ public class RundeckConfigBase {
         @Data
         public static class Keystorage{
             Boolean downloadenabled;
+        }
+
+        @Data
+        public static class Activity {
+            /** Default time filter for the activity/executions page when no filters are active.
+             *  Accepted values: 1h, 1d, 1w, 1m. Default: 1m */
+            String defaultTimeFilter;
         }
     }
 

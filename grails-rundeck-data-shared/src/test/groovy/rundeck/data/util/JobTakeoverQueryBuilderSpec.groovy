@@ -24,6 +24,18 @@ class JobTakeoverQueryBuilderSpec extends Specification {
         "one"         | false          | "SELECT DISTINCT se.id FROM scheduled_execution se WHERE se.scheduled = true AND se.uuid in (:jobids) AND se.project = :projectFilter AND se.server_nodeuuid = :fromServerUUID"
     }
 
+    def "buildTakeoverQuery generates valid SQL for a single batch of 1000 UUIDs (ORA-01795 fix building block)"() {
+        given: "a chunk of exactly 1000 UUIDs as produced by Lists.partition(jobids, 1000)"
+        def batch = (1..1000).collect { "uuid-${it}" }
+
+        when:
+        String result = JobTakeoverQueryBuilder.buildTakeoverQuery("to-uuid", "from-uuid", false, null, batch, true)
+
+        then: "SQL contains :jobids placeholder — NamedParameterJdbcTemplate expands it to <=1000 expressions"
+        result.contains("se.uuid in (:jobids)")
+        result.startsWith("SELECT DISTINCT se.id FROM scheduled_execution se WHERE")
+    }
+
     def "CreateServerNodeQueryPart"() {
         when:
         String result = JobTakeoverQueryBuilder.createServerNodeQueryPart(selectAll, fromServerUUID, toServerUUID)

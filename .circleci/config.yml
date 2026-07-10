@@ -9,7 +9,7 @@ parameters:
     default: true
 
 orbs:
-  aws-cli: circleci/aws-cli@5.4.1
+  aws-cli: circleci/aws-cli@5.4.2
   node: circleci/node@7.2.1
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@6.1.3
@@ -73,10 +73,10 @@ slack-fail-post-step: &slack-fail-post-step
 
 executors:
 
-  # Main docker executor
+  # Main docker executor (cimg/openjdk:17.0 includes Eclipse Temurin JDK 17)
   docker-builder:
     docker:
-      - image: cimg/base:current-22.04
+      - image: cimg/openjdk:17.0.19
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -87,15 +87,15 @@ executors:
     resource_class: << parameters.resource_class >>
 
 
-  # Machine executor
+  # Machine executor (gen2: up to 180% faster multi-threaded CPU vs gen1)
   machine-builder:
     machine:
-      image: ubuntu-2204:2025.09.1
+      image: ubuntu-2204:current
       docker_layer_caching: << parameters.docker_layer_caching >>
     parameters:
       resource_class:
         type: string
-        default: medium
+        default: medium.gen2
       # TIP: Circle layer caching is only useful for jobs that build images.
       docker_layer_caching:
         type: boolean
@@ -195,9 +195,9 @@ commands:
           use-nvm-cache: true
           nvm-cache-key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-nvm-{{ checksum ".nvmrc" }}
 
-  # Install Java JDK
+  # Install/verify Java JDK (pre-installed on cimg/openjdk, installed via apt on machine executor)
   install-java-jdk:
-    description: Install JDK
+    description: Ensure JDK 17 is available
     steps:
       - run-build-step:
           step-name: Install Java JDK
@@ -252,7 +252,6 @@ commands:
           step-name: Install TestDeck Dependencies
           command: dependencies_testdeck_setup
 
-
 #### Job Definitions ####
 
 # Default job config
@@ -263,7 +262,6 @@ job-defaults: &job-defaults
     CIRCLE_PIPELINE_NUM: << pipeline.number >>
     GRADLE_OPTS: -XX:MaxRAMPercentage=85.0
     JAVA_OPTS: -XX:MaxRAMPercentage=85.0
-    JAVA_HOME: /usr/lib/jvm/zulu17
 
 jobs:
 
@@ -272,11 +270,15 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
-      resource_class: xlarge
+      resource_class: xlarge.gen2
     parameters:
       jreVersion:
         type: string
         default: "openjdk-17-jre-headless"
+      jre25Publish:
+        description: Also build and push a Docker image with JRE 25
+        type: boolean
+        default: false
     steps:
       - setup_docker:
           docker_layer_caching: true
@@ -290,7 +292,15 @@ jobs:
           step-name: Build And Push Docker Images
           command: |
             rundeck_docker_build << parameters.jreVersion >>
-            rundeck_docker_push
+            rundeck_docker_push << parameters.jreVersion >>
+      - when:
+          condition: << parameters.jre25Publish >>
+          steps:
+            - run-build-step:
+                step-name: Build And Push Docker Images (JRE 25)
+                command: |
+                  rundeck_docker_build openjdk-25-jre-headless
+                  rundeck_docker_push openjdk-25-jre-headless
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build
@@ -317,6 +327,7 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
+      resource_class: large.gen2
     steps:
       - setup_docker
       - checkout
@@ -387,7 +398,7 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
-      resource_class: large
+      resource_class: large.gen2
     steps:
       - setup_docker:
           docker_layer_caching: true
@@ -517,7 +528,7 @@ jobs:
     <<: *job-defaults
     executor:
       name: machine-builder  # Change from docker-builder
-      resource_class: medium
+      resource_class: medium.gen2
 
     steps:
       - checkout
@@ -553,7 +564,7 @@ jobs:
     <<: *job-defaults
     executor:
       name: machine-builder  # Change from docker-builder
-      resource_class: medium
+      resource_class: medium.gen2
 
     steps:
       - checkout
@@ -628,28 +639,18 @@ jobs:
     parameters:
       resource_class:
         type: string
-        default: medium
+        default: medium.gen2
       command:
         description: Command that will execute the docker tests
         type: string
       host_jdk_for_tests:
-        description: JDK on the CI host (Docker image still uses JRE from build job)
+        description: JDK version for selecting the Docker test image
         type: enum
         enum: [ "17", "25" ]
         default: "17"
     steps:
-
       - checkout
-      - when:
-          condition:
-            equal: [ "25", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - install-testdeck-dependencies-jdk25
-      - when:
-          condition:
-            equal: [ "17", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - install-testdeck-dependencies
+      - install-testdeck-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
@@ -679,7 +680,7 @@ jobs:
         default: 1
       resource_class:
         type: string
-        default: medium
+        default: medium.gen2
       test_file_pattern:
         type: string
       host_jdk_for_tests:
@@ -690,23 +691,12 @@ jobs:
     steps:
       - checkout
       - restore-build-cache
-      - when:
-          condition:
-            equal: [ "25", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - run-build-step:
-                step-name: Install Java JDK 25 (host Gradle)
-                command: dependencies_install_zulu25jdk
-      - when:
-          condition:
-            equal: [ "17", << parameters.host_jdk_for_tests >> ]
-          steps:
-            - install-base-dependencies
+      - install-base-dependencies
       - attach_workspace:
           at: ~/workspace
       - run-build-step:
           step-name: Pull images
-          command: rundeck_pull_image
+          command: rundeck_pull_image << parameters.host_jdk_for_tests >>
       - run-build-step:
           step-name: Runs gradle test task << parameters.gradle-task >>
           command: |
@@ -771,6 +761,7 @@ require-api-integration: &require-api-integration
 require-selenium: &require-selenium
   requires:
     - T Selenium - Auth & Login
+    - T Selenium - Context Path
     - T Selenium - Projects
     - T Selenium - Jobs Core
     - T Selenium - Jobs Advanced
@@ -878,7 +869,7 @@ workflows:
       - test-gradle-functional:
           name: T Functional API
           gradle-task: apiTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
           <<: *require-build-and-units
@@ -901,14 +892,22 @@ workflows:
       - test-gradle-functional:
           name: T Selenium - Auth & Login
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          <<: *require-api-integration
+          <<: *slack-defaults
+      - test-gradle-functional:
+          name: T Selenium - Context Path
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge.gen2
+          parallelism: 1
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/contextPath/**/*{.groovy,.java}"
           <<: *require-api-integration
           <<: *slack-defaults
       - test-gradle-functional:
           name: T Selenium - Projects
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           parallelism: 2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
           <<: *require-api-integration
@@ -916,7 +915,7 @@ workflows:
       - test-gradle-functional:
           name: T Selenium - Jobs Core
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           parallelism: 2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
           <<: *require-api-integration
@@ -924,14 +923,14 @@ workflows:
       - test-gradle-functional:
           name: T Selenium - Jobs Advanced
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
           <<: *require-api-integration
           <<: *slack-defaults
       - test-gradle-functional:
           name: T Selenium - Execution & Other
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           parallelism: 2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
           <<: *require-api-integration
@@ -1003,6 +1002,7 @@ workflows:
       - build-rundeck:
           name: Build with Docker image using JRE 17
           jreVersion: "openjdk-17-jre-headless"
+          jre25Publish: true
       - test-docker:
           name: T Integration SSL (host JDK 25, image JRE 17)
           command: bash test/run-docker-ssl-tests.sh
@@ -1032,42 +1032,50 @@ workflows:
       - test-gradle-functional:
           name: T Selenium - Auth & Login (host JDK 25)
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{login,ldap,execution/ExecutionShowAuthSpec,jobs/ActivitySectionAuthSpec,appadmin/AccessControlSpec}/**/*{.groovy,.java}"
+          host_jdk_for_tests: "25"
+          <<: *require-build-jre-17
+      - test-gradle-functional:
+          name: T Selenium - Context Path  (host JDK 25)
+          gradle-task: seleniumCoreTest
+          resource_class: xlarge.gen2
+          parallelism: 1
+          test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/contextPath/**/*{.groovy,.java}"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Selenium - Projects (host JDK 25)
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/project/**/*{.groovy,.java}"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Selenium - Jobs Core (host JDK 25)
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{BasicJobsSpec,JobsSpec,JobEditSpec,JobDeleteSpec,JobSummarySpec,JobTabsSpec}.groovy"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Selenium - Jobs Advanced (host JDK 25)
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/jobs/{DuplicateJobSpec,JobReferenceSpec,ScheduledJobSpec,JobNotificationSpec,BulkJobActionsSpec,ExportImportSpec,DuplicateOptionsSpec,ExpandedJobGroupsSpec,JobActivityHistorySpec,JobAuditApiSpec,LogFilterSpec,LogViewerOutputSpec,steps}/**/*{.groovy,.java}"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Selenium - Execution & Other (host JDK 25)
           gradle-task: seleniumCoreTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/selenium/{execution,nodes,activity,navigation,profile,appadmin/KeyStorageSpec,scm,webhook,users}/**/*{.groovy,.java}"
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-gradle-functional:
           name: T Functional API (host JDK 25)
           gradle-task: apiTest
-          resource_class: xlarge
+          resource_class: xlarge.gen2
           test_file_pattern: "functional-test/src/test/groovy/org/rundeck/tests/functional/api/**/*{.groovy,.java}"
           parallelism: 3
           host_jdk_for_tests: "25"

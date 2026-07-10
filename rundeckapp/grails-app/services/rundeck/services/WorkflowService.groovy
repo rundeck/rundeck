@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.HasParentStepContext
 import com.dtolabs.rundeck.core.execution.workflow.IWorkflow
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
@@ -127,72 +128,319 @@ class WorkflowService implements ApplicationContextAware{
     def MutableWorkflowStateImpl createStateForWorkflow(IWorkflow wf, String project, String frameworkNodeName,
                                                         StepExecutionContext parent, Map secureOptions, StepIdentifier parentId=null) {
 
+        // The flat command list may contain runs of items implementing HasParentStepContext
+        // (sub-steps of a Conditional that were flattened by ExecutionUtilService.consolidateWorkflowSteps).
+        // Group those contiguous runs under a single parent MutableWorkflowStepStateImpl so the
+        // state tree mirrors the original (un-flattened) job definition layout.
         Map<Integer, MutableWorkflowStepStateImpl> substeps = [:]
-        wf.commands.eachWithIndex { StepExecutionItem step, int ndx ->
-            def stepId= StateUtils.stepIdentifierAppend(parentId, StateUtils.stepIdentifier(ndx + 1))
-            boolean isNodeStep = false
+        List<StepExecutionItem> commands = wf.commands as List<StepExecutionItem>
 
-            if (step instanceof JobReferenceItem) {
 
-                JobReferenceItem jexec = (JobReferenceItem) step
-                ScheduledExecution se = scheduledExecutionService.findJobFromJobReference(jexec, project)
-                if (!se) {
-                    //skip
-                    return
+        int logicalIdx = 0
+        int i = 0
+        while (i < commands.size()) {
+            StepExecutionItem step = commands[i]
+            HasParentStepContext parentedHead = asConditionalSubStep(step)
+            if (parentedHead != null) {
+                // For nested conditionals, only group items that are at the same nesting level
+                // (same parent path, not just same parentStepNumber)
+                List<Integer> parentPath = parentedHead.parentStepPath
+                int parentStepNum = parentedHead.parentStepNumber
+                int groupEnd = i
+
+                // Group consecutive items that share the same parent context
+                while (groupEnd < commands.size()) {
+                    HasParentStepContext h = asConditionalSubStep(commands[groupEnd])
+                    if (h == null) break
+
+                    // For single-level conditionals (no parentStepPath), match by parentStepNumber
+                    if (parentPath == null) {
+                        if (h.parentStepNumber != parentStepNum) break
+                    } else {
+                        // For nested conditionals, items belong to the same group if they have
+                        // the same parent path OR if their path starts with this path
+                        // (meaning they're nested under this conditional)
+                        List<Integer> hPath = h.parentStepPath
+                        if (hPath == null) {
+                            // Single-level conditional substep - check if it belongs to the same top-level parent
+                            // This handles mixed conditionals with both nested and direct substeps
+                            if (h.parentStepNumber != parentStepNum) {
+                                break  // Different top-level parent, end group
+                            }
+                            // Same parent, continue grouping
+                        } else {
+                            // Stop if we encounter a different top-level parent
+                            // All substeps under the same top-level conditional should be grouped together,
+                            // with nested structure handled by buildConditionalSubWorkflowState
+                            if (hPath[0] != parentStepNum) {
+                                break
+                            }
+                        }
+                    }
+                    groupEnd++
                 }
 
-                //generate a workflow context
-                StepExecutionContext newContext=null
-                try {
-                    def jobArgs = jexec.args
-                    newContext = executionService.createJobReferenceContext(
-                            se,
-                            null,
-                            parent,
-                            jobArgs,
-                            jexec.nodeFilter,
-                            jexec.nodeKeepgoing,
-                            jexec.nodeThreadcount,
-                            jexec.nodeRankAttribute,
-                            jexec.nodeRankOrderAscending,
-                            null,
-                            jexec.nodeIntersect,
-                            jexec.importOptions,
-                            false,
-                            jexec.childNodes
-                    )
-                } catch (ExecutionServiceValidationException e) {
-                    log.error("Error validating job reference context: "+e.message,e)
-                    //invalid arguments
-                }
-
-                WorkflowExecutionItem item = jexec.getWorkflow()
-
-                isNodeStep = jexec.nodeStep
-
-                substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
-                        createStateForWorkflow(item.workflow, project,frameworkNodeName,newContext,secureOptions))
-            } else if (step instanceof SubWorkflowExecutionItem) {
-                // this only applies to Workflow Steps
-                SubWorkflowExecutionItem rstep = (SubWorkflowExecutionItem) step
-                substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
-                        createStateForWorkflow(rstep.subWorkflow.workflow, project,frameworkNodeName,parent,secureOptions))
-            }else{
-                def mutableStep = new MutableWorkflowStepStateImpl(stepId)
-                if(step.getRunner() && parentId == null){
-                    mutableStep.runnerNode = step.getRunner().nodename
-                }
-                substeps[ndx] = mutableStep
-
-                //check if node step type
-                if(!isNodeStep && step instanceof NodeStepExecutionItem){
-                    isNodeStep = true
-                }
+                logicalIdx++
+                StepIdentifier groupStepId = StateUtils.stepIdentifierAppend(parentId, StateUtils.stepIdentifier(logicalIdx))
+                // Pass [parentStepNum] as currentLevelPath - this is the level we're building,
+                // not the first item's full parent path
+                List<Integer> currentLevelPath = [parentStepNum]
+                MutableWorkflowStateImpl innerWorkflow = buildConditionalSubWorkflowState(
+                        commands, i, groupEnd, project, frameworkNodeName, parent, secureOptions, groupStepId, currentLevelPath
+                )
+                MutableWorkflowStepStateImpl groupState = new MutableWorkflowStepStateImpl(groupStepId, innerWorkflow)
+                // a Conditional wrapper is not itself a node step; node-step semantics belong to its sub-steps.
+                groupState.nodeStep = false
+                substeps[logicalIdx - 1] = groupState
+                i = groupEnd
+                continue
             }
-            substeps[ndx].nodeStep = isNodeStep
+
+            logicalIdx++
+            int ndx = logicalIdx - 1
+            StepIdentifier stepId = StateUtils.stepIdentifierAppend(parentId, StateUtils.stepIdentifier(logicalIdx))
+            def stepState = buildStepStateForItem(step, stepId, project, frameworkNodeName, parent, secureOptions, parentId)
+            if (stepState != null) {
+                substeps[ndx] = stepState
+            }
+            // If stepState is null (e.g., a JobReferenceItem whose target job no longer exists),
+            // we skip adding it to the map. The MutableWorkflowStateImpl constructor will create
+            // a placeholder step for the missing index, preserving the logical step slot so later
+            // steps keep their original logical numbering and remain aligned with listener-emitted
+            // step contexts.
+            i++
         }
-        return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, wf.commands.size(),
+        return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, logicalIdx,
                 substeps, parentId,frameworkNodeName)
+    }
+
+    /**
+     * Build the nested {@link MutableWorkflowStateImpl} that holds the state for a contiguous
+     * run of flattened conditional sub-step items.
+     *
+     * For nested conditionals, this method recursively builds the state tree by grouping
+     * items by their substep number at the current nesting level and creating nested
+     * sub-workflows for items that belong to deeper levels.
+     *
+     * @param currentLevelPath The parent path of the current nesting level (e.g., [2] or [2, 2])
+     */
+    private MutableWorkflowStateImpl buildConditionalSubWorkflowState(
+            List<StepExecutionItem> commands,
+            int start,
+            int end,
+            String project,
+            String frameworkNodeName,
+            StepExecutionContext parent,
+            Map secureOptions,
+            StepIdentifier groupStepId,
+            List<Integer> currentLevelPath = null
+    ) {
+        Map<Integer, MutableWorkflowStepStateImpl> innerSubsteps = [:]
+        int maxSubStep = 0
+        int j = start
+
+
+        while (j < end) {
+            StepExecutionItem inner = commands[j]
+            HasParentStepContext h = (HasParentStepContext) inner
+            List<Integer> itemPath = h.parentStepPath
+
+            // Determine the substep number at the current level
+            int substepAtThisLevel
+            boolean isDirectChild
+
+            if (itemPath == null) {
+                // Single-level conditional: item is a direct child
+                substepAtThisLevel = h.subStepNumber
+                isDirectChild = true
+            } else if (pathEquals(itemPath, currentLevelPath)) {
+                // Item's parent path equals current level: it's a direct child
+                substepAtThisLevel = h.subStepNumber
+                isDirectChild = true
+            } else if (pathStartsWith(itemPath, currentLevelPath)) {
+                // Item's parent path starts with current level: it's nested deeper
+                substepAtThisLevel = itemPath[currentLevelPath.size()]
+                isDirectChild = false
+            } else {
+                // This shouldn't happen in a properly grouped set
+                log.warn("Unexpected item at level ${currentLevelPath}: itemPath=${itemPath}")
+                j++
+                continue
+            }
+
+            if (substepAtThisLevel > maxSubStep) maxSubStep = substepAtThisLevel
+
+            if (isDirectChild) {
+                // This is a leaf step at the current level
+                StepIdentifier innerStepId = StateUtils.stepIdentifier(substepAtThisLevel)
+                MutableWorkflowStepStateImpl innerState = buildStepStateForItem(
+                        inner, innerStepId, project, frameworkNodeName, parent, secureOptions, null
+                )
+                if (innerState != null) {
+                    innerSubsteps[substepAtThisLevel - 1] = innerState
+                }
+                j++
+            } else {
+                // This item and potentially following items belong to a nested level
+                // Group all items that belong to this substep at the current level
+                int groupEnd = j
+                List<Integer> nestedLevelPath = buildNestedPath(currentLevelPath, substepAtThisLevel)
+
+                while (groupEnd < end) {
+                    HasParentStepContext candidate = (HasParentStepContext) commands[groupEnd]
+                    List<Integer> candidatePath = candidate.parentStepPath
+
+                    // Check if this candidate belongs to the same nested group
+                    if (candidatePath == null || !pathStartsWith(candidatePath, nestedLevelPath)) {
+                        break
+                    }
+                    groupEnd++
+                }
+
+                // Recursively build the nested workflow
+                StepIdentifier innerStepId = StateUtils.stepIdentifier(substepAtThisLevel)
+                MutableWorkflowStateImpl nestedWorkflow = buildConditionalSubWorkflowState(
+                        commands, j, groupEnd, project, frameworkNodeName, parent, secureOptions, innerStepId, nestedLevelPath
+                )
+                MutableWorkflowStepStateImpl nestedState = new MutableWorkflowStepStateImpl(innerStepId, nestedWorkflow)
+                nestedState.nodeStep = false
+                innerSubsteps[substepAtThisLevel - 1] = nestedState
+                j = groupEnd
+            }
+        }
+
+        return new MutableWorkflowStateImpl(
+                parent ? (parent.nodes.nodeNames as List) : null,
+                maxSubStep,
+                innerSubsteps,
+                null,
+                frameworkNodeName
+        )
+    }
+
+    /**
+     * Build the path for a nested level by appending the substep number to the current level path.
+     */
+    private static List<Integer> buildNestedPath(List<Integer> currentLevelPath, int substep) {
+        if (currentLevelPath == null) {
+            return [substep]
+        }
+        List<Integer> result = new ArrayList<>(currentLevelPath)
+        result.add(substep)
+        return result
+    }
+
+    /**
+     * Check if two parent paths are equal.
+     */
+    private static boolean pathEquals(List<Integer> path1, List<Integer> path2) {
+        if (path1 == null && path2 == null) return true
+        if (path1 == null || path2 == null) return false
+        if (path1.size() != path2.size()) return false
+        for (int i = 0; i < path1.size(); i++) {
+            if (path1[i] != path2[i]) return false
+        }
+        return true
+    }
+
+    /**
+     * Check if a parent path starts with a given prefix.
+     * E.g., [2, 2, 1] starts with [2, 2], but not with [2, 3]
+     */
+    private static boolean pathStartsWith(List<Integer> path, List<Integer> prefix) {
+        if (path == null || prefix == null || path.size() < prefix.size()) {
+            return false
+        }
+        for (int i = 0; i < prefix.size(); i++) {
+            if (path[i] != prefix[i]) {
+                return false
+            }
+        }
+        return true
+    }
+
+    /**
+     * Build a {@link MutableWorkflowStepStateImpl} for a single flat {@link StepExecutionItem},
+     * using the same JobReferenceItem / SubWorkflowExecutionItem / plain-step branching as the
+     * historical implementation. Returns {@code null} when the step is a job-ref to a missing
+     * target job (caller should skip the slot).
+     */
+    private MutableWorkflowStepStateImpl buildStepStateForItem(
+            StepExecutionItem step,
+            StepIdentifier stepId,
+            String project,
+            String frameworkNodeName,
+            StepExecutionContext parent,
+            Map secureOptions,
+            StepIdentifier parentId
+    ) {
+        boolean isNodeStep = false
+        MutableWorkflowStepStateImpl built = null
+
+        if (step instanceof JobReferenceItem) {
+            JobReferenceItem jexec = (JobReferenceItem) step
+            ScheduledExecution se = scheduledExecutionService.findJobFromJobReference(jexec, project)
+            if (!se) {
+                return null
+            }
+
+            StepExecutionContext newContext = null
+            try {
+                def jobArgs = jexec.args
+                newContext = executionService.createJobReferenceContext(
+                        se,
+                        null,
+                        parent,
+                        jobArgs,
+                        jexec.nodeFilter,
+                        jexec.nodeKeepgoing,
+                        jexec.nodeThreadcount,
+                        jexec.nodeRankAttribute,
+                        jexec.nodeRankOrderAscending,
+                        null,
+                        jexec.nodeIntersect,
+                        jexec.importOptions,
+                        false,
+                        jexec.childNodes
+                )
+            } catch (ExecutionServiceValidationException e) {
+                log.error("Error validating job reference context: "+e.message,e)
+            }
+
+            WorkflowExecutionItem item = jexec.getWorkflow()
+            isNodeStep = jexec.nodeStep
+            built = new MutableWorkflowStepStateImpl(stepId,
+                    createStateForWorkflow(item.workflow, project, frameworkNodeName, newContext, secureOptions))
+        } else if (step instanceof SubWorkflowExecutionItem) {
+            SubWorkflowExecutionItem rstep = (SubWorkflowExecutionItem) step
+            built = new MutableWorkflowStepStateImpl(stepId,
+                    createStateForWorkflow(rstep.subWorkflow.workflow, project, frameworkNodeName, parent, secureOptions))
+        } else {
+            built = new MutableWorkflowStepStateImpl(stepId)
+            if (step.getRunner() && parentId == null) {
+                built.runnerNode = step.getRunner().nodename
+            }
+            if (step instanceof NodeStepExecutionItem) {
+                isNodeStep = true
+            }
+        }
+        built.nodeStep = isNodeStep
+        return built
+    }
+
+    /**
+     * @return the item viewed as a flattened conditional sub-step (positive parent and sub
+     * indices), or {@code null} if it is a flat top-level step.
+     */
+    private static HasParentStepContext asConditionalSubStep(StepExecutionItem step) {
+        if (!(step instanceof HasParentStepContext)) {
+            return null
+        }
+        HasParentStepContext parented = (HasParentStepContext) step
+        if (parented.parentStepNumber <= 0 || parented.subStepNumber <= 0) {
+            return null
+        }
+        return parented
     }
 
 

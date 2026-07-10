@@ -121,6 +121,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
     String maxMultipleExecutions
     String pluginConfig
     String lastModifiedBy
+    /**
+     * The username of the user who originally created this job.
+     * Set once at creation time and never updated thereafter.
+     * Distinct from {@code user} (schedule owner) and {@code lastModifiedBy} (last editor).
+     */
+    String createdBy
 
     static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
@@ -155,6 +161,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         pluginConfig(nullable: true)
         user(nullable: true, blank: true)
         lastModifiedBy(nullable: true, blank: true)
+        createdBy(nullable: true, blank: true)
     }
 
     static mapping = {
@@ -190,13 +197,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         pluginConfig(type: 'text')
         workflowJson(type: 'text')
         lastModifiedBy(type: 'string')
-        // Escape SQL reserved words with backticks for H2 compatibility
-        minute column: "`MINUTE`"
-        hour column: "`HOUR`"
-        month column: "`MONTH`"
-        seconds column: "`SECONDS`"
-        year column: "`YEAR`"
-
+        createdBy(type: 'string')
         DomainIndexHelper.generate(delegate) {
             index 'JOB_IDX_PROJECT', ['project']
         }
@@ -523,9 +524,9 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                     se.successOnEmptyNodeFilter = data.nodefilters.dispatch.successOnEmptyNodeFilter
                 }
             }
-            if(data.nodefilters.filter){
+            if(data.nodefilters.containsKey('filter')){
                 se.doNodedispatch=true
-                se.filter= data.nodefilters.filter
+                se.filter= data.nodefilters.filter ?: ''
             }else{
                 def map = [include: [:], exclude: [:]]
                 if (data.nodefilters.include) {
@@ -598,8 +599,9 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
             se.pluginConfigMap = data.plugins
         }
 
-        // Restore user field during deserialization
-        // Note: 'user' field represents the job creator (stored in DB column 'rduser')
+        // Restore user field during deserialization.
+        // Note: 'user' field represents the schedule owner (last modifier, stored in DB column 'rduser').
+        // The original creator is tracked separately in the 'createdBy' field.
         if (data.user) {
             se.user = data.user
         }

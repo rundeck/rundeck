@@ -102,7 +102,7 @@ describe("workflowTypes", () => {
         expect(result.commands[0].exec).toBe("echo exec");
         expect(result.commands[1].script).toBe("#!/bin/bash");
         expect(result.commands[2].scriptfile).toBe("/path/to/script");
-        expect(result.commands[3].jobref.name).toBe("MyJob");
+        expect(result.commands[3].jobref!.name).toBe("MyJob");
         expect(result.commands[4].type).toBe("my-plugin");
       });
 

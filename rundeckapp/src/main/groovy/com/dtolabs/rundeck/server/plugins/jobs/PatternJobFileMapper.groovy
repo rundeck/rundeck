@@ -27,11 +27,23 @@ class PatternJobFileMapper implements JobFileMapper{
     String mappingPath
     @Override
     File fileForJob(final JobReference jobReference) {
-        return new File(substitute(mappingPath,jobReference))
+        String path = substitute(mappingPath, jobReference)
+        validateNoTraversal(path)
+        return new File(path)
     }
     @Override
     String pathForJob(final JobReference jobReference) {
-        return substitute(mappingPath,jobReference)
+        String path = substitute(mappingPath, jobReference)
+        validateNoTraversal(path)
+        return path
+    }
+
+    private void validateNoTraversal(String path) {
+        def segments = path.split(/[\/\\]/)
+        if (segments.any { it == '..' }) {
+            throw new UncheckedIOException(new IOException(
+                "Path traversal detected in resolved path: " + path))
+        }
     }
 
     private String substitute(String key, JobReference reference){

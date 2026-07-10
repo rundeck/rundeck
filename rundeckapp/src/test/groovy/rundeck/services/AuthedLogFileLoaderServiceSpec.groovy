@@ -7,13 +7,14 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.services.logging.LogFileLoader
 import spock.lang.Specification
 
 class AuthedLogFileLoaderServiceSpec extends Specification
         implements ServiceUnitTest<AuthedLogFileLoaderService>, DataTest {
     void setupSpec() {
-        mockDomain Execution
+        mockDomains(Execution, LogFileStorageRequest)
     }
 
     void requestLogFileLoad() {

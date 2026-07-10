@@ -24,6 +24,8 @@ class FileUrlScriptStepSpec extends BaseContainer{
         String keyPath = getClass().getClassLoader().getResource("docker/compose/oss").getPath()+"/keys"
 
         loadKeysForNodes(keyPath, TEST_PROJECT, NODE_KEY_PASSPHRASE, NODE_USER_PASSWORD, USER_VAULT_PASSWORD)
+        // Node definitions reference keys under core-jsch-executor-test path
+        loadKeysForNodes(keyPath, "core-jsch-executor-test", NODE_KEY_PASSPHRASE, NODE_USER_PASSWORD, USER_VAULT_PASSWORD)
 
         setupProjectArchiveDirectory(
                 TEST_PROJECT,

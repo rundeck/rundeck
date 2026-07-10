@@ -312,6 +312,9 @@ export default defineComponent({
     };
   },
   computed: {
+    isEditingStep(): boolean {
+      return !!(this.editStepModal || this.editJobRefModal);
+    },
     modalAttributes() {
       if (this.editStepModal) {
         return {
@@ -354,6 +357,10 @@ export default defineComponent({
         this.notify();
       },
       deep: true,
+    },
+    isEditingStep(val: boolean) {
+      window._workflowEditState = { isEditing: val, hasUnsavedChanges: val };
+      eventBus.emit("workflow-editing-state-changed", { isEditing: val });
     },
   },
   async mounted() {

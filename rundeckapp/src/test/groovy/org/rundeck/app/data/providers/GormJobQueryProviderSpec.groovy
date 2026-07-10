@@ -96,12 +96,13 @@ class GormJobQueryProviderSpec extends Specification implements DataTest {
             args[0].call()
             return crit
         }
-        1 * crit.eq(propName, _)
+        1 * crit.'in'(propName, _) >> crit
+        0 * crit.eq(propName, _)
 
         where:
-        idlist | propName
-        [1L]   | "id"
-        ["fake-uuid"]   | "uuid"
+        idlist        | propName
+        [1L]          | "id"
+        ["fake-uuid"] | "uuid"
     }
 
     def "ApplyTxtFiltersCriteria"() {
@@ -180,4 +181,89 @@ class GormJobQueryProviderSpec extends Specification implements DataTest {
 
     }
 
+    def "applyIdCriteria with 1001 UUIDs emits chunked 'in' calls not individual eq calls"() {
+        given: "1001 UUIDs and a mock criteria that captures 'in' call sizes"
+        def crit = Mock(BuildableCriteria)
+        def inCallSizes = []
+        def uuids = (1..1001).collect { "uuid-${it}" }
+
+        when:
+        provider.applyIdCriteria(uuids, crit)
+
+        then:
+        // or { } called once
+        1 * crit.or(_) >> { args ->
+            args[0].delegate = crit
+            args[0].call()
+            return crit
+        }
+        // 'in'("uuid", ...) called twice (chunk of 1000 + chunk of 1) — not 1001 individual eq calls
+        2 * crit.'in'("uuid", _) >> { args ->
+            inCallSizes << (args[1] as Collection).size()
+            return crit
+        }
+        // no individual eq("uuid") calls
+        0 * crit.eq("uuid", _)
+        // all 1001 UUIDs covered across the two chunks
+        inCallSizes.sum() == 1001
+        inCallSizes.every { it <= 1000 }
+    }
+
+    def "applyIdCriteria splits Long ids and String uuids into separate chunked 'in' calls"() {
+        given: "a mix of 1001 Long ids and 1001 String uuids"
+        def crit = Mock(BuildableCriteria)
+        def idSizes = []
+        def uuidSizes = []
+        def ids = (1L..1001L).collect { it } + (1..1001).collect { "uuid-${it}".toString() }
+
+        when:
+        provider.applyIdCriteria(ids, crit)
+
+        then:
+        1 * crit.or(_) >> { args ->
+            args[0].delegate = crit
+            args[0].call()
+            return crit
+        }
+        // Long ids -> 'in'("id", ...) chunked (1000 + 1)
+        2 * crit.'in'("id", _) >> { args ->
+            idSizes << (args[1] as Collection).size()
+            return crit
+        }
+        // String uuids -> 'in'("uuid", ...) chunked (1000 + 1)
+        2 * crit.'in'("uuid", _) >> { args ->
+            uuidSizes << (args[1] as Collection).size()
+            return crit
+        }
+        // no individual eq calls for either type
+        0 * crit.eq(_, _)
+        idSizes.sum() == 1001
+        uuidSizes.sum() == 1001
+        idSizes.every { it <= 1000 }
+        uuidSizes.every { it <= 1000 }
+    }
+
+    def "queryJobs with 1001 idlist entries returns correct results without error"() {
+        given: "1001 jobs — functional correctness test for the idlist path"
+        provider.applicationContext = applicationContext
+        provider.jobSchedulesService = Mock(JobSchedulesService) {
+            0 * isScheduled(_) >> true
+        }
+        def jobs = (1..1001).collect { i ->
+            new ScheduledExecution(
+                jobName: "bulk-job-${i}",
+                project: "test-bulk",
+                workflow: new Workflow(commands: [new CommandExec(adhocLocalString: "echo hello")])
+            ).save(flush: false)
+        }
+        ScheduledExecution.withSession { it.flush() }
+        def idlist = jobs*.id.join(',')
+
+        when:
+        def page = provider.queryJobs(new RdJobQueryInput(idlist: idlist, max: 0))
+
+        then:
+        page.results.size() == 1001
+        page.total == 1001
+    }
 }

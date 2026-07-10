@@ -26,25 +26,23 @@ class ReferencedExecution implements RdReferencedExecution{
     }
 
     static List<JobDataSummary> parentJobSummaries(String jobUuid, int max = 0){
-        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
-        // Fallback to criteria for DataTest compatibility
+        // Select DISTINCT se.id (Long scalar) to avoid ORA-22848: ScheduledExecution has TEXT columns
+        // that Oracle rejects in SELECT DISTINCT on a full entity. Two queries total instead of N+1.
         try {
-            String hql = '''
-                SELECT DISTINCT e.scheduledExecution 
-                FROM ReferencedExecution re 
-                LEFT JOIN re.execution e 
-                WHERE re.jobUuid = :jobUuid 
-                AND e.scheduledExecution IS NOT NULL
-            '''
-            def results = executeQuery(hql, [jobUuid: jobUuid])
-            if (max > 0 && results.size() > max) {
-                results = results[0..<max]
+            def idQuery = "SELECT DISTINCT se.id FROM ReferencedExecution re JOIN re.execution e JOIN e.scheduledExecution se WHERE re.jobUuid = :jobUuid"
+            def options = max > 0 ? [max: max] : [:]
+            List<Long> ids = executeQuery(idQuery, [jobUuid: jobUuid], options)
+            if (!ids) return []
+            return ScheduledExecution.findAllByIdInList(ids)*.toJobDataSummary()
+        } catch (UnsupportedOperationException ignored) {
+            // DataTest fallback: chained HQL JOIN not supported in unit test context
+            def seen = new LinkedHashSet()
+            for (ref in findAllByJobUuid(jobUuid)) {
+                def se = ref.execution?.scheduledExecution
+                if (se != null) seen << se
+                if (max > 0 && seen.size() >= max) break
             }
-            return results*.toJobDataSummary()
-        } catch (UnsupportedOperationException e) {
-            // DataTest fallback: Load objects and extract scheduledExecution values
-            def results = findAllByJobUuid(jobUuid, [max: max > 0 ? max : null])
-            return results*.execution*.scheduledExecution.findAll { it != null }.unique()*.toJobDataSummary()
+            return seen.toList()*.toJobDataSummary()
         }
     }
 

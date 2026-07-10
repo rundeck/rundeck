@@ -6,7 +6,7 @@ import NodeCard from "../../components/job/resources/NodeCard.vue";
 import { observer } from "../../utilities/uiSocketObserver";
 
 const rundeckContext = getRundeckContext();
-const FilterInputComp = defineComponent({
+export const FilterInputComp = defineComponent({
   name: "NodeFilter",
   components: { NodeFilterInput },
   props: ["itemData", "extraAttrs"],
@@ -21,7 +21,7 @@ const FilterInputComp = defineComponent({
       queryFieldPlaceholderText: this.itemData["queryFieldPlaceholderText"],
       koFieldName: this.itemData["koFieldName"],
       koParam: this.itemData["koParam"],
-      subs: [],
+      subs: [] as Array<{ dispose(): void }>,
     };
   },
   computed: {
@@ -39,8 +39,6 @@ const FilterInputComp = defineComponent({
     },
   },
   beforeUnmount() {
-    //note: this removes subscriptions from knockout observable
-    //@ts-ignore
     this.subs.forEach((s) => s.dispose());
   },
   mounted() {
@@ -56,12 +54,19 @@ const FilterInputComp = defineComponent({
       this.nodeFilterKo()?.selectNodeFilter({ filter: val }, false);
       if (this.isNodeStoreAvailable) {
         this.extraAttrs.nodeFilterStore.setSelectedFilter(val);
+      } else {
+        // Emit EventBus event for adhoc page and other pages without NodeFilterStore
+        console.debug("[FilterInputComp] Emitting nodefilter:value:changed event with filter:", val);
+        rundeckContext.eventBus.emit("nodefilter:value:changed", { filter: val });
       }
     },
     filterClicked(filter: any) {
       this.nodeFilterKo()?.selectNodeFilter(filter, false);
       if (this.isNodeStoreAvailable) {
         this.extraAttrs.nodeFilterStore.setSelectedFilter(filter.filter);
+      } else {
+        // Emit EventBus event for adhoc page and other pages without NodeFilterStore
+        rundeckContext.eventBus.emit("nodefilter:value:changed", { filter: filter.filter || filter });
       }
     },
     nodeFilterKo() {
@@ -89,11 +94,16 @@ const FilterInputComp = defineComponent({
             (val: string) => (this.filterValue = val),
           ),
         );
-        this.filterValue = this.nodeFilterKo().filter();
+        const koVal = this.nodeFilterKo().filter();
+        if (this.filterValue) {
+          this.nodeFilterKo().selectNodeFilter({ filter: this.filterValue }, false);
+        } else {
+          this.filterValue = koVal;
+        }
       } else if (retry > 0) {
         setTimeout(() => this.attachKnockout(retry - 1), 1000);
       } else {
-        console.log(
+        console.debug(
           "Did not find ko component: ",
           this.koFieldName,
           this.koParam,
@@ -109,6 +119,7 @@ const FilterInputComp = defineComponent({
                              :filterFieldName="filterFieldName"
                              :filter-field-id="filterFieldId"
                              :query-field-placeholder-text="queryFieldPlaceholderText"
+                             :help-button="itemData?.helpButton !== false"
                              search-btn-type="cta"
                              @update:value="updatedValue"
                              @filter="filterClicked"
@@ -159,11 +170,11 @@ function init() {
           methods: {
             updateNodeFilter(val: any) {
               const filterName = val && val.filter ? val.filter : val;
-              if (filterName === ".*" || this.nodeFilterStore.filter === ".*") {
+              if (filterName === ".*" || this.nodeFilterStore.selectedFilter === ".*") {
                 this.nodeFilterStore.setSelectedFilter(filterName);
               } else {
                 this.nodeFilterStore.setSelectedFilter(
-                  [this.nodeFilterStore.filter, filterName].join(" "),
+                  [this.nodeFilterStore.selectedFilter, filterName].join(" "),
                 );
               }
             },

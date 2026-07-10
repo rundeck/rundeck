@@ -73,7 +73,7 @@ describe("ChoosePluginModal", () => {
   it('emits "selected" event with correct data when a provider button is clicked', async () => {
     const wrapper = await createWrapper();
     await wrapper.find('[data-test="provider-button"]').trigger("click");
-    expect(wrapper.emitted("selected")[0]).toEqual([
+    expect(wrapper.emitted("selected")![0]).toEqual([
       {
         provider: "provider1",
         service: "WorkflowStep",

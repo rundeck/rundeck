@@ -27,6 +27,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import rundeck.*
+import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 import rundeck.services.UserService
@@ -78,7 +79,7 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
         controller.reportService = Mock(ReportService){
             jobHistoryAuthorizations(_,_) >> authorizations
         }
-
+        controller.executionService = Mock(ExecutionService)
 
         when:
         params.doendafterFilter = 'true'
@@ -132,6 +133,7 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
             controller.reportService = Mock(ReportService) {
                 jobHistoryAuthorizations(_, _) >> authorizations
             }
+            controller.executionService = Mock(ExecutionService)
             def project = 'test'
             def wf = new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
 
@@ -214,6 +216,7 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
         }
         controller.metricService = Mock(MetricService)
         controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        controller.executionService = Mock(ExecutionService)
 
         def jobname = 'abc'
         def group = 'path'
@@ -267,5 +270,164 @@ class ReportsControllerSpec extends Specification implements ControllerUnitTest<
         true            | 1
         false           | null
 
+    }
+
+    private void setupBaseServicesForDefaultFilter() {
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * getAuthContextForSubjectAndProject(*_) >> null
+            _ * authorizeProjectResource(*_) >> true
+        }
+        controller.userService = Mock(UserService) {
+            findOrCreateUser(*_) >> new User()
+        }
+        Map<String, List> authorizations = [:]
+        authorizations.put(ReportService.DENIED_VIEW_HISTORY_JOBS, [])
+        controller.reportService = Mock(ReportService) {
+            jobHistoryAuthorizations(_, _) >> authorizations
+            _ * getExecutionReports(_, _) >> [reports: [], lastDate: 0]
+            _ * finishquery(_, _, _) >> { args -> args[2] }
+        }
+        controller.metricService = null
+        controller.executionService = Mock(ExecutionService)
+    }
+
+    def "index_old does not inject recentFilter when feature flag is disabled"() {
+        given:
+        setupBaseServicesForDefaultFilter()
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> null
+        }
+
+        when:
+        params.project = 'test'
+        controller.index_old()
+
+        then:
+        params.recentFilter == null
+    }
+
+    def "index_old injects default recentFilter of 1m when feature enabled and config not set"() {
+        given:
+        setupBaseServicesForDefaultFilter()
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> '1m'
+        }
+
+        when:
+        params.project = 'test'
+        controller.index_old()
+
+        then:
+        params.recentFilter == '1m'
+    }
+
+    @Unroll
+    def "index_old injects configured recentFilter '#configValue' when feature is enabled"() {
+        given:
+        setupBaseServicesForDefaultFilter()
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> configValue
+        }
+
+        when:
+        params.project = 'test'
+        controller.index_old()
+
+        then:
+        params.recentFilter == configValue
+
+        where:
+        configValue | _
+        '1h'        | _
+        '1d'        | _
+        '1w'        | _
+    }
+
+    def "index_old falls back to 1m when configured value is invalid"() {
+        given:
+        setupBaseServicesForDefaultFilter()
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> '1m'
+        }
+
+        when:
+        params.project = 'test'
+        controller.index_old()
+
+        then:
+        params.recentFilter == '1m'
+    }
+
+    def "index_old does not inject default when request already has a Filter param"() {
+        given:
+        setupBaseServicesForDefaultFilter()
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> null
+        }
+
+        when:
+        params.project = 'test'
+        params.statFilter = 'succeed'
+        controller.index_old()
+
+        then:
+        params.recentFilter == null
+    }
+
+    // Tests for index() — the action actually hit by /project/$project/events
+    def "index does not inject recentFilter when feature flag is disabled"() {
+        given:
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * getAuthContextForSubjectAndProject(*_) >> null
+            _ * authorizeProjectResource(*_) >> true
+        }
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> null
+        }
+
+        when:
+        params.project = 'test'
+        def result = controller.index()
+
+        then:
+        result.defaultRecentFilter == null
+    }
+
+    def "index injects default recentFilter of 1m when feature enabled and config not set"() {
+        given:
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * getAuthContextForSubjectAndProject(*_) >> null
+            _ * authorizeProjectResource(*_) >> true
+        }
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> '1m'
+        }
+
+        when:
+        params.project = 'test'
+        def result = controller.index()
+
+        then:
+        result.defaultRecentFilter == '1m'
+    }
+
+    def "index does not inject default when request already has a Filter param"() {
+        given:
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * getAuthContextForSubjectAndProject(*_) >> null
+            _ * authorizeProjectResource(*_) >> true
+        }
+        controller.executionService = Mock(ExecutionService) {
+            getActivityDefaultTimeFilter(_) >> null
+        }
+
+        when:
+        params.project = 'test'
+        params.recentFilter = '1d'
+        def result = controller.index()
+
+        then:
+        result.defaultRecentFilter == null
     }
 }

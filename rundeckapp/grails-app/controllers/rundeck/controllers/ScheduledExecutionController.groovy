@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -553,6 +554,12 @@ Since: v53''',
 
         def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
         def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
+        def defaultRecentFilter = null
+        if (featureService.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+            def configured = configurationService.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+            defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+        }
+
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
@@ -573,9 +580,13 @@ Since: v53''',
                 jobComponents: jobComponents,
                 jobComponentValues: jobComponentValues,
                 max: params.int('max') ?: 10,
-                offset: params.int('offset') ?: 0] + model
+                offset: params.int('offset') ?: 0,
+                defaultRecentFilter: defaultRecentFilter] + model
         if (params.opt && (params.opt instanceof Map)) {
             dataMap.selectedoptsmap = params.opt
+        }
+        if (params.nodeFilter) {
+            dataMap.nodeFilterParam = params.nodeFilter
         }
 
         withFormat{
@@ -1115,16 +1126,19 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
             stream.close()
             writer.flush()
             final string = writer.toString()
-            final JSONElement parse = grails.converters.JSON.parse(string)
-            if (string) {
-                stats.contentSHA1 = string.encodeAsSHA1()
+            def parseResult = remoteUrlParse(string, configRemoteUrl)
+            if (parseResult.error) {
+                return [error: parseResult.error, stats: stats]
+            }
+            if (parseResult.string) {
+                stats.contentSHA1 = parseResult.string.encodeAsSHA1()
             }else{
                 stats.contentSHA1 = ""
             }
             stats.contentLength=srfile.length()
             stats.lastModifiedDate=new Date(srfile.lastModified())
             stats.lastModifiedDateTime=srfile.lastModified()
-            return [json:parse,stats:stats]
+            return [json:parseResult.jsonElement,stats:stats]
         } else {
             throw new Exception("Unsupported protocol: " + url)
         }
@@ -2511,7 +2525,9 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         //set session new workflow
-        WorkflowController.getSessionWorkflow(session,null,new Workflow(scheduledExecution.workflow as WorkflowData))
+        def origWorkflowData = scheduledExecution.getWorkflowData()
+        // Pass the original workflow data through and let WorkflowController perform the single clone.
+        WorkflowController.getSessionWorkflow(session,null,origWorkflowData ?: new WorkflowDataImpl())
         if(scheduledExecution.options){
             def editopts = [:]
 
@@ -2683,8 +2699,99 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
 
     /**
      * execute the job defined via input parameters, but do not store it.
+     * REST API endpoint: /api/{api_version}/project/{project}/run/command/inline
      */
-    def runAdhocInline(ApiRunAdhocRequest apiRunAdhocRequest){
+    @Post(uri='/project/{project}/run/command/inline', produces = MediaType.APPLICATION_JSON)
+    @Operation(
+        method='POST',
+        summary='Run Adhoc Command (Inline)',
+        description='''Run a command string via inline endpoint (maintains backward compatibility with ajax format).
+
+This endpoint accepts parameters either as query parameters or as a JSON request body. The response format matches the legacy ajax endpoint for backward compatibility.
+
+Example: `POST /api/56/project/myproject/run/command/inline?exec=echo+test&filter=.*`
+
+Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
+
+Since: v56''',
+        tags = ['Ad Hoc'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'filter',
+                description = 'Node Filter String',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'exec',
+                description = 'The shell command string to run, e.g. "echo hello".',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'nodeThreadcount',
+                description = 'threadcount to use',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'nodeKeepgoing',
+                description = 'if "true", continue executing on other nodes even if some fail.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'filterExclude',
+                description = 'Node exclude filter string',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'doNodedispatch',
+                description = 'Enable node dispatch',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='Request body',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(implementation = ApiRunAdhocRequest),
+                examples=@ExampleObject('''
+{
+    "project":"[project]",
+    "exec":"[exec]",
+    "filter":"[node filter string]",
+    "filterExclude":"[exclude filter]",
+    "doNodedispatch":"true",
+    "nodeThreadcount": 1,
+    "nodeKeepgoing": true
+}''')
+            )
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''Execution result with success flag and execution ID (backward compatible format).''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema=@Schema(type='object'),
+            examples=@ExampleObject('''{
+  "success": "true",
+  "id": 1
+}''')
+        )
+    )
+    def runAdhocInline(@Parameter(hidden = true) ApiRunAdhocRequest apiRunAdhocRequest){
+        // Original implementation: use CSRF token validation for backward compatibility
         def results=[:]
         withForm{
             apiRunAdhocRequest.script=null
@@ -2699,6 +2806,129 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         }.invalidToken{
             results.error=g.message(code:'request.error.invalidtoken.message')
         }
+        
+        // Maintain backward compatible response format
+        return render(contentType:'application/json'){
+            if(results.error){
+                'error' results.error
+            }else{
+                success 'true'
+                id results.id
+            }
+        }
+    }
+    
+    /**
+     * execute the job defined via input parameters, but do not store it.
+     * REST API endpoint: /api/{api_version}/project/{project}/run/command/inline/api
+     * This endpoint uses API authentication (for v56+)
+     */
+    @Post(uri='/project/{project}/run/command/inline/api', produces = MediaType.APPLICATION_JSON)
+    @Operation(
+        method='POST',
+        summary='Run Adhoc Command (Inline) - API Auth',
+        description='''Run a command string via inline endpoint with API authentication (v56+).
+
+This endpoint requires API authentication and is intended for use by the new Vue.js UI.
+
+Example: `POST /api/56/project/myproject/run/command/inline/api?exec=echo+test&filter=.*`
+
+Authorization required: `run` for project resource type `adhoc`, as well as `runAs` if the runAs parameter is used
+
+Since: v56''',
+        tags = ['Ad Hoc'],
+        parameters = [
+            @Parameter(
+                name = 'project',
+                description = 'Project Name',
+                required = true,
+                in = ParameterIn.PATH,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'filter',
+                description = 'Node Filter String',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'exec',
+                description = 'The shell command string to run, e.g. "echo hello".',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'nodeThreadcount',
+                description = 'threadcount to use',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'integer')
+            ),
+            @Parameter(
+                name = 'nodeKeepgoing',
+                description = 'if "true", continue executing on other nodes even if some fail.',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'filterExclude',
+                description = 'Node exclude filter string',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'doNodedispatch',
+                description = 'Enable node dispatch',
+                in = ParameterIn.QUERY,
+                schema = @Schema(type = 'string')
+            )
+        ],
+        requestBody = @RequestBody(
+            description='Request body',
+            content=@Content(
+                mediaType=MediaType.APPLICATION_JSON,
+                schema=@Schema(implementation = ApiRunAdhocRequest),
+                examples=@ExampleObject('''
+{
+    "project":"[project]",
+    "exec":"[exec]",
+    "filter":"[node filter string]",
+    "filterExclude":"[exclude filter]",
+    "doNodedispatch":"true",
+    "nodeThreadcount": 1,
+    "nodeKeepgoing": true
+}''')
+            )
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''Execution result with success flag and execution ID (backward compatible format).''',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema=@Schema(type='object'),
+            examples=@ExampleObject('''{
+  "success": "true",
+  "id": 1
+}''')
+        )
+    )
+    def runAdhocInlineApi(@Parameter(hidden = true) ApiRunAdhocRequest apiRunAdhocRequest){
+        // API authentication endpoint for v56+
+        if(!apiService.requireApi(request,response)){
+            return
+        }
+        
+        def results=[:]
+        apiRunAdhocRequest.script=null
+        apiRunAdhocRequest.url=null
+        results=runAdhoc(apiRunAdhocRequest)
+        if(results.failed){
+            results.error=results.message
+        } else {
+            log.debug("ExecutionController: immediate execution scheduled (${results.id})")
+        }
+        
+        // Maintain backward compatible response format
         return render(contentType:'application/json'){
             if(results.error){
                 'error' results.error

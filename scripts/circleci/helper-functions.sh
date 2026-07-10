@@ -48,11 +48,16 @@ copy_rundeck_war() {
 # Pull the image built on this build and adds a custom tag if provided as argument.
 rundeck_pull_image() {
     docker_login
-    local sourceTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
+    local jreVersion=${1:-}
+    local JRE_SUFFIX=""
+    if [[ "${jreVersion}" == *"25"* ]]; then
+        JRE_SUFFIX="-j25"
+    fi
+    local sourceTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}${JRE_SUFFIX}"
     docker pull $sourceTag
     docker tag "${sourceTag}" "rundeck/testdeck"
 
-    local customTag=${1:-}
+    local customTag=${2:-}
     if [[ -n "${customTag}" ]]; then
         docker tag "${sourceTag}" "${customTag}"
     fi

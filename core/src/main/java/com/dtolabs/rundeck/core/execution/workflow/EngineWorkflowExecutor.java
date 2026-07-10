@@ -577,7 +577,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                             stepRunTriggerState,
                             stepSkipTriggerState,
                             stepStartTriggerConditions,
-                            stepSkipTriggerConditions
+                            stepSkipTriggerConditions,
+                            profile
                     )
             );
         }

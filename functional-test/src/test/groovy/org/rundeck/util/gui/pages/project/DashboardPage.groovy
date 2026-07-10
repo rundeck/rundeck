@@ -16,7 +16,8 @@ class DashboardPage extends BasePage {
     String loadPath = ""
     By projectDescriptionBy = By.className("text-project-description")
     By projectLabelBy = By.xpath("//div[@data-ko-bind='projectHome']")
-    By readmeMarkDownBy = By.className("markdown-body")
+    /** Scoped to project dashboard Vue mount to avoid matching other .markdown-body on the page. */
+    By readmeMarkDownBy = By.cssSelector("#projectHome-content .markdown-body")
     By projectSummaryBy = By.id("projectHome-summary")
     By projectSummaryCountLinkBy = By.cssSelector("#projectHome-summary a .summary-count")
     By executionCountBy = By.cssSelector(".summary-count.text-info") // Execution count

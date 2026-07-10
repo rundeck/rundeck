@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.util.JsonUtil
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -271,6 +272,71 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def adhoc(ExtNodeFilters query) {
+        def cookieValue = request.getCookies()?.find { it.name == 'nextUi' }?.value
+        if (cookieValue == 'true' || params.boolean('nextUi')) {
+            params.nextUi = true
+            // Still need to process query for the model
+            if (query.hasErrors()) {
+                request.errors = query.errors
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+                return renderErrorView([:])
+            }
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
+            if (unauthorizedResponse(
+                    rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+                            AuthConstants.ACTION_RUN, params.project),
+                    AuthConstants.ACTION_RUN, 'adhoc', 'commands')) {
+                return
+            }
+            String runCommand;
+            if (params.fromExecId || params.retryFailedExecId) {
+                Execution e = Execution.get(params.fromExecId ?: params.retryFailedExecId)
+                if (e && unauthorizedResponse(
+                        rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
+                        AuthConstants.ACTION_VIEW, 'Execution', params.fromExecId ?: params.retryFailedExecId)) {
+                    return
+                }
+
+                if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
+                    def cmd = e.workflow.commands[0]
+                    String adhocRemoteString = null
+                    if (cmd instanceof CommandExec) {
+                        adhocRemoteString = cmd.adhocRemoteString
+                    } else if (cmd instanceof PluginStep) {
+                        Map config = cmd.getConfiguration() ?: [:]
+                        adhocRemoteString = config.adhocRemoteString
+                    }
+                    if (adhocRemoteString) {
+                        runCommand = adhocRemoteString
+                        //configure node filters
+                        if (params.retryFailedExecId) {
+                            query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)
+                        } else {
+                            if(e.doNodedispatch){
+                                query = ExtNodeFilters.from(e, e.project)
+                            }else{
+                                query=new ExtNodeFilters(filter: OptsUtil.join("name:", frameworkService.getFrameworkNodeName()),
+                                        project: e.project)
+                            }
+                        }
+                    }
+                }
+            } else if (params.exec) {
+                runCommand = params.exec
+            }
+
+            query.project = params.project
+            def result
+            if(!query.nodeFilterIsEmpty()){
+                params.requireRunAuth='true'
+                result = [query: query, params: params, allnodes: [:]]
+            }else{
+                result= [query: query, params: params, allnodes:[:]]
+            }
+            def model = result
+            return render(view: 'adhocNext', model: model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount()])
+        }
+        
         if (query.hasErrors()) {
             request.errors = query.errors
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
@@ -333,7 +399,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def model = result//[query: query, params: params]
 
-        return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount()]
+        return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount(), defaultRecentFilter: executionService.getActivityDefaultTimeFilter(params)]
     }
 
     /**
@@ -1728,7 +1794,15 @@ Since: v55""",
         }
 
         // Grails 7: Parse body using Jackson instead of request.JSON
-        def body = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
+        def body = JsonUtil.parseRequestBody(request)
+        if (body == null) {
+            render(
+                contentType: 'application/json',
+                status: HttpStatus.BAD_REQUEST.value(),
+                text: ([errors: ['Request body is missing or empty.']] as grails.converters.JSON) as String
+            )
+            return
+        }
         List plugins = (body?.plugins ?: []) as List
         List removedPlugins = (body?.removedPlugins ?: []) as List
 

@@ -406,7 +406,7 @@
         <tr>
             <td><g:message code="job.audit.created.label" default="Created by" /></td>
             <td>
-                <span class="text-info" data-testid="created-by"><g:enc>${execdata.user ?: g.message(code:'job.audit.unknown', default:'Unknown')}</g:enc></span>
+                <span class="text-info" data-testid="created-by"><g:enc>${(execdata.createdBy ?: execdata.user) ?: g.message(code:'job.audit.unknown', default:'Unknown')}</g:enc></span>
                 <g:message code="job.audit.on" default="on" />
 
                 <% def created = execdata.dateCreated %>

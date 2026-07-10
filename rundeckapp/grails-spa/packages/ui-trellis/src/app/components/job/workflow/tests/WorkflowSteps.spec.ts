@@ -160,7 +160,7 @@ describe("WorkflowSteps", () => {
       editModal.vm.$emit("save");
 
       await flushPromises();
-      expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
+      expect(wrapper.emitted("update:modelValue")![1][0]).toEqual({
         commands: [
           {
             configuration: {
@@ -188,7 +188,7 @@ describe("WorkflowSteps", () => {
       const mockEventBus = getRundeckContext().eventBus;
       const removeButton = wrapper.find('[data-test="remove-step"]');
       await removeButton.trigger("click");
-      expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
+      expect(wrapper.emitted("update:modelValue")![1][0]).toEqual({
         commands: [],
       });
       expect(mockEventBus.emit).toBeCalledWith(
@@ -214,7 +214,7 @@ describe("WorkflowSteps", () => {
       editModal.vm.$emit("save");
       await flushPromises();
 
-      expect(wrapper.emitted("update:modelValue")[1][0]).toEqual({
+      expect(wrapper.emitted("update:modelValue")![1][0]).toEqual({
         commands: [
           {
             description: "echo test",
@@ -240,7 +240,7 @@ describe("WorkflowSteps", () => {
       const duplicateBtn = wrapper.find("[title='Workflow.duplicateStep']");
       await duplicateBtn.trigger("click");
 
-      const emitted = wrapper.emitted("update:modelValue")[1][0];
+      const emitted = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
       expect(emitted["commands"]).toHaveLength(2);
       expect(emitted["commands"]).toEqual([
         { ...baseCommand, nodeStep: true },
@@ -356,8 +356,9 @@ describe("WorkflowSteps", () => {
         editModal.vm.$emit("save");
         await flushPromises();
 
+        const emittedValue = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
         expect(
-          wrapper.emitted("update:modelValue")[1][0]["commands"][0],
+          (emittedValue["commands"] as unknown[])[0],
         ).toMatchObject({
           ...baseCommand,
           errorhandler: {
@@ -387,7 +388,8 @@ describe("WorkflowSteps", () => {
       editModal.vm.$emit("save");
       await flushPromises();
 
-      expect(wrapper.emitted("update:modelValue")[1][0]["commands"]).toEqual([
+      const emittedValue = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
+      expect(emittedValue["commands"]).toEqual([
         { ...baseCommand, nodeStep: true },
         {
           description: "echo test",
@@ -418,6 +420,74 @@ describe("WorkflowSteps", () => {
         "workflow-editor-workflowsteps-request",
         expect.any(Function),
       );
+    });
+  });
+
+  describe("editing state", () => {
+    it("emits workflow-editing-state-changed with isEditing true when a step edit opens", async () => {
+      const mockEventBus = getRundeckContext().eventBus;
+      wrapper = await createWrapper({ commands: [] });
+
+      await wrapper.find('[data-testid="add-button"]').trigger("click");
+      const chooseModal = wrapper.findComponent(ChoosePluginModal);
+      chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+      await wrapper.vm.$nextTick();
+
+      expect(mockEventBus.emit).toHaveBeenCalledWith(
+        "workflow-editing-state-changed",
+        { isEditing: true },
+      );
+    });
+
+    it("sets window._workflowEditState.isEditing true when a step edit opens", async () => {
+      wrapper = await createWrapper({ commands: [] });
+
+      await wrapper.find('[data-testid="add-button"]').trigger("click");
+      const chooseModal = wrapper.findComponent(ChoosePluginModal);
+      chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+      await wrapper.vm.$nextTick();
+
+      expect((window as any)._workflowEditState).toEqual({
+        isEditing: true,
+        hasUnsavedChanges: true,
+      });
+    });
+
+    it("emits workflow-editing-state-changed with isEditing false when a step edit is cancelled", async () => {
+      const mockEventBus = getRundeckContext().eventBus;
+      wrapper = await createWrapper({ commands: [] });
+
+      await wrapper.find('[data-testid="add-button"]').trigger("click");
+      const chooseModal = wrapper.findComponent(ChoosePluginModal);
+      chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+      await wrapper.vm.$nextTick();
+
+      const editModal = wrapper.findComponent(EditPluginModal);
+      editModal.vm.$emit("cancel");
+      await wrapper.vm.$nextTick();
+
+      expect(mockEventBus.emit).toHaveBeenLastCalledWith(
+        "workflow-editing-state-changed",
+        { isEditing: false },
+      );
+    });
+
+    it("sets window._workflowEditState.isEditing false when a step edit is cancelled", async () => {
+      wrapper = await createWrapper({ commands: [] });
+
+      await wrapper.find('[data-testid="add-button"]').trigger("click");
+      const chooseModal = wrapper.findComponent(ChoosePluginModal);
+      chooseModal.vm.$emit("selected", { service: "a", provider: "b" });
+      await wrapper.vm.$nextTick();
+
+      const editModal = wrapper.findComponent(EditPluginModal);
+      editModal.vm.$emit("cancel");
+      await wrapper.vm.$nextTick();
+
+      expect((window as any)._workflowEditState).toEqual({
+        isEditing: false,
+        hasUnsavedChanges: false,
+      });
     });
   });
 });

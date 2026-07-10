@@ -281,10 +281,10 @@ describe("OptionEdit", () => {
       await wrapper.vm.doSave();
       expect(wrapper.vm.hasFormErrors).toBeFalsy();
       //test emitted
-      const actual = wrapper.emitted();
-      expect(actual["update:modelValue"]).toBeTruthy();
-      expect(actual["update:modelValue"].length).toBe(1);
-      const emittedOption = actual["update:modelValue"][0][0];
+      const actual = wrapper.emitted("update:modelValue");
+      expect(actual).toBeTruthy();
+      expect(actual!.length).toBe(1);
+      const emittedOption = actual![0][0];
       expect(emittedOption).toEqual({
         name: "test",
         type: "text",
@@ -341,10 +341,10 @@ describe("OptionEdit", () => {
       await wrapper.vm.doSave();
       expect(wrapper.vm.hasFormErrors).toBeFalsy();
       //test emitted
-      const actual = wrapper.emitted();
-      expect(actual["update:modelValue"]).toBeTruthy();
-      expect(actual["update:modelValue"].length).toBe(1);
-      const emittedOption = actual["update:modelValue"][0][0];
+      const actual = wrapper.emitted("update:modelValue");
+      expect(actual).toBeTruthy();
+      expect(actual!.length).toBe(1);
+      const emittedOption = actual![0][0];
       expect(emittedOption).toEqual(
         Object.assign(
           {
@@ -495,7 +495,7 @@ describe("OptionEdit", () => {
     ["delimiter", { multivalued: true }],
   ])(
     "shows validation errors for field %p",
-    async (fieldName: string, optData: any, errorName: string = null) => {
+    async (fieldName: string, optData: any, errorName: string | null = null) => {
       const wrapper = await mountOptionEdit({
         modelValue: Object.assign({ name: "aname", type: "text" }, optData),
         editable: true,

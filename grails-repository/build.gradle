@@ -94,7 +94,7 @@ dependencies {
     testImplementation "org.apache.grails:grails-testing-support-datamapping"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.apache.grails:grails-testing-support-web"
-    testImplementation "cglib:cglib:2.2"
+    testImplementation "cglib:cglib:2.2.2"
 }
 
 bootRun {

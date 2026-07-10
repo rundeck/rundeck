@@ -201,6 +201,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
         scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
         controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+        controller.executionService = Mock(ExecutionService)
 
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
@@ -237,6 +238,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
         scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
         controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+        controller.executionService = Mock(ExecutionService)
 
                         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
@@ -275,6 +277,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
         scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
         controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+        controller.executionService = Mock(ExecutionService)
         def result=controller.adhoc(new ExtNodeFilters())
 
         then:
@@ -1085,6 +1088,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
         scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
         controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+        controller.executionService = Mock(ExecutionService)
 
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
@@ -1129,6 +1133,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
         scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
         controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+        controller.executionService = Mock(ExecutionService)
 
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
@@ -1175,6 +1180,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
         scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
         controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+        controller.executionService = Mock(ExecutionService)
         def result=controller.adhoc(new ExtNodeFilters())
 
         then:

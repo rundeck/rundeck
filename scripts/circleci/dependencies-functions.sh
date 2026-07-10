@@ -14,9 +14,16 @@ dependencies_install_zulu11jdk() {
 
 }
 
-# Install Azul Zulu JDK 17 (for Grails 7)
+# Install JDK 17 (skips if already provided by the Docker image, e.g. cimg/openjdk:17.0)
 dependencies_install_zulu17jdk() {
-      # Azul Zulu JDK 17 Install
+      if java -version 2>&1 | grep -q 'version "17' && javac -version >/dev/null 2>&1; then
+        echo "JDK 17 already installed — skipping apt install"
+        java -version
+        javac -version
+        return 0
+      fi
+
+      echo "JDK 17 not found — installing Azul Zulu JDK 17 via apt"
       sudo apt-get update
       sudo apt install gnupg ca-certificates curl
       curl -s https://repos.azul.com/azul-repo.key | sudo gpg --dearmor -o /usr/share/keyrings/azul.gpg
@@ -25,6 +32,11 @@ dependencies_install_zulu17jdk() {
       sudo apt-get update
       sudo apt-get -y --no-install-recommends install zulu17-jdk-headless
 
+      if [[ -n "${BASH_ENV:-}" ]]; then
+        echo "export JAVA_HOME=/usr/lib/jvm/zulu17" >> "${BASH_ENV}"
+        echo "export PATH=\"/usr/lib/jvm/zulu17/bin:\${PATH}\"" >> "${BASH_ENV}"
+      fi
+      export JAVA_HOME=/usr/lib/jvm/zulu17
 }
 
 # Install Azul Zulu JDK 25 (forward-compat / newer-LTS testing on CI host).

@@ -83,8 +83,12 @@
                       class="btn btn-default reset_page_confirm"
                       action="Cancel"/>
       <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-cta reset_page_confirm " id="jobUpdateSaveButton"/>
-        <span data-bind="if: inPageError()" class="text-warning">
-            <g:message code="job.editor.workflow.unsavedchanges.warning" />
+        <span class="vue-ui-socket">
+          <ui-socket section="job-editor" location="workflow-edit-warning">
+            <span data-bind="if: inPageError()" class="text-warning">
+              <g:message code="job.editor.workflow.unsavedchanges.warning" />
+            </span>
+          </ui-socket>
         </span>
     </div>
 

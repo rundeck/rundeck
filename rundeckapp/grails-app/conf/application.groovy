@@ -93,7 +93,13 @@ environments {
                 testWhileIdle= true
                 testOnReturn= false
                 jdbcInterceptors= "ConnectionState"
-                defaultTransactionIsolation= 2 // TRANSACTION_READ_COMMITTED
+                defaultTransactionIsolation= java.sql.Connection.TRANSACTION_READ_COMMITTED // Tomcat JDBC pool property (ignored by HikariCP)
+                // The properties above (maxActive, testOnBorrow, jdbcInterceptors, defaultTransactionIsolation, etc.)
+                // use Tomcat JDBC pool naming and are silently ignored by HikariCP (the Grails 7 default pool).
+                // Set the isolation level via HikariCP's own property name so it takes effect.
+                // READ_COMMITTED reduces gap/next-key locking on MySQL/InnoDB, reducing
+                // deadlocks on unique-index INSERTs. No-op on PostgreSQL/Oracle (already their default).
+                transactionIsolation= "TRANSACTION_READ_COMMITTED"
             }
         }
     }

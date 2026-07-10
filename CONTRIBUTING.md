@@ -8,31 +8,31 @@ The more of these guidelines you can follow, the easier (and faster) it is for u
 
 2. Make sure you can perform a full build and that the tests all pass. (See [Building and Testing])
 3. Please add unit tests to demonstrate that your submission fixes an existing bug, or performs as intended.
-1. Rebase your branch on the current state of the `master` branch. Use `git rebase master`.
+1. Rebase your branch on the current state of the `main` branch. Use `git rebase main`.
    This means you might have to deal with conflicts.
 2. Be descriptive in your commit messages: explain the purpose of all changes.
    You can modify commit messages by doing `git commit --amend` (for the previous change),
    or `git rebase -i` for earlier changes.
 
-Once your branch is cleaned up, please submit the Pull request against the `master` branch.
+Once your branch is cleaned up, please submit the Pull request against the `main` branch.
 
 Thanks for your help!
 
 A typical workflow:
 
 ~~~ {.sh}
-# get up to date with origin/master and create a branch
-git checkout master
+# get up to date with origin/main and create a branch
+git checkout main
 git pull
 git checkout -b newbranch
 # now make your commits.  
 $EDITOR somefile
 git commit -m "my change"
-# If you are now out of date with master, update your master:
-git checkout master && git pull
-# now go back to your branch and rebase on top of master
+# If you are now out of date with main, update your main branch:
+git checkout main && git pull
+# now go back to your branch and rebase on top of main
 git checkout - # "-" will checkout previous branch
-git rebase master
+git rebase main
 # resolve any conflicts, and possibly do `git rebase --continue` to finish rebasing
 # now push your branch to your fork, and submit a pull request
 git push myfork newbranch

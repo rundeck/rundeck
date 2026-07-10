@@ -8,6 +8,16 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
         maven { url "https://repo.grails.org/grails/restricted" }
     }
+    // Force Liquibase to the same pinned version used at runtime.
+    // grails-bom:{strictly 4.27.0} wins in the buildscript context (ext["liquibase.version"]
+    // only applies to the application classpath). Without this force, the Grails plugin
+    // classloader in IntelliJ dev mode loads AbstractChange from liquibase-core:4.27.0, which
+    // references ChecksumVersion — a class that doesn't exist in the runtime 4.19.0 jar.
+    configurations.all {
+        resolutionStrategy {
+            force "org.liquibase:liquibase-core:${liquibaseVersion}"
+        }
+    }
     dependencies {
         classpath platform("org.apache.grails:grails-bom:$grailsVersion")
         classpath "org.apache.grails:grails-gradle-plugins"
@@ -20,7 +30,7 @@ buildscript {
 plugins {
     id "org.springframework.boot" version "${springBootVersion}"
     id "org.dvaske.gradle.git-build-info"
-    id "com.github.node-gradle.node" version "7.0.1"
+    id "com.github.node-gradle.node" version "${nodeGradlePluginVersion}"
     id "java-library"
     id "war"
 }
@@ -53,11 +63,6 @@ configurations.all {
                 details.useVersion springIntegrationVersion
                 details.because 'Spring Boot 3.5.8 requires Spring Integration 6.x'
             }
-            // Force BouncyCastle 1.79 (Spring Boot 3.5+ BOM manages BC and uses 1.80 which breaks Jasypt)
-            if (details.requested.group == 'org.bouncycastle') {
-                details.useVersion bouncyCastleVersion
-                details.because 'BC 1.80 breaks Jasypt encryption - staying on 1.79 until migration'
-            }
             // Force commons-lang3 3.20.0 (prevent duplicate versions in WAR)
             if (details.requested.group == 'org.apache.commons' && details.requested.name == 'commons-lang3') {
                 details.useVersion commonsLang3Version
@@ -66,6 +71,11 @@ configurations.all {
         }
     }
     exclude group: 'io.micronaut', module: 'micronaut-bom'
+    // mysql-connector-java registers com.mysql.jdbc.Driver via JDBC SPI, causing spurious HikariCP
+    // ERROR logs at startup even when org.mariadb.jdbc.Driver is configured. Rundeck ships
+    // mariadb-java-client for MySQL/MariaDB connectivity; mysql-connector-java is not needed.
+    exclude group: 'mysql', module: 'mysql-connector-java'
+    exclude group: 'com.mysql', module: 'mysql-connector-j'
 }
 
 //list of grails plugins to depend on in various ways
@@ -154,7 +164,7 @@ dependencies {
     annotationProcessor "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
 
     // Jakarta Validation implementation for tests
-    testImplementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
+    testImplementation "org.hibernate.validator:hibernate-validator:${hibernateValidatorVersion}"
     testImplementation "org.glassfish.expressly:expressly:5.0.0" // EL implementation required by Hibernate Validator
 
     testImplementation group: 'com.squareup.retrofit2', name: 'retrofit-mock', version: '3.0.0'
@@ -193,11 +203,11 @@ dependencies {
     // Force CVE-patched mchange libraries (transitively brought by quartz:2.5.x)
     implementation "com.mchange:mchange-commons-java:${mchangeCommonsJavaVersion}"
     implementation "com.mchange:c3p0:${c3p0Version}"
-    implementation 'org.grails.plugins:mail:3.0.0'
-    
+    implementation "org.grails.plugins:grails-mail:${grailsMailPluginVersion}"
+
     // Liquibase for compile-time exception classes (runtime provided by Spring Boot)
     compileOnly "org.liquibase:liquibase-core:${liquibaseVersion}"
-    
+
     // Groovy 4: XML parsing is a separate module
     implementation "org.apache.groovy:groovy-xml:${groovyVersion}"
     
@@ -218,12 +228,12 @@ dependencies {
     // https://github.com/gpc/greenmail
     //compile 'org.grails.plugins:greenmail:2.0.0.RC2'
 
-    implementation 'com.atlassian.commonmark:commonmark:0.11.0'
-    implementation 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
+    implementation 'com.atlassian.commonmark:commonmark:0.17.0'
+    implementation 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.17.0'
     implementation ("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:${owaspHtmlSanitizerVersion}") { // CVE-2025-66021
         exclude(group:'com.google.guava',module:'guava')
     }
-    implementation 'org.owasp.encoder:encoder:1.2.1'
+    implementation 'org.owasp.encoder:encoder:1.4.0'
     implementation 'org.grails.plugins:external-config:2.0.0'
     implementation "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
     implementation "commons-io:commons-io:${commonsIoVersion}"
@@ -250,20 +260,20 @@ dependencies {
     implementation("org.hibernate:hibernate-jcache:${hibernateVersion}") {
         exclude group: 'org.hibernate', module: 'hibernate-core'
     }
-    implementation('org.ehcache:ehcache:3.8.1')
+    implementation('org.ehcache:ehcache:3.12.0')
 
     // JAXB implementation for Java 11+ (Ehcache XmlConfiguration parses jcache.xml with javax.xml.bind)
     implementation "javax.xml.bind:jaxb-api:${jaxbApiVersion}"
     implementation "org.glassfish.jaxb:jaxb-runtime:${jaxbRuntimeVersion}"
 
-    implementation ('org.hibernate.validator:hibernate-validator:8.0.1.Final')
+    implementation ("org.hibernate.validator:hibernate-validator:${hibernateValidatorVersion}")
 
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
 
     implementation "org.apache.grails:grails-core"
     // Solo en dev: file watching de Grails en macOS (MacOsWatchServiceDirectoryWatcher); no se incluye en el WAR
-    developmentOnly "io.methvin:directory-watcher:0.15.1"
+    developmentOnly "io.methvin:directory-watcher:0.19.1"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "io.micrometer:micrometer-registry-prometheus"  // Prometheus metrics endpoint
     implementation "io.micrometer:micrometer-registry-jmx"  // Export Micrometer metrics (jetty.threads.*, etc.) as JMX MBeans for dd-java-agent
@@ -318,7 +328,7 @@ dependencies {
     implementation 'org.kohsuke:libpam4j:1.11'
     implementation "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaXmlBindVersion}"
     implementation "jakarta.annotation:jakarta.annotation-api:${jakartaAnnotationVersion}"
-    implementation 'org.dom4j:dom4j:2.1.3'
+    implementation 'org.dom4j:dom4j:2.2.0'
     implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
     implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}")
     // Grails 7: BC 1.80 requires bcutil for CryptlibObjectIdentifiers
@@ -333,12 +343,12 @@ dependencies {
         exclude(group:"org.grails.profiles",module:"web")
     }
 
-    implementation ("com.jayway.jsonpath:json-path:2.9.0"){
+    implementation ("com.jayway.jsonpath:json-path:2.10.0"){
         exclude group:"org.slf4j",module:"slf4j-api"
         exclude group:'org.ow2.asm', module: 'asm'
     }
 
-    implementation ("net.minidev:json-smart:2.5.2")
+    implementation ("net.minidev:json-smart:${jsonSmartVersion}")
     
     // OpenApi Dependencies
     compileOnly "io.swagger.core.v3:swagger-annotations:${swaggerVersion}"
@@ -351,14 +361,14 @@ dependencies {
     compileOnly "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     implementation "io.micronaut:micronaut-core"
 
-    runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
+    runtimeOnly "org.aspectj:aspectjweaver:${aspectjweaverVersion}"
 
     // Database drivers
-    runtimeOnly "com.h2database:h2:2.2.220"
+    runtimeOnly "com.h2database:h2:${h2Version}"
     runtimeOnly "com.microsoft.sqlserver:mssql-jdbc:${mssqlJdbcVersion}"
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
-    runtimeOnly 'org.postgresql:postgresql:42.7.2'
-    runtimeOnly('org.rundeck.hibernate:rundeck-oracle-dialect:1.0.1') {
+    runtimeOnly "org.mariadb.jdbc:mariadb-java-client:${mariadbVersion}"
+    runtimeOnly "org.postgresql:postgresql:${postgresVersion}"
+    runtimeOnly("org.rundeck.hibernate:rundeck-oracle-dialect:${oracleDialectVersion}") {
         exclude group: 'org.hibernate', module: 'hibernate-core'
     }
 
@@ -385,7 +395,7 @@ dependencies {
     testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver:${seleniumJavaVersion}"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-api:${seleniumJavaVersion}"
     testRuntimeOnly "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
-    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.7'
+    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.25.1'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     // transitive dependencies constraints.
     constraints {
@@ -477,6 +487,13 @@ bootRun {
     //    addResources = true
     // Full resources/main so classpath:/assets/ resolves; duplicateFileMode=WARN avoids Liquibase failure on duplicate migrations
     classpath += files("$buildDir/resources/main", "$buildDir/resources/main/META-INF")
+    // Strip liquibase-commercial: it ships LicenseValidationChange (extends AbstractChange)
+    // compiled against the 4.26 API, whose bytecode references liquibase.ChecksumVersion.
+    // We pin liquibase-core to 4.19.0 for DB compatibility, so 4.26's commercial jar causes
+    // NoClassDefFoundError: liquibase/ChecksumVersion during Change introspection.
+    // The WAR works because it doesn't include this artifact. liquibase-hibernate5 must
+    // stay on the classpath — Grails' dbmigration uses HibernateDatabase.
+    classpath = classpath.filter { f -> !f.name.startsWith("liquibase-commercial-") }
     System.setProperty("logRoot",System.getProperty("rdeck.base",System.getProperty("user.dir")+"/rundeck-runtime"))
     systemProperty "rundeck.server.logDir", System.getProperty("logRoot")+"/server/logs"
 }

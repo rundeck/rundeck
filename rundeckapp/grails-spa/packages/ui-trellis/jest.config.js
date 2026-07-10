@@ -9,7 +9,7 @@ const esModules = [
 module.exports = {
   moduleFileExtensions: ["js", "ts", "vue", "mjs"],
   transform: {
-    "^.+\\.tsx?$": ["ts-jest", { tsconfig: "tsconfig.app.json" }],
+    "^.+\\.tsx?$": ["ts-jest", { tsconfig: "tsconfig.test.json" }],
     "^.+\\.vue$": "@vue/vue3-jest",
     "^.+\\.(mj|j|t)s$": "babel-jest",
   },
@@ -22,6 +22,7 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^primevue/(.*)": "<rootDir>/node_modules/primevue/$1",
     "^@primevue/(.*)": "<rootDir>/node_modules/@primevue/$1",
+    "^vue-i18n$": "<rootDir>/node_modules/vue-i18n/dist/vue-i18n.cjs",
   },
   modulePathIgnorePatterns: ["<rootDir>/public"],
   testMatch: ["**/*.test.ts", "**/*.spec.ts"],

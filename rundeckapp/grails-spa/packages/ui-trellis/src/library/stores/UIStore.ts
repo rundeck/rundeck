@@ -64,3 +64,8 @@ export interface UIItem {
 export interface UiMessage {
   [key: string]: string;
 }
+
+export type LocaleMessageValue =
+  | string
+  | { [key: string]: LocaleMessageValue };
+export type LocalizedMessages = Record<string, Record<string, LocaleMessageValue>>;

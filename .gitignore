@@ -4,6 +4,7 @@
 !.gitignore
 !.circleci
 !.nvmrc
+!.claude
 *~
 *.swp
 *.iws

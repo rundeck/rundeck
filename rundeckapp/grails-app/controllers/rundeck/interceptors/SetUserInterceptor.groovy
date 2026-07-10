@@ -78,12 +78,12 @@ class SetUserInterceptor {
         } else if(request.remoteUser && session.subject &&
                 !configurationService.getBoolean("security.authorization.preauthenticated.enabled",false)) {
             request.subject = session.subject
-        } else if (request.api_version && !session.user && authtoken) {
+        } else if (request.api_version && authtoken) {
             //allow authentication token to be used
             boolean webhookType = controllerName == "webhook" && actionName == "post"
 
             AuthenticationToken foundToken = lookupToken(authtoken, servletContext, webhookType)
-            Set<String> roles = lookupTokenRoles(foundToken, servletContext)
+            Set<String> roles = lookupTokenRoles(foundToken, servletContext) ?: ([] as Set<String>)
             String user = foundToken?.getOwnerName()
 
             if(request.getAttribute(RUNNER_RQ_ATTRIB) && foundToken?.type == AuthTokenType.RUNNER) {

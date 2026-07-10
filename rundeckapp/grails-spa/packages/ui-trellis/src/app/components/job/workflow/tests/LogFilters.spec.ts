@@ -148,8 +148,10 @@ describe("LogFilters", () => {
       );
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.emitted("update:modelValue")).toBeTruthy();
-      expect(wrapper.emitted("update:modelValue")![0][0][1]).toEqual({
+      const emitted = wrapper.emitted("update:modelValue");
+      expect(emitted).toBeTruthy();
+      const emittedArray = emitted![0][0] as unknown[];
+      expect(emittedArray[1]).toEqual({
         type: "filterType",
         config: { randomValue: true },
       });
