@@ -21,6 +21,7 @@ class RdExecutionController extends ControllerBase {
     static ObjectMapper mapper = new ObjectMapper()
     static {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
         // RUN-4550: serialize dates as second-precision W3C/ISO-8601 in UTC (e.g. 2026-03-25T21:16:50Z),
         // matching the Grails API converters instead of Jackson's default epoch-millis timestamps.
         SimpleDateFormat df = new SimpleDateFormat(FormattedDate.DEFAULT_DATE_FORMAT)

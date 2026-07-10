@@ -50,7 +50,7 @@ class ApiDateMarshallerSpec extends Specification implements GrailsWebUnitTest {
     static final String EXPECTED = '2026-03-25T21:16:50Z'
     static final String UNEXPECTED_MS = '2026-03-25T21:16:50.022Z'
 
-    def setup() {
+    def setupSpec() {
         def registrar = new ApiMarshallerRegistrar()
         registrar.registerMarshallers()
         registrar.registerApiMarshallers()
