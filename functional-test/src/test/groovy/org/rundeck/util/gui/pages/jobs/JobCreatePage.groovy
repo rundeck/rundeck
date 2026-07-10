@@ -89,7 +89,7 @@ class JobCreatePage extends BasePage {
         static By adhocRemoteStringBy = By.xpath('//*[@data-prop-name="adhocRemoteString"]//input[@type="text"]')
         static By workFlowStrategyBy = By.xpath('//select[contains(@name, \'workflow.strategy\')]')
         static By strategyPluginParallelMsgBy = By.xpath('//*[@id="strategyPluginparallel"]/span')
-        static By numberOfStepsBy = By.cssSelector("[data-test='edit-step-item']")
+        static By numberOfStepsBy = By.cssSelector("[data-testid='edit-step-item']")
         static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
         static By stepEditModalCancelBy = By.cssSelector('.modal.in [data-testid="cancel-button"]')
         static By stepEditModalSaveBy = By.cssSelector('.modal.in [data-testid="save-button"]')
