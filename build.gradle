@@ -346,9 +346,17 @@ getAllprojects().findAll() { proj ->
 }
 
 
-def buildConf  = new org.yaml.snakeyaml.Yaml().load( file('./build.yaml').newDataInputStream() )
 project(':rundeckapp') {
-    it.ext.bundledPlugins = buildConf.rundeck.plugins
+    // Bundled external plugin versions come from gradle.properties (*Version props), mirroring rundeckpro
+    it.ext.bundledPlugins = [
+        "org.rundeck.plugins:ansible-plugin:${ansiblePluginVersion}",
+        "org.rundeck.plugins:aws-s3-model-source:${awsS3ModelSourceVersion}",
+        "org.rundeck.plugins:py-winrm-plugin:${pyWinrmPluginVersion}",
+        "org.rundeck.plugins:openssh-node-execution:${opensshNodeExecutionVersion}",
+        "org.rundeck.plugins:multiline-regex-datacapture-filter:${multilineRegexDatacaptureFilterVersion}",
+        "org.rundeck.plugins:attribute-match-node-enhancer:${attributeMatchNodeEnhancerVersion}",
+        "org.rundeck.plugins:sshj-plugin:${sshjPluginVersion}",
+    ]
 
     it.ext.bundledPlugins += [
         project(':plugins:script-node-step-plugin'),
