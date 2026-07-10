@@ -64,6 +64,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 //the list of bundled plugins to verify in the war and jar
 def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','aes-gcm-encryption','git','object-store','orchestrator', 'source-refresh','upvar', 'audit-logging','jsch']
 //bundled external plugin versions come from gradle.properties (*Version props)
+//normalize any @zip/@jar suffix to a filename extension (matches the legacy build.yaml parsing)
 def coreExternalPlugins=[
     'ansible-plugin'                    : gprops['ansiblePluginVersion'],
     'aws-s3-model-source'               : gprops['awsS3ModelSourceVersion'],
@@ -72,7 +73,7 @@ def coreExternalPlugins=[
     'multiline-regex-datacapture-filter': gprops['multilineRegexDatacaptureFilterVersion'],
     'attribute-match-node-enhancer'     : gprops['attributeMatchNodeEnhancerVersion'],
     'sshj-plugin'                       : gprops['sshjPluginVersion'],
-]
+].collectEntries { name, ver -> [name, ver?.replaceAll('@', '.')] }
 
 //manifest describing expected build results
 def manifest=[
