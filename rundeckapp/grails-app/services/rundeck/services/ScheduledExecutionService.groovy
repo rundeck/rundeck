@@ -151,7 +151,9 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
+import java.time.DateTimeException
 import java.time.Duration
+import java.time.ZoneId
 import com.google.common.collect.Lists
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
@@ -3410,7 +3412,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.argString.replaceAll(
                         /\$\{DATE:(.*)\}/,
                         { all, String tstamp ->
-                            new SimpleDateFormat(tstamp).format(new Date())
+                            // Extract optional timezone from last colon-segment
+                            String fdate = tstamp
+                            final lastColon = tstamp.lastIndexOf(":")
+                            if (lastColon >= 0) {
+                                try {
+                                    ZoneId.of(tstamp.substring(lastColon + 1))
+                                    fdate = tstamp.substring(0, lastColon)
+                                } catch (DateTimeException ignored) {
+                                    // last segment is not a valid ZoneId; treat whole tstamp as FORMAT
+                                }
+                            }
+                            new SimpleDateFormat(fdate).format(new Date())
                         }
                 )
             } catch (IllegalArgumentException e) {

@@ -142,6 +142,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.regex.Pattern
+import java.time.DateTimeException
+import java.time.ZoneId
 import java.util.stream.Collectors
 
 /**
@@ -2372,12 +2374,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             try {
                 newstr = input.replaceAll(/\$\{DATE((?:[-+]\d+)?:.*?)\}/) { all, tstamp ->
-                    if (tstamp.lastIndexOf(":") == -1) {
+                    final firstColon = tstamp.indexOf(":")
+                    if (firstColon == -1) {
                         return all
                     }
-                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
-                    final fdate = tstamp.substring(tstamp.lastIndexOf(":") + 1)
+                    final operator = tstamp.substring(0, firstColon)
+                    final rest = tstamp.substring(firstColon + 1)
+
+                    // Try to extract optional TIMEZONE from the last colon-segment
+                    String fdate = rest
+                    TimeZone tz = null
+                    final lastColon = rest.lastIndexOf(":")
+                    if (lastColon >= 0) {
+                        try {
+                            tz = TimeZone.getTimeZone(ZoneId.of(rest.substring(lastColon + 1)))
+                            fdate = rest.substring(0, lastColon)
+                        } catch (DateTimeException ignored) {
+                            // last segment is part of FORMAT, not a timezone — use whole rest
+                        }
+                    }
+
                     def formatter = new SimpleDateFormat(fdate)
+                    if (tz != null) {
+                        formatter.setTimeZone(tz)
+                    }
                     if (operator == '') {
                         formatter.format(dateStarted)
                     } else {
@@ -2388,9 +2408,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
             } catch (IllegalArgumentException e) {
-                log.warn(e)
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             } catch (NumberFormatException e) {
-                log.warn(e)
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
+            } catch (DateTimeException e) {
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             }
 
 
