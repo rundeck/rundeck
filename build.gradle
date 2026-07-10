@@ -157,6 +157,7 @@ allprojects {
     // Override Spring Boot BOM-managed versions (eachDependency/force can't move Boot-managed deps).
     ext["micrometer.version"] = micrometerVersion          // CVE-2026-40983, CVE-2026-40984
     ext["spring-retry.version"] = springRetryVersion       // CVE-2026-41710
+    ext["httpcore5.version"] = httpCore5Version             // CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)
     // CVE-2026-54512, CVE-2026-54513 (jackson-databind PolymorphicTypeValidator bypass). Grails/Spring
     // Boot dependency management pins jackson to 2.21.2 and downgrades transitive 2.21.4; a plain
     // platform import or resolutionStrategy.force does NOT override it. Overriding the Boot BOM property
@@ -238,6 +239,15 @@ allprojects {
                 if (details.requested.group == 'org.springframework.retry' && details.requested.name == 'spring-retry') {
                     details.useVersion springRetryVersion
                     details.because 'spring-retry 2.0.13 fixes CVE-2026-41710'
+                }
+                // CVE-2026-54399: httpcore5-h2 HTTP/2 DoS, fixed in 5.4.2. Pulled transitively via
+                // grails-data-hibernate5-dbmigration -> grails-shell-cli -> spring-boot-cli -> httpclient5.
+                // The Spring Boot BOM manages httpcore5.version and overrides resolutionStrategy.force,
+                // so use a useVersion rule (like spring/micrometer above). Covers httpcore5 and httpcore5-h2
+                // (released together) so the core5 family stays aligned.
+                if (details.requested.group == 'org.apache.httpcomponents.core5') {
+                    details.useVersion httpCore5Version
+                    details.because 'httpcore5 5.4.2 fixes CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)'
                 }
             }
             
