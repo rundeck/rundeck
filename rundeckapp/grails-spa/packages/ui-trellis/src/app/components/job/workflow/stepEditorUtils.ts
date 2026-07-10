@@ -3,7 +3,7 @@
  * Used by both WorkflowSteps (root level) and InnerStepList (inner level).
  */
 import { mkid } from "./types/workflowFuncs";
-import type { EditStepData } from "./types/workflowTypes";
+import type { EditStepData, JobRefDefinition } from "./types/workflowTypes";
 import { getRundeckContext } from "../../../../library";
 import { ServiceType, type Plugin } from "../../../../library/stores/Plugins";
 import { validatePluginConfig } from "../../../../library/modules/pluginService";
@@ -30,6 +30,38 @@ export function resetValidation(): ValidationResult {
 }
 
 /**
+ * Default jobref fields for job-reference step editors.
+ * Shared by JobRefForm and EditStepCard so defaults stay in sync.
+ */
+export function createJobRefDefinition(
+  projectName: string = getRundeckContext().projectName,
+): JobRefDefinition {
+  return {
+    nodeStep: false,
+    name: "",
+    uuid: "",
+    group: "",
+    project: projectName,
+    args: "",
+    failOnDisable: false,
+    childNodes: false,
+    importOptions: false,
+    ignoreNotifications: false,
+    useName: false,
+    nodefilters: {
+      filter: "",
+      dispatch: {
+        threadcount: undefined,
+        keepgoing: undefined,
+        rankAttribute: undefined,
+        rankOrder: undefined,
+        nodeIntersect: undefined,
+      },
+    },
+  };
+}
+
+/**
  * Creates a new step object from a provider selection.
  * Handles job references and regular plugins.
  *
@@ -49,6 +81,7 @@ export function createStepFromProvider(
       description: "",
       nodeStep,
       jobref: {
+        ...createJobRefDefinition(),
         nodeStep,
       },
       id: mkid(),

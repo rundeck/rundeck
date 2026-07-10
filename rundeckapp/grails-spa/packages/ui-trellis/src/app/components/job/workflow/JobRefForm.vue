@@ -37,6 +37,7 @@ import { merge } from "lodash";
 import ErrorsList from "../options/ErrorsList.vue";
 import { ContextVariable } from "../../../../library/stores/contextVariables";
 import JobRefFormFields from "./JobRefFormFields.vue";
+import { createJobRefDefinition } from "./stepEditorUtils";
 
 const rundeckContext = getRundeckContext();
 
@@ -74,37 +75,12 @@ export default defineComponent({
       editModel: {
         description: "",
         keepgoingOnSuccess: false,
-        jobref: {
-          nodeStep: false,
-          name: "",
-          uuid: "",
-          project: rundeckContext.projectName,
-          group: "",
-          args: "",
-          failOnDisable: false,
-          childNodes: false,
-          importOptions: false,
-          ignoreNotifications: false,
-          nodefilters: {
-            filter: "",
-            dispatch: {
-              threadcount: undefined,
-              keepgoing: undefined,
-              rankAttribute: undefined,
-              rankOrder: undefined,
-              nodeIntersect: undefined,
-            },
-          },
-        },
+        jobref: createJobRefDefinition(rundeckContext.projectName),
       },
       error: false,
       errorMessage: "",
       showRequired: false,
     };
-  },
-  mounted() {
-    // Initialize editModel with incoming modelValue on mount
-    this.editModel = merge(this.editModel, this.modelValue);
   },
   watch: {
     modalActive(val) {
@@ -117,11 +93,16 @@ export default defineComponent({
       this.editModel = merge(this.editModel, val);
     },
   },
+  mounted() {
+    this.editModel = merge(this.editModel, this.modelValue);
+  },
   methods: {
     async saveChanges() {
       if (
-        (!this.editModel.jobref?.name || this.editModel.jobref.name.length === 0) &&
-        (!this.editModel.jobref?.uuid || this.editModel.jobref.uuid.length === 0)
+        (!this.editModel.jobref?.name ||
+          this.editModel.jobref.name.length === 0) &&
+        (!this.editModel.jobref?.uuid ||
+          this.editModel.jobref.uuid.length === 0)
       ) {
         this.error = true;
         this.errorMessage = this.$t("commandExec.jobName.blank.message");

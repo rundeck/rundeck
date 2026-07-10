@@ -128,7 +128,7 @@ import { getRundeckContext } from "../../../../library";
 import type { EditStepData } from "./types/workflowTypes";
 import JobRefFormFields from "./JobRefFormFields.vue";
 import VueScrollTo from "vue-scrollto";
-import { resetValidation, type PluginDetails } from "./stepEditorUtils";
+import { resetValidation, createJobRefDefinition, type PluginDetails } from "./stepEditorUtils";
 
 const rundeckContext = getRundeckContext();
 
@@ -193,31 +193,9 @@ export default defineComponent({
       loading: false,
       pluginConfigMode: "edit",
       validationErrors: resetValidation(),
-      // Job reference defaults (matching JobRefForm)
       jobRefDefaults: {
         description: "",
-        jobref: {
-          nodeStep: false,
-          name: "",
-          uuid: "",
-          project: rundeckContext.projectName,
-          group: "",
-          args: "",
-          failOnDisable: false,
-          childNodes: false,
-          importOptions: false,
-          ignoreNotifications: false,
-          nodefilters: {
-            filter: "",
-            dispatch: {
-              threadcount: null,
-              keepgoing: null,
-              rankAttribute: null,
-              rankOrder: null,
-              nodeIntersect: null,
-            },
-          },
-        },
+        jobref: createJobRefDefinition(rundeckContext.projectName),
       },
     };
   },
