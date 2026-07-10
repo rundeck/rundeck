@@ -54,7 +54,7 @@ project(':rundeck-repository:rundeck-repository-client') {
         implementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
         api "org.slf4j:slf4j-api:${slf4jVersion}"
         // Use the awesome Spock testing and specification framework
-        testImplementation 'org.spockframework:spock-core:2.3-groovy-3.0'
+        testImplementation 'org.spockframework:spock-core:2.4-groovy-5.0'
         testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     }
 
