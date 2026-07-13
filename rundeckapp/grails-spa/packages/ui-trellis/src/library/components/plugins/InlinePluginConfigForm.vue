@@ -38,8 +38,12 @@
       </p>
     </div>
     <div v-if="showButtons" class="inline-form-footer">
-      <btn @click="$emit('cancel')">{{ $t("Cancel") }}</btn>
-      <btn type="success" @click="saveChanges">{{ $t("Save") }}</btn>
+      <btn data-testid="cancel-button" @click="$emit('cancel')">{{
+        $t("Cancel")
+      }}</btn>
+      <btn data-testid="save-button" type="success" @click="saveChanges">{{
+        $t("Save")
+      }}</btn>
     </div>
   </div>
 </template>
@@ -114,7 +118,10 @@ export default defineComponent({
       return this.editModel;
     },
     onPluginConfigUpdate(updated: PluginConfig) {
-      this.editModel = updated;
+      // pluginConfig only emits plugin fields (type/config). Merge instead of
+      // replacing so caller-owned fields (e.g. keepgoingOnSuccess, nodeStep, id
+      // on an error handler) are preserved rather than dropped.
+      this.editModel = { ...this.editModel, ...updated };
       this.$emit("update:modelValue", this.editModel);
     },
     saveChanges() {
@@ -130,7 +137,7 @@ export default defineComponent({
             this.editModel.type,
           );
         } catch (e) {
-          console.log(e);
+          console.error("[InlinePluginConfigForm] loadProvider error:", e);
         } finally {
           this.loading = false;
         }
