@@ -257,4 +257,47 @@ class OptionSpec extends Specification implements DomainUnitTest<Option> {
         opt.configRemoteUrl !=null
         opt.configRemoteUrl.jsonFilter == "\$.key"
     }
+
+    def "fromMap merges top-level remoteUrlAuthenticationType into configRemoteUrl when not already set"() {
+        given: "a map with remoteUrlAuthenticationType at the top level and configRemoteUrl without authenticationType"
+        def opt = Option.fromMap('test', [
+                type                      : 'text',
+                remoteUrlAuthenticationType: 'BASIC',
+                configRemoteUrl           : [username: 'admin', passwordStoragePath: 'keys/pass']
+        ])
+
+        expect: "authenticationType from top-level field is merged into configRemoteUrl"
+        opt.configRemoteUrl != null
+        opt.configRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BASIC
+        opt.configRemoteUrl.username == 'admin'
+        opt.configRemoteUrl.passwordStoragePath == 'keys/pass'
+    }
+
+    def "fromMap does not override authenticationType already present in configRemoteUrl"() {
+        given: "a map where both remoteUrlAuthenticationType and configRemoteUrl.authenticationType are set"
+        def opt = Option.fromMap('test', [
+                type                      : 'text',
+                remoteUrlAuthenticationType: 'BASIC',
+                configRemoteUrl           : [authenticationType: 'API_KEY', tokenStoragePath: 'keys/token']
+        ])
+
+        expect: "the existing authenticationType in configRemoteUrl is preserved"
+        opt.configRemoteUrl != null
+        opt.configRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY
+        opt.configRemoteUrl.tokenStoragePath == 'keys/token'
+    }
+
+    def "fromMap ignores empty remoteUrlAuthenticationType"() {
+        given: "a map with an empty remoteUrlAuthenticationType"
+        def opt = Option.fromMap('test', [
+                type                      : 'text',
+                remoteUrlAuthenticationType: '',
+                configRemoteUrl           : [tokenStoragePath: 'keys/token']
+        ])
+
+        expect: "no authenticationType is set on configRemoteUrl"
+        opt.configRemoteUrl != null
+        opt.configRemoteUrl.authenticationType == null
+        opt.configRemoteUrl.tokenStoragePath == 'keys/token'
+    }
 }

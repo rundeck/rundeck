@@ -29,8 +29,11 @@ import org.rundeck.storage.conf.TreeBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,6 +60,48 @@ public class StorageTreeFactory {
     private PluggableProviderService<StoragePlugin> storagePluginProviderService;
     private PluggableProviderService<StorageConverterPlugin> storageConverterPluginProviderService;
 
+
+    /**
+     * Scans the given config map for keys of the form {@code prefix.N.type} and returns a
+     * sorted list of all distinct integer indices {@code N} found.
+     * <p>
+     * Replaces the sequential {@code while (config.containsKey(prefix.N.type))} pattern,
+     * which stopped at the first gap in the index sequence and silently skipped all providers
+     * configured at higher indices (e.g. if index 3 was absent, index 4 and beyond were never
+     * loaded even if they were explicitly defined).
+     *
+     * @param config config property map
+     * @param prefix key prefix (e.g. {@code storage.provider} or {@code storage.converter})
+     * @return sorted list of integer indices N for which {@code prefix.N.type} exists
+     */
+    static List<Integer> extractConfiguredIndices(Map<String, String> config, String prefix) {
+        String indexedPrefix = prefix + SEP;
+        String typeSuffix    = SEP + TYPE;
+        // Use a Set to deduplicate: keys like "provider.4.type" and "provider.04.type"
+        // both parse to integer 4 and must not configure the same provider twice.
+        Set<Integer> indexSet = new HashSet<>();
+        for (String key : config.keySet()) {
+            if (key.startsWith(indexedPrefix) && key.endsWith(typeSuffix)) {
+                // Extract the middle segment — must be a plain integer with no extra dots
+                String middle = key.substring(indexedPrefix.length(), key.length() - typeSuffix.length());
+                if (!middle.contains(SEP)) {
+                    try {
+                        int index = Integer.parseInt(middle);
+                        // Only accept positive indices, consistent with the previous 1-based
+                        // sequential scan which never visited index 0 or below.
+                        if (index > 0) {
+                            indexSet.add(index);
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // non-numeric segment — not a valid index key, skip
+                    }
+                }
+            }
+        }
+        List<Integer> indices = new ArrayList<>(indexSet);
+        Collections.sort(indices);
+        return indices;
+    }
 
     public StorageTree createTree() throws Exception {
         if ( null == frameworkPropertyLookup) {
@@ -100,26 +145,26 @@ public class StorageTreeFactory {
         //base layer of storage
         TreeBuilder<ResourceMeta> builder = baseStorage(TreeBuilder.<ResourceMeta>builder());
 
-        int storeIndex = 1;
-
-        while (config.containsKey(getStorageConfigPrefix() + SEP + storeIndex + SEP + TYPE)) {
+        // Scan all keys to find configured storage provider indices, then sort and apply them.
+        // The previous sequential while-loop stopped at the first missing index, silently
+        // skipping all providers at higher indices whenever there was a gap in the sequence.
+        List<Integer> storeIndices = extractConfiguredIndices(config, getStorageConfigPrefix());
+        for (int storeIndex : storeIndices) {
             configureStoragePlugin(builder, storeIndex, config);
-            storeIndex++;
         }
-        if (1 == storeIndex) {
+        if (storeIndices.isEmpty()) {
             logger.debug("No storage plugins configured with prefix " + getStorageConfigPrefix());
         }
-        builder = addLogger(builder,config);
+        builder = addLogger(builder, config);
         //apply default converters on top of storage
         builder = baseConverter(builder);
 
         //add plugin converters
-        int converterIndex = 1;
-        while (config.containsKey(getConverterConfigPrefix() + SEP + converterIndex + SEP + TYPE)) {
+        List<Integer> converterIndices = extractConfiguredIndices(config, getConverterConfigPrefix());
+        for (int converterIndex : converterIndices) {
             builder = configureConverterPlugin(builder, converterIndex, config);
-            converterIndex++;
         }
-        if (1 == converterIndex) {
+        if (converterIndices.isEmpty()) {
             logger.debug("No converter plugins configured with prefix " + getConverterConfigPrefix());
         }
         return builder.build();

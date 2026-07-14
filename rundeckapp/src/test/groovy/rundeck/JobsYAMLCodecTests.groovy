@@ -605,7 +605,7 @@ public class JobsYAMLCodecTests  {
         assertFalse "wrong option name", opt2.required != null && opt2.required
         assertNull "wrong option values", opt2.optionValues
         assertNotNull "missing valuesUrl ", opt2.realValuesUrl
-        assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl.toExternalForm()
+        assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl
         assertEquals "wrong option regex", "\\d+", opt2.regex
     }
 

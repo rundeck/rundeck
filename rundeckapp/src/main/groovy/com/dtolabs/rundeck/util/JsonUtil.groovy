@@ -16,14 +16,16 @@
 
 package com.dtolabs.rundeck.util
 
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.util.logging.Slf4j
 import jakarta.servlet.http.HttpServletRequest
-import org.grails.web.json.JSONObject
 
 
 /**
  * JSON request handling utilities
  */
+@Slf4j
 class JsonUtil {
 
     // Grails 7: Shared ObjectMapper instance for parsing JSON request bodies
@@ -38,46 +40,46 @@ class JsonUtil {
      * @throws IOException if JSON parsing fails (but not if body is unavailable)
      */
     static Map parseRequestBody(HttpServletRequest request) throws IOException {
-        // Grails 7: Check if this is actually a JSON request
         def contentType = request.contentType
-        if (contentType) {
-            // Skip non-JSON content types (multipart/form-data, etc.)
-            if (!contentType.toLowerCase().contains('json')) {
-                return null
-            }
+        if (contentType && !contentType.toLowerCase().contains('json')) {
+            return null
         }
-        
-        // Spring Boot 3: Try multiple approaches to read the request body
-        
-        // Attempt 1: Read from input stream
+
+        // Use getReader() FIRST — never call getInputStream() before getReader().
+        // Calling getInputStream() first locks the stream and causes getReader() to throw
+        // IllegalStateException (Servlet spec), which combined with available()==0 (common on
+        // real networks/ALB) was the root cause of the silent data-loss bug (RUN-4521).
+        String content = null
         try {
-            def inputStream = request.getInputStream()
-            if (inputStream && inputStream.available() > 0) {
-                return objectMapper.readValue(inputStream, Map.class)
-            }
-        } catch (Exception e) {
-            // Stream might be already consumed or unavailable
-            // Continue to next attempt
-        }
-        
-        // Attempt 2: Read from reader  
-        try {
-            def reader = request.getReader()
-            if (reader) {
-                def content = reader.text
-                if (content && !content.trim().empty) {
-                    return objectMapper.readValue(content, Map.class)
+            content = request.getReader()?.text
+        } catch (Exception readerEx) {
+            // Reader unavailable (stream closed, IllegalStateException from prior getInputStream
+            // call, etc.) — fall back to reading raw bytes without the available() check.
+            // Do NOT use available(): it returns only buffered bytes and silently truncates
+            // data not yet in the local buffer on proxied/slow connections.
+            log.error("parseRequestBody: getReader() failed [${readerEx.class.simpleName}: ${readerEx.message}], falling back to getInputStream()")
+            try {
+                def bytes = request.getInputStream()?.readAllBytes()
+                if (bytes?.length > 0) {
+                    content = new String(bytes, 'UTF-8')
                 }
+            } catch (Exception streamEx) {
+                // Both reader and stream unavailable — body cannot be read
+                log.error("parseRequestBody: getInputStream() also failed [${streamEx.class.simpleName}: ${streamEx.message}] — body is unreadable")
             }
-        } catch (Exception e) {
-            // Reader might be unavailable
-            // Continue to next attempt
         }
-        
-        // NOTE: No fallback needed for Grails 7 controllers using @RequestBody
-        // Spring automatically handles JSON deserialization for @RequestBody parameters
-        
-        return null
+
+        if (!content?.trim()) {
+            return null
+        }
+
+        try {
+            return objectMapper.readValue(content, Map.class)
+        } catch (JsonProcessingException parseEx) {
+            // Body readable but not a JSON object (array, primitive, malformed) — return null
+            log.error("parseRequestBody: JSON parsing failed [${parseEx.class.simpleName}: ${parseEx.originalMessage}] — body was readable but not a JSON object")
+            return null
+        }
     }
 
     /**

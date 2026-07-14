@@ -11,6 +11,7 @@ import org.grails.plugins.metricsweb.MetricService
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent
+import org.springframework.security.authentication.event.AuthenticationFailureServiceExceptionEvent
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
 import rundeck.services.FrameworkService
@@ -131,6 +132,76 @@ class AuditEventsServiceSpec extends Specification implements ServiceUnitTest<Au
         !receivedEvent.userInfo.userRoles.is(roleList)
         receivedEvent.userInfo.userRoles == roleList
         receivedEvent.requestInfo.serverUUID == uuid
+    }
+
+    def "JAAS login failure dispatches LOGIN_FAILED audit event"() {
+        given:
+        defineBeans {
+            frameworkService(InstanceFactoryBean, Mock(FrameworkService) {
+                getServerUUID() >> "serverUUID"
+                getServerHostname() >> "serverHostname"
+                pluginService >> Mock(PluginService) {
+                    listPluginDescriptions(_) >> []
+                }
+            })
+            metricService(InstanceFactoryBean, Mock(MetricService) {
+                counter("userLogin", "success") >> Mock(Counter)
+                counter("userLogin", "failure") >> Mock(Counter)
+                counter("userLogout", "success") >> Mock(Counter)
+            })
+        }
+        service.installedPlugins = new HashMap<>()
+        def receivedEvent = null
+        CountDownLatch latch = new CountDownLatch(1)
+        service.addListener(new AuditEventListener() {
+            @Override
+            void onEvent(AuditEvent event) {
+                receivedEvent = event
+                latch.countDown()
+            }
+        })
+
+        when:
+        service.handleAuthenticationServiceExceptionFailureEvent(
+            Stub(AuthenticationFailureServiceExceptionEvent) {
+                getAuthentication() >> new UsernamePasswordAuthenticationToken("baduser", "pw")
+            })
+        latch.await(3, TimeUnit.SECONDS)
+
+        then:
+        receivedEvent?.actionType == ActionTypes.LOGIN_FAILED
+        receivedEvent?.userInfo?.username == "baduser"
+    }
+
+    def "JAAS login failure increments userLogin.failure counter"() {
+        given:
+        def failureCounter = Mock(Counter) {
+            1 * inc()
+        }
+        defineBeans {
+            frameworkService(InstanceFactoryBean, Mock(FrameworkService) {
+                getServerUUID() >> "serverUUID"
+                getServerHostname() >> "serverHostname"
+                pluginService >> Mock(PluginService) {
+                    listPluginDescriptions(_) >> []
+                }
+            })
+            metricService(InstanceFactoryBean, Mock(MetricService) {
+                counter("userLogin", "success") >> Mock(Counter)
+                counter("userLogin", "failure") >> failureCounter
+                counter("userLogout", "success") >> Mock(Counter)
+            })
+        }
+        service.installedPlugins = new HashMap<>()
+
+        when:
+        service.handleAuthenticationServiceExceptionFailureEvent(
+            Stub(AuthenticationFailureServiceExceptionEvent) {
+                getAuthentication() >> new UsernamePasswordAuthenticationToken("baduser", "pw")
+            })
+
+        then:
+        noExceptionThrown()
     }
 
     def "test metric counters"() {

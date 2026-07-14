@@ -2,6 +2,8 @@ package org.rundeck.app.config;
 
 import lombok.Builder;
 import lombok.Data;
+import java.util.Collections;
+import java.util.List;
 
 @Data
 @Builder
@@ -24,4 +26,6 @@ public class SystemConfig
     private final String description;
     private final String descriptionCode;
     private final String authRequired;
+    @Builder.Default
+    private final List<String> values = Collections.emptyList();
 }

@@ -120,6 +120,7 @@ export default defineComponent({
       this.modalOpen = false;
     },
     openSelector() {
+      this.clean();
       this.modalOpen = true;
     },
     openEditor(uploadSetting: UploadSetting) {

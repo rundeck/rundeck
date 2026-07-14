@@ -176,9 +176,7 @@ search
             pagination:{
                 max: ${enc(js:params.max?params.int('max',10):10)}
             },
-            query:{
-                jobIdFilter:"${enc(js:scheduledExecution.extid)}"
-            },
+            query:Object.assign({jobIdFilter:"${enc(js:scheduledExecution.extid)}"}, ${raw(groovy.json.JsonOutput.toJson(defaultRecentFilter ? [recentFilter: defaultRecentFilter] : [:]))}),
             filterOpts: {
                 showFilter: false,
                 showRecentFilter: true,

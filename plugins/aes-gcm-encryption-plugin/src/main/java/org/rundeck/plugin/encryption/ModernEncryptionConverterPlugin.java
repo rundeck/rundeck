@@ -128,13 +128,29 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
     @Override
     public HasInputStream readResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
                                        HasInputStream hasInputStream) {
-        if ("true".equals(resourceMetaBuilder.getResourceMeta().get(META_ENCRYPTED))) {
-            logger.debug("readResource (aes-gcm-encrypted) {}", path);
-            return decrypt(hasInputStream);
-        }
-        if ("true".equals(resourceMetaBuilder.getResourceMeta().get(JASYPT_META_ENCRYPTED))) {
-            logger.debug("readResource (jasypt-encrypted, legacy fallback) {}", path);
+        boolean jasyptEncrypted = "true".equals(resourceMetaBuilder.getResourceMeta().get(JASYPT_META_ENCRYPTED));
+        boolean aesEncrypted = "true".equals(resourceMetaBuilder.getResourceMeta().get(META_ENCRYPTED));
+
+        // The two flags are mutually exclusive by construction: every AES-GCM write clears the
+        // legacy Jasypt flag (see createResource/updateResource), and content + metadata are
+        // persisted atomically by the storage layer (single row write). Therefore any record
+        // that still carries jasypt-encryption:encrypted=true holds Jasypt-encrypted content —
+        // even when the aes-gcm-encryption:encrypted flag is also true. The legacy flag wins so
+        // that inconsistent records (e.g. production row id=130, where both flags were true) are
+        // decrypted with the correct algorithm instead of crashing. See RUN-4512.
+        if (jasyptEncrypted) {
+            if (aesEncrypted) {
+                logger.warn("readResource: record at '{}' has both encryption flags set; decrypting as "
+                        + "legacy Jasypt (content predates the AES-GCM migration, see RUN-4512). It will be "
+                        + "re-encrypted to AES-GCM on its next update.", path);
+            } else {
+                logger.debug("readResource (jasypt-encrypted, legacy) {}", path);
+            }
             return decryptLegacy(hasInputStream);
+        }
+        if (aesEncrypted) {
+            logger.debug("readResource (aes-gcm-encrypted) {}", path);
+            return decryptModern(hasInputStream);
         }
         logger.debug("readResource (unencrypted) {}", path);
         return null;
@@ -144,6 +160,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
     public HasInputStream createResource(Path path, ResourceMetaBuilder resourceMetaBuilder,
                                          HasInputStream hasInputStream) {
         resourceMetaBuilder.getResourceMeta().put(META_ENCRYPTED, "true");
+        resourceMetaBuilder.getResourceMeta().put(JASYPT_META_ENCRYPTED, "false");
         logger.debug("createResource {}", path);
         return encrypt(hasInputStream);
     }
@@ -171,7 +188,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
         }
     }
 
-    private HasInputStream decrypt(HasInputStream input) {
+    private HasInputStream decryptModern(HasInputStream input) {
         try {
             return new TransformStream(input) {
                 @Override
@@ -180,7 +197,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
                 }
             };
         } catch (Exception e) {
-            logger.error("AES-256-GCM decryption failed. Wrong password or tampered data.", e);
+            logger.error("AES-256-GCM decryption failed. Wrong password or corrupted data.", e);
             throw new RuntimeException("AES-256-GCM decryption failed", e);
         }
     }

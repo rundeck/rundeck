@@ -768,6 +768,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
         def projectData = projectDataProvider.findByName(project)
+        if (projectData == null) {
+            log.warn("Project '${project}' not found in database during loadProject despite existsFrameworkProject returning true")
+            return null
+        }
         def description = projectData.description
         def rdproject = new RundeckProject(projectData,null, this)
         //preload cached readme/motd

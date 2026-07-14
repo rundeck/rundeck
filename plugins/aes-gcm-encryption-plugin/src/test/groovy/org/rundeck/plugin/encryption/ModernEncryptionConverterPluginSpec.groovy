@@ -367,6 +367,78 @@ class ModernEncryptionConverterPluginSpec extends Specification {
         readAllBytes(result) == plaintext
     }
 
+    // --- RUN-4512: Prevention — metadata flags are always set consistently on write ---
+    //
+    // These tests verify that createResource() and updateResource() never leave the storage
+    // record in a state where both flags are true simultaneously, which was the root cause
+    // of the bug found in production (row id=130).
+
+    def "RUN-4512 prevention: createResource always sets jasypt flag to false"() {
+        given: "a resource that already has jasypt=true in its metadata (pre-existing Jasypt record)"
+        def plugin = createPlugin()
+        def plaintext = "new project config".bytes
+        def path = Mock(Path)
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "createResource is called (e.g. after a project re-creation)"
+        plugin.createResource(path, meta, mockHasInputStream(plaintext))
+
+        then: "aes-gcm flag is set and jasypt flag is explicitly cleared — never both true"
+        meta.getResourceMeta()["aes-gcm-encryption:encrypted"] == "true"
+        meta.getResourceMeta()["jasypt-encryption:encrypted"] == "false"
+    }
+
+    def "RUN-4512 prevention: updateResource always sets jasypt flag to false"() {
+        given: "a resource with jasypt=true (old Jasypt-encrypted record being updated)"
+        def plugin = createPlugin()
+        def plaintext = "updated project config".bytes
+        def path = Mock(Path)
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "updateResource is called (triggers lazy migration)"
+        plugin.updateResource(path, meta, mockHasInputStream(plaintext))
+
+        then: "aes-gcm flag is set and jasypt flag is explicitly cleared — never both true"
+        meta.getResourceMeta()["aes-gcm-encryption:encrypted"] == "true"
+        meta.getResourceMeta()["jasypt-encryption:encrypted"] == "false"
+    }
+
+    // --- RUN-4512: Inconsistent metadata recovery via flag precedence ---
+    //
+    // Root cause: readResource() checked the aes-gcm flag first and trusted it blindly. A record
+    // whose metadata had aes-gcm-encryption:encrypted=true but whose content was still Jasypt
+    // (e.g. production row id=130, where BOTH flags were true after a legacy migration) was sent
+    // to the AES-GCM decryptor, which threw:
+    //   EncryptionException: Unsupported encryption format version: -126
+    //
+    // Fix: the legacy Jasypt flag takes precedence. Because every AES-GCM write clears the Jasypt
+    // flag and content+metadata are persisted atomically, any record still carrying
+    // jasypt-encryption:encrypted=true holds Jasypt content and must be decrypted as legacy —
+    // even if the aes-gcm flag is also set.
+
+    def "RUN-4512: readResource decrypts as legacy Jasypt when both flags are true (content is Jasypt)"() {
+        given: "Jasypt-encrypted content (simulates production row id=130: both flags = true)"
+        def plugin = createPlugin()
+        def plaintext = "project.properties content".bytes
+        def path = Mock(Path)
+
+        and:
+        def jasyptEncrypted = jasyptEncrypt(plaintext, TEST_PASSWORD,
+                "PBEWITHSHA256AND128BITAES-CBC-BC", "BC")
+
+        and: "metadata has BOTH flags true (the exact inconsistent state found in production)"
+        def meta = metaWith([
+            "aes-gcm-encryption:encrypted": "true",
+            "jasypt-encryption:encrypted" : "true"
+        ])
+
+        when: "readResource is called — legacy flag wins, so the Jasypt decryptor is used"
+        def result = plugin.readResource(path, meta, mockHasInputStream(jasyptEncrypted))
+
+        then: "plaintext is recovered correctly without throwing"
+        readAllBytes(result) == plaintext
+    }
+
     // --- Wrong password test ---
 
     def "readResource with wrong password throws exception"() {

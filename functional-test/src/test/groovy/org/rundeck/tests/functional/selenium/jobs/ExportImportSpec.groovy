@@ -1,19 +1,26 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.UiModes
 import org.rundeck.util.gui.common.navigation.NavLinkTypes
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.jobs.JobUploadPage
+import org.rundeck.util.gui.pages.jobs.UiMode
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.SideBarPage
 import spock.lang.Shared
 
 @SeleniumCoreTest
+@UiModeFlag(featureName = "export-import", status = UiModeStatus.PROMOTED)
 class ExportImportSpec extends SeleniumBase {
+
+    static final UI_MODES = UiModes.defaultAndLegacy()
 
     @Shared String SELENIUM_EXPORT_IMPORT_PROJECT
 
@@ -106,14 +113,14 @@ class ExportImportSpec extends SeleniumBase {
         jobShowPage.getExtraOptFirsts(optName).size() == 1
         when:
         def jobUuid = jobShowPage.jobUuid.text
-        jobCreatePage.loadEditPath(SELENIUM_EXPORT_IMPORT_PROJECT, jobUuid, true, legacyUi)
+        jobCreatePage.loadEditPath(SELENIUM_EXPORT_IMPORT_PROJECT, jobUuid, legacyUi ? UiMode.LEGACY : UiMode.DEFAULT)
         jobCreatePage.go()
         jobCreatePage.tab JobTab.WORKFLOW click()
         then:
         jobCreatePage.optDetails.size() == 1
         jobCreatePage.options.size() == 1
         where:
-        legacyUi<< [true, false]
+        [legacyUi] << UI_MODES
     }
     def "import job with skip should show skip message"() {
         setup:
@@ -145,7 +152,7 @@ class ExportImportSpec extends SeleniumBase {
 
         jobUploadPage.headerTextInfo.text.contains("skipped due to existing jobs")
         where:
-        legacyUi<< [true, false]
+        [legacyUi] << UI_MODES
 
     }
 

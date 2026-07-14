@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 import com.dtolabs.rundeck.core.execution.workflow.HasParentStepContext;
 
+import java.util.List;
+
 
 /**
  * JobRefCommandBase implementation returns a null value for jobIdentifier, can be subclassed.
@@ -39,6 +41,8 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
     private int subStepNumber = -1;
     /** 1-based logical step number in the original job definition; -1 when not set. */
     private int logicalStepNumber = -1;
+    /** Full parent step path for nested conditionals (e.g., [2, 2] for step "2/2/1"). Null for non-nested steps. */
+    private List<Integer> parentStepPath = null;
     public String getJobIdentifier() {
         return null;
     }
@@ -132,5 +136,14 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
 
     public void setLogicalStepNumber(int logicalStepNumber) {
         this.logicalStepNumber = logicalStepNumber;
+    }
+
+    @Override
+    public List<Integer> getParentStepPath() {
+        return parentStepPath;
+    }
+
+    public void setParentStepPath(List<Integer> parentStepPath) {
+        this.parentStepPath = parentStepPath;
     }
 }

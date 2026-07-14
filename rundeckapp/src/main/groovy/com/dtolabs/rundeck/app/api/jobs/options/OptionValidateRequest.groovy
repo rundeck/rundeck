@@ -51,20 +51,13 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
     String valuesUrl
 
     @Override
-    URL getRealValuesUrl() {
-        if(valuesUrl){
-            try{
-                return new URL(this.valuesUrl)
-            }catch (MalformedURLException e){
-                return null
-            }
-        }
-        return null
+    String getRealValuesUrl() {
+        return valuesUrl ?: null
     }
 
     @Override
-    void setRealValuesUrl(final URL realValuesUrl) {
-        this.valuesUrl = realValuesUrl.toString()
+    void setRealValuesUrl(final String realValuesUrl) {
+        this.valuesUrl = realValuesUrl
     }
 
     /**
@@ -154,9 +147,9 @@ class OptionValidateRequest extends OptionInput implements OptionData, Validatea
         storagePath(nullable: true)
         type(nullable: true, inList: ['text', 'file', 'multiline'])
         valuesUrl(nullable: true, blank:true, validator: { String val, OptionValidateRequest obj, Errors errors ->
-            if(val){
+            if(val && !val.contains('${')) {
                 try {
-                    def url = new URL(val)
+                    new URL(val)
                 } catch (MalformedURLException e) {
                     errors.rejectValue('valuesUrl', 'option.valuesUrl.invalid.message')
                     return false

@@ -3,6 +3,9 @@ package org.rundeck.tests.functional.selenium.settings
 import org.openqa.selenium.By
 import org.openqa.selenium.Cookie
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiMechanism
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
@@ -17,6 +20,12 @@ import org.rundeck.util.gui.pages.settings.SettingsBarPage
  * - NextUI cookie-based preference
  */
 @SeleniumCoreTest
+@UiModeFlag(
+    featureName = "nextui-cookie",
+    status      = UiModeStatus.PROMOTED,
+    mechanism   = UiMechanism.COOKIE,
+    description = "Both nextUi=true and nextUi=false cookie paths are exercised"
+)
 class SettingsBarSpec extends SeleniumBase {
 
     static final String PROJECT_NAME = "SettingsBarTestProject"

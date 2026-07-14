@@ -17,7 +17,7 @@
 plugins {
     id "org.dvaske.gradle.git-build-info"
     id "java-library"
-    id 'com.github.gmazzo.buildconfig' version '3.0.3'
+    id 'com.github.gmazzo.buildconfig' version '3.1.0'
 
 }
 import java.text.SimpleDateFormat
@@ -67,7 +67,7 @@ dependencies {
         exclude group:'org.checkerframework', module: 'checker-qual'
     }
 
-    api('org.dom4j:dom4j:2.1.3'){
+    api('org.dom4j:dom4j:2.2.0'){
         exclude group:'javax.xml.bind', module: 'jaxb-api'
         exclude group: 'pull-parser'
     }
@@ -111,7 +111,7 @@ dependencies {
 
 
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-    testImplementation group: 'org.junit-pioneer', name: 'junit-pioneer', version: '1.5.0'
+    testImplementation group: 'org.junit-pioneer', name: 'junit-pioneer', version: '1.9.1'
 
     // Add constraints to fix transitive dependency conflicts
     constraints {

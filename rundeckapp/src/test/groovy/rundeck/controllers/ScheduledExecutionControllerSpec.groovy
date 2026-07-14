@@ -5576,4 +5576,100 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         // If someone reverts to old pattern, tests checking 'instanceof WorkflowDataImpl' will FAIL
     }
 
+    def "show action includes nodeFilterParam in model when nodeFilter param is provided"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter: '.*',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                )
+        ).save()
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _*authorizeProjectJobAny(_, _, _, _) >> true
+            _*filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            filterNodeSet(_, _) >> new NodeSetImpl()
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            _*calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
+        }
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            validateJobForExport(_, _) >> Mock(Validator.Report) { isValid() >> true }
+        }
+        controller.notificationService = Mock(NotificationService)
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+        when:
+        request.parameters = [id: se.id.toString(), project: 'project1', nodeFilter: 'name: nodea']
+        def model = controller.show()
+
+        then:
+        model != null
+        model.nodeFilterParam == 'name: nodea'
+    }
+
+    def "show action omits nodeFilterParam from model when nodeFilter param is absent"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter: '.*',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                )
+        ).save()
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _*authorizeProjectJobAny(_, _, _, _) >> true
+            _*filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            filterNodeSet(_, _) >> new NodeSetImpl()
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            _*calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
+        }
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            validateJobForExport(_, _) >> Mock(Validator.Report) { isValid() >> true }
+        }
+        controller.notificationService = Mock(NotificationService)
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        controller.featureService = Mock(FeatureService)
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+
+        when:
+        request.parameters = [id: se.id.toString(), project: 'project1']
+        def model = controller.show()
+
+        then:
+        model != null
+        model.nodeFilterParam == null
+    }
+
 }

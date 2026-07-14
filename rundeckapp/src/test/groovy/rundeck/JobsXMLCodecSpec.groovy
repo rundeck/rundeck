@@ -844,4 +844,59 @@ exit 0''', argString: 'elf biscuits'
             wfi.type == ScriptCommand.SCRIPT_COMMAND_TYPE
 
     }
+
+    def "decode XML with empty filter element inside nodefilters sets doNodedispatch true (RUN-3132)"() {
+        given: "XML job with <nodefilters><filter/></nodefilters> and <dispatch>"
+            def xml = """<joblist>
+  <job>
+    <id>1</id>
+    <name>test-dispatch-empty-filter</name>
+    <description>RUN-3132 regression test</description>
+    <loglevel>INFO</loglevel>
+    <context><project>test</project></context>
+    <sequence><command><exec>echo hello</exec></command></sequence>
+    <nodefilters excludeprecedence="true">
+      <filter></filter>
+    </nodefilters>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+      <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+    </dispatch>
+  </job>
+</joblist>"""
+        when:
+            def jobs = JobsXMLCodec.decode(xml)
+        then:
+            jobs != null
+            jobs.size() == 1
+            ScheduledExecution se = jobs[0] as ScheduledExecution
+            se.doNodedispatch == true
+            se.filter == ''
+    }
+
+    def "decode XML with only dispatch block and no nodefilters keeps doNodedispatch false (backward compat)"() {
+        given: "old-format XML job with <dispatch> only and no <nodefilters> element (RUN-3132)"
+            def xml = """<joblist>
+  <job>
+    <id>2</id>
+    <name>test-local-old-format</name>
+    <description>backward compat: old XML with only dispatch block</description>
+    <loglevel>INFO</loglevel>
+    <context><project>test</project></context>
+    <sequence><command><exec>echo hello</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+</joblist>"""
+        when:
+            def jobs = JobsXMLCodec.decode(xml)
+        then:
+            jobs != null
+            jobs.size() == 1
+            ScheduledExecution se = jobs[0] as ScheduledExecution
+            se.doNodedispatch == false
+    }
 }

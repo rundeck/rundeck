@@ -367,4 +367,64 @@ class WorkflowServiceSpec extends Specification implements ServiceUnitTest<Workf
         ]
         return map
     }
+
+    def "createStateForWorkflow correctly groups mixed conditional with nested and direct substeps"() {
+        given: "A conditional with both a nested conditional and a direct substep"
+        // Job structure:
+        // Step 1: regular command
+        // Step 2: Conditional (top-level)
+        //   SubStep 1: Nested Conditional
+        //     Nested SubStep 1: command in nested conditional
+        //   SubStep 2: Direct command (not in nested conditional)
+        // Step 3: regular command
+
+        def step1 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'step1', null)
+
+        // SubStep 1 of Step 2: Nested conditional (has parentStepPath)
+        def nestedSub1 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'nestedSub1', null)
+        nestedSub1.parentStepNumber = 2
+        nestedSub1.subStepNumber = 1
+        nestedSub1.parentStepPath = [2, 1]  // Path: step 2, substep 1
+
+        // SubStep 2 of Step 2: Direct substep (no parentStepPath)
+        def directSub2 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'directSub2', null)
+        directSub2.parentStepNumber = 2
+        directSub2.subStepNumber = 2
+        directSub2.parentStepPath = null  // Direct substep of step 2
+
+        def step3 = new PluginNodeStepExecutionItemImpl('plugin', [:], false, null, 'step3', null)
+
+        WorkflowImpl workflow = new WorkflowImpl([step1, nestedSub1, directSub2, step3], 0, false, "")
+
+        when:
+        def state = service.createStateForWorkflow(workflow, 'proj1', 'frameworkNode', null, null)
+
+        then: "The state tree has exactly 3 logical steps"
+        state.stepCount == 3
+        state.mutableStepStates.size() == 3
+
+        and: "Step 1 is a regular step"
+        !state.mutableStepStates[0].hasSubWorkflow()
+        state.mutableStepStates[0].stepIdentifier.context*.step == [1]
+
+        and: "Step 2 is a conditional containing both substeps"
+        state.mutableStepStates[1].hasSubWorkflow()
+        state.mutableStepStates[1].stepIdentifier.context*.step == [2]
+        def innerWf = state.mutableStepStates[1].mutableSubWorkflowState
+        innerWf.stepCount == 2
+
+        and: "SubStep 1 of Step 2 is the nested conditional"
+        innerWf.mutableStepStates[0].hasSubWorkflow()
+        innerWf.mutableStepStates[0].stepIdentifier.context*.step == [1]
+        def nestedWf = innerWf.mutableStepStates[0].mutableSubWorkflowState
+        nestedWf.stepCount == 1
+
+        and: "SubStep 2 of Step 2 is the direct command"
+        !innerWf.mutableStepStates[1].hasSubWorkflow()
+        innerWf.mutableStepStates[1].stepIdentifier.context*.step == [2]
+
+        and: "Step 3 is a regular step"
+        !state.mutableStepStates[2].hasSubWorkflow()
+        state.mutableStepStates[2].stepIdentifier.context*.step == [3]
+    }
 }

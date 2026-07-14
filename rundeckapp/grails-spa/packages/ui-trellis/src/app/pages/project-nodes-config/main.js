@@ -12,7 +12,7 @@ import PageConfirm from "../../../library/components/utils/PageConfirm.vue";
 import ProjectConfigurableForm from "./ProjectConfigurableForm.vue";
 import ProjectNodePage from "./ProjectNodePage.vue";
 import { getRundeckContext } from "../../../library";
-import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
+import { initI18n, commonAddUiMessages } from "../../utilities/i18n";
 import PrimeVue from "primevue/config";
 import Lara from "@primeuix/themes/lara";
 
@@ -57,14 +57,8 @@ for (let i = 0; i < els.length; i++) {
       },
     },
   });
-  app.provide("addUiMessages", async (messages) => {
-    const newMessages = messages.reduce(
-      (acc, message) => (message ? { ...acc, ...message } : acc),
-      {},
-    );
-    const locale = window._rundeck.locale || "en_US";
-    const lang = window._rundeck.language || "en";
-    return updateLocaleMessages(i18n, locale, lang, newMessages);
-  });
+  app.provide("addUiMessages", async (messages) =>
+    commonAddUiMessages(i18n, messages),
+  );
   app.mount(e);
 }

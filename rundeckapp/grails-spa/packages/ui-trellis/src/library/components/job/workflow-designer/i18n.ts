@@ -1,5 +1,5 @@
 const messages: any = {
-  en: {
+  en_US: {
     graph: {
       stepLabel: {
         scriptFile: "Script File",

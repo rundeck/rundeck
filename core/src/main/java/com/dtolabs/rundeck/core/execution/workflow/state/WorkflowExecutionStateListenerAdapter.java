@@ -174,9 +174,20 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     public void beginWorkflowItem(int step, StepExecutionItem item) {
         HasParentStepContext parented = asHierarchical(item);
         if (parented != null) {
-            stepContext.beginStepContext(StateUtils.stepContextId(parented.getParentStepNumber(), false));
-            stepContext.beginContext();
-            stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+            List<Integer> parentPath = parented.getParentStepPath();
+            if (parentPath != null && !parentPath.isEmpty()) {
+                // Push all levels of the parent path onto the context stack for multi-level nesting
+                for (Integer parentStepNum : parentPath) {
+                    stepContext.beginStepContext(StateUtils.stepContextId(parentStepNum, false));
+                    stepContext.beginContext();
+                }
+                stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+            } else {
+                // Single-level conditional substep (original behavior)
+                stepContext.beginStepContext(StateUtils.stepContextId(parented.getParentStepNumber(), false));
+                stepContext.beginContext();
+                stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+            }
         } else {
             stepContext.beginStepContext(StateUtils.stepContextId(resolveStepNumber(step, item), false));
         }
@@ -204,9 +215,20 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
             notifyAllStepState(createIdentifier(), createStepStateChange(result), new Date());
         }
         stepContext.finishStepContext();
-        if (asHierarchical(item) != null) {
-            stepContext.finishContext();
-            stepContext.finishStepContext();
+        HasParentStepContext parented = asHierarchical(item);
+        if (parented != null) {
+            List<Integer> parentPath = parented.getParentStepPath();
+            if (parentPath != null && !parentPath.isEmpty()) {
+                // Pop all levels of the parent path from the context stack for multi-level nesting
+                for (int i = 0; i < parentPath.size(); i++) {
+                    stepContext.finishContext();
+                    stepContext.finishStepContext();
+                }
+            } else {
+                // Single-level conditional substep (original behavior)
+                stepContext.finishContext();
+                stepContext.finishStepContext();
+            }
         }
     }
 

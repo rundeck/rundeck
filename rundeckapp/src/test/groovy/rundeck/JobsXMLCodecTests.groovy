@@ -2259,8 +2259,8 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect regex", "abc", opt1.regex
             assertNull "incorrect values size", opt1.valuesList
             assertNotNull "missing valuesUrl", opt1.realValuesUrl
-            assertTrue "missing valuesUrl", opt1.realValuesUrl instanceof URL
-            assertEquals "incorrect valuesUrl", "http://monkey/somewhere",opt1.realValuesUrl.toExternalForm()
+            assertTrue "missing valuesUrl", opt1.realValuesUrl instanceof String
+            assertEquals "incorrect valuesUrl", "http://monkey/somewhere", opt1.realValuesUrl
 
     }
 
@@ -4932,7 +4932,7 @@ void testDecodeBasic__no_group(){
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         options:[
-                            new Option(name:'test1',defaultValue:'monkey',valuesUrl:new URL('http://monkey/somewhere'),enforced:false),
+                            new Option(name:'test1',defaultValue:'monkey',valuesUrl:'http://monkey/somewhere',enforced:false),
                             new Option(name:'delay',defaultValue:'12')
                         ] as TreeSet
                 )

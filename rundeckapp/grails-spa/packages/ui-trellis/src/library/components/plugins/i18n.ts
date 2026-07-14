@@ -1,6 +1,6 @@
 // Ready translated locale messages
 export default {
-  en: {
+  en_US: {
     message: {
       delete: "Delete this field",
       duplicated: "Field already exists",

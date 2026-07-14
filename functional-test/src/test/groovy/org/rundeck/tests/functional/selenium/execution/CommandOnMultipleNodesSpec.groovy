@@ -5,6 +5,7 @@ import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.execution.CommandPage
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
+import spock.lang.Unroll
 
 @SeleniumCoreTest
 class CommandOnMultipleNodesSpec extends SeleniumBase{
@@ -42,9 +43,11 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
         loginPage.login(TEST_USER, TEST_PASS)
     }
 
-    def "execution succeeds on the specific nodes matching the filter"() {
+    @Unroll
+    def "execution succeeds on the specific nodes matching the filter (nextUi: #nextUi)"() {
         when:
         def commandPage = go CommandPage, TEST_PROJECT
+        commandPage.nextUi = nextUi
         def executionShowPage = page ExecutionShowPage
         then:
         commandPage.nodeFilterTextField.click()
@@ -62,5 +65,7 @@ class CommandOnMultipleNodesSpec extends SeleniumBase{
         executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
         // Waits to ensure there is a log line for each node matching the executor-test tag
         waitFor({ executionShowPage.getExecLogLines() }, { it.size() == NODE_LIST.size() })
+        where:
+            nextUi << [false, true]
     }
 }

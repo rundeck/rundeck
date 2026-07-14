@@ -95,6 +95,41 @@ class MutableWorkflowStateImplSpec extends Specification {
         mutableWorkflowState.stepStates[0].subWorkflowState.stepStates[0].nodeStateMap[nodeB].executionState.toString()=='RUNNING'
 
     }
+    def "RUN-2939: late node step completion overrides an inferred NOT_STARTED state"() {
+        given:
+        def date = new Date()
+        def nodeA = 'TargetNode1'
+        def nodeB = 'TargetNode2'
+        def serverNode = 'server'
+
+        //single node step running on two nodes (the last step of the job)
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = true
+        def wf = new MutableWorkflowStateImpl([nodeA, nodeB], 1, [0: mutableStep1], null, serverNode)
+
+        //workflow + step begin
+        wf.updateWorkflowState(ExecutionState.RUNNING, date, [nodeA, nodeB])
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.RUNNING)), date)
+
+        //nodeA runs and completes normally
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.RUNNING), nodeA), date)
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), nodeA), date)
+
+        //nodeB also ran (its output exists) but its state events have not been delivered yet
+
+        when: "the overall workflow is reported SUCCEEDED before nodeB's completion event"
+        wf.updateWorkflowState(ExecutionState.SUCCEEDED, date, null)
+
+        then: "nodeB is inferred as NOT_STARTED at finalization"
+        wf.stepStates[0].nodeStateMap[nodeB].executionState.toString() == 'NOT_STARTED'
+
+        when: "the real (late) completion event for nodeB finally arrives"
+        wf.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), nodeB), date)
+
+        then: "the inferred NOT_STARTED is corrected to the observed SUCCEEDED"
+        wf.stepStates[0].nodeStateMap[nodeA].executionState.toString() == 'SUCCEEDED'
+        wf.stepStates[0].nodeStateMap[nodeB].executionState.toString() == 'SUCCEEDED'
+    }
     def "captured state test of above"(){
         given:
         def date = new Date()

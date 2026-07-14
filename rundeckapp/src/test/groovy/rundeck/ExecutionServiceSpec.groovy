@@ -97,6 +97,9 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import com.dtolabs.rundeck.core.audit.AuditEvent
+import com.dtolabs.rundeck.plugins.audit.AuditEventListener
+import rundeck.services.audit.AuditEventsService
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.Timestamp
@@ -105,6 +108,8 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by greg on 2/17/15.
@@ -153,6 +158,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     @Unroll
     def "expand date strings"() {
         given:
+        // Fix JVM timezone to UTC so expected values are portable across test environments
+        def originalTz = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
         def cal = new GregorianCalendar(1970, 0, 14, 8, 20, 30)
         Date thedate = cal.time
 
@@ -161,6 +169,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         result == expected
+
+        cleanup:
+        TimeZone.setDefault(originalTz)
+
         where:
         input                                          | expected
         ''                                             | ''
@@ -170,6 +182,14 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         '${DATE:yyyy-MM-dd} blah ${DATE+3:yyyy-MM-dd}' | '1970-01-14 blah 1970-01-17'
         '${DATE-7:yyyy-MM-dd}'                         | '1970-01-07'
         'invalid ${DATE-asdf7:yyyy-MM-dd}'             | 'invalid ${DATE-asdf7:yyyy-MM-dd}'
+        '${DATE:HH:mm:ss}'                             | '08:20:30'
+        '${DATE:yyyy-MM-dd HH:mm:ss}'                  | '1970-01-14 08:20:30'
+        // TZ-aware: Asia/Tokyo is UTC+9, so 08:20:30 UTC = 17:20:30 JST
+        '${DATE:HH:mm:ss:Asia/Tokyo}'                  | '17:20:30'
+        // 1970-01-15 08:20:30 UTC = 1970-01-15 03:20:30 EST (UTC-5 in January)
+        '${DATE+1:HH:mm:ss:America/New_York}'          | '03:20:30'
+        // Unknown TZ segment — falls back to treating full string as FORMAT; SimpleDateFormat rejects it, token left unexpanded
+        '${DATE:HH:mm:ss:NotAZone}'                    | '${DATE:HH:mm:ss:NotAZone}'
     }
     void "retry execution otherwise running"() {
 
@@ -301,6 +321,71 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         e2 != null
         e2.user == 'testuser'
+    }
+
+    @Unroll
+    void "create execution publishes audit RUN event with username from execution record"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'auditJob',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'audit test job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo test'])]
+                ),
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getNodes(_, _) >> null
+        }
+
+        AuditEvent capturedEvent = null
+        CountDownLatch latch = new CountDownLatch(1)
+
+        def auditSvc = new AuditEventsService()
+        auditSvc.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> 'test-uuid'
+            getServerHostname() >> 'test-host'
+        }
+        auditSvc.installedPlugins = [:]
+        auditSvc.addListener(new AuditEventListener() {
+            @Override
+            void onEvent(AuditEvent event) {
+                capturedEvent = event
+                latch.countDown()
+            }
+        })
+        service.auditEventsService = auditSvc
+
+        when: "execution is created — security context has no real user (simulates scheduled/API/webhook contexts)"
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> contextUser
+        }
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                runAsUser,
+                [executionType: execType]
+        )
+        latch.await(3, TimeUnit.SECONDS)
+
+        then: "audit event username is taken from execution.user, not from the security context"
+        e2 != null
+        e2.user == expectedUser
+        capturedEvent != null
+        capturedEvent.userInfo.username == expectedUser
+
+        where:
+        execType    | contextUser   | runAsUser      | expectedUser
+        'scheduled' | 'job-creator' | null           | 'job-creator'   // Quartz thread: job creator
+        'user'      | 'john.doe'    | null           | 'john.doe'      // interactive: auth user
+        'user'      | 'john.doe'    | 'run-as-user'  | 'run-as-user'   // run-as: override user
     }
 
     void "create execution expand date strings"() {

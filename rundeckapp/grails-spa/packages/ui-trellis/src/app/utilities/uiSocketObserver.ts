@@ -3,7 +3,7 @@ import * as uiv from "uiv";
 import { getRundeckContext } from "../../library";
 import { UiMessage } from "../../library/stores/UIStore";
 import UiSocket from "../../library/components/utils/UiSocket.vue";
-import { initI18n, updateLocaleMessages } from "./i18n";
+import { initI18n, commonAddUiMessages, type LocalizedMessages } from "./i18n";
 import { createApp } from "vue";
 import { configurePrimeVue } from "../../library/utilities/primeVueConfig";
 
@@ -37,15 +37,11 @@ export const observer = new MutationObserver(function (mutations_list) {
             },
           );
 
-          vue.provide("addUiMessages", async (messages: UiMessage[]) => {
-            const newMessages = messages.reduce(
-              (acc: Record<string, any>, message: UiMessage) => (message ? { ...acc, ...message } : acc),
-              {},
-            );
-            const locale = getRundeckContext().locale || "en_US";
-            const lang = getRundeckContext().language || "en";
-            return updateLocaleMessages(i18n, locale, lang, newMessages);
-          });
+          vue.provide(
+            "addUiMessages",
+            async (messages: UiMessage[] | LocalizedMessages) =>
+              commonAddUiMessages(i18n, messages),
+          );
 
           vue.use(i18n);
           vue.use(uiv);

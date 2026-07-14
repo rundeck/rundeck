@@ -102,18 +102,28 @@ export default defineComponent({
 
     getFilter() {
       if (this.nodeFilter) {
-        let nodeFilterCpy = this.nodeFilter.trim();
-        const idxKey = nodeFilterCpy.indexOf(": ") + 2;
-        if (nodeFilterCpy.slice(idxKey).includes(" ")) {
-          nodeFilterCpy += '"';
-          nodeFilterCpy =
-            nodeFilterCpy.slice(0, idxKey) + '"' + nodeFilterCpy.slice(idxKey);
-
+        const nodeFilterCpy = this.nodeFilter.trim();
+        const sepIdx = nodeFilterCpy.indexOf(": ");
+        if (sepIdx < 0) {
           return nodeFilterCpy;
         }
-        return this.nodeFilter;
+        const valueStart = sepIdx + 2;
+        const valueAndRest = nodeFilterCpy.slice(valueStart);
+        // Already quoted — leave as-is to avoid double-quoting
+        if (valueAndRest.startsWith('"')) {
+          return nodeFilterCpy;
+        }
+        // Multi-attribute filter (e.g. "osFamily: unix name: localhost") —
+        // detected by a space followed by an optional ! and an attribute name + colon.
+        // Do NOT quote: the space is a separator between attributes, not part of a value.
+        const hasMultipleAttrs = /\s+!?\w[\w.-]*:/.test(valueAndRest);
+        if (!hasMultipleAttrs && valueAndRest.includes(" ")) {
+          // Single attribute whose value contains spaces — quote it
+          return nodeFilterCpy.slice(0, valueStart) + '"' + valueAndRest + '"';
+        }
+        return nodeFilterCpy;
       } else if (this.filterKey && this.filterVal) {
-        return `${this.filterKey}: \"${this.filterVal}\"`;
+        return `${this.filterKey}: "${this.filterVal}"`;
       }
     },
   },

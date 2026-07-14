@@ -64,12 +64,11 @@ class ConditionalStep implements WorkflowStepData, Validateable {
             if (obj.conditionSet && (!val || val.isEmpty())) {
                 errors.rejectValue("subSteps", 'WorkflowStep.conditional.subSteps.required', [errors.nestedPath] as Object[], "Step {0}: Conditional steps must have at least one sub-step")
             }
-            // Validate nesting depth (v1: max 1 level deep)
+            // Validate nesting depth - only allow one level of nested conditionals
             if (val) {
-                val.eachWithIndex { subStep, index ->
-                    if (subStep instanceof ConditionalStep) {
-                        errors.rejectValue("subSteps", 'WorkflowStep.conditional.nesting.depth', [errors.nestedPath, index] as Object[], "Step {0}: Sub-step {1} cannot be a conditional step (nesting limited to 1 level in v1)")
-                    }
+                def maxDepth = calculateMaxNestedDepth(val, 0)
+                if (maxDepth > 1) {
+                    errors.rejectValue("subSteps", 'WorkflowStep.conditional.nesting.tooDeep', [errors.nestedPath, maxDepth] as Object[], "Step {0}: Nested conditionals are limited to one level deep (found depth {1})")
                 }
             }
         })
@@ -77,6 +76,29 @@ class ConditionalStep implements WorkflowStepData, Validateable {
             if(!val) return
             new WorkflowStepValidatorFactory(Holders.grailsApplication.mainContext.getBean(FrameworkServiceCapabilities)).createValidator("${errors.nestedPath}.errorHandler", val).validate(val, errors)
         })
+    }
+
+    /**
+     * Calculate the maximum nesting depth of conditional steps within a list of steps.
+     * @param steps List of workflow steps to check
+     * @param currentDepth Current depth in the recursion
+     * @return Maximum depth of nested conditionals found
+     */
+    private static int calculateMaxNestedDepth(List<WorkflowStepData> steps, int currentDepth) {
+        int maxDepth = currentDepth
+        for (WorkflowStepData step : steps) {
+            if (step instanceof ConditionalStep) {
+                ConditionalStep conditionalStep = (ConditionalStep) step
+                int nestedDepth = currentDepth + 1
+                if (conditionalStep.subSteps) {
+                    int subDepth = calculateMaxNestedDepth(conditionalStep.subSteps, nestedDepth)
+                    maxDepth = Math.max(maxDepth, subDepth)
+                } else {
+                    maxDepth = Math.max(maxDepth, nestedDepth)
+                }
+            }
+        }
+        return maxDepth
     }
 
     /**
@@ -115,17 +137,28 @@ class ConditionalStep implements WorkflowStepData, Validateable {
         if (stepMap.conditionGroups) {
             step.conditionSet = new ConditionalSetImpl().fromMap(stepMap as Map<String, Object>)
         }
-        // Handle subSteps - can be any WorkflowStepData type
+        // Handle subSteps - can be any WorkflowStepData type including nested ConditionalSteps
         if (stepMap.conditionGroups && stepMap.subSteps) {
             def subStepsList = []
             stepMap.subSteps.each { Map subStepMap ->
                 WorkflowStepData exec
-                if (subStepMap.jobref!=null) {
+                // Check for truthy conditionGroups (not just non-null) to detect nested conditionals
+                if (subStepMap.conditionGroups) {
+                    // Handle nested ConditionalStep recursively
+                    exec = ConditionalStep.fromMap(subStepMap)
+                } else if (subStepMap.jobref!=null) {
                     exec = JobExec.jobExecFromMap(subStepMap)
                 } else {
                     exec = PluginStep.fromMap(subStepMap)
+                    // PluginStep.fromMap() doesn't handle errorhandler, so we need to set it explicitly
+                    if (subStepMap.errorhandler) {
+                        exec.errorHandler = WorkflowStepDataImpl.fromMap(subStepMap.errorhandler as Map<String, Object>)
+                    }
                 }
-                subStepsList.add(exec)
+                // Only add non-null steps to avoid NPE later
+                if (exec != null) {
+                    subStepsList.add(exec)
+                }
             }
             step.subSteps = subStepsList
         }

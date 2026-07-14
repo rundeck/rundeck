@@ -7,7 +7,7 @@ import spock.lang.Specification
 class ReferencedExecutionSpec extends Specification implements DataTest {
     
     void setupSpec() {
-        mockDomains(ScheduledExecution, Workflow, CommandExec, ReferencedExecution)
+        mockDomains(ScheduledExecution, Workflow, CommandExec, Execution, ReferencedExecution)
     }
     def "execution id list"(){
         given:

@@ -5,7 +5,11 @@ import VueCookies from "vue-cookies";
 import { getRundeckContext } from "../../../library";
 import { UiMessage } from "../../../library/stores/UIStore";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
-import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
+import {
+  initI18n,
+  commonAddUiMessages,
+  type LocalizedMessages,
+} from "../../utilities/i18n";
 import {configurePrimeVue} from "../../../library/utilities/primeVueConfig";
 
 const rootStore = getRundeckContext().rootStore;
@@ -72,16 +76,11 @@ function initUiComponents(elmElement: any) {
   vue.provide("registerComponent", (name: string, comp: Component) => {
     vue.component(name, comp);
   });
-  vue.provide("addUiMessages", async (messages: UiMessage[]) => {
-    const newMessages = messages.reduce(
-      (acc: Record<string, any>, message: UiMessage) =>
-        message ? { ...acc, ...message } : acc,
-      {},
-    );
-    const locale = window._rundeck.locale || "en_US";
-    const lang = window._rundeck.language || "en";
-    return updateLocaleMessages(i18n, locale, lang, newMessages);
-  });
+  vue.provide(
+    "addUiMessages",
+    async (messages: UiMessage[] | LocalizedMessages) =>
+      commonAddUiMessages(i18n, messages),
+  );
   try {
     vue.mount(elmElement);
   } catch (e) {

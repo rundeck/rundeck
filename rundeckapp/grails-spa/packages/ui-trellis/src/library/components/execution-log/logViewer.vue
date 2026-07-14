@@ -98,6 +98,7 @@
         'execution-log--no-transition': logLines > 1000,
         'ansicolor-on': settings.ansiColor,
       }"
+      :style="node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}"
     >
       <div ref="log" class="execution-log__scroller-item-container">
         <div
@@ -168,6 +169,7 @@
           <h5>No output</h5>
         </div>
         <LogNodeChunk
+          v-if="!overSize"
           ref="logEntryChunk"
           class="execution-log__node-chunk"
           :event-bus="eventBus"
@@ -186,6 +188,7 @@
           :follow="mfollow"
           @line-select="handleLineSelect"
           @jumped="jumped = true"
+          @follow-change="onNodeFollowChange"
         />
       </div>
     </div>
@@ -202,6 +205,7 @@
 
 <script lang="ts">
 import { CancelToken } from "@esfx/canceltoken";
+import { autorun, IReactionDisposer } from "mobx";
 
 import { defineComponent } from "vue";
 import RdDrawer from "../containers/drawer/Drawer.vue";
@@ -343,6 +347,8 @@ export default defineComponent({
       entries: [],
       entriesFromViewer: [],
       viewerEntriesByNodeCtx: null,
+      viewerFilteredEntries: [] as any[],
+      autorunDisposer: null as IReactionDisposer | null,
     };
   },
   computed: {
@@ -386,12 +392,7 @@ export default defineComponent({
         return [];
       }
       if (this.node) {
-        if (this.stepCtx && this.viewerEntriesByNodeCtx) {
-          return this.viewerEntriesByNodeCtx[
-            `${this.node}:${JobWorkflow.cleanContextId(this.stepCtx)}`
-          ];
-        }
-        return this.viewerEntriesByNode[this.node];
+        return this.viewerFilteredEntries;
       }
       return this.entriesFromViewer;
     },
@@ -423,32 +424,44 @@ export default defineComponent({
     viewer: {
       handler(newVal) {
         this.entriesFromViewer = newVal.entries;
-        this.viewerEntriesByNodeCtx = this.entriesFromViewer.reduce(
-          (acc, entry) => ({
-            ...acc,
-            [`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`]:
-              [
-                ...(acc[
-                  `${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`
-                ] || []),
-                entry,
-              ],
-          }),
-          {},
-        );
       },
       deep: true,
     },
   },
   beforeMount() {
     this.loadConfig();
-    this.viewer = rootStore.executionOutputStore.createOrGet(this.executionId);
+    // Capture the raw ExecutionOutput reference before Vue wraps it in a
+    // reactive proxy, so MobX can properly track ObservableGroupMap accesses
+    // inside the autorun callback.
+    const rawViewer = rootStore.executionOutputStore.createOrGet(this.executionId);
+    this.viewer = rawViewer;
+    if (this.node) {
+      const node = this.node;
+      const stepCtx = this.stepCtx;
+      this.autorunDisposer = autorun(() => {
+        const filtered = rawViewer.getEntriesFiltered(node, stepCtx);
+        this.viewerFilteredEntries = filtered ? [...filtered] : [];
+      });
+    }
+  },
+  beforeUnmount() {
+    if (this.autorunDisposer) {
+      this.autorunDisposer();
+      this.autorunDisposer = null;
+    }
   },
   async mounted() {
     await this.viewer.init();
 
     this.startTime = Date.now();
-    this.addScrollBlocker();
+    // In node view the outer scroller has overflow:hidden and the DynamicScroller
+    // handles its own scrolling. Applying addScrollBlocker there would call
+    // ev.preventDefault() on bubbled wheel events and prevent the DynamicScroller
+    // from scrolling. The LogNodeChunk handles follow detection via its own scroll
+    // listener and emits 'follow-change' instead.
+    if (!this.node) {
+      this.addScrollBlocker();
+    }
 
     this.updateProgress();
 
@@ -544,6 +557,14 @@ export default defineComponent({
       }
 
       _scroller.scrollTop = offset - 24; // Insure under stick header
+    },
+    onNodeFollowChange(val: boolean) {
+      // Only honor follow-change events from LogNodeChunk when in node view.
+      // In the log output view, addScrollBlocker + the Follow button manage
+      // mfollow; the DynamicScroller scroll listener must not interfere.
+      if (this.node) {
+        this.mfollow = val;
+      }
     },
     handleLineSelect(idx: number) {
       if (this.overSize) {

@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import java.util.List;
+
 /**
  * Marker interface for {@link com.dtolabs.rundeck.core.execution.StepExecutionItem}s that
  * have been flattened into the engine's top-level command list from a parent workflow step
@@ -26,8 +28,9 @@ package com.dtolabs.rundeck.core.execution.workflow;
  * (so flat engine step numbers are preserved). The workflow execution listeners use the
  * parent and sub indices reported here to emit a hierarchical
  * {@link com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier}
- * (e.g. {@code "2/1"}) for log lines and step state events, so the resulting
- * {@code .rdlog} and state files align with the original (un-flattened) job definition.
+ * (e.g. {@code "2/1"} or {@code "2/2/1"} for nested conditionals) for log lines and step
+ * state events, so the resulting {@code .rdlog} and state files align with the original
+ * (un-flattened) job definition.
  */
 public interface HasParentStepContext {
     /**
@@ -51,5 +54,18 @@ public interface HasParentStepContext {
      */
     default int getLogicalStepNumber() {
         return -1;
+    }
+
+    /**
+     * Returns the full parent step path for nested conditionals. For example, a substep at
+     * position "2/2/1" would return [2, 2]. This supports arbitrary nesting depth.
+     * Returns null or empty list for regular (non-nested) conditional substeps, which should
+     * fall back to using {@link #getParentStepNumber()} and {@link #getSubStepNumber()}.
+     *
+     * @return List of parent step numbers representing the full path, or null/empty for
+     *         single-level conditional substeps
+     */
+    default List<Integer> getParentStepPath() {
+        return null;
     }
 }

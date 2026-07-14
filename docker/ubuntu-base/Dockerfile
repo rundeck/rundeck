@@ -2,11 +2,11 @@
 ###################################################
 FROM golang:1.24.6 AS remco
 
-# Pinned to rundeck/remco HEAD (2026-01-27).
-# Forked from HeavyHorst/remco; includes CVE fixes from upstream
-# PR #115 (https://github.com/HeavyHorst/remco/pull/115) for
-# CVE-2025-47914, CVE-2025-61727, CVE-2026-33186 (grpc v1.79.3).
-ENV REMCO_COMMIT=dd15086e958dd83f334fb857ecd29bb1615fa179
+# Pinned to rundeck/remco @ v0.12.6 (synced to upstream HeavyHorst/remco).
+# Includes CVE fixes through v0.12.6: go-jose/go-jose/v4 4.1.4 for
+# CVE-2026-34986 (GHSA-78h2-9frx-2jm8), plus CVE-2025-47914,
+# CVE-2025-61727, CVE-2026-33186 (grpc v1.79.3).
+ENV REMCO_COMMIT=777d12eaff303faa220f7686cdfa583a84f9bda4
 
 RUN git clone https://github.com/rundeck/remco.git /tmp/remco && \
     cd /tmp/remco && \

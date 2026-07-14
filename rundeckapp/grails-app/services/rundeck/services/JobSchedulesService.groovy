@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
+import com.google.common.collect.Lists
 import org.quartz.*
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import rundeck.ScheduledExecution
@@ -186,7 +187,9 @@ class LocalJobSchedulesManager implements SchedulesManager {
         if(jobUuids.isEmpty() ||
            !scheduledExecutionService.isProjectScheduledEnabled(project) ||
            !scheduledExecutionService.isProjectExecutionEnabled(project)) return [:]
-        def jobs = ScheduledExecution.findAllByUuidInList(jobUuids)
+        def jobs = Lists.partition(jobUuids, 1000).collectMany { batch ->
+            ScheduledExecution.findAllByUuidInList(batch)
+        }
         Map results = [:]
         jobs.each { job ->
             if(job.scheduleEnabled && job.scheduled && job.executionEnabled && job.project == project) {

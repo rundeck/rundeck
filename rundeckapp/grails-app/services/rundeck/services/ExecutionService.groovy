@@ -143,6 +143,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.regex.Pattern
+import java.time.DateTimeException
+import java.time.ZoneId
 import java.util.stream.Collectors
 
 /**
@@ -357,6 +359,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     boolean getExecutionsAreActive(){
         configurationService.executionModeActive
+    }
+
+    /**
+     * Returns the configured default activity time filter value when the feature is enabled,
+     * or null if no filter should be applied. Used to avoid duplicating this logic across controllers.
+     * @param params request params — if any param ends with 'Filter', returns null (user already has a filter)
+     */
+    String getActivityDefaultTimeFilter(def params) {
+        if (params.find { it.key.endsWith('Filter') }) {
+            return null
+        }
+        if (featureService?.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+            def configured = configurationService?.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+            return (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+        }
+        return null
     }
 
     void setExecutionsAreActive(boolean active){
@@ -2357,12 +2375,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             try {
                 newstr = input.replaceAll(/\$\{DATE((?:[-+]\d+)?:.*?)\}/) { all, tstamp ->
-                    if (tstamp.lastIndexOf(":") == -1) {
+                    final firstColon = tstamp.indexOf(":")
+                    if (firstColon == -1) {
                         return all
                     }
-                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
-                    final fdate = tstamp.substring(tstamp.lastIndexOf(":") + 1)
+                    final operator = tstamp.substring(0, firstColon)
+                    final rest = tstamp.substring(firstColon + 1)
+
+                    // Try to extract optional TIMEZONE from the last colon-segment
+                    String fdate = rest
+                    TimeZone tz = null
+                    final lastColon = rest.lastIndexOf(":")
+                    if (lastColon >= 0) {
+                        try {
+                            tz = TimeZone.getTimeZone(ZoneId.of(rest.substring(lastColon + 1)))
+                            fdate = rest.substring(0, lastColon)
+                        } catch (DateTimeException ignored) {
+                            // last segment is part of FORMAT, not a timezone — use whole rest
+                        }
+                    }
+
                     def formatter = new SimpleDateFormat(fdate)
+                    if (tz != null) {
+                        formatter.setTimeZone(tz)
+                    }
                     if (operator == '') {
                         formatter.format(dateStarted)
                     } else {
@@ -2373,9 +2409,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
             } catch (IllegalArgumentException e) {
-                log.warn(e)
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             } catch (NumberFormatException e) {
-                log.warn(e)
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
+            } catch (DateTimeException e) {
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             }
 
 
@@ -2897,12 +2935,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Execution newExec = int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
 
         // Publish audit event for new job run.
+        // Explicitly set the username from the execution record so that the audit log
+        // always reflects the real user, even when there is no web session in the
+        // security context (e.g. Quartz-scheduled jobs, API/webhook calls).
         if(auditEventsService) {
             auditEventsService.eventBuilder()
                 .setResourceType(ResourceTypes.JOB)
-                .setResourceName("${jobReference.project}:${jobReference.jobAndGroup}")
                 .setResourceName("${se.project}:${se.uuid}:${se.generateFullName()}:${newExec.id}")
                 .setActionType(ActionTypes.RUN)
+                .setUsername(newExec.user)
                 .publish()
         }
 
@@ -4865,7 +4906,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         StandardBasicTypes.LONG
             }
         }
-        return Arrays.asList(metricCriteriaA, metricCriteriaB)
+        // Oracle: DATE - DATE returns NUMBER (fractional days); multiply by 86400 for integer seconds
+        def metricCriteriaC = {
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                rowCount("count")
+                sqlProjection 'sum(round((date_completed - date_started) * 86400)) as durationSum',
+                        'durationSum',
+                        StandardBasicTypes.LONG
+                sqlProjection 'min(round((date_completed - date_started) * 86400)) as durationMin',
+                        'durationMin',
+                        StandardBasicTypes.LONG
+                sqlProjection 'max(round((date_completed - date_started) * 86400)) as durationMax',
+                        'durationMax',
+                        StandardBasicTypes.LONG
+
+                // Zero-overhead status count projections
+                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                        'succeededCount',
+                        StandardBasicTypes.LONG
+                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                        'failedCount',
+                        StandardBasicTypes.LONG
+            }
+        }
+        return Arrays.asList(metricCriteriaA, metricCriteriaB, metricCriteriaC)
     }
 
     /**

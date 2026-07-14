@@ -563,13 +563,18 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         if(fromState==toState){
             return
         }
+        //NOT_STARTED is an inferred state: it is assigned at finalization to any node/step
+        //that had no observed activity yet. A genuine state event that arrives afterwards
+        //(e.g. a node step completion delivered just after the workflow is reported complete)
+        //must be allowed to override it, otherwise the step is shown as "not started" even
+        //though it actually ran and produced output (RUN-2939).
         def allowed=[
                 (ExecutionState.WAITING):[null,ExecutionState.WAITING],
-                (ExecutionState.RUNNING): [null, ExecutionState.WAITING,ExecutionState.RUNNING],
-                (ExecutionState.RUNNING_HANDLER):[null,ExecutionState.WAITING,ExecutionState.FAILED, ExecutionState.RUNNING,ExecutionState.RUNNING_HANDLER],
+                (ExecutionState.RUNNING): [null, ExecutionState.WAITING,ExecutionState.RUNNING, ExecutionState.NOT_STARTED],
+                (ExecutionState.RUNNING_HANDLER):[null,ExecutionState.WAITING,ExecutionState.FAILED, ExecutionState.RUNNING,ExecutionState.RUNNING_HANDLER, ExecutionState.NOT_STARTED],
         ]
         ExecutionState.values().findAll{it.isCompletedState()}.each{
-            allowed[it]= [it,ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING]
+            allowed[it]= [it,ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING, ExecutionState.NOT_STARTED]
         }
         if (errorHandler) {
             allowed[ExecutionState.RUNNING] << ExecutionState.FAILED
