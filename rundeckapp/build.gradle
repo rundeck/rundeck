@@ -914,60 +914,13 @@ tasks.withType(GenerateMavenPom).all {
     }
 }
 
-publishing {
-    publications {
-        "rundeck"(MavenPublication) {
-            artifactId = "rundeck"
-            groupId = project.group
-            artifact bootWar
-            version = version
-            pom {
-                 name = "Rundeck library Rundeck"
-                 description = project.description?:'Rundeck'
-                 url = 'http://rundeck.org'
-                 licenses {
-                     license {
-                         name = 'The Apache Software License, Version 2.0'
-                         url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                         distribution = 'repo'
-                     }
-                 }
-                 developers {
-                     developer {
-                         id = 'gschueler'
-                         name = 'Greg Schueler'
-                         email = 'greg@rundeck.com'
-                     }
-                 }
-                 scm {
-                     connection = 'scm:git:git@github.com/rundeck/rundeck.git'
-                     developerConnection = 'scm:git:git@github.com:rundeck/rundeck.git'
-                     url = 'https://github.com/rundeck/rundeck'
-                 }
-             }
-        }
-    }
-    repositories {
-         maven {
-             // change URLs to point to your repos, e.g. http://my.org/repo
-             def releasesRepoUrl = 'https://ossrh-staging-api.central.sonatype.com/service/local/'
-             def snapshotsRepoUrl = 'https://central.sonatype.com/repository/maven-snapshots/'
-             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-             credentials {
-                 username findProperty('sonatypeUsername')
-                 password findProperty('sonatypePassword')
-             }
-         }
-     }
-}
+// WAR publication to Maven Central removed (RUN-4570).
+// The WAR (~240 MB) had zero dependents on Maven Central.
+// Distribution channels: Docker Hub, PackageCloud, GitHub Releases.
 
 apply from: "${rootDir}/gradle/java.gradle"
 apply from: "../gradle/java-version.gradle"
 
 
-if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password')) {
-    signing {
-        sign(publishing.publications)
-    }
-}
+// Signing block removed along with WAR publication (RUN-4570).
 

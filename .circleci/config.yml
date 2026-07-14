@@ -785,6 +785,12 @@ filters:
       branches: {ignore: /.*/}
       tags: {only: '/^v.*/'}
 
+  # GA-only tags: matches v1.2.3 but NOT v1.2.3-rc1, v1.2.3-alpha1, etc. (RUN-4570)
+  ga-tags: &filter-ga-tags
+    filters:
+      branches: {ignore: /.*/}
+      tags: {only: '/^v\d+\.\d+\.\d+$/'}
+
 workflows:
 
   build_and_publish:
@@ -807,7 +813,7 @@ workflows:
           requires:
             - Build Release
           <<: *cloudsmith-slack-defaults
-          <<: *filter-tags
+          <<: *filter-ga-tags
       - docker-publish:
           name: Docker Publish
           requires:
