@@ -8,6 +8,7 @@ jest.mock("@/library/modules/rundeckClient", () => ({
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },
+    apiVersion: "44",
   })),
 }));
 
@@ -29,12 +30,26 @@ const mockErrorHandler = {
   config: { exec: "echo hello" },
 };
 
+const pluginConfigStub = {
+  name: "PluginConfig",
+  props: ["validation"],
+  template: `<div>
+    <span
+      v-if="validation && validation.valid === false && validation.errors"
+      data-testid="config-field-error"
+    >{{ validation.errors.exec }}</span>
+  </div>`,
+};
+
 const createWrapper = async (props = {}) => {
   const wrapper = mount(InlinePluginConfigForm, {
     props: {
       modelValue: mockErrorHandler,
       serviceName: "WorkflowNodeStep",
       ...props,
+    },
+    global: {
+      stubs: { pluginConfig: pluginConfigStub, PluginConfig: pluginConfigStub },
     },
   });
   await flushPromises();
@@ -87,5 +102,17 @@ describe("InlinePluginConfigForm", () => {
 
     expect(wrapper.text()).not.toContain("Save");
     expect(wrapper.text()).not.toContain("Cancel");
+  });
+
+  it("user sees inline validation errors when the config is invalid", async () => {
+    // Backend Validator returns errors[field] === "required" for a missing
+    // required field (Validator.java); the form surfaces it inline.
+    const wrapper = await createWrapper({
+      validation: { valid: false, errors: { exec: "required" } },
+    });
+
+    const fieldError = wrapper.find('[data-testid="config-field-error"]');
+    expect(fieldError.exists()).toBe(true);
+    expect(fieldError.text()).toBe("required");
   });
 });
