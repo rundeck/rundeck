@@ -60,7 +60,7 @@ import spock.lang.Unroll
 import webhooks.Webhook
 import webhooks.WebhookService
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 
 class WebhookServiceSpec extends Specification implements ServiceUnitTest<WebhookService>, DataTest {
     @Shared GormEventStoreService eventStoreService
@@ -106,16 +106,12 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def mockPropertyResolver = Mock(PropertyResolver)
         def webhookProviderService = Mock(PluggableProviderService)
 
-        service.featureService = Mock(FeatureService) {
-            featurePresent(Features.EVENT_STORE) >> false
-        }
-
         service.gormEventStoreService = Mock(EventStoreService) {
             scoped(_,_) >> { Mock(EventStoreService) }
         }
 
         service.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider) {
-            getServicesWith(_) >> { Mock(Services)}
+            getServicesWith(_) >> new SimpleServiceProvider([:])
         }
         service.frameworkService = Mock(MockFrameworkService) {
             getFrameworkPropertyResolver(_,_) >> { mockPropertyResolver }
@@ -160,10 +156,6 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
         def mockPropertyResolver = Mock(PropertyResolver)
         def webhookProviderService = Mock(PluggableProviderService)
-
-        service.featureService = Mock(FeatureService) {
-            featurePresent(Features.EVENT_STORE) >> true
-        }
 
         def scopedService=Mock(EventStoreService)
         service.gormEventStoreService = Mock(EventStoreService) {
@@ -836,6 +828,35 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         output.authToken == "abc123"
     }
 
+    def "getWebhookWithAuth should return webhook if authToken is removed"() {
+        setup:
+        Webhook hook = new Webhook()
+        hook.name = "hit"
+        hook.project = "One"
+        hook.authToken = "abc123"
+        hook.eventPlugin = "do-some-action"
+        hook.pluginConfigurationJson = '{"prop1":"true"}'
+        hook.save()
+
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            1 * getTokenWithType("abc123", AuthTokenType.WEBHOOK) >> null
+        }
+
+        when:
+        def output = service.getWebhookWithAuth(hook.id.toString())
+
+        then:
+        output.id == hook.id
+        output.name == "hit"
+        output.project == "One"
+        output.eventPlugin == "do-some-action"
+        output.config == ["prop1":"true"]
+        output.user == null
+        output.creator == null
+        output.roles == null
+        output.authToken == "abc123"
+    }
+
     def "getWebhookForProjectWithAuth returns null for wrong project"() {
         setup:
         def project = 'aproject'
@@ -923,7 +944,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
 
     interface MockApiService {
-        Map generateUserToken(UserAndRolesAuthContext ctx, Integer expiration, String user, Set<String> roles, boolean forceExpiration, AuthTokenType tokenType) throws Exception
+        Map generateUserToken(UserAndRolesAuthContext ctx, long expiration, String user, Set<String> roles, boolean forceExpiration, AuthTokenType tokenType) throws Exception
     }
 
     interface MockStorageService {

@@ -24,7 +24,7 @@
   </span>
 </template>
 <script lang="ts">
-import pluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import pluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -41,4 +41,13 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.btn-group {
+  display: inline-flex;
+
+  & > .btn > span {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+</style>

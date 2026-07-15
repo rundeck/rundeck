@@ -24,25 +24,26 @@
 <g:render template="/common/messages" model="[notDismissable:true]"/>
 <script type="text/javascript">
     function changeCronExpression(elem){
-        clearHtml($('crontooltip'));
-        var params={crontabString:$F(elem)};
-        new Ajax.Updater('cronstrinfo',
-            '${createLink(controller:'scheduledExecution',action:'checkCrontab')}',{
-                parameters:params,
-                evalScripts:true
+        clearHtml(document.getElementById('crontooltip'));
+        var params={crontabString:elem.value};
+        jQuery.ajax({
+            url: '${createLink(controller:'scheduledExecution',action:'checkCrontab')}',
+            data: params,
+            success: function(data){
+                jQuery('#cronstrinfo').html(data);
             }
-        );
+        });
     }
     var cronSects=['Second','Minute','Hour','Day of Month','Month','Day of Week','Year'];
     function tkeyup(el){
         clearHtml('cronstrinfo');
         var pos=getCaretPos(el);
-        var f =$F(el);
+        var f = el.value;
         //find # of space chars prior to pos
         var sub=f.substring(0,pos);
-        var c = sub.split(' ').size();
+        var c = sub.split(' ').length;
         if(c>=1&&c<=7){
-            setText($('crontooltip'),cronSects[c-1]);
+            setText(document.getElementById('crontooltip'),cronSects[c-1]);
         }else{
             clearHtml('crontooltip');
         }
@@ -98,6 +99,11 @@
             <div class="text-warning"><g:enc>${projectDescriptionError}</g:enc></div>
         </g:if>
     </div>
+    <g:if test="${enableCleanHistory}">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> <g:message code="project.execution.cleanup.default.enabled" default="Execution cleanup is now enabled for this project"/>
+        </div>
+    </g:if>
   </div>
 <feature:enabled name="cleanExecutionsHistoryJob">
   <div class="tab-pane" id="tab_history">
@@ -114,16 +120,21 @@
                           onchange='cleanerchkbox(this)'
                           checked="${isSelected}"/>
                   <label for="${nkey+'enable_cleaner_input'}">
-                      <b><g:enc>Enable</g:enc></b>
+                      <b><g:message code="execution.history.cleanup.enable.label" default="Enable"/></b>
                   </label>
-                  <span class="help-block"><g:enc>Enable cleaner executions history</g:enc></span>
+                  <span class="help-block"><g:message code="execution.history.cleanup.enable.help" default="Enable cleaner executions history"/></span>
               </div>
           </div>
       </div>
     <div id="cleaner_config" style="display: ${isSelected ? 'block' : 'none' }">
         <div class="form-group ${cleanerHistoryPeriodError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="execution.history.cleanup.retention.days" default="Days to keep executions. Default: 60"/>
+                <g:if test="${enableCleanHistory}">
+                    <g:message code="execution.history.cleanup.retention.days.default"  default="Days to keep executions."/>
+                </g:if>
+                <g:else>
+                    <g:message code="execution.history.cleanup.retention.days" default="Days to keep executions. Default: 60"/>
+                </g:else>
             </label>
             <g:field name="cleanperiod" type="number" size="50" min="0" value="${cleanerHistoryPeriod}" class="form-control"/>
             <g:if test="${cleanerHistoryPeriodError}">
@@ -132,7 +143,12 @@
         </div>
         <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="execution.history.cleanup.retention.minimum" default="Minimum executions to keep. Default: 50"/>
+                <g:if test="${enableCleanHistory}">
+                    <g:message code="execution.history.cleanup.retention.minimum.default" default="Minimum executions to keep."/>
+                </g:if>
+                <g:else>
+                    <g:message code="execution.history.cleanup.retention.minimum" default="Minimum executions to keep. Default: 50"/>
+                </g:else>
             </label>
             <g:field name="minimumtokeep" type="number" size="50" min="0" value="${minimumExecutionToKeep}" class="form-control"/>
             <g:if test="${cleanerHistoryConfigError}">
@@ -141,7 +157,12 @@
         </div>
         <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="execution.history.cleanup.batch" default="Maximum size of the deletion. Default: 500"/>
+                <g:if test="${enableCleanHistory}">
+                    <g:message code="execution.history.cleanup.batch.default" default="Maximum size of the deletion."/>
+                </g:if>
+                <g:else>
+                    <g:message code="execution.history.cleanup.batch" default="Maximum size of the deletion. Default: 500"/>
+                </g:else>
             </label>
             <g:field name="maximumdeletionsize" type="number" size="50" min="0" value="${maximumDeletionSize}" class="form-control"/>
             <g:if test="${cleanerHistoryConfigError}">
@@ -151,7 +172,12 @@
         <div class="form-group">
             %{--<div class="panel panel-default panel-tab-pane crontab tabtarget"  >--}%
             <div class="${labelColSize}  control-label text-form-label">
-                <g:message code="execution.history.cleanup.schedule" default="Schedule clean history job (Cron expression). Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
+                <g:if test="${enableCleanHistory}">
+                    <g:message code="execution.history.cleanup.schedule.default" default="Schedule clean history job (Cron expression)."/>
+                </g:if>
+                <g:else>
+                    <g:message code="execution.history.cleanup.schedule" default="Schedule clean history job (Cron expression). Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
+                </g:else>
             </div>
             <div class="row">
                 <div class="col-sm-8">
@@ -177,7 +203,7 @@
                     <g:select name="${'example_cron_period_sel'}" from="${propSelectValues}" id="example_cron_period"
                               optionKey="key" optionValue="value"
                               noSelection="['':'-choose an example-']"
-                              onchange="if(this.value){\$('cronTextField').value=this.value;}"
+                              onchange="if(this.value){document.getElementById('cronTextField').value=this.value;}"
                               class="${formControlType} form-control"
                     />
                 </div>

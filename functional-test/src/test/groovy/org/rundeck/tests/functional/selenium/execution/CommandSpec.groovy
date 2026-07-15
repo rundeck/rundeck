@@ -1,5 +1,6 @@
 package org.rundeck.tests.functional.selenium.execution
 
+import org.openqa.selenium.WebElement
 import org.rundeck.util.gui.pages.execution.CommandPage
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
@@ -7,6 +8,7 @@ import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.annotations.SeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
+import spock.lang.Unroll
 
 @SeleniumCoreTest
 class CommandSpec extends SeleniumBase {
@@ -20,143 +22,169 @@ class CommandSpec extends SeleniumBase {
         loginPage.login(TEST_USER, TEST_PASS)
     }
 
-    def "abort button in commands page"() {
+    @Unroll
+    def "abort button in commands page (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
         then:
             commandPage.nodeFilterTextField.click()
-            commandPage.nodeFilterTextField.sendKeys".*"
-            commandPage.filterNodeButton.click()
-            commandPage.waitForElementToBeClickable commandPage.commandTextField
-            commandPage.commandTextField.click()
-            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
-            commandPage.commandTextField.sendKeys "echo running test && sleep 45"
-            commandPage.runButton.click()
-            commandPage.waitForElementAttributeToChange commandPage.runningExecutionStateButton, 'data-execstate', 'RUNNING'
+        commandPage.nodeFilterTextField.sendKeys".*"
+        commandPage.filterNodeButton.click()
+        commandPage.waitForElementToBeClickable commandPage.commandTextField
+        commandPage.commandTextField.click()
+        commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+        commandPage.commandTextField.sendKeys "echo running test && sleep 45"
+        commandPage.runButton.click()
+        commandPage.waitForElementAttributeToChange commandPage.runningExecutionStateButton, 'data-execstate', 'RUNNING'
         expect:
             commandPage.abortButton.click()
             commandPage.waitForElementAttributeToChange commandPage.runningExecutionStateButton, 'data-execstate', 'ABORTED'
+        where:
+            nextUi << [false, true]
     }
 
-    def "abort button in show page"() {
+    @Unroll
+    def "abort button in show page (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
-            commandPage.nodeFilterTextField.sendKeys".*"
-            commandPage.filterNodeButton.click()
-            commandPage.waitForElementToBeClickable commandPage.commandTextField
-            commandPage.commandTextField.click()
-            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
-            commandPage.commandTextField.sendKeys "echo running test && sleep 45"
-            commandPage.runButton.click()
-            commandPage.runningButtonLink().click()
+        commandPage.nodeFilterTextField.sendKeys".*"
+        commandPage.filterNodeButton.click()
+        commandPage.waitForElementToBeClickable commandPage.commandTextField
+        commandPage.commandTextField.click()
+        commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+        commandPage.commandTextField.sendKeys "echo running test && sleep 45"
+        commandPage.runButton.click()
+        commandPage.runningButtonLink().click()
         expect:
             executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'RUNNING'
             executionShowPage.abortButton.click()
             executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'ABORTED'
+        where:
+            nextUi << [false, true]
     }
 
-    def "default page load shows nodes view"() {
+    @Unroll
+    def "default page load shows nodes view (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
-            commandPage.nodeFilterTextField.sendKeys".*"
-            commandPage.filterNodeButton.click()
-            commandPage.waitForElementToBeClickable commandPage.commandTextField
-            commandPage.commandTextField.click()
-            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
-            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
-            commandPage.runButton.click()
-            def href = commandPage.runningButtonLink().getAttribute("href")
-            commandPage.driver.get href
+        commandPage.nodeFilterTextField.sendKeys".*"
+        commandPage.filterNodeButton.click()
+        commandPage.waitForElementToBeClickable commandPage.commandTextField
+        commandPage.commandTextField.click()
+        commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+        commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
+        commandPage.runButton.click()
+        def href = commandPage.runningButtonLink().getAttribute("href")
+        commandPage.driver.get href
         expect:
             executionShowPage.validatePage()
             executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
             executionShowPage.viewContentNodes.isDisplayed()
             !executionShowPage.viewButtonNodes.isDisplayed()
             executionShowPage.viewButtonOutput.isDisplayed()
+        where:
+            nextUi << [false, true]
     }
 
-    def "fragment #output page load shows output view"() {
+    @Unroll
+    def "output fragment page load shows output view (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
-            commandPage.nodeFilterTextField.sendKeys".*"
-            commandPage.filterNodeButton.click()
-            commandPage.waitForElementToBeClickable commandPage.commandTextField
-            commandPage.commandTextField.click()
-            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
-            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
-            commandPage.runButton.click()
-            def href = commandPage.runningButtonLink().getAttribute("href")
-            commandPage.driver.get href + "#output"
+        commandPage.nodeFilterTextField.sendKeys".*"
+        commandPage.filterNodeButton.click()
+        commandPage.waitForElementToBeClickable commandPage.commandTextField
+        commandPage.commandTextField.click()
+        commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+        commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
+        commandPage.runButton.click()
+        def href = commandPage.runningButtonLink().getAttribute("href")
+        commandPage.driver.get href + "#output"
         expect:
             executionShowPage.validatePage()
             executionShowPage.waitForElementAttributeToChange executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED'
             executionShowPage.viewContentOutput.isDisplayed()
             executionShowPage.viewButtonNodes.isDisplayed()
             !executionShowPage.viewButtonOutput.isDisplayed()
+        where:
+            nextUi << [false, true]
     }
 
-    def "output view toggle to nodes view with button"() {
+    @Unroll
+    def "output view toggle to nodes view with button (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
-            commandPage.nodeFilterTextField.sendKeys".*"
-            commandPage.filterNodeButton.click()
-            commandPage.waitForElementToBeClickable commandPage.commandTextField
-            commandPage.commandTextField.click()
-            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
-            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
-            commandPage.runButton.click()
-            def href = commandPage.runningButtonLink().getAttribute("href")
-            commandPage.driver.get href + "#output"
+        commandPage.nodeFilterTextField.sendKeys".*"
+        commandPage.filterNodeButton.click()
+        commandPage.waitForElementToBeClickable commandPage.commandTextField
+        commandPage.commandTextField.click()
+        commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+        commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
+        commandPage.runButton.click()
+        def href = commandPage.runningButtonLink().getAttribute("href")
+        commandPage.driver.get href + "#output"
         expect:
             executionShowPage.validatePage()
-            executionShowPage.viewButtonNodes.isDisplayed()
-            executionShowPage.viewButtonNodes.click()
+        executionShowPage.viewButtonNodes.isDisplayed()
+        executionShowPage.viewButtonNodes.click()
 
             executionShowPage.viewContentNodes.isDisplayed()
             !executionShowPage.viewButtonNodes.isDisplayed()
             executionShowPage.viewButtonOutput.isDisplayed()
+        where:
+            nextUi << [false, true]
     }
 
-    def "nodes view toggle to output view with button"() {
+    @Unroll
+    def "nodes view toggle to output view with button (nextUi: #nextUi)"() {
         when:
             def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+            commandPage.nextUi = nextUi
             def executionShowPage = page ExecutionShowPage
         then:
             commandPage.nodeFilterTextField.click()
-            commandPage.nodeFilterTextField.sendKeys".*"
-            commandPage.filterNodeButton.click()
-            commandPage.waitForElementToBeClickable commandPage.commandTextField
-            commandPage.commandTextField.click()
-            commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
-            commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
-            commandPage.runButton.click()
-            def href = commandPage.runningButtonLink().getAttribute("href")
-            commandPage.driver.get href
+        commandPage.nodeFilterTextField.sendKeys".*"
+        commandPage.filterNodeButton.click()
+        commandPage.waitForElementToBeClickable commandPage.commandTextField
+        commandPage.commandTextField.click()
+        commandPage.waitForElementAttributeToChange commandPage.commandTextField, 'disabled', null
+        commandPage.commandTextField.sendKeys "echo running test '" + this.class.name.toString() + "'"
+        commandPage.runButton.click()
+        def href = commandPage.runningButtonLink().getAttribute("href")
+        commandPage.driver.get href
         expect:
             executionShowPage.validatePage()
-            executionShowPage.viewButtonOutput.isDisplayed()
-            executionShowPage.viewButtonOutput.click()
+        executionShowPage.viewButtonOutput.isDisplayed()
+        executionShowPage.viewButtonOutput.click()
 
             executionShowPage.viewContentOutput.isDisplayed()
             !executionShowPage.viewButtonOutput.isDisplayed()
             executionShowPage.viewButtonNodes.isDisplayed()
+        where:
+            nextUi << [false, true]
     }
 
-    def "save as job button saves the command as a job"() {
+    @Unroll
+    def "save as job button saves the command as a job (nextUi: #nextUi)"() {
         when:
         def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+        commandPage.nextUi = nextUi
         def jobCreatePage = page JobCreatePage
         def jobShowPage = page  JobShowPage
         then:
@@ -173,6 +201,32 @@ class CommandSpec extends SeleniumBase {
         jobCreatePage.saveJob()
         expect:
         jobShowPage.validatePage()
+        where:
+            nextUi << [false, true]
     }
 
+    def "node popover displays all parameters after clicking on a node"() {
+        when: "User navigates to adhoc page and searches for all nodes"
+        def commandPage = go CommandPage, SELENIUM_BASIC_PROJECT
+        commandPage.nodeFilterTextField.click()
+        commandPage.nodeFilterTextField.sendKeys".*"
+        commandPage.filterNodeButton.click()
+
+        then: "Nodes should be loaded and visible"
+        commandPage.waitForElementToBeClickable commandPage.commandTextField
+        def nodes = commandPage.getNodeElements()
+        nodes.size() > 0
+
+        when: "User clicks on the first node"
+        commandPage.clickNode(0)
+
+        then: "Popover should appear with node details table"
+        def nodeDetailsTable = commandPage.getNodeDetailsTable()
+        nodeDetailsTable.isDisplayed()
+
+        expect: "Node details should have visible key-value structure with content"
+        def keyCells = commandPage.getNodeDetailsKeyCells()
+        keyCells.size() > 0
+        keyCells.every { it.text?.trim() }
+    }
 }

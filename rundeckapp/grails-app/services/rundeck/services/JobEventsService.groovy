@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.events.LogJobChangeEvent
@@ -28,7 +29,7 @@ import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import rundeck.services.scm.ProjectJobChangeListener
 
-class JobEventsService {
+class JobEventsService implements EventBusAware {
     static Logger jobChangeLogger = LoggerFactory.getLogger("com.dtolabs.rundeck.data.jobs.changes")
     def List<JobChangeListener> listeners = []
     RundeckJobDefinitionManager rundeckJobDefinitionManager

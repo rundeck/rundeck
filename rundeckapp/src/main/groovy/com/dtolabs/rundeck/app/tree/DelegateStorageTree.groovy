@@ -2,11 +2,9 @@ package com.dtolabs.rundeck.app.tree
 
 import com.dtolabs.rundeck.core.storage.StorageTree
 import grails.events.annotation.Subscriber
-import grails.util.Holders
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.springframework.beans.factory.InitializingBean
-import org.springframework.beans.factory.annotation.Autowired
+import org.rundeck.app.grails.events.AppEvents
 
 @CompileStatic
 class DelegateStorageTree implements StorageTree {
@@ -24,7 +22,7 @@ class DelegateStorageTree implements StorageTree {
         return storageTree
     }
 
-    @Subscriber('rundeck.configuration.change')
+    @Subscriber(AppEvents.APP_CONFIG_CHANGED)
     @CompileDynamic
     def updateTreeConfig(def event) {
         if(!refreshable){

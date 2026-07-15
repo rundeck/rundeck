@@ -16,10 +16,15 @@
 
 package rundeck.services
 
-
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.JobReferenceItem
+import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
-import org.springframework.dao.DataAccessException
+import groovy.transform.EqualsAndHashCode
+import org.hibernate.sql.JoinType
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.data.util.ExecReportUtil
 import rundeck.services.workflow.WorkflowMetricsWriterImpl
 import rundeck.support.filters.BaseNodeFilters
@@ -76,6 +81,9 @@ import org.apache.commons.io.FileUtils
 import org.hibernate.JDBCException
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
+import java.util.concurrent.TimeUnit
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
@@ -115,11 +123,14 @@ import rundeck.services.execution.ThresholdValue
 import rundeck.services.feature.FeatureService
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
+import org.rundeck.app.config.SysConfigProp
+import org.rundeck.app.config.SystemConfig
+import org.rundeck.app.config.SystemConfigurable
 
-import javax.annotation.PreDestroy
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
-import javax.servlet.http.HttpSession
+import jakarta.annotation.PreDestroy
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpSession
 import java.nio.charset.Charset
 import java.sql.Time
 import java.sql.Timestamp
@@ -131,13 +142,15 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.regex.Pattern
+import java.time.DateTimeException
+import java.time.ZoneId
 import java.util.stream.Collectors
 
 /**
  * Coordinates Command executions via Ant Project objects
  */
 @Transactional
-class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor, EventPublisher {
+class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor, EventPublisher, SystemConfigurable {
     static Logger executionStatusLogger = LoggerFactory.getLogger("org.rundeck.execution.status")
 
     def FrameworkService frameworkService
@@ -178,37 +191,189 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ReferencedExecutionDataProvider referencedExecutionDataProvider
     JobStatsDataProvider jobStatsDataProvider
 
+    // Configuration keys for execution count cache and optimizations
+    static final String EXECUTION_COUNT_CACHE_ENABLED = 'api.executionQueryConfig.countCache.enabled'
+    static final String EXECUTION_COUNT_CACHE_TTL_SECONDS = 'api.executionQueryConfig.countCache.ttl'
+    static final String SIMPLE_COUNT_ENABLED = 'api.executionQueryConfig.countPerformance.enabled'
+    static final int DEFAULT_CACHE_TTL_SECONDS = 30
+    static final int DEFAULT_CACHE_MAX_SIZE = 1000
+
+    /**
+     * Cache key for execution count queries.
+     * All fields are immutable Strings/Boolean for reliable equals/hashCode.
+     * Only supports single job filter - queries with multiple jobs are not cached.
+     */
+    @ToString(includeNames = true)
+    @EqualsAndHashCode
+    static class ExecutionCountCacheKey {
+        final String project
+        final String status
+        final String user
+        final String execType
+        final Boolean adhoc
+        final String recentFilter
+        final String olderFilter
+        final String jobId  // Single job ID only
+        
+        ExecutionCountCacheKey(Map args) {
+            this.project = args.project
+            this.status = args.status
+            this.user = args.user
+            this.execType = args.execType
+            this.adhoc = args.adhoc
+            this.recentFilter = args.recentFilter
+            this.olderFilter = args.olderFilter
+            this.jobId = args.jobId
+        }
+
+        /**
+         * Factory method to create a cache key from an ExecutionQuery.
+         * Only single job ID is supported in cache key. Multiple job IDs should be
+         * handled by isCacheableQuery() returning false.
+         */
+        static ExecutionCountCacheKey fromQuery(ExecutionQuery query) {
+            // Extract single job ID (isCacheableQuery ensures size <= 1)
+            String jobId = null
+            if (query.jobIdListFilter && query.jobIdListFilter.size() == 1) {
+                jobId = query.jobIdListFilter[0]?.toString()
+            }
+            
+            new ExecutionCountCacheKey(
+                project: query.projFilter,
+                status: query.statusFilter,
+                user: query.userFilter,
+                execType: query.executionTypeFilter,
+                adhoc: query.adhoc,
+                recentFilter: query.recentFilter,
+                olderFilter: query.olderFilter,
+                jobId: jobId
+            )
+        }
+
+        /**
+         * Invalidate a specific cache entry.
+         */
+        static void invalidate(Cache<ExecutionCountCacheKey, Long> cache, ExecutionCountCacheKey key) {
+            if (cache != null && key != null) {
+                cache.invalidate(key)
+            }
+        }
+
+        /**
+         * Invalidate all cache entries for a specific project.
+         */
+        static void invalidateForProject(Cache<ExecutionCountCacheKey, Long> cache, String project) {
+            if (cache != null && project != null) {
+                cache.asMap().keySet().removeIf { it.project == project }
+            }
+        }
+
+        /**
+         * Invalidate all cache entries for a specific job.
+         */
+        static void invalidateForJob(Cache<ExecutionCountCacheKey, Long> cache, String jobId) {
+            if (cache != null && jobId != null) {
+                cache.asMap().keySet().removeIf { it.jobId == jobId }
+            }
+        }
+
+        /**
+         * Invalidate all cache entries.
+         */
+        static void invalidateAll(Cache<ExecutionCountCacheKey, Long> cache) {
+            if (cache != null) {
+                cache.invalidateAll()
+            }
+        }
+    }
+
+    // Lazy-initialized cache for execution counts (volatile for thread-safe lazy init)
+    private volatile Cache<ExecutionCountCacheKey, Long> executionCountCache
+
+    /**
+     * Get or create the execution count cache
+     * Cache is created lazily to allow configurationService to be injected
+     * Uses double-checked locking for thread-safety
+     */
+    private Cache<ExecutionCountCacheKey, Long> getExecutionCountCache() {
+        if (executionCountCache == null) {
+            synchronized(this) {
+                if (executionCountCache == null) {
+                    int ttlSeconds = configurationService?.getInteger(EXECUTION_COUNT_CACHE_TTL_SECONDS, DEFAULT_CACHE_TTL_SECONDS) ?: DEFAULT_CACHE_TTL_SECONDS
+                    executionCountCache = CacheBuilder.newBuilder()
+                        .expireAfterWrite(ttlSeconds, TimeUnit.SECONDS)
+                        .maximumSize(DEFAULT_CACHE_MAX_SIZE)
+                        .build()
+                }
+            }
+        }
+        return executionCountCache
+    }
+
+    /**
+     * Check if execution count caching is enabled
+     */
+    boolean isExecutionCountCacheEnabled() {
+        return configurationService?.getBoolean(EXECUTION_COUNT_CACHE_ENABLED, false) ?: false
+    }
+
+    /**
+     * Check if simple count optimization is enabled.
+     * When enabled, uses HQL count without JOINs for eligible queries.
+     * When disabled, always uses criteria-based count.
+     * Default: true (enabled)
+     */
+    boolean isSimpleCountEnabled() {
+        return configurationService?.getBoolean(SIMPLE_COUNT_ENABLED, false) ?: false
+    }
+
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
             @Override
             protected DateFormat initialValue() {
-				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-			}
-		}
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+            }
+        }
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_XXX =
         new ThreadLocal<DateFormat>() {
             @Override
             protected DateFormat initialValue() {
-				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
-			}
-		}
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
+            }
+        }
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS =
         new ThreadLocal<DateFormat>() {
             @Override
             protected DateFormat initialValue() {
-				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX")
-			}
-		}
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX")
+            }
+        }
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT =
         new ThreadLocal<DateFormat>() {
-			@Override
-			protected DateFormat initialValue() {
-				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
-			}
-		}
+            @Override
+            protected DateFormat initialValue() {
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
+            }
+        }
 
     boolean getExecutionsAreActive(){
         configurationService.executionModeActive
+    }
+
+    /**
+     * Returns the configured default activity time filter value when the feature is enabled,
+     * or null if no filter should be applied. Used to avoid duplicating this logic across controllers.
+     * @param params request params — if any param ends with 'Filter', returns null (user already has a filter)
+     */
+    String getActivityDefaultTimeFilter(def params) {
+        if (params.find { it.key.endsWith('Filter') }) {
+            return null
+        }
+        if (featureService?.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+            def configured = configurationService?.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+            return (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+        }
+        return null
     }
 
     void setExecutionsAreActive(boolean active){
@@ -272,18 +437,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             data
         }, paging)
     }
-    public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
+    public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:], ExecutionQuery query  = null) {
         return apiService.respondExecutionsJson(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
                         permalink: apiService.guiHrefForExecution(e),
                         href: apiService.apiHrefForExecution(e),
-                        status: getExecutionState(e),
-                        summary: ExecReportUtil.summarizeJob(e)
+                        status: getExecutionState(e)
                 ]
-            if(e.customStatusString){
-                data.customStatus=e.customStatusString
-            }
+
+                //check if query is set and executionSummary is defined¡
+                if (!query || query?.executionSummary) {
+                    data.summary = ExecReportUtil.summarizeJob(e)
+                }
+
+                if(e.customStatusString){
+                    data.customStatus=e.customStatusString
+                }
                 if(e.retryExecution){
                     data.retryExecution=[
                             id:e.retryExecution.id,
@@ -805,18 +975,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     private void cleanupExecution(Execution e, String status = null) {
+        def dateCompleted = new Date()
         saveExecutionState(
                 e.scheduledExecution?.uuid,
                 e.id,
                 [
                         status       : status ?: String.valueOf(false),
-                        dateCompleted: new Date(),
+                        dateCompleted: dateCompleted,
                         cancelled    : !status
                 ],
                 null,
                 null
         )
 
+        // Update job statistics for cleaned-up executions
+        if (e.scheduledExecution?.uuid && e.dateStarted) {
+            def time = dateCompleted.time - e.dateStarted.time
+            def execStatus = status ?: 'failed'
+            updateScheduledExecStatistics(e.scheduledExecution.uuid, e.id, time, execStatus, dateCompleted)
+        }
     }
 
     /**
@@ -864,7 +1041,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobstring = " job: " + e.scheduledExecution.extid + " " + (e.scheduledExecution.groupPath ?: '') + "/" +
                     e.scheduledExecution.jobName
         } else {
-            def adhocCommand = e.workflow.commands.size()==1 && (e.workflow.commands[0] instanceof CommandExec) && e.workflow.commands[0].adhocRemoteString
+            def workflowData = e.getWorkflowData()
+            def adhocCommand = workflowData?.commands?.size()==1 && (workflowData.commands[0] instanceof CommandExec) && workflowData.commands[0].adhocRemoteString
             if (adhocCommand) {
                 mdcprops.put("command", adhocCommand)
                 jobstring += " command: " + adhocCommand
@@ -1102,10 +1280,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logFilterPluginLoader,
                     scheduledExecution ?
                             ExecutionUtilService.createLogFilterConfigs(
-                                    execution.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+                                    (execution.getWorkflowData())?.getPluginConfigDataList(ServiceNameConstants.LogFilter)
                             ) + globalConfig :
                             globalConfig
             )
+
+            def secureOptionNodeDeferred = [:]
+            if(scheduledExecution) {
+                if(!extraParamsExposed){
+                    extraParamsExposed=[:]
+                }
+                if(!extraParams){
+                    extraParams=[:]
+                }
+                Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
+                ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
+                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
+                        args, jobcontext, secureOptionNodeDeferred)
+            }
+            String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
 
 
             NodeRecorder recorder = new NodeRecorder()
@@ -1114,10 +1307,56 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(
                     recorder,
                     workflowlogger
-            );
+            )
+
+            def executionLifecyclePluginConfigs = scheduledExecution ?
+                    executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
+                    null
+            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
+
+            WorkflowData eWorkflowData = execution.getWorkflowData()
+
+            if (eWorkflowData.hasConditionalSteps()) {
+                boolean featureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
+                if(!featureEnabled) {
+                    def msg = "Job [${scheduledExecution.jobName}] has conditional steps and the conditional logic feature is not enabled"
+                    throw new ExecutionServiceException(msg, "Conditional Steps not supported")
+                }
+            }
+
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(eWorkflowData, execution.project)
+
+            StepExecutionContext createInitContext = createContext(
+                    execution,
+                    null,
+                    framework,
+                    authContext,
+                    execution.user,
+                    jobcontext,
+                    null,
+                    null,
+                    null,
+                    extraParams,
+                    extraParamsExposed,
+                    inputCharset,
+                    workflowLogManager,
+                    secureOptionNodeDeferred
+            )
+
+            if (executionLifecyclePluginExecHandler != null) {
+                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeWorkflowIsSet(createInitContext, item).orElse(null)
+                if(executionLifecycleStatus?.useNewValues){
+                    createInitContext = executionLifecycleStatus.getExecutionContext()?:createInitContext
+
+                    if(executionLifecycleStatus?.isUpdateWorkflowDataValues()){
+                        item = executionLifecycleStatus.workflow
+                    }
+                }
+            }
 
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
                     execution,
+                    item.workflow,
                     framework,
                     authContext,
                     jobcontext,
@@ -1143,37 +1382,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     loadAdditionalListeners(listenersList)
             )
 
-            def secureOptionNodeDeferred = [:]
-            if(scheduledExecution) {
-                if(!extraParamsExposed){
-                    extraParamsExposed=[:]
-                }
-                if(!extraParams){
-                    extraParams=[:]
-                }
-                Map<String, String> args = OptionsParserUtil.parseOptsFromString(execution.argString)
-                ignoreDefaultValuesForSecureOptions(scheduledExecution, extraParams, extraParamsExposed)
-                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
-                        args, jobcontext, secureOptionNodeDeferred)
-            }
-            String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
-
-            StepExecutionContext executioncontext = createContext(
-                    execution,
-                    null,
-                    framework,
-                    authContext,
-                    execution.user,
-                    jobcontext,
-                    multiListener,
-                    multiListener,
-                    null,
-                    extraParams,
-                    extraParamsExposed,
-                    inputCharset,
-                    workflowLogManager,
-                    secureOptionNodeDeferred
-            )
+            StepExecutionContext executioncontext = ExecutionContextImpl.builder(createInitContext)
+                    .executionListener(multiListener)
+                    .workflowExecutionListener(multiListener)
+                    .build()
 
             fileUploadService.executionBeforeStart(
                     new ExecutionPrepareEvent(
@@ -1212,13 +1424,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             )
             logsInstalled=true
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
 
-
-            def executionLifecyclePluginConfigs = scheduledExecution ?
-                                   executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
-                                   null
-            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),
@@ -1240,7 +1446,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     periodicCheck     : checkpoint
             )
         } catch(Throwable e) {
-            log.error("Failed while starting execution: ${execution.id}", t)
+            log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
             if(logsInstalled) {
                 sysThreadBoundOut.removeThreadStream()?.close()
@@ -1669,7 +1875,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(execMap instanceof Execution) {
             executionReference = execMap.asReference()
         }
-        
+
+        // Get workflowData from execMap
+        def wfData = null
+        if(execMap instanceof Execution) {
+            wfData = execMap.getWorkflowData()
+        }
 
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
@@ -1689,6 +1900,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             executionListener(listener)
             workflowExecutionListener(wlistener)
             execution(executionReference)
+            workflowData(wfData)
         }
         builder.charsetEncoding(charsetEncoding)
         builder.framework(framework)
@@ -2026,6 +2238,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
+            LogFileStorageRequest.findByExecution(e)?.delete(flush: true)
             e.delete()
             //delete all files
             def deletedfiles = 0
@@ -2122,7 +2335,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       orchestrator:params.orchestrator,
                                       nodeRankOrderAscending:params.nodeRankOrderAscending,
                                       nodeRankAttribute:params.nodeRankAttribute,
-                                      workflow:params.workflow,
+                                      workflowData:params.workflow,
                                       argString:params.argString,
                                       executionType: params.executionType ?: 'scheduled',
                                       timeout:params.timeout?:null,
@@ -2161,12 +2374,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             try {
                 newstr = input.replaceAll(/\$\{DATE((?:[-+]\d+)?:.*?)\}/) { all, tstamp ->
-                    if (tstamp.lastIndexOf(":") == -1) {
+                    final firstColon = tstamp.indexOf(":")
+                    if (firstColon == -1) {
                         return all
                     }
-                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
-                    final fdate = tstamp.substring(tstamp.lastIndexOf(":") + 1)
+                    final operator = tstamp.substring(0, firstColon)
+                    final rest = tstamp.substring(firstColon + 1)
+
+                    // Try to extract optional TIMEZONE from the last colon-segment
+                    String fdate = rest
+                    TimeZone tz = null
+                    final lastColon = rest.lastIndexOf(":")
+                    if (lastColon >= 0) {
+                        try {
+                            tz = TimeZone.getTimeZone(ZoneId.of(rest.substring(lastColon + 1)))
+                            fdate = rest.substring(0, lastColon)
+                        } catch (DateTimeException ignored) {
+                            // last segment is part of FORMAT, not a timezone — use whole rest
+                        }
+                    }
+
                     def formatter = new SimpleDateFormat(fdate)
+                    if (tz != null) {
+                        formatter.setTimeZone(tz)
+                    }
                     if (operator == '') {
                         formatter.format(dateStarted)
                     } else {
@@ -2177,9 +2408,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
             } catch (IllegalArgumentException e) {
-                log.warn(e)
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             } catch (NumberFormatException e) {
-                log.warn(e)
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
+            } catch (DateTimeException e) {
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             }
 
 
@@ -2207,14 +2440,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         // Abandon the transient ScheduledExecution entity instance.
         execution.scheduledExecution = null
         execution.jobUuid = null
-
-        if(execution.workflow){
-            if(!execution.workflow.save(flush:true)){
-                def err=execution.workflow.errors.allErrors.collect { it.toString() }.join(", ")
-                log.error("unable to save workflow: ${err}")
-                throw new ExecutionServiceException("unable to save workflow: "+err)
-            }
-        }
 
         if(!execution.save(flush:true)){
             execution.errors.allErrors.each { log.warn(it.defaultMessage) }
@@ -2602,11 +2827,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
 
-        Workflow workflow = new Workflow(se.workflow)
-        //create duplicate workflow
-        props.workflow = workflow
+        // Clone workflow from job definition using new JSON storage approach
+        def workflowData = se.getWorkflowData()
+        if(workflowData){
+            props.workflow = workflowData
+        }
 
         Execution execution = createExecution(props)
+        execution.setWorkflowData(workflowData)
         execution.dateStarted = new Date()
 
         def newstr = expandDateStrings(execution.argString, execution.dateStarted)
@@ -2626,11 +2854,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             execution.setExtraMetadataMap(extraMeta)
         }
 
+        Workflow workflow = execution.workflow
+
         if (workflow && !workflow.save(flush:true)) {
             execution.workflow.errors.allErrors.each { log.error(it.toString()) }
             log.error("unable to save execution workflow")
             throw new ExecutionServiceException("unable to create execution workflow")
         }
+
         if (!execution.save(flush:true)) {
             execution.errors.allErrors.each { log.warn(it.toString()) }
             def msg=execution.errors.allErrors.collect { ObjectError err-> lookupMessage(err.codes,err.arguments?.toList(),err.defaultMessage) }.join(", ")
@@ -2703,12 +2934,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Execution newExec = int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
 
         // Publish audit event for new job run.
+        // Explicitly set the username from the execution record so that the audit log
+        // always reflects the real user, even when there is no web session in the
+        // security context (e.g. Quartz-scheduled jobs, API/webhook calls).
         if(auditEventsService) {
             auditEventsService.eventBuilder()
                 .setResourceType(ResourceTypes.JOB)
-                .setResourceName("${jobReference.project}:${jobReference.jobAndGroup}")
                 .setResourceName("${se.project}:${se.uuid}:${se.generateFullName()}:${newExec.id}")
                 .setActionType(ActionTypes.RUN)
+                .setUsername(newExec.user)
                 .publish()
         }
 
@@ -3239,6 +3473,34 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public def triggerJobCompleteNotifications(AsyncStarted execRun, ExecutionCompleteEvent event) {
         def context = execRun?.thread?.context
         def execution = event.execution
+        def executionId = event.execution.id
+
+        //load stored execution to get the orchestrator data
+        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+        // Fallback to simple get() for DataTest compatibility
+        Execution executionLoad
+        try {
+            executionLoad = Execution.withSession { session ->
+                String hql = '''
+                    SELECT e
+                    FROM Execution e
+                    LEFT JOIN e.orchestrator o
+                    WHERE e.id = :executionId
+                '''
+                def query = session.createQuery(hql, Execution)
+                query.setParameter('executionId', executionId)
+                query.uniqueResult()
+            } as Execution
+        } catch (MissingMethodException e) {
+            // DataTest fallback: SimpleMapSession doesn't support HQL, use simple get()
+            executionLoad = Execution.get(executionId)
+        }
+
+        //just replacing the value for the received from ExecutionJob because the status is not saved yet
+        if(executionLoad && executionLoad.orchestrator){
+            execution.orchestrator = executionLoad.orchestrator
+        }
+
         def export = execRun?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
 
         notificationService.asyncTriggerJobNotification(
@@ -3255,13 +3517,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
      * Update a scheduledExecution statistics with a successful execution duration
-     * @param schedId
+     * @param jobUuid
+     * @param eId
+     * @param time
      * @param execution
      * @return
      */
     @NotTransactional
-    def updateScheduledExecStatistics(String jobUuid, eId, long time) {
-        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time)
+    def updateScheduledExecStatistics(String jobUuid, eId, long time, String status, Date dateCompleted) {
+        return jobStatsDataProvider.updateJobStats(jobUuid, eId, time, status, dateCompleted)
     }
 
     /**
@@ -3372,17 +3636,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     StepExecutionResult executeWorkflowStep(StepExecutionContext executionContext, StepExecutionItem executionItem) throws StepException{
-        if (!(executionItem instanceof JobExecutionItem)) {
-            throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName());
-        }
+
         def createFailure = { FailureReason reason, String msg ->
             return new StepExecutionResultImpl(null, reason, msg)
         }
         def createSuccess = {
             return new StepExecutionResultImpl()
         }
-        JobExecutionItem jitem = (JobExecutionItem) executionItem
-        return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
+
+        if (executionItem instanceof JobExecutionItem) {
+            JobExecutionItem jitem = (JobExecutionItem) executionItem
+            return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
+        }
+
+        if (executionItem instanceof SubWorkflowExecutionItem) {
+            SubWorkflowExecutionItem runnerExecutionItem = (SubWorkflowExecutionItem) executionItem
+            return runSubworkflowExecutionItem(executionContext, runnerExecutionItem, createFailure, createSuccess)
+        }
+        throw new IllegalArgumentException("Unsupported item type: " + executionItem.getClass().getName())
     }
 
     ///////////////
@@ -3670,11 +3941,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
 
+        def globalConfig = getGlobalPluginConfigurations(se.project)
         def loggingFilters = se  ?
                 ExecutionUtilService.createLogFilterConfigs(
-                        se.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
-                ) :
-                []
+                        se.getWorkflowData()?.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+                ) + globalConfig :
+                globalConfig
         def workflowLogManager = executionContext.loggingManager?.createManager(
                 loggingFilters
         )
@@ -3715,6 +3987,48 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
         }
         return newContext
+    }
+
+
+    /**
+     * Create a step execution context for a Job Reference step
+     * @param se the job
+     * @param exec the execution, or null if not known
+     * @param executionContext the original step context
+     * @param newargs argument strings for the job, which will have data context references expanded
+     * @param nodeFilter overriding node filter
+     * @param nodeKeepgoing overriding keepgoing
+     * @param nodeThreadcount overriding threadcount
+     * @param dovalidate if true, validate the input arguments to the job
+     * @return
+     * @throws ExecutionServiceValidationException if input argument validation fails
+     */
+    StepExecutionContext createJobReferenceContext(
+            JobReferenceItem jobReferenceItem,
+            StepExecutionContext executionContext
+    )
+            throws ExecutionServiceValidationException
+    {
+        def se = scheduledExecutionService.findJobFromJobReference(jobReferenceItem, jobReferenceItem.project ?: event.projectName)
+        def jobArgs = jobReferenceItem.args
+
+        return createJobReferenceContext(
+                se,
+                null,
+                executionContext,
+                jobArgs,
+                jobReferenceItem.nodeFilter,
+                jobReferenceItem.nodeKeepgoing,
+                jobReferenceItem.nodeThreadcount,
+                jobReferenceItem.nodeRankAttribute,
+                jobReferenceItem.nodeRankOrderAscending,
+                null,
+                jobReferenceItem.nodeIntersect,
+                jobReferenceItem.importOptions,
+                false,
+                jobReferenceItem.childNodes
+        )
+
     }
     /**
      * Execute a job reference workflow with a particular context, optionally overriding the target node set,
@@ -3835,7 +4149,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
                     return
                 }
-                newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow, se.project)
+                def seWorkflowData = se.getWorkflowData()
+                if (!seWorkflowData) {
+                    def msg = "No workflow data available for job [${jitem.jobIdentifier}]: ${se.extid}"
+                    executionContext.getExecutionListener().log(0, msg);
+                    result = createFailure(JobReferenceFailureReason.NotFound, msg)
+                    return
+                }
+                if (seWorkflowData.hasConditionalSteps()) {
+                    boolean featureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
+                    if(!featureEnabled) {
+                        def msg = "Job [${jitem.jobIdentifier}] has conditional steps and the feature is not enabled: ${se.extid}"
+                        executionContext.getExecutionListener().log(0, msg);
+                        result = createFailure(JobReferenceFailureReason.JobFailed, msg)
+                        return
+                    }
+                }
+                newExecItem = executionUtilService.createExecutionItemForWorkflow(seWorkflowData, se.project)
 
                 try {
                     newContext = createJobReferenceContext(
@@ -3901,6 +4231,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                    executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) :
                                    null
             def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, executionReference)
+
+            //Execute beforeJobStarts lifecycle for the job reference step
+            if (executionLifecyclePluginExecHandler != null) {
+                ExecutionLifecycleStatus executionLifecycleStatus = executionLifecyclePluginExecHandler.beforeWorkflowIsSet(newContext, newExecItem).orElse(null)
+                if(executionLifecycleStatus?.useNewValues){
+                    newContext = executionLifecycleStatus.getExecutionContext()?:newContext
+
+                    if(executionLifecycleStatus?.isUpdateWorkflowDataValues()){
+                        newExecItem = executionLifecycleStatus.workflow
+                    }
+                }
+
+            }
+
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
@@ -3997,6 +4341,78 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return result
     }
 
+    /**
+     * Execute a subworkflow from the Step (only for Workflow Steps)
+     * @param executionContext the execution context
+     * @param runnerExecutionItem the runner execution item containing the subworkflow
+     * @return StepExecutionResult
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    private def runSubworkflowExecutionItem(
+            StepExecutionContext executionContext,
+            SubWorkflowExecutionItem runnerExecutionItem,
+            Closure createFailure,
+            Closure createSuccess
+    ) {
+        def result
+
+        // Get the subworkflow from the runner execution item
+        WorkflowExecutionItem workflowItem = runnerExecutionItem.getSubWorkflow()
+
+        if (!workflowItem) {
+            def msg = "Runner execution item does not contain a subworkflow"
+            executionContext.getExecutionListener().log(0, msg)
+            return createFailure( StepFailureReason.ConfigurationFailure,msg)
+        }
+
+        try {
+
+            // Start timing before the execution
+            long startTime = System.currentTimeMillis()
+
+            def wresult = metricService.withTimer(this.class.name, 'runRunnerWorkflow') {
+                // Get the workflow execution service
+                WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
+
+                // Create and start the workflow execution thread
+                Thread thread = new WorkflowExecutionServiceThread(
+                        wservice,
+                        workflowItem,
+                        executionContext,
+                        null,
+                        null
+                )
+
+                thread.start()
+
+                // Wait for the thread to complete (no timeout for runner workflows)
+                return executionUtilService.runRefJobWithTimer(thread, startTime, false, 0)
+            }
+
+            // Process result after the workflow completes
+            if (!wresult.result || !wresult.result.success || wresult.interrupt) {
+                String errors = ""
+
+                wresult.result.stepFailures.each { step, failure ->
+                    errors += "Step ${step}: ${failure.failureMessage}\n"
+                }
+
+                result = createFailure(StepFailureReason.PluginFailed, errors)
+
+            } else {
+                result = createSuccess()
+            }
+
+            return result
+
+        } catch (Exception e) {
+            def msg = "Error executing runner workflow: ${e.message}"
+            executionContext.getExecutionListener().log(0, msg)
+            log.error(msg, e)
+            throw new StepException(msg,StepFailureReason.Unknown)
+        }
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     def saveRefExecution(String status, Long refId, String jobUuid = null, Long execId=null){
         return referencedExecutionDataProvider.updateOrCreateReference(refId, jobUuid, execId, status)
@@ -4022,7 +4438,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return queryExecutions(query,offset,max)
     }
 
-    private List getAllowedProjects(String project, String jobUuid){
+    List getAllowedProjects(String project, String jobUuid){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         def list = []
         if(project != null) {
@@ -4059,13 +4475,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
   /**
-   * Query executions
-   * @param query query
-   * @param offset paging offset
-   * @param max paging max
-   * @return result map [total: int, result: List<Execution>]
-   */
+  * Query executions
+  * @param query query
+  * @param offset paging offset
+  * @param max paging max
+  * @return result map [total: int, result: List<Execution>]
+  */
   def queryExecutions(ExecutionQuery query, int offset = 0, int max = -1) {
+
+    // Standard Criteria-based query (original implementation)
     def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
     def criteriaClos = { isCount ->
 
@@ -4082,15 +4500,224 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         and {
           order('dateCompleted', 'desc')
-          order('dateStarted', 'desc')
+          order('id', 'desc')  // Secondary sort by id for consistent pagination (faster than dateStarted)
         }
       }
     }
+
     def result = Execution.createCriteria().list(criteriaClos.curry(false))
-    def total = Execution.createCriteria().count(criteriaClos.curry(true))
+
+    // Initialize total count
+    def total = 0
+    ExecutionCountCacheKey cacheKey = null
+    def fromCache = false
+
+    // Check cache first if enabled and query is cacheable
+    // Queries with absolute date filters (without relative filters) are not cached
+    def canCache = isExecutionCountCacheEnabled() && isCacheableQuery(query)
+    
+    if (canCache) {
+        cacheKey = buildCountCacheKey(query)
+        def cache = getExecutionCountCache()
+        def cachedTotal = cache.getIfPresent(cacheKey)
+        if (cachedTotal != null) {
+            log.debug("ExecutionCount CACHE HIT: key=${cacheKey}, hash=${cacheKey.hashCode()}, count=${cachedTotal}, cacheSize=${cache.size()}")
+            total = cachedTotal
+            fromCache = true
+        } else {
+            log.debug("ExecutionCount CACHE MISS: key=${cacheKey}, hash=${cacheKey.hashCode()}, cacheSize=${cache.size()}")
+        }
+    } else {
+        log.debug("ExecutionCount NOT CACHEABLE: cacheEnabled=${isExecutionCountCacheEnabled()}, isCacheable=${isCacheableQuery(query)}")
+    }
+
+    // If not from cache, determine the best count method
+    if (!fromCache) {
+        String countMethod = 'unknown'
+        def startTime = System.currentTimeMillis()
+        
+        if (query.shouldUseUnionQuery() || canUseSimpleCount(query)) {
+            // Use optimized HQL count from ExecutionQuery (handles both UNION and simple cases)
+            countMethod = query.shouldUseUnionQuery() ? 'UNION' : 'SIMPLE_HQL'
+            total = query.countExecutions()
+        } else {
+            // Standard criteria count (may include JOINs)
+            countMethod = 'CRITERIA'
+            total = Execution.createCriteria().count(criteriaClos.curry(true))
+        }
+        
+        def elapsedMs = System.currentTimeMillis() - startTime
+        log.debug("ExecutionCount QUERY: method=${countMethod}, count=${total}, elapsed=${elapsedMs}ms, canCache=${canCache}")
+
+        // Store in cache if cacheable
+        if (canCache && cacheKey) {
+            getExecutionCountCache().put(cacheKey, total as Long)
+            log.debug("ExecutionCount CACHED: key=${cacheKey}, count=${total}")
+        }
+    }
+
+
+    // Edge case handling: Detect stale cached count and refresh if necessary
+    // Only check if the total came from cache - otherwise it's already fresh
+    if (fromCache) {
+        def resultSize = result.size()
+        boolean cacheIsStale = false
+
+        if (resultSize > 0 && total < offset + resultSize) {
+            // Cached total is lower than what we actually got - definitely stale
+            log.debug("Stale cache detected: total ${total} < offset ${offset} + resultSize ${resultSize}")
+            cacheIsStale = true
+        } else if (resultSize == 0 && offset > 0 && total > offset) {
+            // Empty result on a non-first page but cached total says there should be data
+            log.debug("Stale cache detected: empty page at offset ${offset} but total is ${total}")
+            cacheIsStale = true
+        } else if (resultSize > 0 && resultSize < max && max > 0 && offset + resultSize < total) {
+            // Got fewer results than max (partial page) but cached total says there's more
+            log.debug("Stale cache detected: partial page with ${resultSize} results but total is ${total}")
+            cacheIsStale = true
+        }
+
+        // If cache is stale, invalidate and get real count
+        if (cacheIsStale) {
+            log.debug("Refreshing stale cached count with real query")
+            
+            // Invalidate the stale cache entry using static method
+            ExecutionCountCacheKey.invalidate(getExecutionCountCache(), cacheKey)
+            
+            // Get the real count using the same logic as the main count path
+            if (query.shouldUseUnionQuery() || canUseSimpleCount(query)) {
+                total = query.countExecutions()
+            } else {
+                total = Execution.createCriteria().count(criteriaClos.curry(true))
+            }
+            
+            // Cache the fresh count
+            getExecutionCountCache().put(cacheKey, total as Long)
+        }
+    }
+
     return [result: result, total: total]
   }
 
+    /**
+     * Check if this query can use simple count without JOINs.
+     * Returns true if the optimization is enabled AND the query can be satisfied 
+     * using only execution table columns.
+     * 
+     * Returns false if:
+     *   - simpleCount.enabled config is false
+     *   - Query has ILIKE filters (nodeFilter, optionFilter, adhocStringFilter)
+     *   - Query requires JOIN with scheduled_execution
+     * 
+     * Filters that REQUIRE JOIN with scheduled_execution:
+     *   - jobListFilter (job names)
+     *   - jobFilter, jobExactFilter (job name patterns)
+     *   - groupPath, groupPathExact (job group paths)
+     *   - excludeJobListFilter, excludeJobIdListFilter (exclusions)
+     *   - excludeGroupPath, excludeGroupPathExact (group exclusions)
+     *   - excludeJobFilter, excludeJobExactFilter (job exclusions)
+     *   - descFilter (job description)
+     *   - adhoc=true/false (requires checking scheduledExecution IS NULL)
+     * 
+     * Filters that can use execution.job_uuid column (NO JOIN needed):
+     *   - jobIdListFilter with UUID strings (not Long IDs)
+     */
+    boolean canUseSimpleCount(ExecutionQuery query) {
+        // Check if simple count optimization is enabled
+        if (!isSimpleCountEnabled()) {
+            return false
+        }
+
+        // Filters that always require JOIN with scheduled_execution
+        def joinRequiredFilters = ['jobListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter',
+                                   'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter',
+                                   'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
+
+        // Check if any JOIN-required filters are set
+        boolean hasJoinRequiredFilters = joinRequiredFilters.any { query[it] }
+        if (hasJoinRequiredFilters) {
+            return false
+        }
+
+        // adhoc filter requires checking scheduledExecution IS NULL/NOT NULL
+        if (query.adhoc != null) {
+            return false
+        }
+
+        // These filters require ILIKE queries that are only supported in the criteria-based count
+        // (not yet implemented in the HQL countExecutions method)
+        if (query.nodeFilter || query.optionFilter || query.adhocStringFilter) {
+            return false
+        }
+
+        // jobIdListFilter can be handled without JOIN if all IDs are UUIDs (not Long IDs)
+        // because we can filter on execution.job_uuid column directly
+        if (query.jobIdListFilter) {
+            // Check if any ID is a Long (legacy format) - these require JOIN
+            boolean hasLongIds = query.jobIdListFilter.any { id ->
+                try {
+                    Long.valueOf(id.toString())
+                    return true // It's a Long
+                } catch (NumberFormatException e) {
+                    return false // It's a UUID string
+                }
+            }
+            if (hasLongIds) {
+                return false // Long IDs require JOIN to scheduled_execution
+            }
+            // All IDs are UUIDs - can use execution.job_uuid column
+        }
+
+        return true
+    }
+
+    /**
+     * Check if a query result can be cached.
+     * 
+     * Returns FALSE for:
+     *   - Queries with absolute date filters not covered by relative filters
+     *   - Queries with multiple job IDs (only single job ID is supported)
+     * 
+     * Returns TRUE for:
+     *   - Queries with ONLY relative filters (recentFilter, olderFilter)
+     *   - Queries without any date filters
+     *   - Queries with 0 or 1 job ID filter
+     */
+    boolean isCacheableQuery(ExecutionQuery query) {
+        // Check for multiple job IDs - not cacheable (cache key only supports single job)
+        if (query.jobIdListFilter && query.jobIdListFilter.size() > 1) {
+            log.debug("Query not cacheable: has multiple job IDs (${query.jobIdListFilter.size()})")
+            return false
+        }
+        
+        // Check for absolute date filters that are NOT covered by relative filters
+        // recentFilter sets doendafterFilter, olderFilter sets doendbeforeFilter
+        boolean hasUncoveredEndAfter = query.doendafterFilter && !query.recentFilter
+        boolean hasUncoveredEndBefore = query.doendbeforeFilter && !query.olderFilter
+        boolean hasStartFilters = query.dostartafterFilter || query.dostartbeforeFilter
+        
+        if (hasUncoveredEndAfter || hasUncoveredEndBefore || hasStartFilters) {
+            log.debug("Query not cacheable: has absolute date filters not covered by relative filters")
+            return false
+        }
+        
+        return true
+    }
+
+    /**
+     * Build a cache key for the count query based on query parameters.
+     * Delegates to the static factory method on ExecutionCountCacheKey.
+     * 
+     * For RELATIVE time filters (recentFilter, olderFilter like "60d", "24h"):
+     *   - Uses the relative filter string directly
+     *   - This means all requests with same relative filter share the same cache entry
+     * 
+     * Only single job ID is supported in cache key. Multiple job IDs are handled by
+     * isCacheableQuery() returning false.
+     */
+    ExecutionCountCacheKey buildCountCacheKey(ExecutionQuery query) {
+        ExecutionCountCacheKey.fromQuery(query)
+    }
 
   /**
      * Return statistics over a Query resultset.
@@ -4168,7 +4795,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 average: formattedMetrics.avgDuration,
                 max    : formattedMetrics.maxDuration,
                 min    : formattedMetrics.minDuration
-            ]
+            ],
+
+            // Enhanced response with status counts and success rate
+            succeeded: formattedMetrics.succeededCount,
+            failed: formattedMetrics.failedCount,
+            successRate: formattedMetrics.successRate
         ]
 
     }
@@ -4202,6 +4834,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         'durationMax',
                         StandardBasicTypes.TIME
 
+                // Zero-overhead status count projections
+                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                        'succeededCount',
+                        StandardBasicTypes.LONG
+                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                        'failedCount',
+                        StandardBasicTypes.LONG
+
             }
         }
         def metricCriteriaB = {
@@ -4223,9 +4863,44 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         'durationMax',
                         StandardBasicTypes.LONG
 
+                // Zero-overhead status count projections
+                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                        'succeededCount',
+                        StandardBasicTypes.LONG
+                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                        'failedCount',
+                        StandardBasicTypes.LONG
             }
         }
-        return Arrays.asList(metricCriteriaA, metricCriteriaB)
+        // Oracle: DATE - DATE returns NUMBER (fractional days); multiply by 86400 for integer seconds
+        def metricCriteriaC = {
+            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                rowCount("count")
+                sqlProjection 'sum(round((date_completed - date_started) * 86400)) as durationSum',
+                        'durationSum',
+                        StandardBasicTypes.LONG
+                sqlProjection 'min(round((date_completed - date_started) * 86400)) as durationMin',
+                        'durationMin',
+                        StandardBasicTypes.LONG
+                sqlProjection 'max(round((date_completed - date_started) * 86400)) as durationMax',
+                        'durationMax',
+                        StandardBasicTypes.LONG
+
+                // Zero-overhead status count projections
+                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                        'succeededCount',
+                        StandardBasicTypes.LONG
+                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                        'failedCount',
+                        StandardBasicTypes.LONG
+            }
+        }
+        return Arrays.asList(metricCriteriaA, metricCriteriaB, metricCriteriaC)
     }
 
     /**
@@ -4241,6 +4916,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def minDuration = metricsData?.durationMin ? metricsData.durationMin : 0
         def durationSum = metricsData?.durationSum ? metricsData.durationSum : 0
 
+        // Extract status counts
+        def succeededCount = metricsData?.succeededCount ? metricsData.succeededCount : 0
+        def failedCount = metricsData?.failedCount ? metricsData.failedCount : 0
+
         if ( maxDuration instanceof Long || minDuration instanceof Long || durationSum instanceof Long ) {
             maxDuration = epochToTime(metricsData?.durationMax)
             minDuration = epochToTime(metricsData?.durationMin)
@@ -4252,11 +4931,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def maxDurationToMillis = maxDuration != 0 ? sqlTimeToMillis(maxDuration) : 0
         def minDurationToMillis = minDuration != 0 ? sqlTimeToMillis(minDuration) : 0
 
+        // Calculate success rate
+        def successRate = totalCount != 0 ? (succeededCount / totalCount * 100).round(1) : 0
+
         return [
                 totalCount: totalCount,
                 maxDuration: maxDurationToMillis,
                 minDuration: minDurationToMillis,
-                avgDuration: avgDuration
+                avgDuration: avgDuration,
+                succeededCount: succeededCount,
+                failedCount: failedCount,
+                successRate: successRate
         ]
 
     }
@@ -4283,6 +4968,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             projections {
                 property("dateStarted","dateStarted")
                 property("dateCompleted","dateCompleted")
+                property("status","status")  // Add status for in-memory calculation
             }
         }
         List<Map<String, Timestamp>> result =  Execution.createCriteria().list(metricCriteria2)
@@ -4290,12 +4976,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * input: List of Map of String to Timestamp, containing keys dateCompleted and dateStarted
+     * input: List of Map containing keys dateCompleted, dateStarted, and status
      * @param result
      * @return
      */
-    Map<String,Object> metricsDataFromProjectionResult(List<Map<String, Timestamp>> result) {
-        List<Long> timeSpent = result?.collect { Map<String, Timestamp> dataResult ->
+    Map<String,Object> metricsDataFromProjectionResult(List<Map<String, Object>> result) {
+        // Initialize status counters
+        def succeededCount = 0
+        def failedCount = 0
+
+        List<Long> timeSpent = result?.collect { Map<String, Object> dataResult ->
+            // Count status during existing iteration (zero overhead)
+            def status = dataResult.status
+            if (status == 'succeeded') {
+                succeededCount++
+            } else if (status in ['failed', 'failed-with-retry', 'timedout']) {
+                failedCount++
+            }
+
             if( dataResult.dateCompleted != null ){
                 return dataResult.dateCompleted.getTime() - dataResult.dateStarted.getTime()
             }
@@ -4310,6 +5008,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Long minDuration = timeSpentWithoutRunningExecs?.min()
         double avgDuration = totalCount != 0 ? (timeSpentWithoutRunningExecs?.sum() / totalCount) : 0
 
+        // Calculate success rate
+        def successRate = totalCount != 0 ? (succeededCount / totalCount * 100).round(1) : 0
+
         return  [
             total   : totalCount,
 
@@ -4317,7 +5018,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 average: avgDuration,
                 max    : maxDuration,
                 min    : minDuration
-            ]
+            ],
+
+            // Enhanced response with status counts and success rate
+            succeeded: succeededCount,
+            failed: failedCount,
+            successRate: successRate
         ]
     }
 
@@ -4368,19 +5074,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     List<PluginConfiguration> getGlobalPluginConfigurations(String project){
         def list = []
 
-        def fwPlugins = ProjectNodeSupport.listPluginConfigurations(
-                frameworkService.getProjectProperties(project),
+        // framework.globalfilter.* properties come from framework.properties
+        def fwProps = frameworkService.getFrameworkPropertiesMap()
+        def fwPlugins = fwProps ? ProjectNodeSupport.listPluginConfigurations(
+                fwProps,
                 'framework.globalfilter',
                 ServiceNameConstants.LogFilter,
                 true
-        )
+        ) : []
 
-        def projPlugins = ProjectNodeSupport.listPluginConfigurations(
-                frameworkService.getProjectProperties(project),
+        // project.globalfilter.* properties come from project properties
+        def projProps = frameworkService.getProjectProperties(project)
+        def projPlugins = projProps ? ProjectNodeSupport.listPluginConfigurations(
+                projProps,
                 'project.globalfilter',
                 ServiceNameConstants.LogFilter,
                 true
-        )
+        ) : []
         list = list + projPlugins
         list = list + fwPlugins
 
@@ -4452,8 +5162,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.user = scheduledExecution.user
         missed.userRoleList = scheduledExecution.userRoleList
         missed.serverNodeUUID = scheduledServer
-        missed.workflow = new Workflow()
-        missed.workflow.save()
+        missed.setWorkflowData(new WorkflowDataImpl())
         missed.status = 'missed'
         missed.save()
 
@@ -4471,6 +5180,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 storageTree(storageService.storageTreeWithContext(authContext))
                 framework(frameworkService.rundeckFramework)
                 frameworkProject(scheduledExecution.project)
+                workflowData(scheduledExecution.getWorkflowData())
             }
             contextBuilder.authContext(authContext)
             notificationService.triggerJobNotification(
@@ -4479,5 +5189,55 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      context  : contextBuilder.build()]
             )
         }
+    }
+
+    @Override
+    List<SysConfigProp> getSystemConfigProps() {
+        [
+                SystemConfig.builder().with {
+                    key "rundeck.executionDailyMetrics.enabled"
+                    description "Enable Daily Execution Metrics Collection"
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'Execution'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key "rundeck.api.executionQueryConfig.countPerformance.enabled"
+                    description "Enable query performance for counting total executions in API execution queries"
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'API'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key "rundeck.api.executionQueryConfig.countCache.enabled"
+                    description "Enable cache for counting total executions in API execution queries"
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'API'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key "rundeck.api.executionQueryConfig.countCache.ttl"
+                    description "Time-to-live (TTL) in seconds for cached execution count entries in API execution queries"
+                    defaultValue "30"
+                    required false
+                    datatype "Integer"
+                    visibility 'Advanced'
+                    category 'API'
+                    authRequired("app_admin")
+                    build()
+                },
+        ] as List<SysConfigProp>
     }
 }

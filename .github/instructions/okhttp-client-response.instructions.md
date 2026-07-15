@@ -1,0 +1,1 @@
+../../.claude/rules/okhttp-client-response.md

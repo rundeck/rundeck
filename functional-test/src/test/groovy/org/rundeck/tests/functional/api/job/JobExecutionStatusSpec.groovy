@@ -31,9 +31,8 @@ class JobExecutionStatusSpec extends BaseContainer {
                 execId > 0
             }
         when:
-        // Waits for all executions to finish
-        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
+
+        def executioLog = waitForExecutionFinish(String.valueOf(execId), WaitingTime.EXCESSIVE)
         def response = doGet("/job/${jobId}/executions?status=test+status+code")
         then:
         verifyAll {

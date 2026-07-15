@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData;
 
 import java.util.Collection;
 import java.util.List;
@@ -229,4 +230,11 @@ public interface ExecutionContext {
      * @return An {@link ExecutionReference} to the execution, or null if doesn't apply.
      */
     public ExecutionReference getExecution();
+
+    /**
+     * Retrieves the workflow JSON representation for the execution.
+     *
+     * @return the workflow JSON string
+     */
+    public WorkflowData getWorkflowData();
 }

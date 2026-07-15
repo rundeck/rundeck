@@ -23,6 +23,7 @@ import org.grails.plugins.codecs.URLCodec
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.PluginStep
@@ -66,8 +67,8 @@ class WorkflowControllerSpec extends Specification implements ControllerUnitTest
 
     def "modify commandexec type empty validation"() {
         given:
-        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
-        wf.commands = new ArrayList()
+        WorkflowDataImpl wf = new WorkflowDataImpl().fromMap([threadcount: 1, keepgoing: true])
+        wf.steps = new ArrayList()
         def inputparams = [(fieldname): 'blah']
         wf.commands << new CommandExec(inputparams)
         controller.frameworkService = Mock(FrameworkService)

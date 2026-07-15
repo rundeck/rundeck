@@ -34,8 +34,8 @@ describe("ProjectPicker.vue", () => {
     expect(wrapper.emitted("update:modelValue")).toBeFalsy();
     const select = wrapper.find('[data-testid="project-select"]');
     await select.setValue("Project A");
-    expect(wrapper.emitted("update:modelValue")).toBeTruthy();
-    expect(wrapper.emitted("update:modelValue")[0][0]).toBe("Project A");
+    expect(wrapper.emitted("update:modelValue")!).toBeTruthy();
+    expect(wrapper.emitted("update:modelValue")![0][0]!).toBe("Project A");
   });
   it("renders only the default option when project list is empty", async () => {
     (client.projectList as jest.Mock).mockResolvedValueOnce([]);

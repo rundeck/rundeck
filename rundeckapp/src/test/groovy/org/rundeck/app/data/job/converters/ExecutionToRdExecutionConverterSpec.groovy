@@ -3,6 +3,7 @@ package org.rundeck.app.data.job.converters
 import grails.testing.gorm.DataTest
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.Workflow
 import rundeck.data.execution.RdExecution
 import spock.lang.Specification
@@ -12,7 +13,7 @@ import testhelper.TestDomainFactory
 class ExecutionToRdExecutionConverterSpec extends Specification implements DataTest {
 
     def setupSpec() {
-        mockDomains(Execution, Workflow, CommandExec)
+        mockDomains(Execution, Workflow, CommandExec, LogFileStorageRequest)
     }
 
     ExecutionToRdExecutionConverter converter = new ExecutionToRdExecutionConverter()
@@ -41,7 +42,7 @@ class ExecutionToRdExecutionConverterSpec extends Specification implements DataT
         rdExecution.internalId == execution.id
         rdExecution.uuid == execution.uuid
         rdExecution.jobUuid == execution.jobUuid
-        rdExecution.workflow.steps.size() == execution.workflow.commands.size()
+        rdExecution.workflow.steps.size() == execution.getWorkflowData()?.commands?.size() ?: 0
         rdExecution."${property}" == value
 
 

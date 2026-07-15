@@ -16,7 +16,7 @@ const ServerIdentityComp = defineComponent({
     serverName: { type: String, default: "" },
     serverUuid: { type: String, default: "" },
   },
-  data() {
+  data(): { serverInfo: ServerInfo | null } {
     return {
       serverInfo: null,
     };

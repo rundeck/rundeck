@@ -78,7 +78,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             mutableStepStates.each { int index, MutableWorkflowStepState step ->
                 if (!step.nodeStep && !step.hasSubWorkflow()) {
                     //a workflow step, e.g. plugin, without a sub workflow
-                    getOrCreateMutableNodeStepState(step, serverNode, step.stepIdentifier)
+                    getOrCreateMutableNodeStepState(step, getRunnerNode(step), step.stepIdentifier)
                 }
             }
         }
@@ -184,10 +184,10 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         } else if (!currentStep.nodeStep) {
             //overall step state
             toUpdateComplete << currentStep.mutableStepState
-
-            if(serverNode && !currentStep.hasSubWorkflow()){
+            String runnerNode = getRunnerNode(currentStep)
+            if(runnerNode && !currentStep.hasSubWorkflow()){
                 //treat server node as node owner for this step
-                toUpdateComplete << updateNodeStepState(currentStep, serverNode, identifier, stepStateChange)
+                toUpdateComplete << updateNodeStepState(currentStep, runnerNode, identifier, stepStateChange)
             }
 
             toUpdateComplete.each{ toup->
@@ -380,7 +380,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 nodeTargets.addAll(currentStep.mutableNodeStateMap.keySet())
             }
         }else{
-            nodeTargets<<serverNode
+            nodeTargets<<getRunnerNode(currentStep)
         }
         def substates= nodeTargets.collect{ currentStep.nodeStateMap?.get(it)?.executionState?:null}
 
@@ -415,7 +415,9 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @return
      */
     private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep,Date timestamp){
-        def nodes = currentStep.nodeStepTargets?:currentStep.mutableNodeStateMap?currentStep.mutableNodeStateMap.keySet() : [serverNode]
+
+        String runnerNode = getRunnerNode(currentStep)
+        def nodes = currentStep.nodeStepTargets?:currentStep.mutableNodeStateMap?currentStep.mutableNodeStateMap.keySet() : [runnerNode]
         if(currentStep.nodeStateMap.keySet().size()>nodes.size()) {
             nodes = currentStep.nodeStateMap.keySet().
                 findAll { currentStep.nodeStateMap[it].executionState != ExecutionState.WAITING }
@@ -561,13 +563,18 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         if(fromState==toState){
             return
         }
+        //NOT_STARTED is an inferred state: it is assigned at finalization to any node/step
+        //that had no observed activity yet. A genuine state event that arrives afterwards
+        //(e.g. a node step completion delivered just after the workflow is reported complete)
+        //must be allowed to override it, otherwise the step is shown as "not started" even
+        //though it actually ran and produced output (RUN-2939).
         def allowed=[
                 (ExecutionState.WAITING):[null,ExecutionState.WAITING],
-                (ExecutionState.RUNNING): [null, ExecutionState.WAITING,ExecutionState.RUNNING],
-                (ExecutionState.RUNNING_HANDLER):[null,ExecutionState.WAITING,ExecutionState.FAILED, ExecutionState.RUNNING,ExecutionState.RUNNING_HANDLER],
+                (ExecutionState.RUNNING): [null, ExecutionState.WAITING,ExecutionState.RUNNING, ExecutionState.NOT_STARTED],
+                (ExecutionState.RUNNING_HANDLER):[null,ExecutionState.WAITING,ExecutionState.FAILED, ExecutionState.RUNNING,ExecutionState.RUNNING_HANDLER, ExecutionState.NOT_STARTED],
         ]
         ExecutionState.values().findAll{it.isCompletedState()}.each{
-            allowed[it]= [it,ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING]
+            allowed[it]= [it,ExecutionState.RUNNING, ExecutionState.RUNNING_HANDLER, ExecutionState.WAITING, ExecutionState.NOT_STARTED]
         }
         if (errorHandler) {
             allowed[ExecutionState.RUNNING] << ExecutionState.FAILED
@@ -657,6 +664,8 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @param mutableWorkflowStepState
      */
     def resolveStepCompleted(ExecutionState executionState, Date date,  MutableWorkflowStepState mutableWorkflowStepState) {
+
+        String runnerNode = getRunnerNode(mutableWorkflowStepState)
         boolean finalized=false
         if(mutableWorkflowStepState.parameterizedStateMap){
             mutableWorkflowStepState.mutableParameterizedStateMap.values().each{MutableWorkflowStepState paramstep->
@@ -670,7 +679,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         }
         if(mutableWorkflowStepState.hasSubWorkflow()){
             finalizeSubWorkflowStep(mutableWorkflowStepState, executionState, date)
-        } else if (!mutableWorkflowStepState.nodeStep && serverNode) {
+        } else if (!mutableWorkflowStepState.nodeStep && runnerNode) {
             finalizeNodeStep(executionState, mutableWorkflowStepState, date)
             finalized=true
         }
@@ -710,7 +719,7 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 def values = states*.mutableSubWorkflowState*.stepStates*.get(i)*.stepState*.executionState
                 def summaryState = summarizedSubStateResult(values,executionState)
                 if(eachstep.nodeStep){
-                    def nodes = eachstep.nodeStepTargets?:eachstep.nodeStateMap?eachstep.nodeStateMap.keySet():[serverNode]
+                    def nodes = eachstep.nodeStepTargets?:eachstep.nodeStateMap?eachstep.nodeStateMap.keySet():[getRunnerNode(eachstep)]
                     nodes.each{node->
                         mutableWorkflowStepState.mutableSubWorkflowState.updateStateForStep(eachstep.stepIdentifier,0,
                                 StateUtils.stepStateChange(StateUtils.stepState(summaryState),node), updateTime)
@@ -780,6 +789,18 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
             //update the workflow state for this workflow
             updateWorkflowState(identifier,  quellFinalState, executionState, timestamp, nodeNames, parent ?: this)
         }
+    }
+
+    /**
+     * Returns the runner node configured for the given workflow step. If the step's runner node is not set,
+     * this method falls back to returning the server node.
+     *
+     * @param currentStep the current workflow step state
+     * @return the name of the runner node for the step, or the server node if not specified
+     */
+    @Override
+    String getRunnerNode(WorkflowStepState currentStep){
+        return currentStep.runnerNode?:serverNode
     }
 
     @Override

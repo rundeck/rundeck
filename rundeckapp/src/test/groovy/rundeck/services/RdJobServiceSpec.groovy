@@ -29,7 +29,7 @@ import rundeck.services.data.ScheduledExecutionDataService
 import spock.lang.Specification
 
 import javax.security.auth.Subject
-import javax.servlet.http.HttpSession
+import jakarta.servlet.http.HttpSession
 
 class RdJobServiceSpec extends Specification implements DataTest {
     RdJobService service

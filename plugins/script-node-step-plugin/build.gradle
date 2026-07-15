@@ -19,9 +19,13 @@ configurations{
 
 dependencies {
     // Use the latest Groovy version for building this library
-    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation "org.apache.groovy:groovy:${groovyVersion}"
 
     testImplementation "org.spockframework:spock-core:${spockVersion}"
+    // Pattern #10: Spock mocking dependencies for Java 17 + Groovy 4
+    testImplementation "org.objenesis:objenesis:${objenesisVersion}"
+    testImplementation "cglib:cglib-nodep:${cglibNoDepVersion}"
+    testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
 }
 
 repositories {
@@ -36,6 +40,10 @@ task copyToLib(type: Copy) {
 
 tasks.withType(Test) {
     useJUnitPlatform()
+    jvmArgs(
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+    )
 }
 
 jar {

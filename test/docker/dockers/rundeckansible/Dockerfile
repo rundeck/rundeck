@@ -1,10 +1,9 @@
 FROM rdtest:latest
 
-RUN sudo apt-add-repository ppa:ansible/ansible && \
-    sudo apt-get update
-
-
-RUN sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ansible-core
+RUN sudo apt-get update && \
+    sudo apt-get -y install python3-pip && \
+    sudo pip3 install ansible-core && \
+    sudo rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p $HOME/atest
 COPY config $HOME/atest

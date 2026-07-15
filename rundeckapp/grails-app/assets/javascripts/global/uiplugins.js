@@ -24,6 +24,7 @@ function RundeckPage(data) {
     self.uiType = ko.observable(data.uiType||'current');
     self.path = ko.observable(data.path);
     self.baseUrl = ko.observable(data.baseUrl);
+    self.appBaseUrl = ko.observable(data.appBaseUrl); // Grails 7: actual app base URL (not plugin path)
     self.basei18nUrl = ko.observable(data.basei18nUrl);
     self.lang = ko.observable(data.lang);
     self.pluginBaseUrl = function (plugin) {

@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.utils
 
 import spock.lang.Specification
+import spock.lang.Timeout
 
 import java.util.concurrent.CountDownLatch
 

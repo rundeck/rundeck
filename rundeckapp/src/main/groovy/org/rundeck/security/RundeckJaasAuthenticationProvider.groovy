@@ -15,7 +15,6 @@
  */
 package org.rundeck.security
 
-import org.eclipse.jetty.jaas.JAASLoginService
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -28,18 +27,12 @@ import javax.security.auth.login.LoginException
 
 
 class RundeckJaasAuthenticationProvider extends DefaultJaasAuthenticationProvider {
-    static final String IGNORE_THIS_ERROR = "java.lang.NullPointerException\n\tat org.eclipse.jetty.jaas.spi.AbstractLoginModule.logout(AbstractLoginModule.java"
 
     @Override
     Authentication authenticate(final Authentication auth) throws AuthenticationException {
-        try {
-            JAASLoginService jls = new JAASLoginService();
-            jls.start();
-            JAASLoginService.INSTANCE.set(jls)
-            return super.authenticate(auth)
-        } finally {
-            JAASLoginService.INSTANCE.remove();
-        }
+        // Removed Jetty JAASLoginService thread-local setup - no longer needed
+        // with standard Java JAAS implementation
+        return super.authenticate(auth)
     }
 
     @Override
@@ -71,13 +64,9 @@ class RundeckJaasAuthenticationProvider extends DefaultJaasAuthenticationProvide
                     }
                 }
                 catch (LoginException e) {
-                    //IGNORE_THIS_ERROR is caused by a jetty bug in the AbstractLoginModule where
-                    //they don't check that this.currentUser is not null before calling a method on
-                    //the object. This can legitimately happen if the user has configured multiple
-                    //jaas modules and the first module has already logged out the user.
-                    //This bug is fixed in later versions on jetty but we are pinned to this one right
-                    //now because our grails version requires it.
-                    if(!e.message.startsWith(IGNORE_THIS_ERROR)) writeWarning("Logout Error", e)
+                    // Jetty AbstractLoginModule logout bug no longer applies
+                    // with our custom JAAS implementation
+                    writeWarning("Logout Error", e)
                 }
             }
         }

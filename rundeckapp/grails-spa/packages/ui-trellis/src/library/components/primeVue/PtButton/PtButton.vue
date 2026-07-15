@@ -1,5 +1,6 @@
 <template>
   <Button
+    data-testid="pt-button"
     :label="label"
     :icon="icon"
     :icon-pos="iconPos"
@@ -121,7 +122,7 @@ export default defineComponent({
 
 .p-button-secondary {
   background-color: var(--colors-white);
-  border-color: var(--colors-gray-800);
+  border-color: var(--colors-gray-600);
   color: var(--colors-gray-800);
 
   &:hover {
@@ -142,6 +143,13 @@ export default defineComponent({
     &:focus {
       outline: 1px solid var(--colors-gray-800);
     }
+  }
+
+  &.p-button-icon-only {
+    font-size: 11px;
+    padding: 6px;
+    width: 26px;
+    height: 26px;
   }
 }
 

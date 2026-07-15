@@ -1,5 +1,4 @@
 .p-message {
-    border-radius: 0;
     border-width: 0 0 0 6px;
     border-style: solid;
     color: var(--colors-gray-800);
@@ -8,6 +7,7 @@
         display: flex;
         align-items: center;
         font-weight: var(--fontWeights-bold);
+        flex-grow: 1;
     }
 
     .p-message-subtitle {
@@ -29,11 +29,11 @@
     }
 
     &-info {
-        background: var(--colors-blue-100);
-        border-color: var(--colors-blue-600);
+        background: var(--colors-blue-100-original);
+        border-color: var(--colors-blue-600-original);
 
         .p-message-close:focus-visible {
-            box-shadow: 0 0 0 0.2rem var(--colors-blue-600)
+            box-shadow: 0 0 0 0.2rem var(--colors-blue-600-original)
         }
     }
 

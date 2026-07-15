@@ -15,17 +15,19 @@
  */
 
 package rundeck.services
+import groovy.xml.XmlSlurper
+import groovy.xml.XmlParser
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
 import grails.testing.gorm.DataTest
-import grails.testing.web.controllers.ControllerUnitTest
+import grails.testing.services.ServiceUnitTest
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
-import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.web.WebUtilService
@@ -39,6 +41,8 @@ import rundeck.services.data.AuthTokenDataService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -46,20 +50,24 @@ import java.time.ZoneId
 /**
  * Created by greg on 7/28/15.
  */
-class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiController>, DataTest {
+class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService>, DataTest {
 
     ApiService service
     GormTokenDataProvider provider = new GormTokenDataProvider()
 
     void setup() {
-        mockCodec(JSONCodec)
         mockDomains(AuthToken, User)
         mockDataService(AuthTokenDataService)
 
         provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
 
         provider.userDataProvider = Mock(GormUserDataProvider){
-            findOrCreateUser(_) >>  new User(login: 'auser').save()
+            findOrCreateUser(_) >> {
+                def user = new User(login: 'auser')
+                user.id = 1L  // Explicitly set id for unit test
+                user.save()
+                return user
+            }
         }
         service = new ApiService()
         service.tokenDataProvider = provider
@@ -76,19 +84,46 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         sw.toString()=='<contents><![CDATA[x]]></contents>'
 
     }
-    def "jsonRenderDirlist"(){
+    @Unroll
+    def "extractResponseFormat resolves Accept header '#acceptHeader' to '#expected' when request.format is '#reqFormat'"(){
         given:
-        def builder = new JSONBuilder()
+        // Grails 7 regression context (RUN-4581): request.format is not populated from the
+        // Accept header, so format negotiation must fall back to parsing Accept explicitly.
+        // Without yaml handling here, Accept: application/yaml was wrongly served as JSON
+        // wrapped in a `contents` field by the ACL policy API endpoints.
+        def request = GroovyMock(HttpServletRequest)
+        request.format >> reqFormat
+        request.getHeader('Accept') >> acceptHeader
+        def response = Mock(HttpServletResponse)
+        def allowed = ['yaml', 'xml', 'json', 'text']
+
+        expect:
+        service.extractResponseFormat(request, response, allowed, reqFormat) == expected
+
+        where:
+        acceptHeader                 | reqFormat | expected
+        'application/yaml'           | 'all'     | 'yaml'
+        'text/yaml'                  | 'all'     | 'yaml'
+        'application/yaml;charset=UTF-8' | 'all' | 'yaml'
+        'Application/YAML'           | 'all'     | 'yaml'
+        'APPLICATION/YAML'           | 'all'     | 'yaml'
+        'application/json'           | 'all'     | 'json'
+        'Application/JSON'           | 'all'     | 'json'
+        'application/xml'            | 'all'     | 'xml'
+        'text/plain'                 | 'all'     | 'text'
+        'yaml'                       | 'yaml'    | 'yaml'
+    }
+
+    def "jsonRenderDirlist"(){
         when:
-        def result=builder.build {
-            service.jsonRenderDirlist(
-                    '',
-                    {it},
-                    {"http://localhost:8080/api/14/project/test/acl/${it}"},
-                    ['blah.aclpolicy','adir/']
-            )
-        }
-        def parsed=JSON.parse(result.toString())
+        // Grails 7: Service returns Map directly, no need for JSONBuilder
+        def result = service.jsonRenderDirlist(
+                '',
+                {it},
+                {"http://localhost:8080/api/14/project/test/acl/${it}"},
+                ['blah.aclpolicy','adir/']
+        )
+        def parsed = result  // Already a Map
 
         then:
         parsed==[
@@ -140,20 +175,14 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
     }
 
     def "renderJsonAclpolicyValidation"(){
-        given:
-
-        def builder = new JSONBuilder()
         when:
         def validation=Stub(Validation){
             isValid()>>false
             getErrors()>>['file1[1]':['error1','error2'],'file2[1]':['error3','error4']]
         }
-        def result=builder.build {
-            service.renderJsonAclpolicyValidation(
-                    validation
-            )
-        }
-        def parsed=JSON.parse(result.toString())
+        // Grails 7: Service returns Map directly, no need for JSONBuilder
+        def result = service.renderJsonAclpolicyValidation(validation)
+        def parsed = result  // Already a Map
         then:
         parsed==[valid:false,
         policies:[
@@ -200,12 +229,40 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         result == expected
         where:
         duration | max | expected
-        123      | 200 | [date: new Date(124000), max: false]
-        123      | 100 | [date: new Date(101000), max: true]
-        0        | 100 | [date: new Date(101000), max: false]
-        200      | 0   | [date: new Date(201000), max: false]
-        0        | 0   | [date: null, max: false]
+        123      | 200 | [date: new Date(124000), max: false, error: null]
+        123      | 100 | [date: new Date(101000), max: true, error: null]
+        0        | 100 | [date: new Date(101000), max: false, error: null]
+        200      | 0   | [date: new Date(201000), max: false, error: null]
+        0        | 0   | [date: null, max: false, error: null]
 
+    }
+
+    @Unroll
+    def "generateTokenExpirationDate rejects negative duration #duration"() {
+        given:
+        service.systemClock = Clock.fixed(Instant.ofEpochMilli(1000), ZoneId.of("Z"))
+
+        when:
+        def result = service.generateTokenExpirationDate(duration, 2592000L)
+
+        then:
+        result.error != null
+        result.date == null
+
+        where:
+        duration << [-1668537728L, -1L, Long.MIN_VALUE]
+    }
+
+    def "generateTokenExpirationDate handles large duration exceeding max"() {
+        given:
+        service.systemClock = Clock.fixed(Instant.ofEpochMilli(1000), ZoneId.of("Z"))
+        long hugeDuration = 86_399_999_999_222_400L
+
+        when:
+        def result = service.generateTokenExpirationDate(hugeDuration, 2592000L)
+
+        then:
+        result.max == true
     }
 
     def "generate user token unauthorized"() {
@@ -644,7 +701,22 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
 
     def "render success xml response unwrapped"() {
         given:
-        service.rundeckWebUtil= Mock(WebUtilService)
+        // Grails 7: Jakarta EE namespace (jakarta.servlet vs javax.servlet)
+        def response = Mock(jakarta.servlet.http.HttpServletResponse)
+        def byteArrayStream = new ByteArrayOutputStream()
+        def servletOutputStream = new jakarta.servlet.ServletOutputStream() {
+            @Override
+            void write(int b) throws IOException {
+                byteArrayStream.write(b)
+            }
+            
+            @Override
+            boolean isReady() { true }
+            
+            @Override
+            void setWriteListener(jakarta.servlet.WriteListener writeListener) {}
+        }
+        
         when:
         def closureCalled = false
         service.renderSuccessXml(response) {
@@ -655,20 +727,28 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         }
 
         then:
-            1 * service.rundeckWebUtil.respondOutput(_, 'application/xml', _) >> {
-                def slurper = new XmlSlurper()
-                def gpath = slurper.parseText(it[2])
-                assert gpath.name() == 'responseData'
-                assert gpath.'@test'.text() == 'true'
-                assert gpath.value.text() == 'something'
-            }
+        1 * response.outputStream >> servletOutputStream
+        1 * response.setContentType('application/xml')
+        1 * response.setCharacterEncoding('UTF-8')
+        1 * response.setHeader('X-Rundeck-API-Version', _)
+        
+        def slurper = new XmlSlurper()
+        def gpath = slurper.parseText(byteArrayStream.toString())
+        gpath.name() == 'responseData'
+        gpath.'@test'.text() == 'true'
+        gpath.value.text() == 'something'
         closureCalled
     }
 
-    private GormTokenDataProvider setupTokenProvider(String userId = null, List<AuthToken> tokens = []) {
+    private GormTokenDataProvider setupTokenProvider(String userId, List<AuthToken> tokens) {
+        setupTokenProvider(userId, AuthTokenType.USER, tokens)
+    }
+
+    private GormTokenDataProvider setupTokenProvider(String userId = null, AuthTokenType type = null, List<AuthToken> tokens = []) {
         def mockProvider = Mock(GormTokenDataProvider)
         if (userId) {
             mockProvider.findAllByUser(userId) >> tokens
+            mockProvider.findAllByUserAndType(userId, type) >> tokens.findAll { type ? it.type == type : true }
         }
         service.tokenDataProvider = mockProvider
         return mockProvider
@@ -679,8 +759,8 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         def user = new User(login: 'testuser').save()
         def userId = user.id.toString()
         def provider = setupTokenProvider(userId, [
-                new AuthToken(uuid: 'token1', creator: 'admin', authRoles: 'admin', user: userId),
-                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId)
+                new AuthToken(uuid: 'token1', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.USER),
+                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.USER)
         ])
 
         when:
@@ -703,6 +783,24 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         then:
         result == 0
         0 * provider.delete(_)
+    }
+
+    def "removeAllTokensByUser should remove only user type tokens"() {
+        given:
+        def user = new User(login: 'testuser').save()
+        def userId = user.id.toString()
+        def provider = setupTokenProvider(userId, [
+                new AuthToken(uuid: 'token1', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.USER),
+                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.WEBHOOK),
+                new AuthToken(uuid: 'token2', creator: 'admin', authRoles: 'admin', user: userId, type: AuthTokenType.RUNNER)
+        ])
+
+        when:
+        def result = service.removeAllTokensByUser(userId)
+
+        then:
+        result == 1
+        1 * provider.delete(_)
     }
 
     def "removeAllTokensByUser handles provider error"() {

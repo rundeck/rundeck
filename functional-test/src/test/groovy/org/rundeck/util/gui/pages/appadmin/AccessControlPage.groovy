@@ -24,7 +24,7 @@ class AccessControlPage extends BasePage {
     By uploadNameBy = By.cssSelector("#aclStorageUploadForm input#aclStorageUpload_input_name")
     By alertBy = By.cssSelector(".alert.alert-danger")
     By uploadedPolicyValidationTitleBy = By.cssSelector("#uploadedPolicyValidation .alert h4")
-    By policiesTitleBy = By.cssSelector("span.h4 > span[data-bind=\"text: name\"]")
+    By policiesTitleBy = By.cssSelector("#storedPolicies_list span.h4 > span[data-bind=\"text: name\"]")
     By aclUploadOverwriteBy = By.cssSelector("#aclStorageUploadForm input#acl_upload_overwrite")
     By storedPoliciesListBy = By.cssSelector("#storedPolicies_list")
     By storedPoliciesHeaderBy = By.cssSelector("#storedPolicies_header")
@@ -32,12 +32,6 @@ class AccessControlPage extends BasePage {
 
     AccessControlPage(final SeleniumContext context) {
         super(context)
-    }
-
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on access control page: " + driver.currentUrl + " loadPath: " + loadPath)
-        }
     }
 
     WebElement getUploadButton() {
@@ -84,8 +78,39 @@ class AccessControlPage extends BasePage {
         el uploadedPolicyValidationTitleBy
     }
 
+    /**
+     * Get the list of policy title elements.
+     * Handles empty lists by using findElements which doesn't require visibility.
+     * Uses els() which respects implicit wait and doesn't throw if element not found.
+     * Scoped to #storedPolicies_list to avoid matching file system policies.
+     *
+     * @return List of WebElement policy titles, empty list if no policies exist
+     */
     List<WebElement> getPoliciesTitleList() {
-        el storedPoliciesListBy findElements policiesTitleBy
+        // Use scoped selector directly - respects implicit wait, returns empty list if not found
+        els(policiesTitleBy)
+    }
+
+    /**
+     * Wait for the number of stored policies to match the expected count.
+     *
+     * @param expectedCount The expected number of policies
+     */
+    void waitForPoliciesCountToBe(int expectedCount) {
+        waitForNumberOfElementsToBe policiesTitleBy, expectedCount
+    }
+
+    /**
+     * Wait for the number of stored policies to be at least the minimum count.
+     *
+     * @param minimumCount The minimum number of policies expected
+     */
+    void waitForPoliciesCountToBeAtLeast(int minimumCount) {
+        if (minimumCount <= 0) {
+            waitForNumberOfElementsToBeMoreThan policiesTitleBy, 0
+        } else {
+            waitForNumberOfElementsToBeMoreThan policiesTitleBy, minimumCount - 1
+        }
     }
 
     WebElement getActionDropdown() {

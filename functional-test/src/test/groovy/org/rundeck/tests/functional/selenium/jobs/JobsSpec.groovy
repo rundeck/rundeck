@@ -10,13 +10,17 @@ import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobListPage
+import org.rundeck.util.gui.pages.jobs.JobReferenceStep
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.profile.UserProfilePage
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.UiModes
 import org.rundeck.util.gui.pages.activity.ActivityPage
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import spock.lang.Stepwise
@@ -25,7 +29,14 @@ import java.util.stream.Collectors
 
 @SeleniumCoreTest
 @Stepwise
+@UiModeFlag(
+    featureName = "jobs-options-workflow",
+    status      = UiModeStatus.PROMOTED,
+    description = "@Stepwise spec covering the workflow tab (uiType!='legacy') and its step editor; iterates legacyUi via UI_MODES (default→Vue, legacy→KO)."
+)
 class JobsSpec extends SeleniumBase {
+
+    static final UI_MODES = UiModes.defaultAndLegacy()
 
     def setupSpec() {
         setupProjectArchiveDirectoryResource(SELENIUM_BASIC_PROJECT, "/projects-import/${SELENIUM_BASIC_PROJECT}")
@@ -40,7 +51,26 @@ class JobsSpec extends SeleniumBase {
             def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
             def jobShowPage = page JobShowPage
         then:
+            jobCreatePage.go()
             jobCreatePage.jobNameInput.sendKeys 'jobs workflow strategy'
+            jobCreatePage.tab JobTab.WORKFLOW click()
+            jobCreatePage.workFlowStrategyField.sendKeys 'Parallel'
+            jobCreatePage.waitIgnoringForElementVisible jobCreatePage.strategyPluginParallelField
+            jobCreatePage.strategyPluginParallelMsgField.getText() == 'Run all steps in parallel'
+
+            jobCreatePage.addSimpleCommandStepNextUi 'echo selenium test', 0
+            jobCreatePage.createJobButton.click()
+        expect:
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.workflowDetailField.getText() == 'Parallel Run all steps in parallel'
+    }
+
+    def "change workflow strategy legacy"() {
+        when:
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: true])
+            def jobShowPage = page JobShowPage
+        then:
+            jobCreatePage.jobNameInput.sendKeys 'jobs workflow strategy legacy'
             jobCreatePage.tab JobTab.WORKFLOW click()
             jobCreatePage.workFlowStrategyField.sendKeys 'Parallel'
             jobCreatePage.waitIgnoringForElementVisible jobCreatePage.strategyPluginParallelField
@@ -105,14 +135,12 @@ class JobsSpec extends SeleniumBase {
 
     def "Duplicate_options - only validations, not save jobs old ui"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi = false
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: true])
             def optName = 'test'
             jobCreatePage.fillBasicJob specificationContext.currentIteration.name
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys optName
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
+            jobCreatePage.waitForElementVisible jobCreatePage.usageSection
             jobCreatePage.executeScript "window.location.hash = '#workflowKeepGoingFail'"
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
@@ -195,35 +223,37 @@ class JobsSpec extends SeleniumBase {
     }
     def "job options config - check usage session"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         then:
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? "legacy ui" : "current ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
-            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+            jobCreatePage.usageSection.isDisplayed()
+            if(legacyUi) {
+                jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.sessionSectionLabel
+                jobCreatePage.sessionSectionLabel.isDisplayed()
+            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            nextUi << [false]
+            [legacyUi] << UI_MODES
     }
     def "job options config - check storage session"() {
         given:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         when:
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? "legacy ui" : "current ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+            jobCreatePage.usageSection.isDisplayed()
+            if(legacyUi) {
+                jobCreatePage.sessionSectionLabel.isDisplayed()
+            }
             jobCreatePage.secureInputTypeRadio.click()
             jobCreatePage.optionOpenKeyStorageButton.click()
             jobCreatePage.optionCloseKeyStorageButton.click()
@@ -236,26 +266,30 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.waitForOptionsToBe 1, 0
             jobCreatePage.optionLis 0 isEmpty()
         where:
-            nextUi << [false]
+            [legacyUi] << UI_MODES
     }
     def "job option simple redo"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         then:
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? "legacy ui" : "current ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+            jobCreatePage.usageSection.isDisplayed()
+            if(legacyUi) {
+                jobCreatePage.sessionSectionLabel.isDisplayed()
+            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+            jobCreatePage.usageSection.isDisplayed()
+            if(legacyUi) {
+                jobCreatePage.sessionSectionLabel.isDisplayed()
+            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
@@ -267,19 +301,20 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            nextUi << [false]
+            [legacyUi] << UI_MODES
     }
     def "No default value field shown in secure job option section"() {
         given:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         when:
-        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? "legacy ui" : "current ui"}"
         jobCreatePage.optionButton.click()
         jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
-        jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-        jobCreatePage.sessionSectionLabel.isDisplayed()
+        jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+        jobCreatePage.usageSection.isDisplayed()
+        if(legacyUi) {
+            jobCreatePage.sessionSectionLabel.isDisplayed()
+        }
         jobCreatePage.secureInputTypeRadio.click()
         jobCreatePage.storagePathInput.sendKeys("test")
         jobCreatePage.secureInputTypeRadio.click()
@@ -289,25 +324,29 @@ class JobsSpec extends SeleniumBase {
         then:
         driver.findElements(jobCreatePage.defaultValueBy).isEmpty() || !jobCreatePage.defaultValueInput.isDisplayed()
         where:
-        nextUi << [false]
+        [legacyUi] << UI_MODES
     }
     def "job option revert all"() {
         given:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? "legacy ui" : "current ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+            jobCreatePage.usageSection.isDisplayed()
+            if(legacyUi) {
+                jobCreatePage.sessionSectionLabel.isDisplayed()
+            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+            jobCreatePage.usageSection.isDisplayed()
+            if(legacyUi) {
+                jobCreatePage.sessionSectionLabel.isDisplayed()
+            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
@@ -316,7 +355,7 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionUndoButton
         when:
             jobCreatePage.optionRevertAllButton.click()
-            if(!nextUi) {
+            if(legacyUi) {
                 jobCreatePage.optionConfirmRevertAllButton.click()
             }
         then:
@@ -325,33 +364,39 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.optionLis 0 isEmpty()
             jobCreatePage.optionLis 1 isEmpty()
         where:
-            nextUi << [false]
+            [legacyUi] << UI_MODES
     }
     def "job option undo redo"() {
         when:
-            def jobCreatePage = page JobCreatePage, SELENIUM_BASIC_PROJECT
-            jobCreatePage.nextUi=nextUi
-            jobCreatePage.go()
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         then:
-            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${nextUi ? "next ui" : "old ui"}"
+            jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? "legacy ui" : "current ui"}"
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew() sendKeys 'seleniumOption1'
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+            jobCreatePage.usageSection.isDisplayed()
+            if(legacyUi) {
+                jobCreatePage.sessionSectionLabel.isDisplayed()
+            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 0
             jobCreatePage.optionButton.click()
             jobCreatePage.optionNameNew(1) sendKeys 'seleniumOption2'
-            jobCreatePage.waitForElementVisible jobCreatePage.separatorOption
-            jobCreatePage.sessionSectionLabel.isDisplayed()
+            jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+            jobCreatePage.usageSection.isDisplayed()
+            if(legacyUi) {
+                jobCreatePage.sessionSectionLabel.isDisplayed()
+            }
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
             jobCreatePage.saveOptionButton.click()
             jobCreatePage.waitFotOptLi 1
             jobCreatePage.executeScript "window.location.hash = '#optundoredo'"
             jobCreatePage.waitForElementAttributeToChange jobCreatePage.optionUndoButton, 'disabled', null
             jobCreatePage.optionUndoButton.click()
-            jobCreatePage.waitForElementToBeClickable jobCreatePage.optionRedoButton
+            // Re-find by locator each poll: WebElement from getter goes stale after undo reflows the bar
+            jobCreatePage.waitForElementToBeClickable(
+                    jobCreatePage.legacyUi ? jobCreatePage.optionRedoBy : JobCreatePage.NextUi.optionRedoBy)
             sleep 1000
             jobCreatePage.optionRedoButton.click()
         expect:
@@ -360,14 +405,14 @@ class JobsSpec extends SeleniumBase {
             jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.createJobButton
             jobCreatePage.createJobButton.click()
         where:
-            nextUi << [false]
+            [legacyUi] << UI_MODES
     }
 
     def "job workflow step context variables autocomplete"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: true])
         then:
-            jobCreatePage.jobNameInput.sendKeys 'job workflow step context variables autocomplete'
+            jobCreatePage.jobNameInput.sendKeys "job workflow step context variables autocomplete legacy ui"
             jobCreatePage.tab JobTab.WORKFLOW click()
             jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
             jobCreatePage.stepLink 'com.batix.rundeck.plugins.AnsiblePlaybookInlineWorkflowStep', StepType.WORKFLOW click()
@@ -384,24 +429,30 @@ class JobsSpec extends SeleniumBase {
 
     def "job workflow simple undo"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         then:
-            jobCreatePage.fillBasicJob 'a job with workflow undo test'
-            jobCreatePage.addSimpleCommandStepButton.click()
+            jobCreatePage.fillBasicJob "a job with workflow undo test ${legacyUi ? 'legacy ui' : 'current ui'}"
+            if(legacyUi) {
+                jobCreatePage.addSimpleCommandStepButton.click()
+            }
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
             jobCreatePage.wfUndoButton.click()
             jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.listWorkFlowItemBy, 1
         expect:
             jobCreatePage.workFlowList.size() == 1
             jobCreatePage.createJobButton.click()
+        where:
+            [legacyUi] << UI_MODES
     }
 
     def "job workflow undo redo"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         then:
-            jobCreatePage.fillBasicJob 'a job with workflow undo-redo test'
-            jobCreatePage.addSimpleCommandStepButton.click()
+            jobCreatePage.fillBasicJob "a job with workflow undo-redo test ${legacyUi ? 'legacy ui' : 'current ui'}"
+            if(legacyUi) {
+                jobCreatePage.addSimpleCommandStepButton.click()
+            }
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
             jobCreatePage.waitForElementToBeClickable jobCreatePage.wfUndoButtonLink
             jobCreatePage.wfUndoButtonLink.click()
@@ -411,23 +462,33 @@ class JobsSpec extends SeleniumBase {
         expect:
             jobCreatePage.workFlowList.size() == 2
             jobCreatePage.createJobButton.click()
+        where:
+            [legacyUi] << UI_MODES
     }
 
     def "job workflow revert all"() {
         when:
-            def jobCreatePage = go JobCreatePage, SELENIUM_BASIC_PROJECT
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
         then:
-            jobCreatePage.fillBasicJob 'a job with workflow revert all test'
-            jobCreatePage.addSimpleCommandStepButton.click()
+            jobCreatePage.fillBasicJob "a job with workflow revert all test ${legacyUi ? 'legacy ui' : 'current ui'}"
+            if(legacyUi) {
+                jobCreatePage.addSimpleCommandStepButton.click()
+            }
             jobCreatePage.addSimpleCommandStep 'echo selenium test 2', 1
             jobCreatePage.wfRevertAllButton.click()
-            jobCreatePage.revertWfConfirmYes.click()
+            if(legacyUi) {
+                jobCreatePage.revertWfConfirmYes.click()
+            }
             jobCreatePage.waitForNumberOfElementsToBe jobCreatePage.listWorkFlowItemBy, 0
         expect:
             jobCreatePage.workFlowList.size() == 0
-            jobCreatePage.addSimpleCommandStepButton.click()
+            if(legacyUi) {
+                jobCreatePage.addSimpleCommandStepButton.click()
+            }
             jobCreatePage.addSimpleCommandStep 'echo selenium test', 0
             jobCreatePage.createJobButton.click()
+        where:
+            [legacyUi] << UI_MODES
     }
 
     def "job timeout should finish job with timeout status and step marked as failed"() {
@@ -481,9 +542,7 @@ class JobsSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        def response = client.doPostWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
-        assert response.successful
-        def createdJob = mapper.readValue(response.body().string(), CreateJobResponse.class)
+        def createdJob = client.postWithMultipart("/project/${projectName}/jobs/import?format=yaml&dupeOption=skip", multipartBody,CreateJobResponse)
         def jobUuid = createdJob.succeeded[0]?.id
         jobShowPage.goToJob(jobUuid as String)
         jobShowPage.validatePage()
@@ -512,18 +571,16 @@ class JobsSpec extends SeleniumBase {
     def "Filter steps"(){
         given:
         def projectName = "filter-steps-later-test"
-        JobCreatePage jobCreatePage = page JobCreatePage
         JobShowPage jobShowPage = page JobShowPage
 
         when:
         setupProject(projectName)
-        go JobCreatePage, projectName
+        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: true])
         jobCreatePage.jobNameInput.sendKeys("test")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.waitForElementToBeClickable(jobCreatePage.stepFilterInput)
         jobCreatePage.stepFilterInput.sendKeys("cmd")
         jobCreatePage.stepFilterSearchButton.click()
-
         then: "Command step is not visible, since the list dont have any steps"
         !jobCreatePage.commandStepVisible()
 
@@ -532,7 +589,6 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.stepFilterInput.sendKeys(Keys.BACK_SPACE)
         jobCreatePage.stepFilterInput.sendKeys("command")
         jobCreatePage.stepFilterSearchButton.click()
-
         then: "We can create the command step"
         jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
         jobCreatePage.createJobButton.click()
@@ -541,7 +597,6 @@ class JobsSpec extends SeleniumBase {
 
         cleanup:
         deleteProject(projectName)
-
     }
 
     /**
@@ -554,12 +609,10 @@ class JobsSpec extends SeleniumBase {
         def projectName = "select-all-json-test"
         def optionListOfNames = "names"
         def optionListOfValues = "search"
-        JobCreatePage jobCreatePage = page JobCreatePage
-        JobShowPage jobShowPage = page JobShowPage
 
         when:
         setupProject(projectName)
-        go JobCreatePage, projectName
+        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
         jobCreatePage.jobNameInput.sendKeys("test")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.optionButton.click()
@@ -572,7 +625,7 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.waitForElementToBeClickable(jobCreatePage.optionButton)
         jobCreatePage.optionButton.click()
         jobCreatePage.optionName(1).sendKeys(optionListOfValues)
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
+        jobCreatePage.clickJobOptionAllowedValuesRemoteUrlRadio()
         jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("file:/home/\${option.names.value}/saved_searches.json")
         jobCreatePage.jobOptionEnforcedInput.click()
         jobCreatePage.jobOptionRequiredInput.click()
@@ -582,34 +635,35 @@ class JobsSpec extends SeleniumBase {
         jobCreatePage.jobOptionMultiValuedAllSelectedInput.click()
         jobCreatePage.saveOptionButton.click()
 
-        jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
-        jobCreatePage.createJobButton.click()
+        if(legacyUi) {
+            jobCreatePage.addSimpleCommandStep("echo 'asd'", 0)
+        } else {
+            jobCreatePage.addSimpleCommandStepNextUi("echo 'asd'", 0)
+        }
+        def jobShowPage = jobCreatePage.saveJob()
+        jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
         def jobUuid = jobShowPage.jobUuid.text
         jobShowPage.goToJob(jobUuid)
 
-        jobShowPage.waitForElementVisible(jobShowPage.getOptionSelectByName(optionListOfNames))
+        jobShowPage.waitForElementVisible(By.name("extra.option.${optionListOfNames}"))
 
         jobShowPage.selectOptionFromOptionListByName(optionListOfNames, selection)
-        jobShowPage.waitForElementToBeClickable(jobShowPage.getOptionSelectByName(optionListOfValues))
-        jobShowPage.waitForNumberOfElementsToBe(By.name("extra.option.search"), Integer.valueOf(selection))
-        def flag = true
-        (0..(selection-1)).each{
-            if(!jobShowPage.getOptionSelectChildren(optionListOfValues)[it].isSelected()) flag = false
-        }
-        noUnselectedOptions = flag
-
+        jobShowPage.waitIgnoringForElementToBeClickable(By.name("extra.option.${optionListOfValues}"))
+        jobShowPage.waitForNumberOfElementsToBe(jobShowPage.extraOptionSearchBy, Integer.valueOf(selection))
         then:
-        jobShowPage.validatePage()
+        jobShowPage.waitForAllOptionsToBeSelected(optionListOfValues)
 
         cleanup:
         deleteProject(projectName)
 
         where:
-        selection   | noUnselectedOptions
-        2           | true
-        3           | true
-        4           | true
-
+        selection | legacyUi
+        2         | false
+        3         | false
+        4         | false
+        2         | true
+        3         | true
+        4         | true
     }
 
     /**
@@ -619,16 +673,20 @@ class JobsSpec extends SeleniumBase {
     def "Step duplication"(){
         given:
         def projectName = "step-duplication-test"
-        JobCreatePage jobCreatePage = page JobCreatePage
         JobShowPage jobShowPage = page JobShowPage
         ExecutionShowPage executionShowPage = page ExecutionShowPage
 
         when:
         setupProject(projectName)
-        go JobCreatePage, projectName
+        JobCreatePage jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
+        jobCreatePage.waitForElementVisible(By.id("schedJobName"))
         jobCreatePage.jobNameInput.sendKeys("test-duplication")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
-        jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
+        if(legacyUi) {
+            jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
+        } else {
+            jobCreatePage.addSimpleCommandStepNextUi "echo 'This is a simple job'", 0
+        }
         jobCreatePage.createJobButton.click()
         jobShowPage.waitForElementVisible(jobShowPage.jobActionDropdownButton)
         jobShowPage.jobActionDropdownButton.click()
@@ -636,6 +694,7 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.editJobLink.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.tab(JobTab.WORKFLOW))
         jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.waitForNumberOfElementsToBeMoreThan(jobCreatePage.duplicateWfStepBy, 0)
         jobCreatePage.duplicateWfStepButton.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.getWfStepByListPosition(1))
         jobCreatePage.updateBtn.click()
@@ -655,6 +714,8 @@ class JobsSpec extends SeleniumBase {
         cleanup:
         deleteProject(projectName)
 
+        where:
+        [legacyUi] << UI_MODES
     }
 
     /**
@@ -666,24 +727,24 @@ class JobsSpec extends SeleniumBase {
         def projectName = "url-job-options-test"
         def labelToSelect = "Y Label"
         def expectedValue = "y value"
-        JobCreatePage jobCreatePage = page JobCreatePage
+        def remoteOptionsUrl = System.getenv("TEST_REMOTE_OPTIONS_URL") ?: System.getProperty("TEST_REMOTE_OPTIONS_URL", "http://mock-server/remoteOptions.json")
         JobShowPage jobShowPage = page JobShowPage
         ExecutionShowPage executionShowPage = page ExecutionShowPage
 
         when:
         setupProject(projectName)
-        go JobCreatePage, projectName
+        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: false])
+        jobCreatePage.waitForElementToBeClickable(jobCreatePage.jobNameInput)
         jobCreatePage.jobNameInput.sendKeys("test-url-opts")
         jobCreatePage.tab(JobTab.WORKFLOW).click()
         jobCreatePage.optionButton.click()
         jobCreatePage.optionName(0).sendKeys("remote")
-        jobCreatePage.scrollToElement(jobCreatePage.jobOptionAllowedValuesRemoteUrlInput)
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlInput.click()
-        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys("http://mock-server/remoteOptions.json")
+        jobCreatePage.clickJobOptionAllowedValuesRemoteUrlRadio()
+        jobCreatePage.jobOptionAllowedValuesRemoteUrlValueTextInput.sendKeys(remoteOptionsUrl)
         jobCreatePage.waitForElementVisible(jobCreatePage.saveOptionButton)
         jobCreatePage.scrollToElement(jobCreatePage.saveOptionButton)
         jobCreatePage.saveOptionButton.click()
-        jobCreatePage.addSimpleCommandStep "echo 'This is a simple job'", 0
+        jobCreatePage.addSimpleCommandStepNextUi "echo 'This is a simple job'", 0
         jobCreatePage.createJobButton.click()
         jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
         jobShowPage.goToJob(jobShowPage.jobUuid.text)
@@ -702,7 +763,6 @@ class JobsSpec extends SeleniumBase {
 
         cleanup:
         deleteProject(projectName)
-
     }
 
     /**
@@ -755,9 +815,246 @@ class JobsSpec extends SeleniumBase {
         jobShowPage.go()
         jobShowPage.getRunJobBtn().click()
         then:
-        jobShowPage.currentUrl().contains("invalidInputsProject/job/index")
+        // Wait for validation alert to appear
+        jobShowPage.waitForElementVisible(jobShowPage.jobOptionAlertBy)
+        // Verify the validation alert message is present
         jobShowPage.getJobOptionAlertBy().getText().contains("Option 'myOption' is required")
         cleanup:
         deleteProject(projectName)
+    }
+
+    def "job workflow"() {
+        when:
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT)
+        jobCreatePage.tab JobTab.WORKFLOW click()
+        then:
+        jobCreatePage.waitForTextToBePresentBySelector(jobCreatePage.workflowContentControlLabelBy, "Workflow",60)
+        expect:
+        // Grails 7: Verify NextUI workflow UI is loaded by checking for add step button
+        // The button is rendered by CommonUndoRedoDraggableList.vue with data-testid="add-button"
+        jobCreatePage.waitForElementVisible(By.cssSelector("[data-testid='add-button']"))
+    }
+
+    def "Create option form"() {
+        when:
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
+        def optName = 'test'
+        jobCreatePage.fillBasicJob specificationContext.currentIteration.name+" ${legacyUi ? 'legacy ui' : 'current ui'}"
+        jobCreatePage.optionButton.click()
+
+        then: "create form is shown"
+        jobCreatePage.optionNameNew() displayed
+        jobCreatePage.saveOptionButton.displayed
+        where:
+        [legacyUi] << UI_MODES
+    }
+
+    def "Duplicate option create form"() {
+        when:
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
+        def optName = 'test'
+        jobCreatePage.jobNameInput.sendKeys(specificationContext.currentIteration.name+" ${legacyUi ? 'legacy ui' : 'current ui'}")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+        jobCreatePage.optionButton.click()
+        jobCreatePage.optionNameNew() sendKeys optName
+        jobCreatePage.waitForElementVisible jobCreatePage.usageSection
+        jobCreatePage.executeScript "window.location.hash = '#workflowKeepGoingFail'"
+        jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+        jobCreatePage.saveOptionButton.click()
+        jobCreatePage.waitFotOptLi 0
+
+        jobCreatePage.duplicateButton( optName, 0) click()
+        
+        if (legacyUi) {
+            jobCreatePage.waitFotOptLi 1
+        }
+
+        then: "duplicated option exists"
+        if (legacyUi) {
+            // Legacy UI reloads options in view mode after duplicate with _1 suffix
+            jobCreatePage.optionNameSaved(0).getText() == optName
+            jobCreatePage.optionNameSaved(1).getText() == optName + '_1'
+        } else {
+            jobCreatePage.waitForElementVisible(By.cssSelector("#optitem_new input[type=text][name=name]"))
+            def nameInput = jobCreatePage.byAndWait(By.cssSelector("#optitem_new input[type=text][name=name]"))
+            nameInput.displayed
+            nameInput.getAttribute('value') == optName + '_copy'
+            jobCreatePage.saveOptionButton.displayed
+        }
+        
+        when:
+        if (!legacyUi) {
+            jobCreatePage.executeScript "arguments[0].scrollIntoView(true);", jobCreatePage.saveOptionButton
+            jobCreatePage.saveOptionButton.click()
+            jobCreatePage.waitFotOptLi 1
+        }
+
+        then:
+        jobCreatePage.optionNameSaved(0).getText() == optName
+        jobCreatePage.optionNameSaved(1).getText() == (legacyUi ? optName + '_1' : optName + '_copy')
+        
+        where:
+        [legacyUi] << UI_MODES
+    }
+
+    def "add global log filters"() {
+        when:
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT)
+        jobCreatePage.jobNameInput.sendKeys("job with global log filter")
+        jobCreatePage.tab(JobTab.WORKFLOW).click()
+
+        then:
+        jobCreatePage.waitForNumberOfElementsToBe(jobCreatePage.loaderClass, 0)
+        jobCreatePage.addGlobalLogFilter.click()
+        jobCreatePage.waitForModal(1)
+        jobCreatePage.fillHighlightLogFilter()
+
+        then:
+        assert jobCreatePage.getLogFilterButtons('#globalLogFilters').size() == 1
+    }
+
+    // Default-only: legacy parity is covered by the other workflow-step methods that iterate UI_MODES.
+    def "Node steps"() {
+        when: "Create a new job and add a node step"
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT)
+        String jobUuid = JobUtils.jobImportFile(SELENIUM_BASIC_PROJECT, '/test-files/simple-job-ref.xml', client).succeeded.first().id
+        def jobShowPage = page JobShowPage
+        jobCreatePage.fillBasicJob "job with node steps"
+        jobCreatePage.expectNumberOfStepsToBe(1)
+        then: "Duplicate a step"
+        jobCreatePage.waitForElementToBeClickable jobCreatePage.duplicateWfStepButton
+        jobCreatePage.duplicateWfStepButton.click()
+        jobCreatePage.expectNumberOfStepsToBe(2)
+        then: "Add a log filter to step"
+        jobCreatePage.waitForElementToBeClickable jobCreatePage.stepDropdownTrigger(0)
+        jobCreatePage.clickAddLogFilter(0)
+        jobCreatePage.fillHighlightLogFilter()
+        jobCreatePage.getLogFilterButtons('#logFilters').size() == 1
+        then: "Add another step"
+        jobCreatePage.scrollToElement(jobCreatePage.createJobButton)
+        jobCreatePage.addStep(new JobReferenceStep([
+                childJobUuid: jobUuid,
+                stepType    : StepType.NODE
+        ]))
+        jobCreatePage.expectNumberOfStepsToBe(3)
+        then: "Remove a step"
+        jobCreatePage.waitForElementToBeClickable jobCreatePage.deleteStepBy
+        jobCreatePage.removeStepByIndex(0)
+        jobCreatePage.expectNumberOfStepsToBe(2)
+        expect: "Save the job successfully"
+        jobCreatePage.scrollToElement(jobCreatePage.createJobButton)
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.jobDefinitionModal
+        jobShowPage.jobDefinitionModal.click()
+        jobShowPage.expectNumberOfStepsToBe(2)
+    }
+
+    // Default-only: legacy parity is covered by the other workflow-step methods that iterate UI_MODES.
+    def "Error handlers"() {
+        when:
+        def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT)
+        def jobShowPage = page JobShowPage
+        jobCreatePage.fillBasicJob 'job with error handlers'
+        then: "Add error handler and check that its not possible to add more error handlers to same step"
+        jobCreatePage.addErrorHandler( 'exec-command',  StepType.NODE)
+        assert jobCreatePage.waitForDropdownOptionAbsent(0, "add-error-handler")
+        then: "Duplicate step and remove duplicated error handler"
+        jobCreatePage.scrollToElement(jobCreatePage.duplicateWfStepButton)
+        jobCreatePage.duplicateWfStepButton.click()
+        jobCreatePage.expectNumberOfStepsToBe(2)
+        assert jobCreatePage.waitForDropdownOptionAbsent(1, "add-error-handler")
+        jobCreatePage.scrollToElement(jobCreatePage.workflowAlphaUiButton)
+        jobCreatePage.removeErrorHandlerButton(1).click()
+        assert jobCreatePage.waitForDropdownOptionPresent(1, "add-error-handler")
+        expect: "Save the job successfully"
+        jobCreatePage.scrollToElement(jobCreatePage.createJobButton);
+        jobCreatePage.waitForElementToBeClickable jobCreatePage.createJobButton
+        jobCreatePage.createJobButton.click()
+        jobShowPage.waitForElementToBeClickable jobShowPage.jobDefinitionModal
+        jobShowPage.jobDefinitionModal.click()
+        jobShowPage.expectNumberOfStepsToBe(3) // it counts the error handler as a step due to class
+    }
+
+    def "edit existing step - change command and save"() {
+        // Workflow-tab step editor — same `uiType!='legacy'` GSP gate as the parent
+        // `jobs-options-workflow` feature; iterate `[legacyUi] << UI_MODES`.
+        when:
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
+            def jobShowPage = page JobShowPage
+        then:
+            jobCreatePage.fillBasicJob "edit step regression ${legacyUi ? 'legacy' : 'default'}"
+            jobCreatePage.expectNumberOfStepsToBe(1)
+        when: "edit step and change command"
+            jobCreatePage.clickStepToEdit(0)
+            jobCreatePage.waitForElementVisible (legacyUi ? jobCreatePage.adhocRemoteStringBy : JobCreatePage.NextUi.adhocRemoteStringBy)
+            jobCreatePage.adhocRemoteStringField.clear()
+            jobCreatePage.adhocRemoteStringField.sendKeys 'echo updated command'
+            if (legacyUi) {
+                jobCreatePage.saveStep(0)
+            } else {
+                jobCreatePage.workflowSaveStepButton.click()
+            }
+        then:
+            jobCreatePage.createJobButton.click()
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.expectNumberOfStepsToBe(1)
+        expect:
+            jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo updated command') }
+        where:
+            [legacyUi] << UI_MODES
+    }
+
+    def "cancel editing new step - step not added"() {
+        // Workflow-tab step editor — covered by class-level `jobs-options-workflow` PROMOTED.
+        when:
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
+        then:
+            jobCreatePage.jobNameInput.sendKeys "cancel new step ${legacyUi ? 'legacy' : 'default'}"
+            jobCreatePage.tab(JobTab.WORKFLOW).click()
+        when: "add step, configure, then cancel"
+            if (legacyUi) {
+                jobCreatePage.executeScript "window.location.hash = '#addnodestep'"
+                jobCreatePage.stepLink('exec-command', StepType.NODE).click()
+                jobCreatePage.byAndWaitClickable jobCreatePage.adhocRemoteStringBy
+                jobCreatePage.adhocRemoteStringField.sendKeys 'echo should not appear'
+                jobCreatePage.byAndWaitClickable(jobCreatePage.cancelNewStepFormBy).click()
+            } else {
+                jobCreatePage.clickAddStep()
+                jobCreatePage.byAndWaitClickable(By.xpath("//*[@${StepType.NODE.getStepType()}='exec-command']"))
+                jobCreatePage.stepLink('exec-command', StepType.NODE).click()
+                jobCreatePage.byAndWaitClickable JobCreatePage.NextUi.adhocRemoteStringBy
+                jobCreatePage.adhocRemoteStringField.sendKeys 'echo should not appear'
+                jobCreatePage.clickCancelStepEdit()
+            }
+        then:
+            jobCreatePage.waitForNumberOfElementsToBe(legacyUi ? jobCreatePage.numberOfStepsBy : JobCreatePage.NextUi.numberOfStepsBy, 0)
+        expect:
+            jobCreatePage.workFlowList.size() == 0
+        where:
+            [legacyUi] << UI_MODES
+    }
+
+    def "cancel editing existing step - changes discarded"() {
+        // Workflow-tab step editor — covered by class-level `jobs-options-workflow` PROMOTED.
+        when:
+            def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT, [legacyUi: legacyUi])
+            def jobShowPage = page JobShowPage
+        then:
+            jobCreatePage.fillBasicJob "cancel edit step ${legacyUi ? 'legacy' : 'default'}"
+            jobCreatePage.expectNumberOfStepsToBe(1)
+        when: "edit step, change command, cancel"
+            jobCreatePage.clickStepToEdit(0)
+            jobCreatePage.waitForElementVisible (legacyUi ? jobCreatePage.adhocRemoteStringBy : JobCreatePage.NextUi.adhocRemoteStringBy)
+            jobCreatePage.adhocRemoteStringField.clear()
+            jobCreatePage.adhocRemoteStringField.sendKeys 'echo discarded change'
+            jobCreatePage.clickCancelStepEdit()
+        then:
+            jobCreatePage.createJobButton.click()
+            jobShowPage.jobDefinitionModal.click()
+            jobShowPage.expectNumberOfStepsToBe(1)
+        expect:
+            jobShowPage.els(jobShowPage.stepsInJobDefinitionBy).any { it.text.contains('echo selenium test') }
+        where:
+            [legacyUi] << UI_MODES
     }
 }

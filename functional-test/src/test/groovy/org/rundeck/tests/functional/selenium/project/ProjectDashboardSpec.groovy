@@ -24,7 +24,7 @@ class ProjectDashboardSpec extends SeleniumBase {
         def client = getClient()
         def response = JobUtils.createJob(projectName, jobDefinition, client)
         def jobId = response.succeeded[0].id
-        assert JobUtils.executeJob(jobId, client).isSuccessful()
+        JobUtils.runExecuteJob(jobId, client)
     }
 
     def setup() {

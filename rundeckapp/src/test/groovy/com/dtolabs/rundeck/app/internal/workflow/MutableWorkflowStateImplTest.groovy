@@ -30,8 +30,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
 
 import grails.converters.JSON
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin;
+;
 
 import java.text.SimpleDateFormat
 

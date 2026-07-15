@@ -28,7 +28,7 @@ import org.junit.runners.JUnit4
  * Created by greg on 9/21/15.
  */
 @RunWith(JUnit4)
-class LineCountingLogWriterTest extends GroovyTestCase {
+class LineCountingLogWriterTest  {
 
     @Test
     void testCounter() {

@@ -70,4 +70,19 @@ public interface WorkflowStepState {
      * @return  true if this is a node step
      */
     public boolean isNodeStep();
+
+    /**
+     * Returns the name of the node that executed (or is executing) this workflow step.
+     * <p>
+     * In the context of workflow step state, the runner node represents the node where the step's logic
+     * was actually run. For node steps, this is typically the target node. For workflow step it could be the runner or the local server
+     * </p>
+     * <p>
+     * This method returns {@code null} if the runner node is not applicable or not known for this step,
+     * otherwise it returns the name of the node.
+     * </p>
+     *
+     * @return the name of the runner node, or {@code null} if not applicable
+     */
+    public String getRunnerNode();
 }

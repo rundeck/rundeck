@@ -149,4 +149,26 @@ class SizesTest extends Specification {
         "asdf" | 0L
         "123z" | 0
     }
+
+    def "parseTimeDuration handles large values within long range"() {
+        expect:
+        Sizes.parseTimeDuration(value) == result
+
+        where:
+        value              | result
+        "999999999991d"    | 999999999991L * 86400L
+        "999999999999999s" | 999999999999999L
+    }
+
+    @Unroll("parseTimeDuration overflow #value should throw ArithmeticException")
+    def "parseTimeDuration detects overflow for values exceeding long range"() {
+        when:
+        Sizes.parseTimeDuration(value)
+
+        then:
+        thrown(ArithmeticException)
+
+        where:
+        value << ["99999999999999999999999999d", "999999999999999d", "9999999999999999999999s"]
+    }
 }

@@ -16,13 +16,71 @@
 
 package com.dtolabs.rundeck.util
 
-import org.grails.web.json.JSONObject
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.util.logging.Slf4j
+import jakarta.servlet.http.HttpServletRequest
 
 
 /**
  * JSON request handling utilities
  */
+@Slf4j
 class JsonUtil {
+
+    // Grails 7: Shared ObjectMapper instance for parsing JSON request bodies
+    private static final ObjectMapper objectMapper = new ObjectMapper()
+
+    /**
+     * Grails 7: Parse JSON from HttpServletRequest body using Jackson ObjectMapper.
+     * This replaces the broken request.JSON property in Grails 7/Spring Boot 3.
+     * 
+     * @param request HttpServletRequest with JSON body
+     * @return Parsed JSON as Map, or null if request body is empty or already consumed
+     * @throws IOException if JSON parsing fails (but not if body is unavailable)
+     */
+    static Map parseRequestBody(HttpServletRequest request) throws IOException {
+        def contentType = request.contentType
+        if (contentType && !contentType.toLowerCase().contains('json')) {
+            return null
+        }
+
+        // Use getReader() FIRST — never call getInputStream() before getReader().
+        // Calling getInputStream() first locks the stream and causes getReader() to throw
+        // IllegalStateException (Servlet spec), which combined with available()==0 (common on
+        // real networks/ALB) was the root cause of the silent data-loss bug (RUN-4521).
+        String content = null
+        try {
+            content = request.getReader()?.text
+        } catch (Exception readerEx) {
+            // Reader unavailable (stream closed, IllegalStateException from prior getInputStream
+            // call, etc.) — fall back to reading raw bytes without the available() check.
+            // Do NOT use available(): it returns only buffered bytes and silently truncates
+            // data not yet in the local buffer on proxied/slow connections.
+            log.error("parseRequestBody: getReader() failed [${readerEx.class.simpleName}: ${readerEx.message}], falling back to getInputStream()")
+            try {
+                def bytes = request.getInputStream()?.readAllBytes()
+                if (bytes?.length > 0) {
+                    content = new String(bytes, 'UTF-8')
+                }
+            } catch (Exception streamEx) {
+                // Both reader and stream unavailable — body cannot be read
+                log.error("parseRequestBody: getInputStream() also failed [${streamEx.class.simpleName}: ${streamEx.message}] — body is unreadable")
+            }
+        }
+
+        if (!content?.trim()) {
+            return null
+        }
+
+        try {
+            return objectMapper.readValue(content, Map.class)
+        } catch (JsonProcessingException parseEx) {
+            // Body readable but not a JSON object (array, primitive, malformed) — return null
+            log.error("parseRequestBody: JSON parsing failed [${parseEx.class.simpleName}: ${parseEx.originalMessage}] — body was readable but not a JSON object")
+            return null
+        }
+    }
 
     /**
      * Validate a json object

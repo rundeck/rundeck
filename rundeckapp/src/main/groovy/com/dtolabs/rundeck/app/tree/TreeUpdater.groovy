@@ -16,7 +16,6 @@ class TreeUpdater implements Updater {
         if (!updaterConfig.shouldPerform()) {
             return
         }
-        //detect if configuration contains jasypt-encryption
         log.info("Storage Tree Updater: begin: ${updaterConfig.name}")
         int count = 0
         List<String> paths = [basePath]

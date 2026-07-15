@@ -6,17 +6,17 @@ export type ContextVariable = {
   name: string;
   title: string;
   description?: string;
-  type: "job" | "node" | "result" | "execution" | "option";
+  type: "job" | "node" | "result" | "execution" | "option" | "global";
 };
 
 export type ContextVariablesByType = {
   [key: string]: ContextVariable[];
 };
 
-const customVariables = (): ContextVariable[] => {
-  const rundeckContext = getRundeckContext() as RundeckContextType;
-  const customContextVariables: Array<JobOption> = rundeckContext?.data?.options?.optionsData || [];
-  return customContextVariables.map((variable: JobOption): ContextVariable => {
+export const createOptionVariables = (
+  options: JobOption[],
+): ContextVariable[] => {
+  return options.map((variable: JobOption): ContextVariable => {
     return {
       name: variable.name,
       title: variable.label || "",
@@ -234,5 +234,4 @@ export const contextVariables = (): ContextVariablesByType => ({
       type: "result",
     },
   ],
-  options: customVariables(),
 });

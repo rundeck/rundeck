@@ -21,7 +21,7 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.services.FrameworkService
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 import java.util.regex.Pattern
 
 /**

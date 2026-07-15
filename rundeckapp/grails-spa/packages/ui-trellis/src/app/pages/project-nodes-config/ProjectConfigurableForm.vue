@@ -20,7 +20,7 @@
                   key="save"
                   class="btn btn-cta reset_page_confirm"
                   @click="saveConfig"
-                  >{{ "Save" }}</a
+                  >{{ $t("Save") }}</a
                 >
               </span>
             </div>
@@ -105,7 +105,7 @@ export default defineComponent({
           window._rundeck.projectName,
           this.category,
         );
-        this.apiResponse = config.response["projectConfigurable"] as [
+        this.apiResponse = (config.response["projectConfigurable"] || []) as [
           ConfigurableItem,
         ];
         const properties = [];
@@ -114,6 +114,8 @@ export default defineComponent({
           item.properties.forEach((prop: any) => {
             const originalPropName = prop.name;
             prop.name = itemName + "." + prop.name;
+            prop.title = this.$t(prop.title) as string;
+            prop.description = this.$t(prop.description) as string;
             Object.entries(item.values).forEach(([key, value]) => {
               if (originalPropName === key) {
                 this.massagedConfig[prop.name] = value;
@@ -155,8 +157,11 @@ export default defineComponent({
           await this.loadConfig();
         }
       } catch (err) {
-        console.error(err);
-        this.notifyError("Error saving config: " + err.message);
+        console.error("Full error object:", err);
+        this.notifyError(
+          "Error saving config: " +
+            (err.message || err.toString() || "Unknown error"),
+        );
       }
     },
     convertMapNumbersToStrings(obj: any): any {

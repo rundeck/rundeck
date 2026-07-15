@@ -82,6 +82,11 @@
             </div>
         </div>
     </div>
+    <div data-bind="if: isMultilineType()">
+        <textarea
+                rows="5"
+                data-bind="value: value, attr: {name: fieldName, id: fieldId}" class="optionvaluesfield form-control"></textarea>
+    </div>
 
     <div data-bind="if: !hasTextfield() && enforced() && remoteError()">
         <input type="hidden" data-bind="value: value, attr: {name: fieldName}" value=""/>

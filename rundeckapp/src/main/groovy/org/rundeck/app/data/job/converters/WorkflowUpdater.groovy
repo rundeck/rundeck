@@ -11,7 +11,7 @@ import rundeck.data.constants.WorkflowStepConstants
 
 class WorkflowUpdater {
 
-    static void updateWorkflow(Workflow wkf, WorkflowData rdw) {
+    static void updateWorkflow(WorkflowData wkf, WorkflowData rdw) {
         if(!wkf || !rdw) return
         wkf.threadcount = rdw.threadcount
         wkf.keepgoing = rdw.keepgoing
@@ -21,15 +21,15 @@ class WorkflowUpdater {
         for(int x = 0; x < wkf.commands.size(); x++) {
             def cmd = wkf.commands[x]
             wkf.removeFromCommands(cmd)
-            cmd.delete()
+            // Note: WorkflowSteps are now serialized as part of workflow JSON, no separate delete needed
         }
         rdw.steps.each { rdstep ->
             def wfstep = createWorkflowStep(rdstep)
             wkf.addToCommands(wfstep)
             updateWorkflowStep(wfstep, rdstep)
-            wfstep.save(failOnError:true)
+            // Note: WorkflowSteps are now serialized as part of workflow JSON, no separate save needed
         }
-        wkf.save(failOnError:true)
+        // Note: Workflow is now stored as JSON, caller should use setWorkflowData() to persist
 
     }
 

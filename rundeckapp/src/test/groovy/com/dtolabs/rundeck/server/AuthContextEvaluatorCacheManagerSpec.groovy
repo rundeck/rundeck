@@ -46,18 +46,15 @@ class AuthContextEvaluatorCacheManagerSpec  extends Specification implements Gra
 
     Subject mksubject(String user, String... roles){
         def sub = new Subject()
-        sub.principals = [
-                             new Username(user),
-                         ] + roles.collect {
-            new Group(it)
+        sub.getPrincipals().add(new Username(user))
+        roles.each {
+            sub.getPrincipals().add(new Group(it))
         }
         sub
     }
     Subject mksubjecturn(String urn){
         def sub = new Subject()
-        sub.principals = [
-                new Urn(urn),
-        ]
+        sub.getPrincipals().add(new Urn(urn))
         sub
     }
     AuthContext mkctx(String user, String... roles){

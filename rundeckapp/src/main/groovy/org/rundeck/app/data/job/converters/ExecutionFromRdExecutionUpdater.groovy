@@ -33,8 +33,16 @@ class ExecutionFromRdExecutionUpdater {
         e.succeededNodeList = re.succeededNodeList
         e.serverNodeUUID = re.serverNodeUUID
         e.nodeThreadcount = re.nodeThreadcount
-        if(re.logFileStorageRequestId && e.logFileStorageRequestId != re.logFileStorageRequestId) {
-            e.logFileStorageRequest = LogFileStorageRequest.get(re.logFileStorageRequestId)
+        if(re.logFileStorageRequestId) {
+            def currentRequest = LogFileStorageRequest.findByExecution(e)
+            def newRequest = LogFileStorageRequest.get(re.logFileStorageRequestId)
+            if(currentRequest?.id != newRequest?.id) {
+                // Update the LogFileStorageRequest to point to this execution
+                if(newRequest && newRequest.execution?.id != e.id) {
+                    newRequest.execution = e
+                    newRequest.save(flush: true)
+                }
+            }
         }
         if(re.retryExecutionId && e.retryExecutionId != re.retryExecutionId) {
             e.retryExecution = Execution.get(re.retryExecutionId)
@@ -46,8 +54,12 @@ class ExecutionFromRdExecutionUpdater {
         e.cancelled = re.cancelled
         e.timedOut = re.timedOut
         updateNodeConfig(e, re.nodeConfig)
-        if(!e.workflow) e.workflow = new Workflow(commands:[])
-        WorkflowUpdater.updateWorkflow(e.workflow, re.workflow)
+        // Get or create workflow for updating
+        def workflow = e.getWorkflowData()
+        if(!workflow) workflow = new Workflow(commands:[])
+        WorkflowUpdater.updateWorkflow(workflow, re.workflow)
+        // Persist workflow as JSON
+        e.setWorkflowData(workflow)
         updateOrchestrator(e, re.orchestrator)
     }
 

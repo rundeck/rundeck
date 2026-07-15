@@ -15,6 +15,7 @@
  */
 
 
+import asset.pipeline.grails.AssetProcessorService
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
@@ -25,12 +26,10 @@ import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupF
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.NodeExecutorServiceFactory
-import com.dtolabs.rundeck.app.internal.framework.FeatureToggleNodeExecutorProfile
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckNodeExecutorProfile
+import com.dtolabs.rundeck.app.mail.DynamicMailSender
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
-import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
-import com.dtolabs.rundeck.app.tree.JasyptEncryptionEnforcerUpdaterConfig
 import com.dtolabs.rundeck.app.tree.StorageTreeCreator
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
@@ -46,7 +45,6 @@ import com.dtolabs.rundeck.core.common.NodeSupport
 import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor
-import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
@@ -83,6 +81,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.notification.DummyEmailNotificationPlugin
 import com.dtolabs.rundeck.server.plugins.notification.DummyWebhookNotificationPlugin
+import com.dtolabs.rundeck.server.plugins.runner.SubWorkflowWorkflowStepExecutor
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePlugin
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
@@ -116,9 +115,11 @@ import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+import org.rundeck.app.config.FeatureFlagConfigurable
 import org.rundeck.app.data.job.metadata.JobAuthorizationMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScheduleMetadataComponent
 import org.rundeck.app.data.job.metadata.JobScmMetadataComponent
+import org.rundeck.app.data.job.metadata.JobStatsMetadataComponent
 import org.rundeck.app.data.project.ProjectAuthorizationMetadataComponent
 import org.rundeck.app.data.project.ProjectConfigMetadataComponent
 import org.rundeck.app.data.project.ProjectMessageMetadataComponent
@@ -236,13 +237,23 @@ beans={
     if (application.config.getProperty("rundeck.multiURL.enabled", Boolean.class, false)) {
         Class requestAwareLinkGeneratorClass = RequestAwareLinkGenerator
         String serverURL = application.config.getProperty("grails.serverURL",String.class)
-        String contextPath = application.config.server.servlet["context-path"]
+        String contextPath = application.config.getProperty("server.servlet.context-path", String.class, "")
         if (serverURL && (contextPath && "/" != contextPath)) {
             log.info("RequestAwareLinkGenerator using url ${serverURL} and context-path ${contextPath}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL, contextPath) {}
+            // RUN-4332: When overriding grailsLinkGenerator, fix assetProcessorService contextPath null
+            // See: https://github.com/wondrify/asset-pipeline/issues/444#issuecomment-3958024443
+            assetProcessorService(AssetProcessorService) { bean ->
+                bean.autowire = true
+            }
         } else if (serverURL) {
             log.info("context-path not set, RequestAwareLinkGenerator using url ${serverURL}")
             grailsLinkGenerator(requestAwareLinkGeneratorClass, serverURL) {}
+            // RUN-4332: When overriding grailsLinkGenerator, fix assetProcessorService contextPath null
+            // See: https://github.com/wondrify/asset-pipeline/issues/444#issuecomment-3958024443
+            assetProcessorService(AssetProcessorService) { bean ->
+                bean.autowire = true
+            }
         } else {
             log.warn("rundeck.multiURL enabled but no grails.serverURL found. This feature will be disabled.")
         }
@@ -312,27 +323,13 @@ beans={
         frameworkNodes = ref('rundeckNodeSupport')
         nodeExecutorService = ref('rundeckNodeExecutorService')
     }
-    rundeckBaseNodeExecutorProfile(RundeckNodeExecutorProfile){
+    rundeckNodeExecutorProfile(RundeckNodeExecutorProfile){
         defaultLocalProvider = LocalNodeExecutor.SERVICE_PROVIDER_TYPE
         defaultRemoteProvider = "sshj-ssh"
         localRegistry = [
                 (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
-                (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
+                (LocalNodeExecutor.SERVICE_PROVIDER_TYPE_ALIAS): LocalNodeExecutor,
         ]
-    }
-    rundeckNewLocalNodeExecutorProfile(RundeckNodeExecutorProfile){
-        defaultLocalProvider = NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE
-        defaultRemoteProvider = "sshj-ssh"
-        localRegistry = [
-            (LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor,
-            (NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE): NewLocalNodeExecutor,
-        ]
-    }
-    rundeckNodeExecutorProfile(FeatureToggleNodeExecutorProfile){
-        baseProfile = ref('rundeckBaseNodeExecutorProfile')
-        toggleProfile = ref('rundeckNewLocalNodeExecutorProfile')
-        featureService = ref('featureService')
-        feature = Features.NEW_LOCAL_NODE_EXECUTOR
     }
     rundeckNodeExecutorService(NodeExecutorServiceFactory)
     rundeckBaseFrameworkExecutionServices(BaseFrameworkExecutionServices){
@@ -677,17 +674,6 @@ beans={
         rundeckKeyStorageContextProvider(KeyStorageContextProvider)
     }
 
-    rundeckJasyptConverterUpdaterConfig(JasyptEncryptionEnforcerUpdaterConfig){
-        treeCreator = ref('rundeckStorageTreeCreator')
-    }
-
-    rundeckBootstrapStorageTreeUpdater(RundeckBootstrapStorageTreeUpdater){
-        storageTree = ref('rundeckStorageTree')
-        updaterConfig = ref('rundeckJasyptConverterUpdaterConfig')
-        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, false)
-        basePath = grailsApplication.config.getProperty('rundeck.storage.rewrite.basePath', String.class, 'keys')
-    }
-
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree, rundeckKeyStorageContextProvider)
 
     rundeckConfigStorageTreeCreator(StorageTreeCreator){
@@ -753,27 +739,28 @@ beans={
     [
             //Job reference plugins
             JobReferenceNodeStepExecutor,
-            JobReferenceStepExecutor
+            JobReferenceStepExecutor,
+            SubWorkflowWorkflowStepExecutor
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(JobReferencePluginFactoryBean, it)
     }
 
     //list of plugin classes to generate factory beans for
     [
-            //log converters
-            JsonConverterPlugin,
-            PropertiesConverterPlugin,
-            HTMLTableViewConverterPlugin,
-            MarkdownConverterPlugin,
-            TabularDataConverterPlugin,
-            HTMLViewConverterPlugin,
-            //log filters
-            MaskPasswordsFilterPlugin,
-            MaskLogOutputByRegexPlugin,
-            SimpleDataFilterPlugin,
-            RenderDatatypeFilterPlugin,
-            QuietFilterPlugin,
-            HighlightFilterPlugin
+        //log converters
+        JsonConverterPlugin,
+        PropertiesConverterPlugin,
+        HTMLTableViewConverterPlugin,
+        MarkdownConverterPlugin,
+        TabularDataConverterPlugin,
+        HTMLViewConverterPlugin,
+        //log filters
+        MaskPasswordsFilterPlugin,
+        MaskLogOutputByRegexPlugin,
+        KeyValueDataLogFilterPlugin,
+        RenderDatatypeFilterPlugin,
+        QuietFilterPlugin,
+        HighlightFilterPlugin
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
@@ -911,9 +898,12 @@ beans={
         }
     } else {
         jettyCompatiblePasswordEncoder(JettyCompatibleSpringSecurityPasswordEncoder)
-        //if not using jaas for security provide a simple default
         Properties realmProperties = new Properties()
-        realmProperties.load(new File(grailsApplication.config.getProperty("rundeck.security.fileUserDataSource",String.class)).newInputStream())
+        String realmFilePath = grailsApplication.config.getProperty("rundeck.security.fileUserDataSource", String.class)
+        File realmFile = realmFilePath ? new File(realmFilePath) : null
+        if (realmFile?.exists()) {
+            realmProperties.load(realmFile.newInputStream())
+        }
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
         realmAuthProvider(DaoAuthenticationProvider) {
             passwordEncoder = ref("jettyCompatiblePasswordEncoder")
@@ -949,8 +939,8 @@ beans={
     }
 
 
-    // Activate Spring Actuator DataSourceHealthIndicator with a Rundeck specific bean name `rundeckDataSourceHeathIndicator`
-    rundeckDataSourceHeathIndicator(DataSourceHealthIndicator) {
+    // Activate Spring Actuator DataSourceHealthIndicator with a Rundeck specific bean name `rundeckDataSourceHealthIndicator`
+    rundeckDataSourceHealthIndicator(DataSourceHealthIndicator) {
         dataSource = ref("dataSource")
         // Get the validation query from config, if not provided the Spring DataSourceHealthIndicator will use the Connection.isValid() to test the database connection.
         query = grailsApplication.config.getProperty("rundeck.health.databaseValidationQuery")
@@ -969,7 +959,9 @@ beans={
         userService = ref("userService")
     }
     remoteJsonOptionRetriever(DefaultRemoteJsonOptionRetriever)
-    workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory)
+    workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory){
+        featureService = ref('featureService')
+    }
     workflowStateDataLoader(DefaultWorkflowStateDataLoader) {
         logFileStorageService = ref('logFileStorageService')
     }
@@ -999,8 +991,16 @@ beans={
     jobScheduleMetadataComponent(JobScheduleMetadataComponent)
     jobAuthorizationMetadataComponent(JobAuthorizationMetadataComponent)
     jobScmMetadataComponent(JobScmMetadataComponent)
+    jobStatsMetadataComponent(JobStatsMetadataComponent)
     projectAuthorizationMetadataComponent(ProjectAuthorizationMetadataComponent)
     projectConfigMetadataComponent(ProjectConfigMetadataComponent)
     projectScmMetadataComponent(ProjectScmMetadataComponent)
     projectExecutionMetadataComponent(ProjectMessageMetadataComponent)
+
+    //defines feature flag metadata for system configuration
+    rundeckFeatureFlagConfigurable(FeatureFlagConfigurable)
+
+    rundeckDynamicMailSender(DynamicMailSender) { bean ->
+        bean.primary = true
+    }
 }

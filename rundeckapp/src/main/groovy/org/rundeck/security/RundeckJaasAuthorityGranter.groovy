@@ -15,7 +15,7 @@
  */
 package org.rundeck.security
 
-import org.eclipse.jetty.jaas.JAASRole
+import org.rundeck.jaas.RundeckRole
 import org.springframework.security.authentication.jaas.AuthorityGranter
 import org.springframework.util.Assert
 
@@ -28,7 +28,7 @@ class RundeckJaasAuthorityGranter implements AuthorityGranter {
 
     @Override
     Set<String> grant(final Principal principal) {
-        if( principal instanceof JAASRole){
+        if( principal instanceof RundeckRole){
             return [rolePrefix+ principal.name] as Set
         }else{
             return null

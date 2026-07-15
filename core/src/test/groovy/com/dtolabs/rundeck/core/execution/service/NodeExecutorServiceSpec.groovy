@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.service
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -8,7 +9,6 @@ import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor
-import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import spock.lang.Shared
 import spock.lang.Specification
@@ -33,7 +33,7 @@ class NodeExecutorServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> true
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig){
+                getFrameworkProject(_) >> Mock(IRundeckProject){
                     getProperty(_) >> null
                 }
             }
@@ -65,7 +65,7 @@ class NodeExecutorServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> false
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
+                getFrameworkProject(_) >> Mock(IRundeckProject)
             }
         }
         NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){
@@ -98,7 +98,7 @@ class NodeExecutorServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> true
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
+                getFrameworkProject(_) >> Mock(IRundeckProject)
             }
         }
         NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){
@@ -131,11 +131,11 @@ class NodeExecutorServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> false
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
+                getFrameworkProject(_) >> Mock(IRundeckProject)
             }
         }
         NodeExecutorService service = Spy(new NodeExecutorService(framework, defaultProfile)){
-            providerOfType("local") >> new LocalNodeExecutor(framework)
+            providerOfType("local") >> new LocalNodeExecutor()
         }
 
 
@@ -171,7 +171,7 @@ class NodeExecutorServiceSpec extends Specification {
                 _ * getLocalRegistry() >> [(LocalNodeExecutor.SERVICE_PROVIDER_TYPE): LocalNodeExecutor]
             }
             NodeExecutorService service = Spy(new NodeExecutorService(framework, profile)) {
-                providerOfType("local") >> new LocalNodeExecutor(framework)
+                providerOfType("local") >> new LocalNodeExecutor()
             }
             def config = Mock(IRundeckProjectConfig){
                 _*getProperty('service.NodeExecutor.default.provider') >> pDefaultRemote

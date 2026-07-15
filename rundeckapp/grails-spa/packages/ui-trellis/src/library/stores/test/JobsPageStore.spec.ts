@@ -12,7 +12,7 @@ import {JobBrowseItem, JobBrowseMeta} from '../../types/jobs/JobBrowse';
 jest.mock('../../rundeckService', () => ({
     getRundeckContext: jest.fn().mockImplementation(() => ({
         projectName: 'TestProject',
-        rdBase: 'http://localhost:4440/',
+        rdBase: 'http://localhost:4440',
     })),
 }));
 
@@ -283,6 +283,12 @@ describe('JobPageStore', () => {
             const browser1 = store.getJobBrowser();
             const browser2 = store.getJobBrowser();
             expect(browser1).toBe(browser2);
+        });
+
+        it('should default job browser metaExclude to stats for browse API', () => {
+            const browser = store.getJobBrowser();
+            expect(browser.meta).toBe('*');
+            expect(browser.metaExclude).toBe('stats');
         });
     });
 

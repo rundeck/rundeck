@@ -32,7 +32,17 @@ class SharedJobConstraints implements Validateable {
 
     static constraints = {
         jobName(blank: false, nullable: false, matches: "[^/]+", maxSize: 1024)
-        groupPath(nullable:true, maxSize: 2048)
+        groupPath(nullable: true, maxSize: 2048, validator: { val, obj ->
+            if (val == null || val.isEmpty()) return true
+            if (val.startsWith('/') || val.startsWith('\\') || val ==~ /^[a-zA-Z]:[\\\/].*/) {
+                return ['invalid.absolute.path']
+            }
+            def segments = val.split(/[\/\\]/)
+            if (segments.any { it == '..' || it == '.' }) {
+                return ['invalid.path.traversal']
+            }
+            return true
+        })
         user(nullable:true)
         loglevel(nullable:true)
 

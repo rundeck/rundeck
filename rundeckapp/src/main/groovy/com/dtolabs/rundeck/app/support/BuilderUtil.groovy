@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.app.support
 
-import org.apache.commons.lang3.StringUtils
 import org.rundeck.app.components.jobs.JobXMLUtil
 
 import java.util.regex.Pattern
@@ -238,7 +237,7 @@ class BuilderUtil {
      * @return new string
      */
     static String trimAllLinesAndReplaceLineEndings(String os, String lineEnding) {
-        os.readLines().collect { StringUtils.stripEnd(it,null) }.join(lineEnding)
+        os.readLines().collect { it.stripTrailing() }.join(lineEnding)
     }
 
     /**

@@ -29,9 +29,7 @@ import spock.lang.Unroll
 
 class ExecutionLifecyclComponentServiceSpec extends Specification {
     def item = Mock(WorkflowExecutionItem)
-    def featureService = Mock(FeatureService){
-        featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false) >> true
-    }
+    def featureService = Mock(FeatureService)
     def iRundeckProject = Mock(IRundeckProject){
         hasProperty("project.enable.executionLifecyclePlugin.TestPlugin") >> true
         getProperty("project.enable.executionLifecyclePlugin.TestPlugin") >> 'true'

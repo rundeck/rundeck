@@ -1,10 +1,17 @@
 package org.rundeck.tests.functional.selenium.project
 
 
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.gui.pages.home.HomePage
 import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.container.SeleniumBase
 
+@UiModeFlag(
+    featureName = "projects-nextui",
+    status      = UiModeStatus.NEXT_UI,
+    description = "Asserts URL contains nextUi=true on the next-UI projects page; legacy not exercised here"
+)
 class ProjectsSpec extends SeleniumBase {
 
     def setupSpec() {

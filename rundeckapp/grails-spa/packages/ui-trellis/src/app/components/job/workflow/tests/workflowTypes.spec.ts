@@ -8,7 +8,7 @@ import {
 describe("workflowTypes", () => {
   it("createStrategyData empty data", () => {
     const wfData = {} as WorkflowData;
-    expect(createStrategyData(wfData)).toEqual({ type: undefined, config: {} });
+    expect(createStrategyData(wfData)).toEqual({ type: "", config: {} });
   });
   it("createStrategyData strategy type only", () => {
     const wfData = {
@@ -32,7 +32,7 @@ describe("workflowTypes", () => {
   );
   it("exportPluginData includes strategy data", () => {
     const strategy = { type: "s", config: { a: "b" } };
-    expect(exportPluginData(strategy, null)).toEqual({
+    expect(exportPluginData(strategy, {})).toEqual({
       pluginConfig: {
         WorkflowStrategy: {
           s: {

@@ -2,14 +2,15 @@ package rundeck.services.events
 
 import grails.gorm.transactions.Transactional
 import org.springframework.context.event.EventListener
+import org.springframework.security.authentication.event.AuthenticationFailureServiceExceptionEvent
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.authentication.logout.LogoutHandler
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @Transactional
 class UserActionService implements LogoutHandler{
@@ -29,6 +30,24 @@ class UserActionService implements LogoutHandler{
         }
     }
 
+    /**
+     * Handles failed authentication events produced by JAAS login providers.
+     * When {@code rundeck.jaaslogin=true}, Spring Security publishes
+     * {@code AuthenticationFailureServiceExceptionEvent} for failed logins instead of
+     * {@code AuthenticationFailureBadCredentialsEvent}, leaving a gap in login-failure tracking.
+     *
+     * @param event the JAAS authentication failure event
+     */
+    @EventListener
+    void handleAuthenticationFailureServiceExceptionEvent(AuthenticationFailureServiceExceptionEvent event) {
+        def username = extractUsername(event?.authentication)
+        if (username != null) {
+            log.warn("Failed login attempt (JAAS) for user: ${username}")
+        } else {
+            log.error("Null user name on handleAuthenticationFailureServiceExceptionEvent")
+        }
+    }
+
     @Override
     void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         if(extractUsername(authentication) != null){
@@ -38,11 +57,15 @@ class UserActionService implements LogoutHandler{
         }
     }
 
-    private String extractUsername(Authentication authentication) {
-        if (!authentication){
-            log.error("Null authentication on event")
-            return null
-        }
-        return authentication.name ?: authentication.principal.name ?: null
+    /**
+     * Extracts the username from an authentication object without side effects.
+     * Returns null if authentication is null or no username can be determined;
+     * callers are responsible for logging when null is returned.
+     */
+    private static String extractUsername(Authentication authentication) {
+        if (!authentication) return null
+        if (authentication.name) return authentication.name
+        if (authentication.principal instanceof String) return authentication.principal as String
+        return authentication.principal?.name ?: null
     }
 }

@@ -25,12 +25,6 @@ class ProjectCreatePage extends BasePage {
         super(context)
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on create project page: " + driver.currentUrl)
-        }
-    }
-
     void createProject(String name) {
         projectNameInput.click()
         projectNameInput.sendKeys(name)

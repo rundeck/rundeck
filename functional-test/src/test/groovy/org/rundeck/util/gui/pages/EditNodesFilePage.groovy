@@ -45,10 +45,15 @@ class EditNodesFilePage extends BasePage{
     }
 
     void waitForAceToHaveText(){
+        // Wait until the gutter shows more than one line number, which confirms
+        // the Ace editor has finished rendering the full file content.
+        // Waiting for length != 0 is insufficient — the gutter shows "1" immediately
+        // even before the remaining lines are rendered.
         new WebDriverWait(driver, Duration.ofSeconds(30)).until(
                 new ExpectedCondition<Boolean>() {
                     Boolean apply(WebDriver input) {
-                        return aceGutterElement().text.length() != 0
+                        String text = aceGutterElement().text
+                        return text.contains("\n")
                     }
                 }
         )

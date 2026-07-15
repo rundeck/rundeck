@@ -1,8 +1,6 @@
 #!/bin/bash
 #/ trigger local ci test run
 
-. scripts/rd_versions.sh
-
 set -euo pipefail
 IFS=$'\n\t'
 readonly ARGS=("$@")

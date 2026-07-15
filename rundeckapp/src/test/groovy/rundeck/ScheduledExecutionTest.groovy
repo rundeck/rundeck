@@ -21,8 +21,6 @@ import org.junit.Test
 
 import static org.junit.Assert.*
 //import grails.test.GrailsUnitTestCase
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import org.quartz.CronExpression
 
 /**

@@ -27,14 +27,21 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.*;
+import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 
+import java.net.ProxySelector;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ApacheHttpClient implements HttpClient<HttpResponse> {
 
-    HttpClientBuilder clientBuilder = HttpClients.custom();
+    HttpClientBuilder clientBuilder =
+            HttpClients.custom()
+                    .useSystemProperties()
+                    .setRoutePlanner(new SystemDefaultRoutePlanner(
+                            ProxySelector.getDefault()
+                    ));
     RequestConfig.Builder rqConfigBuilder = RequestConfig.custom();
     HttpClientContext clientContext = null;
     HttpRequestBase request = null;

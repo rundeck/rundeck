@@ -21,8 +21,8 @@ import org.eclipse.jetty.server.Handler
 import org.eclipse.jetty.server.HostHeaderCustomizer
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.ContextHandler
-import org.eclipse.jetty.webapp.AbstractConfiguration
-import org.eclipse.jetty.webapp.WebAppContext
+import org.eclipse.jetty.ee10.webapp.AbstractConfiguration
+import org.eclipse.jetty.ee10.webapp.WebAppContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
@@ -59,7 +59,8 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
                 }
             }
         })
-        factory.addServerCustomizers(new BanHttpMethodCustomizer())
+        // Grails 7/Jetty 12: BanHttpMethodCustomizer disabled temporarily to debug ServletApiRequest NPE
+        // TODO: Re-enable HTTP method filtering once ServletAPI issue is resolved
         if(serverUrl && featureService.featurePresent("setServerUrlOnNoHostHeader", false)) {
             factory.addServerCustomizers(new RundeckHostHeaderCustomizer(serverUrl: serverUrl))
         }
@@ -76,6 +77,7 @@ class JettyConfigPropsInitParameterConfiguration extends AbstractConfiguration {
     Map<String, String> initParams = [:]
 
     JettyConfigPropsInitParameterConfiguration(final Map<String, String> initParams) {
+        super(new Builder())  // Jetty 12 requires explicit super() call
         this.initParams = initParams
     }
 

@@ -3,6 +3,7 @@
     ref="root"
     class="execution-log"
     :class="[`execution-log--${colorTheme}`]"
+    data-testid="log-viewer"
   >
     <RdDrawer
       title="Settings"
@@ -14,10 +15,14 @@
       :wrap-style="{ position: 'absolute' }"
       @close="closeSettings"
     >
-      <form style="padding: 10px">
+      <form style="padding: 10px" data-testid="log-viewer-settings-form">
         <div class="form-group">
           <label>Theme</label>
-          <select v-model="settings.theme" class="form-control select">
+          <select
+            v-model="settings.theme"
+            class="form-control select"
+            data-testid="log-viewer-theme-select"
+          >
             <option
               v-for="themeOpt in themes"
               :key="themeOpt.value"
@@ -76,7 +81,7 @@
           <label for="logview_lineWrap">Wrap Long Lines</label>
         </div>
         <div class="checkbox">
-          <input id="logview_stats" v-model="settings.stats" type="checkbox" />
+          <input id="logview_stats" v-model="settings.stats" type="checkbox" data-testid="log-viewer-stats-checkbox" />
           <label for="logview_stats">Display Stats</label>
         </div>
         <ui-socket
@@ -93,23 +98,37 @@
         'execution-log--no-transition': logLines > 1000,
         'ansicolor-on': settings.ansiColor,
       }"
+      :style="node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}"
     >
       <div ref="log" class="execution-log__scroller-item-container">
         <div
           v-if="showSettings"
           class="execution-log__settings"
           style="margin-left: 5px; margin-right: 5px"
+          data-testid="log-viewer-toolbar"
         >
           <btn-group>
-            <btn size="xs" @click="toggleSettings">
+            <btn
+              size="xs"
+              data-testid="log-viewer-settings-btn"
+              @click="toggleSettings"
+            >
               <i class="fas fa-cog" />Settings
             </btn>
-            <btn size="xs" @click="toggleFollow">
-              <i :class="[followIcon]" />Follow
+            <btn
+              size="xs"
+              data-testid="log-viewer-follow-btn"
+              @click="toggleFollow"
+            >
+              <i :class="[followIcon]" data-testid="log-viewer-follow-icon" />Follow
             </btn>
           </btn-group>
           <transition name="fade">
-            <div v-if="showProgress" class="execution-log__progress-bar">
+            <div
+              v-if="showProgress"
+              class="execution-log__progress-bar"
+              data-testid="log-viewer-progress-bar"
+            >
               <progress-bar
                 v-model="barProgress"
                 :type="progressType"
@@ -118,25 +137,39 @@
                 min-width
                 striped
                 active
+                data-testid="log-viewer-progress-bar-component"
                 @click="toggleProgressBar"
               />
             </div>
           </transition>
         </div>
-        <div v-if="overSize" class="execution-log__warning">
+        <div
+          v-if="overSize"
+          class="execution-log__warning"
+          data-testid="log-viewer-oversize-warning"
+        >
           <h3>
             🐋 {{ +(logSize / 1048576).toFixed(2) }}MiB is a whale of a log! 🐋
           </h3>
           <h4>Select a download option above to avoid sinking the ship.</h4>
           <h5>Log content may be truncated</h5>
         </div>
-        <div v-if="errorMessage" class="execution-log__warning">
+        <div
+          v-if="errorMessage"
+          class="execution-log__warning"
+          data-testid="log-viewer-error-message"
+        >
           <h4>{{ errorMessage }}</h4>
         </div>
-        <div v-if="completed && logLines === 0" class="execution-log__warning">
+        <div
+          v-if="completed && logLines === 0"
+          class="execution-log__warning"
+          data-testid="log-viewer-no-output"
+        >
           <h5>No output</h5>
         </div>
         <LogNodeChunk
+          v-if="!overSize"
           ref="logEntryChunk"
           class="execution-log__node-chunk"
           :event-bus="eventBus"
@@ -155,10 +188,11 @@
           :follow="mfollow"
           @line-select="handleLineSelect"
           @jumped="jumped = true"
+          @follow-change="onNodeFollowChange"
         />
       </div>
     </div>
-    <div v-if="settings.stats" class="stats">
+    <div v-if="settings.stats" class="stats" data-testid="log-viewer-stats">
       <span
         >Following:{{ mfollow }} Lines:{{
           logLines.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
@@ -171,6 +205,7 @@
 
 <script lang="ts">
 import { CancelToken } from "@esfx/canceltoken";
+import { autorun, IReactionDisposer } from "mobx";
 
 import { defineComponent } from "vue";
 import RdDrawer from "../containers/drawer/Drawer.vue";
@@ -311,7 +346,9 @@ export default defineComponent({
       percentLoaded: 0,
       entries: [],
       entriesFromViewer: [],
-      viewerEntriesByNodeCtx: null
+      viewerEntriesByNodeCtx: null,
+      viewerFilteredEntries: [] as any[],
+      autorunDisposer: null as IReactionDisposer | null,
     };
   },
   computed: {
@@ -351,18 +388,12 @@ export default defineComponent({
       }, {});
     },
     viewerEntries() {
-      if(this.viewer == null) {
+      if (this.viewer == null) {
         return [];
       }
       if (this.node) {
-        if (this.stepCtx && this.viewerEntriesByNodeCtx) {
-          return this.viewerEntriesByNodeCtx[
-            `${this.node}:${JobWorkflow.cleanContextId(this.stepCtx)}`
-          ];
-        }
-        return this.viewerEntriesByNode[this.node];
+        return this.viewerFilteredEntries;
       }
-      return this.viewer.entries;
       return this.entriesFromViewer;
     },
   },
@@ -393,34 +424,44 @@ export default defineComponent({
     viewer: {
       handler(newVal) {
         this.entriesFromViewer = newVal.entries;
-        this.viewerEntriesByNodeCtx = this.entriesFromViewer.reduce(
-            (acc, entry) => ({
-              ...acc,
-              [`${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`]:
-                [
-                  ...(acc[
-                    `${entry.node}:${entry.stepctx ? JobWorkflow.cleanContextId(entry.stepctx) : ""}`
-                  ] || []),
-                  entry,
-                ],
-            }),
-            {},
-          );
       },
-      deep: true
-    }
+      deep: true,
+    },
   },
   beforeMount() {
     this.loadConfig();
-    this.viewer = rootStore.executionOutputStore.createOrGet(
-        this.executionId,
-    );
+    // Capture the raw ExecutionOutput reference before Vue wraps it in a
+    // reactive proxy, so MobX can properly track ObservableGroupMap accesses
+    // inside the autorun callback.
+    const rawViewer = rootStore.executionOutputStore.createOrGet(this.executionId);
+    this.viewer = rawViewer;
+    if (this.node) {
+      const node = this.node;
+      const stepCtx = this.stepCtx;
+      this.autorunDisposer = autorun(() => {
+        const filtered = rawViewer.getEntriesFiltered(node, stepCtx);
+        this.viewerFilteredEntries = filtered ? [...filtered] : [];
+      });
+    }
+  },
+  beforeUnmount() {
+    if (this.autorunDisposer) {
+      this.autorunDisposer();
+      this.autorunDisposer = null;
+    }
   },
   async mounted() {
     await this.viewer.init();
 
     this.startTime = Date.now();
-    this.addScrollBlocker();
+    // In node view the outer scroller has overflow:hidden and the DynamicScroller
+    // handles its own scrolling. Applying addScrollBlocker there would call
+    // ev.preventDefault() on bubbled wheel events and prevent the DynamicScroller
+    // from scrolling. The LogNodeChunk handles follow detection via its own scroll
+    // listener and emits 'follow-change' instead.
+    if (!this.node) {
+      this.addScrollBlocker();
+    }
 
     this.updateProgress();
 
@@ -517,6 +558,14 @@ export default defineComponent({
 
       _scroller.scrollTop = offset - 24; // Insure under stick header
     },
+    onNodeFollowChange(val: boolean) {
+      // Only honor follow-change events from LogNodeChunk when in node view.
+      // In the log output view, addScrollBlocker + the Follow button manage
+      // mfollow; the DynamicScroller scroll listener must not interfere.
+      if (this.node) {
+        this.mfollow = val;
+      }
+    },
     handleLineSelect(idx: number) {
       if (this.overSize) {
         alert("Line-linking is not supported for over-sized logs");
@@ -578,7 +627,11 @@ export default defineComponent({
         if (this.viewer.error) this.errorMessage = this.viewer.error;
 
         this.logSize = this.viewer.offset;
-        this.logLines = this.viewer.entries.length;
+        this.logLines = this.stepCtx
+          ? this.entriesFromViewer.filter(
+              (entry) => entry.stepctx === this.stepCtx,
+            ).length
+          : this.viewer.entries.length;
         this.handleExecutionLogResp();
 
         if (this.viewer.completed) break;

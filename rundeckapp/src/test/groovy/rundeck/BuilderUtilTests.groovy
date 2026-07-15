@@ -16,8 +16,7 @@ package rundeck
  * limitations under the License.
  */
 
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin;
+;
 import groovy.xml.MarkupBuilder
 
 import com.dtolabs.rundeck.app.support.BuilderUtil

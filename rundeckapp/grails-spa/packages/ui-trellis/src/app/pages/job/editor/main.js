@@ -10,25 +10,24 @@ import NotificationsEditorSection from "./NotificationsEditorSection.vue";
 import ResourcesEditorSection from "./ResourcesEditorSection.vue";
 import SchedulesEditorSection from "./SchedulesEditorSection.vue";
 import OtherEditorSection from "./OtherEditorSection.vue";
-import { initI18n, updateLocaleMessages } from "../../../utilities/i18n";
+import { initI18n, commonAddUiMessages } from "../../../utilities/i18n";
 import { observer } from "../../../utilities/uiSocketObserver";
 import OptionsEditorSection from "./OptionsEditorSection.vue";
 import { getRundeckContext } from "@/library";
 import { loadJsonData } from "@/app/utilities/loadJsonData";
-import NextUiToggle from "@/app/pages/job/browse/NextUiToggle.vue";
 import DetailsEditorSection from "@/app/pages/job/editor/DetailsEditorSection.vue";
 import ExecutionEditorSection from "./ExecutionEditorSection.vue";
 import WorkflowEditorSection from "@/app/pages/job/editor/WorkflowEditorSection.vue";
-import PrimeVue from "primevue/config";
-import Lara from "@primeuix/themes/lara";
+import WorkflowEditWarning from "@/app/pages/job/editor/WorkflowEditWarning.vue";
+import "primeicons/primeicons.css";
 import HeaderSection from "@/app/pages/job/editor/HeaderSection.vue";
+import { configurePrimeVue } from "@/library/utilities/primeVueConfig";
 
 const locale = window._rundeck.locale || "en_US";
 moment.locale(locale);
 
 const i18n = initI18n();
 const EventBus = getRundeckContext().eventBus;
-const rootStore = getRundeckContext().rootStore;
 const uiMeta = loadJsonData("pageUiMeta");
 const uiType = uiMeta?.uiType || "current";
 const pinia = createPinia();
@@ -88,16 +87,8 @@ const jobSections = [
     component: { WorkflowEditorSection },
     elementClass: "job-editor-workflow-vue",
     addUiMessages: true,
-    visible: uiType === "next",
-  },
-  {
-    name: "JobEditOptionsApp",
-    component: { OptionsEditorSection },
-    elementClass: "job-editor-options-vue",
-    addUiMessages: true,
-    addEventBus: true,
-    visible: uiType === "next",
-  },
+    visible: true,
+  }
 ];
 
 const mountSection = (section) => {
@@ -118,29 +109,14 @@ const mountSection = (section) => {
       app.use(uiv);
       app.use(i18n);
       if (section.addUiMessages) {
-        app.provide("addUiMessages", async (messages) => {
-          const newMessages = messages.reduce(
-            (acc, message) => (message ? { ...acc, ...message } : acc),
-            {},
-          );
-          const locale = window._rundeck.locale || "en_US";
-          const lang = window._rundeck.language || "en";
-          return updateLocaleMessages(i18n, locale, lang, newMessages);
-        });
+        app.provide("addUiMessages", async (messages) =>
+          commonAddUiMessages(i18n, messages),
+        );
       }
       if (section.addCookies) {
         app.use(VueCookies);
       }
-      app.use(PrimeVue, {
-        theme: {
-          preset: Lara,
-          options: {
-            prefix: "p",
-            cssLayer: true,
-            darkModeSelector: ".dark",
-          },
-        },
-      });
+      configurePrimeVue(app, { includeTooltip: true });
       app.use(pinia);
       app.mount(element);
     });
@@ -157,5 +133,18 @@ window.addEventListener("DOMContentLoaded", (event) => {
   const elem = document.querySelector("#workflowContent .pflowlist.edit");
   if (elem) {
     observer.observe(elem, { subtree: true, childList: true });
+  }
+
+  // Register workflow-edit-warning UiSocket widget
+  const rootStore = getRundeckContext()?.rootStore;
+  if (rootStore) {
+    rootStore.ui.addItems([
+      {
+        section: "job-editor",
+        location: "workflow-edit-warning",
+        visible: true,
+        widget: markRaw(WorkflowEditWarning),
+      },
+    ]);
   }
 });

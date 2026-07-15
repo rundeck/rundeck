@@ -33,6 +33,8 @@
     <asset:stylesheet src="static/css/pages/nodes.css"/>
 
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    <asset:stylesheet href="static/css/chunk-vendors.css"/>
+    <asset:javascript src="static/pages/job/show.js" defer="defer"/>
     <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
     <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
@@ -60,6 +62,7 @@ search
                          hasScheduleEnabled(), executionEnabled: scheduledExecution?.hasExecutionEnabled()]}"/>
     <g:embedJSON id="pageParams" data="${[project: params.project ?: request.project]}"/>
 
+    <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
     <g:jsMessages code="Node,Node.plural,option.value.required,options.remote.dependency.missing.required,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <script type="text/javascript">
         var joboptions;
@@ -173,9 +176,7 @@ search
             pagination:{
                 max: ${enc(js:params.max?params.int('max',10):10)}
             },
-            query:{
-                jobIdFilter:"${enc(js:scheduledExecution.extid)}"
-            },
+            query:Object.assign({jobIdFilter:"${enc(js:scheduledExecution.extid)}"}, ${raw(groovy.json.JsonOutput.toJson(defaultRecentFilter ? [recentFilter: defaultRecentFilter] : [:]))}),
             filterOpts: {
                 showFilter: false,
                 showRecentFilter: true,

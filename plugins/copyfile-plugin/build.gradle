@@ -34,13 +34,18 @@ jar {
 }
 dependencies{
 
-    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "cglib:cglib-nodep:2.2.2"
 }
 
 tasks.withType(Test) {
     useJUnitPlatform()
+    jvmArgs += [
+        '--add-opens=java.base/java.lang=ALL-UNNAMED',
+        '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
+        '--add-opens=java.base/java.util=ALL-UNNAMED'
+    ]
 }
 
 task('createPom').doLast {

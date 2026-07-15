@@ -1,13 +1,16 @@
-import { createApp } from "vue";
+import { createApp, Component } from "vue";
 import * as uiv from "uiv";
 import VueCookies from "vue-cookies";
-import PrimeVue from "primevue/config";
-import Lara from "@primeuix/themes/lara";
 
 import { getRundeckContext } from "../../../library";
 import { UiMessage } from "../../../library/stores/UIStore";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
-import { initI18n, updateLocaleMessages } from "../../utilities/i18n";
+import {
+  initI18n,
+  commonAddUiMessages,
+  type LocalizedMessages,
+} from "../../utilities/i18n";
+import {configurePrimeVue} from "../../../library/utilities/primeVueConfig";
 
 const rootStore = getRundeckContext().rootStore;
 const EventBus = getRundeckContext().eventBus;
@@ -28,7 +31,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const elm = document.getElementsByClassName("vue-ui-socket");
   for (const elmElement of elm) {
     if (closest(elmElement, "vue-ui-socket-deferred")) {
-      return;
+      continue;
     }
     const eventName = elmElement.getAttribute("vue-socket-on");
     if (eventName) {
@@ -68,34 +71,20 @@ function initUiComponents(elmElement: any) {
   vue.use(i18n);
   vue.use(uiv);
 
-  vue.use(PrimeVue, {
-    theme: {
-      preset: Lara,
-      options: {
-        prefix: "p",
-        cssLayer: true,
-        darkModeSelector: ".dark",
-      },
-    },
-  });
+  configurePrimeVue(vue);
 
-  vue.provide("registerComponent", (name, comp) => {
+  vue.provide("registerComponent", (name: string, comp: Component) => {
     vue.component(name, comp);
   });
-  vue.provide("addUiMessages", async (messages) => {
-    const newMessages = messages.reduce(
-      (acc: any, message: UiMessage) =>
-        message ? { ...acc, ...message } : acc,
-      {},
-    );
-    const locale = window._rundeck.locale || "en_US";
-    const lang = window._rundeck.language || "en";
-    return updateLocaleMessages(i18n, locale, lang, newMessages);
-  });
+  vue.provide(
+    "addUiMessages",
+    async (messages: UiMessage[] | LocalizedMessages) =>
+      commonAddUiMessages(i18n, messages),
+  );
   try {
     vue.mount(elmElement);
   } catch (e) {
-    console.error("Error mounting vue app", e.message, e);
+    console.error("Error mounting vue app", (e as Error).message, e);
   }
   rootStore.ui.registerComponent = vue.component;
 }

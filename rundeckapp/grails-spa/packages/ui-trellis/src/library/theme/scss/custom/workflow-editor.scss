@@ -20,9 +20,8 @@ span.autoedit:hover {
    */
 .optEditForm,
 .wfitemEditForm {
-  border: 2px solid #e5e5e5;
-  border-bottom-radius: 5px;
-  border-top-radius: 5px;
+  border: 2px solid var(--gray-input-outline);
+  border-radius: 5px;
   padding: 10px;
 
   &.container {

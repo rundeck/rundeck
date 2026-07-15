@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
+import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet;
 
 import java.util.List;
 
@@ -10,6 +11,7 @@ import java.util.List;
 public abstract class BaseExecutionItem implements StepExecutionItem, HasLoggingFilterConfiguration {
     private String label;
     private List<PluginConfiguration> pluginLoggingConfigurations;
+    private ConditionalSet conditions;
 
     @Override
     public String getLabel() {
@@ -23,5 +25,14 @@ public abstract class BaseExecutionItem implements StepExecutionItem, HasLogging
     @Override
     public List<PluginConfiguration> getFilterConfigurations() {
         return pluginLoggingConfigurations;
+    }
+
+    @Override
+    public ConditionalSet getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(ConditionalSet conditions) {
+        this.conditions = conditions;
     }
 }

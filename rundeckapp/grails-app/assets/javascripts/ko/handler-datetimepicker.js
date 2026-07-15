@@ -17,6 +17,9 @@
  */
 
 jQuery(function () {
+    // fallback format to match UI placeholder when dateFormat is not provided
+    var DEFAULT_DATE_FORMAT = 'MM/DD/YYYY hh:mm a';
+
     ko.bindingHandlers.datetimepicker = {
         init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
             var opts = {useCurrent: true, sideBySide: true};
@@ -31,9 +34,15 @@ jQuery(function () {
             if (ko.isObservable(dateFormat)) {
                 dateFormat = ko.unwrap(dateFormat);
             }
-            if (typeof(dateFormat) === 'string') {
-                opts.format = dateFormat;
+            // trim whitespace if string, otherwise use default format
+            var effectiveFormat;
+            if (typeof dateFormat === 'string') {
+                var trimmedFormat = dateFormat.trim();
+                effectiveFormat = trimmedFormat ? trimmedFormat : DEFAULT_DATE_FORMAT;
+            } else {
+                effectiveFormat = DEFAULT_DATE_FORMAT;
             }
+            opts.format = effectiveFormat;
             if (opts.defaultDate) {
                 try {
                     var m = moment(opts.defaultDate, opts.format, true);
@@ -61,11 +70,7 @@ jQuery(function () {
             ko.utils.registerEventHandler(element, "dp.change", function (event) {
                 var value = valueAccessor();
                 if (ko.isObservable(value)) {
-                    if (event.date != null && !(event.date instanceof Date)) {
-                        value(moment(event.date).format(dateFormat));
-                    } else {
-                        value(event.date);
-                    }
+                    value(event.date ? moment(event.date).format(effectiveFormat) : null);
                 }
             });
         },

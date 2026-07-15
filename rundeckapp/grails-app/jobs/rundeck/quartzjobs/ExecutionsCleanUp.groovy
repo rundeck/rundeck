@@ -10,6 +10,7 @@ import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvid
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.services.*
 import rundeck.services.jobs.ResolvedAuthJobService
 
@@ -124,6 +125,7 @@ class ExecutionsCleanUp implements InterruptableJob {
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
+            LogFileStorageRequest.findByExecution(e)?.delete(flush: true)
             e.delete(flush: true)
             //delete all files
             def deletedfiles = 0
@@ -150,24 +152,29 @@ class ExecutionsCleanUp implements InterruptableJob {
 
         logger.info("Searching All Executions")
 
-        Map jobList = executionService.queryExecutions(
-            getExecutionsQueryCriteria(
-                project,
-                maxDaysToKeep,
-                maximumDeletionSize
-            )
+        Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", null)
+
+        List<Long> jobList = Execution.executeQuery(
+            """select e.id from Execution e 
+               where e.project = :project 
+               and e.dateCompleted <= :endDate""",
+            [
+                project: project,
+                endDate: endDate
+            ],
+            [max: maximumDeletionSize]
         )
 
-        if(null != jobList && null != jobList.get("total")) {
-            List result = (List)jobList.get("result")
-            Integer totalFound = (Integer) jobList.get("total")
+        if(null != jobList && 0 != jobList.size()) {
+            List result = jobList
+            Integer totalFound = jobList.size()
             Integer totalToExclude = result.size()
 
             logger.info("found ${totalFound} executions")
             if(totalToExclude >0) {
                 if (minimumExecutionToKeep > 0) {
 
-                    int totalExecutions = this.totalAllExecutions(executionService, project)
+                    int totalExecutions = this.totalAllExecutions(project)
                     int sub = totalExecutions - totalToExclude
 
                     logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
@@ -211,41 +218,14 @@ class ExecutionsCleanUp implements InterruptableJob {
         return collectedExecutions
     }
 
-    private int totalAllExecutions(ExecutionService executionService, String project){
-        ExecutionQuery query = new ExecutionQuery(projFilter: project)
-        def total = Execution.createCriteria().count{
-            def queryCriteria = query.createCriteria(delegate)
-            queryCriteria()
-        }
+    private int totalAllExecutions(String project){
+        Integer total = Execution.executeQuery(
+                "select count(e.id) from Execution e where e.project = :project",
+                [project: project]
+        )[0]
         return null != total ? total : 0
     }
 
-    private Closure getExecutionsQueryCriteria(String project, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500){
-        Date endDate=ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
-        return {isCount ->
-            if(!isCount){
-                projections {
-                    //just return the ID on the select
-                    property('id')
-                }
-            }
-
-            eq('project', project)
-            le('dateCompleted', endDate)
-            //remove running execution
-            isNotNull('dateCompleted')
-            and{
-                ne('status',ExecutionService.EXECUTION_SCHEDULED)
-                ne('status', ExecutionService.EXECUTION_QUEUED)
-            }
-            maxResults(maxDetetionSize)
-            if (!isCount) {
-                and {
-                    order('dateCompleted', 'asc')
-                }
-            }
-        }
-    }
 
     private int deleteByExecutionList(List<Long> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService,referencedExecutionDataProvider, ReportService reportService) {
         logger.info("Start to delete ${collectedExecutions.size()} executions")

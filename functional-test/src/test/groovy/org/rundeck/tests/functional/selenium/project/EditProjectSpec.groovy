@@ -29,7 +29,6 @@ class EditProjectSpec extends SeleniumBase {
             def loginPage = go LoginPage
         when:
             loginPage.login(TEST_USER, TEST_PASS)
-            homePage.validatePage()
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.setProjectDescription projectDescription
             projectEditPage.save()
@@ -54,7 +53,6 @@ class EditProjectSpec extends SeleniumBase {
             def loginPage = go LoginPage
         when:
             loginPage.login(TEST_USER, TEST_PASS)
-            homePage.validatePage()
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.setProjectLabel projectLabel
             projectEditPage.save()
@@ -86,7 +84,6 @@ class EditProjectSpec extends SeleniumBase {
         when:
             loginPage.go()
             loginPage.login(TEST_USER, TEST_PASS)
-            homePage.validatePage()
             projectEditPage.go("/project/${projectName}/configure")
             projectEditPage.clickEditConfigurationFile()
             projectEditPage.addConfigurationValue projectDescriptionProperty
@@ -138,7 +135,6 @@ class EditProjectSpec extends SeleniumBase {
 
         when:
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectDescription(projectDescription)
         projectEditPage.save()
@@ -173,7 +169,6 @@ class EditProjectSpec extends SeleniumBase {
 
         when:
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectLabel projectLabel
         projectEditPage.save()
@@ -206,7 +201,6 @@ class EditProjectSpec extends SeleniumBase {
 
         when: "Give a desc and label first"
         loginPage.login(TEST_USER, TEST_PASS)
-        homePage.validatePage()
         projectEditPage.go("/project/${projectName}/configure")
         projectEditPage.setProjectLabel "a-label"
         projectEditPage.setProjectDescription "A desc"

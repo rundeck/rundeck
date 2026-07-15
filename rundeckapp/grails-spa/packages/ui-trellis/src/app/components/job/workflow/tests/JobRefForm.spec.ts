@@ -4,7 +4,7 @@ import { createTestingPinia } from "@pinia/testing";
 import { useNodesStore } from "../../../../../library/stores/NodesStorePinia";
 import JobRefForm from "../JobRefForm.vue";
 
-jest.mock("../../../../../library/services/api", () => ({
+jest.mock("@/library/services/api", () => ({
   api: {
     get: jest.fn(),
     post: jest.fn(),
@@ -18,9 +18,9 @@ jest.mock("../../../../../library/services/api", () => ({
   },
 }));
 
-jest.mock("../../../../../library", () => ({
+jest.mock("@/library", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
-    rdBase: "http://localhost:4440/",
+    rdBase: "http://localhost:4440",
     projectName: "TestProject",
     rootStore: {
       projects: {
@@ -34,6 +34,37 @@ jest.mock("../../../../../library", () => ({
     },
   })),
 }));
+
+jest.mock("@/library/modules/pluginService", () => ({
+  getServiceProviderDescription: jest.fn(),
+  validatePluginConfig: jest.fn(),
+  getPluginProvidersForService: jest.fn(),
+}));
+
+jest.mock("@/library/modules/rundeckClient", () => ({
+  client: jest.fn(),
+}));
+
+const baseJobRef = {
+  nodeStep: false,
+  name: "",
+  uuid: "",
+  project: "TestProject",
+  group: "",
+  args: "",
+  failOnDisable: false,
+  childNodes: false,
+  nodefilters: {
+    filter: "",
+    dispatch: {
+      threadcount: null,
+      keepgoing: null,
+      rankAttribute: null,
+      rankOrder: null,
+      nodeIntersect: null,
+    },
+  },
+};
 
 const createWrapper = async (
   props = {},
@@ -110,6 +141,63 @@ describe("JobRefForm", () => {
     });
   });
 
+  describe("useName persistence", () => {
+    it("persists useName:true in saved payload when user switches to name mode", async () => {
+      const wrapper = await createWrapper();
+
+      await wrapper.find('[data-testid="use-name-radio"]').setValue(true);
+      await wrapper.find('[data-testid="jobNameField"]').setValue("myJob");
+      await wrapper.find('[data-testid="save-button"]').trigger("click");
+      await flushPromises();
+
+      const emitted = wrapper.emitted("update:modelValue");
+      expect(emitted).toBeTruthy();
+      const payload = emitted?.[emitted.length - 1]?.[0] as any;
+      expect(payload?.jobref.useName).toBe(true);
+    });
+
+    it("persists useName:false in saved payload when user stays in UUID mode", async () => {
+      const wrapper = await createWrapper();
+
+      await wrapper
+        .find('[data-testid="jobUuidField"] input')
+        .setValue("abc-123");
+      await wrapper.find('[data-testid="save-button"]').trigger("click");
+      await flushPromises();
+
+      const emitted = wrapper.emitted("update:modelValue");
+      expect(emitted).toBeTruthy();
+      const payload = emitted?.[emitted.length - 1]?.[0] as any;
+      expect(payload?.jobref.useName).toBe(false);
+    });
+
+    it("re-opens in name mode when job ref was previously saved with useName:true", async () => {
+      const wrapper = await createWrapper({
+        jobref: { ...baseJobRef, name: "myJob", useName: true },
+      });
+
+      expect(
+        wrapper.find("[data-testid='jobNameField']").attributes("readonly"),
+      ).toBeUndefined();
+      expect(
+        wrapper.find("[data-testid='jobGroupField']").attributes("readonly"),
+      ).toBeUndefined();
+    });
+
+    it("shows UUID mode for existing job ref with uuid", async () => {
+      const wrapper = await createWrapper({
+        jobref: { ...baseJobRef, uuid: "abc-123" },
+      });
+
+      expect(
+        wrapper.find("[data-testid='jobNameField']").attributes("readonly"),
+      ).toBeDefined();
+      expect(
+        wrapper.find("[data-testid='jobGroupField']").attributes("readonly"),
+      ).toBeDefined();
+    });
+  });
+
   describe("Job Reference Type Selection", () => {
     it("toggles input fields based on name/uuid selection", async () => {
       const wrapper = await createWrapper();
@@ -122,7 +210,9 @@ describe("JobRefForm", () => {
         wrapper.find("[data-testid='jobGroupField']").attributes("readonly"),
       ).toBeDefined();
       expect(
-        wrapper.find("[data-testid='jobUuidField'] input").attributes("disabled"),
+        wrapper
+          .find("[data-testid='jobUuidField'] input")
+          .attributes("disabled"),
       ).toBeUndefined();
 
       // Switch to name-based reference
@@ -136,7 +226,9 @@ describe("JobRefForm", () => {
         wrapper.find("[data-testid='jobGroupField']").attributes("readonly"),
       ).toBeUndefined();
       expect(
-        wrapper.find("[data-testid='jobUuidField'] input").attributes("disabled"),
+        wrapper
+          .find("[data-testid='jobUuidField'] input")
+          .attributes("disabled"),
       ).toBeDefined();
     });
   });
@@ -154,7 +246,9 @@ describe("JobRefForm", () => {
     it("emits save event when form is valid", async () => {
       const wrapper = await createWrapper();
 
-      await wrapper.find("[data-testid='jobUuidField'] input").setValue("test-uuid");
+      await wrapper
+        .find("[data-testid='jobUuidField'] input")
+        .setValue("test-uuid");
       await wrapper
         .find("[data-testid='jobProjectField']")
         .setValue("test-job");
@@ -243,7 +337,10 @@ describe("JobRefForm", () => {
 
       await wrapper.find(".act_choose_job").trigger("click");
 
-      expect(wrapper.vm.openJobSelectionModal).toBe(true);
+      expect(
+        wrapper.findComponent({ name: "JobRefFormFields" }).vm
+          .openJobSelectionModal,
+      ).toBe(true);
     });
 
     it("updates job reference when job is selected", async () => {
@@ -255,7 +352,9 @@ describe("JobRefForm", () => {
       };
 
       // Simulate the event bus event that would come from job selection
-      wrapper.vm.eventBus.emit("browser-job-item-selection", mockJob);
+      wrapper
+        .findComponent({ name: "JobRefFormFields" })
+        .vm.eventBus.emit("browser-job-item-selection", mockJob);
       await wrapper.vm.$nextTick();
 
       expect(
@@ -280,21 +379,25 @@ describe("JobRefForm", () => {
   });
 
   describe("Additional Options", () => {
-    it("handles checkbox options correctly", async () => {
-      const wrapper = await createWrapper();
+    it("saves all checkbox options in payload when user checks them and saves", async () => {
+      const wrapper = await createWrapper({
+        jobref: { ...baseJobRef, uuid: "test-uuid" },
+      });
 
-      const checkboxes = [
-        "#importOptionsCheck",
-        "#ignoreNotificationsCheck",
-        "#failOnDisableCheck",
-        "#childNodesCheck",
-      ];
+      await wrapper.find("#importOptionsCheck").setValue(true);
+      await wrapper.find("#ignoreNotificationsCheck").setValue(true);
+      await wrapper.find("#failOnDisableCheck").setValue(true);
+      await wrapper.find("#childNodesCheck").setValue(true);
+      await wrapper.find('[data-testid="save-button"]').trigger("click");
+      await flushPromises();
 
-      for (const checkbox of checkboxes) {
-        const input = wrapper.find(checkbox);
-        await input.setValue(true);
-        expect((input.element as HTMLInputElement).checked).toBe(true);
-      }
+      const emitted = wrapper.emitted("update:modelValue");
+      expect(emitted).toBeTruthy();
+      const payload = emitted?.[emitted.length - 1]?.[0] as any;
+      expect(payload?.jobref.importOptions).toBe(true);
+      expect(payload?.jobref.ignoreNotifications).toBe(true);
+      expect(payload?.jobref.failOnDisable).toBe(true);
+      expect(payload?.jobref.childNodes).toBe(true);
     });
   });
 
@@ -313,7 +416,7 @@ describe("JobRefForm", () => {
       await wrapper.setProps({ modalActive: false });
 
       expect(wrapper.emitted("update:modalActive")).toBeTruthy();
-      expect(wrapper.emitted("update:modalActive")[0]).toEqual([false]);
+      expect(wrapper.emitted("update:modalActive")?.[0]).toEqual([false]);
     });
   });
 

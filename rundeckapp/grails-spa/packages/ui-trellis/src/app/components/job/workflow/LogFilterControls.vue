@@ -1,38 +1,45 @@
 <template>
-  <btn v-if="showButton" size="sm" @click="addFilter">
+  <btn v-if="showButton" size="sm" data-testid="add-filter-button" @click="addFilter">
     <i class="glyphicon glyphicon-plus"></i>
     {{ $t("message_add") }}
   </btn>
-  <choose-plugin-modal
-    v-if="addFilterModal"
-    v-model="addFilterModal"
-    :title="addFilterTitle"
-    :services="[ServiceType.LogFilter]"
-    @cancel="addFilterModal = false"
-    @selected="chooseProviderAdd"
-  >
-  </choose-plugin-modal>
-  <edit-plugin-modal
-    v-model:modal-active="editFilterModal"
-    v-model="model"
-    :validation="editModelValidation"
-    :service-name="ServiceType.LogFilter"
-    :title="editFilterTitle"
-    @cancel="cancelEditFilter"
-    @save="saveEditFilter"
-  ></edit-plugin-modal>
+  <Teleport to="body">
+    <choose-plugin-modal
+      v-if="addFilterModal"
+      data-testid="add-filter-modal"
+      v-model="addFilterModal"
+      :title="addFilterTitle"
+      :services="[ServiceType.LogFilter]"
+      @cancel="addFilterModal = false"
+      @selected="chooseProviderAdd"
+    >
+    </choose-plugin-modal>
+  </Teleport>
+  <Teleport to="body">
+    <edit-plugin-modal
+      data-testid="edit-filter-modal"
+      v-model:modal-active="editFilterModal"
+      v-model="model"
+      :validation="editModelValidation"
+      :service-name="ServiceType.LogFilter"
+      :title="editFilterTitle"
+      @cancel="cancelEditFilter"
+      @save="saveEditFilter"
+    ></edit-plugin-modal>
+  </Teleport>
 </template>
 <script lang="ts">
-import ChoosePluginModal from "@/library/components/plugins/ChoosePluginModal.vue";
-import EditPluginModal from "@/library/components/plugins/EditPluginModal.vue";
-import { PluginConfig } from "@/library/interfaces/PluginConfig";
+import ChoosePluginModal from "../../../../library/components/plugins/ChoosePluginModal.vue";
+import EditPluginModal from "../../../../library/components/plugins/EditPluginModal.vue";
+import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import {
   getPluginProvidersForService,
   validatePluginConfig,
-} from "@/library/modules/pluginService";
-import { ServiceType } from "@/library/stores/Plugins";
+} from "../../../../library/modules/pluginService";
+import { ServiceType, Plugin } from "../../../../library/stores/Plugins";
 import { cloneDeep } from "lodash";
 import { defineComponent, nextTick } from "vue";
+import { resetValidation } from "./stepEditorUtils";
 export default defineComponent({
   name: "LogFilterControls",
   components: { ChoosePluginModal, EditPluginModal },
@@ -64,7 +71,7 @@ export default defineComponent({
   data() {
     return {
       ServiceType,
-      pluginProviders: [],
+      pluginProviders: [] as Plugin[],
       pluginLabels: [],
       addFilterModal: false,
       editFilterModal: false,
@@ -72,7 +79,7 @@ export default defineComponent({
         type: "",
         config: {},
       } as PluginConfig,
-      editModelValidation: { errors: [], valid: true },
+      editModelValidation: resetValidation(),
     };
   },
   computed: {
@@ -96,7 +103,7 @@ export default defineComponent({
   },
   async mounted() {
     await this.getLogFilterPlugins();
-    this.model = cloneDeep(this.modelValue);
+    this.model = cloneDeep(this.modelValue) as { type: string; config: any; };
     this.eventBus.on("edit", () => {
       if (!this.addFilterModal) {
         this.editFilterModal = true;
@@ -107,7 +114,7 @@ export default defineComponent({
   methods: {
     clearEdit() {
       this.model = { type: "", config: {} };
-      this.editModelValidation = { errors: [], valid: true };
+      this.editModelValidation = resetValidation();
     },
     addFilter() {
       if (this.editFilterModal) {

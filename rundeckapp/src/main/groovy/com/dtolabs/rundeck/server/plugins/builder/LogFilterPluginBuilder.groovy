@@ -22,7 +22,8 @@ import org.codehaus.groovy.runtime.InvokerHelper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class LogFilterPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<LogFilterPlugin> {
+class LogFilterPluginBuilder extends ScriptPluginBuilder {
+    // Groovy 4: Cannot re-implement PluginBuilder with different type parameter
     static Logger logger = LoggerFactory.getLogger(StreamingLogWriterPluginBuilder)
     Map<String, Closure> handlers = [:]
 

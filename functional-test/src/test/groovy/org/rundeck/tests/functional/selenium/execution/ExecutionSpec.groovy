@@ -15,6 +15,7 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import org.rundeck.util.gui.pages.project.ProjectEditPage
 import org.rundeck.util.gui.pages.project.SideBarPage
 import spock.lang.Shared
+import spock.lang.Unroll
 
 @SeleniumCoreTest
 class ExecutionSpec extends SeleniumBase {
@@ -22,7 +23,7 @@ class ExecutionSpec extends SeleniumBase {
     @Shared String SELENIUM_EXEC_PROJECT
 
     def setup() {
-        SELENIUM_EXEC_PROJECT = specificationContext.currentIteration.name.tokenize().collect { it.capitalize() }.join()
+        SELENIUM_EXEC_PROJECT = specificationContext.currentIteration.name.tokenize().collect { it.capitalize() }.join().replaceAll(/[^a-zA-Z0-9_\-+.]/, '_')
         setupProject(SELENIUM_EXEC_PROJECT)
         def loginPage = go LoginPage
         loginPage.login(TEST_USER, TEST_PASS)
@@ -77,7 +78,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         then:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -111,16 +112,20 @@ class ExecutionSpec extends SeleniumBase {
      * - Executes the command 'echo 'Hello world'' and waits for it to succeed.
      * - Validates various elements on the command page, such as the execution content and log gutters.
      */
-    def "viewer execution check adhoc page"() {
+    @Unroll
+    def "viewer execution check adhoc page (nextUi: #nextUi)"() {
         when:
         def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
+        commandPage.nextUi = nextUi
         commandPage.runCommandAndWaitToBe("echo 'Hello world'", "SUCCEEDED")
         then:
         commandPage.runContent.isDisplayed()
-        commandPage.runArgument.text == "echo 'Hello world'"
+        commandPage.commandRunArgument.text == "echo 'Hello world'"
         commandPage.getExecLogGutters().size() == 2
         commandPage.execLogContent.text == "Hello world"
         commandPage.runningExecState == "SUCCEEDED"
+        where:
+            nextUi << [false, true]
     }
 
     /**
@@ -129,6 +134,7 @@ class ExecutionSpec extends SeleniumBase {
      * Steps:
      * - Executes the command 'echo 'Hello world'' and waits for it to succeed.
      * - Navigates to the log node view and validates its contents.
+     * - Verifies that the loading spinner does not appear after execution completes.
      */
     def "viewer execution check log node view"() {
         setup:
@@ -149,6 +155,7 @@ class ExecutionSpec extends SeleniumBase {
         executionShowPage.execLogNode.isDisplayed()
         executionShowPage.execLogNode.text == "Hello world"
         executionShowPage.execLogGutterEntryAttribute.matches("\\d{2}:\\d{2}:\\d{2}")
+        executionShowPage.waitForNumberOfElementsToBe executionShowPage.nodeOutputLoadingSpinnerBy, 0
     }
 
     /**
@@ -191,7 +198,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -223,9 +230,11 @@ class ExecutionSpec extends SeleniumBase {
      * - Executes a command with a long echo statement.
      * - Verifies the presence of line wrapping in the log view.
      */
-    def "check line wrap"() {
+    @Unroll
+    def "check line wrap (nextUi: #nextUi)"() {
         setup:
         def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
+        commandPage.nextUi = nextUi
         def sideBarPage = page SideBarPage
         def executionShowPage = page ExecutionShowPage
         when:
@@ -243,6 +252,8 @@ class ExecutionSpec extends SeleniumBase {
         then:
         executionShowPage.waitForNumberOfElementsToBe executionShowPage.maskSettingsOptionsBy, 0
         executionShowPage.waitForNumberOfElementsToBe executionShowPage.logContentTextBy, 1
+        where:
+            nextUi << [false, true]
     }
 
     /**
@@ -287,7 +298,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -342,7 +353,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.validatePage()
@@ -402,7 +413,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -462,7 +473,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -523,7 +534,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         jobShowPage.go()
         jobShowPage.runJobBtn.click()
@@ -560,9 +571,11 @@ class ExecutionSpec extends SeleniumBase {
      * - Executes an adhoc command and navigates to the log output.
      * - Changes log view settings while the command is running and verifies their effects.
      */
-    def "change options while running"() {
+    @Unroll
+    def "change options while running (nextUi: #nextUi)"() {
         setup:
         def commandPage = go CommandPage, SELENIUM_EXEC_PROJECT
+        commandPage.nextUi = nextUi
         def sideBarPage = page SideBarPage
         def activityPage = page ActivityPage
         def executionShowPage = page ExecutionShowPage
@@ -595,7 +608,7 @@ class ExecutionSpec extends SeleniumBase {
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
                 .build()
-        client.doPostWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
         when:
         commandPage.runCommandAndWaitToBe("echo 'Hello world'", "SUCCEEDED")
         sideBarPage.goTo NavLinkTypes.ACTIVITY
@@ -617,6 +630,89 @@ class ExecutionSpec extends SeleniumBase {
         executionShowPage.execLogGutters.size() == 0
         executionShowPage.gutterLineNumbers.size() == 0
         executionShowPage.logNodeSettings.size() == 0
+        where:
+            nextUi << [false, true]
+    }
+
+    /**
+     * Regression test for RUN-2759.
+     *
+     * Verifies that step numbers >= 10 are rendered correctly in the node view.
+     * The bug was caused by using string index notation ($data.stepctx[0]) which
+     * returned only the first character, so step 10 appeared as "1.", step 11 as "1.", etc.
+     * The fix uses parseInt($data.stepctx) to extract the full number.
+     *
+     * Steps:
+     * - Creates a job with 12 steps.
+     * - Runs the job and navigates to the Nodes tab.
+     * - Expands the node and reads the rendered step number labels.
+     * - Verifies that steps 10, 11, and 12 display the full two-digit number.
+     */
+    def "step numbers with two or more digits display correctly in node view"() {
+        setup:
+        def executionShowPage = page ExecutionShowPage
+        def jobUuid = "3de51941-605c-435b-b128-4dfa8142f210"
+        JobShowPage jobShowPage = page(JobShowPage, SELENIUM_EXEC_PROJECT).forJob(jobUuid)
+        def yaml = """
+            -
+              defaultTab: nodes
+              description: ''
+              executionEnabled: true
+              id: ${jobUuid}
+              loglevel: INFO
+              name: stepNumberRegressionJob
+              nodeFilterEditable: false
+              plugins:
+                ExecutionLifecycle: {}
+              scheduleEnabled: true
+              sequence:
+                commands:
+                - exec: echo 'step 1'
+                - exec: echo 'step 2'
+                - exec: echo 'step 3'
+                - exec: echo 'step 4'
+                - exec: echo 'step 5'
+                - exec: echo 'step 6'
+                - exec: echo 'step 7'
+                - exec: echo 'step 8'
+                - exec: echo 'step 9'
+                - exec: echo 'step 10'
+                - exec: echo 'step 11'
+                - exec: echo 'step 12'
+              keepgoing: false
+              strategy: node-first
+              uuid: ${jobUuid}
+        """
+        def pathToJob = JobUtils.generateFileToImport(yaml, "yaml")
+        def multipartBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("xmlBatch", new File(pathToJob).name, RequestBody.create(new File(pathToJob), MultipartBody.FORM))
+                .build()
+        client.postWithMultipart("/project/${SELENIUM_EXEC_PROJECT}/jobs/import?format=yaml&dupeOption=skip", multipartBody)
+
+        when:
+        jobShowPage.go()
+        jobShowPage.runJobBtn.click()
+        executionShowPage.validateStatus 'SUCCEEDED'
+
+        then: "navigate to nodes tab and expand the first node"
+        def nodesView = executionShowPage.nodesView
+        nodesView.expandNode(0)
+
+        when:
+        def stepNumbers = nodesView.stepNumbers
+
+        then: "all 12 steps must be present"
+        stepNumbers.size() == 12
+
+        and: "single-digit steps display correctly"
+        stepNumbers[0].trim() == "1."
+        stepNumbers[8].trim() == "9."
+
+        and: "two-digit step numbers show the full number, not just the first digit"
+        stepNumbers[9].trim() == "10."
+        stepNumbers[10].trim() == "11."
+        stepNumbers[11].trim() == "12."
     }
 
     def cleanup() {

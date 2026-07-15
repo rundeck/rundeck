@@ -16,14 +16,13 @@
 
 package org.rundeck.app.authorization
 
+import com.dtolabs.rundeck.core.authorization.AuthContextService
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.NodeExecutionService
 import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.jobs.JobService
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
-import com.dtolabs.rundeck.core.storage.projects.ProjectStorageTree
 import groovy.transform.CompileStatic
 import org.rundeck.app.spi.AppService
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -48,14 +47,15 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
                                                 (Class) KeyStorageTree,
                                                 (Class) NodeExecutionService,
                                                 (Class) ExecutionFileLoaderService,
-                                                (Class) AsyncExecutionFileLoaderService]
+                                                (Class) AsyncExecutionFileLoaderService,
+                                                (Class) AuthContextService]
 
     @Override
     Services getServicesWith(final UserAndRolesAuthContext authContext) {
         return combine(baseServices.services, new AuthedServices(authContext))
     }
 
-    class AuthedServices implements Services {
+    class AuthedServices implements Services, AuthContextService {
         final UserAndRolesAuthContext authContext
 
         AuthedServices(final UserAndRolesAuthContext authContext) {
@@ -83,6 +83,9 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
             }
             if (type == AsyncExecutionFileLoaderService) {
                 return (T) authedLogFileLoaderService.serviceWithAuth(authContext)
+            }
+            if (type == AuthContextService) {
+                return (T) this
             }
             throw new IllegalStateException("Required service " + type.getName() + " was not available");
         }

@@ -10,11 +10,12 @@ import org.rundeck.util.api.scm.httpbody.ScmActionPerformRequest
 import org.rundeck.util.api.scm.httpbody.ScmJobStatusResponse
 import org.rundeck.util.api.scm.httpbody.SetupIntegrationResponse
 import org.rundeck.util.common.scm.ScmIntegration
+import org.rundeck.util.common.WaitingTime
 import org.rundeck.util.container.BaseContainer
 
 @APITest
 @ExcludePro
-class ScmPluginJobDiffSpec extends BaseContainer {
+class ScmPluginJobDiffSpec extends ScmBaseContainer {
 
     static final String PROJECT_NAME = "ScmPluginJobActionsInput-project"
     final String DUMMY_JOB_ID = "383d0599-3ea3-4fa6-ac3a-75a53d6b0000"
@@ -36,9 +37,20 @@ class ScmPluginJobDiffSpec extends BaseContainer {
                 "2-args": "echo hello there 2",
                 "uuid": DUMMY_JOB_ID
         ]
-        JobUtils.jobImportFile(PROJECT_NAME, JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, initialArgs) as String, client)
-        GitScmApiClient scmClient = new GitScmApiClient(clientProvider).forIntegration(ScmIntegration.EXPORT).forProject(PROJECT_NAME)
-        scmClient.callSetupIntegration(GitExportSetupRequest.defaultRequest().forProject(PROJECT_NAME).withRepo(remoteRepo))
+        JobUtils.jobImportFile(PROJECT_NAME,
+                JobUtils.updateJobFileToImport(JOB_XML_NAME, PROJECT_NAME, initialArgs) as String,
+                client)
+        GitScmApiClient scmClient = new GitScmApiClient(clientProvider)
+                .forIntegration(ScmIntegration.EXPORT)
+                .forProject(PROJECT_NAME)
+        def setupRequest = GitExportSetupRequest.defaultRequest()
+                .forProject(PROJECT_NAME)
+                .withRepo(remoteRepo)
+        waitFor(
+                { try { scmClient.callSetupIntegration(setupRequest).response } catch (Exception e) { null } },
+                { it?.success },
+                WaitingTime.EXCESSIVE
+        )
         ScmJobStatusResponse initialStatus = scmClient.callGetJobStatus(DUMMY_JOB_ID).response
         ScmActionPerformRequest actionRequest = new ScmActionPerformRequest([
                 input: [message: "Commit msg example"],

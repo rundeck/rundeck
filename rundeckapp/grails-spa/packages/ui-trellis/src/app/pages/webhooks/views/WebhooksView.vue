@@ -68,7 +68,7 @@
             data-tabkey="webhook-header"
             style="height: 200px"
           >
-            <Tab :index="0" title="General">
+            <Tab :index="0" :title="$t('message_webhookTabGeneral')">
               <div class="wh-edit__body">
                 <div class="form-group">
                   <div class="card card-accent">
@@ -110,7 +110,7 @@
                           class="btn btn-sm btn-default"
                           @click="setRegenerate"
                         >
-                          Regenerate
+                          {{ $t("message_webhookButtonRegenerate") }}
                         </button>
                         <span
                           v-if="curHook.regenAuth"
@@ -181,7 +181,10 @@
                 </div>
               </div>
             </Tab>
-            <Tab :index="1" title="Handler Configuration">
+            <Tab
+              :index="1"
+              :title="$t('message_webhookTabHandlerConfiguration')"
+            >
               <div class="wh-edit__body">
                 <div class="card" style="padding: 1em">
                   <div class="form-group">
@@ -315,7 +318,7 @@ export default defineComponent({
       errors: {},
       validation: { valid: true, errors: {} },
       selectedPlugin: null,
-      apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
+      apiBasePostUrl: `${rdBase}/api/${apiVersion}/webhook/`,
       customConfigComponent: null,
       showPluginConfig: false,
       projectName,
@@ -411,7 +414,7 @@ export default defineComponent({
     getHooks() {
       this.ajax(
         "get",
-        `${this.rdBase}webhook/admin/editorData/${this.projectName}`,
+        `${this.rdBase}/webhook/admin/editorData/${this.projectName}`,
       ).then((response) => {
         this.curUser = response.data.username;
         this.curUserRoles = response.data.roles;
@@ -458,13 +461,33 @@ export default defineComponent({
       if (!preserve) {
         this.setValidation(true);
       }
+      
+      // Grails 7: Add error handling and validation
+      if (!this.curHook.eventPlugin) {
+        console.error("Webhook: No eventPlugin set");
+        return;
+      }
+      
+      if (!this.curHook.eventPlugin.artifactName) {
+        console.error("Webhook: eventPlugin missing artifactName", this.curHook.eventPlugin);
+        return;
+      }
+      
+      console.log("Webhook: Loading plugin description for", this.curHook.eventPlugin.artifactName);
+      
       getServiceProviderDescription(
         "WebhookEvent",
         this.curHook.eventPlugin.artifactName,
       ).then((data) => {
+        console.log("Webhook: Plugin description loaded", data);
+        console.log("Webhook: Props length:", data.props ? data.props.length : 0);
         this.customConfigComponent = data.vueConfigComponent;
         this.showPluginConfig =
-          this.customConfigComponent || data.props.length > 0;
+          this.customConfigComponent || (data.props && data.props.length > 0);
+        console.log("Webhook: showPluginConfig set to", this.showPluginConfig);
+      }).catch((error) => {
+        console.error("Webhook: Error loading plugin description", error);
+        this.showPluginConfig = false;
       });
     },
     async handleSave() {
@@ -578,7 +601,7 @@ export default defineComponent({
       this.showPluginConfig = false;
       this.origUseAuthVal = false;
       this.curHook = this.webhookStore.newFromApi({
-        name: "New Hook",
+        name: this.$t("message_webhookNewHookName"),
         user: this.curUser,
         roles: this.curUserRoles,
         useAuth: false,

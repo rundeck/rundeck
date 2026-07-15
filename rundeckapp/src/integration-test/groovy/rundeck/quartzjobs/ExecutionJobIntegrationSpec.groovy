@@ -89,7 +89,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             }
             def saveStatsComplete = false
             def fail3times = throwXTimes(3)
-            retryMax * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> {
+            retryMax * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }, _, _) >> {
                 fail3times()
                 saveStatsComplete = true
             }
@@ -192,7 +192,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             }, _, _
             ) >> new ExecutionCompleteEvent()
 
-            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
+            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }, _, _) >> true
     }
 
     def testSaveStateWithFailureNoJob() {
@@ -239,7 +239,7 @@ class ExecutionJobIntegrationSpec extends Specification {
         then:
             !result
 
-            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
+            1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }, _, _) >> true
     }
 
     def testSaveStateWithFailureOnNotification() {
@@ -290,7 +290,50 @@ class ExecutionJobIntegrationSpec extends Specification {
         then:
         result
 
-        1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }) >> true
+        1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }, _, _) >> true
+    }
+
+    def testSaveStateWithFailedExecution() {
+        given: "a failed execution"
+        def job = new ExecutionJob()
+        job.finalizeRetryMax = 1
+        job.finalizeRetryDelay = 0
+        def scheduledExecution = setupJob()
+        def execution = setupExecution(scheduledExecution, new Date(), null)
+        def mockes = Mock(ExecutionService)
+
+        def expectresult = [
+                status        : 'failed',
+                cancelled     : false,
+                failedNodes   : null,
+                failedNodesMap: null,
+        ]
+        def execMap = new ExecutionService.AsyncStarted()
+
+        when: "saveState is called with success=false"
+        def result = job.saveState(
+                null,
+                mockes,
+                execution,
+                false,  // success = false
+                false,
+                false,
+                false,
+                null,
+                scheduledExecution.uuid,
+                null,
+                execMap
+        )
+
+        then: "execution state is saved"
+        1 * mockes.saveExecutionState_newTransaction(
+                scheduledExecution.uuid, execution.id, {
+            it.subMap(expectresult.keySet()) == expectresult
+        }, _, _
+        ) >> new ExecutionCompleteEvent()
+
+        and: "job stats are still collected for failed executions"
+        1 * mockes.updateScheduledExecStatistics(scheduledExecution.uuid, execution.id, { it > 0 }, 'failed', _) >> true
     }
 
 

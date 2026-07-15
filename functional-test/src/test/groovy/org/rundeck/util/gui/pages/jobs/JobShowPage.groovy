@@ -2,6 +2,7 @@ package org.rundeck.util.gui.pages.jobs
 
 import groovy.transform.CompileStatic
 import org.openqa.selenium.By
+import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.Select
@@ -23,11 +24,16 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobUuidBy = By.xpath("//*[@class='rd-copybox__content']")
     By stepsInJobDefinitionBy = By.cssSelector(".pflowitem.wfctrlholder")
     By jobDefinitionModalBy = By.cssSelector('a[href="#job-definition-modal"]')
+    By jobDefinitionModalButtonBy = By.cssSelector('a[href="#job-definition-modal"][data-toggle="modal"]')
+    By jobDefinitionModalContentBy = By.id("job-definition-modal")
+    By createdByBy = By.cssSelector("[data-testid='created-by']")
+    By lastModifiedByBy = By.cssSelector("[data-testid='last-modified-by']")
+    By detailTableBy = By.id("detailtable")
     By notificationDefinitionBy = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
     By jobInfoGroupBy = By.cssSelector('div.jobInfoSection a.text-secondary')
     By descriptionText = By
-            .xpath("//*[@class=\"section-space\"]//*[@class=\"h5 text-strong\"]")
+            .xpath("//*[contains(@class, 'section-space')]//*[contains(@class, 'h5') and contains(@class, 'text-strong')] | //*[contains(@class, 'markdown-body')]")
     By cronBy = By.xpath("//*[@class='cronselected']")
     By scheduleTimeBy = By.xpath("//*[@class='scheduletime']")
     By multipleExecBy = By.xpath("//*[@id=\"detailtable\"]//td[text()='Multiple Executions?']")
@@ -42,19 +48,32 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By closeDefinitionModalBy = By.cssSelector("div[id='job-definition-modal_footer'] button[data-dismiss='modal']")
     By jobActionBy = By.xpath("//div[contains(@class, 'job-action-button')]")
     By jobActionEditBy = By.xpath("//a[@title='Edit this Job']")
-    By nodeFilterInputBy = By.cssSelector("#doReplaceFilters")
-    By nodeFilterOverrideBy = By.cssSelector("#filterradio")
-    By nodeFilterInputValueBy = By.cssSelector('input[name="extra.nodefilter"]')
+    /**
+     * Run UI: jobs list loads the exec fragment in {@code #execDiv}; only match when the modal is visible
+     * ({@code .in} / {@code .show}) so a stale hidden fragment is not used. Job show embeds the form in {@code #runjob}.
+     */
+    By nodeFilterInputBy = By.cssSelector(
+            "#execDiv.modal.in #doReplaceFilters, #execDiv.modal.show #doReplaceFilters, #runjob #doReplaceFilters")
+    By nodeFilterOverrideBy = By.cssSelector(
+            "#execDiv.modal.in #filterradio, #execDiv.modal.show #filterradio, #runjob #filterradio")
+    By nodeFilterInputValueBy = By.cssSelector(
+            "#execDiv.modal.in input[name=\"extra.nodefilter\"], #execDiv.modal.show input[name=\"extra.nodefilter\"], #runjob input[name=\"extra.nodefilter\"]")
     By dropDownToggleBy = By.cssSelector("button[data-testid='nfi-toggle']")
     By selectAllNodesLinkBy = By.cssSelector("a.xnodefilterlink.job_edit__node_filter__filter_select_all")
     By localhostNodeBy = By.cssSelector(".col-xs-6.node_ident.embedded_node.tight.server .fas.fa-hdd")
     By popoverContentBy = By.cssSelector("div.popover-content")
     By nodeFilterLinkBy = By.cssSelector("node-filter-link[params*='linkicon']")
     By arrowIconBy = By.cssSelector("i.glyphicon-circle-arrow-right")
-    By schedJobNodeFilterBy = By.cssSelector("div[class='input-group nodefilters multiple-control-input-group']")
+    By schedJobNodeFilterBy = By.cssSelector(
+            "#execDiv.modal.in div.input-group.nodefilters.multiple-control-input-group, " +
+                    "#execDiv.modal.show div.input-group.nodefilters.multiple-control-input-group, " +
+                    "#runjob div.input-group.nodefilters.multiple-control-input-group")
     By jobLinkTitleBy = By.xpath("//a[contains(@class, 'job-header-link')]")
     By autocompleteJobStepDefinitionBy = By.cssSelector("#wfitem_0 > span > div > div > span > span > span.text-success")
-    By runFormBy = By.cssSelector("#execDiv #exec_options_form #formbuttons #execFormRunButton")
+    By runFormBy = By.cssSelector(
+            "#execDiv.modal.in #exec_options_form #formbuttons #execFormRunButton, " +
+                    "#execDiv.modal.show #exec_options_form #formbuttons #execFormRunButton, " +
+                    "#runjob #exec_options_form #formbuttons #execFormRunButton")
     By optionValidationWarningBy = By.cssSelector("#execDiv #exec_options_form #optionSelect #_commandOptions div.form-group.has-warning p.text-warning")
     By jobRowBy = By.cssSelector("#job_group_tree .jobname.job_list_row[data-job-id] > a[data-job-id]")
     By jobSearchBy = By.xpath("//span[@title='Click to modify filter']")
@@ -69,10 +88,13 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobDeleteModalBy = By.id("jobdelete")
     By runJobLaterBy = By.linkText("Run Job Later...")
     By runJobLaterMinuteArrowUpBy = By.cssSelector("td:nth-child(3) .glyphicon-chevron-up")
-    By runJobLaterScheduleCreateButtonBy = By.id("scheduler_buttons")
+    By runJobLaterSchedulerModalBy = By.cssSelector("#scheduler.modal.in")
+    By runJobLaterScheduleCreateButtonBy = By.cssSelector("#scheduler_buttons button.schedule-button")
     By jobStatusBarBy = By.className("job-stats-value")
     By jobOptionValuesBy = By.cssSelector(".optionvalues")
     By jobOptionValueInputBy = By.cssSelector(".optionvalues > option:nth-child(6)")
+    By extraOptionSearchBy = By.name("extra.option.search")
+    By datetimepickerWidgetBy = By.cssSelector(".bootstrap-datetimepicker-widget.dropdown-menu.timepicker-sbs.bottom")
     By jobDisableScheduleButtonBy = By.linkText("Disable Schedule")
     By jobEnableScheduleButtonBy = By.linkText("Enable Schedule")
     By jobInfoSectionBy = By.id("jobInfo_")
@@ -83,7 +105,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By buttonDangerBy = By.cssSelector(".btn.btn-danger.btn-sm")
     By jobDisableExecutionButtonBy = By.linkText("Disable Execution")
     By jobEnableExecutionButtonBy = By.linkText("Enable Execution")
-    By jobOptionsDropdownBy = By.cssSelector(".optionvalues")
+    By jobOptionsDropdownBy = By.cssSelector("select.optionvalues, select[name^='extra.option.']")
     By duplicateJobButtonBy = By.partialLinkText("Duplicate this Job")
     By duplicateJobToProjectButtonBy = By.partialLinkText("Duplicate this Job to other Project")
     By projectDropDownToDuplicateBy = By.id("jobProject")
@@ -91,6 +113,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobStatsBy = By.cssSelector(".col-xs-12.col-sm-4.job-stats-item")
     By optionInputBy = By.cssSelector(".optionvaluesfield")
     By jobOptionAlertBy = By.cssSelector(".alert.alert-danger")
+
 
     static class NextUi {
         static By descriptionText = By
@@ -100,7 +123,9 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     static final String PAGE_PATH = "/job/show"
     String loadPath = "/job/show"
     private String project
-    boolean nextUi = false
+
+    boolean getNextUi() { isFlagEnabled('nextUi') }
+    void setNextUi(boolean value) { withFlag('nextUi', value) }
 
     JobShowPage(final SeleniumContext context) {
         super(context)
@@ -137,18 +162,50 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         driver.findElements(By.xpath("//input[contains(@name, 'extra.option.')]"))
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on job show selected page: " + driver.currentUrl)
-        }
-    }
-
     WebElement getJobExecutionDisabledIcon(){
         el jobExecutionDisabledIconBy
     }
 
     WebElement getJobDefinitionModal(){
         el jobDefinitionModalBy
+    }
+
+    WebElement getJobDefinitionModalButton(){
+        el jobDefinitionModalButtonBy
+    }
+
+    WebElement getJobDefinitionModalContent(){
+        waitForElementVisible jobDefinitionModalContentBy
+        el jobDefinitionModalContentBy
+    }
+
+    /**
+     * Get the 'Created By' element from the job definition modal
+     * @return WebElement containing the created by information
+     */
+    WebElement getCreatedByElement() {
+        def modalContent = getJobDefinitionModalContent()
+        modalContent.findElement(createdByBy)
+    }
+
+    /**
+     * Get the 'Last Modified By' element from the job definition modal
+     * @return WebElement containing the last modified by information
+     */
+    WebElement getLastModifiedByElement() {
+        def modalContent = getJobDefinitionModalContent()
+        modalContent.findElement(lastModifiedByBy)
+    }
+
+    /**
+     * Get the calendar button for an option input field
+     * Finds the parent of the option input and then locates the calendar button
+     * @param optionInputField The option input WebElement
+     * @return WebElement representing the calendar button
+     */
+    WebElement getCalendarButtonForOption(WebElement optionInputField) {
+        WebElement optionParent = optionInputField.findElement(By.xpath("./.."))
+        optionParent.findElement(By.cssSelector(".glyphicon.glyphicon-calendar"))
     }
 
     WebElement getNotificationDefinition(){
@@ -244,6 +301,51 @@ class JobShowPage extends BasePage implements ActivityListTrait {
         el runFormBy
     }
 
+    /**
+     * After clicking a job run link, waits until the run form is usable: visible jobs modal ({@code #execDiv.modal.in|.show})
+     * or job show {@code #runjob}, with a clickable Run button. Do not rely on URL alone — {@code /job/show} can match early.
+     */
+    void waitForRunJobExecFormReady(Duration timeout = Duration.ofSeconds(60)) {
+        new WebDriverWait(driver, timeout).until(ExpectedConditions.elementToBeClickable(runFormBy))
+    }
+
+    /**
+     * Waits until the "change target nodes" checkbox is visible in the exec modal or job show form.
+     * Does not require WebDriver "clickable" — radios in the jobs exec modal often fail that check in CI.
+     */
+    void waitForNodeFilterReplaceCheckboxClickable(Duration timeout = Duration.ofSeconds(90)) {
+        // Native checkbox inputs are styled with opacity:0 and zero dimensions (Bootstrap custom checkbox).
+        // visibilityOfElementLocated requires non-zero size — always times out on styled checkboxes.
+        // Use presenceOfElementLocated: the element is in the DOM, just visually replaced by its label.
+        new WebDriverWait(driver, timeout)
+                .ignoring(StaleElementReferenceException.class)
+                .until(ExpectedConditions.presenceOfElementLocated(nodeFilterInputBy))
+        def cb = driver.findElement(nodeFilterInputBy)
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", cb)
+    }
+
+    /**
+     * Toggles the "change the target nodes" checkbox via script click (avoids click-intercepted flakes in headless CI).
+     */
+    void clickNodeFilterReplaceCheckbox() {
+        def cb = driver.findElement(nodeFilterInputBy)
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", cb)
+        executeScript("arguments[0].click();", cb)
+    }
+
+    /**
+     * Waits for the node filter override radio to be present, then clicks it via JS.
+     * Like #doReplaceFilters, #filterradio is a Bootstrap-styled radio with zero dimensions.
+     */
+    void waitAndClickNodeFilterOverride(Duration timeout = Duration.ofSeconds(30)) {
+        new WebDriverWait(driver, timeout)
+                .ignoring(StaleElementReferenceException.class)
+                .until(ExpectedConditions.presenceOfElementLocated(nodeFilterOverrideBy))
+        def radio = driver.findElement(nodeFilterOverrideBy)
+        executeScript("arguments[0].scrollIntoView({block: 'center'});", radio)
+        executeScript("arguments[0].click();", radio)
+    }
+
     WebElement getOptionValidationWarningText() {
         el optionValidationWarningBy
     }
@@ -301,7 +403,7 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     WebElement getRunJobBtn(){
-        el runJobBtnBy
+        waitIgnoringForElementToBeClickable(runJobBtnBy)
     }
 
     WebElement getLogOutputBtn(){
@@ -322,7 +424,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     WebElement getJobOptionsDropdown(){
-        el jobOptionsDropdownBy
+        waitForElementVisible(jobOptionsDropdownBy)
+        el(jobOptionsDropdownBy)
     }
 
     /**
@@ -370,6 +473,24 @@ class JobShowPage extends BasePage implements ActivityListTrait {
 
         waitForElementVisible(optionSelector)
         driver.findElements(optionSelector)
+    }
+
+    /**
+     * Waits for all option checkboxes to be selected, handling StaleElementReferenceException
+     * that can occur when the DOM is updated between fetching elements and checking their state.
+     *
+     * @param name The option name
+     * @param timeoutSeconds Timeout in seconds (default 30)
+     * @return true if all options are selected within the timeout
+     */
+    boolean waitForAllOptionsToBeSelected(String name, int timeoutSeconds = 30) {
+        final By optionSelector = By.name("extra.option.${name}")
+        new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds))
+                .ignoring(StaleElementReferenceException.class)
+                .until { drv ->
+                    def elements = drv.findElements(optionSelector)
+                    elements.size() > 0 && elements.every { it.isSelected() }
+                }
     }
 
     void waitForLogOutput (By logOutput, Integer number, Integer seconds){

@@ -73,7 +73,9 @@ class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
      */
     def boolean featurePresent(String name, boolean defaultEnabled) {
         def splat = configurationService.getBoolean('feature.enableAll', false)
-        return splat || configurationService.getBoolean("feature.${name}.enabled", defaultEnabled)
+        def featureEnabled = configurationService.getBoolean("feature.${name}.enabled", defaultEnabled)
+        log.debug("FeatureService.featurePresent(${name}): enableAll=${splat}, feature.${name}.enabled=${featureEnabled}, defaultEnabled=${defaultEnabled}, result=${splat || featureEnabled}")
+        return splat || featureEnabled
     }
     /**
      * Set an incubator feature toggle on or off

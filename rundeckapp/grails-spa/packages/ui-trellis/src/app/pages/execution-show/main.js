@@ -7,7 +7,8 @@ import * as uiv from "uiv";
 import { getRundeckContext } from "../../../library";
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import "./nodeView";
-import { initI18n } from "../../utilities/i18n";
+import { initI18n, commonAddUiMessages } from "../../utilities/i18n";
+import loadJobStats from "../job/show/loadJobStats";
 
 const VIEWER_CLASS = "execution-log-viewer";
 
@@ -94,6 +95,9 @@ function mount(e) {
   vue.use(VueCookies);
   vue.use(uiv);
   vue.use(i18n);
+  vue.provide("addUiMessages", async (messages) =>
+    commonAddUiMessages(i18n, messages),
+  );
   vue.mount(e);
 
   /** Puts line number in url HASH */
@@ -112,3 +116,5 @@ function mount(e) {
     panel.scrollTop = scrollPos;
   });
 }
+
+window.addEventListener("DOMContentLoaded", loadJobStats);

@@ -16,9 +16,9 @@
 
 package org.rundeck.jaas.jetty;
 
-import org.eclipse.jetty.jaas.JAASPrincipal;
-import org.eclipse.jetty.jaas.JAASRole;
-import org.eclipse.jetty.jaas.callback.ObjectCallback;
+import org.rundeck.jaas.RundeckPrincipal;
+import org.rundeck.jaas.RundeckRole;
+import org.rundeck.jaas.callback.ObjectCallback;
 
 import javax.security.auth.callback.*;
 import javax.security.auth.login.LoginException;
@@ -26,7 +26,10 @@ import java.io.IOException;
 import java.security.Principal;
 
 /**
- * $INTERFACE is ... User: greg Date: 8/16/13 Time: 10:26 AM
+ * Support utilities for JAAS authentication.
+ * Updated to use org.rundeck.jaas classes instead of Jetty JAAS.
+ * 
+ * User: greg Date: 8/16/13 Time: 10:26 AM
  */
 public class JettySupport {
     private static Callback[] createCallbacks() {
@@ -62,9 +65,10 @@ public class JettySupport {
     }
 
     public static Principal createUserPrincipal(String username) {
-        return new JAASPrincipal(username);
+        return new RundeckPrincipal(username);
     }
+    
     public static Principal createRolePrincipal(String rolename) {
-        return new JAASRole(rolename);
+        return new RundeckRole(rolename);
     }
 }

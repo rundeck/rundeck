@@ -68,7 +68,6 @@ w.appLinks = {
   scheduledExecutionActionMenuFragment:
     "/scheduledExecution/actionMenuFragment",
   scheduledExecutionCreate: "/scheduledExecution/create",
-  scheduledExecutionDetailFragment: "/scheduledExecution/detailFragment",
   scheduledExecutionDetailFragmentAjax:
     "/scheduledExecution/detailFragmentAjax",
   scheduledExecutionExecuteFragment: "/scheduledExecution/executeFragment",

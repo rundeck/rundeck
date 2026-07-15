@@ -1,4 +1,5 @@
 #!/usr/bin/env groovy
+import groovy.cli.commons.CliBuilder
 import java.util.function.Predicate
 import java.util.zip.ZipEntry
 
@@ -22,6 +23,7 @@ import java.util.zip.ZipEntry
 
 cli = new CliBuilder(usage: 'slide')
 cli._(longOpt: 'buildType', args: 1, '-buildType [development | release]')
+cli._(longOpt: 'version', args: 1, '-version <version>')
 def options = cli.parse(args)
 
 def target="build/libs"
@@ -38,7 +40,7 @@ def version
 if(options.buildType == 'development'){
     version = "${vNum}-SNAPSHOT".toString()
 } else if (options.buildType == 'release'){
-    version = props.get('version.version')
+    version = options.version ?: props.get('version.version')
 } else {
     throw new Exception("Unknown build type [${options.buildType}]".toString())
 }
@@ -60,15 +62,18 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 //def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','orchestrator', 'source-refresh','upvar', 'audit-logging','jsch']
-//load build.yaml from rundeckcore
-def corebuild = new File('build.yaml').withReader{reader->
-    new groovy.yaml.YamlSlurper().parse(reader)
-}
-def coreExternalPlugins= corebuild.rundeck.plugins.collectEntries{
-    def parts=it.split(':')
-    [parts[1],parts[2].replaceAll('@','.')]
-}
+def plugins=['script','script-node-step','stub','localexec','copyfile','job-state','flow-control','aes-gcm-encryption','git','object-store','orchestrator', 'source-refresh','upvar', 'audit-logging','jsch']
+//bundled external plugin versions come from gradle.properties (*Version props)
+//normalize any @zip/@jar suffix to a filename extension (matches the legacy build.yaml parsing)
+def coreExternalPlugins=[
+    'ansible-plugin'                    : gprops['ansiblePluginVersion'],
+    'aws-s3-model-source'               : gprops['awsS3ModelSourceVersion'],
+    'py-winrm-plugin'                   : gprops['pyWinrmPluginVersion'],
+    'openssh-node-execution'            : gprops['opensshNodeExecutionVersion'],
+    'multiline-regex-datacapture-filter': gprops['multilineRegexDatacaptureFilterVersion'],
+    'attribute-match-node-enhancer'     : gprops['attributeMatchNodeEnhancerVersion'],
+    'sshj-plugin'                       : gprops['sshjPluginVersion'],
+].collectEntries { name, ver -> [name, ver?.replaceAll('@', '.')] }
 
 //manifest describing expected build results
 def manifest=[
@@ -123,7 +128,6 @@ def manifest=[
         "templates/config/rundeck-config.properties.template",
         "templates/config/ssl.properties.template",
         "templates/sbin/rundeckd.template",
-        "WEB-INF/lib/jetty-jaas-${versions.jetty}.jar",
         "WEB-INF/lib/jetty-server-${versions.jetty}.jar",
         "WEB-INF/lib/jetty-util-${versions.jetty}.jar",
 //        "WEB-INF/lib-provided/jetty-http-${versions.jetty}.jar", //XXX: not sure if these are needed
@@ -131,8 +135,8 @@ def manifest=[
         "WEB-INF/lib/jetty-security-${versions.jetty}.jar",
         "WEB-INF/lib/log4j-api-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-core-${versions.log4j}.jar",
-        "WEB-INF/lib/log4j-slf4j-impl-${versions.log4j}.jar",
-        "WEB-INF/lib/slf4j-api-1.7.36.jar",
+        "WEB-INF/lib/log4j-slf4j2-impl-.*\\.jar#~",  // Spring Boot managed version (2.x)
+        "WEB-INF/lib/slf4j-api-2\\..*\\.jar#~",  // Spring Boot 3 uses SLF4J 2.x
         "WEB-INF/lib/libpam4j-1.11.jar",
         ".*junit.*#!~"
     ],

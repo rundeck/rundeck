@@ -31,7 +31,7 @@ const mountActivityFilter = async (props = {}) => {
     global: {
       stubs: {
         modal: {
-          template: '<div class="modal"><slot></slot></div>',
+          template: '<div class="modal"><slot v-if="$attrs.modelValue"></slot><slot v-if="$attrs.modelValue" name="footer"></slot></div>',
         },
         DateTimePicker: {
           template: '<div id="DateTimePicker" />',
@@ -171,8 +171,10 @@ describe("ActivityFilter", () => {
       expect(wrapper.vm.period.name).toBe("All");
     });
     it("handles custom periods in dropdown correctly", async () => {
-      const wrapper = await mountActivityFilter();
-      wrapper.vm.query.recentFilter = "-";
+      const wrapper = await mountActivityFilter({
+        modelValue: { recentFilter: "-" }
+      });
+      await wrapper.find('[data-test-id="filter-button"]').trigger("click");
       await wrapper.vm.$nextTick();
       expect(wrapper.find('[data-test-id="date-filters"]').exists()).toBe(true);
     });
@@ -283,8 +285,10 @@ describe("ActivityFilter", () => {
       searchSpy.mockRestore();
     });
     it("renders date filters correctly when recentFilter is set to '-'", async () => {
-      const wrapper = await mountActivityFilter();
-      wrapper.vm.query.recentFilter = "-";
+      const wrapper = await mountActivityFilter({
+        modelValue: { recentFilter: "-" }
+      });
+      await wrapper.find('[data-test-id="filter-button"]').trigger("click");
       await wrapper.vm.$nextTick();
       expect(wrapper.find('[data-test-id="date-filters"]').exists()).toBe(true);
     });
@@ -306,6 +310,27 @@ describe("ActivityFilter", () => {
       wrapper.vm.query.startafterFilter = "2024-05-18T12:00:00Z";
       await wrapper.vm.reset();
       expect(wrapper.vm.query.startafterFilter).toBeUndefined();
+    });
+    it("handles option filter input correctly", async () => {
+      const wrapper = await mountActivityFilter();
+
+      await wrapper.find('[data-test-id="filter-button"]').trigger("click");
+      await wrapper.vm.$nextTick();
+
+      const optionFilterInput = wrapper.find('[data-test-id="option-filter"]');
+      await optionFilterInput.setValue("-sleep 10 -env prod");
+      await wrapper.vm.$nextTick();
+
+      expect((optionFilterInput.element as HTMLInputElement).value).toBe("-sleep 10 -env prod");
+
+      const searchButton = wrapper.find('[data-testid="searchfilter"]');
+      await searchButton.trigger("click");
+      await wrapper.vm.$nextTick();
+
+      const emitted = wrapper.emitted("update:modelValue");
+      expect(emitted).toBeTruthy();
+      const lastEmit = emitted?.[emitted.length - 1]?.[0] as any;
+      expect(lastEmit.optionFilter).toBe("-sleep 10 -env prod");
     });
   });
 });

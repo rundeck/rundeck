@@ -83,6 +83,11 @@ public abstract class AbstractBaseLoginModule implements LoginModule {
     public CallbackHandler getCallbackHandler() {
         return callbackHandler;
     }
+    
+    // Setter for testing purposes - allows tests to inject mock callback handlers
+    public void setCallbackHandler(CallbackHandler callbackHandler) {
+        this.callbackHandler = callbackHandler;
+    }
 
     /**
      * Called after authentication succeeds

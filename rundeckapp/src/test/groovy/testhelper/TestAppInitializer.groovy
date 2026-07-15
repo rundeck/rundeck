@@ -53,12 +53,11 @@ class TestAppInitializer implements SpringApplicationRunListener, Ordered {
 
     }
 
-    @Override
+    // Spring Boot 3: started() and running() methods signature changed
     void started(final ConfigurableApplicationContext context) {
 
     }
 
-    @Override
     void running(final ConfigurableApplicationContext context) {
 
     }

@@ -131,6 +131,7 @@ class PluginStep extends WorkflowStep{
     private Map<String, Object> toLegacyCommandMap() {
         def legacyData = this.configuration.subMap(LEGACY_BUILTIN_STEP_CONFIGURATION_KEYS)
         CommandExec commandExec = new CommandExec(legacyData)
+        CommandExec.updateFromMap(commandExec, legacyData)
         commandExec.description = this.description
         commandExec.errorHandler = this.errorHandler
         commandExec.keepgoingOnSuccess = this.keepgoingOnSuccess

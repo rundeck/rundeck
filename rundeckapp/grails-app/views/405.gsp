@@ -46,11 +46,13 @@
   <asset:javascript src="bootstrap.js" />
 </head>
 
+<g:set var="titleLink" value="${grailsApplication.config.getProperty('rundeck.gui.titleLink', String)}"/>
+<g:set var="hideSpaceCat" value="${grailsApplication.config.getProperty('rundeck.feature.fourOhFour.hideSpaceCat', Boolean, false)}"/>
 <body id="four-oh-four-page">
     <div class="four-oh-four">
       <div class="nav-bar">
         <a
-          href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}">
+          href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}">
           <img src="${resource(dir: 'images', file: 'rundeck-full-logo-white.png')}" alt="Rundeck"
             style="height: 20px; width: auto;" />
         </a>
@@ -63,7 +65,7 @@
             <h2><g:message code="request.error.notallowed.message" />
             </h2>
             <div>
-              <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+              <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}"
                 class="
                 btn btn-lg return-button">Return to Rundeck</a>
             </div>
@@ -71,7 +73,7 @@
         </div>
       </div>
           <div class="laser-cat-container">
-            <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
+            <g:if test="${!hideSpaceCat}">
               <asset:image src="spacecat/laser-cat.png" class="img-responsive"
                 alt="Laser Cat" />
             </g:if>

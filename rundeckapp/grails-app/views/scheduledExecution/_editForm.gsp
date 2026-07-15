@@ -17,9 +17,18 @@
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
 <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
+<g:set var="isAdmin" value="${auth.resourceAllowedTest(
+        type: AuthConstants.TYPE_RESOURCE,
+        kind: AuthConstants.TYPE_SYSTEM,
+        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN],
+        any: true,
+        context: AuthConstants.CTX_APPLICATION
+)}"/>
 
 <g:render template="/common/errorFragment"/>
 <g:render template="editLogFilterModal"/>
+
+<g:embedJSON id="jobEditUiMeta" data="[isAdmin: isAdmin]"/>
 
 
 %{--Edit job form--}%
@@ -74,8 +83,12 @@
                       class="btn btn-default reset_page_confirm"
                       action="Cancel"/>
       <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-cta reset_page_confirm " id="jobUpdateSaveButton"/>
-        <span data-bind="if: inPageError()" class="text-warning">
-            <g:message code="job.editor.workflow.unsavedchanges.warning" />
+        <span class="vue-ui-socket">
+          <ui-socket section="job-editor" location="workflow-edit-warning">
+            <span data-bind="if: inPageError()" class="text-warning">
+              <g:message code="job.editor.workflow.unsavedchanges.warning" />
+            </span>
+          </ui-socket>
         </span>
     </div>
 

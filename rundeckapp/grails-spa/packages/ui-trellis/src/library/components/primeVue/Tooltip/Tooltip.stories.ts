@@ -35,7 +35,7 @@ const meta: Meta<TooltipDirectiveBinding> = {
   decorators: [
     () => ({
       template:
-        '<div style="margin: 1em; display: flex; gap: 10px; align-items: flex-end"><story /></div>',
+        '<div style="margin: 5em; display: flex; gap: 10px; align-items: flex-end"><story /></div>',
     }),
   ],
 };

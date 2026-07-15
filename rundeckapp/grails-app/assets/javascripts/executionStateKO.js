@@ -1383,10 +1383,30 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         if(!time) return
         return moment(self.startTime()).fromNow();
     })
+    self.startTimeDisplayUtc=ko.pureComputed(function () {
+        let time=self.startTime()
+        if(!time) return
+        return MomentUtil.formatTimeUTC(time);
+    })
+    self.startTimeDisplay=ko.pureComputed(function () {
+        let time=self.startTime()
+        if(!time) return
+        return MomentUtil.formatTime(time);
+    })
     self.endTimeAgo=ko.pureComputed(function () {
         let time=self.endTime()
         if(!time) return
         return moment(self.endTime()).fromNow();
+    })
+    self.endTimeDisplay=ko.pureComputed(function () {
+        let time=self.endTime()
+        if(!time) return
+        return MomentUtil.formatTime(time);
+    })
+    self.endTimeDisplayUtc=ko.pureComputed(function () {
+        let time=self.endTime()
+        if(!time) return
+        return MomentUtil.formatTimeUTC(time);
     })
 
     self.execDurationSimple = ko.pureComputed(function () {

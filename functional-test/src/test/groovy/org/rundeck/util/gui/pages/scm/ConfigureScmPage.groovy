@@ -20,15 +20,6 @@ class ConfigureScmPage extends BasePage{
         loadPath = "/project/${project}/scm"
     }
 
-    @Override
-    void validatePage() {
-        if(!loadPath)
-            throw new IllegalStateException("Load path not set")
-        if (!driver.currentUrl.endsWith(loadPath)) {
-            throw new IllegalStateException("Couldn't browse Configure SCM Page. Expected: ${loadPath} Actual: ${driver.currentUrl}")
-        }
-    }
-
     void disableScmExport() {
         toggleSCM(false, true)
     }
@@ -64,5 +55,13 @@ class ConfigureScmPage extends BasePage{
         toggleButton.click()
         waitForModal(1)
         byAndWait(modalField).findElement(By.xpath(".//input[@type='submit'][@value='Yes']")).click()
+        
+        waitForModal(0)
+        
+        String expectedMessageText = enable ? "Plugin enabled for SCM ${integration}" : "Plugin disabled"
+        By successBannerBy = By.cssSelector(".alert.alert-info")
+        
+        WebElement banner = waitForElementVisible(successBannerBy)
+        waitForTextToBePresentInElement(banner, expectedMessageText)
     }
 }

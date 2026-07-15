@@ -14,7 +14,7 @@ import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory;
 import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter;
 import org.rundeck.app.job.option.JobOptionUrlExpander;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 import java.util.Collection;
 import java.util.Map;
 

@@ -25,7 +25,7 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
     Boolean isDate = false
     String dateFormat
     String label
-    URL realValuesUrl
+    String realValuesUrl
     String regex
     String valuesList
     String valuesListDelimiter
@@ -46,6 +46,11 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
     static constraints = {
         importFrom(SharedJobOptionConstraints)
         realValuesUrl(nullable: true)
+    }
+
+    @Override
+    List<OptionValueData> getValuesFromPlugin() {
+        return valuesFromPlugin as List<OptionValueData>
     }
 
     List<String> getOptionValues() {

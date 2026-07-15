@@ -29,6 +29,7 @@ function OptionEditor(data) {
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
     self.enforceType = ko.observable(data.enforceType);
     self.originalIsNonSecure = data.showDefaultValue;
+    self.multilineJobOptionsEnabled = ko.observable(data.multilineJobOptionsEnabled);
 
     self.remoteUrlAuthenticationList  = ko.observableArray([
         new RemoteOptionValues("BASIC", message('form.option.valuesType.url.authType.basic.label')),
@@ -63,6 +64,10 @@ function OptionEditor(data) {
         return "file" === self.optionType();
     });
 
+    self.isMultilineType = ko.computed(function () {
+        return "multiline" === self.optionType() && self.multilineJobOptionsEnabled();
+    });
+
     self.isRegexEnforceType = ko.computed(function () {
         return self.enforceType() === "regex";
     });
@@ -86,6 +91,12 @@ function OptionEditor(data) {
     });
     var subscription = this.optionType.subscribe(function(newValue) {
         self.showDefaultValue(self.originalIsNonSecure);
+        if (newValue === 'multiline' && self.multilineJobOptionsEnabled()) {
+            self.enforceType('none');
+            self.valuesList('');
+            self.valuesUrl('');
+            self.remoteUrlAuthenticationType('');
+        }
     });
 
     self.isRemoteUrlUserAuth = ko.computed(function () {

@@ -41,7 +41,6 @@ import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
-import com.sun.org.apache.xpath.internal.operations.Bool
 import grails.compiler.GrailsCompileStatic
 import grails.events.annotation.Subscriber
 import grails.events.bus.EventBusAware
@@ -193,7 +192,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     
     IRundeckProject getFrameworkProject(final String name) {
         if (null==projectCache.getIfPresent(name) && !existsFrameworkProject(name)) {
-            throw new IllegalArgumentException("Project does not exist: " + name)
+            throw new IllegalArgumentException("Project not found in cache or DB: " + name)
         }
         def result = projectCache.get(name)
         if (!result) {
@@ -547,17 +546,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         rundeckNodeService.refreshProjectNodes(projectName)
     }
 
-    private IPropertyLookup createProjectPropertyLookup(String projectName, Properties config) {
-        final Properties ownProps = new Properties();
-        ownProps.setProperty("project.name", projectName);
-        def create = PropertyLookup.create(
-                createDirectProjectPropertyLookup(projectName,config),
-                frameworkService.getRundeckFramework().propertyLookup
-        )
-
-        create.expand()
-        return create
-    }
     private static IPropertyLookup createDirectProjectPropertyLookup(String projectName, Properties config) {
         final Properties ownProps = new Properties();
         ownProps.setProperty("project.name", projectName);
@@ -610,7 +598,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         def res = storeProjectConfig(projectName, null, storedProps)
         def rdprojectconfig = new RundeckProjectConfig(projectName,
-                                                       createProjectPropertyLookup(projectName, res.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(projectName, res.config ?: new Properties()),
                                                        res.lastModified, res.creationTime
         )
@@ -677,7 +664,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         }
         def resource=mergeProjectProperties(project.name,properties,removePrefixes)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
-                                                       createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        resource.lastModified,
                                                         resource.creationTime
@@ -728,7 +714,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     void setProjectProperties(final RundeckProject project, final Properties properties) {
         def resource=setProjectProperties(project.name,properties)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
-                                                       createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        resource.lastModified,
                 resource.creationTime
@@ -752,17 +737,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
 
     /**
-     * Load the project config and node support
+     * Load the project config, without caching, ONLY USE IF NECESSARY. It is preferable
+     * to use the {@link #getFrameworkProject(String)} method which will improve performance by using a cached project and config.
      * @param project
      * @return
      */
     IRundeckProjectConfig loadProjectConfig(final String project) {
         def resource = loadProjectConfigResource(project)
         def rdprojectconfig = new RundeckProjectConfig(project,
-                                                 createProjectPropertyLookup(
-                                                         project,
-                                                         resource.config ?: new Properties()
-                                                 ),
                                                  createDirectProjectPropertyLookup(
                                                          project,
                                                          resource.config ?: new Properties()
@@ -786,6 +768,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
         def projectData = projectDataProvider.findByName(project)
+        if (projectData == null) {
+            log.warn("Project '${project}' not found in database during loadProject despite existsFrameworkProject returning true")
+            return null
+        }
         def description = projectData.description
         def rdproject = new RundeckProject(projectData,null, this)
         //preload cached readme/motd

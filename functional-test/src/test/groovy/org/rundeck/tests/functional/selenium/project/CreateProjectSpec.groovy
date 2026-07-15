@@ -63,9 +63,13 @@ class CreateProjectSpec extends SeleniumBase {
         when:
         loginPage.login(TEST_USER, TEST_PASS)
         homePage.createProjectButton()
-        currentUrl.contains("/resources/createProject")
+        // Wait for project create page to load
+        projectCreatePage.waitForUrlToContain("/resources/createProject")
         projectCreatePage.projectNameInput.sendKeys(projectName)
         projectCreatePage.createField.click()
+        // Wait for node source page to load after project creation
+        nodeSourcePage.waitForUrlToContain("/project/${projectName}/nodes/sources")
+        // Wait for page elements to be ready
 
         then:
         nodeSourcePage.validatePage()

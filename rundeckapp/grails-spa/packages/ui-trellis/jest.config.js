@@ -1,15 +1,15 @@
 const esModules = [
   "vue-virtual-scroller",
   "uuid",
-    "primevue/.*",
-    "@primevue/.*",
-    "@primeuix/.*",
+  "primevue/.*",
+  "@primevue/.*",
+  "@primeuix/.*",
 ].join("|");
 
 module.exports = {
   moduleFileExtensions: ["js", "ts", "vue", "mjs"],
   transform: {
-    "^.+\\.tsx?$": ["ts-jest", { tsconfig: "tsconfig.app.json" }],
+    "^.+\\.tsx?$": ["ts-jest", { tsconfig: "tsconfig.test.json" }],
     "^.+\\.vue$": "@vue/vue3-jest",
     "^.+\\.(mj|j|t)s$": "babel-jest",
   },
@@ -18,10 +18,11 @@ module.exports = {
   roots: ["<rootDir>/src/app", "<rootDir>/src/library", "<rootDir>/tests"],
   moduleNameMapper: {
     "\\.(css|less|sass|scss)$": "identity-obj-proxy",
+    "\\.(jpg|jpeg|png|gif|svg|webp)$": "<rootDir>/src/__mocks__/fileMock.js",
     "^@/(.*)$": "<rootDir>/src/$1",
     "^primevue/(.*)": "<rootDir>/node_modules/primevue/$1",
     "^@primevue/(.*)": "<rootDir>/node_modules/@primevue/$1",
-    "^@primeuix/(.*)": "<rootDir>/node_modules/@primeuix/$1",
+    "^vue-i18n$": "<rootDir>/node_modules/vue-i18n/dist/vue-i18n.cjs",
   },
   modulePathIgnorePatterns: ["<rootDir>/public"],
   testMatch: ["**/*.test.ts", "**/*.spec.ts"],

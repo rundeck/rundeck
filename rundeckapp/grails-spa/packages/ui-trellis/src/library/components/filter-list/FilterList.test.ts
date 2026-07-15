@@ -76,7 +76,7 @@ describe("FilterList", () => {
 
     // Assert that the "item:selected" event is emitted with the correct payload
     expect(wrapper.emitted("item:selected")).toBeTruthy();
-    expect(wrapper.emitted("item:selected")[0]).toEqual([
+    expect(wrapper.emitted("item:selected")![0]).toEqual([
       { id: "apple", name: "Apple" },
     ]);
   });

@@ -96,7 +96,7 @@
                       <ui-socket
                               section="server-info-display"
                               location="main"
-                              socket-data="${enc(attr:[remoteClusterNodeUUID:remoteClusterNodeUUID,showId:false,serverName:remoteClusterNodeUUID.substring(0,8)].encodeAsJSON())}"
+                              socket-data="${enc(attr:[serverUuid:remoteClusterNodeUUID,showId:false,serverName:remoteClusterNodeUUID.substring(0,8)].encodeAsJSON())}"
                       >
                       </ui-socket>
                   </span>

@@ -2,9 +2,12 @@ package org.rundeck.tests.functional.selenium.jobs
 
 
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.common.execution.ExecutionStatus
 import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.UiModes
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobReferenceStep
@@ -13,7 +16,10 @@ import org.rundeck.util.gui.pages.jobs.StepType
 import org.rundeck.util.gui.pages.login.LoginPage
 
 @SeleniumCoreTest
+@UiModeFlag(featureName = "job-reference", status = UiModeStatus.PROMOTED)
 class JobReferenceSpec extends SeleniumBase {
+
+    static final UI_MODES = UiModes.defaultAndLegacy()
 
     private static String PROJECT_LOCATION = '/projects-import/jobref'
 
@@ -62,7 +68,8 @@ class JobReferenceSpec extends SeleniumBase {
         String jobUuid = JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded.first().id
 
         when:
-        JobShowPage jobPage = go(JobCreatePage, projectName)
+        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
+        JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
                         childJobUuid: jobUuid,
@@ -81,6 +88,8 @@ class JobReferenceSpec extends SeleniumBase {
         }
         cleanup:
         deleteProject(projectName)
+        where:
+        [legacyUi] << UI_MODES
     }
 
     def "create a job with referenced execution node step by name and run it successfully"(){
@@ -92,7 +101,8 @@ class JobReferenceSpec extends SeleniumBase {
         JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded
 
         when:
-        JobShowPage jobPage = go(JobCreatePage, projectName)
+        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: legacyUi])
+        JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
                         childJobName   : 'simple-child-job',
@@ -116,6 +126,8 @@ class JobReferenceSpec extends SeleniumBase {
         }
         cleanup:
         deleteProject(projectName)
+        where:
+        [legacyUi] << UI_MODES
     }
 
     def "create a job with referenced execution workflow step by using 'choose a job' button and run it successfully"() {
@@ -127,7 +139,8 @@ class JobReferenceSpec extends SeleniumBase {
         JobUtils.jobImportFile(projectName, '/test-files/simple-job-ref.xml', client).succeeded
 
         when:
-        JobShowPage jobPage = go(JobCreatePage, projectName)
+        def jobCreatePage = go(JobCreatePage, projectName, [legacyUi: true])
+        JobShowPage jobPage = jobCreatePage
                 .withName('parentJob')
                 .addStep(new JobReferenceStep([
                         childJobName       : 'simple-child-job',

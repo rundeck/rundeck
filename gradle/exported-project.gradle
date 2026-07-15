@@ -122,3 +122,32 @@ java {
     withSourcesJar()
 }
 
+// Gradle 8.14 strictness: Publishing tasks need explicit dependency on sourceJar task
+afterEvaluate {
+    // If expandTemplate exists, sourceJar tasks need to depend on it
+    if (tasks.findByName('expandTemplate')) {
+        if (tasks.findByName('sourcesJar')) {
+            tasks.named('sourcesJar').configure {
+                dependsOn tasks.expandTemplate
+            }
+        }
+        if (tasks.findByName('sourceJar')) {
+            tasks.named('sourceJar').configure {
+                dependsOn tasks.expandTemplate
+            }
+        }
+    }
+    
+    // Publishing tasks need explicit dependency on sourceJar (legacy task from java.gradle)
+    tasks.withType(PublishToMavenRepository).configureEach {
+        if (tasks.findByName('sourceJar')) {
+            dependsOn tasks.sourceJar
+        }
+    }
+    tasks.withType(GenerateModuleMetadata).configureEach {
+        if (tasks.findByName('sourceJar')) {
+            dependsOn tasks.sourceJar
+        }
+    }
+}
+

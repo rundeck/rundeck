@@ -1,0 +1,38 @@
+<joblist>
+  <job>
+    <defaultTab>nodes</defaultTab>
+    <description>Run steps on nodes, node filter will be specified at execution time</description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>false</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <id>501de248-31a3-4720-8558-aa0c30ef9cdd</id>
+    <loglevel>INFO</loglevel>
+    <name>Basic steps test</name>
+    <nodeFilterEditable>true</nodeFilterEditable>
+    <nodefilters>
+      <filter>tags: NOT_FOUND</filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <plugins />
+    <scheduleEnabled>true</scheduleEnabled>
+    <schedules />
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>echo "hello there"</exec>
+      </command>
+      <command>
+        <exec>uname -a</exec>
+      </command>
+      <command>
+        <script><![CDATA[#!/bin/bash
+          echo "Hello, World!"]]></script>
+      </command>
+    </sequence>
+    <uuid>501de248-31a3-4720-8558-aa0c30ef9cdd</uuid>
+  </job>
+</joblist>

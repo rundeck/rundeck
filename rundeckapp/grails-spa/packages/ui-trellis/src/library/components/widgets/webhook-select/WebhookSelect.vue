@@ -4,7 +4,7 @@
     :items="webhooksForProject"
     id-field="uuid"
     :selected="selected"
-    search-text="Filter Webhooks"
+    :search-text="$t('message_webhookFilterListPlaceholder')"
     :item-size="40"
   >
     <template #item="{ item }">

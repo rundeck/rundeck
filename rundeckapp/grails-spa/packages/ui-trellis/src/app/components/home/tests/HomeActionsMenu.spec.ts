@@ -3,23 +3,23 @@ import HomeActionsMenu from "../HomeActionsMenu.vue";
 import { Dropdown, Btn } from "uiv";
 import { AuthzMeta } from "../types/projectTypes";
 
-const defaultMeta: AuthzMeta = {
+const createDefaultMeta = (): AuthzMeta => ({
   name: "authz",
   data: { project: { admin: true }, types: { job: { create: true } } },
-};
+});
 
 jest.mock("@/library", () => ({
   getRundeckContext: jest
     .fn()
-    .mockReturnValue({ rdBase: "http://localhost:4440/" }),
+    .mockReturnValue({ rdBase: "http://localhost:4440" }),
 }));
 
-const mountHomeActionsMenu = async (): Promise<VueWrapper<any>> => {
+const mountHomeActionsMenu = async (meta?: AuthzMeta): Promise<VueWrapper<any>> => {
   const wrapper = mount(HomeActionsMenu, {
     props: {
       project: {
         name: "example",
-        meta: [defaultMeta],
+        meta: [meta || createDefaultMeta()],
       },
       index: 0,
     },
@@ -47,8 +47,9 @@ describe("HomeActionsMenu", () => {
   });
 
   it("does not display edit configuration link for non-admin", async () => {
-    defaultMeta.data.project.admin = false;
-    const wrapper = await mountHomeActionsMenu();
+    const meta = createDefaultMeta();
+    meta.data.project.admin = false;
+    const wrapper = await mountHomeActionsMenu(meta);
 
     expect(
       wrapper
@@ -68,10 +69,11 @@ describe("HomeActionsMenu", () => {
   });
 
   it("does not display create job link for users without create permissions", async () => {
-    defaultMeta.data.types.job.create = false;
-    defaultMeta.data.project.admin = false;
+    const meta = createDefaultMeta();
+    meta.data.types.job.create = false;
+    meta.data.project.admin = false;
 
-    const wrapper = await mountHomeActionsMenu();
+    const wrapper = await mountHomeActionsMenu(meta);
 
     // Assert that the create job link is not displayed
     expect(

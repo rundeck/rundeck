@@ -34,7 +34,7 @@ describe("EditProjectFile", () => {
   it("links to project activity", async () => {
     const wrapper = await mountActivitySummary({
       project: { name: "test" },
-      rdBase: "http://localhost:9999/",
+      rdBase: "http://localhost:9999",
     });
     expect(wrapper.find(".card-content a.h4").attributes()["href"]).toBe(
       "http://localhost:9999/project/test/activity",
@@ -55,7 +55,7 @@ describe("EditProjectFile", () => {
   it.each([1, 2])("renders failed count %d", async (failedCount) => {
     const wrapper = await mountActivitySummary({
       project: { failedCount, name: "test" },
-      rdBase: "http://localhost:9999/",
+      rdBase: "http://localhost:9999",
     });
     expect(
       wrapper.find(`.card-content [data-test-id="failed-count"]`).text(),
@@ -69,7 +69,7 @@ describe("EditProjectFile", () => {
   it("does not failed count 0", async () => {
     const wrapper = await mountActivitySummary({
       project: { failedCount: 0, name: "test" },
-      rdBase: "http://localhost:9999/",
+      rdBase: "http://localhost:9999",
     });
     expect(
       wrapper.findAll(`.card-content [data-test-id="failed-count"]`).length,
@@ -78,7 +78,7 @@ describe("EditProjectFile", () => {
   it.each([1, 2])("renders user count %d", async (userCount) => {
     const wrapper = await mountActivitySummary({
       project: { userCount, name: "test" },
-      rdBase: "http://localhost:9999/",
+      rdBase: "http://localhost:9999",
     });
     expect(
       wrapper.find(`.card-content [data-test-id="user-count"]`).text(),
@@ -91,7 +91,7 @@ describe("EditProjectFile", () => {
     async (userSummary) => {
       const wrapper = await mountActivitySummary({
         project: { userSummary, userCount: userSummary.length, name: "test" },
-        rdBase: "http://localhost:9999/",
+        rdBase: "http://localhost:9999",
       });
       expect(
         wrapper.findAll(`.card-content [data-test-id="user-count"] ul.users li`)
@@ -102,7 +102,7 @@ describe("EditProjectFile", () => {
   it("does not show user count 0", async () => {
     const wrapper = await mountActivitySummary({
       project: { userCount: 0, name: "test" },
-      rdBase: "http://localhost:9999/",
+      rdBase: "http://localhost:9999",
     });
     expect(
       wrapper.findAll(`.card-content [data-test-id="user-count"]`).length,

@@ -36,6 +36,11 @@ class OptionsParserUtilsSpec extends Specification implements ControllerUnitTest
         mockDomains(ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats, User)
     }
 
+    def cleanup() {
+        OptionsUtil.frameworkServiceInstance = null
+        OptionsUtil.httpSessionInstance = null
+    }
+
     private Map createJobParams(Map overrides=[:]){
         [
                 jobName: 'blue',
@@ -56,8 +61,7 @@ class OptionsParserUtilsSpec extends Specification implements ControllerUnitTest
         def optsmap = [:]
         def ishttp = true
         def frameworkService = Mock(FrameworkService)
-        OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return frameworkService}
-        OptionsUtil.metaClass.static.frameworkServiceInstance = { return frameworkService}
+        OptionsUtil.frameworkServiceInstance = frameworkService
         GormUserDataProvider provider = new GormUserDataProvider()
 
         when:
@@ -84,20 +88,19 @@ class OptionsParserUtilsSpec extends Specification implements ControllerUnitTest
 
     def "add user email to option context"() {
         setup:
-        if(username) {
-            new User(login: username, email: email).save()
-            User.list()
-        }
-
         Option option = new Option()
         ScheduledExecution job = new ScheduledExecution(createJobParams())
         def optsmap = [:]
         def ishttp = true
         def frameworkService = Mock(FrameworkService)
-        OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return frameworkService}
-        OptionsUtil.metaClass.static.frameworkServiceInstance = { return frameworkService}
-        OptionsUtil.metaClass.static.getHttpSessionInstance = { return null }
-        GormUserDataProvider provider = new GormUserDataProvider()
+        OptionsUtil.frameworkServiceInstance = frameworkService
+        OptionsUtil.httpSessionInstance = null
+        GormUserDataProvider provider = Mock(GormUserDataProvider) {
+            getEmailWithNewSession(_) >> { String login -> 
+                // Return email only if we have a real username (not null/anonymous)
+                return (username && username != "anonymous") ? (email ?: "") : ""
+            }
+        }
 
         when:
         def result = OptionsUtil.expandUrl(option, url, job, provider, optsmap, ishttp, username)

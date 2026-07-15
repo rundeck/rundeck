@@ -1,5 +1,6 @@
 import pluginPropEdit from "@/library/components/plugins/pluginPropEdit.vue";
-import { describe, it, jest } from "@jest/globals";
+import AceEditorVue from "@/library/components/utils/AceEditorVue.vue";
+import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 jest.mock("../../../modules/rundeckClient", () => ({}));
 
@@ -14,9 +15,15 @@ jest.mock("@/library/rundeckService", () => {
           getServicePlugins: jest.fn(),
         },
       },
+      appMeta: {},
     })),
   };
 });
+
+const { getRundeckContext } = jest.requireMock("@/library/rundeckService") as {
+  getRundeckContext: jest.Mock;
+};
+const mockGetRundeckContext = getRundeckContext;
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   const wrapper = shallowMount(pluginPropEdit, {
     props: {
@@ -27,6 +34,81 @@ const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
   await flushPromises();
   return wrapper;
 };
+
+const codeProp = {
+  type: "String",
+  title: "Script",
+  name: "script",
+  required: false,
+  desc: "",
+  options: { displayType: "CODE", codeSyntaxMode: "sh" },
+};
+
+const createCodeWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
+  const wrapper = shallowMount(pluginPropEdit, {
+    props: { modelValue: "", selectorData: {}, ...propsData },
+    global: {
+      stubs: { UiSocket: { template: "<div><slot /></div>" } },
+    },
+  });
+  await flushPromises();
+  return wrapper;
+};
+describe("pluginPropEdit aceEditor computed props", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("aceEditorMinLines", () => {
+    it("passes minLines of 12 to AceEditorVue when appMeta has no aceEditorMinLines", async () => {
+      mockGetRundeckContext.mockReturnValueOnce({ appMeta: {} });
+      const wrapper = await createCodeWrapper({ prop: codeProp });
+
+      expect(wrapper.findComponent(AceEditorVue).props("minLines")).toBe(12);
+    });
+
+    it("passes the configured minLines to AceEditorVue when appMeta provides it", async () => {
+      mockGetRundeckContext.mockReturnValueOnce({
+        appMeta: { aceEditorMinLines: 20 },
+      });
+      const wrapper = await createCodeWrapper({ prop: codeProp });
+
+      expect(wrapper.findComponent(AceEditorVue).props("minLines")).toBe(20);
+    });
+  });
+
+  describe("aceEditorMaxLines", () => {
+    it("passes Infinity to AceEditorVue when appMeta has no aceEditorMaxLines", async () => {
+      mockGetRundeckContext.mockReturnValueOnce({ appMeta: {} });
+      const wrapper = await createCodeWrapper({ prop: codeProp });
+
+      expect(wrapper.findComponent(AceEditorVue).props("maxLines")).toBe(
+        Infinity,
+      );
+    });
+
+    it("passes Infinity to AceEditorVue when aceEditorMaxLines is 0", async () => {
+      mockGetRundeckContext.mockReturnValueOnce({
+        appMeta: { aceEditorMaxLines: 0 },
+      });
+      const wrapper = await createCodeWrapper({ prop: codeProp });
+
+      expect(wrapper.findComponent(AceEditorVue).props("maxLines")).toBe(
+        Infinity,
+      );
+    });
+
+    it("passes the configured maxLines to AceEditorVue when set to a positive integer", async () => {
+      mockGetRundeckContext.mockReturnValueOnce({
+        appMeta: { aceEditorMaxLines: 50 },
+      });
+      const wrapper = await createCodeWrapper({ prop: codeProp });
+
+      expect(wrapper.findComponent(AceEditorVue).props("maxLines")).toBe(50);
+    });
+  });
+});
+
 describe("pluginPropEdit", () => {
   it.each([true, false])(
     "hides the label when labelHidden option is %p for text property",

@@ -68,6 +68,11 @@ class DelegateMutableWorkflowState implements MutableWorkflowState {
     }
 
     @Override
+    String getRunnerNode(WorkflowStepState currentStep) {
+        return delegate.getRunnerNode(currentStep)
+    }
+
+    @Override
     List<String> getNodeSet() {
         delegate.getNodeSet()
     }

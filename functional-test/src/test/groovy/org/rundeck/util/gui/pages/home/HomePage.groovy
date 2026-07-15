@@ -35,12 +35,6 @@ class HomePage extends BasePage {
         waitForUrlToContain(projectName)
     }
 
-    void validatePage() {
-        if (!driver.currentUrl.contains(loadPath)) {
-            throw new IllegalStateException("Not on home page: " + driver.currentUrl)
-        }
-    }
-
     void createProjectButton() {
         try {
             waitForElementToBeClickable createNewProjectField

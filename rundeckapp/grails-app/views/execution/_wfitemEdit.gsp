@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec;org.rundeck.app.data.workflow.ConditionalStep" %>
 <asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
 
 <%--
@@ -656,7 +656,7 @@
                 </g:if>
             </div>
         </g:elseif>
-        <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
+        <g:elseif test="${( newitemtype || item && (item.instanceOf(PluginStep) || item.instanceOf(ConditionalStep)) ) && newitemDescription}">
             <g:set var="isNodeStep" value="${item ? !!item.nodeStep : newitemnodestep == 'true'}"/>
             <g:set var="serviceName" value="${isNodeStep ? 'WorkflowNodeStep' : 'WorkflowStep'}"/>
             <div>
@@ -709,7 +709,7 @@
                 </div>
             </div>
         </g:elseif>
-        <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && pluginNotFound}">
+        <g:elseif test="${( newitemtype || item && (item.instanceOf(PluginStep) || item.instanceOf(ConditionalStep)) ) && pluginNotFound}">
             <div>
                 <div>
                     <span class="text-danger invalidProvider"><g:message code="Workflow.step.plugin.provider.not.found" /></span>

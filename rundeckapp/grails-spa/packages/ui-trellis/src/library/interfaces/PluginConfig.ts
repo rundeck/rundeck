@@ -1,4 +1,4 @@
 export interface PluginConfig {
   type: string;
-  config: any;
+  config: Record<string, any>;
 }

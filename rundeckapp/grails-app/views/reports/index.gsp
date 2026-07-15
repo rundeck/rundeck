@@ -44,13 +44,14 @@
             'userFilter',
             'statFilter',
             'filter',
+            'optionFilter',
             'recentFilter',
             'startbeforeFilter',
             'startafterFilter',
             'endbeforeFilter',
             'endafterFilter',
             'filterName'
-    ])}"/>
+    ]) + (defaultRecentFilter && !params.recentFilter ? [recentFilter: defaultRecentFilter] : [:])}"/>
     <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
     <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
@@ -62,6 +63,7 @@ jobquery.title.jobIdFilter
 jobquery.title.userFilter
 jobquery.title.statFilter
 jobquery.title.filter
+jobquery.title.optionFilter
 jobquery.title.recentFilter
 jobquery.title.startbeforeFilter
 jobquery.title.startafterFilter

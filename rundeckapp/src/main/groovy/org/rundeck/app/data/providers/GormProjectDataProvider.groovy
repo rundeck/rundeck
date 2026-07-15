@@ -12,7 +12,7 @@ import org.springframework.context.MessageSource
 import rundeck.Project
 import rundeck.services.data.ProjectDataService
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 
 @GrailsCompileStatic

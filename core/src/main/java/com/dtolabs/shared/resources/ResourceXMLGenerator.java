@@ -129,7 +129,9 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
         if(null!=node.getAttributes()){
             for (final String setName : node.getAttributes().keySet()) {
                 String value = node.getAttributes().get(setName);
-                ent.setProperty(setName, value);
+                // Properties.setProperty() throws NullPointerException if value is null
+                // Convert null to empty string to preserve the attribute key
+                ent.setProperty(setName, value != null ? value : "");
             }
         }
         if(null!=node.getTags()){

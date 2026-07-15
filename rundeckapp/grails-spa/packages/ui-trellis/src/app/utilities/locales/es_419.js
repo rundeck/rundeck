@@ -32,7 +32,6 @@ const messages = {
     "It appears an error occured when connecting to Community News.",
   message_readMore: "Read More",
   message_refresh: "Please refresh the page or visit us at",
-  message_subscribe: "Suscribir",
   message_delete: "Borrar el campo",
   message_duplicated: "El campo ya existe",
   message_select: "Seleccionar un nuevo campo",
@@ -196,6 +195,8 @@ const messages = {
 
   "acl.config.link.title": "Project Settings > Access Control",
   "acl.config.system.link.title": "System Settings > Access Control",
+  "settings.uiEarlyAccess.toast.enabled": "Acceso anticipado a Next UI habilitado. Puedes volver a cambiarlo en cualquier momento.",
+  "settings.uiEarlyAccess.toast.disabled": "Next UI ha sido desactivado. Puedes volver a cambiarlo en cualquier momento.",
 
   "acl.example.summary": "Ejemplo de ACL Policy",
 
@@ -389,6 +390,7 @@ const messages = {
   "jobquery.title.adhocRemoteStringFilter": "Comando Shell",
   "jobquery.title.adhocFilepathFilter": "Ruta de Archivo Script",
   "jobquery.title.argStringFilter": "Argumentos del Archivo Script",
+  "jobquery.title.execnodeFilter": "Filtro de Nodos",
   "page.unsaved.changes": "You have unsaved changes",
   "edit.nodes.file": "Edit Nodes File",
   "project.node.file.source.label": "Source",

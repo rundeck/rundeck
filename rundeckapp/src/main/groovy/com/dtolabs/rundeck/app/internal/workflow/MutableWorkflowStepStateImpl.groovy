@@ -41,6 +41,7 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     Map<String, MutableWorkflowStepState> parameterizedStepStates;
     List<String> nodeStepTargets;
     boolean nodeStep;
+    String runnerNode;
 
     MutableWorkflowStepStateImpl(StepIdentifier stepIdentifier) {
         this(stepIdentifier,null)

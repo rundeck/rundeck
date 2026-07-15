@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.util.JsonUtil
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Get
@@ -76,10 +77,13 @@ import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
+import io.micronaut.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
+import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.PasswordFieldsService
@@ -87,7 +91,7 @@ import rundeck.services.PluginService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -143,6 +147,34 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def MenuService menuService
     def PluginService pluginService
 
+    private Integer getDefaultDaysToKeep() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return MAX_DAYS_TO_KEEP
+        }
+        return configurationService.getInteger("executionCleanupConfig.defaultExecutionDaysToKeep", MAX_DAYS_TO_KEEP)
+    }
+
+    private Integer getDefaultMinimumToKeep() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return MINIMUM_EXECUTION_TO_KEEP
+        }
+        return configurationService.getInteger("executionCleanupConfig.defaultExecutionMinimumToKeep", MINIMUM_EXECUTION_TO_KEEP)
+    }
+
+    private Integer getDefaultMaximumDeletionSize() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return MAXIMUM_DELETION_SIZE
+        }
+        return configurationService.getInteger("executionCleanupConfig.defaultExecutionMaximumDeletionSize", MAXIMUM_DELETION_SIZE)
+    }
+
+    private String getDefaultCleanupSchedule() {
+        if (!featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)) {
+            return SCHEDULE_DEFAULT
+        }
+        return  configurationService.getString("executionCleanupConfig.defaultExecutionCleanupScheduleCron", SCHEDULE_DEFAULT)
+    }
+
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -152,7 +184,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         saveProject              : 'POST',
         saveProjectNodeSources   : 'POST',
         saveProjectNodeSourceFile: 'POST',
-        saveProjectPluginsAjax   : 'POST',
+        saveProjectPlugins       : 'POST',
         getProjectConfigurable   : 'GET',
         saveProjectConfigurable  : 'POST',
     ]
@@ -240,6 +272,71 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def adhoc(ExtNodeFilters query) {
+        def cookieValue = request.getCookies()?.find { it.name == 'nextUi' }?.value
+        if (cookieValue == 'true' || params.boolean('nextUi')) {
+            params.nextUi = true
+            // Still need to process query for the model
+            if (query.hasErrors()) {
+                request.errors = query.errors
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
+                return renderErrorView([:])
+            }
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
+            if (unauthorizedResponse(
+                    rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
+                            AuthConstants.ACTION_RUN, params.project),
+                    AuthConstants.ACTION_RUN, 'adhoc', 'commands')) {
+                return
+            }
+            String runCommand;
+            if (params.fromExecId || params.retryFailedExecId) {
+                Execution e = Execution.get(params.fromExecId ?: params.retryFailedExecId)
+                if (e && unauthorizedResponse(
+                        rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
+                        AuthConstants.ACTION_VIEW, 'Execution', params.fromExecId ?: params.retryFailedExecId)) {
+                    return
+                }
+
+                if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
+                    def cmd = e.workflow.commands[0]
+                    String adhocRemoteString = null
+                    if (cmd instanceof CommandExec) {
+                        adhocRemoteString = cmd.adhocRemoteString
+                    } else if (cmd instanceof PluginStep) {
+                        Map config = cmd.getConfiguration() ?: [:]
+                        adhocRemoteString = config.adhocRemoteString
+                    }
+                    if (adhocRemoteString) {
+                        runCommand = adhocRemoteString
+                        //configure node filters
+                        if (params.retryFailedExecId) {
+                            query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)
+                        } else {
+                            if(e.doNodedispatch){
+                                query = ExtNodeFilters.from(e, e.project)
+                            }else{
+                                query=new ExtNodeFilters(filter: OptsUtil.join("name:", frameworkService.getFrameworkNodeName()),
+                                        project: e.project)
+                            }
+                        }
+                    }
+                }
+            } else if (params.exec) {
+                runCommand = params.exec
+            }
+
+            query.project = params.project
+            def result
+            if(!query.nodeFilterIsEmpty()){
+                params.requireRunAuth='true'
+                result = [query: query, params: params, allnodes: [:]]
+            }else{
+                result= [query: query, params: params, allnodes:[:]]
+            }
+            def model = result
+            return render(view: 'adhocNext', model: model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount()])
+        }
+        
         if (query.hasErrors()) {
             request.errors = query.errors
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
@@ -261,10 +358,20 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return
             }
 
-            if (e && !e.scheduledExecution && e.workflow.commands.size() == 1) {
-                def cmd = e.workflow.commands[0]
-                if (cmd.adhocRemoteString) {
-                    runCommand = cmd.adhocRemoteString
+            def execWorkflowData = e?.getWorkflowData()
+            if (e && !e.scheduledExecution && execWorkflowData?.commands?.size() == 1) {
+                def cmd = execWorkflowData.commands[0]
+                String adhocRemoteString = null
+
+                if(cmd instanceof CommandExec){
+                    adhocRemoteString = cmd.adhocRemoteString
+                } else if(cmd instanceof PluginStep){
+                    Map config = cmd.getConfiguration() ?: [:]
+                    adhocRemoteString = config.adhocRemoteString
+                }
+
+                if (adhocRemoteString) {
+                    runCommand = adhocRemoteString
                     //configure node filters
                     if (params.retryFailedExecId) {
                         query = new ExtNodeFilters(filter: OptsUtil.join("name:", e.failedNodeList), project: e.project)
@@ -292,7 +399,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def model = result//[query: query, params: params]
 
-        return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount()]
+        return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount(), defaultRecentFilter: executionService.getActivityDefaultTimeFilter(params)]
     }
 
     /**
@@ -654,15 +761,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
         if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
-            projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
-            projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: SCHEDULE_DEFAULT
+            projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: getDefaultDaysToKeep().toString()
+            projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: getDefaultMinimumToKeep().toString()
+            projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: getDefaultMaximumDeletionSize().toString()
+            projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: getDefaultCleanupSchedule()
         }else{
-            projProps['project.execution.history.cleanup.retention.days'] = MAX_DAYS_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.retention.minimum'] = MINIMUM_EXECUTION_TO_KEEP.toString()
-            projProps['project.execution.history.cleanup.batch'] = MAXIMUM_DELETION_SIZE.toString()
-            projProps['project.execution.history.cleanup.schedule'] = SCHEDULE_DEFAULT
+            projProps['project.execution.history.cleanup.retention.days'] = getDefaultDaysToKeep().toString()
+            projProps['project.execution.history.cleanup.retention.minimum'] = getDefaultMinimumToKeep().toString()
+            projProps['project.execution.history.cleanup.batch'] = getDefaultMaximumDeletionSize().toString()
+            projProps['project.execution.history.cleanup.schedule'] = getDefaultCleanupSchedule()
         }
         def errors = []
         def configs
@@ -875,7 +982,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             prefixKey:prefixKey,
             extraConfig:extraConfig,
             cronModelValues: CRON_MODELS_SELECT_VALUES,
-            cronValues: [:]
+            cronValues: [:],
+            enableCleanHistory: featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE),
+            cleanerHistoryPeriod: getDefaultDaysToKeep(),
+            minimumExecutionToKeep: getDefaultMinimumToKeep(),
+            maximumDeletionSize: getDefaultMaximumDeletionSize(),
+            cronExression: getDefaultCleanupSchedule()
         ]
     }
 
@@ -1186,15 +1298,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled) {
-                projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
-                projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: SCHEDULE_DEFAULT
+                projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: getDefaultDaysToKeep().toString()
+                projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: getDefaultMinimumToKeep().toString()
+                projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: getDefaultMaximumDeletionSize().toString()
+                projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: getDefaultCleanupSchedule()
             }else{
-                projProps['project.execution.history.cleanup.retention.days'] = MAX_DAYS_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.retention.minimum'] = MINIMUM_EXECUTION_TO_KEEP.toString()
-                projProps['project.execution.history.cleanup.batch'] = MAXIMUM_DELETION_SIZE.toString()
-                projProps['project.execution.history.cleanup.schedule'] = SCHEDULE_DEFAULT
+                projProps['project.execution.history.cleanup.retention.days'] = getDefaultDaysToKeep().toString()
+                projProps['project.execution.history.cleanup.retention.minimum'] = getDefaultMinimumToKeep().toString()
+                projProps['project.execution.history.cleanup.batch'] = getDefaultMaximumDeletionSize().toString()
+                projProps['project.execution.history.cleanup.schedule'] = getDefaultCleanupSchedule()
             }
 
             def Set<String> removePrefixes=[]
@@ -1254,37 +1366,35 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
 
-            if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
-                List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
-                //specific props for typed pluginValues
-                removePrefixes.add("project.plugin.PluginGroup.".toString())
-                removePrefixes.add("project.PluginGroup.".toString())
-                if (params.pluginValues?.PluginGroup?.json) {
-                    def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
-                    if (groupData instanceof Collection) {
-                        for (Object data : groupData) {
-                            if (data instanceof Map
-                                && data.type instanceof String
-                                && data.config instanceof Map) {
-                                String type = data.get('type')
-                                Map config = data.get('config')
-                                pluginGroupPasswordFieldsService.untrack(
-                                    [[config: [type: type, props: config], type: type, index: 0]],
-                                    pluginGroupDescs
-                                )
-                                projProps.put(
-                                        "project.PluginGroup.${type}.enabled".toString(),
-                                        'true'
-                                )
-                                for (String confKey : config.keySet()) {
-                                    if(config.get(confKey) != null) {
-                                        projProps.put(
-                                                "project.plugin.PluginGroup.${type}.${confKey}".toString(),
-                                                config.get(confKey).toString()
-                                        )
-                                    }
-
+            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+            //specific props for typed pluginValues
+            removePrefixes.add("project.plugin.PluginGroup.".toString())
+            removePrefixes.add("project.PluginGroup.".toString())
+            if (params.pluginValues?.PluginGroup?.json) {
+                def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
+                if (groupData instanceof Collection) {
+                    for (Object data : groupData) {
+                        if (data instanceof Map
+                            && data.type instanceof String
+                            && data.config instanceof Map) {
+                            String type = data.get('type')
+                            Map config = data.get('config')
+                            pluginGroupPasswordFieldsService.untrack(
+                                [[config: [type: type, props: config], type: type, index: 0]],
+                                pluginGroupDescs
+                            )
+                            projProps.put(
+                                    "project.PluginGroup.${type}.enabled".toString(),
+                                    'true'
+                            )
+                            for (String confKey : config.keySet()) {
+                                if(config.get(confKey) != null) {
+                                    projProps.put(
+                                            "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                            config.get(confKey).toString()
+                                    )
                                 }
+
                             }
                         }
                     }
@@ -1339,15 +1449,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                         ExecutionCleanerConfigImpl.build {
                             enabled(cleanerHistoryEnabled)
                             maxDaysToKeep(
-                                FrameworkService.tryParseInt(params.cleanperiod).orElse(MAX_DAYS_TO_KEEP)
+                                FrameworkService.tryParseInt(params.cleanperiod).orElse(getDefaultDaysToKeep())
                             )
                             minimumExecutionToKeep(
-                                FrameworkService.tryParseInt(params.minimumtokeep).orElse(MINIMUM_EXECUTION_TO_KEEP)
+                                FrameworkService.tryParseInt(params.minimumtokeep).orElse(getDefaultMinimumToKeep())
                             )
                             maximumDeletionSize(
-                                FrameworkService.tryParseInt(params.maximumdeletionsize).orElse(MAXIMUM_DELETION_SIZE)
+                                FrameworkService.tryParseInt(params.maximumdeletionsize).orElse(getDefaultMaximumDeletionSize())
                             )
-                            cronExpression(params.crontabString ?: SCHEDULE_DEFAULT)
+                            cronExpression(params.crontabString ?: getDefaultCleanupSchedule())
                         }
                     )
                 }
@@ -1536,60 +1646,175 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
     }
 
-    def saveProjectPluginsAjax(String project, String serviceName, String configPrefix) {
-        boolean valid = false
-        withForm {
-            valid = true
-            g.refreshFormTokensHeader()
-        }.invalidToken {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'request.error.invalidtoken.message',
-            ]
+    @Post(uri = "/project/{project}/plugins/save", produces = MediaType.APPLICATION_JSON)
+    @Operation(
+            method = "POST",
+            summary = "Save list-style plugin configurations for a project",
+            description = """Create/update list-based plugin configurations (e.g. Resource Model Sources).
+Authorization required: `configure` on the project.
+Since: v55""",
+            tags = ["Project"],
+            parameters = [
+                    @Parameter(
+                            name = "project",
+                            description = "Project name",
+                            required = true,
+                            in = ParameterIn.PATH,
+                            schema = @Schema(type = "string")
+                    ),
+                    @Parameter(
+                            name = "serviceName",
+                            description = "Plugin service name (e.g. `ResourceModelSource`)",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string")
+                    ),
+                    @Parameter(
+                            name = "configPrefix",
+                            description = "Property prefix (e.g. `resources.source`)",
+                            required = true,
+                            in = ParameterIn.QUERY,
+                            schema = @Schema(type = "string")
+                    )
+            ],
+            requestBody = @RequestBody(
+                    required = true,
+                    description = "Plugins payload",
+                    content = @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema = @Schema(type = "object"),
+                            examples = [
+                                @ExampleObject(
+                                    name = 'save-project-plugins-example',
+                                    description = 'Save and remove project plugins',
+                                    value = """
+{
+  "plugins": [
+    { "type": "file", "config": { "file": "/path/resources.yml" }, "extra": {}, "origIndex": 0 }
+  ],
+  "removedPlugins": [
+    { "type": "stub", "origIndex": 2 }
+  ]
+}
+"""
+                                )
+                            ]
+                    )
             )
-        }
-        if (!valid) {
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Saved. Returns the saved plugins.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'save-plugins-request',
+                            description = 'Save project plugins request',
+                            value = """
+{
+  "project": "Ansible-resource-model-error",
+  "plugins": [
+    {
+      "type": "file",
+      "service": "ResourceModelSource",
+      "config": { "file": "/path/to/nodes.yml" },
+      "extra": {}
+    }
+  ]
+}
+"""
+                        )
+                    ]
+            )
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Bad request (missing/invalid body or parameters).",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'bad-request-error',
+                            description = 'Bad request error response',
+                            value = """{ "errors": ["plugins and removedPlugins must be arrays"] }"""
+                        )
+                    ]
+            )
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Forbidden (user lacks 'configure' on the project)."
+    )
+    @ApiResponse(
+            responseCode = "422",
+            description = "Validation errors.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'validation-errors',
+                            description = 'Validation errors response',
+                            value = """
+{
+  "errors": ["[0]: configuration was invalid: ..."],
+  "reports": { "0": [ { "key": "file", "msg": "is required" } ] }
+}
+"""
+                        )
+                    ]
+            )
+    )
+    def saveProjectPlugins(String project, String serviceName, String configPrefix) {
+        // Require API (use your current bumped version)
+        if (!apiService.requireApi(request, response, ApiVersions.V55)) {
             return
         }
 
-        if (request.format != 'json') {
-            return apiService.renderErrorFormat(
-                    response, [
-                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code  : 'api.error.item.unsupported-format',
-                    args  : [request.format]
-            ]
-            )
+        // Required params & project existence
+        if (!apiService.requireParameters(params, response, ['serviceName', 'configPrefix'])) {
+            return
+        }
+        if (!apiService.requireExists(
+                response,
+                frameworkService.existsFrameworkProject(project),
+                ['project', project]
+        )) {
+            return
         }
 
-        if (!project) {
-            return renderErrorView("Project parameter is required")
-        }
-        if (!serviceName) {
-            return renderErrorView("serviceName parameter is required")
-        }
-        if (!configPrefix) {
-            return renderErrorView("configPrefix parameter is required")
-        }
-        def plugins = request.JSON.plugins
-        List removedPlugins = request.JSON.removedPlugins as List
-
+        // AuthZ
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
-            AuthConstants.ACTION_CONFIGURE, 'Project',project)) {
+        if (!apiService.requireAuthorized(
+                rundeckAuthContextProcessor.authorizeProjectConfigure(authContext, project),
+                response,
+                [AuthConstants.ACTION_CONFIGURE, 'Project', project]
+        )) {
             return
         }
 
-        if(removedPlugins)
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def body = JsonUtil.parseRequestBody(request)
+        if (body == null) {
+            render(
+                contentType: 'application/json',
+                status: HttpStatus.BAD_REQUEST.value(),
+                text: ([errors: ['Request body is missing or empty.']] as grails.converters.JSON) as String
+            )
+            return
+        }
+        List plugins = (body?.plugins ?: []) as List
+        List removedPlugins = (body?.removedPlugins ?: []) as List
+
+        if (removedPlugins) {
             notifyRemovedPlugins(project, removedPlugins)
+        }
 
         def errors = []
         def reports = [:]
         List<ExtPluginConfiguration> configs = []
-
         def mappedConfigs = []
+
         plugins.eachWithIndex { pluginDef, int ndx ->
             def confData = new HashMap<>(pluginDef.config ?: [:])
             mappedConfigs << [
@@ -1601,9 +1826,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     newIndex: ndx
             ]
         }
+
         final pluginDescriptions = pluginService.listPluginDescriptions(serviceName)
 
-        //replace obscured values with original values
+        // Restore obscured values
         obscurePasswordFieldsService.untrack(
                 "${project}/${serviceName}/${configPrefix}",
                 mappedConfigs,
@@ -1611,36 +1837,24 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
 
         mappedConfigs.eachWithIndex { pluginDef, int ndx ->
-
             String type = pluginDef.type
-            if (!type) {
-                errors << "[$ndx]: missing type"
-                return
-            }
-
+            if (!type) { errors << "[$ndx]: missing type"; return }
             if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
-                errors << "[$ndx]: Invalid provider type name"
-                return
+                errors << "[$ndx]: Invalid provider type name"; return
             }
-
             def described = pluginService.getPluginDescriptor(type, serviceName)
-            if (!described) {
-                errors << "[$ndx]: $serviceName provider was not found: ${type}"
-                return
-            }
+            if (!described) { errors << "[$ndx]: $serviceName provider was not found: ${type}"; return }
 
-            //validate
-            Map<String, Object> configMap = pluginDef.props
+            Map<String,Object> configMap = (pluginDef.props ?: [:]) as Map<String,Object>
             ValidatedPlugin validated = pluginService.validatePluginConfig(serviceName, type, configMap)
             if (!validated.valid) {
                 errors << "[$ndx]: configuration was invalid: $validated.report"
                 reports["$ndx"] = validated.report.errors
                 return
             }
-            Map<String, Object> extraMap = pluginDef.extra ?: [:]
 
-
-            configs <<  SimplePluginConfiguration.builder()
+            Map<String,Object> extraMap = (pluginDef.extra ?: [:]) as Map<String,Object>
+            configs << SimplePluginConfiguration.builder()
                     .service(serviceName)
                     .provider(type)
                     .configuration(configMap)
@@ -1649,42 +1863,53 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         if (!errors) {
-
             Properties projProps = ProjectNodeSupport.serializePluginConfigurations(configPrefix, configs, true)
-            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, [configPrefix+'.'].toSet())
+            def result = frameworkService.updateFrameworkProjectConfig(
+                    project,
+                    projProps,
+                    [(configPrefix + '.')] as Set
+            )
             if (!result.success) {
                 errors << result.error
             }
         }
 
         if (errors) {
-            return respond(
-                    formats: ['json'],
+            render(
+                    contentType: 'application/json',
                     status: HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                    [
-                            errors : errors,
-                            reports: reports
-                    ]
+                    text: ([errors: errors, reports: reports] as grails.converters.JSON) as String
             )
+            return
         }
 
-
+        // Track obscured/secret values again after a successful save
         obscurePasswordFieldsService.resetTrack(
                 "${project}/${serviceName}/${configPrefix}",
                 configs,
                 pluginDescriptions
         )
 
-        respond(
-                formats: ['json'],
-                [
+        // === Success: always return { project, plugins: [...] } ===
+        def responsePlugins = (configs ?: []).collect { ExtPluginConfiguration conf ->
+            [
+                    type   : conf.provider,
+                    service: conf.service,
+                    config : conf.configuration ?: [:],
+                    extra  : conf.extra ?: [:]
+            ]
+        }
+
+        render(
+                contentType: 'application/json',
+                status: 200,
+                text: ([
                         project: project,
-                        plugins: configs.collect { ExtPluginConfiguration conf ->
-                            [type: conf.provider, config: conf.configuration, service: conf.service, extra: conf.extra]
-                        },
-                ]
+                        plugins: responsePlugins
+                ] as grails.converters.JSON) as String
         )
     }
+
 
     def projectNodeSources() {
         if (!params.project) {
@@ -1721,19 +1946,24 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     @Hidden
-    @Get(uri='/project/{project}/configurable')
+    @Get(uri='/project/{project}/configurable', produces = MediaType.APPLICATION_JSON)
     @Operation(
             method = 'GET',
             summary = 'Get Project Configurations Using Mapping defined in ProjectConfigurable beans',
             description = 'Get Project Configurable configs and properties.',
-            tags = ['project'],
-            responses = [
-                    @ApiResponse(
-                            responseCode = '200',
-                            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
-                            content = @Content(
-                                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
-                                    examples = @ExampleObject('''
+            tags = ['Project'],
+            operationId = 'GetProjectConfigurable'
+    )
+    @ApiResponse(
+            responseCode = '200',
+            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
+            content = @Content(
+                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'project-configurable',
+                            description = 'Project configurable response',
+                            value = '''
 {
                         "project": "projectName",
                         "projectConfigurable": [
@@ -1759,14 +1989,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                 "delay": "0"
                            },
                         ]
-}''')
-                            )
-                    ),
-                    @ApiResponse(responseCode = '400', description = 'Bad request'),
-                    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
-            ],
-            operationId = 'GetProjectConfigurable'
+}'''
+                        )
+                    ]
+            )
     )
+    @ApiResponse(responseCode = '400', description = 'Bad request')
+    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
     def getProjectConfigurable() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
@@ -1792,6 +2021,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         for (entry in extraConfig) {
             propertyConfig.add([
                     name: entry.key,
+                    // Grails 7: Property objects serialized via custom JSON marshaller (see BootStrap.groovy)
                     properties: entry.value["propertyList"],
                     propertiesMapping: entry.value["mapping"],
                     values: entry.value["values"],
@@ -1808,12 +2038,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     @Hidden
-    @Post(uri='/project/{project}/configurable')
+    @Post(uri='/project/{project}/configurable', produces = MediaType.APPLICATION_JSON)
     @Operation(
             method = 'POST',
             summary = 'Create or Update Configurations Using Mapping defined in ProjectConfigurable beans',
             description = 'Create or update configs and properties.',
-            tags = ['project'],
+            tags = ['Project'],
             requestBody = @RequestBody(
                     required = true,
                     description = '''Update Config Request.
@@ -1826,7 +2056,11 @@ List of config values, each value contains:
                     content = @Content(
                             mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                             array = @ArraySchema(schema = @Schema(type = 'object')),
-                            examples = @ExampleObject('''[
+                            examples = [
+                                @ExampleObject(
+                                    name = 'update-project-config-example',
+                                    description = 'Update project configuration with extra config',
+                                    value = '''[
   {
   "extraConfig": {
       "nodeService": {
@@ -1841,16 +2075,23 @@ List of config values, each value contains:
       }
   }
   }
-]''')
+]'''
+                                )
+                            ]
                     )
             ),
-            responses = [
-                    @ApiResponse(
-                            responseCode = '200',
-                            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
-                            content = @Content(
-                                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
-                                    examples = @ExampleObject('''
+            operationId = 'SaveProjectConfigurable'
+    )
+    @ApiResponse(
+            responseCode = '200',
+            description = '''All configs were successfully saved or updated. A payload reflecting save or creation status is returned. `restart` will indicate if the server must be restarted for some changes to take effect.''',
+            content = @Content(
+                    mediaType= io.micronaut.http.MediaType.APPLICATION_JSON,
+                    examples = [
+                        @ExampleObject(
+                            name = 'save-result',
+                            description = 'Save project configurable result',
+                            value = '''
 {
                         "result": {
                             "success": true,
@@ -1860,18 +2101,18 @@ List of config values, each value contains:
                           "error message",
                           "error message"
                         ]
-}''')
-                            )
-                    ),
-                    @ApiResponse(responseCode = '400', description = 'Bad request'),
-                    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
-            ],
-            operationId = 'SaveProjectConfigurable'
+}'''
+                        )
+                    ]
+            )
     )
+    @ApiResponse(responseCode = '400', description = 'Bad request')
+    @ApiResponse(responseCode = '403', description = 'Unauthorized response')
     def saveProjectConfigurable(){
         def project = params.project
         def category = params.category
-        def cfgPayload = request.JSON
+        // Grails 7: Parse body using Jackson instead of request.JSON
+        def cfgPayload = com.dtolabs.rundeck.util.JsonUtil.parseRequestBody(request)
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
@@ -2232,17 +2473,15 @@ List of config values, each value contains:
         execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], execDesc)
         fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
         List<Map<String, Object>> pluginGroupConfig = []
-        if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
-          final fproject = frameworkService.getFrameworkProject(project)
-          def projectProps = fproject.getProjectProperties()
-            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
-            pluginGroupDescs.each {
-                if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
-                    Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
-                    pluginGroupPasswordFieldsService
-                        .track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
-                    pluginGroupConfig.add([type: it.name, config: providerConfig])
-                }
+        final fproject = frameworkService.getFrameworkProject(project)
+        def projectProps = fproject.getProjectProperties()
+        List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+        pluginGroupDescs.each {
+            if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
+                Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
+                pluginGroupPasswordFieldsService
+                    .track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
+                pluginGroupConfig.add([type: it.name, config: providerConfig])
             }
         }
         // resourceConfig CRUD rely on this session mapping
@@ -2259,11 +2498,18 @@ List of config values, each value contains:
             project: project,
             projectDescription:projectDescription?:fwkProject.getProjectProperties().get("project.description"),
             projectLabel:fwkProject.getProjectProperties().get("project.label"),
-            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days") ?: MAX_DAYS_TO_KEEP,
-            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum") ?: MINIMUM_EXECUTION_TO_KEEP,
-            maximumDeletionSize:fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch") ?: MAXIMUM_DELETION_SIZE,
-            enableCleanHistory:["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled")),
-            cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: SCHEDULE_DEFAULT,
+            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days") ?: getDefaultDaysToKeep(),
+            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum") ?: getDefaultMinimumToKeep(),
+            maximumDeletionSize:fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch") ?: getDefaultMaximumDeletionSize(),
+            enableCleanHistory: {
+                def propertyValue = fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled")
+                if (propertyValue != null) {
+                    return ["true", true].contains(propertyValue)
+                } else {
+                    return featureService.featurePresent(Features.EXECUTION_CLEANUP_ENABLE)
+                }
+            }(),
+            cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: getDefaultCleanupSchedule(),
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             pluginGroupConfig: pluginGroupConfig,
@@ -2736,7 +2982,7 @@ List of config values, each value contains:
             def flabels = frameworkService.projectLabels(authContext)
             session.frameworkLabels = flabels
         }
-        [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])
+        ([projects:projects,project:params.project]) + (params.page ? ([selectParams:[page:params.page]]) : ([:]))
     }
     /**
      * Select project via parameter, and redirect to default page for the project
@@ -2778,7 +3024,7 @@ List of config values, each value contains:
         return result
     }
 
-    @Get(uri='/project/{project}/sources')
+    @Get(uri='/project/{project}/sources', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='GET',
         summary='List Resource Model Sources for a Project',
@@ -2792,21 +3038,26 @@ whether it is `writeable`.  The `href` indicates the URL for `/project/{project}
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project'],
+        tags=['Project'],
         parameters = @Parameter(
             name = 'project',
             description = 'Project Name',
             required = true,
             in = ParameterIn.PATH,
             schema = @Schema(type = 'string')
-        ),
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''Sources List.''',
-            content=@Content(
-                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                array = @ArraySchema(schema = @Schema(implementation = Source)),
-                examples=@ExampleObject('''[
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''Sources List.''',
+        content=@Content(
+            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(implementation = Source)),
+            examples=[
+                @ExampleObject(
+                    name = 'sources-list',
+                    description = 'Project sources list',
+                    value = '''[
     {
         "index": 1,
         "resources": {
@@ -2826,8 +3077,9 @@ Since: v23''',
         },
         "type": "stub"
     }
-]''')
-            )
+]'''
+                )
+            ]
         )
     )
     def apiSourcesList() {
@@ -2906,7 +3158,7 @@ Since: v23''',
         )
     }
 
-    @Post(uri = '/project/{project}/source/{index}/resources')
+    @Post(uri = '/project/{project}/source/{index}/resources', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method = 'POST',
         summary = 'Update Resources of a Resource Model Source',
@@ -2914,7 +3166,7 @@ Since: v23''',
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags = ['project'],
+        tags = ['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -2941,7 +3193,11 @@ Since: v23''',
                         url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
                         description = "Resources JSON Format"
                     )),
-                    examples = @ExampleObject('''{
+                    examples = [
+                        @ExampleObject(
+                            name = 'update-node-resources-json-example',
+                            description = 'Update node resources in JSON format',
+                            value = '''{
   "node1": {
     "nodename": "node1",
     "hostname": "node1",
@@ -2951,7 +3207,9 @@ Since: v23''',
     "description": "Rundeck server node",
     "osName": "Linux"
   }
-}''')
+}'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = 'text/yaml',
@@ -2959,7 +3217,11 @@ Since: v23''',
                         url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
                         description = "Resources YAML Format"
                     )),
-                    examples = @ExampleObject('''node1:
+                    examples = [
+                        @ExampleObject(
+                            name = 'update-node-resources-yaml-example',
+                            description = 'Update node resources in YAML format',
+                            value = '''node1:
   nodename: node1
   hostname: node1
   osVersion: 5.15.49-linuxkit
@@ -2967,40 +3229,40 @@ Since: v23''',
   osArch: amd64
   description: Rundeck server node
   osName: Linux
-  tags: \'\'''')
+  tags: \'\''''
+                        )
+                    ]
                 )
             ]
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode='200',
-                description='''The resource model data.''',
-                content = [
-                    @Content(
-                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                            schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
-                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
-                                    description = "Resources JSON Format"
-                            ))
-                    ),
-                    @Content(
-                            mediaType = 'text/yaml',
-                            schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
-                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
-                                    description = "Resources YAML Format"
-                            ))
-                    )
-                ]
-            ),
-            @ApiResponse(
-                responseCode="400",
-                description="Invalid format",
-                content=@Content(
+        )
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''The resource model data.''',
+        content = [
+            @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                    schema = @Schema(type='object', implementation = ApiErrorResponse)
-                )
+                    schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                            description = "Resources JSON Format"
+                    ))
+            ),
+            @Content(
+                    mediaType = 'text/yaml',
+                    schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                            url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                            description = "Resources YAML Format"
+                    ))
             )
         ]
+    )
+    @ApiResponse(
+        responseCode="400",
+        description="Invalid format",
+        content=@Content(
+            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+            schema = @Schema(type='object', implementation = ApiErrorResponse)
+        )
     )
     def apiSourceWriteContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
@@ -3130,7 +3392,7 @@ Since: v23''',
     }
 
 
-    @Get(uri='/project/{project}/source/{index}')
+    @Get(uri='/project/{project}/source/{index}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     @Operation(
         method='GET',
         summary='Get a Resource Model Source for a Project',
@@ -3144,7 +3406,7 @@ whether it is `writeable`.  The `href` indicates the URL for `/project/{project}
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3160,14 +3422,15 @@ Since: v23''',
                 in = ParameterIn.PATH,
                 schema = @Schema(type = 'integer')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''Source definition.''',
-            content=@Content(
-                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                schema=@Schema(implementation = Source),
-                examples=@ExampleObject('''
+        ]
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''Source definition.''',
+        content=@Content(
+            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+            schema=@Schema(implementation = Source),
+            examples=@ExampleObject('''
     {
         "index": 1,
         "resources": {
@@ -3178,7 +3441,6 @@ Since: v23''',
         },
         "type": "file"
     }''')
-            )
         )
     )
     def apiSourceGet() {
@@ -3274,7 +3536,7 @@ Since: v23''',
         )
     }
 
-    @Get(uri='/project/{project}/source/{index}/resources')
+    @Get(uri='/project/{project}/source/{index}/resources', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method='GET',
         summary='List Resources of a Resource Model Source',
@@ -3282,7 +3544,7 @@ Since: v23''',
 Authorization required: `configure` for project resource
 
 Since: v23''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3298,29 +3560,27 @@ Since: v23''',
                 in = ParameterIn.PATH,
                 schema = @Schema(type = 'integer')
             )
-        ],
-        responses = [
-                @ApiResponse(
-                        responseCode='200',
-                        description='''The resource model data.''',
-                        content = [
-                                @Content(
-                                        mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                                        schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
-                                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
-                                                description = "Resources JSON Format"
-                                        ))
-                                ),
-                                @Content(
-                                        mediaType = 'text/yaml',
-                                        schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
-                                                url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
-                                                description = "Resources YAML Format"
-                                        ))
-                                )
-                        ]
-                )
         ]
+    )
+    @ApiResponse(
+            responseCode='200',
+            description='''The resource model data.''',
+            content = [
+                    @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                                    description = "Resources JSON Format"
+                            ))
+                    ),
+                    @Content(
+                            mediaType = 'text/yaml',
+                            schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                                    description = "Resources YAML Format"
+                            ))
+                    )
+            ]
     )
     def apiSourceGetContent() {
         if (!apiService.requireApi(request, response, ApiVersions.V23)) {
@@ -3368,7 +3628,7 @@ Since: v23''',
         return apiRenderNodeResult(source.source.nodes, fmk, params.project)
     }
 
-    @Get(uri='/project/{project}/resource/{name}')
+    @Get(uri='/project/{project}/resource/{name}', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method='GET',
         summary='Get Node Info',
@@ -3377,7 +3637,7 @@ Since: v23''',
 Authorization required: `read` for project resource type `node`, as well as `read` for the Node 
 
 Since: v14''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3393,27 +3653,27 @@ Since: v14''',
                 in = ParameterIn.PATH,
                 schema = @Schema(type = 'string')
             )
-        ],
-        responses = @ApiResponse(
-                responseCode='200',
-                description='''The resource model data.''',
-                content = [
-                        @Content(
-                                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                                schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
-                                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
-                                        description = "Resources JSON Format"
-                                ))
-                        ),
-                        @Content(
-                                mediaType = 'text/yaml',
-                                schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
-                                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
-                                        description = "Resources YAML Format"
-                                ))
-                        )
-                ]
-        )
+        ]
+    )
+    @ApiResponse(
+            responseCode='200',
+            description='''The resource model data.''',
+            content = [
+                    @Content(
+                            mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                            schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                                    description = "Resources JSON Format"
+                            ))
+                    ),
+                    @Content(
+                            mediaType = 'text/yaml',
+                            schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                                    description = "Resources YAML Format"
+                            ))
+                    )
+            ]
     )
     /**
      * API: /api/14/project/PROJECT/resource/NAME, version 14
@@ -3460,7 +3720,7 @@ Since: v14''',
         return apiRenderNodeResult(readnodes, framework, params.project)
     }
 
-    @Get(uri='/project/{project}/resources')
+    @Get(uri='/project/{project}/resources', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])
     @Operation(
         method='GET',
         summary='List Project Nodes',
@@ -3496,7 +3756,7 @@ Custom attributes can also be used.
 Authorization required: `read` for project resource type `node`, as well as `read` for each Node resource
 
 Since: v14''',
-        tags=['project'],
+        tags=['Project'],
         parameters = [
             @Parameter(
                 name = 'project',
@@ -3511,18 +3771,19 @@ Since: v14''',
                 in = ParameterIn.QUERY,
                 schema = @Schema(type = 'string')
             )
-        ],
-        responses = @ApiResponse(
-            responseCode='200',
-            description='''The resource model data.''',
-            content = [
-                @Content(
-                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
-                    schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
-                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
-                        description = "Resources JSON Format"
-                    )),
-                    examples=@ExampleObject('''{
+        ]
+    )
+    @ApiResponse(
+        responseCode='200',
+        description='''The resource model data.''',
+        content = [
+            @Content(
+                mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                schema=@Schema(type='object', externalDocs = @ExternalDocumentation(
+                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-json-v10.html',
+                    description = "Resources JSON Format"
+                )),
+                examples=@ExampleObject('''{
   "node1": {
     "nodename": "node1",
     "hostname": "node1",
@@ -3533,14 +3794,18 @@ Since: v14''',
     "osName": "Linux"
   }
 }''')
-                ),
-                @Content(
-                    mediaType = 'text/yaml',
-                    schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
-                        url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
-                        description = "Resources YAML Format"
-                    )),
-                    examples=@ExampleObject('''node1:
+            ),
+            @Content(
+                mediaType = 'text/yaml',
+                schema=@Schema(type='string', externalDocs = @ExternalDocumentation(
+                    url = 'https://docs.rundeck.com/docs/manual/document-format-reference/resource-yaml-v13.html',
+                    description = "Resources YAML Format"
+                )),
+                examples=[
+                    @ExampleObject(
+                        name = 'resources-yaml',
+                        description = 'Resources in YAML format',
+                        value = '''node1:
   nodename: node1
   hostname: node1
   osVersion: 5.15.49-linuxkit
@@ -3548,10 +3813,11 @@ Since: v14''',
   osArch: amd64
   description: Rundeck server node
   osName: Linux
-  tags: \'\'''')
-                )
-            ]
-        )
+  tags: \'\''''
+                    )
+                ]
+            )
+        ]
     )
     /**
      * API: /api/2/project/NAME/resources, version 2
@@ -3603,7 +3869,7 @@ Since: v14''',
             description='''List tags for project nodes.
 
 Since: v52''',
-            tags=['project'],
+            tags=['Project'],
             parameters = [
                     @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string'))
             ])
@@ -3674,29 +3940,20 @@ Since: v52''',
         }
         if (!generator) {
             //try accept header
-            List<MediaType> mimes = []
-            try {
-                mimes = MediaType.parseMediaTypes(request.getHeader('accept'))
-                MediaType.sortBySpecificityAndQuality(mimes)
-            } catch (RuntimeException e) {
-                return apiService.renderErrorFormat(
-                    response,
-                    [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code  : 'api.error.invalid.request',
-                        args  : [e.message]
-                    ]
-                )
-            }
-            for (MediaType mime : mimes) {
-                try {
-                    generator = service.getGeneratorForMIMEType(mime.toString())
-                    break
-                } catch (UnsupportedFormatException e) {
-                    log.debug(
-                        "could not get generator for mime type: ${request.getHeader("accept")}: ${e.message}",
-                        e
-                    )
+            String acceptHeader = request.getHeader('accept')
+            if (acceptHeader && acceptHeader != '*/*') {
+                // Grails 7: Manually parse Accept header since Micronaut MediaType.parseMediaTypes() doesn't exist
+                List<String> mimeTypes = acceptHeader.split(',').collect { it.split(';')[0].trim() }
+                for (String mimeType : mimeTypes) {
+                    try {
+                        generator = service.getGeneratorForMIMEType(mimeType)
+                        break
+                    } catch (UnsupportedFormatException e) {
+                        log.debug(
+                            "could not get generator for mime type: ${mimeType}: ${e.message}",
+                            e
+                        )
+                    }
                 }
             }
         }
@@ -3733,7 +3990,7 @@ Since: v52''',
     /**
      * Documentation method for DELETE system acls
      */
-    @Delete('/system/acl/{path}')
+    @Delete(uri = '/system/acl/{path}', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = "DELETE",
         summary = "Delete an ACL Policy.",
@@ -3741,7 +3998,7 @@ Since: v52''',
 Authorization required: `delete` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -3751,30 +4008,34 @@ Since: v14""",
                 required = true,
                 schema = @Schema(implementation = String.class, pattern = '\\w+.aclpolicy')
             )
-        ],
-        responses = [
-            @ApiResponse(
-                responseCode = "204",
-                description = "No Content"
-            ),
-
-            @ApiResponse(
-                responseCode = "404",
-                description = "Not Found",
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
-            )
-
         ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "apiSystemAcls_DELETE_docs 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
+        responseCode = "204",
+        description = "No Content"
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
     )
     protected def apiSystemAcls_DELETE_docs(){}
 
     /**
      * Documentation method for PUT system acls
      */
-    @Put('/system/acl/{path}')
+    @Put(uri = '/system/acl/{path}', produces = ['text/plain', MediaType.APPLICATION_YAML, MediaType.APPLICATION_JSON])
     @Operation(
         method = "PUT",
         summary = "Update an ACL Policy.",
@@ -3782,7 +4043,7 @@ Since: v14""",
 Authorization required: `update` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -3808,41 +4069,44 @@ Otherwise, you can use JSON to wrap the yaml content inside `contents`
                             schema=@Schema(type='object')
                     )
             ]
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = "200",
-                description = "ACL Policy Document",
-                content = [
-                    @Content(
-                            mediaType = 'text/plain'
-                    ),
-                    @Content(
-                            mediaType = "application/yaml"
-                    ),
-                    @Content(
-                            mediaType = "application/json"
-                    )
-                ]
+        )
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "ACL Policy Document",
+        content = [
+            @Content(
+                    mediaType = 'text/plain'
             ),
-
-            @ApiResponse(
-                responseCode = "404",
-                description = "Not Found",
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
+            @Content(
+                    mediaType = MediaType.APPLICATION_YAML
             ),
-
-            @ApiResponse(
-                responseCode = "400",
-                description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
+            @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = Object)
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Not Found",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
 Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(type='object'),
-                    examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type='object'),
+            examples = [
+                @ExampleObject(
+                    name = 'acl-validation-error',
+                    description = 'ACL validation error response',
+                    value = '''{
   "valid": false,
   "policies": [
     {
@@ -3861,10 +4125,10 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
       ]
     }
   ]
-}''')
+}'''
                 )
-            )
-        ]
+            ]
+        )
     )
     protected def apiSystemAcls_PUT_docs(){}
 
@@ -3872,7 +4136,7 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
     /**
      * Documentation method for POST system acls
      */
-    @Post('/system/acl/{path}')
+    @Post(uri = '/system/acl/{path}', produces = ['text/plain', MediaType.APPLICATION_YAML, MediaType.APPLICATION_JSON])
     @Operation(
         method = "POST",
         summary = "Create an ACL Policy.",
@@ -3880,7 +4144,7 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
 Authorization required: `create` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -3900,77 +4164,125 @@ Otherwise, you can use JSON to wrap the yaml content inside `contents`
                 @Content(
                     mediaType = 'application/yaml',
                     schema=@Schema(type='string'),
-                    examples = @ExampleObject('''description: "my policy"
+                    examples = [
+                        @ExampleObject(
+                            name = 'system-acl-yaml-example',
+                            description = 'System ACL policy in YAML format',
+                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                        )
+                    ]
                 ),
                 @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                     schema=@Schema(type='object'),
-                    examples = @ExampleObject('''{
+                    examples = [
+                        @ExampleObject(
+                            name = 'system-acl-json-example',
+                            description = 'System ACL policy as JSON with embedded YAML',
+                            value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                        )
+                    ]
                 )
             ]
-        ),
-        responses = [
-            @ApiResponse(
-                responseCode = "201",
-                description = "Created",
-                content = [
-                    @Content(
-                        mediaType = 'text/plain',
-                        examples = @ExampleObject('''description: "my policy"
+        )
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "Created",
+        content = [
+            @Content(
+                mediaType = 'text/plain',
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
-                    ),
-                    @Content(
-                        mediaType = "application/yaml",
-                        examples = @ExampleObject('''description: "my policy"
-context:
-  application: rundeck
-for:
-  project:
-    - allow: read
-by:
-  group: build''')
-                    ),
-                    @Content(
-                        mediaType = "application/json",
-                        examples = @ExampleObject('''{
-  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+  group: build'''
                     )
                 ]
             ),
-
-            @ApiResponse(
-                responseCode = "409",
-                description = "Conflict. Already exists",
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ApiErrorResponse)
-                )
+            @Content(
+                mediaType = MediaType.APPLICATION_YAML,
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
+context:
+  application: rundeck
+for:
+  project:
+    - allow: read
+by:
+  group: build'''
+                    )
+                ]
             ),
-
-            @ApiResponse(
-                responseCode = "400",
-                description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-contents',
+                        description = 'ACL policy contents',
+                        value = '''{
+  "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
+}'''
+                    )
+                ]
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "apiSystemAcls_POST_docs 200 response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "Created",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object')
+        )
+    )
+    @ApiResponse(
+        responseCode = "409",
+        description = "Conflict. Already exists",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = '''Validation failure. If Validation fails, the body will contain a list of validation errors.
 Because each ACLPOLICY document can contain multiple Yaml documents, each will be listed as a separate policy.''',
-                content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(type='object'),
-                    examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type='object'),
+            examples = [
+                @ExampleObject(
+                    name = 'acl-validation-error',
+                    description = 'ACL validation error response',
+                    value = '''{
   "valid": false,
   "policies": [
     {
@@ -3989,10 +4301,10 @@ Because each ACLPOLICY document can contain multiple Yaml documents, each will b
       ]
     }
   ]
-}''')
+}'''
                 )
-            )
-        ]
+            ]
+        )
     )
     protected def apiSystemAcls_POST_docs(){}
 
@@ -4006,7 +4318,7 @@ Otherwise if XML or JSON is requested, the YAML text will be wrapped within that
 Authorization required: `read` or `admin` or `app_admin` access for `system_acl` resource type 
 
 Since: v14""",
-        tags=['acls'],
+        tags=['ACL'],
         parameters = [
             @Parameter(
                 name = 'path',
@@ -4024,31 +4336,49 @@ Since: v14""",
         content = [
             @Content(
                 mediaType = 'text/plain',
-                examples = @ExampleObject('''description: "my policy"
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                    )
+                ]
             ),
             @Content(
-                mediaType = "application/yaml",
-                examples = @ExampleObject('''description: "my policy"
+                mediaType = MediaType.APPLICATION_YAML,
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-policy',
+                        description = 'ACL policy document',
+                        value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                    )
+                ]
             ),
             @Content(
-                mediaType = "application/json",
-                examples = @ExampleObject('''{
+                mediaType = MediaType.APPLICATION_JSON,
+                examples = [
+                    @ExampleObject(
+                        name = 'acl-contents',
+                        description = 'ACL policy contents',
+                        value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                    )
+                ]
             )
         ]
     )

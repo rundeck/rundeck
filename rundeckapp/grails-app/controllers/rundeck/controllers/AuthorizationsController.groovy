@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.app.api.authorizations.ProjectAuthorizationContext
 import com.dtolabs.rundeck.app.api.authorizations.TypeResource
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Decision
+import org.rundeck.app.api.model.ApiErrorResponse
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.swagger.v3.oas.annotations.Operation
@@ -34,15 +35,22 @@ class AuthorizationsController extends ControllerBase {
     @Get(uri='/authorizations/application/{kind}', produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     @Operation(
             method='GET',
-            summary = "Get authorizations for an application resource kind",
-            description='''Get authorizations for the supplied set of actions for the subject executing the API call. 
-Evaluation is made in the context of the application for the supplied resource kind.
+            summary = "Check authorization for application resource kind",
+            description='''Evaluates whether the current user has authorization to perform specific actions on resources of a given kind within the application context.
+
+This endpoint checks permissions for a resource type (kind) such as "job", "project", "system", etc., and returns authorization results for each requested action. The evaluation is performed using the application's access control policies and the authenticated user's permissions.
+
+The `actions` parameter must be provided as a query parameter and can be specified multiple times for multiple actions.
+
+Example: `GET /api/56/authorizations/application/job?actions=create&actions=read`
+
+Useful for UI components that need to conditionally display features or for applications that need to verify permissions before attempting operations.
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
-                    @Parameter(name = 'kind', description = 'Resource Kind', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'kind', description = 'Resource Kind', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(implementation = String)))
             ])
     @ApiResponse(
             responseCode='200',
@@ -50,6 +58,14 @@ Evaluation is made in the context of the application for the supplied resource k
             content = @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                     schema=@Schema(implementation=AuthorizationsResponse)
+            )
+    )
+    @ApiResponse(
+            responseCode='400',
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
             )
     )
     def appContextAuthorizationsForResourceKind() {
@@ -78,12 +94,16 @@ Evaluation is made in the context of the application for the supplied resource k
             description='''Get authorizations for the supplied set of actions for the subject executing the API call. 
 Evaluation is made in the context of the application for the supplied type and specifier.
 
+The `actions` parameter must be provided as a query parameter and can be specified multiple times for multiple actions.
+
+Example: `GET /api/56/authorizations/application/project/myproject?actions=read&actions=delete`
+
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
-                    @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'specifier', description = 'Resource specifier', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'specifier', description = 'Resource specifier', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(implementation = String)))
             ])
     @ApiResponse(
             responseCode='200',
@@ -91,6 +111,14 @@ Evaluation is made in the context of the application for the supplied type and s
             content = @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                     schema=@Schema(implementation=AuthorizationsResponse)
+            )
+    )
+    @ApiResponse(
+            responseCode='400',
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
             )
     )
     def appContextAuthorizationsForTypeWithSpecifier() {
@@ -119,12 +147,16 @@ Evaluation is made in the context of the application for the supplied type and s
             description='''Get authorizations for the supplied set of actions for the subject executing the API call. 
 Evaluation is made in the context of the project for the supplied resource kind.
 
+The `actions` parameter must be provided as a query parameter and can be specified multiple times for multiple actions.
+
+Example: `GET /api/56/authorizations/project/myproject/node?actions=read&actions=run`
+
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
-                    @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'kind', description = 'Resource Kind', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'kind', description = 'Resource Kind', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(implementation = String)))
             ])
     @ApiResponse(
             responseCode='200',
@@ -132,6 +164,14 @@ Evaluation is made in the context of the project for the supplied resource kind.
             content = @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                     schema=@Schema(implementation=AuthorizationsResponse)
+            )
+    )
+    @ApiResponse(
+            responseCode='400',
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
             )
     )
     def projectContextAuthorizationsForResourceKind() {
@@ -161,11 +201,11 @@ Evaluation is made in the context of the project for the supplied resource kind.
 Evaluation is made in the context of the project for the supplied job.
 
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
-                    @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'specifier', description = 'Job Id', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'specifier', description = 'Job Id', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(implementation = String)))
             ])
     @ApiResponse(
             responseCode='200',
@@ -211,13 +251,17 @@ Evaluation is made in the context of the project for the supplied job.
             description='''Get authorizations for the supplied set of actions for the subject executing the API call. 
 Evaluation is made in the context of the project for the type with a specifier.
 
+The `actions` parameter must be provided as a query parameter and can be specified multiple times for multiple actions.
+
+Example: `GET /api/56/authorizations/project/myproject/node/node1?actions=read&actions=run`
+
 **INCUBATING**: This endpoint is in "incubating" status, and may change.''',
-            tags=['authorization'],
+            tags=['Authorization'],
             parameters = [
-                    @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'specifier', description = 'Resource specifier', required = true, in = ParameterIn.PATH, schema = @Schema(type = 'string')),
-                    @Parameter(name = 'actions', description = 'Actions to check authorization for', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(type = 'string')))
+                    @Parameter(name = 'project', description = 'Project Name', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'type', description = 'Resource Type', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'specifier', description = 'Resource specifier', required = true, in = ParameterIn.PATH, schema = @Schema(implementation = String)),
+                    @Parameter(name = 'actions', description = 'Actions to check authorization for (can be specified multiple times)', required = true, in = ParameterIn.QUERY, array = @ArraySchema (schema = @Schema(implementation = String)))
             ])
     @ApiResponse(
             responseCode='200',
@@ -225,6 +269,14 @@ Evaluation is made in the context of the project for the type with a specifier.
             content = @Content(
                     mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
                     schema=@Schema(implementation=AuthorizationsResponse)
+            )
+    )
+    @ApiResponse(
+            responseCode='400',
+            description='Bad request - missing required parameter `actions`',
+            content = @Content(
+                    mediaType = io.micronaut.http.MediaType.APPLICATION_JSON,
+                    schema=@Schema(implementation=ApiErrorResponse)
             )
     )
     def projectContextAuthorizationsForTypeWithSpecifier() {

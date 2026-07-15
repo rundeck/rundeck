@@ -61,6 +61,7 @@ class ExecQuery extends ReportQuery implements Validateable, RdExecQuery{
         excludeJobListFilter(nullable: true)
         statFilter(nullable:true,inList:["succeed","fail","cancel","missed"])
         execnodeFilter(nullable: true)
+        optionFilter(nullable: true)
         execIdFilter(nullable:true)
         execProjects(nullable:true)
         sortBy(nullable:true,inList:[

@@ -21,7 +21,7 @@ class AccessControlSpec extends SeleniumBase {
             def aclPage = go AccessControlPage
         when:
             aclPage.uploadButton.click()
-            aclPage.waitForModal 1, By.cssSelector(".modal.in")
+            aclPage.waitForModal 1, aclPage.modalInBy
             aclPage.uploadSubmitButton.click()
         then:
             aclPage.alertsFields.size() == 3
@@ -37,13 +37,12 @@ class AccessControlSpec extends SeleniumBase {
             def aclPage = go AccessControlPage
         when:
             aclPage.uploadButton.click()
-            aclPage.waitForModal 1, By.cssSelector(".modal.in")
+            aclPage.waitForModal 1, aclPage.modalInBy
             aclPage.uploadSubmitButton.click()
             aclPage.uploadNameField.sendKeys 'some-file-name'
             aclPage.uploadFileField.sendKeys createTempYamlFile('invalid acl content test data')
             aclPage.uploadSubmitButton.click()
         then:
-            aclPage.validatePage()
             aclPage.alertField.getText().contains 'Validation failed'
             aclPage.uploadedPolicyValidationTitleField.getText() == 'Uploaded File failed ACL Policy Validation:'
     }
@@ -55,14 +54,14 @@ class AccessControlSpec extends SeleniumBase {
             def aclPage = go AccessControlPage
         when:
             aclPage.uploadButton.click()
-            aclPage.waitForModal 1, By.cssSelector(".modal.in")
+            aclPage.waitForModal 1, aclPage.modalInBy
             aclPage.uploadSubmitButton.click()
             aclPage.uploadFileField.sendKeys createTempYamlFile(validPolicyData)
             aclPage.uploadNameField.clear()
             aclPage.uploadNameField.sendKeys validPolicyName
             aclPage.uploadSubmitButton.click()
+            aclPage.waitForPoliciesCountToBeAtLeast 1
         then:
-            aclPage.validatePage()
             aclPage.policiesTitleList.size() == 1
             aclPage.policiesTitleList.get 0 getText() equals validPolicyName
     }
@@ -74,7 +73,7 @@ class AccessControlSpec extends SeleniumBase {
             def aclPage = go AccessControlPage
         when:
             aclPage.uploadButton.click()
-            aclPage.waitForModal 1, By.cssSelector(".modal.in")
+            aclPage.waitForModal 1, aclPage.modalInBy
             aclPage.uploadSubmitButton.click()
             aclPage.uploadFileField.sendKeys createTempYamlFile(validPolicyData)
             aclPage.uploadNameField.clear()
@@ -95,6 +94,7 @@ class AccessControlSpec extends SeleniumBase {
             aclPage.deleteButton.click()
             aclPage.deleteModal.isDisplayed()
             aclPage.deleteButtonConfirm.click()
+            aclPage.waitForPoliciesCountToBe(0)
         then:
             aclPage.alertFields.size() == 0
             aclPage.countBadge.getText() == "0"

@@ -14,7 +14,7 @@ import org.rundeck.util.container.BaseContainer
 
 @APITest
 @ExcludePro
-class ScmPluginSetupSpec extends BaseContainer {
+class ScmPluginSetupSpec extends ScmBaseContainer {
     static final GiteaApiRemoteRepo remoteRepo = new GiteaApiRemoteRepo('repoExample')
     static final String PROJECT_NAME = "ScmPluginSetupSpec"
 

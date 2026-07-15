@@ -17,7 +17,7 @@ import rundeck.User
 import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.data.AuthTokenDataService
 
-import javax.transaction.Transactional
+import jakarta.transaction.Transactional
 
 @GrailsCompileStatic
 @Slf4j
@@ -121,6 +121,18 @@ class GormTokenDataProvider implements TokenDataProvider {
         if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
         List<AuthenticationToken> tokens = []
         List<AuthToken> authTokens = AuthToken.findAllByUser(user)
+        authTokens.each{authToken ->
+            tokens << authToken
+        }
+        tokens
+    }
+
+    @Override
+    List<AuthenticationToken> findAllByUserAndType(String userId, AuthTokenType type) {
+        User user = User.get(userId.toLong())
+        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
+        List<AuthenticationToken> tokens = []
+        List<AuthToken> authTokens = AuthToken.findAllByUserAndType(user, type)
         authTokens.each{authToken ->
             tokens << authToken
         }

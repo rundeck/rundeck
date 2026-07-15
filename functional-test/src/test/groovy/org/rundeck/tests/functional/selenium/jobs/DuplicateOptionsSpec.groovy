@@ -3,6 +3,8 @@ package org.rundeck.tests.functional.selenium.jobs
 import org.openqa.selenium.By
 import org.openqa.selenium.WebElement
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobOption
@@ -12,6 +14,11 @@ import org.rundeck.util.gui.pages.login.LoginPage
 import java.text.SimpleDateFormat
 
 @SeleniumCoreTest
+@UiModeFlag(
+    featureName = "duplicate-options",
+    status      = UiModeStatus.LEGACY,
+    description = "Pinned to legacyUi=true; only the legacy code path is exercised here. Migration deferred."
+)
 class DuplicateOptionsSpec extends SeleniumBase {
 
     final static String PROJECT_NAME = 'DuplicateOptionsSpec'
@@ -26,8 +33,8 @@ class DuplicateOptionsSpec extends SeleniumBase {
 
     def "duplicate option and check both are present in job show page as inputs with the corresponding option type"(){
         given:
-        JobCreatePage jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-                .withName('job-duplicate-default-option')
+        JobCreatePage jobCreatePage = go(JobCreatePage, PROJECT_NAME, [legacyUi: true])
+        jobCreatePage.withName('job-duplicate-default-option')
                 .addOption(new JobOption(name: optionName, optNumber: 0, optionType: optionType))
                 .addSimpleCommandStep('echo hello ', 0)
 
@@ -49,8 +56,8 @@ class DuplicateOptionsSpec extends SeleniumBase {
     def "duplicate date option and check both are present in job show page"(){
         given:
         String optionName = 'textOpt'
-        JobCreatePage jobCreatePage = go(JobCreatePage, PROJECT_NAME)
-                .withName('job-duplicate-default-option')
+        JobCreatePage jobCreatePage = go(JobCreatePage, PROJECT_NAME, [legacyUi: true])
+        jobCreatePage.withName('job-duplicate-default-option')
                 .addOption(new JobOption(name: optionName, optNumber: 0, inputType: 'date'))
                 .addSimpleCommandStep('echo hello ', 0)
 
@@ -69,7 +76,9 @@ class DuplicateOptionsSpec extends SeleniumBase {
         optionInputs.each {optionsValues << clickCalendarButtonTwice(jobShowPage, it) }
 
         then:
-        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
+        // When dateFormat is empty, the UI uses Moment.js format 'MM/DD/YYYY hh:mm a' (matches placeholder).
+        // The actual value is parsed using the equivalent Java SimpleDateFormat pattern 'MM/dd/yyyy hh:mm a'.
+        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("MM/dd/yyyy hh:mm a")
 
         optionsValues.size() == 2
         expectedDateFormat.parse(optionsValues[0])
@@ -84,11 +93,10 @@ class DuplicateOptionsSpec extends SeleniumBase {
      * @return the inserted date
      */
     String clickCalendarButtonTwice(JobShowPage jobShowPage, WebElement optionInputField){
-        WebElement optionParent = optionInputField.findElement(By.xpath("./.."))
-        WebElement calendarButton = optionParent.findElement(By.cssSelector(".glyphicon.glyphicon-calendar"))
+        WebElement calendarButton = jobShowPage.getCalendarButtonForOption(optionInputField)
         calendarButton.click()
 
-        jobShowPage.waitForElementVisible(By.cssSelector(".bootstrap-datetimepicker-widget.dropdown-menu.timepicker-sbs.bottom"))
+        jobShowPage.waitForElementVisible(jobShowPage.datetimepickerWidgetBy)
         calendarButton.click()
 
         return optionInputField.getAttribute("value")

@@ -238,8 +238,8 @@ export default defineComponent({
       }
     }
 
-    if (this.useOptions && this.options !== null && this.options !== "") {
-      const optionsObject = JSON.parse(this.options);
+    if (this.useOptions && this.options !== null && this.options !== undefined && this.options !== "") {
+      const optionsObject = JSON.parse(this.options!);
       const options = Object.keys(optionsObject).map((key: any) => {
         const data = optionsObject[key];
         return { value: key, label: data };

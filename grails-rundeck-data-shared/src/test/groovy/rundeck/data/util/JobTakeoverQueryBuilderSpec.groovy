@@ -18,25 +18,22 @@ class JobTakeoverQueryBuilderSpec extends Specification {
 
         where:
         projectFilter | innerSchedFlag | expectedQry
-        null          | true           | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.server_nodeuuid = :fromServerUUID) OR (se.uuid in (:jobids) AND se.server_nodeuuid = :fromServerUUID))"
-        null          | false          | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.server_nodeuuid = :fromServerUUID) OR (se.scheduled = true AND se.uuid in (:jobids) AND se.server_nodeuuid = :fromServerUUID))"
-        "one"         | true           | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.project = :projectFilter AND e.server_nodeuuid = :fromServerUUID) OR (se.uuid in (:jobids) AND se.project = :projectFilter AND se.server_nodeuuid = :fromServerUUID))"
-        "one"         | false          | "SELECT DISTINCT se.id FROM scheduled_execution se LEFT JOIN execution e ON se.id = e.scheduled_execution_id WHERE ((e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.project = :projectFilter AND e.server_nodeuuid = :fromServerUUID) OR (se.scheduled = true AND se.uuid in (:jobids) AND se.project = :projectFilter AND se.server_nodeuuid = :fromServerUUID))"
+        null          | true           | "SELECT DISTINCT se.id FROM scheduled_execution se WHERE se.uuid in (:jobids) AND se.server_nodeuuid = :fromServerUUID"
+        null          | false          | "SELECT DISTINCT se.id FROM scheduled_execution se WHERE se.scheduled = true AND se.uuid in (:jobids) AND se.server_nodeuuid = :fromServerUUID"
+        "one"         | true           | "SELECT DISTINCT se.id FROM scheduled_execution se WHERE se.uuid in (:jobids) AND se.project = :projectFilter AND se.server_nodeuuid = :fromServerUUID"
+        "one"         | false          | "SELECT DISTINCT se.id FROM scheduled_execution se WHERE se.scheduled = true AND se.uuid in (:jobids) AND se.project = :projectFilter AND se.server_nodeuuid = :fromServerUUID"
     }
 
-    def "CreateJobTakeoverExecutionQueryPart"() {
+    def "buildTakeoverQuery generates valid SQL for a single batch of 1000 UUIDs (ORA-01795 fix building block)"() {
+        given: "a chunk of exactly 1000 UUIDs as produced by Lists.partition(jobids, 1000)"
+        def batch = (1..1000).collect { "uuid-${it}" }
 
         when:
-        String result = JobTakeoverQueryBuilder.createJobTakeoverExecutionQueryPart(selectAll, fromServerUUID, toServerUUID, projectFilter)
+        String result = JobTakeoverQueryBuilder.buildTakeoverQuery("to-uuid", "from-uuid", false, null, batch, true)
 
-        then:
-        result == expectedQry
-
-        where:
-        selectAll | fromServerUUID | toServerUUID    | projectFilter | expectedQry
-        true      | null           | "dest-svr-uuid" | null          | "e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND (e.server_nodeuuid IS NULL OR e.server_nodeuuid != :toServerUUID)"
-        true      | null           | "dest-svr-uuid" | "prj-one"     | "e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.project = :projectFilter AND (e.server_nodeuuid IS NULL OR e.server_nodeuuid != :toServerUUID)"
-        false     | "src-svr-uuid" | "dest-svr-uuid" | null          | "e.status = 'scheduled' AND e.date_completed IS NULL AND e.date_started > current_timestamp AND e.server_nodeuuid = :fromServerUUID"
+        then: "SQL contains :jobids placeholder — NamedParameterJdbcTemplate expands it to <=1000 expressions"
+        result.contains("se.uuid in (:jobids)")
+        result.startsWith("SELECT DISTINCT se.id FROM scheduled_execution se WHERE")
     }
 
     def "CreateServerNodeQueryPart"() {

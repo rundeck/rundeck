@@ -17,11 +17,13 @@ class ProjectUtils {
     static void createProjectsWithJobsScheduled(String suffixProjectName, int projectsCount, int jobsCountsPerProject, RdClient client) {
         (1..projectsCount).each {it ->
             def projectName = "${suffixProjectName}-${it}".toString()
-            def getProject = client.doGet("/project/${projectName}")
-            if (getProject.code() == 404) {
-                def post = client.doPost("/projects", [name: projectName])
-                if (!post.successful) {
-                    throw new RuntimeException("Failed to create project: ${post.body().string()}")
+            try(def getProject = client.doGet("/project/${projectName}")) {
+                if (getProject.code() == 404) {
+                    try(def post = client.doPost("/projects", [name: projectName])) {
+                        if (!post.successful) {
+                            throw new RuntimeException("Failed to create project: ${post.body().string()}")
+                        }
+                    }
                 }
             }
             (1..jobsCountsPerProject).each {it2 ->

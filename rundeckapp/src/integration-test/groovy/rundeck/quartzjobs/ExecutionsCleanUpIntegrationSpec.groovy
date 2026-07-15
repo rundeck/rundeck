@@ -28,6 +28,7 @@ import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
 import rundeck.ExecReport
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ConfigurationService
@@ -58,18 +59,15 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         int maxDaysToKeep = 10
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
-        Date startDate = new Date(2015 - 1900, 2, 8)
-        Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
-        ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
-            endDate
-        }
+
         Date execDate = new Date(2015 - 1900, 02, 03)
+        Date executionCompletionDate = ExecutionQuery.parseRelativeDate("5d", new Date())
         FrameworkService frameworkService = initNonClusterFrameworkService()
 
         ScheduledExecution se = setupJob(projName)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
         when:
-        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
+        Execution execution = setupExecution(se, projName, execDate, executionCompletionDate, frameworkService.getServerUUID())
         then:
         1 == Execution.countByProject(projName)
         1 == ExecReport.countByProject(projName)
@@ -81,6 +79,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
                 new ExecutionService(),
                 new JobSchedulerService(),
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
+
         then:
         execIdsToExclude.size() == 0
         1 == Execution.countByProject(projName)
@@ -97,11 +96,6 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         def logFileStorageService = Mock(LogFileStorageService)
         def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
 
-        Date startDate = new Date(2015 - 1900, 2, 8)
-        Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
-        ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
-            endDate
-        }
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -128,6 +122,46 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         0 == ExecReport.countByProject(projName)
     }
 
+    def "deleteByExecutionList removes LogFileStorageRequest before deleting Execution to avoid FK constraint"() {
+        given:
+        String projName = 'projectTestLogStorage'
+        def logFileStorageService = Mock(LogFileStorageService)
+        def referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
+        Date execDate = new Date(2015 - 1900, 02, 03)
+
+        ScheduledExecution se = setupJob(projName)
+        FrameworkService frameworkService = initNonClusterFrameworkService()
+        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
+
+        Execution.withTransaction {
+            new LogFileStorageRequest(
+                execution: Execution.get(execution.id),
+                pluginName: 'test1',
+                filetype: '*',
+                completed: true
+            ).save(flush: true, failOnError: true)
+        }
+
+        expect:
+        1 == Execution.countByProject(projName)
+        1 == LogFileStorageRequest.countByExecution(execution)
+
+        when:
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
+        int deleted = job.deleteByExecutionList(
+            [execution.id],
+            new FileUploadService(),
+            logFileStorageService,
+            referencedExecutionDataProvider,
+            reportService
+        )
+
+        then:
+        deleted == 1
+        0 == Execution.countByProject(projName)
+        0 == LogFileStorageRequest.countByExecution(execution)
+    }
+
     private FrameworkService initNonClusterFrameworkService() {
         NavigableMap cfg = new NavigableMap()
         cfg.setProperty("clusterMode.enabled",false)
@@ -146,9 +180,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
-        ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
-            endDate
-        }
+
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
         def mockfs=Mock(FrameworkService){

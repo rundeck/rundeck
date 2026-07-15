@@ -1,9 +1,11 @@
 package org.rundeck.util.api.responses.common
 
 import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class ErrorResponse {
     String errorCode
     int apiversion

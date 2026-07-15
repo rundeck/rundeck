@@ -87,7 +87,7 @@
                     <!-- /ko -->
                 </dt>
                 <dd>
-                    <span data-bind="text: startTime()">
+                    <span data-bind="text: startTimeDisplay(), attr: {title: startTimeDisplayUtc()}">
                     <g:if test="${execution.dateStarted}">
                         ${execution.dateStarted}
                         <g:relativeDate atDate="${execution.dateStarted}"/>
@@ -98,7 +98,7 @@
                 <!-- ko if: completed() -->
                 <dt><g:message code="end" /> (<span data-bind="text: endTimeAgo()"></span>)</dt>
                 <dd >
-                    <span data-bind="text: endTime()">
+                    <span data-bind="text: endTimeDisplay(), attr: {title: endTimeDisplayUtc()}">
                     <g:if test="${execution.dateCompleted}">
                         ${execution.dateCompleted}
                         <g:relativeDate atDate="${execution.dateCompleted}"/>

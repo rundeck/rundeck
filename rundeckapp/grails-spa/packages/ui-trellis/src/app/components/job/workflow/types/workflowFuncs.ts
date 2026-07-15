@@ -1,3 +1,4 @@
+import { cloneDeep } from "lodash";
 import {
   CommandEditData,
   CommandExecPluginConfig,
@@ -9,6 +10,27 @@ import {
   StepsData,
   StepsEditData,
 } from "./workflowTypes";
+
+/**
+ * When saving a workflow step, plugin edit UIs may omit `filters` or emit `[]` while the step
+ * still had log filters configured. Merge from the original step so filters are not dropped.
+ */
+export function mergePreservedLogFiltersIntoSaveData(
+  saveData: Pick<EditStepData, "filters">,
+  originalFilters: EditStepData["filters"] | undefined | null,
+): void {
+  if (saveData.filters == null) {
+    saveData.filters =
+      originalFilters != null ? cloneDeep(originalFilters) : [];
+  } else if (
+    Array.isArray(saveData.filters) &&
+    saveData.filters.length === 0 &&
+    Array.isArray(originalFilters) &&
+    originalFilters.length > 0
+  ) {
+    saveData.filters = cloneDeep(originalFilters);
+  }
+}
 
 /**
  * Convert input data to edit data format
@@ -39,9 +61,11 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
   if (cmd.type) {
     editData.type = cmd.type;
     editData.config = cmd.configuration || {};
-    editData.nodeStep = cmd.nodeStep;
+    editData.nodeStep = cmd.nodeStep ?? false;
   } else {
     if (cmd.jobref) {
+      editData.type = "job.reference";
+      editData.nodeStep = cmd.nodeStep ?? cmd.jobref?.nodeStep ?? false;
       editData.jobref = cmd.jobref;
     } else if (cmd.script) {
       editData.nodeStep = true;
@@ -53,11 +77,11 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
         interpreterArgsQuoted: cmd.interpreterArgsQuoted,
         fileExtension: cmd.fileExtension,
       } as ScriptInlinePluginConfig;
-    } else if (cmd.scriptfile) {
+    } else if (cmd.scriptfile != null || cmd.scripturl != null) {
       editData.nodeStep = true;
       editData.type = "script-file-url";
       editData.config = {
-        adhocFilepath: cmd.scriptfile,
+        adhocFilepath: cmd.scriptfile ?? cmd.scripturl,
         expandTokenInScriptFile: cmd.expandTokenInScriptFile,
         argString: cmd.args,
         scriptInterpreter: cmd.scriptInterpreter,
@@ -83,6 +107,7 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
 export function mkid() {
   return Math.random().toString(36).substring(7);
 }
+
 export function editToCommandConfig(plugin: EditStepData): StepData {
   let data = {
     description: plugin.description,
@@ -103,7 +128,14 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
     data.fileExtension = scriptInline.fileExtension;
   } else if (plugin.type === "script-file-url") {
     let scriptFile = plugin.config as ScriptFilePluginConfig;
-    data.scriptfile = scriptFile.adhocFilepath;
+    if (scriptFile.adhocFilepath != null) {
+      const isUrl = /^(https?|file):.*$/i.test(scriptFile.adhocFilepath);
+      if (isUrl) {
+        data.scripturl = scriptFile.adhocFilepath;
+      } else {
+        data.scriptfile = scriptFile.adhocFilepath;
+      }
+    }
     data.expandTokenInScriptFile = scriptFile.expandTokenInScriptFile;
     data.args = scriptFile.argString;
     data.scriptInterpreter = scriptFile.scriptInterpreter;

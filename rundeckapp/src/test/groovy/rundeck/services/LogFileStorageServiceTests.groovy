@@ -43,9 +43,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.runtime.DirtiesRuntime
 import grails.web.mapping.LinkGenerator
 
 //import org.grails.web.mapping.LinkGenerator
@@ -126,7 +123,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         // asserts validate test
         1 == 1
     }
-    @DirtiesRuntime
     void testgetLogFileWriterWithoutPlugin(){
         grailsApplication.config.clear()
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
@@ -282,7 +278,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
             return true
         }
     }
-    @DirtiesRuntime
     void testgetLogFileWriterWithPluginNoRequest(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -304,7 +299,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         1 == 1
     }
 
-    @DirtiesRuntime
     void testPluginLogFileWriterOnCloseShouldNotStartStorageRequest(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -803,7 +797,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         return task
     }
 
-    @DirtiesRuntime
     void testSubmitForStorage_plugin_storeUnsupported(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -850,7 +843,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
 
     }
 
-    @DirtiesRuntime
     void testRequestLogFileReaderFileDNE(){
 
         grailsApplication.config.clear()
@@ -869,7 +861,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         1 == 1
     }
 
-    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEWaiting() {
 
         grailsApplication.config.clear()
@@ -889,7 +880,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         // asserts validate test
         1 == 1
     }
-    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEClusterModePendingRemote() {
 
         grailsApplication.config.clear()
@@ -912,7 +902,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         1 == 1
     }
 
-    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginAvailableFalseShouldResultInPendingRemote() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -933,7 +922,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         // asserts validate test
         1 == 1
     }
-    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginAvailableTrueShouldResultInAvailableRemote() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -954,7 +942,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         // asserts validate test
         1 == 1
     }
-    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginAvailableErrorShouldResultInError() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -978,7 +965,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         // asserts validate test
         1 == 1
     }
-    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginRequestAlreadyPending() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -1003,7 +989,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         1 == 1
     }
 
-    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEPluginRetrieveUnsupported() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -1025,7 +1010,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         // asserts validate test
         1 == 1
     }
-    @DirtiesRuntime
     void testRequestLogFileReaderFileDNEStartsANewRequest() {
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
@@ -1051,7 +1035,6 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         // asserts validate test
         1 == 1
     }
-    @DirtiesRuntime
     void testGetFileForExecutionFiletypeLegacyLogFile() {
 
         grailsApplication.config.clear()

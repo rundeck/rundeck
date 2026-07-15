@@ -1,5 +1,9 @@
 package org.rundeck.app.data.workflow
 
+import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.execution.BaseExecutionItem
+import com.dtolabs.rundeck.core.execution.PluginStepExecutionItemImpl
+import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
@@ -11,8 +15,10 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import rundeck.data.constants.WorkflowStepConstants
+import rundeck.services.feature.FeatureService
 
 class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemFactory {
+    FeatureService featureService
     /**
      * Create an WorkflowExecutionItem instance for the given WorkflowData,
      * suitable for the ExecutionService layer
@@ -22,13 +28,11 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
             throw new Exception("Workflow is empty")
         }
 
+        // Flatten conditional steps into flat list of StepExecutionItems
+        List<StepExecutionItem> flattenedSteps = consolidateWorkflowSteps(workflow.steps)
+
         def impl = new WorkflowImpl(
-                workflow.steps.collect {
-                    itemForWFCmdItem(
-                            it,
-                            it.errorHandler ? itemForWFCmdItem(it.errorHandler,null) : null,
-                    )
-                },
+                flattenedSteps,
                 workflow.threadcount,
                 workflow.keepgoing,
                 workflow.strategy ? workflow.strategy : "node-first"
@@ -38,11 +42,129 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
         return item
     }
 
+    /**
+     * Consolidate WorkflowStepData list into a flat list of StepExecutionItems, flattening any ConditionalSteps
+     * (including nested ones) and attaching their combined ConditionSets to the resulting StepExecutionItems.
+     * @param steps List of workflow steps to flatten
+     * @param parentConditionSet Optional parent condition set to combine with nested conditionals
+     * @param depth Current nesting depth (0 = top level, 1 = one level deep)
+     * @return Flattened list of StepExecutionItems with conditions attached
+     */
+    List<StepExecutionItem> consolidateWorkflowSteps(
+        List<WorkflowStepData> steps,
+        ConditionalSet parentConditionSet = null,
+        int depth = 0
+    ) {
+        List<StepExecutionItem> flattened = []
+
+        steps.each { WorkflowStepData step ->
+            // Check if this is a ConditionalStep
+            if (step instanceof ConditionalStep && featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)) {
+                ConditionalStep conditionalStep = (ConditionalStep) step
+
+                // Enforce maximum nesting depth of 1
+                // depth=0: top level, depth=1: one level nested (allowed), depth=2+: too deep (reject)
+                if (depth >= 2) {
+                    throw new IllegalArgumentException(
+                        "Conditional steps cannot be nested more than one level deep. " +
+                        "Found conditional step at depth ${depth}."
+                    )
+                }
+
+                // Convert data model ConditionalSet to core ConditionSet
+                ConditionalSet conditionSet = ConditionalSetImpl.fromDataModel(conditionalStep.conditionSet)
+
+                // Combine parent and current conditions (AND logic)
+                ConditionalSet combinedConditionSet = combineConditionSets(parentConditionSet, conditionSet)
+
+                // RECURSIVE: Process subSteps with combined condition
+                if (conditionalStep.subSteps) {
+                    List<StepExecutionItem> subItems = consolidateWorkflowSteps(
+                        conditionalStep.subSteps,
+                        combinedConditionSet,
+                        depth + 1
+                    )
+                    flattened.addAll(subItems)
+                }
+            } else {
+                // Leaf step - convert and attach combined conditions if any
+                StepExecutionItem stepItem = itemForWFCmdItem(
+                    step,
+                    step.errorHandler ? itemForWFCmdItem(step.errorHandler, null) : null
+                )
+
+                if (parentConditionSet != null) {
+                    attachConditionsToStep(stepItem, parentConditionSet)
+                }
+
+                flattened.add(stepItem)
+            }
+        }
+
+        return flattened
+    }
+
+    /**
+     * Combine two ConditionalSets using AND logic (Cartesian product of OR groups).
+     * @param parent Parent condition set (can be null)
+     * @param child Child condition set (can be null)
+     * @return Combined condition set, or null if both are null
+     */
+    private ConditionalSet combineConditionSets(ConditionalSet parent, ConditionalSet child) {
+        if (parent == null) return child
+        if (child == null) return parent
+
+        // Guard against null or empty condition groups
+        def parentGroups = parent.conditionGroups
+        def childGroups = child.conditionGroups
+
+        if (parentGroups == null || parentGroups.isEmpty()) return child
+        if (childGroups == null || childGroups.isEmpty()) return parent
+
+        def combined = new ConditionalSetImpl()
+        combined.nodeStep = parent.nodeStep || child.nodeStep
+
+        // Cartesian product of OR groups to implement AND logic
+        // If parent has groups [A, B] and child has groups [C, D]
+        // Result: [A+C, A+D, B+C, B+D]
+        List combinedGroups = []
+        parentGroups.each { parentGroup ->
+            childGroups.each { childGroup ->
+                // Merge AND groups (concatenate conditions)
+                List mergedGroup = []
+                mergedGroup.addAll(parentGroup)
+                mergedGroup.addAll(childGroup)
+                combinedGroups.add(mergedGroup)
+            }
+        }
+        combined.conditionGroups = combinedGroups
+
+        return combined
+    }
+
+    /**
+     * Attach a ConditionalSet to a StepExecutionItem.
+     * @param stepItem The step item to attach conditions to
+     * @param conditionSet The condition set to attach
+     */
+    private void attachConditionsToStep(StepExecutionItem stepItem, ConditionalSet conditionSet) {
+        if (stepItem instanceof BaseExecutionItem) {
+            ((BaseExecutionItem) stepItem).setConditions(conditionSet)
+        } else if (stepItem instanceof PluginStepExecutionItemImpl) {
+            ((PluginStepExecutionItemImpl) stepItem).setConditions(conditionSet)
+        }
+    }
+
     static StepExecutionItem itemForWFCmdItem(final WorkflowStepData step, final StepExecutionItem handler=null) throws FileNotFoundException {
+        // Check if this is a ConditionalStep - should not happen here as it's handled in flattenWorkflowSteps
+        if (step instanceof ConditionalStep) {
+            throw new IllegalArgumentException("ConditionalStep should be flattened before calling itemForWFCmdItem")
+        }
+        
         if (step.pluginType == WorkflowStepConstants.TYPE_JOB_REF) {
             createStepForJobRefType(step, handler)
-        }else {
-            createStepForPluginType(step)
+        } else {
+            createStepForPluginType(step, handler)
         }
     }
 
@@ -80,6 +202,8 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
     }
 
     static StepExecutionItem createStepForPluginType(WorkflowStepData step, final StepExecutionItem handler=null) {
+        def logFilterConfigs = WorkflowStepDataUtil.createLogFilterConfigs(WorkflowStepDataUtil.getPluginConfigListForType(step, ServiceNameConstants.LogFilter))
+        
         if(step.nodeStep) {
             return ExecutionItemFactory.createPluginNodeStepItem(
                     step.pluginType,
@@ -87,16 +211,16 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
                     !!step.keepgoingOnSuccess,
                     handler,
                     step.description,
-                    WorkflowStepDataUtil.createLogFilterConfigs(WorkflowStepDataUtil.getPluginConfigListForType(step, ServiceNameConstants.LogFilter))
+                    logFilterConfigs
             )
-        }else {
+        } else {
             return ExecutionItemFactory.createPluginStepItem(
                     step.pluginType,
                     step.configuration,
                     !!step.keepgoingOnSuccess,
                     handler,
                     step.description,
-                    WorkflowStepDataUtil.createLogFilterConfigs(WorkflowStepDataUtil.getPluginConfigListForType(step, ServiceNameConstants.LogFilter))
+                    logFilterConfigs
             )
         }
     }

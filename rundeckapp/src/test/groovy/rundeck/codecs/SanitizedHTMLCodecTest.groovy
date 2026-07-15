@@ -21,8 +21,6 @@ import org.junit.Test
 import static org.junit.Assert.*
 
 import rundeck.codecs.SanitizedHTMLCodec
-import grails.test.mixin.TestMixin
-import grails.test.mixin.support.GrailsUnitTestMixin
 
 /**
  * SanitizedHTMLCodecTest is ...

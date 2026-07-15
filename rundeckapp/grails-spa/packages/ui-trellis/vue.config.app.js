@@ -1,5 +1,6 @@
 const Path = require("path");
 const webpack = require("webpack");
+const ESLintPlugin = require("eslint-webpack-plugin");
 
 const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`;
 
@@ -19,6 +20,7 @@ module.exports = {
     },
     "components/motd": { entry: "./src/app/components/motd/main.js" },
     "components/navbar": { entry: "./src/app/components/navbar/main.ts" },
+    "components/mainbar": { entry: "./src/app/components/mainbar/main.ts" },
     "components/project-picker": {
       entry: "./src/app/components/project-picker/main.ts",
     },
@@ -40,6 +42,7 @@ module.exports = {
       entry: "./src/app/pages/project-activity/main.js",
     },
     "pages/repository": { entry: "./src/app/pages/repository/main.js" },
+    "pages/adhoc": { entry: "./src/app/pages/adhoc/main.ts" },
     "pages/command": { entry: "./src/app/pages/command/main.ts" },
     "pages/community-news": { entry: "./src/app/pages/community-news/main.js" },
     "pages/project-nodes-config": {
@@ -54,8 +57,10 @@ module.exports = {
     "pages/user-summary": { entry: "./src/app/pages/menu/main.js" },
     "pages/dynamic-form": { entry: "./src/app/pages/dynamic-form/main.js" },
     "pages/job/editor": { entry: "./src/app/pages/job/editor/main.js" },
+    "pages/job/show": { entry: "./src/app/pages/job/show/main.ts" },
     "pages/nodes": { entry: "./src/app/pages/nodes/main.ts" },
     "pages/job/browse": { entry: "./src/app/pages/job/browse/main.ts" },
+    "pages/job/upload": { entry: "./src/app/pages/job/upload/main.ts" },
     "pages/home": { entry: "./src/app/pages/home/main.ts" },
     "pages/job/head/scm-action-buttons": {
       entry: "./src/app/pages/job/head/scm/scm-action-buttons.ts",
@@ -166,7 +171,9 @@ module.exports = {
       },
       proxy: {
         ".": {
-          target: "http://localhost:4440",
+          target: process.env.VUE_APP_SERVER_PORT
+            ? `http://localhost:${process.env.VUE_APP_SERVER_PORT}`
+            : "http://localhost:4440",
         },
       },
     },
@@ -176,6 +183,13 @@ module.exports = {
       new webpack.SourceMapDevToolPlugin({
         filename: "[file].map",
         include: [/\.css$/],
+      }),
+      /** ESLint validation during build watch */
+      new ESLintPlugin({
+        extensions: ["js", "ts", "vue"],
+        emitError: true,
+        emitWarning: true,
+        failOnError: true,
       }),
     ],
   },

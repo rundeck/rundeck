@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Minimal project nodes so execute-job fragments always get a non-empty node set.
+  SeleniumBasic previously had no resources.xml; local model source could yield zero nodes,
+  which hides the nodes section in _execOptionsForm.gsp and breaks node-filter UI tests.
+-->
+<project>
+  <node name="selenium-basic-ci"
+        description="Fixture node for SeleniumBasic functional tests"
+        tags="test,selenium"
+        hostname="localhost"
+        osName="Linux"
+        osFamily="unix"
+        osArch="amd64"
+        osVersion="1"
+        username="rundeck"/>
+</project>

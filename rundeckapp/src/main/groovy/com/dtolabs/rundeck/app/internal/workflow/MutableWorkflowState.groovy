@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
 import com.dtolabs.rundeck.core.execution.workflow.state.StepStateChange
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
+import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
 
 /**
  * $INTERFACE is ...
@@ -64,4 +65,13 @@ public interface MutableWorkflowState extends WorkflowState, MutableExecutionSta
 
 
     public Map<String,? extends MutableWorkflowNodeState> getMutableNodeStates();
+
+    /**
+     * Returns the runner node configured for the given workflow step. If the step's runner node is not set,
+     * this method falls back to returning the server node.
+     *
+     * @param currentStep the current workflow step state
+     * @return the name of the runner node for the step, or the server node if not specified
+     */
+    String getRunnerNode(WorkflowStepState currentStep);
 }

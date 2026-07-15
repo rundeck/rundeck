@@ -25,7 +25,7 @@
   </div>
 </template>
 <script lang="ts">
-import { JobRefData } from "@/app/components/job/workflow/types/workflowTypes";
+import { JobRefData } from "./types/workflowTypes";
 import { defineComponent, PropType } from "vue";
 
 type OptionsMap = Record<string, string>;
@@ -41,16 +41,16 @@ export default defineComponent({
   },
   computed: {
     fullName() {
-      if (this.step.jobref.name) {
+      if (this.step.jobref?.name) {
         return (
           (this.step.jobref.group ? this.step.jobref.group + "/" : "") +
           this.step.jobref.name
         );
       }
-      return this.step.jobref.uuid;
+      return this.step.jobref?.uuid || '';
     },
     parsed() {
-      if (!this.step.jobref.args) {
+      if (!this.step.jobref?.args) {
         return null;
       }
       return this.parseOptsFromArray(this.burst(this.step.jobref.args));

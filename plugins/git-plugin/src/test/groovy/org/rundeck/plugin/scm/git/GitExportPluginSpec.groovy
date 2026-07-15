@@ -1744,6 +1744,34 @@ class GitExportPluginSpec extends Specification {
         e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
     }
 
+    def "initialize plugin creates branch when branch does not exist on remote"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        git.close()
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        Export config2 = createTestConfig(gitdir, origindir, [
+                branch      : 'dev2',
+                createBranch: 'true',
+                baseBranch  : 'master'
+        ])
+        def context = Mock(ScmOperationContext)
+
+        when:
+        new GitExportPlugin(config2).initialize(context)
+
+        then:
+        noExceptionThrown()
+        def remoteGit = openGit(origindir)
+        def remoteBranches = remoteGit.branchList().call().collect { it.name }
+        remoteGit.close()
+        remoteBranches.contains('refs/heads/dev2')
+    }
+
     def "initialize plugin with unknown branch with create config"() {
         given:
 
@@ -1784,9 +1812,47 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(context)
 
         then:
-        ScmPluginException e = thrown()
-        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
+        noExceptionThrown()
+        def remoteGit = openGit(origindir)
+        def remoteBranches = remoteGit.branchList().call().collect { it.name }
+        remoteGit.close()
+        remoteBranches.contains('refs/heads/dev2')
 
+    }
+
+    def "initialize plugin with create config does not recreate branch when it already exists on remote"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        // pre-create dev2 on the remote with a distinct tip commit
+        git.branchCreate().setName('dev2').call()
+        git.checkout().setName('dev2').call()
+        def dev2Commit = addCommitFile(origindir, git, 'dev2-marker.txt', 'only on dev2')
+        def dev2TipBefore = dev2Commit.name()
+        git.close()
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        Export config2 = createTestConfig(gitdir, origindir, [
+                branch      : 'dev2',
+                createBranch: 'true',
+                baseBranch  : 'master'
+        ])
+        def plugin = new GitExportPlugin(config2)
+        def context = Mock(ScmOperationContext)
+
+        when:
+        plugin.initialize(context)
+
+        then:
+        noExceptionThrown()
+        plugin.branch == 'dev2'
+        def remoteGit = openGit(origindir)
+        def dev2TipAfter = remoteGit.repository.resolve('refs/heads/dev2').name
+        remoteGit.close()
+        dev2TipAfter == dev2TipBefore
     }
 
     def "initialize plugin with unknown branch with create config and bad remote"() {
@@ -1829,7 +1895,7 @@ class GitExportPluginSpec extends Specification {
 
         then:
         ScmPluginException e = thrown()
-        e.message=="Failed cloning the repository from " + origindir + ": Remote branch 'dev2' not found in upstream origin"
+        e.message == "Non existent remote branch: wrong"
     }
 
     def "refresh status should re-serialize job if stored commit is different than local commit"() {

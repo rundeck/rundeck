@@ -148,12 +148,12 @@ E.g.: `.ps1`, or `abc`.
 
     @Override
     List<String> listResources() throws PluginException, IOException {
-        ['WorkflowNodeStep.script-file-url.icon.png']
+        ['WorkflowNodeStep.script-file-url.icon.svg']
     }
 
     @Override
     InputStream openResourceStreamFor(String name) throws PluginException, IOException {
-        return this.getClass().getResourceAsStream("/" + name)
+        return this.getClass().getResourceAsStream("/resources/" + name)
     }
 
 }

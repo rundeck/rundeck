@@ -71,17 +71,22 @@
         <span v-if="validation && !validation.valid" class="text-warning">
           <i class="fas fa-exclamation-circle"></i> {{ validationWarningText }}
         </span>
-        <span v-for="prop in props" :key="prop.name" class="configprop">
-          <plugin-prop-view
+        <template v-for="prop in props" :key="prop.name">
+          <span
             v-if="
               (prop.type === 'Boolean' || config[prop.name]) &&
               isPropInScope(prop) &&
               !isPropHidden(prop)
             "
-            :prop="prop"
-            :value="config[prop.name]"
-          />
-        </span>
+            class="configprop"
+          >
+            <plugin-prop-view
+              :prop="prop"
+              :value="config[prop.name]"
+              :allow-copy="allowCopy"
+            />
+          </span>
+        </template>
         <div class="col-sm-12">
           <slot name="extraProperties"></slot>
         </div>
@@ -106,6 +111,7 @@
               type="hidden"
               :value="inputValues[prop.name]"
               :data-hidden-field-identity="prop.options['hidden_identity']"
+              :data-testid="`prop-hidden-${prop.name}`"
               class="_config_prop_display_hidden"
             />
 
@@ -117,6 +123,7 @@
                 (validation && validation.errors[prop.name] ? ' has-error' : '')
               "
               :data-prop-name="prop.name"
+              :data-testid="`prop-field-${prop.name}`"
             >
               <plugin-prop-edit
                 v-model="inputValues[prop.name]"
@@ -133,6 +140,7 @@
                 :autocomplete-callback="autocompleteCallback"
                 :step-type="serviceName"
                 :plugin-type="modelValue.type"
+                :extra-autocomplete-vars="extraAutocompleteVars"
                 @plugin-props-mounted="notifyHandleAutoComplete"
               />
             </div>
@@ -141,6 +149,7 @@
             v-if="group.name"
             :open="!group.secondary"
             class="more-info details-reset"
+            :data-testid="`prop-section-${group.name}`"
           >
             <summary>
               <span class="row">
@@ -164,6 +173,7 @@
                 type="hidden"
                 :value="inputValues[prop.name]"
                 :data-hidden-field-identity="prop.options['hidden_identity']"
+                :data-testid="`prop-hidden-${prop.name}`"
                 class="_config_prop_display_hidden"
               />
               <div
@@ -176,6 +186,7 @@
                     : '')
                 "
                 :data-prop-name="prop.name"
+                :data-testid="`prop-field-${prop.name}`"
               >
                 <plugin-prop-edit
                   v-model="inputValues[prop.name]"
@@ -192,6 +203,7 @@
                   :step-type="serviceName"
                   :plugin-type="modelValue.type"
                   :autocomplete-callback="autocompleteCallback"
+                  :extra-autocomplete-vars="extraAutocompleteVars"
                 />
               </div>
             </div>
@@ -204,13 +216,12 @@
 </template>
 
 <script lang="ts">
+import { ContextVariable } from "../../../library/stores/contextVariables";
 import { getRundeckContext } from "../../rundeckService";
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
+import type { PluginConfig } from "../../../library/interfaces/PluginConfig";
 
-import AceEditor from "../utils/AceEditor.vue";
-import Expandable from "../utils/Expandable.vue";
 import PluginInfo from "./PluginInfo.vue";
-import PluginValidation from "../../interfaces/PluginValidation";
 import PluginPropView from "./pluginPropView.vue";
 import PluginPropEdit from "./pluginPropEdit.vue";
 import { cleanConfigInput, convertArrayInput } from "../../modules/InputUtils";
@@ -219,7 +230,6 @@ import { diff } from "deep-object-diff";
 
 import {
   getPluginProvidersForService,
-  validatePluginConfig,
 } from "../../modules/pluginService";
 
 interface PropGroup {
@@ -231,8 +241,6 @@ interface PropGroup {
 export default defineComponent({
   name: "PluginConfig",
   components: {
-    Expandable,
-    AceEditor,
     PluginInfo,
     PluginPropView,
     PluginPropEdit,
@@ -245,8 +253,8 @@ export default defineComponent({
     showTitle: { required: false },
     showIcon: { required: false },
     showDescription: { required: false },
-    modelValue: { required: false },
-    savedProps: { required: false },
+    modelValue: { type: Object as PropType<PluginConfig>, required: false },
+    savedProps: { type: Array as PropType<string[]>, required: false },
     pluginConfig: { required: false },
     validation: { required: false },
     readOnly: { required: false },
@@ -260,6 +268,12 @@ export default defineComponent({
     groupCss: {
       required: false,
       default: "col-sm-2 control-label h5 header-reset",
+    },
+    allowCopy: { type: Boolean, default: false },
+    extraAutocompleteVars: {
+      type: Array as PropType<ContextVariable[]>,
+      required: false,
+      default: () => [],
     },
   },
   emits: [
@@ -282,7 +296,7 @@ export default defineComponent({
       inputValues: {} as any,
       inputSaved: {} as any,
       inputSavedProps:
-        typeof this.savedProps !== "undefined" ? this.savedProps : ["type"],
+        (typeof this.savedProps !== "undefined" ? this.savedProps : ["type"]) as string[] | null,
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },
@@ -393,6 +407,16 @@ export default defineComponent({
         this.loadForMode();
       },
     },
+    serviceName: {
+      handler() {
+        this.loadForMode();
+      },
+    },
+    provider: {
+      handler() {
+        this.loadForMode();
+      },
+    },
   },
   beforeMount() {
     this.loadForMode();
@@ -414,16 +438,17 @@ export default defineComponent({
 
       if (
         typeof this.inputSavedProps !== "undefined" &&
+        this.inputSavedProps !== null &&
         this.inputSavedProps.length > 0
       ) {
         for (const i of this.inputSavedProps) {
           if (typeof this.inputSaved[i] === "undefined") {
-            this.inputSaved[i] = this.modelValue[i];
+            this.inputSaved[i] = (this.modelValue as any)[i];
           }
         }
       }
 
-      const config = this.modelValue.config;
+      const config = this.modelValue?.config || {};
 
       const modeCreate = this.isCreateMode;
 
@@ -487,8 +512,10 @@ export default defineComponent({
             this.inputValues[prop.name] === "true"
           ) {
             values[prop.name] = "true";
-          } else if (prop.defaultValue === "true") {
-            //explicit value set if the default would be true
+          } else if (
+            prop.defaultValue === "true" ||
+            this.inputValues[prop.name] === false
+          ) {
             values[prop.name] = "false";
           }
         } else {
@@ -545,7 +572,7 @@ export default defineComponent({
       try {
         const data =
           await getRundeckContext().rootStore.plugins.getPluginDetail(
-            this.serviceName,
+            this.serviceName as string,
             provider,
           );
         if (data.props) {

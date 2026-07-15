@@ -147,7 +147,7 @@ class ParamsUtil {
      * @return
      */
     static List parseMapList(Map data) {
-        def entries = data?[data.get("_indexes")].flatten():[]
+        def entries = data ? ([data.get("_indexes")].flatten()) : ([])
         List result = []
         entries.each { index ->
             def map = getMapOrPrefixedMap(data, "entry[${index}]".toString())

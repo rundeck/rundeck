@@ -1,3 +1,10 @@
+:root {
+  --p-tooltip-max-width: 12.5rem;
+  --p-tooltip-gutter: 0.25rem;
+  --p-tooltip-padding: 0.625rem 0.75rem;
+  --p-tooltip-border-radius: 6px;
+}
+
 .p-tooltip {
   &-text {
     background: var(--colors-gray-800);
@@ -5,17 +12,25 @@
   }
   &-right .p-tooltip-arrow {
     border-right-color: var(--colors-gray-800);
+    left: 1px !important;
+    top: 40%;
   }
 
   &-left .p-tooltip-arrow {
     border-left-color: var(--colors-gray-800);
+    right: 1px !important;
+    top: 40%;
   }
 
   &-top .p-tooltip-arrow {
     border-top-color: var(--colors-gray-800);
+    bottom: 1px !important;
+    left: 50%;
   }
 
   &-bottom .p-tooltip-arrow {
     border-bottom-color: var(--colors-gray-800);
+    top: 1px !important;
+    left: 50%;
   }
 }

@@ -23,6 +23,7 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.workflow.WorkflowDataImpl
 import rundeck.*
 import rundeck.services.FrameworkService
 import spock.lang.Specification
@@ -214,9 +215,9 @@ class WorkflowController2Spec extends Specification implements ControllerUnitTes
 
     public void testWFEditActionsModifyJob() {
         WorkflowController ctrl = new WorkflowController()
-        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        WorkflowDataImpl wf = new WorkflowDataImpl().fromMap([threadcount: 1, keepgoing: true])
         JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee', description: 'abc')
-        wf.addToCommands(je)
+        wf.steps.add(je)
 
         assertEquals 1, wf.commands.size()
          setupExtended(ctrl, false)

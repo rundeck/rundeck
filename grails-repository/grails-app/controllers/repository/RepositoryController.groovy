@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.rundeck.repository.artifact.RepositoryArtifact
 import com.rundeck.repository.client.exceptions.ArtifactNotFoundException
 import com.rundeck.repository.client.manifest.search.ManifestSearchBuilder
@@ -66,8 +67,20 @@ class RepositoryController {
             }
             String searchTerm
 
-            if(request.JSON) {
-                searchTerm = request.JSON.searchTerm
+            // Grails 7: Parse body using Jackson instead of request.JSON
+            def jsonBody = null
+            try {
+                def inputStream = request.getInputStream()
+                if (inputStream && inputStream.available() > 0) {
+                    def mapper = new ObjectMapper()
+                    jsonBody = mapper.readValue(inputStream, Map.class)
+                }
+            } catch (Exception e) {
+                // No JSON body or already consumed, fall through to params
+            }
+            
+            if(jsonBody) {
+                searchTerm = jsonBody.searchTerm
             } else {
                 searchTerm = params.searchTerm
             }

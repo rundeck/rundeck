@@ -8,42 +8,28 @@ class ExecutionModeSpec extends BaseContainer{
 
     def "test_enable_json"() {
         when:
-        def response =client.doPostWithoutBody("/system/executions/enable")
+            Map json = post("/system/executions/enable",Map)
         then:
-        response
         verifyAll {
-            response.successful
-            response.code() == 200
-            response.message() == "OK"
-            def json = jsonValue(response.body())
             json.executionMode == "active"
         }
     }
 
     def "test_disable_json"() {
         when:
-        def response =client.doPostWithoutBody("/system/executions/disable")
+            Map json = client.post("/system/executions/disable",Map)
         then:
-        response
         verifyAll {
-            response.successful
-            response.code() == 200
-            response.message() == "OK"
-            def json = jsonValue(response.body())
             json.executionMode == "passive"
         }
     }
 
     def "test_all"(){
         when:
-        def response =client.doPostWithoutBody("/system/executions/"+mode)
+            Map json = client.post("/system/executions/" + mode,Map)
 
         then:
         verifyAll {
-            response.successful
-            response.code() == 200
-            response.message() == "OK"
-            def json = jsonValue(response.body())
             json.executionMode == responseMode
         }
         where:

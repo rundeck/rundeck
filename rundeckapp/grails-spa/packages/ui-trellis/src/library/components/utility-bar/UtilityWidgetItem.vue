@@ -1,5 +1,8 @@
 <template>
-  <li :id="item.id" class="utility-bar__item" @click="handleClick">
+  <li v-if="item.inline" :id="item.id" class="utility-bar__item utility-bar__item--inline">
+    <component :is="item.widget" />
+  </li>
+  <li v-else :id="item.id" class="utility-bar__item" @click="handleClick">
     <i class="utility-bar__item-icon" :class="item.class"></i>
     <span v-if="item.label">{{ item.label }}</span>
     <span v-if="item.count" class="utility-bar__item-counter">{{
@@ -53,5 +56,14 @@ export default defineComponent({
 <style scoped lang="scss">
 .utility-bar__widget {
   margin: 0;
+}
+
+.utility-bar__item--inline {
+  padding: 0;
+  cursor: default;
+  
+  &:hover {
+    background-color: transparent;
+  }
 }
 </style>

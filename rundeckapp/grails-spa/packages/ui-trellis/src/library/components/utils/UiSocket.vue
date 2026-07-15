@@ -119,7 +119,7 @@ export default defineComponent({
     unload() {
       if (this.uiwatcher) {
         this.rootStore.ui.removeWatcher(this.uiwatcher);
-        this.uiwatcher = null;
+        this.uiwatcher = undefined;
       }
     },
     reload() {

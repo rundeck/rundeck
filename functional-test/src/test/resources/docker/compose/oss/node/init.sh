@@ -20,3 +20,14 @@ chown -R "$USERNAME" $HOME/.ssh
 
 cat /configuration/id_rsa.pub > /home/rundeck/.ssh/authorized_keys
 cat /configuration/id_rsa_passphrase.pub >> /home/rundeck/.ssh/authorized_keys
+
+
+# Configure SSHD to pass environment variables to shell.
+if ! grep -q "^AcceptEnv RD_" /etc/ssh/sshd_config
+then
+    cat <<END | sudo tee -a /etc/ssh/sshd_config
+#
+#
+AcceptEnv RD_*
+END
+fi

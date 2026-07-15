@@ -31,7 +31,6 @@ const messages = {
     "Il semble qu\u02bcune erreur se soit produite lors de la connexion \u00e0 Community News.",
   message_readMore: "En savoir plus",
   message_refresh: "Veuillez actualiser la page ou nous rendre visite \u00e0",
-  message_subscribe: "S\u02bcabonner",
   message_delete: "Supprimer ce champ",
   message_duplicated: "Le champ existe d\u00e9j\u00e0",
   message_select: "Selectionner un champ",

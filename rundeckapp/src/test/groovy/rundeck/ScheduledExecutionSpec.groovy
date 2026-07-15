@@ -61,6 +61,66 @@ class ScheduledExecutionSpec extends Specification implements DataTest
             se.options.every { it.scheduledExecution == se }
     }
 
+    def "from map with dispatch block and empty filter preserves doNodedispatch"() {
+        given: "a job map with nodefilters.dispatch and an empty filter (RUN-3132)"
+            def map = [
+                jobName: 'test-dispatch',
+                nodefilters: [
+                    dispatch: [
+                        threadcount: '1',
+                        keepgoing: false,
+                        excludePrecedence: true,
+                        successOnEmptyNodeFilter: false,
+                    ],
+                    filter: '',
+                ],
+                nodesSelectedByDefault: true,
+            ]
+        when:
+            def se = ScheduledExecution.fromMap(map)
+        then: "doNodedispatch must be true even when filter is empty string"
+            se.doNodedispatch == true
+            se.filter == ''
+            se.nodesSelectedByDefault == true
+    }
+
+    def "from map with dispatch block and non-null filter preserves doNodedispatch"() {
+        given: "a job map with nodefilters.dispatch and a non-empty filter"
+            def map = [
+                jobName: 'test-dispatch',
+                nodefilters: [
+                    dispatch: [
+                        threadcount: '2',
+                        keepgoing: true,
+                    ],
+                    filter: 'hostname: myhost',
+                ],
+                nodesSelectedByDefault: true,
+            ]
+        when:
+            def se = ScheduledExecution.fromMap(map)
+        then:
+            se.doNodedispatch == true
+            se.filter == 'hostname: myhost'
+    }
+
+    def "from map with only dispatch block and no filter key keeps doNodedispatch false"() {
+        given: "old-format job map with nodefilters.dispatch but no filter key (backward compat)"
+            def map = [
+                jobName: 'test-local',
+                nodefilters: [
+                    dispatch: [
+                        threadcount: '1',
+                        keepgoing: false,
+                    ],
+                ],
+            ]
+        when:
+            def se = ScheduledExecution.fromMap(map)
+        then: "old XML jobs with only <dispatch> and no <filter> stay as Execute locally"
+            se.doNodedispatch == false
+    }
+
     def "from map notifications urls should include httpMethod and format"() {
         given:
             def map = [

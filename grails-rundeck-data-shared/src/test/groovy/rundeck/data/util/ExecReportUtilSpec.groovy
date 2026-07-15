@@ -22,7 +22,7 @@ class ExecReportUtilSpec extends Specification {
             project >> "test"
             user >> "test"
             uuid >> "uuid"
-            workflow >> Mock(WorkflowData){
+            workflowData >> Mock(WorkflowData){
                 steps >> [Mock(WorkflowStepData) {
                     pluginType >> "builtin-script"
                     nodeStep >> true
@@ -63,7 +63,7 @@ class ExecReportUtilSpec extends Specification {
     def "test summarize method"() {
         given:
         def exec = Mock(ExecutionData){
-            workflow >> Mock(WorkflowData){
+            getWorkflowData() >> Mock(WorkflowData){
                 steps >> [Mock(WorkflowStepData) {
                     pluginType >> "builtin-script"
                     nodeStep >> true

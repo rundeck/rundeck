@@ -3,6 +3,7 @@ package org.rundeck.app.data.job.converters
 import grails.testing.gorm.DataTest
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.data.constants.WorkflowStepConstants
@@ -15,7 +16,7 @@ import testhelper.TestDomainFactory
 class ExecutionFromRdExecutionUpdaterSpec extends Specification implements DataTest {
 
     def setupSpec() {
-        mockDomains(Execution, ScheduledExecution, Workflow, CommandExec)
+        mockDomains(Execution, ScheduledExecution, Workflow, CommandExec, LogFileStorageRequest)
     }
 
     def "should update Execution from RdExecution"() {
@@ -58,7 +59,7 @@ class ExecutionFromRdExecutionUpdaterSpec extends Specification implements DataT
         e.status == "test-status"
         e.dateStarted == startDate
         e.dateCompleted == completeDate
-        e.workflow.steps.size() == 1
+        e.getWorkflowData().steps.size() == 1
         e.failedNodeList == "node1"
         e.succeededNodeList == "node2"
         e.abortedby == "tester"

@@ -1,19 +1,34 @@
-import { createApp } from "vue";
+import { createApp, defineComponent, PropType } from "vue";
 import Pagination from "../../../library/components/utils/Pagination.vue";
 
-const template = `
-    <Pagination 
-        v-model="activePage"
-        :totalPages="totalPages"
-        @change="handlePageChange"
-    />
-    `;
+interface KoPagerPage {
+  current: boolean;
+  [key: string]: unknown;
+}
+
+interface KoPager {
+  pageList: {
+    (): KoPagerPage[];
+    subscribe(callback: (pages: KoPagerPage[]) => void): void;
+  };
+  setPage(page: number): void;
+}
+
+interface KoPaginationEvent {
+  name: string;
+  pager: KoPager;
+}
 
 /** Adapt KO Pager with Paginator wrapper */
-const KoPaginator = {
-  template,
+const KoPaginator = defineComponent({
+  name: "KoPaginator",
   components: { Pagination },
-  props: ["pager"],
+  props: {
+    pager: {
+      type: Object as PropType<KoPager>,
+      required: true,
+    },
+  },
   data() {
     return {
       activePage: 0,
@@ -23,13 +38,13 @@ const KoPaginator = {
 
   created() {
     this.activePage =
-      this.pager.pageList().findIndex((p: any) => p.current) + 1;
+      this.pager.pageList().findIndex((p: KoPagerPage) => p.current) + 1;
     this.totalPages = this.pager.pageList().length;
   },
 
   mounted() {
-    this.pager.pageList.subscribe((pages: any) => {
-      this.activePage = pages.findIndex((p: any) => p.current) + 1;
+    this.pager.pageList.subscribe((pages: KoPagerPage[]) => {
+      this.activePage = pages.findIndex((p: KoPagerPage) => p.current) + 1;
       this.totalPages = pages.length;
     });
   },
@@ -39,12 +54,19 @@ const KoPaginator = {
       this.pager.setPage(page - 1);
     },
   },
-};
+  template: `
+    <Pagination 
+        v-model="activePage"
+        :totalPages="totalPages"
+        @change="handlePageChange"
+    />
+    `,
+});
 
 const mounted = new Map<string, boolean>();
 
 /** Listen to events advertising pagination and mount to elements */
-window._rundeck.eventBus.on("ko-pagination", (event: any) => {
+window._rundeck.eventBus.on("ko-pagination", (event: KoPaginationEvent) => {
   const { name, pager } = event;
 
   if (!mounted.has(name)) {

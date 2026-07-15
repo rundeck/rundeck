@@ -21,7 +21,7 @@ jest.mock("../../../../../library/services/api", () => ({
 jest.mock("../../../../../library", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     projectName: "TestProject",
-    rdBase: "http://localhost:4440/",
+    rdBase: "http://localhost:4440",
     apiVersion: "41",
   })),
   getAppLinks: jest.fn().mockImplementation(() => ({

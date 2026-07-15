@@ -50,7 +50,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import io.swagger.v3.oas.annotations.tags.Tags
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.api.model.ApiErrorResponse
@@ -74,8 +73,8 @@ import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
@@ -349,10 +348,15 @@ class ProjectController extends ControllerBase{
             response.setContentType("application/zip")
             response.setHeader("Content-Disposition", "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\"")
 
-            outfile.withInputStream {instream->
-                Streams.copy(instream,response.outputStream,false)
+            try {
+                outfile.withInputStream { instream ->
+                    Streams.copy(instream, response.outputStream, false)
+                }
+            } catch (Exception e) {
+                throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
+            } finally {
+                projectService.releasePromise(session.user, token)
             }
-            projectService.releasePromise(session.user,token)
         }else {
             def percentage = projectService.promiseSummary(session.user, token).percent()
 
@@ -494,8 +498,13 @@ class ProjectController extends ControllerBase{
     private String hintErrorCause(Throwable t){
         final SIZE_CONSTRAINT_VIOLATION_STRING = 'Data too long for column \'data\''
         final SIZE_CONSTRAINT_VIOLATION_MESSAGE = "Some of the imported content was too large, this may be caused by a node source definition or other components that exceeds the supported size."
-        def cause = ExceptionUtils.getRootCause(t).message
-        if( cause.contains(SIZE_CONSTRAINT_VIOLATION_STRING) ){
+        // Get root cause manually (Apache Commons Lang3 not available in Grails 7)
+        Throwable rootCause = t
+        while (rootCause.cause != null && rootCause.cause != rootCause) {
+            rootCause = rootCause.cause
+        }
+        def cause = rootCause.message
+        if( cause?.contains(SIZE_CONSTRAINT_VIOLATION_STRING) ){
             return SIZE_CONSTRAINT_VIOLATION_MESSAGE
         }
         return ''
@@ -641,15 +650,15 @@ class ProjectController extends ControllerBase{
         g.createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/project/${projectName}")
     }
 
-    @Get(uri = '/projects')
+    @Get(uri = '/projects', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'GET',
         summary = 'List Projects',
         description = '''List the existing projects on the server.
 
-Authorization required: `read` for project resource
+Authorization required: `read` for each project resource. Only authorized projects will be included in the response.
 ''',
-        tags = ['project'],
+        tags = ['Project'],
         parameters = [
                 @Parameter(
                         name = 'meta',
@@ -659,10 +668,11 @@ Authorization required: `read` for project resource
                         required = false,
                         schema = @Schema(implementation = String.class)
                 ),
-        ],
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''
 *Since API version 26*: add the project `label` to the response
 
 *Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
@@ -670,17 +680,22 @@ Authorization required: `read` for project resource
 
 *Since API version 47*: add the project `metadata` to the response. To retrieve this information, use the query param meta
 (Comma-separated list of metadata items to include, or "*" for all (default)).''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                array = @ArraySchema(schema = @Schema(type = 'object')),
-                examples = @ExampleObject('''[
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            array = @ArraySchema(schema = @Schema(type = 'object')),
+            examples = [
+                @ExampleObject(
+                    name = 'projects-list',
+                    description = 'List of projects',
+                    value = '''[
     {
         "name":"...",
         "description":"...",
         "url":"..."
     }
-]''')
-            )
+]'''
+                )
+            ]
         )
     )
     /**
@@ -741,16 +756,22 @@ Authorization required: `read` access for `project` resource type to get basic p
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
             responseCode = "200",
             description = "Project details",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema=@Schema(type='object'),
-                    examples = @ExampleObject('{"description": "",  "name": "PROJECT_NAME",  "url": "http://server:4440/api/11/project/PROJECT_NAME", "config": {  }}')
+                    examples = [
+                        @ExampleObject(
+                            name = 'project-details',
+                            description = 'Project details response',
+                            value = '{"description": "",  "name": "PROJECT_NAME",  "url": "http://server:4440/api/11/project/PROJECT_NAME", "config": {  }}'
+                        )
+                    ]
             )
     )
     @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_READ)
@@ -776,7 +797,7 @@ Authorization required: `read` access for `project` resource type to get basic p
         }
     }
 
-    @Post(uri = '/projects')
+    @Post(uri = '/projects', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method = 'POST',
         summary = 'Create a Project',
@@ -784,32 +805,44 @@ Authorization required: `read` access for `project` resource type to get basic p
 
 Authorization required: `create` for resource type `project`
 ''',
-        tags = ['project'],
+        tags = ['Project'],
         requestBody = @RequestBody(
             description='Project Create contains a name, and configuration values',
             content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
                 schema=@Schema(type='object'),
-                examples=@ExampleObject('''{ "name": "myproject", "config": { "propname":"propvalue" } }''')
+                examples=[
+                    @ExampleObject(
+                        name='create-project-example',
+                        description='Create a new project with configuration',
+                        value='''{ "name": "myproject", "config": { "propname":"propvalue" } }'''
+                    )
+                ]
             )
-        ),
-        responses = @ApiResponse(
-            responseCode = '200',
-            description = '''
+        )
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = '''
 *Since API version 26*: add the project `label` to the response
 
 *Since API version 33*: add the project `created` date to the response. This is based on the creation of the 
 `project.properties` file in the file system or in the DB storage.''',
-            content = @Content(
-                mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(type = 'object'),
-                examples = @ExampleObject('''{
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(type = 'object'),
+            examples = [
+                @ExampleObject(
+                    name = 'project-created',
+                    description = 'Project created response',
+                    value = '''{
   "description": "",
   "name": "NAME",
   "url": "http://server:4440/api/11/project/NAME",
   "config": {  }
-}''')
-            )
+}'''
+                )
+            ]
         )
     )
     @RdAuthorizeApplicationType(
@@ -958,7 +991,7 @@ Authorization required: `create` for resource type `project`
     @Operation(
             method = "Delete",
             summary = "Delete a project",
-            description = """Delete an existing projects on the server.
+            description = """Delete an existing project on the server.  The action cannot be undone.
 
 Authorization required: `delete` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
             parameters = [
@@ -981,7 +1014,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -992,7 +1025,7 @@ Authorization required: `delete` access for `project` resource type or `admin` o
             responseCode = "400",
             description = "Project details",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1110,28 +1143,40 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
-            responseCode = "200",
-            description = "Project details",
-            content = [
-                    @Content(
-                            mediaType = "application/text",
-                            schema=@Schema(type='string'),
-                            examples = @ExampleObject('''key=value
-key2=value''')
-                    ),
-                    @Content(
-                            mediaType = "application/json",
-                            schema=@Schema(type='object'),
-                            examples = @ExampleObject('''{
-    "key":"value",
-    "key2":"value2..."
-}''')
-                    )
-            ]
+    responseCode = "200",
+    description = "Project configuration retrieved successfully",
+    content = @Content(
+        mediaType = MediaType.APPLICATION_JSON,
+        schema = @Schema(type = 'object', additionalProperties = Schema.AdditionalPropertiesValue.TRUE),
+        examples = [
+            @ExampleObject(
+                name = "projectConfig",
+                description = "Example project configuration",
+                value = '''{
+            "project.description": "My Project Description",
+            "project.label": "My Project",
+            "project.disable.executions": "false",
+            "project.disable.schedule": "false",
+            "project.execution.history.cleanup.enabled": "true",
+            "project.execution.history.cleanup.retention.days": "60",
+            "project.execution.history.cleanup.retention.minimum": "50",
+            "project.execution.history.cleanup.batch": "500",
+            "project.execution.history.cleanup.schedule": "0 0 0 1/1 * ? *",
+            "project.jobs.gui.groupExpandLevel": "1",
+            "resources.source.1.type": "file",
+            "resources.source.1.config.file": "/var/rundeck/projects/myproject/etc/resources.xml",
+            "resources.source.1.config.generateFileAutomatically": "true",
+            "resources.source.1.config.includeServerNode": "true",
+            "service.NodeExecutor.default.provider": "jsch-ssh",
+            "service.FileCopier.default.provider": "jsch-scp"
+            }'''
+            )
+        ]
+        )
     )
     @GrailsCompileStatic
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
@@ -1204,7 +1249,7 @@ Since: v14""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1212,34 +1257,52 @@ Since: v14""",
             description = "Project details",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='string'),
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
-                            mediaType = "application/yaml",
+                            mediaType = MediaType.APPLICATION_YAML,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject('''{
+                            mediaType = MediaType.APPLICATION_JSON,
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-contents',
+                                    description = 'ACL policy contents',
+                                    value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -1247,7 +1310,7 @@ by:
             responseCode = "400",
             description = "Bad request",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1263,38 +1326,57 @@ Otherwise if XML or JSON is requested, the YAML text will be wrapped within that
 
 Authorization required: `create` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
 Since: v14""",
+            tags = ['ACL'],
             requestBody = @RequestBody(
                     content = [
                             @Content(
                                     mediaType = MediaType.TEXT_PLAIN,
                                     schema = @Schema(implementation = String.class),
-                                    examples = @ExampleObject('''description: "my policy"
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'project-acl-yaml-example',
+                                            description = 'Project ACL policy in YAML format',
+                                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                        )
+                                    ]
                             ),
                             @Content(
-                                    mediaType = "application/yaml",
+                                    mediaType = MediaType.APPLICATION_YAML,
                                     schema=@Schema(type='object'),
-                                    examples = @ExampleObject('''description: "my policy"
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'project-acl-yaml-content-example',
+                                            description = 'Project ACL policy as YAML',
+                                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                        )
+                                    ]
                             ),
                             @Content(
-                                    mediaType = "application/json",
+                                    mediaType = MediaType.APPLICATION_JSON,
                                     schema=@Schema(type='object'),
-                                    examples = @ExampleObject('''{
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'project-acl-json-example',
+                                            description = 'Project ACL policy as JSON with embedded YAML',
+                                            value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                        )
+                                    ]
                             )
                     ]
             ),
@@ -1317,11 +1399,6 @@ by:
                     )
             ]
     )
-    @Tags(
-            [
-                    @Tag(name="project")
-            ]
-    )
     @ApiResponse(
             responseCode = "201",
             description = "ACL policy created",
@@ -1329,41 +1406,67 @@ by:
                     @Content(
                             mediaType = MediaType.TEXT_PLAIN,
                             schema = @Schema(type = 'string'),
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_YAML,
                             schema = @Schema(type = 'object'),
-                            examples = @ExampleObject('''description: "my policy"
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
                             mediaType = MediaType.APPLICATION_JSON,
                             schema = @Schema(type = 'object'),
-                            examples = @ExampleObject('''{
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-contents',
+                                    description = 'ACL policy contents',
+                                    value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                )
+                            ]
                     )
             ]
+    )
+    @ApiResponse(
+            responseCode = "201",
+            description = "ACL policy created",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(type = 'object')
+            )
     )
     @ApiResponse(
             responseCode = "409",
             description = "Conflict if already exists",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1371,7 +1474,7 @@ by:
             responseCode = "400",
             description = "Bad request if validation failure",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1387,38 +1490,57 @@ Otherwise if XML or JSON is requested, the YAML text will be wrapped within that
 
 Authorization required: `update` access for `Project ACL` resource type or `admin` or `app_admin` access for `user` resource type.
 Since: v14""",
+            tags = ['ACL'],
             requestBody = @RequestBody(
                     content = [
                             @Content(
                                     mediaType = MediaType.TEXT_PLAIN,
                                     schema = @Schema(type = 'string'),
-                                    examples = @ExampleObject('''description: "my policy"
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'update-project-acl-yaml-example',
+                                            description = 'Update project ACL policy in YAML format',
+                                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                        )
+                                    ]
                             ),
                             @Content(
                                     mediaType = MediaType.APPLICATION_YAML,
                                     schema = @Schema(type = 'string'),
-                                    examples = @ExampleObject('''description: "my policy"
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'update-project-acl-yaml-content-example',
+                                            description = 'Update project ACL policy as YAML',
+                                            value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                        )
+                                    ]
                             ),
                             @Content(
                                     mediaType = MediaType.APPLICATION_JSON,
                                     schema = @Schema(type = 'object'),
-                                    examples = @ExampleObject('''{
+                                    examples = [
+                                        @ExampleObject(
+                                            name = 'update-project-acl-json-example',
+                                            description = 'Update project ACL policy as JSON with embedded YAML',
+                                            value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                        )
+                                    ]
                             )
                     ]
             ),
@@ -1441,42 +1563,55 @@ by:
                     )
             ]
     )
-    @Tags(
-            [
-                    @Tag(name="project")
-            ]
-    )
     @ApiResponse(
             responseCode = "200",
             description = "ACL Policy updated",
             content = [
                     @Content(
-                            mediaType = "application/text",
-                            examples = @ExampleObject('''description: "my policy"
+                            mediaType = MediaType.TEXT_PLAIN,
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
-                            mediaType = "application/yaml",
-                            examples = @ExampleObject('''description: "my policy"
+                            mediaType = MediaType.APPLICATION_YAML,
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-policy',
+                                    description = 'ACL policy document',
+                                    value = '''description: "my policy"
 context:
   application: rundeck
 for:
   project:
     - allow: read
 by:
-  group: build''')
+  group: build'''
+                                )
+                            ]
                     ),
                     @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject('''{
+                            mediaType = MediaType.APPLICATION_JSON,
+                            examples = [
+                                @ExampleObject(
+                                    name = 'acl-contents',
+                                    description = 'ACL policy contents',
+                                    value = '''{
   "contents": "description: \\"my policy\\"\\ncontext:\\n  application: rundeck\\nfor:\\n  project:\\n    - allow: read\\nby:\\n  group: build"
-}''')
+}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -1484,7 +1619,7 @@ by:
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1519,7 +1654,7 @@ Since: v14""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="ACL")
             ]
     )
     @ApiResponse(
@@ -1530,7 +1665,7 @@ Since: v14""",
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -1860,7 +1995,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -1868,14 +2003,26 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Project details",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='string'),
-                            examples = @ExampleObject('''The readme contents''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'readme-text',
+                                    description = 'Readme text content',
+                                    value = '''The readme contents'''
+                                )
+                            ]
                     ),
                     @Content(
-                            mediaType = "application/json",
+                            mediaType = MediaType.APPLICATION_JSON,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''{"contents":"The readme contents"}''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'readme-json',
+                                    description = 'Readme JSON content',
+                                    value = '''{"contents":"The readme contents"}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -1883,7 +2030,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2010,7 +2157,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2018,14 +2165,26 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Project details",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='string'),
-                            examples = @ExampleObject('''The readme contents''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'readme-text',
+                                    description = 'Readme text content',
+                                    value = '''The readme contents'''
+                                )
+                            ]
                     ),
                     @Content(
-                            mediaType = "application/json",
+                            mediaType = MediaType.APPLICATION_JSON,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''{"contents":"The readme contents"}''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'readme-json',
+                                    description = 'Readme JSON content',
+                                    value = '''{"contents":"The readme contents"}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -2033,7 +2192,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2105,7 +2264,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2116,7 +2275,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2154,7 +2313,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     @Operation(
             method = "PUT",
             summary = "Modify a project config",
-            description = """Replaces all configuration data with the submitted values.
+            description = """Replaces all configuration data with the submitted values. Any existing configuration properties not included in the request will be removed.
 The response, based on `Accept` header, can be returned in the Text, XML or Json format.
 
 Authorization required: `configure` access for `project` resource type or `admin` or `app_admin` access for `user` resource type.""",
@@ -2199,7 +2358,7 @@ key2=value'''
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2347,7 +2506,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2355,18 +2514,30 @@ Authorization required: `configure` access for `project` resource type or `admin
             description = "Project details",
             content = [
                     @Content(
-                            mediaType = "application/text",
+                            mediaType = MediaType.TEXT_PLAIN,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''key=value
-key2=value''')
+                            examples = [
+                                @ExampleObject(
+                                    name = 'config-text',
+                                    description = 'Project config in text format',
+                                    value = '''key=value
+key2=value'''
+                                )
+                            ]
                     ),
                     @Content(
-                            mediaType = "application/json",
+                            mediaType = MediaType.APPLICATION_JSON,
                             schema=@Schema(type='object'),
-                            examples = @ExampleObject('''{
+                            examples = [
+                                @ExampleObject(
+                                    name = 'config-json',
+                                    description = 'Project config in JSON format',
+                                    value = '''{
     "key":"value",
     "key2":"value2..."
-}''')
+}'''
+                                )
+                            ]
                     )
             ]
     )
@@ -2374,7 +2545,7 @@ key2=value''')
             responseCode = "404",
             description = "Not found",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2467,7 +2638,7 @@ Authorization required: `configure` access for `project` resource type or `admin
                                             @ExampleObject(
                                                     name = 'set-project-config',
                                                     summary = "Replace an individual config settings",
-                                                    value = '''{ "[KEY]" : "key value" }'''
+                                                    value = '''{ "value" : "key value" }'''
                                             )
                                     ]
                             ),
@@ -2513,7 +2684,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2542,7 +2713,7 @@ Authorization required: `configure` access for `project` resource type or `admin
             responseCode = "400",
             description = "Bad request to put project config",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2693,7 +2864,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2724,7 +2895,7 @@ Authorization required: `configure` access for `project` resource type or `admin
     @Operation(
             method = "GET",
             summary = "Export a zip archive of the project.",
-            description = """Performs the export to a zip archive of the project synchronously. 
+            description = """Performs the export to a zip archive of the project synchronously.  _For large projects, consider using the async export endpoint instead._
 Optional parameters:
 
 * executionIds a list (comma-separated) of execution IDs. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
@@ -2769,7 +2940,7 @@ Requires `export` authorization for the project resource.""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2781,7 +2952,7 @@ Requires `export` authorization for the project resource.""",
             responseCode = "400",
             description = "Bad request if it has error in the parameters",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -2924,7 +3095,7 @@ Requires `export` authorization for the project resource.""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -2949,11 +3120,282 @@ Requires `export` authorization for the project resource.""",
             responseCode = "400",
             description = "Bad request if it has error in the parameters",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
     protected def apiProjectExportAsync_docs() {}
+
+    @Post('/project/{project}/export')
+    @Operation(
+        method = 'POST',
+        summary = 'Export a zip archive of the project (POST).',
+        description = '''Performs the export to a zip archive of the project synchronously using POST method. _For large projects, consider using the async export endpoint instead._
+
+This is useful for large lists of execution IDs that exceed URL length limits when using GET.
+
+Parameters can be sent as application/x-www-form-urlencoded or as query parameters.
+
+Optional parameters:
+
+* executionIds a list (comma-separated) of execution IDs, or specified multiple times with a single ID per entry. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.''',
+        tags = ['Project'],
+        operationId = 'apiProjectExportPost_docs',
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'executionIds',
+                in = ParameterIn.QUERY,
+                description = 'A list (comma-separated) of execution IDs',
+                required = false,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'exportAll',
+                in = ParameterIn.QUERY,
+                description = 'Export all project contents (default: true)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportJobs',
+                in = ParameterIn.QUERY,
+                description = 'Include job definitions',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportExecutions',
+                in = ParameterIn.QUERY,
+                description = 'Include execution history',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportConfigs',
+                in = ParameterIn.QUERY,
+                description = 'Include project configuration',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportReadmes',
+                in = ParameterIn.QUERY,
+                description = 'Include readme/motd files',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportAcls',
+                in = ParameterIn.QUERY,
+                description = 'true/false, include project ACL Policy files, if authorized',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportScm',
+                in = ParameterIn.QUERY,
+                description = 'Include SCM configuration (API v28+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportWebhooks',
+                in = ParameterIn.QUERY,
+                description = 'Include webhooks (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'whkIncludeAuthTokens',
+                in = ParameterIn.QUERY,
+                description = 'Include auth tokens when exporting webhooks (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'whkRegenUuid',
+                in = ParameterIn.QUERY,
+                description = 'Regenerate UUIDs for webhooks on import (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'The project exported zip archive file',
+        content = @Content(
+            mediaType = 'application/zip',
+            schema = @Schema(type = 'string', format = 'binary')
+        )
+    )
+    @ApiResponse(
+        responseCode = '400',
+        description = 'Bad request if it has error in the parameters',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiProjectExportPost_docs() {}
+
+    @Post('/project/{project}/export/async')
+    @Operation(
+        method = 'POST',
+        summary = 'Export a zip archive of the project asynchronously (POST).',
+        description = '''Performs the export to a zip archive of the project asynchronously using POST method.
+This is useful for large lists of execution IDs that exceed URL length limits.
+
+Parameters can be sent as application/x-www-form-urlencoded or as query parameters.
+
+Optional parameters:
+
+* executionIds a list (comma-separated) of execution IDs, or specified multiple times with a single ID per entry. If this is specified then the archive will contain only executions that are specified, and will not contain Jobs, ACLs, or project configuration/readme files.
+
+In APIv19 or later:
+
+By default, exportALL=true. So, in order to not export empty data, you need to include one of the parameter flags.
+
+In APIv28 or later:
+
+* exportScm true/false, include project SCM configuration, if authorized
+
+In APIv34 or later:
+
+* exportWebhooks true/false, include project webhooks in the archive
+* whkIncludeAuthTokens true/false, include the auth token information when exporting webhooks, if not included the auth tokens will be regenerated upon import
+
+Requires `export` authorization for the project resource.
+
+Since: v19''',
+        tags = ['Project'],
+        operationId = 'apiProjectExportAsyncPost_docs',
+        parameters = [
+            @Parameter(
+                name = 'project',
+                in = ParameterIn.PATH,
+                description = 'Project Name',
+                required = true,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'executionIds',
+                in = ParameterIn.QUERY,
+                description = 'A list (comma-separated) of execution IDs',
+                required = false,
+                schema = @Schema(type = 'string')
+            ),
+            @Parameter(
+                name = 'exportAll',
+                in = ParameterIn.QUERY,
+                description = 'Export all project contents (default: true)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportJobs',
+                in = ParameterIn.QUERY,
+                description = 'Include job definitions',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportExecutions',
+                in = ParameterIn.QUERY,
+                description = 'Include execution history',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportConfigs',
+                in = ParameterIn.QUERY,
+                description = 'Include project configuration',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportReadmes',
+                in = ParameterIn.QUERY,
+                description = 'Include readme/motd files',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportAcls',
+                in = ParameterIn.QUERY,
+                description = 'true/false, include project ACL Policy files, if authorized',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportScm',
+                in = ParameterIn.QUERY,
+                description = 'Include SCM configuration (API v28+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'exportWebhooks',
+                in = ParameterIn.QUERY,
+                description = 'Include webhooks (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'whkIncludeAuthTokens',
+                in = ParameterIn.QUERY,
+                description = 'Include auth tokens when exporting webhooks (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            ),
+            @Parameter(
+                name = 'whkRegenUuid',
+                in = ParameterIn.QUERY,
+                description = 'Regenerate UUIDs for webhooks on import (API v34+)',
+                required = false,
+                schema = @Schema(type = 'boolean')
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = '200',
+        description = 'Returns the Token to retrieve export status and download zip archive',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ProjectExport)
+        )
+    )
+    @ApiResponse(
+        responseCode = '400',
+        description = 'Bad request if it has error in the parameters',
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse)
+        )
+    )
+    protected def apiProjectExportAsyncPost_docs() {}
 
 
     @Get('/project/{project}/export/status/{token}')
@@ -2986,7 +3428,7 @@ Since: v19""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3011,7 +3453,7 @@ Since: v19""",
             responseCode = "400",
             description = "Bad request if it has error in the parameters",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -3076,7 +3518,7 @@ Since: v19""",
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3088,7 +3530,7 @@ Since: v19""",
             responseCode = "400",
             description = "Bad request",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -3127,10 +3569,15 @@ Since: v19""",
                 "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\""
         )
 
-        outfile.withInputStream { instream ->
-            Streams.copy(instream, response.outputStream, false)
+        try {
+            outfile.withInputStream { instream ->
+                Streams.copy(instream, response.outputStream, false)
+            }
+        } catch (Exception e) {
+            throw new ProjectServiceException("Failed to deliver export file: ${e.message}", e)
+        } finally {
+            projectService.releasePromise(session.user, token)
         }
-        projectService.releasePromise(session.user, token)
     }
 
     @Put('/project/{project}/import')
@@ -3157,11 +3604,11 @@ If preserve (default) then imported job UUIDs will not be modified, and may conf
 If remove then all job UUIDs will be removed before importing.''', schema = @Schema(implementation = String.class)),
                     @Parameter(name = 'importExecutions', required = false, in = ParameterIn.QUERY, description = '''If true, import all executions and logs from the archive (default). 
 If false, do not import executions or logs.''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importConfig ', required = false, in = ParameterIn.QUERY, description = '''If true, import the project configuration from the archive. 
+                    @Parameter(name = 'importConfig', required = false, in = ParameterIn.QUERY, description = '''If true, import the project configuration from the archive. 
 If false, do not import the project configuration (default).''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importACL ', required = false, in = ParameterIn.QUERY, description = '''If true, import all of the ACL Policies from the archive. 
+                    @Parameter(name = 'importACL', required = false, in = ParameterIn.QUERY, description = '''If true, import all of the ACL Policies from the archive. 
 If false, do not import the ACL Policies (default).''', schema = @Schema(implementation = Boolean.class)),
-                    @Parameter(name = 'importScm ', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
+                    @Parameter(name = 'importScm', required = false, in = ParameterIn.QUERY, description = '''If true, import SCM configuration from the archive. 
 If false, do not import the SCM configuration (default).''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'importWebhooks', required = false, in = ParameterIn.QUERY, description = '''In APIv34 or later: If true, import the webhooks in the archive. 
 If false, do not import webhooks (default).''', schema = @Schema(implementation = Boolean.class)),
@@ -3171,7 +3618,7 @@ If no auth token info was included with the webhook, it will be generated (defau
                     @Parameter(name = 'importNodesSources', required = false, in = ParameterIn.QUERY, description = '''In APIv38 or later: If true, import Node Resources Source defined on project properties. 
 If false, do not import the nodes sources.''', schema = @Schema(implementation = Boolean.class)),
                     @Parameter(name = 'importComponents.NAME', required = false, in = ParameterIn.QUERY, description = '''Enable a component for import.
-Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Process Automation (Rundeck Enterprise) features.
+Project archives may contain "components" which can be imported, beyond the base set of contents. This includes some data used by Runbook Automation (prev. Rundeck Enterprise) features.
 
 For example, to enable Webhook import, you could use `importWebhooks` and `whkRegenAuthTokens` params, but those are simply shortcuts for the following parameters:
 
@@ -3185,7 +3632,7 @@ Import schedules definitions:
     )
     @Tags(
             [
-                    @Tag(name="project")
+                    @Tag(name="Project")
             ]
     )
     @ApiResponse(
@@ -3227,7 +3674,7 @@ Note: `other_errors` included since API v35""",
             responseCode = "400",
             description = "Bad request if it has error in the parameters",
             content = @Content(
-                    mediaType = "application/json",
+                    mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = ApiErrorResponse)
             )
     )
@@ -3471,7 +3918,7 @@ Since: v46"""
     )
     @Tags(
         [
-            @Tag(name="project")
+            @Tag(name="Project")
         ]
     )
     @ApiResponse(

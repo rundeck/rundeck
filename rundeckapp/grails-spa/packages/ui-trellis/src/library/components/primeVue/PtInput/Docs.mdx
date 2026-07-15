@@ -1,0 +1,80 @@
+import { Meta, Subtitle, Title, Canvas, Controls, Description, Stories } from "@storybook/blocks";
+import * as PtInputStories from './PtInput.stories'
+
+<Meta of={PtInputStories} />
+
+<Title />
+
+<Subtitle />
+[InputText component reference on primevue](https://primevue.org/llms/components/inputtext.md) | [IconField component reference on primevue](https://primevue.org/llms/components/iconfield.md)
+
+## Import
+
+```ts
+import PtInput from "@rundeck/ui-trellis/src/library/components/primeVue/PtInput.vue";
+```
+
+## Playground
+
+{/* Make sure your stories file has an export for playground, otherwise storybook will break */}
+
+<Canvas of={PtInputStories.Playground} sourceState="shown" />
+<Controls of={PtInputStories.Playground} />
+
+## How to use
+
+PtInput is a wrapper component that conditionally renders either:
+- **IconField + InputText** when `leftIcon` or `rightIcon` props are provided
+- **InputText** when no icons are needed
+
+The component supports:
+- **Labels**: Use the `label` prop to display text above the input (uses `text-heading--sm` typography class)
+- **Helper Text**: Use the `helpText` prop to display descriptive text below the label (uses `text-body--sm` typography class)
+- **Error States**: Set `invalid={true}` and provide `errorText` to display error messages (uses `text-body--sm` typography class with red color)
+- **Icons**: Provide `leftIcon` or `rightIcon` props with icon class names (e.g., `"pi pi-search"`) to render icons inside the input field
+- **All InputText props**: All standard InputText props are supported (placeholder, disabled, readonly, type, maxlength, autocomplete, etc.)
+
+### Key Props
+
+- `v-model`: Two-way binding for the input value
+- `label`: Text displayed above the input field
+- `helpText`: Helper text displayed below the label
+- `leftIcon` / `rightIcon`: Icon class names to display icons (triggers IconField rendering)
+- `invalid`: Boolean to show invalid/error state
+- `errorText`: Error message displayed when `invalid` is true
+- `disabled`: Boolean to disable the input
+
+### Example
+
+```vue
+<template>
+  <PtInput
+    v-model="username"
+    label="Username"
+    help-text="Enter your username to login"
+    left-icon="pi pi-user"
+    placeholder="Enter username"
+    :invalid="hasError"
+    error-text="Username is required"
+  />
+</template>
+```
+
+<Description of={PtInputStories} />
+
+<Stories title='' includePrimary={false} />
+
+
+## Accessibility
+
+PtInput renders a native input element that implicitly includes any passed prop. Value to describe the component can either be provided via:
+- `label` prop combined with `inputId` prop (creates proper label association)
+- `ariaLabel` prop for direct accessibility label
+- `ariaLabelledby` prop to reference an existing label element
+
+The component supports standard keyboard navigation:
+- **Tab**: Moves focus to the input
+- **Enter**: Submits form (when inside a form)
+- Standard text input keyboard interactions
+
+When using icons, ensure they are decorative or provide additional context. The input itself should be the primary focusable element.

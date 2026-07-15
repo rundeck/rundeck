@@ -9,4 +9,6 @@ public class ExecutionEnvironmentConstants {
 
     public static final String INTERNAL_USE_ONLY = "InternalUseOnly";
 
+
+    public static final String AUTOMATIC_WORKFLOW_STEP_RUNNER_ASSOCIATION= "automaticWorkflowStepRunnerAssociation";
 }

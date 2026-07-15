@@ -21,7 +21,7 @@
         jQuery('.export_select_list input[type=checkbox]').prop('checked', true);
     }
     function select_none() {
-        jQuery('.export_select_list input[type=checkbox]').val([]);
+        jQuery('.export_select_list input[type=checkbox]').prop('checked', false);
     }
     function deselect_one() {
         jQuery('.export_all').prop('checked', false);
@@ -37,6 +37,8 @@
         jQuery('.export_all').on('change', function () {
             if (jQuery(this).prop('checked')) {
                 select_all();
+            } else {
+                select_none();
             }
         });
         jQuery(document).ready(function(){

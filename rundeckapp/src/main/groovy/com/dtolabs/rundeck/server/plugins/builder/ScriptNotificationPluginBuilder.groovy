@@ -32,7 +32,8 @@ import org.slf4j.LoggerFactory
  * Date: 4/16/13
  * Time: 4:32 PM
  */
-class ScriptNotificationPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<NotificationPlugin>{
+class ScriptNotificationPluginBuilder extends ScriptPluginBuilder {
+    // Groovy 4: Cannot re-implement PluginBuilder with different type parameter
     static Logger logger = LoggerFactory.getLogger(ScriptNotificationPluginBuilder)
     Map<String, Closure> triggers=[:]
     ScriptNotificationPluginBuilder(Class clazz,String name) {

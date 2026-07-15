@@ -4,7 +4,7 @@ import OptionRemoteUrlConfig from "../OptionRemoteUrlConfig.vue";
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },
-    rdBase: "http://localhost:4440/",
+    rdBase: "http://localhost:4440",
     projectName: "testProject",
     apiVersion: "44",
   })),
@@ -39,7 +39,7 @@ describe("OptionRemoteUrlConfig", () => {
     ],
   ])(
     "shows validation errors for field %p",
-    async (fieldName: string, optData: any, errorName: string = null) => {
+    async (fieldName: string, optData: any, errorName: string | null = null) => {
       const wrapper = await mountOptionEdit(
         Object.assign(
           {

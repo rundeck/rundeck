@@ -147,7 +147,9 @@ describe("OptionView", () => {
       enforced: true,
     } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
-    const detail = wrapper.find(".enforceSet > .enforced");
+    const detail = wrapper.find(
+      ".enforceSet[data-test-enforced=enforced] > span",
+    );
     expect(detail.exists()).toBeTruthy();
     expect(detail.text()).toContain("option.view.enforced.placeholder");
     expect(detail.attributes().title).toContain("option.view.enforced.title");
@@ -160,23 +162,17 @@ describe("OptionView", () => {
     } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
 
-    const detail = wrapper.find(".enforceSet .regex");
+    const detail = wrapper.find(".enforceSet[data-test-enforced=regex] > code");
     expect(detail.exists()).toBeTruthy();
-    expect(detail.text()).toContain(regex);
-    expect(detail.attributes()["data-role"]).toEqual("trigger");
-    const note = wrapper.find(".enforceSet .info.note");
-    expect(note.exists()).toBeTruthy();
-    expect(note.text()).toEqual("option.view.regex.info.note");
-    const code = wrapper.find(".enforceSet code");
-    expect(code.exists()).toBeTruthy();
-    expect(code.text()).toEqual(regex);
+    expect(detail.text()).toEqual(regex);
+    expect(detail.attributes().title).toEqual("option.view.regex.info.note");
   });
   it("not enforced or regex text", async () => {
     const option = {
       name: "optionName",
     } as JobOption;
     const wrapper = await mountOptionView({ option, editable: true });
-    const detail = wrapper.find(".enforceSet > .any");
+    const detail = wrapper.find(".enforceSet[data-test-enforced=none] > span");
     expect(detail.exists()).toBeTruthy();
     expect(detail.text()).toContain("option.view.notenforced.placeholder");
     expect(detail.attributes().title).toContain(

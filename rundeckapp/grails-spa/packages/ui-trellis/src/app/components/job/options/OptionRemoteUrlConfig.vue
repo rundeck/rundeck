@@ -277,9 +277,9 @@
   </div>
 </template>
 <script lang="ts">
-import ErrorsList from "@/app/components/job/options/ErrorsList.vue";
-import KeyStorageSelector from "@/library/components/plugins/KeyStorageSelector.vue";
-import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import ErrorsList from "./ErrorsList.vue";
+import KeyStorageSelector from "../../../../library/components/plugins/KeyStorageSelector.vue";
+import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
 

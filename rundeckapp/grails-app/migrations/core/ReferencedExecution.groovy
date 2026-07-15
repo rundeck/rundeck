@@ -61,4 +61,15 @@ databaseChangeLog = {
             column(name: "status")
         }
     }
+
+    changeSet(author: "rundeckdev", id: "add-referenced-execution-execution-id-index") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(indexName: "REFEXEC_IDX_EXECUTION_ID", tableName: "referenced_execution")
+            }
+        }
+        createIndex(indexName: "REFEXEC_IDX_EXECUTION_ID", tableName: "referenced_execution", unique: false) {
+            column(name: "execution_id")
+        }
+    }
 }

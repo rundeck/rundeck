@@ -78,7 +78,7 @@ const mountSavedFilters = (
   });
 };
 describe("SavedFilters", () => {
-  let originalRemoveFilter;
+  let originalRemoveFilter: typeof ActivityFilterStore.prototype.removeFilter;
   beforeEach(() => {
     originalRemoveFilter = ActivityFilterStore.prototype.removeFilter;
     ActivityFilterStore.prototype.loadForProject = jest.fn().mockReturnValue({

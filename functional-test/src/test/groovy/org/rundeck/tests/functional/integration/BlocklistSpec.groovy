@@ -7,7 +7,7 @@ import org.rundeck.util.container.BaseContainer
 class BlocklistSpec extends BaseContainer {
 
 
-    public static final int EXPECTED_PLUGIN_LIST_SIZE = 61
+    public static final int EXPECTED_PLUGIN_LIST_SIZE = 62
     static List<String> BLOCKED_NAMES = [
             'cyberark',
             'openssh',

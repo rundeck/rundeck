@@ -6,7 +6,7 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import org.rundeck.app.access.InterceptorHelper
 import org.springframework.beans.factory.InitializingBean
 
-import javax.servlet.http.HttpServletResponse
+import jakarta.servlet.http.HttpServletResponse
 
 class AuthorizationInterceptor implements InitializingBean {
 

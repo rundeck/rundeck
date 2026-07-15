@@ -41,8 +41,7 @@ class JobExecSudoSpec extends BaseContainer{
         assert jobExecResponse.successful
         Execution exec = MAPPER.readValue(jobExecResponse.body().string(), Execution.class)
         then:
-        JobUtils.waitForExecution(
-                ExecutionStatus.SUCCEEDED.state,
+        JobUtils.waitForSuccess(
                 exec.id,
                 client,
                 WaitingTime.EXCESSIVE

@@ -62,6 +62,11 @@ class PluginTagLib {
             out << pluginIcon(service: options.get('icon:plugin:serviceName'), name: options.get('icon:plugin:provider'), body)
         }
     }
+    private String normalizeCssDimension(def value) {
+        def stringValue = value.toString().trim()
+        return stringValue.matches(/^\d+(\.\d+)?$/) ? stringValue + 'px' : stringValue
+    }
+    
     def pluginIcon = { attrs, body ->
         def service = attrs.get('service')
         def name = attrs.get('name')
@@ -75,7 +80,18 @@ class PluginTagLib {
                     action: 'pluginIcon',
                     params: [service: service, name: name]
             )
-            out << '<img style="border-radius: 2px;" '
+            
+            def width = attrs.remove('width')
+            def height = attrs.remove('height')
+            def styleValue = 'border-radius: 2px;'
+            if (width) {
+                styleValue += " width: ${normalizeCssDimension(width)};"
+            }
+            if (height) {
+                styleValue += " height: ${normalizeCssDimension(height)};"
+            }
+            
+            out << "<img style=\"${enc(attr: styleValue)}\" "
             attrs.each { k, v ->
                 if (v) {
                     out << " ${k}=\"${enc(attr: v)}\""

@@ -1,8 +1,9 @@
-import { defineComponent, markRaw, provide, reactive, ref } from "vue";
+import { defineComponent, markRaw, reactive, ref } from "vue";
 import { getRundeckContext } from "../../../../../library";
 
 import moment from "moment";
 import JobScmStatus from "@/app/pages/job/browse/tree/JobScmStatus.vue";
+import { JobBrowseItem } from "../../../../../library/types/jobs/JobBrowse";
 
 function init() {
   const rootStore = getRundeckContext().rootStore;
@@ -27,14 +28,13 @@ function init() {
                 job: true,
                 groupPath: "",
                 id: props.itemData.jobUuid,
-                meta: undefined,
-              },
+              } as JobBrowseItem,
             });
             let loading = ref(true);
 
             jobPageStore
               .getJobBrowser()
-              .loadJobMeta(scmItemData.job.id)
+              .loadJobMeta(scmItemData.job.id!)
               .then((jobMeta) => {
                 scmItemData.job.meta = jobMeta;
                 loading.value = false;

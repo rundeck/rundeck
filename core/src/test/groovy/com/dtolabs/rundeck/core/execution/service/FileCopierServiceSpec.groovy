@@ -1,8 +1,7 @@
 package com.dtolabs.rundeck.core.execution.service
 
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
-import com.dtolabs.rundeck.core.common.IServicesRegistration
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
@@ -20,7 +19,7 @@ class FileCopierServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> true
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig){
+                getFrameworkProject(_) >> Mock(IRundeckProject){
                     getProperty(_) >> null
                 }
             }
@@ -51,7 +50,7 @@ class FileCopierServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> false
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
+                getFrameworkProject(_) >> Mock(IRundeckProject)
             }
         }
         FileCopierService service = Spy(FileCopierService.getInstanceForFramework(framework,framework)){
@@ -84,7 +83,7 @@ class FileCopierServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> true
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
+                getFrameworkProject(_) >> Mock(IRundeckProject)
             }
         }
         FileCopierService service = Spy(FileCopierService.getInstanceForFramework(framework,framework)){
@@ -117,7 +116,7 @@ class FileCopierServiceSpec extends Specification {
         Framework framework =  Mock(Framework){
             isLocalNode(_) >> false
             getProjectManager() >> Mock(ProjectManager){
-                loadProjectConfig(_) >> Mock(IRundeckProjectConfig)
+                getFrameworkProject(_) >> Mock(IRundeckProject)
             }
         }
         FileCopierService service = Spy(FileCopierService.getInstanceForFramework(framework,framework)){

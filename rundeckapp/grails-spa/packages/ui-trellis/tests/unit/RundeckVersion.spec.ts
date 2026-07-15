@@ -49,4 +49,14 @@ describe("RundeckVersion", () => {
     expect(data.tag).toEqual("SNAPSHOT");
     expect(data.version).toEqual("2.3.4-SNAPSHOT");
   });
+
+  test("5.x uses mountain codenames (majorMinor + tilt modulo names5)", () => {
+    const v = mkvid("5.0.0");
+    expect(v.versionName()).toEqual("Denali");
+  });
+
+  test("6.x uses constellation codenames (majorMinor + tilt modulo names6)", () => {
+    expect(mkvid("6.0.0").versionName()).toEqual("Auriga");
+    expect(mkvid("6.1.0").versionName()).toEqual("Carina");
+  });
 });

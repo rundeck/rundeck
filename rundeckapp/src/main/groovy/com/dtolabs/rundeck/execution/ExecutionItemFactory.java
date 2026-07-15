@@ -23,7 +23,11 @@
 */
 package com.dtolabs.rundeck.execution;
 
+import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet;
+import com.dtolabs.rundeck.core.execution.PluginNodeStepExecutionItemImpl;
+import com.dtolabs.rundeck.core.execution.PluginStepExecutionItemImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.jobs.JobReferenceItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 
@@ -53,6 +57,27 @@ public class ExecutionItemFactory {
                 handler,
                 label,
                 filterConfigs
+        );
+    }
+
+    // New overload: accepts ConditionSet and forwards to plugin node step item with conditions
+    public static StepExecutionItem createScriptFileItem(
+            final String type,
+            final Map configuration,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String label,
+            final List<PluginConfiguration> filterConfigs,
+            final ConditionalSet conditions
+    ){
+        return ExecutionItemFactory.createPluginNodeStepItem(
+                type,
+                configuration,
+                keepgoingOnSuccess,
+                handler,
+                label,
+                filterConfigs,
+                conditions
         );
     }
 
@@ -98,7 +123,9 @@ public class ExecutionItemFactory {
                 null,
                 false,
                 false,
-                false
+                false,
+                null,
+                null
         );
     }
 
@@ -133,10 +160,119 @@ public class ExecutionItemFactory {
             final Boolean useName,
             final Boolean ignoreNotifications,
             final Boolean childNodes
+            )
+    {
+        return createJobRef(
+                jobIdentifier,
+                args,
+                nodeStep,
+                handler,
+                keepgoingOnSuccess,
+                nodeFilter,
+                nodeThreadcount,
+                nodeKeepgoing,
+                nodeRankAttribute,
+                nodeRankOrderAscending,
+                label,
+                nodeIntersect,
+                project,
+                failOnDisable,
+                importOptions,
+                uuid,
+                useName,
+                ignoreNotifications,
+                childNodes,
+                null,
+                null
+        );
+    }
+
+
+    /**
+     * Create step execution item for a job reference with workflow
+     *
+     * @param jobIdentifier
+     * @param args
+     * @param nodeStep
+     * @param handler
+     * @param keepgoingOnSuccess
+     *
+     * @return
+     */
+    public static StepExecutionItem createJobRef(
+            final String jobIdentifier,
+            final String[] args,
+            final boolean nodeStep,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String nodeFilter,
+            final Integer nodeThreadcount,
+            final Boolean nodeKeepgoing,
+            final String nodeRankAttribute,
+            final Boolean nodeRankOrderAscending,
+            final String label,
+            final Boolean nodeIntersect,
+            final String project,
+            final Boolean failOnDisable,
+            final Boolean importOptions,
+            final String uuid,
+            final Boolean useName,
+            final Boolean ignoreNotifications,
+            final Boolean childNodes,
+            final WorkflowExecutionItem workflow
     )
     {
+        return createJobRef(
+                jobIdentifier,
+                args,
+                nodeStep,
+                handler,
+                keepgoingOnSuccess,
+                nodeFilter,
+                nodeThreadcount,
+                nodeKeepgoing,
+                nodeRankAttribute,
+                nodeRankOrderAscending,
+                label,
+                nodeIntersect,
+                project,
+                failOnDisable,
+                importOptions,
+                uuid,
+                useName,
+                ignoreNotifications,
+                childNodes,
+                workflow,
+                null
+        );
+    }
 
-        return new JobReferenceItem(
+    // New full overload: accepts optional workflow and conditions and constructs JobReferenceItem including conditions
+    public static StepExecutionItem createJobRef(
+            final String jobIdentifier,
+            final String[] args,
+            final boolean nodeStep,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String nodeFilter,
+            final Integer nodeThreadcount,
+            final Boolean nodeKeepgoing,
+            final String nodeRankAttribute,
+            final Boolean nodeRankOrderAscending,
+            final String label,
+            final Boolean nodeIntersect,
+            final String project,
+            final Boolean failOnDisable,
+            final Boolean importOptions,
+            final String uuid,
+            final Boolean useName,
+            final Boolean ignoreNotifications,
+            final Boolean childNodes,
+            final WorkflowExecutionItem workflow,
+            final ConditionalSet conditions
+    )
+    {
+        JobReferenceItem jobReferenceItem = new JobReferenceItem(
                 label,
                 jobIdentifier,
                 args,
@@ -155,8 +291,13 @@ public class ExecutionItemFactory {
                 uuid,
                 useName,
                 ignoreNotifications,
-                childNodes
+                childNodes,
+                workflow
         );
+        if (conditions != null) {
+            jobReferenceItem.setConditions(conditions);
+        }
+        return jobReferenceItem;
     }
 
     /**
@@ -184,14 +325,30 @@ public class ExecutionItemFactory {
             final List<PluginConfiguration> filterConfigurations
     )
     {
+        return createPluginNodeStepItem(type, configuration, keepgoingOnSuccess, handler, label, filterConfigurations, null);
+    }
 
+    /**
+     * Create a workflow execution item for a plugin node step with conditions.
+     */
+    public static StepExecutionItem createPluginNodeStepItem(
+            final String type,
+            final Map configuration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem handler,
+            final String label,
+            final List<PluginConfiguration> filterConfigurations,
+            final ConditionalSet conditions
+    )
+    {
         return new PluginNodeStepExecutionItemImpl(
                 type,
                 configuration,
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                conditions
         );
     }
 
@@ -220,14 +377,31 @@ public class ExecutionItemFactory {
             final List<PluginConfiguration> filterConfigurations
     )
     {
+        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, filterConfigurations, null);
+    }
 
+    /**
+     * Create a workflow execution item for a plugin step with conditions.
+     */
+    public static StepExecutionItem createPluginStepItem(
+            final String type,
+            final Map configuration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem handler,
+            final String label,
+            final List<PluginConfiguration> filterConfigurations,
+            final ConditionalSet conditions
+    )
+    {
         return new PluginStepExecutionItemImpl(
                 type,
                 configuration,
                 keepgoingOnSuccess,
                 handler,
                 label,
-                filterConfigurations
+                filterConfigurations,
+                null,
+                conditions
         );
     }
 }

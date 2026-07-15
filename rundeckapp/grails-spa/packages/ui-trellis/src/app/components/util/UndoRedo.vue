@@ -4,7 +4,7 @@
       :class="{ disabled: !hasUndo }"
       @click="doUndo"
       size="xs"
-      data-test="undo-btn"
+      data-testid="undo-btn"
     >
       <i class="glyphicon glyphicon-step-backward"></i>
       {{ $t("util.undoredo.undo") }}
@@ -13,7 +13,7 @@
       :class="{ disabled: !hasRedo }"
       @click="doRedo"
       size="xs"
-      data-test="redo-btn"
+      data-testid="redo-btn"
     >
       {{ $t("util.undoredo.redo") }}
       <i class="glyphicon glyphicon-step-forward"></i>
@@ -24,7 +24,7 @@
       class="btn-muted"
       v-if="revertAllEnabled && hasUndo"
       @click="doRevertAll"
-      data-test="revertAll-btn"
+      data-testid="revertAll-btn"
     >
       <i class="glyphicon glyphicon-fast-backward"></i>
       {{ $t("util.undoredo.revertAll") }}
@@ -74,7 +74,7 @@ export default defineComponent({
       let newindex = this.index + 1;
       let change = this.stack[this.index];
       this.index = newindex;
-      this.eventBus.emit("undo", change);
+      this.eventBus?.emit("undo", change);
     },
     doRedo() {
       if (this.index < 1) {
@@ -83,23 +83,31 @@ export default defineComponent({
       let newindex = this.index - 1;
       let change = this.stack[newindex];
       this.index = newindex;
-      this.eventBus.emit("redo", change);
+      this.eventBus?.emit("redo", change);
     },
     doRevertAll() {
       this.index = this.stack.length;
-      this.eventBus.emit("revertAll");
+      this.eventBus?.emit("revertAll");
     },
   },
   mounted() {
-    this.eventBus.on("change", this.addChange);
+    this.eventBus?.on("change", this.addChange);
   },
   beforeUnmount() {
-    this.eventBus.off("change");
+    this.eventBus?.off("change");
   },
 });
 </script>
 <style scoped lang="scss">
 .flow-h > * + * {
   margin-left: var(--spacing-2);
+}
+</style>
+<style lang="scss">
+.edit-lock-disabled .btn.btn-xs.btn-default,
+.edit-lock-disabled .btn.btn-simple.btn-xs.btn-muted {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
 }
 </style>

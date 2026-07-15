@@ -31,7 +31,7 @@ export default {
         .request({
           method: "get",
           headers: { "x-rundeck-ajax": true },
-          url: `${window._rundeck.rdBase}menu/homeAjax`,
+          url: `${window._rundeck.rdBase}/menu/homeAjax`,
           params: {
             projects: `${window._rundeck.projectName}`,
           },

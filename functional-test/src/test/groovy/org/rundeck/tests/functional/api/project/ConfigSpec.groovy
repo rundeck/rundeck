@@ -26,7 +26,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when:
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -67,11 +67,10 @@ class ConfigSpec extends BaseContainer{
         def updatedValueForProp2 = "A better value2"
         def updatedBodyForProp2 = [ "key":"test.property2", "value":updatedValueForProp2 ]
 
-        def updated1 = client.doPutWithJsonBody("/project/${projectName}/config/test.property", updatedBodyForProp1)
-        assert updated1.successful
+        def updated1 = client.putWithJsonBody("/project/${projectName}/config/test.property", updatedBodyForProp1)
 
-        def updated2 = client.doPutWithJsonBody("/project/${projectName}/config/test.property2", updatedBodyForProp2)
-        assert updated2.successful
+
+        def updated2 = client.putWithJsonBody("/project/${projectName}/config/test.property2", updatedBodyForProp2)
 
         def responseForUpdatedProp1 = doGet("/project/${projectName}/config/test.property")
         assert responseForUpdatedProp1.successful
@@ -94,8 +93,8 @@ class ConfigSpec extends BaseContainer{
         def updatedValueForProp3 = "A better value3"
         def updatedBodyForProp3 = [ "key":"test.property3", "value":updatedValueForProp3 ]
 
-        def updated3 = client.doPutWithJsonBody("/project/${projectName}/config/test.property3", updatedBodyForProp3)
-        assert updated3.successful
+        def updated3 = client.putWithJsonBody("/project/${projectName}/config/test.property3", updatedBodyForProp3)
+
 
         def responseForUpdatedProp3 = doGet("/project/${projectName}/config/test.property3")
         assert responseForUpdatedProp3.successful
@@ -134,7 +133,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when:
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -172,8 +171,7 @@ class ConfigSpec extends BaseContainer{
                 "test.property":"updated value 1",
                 "test.property3":"created value 3"
         ]
-        def updatedResponse = client.doPutWithJsonBody("/project/${projectName}/config", updatedProps)
-        Map<String, Object> parsedUpdatedProps = MAPPER.readValue(updatedResponse.body().string(), HashMap<String, Object>.class)
+        Map<String, Object> parsedUpdatedProps = client.putWithJsonBody("/project/${projectName}/config", updatedProps)
 
         then:
         parsedUpdatedProps."test.property" == "updated value 1"
@@ -198,7 +196,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when:
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -235,7 +233,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when: "TEST: POST /api/14/projects"
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -252,7 +250,7 @@ class ConfigSpec extends BaseContainer{
         parsedResponse.config."test.property" == "test value"
 
         when: "TEST: POST /api/14/projects (existing project results in conflict)"
-        def conflictedResponse = client.doPost(
+        def conflictedResponse = doPost(
                 "/projects",
                 testProperties
         )
@@ -279,7 +277,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when: "TEST: POST /api/14/projects"
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -315,7 +313,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when: "TEST: POST /api/14/projects"
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -343,8 +341,8 @@ class ConfigSpec extends BaseContainer{
         def projectName = "RhetoricalMiscalculationElephant"
 
         when:
-        def response = client.doGet("/project/$projectName")
-        def parsedBody = MAPPER.readValue(response.body().string(), Object.class)
+        def response = doGet("/project/$projectName")
+        def parsedBody = jsonValue(response.body(), Map)
 
         then:
         response.code() == 404
@@ -359,7 +357,7 @@ class ConfigSpec extends BaseContainer{
         def projectName = "RhetoricalMiscalculationElephant"
 
         when: "We check only the format of the response, regardless of the content"
-        def jsonResponseBody = client.doGet("/project/$projectName")
+        def jsonResponseBody = doGet("/project/$projectName")
         def responseString = jsonResponseBody.body().string()
         def validJsonParse = MAPPER.readValue(responseString, Object.class)
 
@@ -376,7 +374,7 @@ class ConfigSpec extends BaseContainer{
         def projectName = "RhetoricalMiscalculationElephant"
 
         when:
-        def jsonResponseBody = client.doGet("/project/$projectName/resources")
+        def jsonResponseBody = doGet("/project/$projectName/resources")
 
         then:
         !jsonResponseBody.successful
@@ -389,7 +387,7 @@ class ConfigSpec extends BaseContainer{
         def client = getClient()
 
         when:
-        def jsonResponseBody = client.doGet("/project/someProject/resources")
+        def jsonResponseBody = doGet("/project/someProject/resources")
         def validJsonParse = MAPPER.readValue(jsonResponseBody.body().string(), Object.class)
 
         then:
@@ -414,7 +412,7 @@ class ConfigSpec extends BaseContainer{
         ]
 
         when:
-        def response = client.doPost(
+        def response = doPost(
                 "/projects",
                 testProperties
         )
@@ -430,7 +428,7 @@ class ConfigSpec extends BaseContainer{
         def client = getClient()
 
         when: "YAML"
-        def yamlResponse = client.doGet("/project/$PROJECT_NAME/resources?format=yaml")
+        def yamlResponse = doGet("/project/$PROJECT_NAME/resources?format=yaml")
         def responseBody = yamlResponse.body().string()
         MAPPER.readValue(responseBody, Object.class)
 
@@ -445,7 +443,7 @@ class ConfigSpec extends BaseContainer{
         yaml != null
 
         when:
-        def jsonResponse = client.doGet("/project/$PROJECT_NAME/resources?format=json")
+        def jsonResponse = doGet("/project/$PROJECT_NAME/resources?format=json")
         def responseJsonBody = jsonResponse.body().string()
         def json = MAPPER.readValue(responseJsonBody, Object.class)
 
@@ -509,7 +507,6 @@ class ConfigSpec extends BaseContainer{
         ]
         // Create test project with resources
         def createResponse = createSampleProject(projectMapJson)
-        assert createResponse.successful
         setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
 
         //Extract local nodename
@@ -571,7 +568,6 @@ class ConfigSpec extends BaseContainer{
         ]
         // Create test project with resources
         def createResponse = createSampleProject(projectMapJson)
-        assert createResponse.successful
         setupProjectArchiveDirectoryResource(projectName, "/projects-import/resourcesTest")
 
         //Extract local nodename
@@ -691,7 +687,6 @@ class ConfigSpec extends BaseContainer{
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         //Extract local nodename
         def systemInfoResponse = doGet("/system/info")
@@ -759,7 +754,7 @@ class ConfigSpec extends BaseContainer{
 
 
         when: "Update the first source with adding a new node"
-        def nodeUpdateResponse = client.doPost("/project/$projectName/source/1/resources", [
+        def nodeUpdateResponse = doPost("/project/$projectName/source/1/resources", [
             "mynode1": [
                 "nodename"   : "mynode1",
                 "description": "Updated node",
@@ -813,7 +808,6 @@ class ConfigSpec extends BaseContainer{
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-        assert responseProject.successful
 
         when: "We request source 1"
         def allSourcesResponse = client.doGetAcceptAll("/project/$projectName/sources")
@@ -834,8 +828,8 @@ class ConfigSpec extends BaseContainer{
         deleteProject(projectName)
     }
 
-    def createSampleProject = (Object projectJsonMap) -> {
-        return client.doPost("/projects", projectJsonMap)
+    def createSampleProject (Object projectJsonMap) {
+        return client.post("/projects", projectJsonMap)
     }
 
     boolean isYamlValid(String yamlString) {

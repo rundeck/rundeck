@@ -35,7 +35,7 @@
   
 
     <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
-        <asset:javascript src="vendor/vue.global.js.js"/>
+        <asset:javascript src="vendor/vue.global.js"/>
     </g:if>
     <g:else>
         <asset:javascript src="vendor/vue.global.prod.js"/>

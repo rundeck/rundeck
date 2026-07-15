@@ -18,7 +18,7 @@ package com.dtolabs.rundeck.app.api
 
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.CustomFormatter
-import org.apache.commons.lang.time.FastDateFormat
+import org.apache.commons.lang3.time.FastDateFormat
 
 /**
  * Wraps a date with a default and customizable format, use with {@link com.dtolabs.rundeck.app.api.marshall

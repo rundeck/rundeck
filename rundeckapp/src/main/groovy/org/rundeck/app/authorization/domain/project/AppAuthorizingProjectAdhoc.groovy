@@ -7,13 +7,14 @@ import groovy.transform.CompileStatic
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.access.NamedAuthProvider
+import org.rundeck.core.auth.access.ProjectIdentifier
 import org.rundeck.core.auth.access.Singleton
 import org.rundeck.core.auth.app.type.AuthorizingProjectAdhoc
 
 import javax.security.auth.Subject
 
 @CompileStatic
-class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, String>
+class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, ProjectIdentifier>
     implements AuthorizingProjectAdhoc {
 
     final String resourceTypeName = 'Adhoc Command'
@@ -22,7 +23,7 @@ class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, St
         final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject,
         final NamedAuthProvider namedAuthActions,
-        final String identifier
+        final ProjectIdentifier identifier
     ) {
         super(rundeckAuthContextProcessor, subject, namedAuthActions, identifier)
     }
@@ -44,12 +45,12 @@ class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, St
 
     @Override
     String getResourceIdent() {
-        return identifier
+        return identifier.project
     }
 
     @Override
     protected String getProject() {
-        identifier
+        return identifier.project
     }
 
 }

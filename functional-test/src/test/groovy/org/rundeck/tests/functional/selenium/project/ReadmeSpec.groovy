@@ -31,7 +31,6 @@ class ReadmeSpec extends SeleniumBase{
         when:
             loginPage.go()
             loginPage.login(TEST_USER, TEST_PASS)
-            homePage.validatePage()
             homePage.goProjectHome projectName
             sideBarPage.goTo NavLinkTypes.README
             readmePage.setReadmeMessage(readmeText)
@@ -40,6 +39,10 @@ class ReadmeSpec extends SeleniumBase{
             projectEditPage.clickNavLink(NavProjectSettings.USER_INTERFACE)
             projectEditPage.selectReadmeAllPlaces()
             projectEditPage.save()
+            // Save triggers POST + redirect; navigating immediately can abort the request so
+            // readme display settings never persist and the dashboard readme never renders.
+            projectEditPage.waitForUrlToNotContain('/configure')
+            homePage.goProjectHome projectName
         then:
             projectDashboard.getCheckReadme() == readmeText
         when:

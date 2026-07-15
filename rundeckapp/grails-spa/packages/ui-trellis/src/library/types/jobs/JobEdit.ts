@@ -22,9 +22,11 @@ export interface JobOption {
   sortValues?: boolean;
   valuesListDelimiter?: string;
   isDate?: boolean;
+  isMultiline?: boolean;
   dateFormat?: string;
   storagePath?: string;
   sortIndex?: number;
+  [key: string]: any;
 }
 
 export interface JobOptionEdit extends JobOption {

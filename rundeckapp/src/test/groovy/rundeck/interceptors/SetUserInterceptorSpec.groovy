@@ -25,7 +25,7 @@ import rundeck.services.UserService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.servlet.ServletContext
+import jakarta.servlet.ServletContext
 
 class SetUserInterceptorSpec extends Specification implements InterceptorUnitTest<SetUserInterceptor>, DataTest {
 
@@ -199,7 +199,9 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
         setup:
         User u1 = new User(login: "admin")
+        u1.id = 1L  // Explicitly set ID for Groovy 4 compatibility
         User u2 = new User(login: "whk")
+        u2.id = 2L  // Explicitly set ID for Groovy 4 compatibility
         AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"admin",type: null)
         AuthToken userTk2 = new AuthToken(token: "456", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.LEGACY)
         AuthToken userTk3 = new AuthToken(token: "ABC", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
@@ -286,6 +288,44 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         then:
             result
             request.invalidApiAuthentication
+    }
+
+    def "api token request authenticates even if session user is already set"() {
+        given:
+        User user = new User(login: "admin")
+        AuthToken token = new AuthToken(
+                token: "valid-token",
+                user: user,
+                authRoles: "admin",
+                type: AuthTokenType.USER,
+                tokenMode: AuthTokenMode.LEGACY
+        )
+        user.save()
+        token.save()
+
+        def apiService = new ApiService()
+        apiService.tokenDataProvider = new GormTokenDataProvider()
+        interceptor.apiService = apiService
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString(_, _) >> ""
+        }
+
+        request.api_version = 44
+        request.addHeader('X-RunDeck-Auth-Token', "valid-token")
+        session.user = "stale-user"
+
+        when:
+        boolean result = interceptor.before()
+
+        then:
+        result
+        !request.invalidApiAuthentication
+        request.authenticatedUser == "admin"
+        session.user == "admin"
+        request.subject.principals.find { it instanceof Username }?.name == "admin"
     }
 
     def "skip requiredRoles check if the call is performed by the runner"() {

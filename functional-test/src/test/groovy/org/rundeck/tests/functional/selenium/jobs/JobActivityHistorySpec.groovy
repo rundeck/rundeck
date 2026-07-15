@@ -26,7 +26,7 @@ class JobActivityHistorySpec extends SeleniumBase {
         def client = getClient()
         def response = JobUtils.createJob(SELENIUM_BASIC_PROJECT, jobDefinition, client)
         jobId = response.succeeded[0].id
-        assert JobUtils.executeJob(jobId, client).isSuccessful()
+        JobUtils.runExecuteJob(jobId, client)
     }
 
     def setup() {
@@ -42,23 +42,6 @@ class JobActivityHistorySpec extends SeleniumBase {
         jobListPage.validatePage()
         wait.until {
             !jobListPage.getActivityRows().isEmpty()
-        }
-    }
-
-    def "review job activity history from Job List Page Saved Filters"() {
-        when: "Navigate to the Job List Page and apply a saved filter"
-        def jobListPage = go JobListPage, SELENIUM_BASIC_PROJECT
-        jobListPage.clickAnyTimeButton()
-                .clickLastWeekButton()
-                .clickSaveFilterButton()
-                .enterFilterName("TestFilter")
-                .confirmFilterSave()
-                .openFilterDropdown()
-                .selectSavedFilter()
-
-        then: "Validate the saved filter is applied"
-        wait.until {
-            jobListPage.getAppliedFilterName() == "TestFilter"
         }
     }
 

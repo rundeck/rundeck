@@ -15,7 +15,7 @@
  */
 package com.dtolabs.rundeck.plugins.webhook;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 public interface WebhookResponder {
     void respond(HttpServletResponse response);

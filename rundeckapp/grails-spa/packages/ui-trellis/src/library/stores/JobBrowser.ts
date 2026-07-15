@@ -9,6 +9,8 @@ export class JobBrowserStoreItem {
   loaded: boolean = false;
   bpHit: boolean = false;
   meta: string = "*";
+  /** When set, sent as API `metaExclude` (v58+); default omits `stats` on browse. */
+  metaExclude: string | undefined = "stats";
   breakpoint: number = 100;
   children: JobBrowserStoreItem[] = [];
 
@@ -39,6 +41,8 @@ export class JobBrowserStoreItem {
           { job: false, groupPath: searchPath },
           searchPath,
         );
+        child.meta = this.meta;
+        child.metaExclude = this.metaExclude;
         this.children.push(child);
       } else {
         return null;
@@ -60,11 +64,14 @@ export class JobBrowserStoreItem {
       this.meta,
       this.breakpoint,
       jobPageStore.query,
+      this.metaExclude,
     );
     this.bpHit = this.breakpoint > 0 && result.items.length >= this.breakpoint;
     this.children = result.items.map((i) => {
       const item = new JobBrowserStoreItem(i, i.groupPath);
       item.item = i;
+      item.meta = this.meta;
+      item.metaExclude = this.metaExclude;
       if (!i.job) {
         item.path = i.groupPath;
       }
@@ -82,6 +89,8 @@ export class JobBrowserStore extends JobBrowserStoreItem {
     super({ job: false, groupPath: path }, path);
     this.path = path;
     this.jobPageStore = jobPageStore;
+    this.meta = "*";
+    this.metaExclude = "stats";
   }
 
   async loadItems(path: string): Promise<JobBrowseItem[]> {
@@ -98,6 +107,7 @@ export class JobBrowserStore extends JobBrowserStoreItem {
       this.jobPageStore.getProject(),
       jobUuid,
       this.meta,
+      this.metaExclude,
     );
   }
 

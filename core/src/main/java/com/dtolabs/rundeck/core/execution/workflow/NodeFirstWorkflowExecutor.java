@@ -28,6 +28,8 @@ import com.dtolabs.rundeck.core.NodesetEmptyException;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
@@ -108,6 +110,10 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                 WorkflowStatusResult sectionSuccess;
                 WorkflowDataResult sectionData;
 
+                // When node-keepgoing is active, exclude nodes that already failed in previous
+                // sections so that subsequent steps do not execute on them.
+                StepExecutionContext sectionContext = buildSectionContext(executionContext, trulyFailedNodes(failures));
+
                 StepExecutor
                         stepExecutor =
                         getFramework().getStepExecutorForItem(flowsection.getCommands().get(0),
@@ -115,7 +121,7 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
 
                 if (stepExecutor.isNodeDispatchStep(flowsection.getCommands().get(0))) {
                     WorkflowStatusDataResult workflowStatusDataResult = executeWFSectionNodeDispatch(
-                            executionContext,
+                            sectionContext,
                             stepCount,
                             results,
                             failures,
@@ -135,7 +141,7 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                     WFSharedContext currentData = new WFSharedContext(wfCurrentContext);
 
                     StepExecutionContext newContext =
-                            ExecutionContextImpl.builder(executionContext)
+                            ExecutionContextImpl.builder(sectionContext)
                                                 .sharedDataContext(currentData)
                                                 .stepNumber(stepCount)
                                                 .build();
@@ -166,8 +172,39 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                 if(sectionSuccess.getStatusString() !=null) {
                     statusString = sectionSuccess.getStatusString();
                 }
-                if (!workflowsuccess && !item.getWorkflow().isKeepgoing() || controlBehavior == ControlBehavior.Halt) {
+                if (controlBehavior == ControlBehavior.Halt) {
                     break;
+                }
+                if (!workflowsuccess && !item.getWorkflow().isKeepgoing()) {
+                    // With node-keepgoing enabled, continue subsequent sections for nodes that have
+                    // not yet failed — mirroring the behavior when all steps are in a single dispatch
+                    // section. The bypass only applies when:
+                    //   (a) the current section failed due to a node-dispatch failure (not a
+                    //       workflow-step failure), OR the current section succeeded but an earlier
+                    //       node-dispatch section failed, AND
+                    //   (b) node-keepgoing is active, AND
+                    //   (c) at least one node has not yet failed.
+                    boolean isSectionNodeDispatch =
+                            stepExecutor.isNodeDispatchStep(flowsection.getCommands().get(0));
+                    Set<String> failedNodes = trulyFailedNodes(failures);
+                    INodeSet allNodes = executionContext.getNodes();
+                    boolean hasSurvivingNodes;
+                    if (!sectionSuccess.isSuccess()) {
+                        // Current section failed: only bypass for node-dispatch section failures
+                        hasSurvivingNodes = isSectionNodeDispatch
+                                && executionContext.isKeepgoing()
+                                && allNodes != null
+                                && !failedNodes.containsAll(allNodes.getNodeNames());
+                    } else {
+                        // Current section succeeded, but an earlier section failed:
+                        // continue as long as there are surviving nodes
+                        hasSurvivingNodes = executionContext.isKeepgoing()
+                                && allNodes != null
+                                && !failedNodes.containsAll(allNodes.getNodeNames());
+                    }
+                    if (!hasSurvivingNodes) {
+                        break;
+                    }
                 }
                 stepCount += flowsection.getCommands().size();
             }
@@ -357,6 +394,69 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
             stepFailures.put(integer, NodeDispatchStepExecutor.wrapDispatcherResult(r));
         }
         return wfSharedContext;
+    }
+
+    /**
+     * Returns the set of node names that have at least one recorded failure in the given map.
+     * Entries created via {@code computeIfAbsent} with empty collections (e.g. for successfully
+     * dispatched nodes) are excluded so that only genuinely-failed nodes are returned.
+     *
+     * @param failures accumulated node-failure map from the section loop
+     * @return set of node names with at least one failure
+     */
+    private static Set<String> trulyFailedNodes(Map<String, Collection<StepExecutionResult>> failures) {
+        Set<String> failed = new HashSet<>();
+        for (Map.Entry<String, Collection<StepExecutionResult>> entry : failures.entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                failed.add(entry.getKey());
+            }
+        }
+        return failed;
+    }
+
+    /**
+     * Builds a section execution context for the given section of the workflow.
+     * When node-keepgoing is active ({@link StepExecutionContext#isKeepgoing()} is {@code true}),
+     * nodes present in {@code failedNodes} are excluded from the returned context so that
+     * subsequent sections do not execute on nodes that already failed in a previous section.
+     * If node-keepgoing is off, or there are no failed nodes, the original context is returned
+     * unchanged.
+     *
+     * @param context    original execution context
+     * @param failedNodes set of node names that have failed in preceding sections
+     * @return a context with failed nodes filtered out, or the original context if no filtering is needed
+     */
+    private StepExecutionContext buildSectionContext(
+            StepExecutionContext context,
+            Set<String> failedNodes
+    ) {
+        if (!context.isKeepgoing() || failedNodes.isEmpty() || context.getNodes() == null) {
+            return context;
+        }
+
+        Collection<String> allNodeNames = context.getNodes().getNodeNames();
+        Set<String> survivingNodeNames = new HashSet<>(allNodeNames);
+        survivingNodeNames.removeAll(failedNodes);
+
+        if (survivingNodeNames.size() == allNodeNames.size() || survivingNodeNames.isEmpty()) {
+            // No actual change needed (nothing to filter, or all failed — let caller decide)
+            return context;
+        }
+
+        NodeSetImpl filteredNodes = new NodeSetImpl();
+        for (String nodeName : survivingNodeNames) {
+            INodeEntry node = context.getNodes().getNode(nodeName);
+            if (node != null) {
+                filteredNodes.putNode(node);
+            }
+        }
+
+        // Only update the node set; the existing node selector (if any) will apply correctly
+        // against the already-filtered node set. Setting a new AND-selector would fail when the
+        // original selector is null (no-op / accept-all), so we leave the selector unchanged.
+        return ExecutionContextImpl.builder(context)
+                                   .nodes(filteredNodes)
+                                   .build();
     }
 
     private void mergeFailure(Map<String, Collection<StepExecutionResult>> destination, Map<String, Collection<StepExecutionResult>> source) {

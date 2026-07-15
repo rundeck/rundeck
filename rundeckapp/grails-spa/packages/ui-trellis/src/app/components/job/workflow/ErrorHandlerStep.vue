@@ -46,11 +46,11 @@
   </div>
 </template>
 <script lang="ts">
-import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
-import { ServiceType } from "@/library/stores/Plugins";
+import PluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
+import { ServiceType } from "../../../../library/stores/Plugins";
 import { PropType } from "vue";
-import { EditStepData } from "@/app/components/job/workflow/types/workflowTypes";
-import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";
+import { EditStepData } from "./types/workflowTypes";
+import JobRefStep from "./JobRefStep.vue";
 
 export default {
   name: "ErrorHandlerStep",

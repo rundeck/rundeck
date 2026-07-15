@@ -17,7 +17,10 @@
 <%@ page import="grails.util.Environment" %>
 <script type="text/javascript">
     <g:set var="currentProject" value="${params.project?:request.project}"/>
-    <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
+    <%
+        def projParams = currentProject ? [project: currentProject] : [:]
+    %>
+    <g:set var="projParams" value="${projParams}"/>
     var appLinks = {
         api_version: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         communityNews: '${createLink(controller: 'communityNews', action: 'index')}',
@@ -64,7 +67,6 @@
         scheduledExecutionActionMenuFragment: '${createLink(controller:"scheduledExecution",action:"actionMenuFragment",params:projParams)}',
         scheduledExecutionRunJobInline: '${createLink(controller:"scheduledExecution",action:"runJobInline",params:projParams)}',
         scheduledExecutionScheduleJobInline: '${createLink(controller:"scheduledExecution",action:"scheduleJobInline",params:projParams)}',
-        scheduledExecutionDetailFragment: '${createLink(controller:'scheduledExecution',action:'detailFragment',params: projParams)}',
         scheduledExecutionDetailFragmentAjax: '${createLink(controller:'scheduledExecution',action:'detailFragmentAjax',params: projParams)}',
         scheduledExecutionJobExecutionsAjax: '${createLink(controller:'scheduledExecution',action:'jobExecutionsAjax',params: projParams)}',
         scheduledExecutionSanitizeHtml: '${createLink(controller:'scheduledExecution',action:'sanitizeHtml',params: projParams)}',

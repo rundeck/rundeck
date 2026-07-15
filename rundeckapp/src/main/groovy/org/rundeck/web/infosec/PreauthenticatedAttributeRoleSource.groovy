@@ -16,7 +16,7 @@
 
 package org.rundeck.web.infosec
 
-import javax.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletRequest
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 

@@ -16,11 +16,11 @@ class ExecReportUtil {
         def adhocScript = null
         if (
                 null == job
-                        && exec.workflow.steps
-                        && exec.workflow.steps.size() == 1
-                        && exec.workflow.steps[0].pluginType == WorkflowStepConstants.TYPE_COMMAND
+                        && exec.getWorkflowData()?.steps
+                        && exec.getWorkflowData()?.steps.size() == 1
+                        && exec.getWorkflowData()?.steps[0].pluginType == WorkflowStepConstants.TYPE_COMMAND
         ) {
-            adhocScript = exec.workflow.steps[0].configuration.exec
+            adhocScript = exec.getWorkflowData()?.steps[0].configuration.exec
         }
         def summary = summarizeJob(exec)
         def issuccess = exec.statusSucceeded()
@@ -55,10 +55,10 @@ class ExecReportUtil {
 
     static String summarizeJob(ExecutionData exec){
         StringBuffer sb = new StringBuffer()
-        final def wfsize = exec?.workflow?.steps?.size() ?: 0
+        final def wfsize = exec?.getWorkflowData()?.steps?.size() ?: 0
 
         if(wfsize>0){
-            sb<<WorkflowStepUtil.summarize(exec.workflow.steps[0])
+            sb<<WorkflowStepUtil.summarize(exec?.getWorkflowData()?.steps[0])
         }else{
             sb<< "[Empty workflow]"
         }

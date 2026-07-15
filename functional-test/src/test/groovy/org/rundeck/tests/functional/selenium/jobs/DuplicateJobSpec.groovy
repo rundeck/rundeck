@@ -57,7 +57,7 @@ class DuplicateJobSpec extends SeleniumBase{
         jobShowPage.getDuplicateJobToProjectSubmitButton().click()
         jobCreatePage.saveJob()
         then:
-        jobShowPage.currentUrl().contains(duplicatedProjectName)
+        jobShowPage.waitForUrlToContain(duplicatedProjectName)
         jobShowPage.currentUrl().contains("/job/show/")
         cleanup:
         deleteProject(projectName)
