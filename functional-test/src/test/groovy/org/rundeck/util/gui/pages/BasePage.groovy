@@ -217,6 +217,22 @@ abstract class BasePage {
                 .until(ExpectedConditions.numberOfElementsToBeMoreThan(locator, number))
     }
 
+    /**
+     * Best-effort wait for more than the given number of elements matching locator.
+     * Returns quietly (false) if the condition is not met within duration, rather than throwing.
+     * Useful for observing a transient state (e.g. a loading indicator) that may appear and
+     * disappear faster than the caller can otherwise reliably catch, before waiting for it to clear.
+     */
+    boolean waitForNumberOfElementsToBeMoreThanIgnoringTimeout(By locator, Integer number, Duration duration = Duration.ofSeconds(3)) {
+        try {
+            new WebDriverWait(context.driver, duration)
+                    .until(ExpectedConditions.numberOfElementsToBeMoreThan(locator, number))
+            return true
+        } catch (org.openqa.selenium.TimeoutException ignored) {
+            return false
+        }
+    }
+
     WebElement waitIgnoringForElementVisible(WebElement locator) {
         new WebDriverWait(context.driver, Duration.ofSeconds(30))
                 .ignoring(StaleElementReferenceException.class)
