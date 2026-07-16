@@ -142,11 +142,15 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
      */
     public Map toMap(){
         final Map map = [jobref: [group: jobGroup ? jobGroup : '', name: jobName]]
-        if(jobProject){
-            map.jobref.project = jobProject
-        }
-        if(uuid){
-        	map.jobref.uuid = uuid
+        // When useName is true, we're using name-based reference, so don't include project or uuid
+        // This ensures that when the job is imported into a different project, it resolves correctly
+        if(!useName) {
+            if(jobProject){
+                map.jobref.project = jobProject
+            }
+            if(uuid){
+                map.jobref.uuid = uuid
+            }
         }
         if(argString){
             map.jobref.args=argString
@@ -208,11 +212,15 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
      */
     public Map toDescriptionMap(){
         final Map map = [jobref: [group: jobGroup ? jobGroup : '', name: jobName]]
-        if(jobProject){
-            map.jobref.project = jobProject
-        }
-        if(uuid){
-        	map.jobref.uuid = uuid
+        // When useName is true, we're using name-based reference, so don't include project or uuid
+        // This ensures that when the job is imported into a different project, it resolves correctly
+        if(!useName) {
+            if(jobProject){
+                map.jobref.project = jobProject
+            }
+            if(uuid){
+                map.jobref.uuid = uuid
+            }
         }
         if(nodeStep){
             map.jobref.nodeStep="true"
