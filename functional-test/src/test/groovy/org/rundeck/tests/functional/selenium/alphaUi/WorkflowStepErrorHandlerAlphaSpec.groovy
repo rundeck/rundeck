@@ -1,4 +1,4 @@
-package org.rundeck.tests.functional.selenium.jobs
+package org.rundeck.tests.functional.selenium.alphaUi
 
 import org.rundeck.util.annotations.AlphaUiSeleniumCoreTest
 import org.rundeck.util.container.SeleniumBase
