@@ -250,7 +250,22 @@ allprojects {
                     details.because 'httpcore5 5.4.2 fixes CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)'
                 }
             }
-            
+
+            // org.ehcache:ehcache:3.12.0 publishes plain (runtimeElements) and Jakarta
+            // (jakartaRuntimeElements) feature variants that both declare identical capabilities
+            // (ehcache-api, ehcache-core, ehcache-xml-provider, etc). grails-spring-security:7.1.4
+            // pulls the jakarta variant while some modules depend on the plain variant directly;
+            // Gradle can't auto-resolve two variants claiming the same capability, so always prefer
+            // jakarta here since Grails 7 / GORM 9 runs on Jakarta EE.
+            capabilitiesResolution.all { details ->
+                if (details.candidates.every { it.id.group == 'org.ehcache' && it.id.module == 'ehcache' }) {
+                    def jakartaCandidate = details.candidates.find { it.variantName.contains('jakarta') }
+                    if (jakartaCandidate != null) {
+                        details.select(jakartaCandidate)
+                    }
+                }
+            }
+
             // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
             force "com.google.protobuf:protobuf-java:${protobufVersion}" // CVE-2024-7254 fix
