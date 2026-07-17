@@ -22,6 +22,7 @@ import org.apache.logging.log4j.core.LoggerContext
 import org.rundeck.security.CliAuthTester
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
+import org.eclipse.jetty.util.security.Password
 import rundeckapp.Application
 import rundeckapp.cli.CommandLineSetup
 
@@ -588,13 +589,28 @@ class RundeckInitializer {
                 e.printStackTrace(System.err);
             }
             System.setProperty(SPRING_BOOT_KEYSTORE_PROP,sslProperties.getProperty(RUNDECK_KEYSTORE))
-            System.setProperty(SPRING_BOOT_KEYSTORE_PWD_PROP,sslProperties.getProperty(RUNDECK_KEYSTORE_PASSWORD))
-            System.setProperty(SPRING_BOOT_KEY_PWD_PROP,sslProperties.getProperty(RUNDECK_KEY_PASSWORD))
+            System.setProperty(SPRING_BOOT_KEYSTORE_PWD_PROP, deobfuscateIfNeeded(sslProperties.getProperty(RUNDECK_KEYSTORE_PASSWORD)))
+            System.setProperty(SPRING_BOOT_KEY_PWD_PROP, deobfuscateIfNeeded(sslProperties.getProperty(RUNDECK_KEY_PASSWORD)))
             System.setProperty(SPRING_BOOT_TRUSTSTORE_PROP,sslProperties.getProperty(RUNDECK_TRUSTSTORE))
-            System.setProperty(SPRING_BOOT_TRUSTSTORE_PWD_PROP,sslProperties.getProperty(RUNDECK_TRUSTSTORE_PASSWORD))
+            System.setProperty(SPRING_BOOT_TRUSTSTORE_PWD_PROP, deobfuscateIfNeeded(sslProperties.getProperty(RUNDECK_TRUSTSTORE_PASSWORD)))
             System.setProperty("server.port", config.runtimeConfiguration.getProperty("server.https.port"))
             System.setProperty(SPRING_BOOT_ENABLE_SSL_PROP,"true")
         }
+    }
+
+    /**
+     * Deobfuscate Jetty OBF:-prefixed passwords so Spring Boot's SSL bundle
+     * receives the actual password value. In Rundeck 5.x Jetty's SslContextFactory
+     * handled this internally; Spring Boot 3's JksSslStoreBundle does not.
+     *
+     * @param value the property value, possibly OBF:-prefixed
+     * @return the deobfuscated password, or the original value if not OBF:-prefixed
+     */
+    static String deobfuscateIfNeeded(String value) {
+        if (value != null && value.startsWith("OBF:")) {
+            return Password.deobfuscate(value)
+        }
+        return value
     }
 
     static String forwardSlashPath(final String input) {
