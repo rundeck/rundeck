@@ -914,9 +914,7 @@ tasks.withType(GenerateMavenPom).all {
     }
 }
 
-// WAR publication to Maven Central removed (RUN-4570).
-// The WAR (~240 MB) had zero dependents on Maven Central.
-// Distribution channels: Docker Hub, PackageCloud, GitHub Releases.
+// WAR publication to Sonatype/Maven Central removed (RUN-4570); the WAR is still built for distribution via Docker Hub, PackageCloud, and GitHub Releases.
 
 apply from: "${rootDir}/gradle/java.gradle"
 apply from: "../gradle/java-version.gradle"
