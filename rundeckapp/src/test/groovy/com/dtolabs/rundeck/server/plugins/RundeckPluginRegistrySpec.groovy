@@ -1054,7 +1054,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
     }
 
-    def "list plugin, one plugin exclude by using metadata EXCLUDE_PROVIDER_LIST_KEY "(){
+    def "list plugin, one plugin exclude by using metadata ExecutionEnvironmentConstants.INTERNAL_USE_ONLY "(){
         given:
         def description1 = DescriptionBuilder.builder()
                 .name('plugin1')
@@ -1114,6 +1114,38 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         result["plugin2"].description == description2
         result["plugin3"] == null
 
+    }
+
+    def "list plugin, one plugin excluded from service.listDescriptions() using metadata ExecutionEnvironmentConstants.INTERNAL_USE_ONLY"(){
+        given:
+        def visibleDescription = DescriptionBuilder.builder()
+                .name('jarplugin-visible')
+                .build()
+
+        def internalDescription = DescriptionBuilder.builder()
+                .name('jarplugin-internal')
+                .metadata(ExecutionEnvironmentConstants.INTERNAL_USE_ONLY, "true")
+                .build()
+
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = [:]
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+        sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist)
+        def svc = Mock(PluggableProviderService){
+            getName() >> "otherservice"
+            listProviders() >> []
+            listDescriptions() >> [visibleDescription, internalDescription]
+        }
+
+        when:
+        def result = sut.listPluginDescriptors(APluginType, svc)
+
+        then:
+        result.size() == 1
+        result['jarplugin-visible'] != null
+        result['jarplugin-internal'] == null
     }
 
     static class TestStreamingLogReaderPlugin implements StreamingLogReaderPlugin, Describable {

@@ -742,6 +742,19 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, d.name)){
                     return
                 }
+
+                Map<String, String> descMeta = d?.metadata ?: [:]
+
+                boolean excludeDesc = false
+                if(descMeta?.containsKey(ExecutionEnvironmentConstants.INTERNAL_USE_ONLY)) {
+                    excludeDesc = Boolean.parseBoolean(descMeta[ExecutionEnvironmentConstants.INTERNAL_USE_ONLY])
+                }
+
+                if(excludeDesc) {
+                    list.remove(d.name)
+                    return
+                }
+
                 if (!list[d.name]) {
                     list[d.name] = new DescribedPlugin<T>( null, null, d.name,null,null)
                 }
