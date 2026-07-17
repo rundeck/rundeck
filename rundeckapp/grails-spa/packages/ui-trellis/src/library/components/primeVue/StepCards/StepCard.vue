@@ -130,6 +130,7 @@ export default defineComponent({
       return this.errorHandlerData?.nodeStep ? "WorkflowNodeStep" : "WorkflowStep";
     },
     computedErrorHandlerProvider() {
+      if (this.errorHandlerData?.type === "job.reference") return "";
       return this.errorHandlerData?.type || "";
     },
   },
