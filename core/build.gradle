@@ -85,6 +85,9 @@ dependencies {
         "com.squareup.retrofit2:converter-jaxb:3.0.0",
         "jakarta.servlet:jakarta.servlet-api:${jakartaServletVersion}"
 
+    implementation "org.springframework.security:spring-security-crypto:${project.property('spring-security.version')}"
+    implementation "org.eclipse.jetty:jetty-util:${project.property('jetty.version')}"
+
     implementation ("commons-beanutils:commons-beanutils:${beanutilsVersion}")
 
     implementation ("org.apache.httpcomponents:httpclient:${httpClientVersion}"){
