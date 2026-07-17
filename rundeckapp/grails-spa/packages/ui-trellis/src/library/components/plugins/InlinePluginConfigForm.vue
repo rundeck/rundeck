@@ -37,6 +37,12 @@
         {{ $t("loading.text") }}
       </p>
     </div>
+    <div v-else-if="loadError" data-testid="inline-plugin-config-form-error">
+      <p>
+        <i class="fas fa-exclamation-triangle"></i>
+        {{ $t("InlinePluginConfigForm.loadError.message") }}
+      </p>
+    </div>
     <div v-if="showButtons" class="inline-form-footer">
       <btn data-testid="cancel-button" @click="$emit('cancel')">{{
         $t("Cancel")
@@ -81,7 +87,7 @@ export default defineComponent({
     },
     showButtons: {
       type: Boolean,
-      default: false,
+      default: true,
     },
   },
   emits: ["cancel", "save", "update:modelValue"],
@@ -90,23 +96,20 @@ export default defineComponent({
       editModel: {} as PluginConfig,
       provider: null,
       loading: false,
+      loadError: false,
       pluginConfigMode: "edit",
     };
   },
   watch: {
     async modelValue(val) {
       this.editModel = cloneDeep(val);
+      this.updatePluginConfigMode();
       await this.loadProvider();
     },
   },
   async mounted() {
     this.editModel = cloneDeep(this.modelValue);
-    if (
-      this.modelValue.config &&
-      Object.keys(this.modelValue.config).length === 0
-    ) {
-      this.pluginConfigMode = "create";
-    }
+    this.updatePluginConfigMode();
     await this.loadProvider();
   },
   methods: {
@@ -116,6 +119,12 @@ export default defineComponent({
      */
     getFormData() {
       return this.editModel;
+    },
+    updatePluginConfigMode() {
+      this.pluginConfigMode =
+        this.editModel.config && Object.keys(this.editModel.config).length === 0
+          ? "create"
+          : "edit";
     },
     onPluginConfigUpdate(updated: PluginConfig) {
       // pluginConfig only emits plugin fields (type/config). Merge instead of
@@ -132,17 +141,21 @@ export default defineComponent({
       if (this.editModel.type) {
         try {
           this.loading = true;
+          this.loadError = false;
           this.provider = await getServiceProviderDescription(
             this.serviceName,
             this.editModel.type,
           );
         } catch (e) {
           console.error("[InlinePluginConfigForm] loadProvider error:", e);
+          this.provider = null;
+          this.loadError = true;
         } finally {
           this.loading = false;
         }
       } else {
         this.loading = false;
+        this.loadError = false;
         this.provider = null;
       }
     },

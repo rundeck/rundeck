@@ -13,6 +13,7 @@ import WorkflowSteps from "../WorkflowSteps.vue";
 import { createTestingPinia } from "@pinia/testing";
 import { getRundeckContext } from "../../../../../library";
 import ErrorHandlerStep from "@/app/components/job/workflow/ErrorHandlerStep.vue";
+import InlinePluginConfigForm from "@/library/components/plugins/InlinePluginConfigForm.vue";
 
 jest.mock("@/library/modules/pluginService", () => ({
   getServiceProviderDescription: jest.fn(),
@@ -59,6 +60,11 @@ jest.mock("@/library/modules/pluginService");
 jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: jest.fn().mockImplementation(() => ({})),
 }));
+jest.mock("@/library/services/feature", () => ({
+  getFeatureEnabled: jest.fn().mockResolvedValue(true),
+}));
+
+const { getFeatureEnabled } = require("@/library/services/feature");
 
 /**
  * Persisted workflow JSON for simple exec steps: nested errorhandler uses the exec branch in
@@ -342,18 +348,22 @@ describe("WorkflowSteps", () => {
         ).toBe("Workflow.errorHandlerDescription");
       });
 
-      it("edits existing error handler", async () => {
+      it("edits existing error handler inline instead of opening a modal", async () => {
         const errorHandlerStep = wrapper.findComponent(ErrorHandlerStep);
         errorHandlerStep.vm.$emit("edit");
         await wrapper.vm.$nextTick();
 
-        const editModal = wrapper.findAllComponents(EditPluginModal)[2];
-        editModal.vm.$emit("update:modelValue", {
+        expect(
+          wrapper.find('[data-test="inline-error-handler-form"]').exists(),
+        ).toBe(true);
+        expect(wrapper.findComponent(ErrorHandlerStep).exists()).toBe(false);
+
+        const inlineForm = wrapper.findComponent(InlinePluginConfigForm);
+        inlineForm.vm.$emit("update:modelValue", {
           type: "exec-command",
           config: { adhocRemoteString: "new-error" },
         });
-
-        editModal.vm.$emit("save");
+        inlineForm.vm.$emit("save");
         await flushPromises();
 
         const emittedValue = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
@@ -367,6 +377,145 @@ describe("WorkflowSteps", () => {
             nodeStep: true,
           },
         });
+      });
+
+      it("adds a new error handler via the inline form", async () => {
+        const localWrapper = await createWrapper(
+          { commands: [{ ...baseCommand, errorhandler: undefined }] },
+          {
+            popover: { template: `<div><slot/></div>` },
+            tabs: { template: `<div><slot/></div>` },
+            tab: { template: `<div><slot/></div>` },
+          },
+        );
+
+        const addErrorHandlerButton = localWrapper.find(
+          "[data-test='add-error-handler']",
+        );
+        await addErrorHandlerButton.trigger("click");
+        await localWrapper.vm.$nextTick();
+
+        const chooseModal = localWrapper.findAllComponents(ChoosePluginModal)[0];
+        chooseModal.vm.$emit("selected", {
+          service: "WorkflowNodeStep",
+          provider: "exec-command",
+        });
+        await localWrapper.vm.$nextTick();
+
+        expect(
+          localWrapper.find('[data-test="inline-error-handler-form"]').exists(),
+        ).toBe(true);
+
+        const inlineForm = localWrapper.findComponent(InlinePluginConfigForm);
+        inlineForm.vm.$emit("update:modelValue", {
+          type: "exec-command",
+          config: { adhocRemoteString: "new handler" },
+        });
+        inlineForm.vm.$emit("save");
+        await flushPromises();
+
+        const emittedValue = localWrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
+        expect(
+          (emittedValue["commands"] as unknown[])[0],
+        ).toMatchObject({
+          errorhandler: {
+            exec: "new handler",
+            keepgoingOnSuccess: false,
+            nodeStep: true,
+          },
+        });
+      });
+
+      it("cancels inline error handler edit without emitting an update", async () => {
+        const errorHandlerStep = wrapper.findComponent(ErrorHandlerStep);
+        errorHandlerStep.vm.$emit("edit");
+        await wrapper.vm.$nextTick();
+
+        const inlineForm = wrapper.findComponent(InlinePluginConfigForm);
+        inlineForm.vm.$emit("cancel");
+        await wrapper.vm.$nextTick();
+
+        expect(
+          wrapper.find('[data-test="inline-error-handler-form"]').exists(),
+        ).toBe(false);
+        expect(wrapper.findComponent(ErrorHandlerStep).exists()).toBe(true);
+      });
+
+      it("falls back to the legacy EditPluginModal when earlyAccessJobConditional is disabled (backward compatibility)", async () => {
+        getFeatureEnabled.mockResolvedValueOnce(false);
+        const localWrapper = await createWrapper(
+          {
+            commands: [{ ...baseCommand }, { ...baseCommand, errorhandler: undefined }],
+          },
+          {
+            popover: { template: `<div><slot/></div>` },
+            tabs: { template: `<div><slot/></div>` },
+            tab: { template: `<div><slot/></div>` },
+          },
+        );
+
+        const errorHandlerStep = localWrapper.findComponent(ErrorHandlerStep);
+        errorHandlerStep.vm.$emit("edit");
+        await localWrapper.vm.$nextTick();
+
+        expect(
+          localWrapper.find('[data-test="inline-error-handler-form"]').exists(),
+        ).toBe(false);
+        expect(localWrapper.findComponent(InlinePluginConfigForm).exists()).toBe(
+          false,
+        );
+
+        const editModal = localWrapper.findAllComponents(EditPluginModal)[2];
+        expect(editModal.exists()).toBe(true);
+        editModal.vm.$emit("update:modelValue", {
+          type: "exec-command",
+          config: { adhocRemoteString: "legacy-modal-error" },
+        });
+        editModal.vm.$emit("save");
+        await flushPromises();
+
+        const emittedValue = localWrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
+        expect(
+          (emittedValue["commands"] as unknown[])[0],
+        ).toMatchObject({
+          errorhandler: {
+            exec: "legacy-modal-error",
+            keepgoingOnSuccess: false,
+            nodeStep: true,
+          },
+        });
+      });
+
+      it("adds a new error handler via the legacy modal when earlyAccessJobConditional is disabled", async () => {
+        getFeatureEnabled.mockResolvedValueOnce(false);
+        const localWrapper = await createWrapper(
+          { commands: [{ ...baseCommand, errorhandler: undefined }] },
+          {
+            popover: { template: `<div><slot/></div>` },
+            tabs: { template: `<div><slot/></div>` },
+            tab: { template: `<div><slot/></div>` },
+          },
+        );
+
+        const addErrorHandlerButton = localWrapper.find(
+          "[data-test='add-error-handler']",
+        );
+        await addErrorHandlerButton.trigger("click");
+        await localWrapper.vm.$nextTick();
+
+        const chooseModal = localWrapper.findAllComponents(ChoosePluginModal)[0];
+        chooseModal.vm.$emit("selected", {
+          service: "WorkflowNodeStep",
+          provider: "exec-command",
+        });
+        await localWrapper.vm.$nextTick();
+
+        expect(
+          localWrapper.find('[data-test="inline-error-handler-form"]').exists(),
+        ).toBe(false);
+
+        const editModal = localWrapper.findAllComponents(EditPluginModal)[1];
+        expect(editModal.exists()).toBe(true);
       });
     });
 

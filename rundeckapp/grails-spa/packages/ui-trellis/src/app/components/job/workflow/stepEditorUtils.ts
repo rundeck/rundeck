@@ -16,9 +16,16 @@ export interface PluginDetails {
   providerMetadata?: { glyphicon?: string; faicon?: string; fabicon?: string };
 }
 
+/** Field name -> error message, as returned by validatePluginConfig. */
+export type FieldValidationErrors = Record<string, string>;
+
 export interface ValidationResult {
   valid: boolean;
-  errors: Record<string, string>;
+  /**
+   * Field-level errors (jobref, plugin config fields, `_general`), plus an
+   * optional nested `errorhandler` map for error-handler-specific field errors.
+   */
+  errors: Record<string, string | FieldValidationErrors>;
 }
 
 /**
@@ -174,19 +181,53 @@ export async function validateStepForSave(
       step.config || {},
     );
 
-    if (response.valid && Object.keys(response.errors || {}).length === 0) {
-      return { valid: true, errors: {} };
+    if (!response.valid || Object.keys(response.errors || {}).length > 0) {
+      return {
+        valid: false,
+        errors: response.errors || {},
+      };
     }
-
-    return {
-      valid: false,
-      errors: response.errors || {},
-    };
   } catch (e) {
     console.error("Error validating plugin config:", e);
     return {
       valid: false,
       errors: { _general: "Validation failed due to an error" },
+    };
+  }
+
+  if (!step.errorhandler?.type || step.errorhandler.jobref) {
+    return { valid: true, errors: {} };
+  }
+
+  const errorHandlerService = step.errorhandler.nodeStep
+    ? ServiceType.WorkflowNodeStep
+    : ServiceType.WorkflowStep;
+
+  try {
+    const errorHandlerResponse = await validatePluginConfig(
+      errorHandlerService,
+      step.errorhandler.type,
+      step.errorhandler.config || {},
+    );
+
+    if (
+      errorHandlerResponse.valid &&
+      Object.keys(errorHandlerResponse.errors || {}).length === 0
+    ) {
+      return { valid: true, errors: {} };
+    }
+
+    return {
+      valid: false,
+      errors: { errorhandler: errorHandlerResponse.errors || {} },
+    };
+  } catch (e) {
+    console.error("Error validating error handler config:", e);
+    return {
+      valid: false,
+      errors: {
+        errorhandler: { _general: "Validation failed due to an error" },
+      },
     };
   }
 }

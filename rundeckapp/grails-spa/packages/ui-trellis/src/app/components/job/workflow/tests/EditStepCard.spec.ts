@@ -821,4 +821,271 @@ describe("EditStepCard", () => {
       expect((wrapper.find('[data-testid="step-description"]').element as HTMLInputElement).value).toBe("Updated");
     });
   });
+
+  describe("Error handler and log filter sections (RUN-4315 core parity)", () => {
+    const mockErrorHandler = {
+      id: "eh-1",
+      type: "exec",
+      config: { exec: "echo hello" },
+      nodeStep: true,
+      keepgoingOnSuccess: false,
+    };
+
+    const mockLogFilter = {
+      type: "mask-passwords",
+      config: { pattern: "secret" },
+    };
+
+    const ConfigSectionStub = {
+      name: "ConfigSection",
+      template: `<div>
+        <button data-testid="config-section-add-btn" @click="$emit('addElement')">+ Add</button>
+        <div v-for="(el, i) in modelValue" :key="i" data-testid="config-section-chip" @click="$emit('editElement', el, i)">
+          {{ el.type }}
+          <button data-testid="config-section-remove-btn" @click.stop="$emit('removeElement', i)">x</button>
+        </div>
+        <slot name="content" />
+      </div>`,
+      props: ["title", "tooltip", "modelValue", "hideWhenSingle", "hideIcon", "isEditView"],
+      emits: ["addElement", "removeElement", "editElement", "update:modelValue"],
+    };
+
+    const InlinePluginConfigFormStub = {
+      name: "InlinePluginConfigForm",
+      template: `<div data-testid="inline-plugin-config-form-stub"><slot name="extra" /></div>`,
+      props: ["modelValue", "serviceName", "validation", "extraAutocompleteVars", "showButtons"],
+      emits: ["update:modelValue", "save", "cancel"],
+      methods: {
+        getFormData(this: { modelValue: Record<string, unknown> }) {
+          return this.modelValue;
+        },
+      },
+    };
+
+    const createSectionWrapper = async (
+      props: EditStepCardTestProps = {},
+    ): Promise<VueWrapper<InstanceType<typeof EditStepCard>>> => {
+      const wrapper = shallowMount(EditStepCard, {
+        props: {
+          modelValue: {
+            type: "script-inline",
+            config: {},
+            nodeStep: true,
+            id: "test-step-1",
+          },
+          serviceName: "WorkflowNodeStep",
+          pluginDetails: mockPluginProvider,
+          ...props,
+        },
+        global: {
+          stubs: {
+            BaseStepCard: BaseStepCardStub,
+            JobRefFormFields: JobRefFormFieldsStub,
+            pluginConfig: pluginConfigStub,
+            PtButton: PtButtonStub,
+            PtInput: PtInputStub,
+            ConfigSection: ConfigSectionStub,
+            inlinePluginConfigForm: InlinePluginConfigFormStub,
+          },
+        },
+      });
+      await wrapper.vm.$nextTick();
+      await flushPromises();
+      return wrapper;
+    };
+
+    it("shows the inline error handler form (no chip) when an error handler exists", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-step-1",
+          errorhandler: mockErrorHandler,
+        },
+      });
+
+      expect(
+        wrapper.find('[data-testid="inline-plugin-config-form-stub"]').exists(),
+      ).toBe(true);
+      expect((wrapper.vm as any).showInlineErrorHandlerForm).toBe(true);
+    });
+
+    it("shows a chip (not the inline form) for log filters", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-step-1",
+          filters: [mockLogFilter],
+        },
+      });
+
+      const logFilterSection = wrapper.find('[data-testid="log-filter-section"]');
+      expect(logFilterSection.find('[data-testid="config-section-chip"]').exists()).toBe(true);
+    });
+
+    it("clicking + Add on the error handler section emits add-error-handler", async () => {
+      const wrapper = await createSectionWrapper();
+
+      const errorHandlerSection = wrapper.find('[data-testid="error-handler-section"]');
+      await errorHandlerSection
+        .find('[data-testid="config-section-add-btn"]')
+        .trigger("click");
+
+      expect(wrapper.emitted("add-error-handler")).toHaveLength(1);
+    });
+
+    it("clicking + Add on the log filter section emits add-log-filter", async () => {
+      const wrapper = await createSectionWrapper();
+
+      const logFilterSection = wrapper.find('[data-testid="log-filter-section"]');
+      await logFilterSection
+        .find('[data-testid="config-section-add-btn"]')
+        .trigger("click");
+
+      expect(wrapper.emitted("add-log-filter")).toHaveLength(1);
+    });
+
+    it("removing the log filter chip emits remove-log-filter with its index", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-step-1",
+          filters: [mockLogFilter],
+        },
+      });
+
+      const logFilterSection = wrapper.find('[data-testid="log-filter-section"]');
+      await logFilterSection
+        .find('[data-testid="config-section-remove-btn"]')
+        .trigger("click");
+
+      expect(wrapper.emitted("remove-log-filter")).toHaveLength(1);
+      expect((wrapper.emitted("remove-log-filter") as any[])[0][0]).toBe(0);
+    });
+
+    it("editing an existing error handler does not open a modal (edit-error-handler is not emitted)", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-step-1",
+          errorhandler: mockErrorHandler,
+        },
+      });
+
+      const errorHandlerSection = wrapper.find('[data-testid="error-handler-section"]');
+      const chip = errorHandlerSection.find('[data-testid="config-section-chip"]');
+      if (chip.exists()) {
+        await chip.trigger("click");
+      }
+
+      expect(wrapper.emitted("edit-error-handler")).toBeUndefined();
+    });
+
+    it("Save persists the edited error handler config from the inline form", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-step-1",
+          errorhandler: mockErrorHandler,
+        },
+      });
+
+      const inlineForm = wrapper.findComponent({ name: "InlinePluginConfigForm" });
+      await inlineForm.vm.$emit("update:model-value", {
+        type: "exec",
+        config: { exec: "echo updated" },
+      });
+
+      await wrapper.find('[data-testid="save-button"]').trigger("click");
+      await flushPromises();
+
+      const emissions = wrapper.emitted("update:modelValue");
+      const savedStep = emissions?.[emissions.length - 1]?.[0] as any;
+      expect(savedStep.errorhandler.config.exec).toBe("echo updated");
+    });
+
+    it("Save preserves keepgoingOnSuccess after the checkbox is checked", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-step-1",
+          errorhandler: { ...mockErrorHandler, keepgoingOnSuccess: false },
+        },
+      });
+
+      const checkbox = wrapper.find("#editStepKeepgoingOnSuccess");
+      await checkbox.setValue(true);
+
+      await wrapper.find('[data-testid="save-button"]').trigger("click");
+      await flushPromises();
+
+      const emissions = wrapper.emitted("update:modelValue");
+      const savedStep = emissions?.[emissions.length - 1]?.[0] as any;
+      expect(savedStep.errorhandler.keepgoingOnSuccess).toBe(true);
+    });
+
+    it("Save includes filters carried over from modelValue", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-step-1",
+          filters: [mockLogFilter],
+        },
+      });
+
+      await wrapper.find('[data-testid="save-button"]').trigger("click");
+      await flushPromises();
+
+      const emissions = wrapper.emitted("update:modelValue");
+      const savedStep = emissions?.[emissions.length - 1]?.[0] as any;
+      expect(savedStep.filters[0].config.pattern).toBe("secret");
+    });
+
+    it("Cancel emits cancel without touching the error handler/log filter sections", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "script-inline",
+          config: {},
+          nodeStep: true,
+          id: "test-step-1",
+          errorhandler: mockErrorHandler,
+          filters: [mockLogFilter],
+        },
+      });
+
+      await wrapper.find('[data-testid="cancel-button"]').trigger("click");
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("cancel")).toHaveLength(1);
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+    });
+
+    it("does not render error handler or log filter sections for job reference steps", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "job.reference",
+          config: {},
+          nodeStep: false,
+          id: "test-step-1",
+          jobref: { name: "test-job", group: "", uuid: "" },
+        },
+      });
+
+      expect(wrapper.find('[data-testid="error-handler-section"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="log-filter-section"]').exists()).toBe(false);
+    });
+  });
 });
