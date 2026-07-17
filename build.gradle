@@ -303,10 +303,10 @@ allprojects {
     }
 
     // resolutionStrategy.force cannot override versions managed by the Spring Boot dependency
-    // management plugin (which applies grails-bom entries as strict constraints, e.g. asm:9.10).
-    // Must use the plugin's own API to pin ASM above the BOM version; otherwise rundeckapp's own
-    // runtimeClasspath (bundled by bootWar) still carries the un-forced BOM version, which causes
-    // duplicate asm/asm-util jars when rundeckpro's enterprise packaging merges it in.
+    // management plugin (which applies grails-bom entries as strict constraints, e.g. asm:9.10 and
+    // kotlin-stdlib:1.9.25). Must use the plugin's own API to pin these above the BOM version;
+    // otherwise rundeckapp's own runtimeClasspath (bundled by bootWar) still carries the un-forced
+    // BOM version, which causes duplicate jars when rundeckpro's enterprise packaging merges it in.
     plugins.withId('io.spring.dependency-management') {
         dependencyManagement {
             dependencies {
@@ -315,6 +315,7 @@ allprojects {
                 dependency "org.ow2.asm:asm-commons:${asmVersion}"
                 dependency "org.ow2.asm:asm-analysis:${asmVersion}"
                 dependency "org.ow2.asm:asm-util:${asmVersion}"
+                dependency "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
             }
         }
     }
