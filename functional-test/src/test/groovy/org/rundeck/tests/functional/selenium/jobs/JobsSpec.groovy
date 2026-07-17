@@ -950,6 +950,13 @@ class JobsSpec extends SeleniumBase {
     }
 
     // Default-only: legacy parity is covered by the other workflow-step methods that iterate UI_MODES.
+    // The `earlyAccessJobConditional` flag (RUN-4317's inline error-handler form) is not exercised
+    // here: OSS has no runtime API to toggle it (only a RUNDECK_FEATURE_*_ENABLED env var baked in
+    // at container startup), so this container always runs with it disabled -- i.e. exactly the
+    // state this test already covers. The flag-enabled inline-form path in WorkflowSteps.vue is
+    // covered by Jest (WorkflowSteps.spec.ts); the pro EA-mode inline form is covered by
+    // ConditionalStepSpec (pro-functional-test), since a pro deployment with the flag on replaces
+    // this whole DOM region with pro's own component tree.
     def "Error handlers"() {
         when:
         def jobCreatePage = go(JobCreatePage, SELENIUM_BASIC_PROJECT)
@@ -958,6 +965,8 @@ class JobsSpec extends SeleniumBase {
         then: "Add error handler and check that its not possible to add more error handlers to same step"
         jobCreatePage.addErrorHandler( 'exec-command',  StepType.NODE)
         assert jobCreatePage.waitForDropdownOptionAbsent(0, "add-error-handler")
+        and: "the inline error-handler form never renders (earlyAccessJobConditional is disabled)"
+        !jobCreatePage.isInlineErrorHandlerFormVisible()
         then: "Duplicate step and remove duplicated error handler"
         jobCreatePage.scrollToElement(jobCreatePage.duplicateWfStepButton)
         jobCreatePage.duplicateWfStepButton.click()

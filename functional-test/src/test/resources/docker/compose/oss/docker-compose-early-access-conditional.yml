@@ -1,0 +1,116 @@
+services:
+  rundeck:
+    build:
+      context: "."
+      args:
+        IMAGE: ${TEST_IMAGE:-rundeck/rundeck:SNAPSHOT}
+    platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
+    hostname: rundeck-oss-server-node
+    environment:
+      RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
+      RUNDECK_DATABASE_USERNAME: rundeck
+      RUNDECK_DATABASE_PASSWORD: rundeck
+      RUNDECK_DATABASE_URL: jdbc:mysql://rundeck-db/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL:-http://localhost:4440}
+      RUNDECK_SERVER_FORWARDED: 'true'
+      RUNDECK_TOKENS_FILE: /home/rundeck/server/config/tokens.properties
+      RUNDECK_MULTIURL_ENABLED: "true"
+      RUNDECK_METRICS_ENABLED: "true"
+      MANAGEMENT_ENDPOINT_HEALTH_ENABLED: "true"
+      MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: "readinessState,rundeckDataSourceHealthIndicator"
+      MANAGEMENT_ENDPOINT_HEALTH_VALIDATE_GROUP_MEMBERSHIP: "false"
+      # RUN-4317: hardcoded directly (not via RUNDECK_FEATURE_FEATURETOTEST_*) because that
+      # generic by-name alias has no server-side consumer right now -- it used to work before
+      # a Grails/Spring Boot upgrade, apparently broke silently, and nobody noticed since. Fix
+      # that properly (likely a relaxed-binding regression, not new app code) and this file can
+      # go back to sharing docker-compose.yml via the generic slot.
+      RUNDECK_FEATURE_EARLYACCESSJOBCONDITIONAL_ENABLED: "true"
+      # Grails 7: Increase Hikari connection pool for Selenium tests
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "20"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "5"
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: "60000"
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: "300000"
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: "600000"
+    volumes:
+      - ./ansible:/home/rundeck/ansible:rw
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "../../../tokens.properties:/home/rundeck/server/config/tokens.properties"
+      - "../../../realm.properties:/home/rundeck/server/config/realm.properties"
+      - "../../../resource-model:/home/resource-model"
+      - "../../../test-files/job-run-steps-test-script1.txt:/home/rundeck/job-run-steps-test-script1.txt"
+      - "../../../test-files/simpleScript.sh:/home/rundeck/simpleScript.sh"
+      - "../../../test-files/test-resources.xml:/home/rundeck/test-resources.xml"
+      - "../../../test-files/saved_searches-A.json:/home/option1/saved_searches.json"
+      - "../../../test-files/saved_searches-B.json:/home/option2/saved_searches.json"
+      - "../../../test-files/saved_searches-C.json:/home/option3/saved_searches.json"
+      - "../../../test-files/saved_searches-D.json:/home/option4/saved_searches.json"
+      - "../../../test-files/copyfile-test-files:/home/rundeck/copyfile-test-files"
+      - "./executor:/home/rundeck/executor:rw"
+      - "./mock-scripts:/home/rundeck/mock-scripts:rw"
+    ports:
+      - "4440:4440"
+      - "5005:5005"
+      - "9012:9012"
+    command:
+      - "-Dcom.sun.management.jmxremote"
+      - "-Dcom.sun.management.jmxremote.port=9012"
+      - "-Dcom.sun.management.jmxremote.authenticate=false"
+      - "-Dcom.sun.management.jmxremote.ssl=false"
+      - "-Dcom.sun.management.jmxremote.local.only=false"
+      - "-Dcom.sun.management.jmxremote.rmi.port=9012"
+      - "-Djava.rmi.server.hostname=localhost"
+      - "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+  rundeck-db:
+    image: mysql:8.4
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=rundeck
+      - MYSQL_USER=rundeck
+      - MYSQL_PASSWORD=rundeck
+    ports:
+      - "3307:3306"
+
+  gitea:
+    build:
+      context: gitea
+      args:
+        IMAGE: gitea/gitea
+    environment:
+      USER_UID: 1000
+      USER_GID: 1000
+      GITEA_ADMIN_USER: 'rundeckgitea'
+      GITEA_ADMIN_PASSWORD: 'rundeckgitea'
+    restart: always
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "./gitea/gitea-cfg.ini:/data/gitea/conf/app.ini"
+    ports:
+      - "3000:3000"
+
+  ssh-node:
+    build:
+      context: node
+    platform: linux/amd64
+    environment:
+      NODE_USER_PASSWORD: testpassword123
+    ports:
+      - "22"
+    volumes:
+      - ./keys:/configuration:rw
+      - ./mock-scripts:/mock-scripts:rw
+
+  mock-server:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+
+    ports:
+      - "8080:80"
+
+networks:
+  default:
+    name: rundeck-network
