@@ -19,12 +19,6 @@ services:
       MANAGEMENT_ENDPOINT_HEALTH_ENABLED: "true"
       MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: "readinessState,rundeckDataSourceHealthIndicator"
       MANAGEMENT_ENDPOINT_HEALTH_VALIDATE_GROUP_MEMBERSHIP: "false"
-      # RUN-4317: hardcoded directly (not via RUNDECK_FEATURE_FEATURETOTEST_*) because that
-      # generic by-name alias has no server-side consumer right now -- it used to work before
-      # a Grails/Spring Boot upgrade, apparently broke silently, and nobody noticed since. Fix
-      # that properly (likely a relaxed-binding regression, not new app code) and this file can
-      # go back to sharing docker-compose.yml via the generic slot.
-      RUNDECK_FEATURE_EARLYACCESSJOBCONDITIONAL_ENABLED: "true"
       # Grails 7: Increase Hikari connection pool for Selenium tests
       SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "20"
       SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "5"
@@ -53,6 +47,15 @@ services:
       - "5005:5005"
       - "9012:9012"
     command:
+      # RUN-4317: `feature.earlyAccessJobConditional.enabled` is read via ConfigurationService's
+      # untyped config Map (FeatureService -> configurationService.getBoolean), which does exact
+      # case-sensitive key lookups. Env vars go through relaxed binding onto a separate typed POJO
+      # (RundeckConfig) that never backs this Map, and get inserted into it with their raw/relaxed
+      # key casing -- so RUNDECK_FEATURE_EARLYACCESSJOBCONDITIONAL_ENABLED can never produce the
+      # exact key `earlyAccessJobConditional` this way (same root cause as the already-broken
+      # generic RUNDECK_FEATURE_FEATURETOTEST_* alias). A `-D` system property is specified in
+      # already-exact-cased dotted form, so it lands in that Map with the correct key as-is.
+      - "-Drundeck.feature.earlyAccessJobConditional.enabled=true"
       - "-Dcom.sun.management.jmxremote"
       - "-Dcom.sun.management.jmxremote.port=9012"
       - "-Dcom.sun.management.jmxremote.authenticate=false"

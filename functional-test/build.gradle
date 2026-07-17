@@ -162,11 +162,12 @@ task alphaUiSeleniumCoreTest(type: Test){
     maxParallelForks = 1
     // RUN-4317: repurposed for earlyAccessJobConditional -- no spec currently uses the
     // alphaUi feature name (removed after the alphaUi->nextUi promotion), so this slot is
-    // free. Uses a dedicated compose file with the real RUNDECK_FEATURE_..._ENABLED env var
-    // hardcoded, rather than the generic RUNDECK_FEATURE_FEATURETOTEST_* by-name alias in
-    // docker-compose.yml -- that alias has no server-side consumer right now (likely broken
-    // by a Grails/Spring Boot upgrade), so it can't reliably enable an arbitrary feature.
-    // Once that's fixed, this can go back to sharing docker-compose.yml via the generic slot.
+    // free. Uses a dedicated compose file that enables the flag via a `-D` JVM system property
+    // (exact-cased, e.g. -Drundeck.feature.earlyAccessJobConditional.enabled=true) rather than
+    // an env var -- FeatureService reads this through ConfigurationService's untyped, exact
+    // case-sensitive config Map, which env vars can't populate correctly regardless of naming
+    // (same root cause as the already-broken generic RUNDECK_FEATURE_FEATURETOTEST_* alias in
+    // docker-compose.yml). See docker-compose-early-access-conditional.yml for details.
     systemProperty('TEST_IMAGE', "rundeck/rundeck:SNAPSHOT")
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose-early-access-conditional.yml")
     systemProperty('spock.configuration', 'spock-configs/IncludeAlphaUiSeleniumCoreTestsConfig.groovy')
