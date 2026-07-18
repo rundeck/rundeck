@@ -351,6 +351,9 @@ repositories {
     maven {
         url "https://packagecloud.io/pagerduty/rundeckpro/maven2"
     }
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeck-plugins/maven2"
+    }
 }
 
 configurations{
