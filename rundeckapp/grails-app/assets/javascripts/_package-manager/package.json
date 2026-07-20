@@ -27,7 +27,7 @@
     "vue-loader": "^16.4.1"
   },
   "dependencies": {
-    "bootstrap": "3.4.1",
+    "bootstrap": "5.3.8",
     "dotenv-webpack": "^7.0.2",
     "install": "^0.13.0",
     "jquery": "^3.6.4",
