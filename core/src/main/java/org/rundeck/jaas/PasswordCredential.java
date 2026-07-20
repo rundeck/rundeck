@@ -16,6 +16,10 @@
 
 package org.rundeck.jaas;
 
+import org.apache.commons.codec.digest.UnixCrypt;
+import org.eclipse.jetty.util.security.Password;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -27,8 +31,10 @@ import java.util.Base64;
  * 
  * Supports:
  * - Plain text passwords
- * - MD5 hashed passwords (MD5:base64hash)
- * - CRYPT hashed passwords (CRYPT:crypthash)
+ * - MD5 hashed passwords (MD5:base64hash or MD5:hexhash)
+ * - CRYPT hashed passwords (CRYPT:crypthash) - standard Unix DES crypt
+ * - BCRYPT hashed passwords (BCRYPT:$2a$... or BCRYPT:$2b$...)
+ * - OBF obfuscated passwords (OBF:...) - Jetty reversible obfuscation
  */
 public class PasswordCredential {
     private final String encodedPassword;
@@ -37,7 +43,9 @@ public class PasswordCredential {
     private enum CredentialType {
         PLAIN,
         MD5,
-        CRYPT
+        CRYPT,
+        BCRYPT,
+        OBF
     }
     
     private PasswordCredential(String encodedPassword, CredentialType type) {
@@ -60,6 +68,10 @@ public class PasswordCredential {
             return new PasswordCredential(encodedPassword.substring(4), CredentialType.MD5);
         } else if (encodedPassword.startsWith("CRYPT:")) {
             return new PasswordCredential(encodedPassword.substring(6), CredentialType.CRYPT);
+        } else if (encodedPassword.startsWith("BCRYPT:")) {
+            return new PasswordCredential(encodedPassword.substring(7), CredentialType.BCRYPT);
+        } else if (encodedPassword.startsWith("OBF:")) {
+            return new PasswordCredential(encodedPassword, CredentialType.OBF);
         } else {
             return new PasswordCredential(encodedPassword, CredentialType.PLAIN);
         }
@@ -104,11 +116,30 @@ public class PasswordCredential {
                 }
                 
             case CRYPT:
-                // Unix crypt() - extract salt from stored hash
                 if (encodedPassword != null && encodedPassword.length() >= 2) {
-                    String salt = encodedPassword.substring(0, 2);
-                    String crypted = UnixCrypt.crypt(salt, passwordStr);
+                    String crypted = UnixCrypt.crypt(passwordStr, encodedPassword);
                     return encodedPassword.equals(crypted);
+                }
+                return false;
+                
+            case BCRYPT:
+                if (encodedPassword != null) {
+                    try {
+                        return BCrypt.checkpw(passwordStr, encodedPassword);
+                    } catch (Exception e) {
+                        return false;
+                    }
+                }
+                return false;
+                
+            case OBF:
+                if (encodedPassword != null) {
+                    try {
+                        String deobfuscated = Password.deobfuscate(encodedPassword);
+                        return passwordStr.equals(deobfuscated);
+                    } catch (Exception e) {
+                        return false;
+                    }
                 }
                 return false;
                 
@@ -156,46 +187,5 @@ public class PasswordCredential {
         }
     }
     
-    /**
-     * Simple Unix crypt() implementation for CRYPT: passwords
-     * This is a minimal implementation - for production use, consider using a library like jBCrypt
-     */
-    private static class UnixCrypt {
-        private static final String SALT_CHARS = 
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
-        
-        public static String crypt(String salt, String password) {
-            // This is a simplified implementation
-            // For full compatibility, we'd need the complete DES-based crypt algorithm
-            // For now, we'll use a basic approach that should work for most cases
-            
-            if (salt == null || salt.length() < 2) {
-                salt = "AA";
-            }
-            
-            // Use the first 2 characters of salt
-            String saltPrefix = salt.substring(0, 2);
-            
-            try {
-                // Simple hash-based approach (not true crypt, but compatible for our needs)
-                MessageDigest md = MessageDigest.getInstance("SHA-256");
-                md.update(saltPrefix.getBytes(StandardCharsets.UTF_8));
-                md.update(password.getBytes(StandardCharsets.UTF_8));
-                byte[] hash = md.digest();
-                
-                // Convert to crypt-style output (13 chars: 2 salt + 11 hash)
-                StringBuilder result = new StringBuilder(saltPrefix);
-                for (int i = 0; i < 11 && i < hash.length; i++) {
-                    int idx = (hash[i] & 0xFF) % SALT_CHARS.length();
-                    result.append(SALT_CHARS.charAt(idx));
-                }
-                
-                return result.toString();
-            } catch (NoSuchAlgorithmException e) {
-                // Fallback
-                return salt + password.substring(0, Math.min(11, password.length()));
-            }
-        }
-    }
 }
 
