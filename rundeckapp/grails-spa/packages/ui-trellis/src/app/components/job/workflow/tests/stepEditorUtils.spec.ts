@@ -42,6 +42,7 @@ import {
   getPluginDetailsForStep,
   resetValidation,
   validateStepForSave,
+  type FieldValidationErrors,
 } from "../stepEditorUtils";
 
 // Use raw string values matching the mocked ServiceType enum
@@ -556,6 +557,141 @@ describe("stepEditorUtils", () => {
         "script-inline",
         {},
       );
+    });
+
+    it("returns valid when step has no errorhandler", async () => {
+      mockValidatePluginConfig.mockResolvedValue({ valid: true, errors: {} });
+
+      const step = {
+        type: "script-inline",
+        config: {},
+        id: "test-id",
+        nodeStep: true,
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(true);
+      expect(mockValidatePluginConfig).toHaveBeenCalledTimes(1);
+    });
+
+    it("validates the errorhandler config after the main step config is valid", async () => {
+      mockValidatePluginConfig
+        .mockResolvedValueOnce({ valid: true, errors: {} }) // main step
+        .mockResolvedValueOnce({ valid: true, errors: {} }); // errorhandler
+
+      const step = {
+        type: "script-inline",
+        config: { adhocLocalString: "echo hello" },
+        id: "test-id",
+        nodeStep: true,
+        errorhandler: {
+          type: "exec-command",
+          config: { adhocRemoteString: "echo err" },
+          nodeStep: false,
+          id: "eh-id",
+        },
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(mockValidatePluginConfig).toHaveBeenNthCalledWith(
+        2,
+        ServiceType.WorkflowStep,
+        "exec-command",
+        { adhocRemoteString: "echo err" },
+      );
+      expect(result.valid).toBe(true);
+    });
+
+    it("returns errors nested under errorhandler when the handler config is invalid", async () => {
+      mockValidatePluginConfig
+        .mockResolvedValueOnce({ valid: true, errors: {} }) // main step
+        .mockResolvedValueOnce({
+          valid: false,
+          errors: { adhocRemoteString: "Script is required" },
+        }); // errorhandler
+
+      const step = {
+        type: "script-inline",
+        config: { adhocLocalString: "echo hello" },
+        id: "test-id",
+        nodeStep: true,
+        errorhandler: {
+          type: "exec-command",
+          config: {},
+          nodeStep: true,
+          id: "eh-id",
+        },
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(result.errors.errorhandler).toEqual({
+        adhocRemoteString: "Script is required",
+      });
+    });
+
+    it("skips errorhandler validation when the errorhandler is a job reference", async () => {
+      mockValidatePluginConfig.mockResolvedValue({ valid: true, errors: {} });
+
+      const step = {
+        type: "script-inline",
+        config: {},
+        id: "test-id",
+        nodeStep: true,
+        errorhandler: {
+          jobref: { name: "My Job", uuid: "" },
+          nodeStep: true,
+        },
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(true);
+      expect(mockValidatePluginConfig).toHaveBeenCalledTimes(1);
+    });
+
+    it("handles errorhandler validation API errors gracefully", async () => {
+      mockValidatePluginConfig
+        .mockResolvedValueOnce({ valid: true, errors: {} }) // main step
+        .mockRejectedValueOnce(new Error("Network error")); // errorhandler
+
+      const step = {
+        type: "script-inline",
+        config: {},
+        id: "test-id",
+        nodeStep: true,
+        errorhandler: {
+          type: "exec-command",
+          config: {},
+          nodeStep: true,
+          id: "eh-id",
+        },
+      } as EditStepData;
+
+      const result = await validateStepForSave(
+        step,
+        ServiceType.WorkflowNodeStep,
+      );
+
+      expect(result.valid).toBe(false);
+      expect(
+        (result.errors.errorhandler as FieldValidationErrors)._general,
+      ).toBeDefined();
     });
   });
 });
