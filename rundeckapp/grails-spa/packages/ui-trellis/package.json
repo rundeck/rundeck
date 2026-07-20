@@ -3,7 +3,7 @@
   "version": "3.3.8",
   "description": "A collection of utilities used across various javascript applications and components.",
   "engines": {
-    "npm": "10.9.4"
+    "npm": "11.16.0"
   },
   "main": "./lib/index.js",
   "scripts": {
