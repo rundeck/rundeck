@@ -306,7 +306,7 @@ import {
 import JobRefForm from "./JobRefForm.vue";
 import ErrorHandlerStep from "./ErrorHandlerStep.vue";
 import InlinePluginConfigForm from "../../../../library/components/plugins/InlinePluginConfigForm.vue";
-import { getPageUiMeta } from "../../../../library/components/widgets/settings-bar/services/pageUiMetaService";
+import { getFeatureEnabled } from "../../../../library/services/feature";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
@@ -353,8 +353,8 @@ export default defineComponent({
       inlineErrorHandlerService: "",
       inlineErrorHandlerExtra: { keepgoingOnSuccess: false },
       inlineErrorHandlerValidation: resetValidation(),
-      // Inline error-handler editing is only available on nextUi pages. When
-      // on a legacy-UI page, error handlers keep using the legacy
+      // Inline error-handler editing is an early-access conditional-workflow
+      // feature. When disabled, error handlers keep using the legacy
       // EditPluginModal/JobRefForm flow for backward compatibility.
       inlineErrorHandlerFormEnabled: false,
     };
@@ -414,7 +414,9 @@ export default defineComponent({
   async mounted() {
     try {
       this.loadingWorflowSteps = true;
-      this.inlineErrorHandlerFormEnabled = getPageUiMeta().isNextUiPage;
+      this.inlineErrorHandlerFormEnabled = await getFeatureEnabled(
+        "earlyAccessJobConditional",
+      );
       await this.getStepPlugins();
       this.model = commandsToEditData(this.modelValue);
       eventBus.on("workflow-editor-workflowsteps-request", this.notify);
@@ -438,9 +440,9 @@ export default defineComponent({
 
       if (this.isErrorHandler) {
         // Job references aren't supported by the inline plugin form, and the
-        // inline form itself is only available on nextUi pages — both cases
-        // keep using the legacy modal flow so EditPluginModal continues to
-        // work on legacy-UI pages.
+        // inline form itself is gated behind the early-access conditional
+        // workflow flag — both cases keep using the legacy modal flow so
+        // EditPluginModal continues to work when the flag is disabled.
         if (provider === "job.reference" || !this.inlineErrorHandlerFormEnabled) {
           this.editExtra = {
             errorhandler: {
@@ -552,9 +554,9 @@ export default defineComponent({
           : ServiceType.WorkflowStep;
 
         // Job references aren't supported by the inline plugin form, and the
-        // inline form itself is only available on nextUi pages — both cases
-        // keep using the legacy modal flow so EditPluginModal continues to
-        // work on legacy-UI pages.
+        // inline form itself is gated behind the early-access conditional
+        // workflow flag — both cases keep using the legacy modal flow so
+        // EditPluginModal continues to work when the flag is disabled.
         if (command.errorhandler.jobref || !this.inlineErrorHandlerFormEnabled) {
           this.editIndex = index;
           this.editExtra = cloneDeep(command);

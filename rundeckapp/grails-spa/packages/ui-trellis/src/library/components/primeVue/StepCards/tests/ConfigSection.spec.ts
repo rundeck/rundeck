@@ -80,6 +80,27 @@ describe("ConfigSection", () => {
       });
       expect(wrapper.findAllComponents(Chip)).toHaveLength(2);
     });
+
+    it("hides the chips row when hideChips is true, even with items present (e.g. an inline edit form is shown instead)", async () => {
+      const wrapper = await createWrapper({
+        modelValue: [{ type: "logging/mask-passwords" }],
+        hideChips: true,
+      });
+      expect(
+        wrapper.find('[data-testid="config-section-chips-row"]').exists(),
+      ).toBe(false);
+    });
+
+    it("hides the chips row when hideChips is true in isEditView layout as well", async () => {
+      const wrapper = await createWrapper({
+        modelValue: [{ type: "logging/mask-passwords" }],
+        hideChips: true,
+        isEditView: true,
+      });
+      expect(
+        wrapper.find('[data-testid="config-section-chips-row"]').exists(),
+      ).toBe(false);
+    });
   });
 
   describe("chip labels", () => {

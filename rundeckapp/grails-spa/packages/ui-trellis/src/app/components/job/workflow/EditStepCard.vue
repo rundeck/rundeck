@@ -86,81 +86,70 @@
           :extra-autocomplete-vars="extraAutocompleteVars"
           @update:model-value="onPluginConfigUpdate"
         />
+
+        <ConfigSection
+          data-testid="error-handler-section"
+          :is-edit-view="true"
+          :title="$t('Workflow.stepErrorHandler')"
+          :tooltip="$t('Workflow.stepErrorHandler.description')"
+          :model-value="errorHandlerValue"
+          :hide-when-single="true"
+          :hide-icon="true"
+          @add-element="handleAddErrorHandler"
+          @edit-element="handleEditErrorHandler"
+          @remove-element="handleRemoveErrorHandler"
+        >
+          <template v-if="showInlineErrorHandlerForm" #extra></template>
+          <template #content>
+            <inline-plugin-config-form
+              v-if="showInlineErrorHandlerForm"
+              ref="inlineErrorHandlerForm"
+              :model-value="editModel.errorhandler"
+              :service-name="errorHandlerServiceName"
+              :validation="errorHandlerValidation"
+              :extra-autocomplete-vars="extraAutocompleteVars"
+              :show-buttons="false"
+              @update:model-value="onErrorHandlerFormUpdate"
+            >
+              <template #extra>
+                <div class="presentation checkbox">
+                  <input
+                    id="editStepKeepgoingOnSuccess"
+                    v-model="editModel.errorhandler.keepgoingOnSuccess"
+                    type="checkbox"
+                  />
+                  <label for="editStepKeepgoingOnSuccess">
+                    {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}
+                    <span>
+                      {{
+                        $t(
+                          "Workflow.stepErrorHandler.keepgoingOnSuccess.description",
+                        )
+                      }}
+                    </span>
+                  </label>
+                </div>
+              </template>
+            </inline-plugin-config-form>
+          </template>
+        </ConfigSection>
+
+        <ConfigSection
+          data-testid="log-filter-section"
+          :is-edit-view="true"
+          :title="$t('Workflow.logFilters')"
+          :tooltip="$t('Workflow.logFilters.description')"
+          :model-value="logFiltersValue"
+          @add-element="handleAddLogFilter"
+          @edit-element="handleEditLogFilter"
+          @remove-element="handleRemoveLogFilter"
+        />
       </div>
 
       <div v-else-if="loading" class="loading-container" data-testid="loading-container">
         <i class="fas fa-spinner fa-spin"></i>
         <span>{{ $t("loading.text") }}</span>
       </div>
-
-      <!--
-        Error handler is allowed on job-reference steps (matches the legacy
-        GSP: only log filters are excluded for job refs, not error handlers)
-        -- so this section renders for both isJobRef and provider-loaded
-        steps. Gating on (provider || isJobRef) -- rather than just !loading
-        -- avoids rendering on the very first synchronous tick, before
-        mounted() has populated editModel from modelValue.
-      -->
-      <ConfigSection
-        v-if="!loading && (provider || isJobRef)"
-        data-testid="error-handler-section"
-        :is-edit-view="true"
-        :title="$t('Workflow.stepErrorHandler')"
-        :tooltip="$t('Workflow.stepErrorHandler.description')"
-        :model-value="errorHandlerValue"
-        :hide-when-single="true"
-        :hide-icon="true"
-        @add-element="handleAddErrorHandler"
-        @edit-element="handleEditErrorHandler"
-        @remove-element="handleRemoveErrorHandler"
-      >
-        <template v-if="showInlineErrorHandlerForm" #extra></template>
-        <template #content>
-          <inline-plugin-config-form
-            v-if="showInlineErrorHandlerForm"
-            ref="inlineErrorHandlerForm"
-            :model-value="editModel.errorhandler"
-            :service-name="errorHandlerServiceName"
-            :validation="errorHandlerValidation"
-            :extra-autocomplete-vars="extraAutocompleteVars"
-            :show-buttons="false"
-            @update:model-value="onErrorHandlerFormUpdate"
-          >
-            <template #extra>
-              <div class="presentation checkbox">
-                <input
-                  id="editStepKeepgoingOnSuccess"
-                  v-model="editModel.errorhandler.keepgoingOnSuccess"
-                  type="checkbox"
-                />
-                <label for="editStepKeepgoingOnSuccess">
-                  {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}
-                  <span>
-                    {{
-                      $t(
-                        "Workflow.stepErrorHandler.keepgoingOnSuccess.description",
-                      )
-                    }}
-                  </span>
-                </label>
-              </div>
-            </template>
-          </inline-plugin-config-form>
-        </template>
-      </ConfigSection>
-
-      <!-- Log filters are excluded for job-reference steps, matching the legacy GSP. -->
-      <ConfigSection
-        v-if="!isJobRef && !loading && provider"
-        data-testid="log-filter-section"
-        :is-edit-view="true"
-        :title="$t('Workflow.logFilters')"
-        :tooltip="$t('Workflow.logFilters.description')"
-        :model-value="logFiltersValue"
-        @add-element="handleAddLogFilter"
-        @edit-element="handleEditLogFilter"
-        @remove-element="handleRemoveLogFilter"
-      />
     </template>
     <template #footer>
       <div
