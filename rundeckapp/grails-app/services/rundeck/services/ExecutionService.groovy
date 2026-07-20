@@ -4746,9 +4746,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     boolean isH2Datasource() {
-        def dataSource = applicationContext.getBean('dataSource', DataSource)
-        def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName
-        return databaseProductName == 'H2'
+        try {
+            def dataSource = applicationContext.getBean('dataSource', DataSource)
+            return dataSource.getConnection().withCloseable { conn ->
+                conn.metaData.databaseProductName == 'H2'
+            }
+        } catch (Exception ex) {
+            log.debug("Unable to determine datasource type, assuming non-H2", ex)
+            return false
+        }
     }
 
     private boolean isSqlCompatible() {

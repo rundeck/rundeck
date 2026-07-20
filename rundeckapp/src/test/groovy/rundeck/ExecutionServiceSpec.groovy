@@ -6397,6 +6397,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             noExceptionThrown()
         cleanup:
             GroovySystem.metaClassRegistry.removeMetaClass(Execution)
+            service.metaClass = null
     }
 
     def "metrics data from criteria result"(){
