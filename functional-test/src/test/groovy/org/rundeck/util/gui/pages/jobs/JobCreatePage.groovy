@@ -180,7 +180,6 @@ class JobCreatePage extends BasePage {
     By addGlobalLogFilterLegacy = By.cssSelector("#logfilterplugins_wf [data-bind='click: addFilterPopup']")
     By addLogFilterOption = By.cssSelector("a[data-test='add-log-filter']")
     By addErrorHandlerOption = By.cssSelector("a[data-test='add-error-handler']")
-    By inlineErrorHandlerFormBy = By.cssSelector("[data-test='inline-error-handler-form']")
 
     private String loadPath = "/job/create"
     private final String copyPath = "/job/copy"
@@ -1223,14 +1222,6 @@ class JobCreatePage extends BasePage {
      */
     boolean isStepEditModalVisible() {
         els(NextUi.stepEditModalCancelBy).any { it.isDisplayed() }
-    }
-
-    /**
-     * Returns true if the inline error handler form (rendered in place of the error-handler
-     * chip when {@code rundeck.feature.earlyAccessJobConditional.enabled} is on) is displayed.
-     */
-    boolean isInlineErrorHandlerFormVisible() {
-        els(inlineErrorHandlerFormBy).any { it.isDisplayed() }
     }
 }
 

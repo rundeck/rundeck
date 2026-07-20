@@ -70,7 +70,7 @@
           </div>
         </div>
         <plugin-config
-          :model-value="editModel"
+          v-model="editModel"
           :mode="pluginConfigMode"
           :plugin-config="provider"
           :show-title="false"
@@ -84,65 +84,6 @@
           data-testid="plugin-info"
           :service-name="serviceName"
           :extra-autocomplete-vars="extraAutocompleteVars"
-          @update:model-value="onPluginConfigUpdate"
-        />
-
-        <ConfigSection
-          data-testid="error-handler-section"
-          :is-edit-view="true"
-          :title="$t('Workflow.stepErrorHandler')"
-          :tooltip="$t('Workflow.stepErrorHandler.description')"
-          :model-value="errorHandlerValue"
-          :hide-when-single="true"
-          :hide-icon="true"
-          @add-element="handleAddErrorHandler"
-          @edit-element="handleEditErrorHandler"
-          @remove-element="handleRemoveErrorHandler"
-        >
-          <template v-if="showInlineErrorHandlerForm" #extra></template>
-          <template #content>
-            <inline-plugin-config-form
-              v-if="showInlineErrorHandlerForm"
-              ref="inlineErrorHandlerForm"
-              :model-value="editModel.errorhandler"
-              :service-name="errorHandlerServiceName"
-              :validation="errorHandlerValidation"
-              :extra-autocomplete-vars="extraAutocompleteVars"
-              :show-buttons="false"
-              @update:model-value="onErrorHandlerFormUpdate"
-            >
-              <template #extra>
-                <div class="presentation checkbox">
-                  <input
-                    id="editStepKeepgoingOnSuccess"
-                    v-model="editModel.errorhandler.keepgoingOnSuccess"
-                    type="checkbox"
-                  />
-                  <label for="editStepKeepgoingOnSuccess">
-                    {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}
-                    <span>
-                      {{
-                        $t(
-                          "Workflow.stepErrorHandler.keepgoingOnSuccess.description",
-                        )
-                      }}
-                    </span>
-                  </label>
-                </div>
-              </template>
-            </inline-plugin-config-form>
-          </template>
-        </ConfigSection>
-
-        <ConfigSection
-          data-testid="log-filter-section"
-          :is-edit-view="true"
-          :title="$t('Workflow.logFilters')"
-          :tooltip="$t('Workflow.logFilters.description')"
-          :model-value="logFiltersValue"
-          @add-element="handleAddLogFilter"
-          @edit-element="handleEditLogFilter"
-          @remove-element="handleRemoveLogFilter"
         />
       </div>
 
@@ -179,11 +120,8 @@ import { defineComponent, type PropType } from "vue";
 import BaseStepCard from "../../../../library/components/primeVue/StepCards/BaseStepCard.vue";
 import pluginConfig from "../../../../library/components/plugins/pluginConfig.vue";
 import PtButton from "../../../../library/components/primeVue/PtButton/PtButton.vue";
-import ConfigSection from "../../../../library/components/primeVue/StepCards/ConfigSection.vue";
-import inlinePluginConfigForm from "../../../../library/components/plugins/InlinePluginConfigForm.vue";
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import { getServiceProviderDescription } from "../../../../library/modules/pluginService";
-import { ServiceType } from "../../../../library/stores/Plugins";
 import { ContextVariable } from "../../../../library/stores/contextVariables";
 import { cloneDeep, merge } from "lodash";
 import { getRundeckContext } from "../../../../library";
@@ -200,8 +138,6 @@ export default defineComponent({
     BaseStepCard,
     pluginConfig,
     PtButton,
-    ConfigSection,
-    inlinePluginConfigForm,
     JobRefFormFields,
   },
   provide() {
@@ -247,17 +183,7 @@ export default defineComponent({
       default: false,
     },
   },
-  emits: [
-    "cancel",
-    "save",
-    "update:modelValue",
-    "add-error-handler",
-    "edit-error-handler",
-    "remove-error-handler",
-    "add-log-filter",
-    "edit-log-filter",
-    "remove-log-filter",
-  ],
+  emits: ["cancel", "save", "update:modelValue"],
   data() {
     return {
       contentExpanded: true,
@@ -286,37 +212,6 @@ export default defineComponent({
     },
     hasJobRefValidationError(): boolean {
       return Boolean(this.validation?.errors?.jobref);
-    },
-    errorHandlerValue(): object[] {
-      const handler =
-        this.editModel?.errorhandler ?? this.modelValue?.errorhandler;
-      return handler ? [handler] : [];
-    },
-    logFiltersValue(): object[] {
-      return this.editModel?.filters ?? this.modelValue?.filters ?? [];
-    },
-    showInlineErrorHandlerForm(): boolean {
-      return Boolean(
-        this.editModel?.errorhandler?.type ??
-          this.modelValue?.errorhandler?.type,
-      );
-    },
-    errorHandlerServiceName(): string {
-      const handler =
-        this.editModel?.errorhandler ?? this.modelValue?.errorhandler;
-      if (!handler) {
-        return this.serviceName;
-      }
-      return handler.nodeStep
-        ? ServiceType.WorkflowNodeStep
-        : ServiceType.WorkflowStep;
-    },
-    errorHandlerValidation() {
-      const handlerErrors = this.validation?.errors?.errorhandler;
-      if (handlerErrors && typeof handlerErrors === "object") {
-        return { valid: false, errors: handlerErrors };
-      }
-      return { valid: true, errors: {} };
     },
   },
   async mounted() {
@@ -381,94 +276,17 @@ export default defineComponent({
         return;
       }
 
-      const saveData: EditStepData = {
+      const saveData = {
         ...cloneDeep(this.modelValue),
         description: this.stepDescription,
         type: this.editModel.type,
         config: this.editModel.config ?? {},
       };
-
-      if (this.showInlineErrorHandlerForm) {
-        const inlineForm = this.$refs.inlineErrorHandlerForm as {
-          getFormData?: () => Record<string, unknown>;
-        } | null;
-        if (inlineForm?.getFormData) {
-          const formData = cloneDeep(inlineForm.getFormData()) as Record<
-            string,
-            unknown
-          >;
-          // Only the plugin fields (type/config) come from the inline form.
-          // keepgoingOnSuccess/nodeStep/id stay owned by editModel.errorhandler
-          // (keepgoingOnSuccess is bound to the checkbox), so they are preserved.
-          this.editModel = {
-            ...this.editModel,
-            errorhandler: {
-              ...this.editModel.errorhandler,
-              type: formData.type,
-              config: formData.config,
-            },
-          };
-        }
-      }
-
-      if (this.editModel.errorhandler) {
-        saveData.errorhandler = cloneDeep(this.editModel.errorhandler);
-      } else {
-        delete saveData.errorhandler;
-      }
-
-      if (this.editModel.filters !== undefined) {
-        saveData.filters = cloneDeep(this.editModel.filters);
-      }
-
       this.$emit("update:modelValue", saveData);
       this.$emit("save");
     },
     handleCancel() {
       this.$emit("cancel");
-    },
-    handleAddErrorHandler() {
-      this.$emit("add-error-handler");
-    },
-    handleEditErrorHandler(_element: unknown) {
-      if (this.showInlineErrorHandlerForm) {
-        return;
-      }
-      this.$emit("edit-error-handler", _element);
-    },
-    handleRemoveErrorHandler() {
-      this.$emit("remove-error-handler");
-    },
-    onErrorHandlerFormUpdate(updated: PluginConfig) {
-      // The inline form owns only the plugin fields (type/config). Merge them in
-      // without replacing the whole handler, so checkbox-owned fields
-      // (keepgoingOnSuccess) and nodeStep/id are preserved on every edit.
-      this.editModel = {
-        ...this.editModel,
-        errorhandler: {
-          ...this.editModel.errorhandler,
-          type: updated?.type,
-          config: updated?.config,
-        },
-      };
-    },
-    handleAddLogFilter() {
-      this.$emit("add-log-filter");
-    },
-    handleEditLogFilter(element: PluginConfig, index: number) {
-      this.$emit("edit-log-filter", { element, index });
-    },
-    handleRemoveLogFilter(index: number) {
-      this.$emit("remove-log-filter", index);
-    },
-    onPluginConfigUpdate(updated: EditStepData) {
-      // ConfigSection chips use modelValue (errorhandler/filters). Only merge plugin fields from plugin-config;
-      // do not clobber handler/filters on editModel when the child emits a narrowed payload.
-      const { errorhandler: _eh, filters: _filters, ...pluginFields } = updated;
-      this.editModel = {
-        ...this.editModel,
-        ...pluginFields,
-      };
     },
     async loadProvider() {
       // If plugin-details prop is provided, use it (no need to fetch)
@@ -514,31 +332,7 @@ export default defineComponent({
     },
     async pluginDetails() {
       await this.loadProvider();
-    },
-    "modelValue.errorhandler": {
-      handler(val) {
-        if (val?.type && !this.editModel?.errorhandler?.type) {
-          this.editModel = {
-            ...this.editModel,
-            errorhandler: cloneDeep(val),
-          };
-        } else if (!val?.type && this.editModel?.errorhandler) {
-          const updated = { ...this.editModel };
-          delete updated.errorhandler;
-          this.editModel = updated;
-        }
-      },
-      flush: "sync",
-    },
-    "modelValue.filters": {
-      handler(val) {
-        this.editModel = {
-          ...this.editModel,
-          filters: val ? cloneDeep(val) : [],
-        };
-      },
-      deep: true,
-    },
+    }
   }
 });
 </script>

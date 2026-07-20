@@ -128,44 +128,8 @@
               "
               />
             </div>
-            <div
-                v-if="inlineErrorHandlerIndex === index"
-                class="error-handler-section"
-                data-test="inline-error-handler-form"
-            >
-              <inline-plugin-config-form
-                  v-model="inlineErrorHandlerModel"
-                  :service-name="inlineErrorHandlerService"
-                  :validation="inlineErrorHandlerValidation"
-                  :show-buttons="true"
-                  @save="saveInlineErrorHandler(index)"
-                  @cancel="cancelInlineErrorHandler"
-              >
-                <template #extra>
-                  <div class="presentation checkbox">
-                    <input
-                        name="inlineKeepgoingOnSuccess"
-                        id="inlineKeepgoingOnSuccess"
-                        v-model="inlineErrorHandlerExtra.keepgoingOnSuccess"
-                        type="checkbox"
-                    />
-                    <label for="inlineKeepgoingOnSuccess">
-                      {{ $t("Workflow.stepErrorHandler.keepgoingOnSuccess.label") }}
-
-                      <span>
-                        {{
-                          $t(
-                            "Workflow.stepErrorHandler.keepgoingOnSuccess.description",
-                          )
-                        }}
-                      </span>
-                    </label>
-                  </div>
-                </template>
-              </inline-plugin-config-form>
-            </div>
             <error-handler-step
-                v-else-if="element.errorhandler"
+                v-if="element.errorhandler"
                 :step="element"
                 @edit="editStepByIndex(index, true)"
                 @removeHandler="removeStep(index, true)"
@@ -305,8 +269,6 @@ import {
 } from "./stepEditorUtils";
 import JobRefForm from "./JobRefForm.vue";
 import ErrorHandlerStep from "./ErrorHandlerStep.vue";
-import InlinePluginConfigForm from "../../../../library/components/plugins/InlinePluginConfigForm.vue";
-import { getFeatureEnabled } from "../../../../library/services/feature";
 
 const context = getRundeckContext();
 const eventBus = context.eventBus;
@@ -321,7 +283,6 @@ export default defineComponent({
     ChoosePluginModal,
     JobRefStep,
     LogFilters,
-    InlinePluginConfigForm,
   },
   props: {
     modelValue: {
@@ -348,15 +309,6 @@ export default defineComponent({
       editService: null,
       editIndex: -1,
       loadingWorflowSteps: false,
-      inlineErrorHandlerIndex: -1,
-      inlineErrorHandlerModel: {} as EditStepData,
-      inlineErrorHandlerService: "",
-      inlineErrorHandlerExtra: { keepgoingOnSuccess: false },
-      inlineErrorHandlerValidation: resetValidation(),
-      // Inline error-handler editing is an early-access conditional-workflow
-      // feature. When disabled, error handlers keep using the legacy
-      // EditPluginModal/JobRefForm flow for backward compatibility.
-      inlineErrorHandlerFormEnabled: false,
     };
   },
   computed: {
@@ -414,9 +366,6 @@ export default defineComponent({
   async mounted() {
     try {
       this.loadingWorflowSteps = true;
-      this.inlineErrorHandlerFormEnabled = await getFeatureEnabled(
-        "earlyAccessJobConditional",
-      );
       await this.getStepPlugins();
       this.model = commandsToEditData(this.modelValue);
       eventBus.on("workflow-editor-workflowsteps-request", this.notify);
@@ -437,52 +386,44 @@ export default defineComponent({
       provider: string;
     }) {
       this.addStepModal = false;
+      this.editExtra = {};
+      if (!this.isErrorHandler) {
+        this.editIndex = -1;
+      }
+      this.editService = service;
 
       if (this.isErrorHandler) {
-        // Job references aren't supported by the inline plugin form, and the
-        // inline form itself is gated behind the early-access conditional
-        // workflow flag — both cases keep using the legacy modal flow so
-        // EditPluginModal continues to work when the flag is disabled.
-        if (provider === "job.reference" || !this.inlineErrorHandlerFormEnabled) {
-          this.editExtra = {
-            errorhandler: {
-              config: {},
-              keepgoingOnSuccess: false,
-            },
-          };
-          this.editService = service;
-          this.editModel = createStepFromProvider(service, provider);
-          if (provider === "job.reference") {
-            this.editJobRefModal = true;
-          } else {
-            this.editStepModal = true;
-          }
+        this.editExtra = {
+          errorhandler: {
+            config: {},
+            keepgoingOnSuccess: false,
+          },
+        };
+      }
+
+      const newStep = createStepFromProvider(service, provider);
+
+      if (provider === "job.reference") {
+        // Error handlers always use modal
+        if (this.isErrorHandler) {
+          this.editModel = newStep;
+          this.editJobRefModal = true;
           return;
         }
 
-        const stepIndex = this.editIndex;
-        this.isErrorHandler = false;
-        this.inlineErrorHandlerIndex = stepIndex;
-        this.inlineErrorHandlerService = service;
-        this.inlineErrorHandlerModel = createStepFromProvider(
-          service,
-          provider,
-        );
-        this.inlineErrorHandlerExtra = { keepgoingOnSuccess: false };
-        this.inlineErrorHandlerValidation = resetValidation();
-        return;
-      }
-
-      this.editExtra = {};
-      this.editIndex = -1;
-      this.editService = service;
-
-      const newStep = createStepFromProvider(service, provider);
-      this.editModel = newStep;
-
-      if (provider === "job.reference") {
+        // Non-EA mode: modal
+        this.editModel = newStep;
         this.editJobRefModal = true;
       } else {
+        // Check if this is an error handler - use modal flow
+        if (this.isErrorHandler) {
+          this.editModel = newStep;
+          this.editStepModal = true;
+          return;
+        }
+
+        // Use modal
+        this.editModel = newStep;
         this.editStepModal = true;
       }
     },
@@ -543,41 +484,24 @@ export default defineComponent({
     },
     editStepByIndex(index: number, isErrorHandler: boolean = false) {
       if (isErrorHandler) {
+        this.editIndex = index;
         const command = this.model.commands[index];
         if (!command.errorhandler) {
           console.warn("Cannot edit error handler: error handler does not exist");
           return;
         }
+        this.editExtra = cloneDeep(command);
+        this.isErrorHandler = true;
+        this.editModel = cloneDeep(command.errorhandler);
         const nodeStep = command.errorhandler.nodeStep || (command.errorhandler.jobref?.nodeStep);
-        const service = nodeStep
+        this.editService = nodeStep
           ? ServiceType.WorkflowNodeStep
           : ServiceType.WorkflowStep;
-
-        // Job references aren't supported by the inline plugin form, and the
-        // inline form itself is gated behind the early-access conditional
-        // workflow flag — both cases keep using the legacy modal flow so
-        // EditPluginModal continues to work when the flag is disabled.
-        if (command.errorhandler.jobref || !this.inlineErrorHandlerFormEnabled) {
-          this.editIndex = index;
-          this.editExtra = cloneDeep(command);
-          this.isErrorHandler = true;
-          this.editModel = cloneDeep(command.errorhandler);
-          this.editService = service;
-          if (command.errorhandler.jobref) {
-            this.editJobRefModal = true;
-          } else {
-            this.editStepModal = true;
-          }
-          return;
+        if (command.errorhandler.jobref) {
+          this.editJobRefModal = true;
+        } else {
+          this.editStepModal = true;
         }
-
-        this.inlineErrorHandlerIndex = index;
-        this.inlineErrorHandlerModel = cloneDeep(command.errorhandler);
-        this.inlineErrorHandlerService = service;
-        this.inlineErrorHandlerExtra = {
-          keepgoingOnSuccess: command.errorhandler.keepgoingOnSuccess || false,
-        };
-        this.inlineErrorHandlerValidation = resetValidation();
         return;
       }
 
@@ -633,53 +557,6 @@ export default defineComponent({
       } catch (e) {
         console.log(e);
       }
-    },
-    async saveInlineErrorHandler(index: number) {
-      try {
-        const handlerData = {
-          ...this.inlineErrorHandlerModel,
-          nodeStep:
-            this.inlineErrorHandlerModel.nodeStep ??
-            this.inlineErrorHandlerService === ServiceType.WorkflowNodeStep,
-          keepgoingOnSuccess: this.inlineErrorHandlerExtra.keepgoingOnSuccess,
-          id: this.inlineErrorHandlerModel.id ?? mkid(),
-        };
-
-        const result = await validateStepForSave(
-          handlerData as EditStepData,
-          this.inlineErrorHandlerService,
-        );
-
-        if (!result.valid) {
-          this.inlineErrorHandlerValidation = result;
-          return;
-        }
-
-        const command = cloneDeep(this.model.commands[index]);
-        const originalData = cloneDeep(command);
-        command.errorhandler = handlerData;
-
-        this.$refs.historyControls.operationModify(index, command);
-        this.$refs.historyControls.changeEvent({
-          index,
-          dest: -1,
-          orig: originalData,
-          value: command,
-          operation: Operation.Modify,
-          undo: Operation.Modify,
-        });
-
-        this.cancelInlineErrorHandler();
-      } catch (e) {
-        console.error("[WorkflowSteps] saveInlineErrorHandler error:", e);
-      }
-    },
-    cancelInlineErrorHandler() {
-      this.inlineErrorHandlerIndex = -1;
-      this.inlineErrorHandlerModel = {};
-      this.inlineErrorHandlerService = "";
-      this.inlineErrorHandlerExtra = { keepgoingOnSuccess: false };
-      this.inlineErrorHandlerValidation = resetValidation();
     },
     async getStepPlugins() {
       await context.rootStore.plugins.load(ServiceType.WorkflowNodeStep);
