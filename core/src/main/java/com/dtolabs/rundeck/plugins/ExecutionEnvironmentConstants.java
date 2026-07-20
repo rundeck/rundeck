@@ -7,6 +7,8 @@ public class ExecutionEnvironmentConstants {
     public static final String LOCAL_RUNNER = "localRunner";
     public static final String REMOTE_RUNNER = "remoteRunner";
 
+    public static final String INTERNAL_USE_ONLY = "InternalUseOnly";
+
 
     public static final String AUTOMATIC_WORKFLOW_STEP_RUNNER_ASSOCIATION= "automaticWorkflowStepRunnerAssociation";
 }
