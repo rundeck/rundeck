@@ -60,11 +60,11 @@ jest.mock("@/library/modules/pluginService");
 jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: jest.fn().mockImplementation(() => ({})),
 }));
-jest.mock("@/library/services/feature", () => ({
-  getFeatureEnabled: jest.fn().mockResolvedValue(true),
+jest.mock("@/library/components/widgets/settings-bar/services/pageUiMetaService", () => ({
+  getPageUiMeta: jest.fn().mockReturnValue({ nextUiCapable: true, isNextUiPage: true }),
 }));
 
-const { getFeatureEnabled } = require("@/library/services/feature");
+const { getPageUiMeta } = require("@/library/components/widgets/settings-bar/services/pageUiMetaService");
 
 /**
  * Persisted workflow JSON for simple exec steps: nested errorhandler uses the exec branch in
@@ -441,8 +441,8 @@ describe("WorkflowSteps", () => {
         expect(wrapper.findComponent(ErrorHandlerStep).exists()).toBe(true);
       });
 
-      it("falls back to the legacy EditPluginModal when earlyAccessJobConditional is disabled (backward compatibility)", async () => {
-        getFeatureEnabled.mockResolvedValueOnce(false);
+      it("falls back to the legacy EditPluginModal on legacy-UI pages (backward compatibility)", async () => {
+        getPageUiMeta.mockReturnValueOnce({ nextUiCapable: false, isNextUiPage: false });
         const localWrapper = await createWrapper(
           {
             commands: [{ ...baseCommand }, { ...baseCommand, errorhandler: undefined }],
@@ -486,8 +486,8 @@ describe("WorkflowSteps", () => {
         });
       });
 
-      it("adds a new error handler via the legacy modal when earlyAccessJobConditional is disabled", async () => {
-        getFeatureEnabled.mockResolvedValueOnce(false);
+      it("adds a new error handler via the legacy modal on legacy-UI pages", async () => {
+        getPageUiMeta.mockReturnValueOnce({ nextUiCapable: false, isNextUiPage: false });
         const localWrapper = await createWrapper(
           { commands: [{ ...baseCommand, errorhandler: undefined }] },
           {

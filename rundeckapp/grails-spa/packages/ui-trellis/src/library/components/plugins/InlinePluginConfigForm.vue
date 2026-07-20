@@ -102,6 +102,15 @@ export default defineComponent({
   },
   watch: {
     async modelValue(val) {
+      // Parent components (e.g. EditStepCard) rebuild their errorhandler/step
+      // object on every field edit and pass it back down as a new object
+      // reference -- without this guard, that echo would re-clone editModel
+      // and re-fetch the provider description on every keystroke. Only treat
+      // this as an external change (e.g. a different plugin type selected,
+      // or the handler reset) when the plugin type itself actually changed.
+      if (val?.type === this.editModel?.type) {
+        return;
+      }
       this.editModel = cloneDeep(val);
       this.updatePluginConfigMode();
       await this.loadProvider();

@@ -1073,7 +1073,7 @@ describe("EditStepCard", () => {
       expect(wrapper.emitted("update:modelValue")).toBeUndefined();
     });
 
-    it("does not render error handler or log filter sections for job reference steps", async () => {
+    it("does not render the log filter section for job reference steps", async () => {
       const wrapper = await createSectionWrapper({
         modelValue: {
           type: "job.reference",
@@ -1084,8 +1084,21 @@ describe("EditStepCard", () => {
         },
       });
 
-      expect(wrapper.find('[data-testid="error-handler-section"]').exists()).toBe(false);
       expect(wrapper.find('[data-testid="log-filter-section"]').exists()).toBe(false);
+    });
+
+    it("renders the error handler section for job reference steps (matches legacy GSP: only log filters are excluded for job refs)", async () => {
+      const wrapper = await createSectionWrapper({
+        modelValue: {
+          type: "job.reference",
+          config: {},
+          nodeStep: false,
+          id: "test-step-1",
+          jobref: { name: "test-job", group: "", uuid: "" },
+        },
+      });
+
+      expect(wrapper.find('[data-testid="error-handler-section"]').exists()).toBe(true);
     });
   });
 });
