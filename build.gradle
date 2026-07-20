@@ -250,7 +250,22 @@ allprojects {
                     details.because 'httpcore5 5.4.2 fixes CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)'
                 }
             }
-            
+
+            // org.ehcache:ehcache:3.12.0 publishes plain (runtimeElements) and Jakarta
+            // (jakartaRuntimeElements) feature variants that both declare identical capabilities
+            // (ehcache-api, ehcache-core, ehcache-xml-provider, etc). grails-spring-security:7.1.4
+            // pulls the jakarta variant while some modules depend on the plain variant directly;
+            // Gradle can't auto-resolve two variants claiming the same capability, so always prefer
+            // jakarta here since Grails 7 / GORM 9 runs on Jakarta EE.
+            capabilitiesResolution.all { details ->
+                if (details.candidates.every { it.id.group == 'org.ehcache' && it.id.module == 'ehcache' }) {
+                    def jakartaCandidate = details.candidates.find { it.variantName.contains('jakarta') }
+                    if (jakartaCandidate != null) {
+                        details.select(jakartaCandidate)
+                    }
+                }
+            }
+
             // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
             force "com.google.protobuf:protobuf-java:${protobufVersion}" // CVE-2024-7254 fix
@@ -272,9 +287,36 @@ allprojects {
             force "io.micrometer:micrometer-observation:${micrometerVersion}"
             force "io.micrometer:micrometer-commons:${micrometerVersion}"
             force "jaxen:jaxen:${jaxenVersion}"
+            // Force guava/failureaccess/asm to the versions declared in gradle.properties, kept in
+            // sync with rundeckpro's enterprise packaging so core and pro resolve identically and
+            // don't end up with duplicate jars when pro bundles rundeck's artifacts into its WAR.
+            force "com.google.guava:guava:${guavaVersion}"
+            force "com.google.errorprone:failureaccess:${failureAccessVersion}"
+            force "org.ow2.asm:asm:${asmVersion}"
+            force "org.ow2.asm:asm-tree:${asmVersion}"
+            force "org.ow2.asm:asm-commons:${asmVersion}"
+            force "org.ow2.asm:asm-analysis:${asmVersion}"
+            force "org.ow2.asm:asm-util:${asmVersion}"
             // NOTE: Micronaut forced to ${micronautVersion} (CVE-2026-33013 fix)
             // TODO: Future cleanup - remove explicit ${micronautVersion} from build files and let BOM manage
-            // NOTE: guava and failureaccess excluded - cause variant resolution conflicts
+        }
+    }
+
+    // resolutionStrategy.force cannot override versions managed by the Spring Boot dependency
+    // management plugin (which applies grails-bom entries as strict constraints, e.g. asm:9.10 and
+    // kotlin-stdlib:1.9.25). Must use the plugin's own API to pin these above the BOM version;
+    // otherwise rundeckapp's own runtimeClasspath (bundled by bootWar) still carries the un-forced
+    // BOM version, which causes duplicate jars when rundeckpro's enterprise packaging merges it in.
+    plugins.withId('io.spring.dependency-management') {
+        dependencyManagement {
+            dependencies {
+                dependency "org.ow2.asm:asm:${asmVersion}"
+                dependency "org.ow2.asm:asm-tree:${asmVersion}"
+                dependency "org.ow2.asm:asm-commons:${asmVersion}"
+                dependency "org.ow2.asm:asm-analysis:${asmVersion}"
+                dependency "org.ow2.asm:asm-util:${asmVersion}"
+                dependency "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
+            }
         }
     }
 }

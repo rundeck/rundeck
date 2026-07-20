@@ -415,15 +415,15 @@ dependencies {
         // Keep guava constraint - this is for build compatibility, not CVE
         implementation('com.google.guava:guava') {
             version {
-                strictly '32.0.1-jre'
+                strictly guavaVersion
             }
-            because "guava 33.4.8 from micronaut-guice-bom causes variant resolution conflicts with exportedLibs"
+            because "guava 33.4.8 from micronaut-guice-bom causes variant resolution conflicts with exportedLibs; aligned to guavaVersion so this doesn't fight the global force"
         }
         implementation('com.google.errorprone:failureaccess') {
             version {
-                strictly '1.0.1'
+                strictly failureAccessVersion
             }
-            because "matches guava 32.0.1-jre transitive dependency"
+            because "matches guavaVersion's transitive dependency"
         }
         
         // Temporarily disabled - will re-enable after baseline
