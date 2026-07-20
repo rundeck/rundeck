@@ -21,7 +21,7 @@
       </div>
       <slot name="extra">
         <div
-          v-if="modelValue.length > 0"
+          v-if="modelValue.length > 0 && !hideChips"
           class="chips-row"
           data-testid="config-section-chips-row"
         >
@@ -87,7 +87,7 @@
       <transition name="chips-slide" mode="out-in">
         <slot name="extra">
           <div
-            v-if="modelValue.length > 0"
+            v-if="modelValue.length > 0 && !hideChips"
             class="chips-row"
             data-testid="config-section-chips-row"
           >
@@ -150,6 +150,10 @@ export default defineComponent({
       default: false,
     },
     hideIcon: {
+      type: Boolean,
+      default: false,
+    },
+    hideChips: {
       type: Boolean,
       default: false,
     },

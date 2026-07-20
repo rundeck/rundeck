@@ -115,4 +115,35 @@ describe("InlinePluginConfigForm", () => {
     expect(fieldError.exists()).toBe(true);
     expect(fieldError.text()).toBe("required");
   });
+
+  it("user sees an error message when the provider fails to load", async () => {
+    getServiceProviderDescription.mockRejectedValueOnce(
+      new Error("network error"),
+    );
+
+    const wrapper = await createWrapper();
+
+    const errorEl = wrapper.find(
+      '[data-testid="inline-plugin-config-form-error"]',
+    );
+    expect(errorEl.exists()).toBe(true);
+    expect(wrapper.text()).toContain(
+      "InlinePluginConfigForm.loadError.message",
+    );
+  });
+
+  it("recomputes pluginConfigMode to create when modelValue swaps to a new provider with empty config", async () => {
+    const wrapper = await createWrapper({
+      modelValue: { type: "exec", config: { exec: "echo hello" } },
+    });
+
+    expect((wrapper.vm as any).pluginConfigMode).toBe("edit");
+
+    await wrapper.setProps({
+      modelValue: { type: "other-provider", config: {} },
+    });
+    await flushPromises();
+
+    expect((wrapper.vm as any).pluginConfigMode).toBe("create");
+  });
 });
