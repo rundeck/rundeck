@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "engines": {
-    "npm": "10.9.4"
+    "npm": "11.16.0"
   },
   "main": "",
   "scripts": {
