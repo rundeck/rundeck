@@ -178,7 +178,7 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
             }
             if (filters) {
                 filters.each { k, v ->
-                    eq(k, v)
+                    ilike(k, "%${v}%")
                 }
             }
 
@@ -205,7 +205,7 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
 
                 if (filters) {
                     filters.each { k, v ->
-                        eq(k, v)
+                        ilike(k, "%${v}%")
                     }
                 }
                 order("login", "asc")
