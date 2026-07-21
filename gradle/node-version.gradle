@@ -1,0 +1,45 @@
+def nvmrcVersion = new File(rootDir, '.nvmrc').text.trim().replace('v', '')
+def nvmDir = System.getenv('NVM_DIR') ?: "${System.getProperty('user.home')}/.nvm"
+def nvmNodeBin = new File(nvmDir, "versions/node/v${nvmrcVersion}/bin")
+// If nvm has the pinned version installed, use it explicitly. Otherwise fall back to
+// whatever Node is already on PATH, and only fail if there's no Node at all, or an older one.
+ext.pinnedNodeBin = nvmNodeBin.directory ? nvmNodeBin : null
+
+task verifyNodeVersion {
+    doFirst {
+        if (project.ext.pinnedNodeBin == null) {
+            def actualVersion = null
+            try {
+                actualVersion = ['node', '--version'].execute().text.trim().replace('v', '')
+            } catch (IOException ignored) {
+                actualVersion = null
+            }
+            if (!actualVersion) {
+                throw new GradleException(
+                    "No Node.js installation found. Install Node ${nvmrcVersion} (pinned in " +
+                    "${rootDir}/.nvmrc) — via nvm (nvm install ${nvmrcVersion}) or by " +
+                    "downloading it from https://nodejs.org/en/download."
+                )
+            }
+            def actualParts = actualVersion.split('\\.').collect { it.toInteger() }
+            def pinnedParts = nvmrcVersion.split('\\.').collect { it.toInteger() }
+            def isOlder = false
+            for (int i = 0; i < Math.max(actualParts.size(), pinnedParts.size()); i++) {
+                def a = i < actualParts.size() ? actualParts[i] : 0
+                def p = i < pinnedParts.size() ? pinnedParts[i] : 0
+                if (a != p) {
+                    isOlder = a < p
+                    break
+                }
+            }
+            if (isOlder) {
+                throw new GradleException(
+                    "Node ${actualVersion} on PATH is older than the pinned ${nvmrcVersion} (from " +
+                    "${rootDir}/.nvmrc). Upgrade via nvm (nvm install ${nvmrcVersion}) or " +
+                    "by downloading it from https://nodejs.org/en/download."
+                )
+            }
+        }
+    }
+}
+tasks.withType(NpmTask).configureEach { dependsOn verifyNodeVersion }
