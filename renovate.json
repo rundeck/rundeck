@@ -28,9 +28,47 @@
       "groupName": "github actions"
     },
     {
-      "description": "jQuery is sensitive — block Renovate from touching it entirely",
-      "matchPackageNames": ["/^jquery/", "/^@types/jquery$/"],
+      "description": "Block packages Eng has flagged as too disruptive to auto-update",
+      "matchPackageNames": [
+        "jquery",
+        "/^@types\\/jquery$/",
+        "vue-eslint-parser",
+        "/^@vue\\/cli-/",
+        "storybook",
+        "/^@storybook\\//",
+        "vue-i18n",
+        "typescript",
+        "/^@typescript/",
+        "sass",
+        "sass-loader"
+      ],
       "enabled": false
+    },
+    {
+      "description": "Group ESLint ecosystem updates",
+      "matchPackageNames": ["/eslint/"],
+      "groupName": "eslint packages"
+    },
+    {
+      "description": "Group Jest ecosystem updates",
+      "matchPackageNames": ["jest", "ts-jest", "@types/jest"],
+      "groupName": "jest packages"
+    },
+    {
+      "description": "Group PrimeVue ecosystem updates",
+      "matchPackageNames": ["primevue", "primeicons", "@primeuix/themes"],
+      "groupName": "primevue packages"
+    },
+    {
+      "description": "Enable npm engine version updates (disabled by default in Renovate)",
+      "matchDepTypes": ["engines"],
+      "enabled": true
+    },
+    {
+      "description": "Group Node.js version (.nvmrc) with the npm engine pin so they update together",
+      "matchManagers": ["nvm", "npm"],
+      "matchDepNames": ["node", "npm"],
+      "groupName": "node and npm engine versions"
     }
   ]
 }
