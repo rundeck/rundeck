@@ -39,6 +39,7 @@
         "vue-i18n",
         "typescript",
         "/^@typescript/",
+        "typescript-eslint",
         "sass",
         "sass-loader"
       ],
