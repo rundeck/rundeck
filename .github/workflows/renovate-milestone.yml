@@ -2,7 +2,7 @@ on:
   pull_request:
     types: [opened]
     branches:
-    - renovate-upgrade
+    - main
 
 # Assigns each new Renovate PR to the lowest-numbered open semver milestone
 # (e.g. picks 6.1.0 over 6.2.0), since Renovate itself has no notion of
