@@ -444,12 +444,6 @@ class JobsXMLCodec {
                     if (cmd.project) {
                         cmd.jobref.project = cmd.remove('project')
                     }
-                    // If useName is explicitly true in XML, remove project and uuid
-                    // This fixes old exports that incorrectly included project/uuid with useName=true
-                    if (cmd.jobref.useName in ['true', true]) {
-                        cmd.jobref.remove('project')
-                        cmd.jobref.remove('uuid')
-                    }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
                         def outconf=[:]
@@ -520,7 +514,7 @@ class JobsXMLCodec {
      * Convert structure returned by job.toMap into correct structure for jobs xml
      */
     static Map convertJobMap (Map map, boolean preserveUuid = true, String replaceId = null, String stripJobRef = null) {
-        map.remove('project')
+        def jobProject = map.remove('project')
         if (!preserveUuid) {
             map.remove('id')
             map.remove('uuid')
@@ -670,7 +664,7 @@ class JobsXMLCodec {
             BuilderUtil.makeAttribute(map.retry,'delay')
         }
 
-        convertWorkflowMapForBuilder(map.sequence, stripJobRef)
+        convertWorkflowMapForBuilder(map.sequence, stripJobRef, jobProject)
         if(map.notification){
             def convertNotificationPlugin={Map pluginMap->
                 def confMap = pluginMap.remove('configuration')
@@ -782,8 +776,10 @@ class JobsXMLCodec {
     /**
      * Convert result of Workflow.toMap() to format used by BuilderUtil
      * @param map
+     * @param stripJobRef
+     * @param jobProject the project of the job being exported, used to compare with jobref projects
      */
-    static void convertWorkflowMapForBuilder(Map map, String stripJobRef = null) {
+    static void convertWorkflowMapForBuilder(Map map, String stripJobRef = null, String jobProject = null) {
         BuilderUtil.makeAttribute(map, 'keepgoing')
         BuilderUtil.makeAttribute(map, 'strategy')
         map.command = map.remove('commands')
@@ -829,11 +825,15 @@ class JobsXMLCodec {
                     }
                 }
 
-                // When useName is true, exclude project and uuid from export
-                // This ensures job references resolve correctly when imported into a different project
+                // When useName is true and the referenced job is in the same project,
+                // exclude project and uuid from export so the reference resolves in the imported project context.
+                // For cross-project references (jobref.project differs from jobProject), keep the project attribute.
                 if(cmd.jobref.useName in ['true', true]) {
-                    cmd.jobref.remove('project')
-                    cmd.jobref.remove('uuid')
+                    boolean isSameProject = !cmd.jobref.project || cmd.jobref.project == jobProject
+                    if (isSameProject) {
+                        cmd.jobref.remove('project')
+                        cmd.jobref.remove('uuid')
+                    }
                 }
 
                 BuilderUtil.makeAttribute(cmd.jobref, 'name')

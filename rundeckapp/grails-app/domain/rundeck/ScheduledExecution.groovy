@@ -267,6 +267,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
     Map toMap(){
         HashMap map = new HashMap()
         map.name=jobName
+        map.project=project
 
         map.scheduleEnabled = hasScheduleEnabled()
         map.executionEnabled = hasExecutionEnabled()
