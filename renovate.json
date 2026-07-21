@@ -1,6 +1,31 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
   ],
-  "prConcurrentLimit": 3
+  "minimumReleaseAge": "7 days",
+  "commitMessagePrefix": "[RUN-0000] {{prettyTitle}}",
+  "internalChecksFilter": "flexible",
+  "dependencyDashboard": true,
+  "vulnerabilityAlerts": {
+    "dependencyDashboardApproval": false
+  },
+  "packageRules": [
+    {
+      "description": "Defer major updates to manual selection from the Dependency Dashboard",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Group routine Gradle minor/patch dependency bumps",
+      "matchManagers": ["gradle"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "gradle minor/patch dependencies"
+    },
+    {
+      "description": "Group low-risk GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    }
+  ]
 }
