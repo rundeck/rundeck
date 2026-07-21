@@ -134,6 +134,7 @@ import jakarta.servlet.http.HttpSession
 import java.nio.charset.Charset
 import java.sql.Time
 import java.sql.Timestamp
+import javax.sql.DataSource
 import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
@@ -4744,20 +4745,36 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return ((Long.parseLong(arr[0]) * 3600) + (Long.parseLong(arr[1]) * 60) + (Long.parseLong(arr[2]))) * 1000
     }
 
+    boolean isH2Datasource() {
+        try {
+            def dataSource = applicationContext.getBean('dataSource', DataSource)
+            return dataSource.getConnection().withCloseable { conn ->
+                conn.metaData.databaseProductName == 'H2'
+            }
+        } catch (Exception ex) {
+            log.debug("Unable to determine datasource type, assuming non-H2", ex)
+            return false
+        }
+    }
+
     private boolean isSqlCompatible() {
         boolean isCompatible = false
-        try{
+        try {
+            boolean isH2 = isH2Datasource()
             Execution.createCriteria().list(max:1) {
-                projections{
-                    sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                projections {
+                    if (isH2) {
+                        sqlProjection 'DATEDIFF(\'SECOND\', date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else {
+                        sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                    }
                 }
             }
-
             isCompatible = true
-        } catch(JDBCException ex){
+        } catch (Exception ex) {
+            log.debug("Execution metrics SQL compatibility check failed, falling back to in-memory metrics calculation", ex)
             isCompatible = false
         }
-
         return isCompatible
     }
 
@@ -4816,6 +4833,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * */
     List<Closure> getCriteriaScenarios(ExecutionQuery query){
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+
+        if (isH2Datasource()) {
+            def metricCriteriaH2 = {
+                def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+                baseQueryCriteria()
+                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+                projections {
+                    rowCount("count")
+                    sqlProjection 'sum(DATEDIFF(\'SECOND\', date_started, date_completed)) as durationSum',
+                            'durationSum', StandardBasicTypes.LONG
+                    sqlProjection 'min(DATEDIFF(\'SECOND\', date_started, date_completed)) as durationMin',
+                            'durationMin', StandardBasicTypes.LONG
+                    sqlProjection 'max(DATEDIFF(\'SECOND\', date_started, date_completed)) as durationMax',
+                            'durationMax', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                            'succeededCount', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                            'failedCount', StandardBasicTypes.LONG
+                }
+            }
+            return Arrays.asList(metricCriteriaH2)
+        }
+
         def metricCriteriaA = {
             def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
             baseQueryCriteria()
