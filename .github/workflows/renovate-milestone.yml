@@ -1,0 +1,35 @@
+on:
+  pull_request:
+    types: [opened]
+    branches:
+    - renovate-upgrade
+
+# Assigns each new Renovate PR to the lowest-numbered open semver milestone
+# (e.g. picks 6.1.0 over 6.2.0), since Renovate itself has no notion of
+# "current" milestone and the milestone rotates every release.
+jobs:
+  assign-milestone:
+    if: github.event.pull_request.user.login == 'renovate[bot]'
+    permissions:
+      pull-requests: write
+      issues: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assign lowest open milestone
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          MILESTONE_TITLE=$(gh api "repos/$REPO/milestones?state=open" \
+            --jq '[.[] | select(.title | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))]
+                  | sort_by(.title | split(".") | map(tonumber))
+                  | .[0].title')
+
+          if [ -z "$MILESTONE_TITLE" ] || [ "$MILESTONE_TITLE" == "null" ]; then
+            echo "::warning::No open semver-named (X.Y.Z) milestone found; skipping."
+            exit 0
+          fi
+
+          echo "Assigning milestone $MILESTONE_TITLE to PR #$PR_NUMBER"
+          gh pr edit "$PR_NUMBER" --repo "$REPO" --milestone "$MILESTONE_TITLE"
