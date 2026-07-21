@@ -353,6 +353,9 @@ repositories {
     }
     maven {
         url "https://packagecloud.io/pagerduty/rundeck-plugins/maven2"
+        content {
+            includeGroup('org.rundeck.plugins')
+        }
     }
 }
 
