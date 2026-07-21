@@ -291,7 +291,7 @@ allprojects {
             // sync with rundeckpro's enterprise packaging so core and pro resolve identically and
             // don't end up with duplicate jars when pro bundles rundeck's artifacts into its WAR.
             force "com.google.guava:guava:${guavaVersion}"
-            force "com.google.errorprone:failureaccess:${failureAccessVersion}"
+            force "com.google.guava:failureaccess:${failureAccessVersion}"
             force "org.ow2.asm:asm:${asmVersion}"
             force "org.ow2.asm:asm-tree:${asmVersion}"
             force "org.ow2.asm:asm-commons:${asmVersion}"

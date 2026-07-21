@@ -419,7 +419,7 @@ dependencies {
             }
             because "guava 33.4.8 from micronaut-guice-bom causes variant resolution conflicts with exportedLibs; aligned to guavaVersion so this doesn't fight the global force"
         }
-        implementation('com.google.errorprone:failureaccess') {
+        implementation('com.google.guava:failureaccess') {
             version {
                 strictly failureAccessVersion
             }
