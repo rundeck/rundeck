@@ -803,6 +803,35 @@ task copySpa(type: Copy) {
 assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
 
+def nvmrcVersion = new File(rootProject.rootDir, '.nvmrc').text.trim().replace('v', '')
+def nvmDir = System.getenv('NVM_DIR') ?: "${System.getProperty('user.home')}/.nvm"
+def nvmNodeBin = new File(nvmDir, "versions/node/v${nvmrcVersion}/bin")
+// If nvm has the pinned version installed, use it explicitly. Otherwise fall back to
+// whatever Node is already on PATH, and only fail if there's no Node at all.
+def pinnedNodeBin = nvmNodeBin.directory ? nvmNodeBin : null
+
+task verifyNodeVersion {
+    doFirst {
+        if (pinnedNodeBin == null) {
+            def nodeAvailable
+            try {
+                def proc = ['node', '--version'].execute()
+                proc.waitFor()
+                nodeAvailable = proc.exitValue() == 0
+            } catch (IOException ignored) {
+                nodeAvailable = false
+            }
+            if (!nodeAvailable) {
+                throw new GradleException(
+                    "No Node.js installation found. Install Node ${nvmrcVersion} (pinned in " +
+                    "${rootProject.rootDir}/.nvmrc) — via nvm (nvm install ${nvmrcVersion}) or any other method."
+                )
+            }
+        }
+    }
+}
+tasks.withType(NpmTask).configureEach { dependsOn verifyNodeVersion }
+
 task vendorAssetDeps(type: NpmTask) { it ->
     dependsOn copySpa
     def baseDir = "${projectDir}/grails-app/assets/javascripts"
@@ -821,6 +850,9 @@ task vendorAssetDeps(type: NpmTask) { it ->
 
     execOverrides {
         it.workingDir = "${baseDir}/_package-manager"
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
         def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
         if (token) {
             it.environment('CLOUDSMITH_NPM_TOKEN', token)
