@@ -514,7 +514,8 @@ class JobsXMLCodec {
      * Convert structure returned by job.toMap into correct structure for jobs xml
      */
     static Map convertJobMap (Map map, boolean preserveUuid = true, String replaceId = null, String stripJobRef = null) {
-        def jobProject = map.remove('project')
+        def jobProject = map.remove('_xml_project')
+        map.remove('project') // Remove project if it exists (shouldn't, but for safety)
         if (!preserveUuid) {
             map.remove('id')
             map.remove('uuid')
