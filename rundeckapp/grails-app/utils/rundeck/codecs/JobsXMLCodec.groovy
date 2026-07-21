@@ -444,6 +444,12 @@ class JobsXMLCodec {
                     if (cmd.project) {
                         cmd.jobref.project = cmd.remove('project')
                     }
+                    // If useName is explicitly true in XML, remove project and uuid
+                    // This fixes old exports that incorrectly included project/uuid with useName=true
+                    if (cmd.jobref.useName in ['true', true]) {
+                        cmd.jobref.remove('project')
+                        cmd.jobref.remove('uuid')
+                    }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
                         def outconf=[:]
@@ -821,6 +827,13 @@ class JobsXMLCodec {
                         cmd.jobref.remove('uuid')
                         cmd.jobref.useName = true
                     }
+                }
+
+                // When useName is true, exclude project and uuid from export
+                // This ensures job references resolve correctly when imported into a different project
+                if(cmd.jobref.useName in ['true', true]) {
+                    cmd.jobref.remove('project')
+                    cmd.jobref.remove('uuid')
                 }
 
                 BuilderUtil.makeAttribute(cmd.jobref, 'name')

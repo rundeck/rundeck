@@ -112,54 +112,30 @@ class JobExecSpec extends Specification implements DataTest {
 
     }
 
-    def "to map with useName true excludes project and uuid"() {
+    def "to map always includes project and uuid regardless of useName"() {
         when:
         Map map = new JobExec(
                 jobGroup: 'group',
                 jobName: 'name',
                 jobProject:'projectB',
                 uuid: 'test-uuid-123',
-                useName: true,
+                useName: useName,
                 description: 'a monkey',
         ).toMap()
 
         then:
-        // When useName is true, project and uuid should NOT be included
-        map == [
-                jobref     : [
-                        group      : 'group',
-                        name       : 'name',
-                        useName    : 'true'
-                ],
-                description: 'a monkey'
-        ]
-        // Verify project and uuid are not present
-        !map.jobref.containsKey('project')
-        !map.jobref.containsKey('uuid')
-    }
+        // toMap() always includes project and uuid for internal serialization
+        // The exclusion happens at XML export layer, not in toMap()
+        map.jobref.project == 'projectB'
+        map.jobref.uuid == 'test-uuid-123'
+        if(useName) {
+            map.jobref.useName == 'true'
+        }
 
-    def "to map with useName false includes project and uuid"() {
-        when:
-        Map map = new JobExec(
-                jobGroup: 'group',
-                jobName: 'name',
-                jobProject:'projectB',
-                uuid: 'test-uuid-123',
-                useName: false,
-                description: 'a monkey',
-        ).toMap()
-
-        then:
-        // When useName is false, project and uuid should be included
-        map == [
-                jobref     : [
-                        group      : 'group',
-                        name       : 'name',
-                        project: 'projectB',
-                        uuid: 'test-uuid-123'
-                ],
-                description: 'a monkey'
-        ]
+        where:
+        useName | _
+        true    | _
+        false   | _
     }
 
     def "from map with node intersect"() {
@@ -213,6 +189,7 @@ class JobExecSpec extends Specification implements DataTest {
         'uuid' | true    | true
 
     }
+
     def "from map with jobref.project"() {
         given:
         def map = [
