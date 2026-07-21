@@ -2,7 +2,7 @@
   "name": "root",
   "private": true,
   "engines": {
-    "npm": "10.9.4"
+    "npm": "11.16.0"
   },
   "scripts": {
     "bootstrap": "lerna clean -y && lerna bootstrap --hoist"
