@@ -54,6 +54,9 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
             filterAuthorizedProjectExecutionsAll(null, !null, !null) >> { auth, exec, actions ->
                 return exec
             }
+            filterAuthorizedProjectExecutionsAny(null, !null, !null) >> { auth, exec, actions ->
+                return exec
+            }
         }
         service.frameworkService=Mock(FrameworkService){
             kickJob(!null, !null, null,!null)>>{
@@ -549,7 +552,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
             }
             [result: [], total: 0]
         }
-        1 * service.rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAll(_, _, [AuthConstants.ACTION_READ]) >>
+        1 * service.rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAny(_, _, [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]) >>
                 {authcontext, inputArr, actions ->
             return inputArr
         }

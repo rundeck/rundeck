@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
+import org.rundeck.core.auth.AuthConstants
+import rundeck.Execution
 import rundeck.ScheduledExecution
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -330,6 +332,53 @@ class BaseAuthContextEvaluatorSpec extends Specification {
             [true, false]  | false
             [false, false] | false
             [true, true]   | true
+    }
+
+    @Unroll
+    def "filterAuthorizedProjectExecutionsAny allows read or view_history"() {
+        given:
+            def test = new BaseAuthContextEvaluator()
+            def auth = Mock(AuthContext)
+            def resources = [
+                ['name': 'name1', 'type': 'job', 'uuid': '8b411ae8-8931-4db9-b12e-8d29a6fec43b', 'group': 'blah/blee']
+            ].toSet()
+            test.authContextEvaluatorCacheManager = Mock(AuthCache) {
+                _ * evaluate(
+                    auth,
+                    resources,
+                    [AuthConstants.ACTION_READ].toSet(),
+                    'testProject'
+                ) >> makeDecisions([readAuthorized])
+                _ * evaluate(
+                    auth,
+                    resources,
+                    [AuthConstants.VIEW_HISTORY].toSet(),
+                    'testProject'
+                ) >> makeDecisions([viewHistoryAuthorized])
+            }
+
+            ScheduledExecution job = new ScheduledExecution(
+                jobName: 'name1',
+                groupPath: 'blah/blee',
+                uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b',
+                project: 'testProject'
+            )
+            Execution exec = new Execution(scheduledExecution: job, project: 'testProject')
+        when:
+            def result = test.filterAuthorizedProjectExecutionsAny(
+                auth,
+                [exec],
+                [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]
+            )
+        then:
+            (result.size() == 1) == expectIncluded
+
+        where:
+            readAuthorized | viewHistoryAuthorized | expectIncluded
+            true           | false                 | true
+            false          | true                  | true
+            true           | true                  | true
+            false          | false                 | false
     }
 
     public HashSet<Decision> makeDecisions(List<Boolean> decisions) {

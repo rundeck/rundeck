@@ -3223,8 +3223,12 @@ if executed in cluster mode.""",
 
         def result = results.result
         def total = results.total
-        //filter query results to READ authorized executions
-        def filtered = rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(authContext, result, [AuthConstants.ACTION_READ])
+        //filter query results to executions the user can view via READ or VIEW_HISTORY
+        def filtered = rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAny(
+            authContext,
+            result,
+            [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]
+        )
 
         def controller = this
         withFormat {

@@ -167,7 +167,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'test')
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
-        1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+        1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAny(_, [], [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]) >> []
         respondJson * controller.executionService.respondExecutionsJson(_, _, [], [total: 1, offset: 0, max: 20],_)
         respondXml * controller.executionService.respondExecutionsXml(_, _, [], [total: 1, offset: 0, max: 20])
 
@@ -207,7 +207,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         1 * controller.apiService.requireApi(_, _) >> true
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
-        1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+        1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAny(_, [], [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]) >> []
         1 * controller.frameworkService.existsFrameworkProject('test') >> true
         1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
     }
@@ -239,7 +239,7 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
         1 * controller.apiService.requireApi(_, _) >> true
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
-        1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+        1 * controller.rundeckAuthContextProcessor.filterAuthorizedProjectExecutionsAny(_, [], [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]) >> []
 
         1 * controller.frameworkService.existsFrameworkProject('test') >> true
         1 * controller.apiService.requireExists(_,true,['Project','test']) >> true
