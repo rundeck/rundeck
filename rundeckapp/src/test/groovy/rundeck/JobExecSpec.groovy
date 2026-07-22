@@ -112,6 +112,32 @@ class JobExecSpec extends Specification implements DataTest {
 
     }
 
+    def "to map always includes project and uuid regardless of useName"() {
+        when:
+        Map map = new JobExec(
+                jobGroup: 'group',
+                jobName: 'name',
+                jobProject:'projectB',
+                uuid: 'test-uuid-123',
+                useName: useName,
+                description: 'a monkey',
+        ).toMap()
+
+        then:
+        // toMap() always includes project and uuid for internal serialization
+        // The exclusion happens at XML export layer, not in toMap()
+        map.jobref.project == 'projectB'
+        map.jobref.uuid == 'test-uuid-123'
+        if(useName) {
+            map.jobref.useName == 'true'
+        }
+
+        where:
+        useName | _
+        true    | _
+        false   | _
+    }
+
     def "from map with node intersect"() {
         given:
         def map = [
@@ -163,6 +189,7 @@ class JobExecSpec extends Specification implements DataTest {
         'uuid' | true    | true
 
     }
+
     def "from map with jobref.project"() {
         given:
         def map = [
