@@ -88,7 +88,7 @@
 
     .col {
       font-size: 16px;
-      line-height: 26px;
+      line-height: 38px;
       vertical-align: top;
     }
 
@@ -115,7 +115,7 @@
       .col {
         box-sizing: border-box;
         display: inline-block !important;
-        line-height: 23px;
+        line-height: 34px;
         width: 100% !important;
       }
 
