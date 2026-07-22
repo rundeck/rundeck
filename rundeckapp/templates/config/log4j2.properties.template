@@ -189,6 +189,19 @@ logger.bootstrap.level = info
 logger.bootstrap.additivity = false
 logger.bootstrap.appenderRef.stdout.ref = STDOUT
 
+# RUN-4548 diagnostics: grails.mail config resolution on RBA Cloud (System Configuration DB-backed source)
+logger.mail.name = com.dtolabs.rundeck.app.mail
+logger.mail.level = debug
+logger.mail.additivity = false
+logger.mail.appenderRef.stdout.ref = STDOUT
+logger.mail.appenderRef.rundeck.ref = rundeck
+
+logger.rundeckproConfig.name = rundeckpro.config
+logger.rundeckproConfig.level = debug
+logger.rundeckproConfig.additivity = false
+logger.rundeckproConfig.appenderRef.stdout.ref = STDOUT
+logger.rundeckproConfig.appenderRef.rundeck.ref = rundeck
+
 logger.grails.name = grails
 logger.grails.level = warn
 logger.grails.additivity = false
