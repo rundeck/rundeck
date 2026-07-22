@@ -27,6 +27,18 @@
       "groupName": "gradle minor/patch dependencies"
     },
     {
+      "description": "Grails minors have a history of real behavioral changes despite semver, and grails-plugin-spring-security-core must move in lockstep with it — pull both out of the auto-grouped minor/patch bucket for manual review",
+      "matchPackageNames": ["/^org\\.apache\\.grails:/"],
+      "groupName": "grails framework (manual review required)",
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Spock's version suffix (e.g. -groovy-5.0) encodes the Groovy variant it's compiled against; that must move in lockstep with our own groovyVersion pin, not silently ride along on a 'minor' semver bump",
+      "matchPackageNames": ["/^org\\.spockframework:/"],
+      "groupName": "spock framework (manual review - groovy variant coupling)",
+      "dependencyDashboardApproval": true
+    },
+    {
       "description": "Keep the Jira REST client app/core artifacts in lockstep",
       "matchPackageNames": ["/^com\\.atlassian\\.jira:jira-rest-java-client-/"],
       "groupName": "atlassian jira rest client"
@@ -57,7 +69,7 @@
         "typescript-eslint",
         "sass",
         "sass-loader",
-        "h2"
+        "/^com\\.h2database:/"
       ],
       "enabled": false
     },
