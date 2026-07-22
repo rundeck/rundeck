@@ -16,15 +16,31 @@
       "dependencyDashboardApproval": true
     },
     {
+      "description": "Group noisy Google Cloud client library revision bumps",
+      "matchPackageNames": ["/^com\\.google\\.apis:/", "/^com\\.google\\.cloud:/"],
+      "groupName": "google cloud clients"
+    },
+    {
       "description": "Group routine Gradle minor/patch dependency bumps",
       "matchManagers": ["gradle"],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "gradle minor/patch dependencies"
     },
     {
+      "description": "Keep the Jira REST client app/core artifacts in lockstep",
+      "matchPackageNames": ["/^com\\.atlassian\\.jira:jira-rest-java-client-/"],
+      "groupName": "atlassian jira rest client"
+    },
+    {
       "description": "Group low-risk GitHub Actions updates",
       "matchManagers": ["github-actions"],
       "groupName": "github actions"
+    },
+    {
+      "description": "Never batch our own runner/sidecar artifact with unrelated updates",
+      "matchPackageNames": ["com.rundeck.sidecar:pd-runner-api"],
+      "groupName": null,
+      "automerge": false
     },
     {
       "description": "Block packages Eng has flagged as too disruptive to auto-update",
@@ -40,7 +56,8 @@
         "/^@typescript/",
         "typescript-eslint",
         "sass",
-        "sass-loader"
+        "sass-loader",
+        "h2"
       ],
       "enabled": false
     },
@@ -69,6 +86,49 @@
       "matchManagers": ["nvm", "npm"],
       "matchDepNames": ["node", "npm"],
       "groupName": "node and npm engine versions"
+    },
+    {
+      "description": "Default Maven registries for the vast majority of Gradle dependencies (Spring, Grails, Netty, Jackson, JUnit, etc.) instead of checking every globally-declared repo (m2proxy, PackageCloud, Sonatype, Gradle Plugin Portal, ...) for every dependency",
+      "matchManagers": ["gradle"],
+      "registryUrls": [
+        "https://repo1.maven.org/maven2/",
+        "https://repo.grails.org/grails/core/"
+      ]
+    },
+    {
+      "description": "Gradle plugin marker artifacts resolve via the Gradle Plugin Portal, not plain Maven Central",
+      "matchManagers": ["gradle"],
+      "matchDepTypes": ["plugin"],
+      "registryUrls": [
+        "https://plugins.gradle.org/m2/",
+        "https://repo1.maven.org/maven2/"
+      ]
+    },
+    {
+      "description": "PagerDuty-internal runner/sidecar artifacts only exist on our PackageCloud feeds",
+      "matchPackageNames": ["/^com\\.rundeck\\.sidecar:/", "/^com\\.rundeck\\.runner:/"],
+      "registryUrls": [
+        "https://packagecloud.io/pagerduty/rundeckpro/maven2/",
+        "https://packagecloud.io/pagerduty/rundeckpro-test/maven2/",
+        "https://repo1.maven.org/maven2/"
+      ]
+    },
+    {
+      "description": "org.rundeck artifacts also need the Sonatype Central snapshots feed",
+      "matchPackageNames": ["/^org\\.rundeck[.:]/"],
+      "registryUrls": [
+        "https://repo1.maven.org/maven2/",
+        "https://central.sonatype.com/repository/maven-snapshots/",
+        "https://repo.grails.org/grails/core/"
+      ]
+    },
+    {
+      "description": "Atlassian artifacts (Jira REST client, commonmark) need the internal Atlassian Maven proxy",
+      "matchPackageNames": ["/^com\\.atlassian[.:]/"],
+      "registryUrls": [
+        "https://m2proxy.atlassian.com/repository/public/",
+        "https://repo1.maven.org/maven2/"
+      ]
     }
   ]
 }
