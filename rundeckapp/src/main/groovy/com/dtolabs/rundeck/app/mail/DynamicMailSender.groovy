@@ -8,12 +8,12 @@ import groovy.util.logging.Slf4j
 import org.rundeck.app.grails.events.AppEvents
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.context.properties.bind.Bindable
-import org.springframework.boot.context.properties.bind.Binder
-import org.springframework.boot.context.properties.bind.handler.IgnoreErrorsBindHandler
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.core.env.ConfigurableEnvironment
+import org.springframework.core.env.EnumerablePropertySource
 import org.springframework.core.env.Environment
+import org.springframework.core.env.PropertySource
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 
@@ -62,15 +62,21 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
     /**
      * Resolves the mail configuration map.
      * <p>
-     * Reads live from the Spring {@link Environment} via {@link Binder} (binding {@code rundeck.grails.mail}
-     * and falling back to {@code grails.mail}) so that mail settings
-     * configured at runtime through System Configuration (database) are honored. Unlike the
-     * Spring Environment, {@code grailsApplication.config} only exposes a snapshot built at
-     * startup for prefix/Map lookups and does not reflect database values added later, which
-     * previously made DB-configured mail settings invisible to the mail sender (RUN-4548).
+     * Reads live from the Spring {@link Environment} by scanning its property sources for keys
+     * under the {@code rundeck.grails.mail} prefix, so that mail settings configured at runtime
+     * through System Configuration (database) are honored. Unlike the Spring Environment,
+     * {@code grailsApplication.config} only exposes a snapshot built at startup for prefix/Map
+     * lookups and does not reflect database values added later, which previously made
+     * DB-configured mail settings invisible to the mail sender (RUN-4548).
+     * <p>
+     * Property sources are scanned directly rather than reconstructed via Spring's {@code Binder}
+     * relaxed-binding-to-Map support, since that machinery's handling of flat dotted keys sourced
+     * from a custom {@code MapPropertySource} (the database-backed System Configuration source)
+     * proved fragile across Spring Boot/Framework patch versions and silently stopped resolving
+     * DB-configured mail settings on RBA Cloud instances (RUN-4548).
      * <p>
      * Falls back to {@code grailsApplication.config} when the application context/environment
-     * is unavailable (e.g. in unit tests) or when nothing could be bound from the environment.
+     * is unavailable (e.g. in unit tests) or when nothing could be found in the environment.
      *
      * @return the resolved {@code grails.mail} configuration map, or {@code null} if none is found
      */
@@ -79,17 +85,69 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
         if (applicationContext) {
             try {
                 Environment env = applicationContext.environment
-                Map bound = Binder.get(env)
-                        .bind('rundeck.grails.mail', Bindable.mapOf(String, Object), new IgnoreErrorsBindHandler())
-                        .orElse(null)
-                if (bound != null) {
-                    return bound
+                Map found = scanEnvironmentForPrefix(env, 'rundeck.grails.mail.')
+                if (found) {
+                    return found
                 }
             } catch (Exception e) {
                 log.warn("Failed to read rundeck.grails.mail from Spring Environment, falling back to grailsApplication.config: {}", e.message)
             }
         }
         return grailsApplication.config.getProperty('grails.mail', Map)
+    }
+
+    /**
+     * Scans every property source in the given environment for keys starting with the given
+     * prefix, then reconstructs a nested map from the remainder of each matching key (splitting
+     * on {@code .}) mirroring the shape that relaxed Map binding would otherwise produce.
+     * <p>
+     * Property sources are scanned in their configured precedence order and the first source to
+     * define a given key wins, matching normal Spring {@link Environment} property resolution
+     * semantics.
+     *
+     * @param env the environment to scan
+     * @param prefix the key prefix to match, including the trailing {@code .}
+     * @return a nested map built from the matching keys, or an empty map if none matched
+     */
+    @CompileDynamic
+    static Map scanEnvironmentForPrefix(Environment env, String prefix) {
+        Map<String, Object> flat = [:]
+        if (env instanceof ConfigurableEnvironment) {
+            for (PropertySource<?> ps : ((ConfigurableEnvironment) env).propertySources) {
+                if (ps instanceof EnumerablePropertySource) {
+                    for (String name : ((EnumerablePropertySource) ps).propertyNames) {
+                        if (name.startsWith(prefix)) {
+                            String key = name.substring(prefix.length())
+                            if (key && !flat.containsKey(key)) {
+                                flat[key] = ps.getProperty(name)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return nestFlatMap(flat)
+    }
+
+    /**
+     * Converts a flat map whose keys use dot-separated paths (e.g. {@code "props.smtp.auth"})
+     * into an equivalent nested map structure.
+     *
+     * @param flat the flat, dot-keyed map
+     * @return the equivalent nested map
+     */
+    @CompileDynamic
+    static Map nestFlatMap(Map<String, Object> flat) {
+        Map<String, Object> result = [:]
+        flat.each { String key, Object value ->
+            List<String> parts = key.split(/\./) as List<String>
+            Map<String, Object> node = result
+            for (int i = 0; i < parts.size() - 1; i++) {
+                node = (Map<String, Object>) node.computeIfAbsent(parts[i], { k -> [:] })
+            }
+            node[parts[-1]] = value
+        }
+        return result
     }
 
     /**
