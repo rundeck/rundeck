@@ -5,7 +5,6 @@
   ],
   "minimumReleaseAge": "7 days",
   "commitMessagePrefix": "[RUN-0000]",
-  "internalChecksFilter": "flexible",
   "dependencyDashboard": true,
   "vulnerabilityAlerts": {
     "dependencyDashboardApproval": false
