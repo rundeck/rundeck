@@ -26,6 +26,9 @@ node{
     download = false
 }
 
+apply from: "../../../../gradle/node-version.gradle"
+def pinnedNodeBin = project.ext.pinnedNodeBin
+
 def sourceDirs = [
         '.storybook',
         'lib',
@@ -52,6 +55,9 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
     args = ['run', npmCommand]
 
     execOverrides {
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
         def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
         if (token) {
             it.environment('CLOUDSMITH_NPM_TOKEN', token)
@@ -103,6 +109,9 @@ def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
 
     t.execOverrides {
         it.workingDir = 'build/pack-version'
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
     }
 }
 
@@ -153,6 +162,9 @@ def runNpmPack = tasks.register('runNpmPack', NpmTask) {
 
     it.execOverrides {
         it.workingDir = 'build/pack'
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
     }
 
     it.doFirst {
@@ -190,6 +202,9 @@ tasks.register('runNpmPublish', NpmTask) {t ->
 
     t.execOverrides {
         it.workingDir = 'build/pack'
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
     }
 }
 
@@ -210,6 +225,9 @@ tasks.register('runNpmTest', NpmTask) {
     args = ['run', npmCommand]
 
     execOverrides {
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
         def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
         if (token) {
             it.environment('CLOUDSMITH_NPM_TOKEN', token)

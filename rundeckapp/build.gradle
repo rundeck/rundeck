@@ -803,6 +803,9 @@ task copySpa(type: Copy) {
 assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
 
+apply from: "../gradle/node-version.gradle"
+def pinnedNodeBin = project.ext.pinnedNodeBin
+
 task vendorAssetDeps(type: NpmTask) { it ->
     dependsOn copySpa
     def baseDir = "${projectDir}/grails-app/assets/javascripts"
@@ -821,6 +824,9 @@ task vendorAssetDeps(type: NpmTask) { it ->
 
     execOverrides {
         it.workingDir = "${baseDir}/_package-manager"
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
         def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
         if (token) {
             it.environment('CLOUDSMITH_NPM_TOKEN', token)
