@@ -86,6 +86,7 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
             try {
                 Environment env = applicationContext.environment
                 Map found = scanEnvironmentForPrefix(env, 'rundeck.grails.mail.')
+                log.debug("Resolved mail config keys from Environment: {}", found?.keySet())
                 if (found) {
                     return found
                 }
@@ -93,7 +94,9 @@ class DynamicMailSender implements JavaMailSender, ApplicationContextAware {
                 log.warn("Failed to read rundeck.grails.mail from Spring Environment, falling back to grailsApplication.config: {}", e.message)
             }
         }
-        return grailsApplication.config.getProperty('grails.mail', Map)
+        def fallback = grailsApplication.config.getProperty('grails.mail', Map)
+        log.debug("Falling back to grailsApplication.config, resolved keys: {}", fallback?.keySet())
+        return fallback
     }
 
     /**
