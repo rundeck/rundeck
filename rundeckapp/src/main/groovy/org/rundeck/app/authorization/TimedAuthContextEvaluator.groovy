@@ -186,6 +186,19 @@ class TimedAuthContextEvaluator implements AppAuthContextEvaluator {
     }
 
     @Override
+    List<Execution> filterAuthorizedProjectExecutionsAny(
+        final AuthContext authContext,
+        final List<Execution> execs,
+        final Collection<String> actions
+    ) {
+        List<Execution> result = null
+        metricService.withTimer(this.class.name, 'filterAuthorizedProjectExecutionsAny') {
+            result = rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAny(authContext, execs, actions)
+        }
+        return result
+    }
+
+    @Override
     boolean authorizeProjectJobAny(
         final AuthContext authContext,
         final ScheduledExecution job,

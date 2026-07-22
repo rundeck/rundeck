@@ -367,7 +367,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
 
-                1 * filterAuthorizedProjectExecutionsAll(*_) >> []
+                1 * filterAuthorizedProjectExecutionsAny(*_) >> []
             }
         controller.frameworkService=fwkControl
         def execControl = Mock(ExecutionService)
@@ -490,7 +490,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubjectAndProject(_, _)
 
-                1 * filterAuthorizedProjectExecutionsAll(_,[],_) >> []
+                1 * filterAuthorizedProjectExecutionsAny(_,[],_) >> []
             }
         controller.frameworkService = fwkControl
         controller.request.api_version = 11
