@@ -343,16 +343,21 @@ jobs:
 
 ### Phase 8: Publishing (Optional, for open source)
 
-**Maven Central** (Preferred over JitPack):
+**PackageCloud** (Preferred over JitPack; replaces Maven Central for `rundeck-plugins` — see RUN-4570):
 
 **Requirements**:
-1. Apply `nexusPublish` gradle plugin
-2. Configure `nexusPublishing` block
-3. Add `withJavadocJar()` and `withSourcesJar()`
-4. Fix javadoc issues
-5. Configure Github secrets (SIGNING_KEY_B64, SIGNING_PASSWORD, SONATYPE_USERNAME, SONATYPE_PASSWORD)
+1. Configure a `maven` publishing repository pointing at
+   `https://packagecloud.io/pagerduty/rundeck-plugins/maven2` (Bearer token auth via `PKGCLD_WRITE_TOKEN`) —
+   do **not** apply `nexusPublish`/`nexusPublishing`
+2. Add `withJavadocJar()` and `withSourcesJar()`
+3. Fix javadoc issues
+4. Sign artifacts with the real `gpg` CLI (not Gradle's `signing` plugin) and upload the `.asc` via `curl` —
+   PackageCloud rejects Gradle's auto-generated checksum-of-signature file
+5. Configure Github secrets (`PKGCLD_WRITE_TOKEN`, `SIGNING_KEY_B64`, `SIGNING_PASSWORD`) and the
+   `PKGCLD_REPO_URL` org variable
 
-**See**: `.claude/docs/plugin-development.md` for complete publishing setup
+**See**: `.claude/docs/plugin-development.md` and the `migrate-plugin-to-packagecloud` skill for complete
+publishing setup
 
 ---
 
@@ -404,10 +409,11 @@ Before considering plugin complete:
 - [ ] Howto documentation in README
 
 **Publishing (if standalone, open source):**
-- [ ] GitHub secrets configured (SIGNING_KEY_B64, SIGNING_PASSWORD, SONATYPE_USERNAME, SONATYPE_PASSWORD)
+- [ ] GitHub secrets configured (PKGCLD_WRITE_TOKEN, SIGNING_KEY_B64, SIGNING_PASSWORD)
+- [ ] PKGCLD_REPO_URL org variable set
 - [ ] Javadoc fixed (no errors)
 - [ ] Release workflow tested
-- [ ] Maven Central publishing verified
+- [ ] PackageCloud publishing verified
 
 ---
 

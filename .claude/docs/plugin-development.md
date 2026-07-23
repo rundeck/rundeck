@@ -74,7 +74,7 @@ Easiest integration with GitHub
 
 **Triggers**: On tags `v*`
 
-**Example**: [rundeck-ec2-nodes-plugin release.yml](https://github.com/rundeck-plugins/rundeck-ec2-nodes-plugin/blob/main/.github/workflows/release.yml)
+**Example**: [sshj-plugin release.yml](https://github.com/rundeck-plugins/sshj-plugin/blob/main/.github/workflows/release.yml)
 
 **Steps**:
 - Same build steps as build.yml
@@ -137,45 +137,74 @@ git push v1.2.3
 
 ### Open Source Plugins
 
-#### Maven Central (Preferred)
+#### PackageCloud (Preferred)
 
-**Example**: [rundeck-ec2-nodes-plugin](https://github.com/rundeck-plugins/rundeck-ec2-nodes-plugin)
+> **Maven Central is no longer used for `rundeck-plugins` publishing.** `org.rundeck` exceeded Maven Central's
+> free publishing limits (see RUN-4570), so plugin publishing moved to PagerDuty's PackageCloud Maven repository
+> (`packagecloud.io/pagerduty/rundeck-plugins/maven2`). Do not add `nexusPublish`/`nexusPublishing`/Sonatype
+> config to new or existing plugins.
+
+**Example**: [sshj-plugin](https://github.com/rundeck-plugins/sshj-plugin) (pilot migration)
 
 **Setup Steps**:
 
-1. **Add release process to CI (GitHub Actions)**:
-   ```bash
-   ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
-   ```
-   Requires signing and sonatype secrets
-
-2. **Update build.gradle**:
-   - Add `nexusPublish` gradle plugin
-   - Add `nexusPublishing` configuration:
+1. **Update build.gradle** — remove any `nexusPublish`/`nexusPublishing` block and configure the PackageCloud
+   Maven repository instead:
    ```groovy
-   nexusPublishing {
+   def pkgcldRepoUrl = (System.getenv("PKGCLD_REPO_URL") ?: "https://packagecloud.io/pagerduty/rundeck-plugins/maven2").trim()
+   publishing {
        repositories {
-           sonatype {
-               nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-               snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+           maven {
+               name = "PackageCloud"
+               url = uri(pkgcldRepoUrl)
+               authentication { header(HttpHeaderAuthentication) }
+               credentials(HttpHeaderCredentials) {
+                   name = "Authorization"
+                   value = "Bearer " + (System.getenv("PKGCLD_WRITE_TOKEN") ?: project.findProperty("pkgcldWriteToken"))
+               }
            }
        }
    }
    ```
+   The `PKGCLD_REPO_URL` fallback default keeps unrelated CI jobs (e.g. `gradlew build` in `gradle.yml`) working
+   even when the env var isn't set — the URL is evaluated eagerly at configuration time, so it can't be null.
 
-3. **Apply publishing.gradle**:
+2. **Add release process to CI (GitHub Actions)**:
+   ```bash
+   ./gradlew publishAllPublicationsToPackageCloudRepository
+   ```
+   (Task name is derived from the `name = "PackageCloud"` repository above — verify the actual task name with
+   `./gradlew tasks --all | grep -i packagecloud` for each repo, since it can differ for zip-based plugins using
+   a `mavenZip(MavenPublication)` publication.)
+
+3. **Sign artifacts with real `gpg`, not Gradle's `signing` plugin**: PackageCloud rejects the checksum file
+   Gradle generates for the `.asc` signature (`*.jar.asc.sha1` → HTTP 422). Sign with the `gpg` CLI and upload
+   only the resulting `.asc` via `curl`, bypassing Gradle's checksum machinery for that artifact. See the
+   `migrate-plugin-to-packagecloud` skill (or an already-migrated repo's `release.yml`) for the exact step.
+
+4. **Apply publishing.gradle**:
    - Define project extension properties
    - Specify: `group = 'org.rundeck.plugins'`
    - Update `java` configuration:
      - Add `withJavadocJar()`
-     - Add `withSourcesJar()` (required by Maven Central)
+     - Add `withSourcesJar()`
 
-4. **Fix javadoc issues**:
+5. **Fix javadoc issues**:
    - Required before publishing (javadoc step will fail otherwise)
 
-5. **Configure GitHub Org Secrets**:
+6. **Configure GitHub Org Secrets**:
    - [rundeck-plugins secrets](https://github.com/organizations/rundeck-plugins/settings/secrets/actions)
-   - Required: `SIGNING_KEY_B64`, `SIGNING_PASSWORD`, `SONATYPE_PASSWORD`, `SONATYPE_USERNAME`
+   - Required: `PKGCLD_WRITE_TOKEN`, `SIGNING_KEY_B64`, `SIGNING_PASSWORD`
+   - `PKGCLD_REPO_URL` is set as a GitHub Actions **variable** (not secret) at the org level
+
+7. **Verify the GPG signing key hasn't expired**: `gpg --show-keys --with-colons <key>` — Gradle's
+   `useInMemoryPgpKeys` (Bouncy Castle) does not enforce key expiration, but real `gpg` does, so an expired key
+   fails only when the manual signing step runs.
+
+**Maven Central (deprecated for `rundeck-plugins`)**: still applicable to other orgs/repos that haven't hit the
+publishing limit. If reintroducing it elsewhere, it required the `nexusPublish` gradle plugin, a `nexusPublishing`
+block pointing at `https://ossrh-staging-api.central.sonatype.com/service/local/`, and
+`SIGNING_KEY_B64`/`SIGNING_PASSWORD`/`SONATYPE_USERNAME`/`SONATYPE_PASSWORD` secrets.
 
 #### JitPack (DEPRECATED - DO NOT USE)
 
