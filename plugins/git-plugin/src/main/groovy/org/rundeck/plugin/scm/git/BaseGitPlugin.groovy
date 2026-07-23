@@ -263,6 +263,7 @@ class BaseGitPlugin {
         def agit = git1 ?: git
         def fetchCommand = agit.fetch()
         fetchCommand.setRemote(REMOTE_NAME)
+        fetchCommand.setTimeout(commonConfig.getFetchTimeoutSeconds())
         setupTransportAuthentication(sshConfig, context, fetchCommand)
         def fetchResult = fetchCommand.call()
 
@@ -308,6 +309,7 @@ class BaseGitPlugin {
 
     PullResult gitPull(ScmOperationContext context, Git git1 = null) {
         def pullCommand = (git1 ?: git).pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
+        pullCommand.setTimeout(commonConfig.getFetchTimeoutSeconds())
         setupTransportAuthentication(sshConfig, context, pullCommand)
         pullCommand.call()
     }

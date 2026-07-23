@@ -240,6 +240,30 @@ Path can include variable references
         return fetchAutomatically in [null,'true']
     }
 
+    @PluginProperty(
+            title = "Fetch Timeout",
+            description = "Timeout in seconds for git fetch/pull network operations. Prevents an " +
+                    "unreachable or slow Git server from blocking indefinitely.",
+            defaultValue = '30',
+            required = false
+    )
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Git Repository"
+    )
+    String fetchTimeout
+
+    /**
+     * @return the configured fetch/pull timeout in seconds, or 30 if unset or not a valid number
+     */
+    int getFetchTimeoutSeconds() {
+        try {
+            fetchTimeout ? Integer.parseInt(fetchTimeout) : 30
+        } catch (NumberFormatException ignored) {
+            30
+        }
+    }
+
 
     static List<Property> addDirDefaultValue(List<Property> properties, File basedir, String finalDir) {
         if (null == basedir) {

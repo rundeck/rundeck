@@ -37,6 +37,7 @@ class ScmLoaderService implements EventBusAware {
     public static final long DEFAULT_LOADER_INTERVAL_SEC = 20
     public static final long INIT_RETRY_TIMES = 5
     public static final long INIT_RETRY_TIMES_DELAY = 1000
+    public static final long DEFAULT_SLOWPOLL_INTERVAL = 60_000
 
     /**
      * scheduledExecutor to load job SCM cache
@@ -45,7 +46,6 @@ class ScmLoaderService implements EventBusAware {
     final Map<String, ScheduledFuture> scmProjectLoaderProcess = Collections.synchronizedMap([:])
     final Map<String, Boolean> scmProjectInitLoaded = Collections.synchronizedMap([:])
     final Map<String, ScmPluginConfigData> scmPluginMeta = Collections.synchronizedMap([:])
-    final Map<String, ScmPluginConfigData> scmFailedProjectInit = Collections.synchronizedMap([:])
 
     @Subscriber("rundeck.bootstrap")
     @CompileDynamic
@@ -94,16 +94,9 @@ class ScmLoaderService implements EventBusAware {
 
     boolean projectIntegrationEnabled(String project, String integration,  ScmPluginConfigData pluginConfigData){
         String projectIntegration = getProjectIntegration(project, integration)
-        if(!scmProjectLoaderProcess.get(projectIntegration) && !scmFailedProjectInit.get(projectIntegration)){
+        if(!scmProjectLoaderProcess.get(projectIntegration)){
             if(pluginConfigData && pluginConfigData.enabled) {
                 return true
-            }
-        }else{
-            if(scmFailedProjectInit.get(projectIntegration)){
-                if(reloadPlugin(project, integration, pluginConfigData)){
-                    scmFailedProjectInit.remove(projectIntegration)
-                    return true
-                }
             }
         }
 
@@ -138,51 +131,85 @@ class ScmLoaderService implements EventBusAware {
                 service.scmPluginMeta.put(projectIntegration, pluginConfigData)
             }
             if(pluginConfigData && pluginConfigData.enabled){
-                boolean process = false
-                int retryCount = 0
+                // Currently in slow-poll cooldown after exhausting fast retries: this scheduled
+                // invocation is a cheap no-op until nextRetryAt elapses, avoiding a repeated
+                // connectivity attempt on every fixed-rate firing (RUN-4525).
+                if (service.scmService.isInRetryCooldown(project, integration)) {
+                    return
+                }
 
                 if (pluginConfigData.properties.get("flagToReturnProcess")) {
                     pluginConfigData.properties.remove("flagToReturnProcess")
                     service.scmService.storeConfig(pluginConfigData, project, integration)
                 }
 
-                while (!process){
-                    try {
-                        if (integration == service.scmService.EXPORT) {
-                            service.processScmExportLoader(project, pluginConfigData, state)
-                        }else{
-                            service.processScmImportLoader(project, pluginConfigData, state)
-                        }
-                        process = true
-
-                    } catch (Throwable t) {
-                        if(retryCount>= retryTimes){
-                            process = true
-                            // Do not put into scmFailedProjectInit and do not persist enabled=false —
-                            // the failure may be a transient connectivity issue. scmFailedProjectInit
-                            // would block beginScmLoader() from restarting this loader (it only clears
-                            // on config change), preventing automatic recovery when Git comes back.
-                            // removingLoaderProcess() cancels the current task; beginScmLoader() will
-                            // start a fresh loader on the next periodic cycle when config is still enabled.
-                            log.warn(
-                                "SCM ${integration} for ${project} failed to initialize after ${retryTimes} retries: ${t.message}. " +
-                                "Plugin remains enabled in configuration. Check connectivity and credentials."
-                            )
-                            service.removingLoaderProcess(
-                                project,
-                                integration,
-                                "Error initializing SCM: " + t.message
-                            )
-                        }else{
-                            retryCount++
-                            log.error("Error initializing SCM for: $project/$integration: ${t.message}. Retrying ${retryCount}/${retryTimes}")
-                            Thread.sleep(this.retryDelay)
-                        }
-                    }
+                if (service.scmService.hasRetryState(project, integration)) {
+                    // Already in slow-poll mode and the cooldown has just elapsed: make exactly ONE
+                    // real connectivity attempt, not another full fast-retry burst — the fast-retry
+                    // phase only ever runs once, on the first failure (RUN-4525).
+                    attemptOnce(pluginConfigData)
+                } else {
+                    fastRetryThenEnterSlowPoll(pluginConfigData)
                 }
 
             }else{
                 service.removingLoaderProcess(project, integration, "SCM disabled or project removed")
+            }
+        }
+
+        private void attemptOnce(ScmPluginConfigData pluginConfigData) {
+            try {
+                runLoader(pluginConfigData)
+                service.scmService.clearRetryState(project, integration)
+            } catch (Throwable t) {
+                long nextRetryAt = System.currentTimeMillis() + service.getScmLoaderSlowPollInterval()
+                service.scmService.markRetryFailure(project, integration, nextRetryAt)
+                log.warn(
+                    "SCM ${integration} for ${project} slow-poll attempt failed: ${t.message}. " +
+                    "Next attempt in ${service.getScmLoaderSlowPollInterval()}ms. Plugin remains enabled in configuration."
+                )
+            }
+        }
+
+        private void fastRetryThenEnterSlowPoll(ScmPluginConfigData pluginConfigData) {
+            boolean process = false
+            int retryCount = 0
+            while (!process){
+                try {
+                    runLoader(pluginConfigData)
+                    process = true
+                    service.scmService.clearRetryState(project, integration)
+
+                } catch (Throwable t) {
+                    if(retryCount>= retryTimes){
+                        process = true
+                        // Do not persist enabled=false — the failure may be a transient
+                        // connectivity issue. Instead, enter slow-poll mode: record when the
+                        // next single connectivity attempt is allowed, so the outer scheduled
+                        // task (already re-invoking run() every scmLoaderIntervalSeconds) keeps
+                        // retrying indefinitely without hammering the git server, and without
+                        // requiring manual re-activation (RUN-4525).
+                        long nextRetryAt = System.currentTimeMillis() + service.getScmLoaderSlowPollInterval()
+                        service.scmService.markRetryFailure(project, integration, nextRetryAt)
+                        log.warn(
+                            "SCM ${integration} for ${project} failed to initialize after ${retryTimes} retries: ${t.message}. " +
+                            "Entering slow-poll mode (retry interval=${service.getScmLoaderSlowPollInterval()}ms). " +
+                            "Plugin remains enabled in configuration."
+                        )
+                    }else{
+                        retryCount++
+                        log.error("Error initializing SCM for: $project/$integration: ${t.message}. Retrying ${retryCount}/${retryTimes}")
+                        Thread.sleep(this.retryDelay)
+                    }
+                }
+            }
+        }
+
+        private void runLoader(ScmPluginConfigData pluginConfigData) {
+            if (integration == service.scmService.EXPORT) {
+                service.processScmExportLoader(project, pluginConfigData, state)
+            }else{
+                service.processScmImportLoader(project, pluginConfigData, state)
             }
         }
     }
@@ -214,12 +241,6 @@ class ScmLoaderService implements EventBusAware {
 
     ProjectScmLoader createProjectLoader(String project, String integration) {
         new ProjectScmLoader(project, integration, this, this.getScmLoaderInitialRetryDelay(), this.getScmLoaderInitialRetryTimes())
-    }
-
-    def scmToFalse(ScmPluginConfigData scmPluginConfig, String project, String integration) {
-        log.debug("SCM disabled")
-        scmPluginConfig.enabled = false
-        scmService.storeConfig(scmPluginConfig, project, integration)
     }
 
     static class CancelTaskException extends Exception {
@@ -259,6 +280,17 @@ class ScmLoaderService implements EventBusAware {
                 DEFAULT_LOADER_INTERVAL_SEC
         ) ?:
                 DEFAULT_LOADER_INTERVAL_SEC
+    }
+
+    /**
+     * Interval, in milliseconds, between single connectivity retry attempts once a project/integration
+     * has exhausted its fast retries and entered slow-poll mode. Enforces a hard floor of
+     * {@link #DEFAULT_SLOWPOLL_INTERVAL} (60s) regardless of configured value, to prevent an overly
+     * aggressive interval from re-introducing the repeated-network-call problem this replaces (RUN-4525).
+     */
+    long getScmLoaderSlowPollInterval() {
+        def configured = configurationService?.getLong('scmLoader.slowPoll.interval', DEFAULT_SLOWPOLL_INTERVAL)
+        Math.max(configured != null ? configured : DEFAULT_SLOWPOLL_INTERVAL, DEFAULT_SLOWPOLL_INTERVAL)
     }
 
     @CompileDynamic
@@ -512,6 +544,9 @@ class ScmLoaderService implements EventBusAware {
             def pluginConfigCache = scmPluginMeta.get(key)
             if(pluginConfigCache && pluginConfig.getProperties() != pluginConfigCache.getProperties()){
                 scmService.unregisterPlugin(integration, project)
+                // Config changed — clear any slow-poll cooldown so the fresh initProject() attempt
+                // below isn't short-circuited by a stale retry-state entry (RUN-4525).
+                scmService.clearRetryState(project, integration)
                 scmService.initProject(project, integration)
                 scmPluginMeta.remove(key)
                 return true
