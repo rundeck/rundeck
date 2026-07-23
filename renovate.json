@@ -6,6 +6,15 @@
   "minimumReleaseAge": "7 days",
   "commitMessagePrefix": "[RUN-0000]",
   "dependencyDashboard": true,
+  "fetchChangeLogs": "off",
+  "hostRules": [
+    {
+      "description": "Concentrating almost all Gradle lookups onto Maven Central (see registryUrls scoping below) increased request density enough to trip its rate limiter (429s). Throttle our own concurrency here instead of bursting and eating retry/backoff costs.",
+      "matchHost": "repo1.maven.org",
+      "concurrentRequestLimit": 4,
+      "maxRequestsPerSecond": 5
+    }
+  ],
   "vulnerabilityAlerts": {
     "dependencyDashboardApproval": false
   },
@@ -106,8 +115,15 @@
       "groupName": "node and npm engine versions"
     },
     {
-      "description": "Default Maven registries for the vast majority of Gradle dependencies (Spring, Grails, Netty, Jackson, JUnit, etc.) instead of checking every globally-declared repo (m2proxy, PackageCloud, Sonatype, Gradle Plugin Portal, ...) for every dependency",
+      "description": "Default registry for the vast majority of Gradle dependencies (Spring, Netty, Jackson, JUnit, etc.) instead of checking every globally-declared repo (m2proxy, PackageCloud, Sonatype, Grails, Gradle Plugin Portal, ...) for every dependency. Only ~9% of our gradle deps are actually Grails/Groovy-namespaced, so grails.org is scoped separately below rather than checked for everything.",
       "matchManagers": ["gradle"],
+      "registryUrls": [
+        "https://repo1.maven.org/maven2/"
+      ]
+    },
+    {
+      "description": "Grails/Groovy-namespaced artifacts also need the Grails Maven repo",
+      "matchPackageNames": ["/^org\\.apache\\.grails:/", "/^org\\.grails\\.plugins:/", "/^org\\.apache\\.groovy:/"],
       "registryUrls": [
         "https://repo1.maven.org/maven2/",
         "https://repo.grails.org/grails/core/"
