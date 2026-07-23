@@ -104,6 +104,13 @@ class ScmService {
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     UserDataProvider userDataProvider
     final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
+    /**
+     * Tracks projects/integrations that recently failed to connect to their SCM remote, keyed by
+     * "project-integration", mapped to the epoch millis timestamp of the next allowed retry attempt.
+     * Consulted by {@link #initProject} to short-circuit repeated network calls while the remote
+     * is unreachable, without requiring the plugin to be permanently disabled (RUN-4525).
+     */
+    final Map<String, Long> scmRetryState = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmExportPlugin>> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmImportPlugin>> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
@@ -137,6 +144,9 @@ class ScmService {
             initedProjects.remove(integration + '/' + project)
             return false
         }
+        if (isInRetryCooldown(project, integration)) {
+            return false
+        }
         synchronized (initedProjects) {
             if (initedProjects.contains(integration + '/' + project)) {
                 return true
@@ -164,6 +174,7 @@ class ScmService {
                 return false
             }
             initedProjects.add(integration + '/' + project)
+            clearRetryState(project, integration)
             return true
         } catch (Throwable e) {
             log.error(
@@ -172,6 +183,41 @@ class ScmService {
             )
         }
     }
+
+    /**
+     * @return true if project/integration recently failed to connect and is still within its
+     * slow-poll cooldown window (RUN-4525)
+     */
+    boolean isInRetryCooldown(String project, String integration) {
+        Long nextRetryAt = scmRetryState.get(project + '-' + integration)
+        nextRetryAt != null && System.currentTimeMillis() < nextRetryAt
+    }
+
+    /**
+     * @return true if project/integration has a recorded slow-poll retry-state entry (whether or not
+     * its cooldown window has elapsed) — i.e. it previously failed and has not yet succeeded or had
+     * its config change. Used to tell a fresh fast-retry attempt apart from a slow-poll retry attempt
+     * (which should be a single try, not another full fast-retry burst) (RUN-4525).
+     */
+    boolean hasRetryState(String project, String integration) {
+        scmRetryState.containsKey(project + '-' + integration)
+    }
+
+    /**
+     * Record that project/integration failed to connect, and should not be retried again until nextRetryAt.
+     */
+    void markRetryFailure(String project, String integration, long nextRetryAt) {
+        scmRetryState.put(project + '-' + integration, nextRetryAt)
+    }
+
+    /**
+     * Clear any recorded retry/cooldown state for project/integration, e.g. after a successful
+     * connection or a plugin config change.
+     */
+    void clearRetryState(String project, String integration) {
+        scmRetryState.remove(project + '-' + integration)
+    }
+
     ScmExportPlugin getLoadedExportPluginFor(String project){
         initProject(project, EXPORT)
         loadedExportPlugins[project]?.provider
@@ -223,19 +269,18 @@ class ScmService {
     }
 
     def projectHasConfiguredExportPlugin(String project) {
-        def loaded = initProject(project, EXPORT)
-        if(!loaded){
-            unregisterPlugin(project, EXPORT)
-        }
-        return loaded
+        // Check persisted config only — do not trigger initProject() here.
+        // initProject() calls the git plugin which requires network access; a transient
+        // connectivity failure would cause unregisterPlugin() to discard an otherwise valid
+        // configuration, forcing users to manually re-activate the plugin after recovery.
+        def pluginConfig = loadScmConfig(project, EXPORT)
+        return pluginConfig?.enabled ?: false
     }
 
     def projectHasConfiguredImportPlugin(String project) {
-        def loaded = initProject(project, IMPORT)
-        if(!loaded){
-            unregisterPlugin(project, IMPORT)
-        }
-        return loaded
+        // Check persisted config only — same reasoning as projectHasConfiguredExportPlugin.
+        def pluginConfig = loadScmConfig(project, IMPORT)
+        return pluginConfig?.enabled ?: false
     }
 
     BasicInputView getInputView(UserAndRolesAuthContext auth, String integration, String project, String actionId) {
@@ -1105,9 +1150,21 @@ class ScmService {
         if (plugin) {
             try{
                 return plugin.getStatus(scmOperationContext(auth, project))
+            }catch (ScmPluginException e){
+                // Propagate — includes git connectivity errors reported by the plugin
+                throw e
             }catch (Throwable t){
-                log.error("Failed to get status for SCM export plugin in project ${project}: $t",t);
+                log.error("Failed to get status for SCM export plugin in project ${project}: $t",t)
+                return null
             }
+        }
+        // Plugin is configured on disk but not loaded in memory.
+        // Signal callers explicitly rather than returning null (which would silently show stale status).
+        if (loadScmConfig(project, EXPORT)?.enabled) {
+            throw new ScmPluginException(
+                "SCM export plugin for project ${project} is configured but currently unavailable. " +
+                "Check Git server connectivity and credentials, or reconfigure the plugin."
+            )
         }
         null
     }
@@ -1120,6 +1177,13 @@ class ScmService {
         def plugin = getLoadedImportPluginFor project
         if (plugin) {
             return plugin.getStatus(scmOperationContext(auth, project))
+        }
+        // Plugin is configured on disk but not loaded in memory.
+        if (loadScmConfig(project, IMPORT)?.enabled) {
+            throw new ScmPluginException(
+                "SCM import plugin for project ${project} is configured but currently unavailable. " +
+                "Check Git server connectivity and credentials, or reconfigure the plugin."
+            )
         }
         null
     }
