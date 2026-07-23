@@ -139,11 +139,6 @@ git push v1.2.3
 
 #### PackageCloud (Preferred)
 
-> **Maven Central is no longer used for `rundeck-plugins` publishing.** `org.rundeck` exceeded Maven Central's
-> free publishing limits (see RUN-4570), so plugin publishing moved to PagerDuty's PackageCloud Maven repository
-> (`packagecloud.io/pagerduty/rundeck-plugins/maven2`). Do not add `nexusPublish`/`nexusPublishing`/Sonatype
-> config to new or existing plugins.
-
 **Example**: [sshj-plugin](https://github.com/rundeck-plugins/sshj-plugin) (pilot migration)
 
 **Setup Steps**:
