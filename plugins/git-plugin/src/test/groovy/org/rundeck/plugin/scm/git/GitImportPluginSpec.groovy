@@ -702,4 +702,29 @@ class GitImportPluginSpec extends Specification {
         e.message.contains('Fetch from the repository failed')
     }
 
+    def "get status succeeds with a configured fetch timeout"() {
+        // A custom fetchTimeout must be plumbed through to the JGit fetch command
+        // (BaseGitPlugin#fetchFromRemote, RUN-4525) without breaking a normal,
+        // fast local fetch against a reachable remote.
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir, [fetchAutomatically: 'true', fetchTimeout: '5'])
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'test'
+        })
+
+        when:
+        def status = plugin.getStatus(Mock(ScmOperationContext))
+
+        then:
+        status != null
+    }
+
 }

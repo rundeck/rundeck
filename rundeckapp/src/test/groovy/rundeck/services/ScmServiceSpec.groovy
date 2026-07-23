@@ -1465,4 +1465,87 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
         noExceptionThrown()
     }
 
+    def "initProject does not re-invoke plugin validation while in retry cooldown"() {
+        given:
+        service.frameworkService = Mock(FrameworkService) { isClusterModeEnabled() >> true }
+        service.pluginConfigService = Mock(PluginConfigService)
+        ScmPluginConfigData config = Mock(ScmPluginConfigData) { getEnabled() >> true }
+        service.pluginConfigService.loadScmConfig(*_) >> config
+        // Simulate a project/integration currently within its slow-poll cooldown window
+        service.scmRetryState['test-export'] = System.currentTimeMillis() + 60000
+
+        when:
+        def result1 = service.initProject('test', 'export')
+        def result2 = service.initProject('test', 'export')
+
+        then:
+        !result1
+        !result2
+        // Reaching the username/roles check (and beyond, to plugin validation/loading) would mean
+        // the cooldown short-circuit did not fire and the real connectivity attempt was repeated.
+        0 * config.getSetting("username")
+        0 * config.getSettingList("roles")
+    }
+
+    def "isInRetryCooldown returns false once nextRetryAt has elapsed"() {
+        given:
+        service.scmRetryState['test-export'] = System.currentTimeMillis() - 1000
+
+        expect:
+        !service.isInRetryCooldown('test', 'export')
+    }
+
+    def "clearRetryState removes a recorded cooldown entry"() {
+        given:
+        service.markRetryFailure('test', 'export', System.currentTimeMillis() + 60000)
+
+        expect:
+        service.isInRetryCooldown('test', 'export')
+
+        when:
+        service.clearRetryState('test', 'export')
+
+        then:
+        !service.isInRetryCooldown('test', 'export')
+    }
+
+    def "initProject clears retry state after a successful init"() {
+        given:
+        service.frameworkService = Mock(FrameworkService) { isClusterModeEnabled() >> true }
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForUserAndRolesAndProject(_, _, _) >> Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'admin'
+            }
+        }
+        service.scmExportPluginProviderService = Mock(ScmExportPluginProviderService)
+        ScmPluginConfigData config = Mock(ScmPluginConfigData) {
+            getEnabled() >> true
+            getSetting("username") >> "admin"
+            getSettingList("roles") >> ["admin"]
+            getType() >> "git-export"
+            getConfig() >> [:]
+        }
+        service.pluginConfigService.loadScmConfig(*_) >> config
+        ScmExportPlugin plugin = Mock(ScmExportPlugin)
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory) {
+            createPlugin(_, _, true) >> plugin
+        }
+        service.pluginService.validatePlugin(*_) >> Mock(ValidatedPlugin) { isValid() >> true }
+        service.pluginService.retainPlugin('git-export', _) >> Closeables.closeableProvider(exportFactory)
+        // A prior failure whose cooldown window has already elapsed — initProject should proceed
+        // (not short-circuit) and clear this stale entry entirely once it succeeds.
+        service.markRetryFailure('test', 'export', System.currentTimeMillis() - 60000)
+
+        when:
+        def result = service.initProject('test', 'export')
+
+        then:
+        result
+        !service.scmRetryState.containsKey('test-export')
+    }
+
 }

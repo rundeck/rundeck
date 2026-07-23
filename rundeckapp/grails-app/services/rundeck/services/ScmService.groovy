@@ -104,6 +104,13 @@ class ScmService {
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     UserDataProvider userDataProvider
     final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
+    /**
+     * Tracks projects/integrations that recently failed to connect to their SCM remote, keyed by
+     * "project-integration", mapped to the epoch millis timestamp of the next allowed retry attempt.
+     * Consulted by {@link #initProject} to short-circuit repeated network calls while the remote
+     * is unreachable, without requiring the plugin to be permanently disabled (RUN-4525).
+     */
+    final Map<String, Long> scmRetryState = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmExportPlugin>> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmImportPlugin>> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
@@ -137,6 +144,9 @@ class ScmService {
             initedProjects.remove(integration + '/' + project)
             return false
         }
+        if (isInRetryCooldown(project, integration)) {
+            return false
+        }
         synchronized (initedProjects) {
             if (initedProjects.contains(integration + '/' + project)) {
                 return true
@@ -164,6 +174,7 @@ class ScmService {
                 return false
             }
             initedProjects.add(integration + '/' + project)
+            clearRetryState(project, integration)
             return true
         } catch (Throwable e) {
             log.error(
@@ -172,6 +183,41 @@ class ScmService {
             )
         }
     }
+
+    /**
+     * @return true if project/integration recently failed to connect and is still within its
+     * slow-poll cooldown window (RUN-4525)
+     */
+    boolean isInRetryCooldown(String project, String integration) {
+        Long nextRetryAt = scmRetryState.get(project + '-' + integration)
+        nextRetryAt != null && System.currentTimeMillis() < nextRetryAt
+    }
+
+    /**
+     * @return true if project/integration has a recorded slow-poll retry-state entry (whether or not
+     * its cooldown window has elapsed) — i.e. it previously failed and has not yet succeeded or had
+     * its config change. Used to tell a fresh fast-retry attempt apart from a slow-poll retry attempt
+     * (which should be a single try, not another full fast-retry burst) (RUN-4525).
+     */
+    boolean hasRetryState(String project, String integration) {
+        scmRetryState.containsKey(project + '-' + integration)
+    }
+
+    /**
+     * Record that project/integration failed to connect, and should not be retried again until nextRetryAt.
+     */
+    void markRetryFailure(String project, String integration, long nextRetryAt) {
+        scmRetryState.put(project + '-' + integration, nextRetryAt)
+    }
+
+    /**
+     * Clear any recorded retry/cooldown state for project/integration, e.g. after a successful
+     * connection or a plugin config change.
+     */
+    void clearRetryState(String project, String integration) {
+        scmRetryState.remove(project + '-' + integration)
+    }
+
     ScmExportPlugin getLoadedExportPluginFor(String project){
         initProject(project, EXPORT)
         loadedExportPlugins[project]?.provider

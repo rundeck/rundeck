@@ -535,6 +535,31 @@ class GitExportPluginSpec extends Specification {
         status.message==null
 
     }
+
+    def "get status clean with a configured fetch timeout"() {
+        // A custom fetchTimeout must be plumbed through to the JGit fetch/pull commands
+        // (BaseGitPlugin#fetchFromRemote/gitPull, RUN-4525) without breaking a normal,
+        // fast local fetch against a reachable remote.
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [fetchTimeout: '5'])
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        when:
+        def status = plugin.getStatus(Mock(ScmOperationContext))
+
+        then:
+        status!=null
+        status.state==SynchState.CLEAN
+        status.message==null
+    }
     def "get status fetch fails throws ScmPluginException"() {
         given:
 
