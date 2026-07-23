@@ -226,17 +226,10 @@
         padding-left: 0 !important;
       }
 
-      .toggle-content {
-        max-height: 0;
-        overflow: auto;
-        transition: max-height .4s linear;
-        -webkit-transition: max-height .4s linear;
-      }
-
-      .toggle-trigger:hover+.toggle-content,
-      .toggle-content:hover {
-        max-height: 999px !important;
-      }
+      <%-- .toggle-content/.toggle-trigger were previously collapsed via max-height:0 and
+           only revealed on :hover, which never fires on touch devices (Android mail apps)
+           once this media query collapses them, permanently hiding the section. Removed
+           so Job Description/Nodes/Log Output stay visible everywhere. --%>
 
       .show-sm {
         display: inherit !important;
