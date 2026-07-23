@@ -48,7 +48,7 @@ class GitExportPluginFactorySpec extends Specification {
         expect:
         desc.title == 'Git Export'
         desc.name == 'git-export'
-        desc.properties.size() == 15
+        desc.properties.size() == 16
     }
 
     def "base description properties"() {
@@ -67,6 +67,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'gitPasswordPath',
                 'format',
                 'fetchAutomatically',
+                'fetchTimeout',
                 'committerName',
                 'committerEmail',
                 'exportUuidBehavior',
@@ -92,6 +93,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'gitPasswordPath',
                 'format',
                 'fetchAutomatically',
+                'fetchTimeout',
                 'committerName',
                 'committerEmail',
                 'exportUuidBehavior',
@@ -123,6 +125,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'gitPasswordPath',
                 'format',
                 'fetchAutomatically',
+                'fetchTimeout',
                 'committerName',
                 'committerEmail',
                 'exportUuidBehavior',
