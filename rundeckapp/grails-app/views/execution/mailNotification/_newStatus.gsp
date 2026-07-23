@@ -474,7 +474,7 @@
                 </h3>
                 <h1 style="margin: 10px 0 15px 0;">
                   <g:link controller="execution" action="show" id="${execution.id}" class="job-link"
-                    absolute="${absolute ? 'true' : 'false'}"
+                    absolute="true"
                     params="${(followparams?.findAll { it.value }?:[:]) + [project: execution.project]}">
                     <g:if test="${scheduledExecution}">
                       <g:message code="scheduledExecution.identity"
