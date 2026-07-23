@@ -39,6 +39,12 @@
       "dependencyDashboardApproval": true
     },
     {
+      "description": "jetty.version only forces jetty-util in core/build.gradle; every other Jetty artifact stays pinned wherever Spring Boot's BOM manages it. A 'minor' bump here (e.g. 12.0.x -> 12.1.x) can cross Jetty's own release-line boundary and produce a mixed-version classpath — must be reviewed and moved in lockstep with springBootVersion",
+      "matchPackageNames": ["/^org\\.eclipse\\.jetty/"],
+      "groupName": "jetty (manual review - Spring Boot BOM coupling)",
+      "dependencyDashboardApproval": true
+    },
+    {
       "description": "Keep the Jira REST client app/core artifacts in lockstep",
       "matchPackageNames": ["/^com\\.atlassian\\.jira:jira-rest-java-client-/"],
       "groupName": "atlassian jira rest client"
