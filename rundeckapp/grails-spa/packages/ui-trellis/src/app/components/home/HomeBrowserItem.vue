@@ -63,7 +63,7 @@
       <!--      TODO: ADJUST THIS SECTION ONCE ACTIVITY IS REFACTORED -->
       <div class="col-sm-6 col-md-2 text-center">
         <a
-          :href="createLink(`project/${project.name}/activity`)"
+          :href="createLink(`project/${project.name}/activity?recentFilter=1d`)"
           class="as-block link-hover link-block-padded text-inverse"
           :class="{ 'text-secondary': project.execCount < 1 }"
           data-toggle="popover"
@@ -116,7 +116,11 @@
         <a
           v-if="project.failedCount > 0"
           class="text-warning"
-          :href="createLink(`project/${project.name}/activity?statFilter=fail`)"
+          :href="
+            createLink(
+              `project/${project.name}/activity?statFilter=fail&recentFilter=1d`,
+            )
+          "
         >
           <span>
             {{ project.failedCount
