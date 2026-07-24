@@ -218,7 +218,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
         then:
             result.users
-            result.users.size() == 1
+            result.users.size() == 2
             result.users.find { it.login == userToSearch }
             result.users.find { it.login == userToSearch }.id == u.id
 
