@@ -21,7 +21,7 @@
     "autoprefixer": "^10.4.14",
     "laravel-mix": "^6.0.16",
     "node-forge": "^1.4.0",
-    "postcss": "^8.4.31",
+    "postcss": "^8.5.23",
     "run-script-os": "^1.1.1",
     "typescript": "^4.2.4",
     "vue-loader": "^16.4.1"
