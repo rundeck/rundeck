@@ -91,7 +91,7 @@
     "@storybook/test": "^8.4.5",
     "@storybook/vue3": "^8.4.5",
     "@storybook/vue3-webpack5": "^8.4.5",
-    "@swc/core": "1.15.10",
+    "@swc/core": "1.15.11",
     "@testing-library/dom": "^9.3.4",
     "@types/dagre": "^0.7.48",
     "@types/graphlib": "^2.1.8",
