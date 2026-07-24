@@ -26,7 +26,7 @@ const mountActivitySummary = async (props = {}) => {
   });
 };
 
-describe("EditProjectFile", () => {
+describe("ActivitySummary", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -37,7 +37,7 @@ describe("EditProjectFile", () => {
       rdBase: "http://localhost:9999",
     });
     expect(wrapper.find(".card-content a.h4").attributes()["href"]).toBe(
-      "http://localhost:9999/project/test/activity",
+      "http://localhost:9999/project/test/activity?recentFilter=1d",
     );
   });
 
@@ -64,9 +64,11 @@ describe("EditProjectFile", () => {
       wrapper
         .find(`.card-content [data-test-id="failed-count"] a`)
         .attributes()["href"],
-    ).toBe("http://localhost:9999/project/test/activity?statFilter=fail");
+    ).toBe(
+      "http://localhost:9999/project/test/activity?statFilter=fail&recentFilter=1d",
+    );
   });
-  it("does not failed count 0", async () => {
+  it("does not render failed count link when count is 0", async () => {
     const wrapper = await mountActivitySummary({
       project: { failedCount: 0, name: "test" },
       rdBase: "http://localhost:9999",
