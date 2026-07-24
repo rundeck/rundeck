@@ -129,6 +129,17 @@ describe("HomeBrowserItem", () => {
     );
   });
 
+  it("links execution count and failed count to activity filtered to the last day", async () => {
+    const wrapper = await mountHomeBrowserItem();
+
+    expect(wrapper.find(".as-block").attributes("href")).toBe(
+      "http://localhost:4440/project/example/activity?recentFilter=1d",
+    );
+    expect(wrapper.find("a.text-warning").attributes("href")).toBe(
+      "http://localhost:4440/project/example/activity?statFilter=fail&recentFilter=1d",
+    );
+  });
+
   it("renders loading state when loaded is false", async () => {
     const wrapper = await mountHomeBrowserItem({
       loaded: false,
