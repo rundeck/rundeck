@@ -14,9 +14,8 @@
   - limitations under the License.
   --}%
 
-
 <div data-bind="css: {'flash_info':wasSaved}" style="border-top:1px solid #cfcfca; padding-top:1em;">
-    <div class=" hover-action-holder">
+    <div class="hover-action-holder acl-policy-row">
         <span class="h4" data-bind="template: { name: 'acl-policy-ident', data:$data }"></span>
           <span data-bind="if: loader.loading" class="text-muted">...</span>
           <span data-bind="if: loader.error" class="text-warning">
@@ -69,13 +68,13 @@
             </a>
         </g:if>
         <!-- ko if: meta() && meta().policies -->
-        <ul data-bind="foreach:  { data: meta().policies, as: 'policy' }">
+        <ul class="acl-policy-summary-list" data-bind="foreach:  { data: meta().policies, as: 'policy' }">
             <li>
-                <span class="text-strong" data-bind="text: policy.description()">
+                <span class="text-strong acl-policy-summary-text" data-bind="text: policy.description(), attr: {title: policy.description()}">
                 </span>
                 <ul>
                     <li>
-                        <span class="text-strong" data-bind="text: policy.by()">
+                        <span class="text-strong acl-policy-summary-text" data-bind="text: policy.by(), attr: {title: policy.by()}">
                         </span>
                     </li>
                 </ul>

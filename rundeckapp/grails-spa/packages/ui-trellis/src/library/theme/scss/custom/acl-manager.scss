@@ -1,0 +1,27 @@
+// RUN-4684: the Access Control list page (/menu/acls, /project/$project/admin/acls)
+// renders each stored policy's description/by summary next to an Edit button
+// (see rundeckapp/grails-app/views/menu/_aclValidationRowKO.gsp). A long, unbreakable
+// value (e.g. a long "by" regex) must not push that row wider than its container.
+
+// Scoped to this page only (not the shared .hover-action-holder class, which is
+// used by unrelated views like node tables).
+#fsPolicies,
+#storedPolicies {
+    max-width: 97vw;
+}
+
+.acl-policy-row {
+    max-width: 100%;
+}
+
+.acl-policy-summary-list {
+    max-width: 100%;
+}
+
+.acl-policy-summary-text {
+    display: inline-block;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    vertical-align: bottom;
+}
