@@ -226,17 +226,10 @@
         padding-left: 0 !important;
       }
 
-      .toggle-content {
-        max-height: 0;
-        overflow: auto;
-        transition: max-height .4s linear;
-        -webkit-transition: max-height .4s linear;
-      }
-
-      .toggle-trigger:hover+.toggle-content,
-      .toggle-content:hover {
-        max-height: 999px !important;
-      }
+      <%-- .toggle-content/.toggle-trigger were previously collapsed via max-height:0 and
+           only revealed on :hover, which never fires on touch devices (Android mail apps)
+           once this media query collapses them, permanently hiding the section. Removed
+           so Job Description/Nodes/Log Output stay visible everywhere. --%>
 
       .show-sm {
         display: inherit !important;
@@ -481,7 +474,7 @@
                 </h3>
                 <h1 style="margin: 10px 0 15px 0;">
                   <g:link controller="execution" action="show" id="${execution.id}" class="job-link"
-                    absolute="${absolute ? 'true' : 'false'}"
+                    absolute="true"
                     params="${(followparams?.findAll { it.value }?:[:]) + [project: execution.project]}">
                     <g:if test="${scheduledExecution}">
                       <g:message code="scheduledExecution.identity"
