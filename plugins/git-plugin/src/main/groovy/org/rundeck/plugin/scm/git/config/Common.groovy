@@ -240,28 +240,39 @@ Path can include variable references
         return fetchAutomatically in [null,'true']
     }
 
+    static class FetchTimeoutValidator implements PropertyValidator {
+        @Override
+        boolean isValid(final String value) throws ValidationException {
+            try {
+                if (Integer.parseInt(value) <= 0) {
+                    throw new ValidationException("Fetch Timeout must be a positive number of seconds.")
+                }
+            } catch (NumberFormatException e) {
+                throw new ValidationException("Fetch Timeout must be a valid number.")
+            }
+            true
+        }
+    }
+
     @PluginProperty(
             title = "Fetch Timeout",
             description = "Timeout in seconds for git fetch/pull network operations. Prevents an " +
-                    "unreachable or slow Git server from blocking indefinitely.",
+                    "unreachable or slow Git server from blocking indefinitely. Must be a positive number.",
             defaultValue = '30',
-            required = false
+            required = false,
+            validatorClass = FetchTimeoutValidator
     )
     @RenderingOption(
             key = StringRenderingConstants.GROUP_NAME,
             value = "Git Repository"
     )
-    String fetchTimeout
+    Integer fetchTimeout
 
     /**
-     * @return the configured fetch/pull timeout in seconds, or 30 if unset or not a valid number
+     * @return the configured fetch/pull timeout in seconds, or 30 if unset
      */
     int getFetchTimeoutSeconds() {
-        try {
-            fetchTimeout ? Integer.parseInt(fetchTimeout) : 30
-        } catch (NumberFormatException ignored) {
-            30
-        }
+        fetchTimeout ?: 30
     }
 
 

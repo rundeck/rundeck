@@ -16,6 +16,7 @@
 
 package org.rundeck.plugin.scm.git.config
 
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -33,10 +34,35 @@ class CommonSpec extends Specification {
         where:
         configured | expected
         null       | 30
-        ''         | 30
-        '30'       | 30
-        '10'       | 10
-        '90'       | 90
-        'notanumber' | 30
+        30         | 30
+        10         | 10
+        90         | 90
+    }
+
+    @Unroll
+    def "FetchTimeoutValidator accepts positive numbers - value: #value"() {
+        given:
+        def validator = new Common.FetchTimeoutValidator()
+
+        expect:
+        validator.isValid(value)
+
+        where:
+        value << ['1', '30', '3600']
+    }
+
+    @Unroll
+    def "FetchTimeoutValidator rejects non-positive or non-numeric values - value: #value"() {
+        given:
+        def validator = new Common.FetchTimeoutValidator()
+
+        when:
+        validator.isValid(value)
+
+        then:
+        thrown(ValidationException)
+
+        where:
+        value << ['0', '-1', '-30', 'notanumber', '']
     }
 }

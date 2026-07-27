@@ -157,6 +157,12 @@ class ScmLoaderService implements EventBusAware {
             }
         }
 
+        /**
+         * Make a single connectivity attempt for a project/integration that is already in slow-poll
+         * mode (i.e. has previously failed and has retry state recorded). On success, clears the
+         * retry state; on failure, records a new cooldown window via {@link ScmService#markRetryFailure}
+         * (RUN-4525).
+         */
         private void attemptOnce(ScmPluginConfigData pluginConfigData) {
             try {
                 runLoader(pluginConfigData)
@@ -171,6 +177,12 @@ class ScmLoaderService implements EventBusAware {
             }
         }
 
+        /**
+         * First-ever (or post-config-change) load attempt for a project/integration: retries up to
+         * {@code retryTimes} times, {@code retryDelay}ms apart. On success, clears any retry state;
+         * once retries are exhausted, enters slow-poll mode by recording a cooldown via
+         * {@link ScmService#markRetryFailure} instead of disabling the plugin (RUN-4525).
+         */
         private void fastRetryThenEnterSlowPoll(ScmPluginConfigData pluginConfigData) {
             boolean process = false
             int retryCount = 0
@@ -205,6 +217,10 @@ class ScmLoaderService implements EventBusAware {
             }
         }
 
+        /**
+         * Delegates to the export or import loader implementation for this project, based on
+         * {@link #integration}.
+         */
         private void runLoader(ScmPluginConfigData pluginConfigData) {
             if (integration == service.scmService.EXPORT) {
                 service.processScmExportLoader(project, pluginConfigData, state)
