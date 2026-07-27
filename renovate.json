@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended"
   ],
-  "minimumReleaseAge": "7 days",
+  "minimumReleaseAge": "4 days",
   "commitMessagePrefix": "[RUN-0000]",
   "dependencyDashboard": true,
   "fetchChangeLogs": "off",
