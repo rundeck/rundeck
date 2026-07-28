@@ -148,9 +148,10 @@
       ]
     },
     {
-      "description": "org.rundeck artifacts also need the Sonatype Central snapshots feed",
+      "description": "org.rundeck artifacts also need the Sonatype Central snapshots feed and PackageCloud (plugins no longer publish to Maven Central)",
       "matchPackageNames": ["/^org\\.rundeck[.:]/"],
       "registryUrls": [
+        "https://packagecloud.io/pagerduty/rundeck-plugins/maven2/",
         "https://repo1.maven.org/maven2/",
         "https://central.sonatype.com/repository/maven-snapshots/",
         "https://repo.grails.org/grails/core/"
