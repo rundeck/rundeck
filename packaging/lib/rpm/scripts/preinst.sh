@@ -7,8 +7,8 @@ if [ "$JAVA_MAJOR_VERSION" = "1" ]; then
   JAVA_MAJOR_VERSION=$(echo "$JAVA_VERSION_OUTPUT" | awk -F '"' '/version/ {print $2}' | cut -d. -f2)
 fi
 
-if [[ "$JAVA_MAJOR_VERSION" != "11" && "$JAVA_MAJOR_VERSION" != "17" ]]; then
-  echo "Java 11 or 17 is required"
+if [[ "$JAVA_MAJOR_VERSION" != "17" && "$JAVA_MAJOR_VERSION" != "21" && "$JAVA_MAJOR_VERSION" != "25" ]]; then
+  echo "Java 17, 21 or 25 is required"
   exit 1
 fi
 
