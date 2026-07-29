@@ -148,8 +148,7 @@ Defaults to `jdbc:h2:file:/home/rundeck/server/data/grailsdb;DB_CLOSE_ON_EXIT=FA
 Set this if using an alternative backend from h2.
 
 - `org.postgresql.Driver`
-- `org.mariadb.jdbc.Driver`
-- `com.mysql.jdbc.Driver`
+- `org.mariadb.jdbc.Driver` (use this for both MariaDB and MySQL databases)
 
 ### `RUNDECK_DATABASE_USERNAME`
 
