@@ -368,6 +368,24 @@ describe("OptionEdit", () => {
       );
     },
   );
+  it.each([["BASIC"], ["API_KEY"], ["BEARER_TOKEN"]])(
+    "restores remoteUrlAuthenticationType %p from configRemoteUrl on reload",
+    async (authenticationType: string) => {
+      const wrapper = await mountOptionEdit({
+        modelValue: {
+          name: "test",
+          type: "text",
+          valuesUrl: "https://example.com",
+          configRemoteUrl: { authenticationType },
+        },
+        editable: true,
+      });
+
+      expect(wrapper.vm.option.remoteUrlAuthenticationType).toBe(
+        authenticationType,
+      );
+    },
+  );
   it("doSave does not emit value if validation fails", async () => {
     mockedValidateJobOption.mockResolvedValueOnce({
       valid: false,
