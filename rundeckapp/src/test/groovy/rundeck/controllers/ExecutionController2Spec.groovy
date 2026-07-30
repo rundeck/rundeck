@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.core.logging.internal.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import grails.testing.gorm.DataTest
@@ -60,6 +61,17 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
 
     public static <T extends Annotation> T getMethodAnnotation(Object instance, String name, Class<T> clazz) {
         instance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
+    }
+
+    /**
+     * Stub the metrics authorization gate (RUN-4247) to grant event READ on every project, so
+     * tests exercising a successful apiExecutionMetrics path are not blocked by the 403 gate.
+     */
+    private void allowAllProjectAuth() {
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            authorizeProjectResource(_, _, _, _) >> true
+        }
     }
     def setup(){
         controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
@@ -739,6 +751,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         // mock exec service
         controller.executionService = Mock(ExecutionService)
         response.format = "json"
+        allowAllProjectAuth()
 
 
         1 * controller.executionService.queryExecutionMetrics(_)>>[
@@ -851,6 +864,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             controller.apiService = apiMock
             controller.executionService = Mock(ExecutionService)
             response.format = "json"
+            allowAllProjectAuth()
 
         when:
             def query = new ExecutionQuery()
@@ -871,6 +885,170 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             response.status == 200
     }
 
+    def "apiExecutionMetrics single-job stats denies a cross-project job with 403 (RUN-4247)"() {
+        given: "a job that lives in ProjectB, which the caller is NOT authorized to read"
+            request.api_version = ApiVersions.V57
+            request.contentType = "application/json"
+            params.useStats = "true"
+            response.format = "json"
+
+            def jobUuid = UUID.randomUUID().toString()
+            new ScheduledExecution(uuid: jobUuid, jobName: "Secret Job", project: "ProjectB").save(flush: true)
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            controller.executionService = Mock(ExecutionService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                getAuthContextForSubjectAndProject(_, "ProjectB") >> Mock(UserAndRolesAuthContext)
+                authorizeProjectResource(_, _, _, "ProjectB") >> false
+            }
+
+        when: "requesting metrics for a job UUID belonging to the unauthorized project"
+            controller.apiExecutionMetrics(new ExecutionQuery(jobIdListFilter: [jobUuid]))
+
+        then: "the request is rejected with 403 naming ProjectB, rather than leaking its metrics"
+            1 * apiMock.requireApi(_, _, ApiVersions.V57) >> true
+            1 * apiMock.renderErrorFormat(_, { Map m -> m.status == 403 && m.args[2] == 'ProjectB' })
+    }
+
+    def "apiExecutionMetrics batch mode denies an unauthorized project with 403 (RUN-4247)"() {
+        given:
+            request.api_version = ApiVersions.V57
+            request.contentType = "application/json"
+            params.project = "TestProject"
+            params.useStats = "true"
+            params.groupByJob = "true"
+            response.format = "json"
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                getAuthContextForSubjectAndProject(_, "TestProject") >> Mock(UserAndRolesAuthContext)
+                authorizeProjectResource(_, _, _, "TestProject") >> false
+            }
+
+        when:
+            controller.apiExecutionMetrics(new ExecutionQuery())
+
+        then:
+            1 * apiMock.requireApi(_, _, ApiVersions.V57) >> true
+            1 * apiMock.renderErrorFormat(_, { Map m -> m.status == 403 })
+    }
+
+    def "apiExecutionMetrics default mode denies an unauthorized explicit project with 403 (RUN-4247)"() {
+        given:
+            request.api_version = 29
+            request.contentType = "application/json"
+            params.project = "TestProject"
+            response.format = "json"
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            controller.executionService = Mock(ExecutionService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                getAuthContextForSubjectAndProject(_, "TestProject") >> Mock(UserAndRolesAuthContext)
+                authorizeProjectResource(_, _, _, "TestProject") >> false
+            }
+
+        when:
+            controller.apiExecutionMetrics(new ExecutionQuery())
+
+        then:
+            1 * apiMock.requireApi(_, _, 29) >> true
+            1 * apiMock.renderErrorFormat(_, { Map m -> m.status == 403 })
+            0 * controller.executionService.queryExecutionMetrics(_)
+    }
+
+    def "apiExecutionMetrics default mode with no filters restricts the query to authorized projects (RUN-4247)"() {
+        given: "caller may read ProjectA but not ProjectB, and supplies no project/job filter"
+            request.api_version = 29
+            request.contentType = "application/json"
+            response.format = "json"
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            controller.executionService = Mock(ExecutionService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
+                getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+                authorizeProjectResource(_, _, _, "ProjectA") >> true
+                authorizeProjectResource(_, _, _, "ProjectB") >> false
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                projectNames(_) >> ["ProjectA", "ProjectB"]
+            }
+            ExecutionQuery captured = null
+
+        when:
+            controller.apiExecutionMetrics(new ExecutionQuery())
+
+        then: "the aggregate is scoped to only the authorized project, never instance-wide"
+            1 * apiMock.requireApi(_, _, 29) >> true
+            1 * controller.executionService.queryExecutionMetrics(_) >> { args ->
+                captured = args[0]
+                [total: 0, duration: [average: 0, min: 0, max: 0]]
+            }
+            captured.projNameFilter == ["ProjectA"]
+            response.status == 200
+    }
+
+    def "apiExecutionMetrics default mode with no authorized projects returns 403 (RUN-4247)"() {
+        given:
+            request.api_version = 29
+            request.contentType = "application/json"
+            response.format = "json"
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            controller.executionService = Mock(ExecutionService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
+                getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+                authorizeProjectResource(_, _, _, _) >> false
+            }
+            controller.frameworkService = Mock(FrameworkService) {
+                projectNames(_) >> ["ProjectA", "ProjectB"]
+            }
+
+        when:
+            controller.apiExecutionMetrics(new ExecutionQuery())
+
+        then:
+            1 * apiMock.requireApi(_, _, 29) >> true
+            1 * apiMock.renderErrorFormat(_, { Map m -> m.status == 403 })
+            0 * controller.executionService.queryExecutionMetrics(_)
+    }
+
+    def "apiExecutionMetrics denies when one of several in-scope projects is unauthorized (RUN-4247)"() {
+        given: "an authorized explicit project plus a job whose owning project is NOT authorized"
+            request.api_version = 29
+            request.contentType = "application/json"
+            params.project = "ProjectA"
+            response.format = "json"
+
+            def jobUuid = UUID.randomUUID().toString()
+            new ScheduledExecution(uuid: jobUuid, jobName: "Cross Job", project: "ProjectB").save(flush: true)
+
+            def apiMock = Mock(ApiService)
+            controller.apiService = apiMock
+            controller.executionService = Mock(ExecutionService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+                authorizeProjectResource(_, _, _, "ProjectA") >> true
+                authorizeProjectResource(_, _, _, "ProjectB") >> false
+            }
+
+        when:
+            controller.apiExecutionMetrics(new ExecutionQuery(jobIdListFilter: [jobUuid]))
+
+        then: "the whole request is rejected and the 403 names only the denied project, not ProjectA"
+            1 * apiMock.requireApi(_, _, 29) >> true
+            1 * apiMock.renderErrorFormat(_, { Map m ->
+                m.status == 403 && m.args[2] == 'ProjectB'
+            })
+            0 * controller.executionService.queryExecutionMetrics(_)
+    }
+
     // RUN-3768 Phase 5: Batch endpoint tests
     // Note: Parameter validation (project required) is tested via integration tests
     // Unit testing this requires extensive mocking of the response chain
@@ -886,6 +1064,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             def apiMock = Mock(ApiService)
             controller.apiService = apiMock
             response.format = "json"
+            allowAllProjectAuth()
 
         when:
             def query = new ExecutionQuery()
@@ -965,6 +1144,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             def apiMock = Mock(ApiService)
             controller.apiService = apiMock
             response.format = "json"
+            allowAllProjectAuth()
 
         when:
             def query = new ExecutionQuery()
@@ -999,6 +1179,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             controller.apiService = apiMock
             controller.executionService = Mock(ExecutionService)
             response.format = "json"
+            allowAllProjectAuth()
 
         when:
             def query = new ExecutionQuery()
@@ -1403,6 +1584,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             def apiMock = Mock(ApiService)
             controller.apiService = apiMock
             response.format = "json"
+            allowAllProjectAuth()
 
         when:
             def query = new ExecutionQuery()
@@ -1412,7 +1594,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         then:
             1 * apiMock.requireApi(_, _, ApiVersions.V57) >> true
             response.status == 200
-            
+
             // Parse JSON response to verify filtering
             def jsonResponse = new JsonSlurper().parseText(response.text)
             jsonResponse.total == 35  // 20 + 15 (filtered)
@@ -1504,6 +1686,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             def apiMock = Mock(ApiService)
             controller.apiService = apiMock
             response.format = "json"
+            allowAllProjectAuth()
 
         when:
             def query = new ExecutionQuery()
@@ -1513,7 +1696,7 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
         then:
             1 * apiMock.requireApi(_, _, ApiVersions.V57) >> true
             response.status == 200
-            
+
             // Verify response contains metrics from stats
             def jsonResponse = new JsonSlurper().parseText(response.text)
             jsonResponse.total == 20

@@ -54,6 +54,12 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     boolean doendbeforeFilter
     boolean includeJobRef
     List<String> execProjects
+    /**
+     * Restrict the query to this set of projects when no single {@link #projFilter} is set. Used to
+     * scope a metrics/execution aggregate to only the projects a caller is authorized to read,
+     * without spanning the whole instance (RUN-4247).
+     */
+    List<String> projNameFilter
     String recentFilter
     String olderFilter
     String userFilter
@@ -79,6 +85,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         jobExactFilter(nullable:true)
         idlist(nullable:true)
         projFilter(nullable:true)
+        projNameFilter(nullable:true)
         userFilter(nullable:true)
         excludeGroupPath(nullable:true)
         excludeJobFilter(nullable:true)
@@ -408,6 +415,13 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
           if(excludeRunning){
               isNotNull('dateCompleted')
           }
+        } else if (query.projNameFilter) {
+          //restrict to an authorized set of projects when no single project is given (RUN-4247)
+          inList('project', query.projNameFilter)
+
+          if(excludeRunning){
+              isNotNull('dateCompleted')
+          }
         }
         if (query.userFilter) {
           eq('user', query.userFilter)
@@ -654,6 +668,10 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         if (this.projFilter) {
             hqlParts << "AND e.project = :project"
             params.project = this.projFilter
+        } else if (this.projNameFilter) {
+            //restrict to an authorized set of projects when no single project is given (RUN-4247)
+            hqlParts << "AND e.project IN (:projNameList)"
+            params.projNameList = this.projNameFilter
         }
 
         // Job UUID filter - uses execution.job_uuid column directly (no JOIN needed)
