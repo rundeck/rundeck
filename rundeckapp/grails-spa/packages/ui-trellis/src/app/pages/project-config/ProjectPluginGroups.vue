@@ -269,6 +269,7 @@ export default defineComponent({
       editFocus: -1,
       errors: [] as string[],
       pluginStorageAccess: [] as any[],
+      formEl: null as HTMLFormElement | null,
     };
   },
   computed: {
@@ -289,8 +290,34 @@ export default defineComponent({
     const pluginGroups = window._rundeck.data.pluginGroups as PluginConf;
     this.contextConfig = pluginGroups.config;
     await this.getPluginConfigs();
+    this.formEl = (this.$el as HTMLElement).closest("form");
+    this.formEl?.addEventListener("submit", this.blockSubmitIfUnsaved);
+  },
+  beforeUnmount() {
+    this.formEl?.removeEventListener("submit", this.blockSubmitIfUnsaved);
   },
   methods: {
+    // Guards against silently discarding an in-progress plugin edit: a
+    // plugin's fields are only written to pluginConfigs (and the hidden
+    // form input the page submits) once its own Save is clicked. If the
+    // page-level Save is clicked instead while a plugin is still being
+    // edited, block the submit rather than lose the entered values.
+    blockSubmitIfUnsaved(event: Event) {
+      if (this.editFocus === -1) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      this.errors = [
+        this.$t("plugin.config.unsaved.edit.message", {
+          serviceName: this.serviceName,
+        }),
+      ];
+      (this.$el as HTMLElement).scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    },
     notifyError(msg: string, args: any[]) {
       Notification.notify({
         type: "danger",
