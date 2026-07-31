@@ -85,7 +85,9 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         jobExactFilter(nullable:true)
         idlist(nullable:true)
         projFilter(nullable:true)
-        projNameFilter(nullable:true)
+        //never bind projNameFilter from request params — it is set server-side only, after the
+        //caller has been authorized for those projects (RUN-4247)
+        projNameFilter(nullable:true, bindable:false)
         userFilter(nullable:true)
         excludeGroupPath(nullable:true)
         excludeJobFilter(nullable:true)

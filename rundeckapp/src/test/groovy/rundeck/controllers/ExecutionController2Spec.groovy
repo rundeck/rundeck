@@ -1049,6 +1049,18 @@ class ExecutionController2Spec extends Specification implements ControllerUnitTe
             0 * controller.executionService.queryExecutionMetrics(_)
     }
 
+    def "ExecutionQuery.projNameFilter is not bindable from request params (RUN-4247)"() {
+        given: "a query bound from request data that tries to inject projNameFilter"
+            def query = new ExecutionQuery()
+
+        when:
+            controller.bindData(query, [projFilter: 'ProjectA', projNameFilter: ['InjectedProject']])
+
+        then: "normal fields bind, but the server-only projNameFilter is ignored"
+            query.projFilter == 'ProjectA'
+            query.projNameFilter == null
+    }
+
     // RUN-3768 Phase 5: Batch endpoint tests
     // Note: Parameter validation (project required) is tested via integration tests
     // Unit testing this requires extensive mocking of the response chain
