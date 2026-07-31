@@ -3751,10 +3751,13 @@ Note: This endpoint has the same query parameters and response as the `/executio
         if (params.project) {
             metricsProjects.add(params.project.toString())
         }
-        query.jobIdListFilter?.each { jobUuid ->
-            def job = ScheduledExecution.findByUuid(jobUuid.toString())
-            if (job?.project) {
-                metricsProjects.add(job.project)
+        List<String> jobUuids = query.jobIdListFilter?.collect { it.toString() }
+        if (jobUuids) {
+            //fetch the jobs' projects in a single query rather than one findByUuid per UUID
+            ScheduledExecution.findAllByUuidInList(jobUuids).each { job ->
+                if (job.project) {
+                    metricsProjects.add(job.project)
+                }
             }
         }
         if (metricsProjects) {
