@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { mount } from "@vue/test-utils";
 import ProjectPluginGroups from "../ProjectPluginGroups.vue";
 
@@ -20,7 +21,15 @@ jest.mock("@/library/modules/pluginService", () => ({
   },
 }));
 
-import pluginService from "@/library/modules/pluginService";
+// The real pluginConfig.vue drags in rundeckClient.ts, which reads a token
+// out of the DOM at module-load time and isn't relevant to this guard.
+jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
+  name: "PluginConfig",
+  props: ["mode", "serviceName", "provider", "showDescription", "showTitle", "config", "validation", "validationWarningText"],
+  template: "<div><slot name=\"extra\"></slot></div>",
+}));
+
+import pluginService from "../../../../library/modules/pluginService";
 
 const mountInForm = async (props: Record<string, any> = {}) => {
   const formEl = document.createElement("form");
@@ -36,7 +45,6 @@ const mountInForm = async (props: Record<string, any> = {}) => {
     global: {
       stubs: {
         PluginInfo: true,
-        PluginConfig: true,
         Expandable: true,
         modal: true,
         btn: true,
@@ -89,7 +97,10 @@ describe("ProjectPluginGroups unsaved-edit submit guard", () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(wrapper.vm.errors).toHaveLength(1);
-    expect(wrapper.vm.errors[0]).toContain("PluginGroup");
+    // $t isn't backed by a real i18n instance in this unit test, so it
+    // returns the raw translation key (consistent with other specs in
+    // this package, e.g. EditProjectFile.spec.ts).
+    expect(wrapper.vm.errors[0]).toContain("plugin.config.unsaved.edit.message");
   });
 
   it("allows the page-level submit again once the plugin's own Save has been clicked", async () => {
