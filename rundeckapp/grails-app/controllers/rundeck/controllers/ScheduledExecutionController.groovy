@@ -2700,7 +2700,10 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
     /**
      * execute the job defined via input parameters, but do not store it.
      * REST API endpoint: /api/{api_version}/project/{project}/run/command/inline
+     * Internal-only: backs the adhoc Vue SPA's session/CSRF-authenticated ajax call, not a
+     * documented public API surface. See RUN-4716.
      */
+    @Hidden
     @Post(uri='/project/{project}/run/command/inline', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
@@ -2822,7 +2825,10 @@ Since: v56''',
      * execute the job defined via input parameters, but do not store it.
      * REST API endpoint: /api/{api_version}/project/{project}/run/command/inline/api
      * This endpoint uses API authentication (for v56+)
+     * Internal-only: supports the adhoc Vue SPA, not a documented public API surface.
+     * See RUN-4716.
      */
+    @Hidden
     @Post(uri='/project/{project}/run/command/inline/api', produces = MediaType.APPLICATION_JSON)
     @Operation(
         method='POST',
