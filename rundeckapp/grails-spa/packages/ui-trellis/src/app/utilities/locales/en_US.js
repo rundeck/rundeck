@@ -1210,6 +1210,8 @@ const messages = {
     expand: "Expand",
   },
   "plugin.choose.title": "Choose a Plugin",
+  "plugin.config.unsaved.edit.message":
+    "You have unsaved changes in a {serviceName} plugin configuration. Click Save or Cancel on that plugin before saving.",
   "plugin.type.WorkflowStep.title.plural": "Workflow Steps",
   "plugin.type.WorkflowStep.title": "Workflow Step",
   "plugin.type.WorkflowNodeStep.title.plural": "Node Steps",
