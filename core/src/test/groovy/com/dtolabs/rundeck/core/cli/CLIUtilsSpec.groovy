@@ -55,6 +55,13 @@ class CLIUtilsSpec extends Specification {
         windowsCmdConverter.convert("foo&bar") == "foo^&bar"
         windowsCmdConverter.convert("`foobar`") == "^`foobar^`"
 
+        when: "Windows PowerShell case"
+        Converter<String, String> windowsPsConverter = CLIUtils.argumentQuoteForOperatingSystem("windows", "powershell")
+        then:
+        windowsPsConverter.convert("foo bar") == '"foo bar"'
+        windowsPsConverter.convert("foo&bar") == '"foo&bar"'
+        windowsPsConverter.convert("`foobar`") == '"`foobar`"'
+
         when: "Windows default case (no interpreter)"
         Converter<String, String> windowsDefaultConverter = CLIUtils.argumentQuoteForOperatingSystem("windows", null)
         then:
