@@ -4,14 +4,17 @@
     data-testid="inline-plugin-config-form"
   >
     <div v-if="provider">
-      <p>
+      <div class="inline-plugin-config-form-header">
         <plugin-info
           :detail="provider"
           :show-description="true"
           :show-extended="false"
           description-css="ml-5"
         ></plugin-info>
-      </p>
+        <div class="inline-plugin-config-form-header-actions">
+          <slot name="header-actions"></slot>
+        </div>
+      </div>
       <plugin-config
         :model-value="editModel"
         :mode="pluginConfigMode"
@@ -171,3 +174,18 @@ export default defineComponent({
   },
 });
 </script>
+<style lang="scss" scoped>
+.inline-plugin-config-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-3, 12px);
+  margin-bottom: var(--spacing-4, 16px);
+}
+
+.inline-plugin-config-form-header-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+</style>
