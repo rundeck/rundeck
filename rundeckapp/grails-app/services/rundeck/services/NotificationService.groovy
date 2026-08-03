@@ -797,7 +797,7 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
             }
         }
         Map<Class, Object> servicesMap = [:]
-        servicesMap.put(KeyStorageTree, content.context.storageTree)
+        servicesMap.put(KeyStorageTree, content.context?.storageTree)
 
         def services = new RundeckSpiBaseServicesProvider(
                 services: servicesMap
