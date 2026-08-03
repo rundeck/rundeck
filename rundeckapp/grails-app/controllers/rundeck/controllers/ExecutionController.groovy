@@ -3743,6 +3743,38 @@ Note: This endpoint has the same query parameters and response as the `/executio
             )
         }
 
+        // RUN-4247: Enforce project-level authorization before any metrics are computed, closing the
+        // cross-project information-disclosure (IDOR) hole. The in-scope projects are the explicit
+        // `project` param plus the owning project of each job in jobIdListFilter. When none are given
+        // the aggregate is restricted to the caller's authorized projects rather than the whole instance.
+        Set<String> metricsProjects = new LinkedHashSet<>()
+        if (params.project) {
+            metricsProjects.add(params.project.toString())
+        }
+        List<String> jobUuids = query.jobIdListFilter?.collect { it.toString() }
+        if (jobUuids) {
+            //fetch the jobs' projects in a single query rather than one findByUuid per UUID
+            ScheduledExecution.findAllByUuidInList(jobUuids).each { job ->
+                if (job.project) {
+                    metricsProjects.add(job.project)
+                }
+            }
+        }
+        if (metricsProjects) {
+            List<String> denied = partitionProjectsByEventReadAuth(metricsProjects).unauthorized
+            if (denied) {
+                return renderMetricsForbidden(denied.join(', '))
+            }
+        } else {
+            List<String> allowed = partitionProjectsByEventReadAuth(
+                frameworkService.projectNames(getSystemAuthContext())
+            ).authorized
+            if (!allowed) {
+                return renderMetricsForbidden('*')
+            }
+            query.projNameFilter = allowed
+        }
+
         // RUN-3768 Phase 5: Batch mode support
         if (useStats && groupByJob) {
             // Batch mode: Get metrics for all jobs in project
@@ -3877,6 +3909,46 @@ Note: This endpoint has the same query parameters and response as the `/executio
         }
 
 
+    }
+
+    /**
+     * Partition a collection of projects by whether the current subject may read events (execution
+     * history) for them. A reusable project-list authorization primitive — not tied to any single
+     * endpoint (RUN-4247).
+     *
+     * @param projects the project names to check
+     * @return a map with two entries, each a {@code List<String>} preserving iteration order:
+     *         {@code authorized} (event-level READ granted) and {@code unauthorized} (denied)
+     */
+    private Map<String, List<String>> partitionProjectsByEventReadAuth(Collection<String> projects) {
+        Map<String, List<String>> partitioned = [authorized: [], unauthorized: []]
+        projects.each { String project ->
+            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
+            boolean allowed = rundeckAuthContextProcessor.authorizeProjectResource(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_EVENT,
+                AuthConstants.ACTION_READ,
+                project
+            )
+            partitioned[allowed ? 'authorized' : 'unauthorized'] << project
+        }
+        partitioned
+    }
+
+    /**
+     * Render the standard API 403 response for an unauthorized metrics request (RUN-4247).
+     * @param project the project (or {@code '*'} for the instance-wide default) the caller may not read
+     */
+    private def renderMetricsForbidden(String project) {
+        apiService.renderErrorFormat(
+            response,
+            [
+                status: HttpServletResponse.SC_FORBIDDEN,
+                code  : 'api.error.item.unauthorized',
+                args  : [AuthConstants.ACTION_READ, 'Events in project', project],
+                format: response.format ?: 'json'
+            ]
+        )
     }
 
     /**
