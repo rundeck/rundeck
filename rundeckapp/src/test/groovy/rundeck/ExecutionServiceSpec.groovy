@@ -2,6 +2,7 @@ package rundeck
 
 import grails.web.mapping.LinkGenerator
 import com.dtolabs.rundeck.core.common.IFramework
+import org.rundeck.app.AppConstants
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.logging.internal.LogFlusher
 
@@ -2082,6 +2083,144 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         where:
         opts                                                     | _
         ['test3': 'shampooz', 'test4': ['shampooa', 'shampoob']] | _
+    }
+
+    private void stubProjectOptionPattern(String pattern) {
+        service.frameworkService = Mock(FrameworkService) {
+            getProjectProperties('AProject') >> [(AppConstants.PROJECT_OPTION_INPUT_DEFAULT_PATTERN): pattern]
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString(AppConstants.SYSTEM_OPTION_INPUT_DEFAULT_PATTERN, null) >> null
+        }
+    }
+
+    def "validate option values, default input pattern valid"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'test1', enforced: false))
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+
+        when:
+        def validation = service.validateOptionValues(se, opts)
+
+        then:
+        validation
+
+        where:
+        opts                  | _
+        ['test1': 'abc123']   | _
+        ['test1': 'PlainVal'] | _
+    }
+
+    def "validate option values, default input pattern failure"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'test1', enforced: false))
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> { it[0] }
+        }
+
+        when:
+        service.validateOptionValues(se, opts)
+
+        then:
+        ExecutionServiceException e = thrown()
+        e.message == 'domain.Option.validation.default.pattern.invalid'
+
+        where:
+        opts                          | _
+        ['test1': '"; id; echo "']    | _
+        ['test1': 'a b']              | _
+        ['test1': 'foo|whoami']       | _
+    }
+
+    def "validate option values, default input pattern skipped when option has own regex"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        // own regex allows spaces; default pattern would reject them - own regex must win
+        se.addToOptions(new Option(name: 'test1', enforced: false, regex: '.*'))
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+
+        when:
+        def validation = service.validateOptionValues(se, ['test1': 'has spaces'])
+
+        then:
+        validation
+    }
+
+    def "validate option values, default input pattern skipped for enforced option"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        final Option option = new Option(name: 'test1', enforced: true)
+        option.valuesList = 'a b,c'
+        se.addToOptions(option)
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+
+        when:
+        // 'a b' contains a space (would fail the default pattern) but is an allowed enforced value
+        def validation = service.validateOptionValues(se, ['test1': 'a b'])
+
+        then:
+        validation
+    }
+
+    def "validate option values, default input pattern multivalued failure"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'test1', enforced: false, multivalued: true, delimiter: ','))
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> { it[0] }
+        }
+
+        when:
+        service.validateOptionValues(se, ['test1': 'ok1,bad value,ok2'])
+
+        then:
+        ExecutionServiceException e = thrown()
+        e.message == 'domain.Option.validation.default.pattern.values'
+    }
+
+    def "validate option values, default input pattern from system config fallback"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'test1', enforced: false))
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> { it[0] }
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getProjectProperties('AProject') >> [:]
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString(AppConstants.SYSTEM_OPTION_INPUT_DEFAULT_PATTERN, null) >> '[A-Za-z0-9]+'
+        }
+
+        when:
+        service.validateOptionValues(se, ['test1': 'bad value'])
+
+        then:
+        ExecutionServiceException e = thrown()
+        e.message == 'domain.Option.validation.default.pattern.invalid'
+    }
+
+    def "validate option values, blank or invalid default input pattern is ignored"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'test1', enforced: false))
+        stubProjectOptionPattern(pattern)
+
+        when:
+        def validation = service.validateOptionValues(se, ['test1': 'any value ; here'])
+
+        then:
+        validation
+
+        where:
+        pattern    | _
+        ''         | _
+        '   '      | _
+        '[unclosed'| _
     }
 
     def "validate option values, enforced valid"() {

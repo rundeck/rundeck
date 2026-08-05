@@ -85,6 +85,7 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import java.util.concurrent.TimeUnit
 import org.hibernate.type.StandardBasicTypes
+import org.rundeck.app.AppConstants
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.data.model.v1.job.JobData
@@ -143,6 +144,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 import java.time.DateTimeException
 import java.time.ZoneId
 import java.util.stream.Collectors
@@ -3138,6 +3140,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             sb << msg
             failedkeys[opt.name] += msg
         }
+        // RUN-4693: project/system-wide default allowlist applied to option values that have no
+        // per-option regex. Resolved once per validation. Null when unset/empty/invalid.
+        Pattern defaultInputPattern = resolveDefaultOptionInputPattern(scheduledExecution.project)
         if (scheduledExecution.options) {
             scheduledExecution.options.each { Option opt ->
                 if (!opt.multivalued && optparams[opt.name] && !(optparams[opt.name] instanceof String)) {
@@ -3220,6 +3225,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
+                    if (!opt.regex && defaultInputPattern && !opt.enforced && optparams[opt.name]) {
+                        def val
+                        if (optparams[opt.name] instanceof Collection) {
+                            val = [optparams[opt.name]].flatten();
+                        } else {
+                            val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
+                        }
+                        List failedValues = []
+                        val.grep { it }.each { value ->
+                            if (!defaultInputPattern.matcher(value.toString()).matches()) {
+                                failedValues += value
+                            }
+                        }
+                        if (failedValues) {
+                            invalidOpt opt, opt.secureInput ?
+                                    lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
+                                    : lookupMessage("domain.Option.validation.default.pattern.values",[opt.name, failedValues])
+                            return
+                        }
+                    }
                     if (opt.enforced && opt.optionValues && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
@@ -3242,6 +3267,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
+                    if (!opt.regex && defaultInputPattern && !opt.enforced && optparams[opt.name]) {
+                        if (!defaultInputPattern.matcher(optparams[opt.name].toString()).matches()) {
+                            invalidOpt opt, opt.secureInput ?
+                                    lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
+                                    : lookupMessage("domain.Option.validation.default.pattern.invalid",[opt.name])
+
+                            return
+                        }
+                    }
                     if (opt.enforced && opt.optionValues &&
                             optparams[opt.name] &&
                             optparams[opt.name] instanceof String &&
@@ -3259,6 +3293,39 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new ExecutionServiceValidationException(msg, optparams, failedkeys)
         }
         return !fail
+    }
+
+    /**
+     * Resolve the default option-input allowlist regex for a project, if configured. The project
+     * property {@link AppConstants#PROJECT_OPTION_INPUT_DEFAULT_PATTERN} takes precedence over the
+     * system-wide {@link AppConstants#SYSTEM_OPTION_INPUT_DEFAULT_PATTERN}. The system value is read
+     * through ConfigurationService so it is editable via the System Configuration UI. Returns null
+     * when no pattern is configured, the configured value is blank, or the value is not a valid regex
+     * (in which case a warning is logged and no default validation is applied).
+     * @param project project name
+     * @return compiled {@link Pattern} or null
+     */
+    private Pattern resolveDefaultOptionInputPattern(String project) {
+        String pattern = null
+        try {
+            Map<String, String> projectProps = frameworkService.getProjectProperties(project)
+            pattern = projectProps?.get(AppConstants.PROJECT_OPTION_INPUT_DEFAULT_PATTERN)
+            if (!pattern?.trim()) {
+                pattern = configurationService.getString(AppConstants.SYSTEM_OPTION_INPUT_DEFAULT_PATTERN, null)
+            }
+        } catch (Exception e) {
+            log.warn("Could not resolve default option input validation pattern for project ${project}: ${e.message}")
+            return null
+        }
+        if (!pattern?.trim()) {
+            return null
+        }
+        try {
+            return Pattern.compile(pattern)
+        } catch (PatternSyntaxException e) {
+            log.warn("Ignoring invalid default option input validation pattern '${pattern}': ${e.message}")
+            return null
+        }
     }
 
     /**
@@ -5275,6 +5342,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     datatype "Integer"
                     visibility 'Advanced'
                     category 'API'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key AppConstants.SYSTEM_OPTION_INPUT_DEFAULT_PATTERN_KEY
+                    description "Default allowlist regular expression applied to job option values that do not define their own validation regex. When set, an option value must fully match this pattern or the execution is rejected. Leave blank to disable. Overridden per-project by 'project.option.input.validation.default.pattern'."
+                    defaultValue ""
+                    required false
+                    datatype "String"
+                    visibility 'Advanced'
+                    category 'Execution'
                     authRequired("app_admin")
                     build()
                 },
