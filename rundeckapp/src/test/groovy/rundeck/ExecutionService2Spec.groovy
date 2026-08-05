@@ -77,6 +77,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             isFrameworkProjectDisabled(1..1) { project ->
                 false
             }
+            getProjectProperties(0..99) { project ->
+                [:]
+            }
             getServerUUID(1..1){
                 null
             }
@@ -2139,8 +2142,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
+            getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
-            getProjectProperties(1..1) { project -> [:] }
+            getProjectProperties(0..1) { project -> [:] }
             parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
@@ -2212,8 +2216,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
+            getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
-            getProjectProperties(1..1) { project -> [:] }
+            getProjectProperties(0..1) { project -> [:] }
             parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
@@ -2299,8 +2304,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                 parseOptsCount++
                 ['test1':'wakeful']
             }
+            getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
-            getProjectProperties(1..1) { project -> [:] }
+            getProjectProperties(0..1) { project -> [:] }
             parseOptsFromArray(1..1) { String[] args ->
                 def argsl = args as List
                 assertTrue(argsl.indexOf('-test1') >= 0 && argsl.indexOf('-test1') <= argsl.size() - 2)
@@ -2398,8 +2404,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                 }
                 opts
             }
+            getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
-            getProjectProperties(1..1) { project -> [:] }
+            getProjectProperties(0..1) { project -> [:] }
             parseOptsFromArray(1..1) { String[] args ->
                 def argsl = args as List
                 assertTrue(argsl.indexOf('-test1') >= 0 && argsl.indexOf('-test1') <= argsl.size() - 2)

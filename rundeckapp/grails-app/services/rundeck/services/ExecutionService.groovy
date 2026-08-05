@@ -3141,8 +3141,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             failedkeys[opt.name] += msg
         }
         // RUN-4693: project/system-wide default allowlist applied to option values that have no
-        // per-option regex. Resolved once per validation. Null when unset/empty/invalid.
-        Pattern defaultInputPattern = resolveDefaultOptionInputPattern(scheduledExecution.project)
+        // per-option regex. Only resolved when at least one option would actually be validated by
+        // it, to avoid a config lookup on executions that cannot use it. Null when unset/empty/invalid.
+        boolean anyDefaultValidatable = scheduledExecution.options?.any { Option o ->
+            !o.regex && !o.enforced && optparams[o.name]
+        }
+        Pattern defaultInputPattern = anyDefaultValidatable ?
+                resolveDefaultOptionInputPattern(scheduledExecution.project) : null
         if (scheduledExecution.options) {
             scheduledExecution.options.each { Option opt ->
                 if (!opt.multivalued && optparams[opt.name] && !(optparams[opt.name] instanceof String)) {
