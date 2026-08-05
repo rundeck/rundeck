@@ -31,6 +31,7 @@ public class RundeckConfigBase {
     Map<String,Object> storage;  //config for the storage tree
     Map<String,Object> clusterMode;  //config for clustering
     Map<String,Object> pagination; //subproperty contains 'default' which would be an invalid java property name;
+    Map<String,Object> option; //option input validation config; subproperty contains 'default' which would be an invalid java property name;
 
     Config config;
 
