@@ -173,5 +173,8 @@ describe("InlinePluginConfigForm", () => {
     expect(wrapper.find("[data-testid='custom-header-actions']").exists()).toBe(
       false,
     );
+    expect(wrapper.find(".inline-plugin-config-form-header-actions").exists()).toBe(
+      false,
+    );
   });
 });

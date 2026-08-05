@@ -11,7 +11,10 @@
           :show-extended="false"
           description-css="ml-5"
         ></plugin-info>
-        <div class="inline-plugin-config-form-header-actions">
+        <div
+          v-if="$slots['header-actions']"
+          class="inline-plugin-config-form-header-actions"
+        >
           <slot name="header-actions"></slot>
         </div>
       </div>
