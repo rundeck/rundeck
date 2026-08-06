@@ -406,7 +406,9 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
         def serverUUID = UUID.randomUUID().toString()
         def jobUUID = UUID.randomUUID().toString()
-        def es = Mock(ExecutionService)
+        def es = Mock(ExecutionService) {
+            validateExecution(_, _) >> true
+        }
         def eus = Mock(ExecutionUtilService)
         def jobSchedulesService = Mock(JobSchedulesService)
         def jobSchedulerService = Mock(JobSchedulerService)
@@ -487,6 +489,82 @@ class ExecutionJobSpec extends Specification implements DataTest {
         then: "execution args are set"
         0 * quartzScheduler.deleteJob(ajobKey)
         1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
+    }
+
+    def "scheduled job trigger does not execute when ACTION_RUN authorization is denied"() {
+
+        def serverUUID = UUID.randomUUID().toString()
+        def jobUUID = UUID.randomUUID().toString()
+        def es = Mock(ExecutionService) {
+            validateExecution(_, _) >> false
+        }
+        def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
+        def jobSchedulerService = Mock(JobSchedulerService)
+        def fs = Mock(FrameworkService) {
+            getServerUUID() >> serverUUID
+            getProjectConfigReloaded('AProject') >> Mock(IRundeckProject) {
+                getProjectProperties() >> [:]
+            }
+        }
+        AuthContextProvider authContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForUserAndRolesAndProject(_, _, _) >> Mock(UserAndRolesAuthContext)
+        }
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                serverNodeUUID: jobUUID,
+                user: 'devread',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                scheduled: true,
+                executionEnabled: true,
+                scheduleEnabled: true,
+                uuid: jobUUID
+        )
+        se.save(flush: true)
+        def datamap = new JobDataMap(
+                [
+                        project             : se.project,
+                        scheduledExecutionId: se.uuid,
+                        executionService    : es,
+                        executionUtilService: eus,
+                        frameworkService    : fs,
+                        bySchedule          : true,
+                        jobSchedulesService : jobSchedulesService,
+                        jobSchedulerService : jobSchedulerService,
+                        authContextProvider : authContextProvider,
+                ]
+        )
+        ExecutionJob job = new ExecutionJob()
+        def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
+
+        def quartzScheduler = Mock(Scheduler)
+        def trigger = Mock(Trigger)
+        def context = Mock(JobExecutionContext) {
+            getJobDetail() >> Mock(JobDetail) {
+                getJobDataMap() >> datamap
+                getKey() >> ajobKey
+            }
+
+            getScheduler() >> quartzScheduler
+            getTrigger() >> trigger
+        }
+
+        when: "job with a denied ACTION_RUN authorization is triggered by its schedule"
+        job.execute(context)
+
+        then: "no execution is created, and the job is not unscheduled"
+        0 * es.createExecution(*_)
+        0 * es.executeAsyncBegin(*_)
+        0 * quartzScheduler.deleteJob(ajobKey)
     }
 
     def "average notification threshold from options"() {
@@ -788,7 +866,9 @@ class ExecutionJobSpec extends Specification implements DataTest {
     def "scheduled job quartz checking the same format of dates"() {
         def serverUUID = UUID.randomUUID().toString()
         def jobUUID = UUID.randomUUID().toString()
-        def es = Mock(ExecutionService)
+        def es = Mock(ExecutionService) {
+            validateExecution(_, _) >> true
+        }
         def eus = Mock(ExecutionUtilService)
         def jobSchedulesService = Mock(JobSchedulesService)
         def jobSchedulerService = Mock(JobSchedulerService)

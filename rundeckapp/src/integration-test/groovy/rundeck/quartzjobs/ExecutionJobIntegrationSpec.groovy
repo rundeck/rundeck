@@ -568,6 +568,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def jobSchedulesServiceMock = Mock(JobSchedulesService)
             def jobSchedulerServiceMock = Mock(JobSchedulerService)
             1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
+            1 * mockes.validateExecution(se, _) >> true
             1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
 
             def proj = Mock(IRundeckProject) {
@@ -757,6 +758,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def jobSchedulesServiceMock = Mock(JobSchedulesService)
             def jobSchedulerServiceMock = Mock(JobSchedulerService)
             1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
+            1 * mockes.validateExecution(se, _) >> true
             1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
 
             def proj = Mock(IRundeckProject) {
@@ -824,6 +826,7 @@ class ExecutionJobIntegrationSpec extends Specification {
         def jobSchedulesServiceMock = Mock(JobSchedulesService)
         def jobSchedulerServiceMock = Mock(JobSchedulerService)
         1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
+        1 * mockes.validateExecution(se, _) >> true
         1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
 
         def proj = Mock(IRundeckProject) {
@@ -892,6 +895,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def jobSchedulesServiceMock = Mock(JobSchedulesService)
             def jobSchedulerServiceMock = Mock(JobSchedulerService)
             1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
+            1 * mockes.validateExecution(se, _) >> true
             1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
 
             def proj = Mock(IRundeckProject) {
