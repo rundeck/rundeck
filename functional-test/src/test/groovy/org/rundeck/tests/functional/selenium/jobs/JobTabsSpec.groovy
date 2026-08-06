@@ -1,7 +1,10 @@
 package org.rundeck.tests.functional.selenium.jobs
 
 import org.rundeck.util.annotations.SeleniumCoreTest
+import org.rundeck.util.annotations.UiModeFlag
+import org.rundeck.util.annotations.UiModeStatus
 import org.rundeck.util.container.SeleniumBase
+import org.rundeck.util.gui.UiModes
 import org.rundeck.util.gui.pages.execution.ExecutionShowPage
 import org.rundeck.util.gui.pages.execution.HtmlRenderedOutputPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
@@ -10,8 +13,10 @@ import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.login.LoginPage
 
 @SeleniumCoreTest
+@UiModeFlag(featureName = "job-tabs", status = UiModeStatus.PROMOTED)
 class JobTabsSpec extends SeleniumBase {
 
+    static final UI_MODES = UiModes.defaultAndLegacy()
     static final String PROJECT_NAME = 'job_nodes_tab'
 
     def setupSpec() {
@@ -56,7 +61,7 @@ class JobTabsSpec extends SeleniumBase {
         nodeViewContainer.isDisplayed()
         executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
         where:
-        legacyUi << [false, true]
+        [legacyUi] << UI_MODES
     }
 
     void "job log output tab"() {
@@ -86,7 +91,7 @@ class JobTabsSpec extends SeleniumBase {
         !nodeViewContainer.isDisplayed()
         executionShowPage.waitForElementAttributeToChange(executionShowPage.executionStateDisplayLabel, 'data-execstate', 'SUCCEEDED')
         where:
-        legacyUi << [false, true]
+        [legacyUi] << UI_MODES
     }
 
     void "job log html tab"() {
@@ -118,6 +123,6 @@ class JobTabsSpec extends SeleniumBase {
         htmlOutputPage.logLevelNormalLogLine.text == commandArg
         currentUrl.endsWith("convertContent=on&loglevels=on&ansicolor=on&reload=true")
         where:
-        legacyUi << [false, true]
+        [legacyUi] << UI_MODES
     }
 }

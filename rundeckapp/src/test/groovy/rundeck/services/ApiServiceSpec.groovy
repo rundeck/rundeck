@@ -41,6 +41,8 @@ import rundeck.services.data.AuthTokenDataService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -82,6 +84,36 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
         sw.toString()=='<contents><![CDATA[x]]></contents>'
 
     }
+    @Unroll
+    def "extractResponseFormat resolves Accept header '#acceptHeader' to '#expected' when request.format is '#reqFormat'"(){
+        given:
+        // Grails 7 regression context (RUN-4581): request.format is not populated from the
+        // Accept header, so format negotiation must fall back to parsing Accept explicitly.
+        // Without yaml handling here, Accept: application/yaml was wrongly served as JSON
+        // wrapped in a `contents` field by the ACL policy API endpoints.
+        def request = GroovyMock(HttpServletRequest)
+        request.format >> reqFormat
+        request.getHeader('Accept') >> acceptHeader
+        def response = Mock(HttpServletResponse)
+        def allowed = ['yaml', 'xml', 'json', 'text']
+
+        expect:
+        service.extractResponseFormat(request, response, allowed, reqFormat) == expected
+
+        where:
+        acceptHeader                 | reqFormat | expected
+        'application/yaml'           | 'all'     | 'yaml'
+        'text/yaml'                  | 'all'     | 'yaml'
+        'application/yaml;charset=UTF-8' | 'all' | 'yaml'
+        'Application/YAML'           | 'all'     | 'yaml'
+        'APPLICATION/YAML'           | 'all'     | 'yaml'
+        'application/json'           | 'all'     | 'json'
+        'Application/JSON'           | 'all'     | 'json'
+        'application/xml'            | 'all'     | 'xml'
+        'text/plain'                 | 'all'     | 'text'
+        'yaml'                       | 'yaml'    | 'yaml'
+    }
+
     def "jsonRenderDirlist"(){
         when:
         // Grails 7: Service returns Map directly, no need for JSONBuilder
@@ -197,12 +229,40 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
         result == expected
         where:
         duration | max | expected
-        123      | 200 | [date: new Date(124000), max: false]
-        123      | 100 | [date: new Date(101000), max: true]
-        0        | 100 | [date: new Date(101000), max: false]
-        200      | 0   | [date: new Date(201000), max: false]
-        0        | 0   | [date: null, max: false]
+        123      | 200 | [date: new Date(124000), max: false, error: null]
+        123      | 100 | [date: new Date(101000), max: true, error: null]
+        0        | 100 | [date: new Date(101000), max: false, error: null]
+        200      | 0   | [date: new Date(201000), max: false, error: null]
+        0        | 0   | [date: null, max: false, error: null]
 
+    }
+
+    @Unroll
+    def "generateTokenExpirationDate rejects negative duration #duration"() {
+        given:
+        service.systemClock = Clock.fixed(Instant.ofEpochMilli(1000), ZoneId.of("Z"))
+
+        when:
+        def result = service.generateTokenExpirationDate(duration, 2592000L)
+
+        then:
+        result.error != null
+        result.date == null
+
+        where:
+        duration << [-1668537728L, -1L, Long.MIN_VALUE]
+    }
+
+    def "generateTokenExpirationDate handles large duration exceeding max"() {
+        given:
+        service.systemClock = Clock.fixed(Instant.ofEpochMilli(1000), ZoneId.of("Z"))
+        long hugeDuration = 86_399_999_999_222_400L
+
+        when:
+        def result = service.generateTokenExpirationDate(hugeDuration, 2592000L)
+
+        then:
+        result.max == true
     }
 
     def "generate user token unauthorized"() {

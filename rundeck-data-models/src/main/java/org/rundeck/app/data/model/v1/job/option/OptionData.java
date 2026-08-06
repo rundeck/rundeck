@@ -15,7 +15,6 @@
  */
 package org.rundeck.app.data.model.v1.job.option;
 
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +28,7 @@ public interface OptionData {
     Boolean getRequired();
     Boolean getIsDate();
     String getDateFormat();
-    URL getRealValuesUrl();
+    String getRealValuesUrl();
     String getLabel();
 
     String getRegex();

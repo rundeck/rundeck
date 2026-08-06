@@ -896,6 +896,9 @@ export default defineComponent({
               ? "secureExposed"
               : "secure"
             : "plain",
+        remoteUrlAuthenticationType:
+          this.modelValue.remoteUrlAuthenticationType ||
+          this.modelValue.configRemoteUrl?.authenticationType,
       }) as JobOptionEdit,
       regexChoice: false,
       validationErrors: {} as Record<string, string[]>,

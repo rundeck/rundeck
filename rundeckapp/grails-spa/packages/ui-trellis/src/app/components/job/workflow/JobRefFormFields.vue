@@ -13,6 +13,7 @@
               type="radio"
               name="useName"
               :value="true"
+              data-testid="use-name-radio"
             />
             <label for="useNameTrue">
               {{ $t("Workflow.Step.jobreference.name.label") }}
@@ -28,6 +29,7 @@
               type="radio"
               name="useName"
               :value="false"
+              data-testid="use-uuid-radio"
             />
             <label for="useNameFalse">
               {{ $t("Workflow.Step.jobreference.uuid.label") }}
@@ -73,9 +75,7 @@
             :title="$t('select.an.existing.job.to.use')"
             @click="openJobBrowser"
           >
-            {{
-              $t(!jobBrowserLoading ? "choose.a.job..." : "loading.text")
-            }}
+            {{ $t(!jobBrowserLoading ? "choose.a.job..." : "loading.text") }}
           </span>
         </div>
         <div class="col-sm-10 col-sm-offset-2" style="margin-top: 1em">
@@ -135,7 +135,7 @@
             :suggestions="inputTypeContextVariables"
             :read-only="!!isUseName"
             :invalid="showValidation && !isUseName"
-            :errorText="$t('commandExec.jobName.blank.message')"
+            :error-text="$t('commandExec.jobName.blank.message')"
             :placeholder="$t('Workflow.Step.jobreference.uuid.placeholder')"
           />
         </div>
@@ -198,9 +198,7 @@
               :value="true"
             />
             <label for="ignoreNotificationsCheck">
-              {{
-                $t("Workflow.Step.jobreference.ignore.notifications.label")
-              }}
+              {{ $t("Workflow.Step.jobreference.ignore.notifications.label") }}
             </label>
             <span>{{
               $t("Workflow.Step.jobreference.ignore.notifications.help")
@@ -244,9 +242,7 @@
             <label for="childNodesCheck">
               {{ $t("Workflow.Step.jobreference.child.nodes.label") }}
             </label>
-            <span>{{
-              $t("Workflow.Step.jobreference.child.nodes.help")
-            }}</span>
+            <span>{{ $t("Workflow.Step.jobreference.child.nodes.help") }}</span>
           </div>
         </div>
       </div>
@@ -257,9 +253,7 @@
             class="btn btn-sm"
             data-testid="expandNodeFilterBtn"
             :class="{ active: nodeFilterOverrideExpanded && filterLoaded }"
-            @click="
-              nodeFilterOverrideExpanded = !nodeFilterOverrideExpanded
-            "
+            @click="nodeFilterOverrideExpanded = !nodeFilterOverrideExpanded"
           >
             {{ $t("override.node.filters") }}
             <i
@@ -318,10 +312,7 @@
       </div>
 
       <div class="form-group">
-        <label
-          class="col-sm-2 control-label"
-          :for="`nodeFilterField${rkey}`"
-        >
+        <label class="col-sm-2 control-label" :for="`nodeFilterField${rkey}`">
           {{ $t("node.filter.prompt") }}
         </label>
         <div class="col-sm-10 vue-ui-socket">
@@ -330,9 +321,7 @@
             :project="currentProject"
             filter-field-name="nodeFilter"
             :filter-field-id="`nodeFilterField${rkey}`"
-            :query-field-placeholder-text="
-              $t('enter.a.node.filter.override')
-            "
+            :query-field-placeholder-text="$t('enter.a.node.filter.override')"
             emit-filter-on-blur
             search-btn-type="cta"
             class="nodefilters"
@@ -374,14 +363,9 @@
                 :id="`matchednodes${rkey}`"
                 class="clearfix"
               >
-                <node-list-embed
-                  :nodes="currentNodes"
-                  @filter="filterClicked"
-                >
+                <node-list-embed :nodes="currentNodes" @filter="filterClicked">
                   <p v-if="isResultsTruncated" class="text-info mb-0">
-                    {{
-                      $t("results.truncated.count.results.shown", [total])
-                    }}
+                    {{ $t("results.truncated.count.results.shown", [total]) }}
                   </p>
                 </node-list-embed>
               </div>
@@ -480,9 +464,7 @@
             name="nodeRankAttribute"
             class="form-control"
             :placeholder="
-              $t(
-                'scheduledExecution.property.nodeRankAttribute.description',
-              )
+              $t('scheduledExecution.property.nodeRankAttribute.description')
             "
           />
         </div>
@@ -520,9 +502,7 @@
             />
             <label for="nodeRankOrderAscending">
               {{
-                $t(
-                  "scheduledExecution.property.nodeRankOrder.ascending.label",
-                )
+                $t("scheduledExecution.property.nodeRankOrder.ascending.label")
               }}
             </label>
           </div>
@@ -537,9 +517,7 @@
             />
             <label for="nodeRankOrderDescending">
               {{
-                $t(
-                  "scheduledExecution.property.nodeRankOrder.descending.label",
-                )
+                $t("scheduledExecution.property.nodeRankOrder.descending.label")
               }}
             </label>
           </div>
@@ -642,6 +620,7 @@ interface JobRefModel {
   importOptions: boolean;
   ignoreNotifications: boolean;
   nodeStep: boolean;
+  useName?: boolean;
   nodefilters: {
     filter: string;
     dispatch: {
@@ -695,7 +674,6 @@ export default defineComponent({
   emits: ["update:modelValue"],
   data() {
     return {
-      isUseName: false,
       nodeFilterOverrideExpanded: null as boolean | null,
       projectStore: rundeckContext.rootStore.projects,
       selectedProject: rundeckContext.projectName,
@@ -719,6 +697,14 @@ export default defineComponent({
     };
   },
   computed: {
+    isUseName: {
+      get(): boolean {
+        return this.modelValue.useName ?? false;
+      },
+      set(val: boolean) {
+        this.$emit("update:modelValue", { ...this.modelValue, useName: val });
+      },
+    },
     hasFilter() {
       return Boolean(this.modelValue?.nodefilters?.filter);
     },

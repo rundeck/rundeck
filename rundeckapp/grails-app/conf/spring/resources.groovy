@@ -1000,5 +1000,7 @@ beans={
     //defines feature flag metadata for system configuration
     rundeckFeatureFlagConfigurable(FeatureFlagConfigurable)
 
-    rundeckDynamicMailSender(DynamicMailSender)
+    rundeckDynamicMailSender(DynamicMailSender) { bean ->
+        bean.primary = true
+    }
 }

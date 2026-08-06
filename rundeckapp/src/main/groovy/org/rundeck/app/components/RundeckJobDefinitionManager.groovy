@@ -300,8 +300,11 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
      * @param job
      * @return
      */
-    Map jobToMap(ScheduledExecution job) {
+    Map jobToMap(ScheduledExecution job, Boolean isXml = false) {
         def oMap = job.toMap()
+        // Add project with a temporary key for XML codec processing
+        // This will be removed in JobsXMLCodec.convertJobMap() and won't appear in YAML/JSON
+        if(isXml) oMap['_xml_project'] = job.project
         jobDefinitionComponents?.each { String name, JobDefinitionComponent export ->
             def vMap = export.exportCanonicalMap(oMap)
             if (vMap) {
@@ -400,7 +403,7 @@ class RundeckJobDefinitionManager implements JobDefinitionManager<ScheduledExecu
 
     @Override
     void exportAs(String format, List<ScheduledExecution> list, JobFormat.Options options, Writer writer) throws JobDefinitionException {
-        def mapList = list.collect { jobToMap(it) }
+        def mapList = list.collect { jobToMap(it, format == "xml") }
         getFormat(format).encode(mapList, options, writer)
     }
 

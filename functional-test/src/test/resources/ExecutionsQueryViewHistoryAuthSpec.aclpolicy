@@ -1,0 +1,29 @@
+description: RUN-4665 functional test - project access for view_history repro
+context:
+  application: rundeck
+for:
+  project:
+  - allow:
+    - read
+    equals:
+      name: ExecutionsQueryViewHistoryAuth
+by:
+  group:
+  - Run4665ViewHistory
+  - Run4665NoAccess
+---
+description: RUN-4665 functional test - view_history only, no job read
+context:
+  project: ExecutionsQueryViewHistoryAuth
+for:
+  job:
+  - allow:
+    - view_history
+  resource:
+  - allow:
+    - read
+    equals:
+      kind: event
+by:
+  group:
+  - Run4665ViewHistory

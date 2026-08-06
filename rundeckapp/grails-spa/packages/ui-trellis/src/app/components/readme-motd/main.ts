@@ -1,23 +1,9 @@
 import { defineComponent, markRaw } from "vue";
 import { getRundeckContext } from "../../../library";
-import { UiMessage } from "../../../library/stores/UIStore";
+import type { LocalizedMessages } from "../../utilities/i18n";
 import EditProjectFile from "./EditProjectFile.vue";
 
 import messages from "./i18n";
-
-const _i18n = messages as any;
-
-// Create VueI18n instance with options
-const locale = getRundeckContext().locale || "en_US";
-const lang = getRundeckContext().language || "en";
-
-// include any i18n injected in the page by the app
-const i18nMessages = {
-  [locale]: Object.assign(
-    {},
-    _i18n[locale] || _i18n[lang] || _i18n["en_US"] || {},
-  ),
-};
 
 const rundeckContext = getRundeckContext();
 
@@ -48,9 +34,9 @@ rundeckContext.rootStore.ui.addItems([
           };
         },
         created() {
-          (this.addUiMessages as (messages: UiMessage[]) => Promise<void>)([
-            i18nMessages[locale],
-          ]);
+          (this.addUiMessages as (messages: LocalizedMessages) => Promise<void>)(
+            messages as LocalizedMessages,
+          );
 
           this.filename = this.itemData.filename;
           // code to handle displayConfig

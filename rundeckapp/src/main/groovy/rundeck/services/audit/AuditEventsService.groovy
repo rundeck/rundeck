@@ -26,6 +26,7 @@ import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent
+import org.springframework.security.authentication.event.AuthenticationFailureServiceExceptionEvent
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
@@ -209,6 +210,32 @@ class AuditEventsService
             return
         }
 
+        eventBuilder()
+                .setUsername(extractUsername(event.authentication))
+                .setUserRoles(extractAuthorities(event.authentication))
+                .setActionType(ActionTypes.LOGIN_FAILED)
+                .setResourceType(ResourceTypes.USER)
+                .setResourceName(extractUsername(event.authentication))
+                .publish()
+    }
+
+    /**
+     * Handles authentication failure events produced by JAAS login providers.
+     * When {@code rundeck.jaaslogin=true}, Spring Security wraps the JAAS {@code LoginException}
+     * as an {@code AuthenticationServiceException} and publishes
+     * {@code AuthenticationFailureServiceExceptionEvent} — a different type than the
+     * {@code AuthenticationFailureBadCredentialsEvent} used by the built-in realm provider.
+     * Without this listener, JAAS login failures are silently dropped from the audit log.
+     *
+     * @param event the JAAS authentication failure event
+     */
+    @EventListener
+    void handleAuthenticationServiceExceptionFailureEvent(AuthenticationFailureServiceExceptionEvent event) {
+        userLoginFailure.inc()
+        if (!event.authentication) {
+            LOG.error("Null authentication on JAAS login failure event. Cancelling event dispatch.")
+            return
+        }
 
         eventBuilder()
                 .setUsername(extractUsername(event.authentication))

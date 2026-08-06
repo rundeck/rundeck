@@ -168,25 +168,34 @@ public abstract class AbstractLoginModule implements LoginModule {
             return false;
         }
         
-        // Add principals to subject
-        if (userPrincipal != null) {
-            boolean addedUser = subject.getPrincipals().add(userPrincipal);
-            debug("Added user principal: " + userPrincipal + " (success: " + addedUser + ")");
-        }
-        if (rolePrincipals != null) {
-            debug("About to add " + rolePrincipals.size() + " role principal(s) to Subject");
-            for (Principal rolePrincipal : rolePrincipals) {
-                boolean added = subject.getPrincipals().add(rolePrincipal);
-                debug("  Adding role principal: " + rolePrincipal + " (success: " + added + ")");
-                if (!added) {
-                    // Check if it already exists in the set
-                    boolean exists = subject.getPrincipals().contains(rolePrincipal);
-                    debug("    Role principal NOT added. Already exists: " + exists);
-                    // Check what's actually in the Subject
-                    for (Principal p : subject.getPrincipals()) {
-                        if (p.getName().equals(rolePrincipal.getName())) {
-                            debug("    Found principal with same name: " + p + " (class: " + p.getClass().getName() + ")");
-                            debug("    Equals check: " + p.equals(rolePrincipal) + ", Hash: " + p.hashCode() + " vs " + rolePrincipal.hashCode());
+        // Add principals to subject.
+        // LDAP path: subclass overrides login() and stores user info via setCurrentUser();
+        // super.login() is never called so userPrincipal and rolePrincipals stay null.
+        // In that case delegate to JAASUserInfo.setJAASInfo() which correctly adds
+        // RundeckPrincipal and RundeckRole objects from the stored UserInfo.
+        JAASUserInfo user = getCurrentUser();
+        if (user != null && userPrincipal == null && rolePrincipals == null) {
+            debug("LDAP path: adding principals from currentUser via setJAASInfo()");
+            user.setJAASInfo(subject);
+        } else {
+            // Standard path: AbstractLoginModule.login() populated userPrincipal / rolePrincipals
+            if (userPrincipal != null) {
+                boolean addedUser = subject.getPrincipals().add(userPrincipal);
+                debug("Added user principal: " + userPrincipal + " (success: " + addedUser + ")");
+            }
+            if (rolePrincipals != null) {
+                debug("About to add " + rolePrincipals.size() + " role principal(s) to Subject");
+                for (Principal rolePrincipal : rolePrincipals) {
+                    boolean added = subject.getPrincipals().add(rolePrincipal);
+                    debug("  Adding role principal: " + rolePrincipal + " (success: " + added + ")");
+                    if (!added) {
+                        boolean exists = subject.getPrincipals().contains(rolePrincipal);
+                        debug("    Role principal NOT added. Already exists: " + exists);
+                        for (Principal p : subject.getPrincipals()) {
+                            if (p.getName().equals(rolePrincipal.getName())) {
+                                debug("    Found principal with same name: " + p + " (class: " + p.getClass().getName() + ")");
+                                debug("    Equals check: " + p.equals(rolePrincipal) + ", Hash: " + p.hashCode() + " vs " + rolePrincipal.hashCode());
+                            }
                         }
                     }
                 }
@@ -227,12 +236,26 @@ public abstract class AbstractLoginModule implements LoginModule {
     public boolean logout() throws LoginException {
         debug("AbstractLoginModule.logout() called");
         
-        // Remove principals from subject
-        if (userPrincipal != null) {
-            subject.getPrincipals().remove(userPrincipal);
-        }
-        if (rolePrincipals != null) {
-            subject.getPrincipals().removeAll(rolePrincipals);
+        // Mirror commit()'s two-path logic so the same principals that were added are removed
+        JAASUserInfo user = getCurrentUser();
+        if (user != null && userPrincipal == null && rolePrincipals == null) {
+            // LDAP path: principals were added via currentUser.setJAASInfo() in commit()
+            UserInfo ui = user.getUserInfo();
+            if (ui != null) {
+                subject.getPrincipals().remove(new RundeckPrincipal(ui.getUserName()));
+                if (ui.getRoleNames() != null) {
+                    for (String role : ui.getRoleNames()) {
+                        subject.getPrincipals().remove(new RundeckRole(role));
+                    }
+                }
+            }
+        } else {
+            if (userPrincipal != null) {
+                subject.getPrincipals().remove(userPrincipal);
+            }
+            if (rolePrincipals != null) {
+                subject.getPrincipals().removeAll(rolePrincipals);
+            }
         }
         
         clearPrincipals();

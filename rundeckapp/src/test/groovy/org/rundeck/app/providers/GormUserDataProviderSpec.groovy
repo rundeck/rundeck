@@ -281,10 +281,11 @@ class GormUserDataProviderSpec extends Specification implements DataTest {
         showLoginStatus | loggedInOnly | filters                | expect
         true            | true         | [login: "admin_other"] | 0
         true            | true         | [:]                    | 1
-        false           | true         | [login: "admin"]       | 1
+        false           | true         | [login: "admin"]       | 2
         false           | true         | [:]                    | 2
         false           | false        | [:]                    | 2
-        true            | false        | [login: "admin"]       | 1
+        true            | false        | [login: "admin"]       | 2
+        false           | false        | [login: "_other"]      | 1
     }
 
     @Unroll

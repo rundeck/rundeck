@@ -14,6 +14,7 @@ class NodesPage extends BasePage {
     By nodeFilterInputDropdownSaveFilterBy = By.partialLinkText("Save Filter")
     By saveNodeFilterModalNameFieldBy = By.id("newFilterName")
     By saveNodeFilterModalSaveButtonBy = By.cssSelector("[data-testid='sfm-button-save']")
+    By nodesLoadingIndicatorBy = By.cssSelector("span.text-info > i.glyphicon-time")
 
     By actionsDropdownToggleBy = By.cssSelector("[data-testid='nc-actions-dropdown-toggle']")
     By actionsDropdownRunCommandBy = By.cssSelector("[data-testid='nc-run-command']")
@@ -41,6 +42,8 @@ class NodesPage extends BasePage {
         (el searchNodeInputBy).clear()
         (el searchNodeInputBy).sendKeys(".*")
         clickSearchNodes()
+        waitForNumberOfElementsToBeMoreThanIgnoringTimeout(nodesLoadingIndicatorBy, 0)
+        waitForNumberOfElementsToBe(nodesLoadingIndicatorBy, 0)
         return (els nodeListTrBy).size()
     }
 
@@ -52,6 +55,8 @@ class NodesPage extends BasePage {
         (el searchNodeInputBy).clear()
         (el searchNodeInputBy).sendKeys(nodeName)
         clickSearchNodes()
+        waitForNumberOfElementsToBeMoreThanIgnoringTimeout(nodesLoadingIndicatorBy, 0)
+        waitForNumberOfElementsToBe(nodesLoadingIndicatorBy, 0)
         return (els nodeListTrBy).size() > 0
     }
 

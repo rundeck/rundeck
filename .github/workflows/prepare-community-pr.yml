@@ -15,6 +15,7 @@
 name: Prepare community PR
 
 on:
+  workflow_call: {}
   pull_request_target:
     types: [labeled]
 
@@ -87,7 +88,7 @@ jobs:
           fi
 
       - name: Check out default base branch (trusted ref only)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0

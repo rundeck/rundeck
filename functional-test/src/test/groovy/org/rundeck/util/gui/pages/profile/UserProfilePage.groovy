@@ -26,8 +26,8 @@ class UserProfilePage extends BasePage {
     By modalCloseBtnBy = By.xpath("//button[@class='btn btn-danger' and @type='button' and normalize-space()='Close']")
     By deleteTokenButtonBy = By.xpath("//a[@title='Delete']")
     By modalDeleteInputBy = By.xpath("//input[@type='submit' and @class='btn btn-danger yes' and @value='Delete']")
-
-
+    /** Groups/roles cell on the signed-in user's profile (4th column of the user info table). */
+    By authGroupsCellBy = By.cssSelector("#userProfilePage table.table-striped tr:nth-of-type(2) td:nth-child(4)")
 
     UserProfilePage(final SeleniumContext context) {
         super(context)
@@ -81,5 +81,11 @@ class UserProfilePage extends BasePage {
         el tokenNameInputBy
     }
 
+    /**
+     * Returns the comma-separated authorization groups shown on the profile page.
+     */
+    String getAuthGroupsText() {
+        waitForTextToBeNonEmptyAndGet(authGroupsCellBy)
+    }
 
 }

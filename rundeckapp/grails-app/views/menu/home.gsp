@@ -316,7 +316,7 @@
 										<div class="col-sm-6 col-md-2 text-center">
 											<div data-bind="if: $root.projectForName(project)">
 												<a data-bind="css: { 'text-secondary': $root.projectForName(project).execCount()<1 }, urlPathParam: project,  bootstrapPopover: true, bootstrapPopoverContentRef: '#exec_detail_'+project "
-												   href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}"
+												   href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>', recentFilter: '1d'])}"
 												   class="as-block link-hover link-block-padded text-inverse "
 												   data-toggle="popover"
 												   data-placement="bottom"
@@ -363,7 +363,7 @@
 													   href="${g.createLink(
 															   controller: "reports",
 															   action: "index",
-															   params: [project: '<$>', statFilter: 'fail']
+															   params: [project: '<$>', statFilter: 'fail', recentFilter: '1d']
 													   )}">
 														<span data-bind="messageTemplate: $root.projectForName(project).failedCount()">
 															<g:message

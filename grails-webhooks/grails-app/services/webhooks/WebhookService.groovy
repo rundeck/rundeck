@@ -255,7 +255,7 @@ class WebhookService {
             //create token
             String checkUser = hookData.user ?: authContext.username
             try {
-                def at=apiService.generateUserToken(authContext, null, checkUser, roles, false,
+                def at=apiService.generateUserToken(authContext, 0L, checkUser, roles, false,
                                                             AuthTokenType.WEBHOOK)
                 saveWebhookRequest.setAuthToken(at.token)
             } catch (Exception e) {

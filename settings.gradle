@@ -15,7 +15,7 @@
  */
 
  plugins {
-    id "com.gradle.enterprise" version "3.7.1"
+    id "com.gradle.enterprise" version "3.19.2"
 }
 
 include	'rundeck-storage',

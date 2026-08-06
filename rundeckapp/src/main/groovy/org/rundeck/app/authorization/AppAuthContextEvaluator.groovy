@@ -57,6 +57,20 @@ interface AppAuthContextEvaluator extends AuthContextEvaluator {
     )
 
     /**
+     * Filter a list of Executions and return only the ones that the user has authorization for any one of the
+     * given actions in the project context
+     * @param authContext
+     * @param execs list of executions
+     * @param actions actions to check, any one of which is sufficient for authorization
+     * @return List of authorized executions
+     */
+    List<Execution> filterAuthorizedProjectExecutionsAny(
+        AuthContext authContext,
+        List<Execution> execs,
+        Collection<String> actions
+    )
+
+    /**
      * Return true if the user is authorized for all actions for the job in the project context
      * @param framework
      * @param job

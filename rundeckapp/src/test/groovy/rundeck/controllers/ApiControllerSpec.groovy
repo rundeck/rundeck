@@ -133,6 +133,81 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         response.json[1].id == "456uuid"
 
     }
+
+    def "api token list serializes expiration without milliseconds (RUN-4550)"() {
+        given:
+        User bob = new User(login: 'bob')
+        bob.save()
+        // Date carries millisecond precision (…50.022Z); API must expose second precision (…50Z)
+        Date expiration = Date.from(java.time.Instant.parse('2026-03-25T21:16:50.022Z'))
+        AuthToken createdToken = new AuthToken(
+                user: bob,
+                type: AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'a,b',
+                uuid: '123uuid',
+                creator: 'elf',
+                expiration: expiration
+        )
+        createdToken.save()
+
+        controller.apiService = Mock(ApiService) {
+            hasTokenAdminAuth(_) >> { true }
+            listTokens() >> { AuthToken.list() }
+        }
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        request.api_version = 33
+        request.addHeader('accept', 'application/json')
+        JSON.use('v' + request.api_version)
+        when:
+        controller.apiTokenList()
+
+        then:
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        response.json[0].expiration == '2026-03-25T21:16:50Z'
+    }
+
+    def "api token get serializes expiration without milliseconds (RUN-4550)"() {
+        given:
+        User bob = new User(login: 'bob')
+        bob.save()
+        Date expiration = Date.from(java.time.Instant.parse('2026-03-25T21:16:50.022Z'))
+        AuthToken createdToken = new AuthToken(
+                user: bob,
+                type: AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'a,b',
+                uuid: 'tok-uuid',
+                creator: 'elf',
+                expiration: expiration
+        )
+        createdToken.save(flush: true)
+
+        controller.apiService = Mock(ApiService) {
+            hasTokenAdminAuth(_) >> { true }
+            findTokenId('tok-uuid') >> createdToken
+            requireExistsFormat(_, _, _) >> true
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'bob'
+            }
+        }
+        request.api_version = 19
+        params.tokenid = 'tok-uuid'
+        request.addHeader('accept', 'application/json')
+        JSON.use('v' + request.api_version)
+        when:
+        controller.apiTokenGet('tok-uuid')
+
+        then:
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        response.json.expiration == '2026-03-25T21:16:50Z'
+    }
+
     def "api token list unauthorized self param #inputUser"() {
         given:
         User bob = new User(login: 'bob')
@@ -298,7 +373,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         then:
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.apiService.generateUserToken(null, null, 'bob', roles, _, _, _) >> createdToken
+        1 * controller.apiService.generateUserToken(null, 0L, 'bob', roles, _, _, _) >> createdToken
         0 * controller.apiService._(*_)
 
         response.status == 201
@@ -350,7 +425,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             it[2].json(requestJson)
             true
         }
-        1 * controller.apiService.generateUserToken(_, null, 'bob', roles, _, _, _) >> createdToken
+        1 * controller.apiService.generateUserToken(_, 0L, 'bob', roles, _, _, _) >> createdToken
         0 * controller.apiService._(*_)
 
         response.status == 201
@@ -358,8 +433,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator   : 'elf',
                 expired   : true,
                 roles     : ['a', 'b'],
-                // Grails 7/Spring Boot 3: Jackson now includes milliseconds in ISO-8601 format
-                expiration: '1970-01-01T00:00:00.123Z',
+                // RUN-4550: Date values are serialized with second-precision W3C/ISO-8601 (no milliseconds)
+                expiration: '1970-01-01T00:00:00Z',
                 id        : '123uuid',
                 user      : 'bob',
                 token     : 'abc'
@@ -407,7 +482,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             it[2].json(requestJson)
             true
         }
-        1 * controller.apiService.generateUserToken(_, null, 'bob', null, _, _, _) >> createdToken
+        1 * controller.apiService.generateUserToken(_, 0L, 'bob', null, _, _, _) >> createdToken
         0 * controller.apiService._(*_)
 
         response.status == 201
@@ -415,8 +490,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator   : 'elf',
                 expired   : true,
                 roles     : ['a', 'b'],
-                // Grails 7/Spring Boot 3: Jackson now includes milliseconds in ISO-8601 format
-                expiration: '1970-01-01T00:00:00.123Z',
+                // RUN-4550: Date values are serialized with second-precision W3C/ISO-8601 (no milliseconds)
+                expiration: '1970-01-01T00:00:00Z',
                 id        : '123uuid',
                 user      : 'bob',
                 token     : 'abc'

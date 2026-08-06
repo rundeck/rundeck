@@ -95,7 +95,7 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
             return updateAuthRoles(authContext, token, roleSet)
         }
 
-        apiService.createUserToken(authContext, 0, token, user, roleSet, false, AuthTokenType.WEBHOOK)
+        apiService.createUserToken(authContext, 0L, token, user, roleSet, false, AuthTokenType.WEBHOOK)
 
         return true
     }

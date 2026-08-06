@@ -3,7 +3,10 @@
     <div class="col-xs-12">
       <div class="card">
         <div class="card-content">
-          <a class="h4" :href="`${rdBase}/project/${project.name}/activity`">
+          <a
+            class="h4"
+            :href="`${rdBase}/project/${project.name}/activity?recentFilter=1d`"
+          >
             <span
               class="summary-count"
               :class="{ 'text-strong': count < 1, 'text-info': count > 0 }"
@@ -21,7 +24,7 @@
                 'text-warning': project.failedCount > 0,
                 'text-muted': project.failedCount < 1,
               }"
-              :href="`${rdBase}/project/${project.name}/activity?statFilter=fail`"
+              :href="`${rdBase}/project/${project.name}/activity?statFilter=fail&recentFilter=1d`"
             >
               {{
                 $t("project.activitySummary.failedCount", [project.failedCount])

@@ -11,7 +11,7 @@ import org.rundeck.util.container.BaseContainer
 @ExcludePro
 class ScmPluginInputsSpec extends ScmBaseContainer {
 
-    static List<String> COMMON_INPUT_FIELD_NAMES = ['pathTemplate','dir','url','branch','strictHostKeyChecking','sshPrivateKeyPath','gitPasswordPath','format','fetchAutomatically','pullAutomatically']
+    static List<String> COMMON_INPUT_FIELD_NAMES = ['pathTemplate','dir','url','branch','strictHostKeyChecking','sshPrivateKeyPath','gitPasswordPath','format','fetchAutomatically','fetchTimeout','pullAutomatically']
     static List<String> EXPORT_INPUT_FIELD_NAMES = ['committerName','committerEmail','exportUuidBehavior','createBranch','baseBranch'] + COMMON_INPUT_FIELD_NAMES
     static List<String> IMPORT_INPUT_FIELD_NAMES = ['importUuidBehavior','useFilePattern','filePattern'] + COMMON_INPUT_FIELD_NAMES
 

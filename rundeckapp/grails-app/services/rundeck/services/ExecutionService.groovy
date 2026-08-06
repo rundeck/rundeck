@@ -134,6 +134,7 @@ import jakarta.servlet.http.HttpSession
 import java.nio.charset.Charset
 import java.sql.Time
 import java.sql.Timestamp
+import javax.sql.DataSource
 import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
@@ -142,6 +143,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import java.util.regex.Pattern
+import java.time.DateTimeException
+import java.time.ZoneId
 import java.util.stream.Collectors
 
 /**
@@ -356,6 +359,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     boolean getExecutionsAreActive(){
         configurationService.executionModeActive
+    }
+
+    /**
+     * Returns the configured default activity time filter value when the feature is enabled,
+     * or null if no filter should be applied. Used to avoid duplicating this logic across controllers.
+     * @param params request params — if any param ends with 'Filter', returns null (user already has a filter)
+     */
+    String getActivityDefaultTimeFilter(def params) {
+        if (params.find { it.key.endsWith('Filter') }) {
+            return null
+        }
+        if (featureService?.featurePresent(Features.ACTIVITY_DEFAULT_TIME_FILTER)) {
+            def configured = configurationService?.getString('gui.activity.defaultTimeFilter', '1m') ?: '1m'
+            return (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
+        }
+        return null
     }
 
     void setExecutionsAreActive(boolean active){
@@ -2356,12 +2375,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             try {
                 newstr = input.replaceAll(/\$\{DATE((?:[-+]\d+)?:.*?)\}/) { all, tstamp ->
-                    if (tstamp.lastIndexOf(":") == -1) {
+                    final firstColon = tstamp.indexOf(":")
+                    if (firstColon == -1) {
                         return all
                     }
-                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
-                    final fdate = tstamp.substring(tstamp.lastIndexOf(":") + 1)
+                    final operator = tstamp.substring(0, firstColon)
+                    final rest = tstamp.substring(firstColon + 1)
+
+                    // Try to extract optional TIMEZONE from the last colon-segment
+                    String fdate = rest
+                    TimeZone tz = null
+                    final lastColon = rest.lastIndexOf(":")
+                    if (lastColon >= 0) {
+                        try {
+                            tz = TimeZone.getTimeZone(ZoneId.of(rest.substring(lastColon + 1)))
+                            fdate = rest.substring(0, lastColon)
+                        } catch (DateTimeException ignored) {
+                            // last segment is part of FORMAT, not a timezone — use whole rest
+                        }
+                    }
+
                     def formatter = new SimpleDateFormat(fdate)
+                    if (tz != null) {
+                        formatter.setTimeZone(tz)
+                    }
                     if (operator == '') {
                         formatter.format(dateStarted)
                     } else {
@@ -2372,9 +2409,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
             } catch (IllegalArgumentException e) {
-                log.warn(e)
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             } catch (NumberFormatException e) {
-                log.warn(e)
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
+            } catch (DateTimeException e) {
+                log.warn("expandDateStrings: ${e.getMessage()}", e)
             }
 
 
@@ -4706,20 +4745,36 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return ((Long.parseLong(arr[0]) * 3600) + (Long.parseLong(arr[1]) * 60) + (Long.parseLong(arr[2]))) * 1000
     }
 
+    boolean isH2Datasource() {
+        try {
+            def dataSource = applicationContext.getBean('dataSource', DataSource)
+            return dataSource.getConnection().withCloseable { conn ->
+                conn.metaData.databaseProductName == 'H2'
+            }
+        } catch (Exception ex) {
+            log.debug("Unable to determine datasource type, assuming non-H2", ex)
+            return false
+        }
+    }
+
     private boolean isSqlCompatible() {
         boolean isCompatible = false
-        try{
+        try {
+            boolean isH2 = isH2Datasource()
             Execution.createCriteria().list(max:1) {
-                projections{
-                    sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                projections {
+                    if (isH2) {
+                        sqlProjection 'DATEDIFF(\'SECOND\', date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else {
+                        sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
+                    }
                 }
             }
-
             isCompatible = true
-        } catch(JDBCException ex){
+        } catch (Exception ex) {
+            log.debug("Execution metrics SQL compatibility check failed, falling back to in-memory metrics calculation", ex)
             isCompatible = false
         }
-
         return isCompatible
     }
 
@@ -4778,6 +4833,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * */
     List<Closure> getCriteriaScenarios(ExecutionQuery query){
         def jobQueryComponents = applicationContext.getBeansOfType(JobQuery)
+
+        if (isH2Datasource()) {
+            def metricCriteriaH2 = {
+                def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+                baseQueryCriteria()
+                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+                projections {
+                    rowCount("count")
+                    sqlProjection 'sum(DATEDIFF(\'SECOND\', date_started, date_completed)) as durationSum',
+                            'durationSum', StandardBasicTypes.LONG
+                    sqlProjection 'min(DATEDIFF(\'SECOND\', date_started, date_completed)) as durationMin',
+                            'durationMin', StandardBasicTypes.LONG
+                    sqlProjection 'max(DATEDIFF(\'SECOND\', date_started, date_completed)) as durationMax',
+                            'durationMax', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                            'succeededCount', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                            'failedCount', StandardBasicTypes.LONG
+                }
+            }
+            return Arrays.asList(metricCriteriaH2)
+        }
+
         def metricCriteriaA = {
             def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
             baseQueryCriteria()

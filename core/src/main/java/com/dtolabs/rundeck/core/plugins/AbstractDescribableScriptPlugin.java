@@ -59,6 +59,7 @@ import java.util.*;
  *     config.X.default = default string of the property
  *     config.X.values = comma-separated values list for Select or FreeSelect properties
  *     config.X.scope = scope of the property, from {@link PropertyScope}
+ *     config.X.blankIfUnexpandable = true/false, if unresolvable ${...} references should be blanked (default: true)
  * </pre>
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
@@ -80,6 +81,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String SETTING_MERGE_ENVIRONMENT = "mergeEnvironment";
 
     public static final String CONFIG_BLANK_IF_UNEXPANDED = "blankIfUnexpanded";
+    public static final String CONFIG_BLANK_IF_UNEXPANDABLE = "blankIfUnexpandable";
 
     private final ScriptPluginProvider provider;
     private final Framework framework;
@@ -223,6 +225,13 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
 
                         dbuilder.frameworkMapping(propName, frameworkPropertyPrefix + propName);
                     }
+                    final Object blankIfUnexpandableValue = itemmeta.get(CONFIG_BLANK_IF_UNEXPANDABLE);
+                    if (blankIfUnexpandableValue instanceof Boolean) {
+                        pbuild.blankIfUnexpandable((Boolean) blankIfUnexpandableValue);
+                    } else if (blankIfUnexpandableValue instanceof String) {
+                        pbuild.blankIfUnexpandable(Boolean.parseBoolean((String) blankIfUnexpandableValue));
+                    }
+
                     //rendering options
                     final Object renderingOpts = itemmeta.get(CONFIG_RENDERING_OPTIONS);
                     if(null != renderingOpts && renderingOpts instanceof Map){

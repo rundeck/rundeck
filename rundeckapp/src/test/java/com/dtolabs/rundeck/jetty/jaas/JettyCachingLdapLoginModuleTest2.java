@@ -23,11 +23,14 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.rundeck.jaas.AbstractLoginModule;
 import org.rundeck.jaas.callback.ObjectCallback;
+import org.rundeck.jaas.RundeckRole;
 import org.rundeck.jaas.UserInfo;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.reflect.Method;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
@@ -515,6 +518,53 @@ public class JettyCachingLdapLoginModuleTest2 {
         module._rootContext = rootContext;
         module.ldapContext = ldapContext;
         return module;
+    }
+
+    /**
+     * Regression test for RUN-4599: LDAP role principals must be present in the Subject after commit().
+     *
+     * JettyCachingLdapLoginModule overrides login(), which calls authenticate() to fetch LDAP groups
+     * and stores them via setCurrentUser(). commit() must read currentUser when rolePrincipals is null (the LDAP path).
+     *
+     * Before the fix, commit() ignored currentUser entirely, so the Subject had zero RundeckRole
+     * principals even after a successful LDAP authentication.
+     *
+     * This test drives commit() directly by setting up the same state that login() would leave
+     * (currentUser set, authenticated=true, rolePrincipals=null) and verifies the Subject contains roles.
+     */
+    @Test
+    public void testLdapRolesAddedToSubjectAfterCommit() throws Exception {
+        JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(false);
+        module._debug = true;
+        module.setSubject(new Subject());
+
+        // getUserInfo() is mocked to return user1 with role1 and role2 (see getJettyCachingLdapLoginModule)
+        UserInfo userInfo = module.getUserInfo(user1);
+
+        // Replicate what authenticate() does: wrap UserInfo in JAASUserInfo, call setCurrentUser()
+        AbstractLoginModule.JAASUserInfo jaasUserInfo = new AbstractLoginModule.JAASUserInfo(userInfo);
+        jaasUserInfo.fetchRoles();
+
+        Method setCurrentUserMethod = AbstractLoginModule.class.getDeclaredMethod(
+            "setCurrentUser", AbstractLoginModule.JAASUserInfo.class);
+        setCurrentUserMethod.setAccessible(true);
+        setCurrentUserMethod.invoke(module, jaasUserInfo);
+
+        // Mark as authenticated (what login() does after authenticate() returns true)
+        Method setAuthenticatedMethod = AbstractLoginModule.class.getDeclaredMethod(
+            "setAuthenticated", boolean.class);
+        setAuthenticatedMethod.setAccessible(true);
+        setAuthenticatedMethod.invoke(module, true);
+
+        // commit() must add RundeckRole principals to the Subject from currentUser
+        assertTrue(module.commit());
+        for (String expectedRole : Arrays.asList(role1, role2)) {
+            assertTrue(
+                "Subject must contain a RundeckRole principal for '" + expectedRole + "' after commit()",
+                module.getSubject().getPrincipals().stream()
+                    .anyMatch(p -> p instanceof RundeckRole && ((RundeckRole) p).getName().equals(expectedRole))
+            );
+        }
     }
 
 

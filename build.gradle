@@ -24,20 +24,23 @@
 
 buildscript {
     repositories {
-        maven {
-            name 'mavenCentralProxy'
-            url mavenCentralUrl
-            if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
-                credentials {
-                    username mavenUser
-                    password mavenPassword
+        if (project.findProperty('mavenCentralUrl')) {
+            maven {
+                name 'mavenCentralProxy'
+                url mavenCentralUrl
+                if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
+                    credentials {
+                        username mavenUser
+                        password mavenPassword
+                    }
                 }
             }
+        } else {
+            mavenCentral()
         }
-        mavenCentral()
     }
     dependencies {
-        classpath 'com.adaptc.gradle:nexus-workflow:0.6'
+        classpath 'com.adaptc.gradle:nexus-workflow:0.8'
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.7.3'
         classpath group: 'org.yaml', name: 'snakeyaml', version: "${snakeyamlVersion}"
         classpath 'org.owasp:dependency-check-gradle:10.0.4'
@@ -45,9 +48,9 @@ buildscript {
 }
 
 plugins {
-    id "org.dvaske.gradle.git-build-info" version "0.8"
+    id "org.dvaske.gradle.git-build-info" version "0.9"
     id "com.dorongold.task-tree" version "1.5"
-    id "org.ajoberstar.grgit" version "5.2.2"
+    id "org.ajoberstar.grgit" version "5.3.3"
     id "signing"
     id 'io.github.gradle-nexus.publish-plugin' version "2.0.0"
 }
@@ -154,6 +157,15 @@ allprojects {
     // Spring Boot's dependency-management BOM overrides Spring Framework via this property name
     // (ext["spring.version"] alone does NOT move the BOM-managed spring-framework version).
     ext["spring-framework.version"] = springVersion
+    // Override Spring Boot BOM-managed versions (eachDependency/force can't move Boot-managed deps).
+    ext["micrometer.version"] = micrometerVersion          // CVE-2026-40983, CVE-2026-40984
+    ext["spring-retry.version"] = springRetryVersion       // CVE-2026-41710
+    ext["httpcore5.version"] = httpCore5Version             // CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)
+    // CVE-2026-54512, CVE-2026-54513 (jackson-databind PolymorphicTypeValidator bypass). Grails/Spring
+    // Boot dependency management pins jackson to 2.21.2 and downgrades transitive 2.21.4; a plain
+    // platform import or resolutionStrategy.force does NOT override it. Overriding the Boot BOM property
+    // moves jackson onto the patched 2.21.4 across grails-* plugin modules and rundeckapp.
+    ext["jackson-bom.version"] = jacksonDatabindVersion
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
@@ -202,11 +214,72 @@ allprojects {
                                     version: groovyVersion)
                     details.because 'Grails 7 uses Apache Groovy 4.x; skip Groovy 3.x for Gradle plugins'
                 }
+                // Align Spring Framework across all configs (grails-bom pins older); plugin subprojects
+                // don't apply spring-boot dependency-management so ext["spring-framework.version"] alone
+                // doesn't reach them. CVE-2026-41839/41840/41845/41848/41850/41851/41852/41853/41854.
+                if (details.requested.group == 'org.springframework') {
+                    details.useVersion springVersion
+                    details.because 'Align Spring Framework to managed version across all configs'
+                }
+                // Align Spring Security (CVE-2026-41706, CVE-2026-47838). Exclude spring-security-rsa (1.x line).
+                if (details.requested.group == 'org.springframework.security' && details.requested.name != 'spring-security-rsa') {
+                    details.useVersion project.findProperty('spring-security.version')
+                    details.because 'Align Spring Security to managed version across all configs'
+                }
+                // Align Micrometer metrics modules (CVE-2026-40983, CVE-2026-40984). Exclude tracing/BOM.
+                if (details.requested.group == 'io.micrometer'
+                        && details.requested.name.startsWith('micrometer-')
+                        && !details.requested.name.contains('-bom')
+                        && !details.requested.name.startsWith('micrometer-tracing')) {
+                    details.useVersion micrometerVersion
+                    details.because 'Align Micrometer metrics modules to managed version'
+                }
+                // spring-integration 6.5.9 pulls spring-retry 2.0.13 (CVE-2026-41710)
+                if (details.requested.group == 'org.springframework.integration') {
+                    details.useVersion springIntegrationVersion
+                    details.because 'spring-integration 6.5.9 (spring-retry 2.0.13)'
+                }
+                if (details.requested.group == 'org.springframework.retry' && details.requested.name == 'spring-retry') {
+                    details.useVersion springRetryVersion
+                    details.because 'spring-retry 2.0.13 fixes CVE-2026-41710'
+                }
+                // CVE-2026-54399: httpcore5-h2 HTTP/2 DoS, fixed in 5.4.2. Pulled transitively via
+                // grails-data-hibernate5-dbmigration -> grails-shell-cli -> spring-boot-cli -> httpclient5.
+                // The Spring Boot BOM manages httpcore5.version and overrides resolutionStrategy.force,
+                // so use a useVersion rule (like spring/micrometer above). Covers httpcore5 and httpcore5-h2
+                // (released together) so the core5 family stays aligned.
+                if (details.requested.group == 'org.apache.httpcomponents.core5') {
+                    details.useVersion httpCore5Version
+                    details.because 'httpcore5 5.4.2 fixes CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)'
+                }
             }
-            
+
+            // org.ehcache:ehcache:3.12.0 publishes plain (runtimeElements) and Jakarta
+            // (jakartaRuntimeElements) feature variants that both declare identical capabilities
+            // (ehcache-api, ehcache-core, ehcache-xml-provider, etc). grails-spring-security:7.1.4
+            // pulls the jakarta variant while some modules depend on the plain variant directly;
+            // Gradle can't auto-resolve two variants claiming the same capability, so always prefer
+            // jakarta here since Grails 7 / GORM 9 runs on Jakarta EE.
+            capabilitiesResolution.all { details ->
+                if (details.candidates.every { it.id.group == 'org.ehcache' && it.id.module == 'ehcache' }) {
+                    def jakartaCandidate = details.candidates.find { it.variantName.contains('jakarta') }
+                    if (jakartaCandidate != null) {
+                        details.select(jakartaCandidate)
+                    }
+                }
+            }
+
             // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
             force "com.google.protobuf:protobuf-java:${protobufVersion}" // CVE-2024-7254 fix
+            // CWE-770 (SNYK-JAVA-COMFASTERXMLJACKSONCORE-15365924): build-tooling configs such as
+            // groovyScript pull groovy-yaml -> jackson 2.19.2, which the jackson BOM only covers in
+            // app/plugin configs. Force jackson onto the managed version across ALL configurations.
+            force "com.fasterxml.jackson.core:jackson-core:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.core:jackson-annotations:${jacksonAnnotationsVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonDatabindVersion}"
+            force "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
             // CVE-2025-67030 - plexus-utils Directory Traversal (Expand.extractFile); pulled via grails-shell-cli
             force "org.codehaus.plexus:plexus-utils:${plexusUtilsVersion}"
             
@@ -217,9 +290,39 @@ allprojects {
             force "io.micrometer:micrometer-observation:${micrometerVersion}"
             force "io.micrometer:micrometer-commons:${micrometerVersion}"
             force "jaxen:jaxen:${jaxenVersion}"
+            // Force guava/failureaccess/asm to the versions declared in gradle.properties, kept in
+            // sync with rundeckpro's enterprise packaging so core and pro resolve identically and
+            // don't end up with duplicate jars when pro bundles rundeck's artifacts into its WAR.
+            force "com.google.guava:guava:${guavaVersion}"
+            force "com.google.guava:failureaccess:${failureAccessVersion}"
+            force "org.ow2.asm:asm:${asmVersion}"
+            force "org.ow2.asm:asm-tree:${asmVersion}"
+            force "org.ow2.asm:asm-commons:${asmVersion}"
+            force "org.ow2.asm:asm-analysis:${asmVersion}"
+            force "org.ow2.asm:asm-util:${asmVersion}"
             // NOTE: Micronaut forced to ${micronautVersion} (CVE-2026-33013 fix)
             // TODO: Future cleanup - remove explicit ${micronautVersion} from build files and let BOM manage
-            // NOTE: guava and failureaccess excluded - cause variant resolution conflicts
+        }
+    }
+
+    // resolutionStrategy.force cannot override versions managed by the Spring Boot dependency
+    // management plugin (which applies grails-bom entries as strict constraints, e.g. asm:9.10,
+    // kotlin-stdlib:1.9.25, and ant:1.10.15). Must use the plugin's own API to pin these above the
+    // BOM version; otherwise rundeckapp's own runtimeClasspath (bundled by bootWar) still carries
+    // the un-forced BOM version, which causes duplicate jars when rundeckpro's enterprise packaging
+    // merges it in.
+    plugins.withId('io.spring.dependency-management') {
+        dependencyManagement {
+            dependencies {
+                dependency "org.ow2.asm:asm:${asmVersion}"
+                dependency "org.ow2.asm:asm-tree:${asmVersion}"
+                dependency "org.ow2.asm:asm-commons:${asmVersion}"
+                dependency "org.ow2.asm:asm-analysis:${asmVersion}"
+                dependency "org.ow2.asm:asm-util:${asmVersion}"
+                dependency "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
+                dependency "org.apache.ant:ant:${antVersion}"
+                dependency "org.apache.ant:ant-launcher:${antVersion}"
+            }
         }
     }
 }
@@ -250,6 +353,12 @@ repositories {
     }
     maven {
         url "https://packagecloud.io/pagerduty/rundeckpro/maven2"
+    }
+    maven {
+        url "https://packagecloud.io/pagerduty/rundeck-plugins/maven2"
+        content {
+            includeGroup('org.rundeck.plugins')
+        }
     }
 }
 
@@ -291,9 +400,17 @@ getAllprojects().findAll() { proj ->
 }
 
 
-def buildConf  = new org.yaml.snakeyaml.Yaml().load( file('./build.yaml').newDataInputStream() )
 project(':rundeckapp') {
-    it.ext.bundledPlugins = buildConf.rundeck.plugins
+    // Bundled external plugin versions come from gradle.properties (*Version props), mirroring rundeckpro
+    it.ext.bundledPlugins = [
+        "org.rundeck.plugins:ansible-plugin:${ansiblePluginVersion}",
+        "org.rundeck.plugins:aws-s3-model-source:${awsS3ModelSourceVersion}",
+        "org.rundeck.plugins:py-winrm-plugin:${pyWinrmPluginVersion}",
+        "org.rundeck.plugins:openssh-node-execution:${opensshNodeExecutionVersion}",
+        "org.rundeck.plugins:multiline-regex-datacapture-filter:${multilineRegexDatacaptureFilterVersion}",
+        "org.rundeck.plugins:attribute-match-node-enhancer:${attributeMatchNodeEnhancerVersion}",
+        "org.rundeck.plugins:sshj-plugin:${sshjPluginVersion}",
+    ]
 
     it.ext.bundledPlugins += [
         project(':plugins:script-node-step-plugin'),

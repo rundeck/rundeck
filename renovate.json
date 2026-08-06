@@ -1,6 +1,169 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:recommended"
   ],
-  "prConcurrentLimit": 3
+  "minimumReleaseAge": "4 days",
+  "commitMessagePrefix": "[RUN-0000]",
+  "dependencyDashboard": true,
+  "fetchChangeLogs": "off",
+  "hostRules": [
+    {
+      "description": "Concentrating almost all Gradle lookups onto Maven Central (see registryUrls scoping below) increased request density enough to trip its rate limiter (429s). Throttle our own concurrency here instead of bursting and eating retry/backoff costs.",
+      "matchHost": "repo1.maven.org",
+      "concurrentRequestLimit": 4,
+      "maxRequestsPerSecond": 5
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "dependencyDashboardApproval": false
+  },
+  "packageRules": [
+    {
+      "description": "Defer major updates to manual selection from the Dependency Dashboard",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Group noisy Google Cloud client library revision bumps",
+      "matchPackageNames": ["/^com\\.google\\.apis:/", "/^com\\.google\\.cloud:/"],
+      "groupName": "google cloud clients"
+    },
+    {
+      "description": "Group routine Gradle minor/patch dependency bumps",
+      "matchManagers": ["gradle"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "gradle minor/patch dependencies"
+    },
+    {
+      "description": "Grails minors have a history of real behavioral changes despite semver, and grails-plugin-spring-security-core must move in lockstep with it — pull both out of the auto-grouped minor/patch bucket for manual review",
+      "matchPackageNames": ["/^org\\.apache\\.grails:/"],
+      "groupName": "grails framework (manual review required)",
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Spock's version suffix (e.g. -groovy-5.0) encodes the Groovy variant it's compiled against; that must move in lockstep with our own groovyVersion pin, not silently ride along on a 'minor' semver bump",
+      "matchPackageNames": ["/^org\\.spockframework:/"],
+      "groupName": "spock framework (manual review - groovy variant coupling)",
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "jetty.version only forces jetty-util in core/build.gradle; every other Jetty artifact stays pinned wherever Spring Boot's BOM manages it. A 'minor' bump here (e.g. 12.0.x -> 12.1.x) can cross Jetty's own release-line boundary and produce a mixed-version classpath — must be reviewed and moved in lockstep with springBootVersion",
+      "matchPackageNames": ["/^org\\.eclipse\\.jetty/"],
+      "groupName": "jetty (manual review - Spring Boot BOM coupling)",
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Keep the Jira REST client app/core artifacts in lockstep",
+      "matchPackageNames": ["/^com\\.atlassian\\.jira:jira-rest-java-client-/"],
+      "groupName": "atlassian jira rest client"
+    },
+    {
+      "description": "Group low-risk GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "description": "Never batch our own runner/sidecar artifact with unrelated updates",
+      "matchPackageNames": ["com.rundeck.sidecar:pd-runner-api"],
+      "groupName": null,
+      "automerge": false
+    },
+    {
+      "description": "Block packages Eng has flagged as too disruptive to auto-update",
+      "matchPackageNames": [
+        "jquery",
+        "/^@types\\/jquery$/",
+        "vue-eslint-parser",
+        "/^@vue\\/cli-/",
+        "storybook",
+        "/^@storybook\\//",
+        "vue-i18n",
+        "typescript",
+        "/^@typescript/",
+        "typescript-eslint",
+        "sass",
+        "sass-loader",
+        "/^com\\.h2database:/"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Group ESLint ecosystem updates",
+      "matchPackageNames": ["/eslint/"],
+      "groupName": "eslint packages"
+    },
+    {
+      "description": "Group Jest ecosystem updates",
+      "matchPackageNames": ["jest", "ts-jest", "@types/jest"],
+      "groupName": "jest packages"
+    },
+    {
+      "description": "Group PrimeVue ecosystem updates",
+      "matchPackageNames": ["primevue", "primeicons", "@primeuix/themes"],
+      "groupName": "primevue packages"
+    },
+    {
+      "description": "Enable npm engine version updates (disabled by default in Renovate)",
+      "matchDepTypes": ["engines"],
+      "enabled": true
+    },
+    {
+      "description": "Group Node.js version (.nvmrc) with the npm engine pin so they update together",
+      "matchManagers": ["nvm", "npm"],
+      "matchDepNames": ["node", "npm"],
+      "groupName": "node and npm engine versions"
+    },
+    {
+      "description": "Default registry for the vast majority of Gradle dependencies (Spring, Netty, Jackson, JUnit, etc.) instead of checking every globally-declared repo (m2proxy, PackageCloud, Sonatype, Grails, Gradle Plugin Portal, ...) for every dependency. Only ~9% of our gradle deps are actually Grails/Groovy-namespaced, so grails.org is scoped separately below rather than checked for everything.",
+      "matchManagers": ["gradle"],
+      "registryUrls": [
+        "https://repo1.maven.org/maven2/"
+      ]
+    },
+    {
+      "description": "Grails/Groovy-namespaced artifacts also need the Grails Maven repo",
+      "matchPackageNames": ["/^org\\.apache\\.grails:/", "/^org\\.grails\\.plugins:/", "/^org\\.apache\\.groovy:/"],
+      "registryUrls": [
+        "https://repo1.maven.org/maven2/",
+        "https://repo.grails.org/grails/core/"
+      ]
+    },
+    {
+      "description": "Gradle plugin marker artifacts resolve via the Gradle Plugin Portal, not plain Maven Central",
+      "matchManagers": ["gradle"],
+      "matchDepTypes": ["plugin"],
+      "registryUrls": [
+        "https://plugins.gradle.org/m2/",
+        "https://repo1.maven.org/maven2/"
+      ]
+    },
+    {
+      "description": "PagerDuty-internal runner/sidecar artifacts only exist on our PackageCloud feeds",
+      "matchPackageNames": ["/^com\\.rundeck\\.sidecar:/", "/^com\\.rundeck\\.runner:/"],
+      "registryUrls": [
+        "https://packagecloud.io/pagerduty/rundeckpro/maven2/",
+        "https://packagecloud.io/pagerduty/rundeckpro-test/maven2/",
+        "https://repo1.maven.org/maven2/"
+      ]
+    },
+    {
+      "description": "org.rundeck artifacts also need the Sonatype Central snapshots feed and PackageCloud (plugins no longer publish to Maven Central)",
+      "matchPackageNames": ["/^org\\.rundeck[.:]/"],
+      "registryUrls": [
+        "https://packagecloud.io/pagerduty/rundeck-plugins/maven2/",
+        "https://repo1.maven.org/maven2/",
+        "https://central.sonatype.com/repository/maven-snapshots/",
+        "https://repo.grails.org/grails/core/"
+      ]
+    },
+    {
+      "description": "Atlassian artifacts (Jira REST client, commonmark) need the internal Atlassian Maven proxy",
+      "matchPackageNames": ["/^com\\.atlassian[.:]/"],
+      "registryUrls": [
+        "https://m2proxy.atlassian.com/repository/public/",
+        "https://repo1.maven.org/maven2/"
+      ]
+    }
+  ]
 }

@@ -54,6 +54,8 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
     private int subStepNumber = -1;
     /** 1-based logical step number in the original job definition; -1 when not set. */
     private int logicalStepNumber = -1;
+    /** Full parent step path for nested conditionals (e.g., [2, 2] for step "2/2/1"). Null for non-nested steps. */
+    private List<Integer> parentStepPath = null;
 
     public PluginStepExecutionItemImpl(
             final String type,
@@ -186,5 +188,14 @@ public class PluginStepExecutionItemImpl implements StepExecutionItem, Configure
 
     public void setLogicalStepNumber(int logicalStepNumber) {
         this.logicalStepNumber = logicalStepNumber;
+    }
+
+    @Override
+    public List<Integer> getParentStepPath() {
+        return parentStepPath;
+    }
+
+    public void setParentStepPath(List<Integer> parentStepPath) {
+        this.parentStepPath = parentStepPath;
     }
 }

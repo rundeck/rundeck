@@ -182,9 +182,11 @@ public class ExecutionServiceImpl implements ExecutionService {
         try {
             final ExecutionContextImpl nodeContext;
             if(secureOptionReplaced){
+                WFSharedContext updatedSharedContext = new WFSharedContext(context.getSharedDataContext());
+                updatedSharedContext.merge(ContextView.global(), context.getDataContextObject());
                 nodeContext = new ExecutionContextImpl.Builder(context)
                         .singleNodeContext(node, true)
-                        .sharedDataContext(WFSharedContext.with(ContextView.global(), context.getDataContextObject()))
+                        .sharedDataContext(updatedSharedContext)
                         .build();
             }else{
                 nodeContext = new ExecutionContextImpl.Builder(context)

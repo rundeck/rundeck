@@ -4,7 +4,7 @@ databaseChangeLog = {
         preConditions(onFail: 'MARK_RAN') {
             grailsPrecondition {
                 check {
-                    def ran = sql.firstRow("SELECT count(*) as num FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'workflow_step' AND (COLUMN_NAME = 'description' AND DATA_TYPE = 'varchar') OR (COLUMN_NAME = 'adhoc_remote_string' AND DATA_TYPE = 'varchar')").num
+                    def ran = sql.firstRow("SELECT count(*) as num FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME COLLATE Latin1_General_CI_AS = 'workflow_step' AND ((COLUMN_NAME COLLATE Latin1_General_CI_AS = 'description' AND DATA_TYPE COLLATE Latin1_General_CI_AS = 'varchar') OR (COLUMN_NAME COLLATE Latin1_General_CI_AS = 'adhoc_remote_string' AND DATA_TYPE COLLATE Latin1_General_CI_AS = 'varchar'))").num
                     if (ran == 0) fail('precondition is not satisfied')
                 }
             }

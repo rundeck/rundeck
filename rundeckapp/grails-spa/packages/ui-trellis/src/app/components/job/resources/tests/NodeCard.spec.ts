@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { mount, flushPromises } from "@vue/test-utils";
 import NodeCard from "../NodeCard.vue";
 import NodeTable from "../NodeTable.vue";
 import NodeFilterLink from "../NodeFilterLink.vue";
@@ -10,7 +10,11 @@ const mockedGetNodeSummary = nodeServices.getNodeSummary as jest.MockedFunction<
 const mockedGetNodes = nodeServices.getNodes as jest.MockedFunction<
   typeof nodeServices.getNodes
 >;
-jest.mock("@/library/rundeckService", () => ({
+jest.mock("@/library", () => ({
+  getAppLinks: jest.fn().mockReturnValue({
+    frameworkNodes: "/resources/nodes",
+    frameworkNodesQueryAjax: "/resources/nodes",
+  }),
   getRundeckContext: jest.fn().mockReturnValue({
     rdBase: "mockRdBase",
     projectName: "test-project",
@@ -99,6 +103,45 @@ describe("NodeCard Component", () => {
   });
   afterEach(() => {
     jest.clearAllMocks();
+  });
+  describe("Paging Behavior", () => {
+    it("syncs pagingMax from server response when getNodes returns a non-default max", async () => {
+      mockedGetNodes.mockResolvedValueOnce({
+        allnodes: mockNodeSet.nodes,
+        tagsummary: mockNodeSummary.tags,
+        allcount: 600,
+        total: 600,
+        truncated: false,
+        colkeys: ["name", "attributes"],
+        max: 500,
+      });
+
+      const wrapper = mount(NodeCard, {
+        props: {
+          project: "test-project",
+          runAuthorized: true,
+          jobCreateAuthorized: true,
+          nodeFilterStore: {
+            filter: "hostname:node1",
+            selectedFilter: "hostname:node1",
+          },
+        },
+        global: {
+          stubs: {
+            btn: true,
+            dropdown: true,
+          },
+        },
+      });
+
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      const nodeTable = wrapper.findComponent(NodeTable);
+      expect(nodeTable.props("pagingMax")).toBe(500);
+      // maxPages = Math.ceil(total / pagingMax) = Math.ceil(600 / 500) = 2
+      expect(nodeTable.props("maxPages")).toBe(2);
+    });
   });
   describe("Browse Tags Functionality", () => {
     it("displays the tags correctly", async () => {

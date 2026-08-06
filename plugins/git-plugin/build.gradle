@@ -52,11 +52,9 @@ dependencies {
     implementation "org.apache.groovy:groovy:${groovyVersion}"
     implementation group: 'com.hierynomus', name: 'sshj', version: '0.40.0'
     implementation group: 'com.hierynomus', name: 'asn-one', version: '0.6.0'
-    implementation 'net.i2p.crypto:eddsa:0.3.0'
 
     pluginLibs group: 'com.hierynomus', name: 'sshj', version: '0.40.0', ext: 'jar'
     pluginLibs group: 'com.hierynomus', name: 'asn-one', version: '0.6.0', ext: 'jar'
-    pluginLibs 'net.i2p.crypto:eddsa:0.3.0'
 
     implementation ("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
     implementation ("org.bouncycastle:bcpg-jdk18on:${bouncyCastleVersion}")

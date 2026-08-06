@@ -277,6 +277,93 @@ class ContextManagerSpec extends Specification {
             cm.getContext() == null
     }
 
+    def "nested conditional stepctx with multi-level parent path"() {
+        given: "a context manager"
+            def cm = new ContextManager()
+            cm.beginWorkflowExecution(Mock(StepExecutionContext), Mock(WorkflowExecutionItem))
+
+        and: "a nested conditional sub-step (path=[2, 2], sub=1) representing step 2/2/1"
+            def nestedSubItem = Mock(ConditionalSubStepFixture) {
+                getParentStepPath() >> [2, 2]
+                getParentStepNumber() >> 2  // First element for backward compatibility
+                getSubStepNumber() >> 1
+            }
+
+        when: "nested substep begins"
+            cm.beginWorkflowItem(5, nestedSubItem)  // Flat engine index is 5
+
+        then: "stepctx reflects full nested hierarchy: 2/2/1"
+            cm.getContext() == [step: '1', stepctx: '2/2/1']
+
+        when: "nested substep finishes"
+            cm.finishWorkflowItem(5, nestedSubItem, Mock(StepExecutionResult))
+
+        then: "context cleared back to workflow level"
+            cm.getContext() == null
+    }
+
+    def "deeply nested conditional stepctx with 3-level parent path"() {
+        given: "a context manager"
+            def cm = new ContextManager()
+            cm.beginWorkflowExecution(Mock(StepExecutionContext), Mock(WorkflowExecutionItem))
+
+        and: "a 3-level nested conditional sub-step (path=[2, 2, 1], sub=2) representing step 2/2/1/2"
+            def deeplyNestedItem = Mock(ConditionalSubStepFixture) {
+                getParentStepPath() >> [2, 2, 1]
+                getParentStepNumber() >> 2
+                getSubStepNumber() >> 2
+            }
+
+        when: "deeply nested substep begins"
+            cm.beginWorkflowItem(10, deeplyNestedItem)
+
+        then: "stepctx reflects full 3-level nested hierarchy: 2/2/1/2"
+            cm.getContext() == [step: '2', stepctx: '2/2/1/2']
+
+        when: "deeply nested substep finishes"
+            cm.finishWorkflowItem(10, deeplyNestedItem, Mock(StepExecutionResult))
+
+        then: "context cleared back to workflow level"
+            cm.getContext() == null
+    }
+
+    def "nested conditional error handler maintains full parent path"() {
+        given: "a context manager"
+            def cm = new ContextManager()
+            cm.beginWorkflowExecution(Mock(StepExecutionContext), Mock(WorkflowExecutionItem))
+
+        and: "a nested conditional sub-step (path=[2, 2], sub=1)"
+            def nestedSubItem = Mock(ConditionalSubStepFixture) {
+                getParentStepPath() >> [2, 2]
+                getParentStepNumber() >> 2
+                getSubStepNumber() >> 1
+            }
+
+        when: "nested substep begins"
+            cm.beginWorkflowItem(5, nestedSubItem)
+
+        then: "stepctx is 2/2/1"
+            cm.getContext() == [step: '1', stepctx: '2/2/1']
+
+        when: "error handler begins"
+            cm.beginWorkflowItemErrorHandler(5, nestedSubItem)
+
+        then: "error handler aspect applies to leaf, parent context maintained"
+            cm.getContext() == [step: '1', stepctx: '2/2/1e']
+
+        when: "error handler finishes"
+            cm.finishWorkflowItemErrorHandler(5, nestedSubItem, Mock(StepExecutionResult))
+
+        then: "back to main aspect"
+            cm.getContext() == [step: '1', stepctx: '2/2/1']
+
+        when: "nested substep finishes"
+            cm.finishWorkflowItem(5, nestedSubItem, Mock(StepExecutionResult))
+
+        then: "context cleared"
+            cm.getContext() == null
+    }
+
     static interface ConditionalSubStepFixture extends StepExecutionItem, HasParentStepContext {}
 
     def "beginWorkflowItem with null runner followed by non-null runner works correctly"() {

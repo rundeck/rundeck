@@ -17,7 +17,7 @@
               <div
                   :id="`wfitem_${index}`"
                   class="step-item-config"
-                  data-test="edit-step-item"
+                  data-testid="edit-step-item"
                   :title="$t('Workflow.clickToEdit')"
                   @click="editStepByIndex(index)"
               >
@@ -42,7 +42,7 @@
                 </plugin-config>
                 <job-ref-step v-else-if="element.jobref" :step="element"></job-ref-step>
 
-                <div v-if="element.description" class="wfstep-description">
+                <div v-if="element.description" :data-testid="`wfstep-description-${index}`" class="wfstep-description">
                   {{ element.description }}
                 </div>
               </div>
@@ -547,9 +547,6 @@ export default defineComponent({
         const result = await validateStepForSave(stepForValidation as EditStepData, this.editService);
 
         if (result.valid) {
-          if (stepForValidation.jobref) {
-            saveData.description = this.editModel.description;
-          }
           if (!stepForValidation.jobref && !this.isErrorHandler) {
             mergePreservedLogFiltersIntoSaveData(saveData, this.editExtra?.filters);
           }

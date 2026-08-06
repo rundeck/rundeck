@@ -100,8 +100,10 @@ import spock.lang.Unroll
 import com.dtolabs.rundeck.core.audit.AuditEvent
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import rundeck.services.audit.AuditEventsService
-
+import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.Timestamp
+import javax.sql.DataSource
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -156,6 +158,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     @Unroll
     def "expand date strings"() {
         given:
+        // Fix JVM timezone to UTC so expected values are portable across test environments
+        def originalTz = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
         def cal = new GregorianCalendar(1970, 0, 14, 8, 20, 30)
         Date thedate = cal.time
 
@@ -164,6 +169,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         result == expected
+
+        cleanup:
+        TimeZone.setDefault(originalTz)
+
         where:
         input                                          | expected
         ''                                             | ''
@@ -173,6 +182,14 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         '${DATE:yyyy-MM-dd} blah ${DATE+3:yyyy-MM-dd}' | '1970-01-14 blah 1970-01-17'
         '${DATE-7:yyyy-MM-dd}'                         | '1970-01-07'
         'invalid ${DATE-asdf7:yyyy-MM-dd}'             | 'invalid ${DATE-asdf7:yyyy-MM-dd}'
+        '${DATE:HH:mm:ss}'                             | '08:20:30'
+        '${DATE:yyyy-MM-dd HH:mm:ss}'                  | '1970-01-14 08:20:30'
+        // TZ-aware: Asia/Tokyo is UTC+9, so 08:20:30 UTC = 17:20:30 JST
+        '${DATE:HH:mm:ss:Asia/Tokyo}'                  | '17:20:30'
+        // 1970-01-15 08:20:30 UTC = 1970-01-15 03:20:30 EST (UTC-5 in January)
+        '${DATE+1:HH:mm:ss:America/New_York}'          | '03:20:30'
+        // Unknown TZ segment — falls back to treating full string as FORMAT; SimpleDateFormat rejects it, token left unexpanded
+        '${DATE:HH:mm:ss:NotAZone}'                    | '${DATE:HH:mm:ss:NotAZone}'
     }
     void "retry execution otherwise running"() {
 
@@ -6344,6 +6361,44 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         val != null
         val.getNodeService() != null
       }
+
+    def "isH2Datasource returns true when databaseProductName is H2"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'H2' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            service.isH2Datasource()
+    }
+
+    def "isH2Datasource returns false when databaseProductName is not H2"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'PostgreSQL' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            !service.isH2Datasource()
+    }
+
+    def "isSqlCompatible returns false without propagating exception when criteria throws"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            Execution.metaClass.static.createCriteria = { -> throw new RuntimeException("SQL error") }
+        when:
+            def result = service.isSqlCompatible()
+        then:
+            !result
+            noExceptionThrown()
+        cleanup:
+            GroovySystem.metaClassRegistry.removeMetaClass(Execution)
+            service.metaClass = null
+    }
 
     def "metrics data from criteria result"(){
         given:

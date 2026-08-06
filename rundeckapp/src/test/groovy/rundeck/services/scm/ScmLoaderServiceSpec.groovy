@@ -697,7 +697,8 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
             service.createProjectLoader(project, 'export').run()
 
         then:
-            thrown(ScmLoaderService.CancelTaskException)
+            noExceptionThrown()
+            1 * service.scmService.markRetryFailure(project, integration, _)
 
             0 * plugin.initJobsStatus(_)
             0 * plugin.refreshJobsStatus(_)
@@ -740,5 +741,171 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
         0 * service.scmService.unregisterPlugin("import", project)
         0 * service.scmService.initProject(project, "import")
 
+    }
+
+    @Unroll
+    def "SCM project loader does not persist enabled=false to disk when initialization fails after retries exhausted - integration: #integration"() {
+        given:
+        def project = "test"
+        def username = "admin"
+        def roles = ["admin"]
+
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> false
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            listWorkflows(_) >> ["schedlist": []]
+        }
+        def scmPluginConfigData = Mock(ScmPluginConfigData) {
+            getSetting("username") >> username
+            getSettingList("roles") >> roles
+            getEnabled() >> true
+            getProperties() >> [:]
+        }
+        service.scmService = Mock(ScmService) {
+            _* projectHasConfiguredExportPlugin(project) >> true
+            _* projectHasConfiguredImportPlugin(project) >> true
+            _* scmOperationContext(username, roles, project) >> Mock(ScmOperationContext)
+            // Every attempt to load the plugin throws — simulates git server unreachable
+            _* loadPluginWithConfig(_, _, _, _) >> { throw new RuntimeException("Connection refused: git server unreachable") }
+            1 * loadScmConfig(project, integration) >> scmPluginConfigData
+        }
+        service.configurationService = Mock(ConfigService) {
+            _* getLong('scmLoader.init.retry', _) >> 0L
+            _* getLong('scmLoader.init.delay', _) >> 0L
+            _* getLong('scmLoader.slowPoll.interval', _) >> ScmLoaderService.DEFAULT_SLOWPOLL_INTERVAL
+        }
+
+        when:
+        service.createProjectLoader(project, integration).run()
+
+        then:
+        noExceptionThrown()
+        // Must NOT write enabled=false to disk — connectivity errors are transient.
+        // Writing enabled=false would require manual re-activation after recovery (RUN-4525).
+        0 * service.scmService.storeConfig(*_)
+        // Instead, the loader enters slow-poll mode: it records a cooldown and keeps the plugin enabled.
+        1 * service.scmService.markRetryFailure(project, integration, _)
+
+        where:
+        integration       | _
+        ScmService.EXPORT | _
+        ScmService.IMPORT | _
+    }
+
+    @Unroll
+    def "getScmLoaderSlowPollInterval enforces a 60 second floor - configured: #configured"() {
+        given:
+        // getLong(String, Long) returns a primitive long — a real ConfigService already applies
+        // ScmLoaderService.DEFAULT_SLOWPOLL_INTERVAL internally when the key is unset, so the
+        // "unset" case is simulated the same way here rather than stubbing a null return.
+        service.configurationService = Mock(ConfigService) {
+            getLong('scmLoader.slowPoll.interval', _) >> configured
+        }
+
+        expect:
+        service.getScmLoaderSlowPollInterval() == expected
+
+        where:
+        configured                                  | expected
+        ScmLoaderService.DEFAULT_SLOWPOLL_INTERVAL   | ScmLoaderService.DEFAULT_SLOWPOLL_INTERVAL
+        10_000L                                      | ScmLoaderService.DEFAULT_SLOWPOLL_INTERVAL
+        60_000L                                       | 60_000L
+        120_000L                                     | 120_000L
+    }
+
+    def "ProjectScmLoader run() no-ops during retry cooldown without attempting to load the plugin"() {
+        given:
+        def project = "test"
+        def integration = 'export'
+
+        service.scmService = Mock(ScmService) {
+            loadScmConfig(project, integration) >> Mock(ScmPluginConfigData) { getEnabled() >> true }
+            isInRetryCooldown(project, integration) >> true
+        }
+        service.configurationService = Mock(ConfigService) {
+            _* getLong(*_) >> 0L
+        }
+
+        when:
+        service.createProjectLoader(project, integration).run()
+
+        then:
+        noExceptionThrown()
+        0 * service.scmService.loadPluginWithConfig(*_)
+        0 * service.scmService.markRetryFailure(*_)
+    }
+
+    def "ProjectScmLoader run() makes exactly one attempt (no fast-retry burst) once already in slow-poll mode"() {
+        // Once a project/integration has already failed and entered slow-poll mode, a re-invocation
+        // after the cooldown has elapsed must try exactly once — not repeat the full fast-retry burst
+        // (5 attempts) every time the cooldown expires (RUN-4525).
+        given:
+        def project = "test"
+        def integration = 'export'
+        def username = "admin"
+        def roles = ["admin"]
+
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> false
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            listWorkflows(_) >> ["schedlist": []]
+        }
+        def scmPluginConfigData = Mock(ScmPluginConfigData) {
+            getSetting("username") >> username
+            getSettingList("roles") >> roles
+            getEnabled() >> true
+            getProperties() >> [:]
+        }
+        service.scmService = Mock(ScmService) {
+            _* projectHasConfiguredExportPlugin(project) >> true
+            _* projectHasConfiguredImportPlugin(project) >> true
+            _* scmOperationContext(username, roles, project) >> Mock(ScmOperationContext)
+            // Every attempt to load the plugin throws — simulates git server unreachable.
+            // Exact cardinality (not "_*"): proves attemptOnce() tries exactly once, not a full
+            // fast-retry burst — this is verified automatically at the end of the test, so it
+            // must NOT also be re-declared (bare, without a response) in the "then:" block below,
+            // which would register a competing, response-less interaction for the same method and
+            // shadow this one's throw behavior.
+            1 * loadPluginWithConfig(_, _, _, _) >> { throw new RuntimeException("Connection refused: git server unreachable") }
+            1 * loadScmConfig(project, integration) >> scmPluginConfigData
+            isInRetryCooldown(project, integration) >> false
+            hasRetryState(project, integration) >> true
+        }
+        service.configurationService = Mock(ConfigService) {
+            _* getLong('scmLoader.init.retry', _) >> 5L
+            _* getLong('scmLoader.init.delay', _) >> 0L
+            _* getLong('scmLoader.slowPoll.interval', _) >> ScmLoaderService.DEFAULT_SLOWPOLL_INTERVAL
+        }
+
+        when:
+        service.createProjectLoader(project, integration).run()
+
+        then:
+        noExceptionThrown()
+        1 * service.scmService.markRetryFailure(project, integration, _)
+    }
+
+    def "reloadPlugin clears retry state when a config change is detected"() {
+        given:
+        def project = "test"
+        def integration = ScmService.EXPORT
+        def key = service.getProjectIntegration(project, integration)
+        // reloadPlugin() compares pluginConfig.getProperties() under @CompileStatic, which resolves
+        // to Groovy's reflective bean-properties map (built from the real getPrefix/getConfig/
+        // getEnabled/getType getters), not a stubbable "getProperties()" interaction — so the two
+        // configs must differ via one of those real getters (getConfig() here) to be detected as changed.
+        def cachedConfig = Mock(ScmPluginConfigData) { getConfig() >> [original: '1'] }
+        def newConfig = Mock(ScmPluginConfigData) { getConfig() >> [changed: '2'] }
+        service.scmPluginMeta.put(key, cachedConfig)
+        service.scmService = Mock(ScmService)
+
+        when:
+        def result = service.reloadPlugin(project, integration, newConfig)
+
+        then:
+        result
+        1 * service.scmService.clearRetryState(project, integration)
     }
 }

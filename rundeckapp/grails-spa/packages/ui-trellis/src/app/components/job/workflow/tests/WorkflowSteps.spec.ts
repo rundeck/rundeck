@@ -201,7 +201,7 @@ describe("WorkflowSteps", () => {
 
     it("emits update:modelValue when a step is updated", async () => {
       const mockEventBus = getRundeckContext().eventBus;
-      const editStep = wrapper.find('[data-test="edit-step-item"]');
+      const editStep = wrapper.find('[data-testid="edit-step-item"]');
       await editStep.trigger("click");
       await wrapper.vm.$nextTick();
       const editModal = wrapper.findAllComponents(EditPluginModal)[1];
@@ -265,7 +265,7 @@ describe("WorkflowSteps", () => {
       };
       const localWrapper = await createWrapper({ commands: [commandWithFilters] });
 
-      const editStep = localWrapper.find('[data-test="edit-step-item"]');
+      const editStep = localWrapper.find('[data-testid="edit-step-item"]');
       await editStep.trigger("click");
       await localWrapper.vm.$nextTick();
 
@@ -420,6 +420,69 @@ describe("WorkflowSteps", () => {
         "workflow-editor-workflowsteps-request",
         expect.any(Function),
       );
+    });
+  });
+
+  describe("job reference step label (RUN-4445)", () => {
+    it("preserves label when JobRefForm update:modelValue clears editModel description on existing step", async () => {
+      const jobRefCommand: PersistedWorkflowCommand = {
+        description: "existing label",
+        jobref: { name: "some-job", group: "", uuid: "abc-123" },
+        nodeStep: false,
+      };
+      const localWrapper = await createWrapper({ commands: [jobRefCommand] });
+
+      await localWrapper.find('[data-testid="edit-step-item"]').trigger("click");
+      await localWrapper.vm.$nextTick();
+
+      const jobRefForm = localWrapper.findComponent({ name: "JobRefForm" });
+      // In production JobRefForm emits update:modelValue with jobref data but without the
+      // description field, overwriting editModel and clearing editModel.description
+      jobRefForm.vm.$emit("update:modelValue", {
+        jobref: { name: "some-job", group: "", uuid: "abc-123" },
+        nodeStep: false,
+      });
+      await localWrapper.vm.$nextTick();
+
+      jobRefForm.vm.$emit("save");
+      await flushPromises();
+
+      expect(localWrapper.find('[data-testid="wfstep-description-0"]').exists()).toBe(true);
+      expect(localWrapper.find('[data-testid="wfstep-description-0"]').text().trim()).toBe("existing label");
+    });
+
+    it("renders the typed label after adding a new job reference step", async () => {
+      const localWrapper = await createWrapper({ commands: [] }, {
+        JobRefForm: {
+          name: "JobRefForm",
+          template: '<div><slot name="extra"/></div>',
+        },
+      });
+
+      await localWrapper.find('[data-testid="add-button"]').trigger("click");
+      const chooseModal = localWrapper.findComponent(ChoosePluginModal);
+      chooseModal.vm.$emit("selected", {
+        service: "WorkflowStep",
+        provider: "job.reference",
+      });
+      await localWrapper.vm.$nextTick();
+
+      await localWrapper.find('[data-testid="step-description"]').setValue("new label");
+
+      const jobRefForm = localWrapper.findComponent({ name: "JobRefForm" });
+      // Simulate JobRefForm emitting update:modelValue without description,
+      // which would overwrite editModel and lose any description on it
+      jobRefForm.vm.$emit("update:modelValue", {
+        jobref: { name: "chosen-job", group: "", uuid: "def-456" },
+        nodeStep: false,
+      });
+      await localWrapper.vm.$nextTick();
+
+      jobRefForm.vm.$emit("save");
+      await flushPromises();
+
+      expect(localWrapper.find('[data-testid="wfstep-description-0"]').exists()).toBe(true);
+      expect(localWrapper.find('[data-testid="wfstep-description-0"]').text().trim()).toBe("new label");
     });
   });
 

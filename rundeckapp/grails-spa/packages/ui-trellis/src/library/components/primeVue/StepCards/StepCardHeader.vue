@@ -24,6 +24,7 @@
         <template v-else>
           <Tag
             :class="[effectiveNodeStep ? 'tag-node' : 'tag-workflow']"
+            :icon="effectiveNodeStep ? 'pi pi-server' : undefined"
             :value="effectiveNodeStep ? $t('Workflow.nodeStep') : $t('Workflow.workflowStep')"
             data-testid="step-card-header-step-type-tag"
           />

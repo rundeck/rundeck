@@ -21,6 +21,7 @@ import rundeck.ScheduledExecution
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.query.JobQueryConstants
 import rundeck.data.job.query.RdJobQueryInput
+import com.google.common.collect.Lists
 import rundeck.data.paging.RdPageable
 import rundeck.services.JobSchedulesService
 
@@ -155,13 +156,14 @@ class GormJobQueryProvider implements JobQueryProvider {
 
     void applyIdCriteria(List idlist, BuildableCriteria crit) {
         if (idlist) {
+            List<Long> longIds = idlist.findAll { it instanceof Long } as List<Long>
+            List<String> stringIds = idlist.findAll { !(it instanceof Long) } as List<String>
             crit.or {
-                idlist.each { theid ->
-                    if (theid instanceof Long) {
-                        crit.eq("id", theid)
-                    } else {
-                        crit.eq("uuid", theid)
-                    }
+                for (def partition : Lists.partition(longIds, 1000)) {
+                    crit.'in'("id", partition)
+                }
+                for (def partition : Lists.partition(stringIds, 1000)) {
+                    crit.'in'("uuid", partition)
                 }
             }
         }

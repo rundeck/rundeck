@@ -133,11 +133,25 @@ public class ContextManager extends NoopWorkflowExecutionListener implements Con
     public void beginWorkflowItem(final int step, final StepExecutionItem item) {
         HasParentStepContext parented = asHierarchical(item);
         if (parented != null) {
-            // push the parent step onto the context stack, then enter the sub-step.
-            // the resulting context produces a hierarchical stepctx (e.g. "2/1").
-            stepContext.beginStepContext(StateUtils.stepContextId(parented.getParentStepNumber(), false));
-            stepContext.beginContext();
-            stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+            // Check if this has a multi-level parent path (nested conditionals)
+            List<Integer> parentPath = parented.getParentStepPath();
+            if (parentPath != null && !parentPath.isEmpty()) {
+                // Push all levels of the parent path onto the context stack
+                // For example, for step "2/2/1", parentPath=[2, 2] and subStep=1
+                // This will push: 2 → context → 2 → context → 1
+                for (Integer parentStepNum : parentPath) {
+                    stepContext.beginStepContext(StateUtils.stepContextId(parentStepNum, false));
+                    stepContext.beginContext();
+                }
+                stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+            } else {
+                // Single-level conditional substep (original behavior)
+                // push the parent step onto the context stack, then enter the sub-step.
+                // the resulting context produces a hierarchical stepctx (e.g. "2/1").
+                stepContext.beginStepContext(StateUtils.stepContextId(parented.getParentStepNumber(), false));
+                stepContext.beginContext();
+                stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
+            }
         } else {
             stepContext.beginStepContext(StateUtils.stepContextId(resolveStepNumber(step, item), false));
         }
@@ -160,10 +174,22 @@ public class ContextManager extends NoopWorkflowExecutionListener implements Con
 
     public void finishWorkflowItem(final int step, final StepExecutionItem item, StepExecutionResult result) {
         stepContext.finishStepContext();
-        if (asHierarchical(item) != null) {
-            // pop the parent off the stack and clear it so we return to the pre-step state.
-            stepContext.finishContext();
-            stepContext.finishStepContext();
+        HasParentStepContext parented = asHierarchical(item);
+        if (parented != null) {
+            // Check if this has a multi-level parent path (nested conditionals)
+            List<Integer> parentPath = parented.getParentStepPath();
+            if (parentPath != null && !parentPath.isEmpty()) {
+                // Pop all levels that were pushed for the parent path
+                for (int i = 0; i < parentPath.size(); i++) {
+                    stepContext.finishContext();
+                    stepContext.finishStepContext();
+                }
+            } else {
+                // Single-level conditional substep (original behavior)
+                // pop the parent off the stack and clear it so we return to the pre-step state.
+                stepContext.finishContext();
+                stepContext.finishStepContext();
+            }
         }
     }
 
@@ -171,6 +197,7 @@ public class ContextManager extends NoopWorkflowExecutionListener implements Con
     public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult result) {
         HasParentStepContext parented = asHierarchical(item);
         if (parented != null) {
+            // Switch back from error handler aspect to main aspect for the leaf step
             stepContext.beginStepContext(StateUtils.stepContextId(parented.getSubStepNumber(), false));
         } else {
             stepContext.beginStepContext(StateUtils.stepContextId(resolveStepNumber(step, item), false));

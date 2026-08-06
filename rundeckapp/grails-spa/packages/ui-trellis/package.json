@@ -3,7 +3,7 @@
   "version": "3.3.8",
   "description": "A collection of utilities used across various javascript applications and components.",
   "engines": {
-    "npm": "10.9.4"
+    "npm": "11.16.0"
   },
   "main": "./lib/index.js",
   "scripts": {
@@ -48,11 +48,11 @@
     "@primeuix/themes": "^1.0.0",
     "@rundeck/client": "^0.2.5",
     "ace-builds": "^1.23.4",
-    "axios": "1.16.1",
+    "axios": "1.18.1",
     "core-js": "^3.6.5",
     "dagre": "^0.8.5",
     "deep-object-diff": "^1.1.9",
-    "dompurify": "^3.3.2",
+    "dompurify": "^3.4.12",
     "fuse.js": "^6.6.2",
     "graphlib": "^2.1.8",
     "jointjs": "^3.2.0",
@@ -79,7 +79,7 @@
     "webpack-node-externals": "^3.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.22.11",
+    "@babel/core": "^7.29.6",
     "@happy-dom/jest-environment": "20.6.1",
     "@pinia/testing": "^0.1.7",
     "@storybook/addon-a11y": "^8.4.5",
@@ -98,7 +98,7 @@
     "@types/jest": "^29.5.12",
     "@types/lodash": "^4.17.24",
     "@types/node": "^14.0.13",
-    "@types/uuid": "^8.3.0",
+    "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
     "@vue/cli-plugin-babel": "^5.0.8",
@@ -130,7 +130,7 @@
     "jest-junit": "^16.0.0",
     "jsdom": "^22.1.0",
     "mobx-utils": "^5.6.1",
-    "node-forge": "^1.3.1",
+    "node-forge": "^1.4.0",
     "prettier": "^3.8.1",
     "prex": "^0.4.9",
     "remark-gfm": "^4.0.0",
@@ -138,7 +138,7 @@
     "run-script-os": "^1.1.6",
     "sass": "^1.62.1",
     "sass-loader": "^10.4.1",
-    "storybook": "^8.4.5",
+    "storybook": "^8.6.7",
     "storybook-addon-cookie": "^4.0.1",
     "storybook-addon-mock": "5.0.0",
     "storybook-dark-mode": "^4.0.2",
@@ -146,11 +146,11 @@
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.4.5",
-    "uuid": "^8.3.2",
+    "uuid": "^11.1.1",
     "vue-eslint-parser": "^9.4.0",
     "vue-loader": "^17.4.2",
     "walk": "^2.3.15",
-    "webpack": "^5.97.1",
+    "webpack": "^5.104.1",
     "webpack-cli": "^5.1.4"
   },
   "peerDependencies": {
@@ -164,16 +164,18 @@
     "access": "public"
   },
   "overrides": {
-    "node-forge": "^1.3.1",
+    "node-forge": "^1.4.0",
     "axios": "$axios",
-    "form-data": "^4.0.4",
+    "form-data": "^4.0.6",
     "cross-spawn": "^7.0.6",
     "glob": "^10.5.0",
     "underscore": "^1.13.8",
     "xml2js": "^0.5.0",
     "lodash": "4.18.1",
     "@babel/runtime": "^7.26.10",
-    "tough-cookie": "^4.1.3"
+    "tough-cookie": "^4.1.3",
+    "@azure/ms-rest-js": "2.7.0",
+    "uuid": "$uuid"
   },
   "jest-junit": {
     "outputDirectory": "./build/test-results",

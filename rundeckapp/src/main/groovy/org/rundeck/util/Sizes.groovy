@@ -54,10 +54,11 @@ class Sizes {
 
     static final Map<String, Long> TIME_UNITS = [s: 1, m: 60, h: 60 * 60, d: 24 * 60 * 60,w: 7 * 24 * 60 * 60, y: 365 * 24 * 60 * 60]
     /**
-     * Return the timeout duration in seconds for a timeout string in the form "1d2h3m15s" etc
-     * @param time
-     * @param opts
-     * @return
+     * Return the timeout duration in seconds for a timeout string in the form "1d2h3m15s" etc.
+     * @param time duration string
+     * @param unit desired output time unit
+     * @return duration converted to the requested unit
+     * @throws ArithmeticException if the parsed value overflows a long
      */
     public static long parseTimeDuration(String time, TimeUnit unit = TimeUnit.SECONDS) {
         long timeval = 0
@@ -67,20 +68,22 @@ class Sizes {
             try {
                 val = Long.parseLong(m[1])
             } catch (NumberFormatException e) {
-                return
+                throw new ArithmeticException("Duration value too large: " + m[1])
             }
             if (m[2] && TIME_UNITS[m[2]]) {
-                timeval += (val * TIME_UNITS[m[2]])
+                long product = Math.multiplyExact(val, TIME_UNITS[m[2]])
+                timeval = Math.addExact(timeval, product)
             } else if (!m[2]) {
-                timeval += val
+                timeval = Math.addExact(timeval, val)
             }
         }
         return unit.convert(timeval, TimeUnit.SECONDS)
-    }/**
-     * Return the timeout duration in seconds for a timeout string in the form "1d2h3m15s" etc
-     * @param time
-     * @param opts
-     * @return
+    }
+
+    /**
+     * Validate the format of a timeout duration string (digits optionally followed by a unit letter).
+     * @param time duration string to validate
+     * @return true if the format is valid
      */
     public static boolean validTimeDuration(String time) {
         def matcher = (time =~ /(\d+)([smhdwy])?/)

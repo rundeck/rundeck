@@ -25,7 +25,7 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
     Boolean isDate = false
     String dateFormat
     String label
-    URL realValuesUrl
+    String realValuesUrl
     String regex
     String valuesList
     String valuesListDelimiter
