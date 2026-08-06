@@ -2546,6 +2546,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Used by the Quartz scheduled-trigger path (ExecutionJob), which builds its authContext
      * from the job's stored user/roles rather than an interactively-authenticated caller.
      */
+    @CompileStatic
     public boolean validateExecution(ScheduledExecution se, UserAndRolesAuthContext authContext) {
         return rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project)
     }

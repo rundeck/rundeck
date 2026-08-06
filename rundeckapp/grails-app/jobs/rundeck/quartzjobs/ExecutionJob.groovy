@@ -377,7 +377,6 @@ class ExecutionJob implements InterruptableJob {
             )
             if (!initMap.executionService.validateExecution(initMap.scheduledExecution, initMap.authContext)) {
                 initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} triggered but user '${initMap.scheduledExecution.user}' is not authorized to run it (ACTION_RUN denied); skipping this execution."
-                log.warn(initMap.jobShouldNotRun)
                 return initMap
             }
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
