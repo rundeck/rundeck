@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.core.plugins;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.data.DataContext;
-import com.dtolabs.rundeck.core.data.UnexpandableBehavior;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
@@ -61,7 +60,6 @@ import java.util.*;
  *     config.X.values = comma-separated values list for Select or FreeSelect properties
  *     config.X.scope = scope of the property, from {@link PropertyScope}
  *     config.X.blankIfUnexpandable = true/false, if unresolvable ${...} references should be blanked (default: true)
- *     config.X.unexpandableBehavior = blank|preserve|preserveBash
  *     config.X.unexpandableBehaviorFrom = name of another config key whose runtime value is blank|preserve|preserveBash
  * </pre>
  *
@@ -85,7 +83,6 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
 
     public static final String CONFIG_BLANK_IF_UNEXPANDED = "blankIfUnexpanded";
     public static final String CONFIG_BLANK_IF_UNEXPANDABLE = "blankIfUnexpandable";
-    public static final String CONFIG_UNEXPANDABLE_BEHAVIOR = "unexpandableBehavior";
     public static final String CONFIG_UNEXPANDABLE_BEHAVIOR_FROM = "unexpandableBehaviorFrom";
 
     private final ScriptPluginProvider provider;
@@ -235,14 +232,6 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                         pbuild.blankIfUnexpandable((Boolean) blankIfUnexpandableValue);
                     } else if (blankIfUnexpandableValue instanceof String) {
                         pbuild.blankIfUnexpandable(Boolean.parseBoolean((String) blankIfUnexpandableValue));
-                    }
-
-                    final Object unexpandableBehaviorValue = itemmeta.get(CONFIG_UNEXPANDABLE_BEHAVIOR);
-                    if (unexpandableBehaviorValue != null) {
-                        UnexpandableBehavior behavior = UnexpandableBehavior.parse(String.valueOf(unexpandableBehaviorValue));
-                        if (behavior != null) {
-                            pbuild.unexpandableBehavior(behavior);
-                        }
                     }
 
                     final String unexpandableBehaviorFrom =

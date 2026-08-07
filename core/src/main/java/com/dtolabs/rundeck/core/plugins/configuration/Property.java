@@ -133,21 +133,11 @@ public interface Property {
     public default boolean isBlankIfUnexpandable() { return true; }
 
     /**
-     * Optional expansion mode for unresolved {@code ${...}} references.
-     * Values: {@code blank}, {@code preserve}, {@code preserveBash}.
-     *
-     * @return behavior or null to fall back to {@link #isBlankIfUnexpandable()}
-     */
-    public default com.dtolabs.rundeck.core.data.UnexpandableBehavior getUnexpandableBehavior() {
-        return null;
-    }
-
-    /**
      * Resolve this property's expansion behavior from another instance config key
-     * (typically a Select the job author sets). The referenced config value should be
-     * {@code blank}, {@code preserve}, or {@code preserveBash}.
+     * (typically a Select the job author sets in the plugin UI). The referenced config
+     * value should be {@code blank}, {@code preserve}, or {@code preserveBash}.
      *
-     * @return other property name, or null if behavior is not user-selectable
+     * @return other property name, or null to fall back to {@link #isBlankIfUnexpandable()}
      */
     public default String getUnexpandableBehaviorFrom() {
         return null;
