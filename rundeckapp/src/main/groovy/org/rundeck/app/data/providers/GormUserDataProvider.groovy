@@ -297,18 +297,29 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
      * Projects only the profile columns instead of loading the whole User row. Single-login
      * counterpart of {@link #getInfoFromUsers(List)}, sharing its projection convention.
      *
+     * <p>Honours the CASE_INSENSITIVE_USERNAME feature the same way
+     * {@link #findUserByLoginCaseSensitivity(String)} does, since the callers of this method
+     * previously resolved their user through it: an {@code ilike} match narrowed in memory by
+     * {@code equalsIgnoreCase}, because {@code ilike} would also match a login containing SQL
+     * wildcards.
+     *
      * @param login of the User
      * @return the properties, or null if no User exists with that login
      */
     @Override
     UserProperties getInfoFromUser(String login) {
         if (!login) { return null }
-        def row = new DetachedCriteria(User).eq("login", login).projections {
+        boolean caseInsensitive = isLoginNameCaseInsensitiveEnabled()
+        DetachedCriteria criteria = new DetachedCriteria(User)
+        criteria = caseInsensitive ? criteria.ilike("login", login) : criteria.eq("login", login)
+        List<String[]> rows = criteria.projections {
+                property("login")
                 property("firstName")
                 property("lastName")
                 property("email")
-        }.get() as String[]
-        return row ? new UserProperties(firstname: row[0], lastname: row[1], email: row[2]) : null
+        }.list() as List<String[]>
+        def row = caseInsensitive ? rows.find { it[0]?.equalsIgnoreCase(login) } : rows.find()
+        return row ? new UserProperties(firstname: row[1], lastname: row[2], email: row[3]) : null
     }
 
     @Override
