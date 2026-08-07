@@ -312,13 +312,29 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
         boolean caseInsensitive = isLoginNameCaseInsensitiveEnabled()
         DetachedCriteria criteria = new DetachedCriteria(User)
         criteria = caseInsensitive ? criteria.ilike("login", login) : criteria.eq("login", login)
-        List<String[]> rows = criteria.projections {
+        List rows = criteria.projections {
                 property("login")
                 property("firstName")
                 property("lastName")
                 property("email")
-        }.list() as List<String[]>
-        def row = caseInsensitive ? rows.find { it[0]?.equalsIgnoreCase(login) } : rows.find()
+        }.list()
+        if (!rows) { return null }
+
+        // Rows are iterated by index rather than with a closure on purpose. A multi-column
+        // projection yields Object[] rows, and passing one to a Groovy closure spreads it into
+        // separate arguments instead of a single element, so find()/find{} blow up with a
+        // MissingMethodException at runtime.
+        def row = null
+        if (caseInsensitive) {
+            for (int i = 0; i < rows.size(); i++) {
+                if (rows[i][0]?.toString()?.equalsIgnoreCase(login)) {
+                    row = rows[i]
+                    break
+                }
+            }
+        } else {
+            row = rows[0]
+        }
         return row ? new UserProperties(firstname: row[1], lastname: row[2], email: row[3]) : null
     }
 
