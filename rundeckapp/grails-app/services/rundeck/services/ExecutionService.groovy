@@ -4757,14 +4757,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Detects MySQL/MariaDB datasources, which require dedicated duration-sum SQL:
+     * a plain {@code date_completed - date_started} projected as TIME overflows
+     * MySQL's TIME range (max 838:59:59) once the aggregated duration across the
+     * queried executions exceeds it.
+     */
+    boolean isMySqlDatasource() {
+        try {
+            def dataSource = applicationContext.getBean('dataSource', DataSource)
+            return dataSource.getConnection().withCloseable { conn ->
+                conn.metaData.databaseProductName in ['MySQL', 'MariaDB']
+            }
+        } catch (Exception ex) {
+            log.debug("Unable to determine datasource type, assuming non-MySQL", ex)
+            return false
+        }
+    }
+
     private boolean isSqlCompatible() {
         boolean isCompatible = false
         try {
             boolean isH2 = isH2Datasource()
+            boolean isMySql = isMySqlDatasource()
             Execution.createCriteria().list(max:1) {
                 projections {
                     if (isH2) {
                         sqlProjection 'DATEDIFF(\'SECOND\', date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else if (isMySql) {
+                        sqlProjection 'TIMESTAMPDIFF(SECOND, date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
                     } else {
                         sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
                     }
@@ -4856,34 +4877,28 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return Arrays.asList(metricCriteriaH2)
         }
 
-        def metricCriteriaA = {
-            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
-            baseQueryCriteria()
-
-            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
-            projections {
-
-                rowCount("count")
-                sqlProjection 'sum(date_completed - date_started) as durationSum',
-                        'durationSum',
-                        StandardBasicTypes.TIME
-                sqlProjection 'min(date_completed - date_started) as durationMin',
-                        'durationMin',
-                        StandardBasicTypes.TIME
-                sqlProjection 'max(date_completed - date_started) as durationMax',
-                        'durationMax',
-                        StandardBasicTypes.TIME
-
-                // Zero-overhead status count projections
-                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
-                        'succeededCount',
-                        StandardBasicTypes.LONG
-                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
-                        'failedCount',
-                        StandardBasicTypes.LONG
-
+        if (isMySqlDatasource()) {
+            def metricCriteriaMySql = {
+                def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+                baseQueryCriteria()
+                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+                projections {
+                    rowCount("count")
+                    sqlProjection 'sum(TIMESTAMPDIFF(SECOND, date_started, date_completed)) as durationSum',
+                            'durationSum', StandardBasicTypes.LONG
+                    sqlProjection 'min(TIMESTAMPDIFF(SECOND, date_started, date_completed)) as durationMin',
+                            'durationMin', StandardBasicTypes.LONG
+                    sqlProjection 'max(TIMESTAMPDIFF(SECOND, date_started, date_completed)) as durationMax',
+                            'durationMax', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                            'succeededCount', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                            'failedCount', StandardBasicTypes.LONG
+                }
             }
+            return Arrays.asList(metricCriteriaMySql)
         }
+
         def metricCriteriaB = {
             // Run main query criteria
             def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
@@ -4940,7 +4955,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         StandardBasicTypes.LONG
             }
         }
-        return Arrays.asList(metricCriteriaA, metricCriteriaB, metricCriteriaC)
+        return Arrays.asList(metricCriteriaB, metricCriteriaC)
     }
 
     /**

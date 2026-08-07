@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.logging.internal.LogFlusher
  */
 
 
+import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
@@ -41,6 +42,7 @@ import com.dtolabs.rundeck.execution.WorkflowExecutionListenerTest
 import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import rundeck.data.constants.ExecutionConstants
 import rundeck.data.report.SaveReportRequestImpl
@@ -6384,6 +6386,58 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             }
         expect:
             !service.isH2Datasource()
+    }
+
+    def "isMySqlDatasource returns true when databaseProductName is MySQL"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'MySQL' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            service.isMySqlDatasource()
+    }
+
+    def "isMySqlDatasource returns true when databaseProductName is MariaDB"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'MariaDB' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            service.isMySqlDatasource()
+    }
+
+    def "isMySqlDatasource returns false when databaseProductName is not MySQL or MariaDB"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'PostgreSQL' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            !service.isMySqlDatasource()
+    }
+
+    def "getCriteriaScenarios returns single MySQL-specific criteria when datasource is MySQL"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            service.metaClass.isMySqlDatasource = { -> true }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBeansOfType(JobQuery) >> [:]
+            }
+            def query = new ExecutionQuery()
+        when:
+            def scenarios = service.getCriteriaScenarios(query)
+        then:
+            scenarios.size() == 1
+        cleanup:
+            service.metaClass = null
     }
 
     def "isSqlCompatible returns false without propagating exception when criteria throws"() {
