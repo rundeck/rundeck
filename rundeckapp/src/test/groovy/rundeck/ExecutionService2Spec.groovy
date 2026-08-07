@@ -1905,6 +1905,70 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         1 == 1
     }
     /**
+     * RUN-4482: with "Use referenced job's nodes" enabled and no intersection, the override node
+     * filter must be resolved (and authorized) against the referenced (child) job's project.
+     */
+    void testOverrideJobReferenceNodeFilter_useChildNodesResolvesAgainstChildProject() {
+        def context = ExecutionContextImpl.builder()
+                                          .frameworkProject('parentProject')
+                                          .nodes(makeNodeSet(['parent-1']))
+                                          .nodeSelector(makeSelector("parent-1", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .build()
+        String filteredProject = null
+        service.frameworkService=mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                filteredProject = project
+                makeNodeSet(['child-1'])
+            }
+        }
+        String authProject = null
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * filterAuthorizedNodes(_, _, _, _)>> { arguments -> authProject = arguments[0] as String; makeNodeSet(['child-1']) }
+        }
+
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl(), context, 'VMID:123', null, null, null, null, false, 'childProject', true)
+        assertEquals('childProject', filteredProject)
+        assertEquals('childProject', authProject)
+        assertEquals(['child-1'] as Set,newctx.nodes.nodeNames as Set)
+
+        expect:
+        // asserts validate above
+        1 == 1
+    }
+    /**
+     * RUN-4482 regression: without "Use referenced job's nodes", the override node filter keeps
+     * being resolved against the calling (parent) job's project.
+     */
+    void testOverrideJobReferenceNodeFilter_withoutChildNodesResolvesAgainstParentProject() {
+        def context = ExecutionContextImpl.builder()
+                                          .frameworkProject('parentProject')
+                                          .nodes(makeNodeSet(['parent-1']))
+                                          .nodeSelector(makeSelector("parent-1", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .build()
+        String filteredProject = null
+        service.frameworkService=mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                filteredProject = project
+                makeNodeSet(['parent-1'])
+            }
+        }
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * filterAuthorizedNodes(*_)>> { makeNodeSet(['parent-1']) }
+        }
+
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl(), context, 'VMID:123', null, null, null, null, false, 'childProject', false)
+        assertEquals('parentProject', filteredProject)
+        assertEquals(['parent-1'] as Set,newctx.nodes.nodeNames as Set)
+
+        expect:
+        // asserts validate above
+        1 == 1
+    }
+    /**
      * set node filter and threadcount
      */
     void testOverrideJobReferenceNodeFilter_filterAndThreadcount() {
@@ -2196,6 +2260,77 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                       'group':'some/where'
                      ].sort().toString(), newCtxt.dataContext['job'].sort().toString())
 
+    }
+    /**
+     * RUN-4482: child job WITH its own filter + blank override filter + "Use referenced job's
+     * nodes" enabled. The override step is skipped entirely (no nodeFilter, no intersect), so the
+     * node set is resolved by createContext using the child job's own filter against the child
+     * (referenced) job's project - NOT the calling job's project.
+     */
+    void testcreateJobReferenceContext_blankOverrideWithChildNodesUsesChildProject(){
+        ScheduledExecution job = prepare()
+
+        def context = ExecutionContextImpl.builder()
+                                          .frameworkProject('parentProject')
+                                          .nodes(makeNodeSet(['parent-1', 'parent-2']))
+                                          .nodeSelector(makeSelector("parent-1 parent-2", 1, false))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .dataContext(['option':[:],'job':['execid':'123']])
+                                          .user('aUser')
+                                          .build()
+        String filteredProject = null
+        int filterNodeSetCalls = 0
+        service.frameworkService = mockWith(FrameworkService) {
+            parseOptsFromArray(1..1) { String[] args ->
+                ['test1':'value']
+            }
+            getFrameworkPropertiesMap(1..1) { -> [:] }
+            getProjectProperties(1..1) { project -> [:] }
+            parseOptsFromArray(1..1) { String[] args ->
+                ['test1':'value']
+            }
+            getProjectGlobals(1..1) { project ->
+                [:]
+            }
+            //only createContext calls this; overrideJobReferenceNodeFilter must NOT be invoked
+            filterNodeSet(1..1) { NodesSelector selector, String project ->
+                filterNodeSetCalls++
+                filteredProject = project
+                makeNodeSet(['child-1','child-2'])
+            }
+        }
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * filterAuthorizedNodes(*_) >> { makeNodeSet(['child-1','child-2']) }
+        }
+        service.storageService=mockWith(StorageService){
+            storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+        }
+        service.jobStateService = mockWith(JobStateService) {
+            jobServiceWithAuthContext { ctx ->
+                null
+            }
+        }
+        service.fileUploadService = mockWith(FileUploadService){
+            executionBeforeStart { evt, skip->
+                null
+            }
+        }
+
+        //nodeFilter=null (blank override), nodeIntersect=false, useChildNodes=true
+        def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],null,null,null,null,null,null, false,false,true,true);
+
+        //override step skipped: filterNodeSet called exactly once (by createContext)
+        assertEquals(1, filterNodeSetCalls)
+        //resolved against the child (referenced) job's project, not 'parentProject'
+        assertEquals('AProject', filteredProject)
+        assertEquals(['child-1','child-2'] as Set,newCtxt.nodes.nodeNames as Set)
+
+        expect:
+        // asserts validate above
+        1 == 1
     }
     void testcreateJobReferenceContext_overrideNodefilter(){
         ScheduledExecution job = prepare()

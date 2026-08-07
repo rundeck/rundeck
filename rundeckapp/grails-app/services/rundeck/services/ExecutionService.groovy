@@ -3734,6 +3734,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param nodeFilter
      * @param nodeThreadcount
      * @param nodeKeepgoing
+     * @param childProject project of the referenced (child) job; used as the node resolution scope
+     *        when {@code useChildNodes} is enabled and no intersection is requested (RUN-4482)
+     * @param useChildNodes when true, resolve a non-intersecting override filter against the
+     *        referenced job's project ({@code childProject}) instead of the calling job's project
      * @return
      */
     StepExecutionContext overrideJobReferenceNodeFilter(
@@ -3745,7 +3749,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Boolean nodeKeepgoing,
             String nodeRankAttribute,
             Boolean nodeRankOrderAscending,
-            Boolean nodeIntersect
+            Boolean nodeIntersect,
+            String childProject = null,
+            Boolean useChildNodes = null
     )
     {
         def builder = ExecutionContextImpl.builder(newContext);
@@ -3770,16 +3776,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
             def INodeSet trialNodes
+            //project whose node set the override filter is resolved against; defaults to the
+            //calling (parent) job's project.
+            def String targetProject = newContext.frameworkProject
             if (nodeIntersect) {
                 // Create intersection of overridden node filter and upstream job nodes
                 trialNodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nodeselector, origContext.nodes)
                 nodeselector = SelectorUtils.nodeList(trialNodes.nodeNames)
             } else {
-                trialNodes = frameworkService.filterNodeSet(nodeselector, newContext.frameworkProject)
+                //RUN-4482: when "Use referenced job's nodes" is enabled, resolve the override
+                //filter against the referenced (child) job's project so the parent can select the
+                //child project's nodes by attribute, instead of the calling job's project.
+                if (useChildNodes && childProject) {
+                    targetProject = childProject
+                }
+                trialNodes = frameworkService.filterNodeSet(nodeselector, targetProject)
             }
 
             INodeSet nodeSet = rundeckAuthContextProcessor.filterAuthorizedNodes(
-                    newContext.frameworkProject,
+                    targetProject,
                     new HashSet<String>(["read", "run"]),
                     trialNodes,
                     newContext.userAndRolesAuthContext);
@@ -3975,7 +3990,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     nodeKeepgoing,
                     nodeRankAttribute,
                     nodeRankOrderAscending,
-                    nodeIntersect
+                    nodeIntersect,
+                    se?.project,
+                    useChildNodes
             )
         }
         if(dovalidate){
