@@ -41,7 +41,6 @@ public class PropertyBuilder {
     private Map<String, Object> renderingOptions = new HashMap<String, Object>();
     private boolean dynamicValues;
     private boolean blankIfUnexpandabled = true;
-    private com.dtolabs.rundeck.core.data.UnexpandableBehavior unexpandableBehavior;
     private String unexpandableBehaviorFrom;
 
     private PropertyBuilder() {
@@ -72,7 +71,6 @@ public class PropertyBuilder {
             .scope(orig.getScope())
             .renderingOptions(orig.getRenderingOptions())
             .blankIfUnexpandable(orig.isBlankIfUnexpandable())
-            .unexpandableBehavior(orig.getUnexpandableBehavior())
             .unexpandableBehaviorFrom(orig.getUnexpandableBehaviorFrom())
             ;
     }
@@ -241,20 +239,8 @@ public class PropertyBuilder {
     }
 
     /**
-     * Set unexpandableBehavior (blank, preserve, preserveBash).
-     *
-     * @param unexpandableBehavior behavior or null to fall back to blankIfUnexpandable
-     * @return this builder
-     */
-    public PropertyBuilder unexpandableBehavior(
-            final com.dtolabs.rundeck.core.data.UnexpandableBehavior unexpandableBehavior
-    ) {
-        this.unexpandableBehavior = unexpandableBehavior;
-        return this;
-    }
-
-    /**
-     * Resolve this property's unexpandable behavior from another instance config key at runtime.
+     * Resolve this property's unexpandable behavior from another instance config key at runtime
+     * (typically a Select exposed in the plugin UI).
      *
      * @param unexpandableBehaviorFrom name of a sibling config property
      * @return this builder
@@ -411,7 +397,6 @@ public class PropertyBuilder {
                 renderingOptions,
                 dynamicValues,
                 blankIfUnexpandabled,
-                unexpandableBehavior,
                 unexpandableBehaviorFrom
         );
     }

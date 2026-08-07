@@ -267,47 +267,6 @@ class AbstractDescribableScriptPluginSpec extends Specification{
         description.properties[1].isBlankIfUnexpandable() == true
     }
 
-    def "unexpandableBehavior parsed from plugin metadata"() {
-        given:
-        File basedir = File.createTempFile("test", "dir")
-        basedir.deleteOnExit()
-
-        def meta = [
-                config: [
-                        [
-                                type                 : 'String',
-                                name                 : 'script',
-                                title                : 'Script',
-                                required             : true,
-                                unexpandableBehavior : 'preserveBash',
-                                scope                : PropertyScope.Instance
-                        ]
-                ]
-        ]
-
-        def pluginMeta = Mock(PluginMeta) {
-            getRundeckPluginVersion() >> "1.2"
-        }
-        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
-            getName() >> 'testUnexpandableBehavior'
-            getMetadata() >> meta
-            getPluginMeta() >> pluginMeta
-            getContentsBasedir() >> basedir
-            getService() >> ServiceNameConstants.WorkflowNodeStep
-        }
-
-        when:
-        TestScriptPlugin plugin = new TestScriptPlugin(provider, framework)
-        def description = plugin.getPluginProperties(null, [:], [:], ServiceNameConstants.WorkflowNodeStep)
-
-        then:
-        description != null
-        description.properties.size() == 1
-        description.properties[0].name == 'script'
-        description.properties[0].getUnexpandableBehavior() ==
-                com.dtolabs.rundeck.core.data.UnexpandableBehavior.PRESERVE_BASH
-    }
-
     def "unexpandableBehaviorFrom parsed from plugin metadata"() {
         given:
         File basedir = File.createTempFile("test", "dir")
@@ -320,7 +279,7 @@ class AbstractDescribableScriptPluginSpec extends Specification{
                                 name                    : 'unexpandableMode',
                                 title                   : 'Mode',
                                 values                  : 'blank,preserveBash',
-                                default                 : 'preserveBash',
+                                default                 : 'blank',
                                 scope                   : PropertyScope.Instance
                         ],
                         [

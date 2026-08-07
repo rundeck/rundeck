@@ -8,33 +8,23 @@ import spock.lang.Specification
 
 class UnexpandableBehaviorSupportSpec extends Specification {
 
-    def "static unexpandableBehavior metadata is honored"() {
+    def "without From uses blankIfUnexpandable"() {
         given:
         Description description = DescriptionBuilder.builder()
                 .name('test')
                 .property(PropertyBuilder.builder()
                         .string('script')
-                        .blankIfUnexpandable(true)
-                        .unexpandableBehavior(UnexpandableBehavior.PRESERVE_BASH)
+                        .blankIfUnexpandable(blankIf)
                         .build())
                 .build()
 
         expect:
-        UnexpandableBehaviorSupport.buildBehaviorMap(description).script == UnexpandableBehavior.PRESERVE_BASH
-    }
+        UnexpandableBehaviorSupport.buildBehaviorMap(description).script == expected
 
-    def "without metadata uses blankIfUnexpandable"() {
-        given:
-        Description description = DescriptionBuilder.builder()
-                .name('test')
-                .property(PropertyBuilder.builder()
-                        .string('script')
-                        .blankIfUnexpandable(false)
-                        .build())
-                .build()
-
-        expect:
-        UnexpandableBehaviorSupport.buildBehaviorMap(description).script == UnexpandableBehavior.PRESERVE
+        where:
+        blankIf | expected
+        true    | UnexpandableBehavior.BLANK
+        false   | UnexpandableBehavior.PRESERVE
     }
 
     def "resolves unexpandableBehaviorFrom instance config"() {
@@ -76,26 +66,5 @@ class UnexpandableBehaviorSupportSpec extends Specification {
 
         expect:
         UnexpandableBehaviorSupport.buildBehaviorMap(description, true, [:]).script == UnexpandableBehavior.BLANK
-    }
-
-    def "From takes precedence over static unexpandableBehavior"() {
-        given:
-        Description description = DescriptionBuilder.builder()
-                .name('test')
-                .property(PropertyBuilder.builder()
-                        .select('unexpandableMode')
-                        .values('blank', 'preserveBash')
-                        .defaultValue('blank')
-                        .build())
-                .property(PropertyBuilder.builder()
-                        .string('script')
-                        .unexpandableBehavior(UnexpandableBehavior.PRESERVE)
-                        .unexpandableBehaviorFrom('unexpandableMode')
-                        .build())
-                .build()
-
-        expect:
-        UnexpandableBehaviorSupport.buildBehaviorMap(
-                description, true, [unexpandableMode: 'preserveBash']).script == UnexpandableBehavior.PRESERVE_BASH
     }
 }

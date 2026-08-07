@@ -23,8 +23,6 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
-import com.dtolabs.rundeck.core.data.UnexpandableBehavior;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +43,6 @@ abstract class PropertyBase implements Property {
     private final PropertyScope scope;
     private final Map<String, Object> renderingOptions;
     private final boolean blankIfUnexpanded;
-    private final UnexpandableBehavior unexpandableBehavior;
     private final String unexpandableBehaviorFrom;
 
     public PropertyBase(final String name, final String title, final String description, final boolean required,
@@ -63,27 +60,18 @@ abstract class PropertyBase implements Property {
                         final String defaultValue, final PropertyValidator validator, final PropertyScope scope,
                         final Map<String, Object> renderingOptions) {
         this(name, title, description, required, defaultValue, validator, scope, renderingOptions == null ? Collections.<String, Object> emptyMap() : Collections
-                .unmodifiableMap(renderingOptions),true, null, null);
+                .unmodifiableMap(renderingOptions),true, null);
     }
 
     public PropertyBase(final String name, final String title, final String description, final boolean required,
                         final String defaultValue, final PropertyValidator validator, final PropertyScope scope,
                         final Map<String, Object> renderingOptions, final boolean blankIfUnexpanded) {
-        this(name, title, description, required, defaultValue, validator, scope, renderingOptions, blankIfUnexpanded, null, null);
+        this(name, title, description, required, defaultValue, validator, scope, renderingOptions, blankIfUnexpanded, null);
     }
 
     public PropertyBase(final String name, final String title, final String description, final boolean required,
                         final String defaultValue, final PropertyValidator validator, final PropertyScope scope,
                         final Map<String, Object> renderingOptions, final boolean blankIfUnexpanded,
-                        final UnexpandableBehavior unexpandableBehavior) {
-        this(name, title, description, required, defaultValue, validator, scope, renderingOptions,
-                blankIfUnexpanded, unexpandableBehavior, null);
-    }
-
-    public PropertyBase(final String name, final String title, final String description, final boolean required,
-                        final String defaultValue, final PropertyValidator validator, final PropertyScope scope,
-                        final Map<String, Object> renderingOptions, final boolean blankIfUnexpanded,
-                        final UnexpandableBehavior unexpandableBehavior,
                         final String unexpandableBehaviorFrom) {
         this.title = title;
         this.name = name;
@@ -95,7 +83,6 @@ abstract class PropertyBase implements Property {
         this.renderingOptions = renderingOptions == null ? Collections.<String, Object> emptyMap() : Collections
                 .unmodifiableMap(renderingOptions);
         this.blankIfUnexpanded = blankIfUnexpanded;
-        this.unexpandableBehavior = unexpandableBehavior;
         this.unexpandableBehaviorFrom = unexpandableBehaviorFrom;
     }
 
@@ -148,11 +135,6 @@ abstract class PropertyBase implements Property {
     }
 
     @Override
-    public UnexpandableBehavior getUnexpandableBehavior() {
-        return unexpandableBehavior;
-    }
-
-    @Override
     public String getUnexpandableBehaviorFrom() {
         return unexpandableBehaviorFrom;
     }
@@ -169,7 +151,6 @@ abstract class PropertyBase implements Property {
                (scope != null ? ", scope=" + scope : "") +
                (renderingOptions != null ? ", renderingOptions=" + renderingOptions : "") +
                ", blankIfUnexpanded="+blankIfUnexpanded+
-               (unexpandableBehavior != null ? ", unexpandableBehavior=" + unexpandableBehavior : "") +
                (unexpandableBehaviorFrom != null ? ", unexpandableBehaviorFrom='" + unexpandableBehaviorFrom + '\'' : "") +
                '}';
     }

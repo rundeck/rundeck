@@ -34,7 +34,6 @@ public final class UnexpandableBehaviorSupport {
      * Build per-field behavior map. Resolution order per property:
      * <ol>
      *   <li>{@link Property#getUnexpandableBehaviorFrom()} → instance config (or that field's default)</li>
-     *   <li>{@link Property#getUnexpandableBehavior()} if set</li>
      *   <li>derive from {@link Property#isBlankIfUnexpandable()}</li>
      * </ol>
      *
@@ -73,9 +72,6 @@ public final class UnexpandableBehaviorSupport {
         UnexpandableBehavior fromConfig = resolveFromSibling(p, description, instanceConfiguration);
         if (fromConfig != null) {
             return fromConfig;
-        }
-        if (p.getUnexpandableBehavior() != null) {
-            return p.getUnexpandableBehavior();
         }
         if (!p.isBlankIfUnexpandable()) {
             return UnexpandableBehavior.PRESERVE;
