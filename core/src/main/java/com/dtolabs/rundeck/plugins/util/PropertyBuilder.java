@@ -41,6 +41,8 @@ public class PropertyBuilder {
     private Map<String, Object> renderingOptions = new HashMap<String, Object>();
     private boolean dynamicValues;
     private boolean blankIfUnexpandabled = true;
+    private com.dtolabs.rundeck.core.data.UnexpandableBehavior unexpandableBehavior;
+    private String unexpandableBehaviorFrom;
 
     private PropertyBuilder() {
 
@@ -70,6 +72,8 @@ public class PropertyBuilder {
             .scope(orig.getScope())
             .renderingOptions(orig.getRenderingOptions())
             .blankIfUnexpandable(orig.isBlankIfUnexpandable())
+            .unexpandableBehavior(orig.getUnexpandableBehavior())
+            .unexpandableBehaviorFrom(orig.getUnexpandableBehaviorFrom())
             ;
     }
 
@@ -237,6 +241,30 @@ public class PropertyBuilder {
     }
 
     /**
+     * Set unexpandableBehavior (blank, preserve, preserveBash).
+     *
+     * @param unexpandableBehavior behavior or null to fall back to blankIfUnexpandable
+     * @return this builder
+     */
+    public PropertyBuilder unexpandableBehavior(
+            final com.dtolabs.rundeck.core.data.UnexpandableBehavior unexpandableBehavior
+    ) {
+        this.unexpandableBehavior = unexpandableBehavior;
+        return this;
+    }
+
+    /**
+     * Resolve this property's unexpandable behavior from another instance config key at runtime.
+     *
+     * @param unexpandableBehaviorFrom name of a sibling config property
+     * @return this builder
+     */
+    public PropertyBuilder unexpandableBehaviorFrom(final String unexpandableBehaviorFrom) {
+        this.unexpandableBehaviorFrom = unexpandableBehaviorFrom;
+        return this;
+    }
+
+    /**
      * Set the default value
      * @param value value
      *
@@ -382,7 +410,9 @@ public class PropertyBuilder {
                 scope,
                 renderingOptions,
                 dynamicValues,
-                blankIfUnexpandabled
+                blankIfUnexpandabled,
+                unexpandableBehavior,
+                unexpandableBehaviorFrom
         );
     }
 
