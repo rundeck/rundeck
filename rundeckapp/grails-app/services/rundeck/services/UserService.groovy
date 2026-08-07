@@ -47,7 +47,7 @@ class UserService {
     }
 
     String getOwnerName(Long userId) {
-        userDataProvider.get(userId).login
+        userDataProvider.getLoginById(userId)
     }
 
     String getUserEmail(String login) {

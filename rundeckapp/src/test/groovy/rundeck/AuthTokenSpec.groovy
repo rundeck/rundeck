@@ -177,4 +177,31 @@ class AuthTokenSpec extends Specification implements DataTest {
         result.authRoles == "admin,user"
     }
 
+    def "getOwnerName returns the owner login"() {
+        given: "a token owned by a user with a fully populated profile"
+        User owner = new User(
+                login: 'bob',
+                email: 'bob@example.com',
+                firstName: 'Bob',
+                lastName: 'Smith'
+        ).save(flush: true, failOnError: true)
+        AuthToken token = new AuthToken(
+                token: 'abc123',
+                authRoles: 'admin',
+                user: owner,
+                type: AuthTokenType.USER
+        ).save(flush: true, failOnError: true)
+
+        expect: "the login is read via a projection on the owner id, not the whole rduser row"
+        token.getOwnerName() == 'bob'
+    }
+
+    def "getOwnerName returns null when the token has no user"() {
+        given:
+        AuthToken token = new AuthToken(token: 'abc123', authRoles: 'admin', type: AuthTokenType.USER)
+
+        expect:
+        token.getOwnerName() == null
+    }
+
 }

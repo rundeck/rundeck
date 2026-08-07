@@ -659,15 +659,15 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
         //data context for property refs in email
         def userData = [:]
         //add user context data
-        def user = userDataProvider.findByLogin(exec.user)
+        def user = userDataProvider.getInfoFromUser(exec.user)
         if (user && user.email) {
             userData['user.email'] = user.email
         }
-        if (user && user.firstName) {
-            userData['user.firstName'] = user.firstName
+        if (user && user.firstname) {
+            userData['user.firstName'] = user.firstname
         }
-        if (user && user.lastName) {
-            userData['user.lastName'] = user.lastName
+        if (user && user.lastname) {
+            userData['user.lastName'] = user.lastname
         }
         //pass data context
         def dcontext = content.context?.getSharedDataContext()?.consolidate()?.getData(ContextView.global())?.getData() ?: [:] //usage of modified global context

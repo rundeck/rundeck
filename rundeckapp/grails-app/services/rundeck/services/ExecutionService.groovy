@@ -1773,9 +1773,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             userName=execMap.user
         }
 
-        def userLogin = userDataProvider.findByLogin(userName)
-        if(userLogin && userLogin.email){
-            jobcontext['user.email'] = userLogin.email
+        def userProps = userDataProvider.getInfoFromUser(userName)
+        if(userProps && userProps.email){
+            jobcontext['user.email'] = userProps.email
         }
         //convert argString into Map<String,String>
         def String[] args = execMap.argString? OptsUtil.burst(execMap.argString):inputargs

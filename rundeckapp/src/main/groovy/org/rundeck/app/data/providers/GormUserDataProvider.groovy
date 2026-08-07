@@ -279,6 +279,38 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
         return result
     }
 
+    /**
+     * Projects only the login column instead of loading the whole User row.
+     *
+     * @param userid id of the User
+     * @return the login, or null if no User exists with that id
+     */
+    @Override
+    String getLoginById(Long userid) {
+        if (userid == null) { return null }
+        return new DetachedCriteria(User).idEq(userid).projections {
+                property("login")
+        }.get() as String
+    }
+
+    /**
+     * Projects only the profile columns instead of loading the whole User row. Single-login
+     * counterpart of {@link #getInfoFromUsers(List)}, sharing its projection convention.
+     *
+     * @param login of the User
+     * @return the properties, or null if no User exists with that login
+     */
+    @Override
+    UserProperties getInfoFromUser(String login) {
+        if (!login) { return null }
+        def row = new DetachedCriteria(User).eq("login", login).projections {
+                property("firstName")
+                property("lastName")
+                property("email")
+        }.get() as String[]
+        return row ? new UserProperties(firstname: row[0], lastname: row[1], email: row[2]) : null
+    }
+
     @Override
     Integer count() {
         return count(null)

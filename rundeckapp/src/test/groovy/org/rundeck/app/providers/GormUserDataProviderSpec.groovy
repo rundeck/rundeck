@@ -385,4 +385,54 @@ class GormUserDataProviderSpec extends Specification implements DataTest {
         where:
         expectedEnabled << [true, false]
     }
+
+    def "getLoginById projects only the login"() {
+        given:
+        User u = new User(login: "bob", email: "bob@example.com", firstName: "Bob", lastName: "Smith")
+        u.save(flush: true)
+
+        expect:
+        provider.getLoginById(u.id) == "bob"
+    }
+
+    def "getLoginById returns null for a missing or null id"() {
+        expect:
+        provider.getLoginById(-1L) == null
+        provider.getLoginById(null) == null
+    }
+
+    def "getInfoFromUser projects the profile properties for one login"() {
+        given:
+        new User(login: "bob", email: "bob@example.com", firstName: "Bob", lastName: "Smith").save(flush: true)
+
+        when:
+        def props = provider.getInfoFromUser("bob")
+
+        then:
+        props != null
+        props.email == "bob@example.com"
+        props.firstname == "Bob"
+        props.lastname == "Smith"
+    }
+
+    def "getInfoFromUser tolerates a user with no profile fields set"() {
+        given:
+        new User(login: "bare").save(flush: true)
+
+        when:
+        def props = provider.getInfoFromUser("bare")
+
+        then:
+        props != null
+        props.email == null
+        props.firstname == null
+        props.lastname == null
+    }
+
+    def "getInfoFromUser returns null for a missing or blank login"() {
+        expect:
+        provider.getInfoFromUser("nobody") == null
+        provider.getInfoFromUser(null) == null
+        provider.getInfoFromUser("") == null
+    }
 }
