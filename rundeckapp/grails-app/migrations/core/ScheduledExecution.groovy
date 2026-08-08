@@ -363,4 +363,25 @@ databaseChangeLog = {
             }
         }
     }
+
+    changeSet(author: "rundeckdev", id: "6.2.0-add-stats-job-uuid-index") {
+        comment {
+            'job_uuid was added to scheduled_execution_stats in 4.11.0 without an index, but it is the ' +
+            'lookup key used to read a job\'s stats on the execution path, so every read scanned the ' +
+            'table. The only existing index covers se_id, which the query does not filter on.'
+        }
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(indexName: "idx_ses_job_uuid", tableName: "scheduled_execution_stats")
+            }
+        }
+
+        createIndex(indexName: "idx_ses_job_uuid", tableName: "scheduled_execution_stats", unique: false) {
+            column(name: "job_uuid")
+        }
+
+        rollback {
+            dropIndex(indexName: "idx_ses_job_uuid", tableName: "scheduled_execution_stats")
+        }
+    }
 }
