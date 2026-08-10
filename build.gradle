@@ -272,6 +272,8 @@ allprojects {
             // CVE and compatibility fixes
             force "commons-fileupload:commons-fileupload:${commonsFileuploadVersion}"
             force "com.google.protobuf:protobuf-java:${protobufVersion}" // CVE-2024-7254 fix
+            // CVE-2026-71497: jsoup pulled transitively via micronaut-openapi (compileOnly)
+            force "org.jsoup:jsoup:${jsoupVersion}"
             // CWE-770 (SNYK-JAVA-COMFASTERXMLJACKSONCORE-15365924): build-tooling configs such as
             // groovyScript pull groovy-yaml -> jackson 2.19.2, which the jackson BOM only covers in
             // app/plugin configs. Force jackson onto the managed version across ALL configurations.
