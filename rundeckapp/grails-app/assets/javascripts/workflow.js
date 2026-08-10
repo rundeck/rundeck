@@ -275,7 +275,12 @@ RDWorkflow.workflowIndexForContextId = function (ctxid) {
 };
 /**
  * Resolve a workflow step definition for a hierarchical step context string,
- * traversing conditional subSteps for contexts like "2/1".
+ * traversing conditional subSteps for contexts like "2/1". Job-reference and
+ * error-handler sub-workflow contexts (e.g. "1/1" into step.workflow, or "1e/1"
+ * into step.ehWorkflow) are not conditional subSteps, so traversal stops there
+ * and returns the deepest step resolved so far, matching the top-level-only
+ * resolution used before subSteps traversal existed - rather than failing
+ * outright and falling back to the raw "Step: <ctx>" placeholder text.
  * @param workflow workflow step list
  * @param context step context string or parsed array
  * @returns {*|null}
@@ -294,11 +299,11 @@ RDWorkflow.stepForContext = function (workflow, context) {
     var step = workflow[ndx];
     for (var i = 1; i < context.length; i++) {
         if (!step || !step.subSteps) {
-            return null;
+            break;
         }
         var subndx = RDWorkflow.workflowIndexForContextId(context[i]);
         if (subndx == null || subndx < 0 || subndx >= step.subSteps.length) {
-            return null;
+            break;
         }
         step = step.subSteps[subndx];
     }
