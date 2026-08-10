@@ -1,5 +1,6 @@
 package rundeck.data.util
 
+import org.apache.commons.lang3.RandomStringUtils
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import org.rundeck.app.data.model.v1.authtoken.AuthenticationToken
 
@@ -8,6 +9,26 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 class AuthenticationTokenUtils {
+
+    /** Alphabet used for API and webhook auth token generation. */
+    static final String SECURE_TOKEN_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+
+    /** Default length for generated API and webhook auth tokens. */
+    static final int SECURE_TOKEN_LENGTH = 32
+
+    /**
+     * Generates a cryptographically secure random string for auth tokens.
+     *
+     * @param length number of characters to generate
+     * @param chars allowed character alphabet
+     * @return secure random string
+     */
+    static String generateSecureRandomString(
+            int length = SECURE_TOKEN_LENGTH,
+            String chars = SECURE_TOKEN_ALPHABET
+    ) {
+        return RandomStringUtils.secure().next(length, chars)
+    }
 
     static boolean tokenIsExpired(AuthenticationToken token) {
         return token.getExpiration() != null && (
