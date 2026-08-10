@@ -41,13 +41,14 @@ const pluginConfigStub = {
   </div>`,
 };
 
-const createWrapper = async (props = {}) => {
+const createWrapper = async (props = {}, slots = {}) => {
   const wrapper = mount(InlinePluginConfigForm, {
     props: {
       modelValue: mockErrorHandler,
       serviceName: "WorkflowNodeStep",
       ...props,
     },
+    slots,
     global: {
       stubs: { pluginConfig: pluginConfigStub, PluginConfig: pluginConfigStub },
     },
@@ -145,5 +146,35 @@ describe("InlinePluginConfigForm", () => {
     await flushPromises();
 
     expect((wrapper.vm as any).pluginConfigMode).toBe("create");
+  });
+
+  it("renders custom header actions when header-actions slot is provided", async () => {
+    const wrapper = await createWrapper(
+      {},
+      {
+        "header-actions":
+          "<div data-testid='custom-header-actions'>Delete</div>",
+      },
+    );
+
+    expect(wrapper.find("[data-testid='custom-header-actions']").exists()).toBe(
+      true,
+    );
+    expect(wrapper.find("[data-testid='custom-header-actions']").text()).toBe(
+      "Delete",
+    );
+    // Plugin title still renders alongside the actions
+    expect(wrapper.text()).toContain("Command");
+  });
+
+  it("renders no header actions when header-actions slot is not provided", async () => {
+    const wrapper = await createWrapper();
+
+    expect(wrapper.find("[data-testid='custom-header-actions']").exists()).toBe(
+      false,
+    );
+    expect(wrapper.find(".inline-plugin-config-form-header-actions").exists()).toBe(
+      false,
+    );
   });
 });

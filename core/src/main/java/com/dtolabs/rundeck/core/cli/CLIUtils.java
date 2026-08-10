@@ -143,6 +143,27 @@ public class CLIUtils {
         return stringBuilder.toString();
     }
 
+    /**
+     * Quote a Windows argument using double quotes following the
+     * {@code CommandLineToArgvW} escaping rules. Single quotes have no quoting
+     * semantics in cmd.exe and are passed literally, breaking arguments and providing
+     * no injection protection. Double quotes correctly handle spaces and prevent
+     * interpretation of most shell metacharacters ({@code |}, {@code &}, {@code >},
+     * {@code <}, {@code ;}).
+     *
+     * <p>Backslash handling follows the MSVC C-runtime convention used by
+     * {@code CommandLineToArgvW}:</p>
+     * <ul>
+     *   <li>{@code 2n} backslashes before {@code "} produce {@code n} literal
+     *       backslashes and the {@code "} acts as a delimiter/escape.</li>
+     *   <li>{@code 2n+1} backslashes before {@code "} produce {@code n} literal
+     *       backslashes plus a literal {@code "}.</li>
+     *   <li>Backslashes not followed by {@code "} are literal.</li>
+     * </ul>
+     *
+     * <p>Percent signs are doubled ({@code %%}) to prevent cmd.exe
+     * environment-variable expansion.</p>
+     */
     private static void quoteWindowsCMDArg(StringBuilder sb, String arg) {
         if (StringUtils.containsNone(arg, WINDOWS_CMD_CHARS) &&
                 StringUtils.containsNone(arg, WINDOWS_WS_CHARS) &&
@@ -152,9 +173,42 @@ public class CLIUtils {
             }
             return;
         }
-        sb.append("'");
-        sb.append(arg.replace("'", "'\"'\"'"));
-        sb.append("'");
+        sb.append('"');
+        int i = 0;
+        while (i < arg.length()) {
+            int numBackslashes = 0;
+            while (i < arg.length() && arg.charAt(i) == '\\') {
+                numBackslashes++;
+                i++;
+            }
+            if (i == arg.length()) {
+                // Trailing backslashes: double them so the closing " is not escaped
+                for (int j = 0; j < numBackslashes * 2; j++) {
+                    sb.append('\\');
+                }
+                break;
+            } else if (arg.charAt(i) == '"') {
+                // Backslashes before ": double them, then emit \"
+                for (int j = 0; j < numBackslashes * 2; j++) {
+                    sb.append('\\');
+                }
+                sb.append("\\\"");
+                i++;
+            } else {
+                // Backslashes not before ": emit literally
+                for (int j = 0; j < numBackslashes; j++) {
+                    sb.append('\\');
+                }
+                char c = arg.charAt(i);
+                if (c == '%') {
+                    sb.append("%%");
+                } else {
+                    sb.append(c);
+                }
+                i++;
+            }
+        }
+        sb.append('"');
     }
 
     private static void quoteUnixShellArg(StringBuilder sb, String arg) {

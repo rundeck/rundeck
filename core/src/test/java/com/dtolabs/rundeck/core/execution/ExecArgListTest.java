@@ -201,7 +201,15 @@ public class ExecArgListTest {
     @Test
     public void buildWindowsEscaping() {
         ExecArgList list = ExecArgList.fromStrings(false, true, "echo", "a&b");
-        List<String> expected = Arrays.asList("echo", "'a&b'");
+        List<String> expected = Arrays.asList("echo", "\"a&b\"");
+        ArrayList<String> result = list.buildCommandForNode(null, "windows");
+        Assert.assertEquals(expected, result);
+    }
+
+    @Test
+    public void buildWindowsEscapingUncPath() {
+        ExecArgList list = ExecArgList.fromStrings(false, true, "powershell", "-file", "\\\\server\\share\\test.ps1");
+        List<String> expected = Arrays.asList("powershell", "-file", "\"\\\\server\\share\\test.ps1\"");
         ArrayList<String> result = list.buildCommandForNode(null, "windows");
         Assert.assertEquals(expected, result);
     }
