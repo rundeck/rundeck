@@ -184,19 +184,86 @@ class GormEventStoreServiceSpec extends Specification implements DataTest {
         oneRes.totalCount == 1
     }
 
-    // TODO: Limiting does not appear to work on detached criteria deleteAll
-//    def "test delete limit"() {
-//        when:
-//        service.storeEventBatch([
-//                [projectName: 'A'] as Evt,
-//                [projectName: 'A'] as Evt,
-//                [projectName: 'B'] as Evt,
-//        ])
-//
-//        def delRes = service.query([projectName: 'A', maxResults: 1, queryType: EventQueryType.DELETE] as EvtQuery)
-//        def twoRes = service.query([:] as EvtQuery)
-//
-//        then:
-//        twoRes.totalCount == 2
-//    }
+    @Rollback
+    def "test delete limit"() {
+        when:
+        // subsystem and topic are non-nullable; the original disabled version of this test omitted
+        // them, which is part of why it no longer compiled or ran.
+        service.storeEventBatch([
+                [projectName: 'A', topic: 'test', subsystem: 'test'] as Evt,
+                [projectName: 'A', topic: 'test', subsystem: 'test'] as Evt,
+                [projectName: 'B', topic: 'test', subsystem: 'test'] as Evt,
+        ])
+
+        def delRes = service.query([projectName: 'A', maxResults: 1, queryType: StoredEventQueryType.DELETE] as EvtQuery)
+        def twoRes = service.query([:] as EvtQuery)
+
+        then: 'only maxResults rows are deleted, leaving one A and one B'
+        delRes.totalCount == 1
+        twoRes.totalCount == 2
+    }
+
+    @Rollback
+    def "delete respects maxResults across a larger backlog"() {
+        given:
+        service.storeEventBatch((1..25).collect {
+            [projectName: 'A', topic: 'test', subsystem: 'webhooks'] as Evt
+        })
+
+        when: 'a single capped invocation'
+        def delRes = service.query(
+                [subsystem: 'webhooks', maxResults: 10, queryType: StoredEventQueryType.DELETE] as EvtQuery
+        )
+
+        then: 'exactly maxResults deleted -- one batch per invocation, no internal draining'
+        delRes.totalCount == 10
+        service.query([:] as EvtQuery).totalCount == 15
+    }
+
+    @Rollback
+    def "delete without maxResults still removes everything matching"() {
+        given:
+        service.storeEventBatch((1..12).collect {
+            [projectName: 'A', topic: 'test', subsystem: 'webhooks'] as Evt
+        } + [[projectName: 'B', topic: 'test', subsystem: 'other'] as Evt])
+
+        when: 'no cap -- the WebhookService.deleteEvents semantics'
+        def delRes = service.query(
+                [subsystem: 'webhooks', queryType: StoredEventQueryType.DELETE] as EvtQuery
+        )
+
+        then: 'all matching rows are gone and the non-matching row survives'
+        delRes.totalCount == 12
+        service.query([:] as EvtQuery).totalCount == 1
+    }
+
+    @Rollback
+    def "delete deletes oldest rows first"() {
+        given:
+        service.storeEventBatch([[projectName: 'A', topic: 'oldest', subsystem: 'webhooks'] as Evt])
+        service.storeEventBatch([[projectName: 'A', topic: 'newest', subsystem: 'webhooks'] as Evt])
+
+        when:
+        service.query([subsystem: 'webhooks', maxResults: 1, queryType: StoredEventQueryType.DELETE] as EvtQuery)
+        def remaining = service.query([:] as EvtQuery)
+
+        then: 'the oldest row was the one removed'
+        remaining.totalCount == 1
+        remaining.events[0].topic == 'newest'
+    }
+
+    @Rollback
+    def "delete matching nothing returns zero"() {
+        given:
+        service.storeEventBatch([[projectName: 'A', topic: 'test', subsystem: 'webhooks'] as Evt])
+
+        when:
+        def delRes = service.query(
+                [subsystem: 'nosuchsubsystem', maxResults: 10, queryType: StoredEventQueryType.DELETE] as EvtQuery
+        )
+
+        then:
+        delRes.totalCount == 0
+        service.query([:] as EvtQuery).totalCount == 1
+    }
 }

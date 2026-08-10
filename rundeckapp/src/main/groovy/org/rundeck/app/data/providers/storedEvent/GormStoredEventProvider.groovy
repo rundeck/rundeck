@@ -46,9 +46,91 @@ class GormStoredEventProvider implements StoredEventProvider {
         return c.count().longValue()
     }
 
+    /**
+     * Maximum number of ids placed in a single {@code DELETE ... WHERE id IN (...)} statement, and
+     * the batch size used when draining without a caller-supplied cap.
+     */
+    private static final int DELETE_CHUNK_SIZE = 1000
+
+    /**
+     * Deletes stored events matching the query.
+     *
+     * <p><b>Never issues an unbounded DELETE.</b> An unbounded delete on this table took over a
+     * minute against a ~479,000 row backlog in production and exceeded the 28-second connection
+     * timeout (RUN-4660).
+     *
+     * <p>Two modes:
+     * <ul>
+     *   <li>{@code maxResults} set — delete at most that many rows and return. Callers using this
+     *       are periodic cleanups; a larger backlog drains across successive scheduled runs.</li>
+     *   <li>{@code maxResults} absent — delete everything matching, but in bounded batches, so the
+     *       "delete all events for this webhook" semantics are preserved without any single
+     *       statement being unbounded.</li>
+     * </ul>
+     *
+     * @param query the query selecting rows to delete
+     * @return the number of rows actually deleted
+     */
     @Override
     Number deleteStoredEvent(StoredEventQuery query) {
-        return genericCriteria(query).deleteAll().longValue()
+        Integer max = query.maxResults
+        if (max != null && max > 0) {
+            return deleteBounded(query, max)
+        }
+
+        // No cap requested: drain in bounded batches. Loops on rows *deleted*, not ids found, so a
+        // batch that selects ids but deletes nothing terminates instead of spinning.
+        long total = 0L
+        long deleted
+        while ((deleted = deleteBounded(query, DELETE_CHUNK_SIZE)) > 0L) {
+            total += deleted
+        }
+        return total
+    }
+
+    /**
+     * Deletes at most {@code selectMax} matching rows, oldest first.
+     *
+     * <p>Two deliberate details, both easy to "simplify" back into bugs:
+     *
+     * <p>1. {@code max} is passed to {@code list()} rather than set on the criteria.
+     * {@code DetachedCriteria.max()} returns a <i>new</i> instance and does not mutate the
+     * receiver, so the {@code max()} call inside {@link #genericCriteria}'s {@code build {}} block
+     * has no effect — its return value is discarded there. {@code listStoredEvent} passes the
+     * bounds explicitly for the same reason.
+     *
+     * <p>2. The bound is expressed as an explicit id list rather than by asking GORM for a limited
+     * bulk delete. A bounded bulk {@code DELETE} has no portable SQL form ({@code DELETE ... LIMIT}
+     * is MySQL/MariaDB only; PostgreSQL needs a subquery, Oracle {@code ROWNUM}, MSSQL
+     * {@code DELETE TOP}), and whether GORM honours a limit on {@code deleteAll()} is undocumented.
+     * An id list is standard SQL on every supported database.
+     *
+     * @param query     the query selecting rows to delete
+     * @param selectMax maximum number of rows to delete in this call
+     * @return the number of rows actually deleted
+     */
+    private static long deleteBounded(StoredEventQuery query, int selectMax) {
+        List<Long> ids = (List<Long>) genericCriteria(query)
+                .build {
+                    order('lastUpdated', 'asc')
+                    projections {
+                        property('id')
+                    }
+                }
+                .list(max: selectMax)
+
+        // Nothing matched: skip the DELETE entirely. The scheduled cleanup runs on every node on
+        // every interval regardless of backlog, so an idle run should cost one indexed SELECT and
+        // no write transaction at all.
+        if (!ids) {
+            return 0L
+        }
+
+        long deleted = 0L
+        ids.collate(DELETE_CHUNK_SIZE).each { List<Long> chunk ->
+            deleted += (StoredEvent.where { id in chunk }.deleteAll() as Number).longValue()
+        }
+        return deleted
     }
 
     private static DetachedCriteria<StoredEvent> genericCriteria(StoredEventQuery query) {
