@@ -683,6 +683,7 @@ function RDNode(name, steps,flow){
         }
     };
     self.durationMs=ko.observable(-1);
+    self.summaryStartTime=ko.observable(null);
     self.toggleExpand=function(){
         self.expanded(!self.expanded());
         if(self.expanded()){
@@ -693,24 +694,61 @@ function RDNode(name, steps,flow){
         }
     };
     self.duration=ko.pureComputed(function(){
-        //sum up duration of all completed steps
+        // Prefer server-provided wall-clock duration; otherwise derive span from step times
        var ms=self.durationMs();
         if(ms<0) {
+            var earliest = null;
+            var latest = null;
             ko.utils.arrayForEach(self.steps(), function (x) {
                 if (!x.parameterizedStep()) {
-                    var ms2 = x.duration();
-                    if (ms2 >= 0 && ms < 0) {
-                        ms = ms2;
-                    } else if (ms2 >= 0) {
-                        ms += ms2;
+                    var start = x.startTime();
+                    var end = x.endTime() || x.updateTime();
+                    if (start) {
+                        var st = moment(start);
+                        if (!earliest || st.isBefore(earliest)) {
+                            earliest = st;
+                        }
+                    }
+                    if (end) {
+                        var et = moment(end);
+                        if (!latest || et.isAfter(latest)) {
+                            latest = et;
+                        }
                     }
                 }
             });
+            if (earliest && latest) {
+                ms = latest.diff(earliest);
+            }
         }
        return ms;
     });
     self.durationSimple=ko.pureComputed(function(){
        return MomentUtil.formatDurationSimple(self.duration());
+    });
+    self.nodeStartTime=ko.pureComputed(function(){
+        var earliest = null;
+        if (self.summaryStartTime()) {
+            earliest = moment(self.summaryStartTime());
+        }
+        ko.utils.arrayForEach(self.steps(), function (x) {
+            if (!x.parameterizedStep() && x.startTime()) {
+                var st = moment(x.startTime());
+                if (!earliest || st.isBefore(earliest)) {
+                    earliest = st;
+                }
+            }
+        });
+        if (!earliest) {
+            var cur = self.currentStep();
+            if (cur && cur.startTime()) {
+                earliest = moment(cur.startTime());
+            }
+        }
+        return earliest ? earliest.toISOString() : null;
+    });
+    self.nodeStartTimeSimple=ko.pureComputed(function(){
+        return MomentUtil.formatTimeSimple(self.nodeStartTime());
     });
     self.summary=ko.observable();
     self.summaryState=ko.observable();
@@ -851,6 +889,7 @@ function RDNode(name, steps,flow){
         self.summary(self.summaryDescriptionForState(nodesummary));
 
         self.durationMs(nodesummary.duration);
+        self.summaryStartTime(nodesummary.startTime || null);
         if(nodesummary.currentStep){
             self.currentStepFromData(nodesummary.currentStep);
         }else{

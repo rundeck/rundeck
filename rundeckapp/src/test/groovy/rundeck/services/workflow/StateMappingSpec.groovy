@@ -531,6 +531,23 @@ class StateMappingSpec extends Specification {
             summarized.nodeSteps['localhost'].find { it.stepctx == '1' } != null
     }
 
+    def "summarizeForNode should set node summary startTime to the earliest step start time"() {
+        given: 'node step has subworkflow error handler, with a parent step and a later-starting sub-step'
+            def sut = new StateMapping()
+            def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+            mutableStep1.nodeStep = true
+            def state = new MutableWorkflowStateImpl(['localhost'], 1, [0: mutableStep1])
+            MutableWorkflowStateImplTest.processStateChanges(state, STATE_CHANGES2)
+        when: "summarize node state"
+            def result = sut.mapOf(1, state)
+            def summarized = sut.summarize(result, ['localhost'], true)
+        then: "node summary startTime matches the earliest of its steps' own startTime values, not a later one"
+            def stepStartTimes = summarized.nodeSteps['localhost']*.startTime
+            stepStartTimes.size() == 2
+            summarized.nodeSummaries['localhost'].startTime == stepStartTimes.min()
+            summarized.nodeSummaries['localhost'].startTime != stepStartTimes.max()
+    }
+
     boolean mapEntriesAreEqualIgnoringDates(given, expected) {
         //assume they are the same type
         if (given instanceof Map) {

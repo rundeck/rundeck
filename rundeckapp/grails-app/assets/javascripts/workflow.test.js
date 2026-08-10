@@ -166,6 +166,27 @@ jQuery(function () {
 
             RDWorkflow.nodeSteppluginDescriptions = orig;
             RDWorkflow.wfSteppluginDescriptions = orig;
+        },
+        renderContextStringHierarchicalTest: function () {
+            var wf = new RDWorkflow([
+                {
+                    type: 'conditional',
+                    description: 'outer-conditional',
+                    subSteps: [
+                        {
+                            type: 'conditional',
+                            description: 'inner-conditional',
+                            subSteps: [
+                                {exec: 'echo sub', description: 'nested-command'}
+                            ]
+                        }
+                    ]
+                },
+                {exec: 'echo top', description: 'top-command'}
+            ]);
+            this.assert(wf.renderContextString('1/1/1') === 'nested-command');
+            this.assert(wf.renderContextString('2') === 'top-command');
+            this.assert(wf.renderContextString('99') === 'Step: 99');
         }
     });
 });
