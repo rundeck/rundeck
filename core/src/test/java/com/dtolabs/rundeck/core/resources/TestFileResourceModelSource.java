@@ -32,6 +32,8 @@ import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -550,6 +552,175 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         final INodeSet nodes = fileNodesProvider.getNodes();
         assertNotNull(nodes);
         assertEquals(0, nodes.getNodes().size());
+    }
+
+    // Security validation tests for RUN-4671
+
+    public void testValidateWriteableSource_PathWithinProjectDirectory() throws Exception {
+        // Test that paths within the project directory are allowed
+        Properties props = new Properties();
+        File projectDir = frameworkProject.getBaseDir();
+        File nodesFile = new File(projectDir, "etc/resources.xml");
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", nodesFile.getAbsolutePath());
+
+        FileResourceModelSource source = new FileResourceModelSource(getFrameworkInstance());
+        source.configure(props);
+
+        Map<String, Object> configProps = new HashMap<>();
+        // No allowed paths - only project directory should be allowed
+
+        // Should not throw - path is within project
+        source.validateWriteableSource(configProps, getFrameworkInstance(), PROJ_NAME);
+    }
+
+    public void testValidateWriteableSource_PathOutsideProjectDirectory() throws Exception {
+        // Test that paths outside project directory are rejected by default
+        Properties props = new Properties();
+        File outsideFile = File.createTempFile("test-outside", ".xml");
+        outsideFile.deleteOnExit();
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", outsideFile.getAbsolutePath());
+
+        FileResourceModelSource source = new FileResourceModelSource(getFrameworkInstance());
+        source.configure(props);
+
+        Map<String, Object> configProps = new HashMap<>();
+        // No allowed paths configured
+
+        try {
+            source.validateWriteableSource(configProps, getFrameworkInstance(), PROJ_NAME);
+            fail("Expected ConfigurationException for path outside project");
+        } catch (ConfigurationException e) {
+            assertTrue(e.getMessage().contains("must be within the project directory"));
+        }
+    }
+
+    public void testValidateWriteableSource_PathTraversal() throws Exception {
+        // Test that path traversal attempts are blocked
+        Properties props = new Properties();
+        File projectDir = frameworkProject.getBaseDir();
+        // Attempt to escape project directory using ../
+        File traversalFile = new File(projectDir, "../../../etc/passwd");
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", traversalFile.getAbsolutePath());
+
+        FileResourceModelSource source = new FileResourceModelSource(getFrameworkInstance());
+        source.configure(props);
+
+        Map<String, Object> configProps = new HashMap<>();
+
+        try {
+            source.validateWriteableSource(configProps, getFrameworkInstance(), PROJ_NAME);
+            fail("Expected ConfigurationException for path traversal");
+        } catch (ConfigurationException e) {
+            // Path traversal should be blocked - canonical path will be outside project
+            assertTrue(e.getMessage().contains("must be within the project directory"));
+        }
+    }
+
+    public void testValidateWriteableSource_AllowedBasePaths() throws Exception {
+        // Test that configuration property allows additional paths
+        Properties props = new Properties();
+        File allowedDir = File.createTempFile("test-allowed", ".dir");
+        allowedDir.delete();
+        allowedDir.mkdir();
+        allowedDir.deleteOnExit();
+
+        File nodesFile = new File(allowedDir, "resources.xml");
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", nodesFile.getAbsolutePath());
+
+        FileResourceModelSource source = new FileResourceModelSource(getFrameworkInstance());
+        source.configure(props);
+
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put("resourceModelSource.file.allowedBasePaths", allowedDir.getAbsolutePath());
+
+        // Should not throw - path is in allowed base paths
+        source.validateWriteableSource(configProps, getFrameworkInstance(), PROJ_NAME);
+    }
+
+    public void testValidateWriteableSource_MultipleAllowedPaths() throws Exception {
+        // Test that multiple comma-separated allowed paths work
+        Properties props = new Properties();
+        File allowedDir1 = File.createTempFile("test-allowed1", ".dir");
+        allowedDir1.delete();
+        allowedDir1.mkdir();
+        allowedDir1.deleteOnExit();
+
+        File allowedDir2 = File.createTempFile("test-allowed2", ".dir");
+        allowedDir2.delete();
+        allowedDir2.mkdir();
+        allowedDir2.deleteOnExit();
+
+        File nodesFile = new File(allowedDir2, "resources.xml");
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", nodesFile.getAbsolutePath());
+
+        FileResourceModelSource source = new FileResourceModelSource(getFrameworkInstance());
+        source.configure(props);
+
+        Map<String, Object> configProps = new HashMap<>();
+        // File is in allowedDir2, not allowedDir1
+        configProps.put("resourceModelSource.file.allowedBasePaths",
+                       allowedDir1.getAbsolutePath() + "," + allowedDir2.getAbsolutePath());
+
+        // Should not throw - path is in one of the allowed base paths
+        source.validateWriteableSource(configProps, getFrameworkInstance(), PROJ_NAME);
+    }
+
+    public void testValidateWriteableSource_CanonicalizationNormalizesPath() throws Exception {
+        // Test that paths are canonicalized (handles ./ and ../ correctly)
+        Properties props = new Properties();
+        File projectDir = frameworkProject.getBaseDir();
+        // Use redundant path elements that should normalize to project directory
+        File nodesFile = new File(projectDir, "./etc/../etc/./resources.xml");
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", nodesFile.getAbsolutePath());
+
+        FileResourceModelSource source = new FileResourceModelSource(getFrameworkInstance());
+        source.configure(props);
+
+        Map<String, Object> configProps = new HashMap<>();
+
+        // Should not throw - canonical path is within project
+        source.validateWriteableSource(configProps, getFrameworkInstance(), PROJ_NAME);
+    }
+
+    public void testValidateWriteableSource_ErrorMessageDoesNotLeakPath() throws Exception {
+        // Test that error messages don't expose sensitive path information
+        Properties props = new Properties();
+        File sensitiveFile = new File("/etc/passwd");
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", sensitiveFile.getAbsolutePath());
+
+        FileResourceModelSource source = new FileResourceModelSource(getFrameworkInstance());
+        source.configure(props);
+
+        Map<String, Object> configProps = new HashMap<>();
+
+        try {
+            source.validateWriteableSource(configProps, getFrameworkInstance(), PROJ_NAME);
+            fail("Expected ConfigurationException");
+        } catch (ConfigurationException e) {
+            // Error message should not contain the actual file path
+            assertFalse("Error message should not leak file path",
+                       e.getMessage().contains("/etc/passwd"));
+            // But should have a generic message
+            assertTrue(e.getMessage().contains("must be within the project directory"));
+        }
+    }
+
+    public void testValidateWriteableSource_NoConfiguration() throws Exception {
+        // Test that validation handles unconfigured source gracefully
+        FileResourceModelSource source = new FileResourceModelSource(getFrameworkInstance());
+        // Don't configure - configuration is null
+
+        Map<String, Object> configProps = new HashMap<>();
+
+        // Should not throw - no file configured yet
+        source.validateWriteableSource(configProps, getFrameworkInstance(), PROJ_NAME);
     }
 
 }

@@ -2266,6 +2266,38 @@ List of config values, each value contains:
             'application/json': 'json',
     ]
 
+    /**
+     * Convert MIME type to format name for FileResourceModelSource.parseFile()
+     */
+    private String getFormatFromMimeType(String mimeType) {
+        def formatMap = [
+            'application/yaml': 'resourceyaml',
+            'text/yaml': 'resourceyaml',
+            'application/xml': 'resourcexml',
+            'text/xml': 'resourcexml',
+            'application/json': 'resourcejson',
+        ]
+        return formatMap[mimeType]
+    }
+
+    /**
+     * Build configuration properties map for path validation
+     */
+    private Map<String, Object> buildConfigPropertiesForValidation() {
+        Map<String, Object> configProps = [:]
+
+        // Read allowed paths from rundeck-config.properties
+        String allowedPaths = configurationService.getString(
+            "resourceModelSource.file.allowedBasePaths",
+            null
+        )
+        if (allowedPaths != null) {
+            configProps.put("resourceModelSource.file.allowedBasePaths", allowedPaths)
+        }
+
+        return configProps
+    }
+
     def editProjectNodeSourceFile() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
@@ -2296,22 +2328,80 @@ List of config values, each value contains:
             return redirect(action: 'projectNodeSources', params: [project: project])
         }
 
-
-        def baos = new ByteArrayOutputStream()
-        def emptydata = false
-        if (source.writeableSource.hasData()) {
-            source.writeableSource.readData(baos)
-        } else {
-            emptydata = true
-        }
-        def fileText = baos.toString('UTF-8')
         def modelFormat = source.writeableSource.syntaxMimeType
         def sourceDesc = source.writeableSource.sourceDescription
-        def providerType = source.type;
+        def providerType = source.type
         def desc = pluginService.getPluginDescriptor(
             providerType,
             frameworkService.rundeckFramework.getResourceModelSourceService()
         )?.description
+
+        def emptydata = false
+        def fileText = ""
+        def warning = null
+
+        try {
+            // Path validation using validateWriteableSource
+            Map<String, Object> configProps = buildConfigPropertiesForValidation()
+            source.writeableSource.validateWriteableSource(
+                configProps,
+                frameworkService.getRundeckFramework(),
+                project
+            )
+
+            // Content validation using FileResourceModelSource.parseFile()
+            File sourceFile = new File(sourceDesc).getCanonicalFile()
+
+            if (sourceFile.exists() && sourceFile.length() > 0) {
+                // Attempt to parse as node source
+                String format = getFormatFromMimeType(modelFormat)
+
+                if (format) {
+                    INodeSet nodes = com.dtolabs.rundeck.core.resources.FileResourceModelSource.parseFile(
+                        sourceFile,
+                        format,
+                        frameworkService.getRundeckFramework(),
+                        project
+                    )
+
+                    // Success - file is a valid node source
+                    log.debug("Validated node source: ${nodes.nodes.size()} nodes in ${sourceDesc}")
+
+                    // Read file content (original code)
+                    def baos = new ByteArrayOutputStream()
+                    source.writeableSource.readData(baos)
+                    fileText = baos.toString('UTF-8')
+                } else {
+                    // Unknown format - treat as invalid
+                    emptydata = true
+                    warning = "Unknown file format: ${modelFormat}"
+                }
+            } else {
+                emptydata = true
+            }
+
+        } catch (com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException e) {
+            // Path validation failed (security check)
+            log.warn("Node source path validation failed for ${sourceDesc}: ${e.message}")
+            emptydata = true
+            warning = e.message  // Use the validation error message
+
+        } catch (ResourceModelSourceException e) {
+            // File is not a valid node source (content validation failed)
+            log.warn("Node source content validation failed for ${sourceDesc}: ${e.message}")
+            emptydata = true
+            warning = "File content is not a valid ${modelFormat} node source format"
+        } catch (IOException e) {
+            // IO error during canonicalization or file access
+            log.warn("IO error during node source validation for ${sourceDesc}: ${e.message}")
+            emptydata = true
+            warning = "Unable to access file"
+        }
+
+        // Set flash warning if validation failed
+        if (warning) {
+            flash.warning = warning
+        }
 
         [
                 project     : project,
