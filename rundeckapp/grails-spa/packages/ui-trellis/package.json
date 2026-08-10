@@ -132,6 +132,7 @@
     "mobx-utils": "^5.6.1",
     "node-forge": "^1.4.0",
     "prettier": "^3.8.1",
+    "postcss": "^8.5.25",
     "prex": "^0.4.9",
     "remark-gfm": "^4.0.0",
     "resolve-url-loader": "^5.0.0",
