@@ -124,4 +124,45 @@ class ExecutionQuerySpec extends Specification {
         ExecutionQuery.escapeLikePattern("user@example.com") == "user@example.com"
         ExecutionQuery.escapeLikePattern("") == ""
     }
+
+    // ==================== projNameFilter (RUN-4247) ====================
+
+    def "createCriteria restricts to projNameFilter via an IN list when no single projFilter is set (RUN-4247)"() {
+        given:
+            def query = new ExecutionQuery(projNameFilter: ['ProjectA', 'ProjectB'])
+            def recorder = new RecordingCriteria()
+            def clos = query.createCriteria(recorder)
+
+        when:
+            clos.call()
+
+        then:
+            recorder.calls.contains(['inList', ['project', ['ProjectA', 'ProjectB']]])
+            !recorder.calls.any { it[0] == 'eq' && it[1][0] == 'project' }
+    }
+
+    def "createCriteria ignores projNameFilter when a single projFilter is set (RUN-4247)"() {
+        given:
+            def query = new ExecutionQuery(projFilter: 'ProjectA', projNameFilter: ['ProjectA', 'ProjectB'])
+            def recorder = new RecordingCriteria()
+            def clos = query.createCriteria(recorder)
+
+        when:
+            clos.call()
+
+        then:
+            recorder.calls.contains(['eq', ['project', 'ProjectA']])
+            !recorder.calls.any { it[0] == 'inList' }
+    }
+}
+
+/**
+ * Records the criteria-builder method calls the createCriteria closure makes against its delegate,
+ * so the project-restriction branch can be asserted without a live GORM criteria (RUN-4247).
+ * Declared top-level because Groovy forbids methodMissing/propertyMissing on static inner classes.
+ */
+class RecordingCriteria {
+    List<List> calls = []
+    def methodMissing(String name, args) { calls << [name, (args as List)]; null }
+    def propertyMissing(String name) { null }
 }

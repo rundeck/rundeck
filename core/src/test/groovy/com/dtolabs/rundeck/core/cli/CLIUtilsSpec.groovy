@@ -58,8 +58,66 @@ class CLIUtilsSpec extends Specification {
         when: "Windows PowerShell case"
         Converter<String, String> windowsPsConverter = CLIUtils.argumentQuoteForOperatingSystem("windows", "powershell")
         then:
-        windowsPsConverter.convert("foo bar") == "'foo bar'"
-        windowsPsConverter.convert("foo&bar") == "'foo&bar'"
-        windowsPsConverter.convert("`foobar`") == "'`foobar`'"
+        windowsPsConverter.convert("foo bar") == '"foo bar"'
+        windowsPsConverter.convert("foo&bar") == '"foo&bar"'
+        windowsPsConverter.convert("`foobar`") == '"`foobar`"'
+
+        when: "Windows default case (no interpreter)"
+        Converter<String, String> windowsDefaultConverter = CLIUtils.argumentQuoteForOperatingSystem("windows", null)
+        then:
+        windowsDefaultConverter.convert("foo bar") == '"foo bar"'
+        windowsDefaultConverter.convert("foo&bar") == '"foo&bar"'
+        windowsDefaultConverter.convert("`foobar`") == '"`foobar`"'
+    }
+
+    def "quoteWindowsCMDArg escapes internal double quotes"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('"hello world"') == '"\\"hello world\\""'
+    }
+
+    def "quoteWindowsCMDArg escapes percent for env var protection"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('%PATH%') == '"%%PATH%%"'
+    }
+
+    def "quoteWindowsCMDArg returns simple args unchanged"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('simple') == 'simple'
+    }
+
+    def "quoteWindowsCMDArg handles UNC paths with spaces"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('\\\\server\\share\\path with spaces\\script.ps1') == '"\\\\server\\share\\path with spaces\\script.ps1"'
+    }
+
+    def "quoteWindowsCMDArg blocks pipe injection"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('80 | whoami') == '"80 | whoami"'
+    }
+
+    def "quoteWindowsCMDArg blocks redirect injection"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('data > C:\\tmp\\file') == '"data > C:\\tmp\\file"'
+    }
+
+    def "quoteWindowsCMDArg blocks AND operator injection"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('test && del /q C:\\') == '"test && del /q C:\\\\"'
+    }
+
+    def "quoteWindowsCMDArg blocks semicolon injection"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('test; whoami') == '"test; whoami"'
+    }
+
+    def "quoteWindowsCMDArg doubles trailing backslashes before closing quote"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('path\\') == '"path\\\\"'
+        CLIUtils.quoteWindowsCMDArg('path\\\\') == '"path\\\\\\\\"'
+    }
+
+    def "quoteWindowsCMDArg doubles backslashes before internal quote"() {
+        expect:
+        CLIUtils.quoteWindowsCMDArg('say\\"hi\\"') == '"say\\\\\\"hi\\\\\\""'
     }
 }
