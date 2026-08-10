@@ -26,7 +26,6 @@ import grails.gorm.transactions.Transactional
 import grails.web.JSONBuilder
 import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
-import org.apache.commons.lang3.RandomStringUtils
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
@@ -67,7 +66,7 @@ class ApiService implements WebUtilService{
             DELETE: AuthConstants.ACTION_DELETE
     )
     private String genRandomString() {
-        return RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        return AuthenticationTokenUtils.generateSecureRandomString()
     }
 
     Clock systemClock = Clock.systemUTC()
