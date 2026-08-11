@@ -39,6 +39,7 @@ class MarkdownCodec {
             .extensions(Arrays.asList(TablesExtension.create())).build();
     static HtmlRenderer renderer = HtmlRenderer.builder()
             .extensions(extensions)
+            .escapeHtml(true)
             .build();
 
     static String decodeStr (String str){
