@@ -41,6 +41,7 @@ import grails.converters.JSON
 import grails.events.annotation.Subscriber
 import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
+import org.springframework.transaction.annotation.Propagation
 import grails.util.Holders
 import grails.web.JSONBuilder
 import grails.web.mapping.LinkGenerator
@@ -179,7 +180,17 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
         }
     }
 
-    @Transactional
+    /**
+     * Dispatch a job notification, optionally on its own thread.
+     *
+     * Must not run in a transaction. The work is done inside {@code withNewTransaction} blocks below --
+     * on a separate thread when NOTIFICATIONS_OWN_THREAD is enabled -- while this method only waits for
+     * completion, for up to notification.threadTimeOut (120s by default). A transaction here, whether
+     * inherited from the caller or created by this method, would hold the calling thread's database
+     * connection checked out and idle for that whole wait; the server closes it after wait_timeout and
+     * the caller then fails on COMMIT.
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void asyncTriggerJobNotification(String trigger, schedUuid, Map content){
         if(trigger && schedUuid){
             if(featureService.featurePresent(Features.NOTIFICATIONS_OWN_THREAD)){

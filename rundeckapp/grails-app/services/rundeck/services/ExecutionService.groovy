@@ -3476,43 +3476,62 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Trigger the completion notifications for a finished execution.
+     *
+     * Deliberately non-transactional. The execution's completed state has already been committed by
+     * {@link #saveExecutionState_newTransaction}, and the notification itself is delivered on a separate
+     * thread inside its own transaction (see NotificationService.asyncTriggerJobNotification), so nothing
+     * in this method needs to be atomic with the send. A transaction held here would only keep this
+     * thread's database connection checked out and idle for as long as the send takes -- up to
+     * notification.threadTimeOut, 120s by default -- which exceeds the server's wait_timeout, and the
+     * connection is then found dead at COMMIT. The two reads that are needed run in their own short
+     * transaction instead.
+     *
+     * @param execRun the started execution
+     * @param event the completion event
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public def triggerJobCompleteNotifications(AsyncStarted execRun, ExecutionCompleteEvent event) {
         def context = execRun?.thread?.context
         def execution = event.execution
         def executionId = event.execution.id
 
-        //load stored execution to get the orchestrator data
-        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
-        // Fallback to simple get() for DataTest compatibility
-        Execution executionLoad
-        try {
-            executionLoad = Execution.withSession { session ->
-                String hql = '''
-                    SELECT e
-                    FROM Execution e
-                    LEFT JOIN e.orchestrator o
-                    WHERE e.id = :executionId
-                '''
-                def query = session.createQuery(hql, Execution)
-                query.setParameter('executionId', executionId)
-                query.uniqueResult()
-            } as Execution
-        } catch (MissingMethodException e) {
-            // DataTest fallback: SimpleMapSession doesn't support HQL, use simple get()
-            executionLoad = Execution.get(executionId)
-        }
+        def averageDuration = Execution.withNewTransaction {
+            //load stored execution to get the orchestrator data
+            // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+            // Fallback to simple get() for DataTest compatibility
+            // JOIN FETCH rather than a bare JOIN: the orchestrator is read from the notification thread,
+            // so it has to be initialised before this transaction closes.
+            Execution executionLoad
+            try {
+                executionLoad = Execution.withSession { session ->
+                    String hql = '''
+                        SELECT e
+                        FROM Execution e
+                        LEFT JOIN FETCH e.orchestrator o
+                        WHERE e.id = :executionId
+                    '''
+                    def query = session.createQuery(hql, Execution)
+                    query.setParameter('executionId', executionId)
+                    query.uniqueResult()
+                } as Execution
+            } catch (MissingMethodException e) {
+                // DataTest fallback: SimpleMapSession doesn't support HQL, use simple get()
+                executionLoad = Execution.get(executionId)
+            }
 
-        //just replacing the value for the received from ExecutionJob because the status is not saved yet
-        if(executionLoad && executionLoad.orchestrator){
-            execution.orchestrator = executionLoad.orchestrator
+            //just replacing the value for the received from ExecutionJob because the status is not saved yet
+            if(executionLoad && executionLoad.orchestrator){
+                execution.orchestrator = executionLoad.orchestrator
+            }
+
+            // Resolved here, before the send, so the notification path does not have to query for it from
+            // inside a transaction that also spans the SMTP and HTTP sends.
+            return (event.job ? getAverageDuration(event.job.getUuid()) : 0) ?: 0
         }
 
         def export = execRun?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
-
-        // Resolved here, on the execution thread, so the notification path does not have to query for
-        // it from inside its own transaction -- that transaction also spans the SMTP and HTTP sends,
-        // during which the database connection can be closed by the server.
-        def averageDuration = (event.job ? getAverageDuration(event.job.getUuid()) : 0) ?: 0
 
         notificationService.asyncTriggerJobNotification(
                 execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
