@@ -17,6 +17,7 @@
 //= require momentutil
 //= require vendor/knockout.min
 //= require executionStateKO
+//= require util/testing
 
 jQuery(function () {
     "use strict";

@@ -60,7 +60,7 @@ class StateMapping {
         return cb > ca
     }
     def boolean stepContributesToNodeDuration(Map step) {
-        if (!step?.startTime) {
+        if (!step?.startTime || step.stepctx?.indexOf('@') >= 0) {
             return false
         }
         def state = step.executionState
@@ -117,7 +117,7 @@ class StateMapping {
         }
         if (duration > 0 && map?.startTime && map?.endTime) {
             def execDuration = decodeDate(map.endTime).time - decodeDate(map.startTime).time
-            if (duration > execDuration) {
+            if (execDuration > 0 && duration > execDuration) {
                 duration = execDuration
             }
         }
