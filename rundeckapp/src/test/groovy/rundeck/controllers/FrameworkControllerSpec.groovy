@@ -2404,6 +2404,7 @@ project.label=A Label
 
         setup:
         def source = Mock(WriteableModelSource) {
+            1 * validateWriteableSource(_, _, _) >> { /* validation passes */ }
             1 * writeData(_) >> {
                 throw new IOException("expected error")
             }
@@ -2422,7 +2423,12 @@ project.label=A Label
                     ]
                 }
             }
+            1 * getRundeckFramework() >> Mock(com.dtolabs.rundeck.core.common.Framework)
             0 * _(*_)
+        }
+
+        controller.configurationService = Mock(ConfigurationService) {
+            1 * getString(_, _) >> null
         }
 
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
@@ -2448,6 +2454,7 @@ project.label=A Label
 
         setup:
         def source = Mock(WriteableModelSource) {
+            1 * validateWriteableSource(_, _, _) >> { /* validation passes */ }
             1 * writeData(_) >> {
                 throw new StorageException()
             }
@@ -2466,7 +2473,12 @@ project.label=A Label
                     ]
                 }
             }
+            1 * getRundeckFramework() >> Mock(com.dtolabs.rundeck.core.common.Framework)
             0 * _(*_)
+        }
+
+        controller.configurationService = Mock(ConfigurationService) {
+            1 * getString(_, _) >> null
         }
 
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
