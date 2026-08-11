@@ -342,7 +342,12 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
             // 6. Parse allowed paths (comma-separated) and check if file is under any
             String[] paths = allowedPaths.split(",");
             for (String path : paths) {
-                File allowedBase = new File(path.trim()).getCanonicalFile();
+                String trimmedPath = path.trim();
+                // Skip empty segments to avoid treating empty string as working directory
+                if (trimmedPath.isEmpty()) {
+                    continue;
+                }
+                File allowedBase = new File(trimmedPath).getCanonicalFile();
                 if (isPathUnder(canonicalFile, allowedBase)) {
                     return;  // Path is within an allowed base path
                 }
@@ -354,22 +359,21 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
             );
 
         } catch (IOException e) {
-            throw new ConfigurationException("Invalid file path: " + e.getMessage());
+            // Don't include exception message to avoid leaking path information
+            throw new ConfigurationException("Invalid file path", e);
         }
     }
 
     /**
-     * Checks if a file is located under a base directory.
+     * Checks if a file is located under a base directory using Path comparison.
+     * This is more reliable than string prefix matching.
      *
      * @param file file to check
      * @param baseDir base directory
      * @return true if file is under baseDir
      */
     private boolean isPathUnder(File file, File baseDir) {
-        String filePath = file.getAbsolutePath();
-        String basePath = baseDir.getAbsolutePath();
-        return filePath.startsWith(basePath + File.separator) ||
-               filePath.equals(basePath);
+        return file.toPath().startsWith(baseDir.toPath());
     }
 
 

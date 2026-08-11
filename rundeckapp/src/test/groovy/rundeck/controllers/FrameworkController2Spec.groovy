@@ -1251,22 +1251,15 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         controller.flash.warning == "File path must be within the project directory"
     }
 
-    void "editProjectNodeSourceFile should allow paths within project directory"() {
-        given: "a valid file resource model source within the project directory"
+    void "editProjectNodeSourceFile should handle non-existent files"() {
+        given: "a file resource model source pointing to non-existent file"
         params.project = "TestProject"
         params.index = "0"
 
-        def validFileContent = "testnode:\n  hostname: test.example.com"
-
         def mockWriteableSource = Mock(WriteableModelSource) {
             getSyntaxMimeType() >> 'application/yaml'
-            getSourceDescription() >> '/var/rundeck/projects/TestProject/etc/resources.yaml'
+            getSourceDescription() >> '/var/rundeck/projects/TestProject/etc/nonexistent.yaml'
             validateWriteableSource(_, _, _) >> { /* validation passes */ }
-            hasData() >> true
-            readData(_) >> { OutputStream out ->
-                out.write(validFileContent.bytes)
-                validFileContent.bytes.length
-            }
         }
 
         def mockSource = [
@@ -1282,10 +1275,6 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def mockProject = Mock(IRundeckProject) {
             getProjectNodes() >> mockProjectNodes
         }
-
-        // Mock FileResourceModelSource.parseFile to succeed
-        // Note: In real test, we would need to properly mock the static method
-        // or use a real file, but for unit test we'll simulate validation success
 
         controller.frameworkService = Mock(FrameworkService) {
             getFrameworkProject(_) >> mockProject
@@ -1307,15 +1296,15 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         when: "editProjectNodeSourceFile is called"
         def result = controller.editProjectNodeSourceFile()
 
-        then: "result depends on whether file exists and can be parsed"
-        // File may not exist in test environment, so we check for empty or content
+        then: "file is treated as empty"
         result.project == "TestProject"
         result.index == 0
-        result.sourceDesc == '/var/rundeck/projects/TestProject/etc/resources.yaml'
+        result.fileEmpty == true
+        result.sourceDesc == '/var/rundeck/projects/TestProject/etc/nonexistent.yaml'
     }
 
-    void "editProjectNodeSourceFile should allow paths in configured allowed directories"() {
-        given: "a file resource model source in an allowed directory"
+    void "editProjectNodeSourceFile should call validation with configured allowed paths"() {
+        given: "a file resource model source and configured allowed paths"
         params.project = "TestProject"
         params.index = "0"
 
@@ -1359,20 +1348,26 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         when: "editProjectNodeSourceFile is called"
         def result = controller.editProjectNodeSourceFile()
 
-        then: "file access depends on whether file exists and is valid"
+        then: "validation is called with config properties containing allowed paths"
+        1 * mockWriteableSource.validateWriteableSource(
+            { Map props -> props.get("resourceModelSource.file.allowedBasePaths") == "/opt/shared,/var/custom" },
+            _,
+            "TestProject"
+        )
         result.project == "TestProject"
         result.sourceDesc == '/opt/shared/nodes.yaml'
     }
 
-    void "editProjectNodeSourceFile should reject invalid node source files"() {
-        given: "a file that is not a valid node source"
+    void "editProjectNodeSourceFile should handle IOException during file access"() {
+        given: "a file that causes IOException when accessed"
         params.project = "TestProject"
         params.index = "0"
 
         def mockWriteableSource = Mock(WriteableModelSource) {
             getSyntaxMimeType() >> 'application/yaml'
-            getSourceDescription() >> '/var/rundeck/projects/TestProject/etc/invalid.yaml'
-            validateWriteableSource(_, _, _) >> { /* path validation passes */ }
+            // Use a path with special characters that might cause issues
+            getSourceDescription() >> '/var/rundeck/projects/TestProject/etc/file-with- -null.yaml'
+            validateWriteableSource(_, _, _) >> { /* validation passes */ }
         }
 
         def mockSource = [
@@ -1406,14 +1401,13 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             authorizeProjectConfigure(_, _) >> true
         }
 
-        when: "editProjectNodeSourceFile is called with invalid file"
+        when: "editProjectNodeSourceFile is called"
         def result = controller.editProjectNodeSourceFile()
 
-        then: "content validation should detect the invalid file"
-        // FileResourceModelSource.parseFile will throw ResourceModelSourceException for invalid files
-        // Controller catches this and returns empty content
+        then: "IOException is handled and file is treated as empty"
         result.project == "TestProject"
-        result.sourceDesc == '/var/rundeck/projects/TestProject/etc/invalid.yaml'
+        result.fileEmpty == true
+        controller.flash.warning == "Unable to access file"
     }
 
 

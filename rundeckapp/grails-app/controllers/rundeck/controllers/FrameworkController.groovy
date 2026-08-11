@@ -2287,6 +2287,8 @@ List of config values, each value contains:
         Map<String, Object> configProps = [:]
 
         // Read allowed paths from rundeck-config.properties
+        // Note: ConfigurationService automatically adds "rundeck." prefix,
+        // so this reads "rundeck.resourceModelSource.file.allowedBasePaths" from the properties file
         String allowedPaths = configurationService.getString(
             "resourceModelSource.file.allowedBasePaths",
             null
@@ -2457,6 +2459,23 @@ List of config values, each value contains:
         def format = source.writeableSource.syntaxMimeType
         //validate
 
+        // Path validation before writing (RUN-4671)
+        try {
+            Map<String, Object> configProps = buildConfigPropertiesForValidation()
+            source.writeableSource.validateWriteableSource(
+                configProps,
+                frameworkService.getRundeckFramework(),
+                project
+            )
+        } catch (com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException e) {
+            log.warn("Node source path validation failed for save operation: ${e.message}")
+            flash.error = e.message
+            return redirect(
+                controller: 'framework',
+                action: 'projectNodeSources',
+                params: [project: project]
+            )
+        }
 
         def bais = new ByteArrayInputStream(params.fileText.toString().getBytes("UTF-8"))
         long size = -1
