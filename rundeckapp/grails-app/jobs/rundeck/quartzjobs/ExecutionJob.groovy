@@ -471,7 +471,11 @@ class ExecutionJob implements InterruptableJob {
                             execmap.scheduledExecution.uuid,
                             [
                                     execution: execmap.execution,
-                                    context:context
+                                    context:context,
+                                    // Already resolved above -- it is the value this notification is
+                                    // triggered by. Passing it spares the notification path a query
+                                    // inside the transaction that spans its SMTP and HTTP sends.
+                                    averageDuration: jobAverageDurationFinal
                             ]
                     )
                     avgNotificationSent=true

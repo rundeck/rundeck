@@ -758,9 +758,14 @@ class ExecutionJobSpec extends Specification implements DataTest {
         }
 
         ExecutionJob executionJob = new ExecutionJob()
+        // averageDuration is carried in the content map so the notification path does not have to
+        // query for it inside its own transaction. 1 matches this job's stats and the getAverageDuration
+        // stub above. The mock below matches this map exactly, and the test only terminates once that
+        // interaction is satisfied, so a mismatch here hangs rather than fails.
         Map content = [
-            execution: e,
-            context  : origContext
+            execution      : e,
+            context        : origContext,
+            averageDuration: 1
         ]
         ExecutionJob.RunContext runContext=new ExecutionJob.RunContext(
             executionService: es,

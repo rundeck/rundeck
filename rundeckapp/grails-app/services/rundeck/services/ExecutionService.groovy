@@ -1400,8 +1400,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "start", execution.user)
             if (scheduledExecution) {
                 //send onstart notification
+                // Resolved here rather than inside the notification path. ExecutionJob computes the
+                // same value, but only after the execution thread has started -- too late for this
+                // trigger. Querying here still keeps it out of the notification transaction, which
+                // spans SMTP and HTTP sends during which the connection can be closed by the server.
                 notificationService.asyncTriggerJobNotification('start', scheduledExecution.uuid,
-                        [execution: execution, context:executioncontext])
+                        [execution: execution, context:executioncontext,
+                         averageDuration: getAverageDuration(scheduledExecution.uuid)])
 
             }
             //install custom outputstreams for System.out and System.err for this thread and any child threads
@@ -3504,14 +3509,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def export = execRun?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
 
+        // Resolved here, on the execution thread, so the notification path does not have to query for
+        // it from inside its own transaction -- that transaction also spans the SMTP and HTTP sends,
+        // during which the database connection can be closed by the server.
+        def averageDuration = (event.job ? getAverageDuration(event.job.getUuid()) : 0) ?: 0
+
         notificationService.asyncTriggerJobNotification(
                 execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
                 event.job?.getUuid(),
                 [
-                        execution : execution,
-                        nodestatus: event.nodeStatus,
-                        context   : context,
-                        export    : export
+                        execution      : execution,
+                        nodestatus     : event.nodeStatus,
+                        context        : context,
+                        export         : export,
+                        averageDuration: averageDuration
                 ]
         )
     }
@@ -4261,8 +4272,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ScheduledExecution.withTransaction {
                         // Get a new object attached to the new session
                         def scheduledExecution = ScheduledExecution.get(id)
+                        // Already resolved at the top of this method; passing it spares the
+                        // notification path a query inside the transaction that spans its sends.
                         notificationService.asyncTriggerJobNotification('start', scheduledExecution.uuid,
-                                [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
+                                [execution: exec, context: newContext, jobref: jitem.jobIdentifier,
+                                 averageDuration: averageDuration])
                     }
 
                 }
@@ -4318,7 +4332,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             execution: execution,
                             context  : newContext,
                             jobref   : jitem.jobIdentifier,
-                            export    : data
+                            export    : data,
+                            // The value this notification is triggered by, already resolved above.
+                            averageDuration: averageDuration
                     ])
                 }
 
@@ -4330,7 +4346,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                 nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
                                 context   : newContext,
                                 jobref    : jitem.jobIdentifier,
-                                export    : data
+                                export    : data,
+                                // Already resolved at the top of this method; passing it spares the
+                                // notification path a query inside the transaction that spans its sends.
+                                averageDuration: averageDuration
                         ]
                 )
             }

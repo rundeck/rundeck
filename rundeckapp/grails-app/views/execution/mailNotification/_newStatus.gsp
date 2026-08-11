@@ -652,8 +652,10 @@
       <td colspan="3" style="padding: 0 10px;">
         <div class="spacer py-sm-10" style="line-height: 30px;">‌</div>
         <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-          <g:set var="executionService" bean="${rundeck.services.ExecutionService}"/>
-          <g:set var="avgduration" value="${executionService.getAverageDuration(scheduledExecution.uuid)}"/>
+          <%-- Supplied by NotificationService in the mail model. Previously this looked up the
+               ExecutionService bean and queried here, which put a database round-trip inside the
+               mail render, mid-send, on a connection the notification transaction was holding. --%>
+          <g:set var="avgduration" value="${averageDuration ?: 0}"/>
 
           <tr>
             <g:if test="${avgduration>0}">

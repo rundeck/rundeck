@@ -520,7 +520,12 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                                                     nodestatus        : content.nodestatus,
                                                     jobref            : content.jobref,
                                                     allowUnsanitized  : allowUnsanitized,
-                                                    logOutput         : outputBuffer!=null? outputBuffer.toString(): null
+                                                    logOutput         : outputBuffer!=null? outputBuffer.toString(): null,
+                                                    // Supplied so the template does not query for it while the
+                                                    // mail body is being rendered -- that happens inside this
+                                                    // transaction, mid-send. Taken from the job map already built
+                                                    // for the notification context, so both report the same value.
+                                                    averageDuration   : execMap?.job?.averageDuration ?: 0
                                             ]
                                     )
                                 }
@@ -747,7 +752,15 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
         modifiedSuccessNodeList
     }
 
-    protected Map exportJobdata(ScheduledExecution scheduledExecution) {
+    /**
+     * Builds the job section of a notification context.
+     *
+     * @param scheduledExecution the job the notification is for
+     * @param content the trigger's content map; when it carries an 'averageDuration' key that value
+     *        is used instead of querying for it
+     * @return the job data map
+     */
+    protected Map exportJobdata(ScheduledExecution scheduledExecution, Map content = null) {
         def job = [
                 id: scheduledExecution.extid,
                 href: grailsLinkGenerator.link(controller: 'scheduledExecution', action: 'show',
@@ -759,8 +772,18 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                 project: scheduledExecution.project,
                 description: scheduledExecution.description
         ]
-        def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
-        if (averageDuration > 0) {
+        // Prefer a value captured where the trigger fired. The fallback keeps callers that do not
+        // supply one working, but it runs inside the notification transaction -- the one that also
+        // spans SMTP and HTTP sends, during which Aurora can close the connection out from under it.
+        //
+        // containsKey rather than truthiness on purpose: a genuine average of 0, for a job with no
+        // completed executions yet, must not be mistaken for "not supplied" and re-trigger the query.
+        // Left untyped, and the comparison null-tolerant, to match the previous behaviour exactly:
+        // getAverageDuration is declared to return Long, so a null must not blow up here.
+        def averageDuration = content?.containsKey('averageDuration')
+                ? content.averageDuration
+                : executionService.getAverageDuration(scheduledExecution.uuid)
+        if ((averageDuration ?: 0) > 0) {
             job.averageDuration = averageDuration
         }
         job
@@ -963,7 +986,7 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
         def projUrl = grailsLinkGenerator.link(action: 'index', controller: 'menu', params: [project:  exec.project], absolute: true)
 
         def execMap = generateExecutionData(exec, content)
-        def jobMap=exportJobdata(source)
+        def jobMap=exportJobdata(source, content)
         Map context = generateContextData(exec, content)
 
         //used for plugins types

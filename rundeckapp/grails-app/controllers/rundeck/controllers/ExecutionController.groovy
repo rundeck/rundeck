@@ -532,9 +532,13 @@ class ExecutionController extends ControllerBase{
             return render(
                     view: "mailNotification/status",
                     model: loadExecutionViewPlugins() + [execstate: state, scheduledExecution: se, execution: e,
-                                                         filesize: filesize]
+                                                         filesize: filesize,
+                                                         // The template reads this from the model rather than
+                                                         // looking up ExecutionService and querying for it.
+                                                         averageDuration: executionService.getAverageDuration(se.uuid)]
             )
         }else{
+            // No job, so no average duration to report; the template treats an absent value as zero.
             return render(
                     view: "mailNotification/status",
                     model: loadExecutionViewPlugins() + [execstate: state, execution: e, filesize: filesize]
