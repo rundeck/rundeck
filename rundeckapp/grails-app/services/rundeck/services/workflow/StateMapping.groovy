@@ -59,6 +59,13 @@ class StateMapping {
         }
         return cb > ca
     }
+    def boolean stepContributesToNodeDuration(Map step) {
+        if (!step?.startTime) {
+            return false
+        }
+        def state = step.executionState
+        return state && !(state in ['NOT_STARTED', 'NONE', 'WAITING'])
+    }
     def Map summarizeForNode(Map map,String node, List steps){
         def summary=[:]
         def currentStep=[:];
@@ -94,17 +101,25 @@ class StateMapping {
                     || currentStep && stateCompare(currentStep.executionState, step.executionState)) {
                 currentStep.putAll(step);
             }
-            def started=step.startTime?decodeDate(step.startTime):null
-            if(!dateStarted || (started && started<dateStarted)){
-                dateStarted=started;
-            }
-            def lastUpdated=lastUpdatedFor(step)
-            if(!updated || lastUpdated>updated){
-                updated=lastUpdated
+            if (stepContributesToNodeDuration(step)) {
+                def started=step.startTime?decodeDate(step.startTime):null
+                if(!dateStarted || (started && started<dateStarted)){
+                    dateStarted=started;
+                }
+                def lastUpdated=lastUpdatedFor(step)
+                if(lastUpdated && (!updated || lastUpdated>updated)){
+                    updated=lastUpdated
+                }
             }
         }
         if (updated && dateStarted) {
             duration = updated.time - dateStarted.time
+        }
+        if (duration > 0 && map?.startTime && map?.endTime) {
+            def execDuration = decodeDate(map.endTime).time - decodeDate(map.startTime).time
+            if (duration > execDuration) {
+                duration = execDuration
+            }
         }
         summary.duration=duration
         summary.startTime=encodeDate(dateStarted)
