@@ -1180,6 +1180,48 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
 
     }
 
+    def "plugin notification still sends when execution context is null"() {
+        given: 'a plugin-type notification dispatched without an execution context'
+        def (job, execution) = createTestJob()
+
+        def content = [
+                execution: execution,
+                context  : null
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'SimpleNotificationPlugin'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService) {
+            getEffectiveSuccessNodeList(_) >> []
+        }
+
+        def pluginInst = Mock(NotificationPlugin)
+
+        when: 'trigger notification'
+        def result = service.triggerJobNotification('start', job, content)
+
+        then: 'the plugin still runs and the notification is sent'
+        1 * service.pluginService.configurePlugin('SimpleNotificationPlugin', _, _, _, _) >> new ConfiguredPlugin(pluginInst, [:])
+        1 * pluginInst.postNotification(_, _, _) >> true
+        result
+    }
+
     def "export variables replace values in webhook url"() {
         given:
         def (job, execution) = createTestJob()
