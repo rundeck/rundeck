@@ -1271,7 +1271,7 @@ const messages = {
     "If the referenced job is from another project, you can use referenced job node list instead of the parent's nodes.",
   "override.node.filters": "Override Node Filters?",
   "JobExec.property.nodeFilter.help.description":
-    "Enter a node filter to override the triggered Job's target nodes. If you enter    a new filter string, you can also change the Thread Count, and behavior if the Job    fails for a node.",
+    "Enter a node filter to override the triggered Job's target nodes. If you enter    a new filter string, you can also change the Thread Count, and behavior if the Job    fails for a node. If the referenced Job is in a different project, this filter will only use the parent project's nodes.",
   "scheduledExecution.property.nodeIntersect.label": "Intersection of nodes",
   "scheduledExecution.property.nodeIntersect.false":
     "No, use referenced job defined or overridden node filter",
