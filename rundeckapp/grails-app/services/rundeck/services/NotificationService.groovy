@@ -55,7 +55,6 @@ import org.rundeck.app.AppConstants
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.app.data.providers.v1.execution.ExecutionDataProvider
-import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
@@ -106,7 +105,6 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
     def storageService
     UserDataProvider userDataProvider
     ExecutionDataProvider executionDataProvider
-    ReferencedExecutionDataProvider referencedExecutionDataProvider
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService, project,config, PropertyScope.Instance, PropertyScope.Project)
@@ -537,7 +535,9 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                     // rendered inside mailService.sendMail below, so a query issued from the template runs
                     // mid-send -- inside the transaction that spans the SMTP conversation, during which the
                     // server can close the connection. Same reasoning as averageDuration.
-                    Map executionCounts = resolveJobExecutionCounts(source)
+                    // Null-tolerant: a mocked ExecutionService returns null for unstubbed methods, and the
+                    // template defaults each count to 0 anyway.
+                    Map executionCounts = executionService.getJobExecutionCounts(source) ?: [:]
 
                     // Read before the send rather than from inside the mail closure below. That closure runs
                     // while the message is being built and sent, so this read -- log storage I/O plus the
@@ -895,31 +895,6 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
             job.averageDuration = averageDuration
         }
         job
-    }
-
-    /**
-     * Resolve the execution counts the notification mail template reports, as a view model fragment.
-     *
-     * These were previously queried by _newStatus.gsp itself. That template is rendered inside
-     * mailService.sendMail, so the queries ran while the message was being sent -- inside the transaction
-     * that spans the SMTP conversation, and therefore on a connection the server may already have closed.
-     * Resolving them before the send removes four queries from that window, two of which are count(*)
-     * against the execution table.
-     *
-     * @param scheduledExecution the job the notification is for, may be null for an execution with no job
-     * @return model entries for the template; all zero when there is no job
-     */
-    protected Map resolveJobExecutionCounts(ScheduledExecution scheduledExecution) {
-        if (!scheduledExecution?.id) {
-            return [executionCount: 0, succeededCount: 0, referencedExecutionCount: 0, referencedSucceededCount: 0]
-        }
-        [
-                executionCount          : Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution),
-                succeededCount          : Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded'),
-                referencedExecutionCount: referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid),
-                referencedSucceededCount: referencedExecutionDataProvider.countByJobUuidAndStatus(
-                        scheduledExecution.uuid, 'succeeded')
-        ]
     }
 
     /**

@@ -3578,6 +3578,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return 0;
     }
 
+    /**
+     * Execution counts for a job, including executions referenced from other jobs.
+     *
+     * The notification mail template used to run these four queries itself, while it was being
+     * rendered -- which happens inside mailService.sendMail, so they ran mid-send, inside the
+     * transaction that spans the SMTP conversation and therefore on a connection the server may
+     * already have closed. Callers now resolve them before the send and pass them in the view model.
+     *
+     * @param scheduledExecution the job, may be null for an execution that has none
+     * @return view model entries; all zero when there is no job
+     */
+    Map getJobExecutionCounts(ScheduledExecution scheduledExecution) {
+        if (!scheduledExecution?.id) {
+            return [executionCount: 0, succeededCount: 0, referencedExecutionCount: 0, referencedSucceededCount: 0]
+        }
+        [
+                executionCount          : Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution),
+                succeededCount          : Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded'),
+                referencedExecutionCount: referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid),
+                referencedSucceededCount: referencedExecutionDataProvider.countByJobUuidAndStatus(
+                        scheduledExecution.uuid, 'succeeded')
+        ]
+    }
+
 
     /**
     * Generate an argString from a map of options and values

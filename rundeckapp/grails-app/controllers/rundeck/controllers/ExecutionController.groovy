@@ -99,7 +99,6 @@ import java.time.ZoneId
 class ExecutionController extends ControllerBase{
     FrameworkService frameworkService
     ExecutionService executionService
-    NotificationService notificationService
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
     OrchestratorPluginService orchestratorPluginService
@@ -537,7 +536,7 @@ class ExecutionController extends ControllerBase{
                                                          // The template reads these from the model rather than
                                                          // looking up beans and querying for them itself.
                                                          averageDuration: executionService.getAverageDuration(se.uuid)]
-                            + notificationService.resolveJobExecutionCounts(se)
+                            + executionService.getJobExecutionCounts(se)
             )
         }else{
             // No job, so no average duration to report; the template treats an absent value as zero.
