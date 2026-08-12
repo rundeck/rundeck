@@ -1,0 +1,42 @@
+services:
+  rundeck:
+    build:
+      context: "."
+      args:
+        IMAGE: ${TEST_IMAGE}
+    platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
+    links:
+      - jdbc-db
+    environment:
+      RUNDECK_MULTIURL_ENABLED: "true"
+      RUNDECK_GRAILS_URL: ${TEST_RUNDECK_GRAILS_URL}
+      RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
+      RUNDECK_DATABASE_USERNAME: rundeck
+      RUNDECK_DATABASE_PASSWORD: rundeck
+      RUNDECK_DATABASE_URL: jdbc:mysql://jdbc-db/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+      RUNDECK_JAAS_MODULES_0: JDBCLoginModule
+      RUNDECK_JAAS_JDBC_DBDRIVER: org.mariadb.jdbc.Driver
+      RUNDECK_JAAS_JDBC_DBURL: jdbc:mysql://jdbc-db/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+      RUNDECK_JAAS_JDBC_DBUSERNAME: rundeck
+      RUNDECK_JAAS_JDBC_DBPASSWORD: rundeck
+      RUNDECK_JAAS_JDBC_USERTABLE: jaas_users
+      RUNDECK_JAAS_JDBC_USERFIELD: username
+      RUNDECK_JAAS_JDBC_CREDENTIALFIELD: password
+      RUNDECK_JAAS_JDBC_USERROLETABLE: jaas_roles
+      RUNDECK_JAAS_JDBC_USERROLEUSERFIELD: username
+      RUNDECK_JAAS_JDBC_USERROLEROLEFIELD: role
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/timezone:/etc/timezone:ro"
+    ports:
+      - "4440:4440"
+
+  jdbc-db:
+    image: mysql:8.4
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=rundeck
+      - MYSQL_USER=rundeck
+      - MYSQL_PASSWORD=rundeck
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d:ro

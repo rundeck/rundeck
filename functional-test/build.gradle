@@ -181,3 +181,13 @@ task ldapTest(type: Test){
     systemProperty('spock.configuration', 'spock-configs/IncludeLdapTestsConfig.groovy')
     description = "Run Rundeck OSS LDAP Tests"
 }
+
+task jdbcTest(type: Test){
+    useJUnitPlatform()
+    // Grails 7: Force sequential execution to prevent Docker Compose port conflicts
+    maxParallelForks = 1
+    systemProperty("TEST_IMAGE", "rundeck/rundeck:SNAPSHOT")
+    systemProperty("COMPOSE_PATH", "docker/jdbc/docker-compose.yml")
+    systemProperty('spock.configuration', 'spock-configs/IncludeJdbcTestsConfig.groovy')
+    description = "Run Rundeck OSS JAAS JDBCLoginModule Tests"
+}
