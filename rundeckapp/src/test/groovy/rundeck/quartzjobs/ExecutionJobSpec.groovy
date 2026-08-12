@@ -38,6 +38,7 @@ import spock.lang.Specification
 
 import java.sql.Timestamp
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Created by greg on 4/12/16.
@@ -788,6 +789,94 @@ class ExecutionJobSpec extends Specification implements DataTest {
         }
         result != null
         se.executions.status.get(0) == ExecutionService.EXECUTION_RUNNING
+    }
+
+    def "average notification context carries the average, not the trigger threshold"() {
+        given: 'a percentage threshold, so the threshold and the average differ'
+        ScheduledExecution se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12']
+                        )]
+                ),
+                // '50%' makes the trigger threshold 1.5x the average: 15ms against an average of 10ms.
+                // The existing test uses '0s', which parseTimeDuration resolves to 0 and therefore falls
+                // back to the average itself -- so it cannot tell the two values apart.
+                notifyAvgDurationThreshold: '50%',
+                averageDuration: 10,
+                totalTime: 10,
+                execCount: 1
+        )
+        se.save(flush: true)
+
+        Execution e = new Execution(
+                scheduledExecution: se,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                project: se.project,
+                user: 'bob',
+                status: ExecutionService.EXECUTION_RUNNING,
+                workflow: new Workflow(commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12']
+                )])
+        ).save(flush: true)
+
+        def secureOption = [:]
+        def secureOptsExposed = [:]
+        def eus = Mock(ExecutionUtilService)
+        def auth = Mock(UserAndRolesAuthContext)
+        def framework = Mock(Framework)
+        def origContext = Mock(StepExecutionContext) {
+            getDataContext() >> [option: [env: true]]
+            getStepNumber() >> 1
+            getStepContext() >> []
+            getFramework() >> framework
+        }
+
+        CountDownLatch latch = new CountDownLatch(1)
+        def testThread = new WorkflowExecutionServiceThread(null, null, origContext, null, null) {
+            void run() {
+                // Bounded, unlike the sibling test: if the expected content map stops matching, this test
+                // must fail rather than hang the whole suite waiting for a countDown that never comes.
+                latch.await(20, TimeUnit.SECONDS)
+            }
+        }
+        def execmap = [execution: e, scheduledExecution: se, thread: testThread]
+        def es = Mock(ExecutionService) {
+            1 * executeAsyncBegin(framework, auth, e, se, secureOption, secureOptsExposed) >> {
+                testThread.start()
+                execmap
+            }
+            getAverageDuration(_) >> 10
+        }
+
+        ExecutionJob executionJob = new ExecutionJob()
+        ExecutionJob.RunContext runContext = new ExecutionJob.RunContext(
+                executionService: es,
+                executionUtilService: eus,
+                execution: e,
+                framework: framework,
+                authContext: auth,
+                scheduledExecution: se,
+                timeout: 0,
+                secureOpts: secureOption,
+                secureOptsExposed: secureOptsExposed
+        )
+
+        when:
+        def result = executionJob.executeCommand(runContext, Mock(JobExecutionContext))
+
+        then: 'the average is reported, not the 15ms threshold the notification fired at'
+        1 * es.avgDurationExceeded(_, [execution: e, context: origContext, averageDuration: 10]) >> {
+            latch.countDown()
+        }
+        result != null
     }
 
     def "scheduled job quartz checking the same format of dates"() {
