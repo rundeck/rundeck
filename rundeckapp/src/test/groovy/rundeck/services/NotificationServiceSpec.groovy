@@ -1484,4 +1484,42 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         where:
         queried << [null, 0L]
     }
+
+    def "deliverNotifications isolates a failing delivery from the rest"() {
+        given: 'three deliveries, the middle one throwing'
+        def called = []
+        List<Closure<Boolean>> deliveries = [
+                { -> called << 'first'; true },
+                { -> called << 'second'; throw new RuntimeException('send failed') },
+                { -> called << 'third'; true },
+        ]
+
+        when:
+        def result = service.deliverNotifications(deliveries)
+
+        then: 'the failure is contained; the notifications after it still go out'
+        called == ['first', 'second', 'third']
+        result
+
+        and: 'this preserves the per-notification try/catch that wrapped both phases before the split'
+        noExceptionThrown()
+    }
+
+    def "deliverNotifications reports the last delivery that returned a result"() {
+        when:
+        def result = service.deliverNotifications(deliveries as List<Closure<Boolean>>)
+
+        then:
+        result == expected
+
+        where: 'a null result leaves the value from the previous delivery, matching the old didsend'
+        deliveries                                      || expected
+        []                                              || false
+        [{ -> true }]                                   || true
+        [{ -> false }]                                  || false
+        [{ -> true }, { -> false }]                     || false
+        [{ -> false }, { -> true }]                     || true
+        [{ -> true }, { -> null }]                      || true
+        [{ -> true }, { -> throw new RuntimeException('x') }] || true
+    }
 }

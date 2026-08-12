@@ -197,12 +197,7 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
         if(trigger && schedUuid){
             if(featureService.featurePresent(Features.NOTIFICATIONS_OWN_THREAD)){
                 def notificationTask = Promises.task {
-                    ScheduledExecution.withNewTransaction {
-                        ScheduledExecution scheduledExecution = ScheduledExecution.findByUuid(schedUuid)
-                        if(null != scheduledExecution) {
-                            triggerJobNotification(trigger, scheduledExecution, content)
-                        }
-                    }
+                    resolveThenDeliver(trigger, schedUuid, content)
                 }
                 try{
                     notificationTask.get(configurationService.getLong("notification.threadTimeOut", defaultThreadTO), TimeUnit.MILLISECONDS)
@@ -211,12 +206,7 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                     notificationTask.cancel(true)
                 }
             }else{
-                ScheduledExecution.withNewTransaction {
-                    ScheduledExecution scheduledExecution = ScheduledExecution.findByUuid(schedUuid)
-                    if(null != scheduledExecution){
-                        triggerJobNotification(trigger, scheduledExecution, content)
-                    }
-                }
+                resolveThenDeliver(trigger, schedUuid, content)
             }
 
         }
@@ -302,8 +292,52 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
         return map;
     }
 
+    /**
+     * Load the job, resolve its notifications in a short transaction, then deliver them with none open.
+     *
+     * The transaction ends before any SMTP, HTTP or plugin call. That is the point: the previous shape
+     * held it open across those sends, and since the server closes a connection idle longer than its
+     * wait_timeout, the transaction's own COMMIT then failed on a dead socket.
+     *
+     * A session is held for the whole call so that plugin notifications, which hand third-party code the
+     * Execution entity, can still traverse associations during delivery. The email and webhook paths do
+     * not need it -- their database reads are all resolved in the transaction.
+     */
+    protected void resolveThenDeliver(String trigger, schedUuid, Map content) {
+        ScheduledExecution.withNewSession {
+            List<Closure<Boolean>> deliveries = ScheduledExecution.withNewTransaction {
+                ScheduledExecution scheduledExecution = ScheduledExecution.findByUuid(schedUuid)
+                null != scheduledExecution ? resolveNotifications(trigger, scheduledExecution, content) : []
+            }
+            deliverNotifications(deliveries)
+        }
+    }
+
+    /**
+     * Resolve and then deliver the notifications for a trigger.
+     *
+     * Kept for callers that want both phases in one call and are already inside a suitable
+     * transaction or session. {@link #asyncTriggerJobNotification} runs the two phases separately so
+     * that only the resolve phase is transactional -- see that method for why.
+     */
     boolean triggerJobNotification(String trigger, ScheduledExecution source, Map content){
-        def didsend = false
+        deliverNotifications(resolveNotifications(trigger, source, content))
+    }
+
+    /**
+     * Resolve the notifications for a trigger into a list of deliveries, doing all database reads here
+     * and none in the returned closures.
+     *
+     * Every closure captures values already resolved, so delivery needs no transaction and -- with the
+     * mail template's queries and the log read now hoisted out of the send -- no Hibernate session
+     * either, except for third-party plugin code which may still walk associations on the Execution it
+     * is handed.
+     *
+     * @return one closure per notification, each returning whether it sent, or null if it does not
+     *         report a result
+     */
+    protected List<Closure<Boolean>> resolveNotifications(String trigger, ScheduledExecution source, Map content){
+        List<Closure<Boolean>> deliveries = []
         if(source.notifications && source.notifications.find{it.eventTrigger=='on'+trigger}){
             def notes = source.notifications.findAll{it.eventTrigger=='on'+trigger}
             notes.each{ Notification n ->
@@ -515,6 +549,8 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                         outputBuffer = copyExecOutputToStringBuffer(exec, isFormatted)
                     }
 
+                    // Recipient expansion resolved here; only the sends themselves are deferred.
+                    List<String> resolvedRecipients = []
                     destarr.each{String recipient->
                         //try to expand property references
                         String sendTo=recipient
@@ -527,6 +563,12 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                                 return
                             }
                         }
+                        resolvedRecipients << sendTo
+                    }
+
+                    deliveries << { ->
+                        boolean sent = false
+                        resolvedRecipients.each{String sendTo->
                         try{
                             mailService.sendMail{
                               multipart (attachlog && outputfile!=null)
@@ -558,17 +600,19 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                                     attachBytes "${source.jobName}-${exec.id}.${attachedExtension}", attachedContentType, outputfile.getText("UTF-8").bytes
                                 }
                             }
-                            didsend = true
+                            sent = true
                         }catch(Throwable t){
                             log.error("Error sending notification email to ${sendTo} for Execution ${exec.id}: "+t.getMessage());
                             if (log.traceEnabled) {
                                 log.trace("Error sending notification email to ${sendTo} for Execution ${exec.id}: " + t.getMessage(), t)
                             }
                         }
-                    }
+                        }
 
-                    if (null != outputfile) {
-                        outputfile.delete()
+                        if (null != outputfile) {
+                            outputfile.delete()
+                        }
+                        sent
                     }
                 }else if(n.type=='url'){    //sending notification of a status trigger for the Job
                     Execution exec = content.execution
@@ -582,35 +626,46 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                     String urls = urlsConfiguration.urls
                     String method = urlsConfiguration.httpMethod
                     def urlarr = urls.split(",") as List
-                    def webhookfailure=false
-                    urlarr.each{String urlstr->
-                        //perform token expansion within URL.
-                        String newurlstr=expandWebhookNotificationUrl(urlstr,exec,source,trigger, content?.export)
+                    // Token expansion resolved here: it reads the execution and job, so it must not run
+                    // after the transaction closes or in the middle of the POSTs.
+                    List<String> expandedUrls = urlarr.collect{String urlstr->
+                        expandWebhookNotificationUrl(urlstr,exec,source,trigger, content?.export)
+                    }
+                    String eventTrigger = n.eventTrigger
+                    String format = n.format
+
+                    deliveries << { ->
+                        def webhookfailure=false
+                        expandedUrls.each{String newurlstr->
                         try{
-                            def result= postDataUrl(newurlstr, n.format,payloadStr, trigger, state, exec.id.toString(), method)
+                            def result= postDataUrl(newurlstr, format,payloadStr, trigger, state, exec.id.toString(), method)
                             if(!result.success){
                                 webhookfailure=true
-                                log.error("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}: ${result.error}")
+                                log.error("Notification failed [${eventTrigger},${state},${exec.id}]; URL ${newurlstr}: ${result.error}")
                             }else if (log.traceEnabled) {
-                                log.trace("Notification succeeded [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}")
+                                log.trace("Notification succeeded [${eventTrigger},${state},${exec.id}]; URL ${newurlstr}")
                             }
                         } catch (Throwable t) {
                             webhookfailure=true
-                            log.error("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}: " + t.message);
+                            log.error("Notification failed [${eventTrigger},${state},${exec.id}]; URL ${newurlstr}: " + t.message);
                             if (log.traceEnabled) {
                                 log.trace("Notification failed", t)
                             }
                         }
+                        }
+                        !webhookfailure
                     }
-                    didsend=!webhookfailure
                 }else if (n.type) {
 
                     def execMap = null
                     Map context = null
                     (context, execMap) = generateNotificationContext(content.execution, content, source)
 
-
-                    didsend=triggerPlugin(trigger,execMap,n.type, source.project,n.configuration, content,context)
+                    String pluginType = n.type
+                    Map pluginConfig = n.configuration
+                    deliveries << { ->
+                        triggerPlugin(trigger,execMap,pluginType, source.project,pluginConfig, content,context)
+                    }
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
@@ -623,7 +678,35 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
             }
         }
 
-        return didsend
+        return deliveries
+    }
+
+    /**
+     * Run resolved deliveries. Performs the external I/O -- SMTP, HTTP, plugins -- and no database work.
+     *
+     * Each delivery is isolated: a failure in one does not stop the others, matching the per-notification
+     * try/catch that wrapped both phases before they were split.
+     *
+     * @param deliveries closures from {@link #resolveNotifications}
+     * @return the result of the last delivery that reported one, preserving the previous behaviour where
+     *         each notification overwrote didsend and types that report nothing left it unchanged
+     */
+    protected boolean deliverNotifications(List<Closure<Boolean>> deliveries) {
+        boolean didsend = false
+        deliveries.each { Closure<Boolean> delivery ->
+            try {
+                Boolean result = delivery.call()
+                if (result != null) {
+                    didsend = result
+                }
+            } catch (Throwable t) {
+                log.error("Error delivering notification: ${t.class}: " + t.message, t)
+                if (log.traceEnabled) {
+                    log.trace("Notification delivery failed", t)
+                }
+            }
+        }
+        didsend
     }
 
     String createXmlNotificationPayload(String trigger, Execution exec) {
