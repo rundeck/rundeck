@@ -3239,8 +3239,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         def val
                         if (optparams[opt.name] instanceof Collection) {
                             val = [optparams[opt.name]].flatten();
-                        } else {
+                        } else if (opt.delimiter) {
                             val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
+                        } else {
+                            val = [optparams[opt.name].toString()]
                         }
                         List failedValues = []
                         val.grep { it }.each { value ->
@@ -3324,7 +3326,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 pattern = configurationService.getString(AppConstants.SYSTEM_OPTION_INPUT_DEFAULT_PATTERN, null)
             }
         } catch (Exception e) {
-            log.warn("Could not resolve default option input validation pattern for project ${project}: ${e.message}")
+            log.warn("Could not resolve default option input validation pattern for project ${project}", e)
             return null
         }
         if (!pattern?.trim()) {
@@ -3333,7 +3335,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
             return Pattern.compile(pattern)
         } catch (PatternSyntaxException e) {
-            log.warn("Ignoring invalid default option input validation pattern '${pattern}': ${e.message}")
+            log.warn("Ignoring invalid default option input validation pattern '${pattern}'", e)
             return null
         }
     }
