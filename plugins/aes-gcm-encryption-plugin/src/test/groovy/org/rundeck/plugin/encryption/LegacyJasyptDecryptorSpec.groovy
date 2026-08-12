@@ -101,17 +101,30 @@ class LegacyJasyptDecryptorSpec extends Specification {
         new LegacyJasyptDecryptor("PBEWithMD5AndDES", "BC", 1000).saltSizeBytes == 8
     }
 
-    def "decrypt with wrong password throws EncryptionException"() {
+    /**
+     * AES-CBC with PKCS#7 does not authenticate ciphertext. A wrong password usually
+     * fails padding validation in {@code Cipher.doFinal}, but valid padding can occur
+     * by chance (~0.4%), in which case decryption returns garbage bytes instead of
+     * throwing. Assert the secure property that always holds: never the original
+     * plaintext. (AES-GCM is the authenticated path; see {@link AesEncryptorSpec}.)
+     */
+    def "decrypt with wrong password does not return original plaintext"() {
         given:
         def plaintext = "secret data".bytes
         def encrypted = jasyptEncrypt(plaintext, "correct-password", "PBEWITHSHA256AND128BITAES-CBC-BC", "BC", 1000)
         def decryptor = LegacyJasyptDecryptor.defaultStorage()
 
         when:
-        decryptor.decrypt("wrong-password", encrypted)
+        byte[] result = null
+        EncryptionException caught = null
+        try {
+            result = decryptor.decrypt("wrong-password", encrypted)
+        } catch (EncryptionException e) {
+            caught = e
+        }
 
         then:
-        thrown(EncryptionException)
+        caught != null || result != plaintext
     }
 
     def "decrypt null message throws EncryptionException"() {
