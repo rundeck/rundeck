@@ -105,12 +105,48 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
     }
 
     /**
+     * Normalize a ConditionalSet to standard OR-of-ANDs (DNF) form so it can be safely combined
+     * by {@link #combineConditionSets}, which assumes both inputs are in that form.
+     * If invertLogic is false, the set is already in this form and is returned unchanged.
+     * If invertLogic is true (AND-of-ORs: groups=[[A,B],[C,D]] meaning (A OR B) AND (C OR D)),
+     * distributes AND over OR to produce the equivalent DNF: the Cartesian product across
+     * groups, picking exactly one condition from each group per combination.
+     * @param set The condition set to normalize (can be null)
+     * @return An equivalent ConditionalSet with invertLogic == false, or the original if already normalized/null
+     */
+    private ConditionalSet normalizeToDnf(ConditionalSet set) {
+        if (set == null || !set.isInvertLogic()) return set
+        def groups = set.conditionGroups
+        if (groups == null || groups.isEmpty()) return set
+
+        List<List> combinations = [[]]
+        groups.each { group ->
+            if (group == null || group.isEmpty()) return // neutral OR-branch, skip
+            List<List> next = []
+            combinations.each { partial -> group.each { cond -> next.add(partial + [cond]) } }
+            combinations = next
+        }
+
+        def normalized = new ConditionalSetImpl()
+        normalized.nodeStep = set.nodeStep
+        normalized.invertLogic = false
+        normalized.conditionGroups = combinations
+        return normalized
+    }
+
+    /**
      * Combine two ConditionalSets using AND logic (Cartesian product of OR groups).
+     * Both inputs are normalized to DNF (OR-of-ANDs) form via {@link #normalizeToDnf} before
+     * combining, so the result is always in standard OR-of-ANDs form with invertLogic == false,
+     * regardless of whether either input had invertLogic set.
      * @param parent Parent condition set (can be null)
      * @param child Child condition set (can be null)
      * @return Combined condition set, or null if both are null
      */
     private ConditionalSet combineConditionSets(ConditionalSet parent, ConditionalSet child) {
+        parent = normalizeToDnf(parent)
+        child = normalizeToDnf(child)
+
         if (parent == null) return child
         if (child == null) return parent
 
