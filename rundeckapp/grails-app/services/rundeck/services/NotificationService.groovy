@@ -55,6 +55,7 @@ import org.rundeck.app.AppConstants
 import org.rundeck.app.data.model.v1.execution.ExecutionData
 import org.rundeck.app.data.providers.v1.user.UserDataProvider
 import org.rundeck.app.data.providers.v1.execution.ExecutionDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
@@ -105,6 +106,7 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
     def storageService
     UserDataProvider userDataProvider
     ExecutionDataProvider executionDataProvider
+    ReferencedExecutionDataProvider referencedExecutionDataProvider
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService, project,config, PropertyScope.Instance, PropertyScope.Project)
@@ -497,6 +499,12 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                         outputfile=copyExecOutputToTempFile(exec,isFormatted,attachedExtension)
                     }
 
+                    // Resolved here, before the send, rather than by the template. The mail body is
+                    // rendered inside mailService.sendMail below, so a query issued from the template runs
+                    // mid-send -- inside the transaction that spans the SMTP conversation, during which the
+                    // server can close the connection. Same reasoning as averageDuration.
+                    Map executionCounts = resolveJobExecutionCounts(source)
+
                     destarr.each{String recipient->
                         //try to expand property references
                         String sendTo=recipient
@@ -537,7 +545,7 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                                                     // transaction, mid-send. Taken from the job map already built
                                                     // for the notification context, so both report the same value.
                                                     averageDuration   : execMap?.job?.averageDuration ?: 0
-                                            ]
+                                            ] + executionCounts
                                     )
                                 }
                                 if(attachlog && outputfile != null){
@@ -798,6 +806,31 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
             job.averageDuration = averageDuration
         }
         job
+    }
+
+    /**
+     * Resolve the execution counts the notification mail template reports, as a view model fragment.
+     *
+     * These were previously queried by _newStatus.gsp itself. That template is rendered inside
+     * mailService.sendMail, so the queries ran while the message was being sent -- inside the transaction
+     * that spans the SMTP conversation, and therefore on a connection the server may already have closed.
+     * Resolving them before the send removes four queries from that window, two of which are count(*)
+     * against the execution table.
+     *
+     * @param scheduledExecution the job the notification is for, may be null for an execution with no job
+     * @return model entries for the template; all zero when there is no job
+     */
+    protected Map resolveJobExecutionCounts(ScheduledExecution scheduledExecution) {
+        if (!scheduledExecution?.id) {
+            return [executionCount: 0, succeededCount: 0, referencedExecutionCount: 0, referencedSucceededCount: 0]
+        }
+        [
+                executionCount          : Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution),
+                succeededCount          : Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded'),
+                referencedExecutionCount: referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid),
+                referencedSucceededCount: referencedExecutionDataProvider.countByJobUuidAndStatus(
+                        scheduledExecution.uuid, 'succeeded')
+        ]
     }
 
     /**

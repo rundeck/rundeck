@@ -28,12 +28,19 @@
     request.setAttribute("IS_MAIL_RENDERING_REQUEST",Boolean.TRUE)
 %>
 
-<g:set var="referencedExecutionDataProvider" bean="${org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider}"/>
-<g:set var="execCount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution) : 0}"/>
-<g:set var="successcount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
-<g:set var="refsuccesscount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuidAndStatus(scheduledExecution.uuid, 'succeeded') : 0}"/>
-
-<g:set var="refexecCount" value="${scheduledExecution.id ? referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid) : 0}"/>
+%{--
+  - The four counts below come from the view model rather than being queried here. This template is
+  - rendered inside mailService.sendMail, so a query at this point runs while the message is being
+  - sent -- inside the transaction that spans the SMTP conversation, during which the server can close
+  - the database connection. The caller resolves them before the send instead.
+  -
+  - Defaults keep the template renderable for callers that supply no counts (an execution with no job),
+  - which also removes the NPE that ${scheduledExecution.id} raised on that path.
+  --}%
+<g:set var="execCount" value="${executionCount ?: 0}"/>
+<g:set var="successcount" value="${succeededCount ?: 0}"/>
+<g:set var="refsuccesscount" value="${referencedSucceededCount ?: 0}"/>
+<g:set var="refexecCount" value="${referencedExecutionCount ?: 0}"/>
 
 <g:set var="successrate" value="${(execCount + refexecCount) > 0 ? ((successcount+refsuccesscount) / (execCount+refexecCount)) : 0}"/>
 

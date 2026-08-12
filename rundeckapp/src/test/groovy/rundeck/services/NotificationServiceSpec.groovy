@@ -50,6 +50,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.spi.Services
 import org.springframework.mail.MailMessage
 import rundeck.CommandExec
@@ -76,6 +77,9 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         mockDataService(UserDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
         service.userDataProvider =  provider
+        // Injected in production; resolveJobExecutionCounts uses it to supply the mail template's
+        // reference-execution counts, so it must be present for any test that renders a notification.
+        service.referencedExecutionDataProvider = Mock(ReferencedExecutionDataProvider)
     }
 
     private List createTestJob() {
