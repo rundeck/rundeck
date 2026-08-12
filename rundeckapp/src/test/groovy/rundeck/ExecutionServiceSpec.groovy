@@ -2182,6 +2182,24 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e.message == 'domain.Option.validation.default.pattern.values'
     }
 
+    def "validate option values, default input pattern multivalued with no delimiter validates whole value (no NPE)"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        // multivalued option without a delimiter configured (delimiter is nullable in the domain)
+        se.addToOptions(new Option(name: 'test1', enforced: false, multivalued: true, delimiter: null))
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> { it[0] }
+        }
+
+        when:
+        service.validateOptionValues(se, ['test1': 'bad value'])
+
+        then:
+        ExecutionServiceException e = thrown()
+        e.message == 'domain.Option.validation.default.pattern.values'
+    }
+
     def "validate option values, default input pattern from system config fallback"() {
         given:
         ScheduledExecution se = new ScheduledExecution(project: 'AProject')
