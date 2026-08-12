@@ -505,6 +505,16 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                     // server can close the connection. Same reasoning as averageDuration.
                     Map executionCounts = resolveJobExecutionCounts(source)
 
+                    // Read before the send rather than from inside the mail closure below. That closure runs
+                    // while the message is being built and sent, so this read -- log storage I/O plus the
+                    // lookup backing it -- happened inside the transaction that spans the SMTP conversation.
+                    // It also re-read the same content once per recipient.
+                    // Guarded on !htmlemail because the default view is the only body that consumes it here;
+                    // when a custom template file uses ${logoutput.data} the buffer was already filled above.
+                    if (!htmlemail && attachlogbody && outputBuffer == null) {
+                        outputBuffer = copyExecOutputToStringBuffer(exec, isFormatted)
+                    }
+
                     destarr.each{String recipient->
                         //try to expand property references
                         String sendTo=recipient
@@ -525,10 +535,6 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
                                 if(htmlemail){
                                     html(htmlemail)
                                 }else{
-                                    if(attachlogbody){
-                                        outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
-                                    }
-
                                     body(
                                             view: "/execution/mailNotification/status",
                                             model: loadExecutionViewPlugins() + [
