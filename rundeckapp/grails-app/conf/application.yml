@@ -399,6 +399,9 @@ server:
             cookie:
                 http-only: true
                 same-site: "Lax"
+                # secure is intentionally left unset here: JettyServletContainerCustomizer auto-enables
+                # it when grails.serverURL uses https, so HTTP-only deployments keep working. Set this
+                # explicitly (true/false) to override that auto-detection.
             tracking-modes: 'cookie'
 rundeck:
     web:
