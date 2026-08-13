@@ -44,17 +44,17 @@ class MotdSpec extends SeleniumBase {
             projectEditPage.save()
             projectEditPage.validateConfigFileSave()
             motdPage.clickMOTD()
-        then: "validate that motd is shown in the navbar and it has the right value"
-            motdPage.waitForMessageShownInProject("a simple message")
+        then: "validate that motd is shown in the navbar and it has the right value, with the script tag inert but not stripped"
+            motdPage.waitForMessageShownInProject(motdMessage)
         when:
             projectDashboard.go("/project/${projectName}/home")
         then: "validate motd shown on project dashboard"
-            motdPage.waitForMessageShownInProject("a simple message")
+            motdPage.waitForMessageShownInProject(motdMessage)
         when:
             homePage.setLoadPath("/menu/home")
             homePage.go()
         then:
-            motdPage.waitForMessageShownInHome("a simple message")
+            motdPage.waitForMessageShownInHome(motdMessage)
         cleanup:
             deleteProject(projectName)
 
@@ -86,17 +86,17 @@ class MotdSpec extends SeleniumBase {
             projectEditPage.clickNavLink(NavProjectSettings.USER_INTERFACE)
             projectEditPage.selectAllMotdPlaces()
             projectEditPage.save()
-        then: "validate that motd is shown in the navbar and it has the right value"
-            motdPage.waitForMessageShownInProject("a simple message")
+        then: "validate that motd is shown in the navbar and it has the right value, with the script tag inert but not stripped"
+            motdPage.waitForMessageShownInProject(motdMessage)
         when:
             projectDashboard.go("/project/${projectName}/home")
         then: "validate motd shown on project dashboard"
-            motdPage.waitForMessageShownInProject("a simple message")
+            motdPage.waitForMessageShownInProject(motdMessage)
         when:
             homePage.setLoadPath("/menu/home")
             homePage.go()
         then:
-            motdPage.waitForMessageShownInHome("a simple message")
+            motdPage.waitForMessageShownInHome(motdMessage)
         cleanup:
             deleteProject(projectName)
     }

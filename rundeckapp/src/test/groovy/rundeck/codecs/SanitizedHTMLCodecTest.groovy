@@ -45,4 +45,33 @@ class SanitizedHTMLCodecTest {
     void testScript(){
         assertEquals('', SanitizedHTMLCodec.encode('<script>alert(1)</script>'))
     }
+
+    // PS-1683: style attribute must be CSS-guarded, not passed through verbatim
+    @Test
+    void testTdStyleMaliciousCssStripped(){
+        assertEquals(
+            '<table><tbody><tr><td style="width:100vw;height:100vh">x</td></tr></tbody></table>',
+            SanitizedHTMLCodec.encode(
+                '<td style="position:fixed;inset:0;width:100vw;height:100vh;background:url(\'//attacker/leak\')">x</td>'
+            )
+        )
+    }
+
+    @Test
+    void testSvgRectStyleMaliciousCssStripped(){
+        assertEquals(
+            '<svg><rect fill="red"></rect></svg>',
+            SanitizedHTMLCodec.encode(
+                '<svg><rect style="position:fixed;inset:0;background:url(\'//attacker/leak\')" fill="red"/></svg>'
+            )
+        )
+    }
+
+    @Test
+    void testTdStyleNormalCssStillWorks(){
+        assertEquals(
+            '<table><tbody><tr><td style="color:red;font-weight:bold;text-align:center">ok</td></tr></tbody></table>',
+            SanitizedHTMLCodec.encode('<td style="color:red;font-weight:bold;text-align:center">ok</td>')
+        )
+    }
 }

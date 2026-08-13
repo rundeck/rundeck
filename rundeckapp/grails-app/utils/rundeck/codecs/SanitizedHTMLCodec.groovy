@@ -16,6 +16,7 @@
 
 package rundeck.codecs
 
+import org.owasp.html.CssSchema
 import org.owasp.html.ElementPolicy
 import org.owasp.html.HtmlChangeListener
 import org.owasp.html.HtmlPolicyBuilder
@@ -78,6 +79,7 @@ class SanitizedHTMLCodec {
             .onElements('svg')
             .allowAttributes('x','y','height','width','style','fill')
             .onElements('rect')
+            .allowStyling(CssSchema.DEFAULT)
             .withPreprocessor(new AutoClosingEventProcessor(autoCloseTags: ['circle','polygon','path','rect']))
             .toFactory();
     static final PolicyFactory POLICY =
@@ -132,7 +134,7 @@ class SanitizedHTMLCodec {
                             'td','th',
                     ).allowAttributes('colspan').onElements(
                             'th',
-                    )
+                    ).allowStyling(CssSchema.DEFAULT)
 
                                 .toFactory()
                     )
