@@ -665,6 +665,63 @@ RDNodeStep.stateCompare= function (a, b) {
 RDNodeStep.completedStates= ['SUCCEEDED', 'FAILED', 'ABORTED', 'NONE_SUCCEEDED','PARTIAL_SUCCEEDED'];
 RDNodeStep.runningStates= ['RUNNING','RUNNING_HANDLER'];
 
+/**
+ * Node duration in ms - wall-clock span (earliest step start to latest end)
+ * instead of summed step durations, so conditional/branching steps can't push
+ * it past the job's own duration.
+ * @param durationMs server-provided duration, or <=0 to derive from steps
+ * @param steps RDNodeStep-like objects with KO observable fields
+ * @param execDurationMs optional execution duration (ms precision) for final clamp
+ * @returns {number} duration in ms, or -1 if unknown
+ */
+RDNode.computeNodeDurationMs = function (durationMs, steps, execDurationMs) {
+    var ms = durationMs;
+    var earliest = null;
+    var latest = null;
+    ko.utils.arrayForEach(steps, function (x) {
+        if (ko.utils.unwrapObservable(x.parameterizedStep)) {
+            return;
+        }
+        var state = ko.utils.unwrapObservable(x.executionState);
+        if (state === 'NOT_STARTED' || state === 'NONE' || state === 'WAITING') {
+            return;
+        }
+        var start = ko.utils.unwrapObservable(x.startTime);
+        var end = ko.utils.unwrapObservable(x.endTime) || ko.utils.unwrapObservable(x.updateTime);
+        var stepDur = ko.utils.unwrapObservable(x.duration);
+        if (start) {
+            var st = moment(start);
+            if (!earliest || st.isBefore(earliest)) {
+                earliest = st;
+            }
+            if (end) {
+                var et = moment(end);
+                if (!latest || et.isAfter(latest)) {
+                    latest = et;
+                }
+            } else if (stepDur >= 0) {
+                var etFromDur = moment(start).add(stepDur, 'ms');
+                if (!latest || etFromDur.isAfter(latest)) {
+                    latest = etFromDur;
+                }
+            }
+        }
+    });
+    var derived = (earliest && latest) ? latest.diff(earliest) : null;
+    if (ms == null || ms <= 0) {
+        if (derived != null) {
+            ms = derived;
+        }
+    } else if (derived != null && derived > 0 && ms > derived) {
+        ms = derived;
+    }
+    // Final safeguard: node duration can never exceed execution duration (ms precision)
+    if (execDurationMs != null && execDurationMs > 0 && ms > execDurationMs) {
+        ms = execDurationMs;
+    }
+    return ms != null ? ms : -1;
+};
+
 function RDNode(name, steps,flow){
     var self=this;
     self.flow= flow;
@@ -694,34 +751,7 @@ function RDNode(name, steps,flow){
         }
     };
     self.duration=ko.pureComputed(function(){
-        // Prefer server-provided wall-clock duration; otherwise derive span from step times
-       var ms=self.durationMs();
-        if(ms<0) {
-            var earliest = null;
-            var latest = null;
-            ko.utils.arrayForEach(self.steps(), function (x) {
-                if (!x.parameterizedStep()) {
-                    var start = x.startTime();
-                    var end = x.endTime() || x.updateTime();
-                    if (start) {
-                        var st = moment(start);
-                        if (!earliest || st.isBefore(earliest)) {
-                            earliest = st;
-                        }
-                    }
-                    if (end) {
-                        var et = moment(end);
-                        if (!latest || et.isAfter(latest)) {
-                            latest = et;
-                        }
-                    }
-                }
-            });
-            if (earliest && latest) {
-                ms = latest.diff(earliest);
-            }
-        }
-       return ms;
+        return RDNode.computeNodeDurationMs(self.durationMs(), self.steps(), self.flow.execDuration());
     });
     self.durationSimple=ko.pureComputed(function(){
        return MomentUtil.formatDurationSimple(self.duration());

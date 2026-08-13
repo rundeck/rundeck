@@ -515,6 +515,81 @@ class StateMappingSpec extends Specification {
             ]
     }
 
+    def "summarizeForNode should ignore never-run conditional branch steps when computing duration"() {
+        given: 'one executed branch step and one NOT_STARTED branch with finalization endTime'
+            def sut = new StateMapping()
+            def workflowMap = [
+                startTime: '2014-09-05T21:28:04Z',
+                endTime  : '2014-09-05T21:28:06Z',
+            ]
+            def steps = [
+                [
+                    stepctx        : '1/1/1',
+                    executionState : 'SUCCEEDED',
+                    startTime      : '2014-09-05T21:28:04Z',
+                    endTime        : '2014-09-05T21:28:05Z',
+                    duration       : 1000L,
+                ],
+                [
+                    stepctx        : '1/1/2',
+                    executionState : 'NOT_STARTED',
+                    updateTime     : '2014-09-05T21:28:43Z',
+                    endTime        : '2014-09-05T21:28:43Z',
+                ],
+            ]
+        when:
+            def summary = sut.summarizeForNode(workflowMap, 'localhost', steps)
+        then:
+            summary.duration == 1000L
+    }
+
+    def "summarizeForNode should ignore parameterized step entries when computing duration"() {
+        given: 'a step and its per-parameter breakdown entry with a much later endTime'
+            def sut = new StateMapping()
+            def steps = [
+                [
+                    stepctx        : '1',
+                    executionState : 'SUCCEEDED',
+                    startTime      : '2014-09-05T21:28:04Z',
+                    endTime        : '2014-09-05T21:28:05Z',
+                    duration       : 1000L,
+                ],
+                [
+                    stepctx        : '1@node=localhost',
+                    executionState : 'SUCCEEDED',
+                    startTime      : '2014-09-05T21:28:04Z',
+                    endTime        : '2014-09-05T21:28:20Z',
+                    duration       : 16000L,
+                ],
+            ]
+        when:
+            def summary = sut.summarizeForNode([:], 'localhost', steps)
+        then:
+            summary.duration == 1000L
+    }
+
+    def "summarizeForNode should not clamp duration to a negative value when execution endTime precedes startTime"() {
+        given: 'malformed workflow map where endTime is before startTime'
+            def sut = new StateMapping()
+            def workflowMap = [
+                startTime: '2014-09-05T21:28:10Z',
+                endTime  : '2014-09-05T21:28:04Z',
+            ]
+            def steps = [
+                [
+                    stepctx        : '1',
+                    executionState : 'SUCCEEDED',
+                    startTime      : '2014-09-05T21:28:04Z',
+                    endTime        : '2014-09-05T21:28:05Z',
+                    duration       : 1000L,
+                ],
+            ]
+        when:
+            def summary = sut.summarizeForNode(workflowMap, 'localhost', steps)
+        then:
+            summary.duration == 1000L
+    }
+
     def "summarize node should include step parent steps only"() {
         given: 'node step has subworkflow error handler'
             def sut = new StateMapping()
