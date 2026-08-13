@@ -114,6 +114,22 @@ jQuery(function () {
                 })
             ];
             this.assert(RDNode.computeNodeDurationMs(-1, steps) === 1000);
+        },
+        computeNodeDurationClampsToExecDurationWhenTruncationInflates: function () {
+            // Simulates truncation inflation: timestamps truncated to whole seconds
+            // yield 1000ms wall-clock, but actual execution was only 457ms.
+            // The execDurationMs (ms precision) should be the final clamp.
+            var steps = [
+                stepFixture({
+                    startTime: '2014-09-05T21:28:04Z',
+                    endTime: '2014-09-05T21:28:05Z',
+                    duration: 457
+                })
+            ];
+            // Wall-clock from truncated timestamps: 1000ms
+            // Actual execution duration: 457ms
+            var ms = RDNode.computeNodeDurationMs(-1, steps, 457);
+            this.assert('clamps to execDurationMs', ms === 457);
         }
     });
 });

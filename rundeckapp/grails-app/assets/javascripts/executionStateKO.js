@@ -671,9 +671,10 @@ RDNodeStep.runningStates= ['RUNNING','RUNNING_HANDLER'];
  * it past the job's own duration.
  * @param durationMs server-provided duration, or <=0 to derive from steps
  * @param steps RDNodeStep-like objects with KO observable fields
+ * @param execDurationMs optional execution duration (ms precision) for final clamp
  * @returns {number} duration in ms, or -1 if unknown
  */
-RDNode.computeNodeDurationMs = function (durationMs, steps) {
+RDNode.computeNodeDurationMs = function (durationMs, steps, execDurationMs) {
     var ms = durationMs;
     var earliest = null;
     var latest = null;
@@ -714,6 +715,10 @@ RDNode.computeNodeDurationMs = function (durationMs, steps) {
     } else if (derived != null && derived > 0 && ms > derived) {
         ms = derived;
     }
+    // Final safeguard: node duration can never exceed execution duration (ms precision)
+    if (execDurationMs != null && execDurationMs > 0 && ms > execDurationMs) {
+        ms = execDurationMs;
+    }
     return ms != null ? ms : -1;
 };
 
@@ -746,7 +751,7 @@ function RDNode(name, steps,flow){
         }
     };
     self.duration=ko.pureComputed(function(){
-        return RDNode.computeNodeDurationMs(self.durationMs(), self.steps());
+        return RDNode.computeNodeDurationMs(self.durationMs(), self.steps(), self.flow.execDuration());
     });
     self.durationSimple=ko.pureComputed(function(){
        return MomentUtil.formatDurationSimple(self.duration());
