@@ -28,12 +28,15 @@ class RundeckJaasAuthorityGranter implements AuthorityGranter {
 
     @Override
     Set<String> grant(final Principal principal) {
-        if( principal instanceof RundeckRole){
-            return [rolePrefix+ principal.name] as Set
-        }else{
+        // RundeckRole covers Rundeck's own AbstractLoginModule subclasses (property file, LDAP).
+        // The class-name check covers role principals added directly by native Jetty JAAS SPI
+        // login modules (e.g. JDBCLoginModule's org.eclipse.jetty.security.jaas.JAASRole), which
+        // never produce a RundeckRole. See ContainerPrincipalRoleSource for the same convention.
+        if (principal instanceof RundeckRole || principal?.class?.name?.endsWith('Role')) {
+            return [rolePrefix + principal.name] as Set
+        } else {
             return null
         }
-
     }
 
     public String getRolePrefix() { return rolePrefix }
