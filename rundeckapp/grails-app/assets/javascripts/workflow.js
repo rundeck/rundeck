@@ -78,10 +78,10 @@ var RDWorkflow = function (wf,params) {
 
 
         contextType: function (ctx) {
-            if (typeof (ctx) == 'string') {
-                ctx = RDWorkflow.parseContextId(ctx)
+            var step = RDWorkflow.stepForContext(this.workflow, ctx)
+            if (step == null) {
+                return 'unknown-step-type'
             }
-            var step = this.workflow[RDWorkflow.workflowIndexForContextId(ctx[0])]
             return _wfTypeForStep(step)
         },
         renderContextStepNumber: function (ctx) {
@@ -97,10 +97,11 @@ var RDWorkflow = function (wf,params) {
             return string
         },
         renderContextString: function (ctx) {
-            if (typeof (ctx) == 'string') {
-                ctx = RDWorkflow.parseContextId(ctx)
+            var step = RDWorkflow.stepForContext(this.workflow, ctx)
+            if (step == null) {
+                var ctxstr = typeof (ctx) == 'string' ? ctx : RDWorkflow.createContextId(ctx)
+                return 'Step: ' + ctxstr
             }
-            var step = this.workflow[RDWorkflow.workflowIndexForContextId(ctx[0])]
             return _wfStringForStep(step)
         }
     })
@@ -271,6 +272,42 @@ RDWorkflow.workflowIndexForContextId = function (ctxid) {
         return m - 1;
     }
     return null;
+};
+/**
+ * Resolve a workflow step definition for a hierarchical step context string,
+ * traversing conditional subSteps for contexts like "2/1". Job-reference and
+ * error-handler sub-workflow contexts (e.g. "1/1" into step.workflow, or "1e/1"
+ * into step.ehWorkflow) are not conditional subSteps, so traversal stops there
+ * and returns the deepest step resolved so far, matching the top-level-only
+ * resolution used before subSteps traversal existed - rather than failing
+ * outright and falling back to the raw "Step: <ctx>" placeholder text.
+ * @param workflow workflow step list
+ * @param context step context string or parsed array
+ * @returns {*|null}
+ */
+RDWorkflow.stepForContext = function (workflow, context) {
+    if (typeof (context) == 'string') {
+        context = RDWorkflow.parseContextId(context)
+    }
+    if (!context || !context.length || !workflow) {
+        return null;
+    }
+    var ndx = RDWorkflow.workflowIndexForContextId(context[0]);
+    if (ndx == null || ndx < 0 || ndx >= workflow.length) {
+        return null;
+    }
+    var step = workflow[ndx];
+    for (var i = 1; i < context.length; i++) {
+        if (!step || !step.subSteps) {
+            break;
+        }
+        var subndx = RDWorkflow.workflowIndexForContextId(context[i]);
+        if (subndx == null || subndx < 0 || subndx >= step.subSteps.length) {
+            break;
+        }
+        step = step.subSteps[subndx];
+    }
+    return step;
 };
 /**
  * removes error handler/parameters from the context path

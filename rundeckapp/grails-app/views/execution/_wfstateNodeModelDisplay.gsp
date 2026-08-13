@@ -88,22 +88,8 @@
           </div>
 
           <div class="col-sm-2 ">
-              <div data-bind="with: currentStep(), visible: !expanded()">
-                  <span class="stepident "
-                        data-bind="attr: { 'data-execstate': executionState }">
-
-                      <feature:disabled name="workflowDynamicStepSummaryGUI">
-                          <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
-                          <span data-bind="text: stepinfo().stepident"></span>
-                      </feature:disabled>
-                      <feature:enabled name="workflowDynamicStepSummaryGUI">
-                          <span data-bind="template: {name: 'step-info-simple-link', data:stepinfo(), as: 'stepinfo'}"></span>
-                      </feature:enabled>
-                  </span>
-                  <span data-bind="if: ( executionState() == 'WAITING' ) " class="text-strong">
-                      (Next up)
-                  </span>
-              </div>
+              <span class="execstart info time"
+                    data-bind="text: nodeStartTimeSimple, visible: !expanded()"></span>
           </div>
           <div class="col-sm-2 ">
               <span class="execend  info time"

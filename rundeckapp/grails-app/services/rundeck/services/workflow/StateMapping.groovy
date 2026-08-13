@@ -107,6 +107,7 @@ class StateMapping {
             duration = updated.time - dateStarted.time
         }
         summary.duration=duration
+        summary.startTime=encodeDate(dateStarted)
         if(currentStep){
             summary.currentStep=currentStep
         }
