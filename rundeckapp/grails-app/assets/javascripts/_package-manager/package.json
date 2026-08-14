@@ -33,7 +33,7 @@
     "jquery": "^3.6.4",
     "jquery-ui-dist": "^1.13.2",
     "jquery-ui-timepicker-addon": "^1.6.3",
-    "knockout": "3.5.1",
+    "knockout": "3.5.3",
     "knockout-mapping": "2.6.0",
     "perfect-scrollbar": "1.5.6",
     "vue": "^3.5.16",
