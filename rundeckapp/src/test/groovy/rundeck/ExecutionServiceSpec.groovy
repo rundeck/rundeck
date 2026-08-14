@@ -6424,10 +6424,51 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             !service.isMySqlDatasource()
     }
 
+    def "isOracleDatasource returns true when databaseProductName is Oracle"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'Oracle' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            service.isOracleDatasource()
+    }
+
+    def "isOracleDatasource returns false when databaseProductName is not Oracle"() {
+        given:
+            def mockMetaData = Mock(DatabaseMetaData) { getDatabaseProductName() >> 'PostgreSQL' }
+            def mockConn = Mock(Connection) { getMetaData() >> mockMetaData }
+            def mockDs = Mock(DataSource) { getConnection() >> mockConn }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBean('dataSource', DataSource) >> mockDs
+            }
+        expect:
+            !service.isOracleDatasource()
+    }
+
     def "getCriteriaScenarios returns single MySQL-specific criteria when datasource is MySQL"() {
         given:
             service.metaClass.isH2Datasource = { -> false }
             service.metaClass.isMySqlDatasource = { -> true }
+            service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
+                getBeansOfType(JobQuery) >> [:]
+            }
+            def query = new ExecutionQuery()
+        when:
+            def scenarios = service.getCriteriaScenarios(query)
+        then:
+            scenarios.size() == 1
+        cleanup:
+            service.metaClass = null
+    }
+
+    def "getCriteriaScenarios returns single Oracle-specific criteria when datasource is Oracle"() {
+        given:
+            service.metaClass.isH2Datasource = { -> false }
+            service.metaClass.isMySqlDatasource = { -> false }
+            service.metaClass.isOracleDatasource = { -> true }
             service.applicationContext = Mock(org.springframework.context.ApplicationContext) {
                 getBeansOfType(JobQuery) >> [:]
             }

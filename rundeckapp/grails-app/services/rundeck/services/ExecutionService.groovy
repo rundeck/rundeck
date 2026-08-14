@@ -4775,17 +4775,40 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Detects Oracle datasources. Oracle's {@code date - date} arithmetic produces an
+     * INTERVAL DAY TO SECOND value; the Oracle JDBC driver's accessor for that type does
+     * not implement {@code getTime()}, so projecting it as SQL TIME fails with
+     * ORA-17004 ("Invalid column type"). Oracle needs both sides cast to DATE first,
+     * turning the subtraction into classic date arithmetic (a NUMBER of fractional
+     * days) that can be safely multiplied by 86400 for seconds.
+     */
+    boolean isOracleDatasource() {
+        try {
+            def dataSource = applicationContext.getBean('dataSource', DataSource)
+            return dataSource.getConnection().withCloseable { conn ->
+                conn.metaData.databaseProductName == 'Oracle'
+            }
+        } catch (Exception ex) {
+            log.debug("Unable to determine datasource type, assuming non-Oracle", ex)
+            return false
+        }
+    }
+
     private boolean isSqlCompatible() {
         boolean isCompatible = false
         try {
             boolean isH2 = isH2Datasource()
             boolean isMySql = isMySqlDatasource()
+            boolean isOracle = isOracleDatasource()
             Execution.createCriteria().list(max:1) {
                 projections {
                     if (isH2) {
                         sqlProjection 'DATEDIFF(\'SECOND\', date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
                     } else if (isMySql) {
                         sqlProjection 'TIMESTAMPDIFF(SECOND, date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else if (isOracle) {
+                        sqlProjection 'round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400) as durationSum', 'durationSum', StandardBasicTypes.LONG
                     } else {
                         sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
                     }
@@ -4899,6 +4922,32 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return Arrays.asList(metricCriteriaMySql)
         }
 
+        if (isOracleDatasource()) {
+            // Oracle: date_completed/date_started are TIMESTAMP columns, so a plain subtraction
+            // yields an INTERVAL DAY TO SECOND (whose JDBC accessor doesn't support getLong()).
+            // Casting both sides to DATE forces classic Oracle date arithmetic, which returns a
+            // NUMBER of fractional days; multiply by 86400 for integer seconds.
+            def metricCriteriaOracle = {
+                def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+                baseQueryCriteria()
+                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+                projections {
+                    rowCount("count")
+                    sqlProjection 'sum(round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400)) as durationSum',
+                            'durationSum', StandardBasicTypes.LONG
+                    sqlProjection 'min(round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400)) as durationMin',
+                            'durationMin', StandardBasicTypes.LONG
+                    sqlProjection 'max(round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400)) as durationMax',
+                            'durationMax', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                            'succeededCount', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                            'failedCount', StandardBasicTypes.LONG
+                }
+            }
+            return Arrays.asList(metricCriteriaOracle)
+        }
+
         def metricCriteriaB = {
             // Run main query criteria
             def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
@@ -4927,35 +4976,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         StandardBasicTypes.LONG
             }
         }
-        // Oracle: DATE - DATE returns NUMBER (fractional days); multiply by 86400 for integer seconds
-        def metricCriteriaC = {
-            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
-            baseQueryCriteria()
-
-            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
-            projections {
-
-                rowCount("count")
-                sqlProjection 'sum(round((date_completed - date_started) * 86400)) as durationSum',
-                        'durationSum',
-                        StandardBasicTypes.LONG
-                sqlProjection 'min(round((date_completed - date_started) * 86400)) as durationMin',
-                        'durationMin',
-                        StandardBasicTypes.LONG
-                sqlProjection 'max(round((date_completed - date_started) * 86400)) as durationMax',
-                        'durationMax',
-                        StandardBasicTypes.LONG
-
-                // Zero-overhead status count projections
-                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
-                        'succeededCount',
-                        StandardBasicTypes.LONG
-                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
-                        'failedCount',
-                        StandardBasicTypes.LONG
-            }
-        }
-        return Arrays.asList(metricCriteriaB, metricCriteriaC)
+        return Arrays.asList(metricCriteriaB)
     }
 
     /**
