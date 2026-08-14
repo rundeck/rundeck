@@ -23,6 +23,51 @@ div {
           margin-bottom: 0;
         }
       }
+
+      .wfsubstepsgroup {
+        margin-top: 6px;
+        padding-left: 0;
+      }
+
+      .wfsubstep-entry .wfsubstepsgroup {
+        margin-top: 4px;
+        margin-left: 4px;
+      }
+
+      .wfsubstepsheading {
+        display: block;
+        margin: 0 0 4px 8px;
+        font-size: 12px;
+        color: var(--text-muted-color, #6c757d);
+      }
+
+      ul.wfsubstepsitem {
+        list-style: none;
+        padding: 0 0 0 8px;
+        margin: 0;
+      }
+
+      ul.wfsubstepsitem > li.wfsubstep-entry {
+        margin-left: 8px;
+        margin-bottom: 4px;
+        padding: 2px 0 2px 10px !important;
+        border: none;
+        border-left: 2px solid var(--list-item-border-color, #dee2e6);
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .wfsubstep-label {
+        display: inline;
+        margin-right: 6px;
+        font-size: 12px;
+      }
+
+      .wfsubstepsgroup ul.wfhandleritem {
+        list-style: none;
+        padding: 0 0 0 8px;
+        margin: 0;
+      }
     }
 
     &.edit {

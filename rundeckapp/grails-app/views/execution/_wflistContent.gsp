@@ -20,12 +20,23 @@
     Created: Jul 27, 2010 2:18:34 PM
     $Id$
  --%>
+<%@ page import="org.rundeck.app.data.workflow.ConditionalStep" %>
 <g:if test="${workflow && workflow?.commands}">
 <g:each in="${workflow.commands}" var="item" status="i">
     <li class="${i%2==1?'alternate':''} draggableitem droppableitem" data-wfitemnum="${i}">
         <div id="wfli_${i}">
         <g:render template="/execution/wflistitemContent" model="${[i:i,stepNum: i,item:item,workflow:workflow,edit:edit,highlight:highlight,noimgs:noimgs, project: project]}"/>
         </div>
+        <g:if test="${!edit && item instanceof ConditionalStep && item.subSteps}">
+            <g:render template="/execution/wflistSubStepsContent"
+                      model="${[steps: item.subSteps,
+                                  workflow: workflow,
+                                  edit: edit,
+                                  noimgs: noimgs,
+                                  project: project,
+                                  idPrefix: 'sub_' + i + '_',
+                                  labelPrefix: (i + 1) as String]}"/>
+        </g:if>
         <g:if test="${item.errorHandler}">
             <ul class="wfhandleritem ${item.errors?.hasFieldErrors('errorHandler') ? 'fieldError' : ''}">
 
