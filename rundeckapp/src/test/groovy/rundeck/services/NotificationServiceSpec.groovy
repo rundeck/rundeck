@@ -1406,4 +1406,116 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
 
         }
     }
+
+    def "exportJobdata uses the supplied averageDuration and issues no query"() {
+        given:
+        def (job, execution) = createTestJob()
+        service.executionService = Mock(ExecutionService)
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+
+        when:
+        def result = service.exportJobdata(job, [averageDuration: 4321L])
+
+        then: 'the supplied value is used'
+        result.averageDuration == 4321L
+
+        and: 'and the database is not consulted for it'
+        0 * service.executionService.getAverageDuration(_)
+    }
+
+    def "exportJobdata falls back to the query when no value is supplied"() {
+        given:
+        def (job, execution) = createTestJob()
+        service.executionService = Mock(ExecutionService)
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+
+        when:
+        def result = service.exportJobdata(job, contentMap)
+
+        then:
+        1 * service.executionService.getAverageDuration('test1') >> 999L
+        result.averageDuration == 999L
+
+        where: 'both a null content map and one without the key fall back'
+        contentMap << [null, [:], [execution: 'x']]
+    }
+
+    def "exportJobdata treats a supplied zero as a real value, not as absent"() {
+        given:
+        def (job, execution) = createTestJob()
+        service.executionService = Mock(ExecutionService)
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+
+        when: 'a job with no completed executions yet legitimately averages zero'
+        def result = service.exportJobdata(job, [averageDuration: 0L])
+
+        then: 'no fallback query is issued'
+        0 * service.executionService.getAverageDuration(_)
+
+        and: 'and averageDuration stays absent, exactly as when the query returns zero'
+        !result.containsKey('averageDuration')
+    }
+
+    def "exportJobdata omits averageDuration when the query returns null or zero"() {
+        given:
+        def (job, execution) = createTestJob()
+        service.executionService = Mock(ExecutionService)
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+
+        when:
+        def result = service.exportJobdata(job, null)
+
+        then: 'a null from the provider must not blow up -- mocks and plugins can return one'
+        1 * service.executionService.getAverageDuration('test1') >> queried
+        !result.containsKey('averageDuration')
+
+        where:
+        queried << [null, 0L]
+    }
+
+    def "deliverNotifications isolates a failing delivery from the rest"() {
+        given: 'three deliveries, the middle one throwing'
+        def called = []
+        List<Closure<Boolean>> deliveries = [
+                { -> called << 'first'; true },
+                { -> called << 'second'; throw new RuntimeException('send failed') },
+                { -> called << 'third'; true },
+        ]
+
+        when:
+        def result = service.deliverNotifications(deliveries)
+
+        then: 'the failure is contained; the notifications after it still go out'
+        called == ['first', 'second', 'third']
+        result
+
+        and: 'this preserves the per-notification try/catch that wrapped both phases before the split'
+        noExceptionThrown()
+    }
+
+    def "deliverNotifications reports the last delivery that returned a result"() {
+        when:
+        def result = service.deliverNotifications(deliveries as List<Closure<Boolean>>)
+
+        then:
+        result == expected
+
+        where: 'a null result leaves the value from the previous delivery, matching the old didsend'
+        deliveries                                      || expected
+        []                                              || false
+        [{ -> true }]                                   || true
+        [{ -> false }]                                  || false
+        [{ -> true }, { -> false }]                     || false
+        [{ -> false }, { -> true }]                     || true
+        [{ -> true }, { -> null }]                      || true
+        [{ -> true }, { -> throw new RuntimeException('x') }] || true
+    }
 }

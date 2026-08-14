@@ -471,7 +471,14 @@ class ExecutionJob implements InterruptableJob {
                             execmap.scheduledExecution.uuid,
                             [
                                     execution: execmap.execution,
-                                    context:context
+                                    context:context,
+                                    // jobAverageDuration, not jobAverageDurationFinal: the latter is the
+                                    // trigger threshold derived from notifyAvgDurationThreshold, which for a
+                                    // percentage or offset setting is not the average at all. This must be
+                                    // the historical average the template used to query for.
+                                    // Already resolved above, so passing it spares the notification path a
+                                    // query inside the transaction that spans its SMTP and HTTP sends.
+                                    averageDuration: jobAverageDuration
                             ]
                     )
                     avgNotificationSent=true

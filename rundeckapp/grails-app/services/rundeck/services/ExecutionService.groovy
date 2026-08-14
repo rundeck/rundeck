@@ -1400,8 +1400,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "start", execution.user)
             if (scheduledExecution) {
                 //send onstart notification
+                // Resolved here rather than inside the notification path. ExecutionJob computes the
+                // same value, but only after the execution thread has started -- too late for this
+                // trigger. Querying here still keeps it out of the notification transaction, which
+                // spans SMTP and HTTP sends during which the connection can be closed by the server.
                 notificationService.asyncTriggerJobNotification('start', scheduledExecution.uuid,
-                        [execution: execution, context:executioncontext])
+                        [execution: execution, context:executioncontext,
+                         averageDuration: getAverageDuration(scheduledExecution.uuid)])
 
             }
             //install custom outputstreams for System.out and System.err for this thread and any child threads
@@ -3471,35 +3476,59 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Trigger the completion notifications for a finished execution.
+     *
+     * Deliberately non-transactional. The execution's completed state has already been committed by
+     * {@link #saveExecutionState_newTransaction}, and the notification itself is delivered on a separate
+     * thread inside its own transaction (see NotificationService.asyncTriggerJobNotification), so nothing
+     * in this method needs to be atomic with the send. A transaction held here would only keep this
+     * thread's database connection checked out and idle for as long as the send takes -- up to
+     * notification.threadTimeOut, 120s by default -- which exceeds the server's wait_timeout, and the
+     * connection is then found dead at COMMIT. The two reads that are needed run in their own short
+     * transaction instead.
+     *
+     * @param execRun the started execution
+     * @param event the completion event
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public def triggerJobCompleteNotifications(AsyncStarted execRun, ExecutionCompleteEvent event) {
         def context = execRun?.thread?.context
         def execution = event.execution
         def executionId = event.execution.id
 
-        //load stored execution to get the orchestrator data
-        // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
-        // Fallback to simple get() for DataTest compatibility
-        Execution executionLoad
-        try {
-            executionLoad = Execution.withSession { session ->
-                String hql = '''
-                    SELECT e
-                    FROM Execution e
-                    LEFT JOIN e.orchestrator o
-                    WHERE e.id = :executionId
-                '''
-                def query = session.createQuery(hql, Execution)
-                query.setParameter('executionId', executionId)
-                query.uniqueResult()
-            } as Execution
-        } catch (MissingMethodException e) {
-            // DataTest fallback: SimpleMapSession doesn't support HQL, use simple get()
-            executionLoad = Execution.get(executionId)
-        }
+        def averageDuration = Execution.withNewTransaction {
+            //load stored execution to get the orchestrator data
+            // Grails 7/Hibernate 6: Use HQL for LEFT OUTER JOIN - most reliable for complex queries
+            // Fallback to simple get() for DataTest compatibility
+            // JOIN FETCH rather than a bare JOIN: the orchestrator is read from the notification thread,
+            // so it has to be initialised before this transaction closes.
+            Execution executionLoad
+            try {
+                executionLoad = Execution.withSession { session ->
+                    String hql = '''
+                        SELECT e
+                        FROM Execution e
+                        LEFT JOIN FETCH e.orchestrator o
+                        WHERE e.id = :executionId
+                    '''
+                    def query = session.createQuery(hql, Execution)
+                    query.setParameter('executionId', executionId)
+                    query.uniqueResult()
+                } as Execution
+            } catch (MissingMethodException e) {
+                // DataTest fallback: SimpleMapSession doesn't support HQL, use simple get()
+                executionLoad = Execution.get(executionId)
+            }
 
-        //just replacing the value for the received from ExecutionJob because the status is not saved yet
-        if(executionLoad && executionLoad.orchestrator){
-            execution.orchestrator = executionLoad.orchestrator
+            //just replacing the value for the received from ExecutionJob because the status is not saved yet
+            if(executionLoad && executionLoad.orchestrator){
+                execution.orchestrator = executionLoad.orchestrator
+            }
+
+            // Resolved here, before the send, so the notification path does not have to query for it from
+            // inside a transaction that also spans the SMTP and HTTP sends.
+            return (event.job ? getAverageDuration(event.job.getUuid()) : 0) ?: 0
         }
 
         def export = execRun?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
@@ -3508,10 +3537,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
                 event.job?.getUuid(),
                 [
-                        execution : execution,
-                        nodestatus: event.nodeStatus,
-                        context   : context,
-                        export    : export
+                        execution      : execution,
+                        nodestatus     : event.nodeStatus,
+                        context        : context,
+                        export         : export,
+                        averageDuration: averageDuration
                 ]
         )
     }
@@ -3546,6 +3576,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return Math.floor(statsContent.totalTime / statsContent.execCount)
         }
         return 0;
+    }
+
+    /**
+     * Execution counts for a job, including executions referenced from other jobs.
+     *
+     * The notification mail template used to run these four queries itself, while it was being
+     * rendered -- which happens inside mailService.sendMail, so they ran mid-send, inside the
+     * transaction that spans the SMTP conversation and therefore on a connection the server may
+     * already have closed. Callers now resolve them before the send and pass them in the view model.
+     *
+     * @param scheduledExecution the job, may be null for an execution that has none
+     * @return view model entries; all zero when there is no job
+     */
+    Map getJobExecutionCounts(ScheduledExecution scheduledExecution) {
+        if (!scheduledExecution?.id) {
+            return [executionCount: 0, succeededCount: 0, referencedExecutionCount: 0, referencedSucceededCount: 0]
+        }
+        [
+                executionCount          : Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution),
+                succeededCount          : Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded'),
+                referencedExecutionCount: referencedExecutionDataProvider.countByJobUuid(scheduledExecution.uuid),
+                referencedSucceededCount: referencedExecutionDataProvider.countByJobUuidAndStatus(
+                        scheduledExecution.uuid, 'succeeded')
+        ]
     }
 
 
@@ -4261,8 +4315,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ScheduledExecution.withTransaction {
                         // Get a new object attached to the new session
                         def scheduledExecution = ScheduledExecution.get(id)
+                        // Already resolved at the top of this method; passing it spares the
+                        // notification path a query inside the transaction that spans its sends.
                         notificationService.asyncTriggerJobNotification('start', scheduledExecution.uuid,
-                                [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
+                                [execution: exec, context: newContext, jobref: jitem.jobIdentifier,
+                                 averageDuration: averageDuration])
                     }
 
                 }
@@ -4318,7 +4375,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             execution: execution,
                             context  : newContext,
                             jobref   : jitem.jobIdentifier,
-                            export    : data
+                            export    : data,
+                            // The value this notification is triggered by, already resolved above.
+                            averageDuration: averageDuration
                     ])
                 }
 
@@ -4330,7 +4389,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                 nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
                                 context   : newContext,
                                 jobref    : jitem.jobIdentifier,
-                                export    : data
+                                export    : data,
+                                // Already resolved at the top of this method; passing it spares the
+                                // notification path a query inside the transaction that spans its sends.
+                                averageDuration: averageDuration
                         ]
                 )
             }
