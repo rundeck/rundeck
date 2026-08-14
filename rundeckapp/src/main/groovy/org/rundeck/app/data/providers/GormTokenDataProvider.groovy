@@ -117,8 +117,8 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     List<AuthenticationToken> findAllByUser(String userId) {
-        User user = User.get(userId.toLong())
-        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
+        if(!User.exists(userId.toLong())) throw new DataAccessException("Couldn't find user: ${userId}")
+        User user = User.load(userId.toLong())
         List<AuthenticationToken> tokens = []
         List<AuthToken> authTokens = AuthToken.findAllByUser(user)
         authTokens.each{authToken ->
@@ -129,8 +129,8 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     List<AuthenticationToken> findAllByUserAndType(String userId, AuthTokenType type) {
-        User user = User.get(userId.toLong())
-        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
+        if(!User.exists(userId.toLong())) throw new DataAccessException("Couldn't find user: ${userId}")
+        User user = User.load(userId.toLong())
         List<AuthenticationToken> tokens = []
         List<AuthToken> authTokens = AuthToken.findAllByUserAndType(user, type)
         authTokens.each{authToken ->
@@ -242,8 +242,8 @@ class GormTokenDataProvider implements TokenDataProvider {
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
     Integer countTokensByUser(String userId) {
-        User user = User.get(userId.toLong())
-        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
+        if(!User.exists(userId.toLong())) throw new DataAccessException("Couldn't find user: ${userId}")
+        User user = User.load(userId.toLong())
         return AuthToken.createCriteria().count {
             eq("user", user)
             or {

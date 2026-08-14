@@ -138,9 +138,27 @@ class AuthToken implements AuthenticationToken {
         "Auth Token: ${printableToken}"
     }
 
+    /**
+     * The login of the user owning this token.
+     *
+     * <p>Reads the login with a column projection rather than {@code user.login}: this runs on every
+     * token-authenticated request, and dereferencing the association would initialise the lazy proxy
+     * and fetch the whole {@code rduser} row for a single column. Reading {@code user.id} is free —
+     * Hibernate serves a proxy's identifier without initialising it — so the id is used to project
+     * just the login.
+     *
+     * @return the owner's login, or null if this token has no user
+     */
     @Override
     String getOwnerName() {
-        return user.login
+        Long ownerId = user?.id
+        if (ownerId == null) { return null }
+        return User.createCriteria().get {
+            idEq(ownerId)
+            projections {
+                property('login')
+            }
+        } as String
     }
 
 }

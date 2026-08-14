@@ -385,4 +385,93 @@ class GormUserDataProviderSpec extends Specification implements DataTest {
         where:
         expectedEnabled << [true, false]
     }
+
+    def "getLoginById projects only the login"() {
+        given:
+        User u = new User(login: "bob", email: "bob@example.com", firstName: "Bob", lastName: "Smith")
+        u.save(flush: true)
+
+        expect:
+        provider.getLoginById(u.id) == "bob"
+    }
+
+    def "getLoginById returns null for a missing or null id"() {
+        expect:
+        provider.getLoginById(-1L) == null
+        provider.getLoginById(null) == null
+    }
+
+    def "getInfoFromUser projects the profile properties for one login"() {
+        given:
+        new User(login: "bob", email: "bob@example.com", firstName: "Bob", lastName: "Smith").save(flush: true)
+
+        when:
+        def props = provider.getInfoFromUser("bob")
+
+        then:
+        props != null
+        props.email == "bob@example.com"
+        props.firstname == "Bob"
+        props.lastname == "Smith"
+    }
+
+    def "getInfoFromUser tolerates a user with no profile fields set"() {
+        given:
+        new User(login: "bare").save(flush: true)
+
+        when:
+        def props = provider.getInfoFromUser("bare")
+
+        then:
+        props != null
+        props.email == null
+        props.firstname == null
+        props.lastname == null
+    }
+
+    def "getInfoFromUser returns null for a missing or blank login"() {
+        given:
+        provider.featureService = Mock(FeatureService) {
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> false
+        }
+
+        expect:
+        provider.getInfoFromUser("nobody") == null
+        provider.getInfoFromUser(null) == null
+        provider.getInfoFromUser("") == null
+    }
+
+    @Unroll
+    def "getInfoFromUser honours CASE_INSENSITIVE_USERNAME - enabled=#caseInsensitive, looking up #lookup"() {
+        given: "a user stored with mixed-case login"
+        new User(login: "Bob", email: "bob@example.com", firstName: "Bob", lastName: "Smith").save(flush: true)
+        provider.featureService = Mock(FeatureService) {
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> caseInsensitive
+        }
+
+        when:
+        def props = provider.getInfoFromUser(lookup)
+
+        then: "matches the behaviour callers previously got through findByLogin"
+        (props?.email) == expectedEmail
+
+        where:
+        caseInsensitive | lookup || expectedEmail
+        true            | "Bob"  || "bob@example.com"
+        true            | "bob"  || "bob@example.com"
+        true            | "BOB"  || "bob@example.com"
+        false           | "Bob"  || "bob@example.com"
+        false           | "bob"  || null
+    }
+
+    def "getInfoFromUser does not match a different login via ilike wildcards when case-insensitive"() {
+        given: "case-insensitive lookup uses ilike, so a wildcard must not widen the match"
+        new User(login: "bob", email: "bob@example.com").save(flush: true)
+        provider.featureService = Mock(FeatureService) {
+            featurePresent(Features.CASE_INSENSITIVE_USERNAME) >> true
+        }
+
+        expect: "the in-memory equalsIgnoreCase filter rejects the wildcard match"
+        provider.getInfoFromUser("b%") == null
+    }
 }

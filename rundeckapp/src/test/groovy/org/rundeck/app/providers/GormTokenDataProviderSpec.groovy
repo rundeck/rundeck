@@ -257,4 +257,49 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
 
     }
 
+    def "findAllByUser returns the user's tokens without loading the full user row"() {
+        given:
+        User owner = new User(login: 'bob').save(flush: true, failOnError: true)
+        new AuthToken(token: 'tk1', authRoles: 'admin', user: owner, uuid: 'u1', type: AuthTokenType.USER)
+                .save(flush: true, failOnError: true)
+        new AuthToken(token: 'tk2', authRoles: 'admin', user: owner, uuid: 'u2', type: AuthTokenType.RUNNER)
+                .save(flush: true, failOnError: true)
+
+        expect:
+        provider.findAllByUser(owner.id.toString())*.uuid.toSorted() == ['u1', 'u2']
+        provider.findAllByUserAndType(owner.id.toString(), AuthTokenType.RUNNER)*.uuid == ['u2']
+        provider.countTokensByUser(owner.id.toString()) == 1
+    }
+
+    // The three tests below guard the User.get() -> User.load() swap: load() returns a non-null proxy
+    // even for a missing id, so without an explicit existence check these would silently return
+    // empty/zero instead of raising.
+
+    def "findAllByUser still raises for a non-existent user id"() {
+        when:
+        provider.findAllByUser('99999')
+
+        then:
+        DataAccessException e = thrown()
+        e.message == "Couldn't find user: 99999"
+    }
+
+    def "findAllByUserAndType still raises for a non-existent user id"() {
+        when:
+        provider.findAllByUserAndType('99999', AuthTokenType.USER)
+
+        then:
+        DataAccessException e = thrown()
+        e.message == "Couldn't find user: 99999"
+    }
+
+    def "countTokensByUser still raises for a non-existent user id"() {
+        when:
+        provider.countTokensByUser('99999')
+
+        then:
+        DataAccessException e = thrown()
+        e.message == "Couldn't find user: 99999"
+    }
+
 }

@@ -28,6 +28,23 @@ import java.util.List;
 
 public interface UserDataProvider extends DataProvider {
     RdUser get(Long userid);
+
+    /**
+     * Retrieves only the login of a User, without loading the rest of the row.
+     *
+     * @param userid id of the User
+     * @return the login, or null if no User exists with that id
+     */
+    String getLoginById(Long userid);
+
+    /**
+     * Retrieves only the profile properties (first name, last name, email) of a User, without
+     * loading the rest of the row. Single-login counterpart of {@link #getInfoFromUsers(List)}.
+     *
+     * @param login of the User, format String
+     * @return the properties, or null if no User exists with that login
+     */
+    UserProperties getInfoFromUser(String login);
     /**
      * Retrieves a User based on the login, otherwise create a User with that login.
      *

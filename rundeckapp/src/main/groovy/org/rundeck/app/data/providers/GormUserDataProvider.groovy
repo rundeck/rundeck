@@ -279,6 +279,65 @@ class GormUserDataProvider implements UserDataProvider, SystemConfigurable{
         return result
     }
 
+    /**
+     * Projects only the login column instead of loading the whole User row.
+     *
+     * @param userid id of the User
+     * @return the login, or null if no User exists with that id
+     */
+    @Override
+    String getLoginById(Long userid) {
+        if (userid == null) { return null }
+        return new DetachedCriteria(User).idEq(userid).projections {
+                property("login")
+        }.get() as String
+    }
+
+    /**
+     * Projects only the profile columns instead of loading the whole User row. Single-login
+     * counterpart of {@link #getInfoFromUsers(List)}, sharing its projection convention.
+     *
+     * <p>Honours the CASE_INSENSITIVE_USERNAME feature the same way
+     * {@link #findUserByLoginCaseSensitivity(String)} does, since the callers of this method
+     * previously resolved their user through it: an {@code ilike} match narrowed in memory by
+     * {@code equalsIgnoreCase}, because {@code ilike} would also match a login containing SQL
+     * wildcards.
+     *
+     * @param login of the User
+     * @return the properties, or null if no User exists with that login
+     */
+    @Override
+    UserProperties getInfoFromUser(String login) {
+        if (!login) { return null }
+        boolean caseInsensitive = isLoginNameCaseInsensitiveEnabled()
+        DetachedCriteria criteria = new DetachedCriteria(User)
+        criteria = caseInsensitive ? criteria.ilike("login", login) : criteria.eq("login", login)
+        List rows = criteria.projections {
+                property("login")
+                property("firstName")
+                property("lastName")
+                property("email")
+        }.list()
+        if (!rows) { return null }
+
+        // Rows are iterated by index rather than with a closure on purpose. A multi-column
+        // projection yields Object[] rows, and passing one to a Groovy closure spreads it into
+        // separate arguments instead of a single element, so find()/find{} blow up with a
+        // MissingMethodException at runtime.
+        def row = null
+        if (caseInsensitive) {
+            for (int i = 0; i < rows.size(); i++) {
+                if (rows[i][0]?.toString()?.equalsIgnoreCase(login)) {
+                    row = rows[i]
+                    break
+                }
+            }
+        } else {
+            row = rows[0]
+        }
+        return row ? new UserProperties(firstname: row[1], lastname: row[2], email: row[3]) : null
+    }
+
     @Override
     Integer count() {
         return count(null)
