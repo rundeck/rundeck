@@ -11,8 +11,8 @@
     "dev:build": "npm install && npm run build",
     "ci:build": "npm ci && npm run build",
     "build": "run-script-os",
-    "build:darwin:linux": "./node_modules/.bin/mix",
-    "build:win32": "mix.cmd"
+    "build:darwin:linux": "NODE_OPTIONS=--no-experimental-detect-module ./node_modules/.bin/mix",
+    "build:win32": "set NODE_OPTIONS=--no-experimental-detect-module && mix.cmd"
   },
   "keywords": [],
   "author": "",
@@ -38,7 +38,7 @@
     "perfect-scrollbar": "1.5.6",
     "vue": "3.5.41",
     "vuex": "^4.1.0",
-    "webpack": "^5.104.1",
+    "webpack": "5.104.1",
     "webpack-cli": "^5.1.4"
   },
   "overrides": {
@@ -47,6 +47,7 @@
     },
     "cross-spawn": "^7.0.6",
     "serialize-javascript": "^7.0.3",
+    "webpack": "5.104.1",
     "ajv": "6.15.0",
     "nanoid": "3.3.18"
   }
