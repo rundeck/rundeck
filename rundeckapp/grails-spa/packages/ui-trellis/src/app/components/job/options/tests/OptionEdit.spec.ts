@@ -1,5 +1,5 @@
 import { mount, shallowMount, VueWrapper } from "@vue/test-utils";
-import { VueNode } from "@vue/test-utils/dist/src/types";
+import type { VueNode } from "@vue/test-utils/dist/src/types";
 import { Btn } from "uiv";
 import OptionEdit from "../OptionEdit.vue";
 
