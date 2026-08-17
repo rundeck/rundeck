@@ -56,10 +56,10 @@ class InfrastructureRoleBeanDefinitionRegistryPostProcessor implements BeanDefin
      * should also be marked as infrastructure role. These are Grails plugin-owned beans
      * (grails-async, grails-events) that this application never declares or overrides directly.
      */
-    static final List<String> ADDITIONAL_INFRASTRUCTURE_BEAN_NAMES = [
+    private static final Set<String> ADDITIONAL_INFRASTRUCTURE_BEAN_NAMES = Collections.unmodifiableSet([
             'grailsPromiseFactory',
             'grailsEventBus',
-    ]
+    ] as Set)
 
     @Override
     void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
