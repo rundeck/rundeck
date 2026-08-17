@@ -86,7 +86,10 @@ class InfrastructureRoleBeanDefinitionRegistryPostProcessorSpec extends Specific
     }
 
     def "postProcessBeanFactory is a no-op"() {
-        expect:
-        processor.postProcessBeanFactory(null) == null
+        when:
+        processor.postProcessBeanFactory(null)
+
+        then:
+        noExceptionThrown()
     }
 }
