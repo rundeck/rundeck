@@ -1,5 +1,4 @@
 import { mount, shallowMount, VueWrapper } from "@vue/test-utils";
-import { VueNode } from "@vue/test-utils/dist/types";
 import { Btn } from "uiv";
 import OptionEdit from "../OptionEdit.vue";
 
@@ -246,7 +245,7 @@ describe("OptionEdit", () => {
       //check all radio buttons
       inputtypes.forEach((type) => {
         const inputRadio = wrapper.get(`input[type=radio][value=${type}]`);
-        expect((inputRadio.element as VueNode<HTMLInputElement>).checked).toBe(
+        expect((inputRadio.element as HTMLInputElement).checked).toBe(
           type === field,
         );
       });
