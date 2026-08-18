@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
@@ -66,6 +67,7 @@ import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
+import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -2289,9 +2291,10 @@ List of config values, each value contains:
         // Read allowed paths from rundeck-config.properties
         // Note: ConfigurationService automatically adds "rundeck." prefix,
         // so this reads "rundeck.resourceModelSource.file.allowedBasePaths" from the properties file
-        String allowedPaths = configurationService.getString(
-            "resourceModelSource.file.allowedBasePaths",
-            null
+        String allowedPaths = grailsApplication.config.getProperty(
+                "rundeck.resourceModelSource.file.allowedBasePaths",
+                String.class,
+                null
         )
         if (allowedPaths != null) {
             configProps.put("resourceModelSource.file.allowedBasePaths", allowedPaths)
@@ -3734,7 +3737,32 @@ Since: v23''',
         if (!apiService.requireExists(response, source, ['source index', params.index])) {
             return
         }
-        return apiRenderNodeResult(source.source.nodes, fmk, params.project)
+
+        // Path validation for writeable sources (RUN-4671): this is the nextUi (legacyUi=false)
+        // counterpart of editProjectNodeSourceFile, used by the Vue node source editor to fetch
+        // raw source content, and must enforce the same containment check.
+        if (source.source instanceof WriteableModelSource) {
+            try {
+                Map<String, Object> configProps = buildConfigPropertiesForValidation()
+                ((WriteableModelSource) source.source).validateWriteableSource(
+                    configProps,
+                    fmk,
+                    project
+                )
+            } catch (ConfigurationException e) {
+                log.warn("Node source path validation failed for project=${project} index=${index}: ${e.message}")
+                render(status: HttpServletResponse.SC_NO_CONTENT)
+                return
+            }
+        }
+
+        try {
+            return apiRenderNodeResult(source.source.nodes, fmk, params.project)
+        } catch (ResourceModelSourceException e) {
+            // File content is not a valid node source format (defense-in-depth)
+            log.warn("Node source content validation failed for project=${project} index=${index}: ${e.message}")
+            render(status: HttpServletResponse.SC_NO_CONTENT)
+        }
     }
 
     @Get(uri='/project/{project}/resource/{name}', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])

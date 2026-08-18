@@ -1337,9 +1337,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             getPluginDescriptor(_, _) >> null
         }
 
-        controller.configurationService = Mock(ConfigurationService) {
-            getString("resourceModelSource.file.allowedBasePaths", _) >> "/opt/shared,/var/custom"
-        }
+        grailsApplication.config.rundeck.resourceModelSource.file.allowedBasePaths = "/opt/shared,/var/custom"
 
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
             authorizeProjectConfigure(_, _) >> true
@@ -1356,6 +1354,9 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         )
         result.project == "TestProject"
         result.sourceDesc == '/opt/shared/nodes.yaml'
+
+        cleanup:
+        grailsApplication.config.rundeck.resourceModelSource.file.allowedBasePaths = null
     }
 
     void "editProjectNodeSourceFile should handle IOException during file access"() {
