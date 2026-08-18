@@ -1,0 +1,29 @@
+description: functional test - project access for view-only execution history repro
+context:
+  application: rundeck
+for:
+  project:
+  - allow:
+    - read
+    equals:
+      name: ExecutionsQueryViewAuth
+by:
+  group:
+  - ExecViewOnlyGroup
+  - ExecNoAccessGroup
+---
+description: functional test - view only, no job read or view_history
+context:
+  project: ExecutionsQueryViewAuth
+for:
+  job:
+  - allow:
+    - view
+  resource:
+  - allow:
+    - read
+    equals:
+      kind: event
+by:
+  group:
+  - ExecViewOnlyGroup
