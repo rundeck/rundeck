@@ -107,4 +107,61 @@ class RundeckSecurityHeadersFilterSpec extends Specification {
             true       | null
             false      | 'true'
     }
+
+    def "csp nonce request attribute is set when enabled"() {
+        given:
+            def filter = new RundeckSecurityHeadersFilter()
+            filter.config = [:]
+            filter.enabled = true
+            filter.applicationContext = Mock(ApplicationContext) {
+                getBeansOfType(SecurityHeaderProvider) >> [:]
+            }
+            def request = new MockHttpServletRequest('GET', "/test/uri")
+            def response = new MockHttpServletResponse()
+            def chain = Mock(FilterChain)
+
+        when:
+            filter.doFilter(request, response, chain)
+        then:
+            1 * chain.doFilter(request, response)
+            CspNonceProvider.getNonce(request) != null
+    }
+
+    def "csp nonce request attribute is not set when disabled"() {
+        given:
+            def filter = new RundeckSecurityHeadersFilter()
+            filter.enabled = false
+            filter.applicationContext = Mock(ApplicationContext)
+            def request = new MockHttpServletRequest('GET', "/test/uri")
+            def response = new MockHttpServletResponse()
+            def chain = Mock(FilterChain)
+
+        when:
+            filter.doFilter(request, response, chain)
+        then:
+            1 * chain.doFilter(request, response)
+            CspNonceProvider.getNonce(request) == null
+    }
+
+    def "csp nonce request attribute differs between requests"() {
+        given:
+            def filter = new RundeckSecurityHeadersFilter()
+            filter.config = [:]
+            filter.enabled = true
+            filter.applicationContext = Mock(ApplicationContext) {
+                getBeansOfType(SecurityHeaderProvider) >> [:]
+            }
+            def request1 = new MockHttpServletRequest('GET', "/test/uri")
+            def request2 = new MockHttpServletRequest('GET', "/test/uri")
+            def response = new MockHttpServletResponse()
+            def chain = Mock(FilterChain)
+
+        when:
+            filter.doFilter(request1, response, chain)
+            filter.doFilter(request2, response, chain)
+        then:
+            CspNonceProvider.getNonce(request1) != null
+            CspNonceProvider.getNonce(request2) != null
+            CspNonceProvider.getNonce(request1) != CspNonceProvider.getNonce(request2)
+    }
 }

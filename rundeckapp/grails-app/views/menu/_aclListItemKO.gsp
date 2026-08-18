@@ -17,7 +17,7 @@
 
 
 
-<script type="text/html" id="acl-policy-ident">
+<script nonce="${security.cspNonce()}" type="text/html" id="acl-policy-ident">
 <span data-bind="if: valid">
     <g:icon name="file"/>
 </span>

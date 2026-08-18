@@ -159,7 +159,7 @@
     <span class="note empty"><g:enc>${emptyText}</g:enc></span>
     </g:if>
 </g:else>
-<script language="text/javascript">
+<script nonce="${security.cspNonce()}" language="text/javascript">
     if (typeof(updateNowRunning) == 'function') {
         updateNowRunning(<%=executions?.size()%>);
     }

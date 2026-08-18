@@ -31,7 +31,7 @@
     )}"/>
     <g:appTitle/> - <g:message code="userController.page.profile.title"/>: ${user.login}</title>
     <asset:javascript src="user/profile.js"/>
-    <script type="text/javascript">
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
     function changeLanguage() {
         var url = '${g.createLink(controller: 'user', action: 'profile')}';

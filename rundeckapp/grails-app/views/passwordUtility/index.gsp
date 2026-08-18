@@ -55,7 +55,7 @@
         </div>
     </div>
 </div>
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
 function updateEncrypterProps() {
     jQuery.ajax({
         url: "${f.createLink(controller:'passwordUtility',action:'selectedEncrypterProps')}",

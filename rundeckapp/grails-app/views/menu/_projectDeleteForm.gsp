@@ -62,7 +62,7 @@
     </div>
   </div>
 </div>
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
   function onDeleteProject() {
     let btnDelete = jQuery("#btn-delete")
     let btnCancel = jQuery("#btn-cancel")

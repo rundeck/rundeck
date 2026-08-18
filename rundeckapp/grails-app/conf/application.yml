@@ -254,7 +254,9 @@ rundeck:
                         default-src: 'none'
                         connect-src: 'self https://api.rundeck.com https://data.analytics.rundeck.com'
                         style-src: 'self unsafe-inline'
-                        script-src: 'self https://content.analytics.rundeck.com unsafe-inline unsafe-eval'
+                        # the 'nonce' marker keyword injects a fresh per-request nonce value,
+                        # matched by the nonce attribute of each inline script tag
+                        script-src: 'self https://content.analytics.rundeck.com nonce unsafe-eval'
                         font-src: 'self data:'
                         img-src: '* data:'
                         form-action: 'self'

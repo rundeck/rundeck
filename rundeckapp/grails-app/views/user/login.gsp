@@ -51,7 +51,7 @@
     <![endif]-->
     <asset:javascript src="vendor/jquery.js"/>
     <g:render template="/common/css"/>
-    <script language="javascript">
+    <script nonce="${security.cspNonce()}" language="javascript">
         //<!--
         jQuery(function() {jQuery('#login').trigger('focus');});
         if (typeof(oopsEmbeddedLogin) == 'function') {
@@ -223,7 +223,7 @@
 
       </div>
     </div>
-      <script type="text/javascript">
+      <script nonce="${security.cspNonce()}" type="text/javascript">
           function onLoginClicked() {
             let lbtn = jQuery("#btn-login")
             let emptyUserNameMsg = jQuery("#empty-username-msg")
