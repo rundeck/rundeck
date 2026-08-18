@@ -163,7 +163,7 @@ jQuery(function(){
                                 filters: workflowLogFilterPluginConfigs ?: []
                         ]
                         }"/>
-                        <script type="text/javascript">
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
                             fireWhenReady("logfilterplugins_wf", function () {
                                 var step = workflowEditor.bindStepFilters('logfilterplugins_wf', 'logfilterplugins_wf', loadJsonData('logFilterData_wf'), {
                                     editor: function (x) {
@@ -214,7 +214,7 @@ jQuery(function(){
         />
     </div>
     </div>
-        <script type="text/javascript">
+        <script nonce="${security.cspNonce()}" type="text/javascript">
             fireWhenReady('wfnew_eh_types',function(){
 
                 jQuery('#wfnew_eh_types').find( '.add_step_type' ).each(function (indx,e) {

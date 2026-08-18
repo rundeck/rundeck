@@ -61,7 +61,7 @@
            )}"/>
 </g:if>
 
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
     window._rundeck = Object.assign(window._rundeck || {}, {
         navbar: {
             items: [

@@ -453,7 +453,7 @@
              data="${jobComponentValidation?.collectEntries { [it.key, it.value.errors] } ?: [:]}"/>
 %{-- end: json component validation data --}%
 
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
 //<!CDATA[
         var selFrameworkProject='${enc(js:project)}';
         var selArgs='${enc(js:scheduledExecution?.argString)}';

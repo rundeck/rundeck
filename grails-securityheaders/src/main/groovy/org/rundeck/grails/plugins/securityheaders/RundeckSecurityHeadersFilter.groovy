@@ -44,6 +44,9 @@ class RundeckSecurityHeadersFilter extends OncePerRequestFilter implements Appli
             throws IOException, ServletException {
 
         if (enabled) {
+            //generate the per-request CSP nonce before any header is built, so that both the CSP
+            //header providers and downstream GSP rendering resolve the same value
+            CspNonceProvider.storeNonce(request)
             def securityHeaders = applicationContext.getBeansOfType(SecurityHeaderProvider)
             for (SecurityHeaderProvider provider : securityHeaders.values()) {
                 def provSettings = config.get(provider.name)
