@@ -40,7 +40,7 @@
         </div>
     </div>
 </div>
-<script lang="text/javascript">
+<script nonce="${security.cspNonce()}" lang="text/javascript">
     jQuery(function(){
         var storagebrowsemodal = jQuery('#storagebrowse');
         storagebrowsemodal.on('show.bs.modal',function (evt) {

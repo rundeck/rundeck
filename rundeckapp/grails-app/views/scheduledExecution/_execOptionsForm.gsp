@@ -466,7 +466,7 @@
 </div>
 </g:uploadForm>
 
-<script lang="text/javascript">
+<script nonce="${security.cspNonce()}" lang="text/javascript">
 
     window._rundeck.data = Object.assign(window._rundeck.data || {}, {
         "jobComponentProperties": loadJsonData('jobComponentProperties')

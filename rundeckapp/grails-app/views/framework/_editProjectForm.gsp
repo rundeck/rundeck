@@ -22,7 +22,7 @@
 
 <%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; rundeck.UtilityTagLib; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
 <g:render template="/common/messages" model="[notDismissable:true]"/>
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
     function changeCronExpression(elem){
         clearHtml(document.getElementById('crontooltip'));
         var params={crontabString:elem.value};

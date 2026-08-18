@@ -15,7 +15,7 @@
   --}%
 
 <%@ page import="rundeck.UtilityTagLib" %>
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
     function changeCronExpression(elem){
         clearHtml(jQuery('#crontooltip'));
         var params={crontabString:jQuery(elem).val()};

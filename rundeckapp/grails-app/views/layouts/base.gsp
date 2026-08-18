@@ -85,7 +85,7 @@
     </g:if>
     <!-- /VUE CSS MODULES -->
 
-    <script language="javascript">
+    <script nonce="${security.cspNonce()}" language="javascript">
         function oopsEmbeddedLogin() {
         <%
             if (g.pageProperty(name: 'meta.tabpage')) { %>
@@ -117,7 +117,7 @@
 
 
     <asset:javascript src="global/rundeckui.js"/>
-    <script type="text/javascript">
+    <script nonce="${security.cspNonce()}" type="text/javascript">
         var isOpera = Object.prototype.toString.call(window.opera) == '[object Opera]';
 
         window._rundeck = Object.assign(window._rundeck || {}, {
@@ -312,13 +312,13 @@
 </section>
 
 <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
-    <script type="text/javascript" defer>
+    <script nonce="${security.cspNonce()}" type="text/javascript" defer>
         //call after gsp page has loaded javascript
         jQuery(function(){window.rundeckPage.onPageLoad();});
     </script>
 </g:if>
 
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
     jQuery('.modal-container').appendTo('body');
     jQuery('body > :not(.modal-container) .modal').appendTo('body');
 </script>

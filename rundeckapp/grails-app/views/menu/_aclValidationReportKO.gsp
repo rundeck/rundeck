@@ -15,7 +15,7 @@
   --}%
 
 
-<script type="text/html" id="acl-policy-validation">
+<script nonce="${security.cspNonce()}" type="text/html" id="acl-policy-validation">
 <ul>
     <li data-bind="foreachprop: validation">
 

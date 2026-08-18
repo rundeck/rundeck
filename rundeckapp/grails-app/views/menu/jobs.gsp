@@ -74,7 +74,7 @@ jobquery.title.endafterFilter
 saved.filters
 search
 "/>
-    <script type="text/javascript">
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
         function showError(message){
              appendText('#error',message);

@@ -98,7 +98,7 @@
         </span>
 
 
-        <script type="text/javascript">
+        <script nonce="${security.cspNonce()}" type="text/javascript">
 
         fireWhenReady('wfitem_${enc(js:i)}',function(){
             jQuery('#wfitem_${enc(js: i)}').find( '.autoedit' ).each( (index, e) => {
@@ -177,10 +177,10 @@
                         description:item.description,
                         filters:item?.getPluginConfigForType('LogFilter')?:[]
                 ]}"/>
-                <script id="wfItemData_${enc(attr:i)}" data-json-type="wfItem" type="text/json">
+                <script nonce="${security.cspNonce()}" id="wfItemData_${enc(attr:i)}" data-json-type="wfItem" type="text/json">
                         ${raw(enc(json:[num:i,item:item]))}
                 </script>
-                <script type="text/javascript">
+                <script nonce="${security.cspNonce()}" type="text/javascript">
                 fireWhenReady("pfctrls_${enc(attr:i)}",function(){
                     var step=workflowEditor.bindStepFilters('logfilter_${i}','logFilter_${enc(attr:i)}',loadJsonData('logFilterData_${enc(attr:i)}'));
                     var elemId="pfctrls_${enc(attr:i)}";
