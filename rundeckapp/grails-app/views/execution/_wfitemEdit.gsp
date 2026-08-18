@@ -15,7 +15,6 @@
   --}%
 
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec;org.rundeck.app.data.workflow.ConditionalStep" %>
-<asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
 
 <%--
     _wfitemEdit.gsp
