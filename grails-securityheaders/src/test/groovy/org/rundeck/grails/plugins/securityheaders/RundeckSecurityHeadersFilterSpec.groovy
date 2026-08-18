@@ -143,7 +143,7 @@ class RundeckSecurityHeadersFilterSpec extends Specification {
             CspNonceProvider.getNonce(request) == null
     }
 
-    def "csp nonce request attribute differs between requests"() {
+    def "csp nonce request attribute differs between sessions"() {
         given:
             def filter = new RundeckSecurityHeadersFilter()
             filter.config = [:]
@@ -163,5 +163,29 @@ class RundeckSecurityHeadersFilterSpec extends Specification {
             CspNonceProvider.getNonce(request1) != null
             CspNonceProvider.getNonce(request2) != null
             CspNonceProvider.getNonce(request1) != CspNonceProvider.getNonce(request2)
+    }
+
+    def "csp nonce request attribute is stable across requests in the same session"() {
+        given:
+            def filter = new RundeckSecurityHeadersFilter()
+            filter.config = [:]
+            filter.enabled = true
+            filter.applicationContext = Mock(ApplicationContext) {
+                getBeansOfType(SecurityHeaderProvider) >> [:]
+            }
+            def session = new org.springframework.mock.web.MockHttpSession()
+            def request1 = new MockHttpServletRequest('GET', "/test/uri")
+            request1.session = session
+            def request2 = new MockHttpServletRequest('GET', "/test/uri")
+            request2.session = session
+            def response = new MockHttpServletResponse()
+            def chain = Mock(FilterChain)
+
+        when:
+            filter.doFilter(request1, response, chain)
+            filter.doFilter(request2, response, chain)
+        then:
+            CspNonceProvider.getNonce(request1) != null
+            CspNonceProvider.getNonce(request1) == CspNonceProvider.getNonce(request2)
     }
 }

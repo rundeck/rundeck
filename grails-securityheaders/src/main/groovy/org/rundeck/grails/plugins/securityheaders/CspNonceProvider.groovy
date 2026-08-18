@@ -19,15 +19,19 @@ package org.rundeck.grails.plugins.securityheaders
 import groovy.transform.CompileStatic
 
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpSession
 import java.security.SecureRandom
 
 /**
- * Generates and stores a per-request Content-Security-Policy nonce.
+ * Generates and stores a Content-Security-Policy nonce, scoped to the current HTTP session.
  *
- * <p>The nonce is generated once per request by {@link RundeckSecurityHeadersFilter} and stored as a
- * request attribute, so that both the CSP response header built by {@link CSPSecurityHeaderProvider}
- * and the {@code nonce="..."} attributes rendered onto inline {@code <script>} tags in GSP views
- * resolve to the same value for a given request.</p>
+ * <p>The nonce is generated once per session by {@link RundeckSecurityHeadersFilter} (on the first
+ * request that establishes a session) and cached as both a session attribute and a request attribute,
+ * so that the CSP response header built by {@link CSPSecurityHeaderProvider} and the {@code nonce="..."}
+ * attributes rendered onto inline {@code <script>} tags in GSP views all resolve to the same value for
+ * the lifetime of the session &mdash; including for HTML fragments fetched via separate AJAX requests
+ * and injected into an already-loaded page, whose inline scripts would otherwise carry a mismatched,
+ * request-specific nonce that the browser rejects against the parent page's CSP header.</p>
  *
  * <p>See <a href="https://content-security-policy.com/nonce/">content-security-policy.com/nonce</a>.</p>
  */
@@ -58,11 +62,11 @@ class CspNonceProvider {
     }
 
     /**
-     * Generate a nonce for the request and store it as a request attribute, unless one was
-     * already stored for this request.
+     * Resolve the nonce for the current session (generating and caching one on first use) and store it
+     * as a request attribute, unless one was already stored for this request.
      *
      * @param request current request
-     * @return the nonce value associated with the request
+     * @return the nonce value associated with the request's session
      */
     static String storeNonce(final HttpServletRequest request) {
         if (null == request) {
@@ -72,7 +76,17 @@ class CspNonceProvider {
         if (existing) {
             return existing
         }
-        String nonce = generateNonce()
+        HttpSession session = request.getSession(true)
+        String nonce
+        synchronized (session) {
+            Object sessionValue = session.getAttribute(HTTP_ATTRIBUTE_NAME)
+            if (sessionValue != null) {
+                nonce = sessionValue.toString()
+            } else {
+                nonce = generateNonce()
+                session.setAttribute(HTTP_ATTRIBUTE_NAME, nonce)
+            }
+        }
         request.setAttribute(HTTP_ATTRIBUTE_NAME, nonce)
         nonce
     }

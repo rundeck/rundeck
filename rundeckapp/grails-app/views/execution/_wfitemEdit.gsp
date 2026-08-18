@@ -48,7 +48,7 @@
                                      checked="${!!isUseName}"/>
                             <script nonce="${security.cspNonce()}" type="text/javascript">
                             document.getElementById('useNameTrue').addEventListener('click', function(event) {
-                              _enableNameJobRefFields(true,'jobUuidField${enc(js:rkey)}','jobNameField${enc(js:rkey)}','jobGroupField${enc(js:rkey)}');
+                              _enableNameJobRefFields(true,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');
                             });
                             </script>
                             <label for="useNameTrue">
@@ -61,7 +61,7 @@
                                      checked="${!isUseName}"/>
                             <script nonce="${security.cspNonce()}" type="text/javascript">
                             document.getElementById('useNameFalse').addEventListener('click', function(event) {
-                              _enableNameJobRefFields(false,'jobUuidField${enc(js:rkey)}','jobNameField${enc(js:rkey)}','jobGroupField${enc(js:rkey)}');
+                              _enableNameJobRefFields(false,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');
                             });
                             </script>
                             <label for="useNameFalse">
@@ -94,8 +94,8 @@
                             %{--<i class="caret"></i>--}%
                         </span>
                         <script nonce="${security.cspNonce()}" type="text/javascript">
-                        document.getElementById('jobChooseBtn${enc(js:rkey)}').addEventListener('click', function(event) {
-                          loadJobChooserModal(this,'jobUuidField${enc(js:rkey)}', 'jobNameField${enc(js:rkey)}','jobGroupField${enc(js:rkey)}', 'jobProjectField${enc(js:rkey)}','jobrefpicker${enc(js:rkey)}','jobrefpicker${enc(js:rkey)}_content');
+                        document.getElementById('jobChooseBtn${rkey}').addEventListener('click', function(event) {
+                          loadJobChooserModal(this,'jobUuidField${rkey}', 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');
                         });
                         </script>
                         <span id="jobChooseSpinner"></span>
@@ -773,11 +773,11 @@
                           title="${message(code:"Workflow.stepErrorHandler.cancel.title")}"><g:message code="button.action.Cancel" /></span>
                     <span class="btn btn-cta btn-sm" id="wfiSaveNewEHBtn_${rkey}" title="${message(code:"Workflow.stepErrorHandler.savenew.title")}"><g:message code="button.action.Save" /></span>
                     <script nonce="${security.cspNonce()}" type="text/javascript">
-                    document.getElementById('wfiCancelNewEHBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
+                    document.getElementById('wfiCancelNewEHBtn_${rkey}').addEventListener('click', function(event) {
                       _wficancelnewEH(this);
                     });
-                    document.getElementById('wfiSaveNewEHBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
-                      _wfisave('${enc(js:key)}', ${num}, 'wfiedit_${enc(js:rkey)}',true);
+                    document.getElementById('wfiSaveNewEHBtn_${rkey}').addEventListener('click', function(event) {
+                      _wfisave('${key}', ${num}, 'wfiedit_${rkey}',true);
                     });
                     </script>
                 </g:if>
@@ -787,11 +787,11 @@
                           title="${message(code:"Workflow.step.cancel.title")}"><g:message code="button.action.Cancel" /></span>
                     <span class="btn btn-cta btn-sm" id="wfiSaveNewBtn_${rkey}" title="${message(code:"Workflow.step.savenew.title")}"><g:message code="button.action.Save" /></span>
                     <script nonce="${security.cspNonce()}" type="text/javascript">
-                    document.getElementById('wfiCancelNewBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
+                    document.getElementById('wfiCancelNewBtn_${rkey}').addEventListener('click', function(event) {
                       _wficancelnew(${num});
                     });
-                    document.getElementById('wfiSaveNewBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
-                      _wfisavenew('wfiedit_${enc(js:rkey)}');
+                    document.getElementById('wfiSaveNewBtn_${rkey}').addEventListener('click', function(event) {
+                      _wfisavenew('wfiedit_${rkey}');
                     });
                     </script>
                 </g:else>
@@ -803,11 +803,11 @@
                 <span class="btn btn-cta btn-sm" id="wfiSaveBtn_${rkey}"
                       title="${message(code:"Workflow."+msgItem+".save.title")}"><g:message code="button.action.Save" /></span>
                 <script nonce="${security.cspNonce()}" type="text/javascript">
-                document.getElementById('wfiViewCancelBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
-                  _wfiview('${enc(js:key)}',${num},${isErrorHandler?true:false});
+                document.getElementById('wfiViewCancelBtn_${rkey}').addEventListener('click', function(event) {
+                  _wfiview('${key}',${num},${isErrorHandler?true:false});
                 });
-                document.getElementById('wfiSaveBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
-                  _wfisave('${enc(js:key)}',${num}, 'wfiedit_${enc(js:rkey)}', ${ isErrorHandler?true:false});
+                document.getElementById('wfiSaveBtn_${rkey}').addEventListener('click', function(event) {
+                  _wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});
                 });
                 </script>
             </g:else>
