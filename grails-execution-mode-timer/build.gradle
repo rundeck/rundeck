@@ -5,6 +5,14 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
         maven { url "https://repo.grails.org/grails/restricted" }
     }
+    configurations.all {
+        resolutionStrategy {
+            // CVE-2026-64607: httpclient5 connection-pool exhaustion DoS, fixed in 5.6.3. Pulled onto
+            // this buildscript classpath via grails-gradle-plugins -> grails-shell-cli -> spring-boot-cli.
+            // Build-tooling only (never shipped), forced to stop the Snyk finding.
+            force "org.apache.httpcomponents.client5:httpclient5:${httpClient5Version}"
+        }
+    }
     dependencies {
         classpath platform("org.apache.grails:grails-bom:$grailsVersion")
         classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
