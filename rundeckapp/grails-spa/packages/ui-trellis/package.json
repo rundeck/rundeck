@@ -178,7 +178,7 @@
     "@azure/ms-rest-js": "2.7.0",
     "uuid": "$uuid",
     "nanoid": "3.3.18",
-    "happy-dom": "20.6.1"
+    "happy-dom": "20.8.9"
   },
   "jest-junit": {
     "outputDirectory": "./build/test-results",
