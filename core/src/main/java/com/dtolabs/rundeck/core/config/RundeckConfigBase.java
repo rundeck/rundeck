@@ -476,6 +476,7 @@ public class RundeckConfigBase {
         Enabled defaultExecutionCleanup = new Enabled();
         Enabled earlyAccessJobConditional = new Enabled();
         Enabled activityDefaultTimeFilter = new Enabled();
+        Enabled nextUiMode = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
         int guiAceEditorMinLines = 12;
