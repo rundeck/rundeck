@@ -27,11 +27,11 @@
 </g:each>
 
 <g:if test="${highlight}">
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
     fireWhenReady('optli_${options.size()-1}',function(){
         jQuery('li.optEntry.dohighlight').each(function(index, elem){
             jQuery(elem).effect( "highlight" );
         });
     });
-    </g:javascript>
+    </script>
 </g:if>

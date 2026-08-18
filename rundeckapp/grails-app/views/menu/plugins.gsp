@@ -70,10 +70,15 @@ To change this template use File | Settings | File Templates.
                     <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                     <i class="glyphicon glyphicon-arrow-right"></i>
                   </g:link>
-                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success pull-right">
+                  <a href="#installplugin" id="installPluginLink" class="btn-group btn btn-success pull-right">
                     <i class="glyphicon glyphicon-plus"></i>
                     <g:message code="gui.admin.InstallPlugin" default="Install Plugin"/>
                   </a>
+                  <script nonce="${security.cspNonce()}" type="text/javascript">
+                  document.getElementById('installPluginLink').addEventListener('click', function(event) {
+                    jQuery('#installplugin').modal('show');
+                  });
+                  </script>
                 </div>
               </g:if>
               <g:else>
@@ -86,10 +91,15 @@ To change this template use File | Settings | File Templates.
                     <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                     <i class="glyphicon glyphicon-arrow-right"></i>
                   </a>
-                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success pull-right">
+                  <a href="#installplugin" id="installPluginLink" class="btn-group btn btn-success pull-right">
                     <i class="glyphicon glyphicon-plus"></i>
                     <g:message code="gui.admin.InstallPlugin" default="Install Plugin"/>
                   </a>
+                  <script nonce="${security.cspNonce()}" type="text/javascript">
+                  document.getElementById('installPluginLink').addEventListener('click', function(event) {
+                    jQuery('#installplugin').modal('show');
+                  });
+                  </script>
                 </div>
               </g:else>
             </h3>

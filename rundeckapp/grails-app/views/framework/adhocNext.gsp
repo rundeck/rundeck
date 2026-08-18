@@ -89,7 +89,7 @@ search
 
   <g:set var="executionModeActive" value="${g.executionMode(active: true, project: projectName)}"/>
 
-  <g:javascript>
+  <script nonce="${security.cspNonce()}" type="text/javascript">
 
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
@@ -120,7 +120,7 @@ search
       }
 }
 })
-  </g:javascript>
+  </script>
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
   <asset:javascript src="static/pages/adhoc.js" defer="defer"/>
 </head>

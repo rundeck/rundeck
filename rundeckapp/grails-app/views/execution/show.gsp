@@ -148,7 +148,7 @@ search
         }
       </style>
       <g:set var="projectName" value="${execution.project}"/>
-      <g:javascript>
+      <script nonce="${security.cspNonce()}" type="text/javascript">
     var execInfo=loadJsonData('execInfoJSON');
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
@@ -175,7 +175,7 @@ search
             }
     }
 })
-      </g:javascript>
+      </script>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 
       <asset:stylesheet href="static/css/chunk-vendors.css"/>
@@ -1150,7 +1150,7 @@ search
         updatepagetitle:${enc(js:null == execution?.dateCompleted)},
         killjobauth:${enc(js: authChecks[AuthConstants.ACTION_KILL] ? true : false)},
       <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-          killjobhtml: '<span class="btn btn-danger btn-xs textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
+          killjobhtml: '<span class="btn btn-danger btn-xs textbtn js-followcontrol-cancel">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
       </g:if>
       <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
           killjobhtml: "",
@@ -1159,6 +1159,12 @@ search
         totalCount: '${enc(js: scheduledExecutionService.getTotalTimeStats(scheduledExecution?.uuid) ?: -1)}',
         colStep:{value:${enc(js: !isAdhoc)} },
         colNode:{value:false}
+      });
+      document.addEventListener('click', function(event) {
+        var target = event.target.closest('.js-followcontrol-cancel');
+        if (target) {
+          followControl.docancel();
+        }
       });
       nodeflowvm=new NodeFlowViewModel(
         workflow,

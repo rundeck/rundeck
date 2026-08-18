@@ -30,7 +30,7 @@
     <meta name="tabtitle" content="${g.message(code:'menu.logStorage.page.title')}"/>
     <title><g:message code="menu.logStorage.page.title"/></title>
     <asset:javascript src="menu/logStorage.js"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
         var storagestats=StorageStats.init({
             baseUrl:"${g.createLink(action: 'logStorageAjax')}",
@@ -40,7 +40,7 @@
             cleanupUrl:"${g.createLink(action: 'cleanupIncompleteLogStorageAjax', params: [project: params.project])}",
             tokensName:'page_tokens'
         });
-    </g:javascript>
+    </script>
 </head>
 
 <body>

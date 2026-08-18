@@ -39,8 +39,12 @@
                     <g:checkBox name="dostartafterFilter"
                                 value="${query?.dostartafterFilter}"
                                 id="dostartafterFilter"
-                                class="checkbox"
-                                onclick="if(this.checked){\$('startafterfilterCtrls').show()}else{\$('startafterfilterCtrls').hide()}"/>
+                                class="checkbox"/>
+                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                    document.getElementById('dostartafterFilter').addEventListener('click', function(event) {
+                      if(this.checked){\$('startafterfilterCtrls').show()}else{\$('startafterfilterCtrls').hide()}
+                    });
+                    </script>
                     <label for="dostartafterFilter">Started After:</label>
                 </span>
         </td><td>
@@ -60,8 +64,12 @@
                     <g:checkBox name="dostartbeforeFilter"
                                 value="${query?.dostartbeforeFilter}"
                                 id="dostartbeforeFilter"
-                                class="checkbox"
-                                onclick="if(this.checked){\$('startbeforefilterCtrls').show()}else{\$('startbeforefilterCtrls').hide()}"/>
+                                class="checkbox"/>
+                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                    document.getElementById('dostartbeforeFilter').addEventListener('click', function(event) {
+                      if(this.checked){\$('startbeforefilterCtrls').show()}else{\$('startbeforefilterCtrls').hide()}
+                    });
+                    </script>
                     <label for="dostartbeforeFilter">Started Before:</label>
                 </span>
         </td><td>
@@ -83,8 +91,12 @@
                 <g:checkBox name="doendafterFilter"
                             value="${query?.doendafterFilter}"
                             id="doendafterFilter"
-                            class="checkbox"
-                            onclick="if(this.checked){\$('endafterfilterCtrls').show()}else{\$('endafterfilterCtrls').hide()}"/>
+                            class="checkbox"/>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
+                document.getElementById('doendafterFilter').addEventListener('click', function(event) {
+                  if(this.checked){\$('endafterfilterCtrls').show()}else{\$('endafterfilterCtrls').hide()}
+                });
+                </script>
                 <label for="doendafterFilter">Ended After:</label>
             </span>
         </td><td>
@@ -105,8 +117,12 @@
                 <g:checkBox name="doendbeforeFilter"
                             value="${query?.doendbeforeFilter}"
                             id="doendbeforeFilter"
-                            class="checkbox"
-                            onclick="if(this.checked){\$('endbeforefilterCtrls').show()}else{\$('endbeforefilterCtrls').hide()}"/>
+                            class="checkbox"/>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
+                document.getElementById('doendbeforeFilter').addEventListener('click', function(event) {
+                  if(this.checked){\$('endbeforefilterCtrls').show()}else{\$('endbeforefilterCtrls').hide()}
+                });
+                </script>
                 <label for="doendbeforeFilter">Ended Before:</label>
             </span>
         </td><td>

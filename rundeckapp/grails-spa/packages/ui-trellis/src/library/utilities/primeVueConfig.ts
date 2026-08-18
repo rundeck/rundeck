@@ -2,6 +2,7 @@ import PrimeVue from 'primevue/config';
 import Tooltip from 'primevue/tooltip';
 import Lara from '@primeuix/themes/lara';
 import type { App } from 'vue';
+import { getRundeckContext } from '../rundeckService';
 
 export interface PrimeVueConfigOptions {
   includeTooltip?: boolean;
@@ -17,6 +18,9 @@ export function configurePrimeVue(
 ): void {
 
   app.use(PrimeVue, {
+    csp: {
+      nonce: getRundeckContext().cspNonce,
+    },
     theme: {
       preset: Lara,
       options: {

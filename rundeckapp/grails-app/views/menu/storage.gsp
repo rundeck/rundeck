@@ -27,11 +27,11 @@ implied. - See the License for the specific language governing permissions and -
 
         ]"/>
         <asset:javascript src="static/pages/storage.js" defer="defer"/>
-        <g:javascript>
+        <script nonce="${security.cspNonce()}" type="text/javascript">
             window._rundeck = Object.assign(window._rundeck || {}, {
                 data: { }
             });
-        </g:javascript>
+        </script>
       </head>
 
     <feature:disabled name="vueKeyStorage">

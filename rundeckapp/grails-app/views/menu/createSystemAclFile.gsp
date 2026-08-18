@@ -33,7 +33,7 @@
     <asset:javascript src="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
         function init() {
             $$('input').each(function (elem) {
@@ -47,7 +47,7 @@
             });
         }
         jQuery(init);
-    </g:javascript>
+    </script>
 </head>
 
 <body>

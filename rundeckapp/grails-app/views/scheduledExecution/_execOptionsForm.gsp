@@ -23,12 +23,12 @@
     <!-- BEGIN: firefox hack https://bugzilla.mozilla.org/show_bug.cgi?id=1119063 -->
     <input type="text" style="display:none" class="ixnay">
     <input type="password" style="display:none" class="ixnay">
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
     jQuery(function(){
         var nay=function(){jQuery('.ixnay').val('');},ix=setTimeout;
         nay(); ix(nay,50); ix(nay,200); ix(nay, 1000);
     });
-    </g:javascript>
+    </script>
     <!-- END: firefox hack -->
 <div class="exec-options-body container-fluid">
 
@@ -380,7 +380,7 @@
                     </g:if>
             </div>
             </div>
-            <g:javascript>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
 
                 jQuery('div.jobmatchednodes').on( 'click','span.selectall', function (evt) {
                     jQuery(this).closest('.group_section').find('input').each(function (i,el) {
@@ -442,7 +442,7 @@
                     jQuery(this).trigger('focus');
                 });
 
-            </g:javascript>
+            </script>
 
     </div>
         </div>

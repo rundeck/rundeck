@@ -61,10 +61,10 @@
             <g:render template="nodeTooltipView" model="[node:node,key: nkey+'_key',islocal:nodedata.islocal,runnable:runnable, nodefilterLinkId: nodefilterLinkId?:'']"/>
             <% i++ %>
         </g:each>
-        <g:javascript>
+        <script nonce="${security.cspNonce()}" type="text/javascript">
             fireWhenReady('embednodeset',function(){
                 _initPopoverContentRef('#embednodeset');
             });
 
-        </g:javascript>
+        </script>
 </span>

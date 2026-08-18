@@ -161,7 +161,7 @@ search
                  ]}"/>
 
 
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
             projectAdminAuth:${enc(js:projAdminAuth)},
@@ -189,7 +189,7 @@ search
             }
     }
 })
-    </g:javascript>
+    </script>
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
     <asset:javascript src="static/components/copybox.js"/>
 </head>

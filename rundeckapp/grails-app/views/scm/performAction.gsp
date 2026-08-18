@@ -173,14 +173,22 @@
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
                                             <span class="btn btn-simple btn-hover"
-                                                  onclick="jQuery('input[name=id]').prop('checked', true)">
+                                                  id="selectAllIds">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
                                             <span class="btn btn-simple btn-hover"
-                                                  onclick="jQuery('input[name=id]').prop('checked', false)">
+                                                  id="selectNoneIds">
                                                 <g:message code="select.none"/>
                                             </span>
+                                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                                            document.getElementById('selectAllIds').addEventListener('click', function(event) {
+                                              jQuery('input[name=id]').prop('checked', true)
+                                            });
+                                            document.getElementById('selectNoneIds').addEventListener('click', function(event) {
+                                              jQuery('input[name=id]').prop('checked', false)
+                                            });
+                                            </script>
                                         </div>
                                     </div>
                                 </g:if>
@@ -225,14 +233,22 @@
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
                                             <span class="btn btn-default"
-                                                  onclick="jQuery('input[name=deletePaths]').prop('checked', true)">
+                                                  id="selectAllDeletePaths">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
                                             <span class="btn btn-default"
-                                                  onclick="jQuery('input[name=deletePaths]').prop('checked', false)">
+                                                  id="selectNoneDeletePaths">
                                                 <g:message code="select.none"/>
                                             </span>
+                                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                                            document.getElementById('selectAllDeletePaths').addEventListener('click', function(event) {
+                                              jQuery('input[name=deletePaths]').prop('checked', true)
+                                            });
+                                            document.getElementById('selectNoneDeletePaths').addEventListener('click', function(event) {
+                                              jQuery('input[name=deletePaths]').prop('checked', false)
+                                            });
+                                            </script>
                                         </div>
                                     </div>
                                 </g:if>
@@ -320,14 +336,22 @@
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
                                             <span class="btn btn-default"
-                                                  onclick="jQuery('input[name=chosenTrackedItem]').prop('checked', true)">
+                                                  id="selectAllChosenTrackedItem">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
                                             <span class="btn btn-default"
-                                                  onclick="jQuery('input[name=chosenTrackedItem]').prop('checked', false)">
+                                                  id="selectNoneChosenTrackedItem">
                                                 <g:message code="select.none"/>
                                             </span>
+                                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                                            document.getElementById('selectAllChosenTrackedItem').addEventListener('click', function(event) {
+                                              jQuery('input[name=chosenTrackedItem]').prop('checked', true)
+                                            });
+                                            document.getElementById('selectNoneChosenTrackedItem').addEventListener('click', function(event) {
+                                              jQuery('input[name=chosenTrackedItem]').prop('checked', false)
+                                            });
+                                            </script>
                                         </div>
                                     </div>
                                 </g:if>
@@ -409,14 +433,22 @@
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
                                             <span class="btn btn-default"
-                                                  onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', true)">
+                                                  id="selectAllChosenDeleteItem">
                                                 <g:message code="select.all"/>
                                             </span>
                                             &bull;
                                             <span class="btn btn-default"
-                                                  onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', false)">
+                                                  id="selectNoneChosenDeleteItem">
                                                 <g:message code="select.none"/>
                                             </span>
+                                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                                            document.getElementById('selectAllChosenDeleteItem').addEventListener('click', function(event) {
+                                              jQuery('input[name=chosenDeleteItem]').prop('checked', true)
+                                            });
+                                            document.getElementById('selectNoneChosenDeleteItem').addEventListener('click', function(event) {
+                                              jQuery('input[name=chosenDeleteItem]').prop('checked', false)
+                                            });
+                                            </script>
                                         </div>
                                     </div>
                                 </g:if>

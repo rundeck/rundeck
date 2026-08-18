@@ -36,7 +36,7 @@
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="storageBrowseKO.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
     var configControl;
     var confirm = new PageConfirm(message('page.unsaved.changes'));
@@ -54,7 +54,7 @@
         }
     var _storageBrowseSelected=confirm.setNeedsConfirm;
     jQuery(init);
-    </g:javascript>
+    </script>
 </head>
 
 <body>
@@ -67,7 +67,7 @@
       </div>
     </div>
     <div class="row">
-      <g:form action="saveProjectNodeSources" method="post" useToken="true" onsubmit="return configControl.checkForm();" class="form">
+      <g:form action="saveProjectNodeSources" method="post" useToken="true" class="form">
         <div class="col-xs-12">
           <div class="card"  id="createform">
             <div class="card-header">
@@ -127,8 +127,7 @@
                                 </div>
                               <div class="list-group">
                                   <g:each in="${resourceModelConfigDescriptions}" var="description">
-                                      <a onclick="configControl.addConfig('${enc(js: description.name)}');
-                                      return false;"
+                                      <a id="addResourceModelSource_${enc(attr:description.name)}"
                                          data-dismiss="modal"
                                          href="#"
                                          class="list-group-item">
@@ -144,6 +143,12 @@
                                           </strong>
                                           <span class="help-block"><g:enc>${description.description}</g:enc></span>
                                       </a>
+                                      <script nonce="${security.cspNonce()}" type="text/javascript">
+                                      document.getElementById('addResourceModelSource_${enc(js:description.name)}').addEventListener('click', function(event) {
+                                        configControl.addConfig('${enc(js: description.name)}');
+                                        event.preventDefault();
+                                      });
+                                      </script>
                                   </g:each>
                               </div>
                           </div>
@@ -160,6 +165,11 @@
                 </div>
             </div>
         </g:form>
+        <script nonce="${security.cspNonce()}" type="text/javascript">
+        document.getElementById('createform').closest('form').addEventListener('submit', function(event) {
+          if (configControl.checkForm() === false) { event.preventDefault(); }
+        });
+        </script>
     </div>
 
     <g:render template="storageBrowseModalKO"/>

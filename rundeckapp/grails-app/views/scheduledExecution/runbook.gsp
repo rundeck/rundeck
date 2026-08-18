@@ -71,14 +71,14 @@
             <div id="rundoc" class="panel panel-default">
                 <div class="panel-body">
                     <div class="markdeep">${rundoctext.replaceAll('\\Q[[run]]\\E', '<div id="inlinerun"></div>')}</div>
-                    <g:javascript>
+                    <script nonce="${security.cspNonce()}" type="text/javascript">
                         jQuery(function () {
                             "use strict";
                             jQuery('#inlinerun').append(
                                     '<button class="btn btn-success">Run Job Now <i class="glyphicon glyphicon-play"></i></button>'
                             );
                         })
-                    </g:javascript>
+                    </script>
                 </div>
             </div>
         </div>

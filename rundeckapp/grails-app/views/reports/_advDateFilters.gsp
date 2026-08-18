@@ -34,8 +34,12 @@ def CUR_YEAR=gcal.get(java.util.GregorianCalendar.YEAR)
 
                                     <g:checkBox name="dostartafterFilter"
                                                 value="${query?.dostartafterFilter}"
-                                                id="dostartafterFilter"
-                                                onclick="if(this.checked){\$('startafterfilterCtrls').show()}else{\$('startafterfilterCtrls').hide()}"/>
+                                                id="dostartafterFilter"/>
+                                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                                    document.getElementById('dostartafterFilter').addEventListener('click', function(event) {
+                                      if(this.checked){\$('startafterfilterCtrls').show()}else{\$('startafterfilterCtrls').hide()}
+                                    });
+                                    </script>
                                     <label for="dostartafterFilter">Started After:</label>
                                 </span>
                                 <div class="presentation" id="startafterfilterCtrls" style="white-space:nowrap; ${query?.dostartafterFilter?'':'display:none;'}">
@@ -49,8 +53,12 @@ def CUR_YEAR=gcal.get(java.util.GregorianCalendar.YEAR)
                                 <span class="prompt">
                                     <g:checkBox name="dostartbeforeFilter"
                                                 value="${query?.dostartbeforeFilter}"
-                                                id="dostartbeforeFilter"
-                                                onclick="if(this.checked){\$('startbeforefilterCtrls').show()}else{\$('startbeforefilterCtrls').hide()}"/>
+                                                id="dostartbeforeFilter"/>
+                                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                                    document.getElementById('dostartbeforeFilter').addEventListener('click', function(event) {
+                                      if(this.checked){\$('startbeforefilterCtrls').show()}else{\$('startbeforefilterCtrls').hide()}
+                                    });
+                                    </script>
                                     <label for="dostartbeforeFilter">Started Before:</label>
                                 </span>
                                 <div class="presentation" id="startbeforefilterCtrls" style="white-space:nowrap; ${query?.dostartbeforeFilter?'':'display:none'}">
@@ -65,8 +73,12 @@ def CUR_YEAR=gcal.get(java.util.GregorianCalendar.YEAR)
                                 <span class="prompt">
                                     <g:checkBox name="doendafterFilter"
                                                 value="${query?.doendafterFilter}"
-                                                id="doendafterFilter"
-                                                onclick="if(this.checked){\$('endafterfilterCtrls').show()}else{\$('endafterfilterCtrls').hide()}"/>
+                                                id="doendafterFilter"/>
+                                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                                    document.getElementById('doendafterFilter').addEventListener('click', function(event) {
+                                      if(this.checked){\$('endafterfilterCtrls').show()}else{\$('endafterfilterCtrls').hide()}
+                                    });
+                                    </script>
                                     <label for="doendafterFilter">Ended After:</label>
                                 </span>
                                 <div class="presentation" id="endafterfilterCtrls" style="white-space:nowrap; ${query?.doendafterFilter?'':'display:none'}">
@@ -81,8 +93,12 @@ def CUR_YEAR=gcal.get(java.util.GregorianCalendar.YEAR)
                                 <span class="prompt">
                                     <g:checkBox name="doendbeforeFilter"
                                                 value="${query?.doendbeforeFilter}"
-                                                id="doendbeforeFilter"
-                                                onclick="if(this.checked){\$('endbeforefilterCtrls').show()}else{\$('endbeforefilterCtrls').hide()}"/>
+                                                id="doendbeforeFilter"/>
+                                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                                    document.getElementById('doendbeforeFilter').addEventListener('click', function(event) {
+                                      if(this.checked){\$('endbeforefilterCtrls').show()}else{\$('endbeforefilterCtrls').hide()}
+                                    });
+                                    </script>
                                     <label for="doendbeforeFilter">Ended Before:</label>
                                 </span>
                                 <div class="presentation" id="endbeforefilterCtrls" style="white-space:nowrap; ${query?.doendbeforeFilter?'':'display:none'}">

@@ -219,12 +219,12 @@
     <g:set var="stepDescriptionsAll" value="${nodeStepDescriptions + (stepDescriptions?:[]) + (nodeStepDescriptionsHighlighted?:[])}"/>
     <g:set var="stepDescriptionsData" value="${stepDescriptionsAll.collect{[name:it.name,title:it.title,description:it.description,properties:it.properties.collect{[name:it.name,title:it.title,description:it.description]}] } }"/>
     <g:embedJSON data="${stepDescriptionsData}" id="stepDescriptions_json"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
                 fireWhenReady('addStep_${enc(js: rkey)}',function(){
                     var filter = new StepPluginsFilter({stepDescriptions:loadJsonData('stepDescriptions_json')});
                     ko.applyBindings(filter,jQuery('#addStep_${enc(js:rkey)}')[0]);
                 });
-    </g:javascript>
+    </script>
 </div>
 
 <div class="panel-footer">

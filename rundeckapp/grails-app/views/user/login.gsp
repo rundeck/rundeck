@@ -110,7 +110,7 @@
               </div>
             </g:if>
             <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
-              <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form" onsubmit="return onLoginClicked()">
+              <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form" id="loginForm">
                 <div class="card" data-background="color" data-color="blue">
                   <div class="card-header">
                     <h3 class="card-title">
@@ -118,7 +118,12 @@
                           <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
                           <g:set var="titleLink" value="${cfg.getString(config: "gui.titleLink")}"/>
                           <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}" title="Home">
-                            <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;" onload="SVGInject(this)"/>
+                            <asset:image id="login-logo-image" src="${logoImage}" alt="Rundeck" style="width: 200px;"/>
+                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                            document.getElementById('login-logo-image').addEventListener('load', function(event) {
+                              SVGInject(this);
+                            });
+                            </script>
                           </a>
 %{--                          <asset:image src="${g.message(code: 'app.login.logo')}"/>--}%
                           <g:set var="userDefinedLogo" value="${cfg.getString(config: "gui.logo")}"/>
@@ -207,6 +212,11 @@
                   </div>
                 </div>
               </form>
+              <script nonce="${security.cspNonce()}" type="text/javascript">
+              document.getElementById('loginForm').addEventListener('submit', function(event) {
+                if (onLoginClicked() === false) { event.preventDefault(); }
+              });
+              </script>
             </div>
           </div>
         </div>

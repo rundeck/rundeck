@@ -192,9 +192,13 @@
                   optionKey="key" optionValue="value"
                   value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)}"
                   noSelection="['': '-choose a value-']"
-                  onchange="if(this.value){jQuery('#${fieldid}').val(this.value);}"
                   class="${formControlType}"
         />
+        <script nonce="${security.cspNonce()}" type="text/javascript">
+        document.getElementById('${enc(js:fieldid)}').addEventListener('change', function(event) {
+          if (this.value) { jQuery('#${enc(js:fieldid)}').val(this.value); }
+        });
+        </script>
         </div>
     </g:if>
     <g:else>

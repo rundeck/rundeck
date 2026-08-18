@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import org.rundeck.grails.plugins.securityheaders.CspNonceProvider
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequest
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong
@@ -794,16 +795,16 @@ class ExecutionController extends ControllerBase{
                 <div class="col-sm-12">
                 ''')
                 appendOutput(response, g.message(code: "execution.html.waiting"))
-                appendOutput(response, '''
+                appendOutput(response, """
                 </div>
-                <script>
+                <script nonce="${CspNonceProvider.getNonce(request)}">
                 setTimeout(function(){
                    window.location.reload(1);
                 }, 5000);
                 </script>
                 </body>
                 </html>
-                ''')
+                """)
             }else{
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND)
                 log.error("Output file not available")
@@ -889,18 +890,18 @@ class ExecutionController extends ControllerBase{
 </html>
 ''')
         }else{
-            appendOutput(response, '''</div>
+            appendOutput(response, """</div>
 </div>
 </div>
 </div>
-<script>
+<script nonce="${CspNonceProvider.getNonce(request)}">
 setTimeout(function(){
    window.location.reload(1);
 }, 5000);
 </script>
 </body>
 </html>
-''')
+""")
         }
 
     }

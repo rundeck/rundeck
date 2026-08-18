@@ -31,7 +31,7 @@
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="static/components/readme-motd.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
     function init(){
         <g:if test="${legacyUi}">
@@ -43,7 +43,7 @@
         </g:if>
     }
     jQuery(init);
-    </g:javascript>
+    </script>
 </head>
 
 <body>

@@ -121,6 +121,7 @@
         var isOpera = Object.prototype.toString.call(window.opera) == '[object Opera]';
 
         window._rundeck = Object.assign(window._rundeck || {}, {
+        cspNonce: '${security.cspNonce()}',
         rdBase: '${g.createLink(uri:"/",absolute:true).replaceAll('/$', '')}',
         context: '${grailsApplication.config.getProperty("server.servlet.context-path", String.class)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',

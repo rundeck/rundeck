@@ -106,11 +106,16 @@
                                 zh_CN : '简体中文',
                             ]
                         }"/>
-                        <g:select class="form-control" name="language" id="language" onchange="changeLanguage();"
+                        <g:select class="form-control" name="language" id="language"
                                   value="${currentLang}" from="${supportedLangs}" optionKey="key"
                                   optionValue="value">
 
                         </g:select>
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
+                        document.getElementById('language').addEventListener('change', function(event) {
+                          changeLanguage();
+                        });
+                        </script>
 
 
                     </div>

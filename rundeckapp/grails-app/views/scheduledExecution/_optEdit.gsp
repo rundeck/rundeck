@@ -190,13 +190,13 @@ form.option.valuesType.url.authType.bearerToken.label
                         <i class="glyphicon glyphicon-question-sign"></i>
                     </a>
                 </div>
-                <g:javascript>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
                     jQuery(function () {
                         jQuery('#optedit_${rkey}').find('textarea.ace_editor').each(function () {
                             _addAceTextarea(this);
                         });
                     });
-                </g:javascript>
+                </script>
             </div>
         </div>
         <!-- ko if: !isFileType() -->
@@ -1019,21 +1019,37 @@ form.option.valuesType.url.authType.bearerToken.label
         <div class="floatr" style="margin:10px 0;">
             <g:if test="${newoption}">
                 <g:hiddenField name="newoption" value="true"/>
-                <span class="btn btn-default btn-sm" onclick="_optcancelnew();"
+                <span class="btn btn-default btn-sm" id="optCancelNewBtn_${enc(attr:rkey)}"
                       title="${g.message(code:'form.option.cancel.title',encodeAs:'HTMLAttribute')}"><g:message code="cancel" /></span>
-                <span class="btn btn-cta btn-sm" onclick="_optsavenew('optedit_${enc(attr:rkey)}', 'reqtoken_${enc(attr:rkey)}');"
+                <span class="btn btn-cta btn-sm" id="optSaveNewBtn_${enc(attr:rkey)}"
                       title="${g.message(code:'form.option.create.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
-                <g:javascript>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
+                document.getElementById('optCancelNewBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
+                  _optcancelnew();
+                });
+                document.getElementById('optSaveNewBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
+                  _optsavenew('optedit_${enc(js:rkey)}', 'reqtoken_${enc(js:rkey)}');
+                });
+                </script>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
                     fireWhenReady('optname_${enc(js:rkey)}',function(){
                         jQuery('#optname_${enc(js:rkey)}').trigger('focus');
                     });
-                </g:javascript>
+                </script>
             </g:if>
             <g:else>
-                <span class="btn btn-default btn-sm" onclick="_optview('${enc(js:origName?:option?.name)}',jQuery(this).closest('li.optEntry'));"
+                <span class="btn btn-default btn-sm" id="optDiscardBtn_${enc(attr:rkey)}"
                       title="${g.message(code:'form.option.discard.title', encodeAs: 'HTMLAttribute')}"><g:message code="discard" /></span>
-                <span class="btn btn-cta btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',jQuery(this).closest('li.optEntry'));"
+                <span class="btn btn-cta btn-sm" id="optSaveBtn_${enc(attr:rkey)}"
                       title="${g.message(code:'form.option.save.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
+                document.getElementById('optDiscardBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
+                  _optview('${enc(js:origName?:option?.name)}',jQuery(this).closest('li.optEntry'));
+                });
+                document.getElementById('optSaveBtn_${enc(js:rkey)}').addEventListener('click', function(event) {
+                  _optsave('optedit_${enc(js:rkey)}','reqtoken_${enc(js:rkey)}',jQuery(this).closest('li.optEntry'));
+                });
+                </script>
             </g:else>
             <span class="text-warning cancelsavemsg" style="display:none;">
                 <g:message code="scheduledExecution.option.unsaved.warning"/>
@@ -1043,7 +1059,7 @@ form.option.valuesType.url.authType.bearerToken.label
     </div>
     <g:set var="listvalue" value="${option?.valuesList}"/>
     <g:set var="listjoin" value="${option?.optionValues }"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
       fireWhenReady('optedit_${enc(js: rkey)}',function(){
           var isRegex = ${null!=option?.regex};
           var enforced = ${option?.enforced?true:false};
@@ -1069,5 +1085,5 @@ form.option.valuesType.url.authType.bearerToken.label
 
           ko.applyBindings(editor,jQuery('#optedit_${enc(js:rkey)}')[0]);
       });
-    </g:javascript>
+    </script>
 </div>

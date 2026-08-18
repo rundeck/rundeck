@@ -293,9 +293,9 @@
                         params="[project: params.project ?: request.project]"><g:enc>${flash.savedJob.generateFullName()}</g:enc></g:link>
             </span>
           </div>
-          <g:javascript>
+          <script nonce="${security.cspNonce()}" type="text/javascript">
             fireWhenReady('jobrow_${enc(js:flash.savedJob.id)}',doyft.curry('jobrow_${enc(js:flash.savedJob.id)}'));
-          </g:javascript>
+          </script>
         </g:if>
 
         <span id="busy" style="display:none"></span>

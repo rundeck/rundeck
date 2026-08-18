@@ -63,7 +63,6 @@
             </div>
             <div class="floatl ">
             <div class="checklist action hidedeselected"
-                 onclick="myToggleClassName(this,'hidedeselected');"
                  title="Click to toggle excluded days of the week"
                  id="DayOfWeekDialog"
                 >
@@ -73,6 +72,11 @@
                     </div>
                 </g:each>
             </div>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
+            document.getElementById('DayOfWeekDialog').addEventListener('click', function(event) {
+              myToggleClassName(this,'hidedeselected');
+            });
+            </script>
             </div>
         </g:else>
 
@@ -90,7 +94,6 @@
         <g:else>
             <div class="checklist hidedeselected action"
                  id="MonthDialog"
-                 onclick="myToggleClassName(this,'hidedeselected');"
                  title="Click to toggle excluded months ">
 
                 <g:each in="${UtilityTagLib.monthsofyearord}">
@@ -99,6 +102,11 @@
                     </div>
                 </g:each>
             </div>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
+            document.getElementById('MonthDialog').addEventListener('click', function(event) {
+              myToggleClassName(this,'hidedeselected');
+            });
+            </script>
         </g:else>
     </div>
     </g:if>
