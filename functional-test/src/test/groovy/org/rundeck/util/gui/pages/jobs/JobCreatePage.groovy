@@ -142,7 +142,7 @@ class JobCreatePage extends BasePage {
     By cancelNewStepFormBy = By.cssSelector('ol.flowlist li span.btn.btn-default.btn-sm[onclick*="_wficancelnew("]')
     By cancelEditStepFormBy = By.cssSelector('ol.flowlist li span.btn.btn-default.btn-sm[onclick*="_wfiview"]')
     By listWorkFlowItemBy = By.xpath("//*[starts-with(@id,'wfitem_')]")
-    By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
+    By addSimpleCommandStepBy = By.id("wfnewtypesShowBtn")
     By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
     By nofiticationChildsBy = By.className("text-success")
     By updateBtn        = By.name("_action_Update")

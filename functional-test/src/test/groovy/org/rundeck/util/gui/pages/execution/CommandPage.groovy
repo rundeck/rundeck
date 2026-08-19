@@ -19,7 +19,7 @@ class CommandPage extends BasePage {
     By nodeFilterTextBy = By.xpath("//*[@id=\"schedJobNodeFilter\"]")
     By filterNodeBy = By.xpath("//button[contains(@class, 'node_filter__dosearch')]")
     By commandInputTextBy = By.xpath("//input[@id='runFormExec']")
-    By runBy = By.xpath("//a[@onclick=\"runFormSubmit('runbox');\"]")
+    By runBy = By.id("runFormSubmitBtn")
     By saveAsJobBy = By.xpath("//a[contains(@href, '/job/createFromExecution?executionId=')]")
     By runningExecutionStateBy = By.cssSelector("#runcontent .executionshow .execution-action-links a .execstate[data-execstate]")
     By abortBy = By.cssSelector("span[data-bind\$='killExecAction']")
