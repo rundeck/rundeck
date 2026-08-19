@@ -36,8 +36,8 @@
       "groupName": "gradle minor/patch dependencies"
     },
     {
-      "description": "Grails minors have a history of real behavioral changes despite semver, and grails-plugin-spring-security-core must move in lockstep with it — pull both out of the auto-grouped minor/patch bucket for manual review",
-      "matchPackageNames": ["/^org\\.apache\\.grails:/"],
+      "description": "Grails minors have a history of real behavioral changes despite semver, and grails-plugin-spring-security-core must move in lockstep with it — pull both out of the auto-grouped minor/patch bucket for manual review. Groovy is included here too: Grails dictates which Groovy line it's built against, and bumping groovyVersion independently caused classpath skew that broke the forked :rundeckapp:assetCompile JVM (PR #10448, ExceptionInInitializerError in GroovySystem.<clinit>).",
+      "matchPackageNames": ["/^org\\.apache\\.grails:/", "/^org\\.apache\\.groovy:/"],
       "groupName": "grails framework (manual review required)",
       "dependencyDashboardApproval": true
     },
@@ -51,6 +51,11 @@
       "description": "jetty.version only forces jetty-util in core/build.gradle; every other Jetty artifact stays pinned wherever Spring Boot's BOM manages it. A 'minor' bump here (e.g. 12.0.x -> 12.1.x) can cross Jetty's own release-line boundary and produce a mixed-version classpath — must be reviewed and moved in lockstep with springBootVersion",
       "matchPackageNames": ["/^org\\.eclipse\\.jetty/"],
       "groupName": "jetty (manual review - Spring Boot BOM coupling)",
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "bcprov-jdk18on shares the bouncyCastleVersion property with bcpkix/bcutil/bcmail/bctls-jdk18on (git-plugin, etc.), and those siblings don't always cut a patch release together — 1.85.2 was published for bcprov-jdk18on alone, which broke git-plugin's bcpkix-jdk18on resolution when Renovate bumped the shared property (PR #10448). Gate on Dependency Dashboard approval rather than disabling outright, so this keeps surfacing instead of being silently forgotten; before approving, confirm bcpkix/bcutil/bcmail/bctls-jdk18on have all published the same version on Maven Central.",
+      "matchPackageNames": ["org.bouncycastle:bcprov-jdk18on"],
       "dependencyDashboardApproval": true
     },
     {
