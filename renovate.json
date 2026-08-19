@@ -54,8 +54,9 @@
       "dependencyDashboardApproval": true
     },
     {
-      "description": "bcprov-jdk18on shares the bouncyCastleVersion property with bcpkix/bcutil/bcmail/bctls-jdk18on (git-plugin, etc.), and those siblings don't always cut a patch release together — 1.85.2 was published for bcprov-jdk18on alone, which broke git-plugin's bcpkix-jdk18on resolution when Renovate bumped the shared property (PR #10448). Gate on Dependency Dashboard approval rather than disabling outright, so this keeps surfacing instead of being silently forgotten; before approving, confirm bcpkix/bcutil/bcmail/bctls-jdk18on have all published the same version on Maven Central.",
+      "description": "bcprov-jdk18on shares the bouncyCastleVersion property with bcpkix/bcutil/bcmail/bctls-jdk18on (git-plugin, etc.), and those siblings don't always cut a patch release together — 1.85.2 was published for bcprov-jdk18on alone, which broke git-plugin's bcpkix-jdk18on resolution when Renovate bumped the shared property (PR #10448). Needs its own groupName, not just dependencyDashboardApproval: without one it stayed lumped into the 'gradle minor/patch dependencies' group below and rode along anyway (same mistake re-broke rundeckpro#4922 a second time). Gate on Dependency Dashboard approval rather than disabling outright, so this keeps surfacing instead of being silently forgotten; before approving, confirm bcpkix/bcutil/bcmail/bctls-jdk18on have all published the same version on Maven Central.",
       "matchPackageNames": ["org.bouncycastle:bcprov-jdk18on"],
+      "groupName": "bouncy castle bcprov (manual review - patch cadence mismatch with siblings)",
       "dependencyDashboardApproval": true
     },
     {
