@@ -21,6 +21,10 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
@@ -552,7 +556,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
             }
             [result: [], total: 0]
         }
-        1 * service.rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAny(_, _, [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]) >>
+        1 * service.rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAny(_, _, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY]) >>
                 {authcontext, inputArr, actions ->
             return inputArr
         }
@@ -562,6 +566,38 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
         [adhoc:true]            | 1
         [jobonly:true]          | 0
         [jobIdListFilter:'1,2'] | 2
+    }
+
+    def "searchExecutions filters by read, view, or view_history"() {
+        given:
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def projectName = 'testProj'
+        def auth = Mock(AuthContext)
+        Execution exec = setTestExecutions(projectName, jobUuid)
+        def myCriteria = new Expando()
+        myCriteria.list = { Closure cls -> return [exec] }
+        Execution.metaClass.static.createCriteria = { myCriteria }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(IFramework) {
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    getFrameworkProject(_) >> Mock(IRundeckProject) {
+                        getNodeSet() >> Mock(INodeSet)
+                    }
+                }
+                getFrameworkNodeName() >> 'localhost'
+            }
+        }
+
+        when:
+        service.searchExecutions(auth, null, projectName, null, null, null)
+
+        then:
+        1 * service.rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAny(
+                _, [exec], [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY]
+        ) >> { authcontext, execs, actions -> execs }
+
+        cleanup:
+        GroovySystem.metaClassRegistry.removeMetaClass(Execution)
     }
 
 
