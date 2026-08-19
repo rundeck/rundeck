@@ -19,4 +19,26 @@ package org.rundeck.app
 class AppConstants {
     static final String FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED = "framework.output.allowUnsanitized"
     static final String PROJECT_OUTPUT_ALLOW_UNSANITIZED = "project.output.allowUnsanitized"
+
+    /**
+     * System-wide default allowlist regex applied to job option values that have no per-option
+     * regex of their own. When set (non-empty) an option value must fully match the pattern or the
+     * execution is rejected during validation. When absent or empty, no default validation applies.
+     * Overridden per-project by {@link #PROJECT_OPTION_INPUT_DEFAULT_PATTERN}.
+     *
+     * Resolved through ConfigurationService (the {@code rundeck.*} namespace), so it is editable at
+     * runtime via the System Configuration UI as well as {@code rundeck-config}. This constant holds
+     * the sub-key (without the {@code rundeck.} prefix) used with {@code ConfigurationService.getString}.
+     */
+    static final String SYSTEM_OPTION_INPUT_DEFAULT_PATTERN = "option.input.validation.default.pattern"
+    /**
+     * Full config key (with {@code rundeck.} prefix) of {@link #SYSTEM_OPTION_INPUT_DEFAULT_PATTERN},
+     * as exposed in the System Configuration UI via SysConfigProp.
+     */
+    static final String SYSTEM_OPTION_INPUT_DEFAULT_PATTERN_KEY = "rundeck." + SYSTEM_OPTION_INPUT_DEFAULT_PATTERN
+    /**
+     * Per-project default allowlist regex applied to job option values that have no per-option
+     * regex of their own. Takes precedence over {@link #SYSTEM_OPTION_INPUT_DEFAULT_PATTERN}.
+     */
+    static final String PROJECT_OPTION_INPUT_DEFAULT_PATTERN = "project.option.input.validation.default.pattern"
 }
