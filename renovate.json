@@ -36,8 +36,8 @@
       "groupName": "gradle minor/patch dependencies"
     },
     {
-      "description": "Grails minors have a history of real behavioral changes despite semver, and grails-plugin-spring-security-core must move in lockstep with it — pull both out of the auto-grouped minor/patch bucket for manual review",
-      "matchPackageNames": ["/^org\\.apache\\.grails:/"],
+      "description": "Grails minors have a history of real behavioral changes despite semver, and grails-plugin-spring-security-core must move in lockstep with it — pull both out of the auto-grouped minor/patch bucket for manual review. Groovy is included here too: Grails dictates which Groovy line it's built against, and bumping groovyVersion independently caused classpath skew that broke the forked :rundeckapp:assetCompile JVM (PR #10448, ExceptionInInitializerError in GroovySystem.<clinit>).",
+      "matchPackageNames": ["/^org\\.apache\\.grails:/", "/^org\\.apache\\.groovy:/"],
       "groupName": "grails framework (manual review required)",
       "dependencyDashboardApproval": true
     },
