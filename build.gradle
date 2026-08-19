@@ -39,6 +39,16 @@ buildscript {
             mavenCentral()
         }
     }
+    // CVE-2026-64607: org.owasp:dependency-check-gradle -> dependency-check-core ->
+    // open-vulnerability-clients pulls httpclient5 5.3.1 (<=5.6.2, vulnerable) onto this buildscript
+    // classpath. Build-tooling only (used by the dependencyCheckAnalyze task; never shipped), but
+    // forced here so a standalone-build Snyk scan of this manifest doesn't keep flagging it.
+    configurations.all {
+        resolutionStrategy {
+            force "org.apache.httpcomponents.client5:httpclient5:${httpClient5Version}"
+        }
+    }
+
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.8'
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.7.3'
