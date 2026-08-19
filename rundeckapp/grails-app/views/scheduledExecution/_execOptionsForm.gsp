@@ -575,10 +575,15 @@
     }
     jQuery(document).ready(init);
 </script>
+%{-- Skipped for ajax fragment requests (e.g. rundeckpro's paged job list "run" panel, which
+     loads this template via jQuery .load()): outside of a decorated full-page render, this
+     <content> block isn't captured by the layout and renders inline as a literal <script src>,
+     which a CSP nonce can't protect once loaded via .load() (jQuery's _evalUrl ignores nonces on
+     fetched <script src> tags). Callers that AJAX-load this template must include these assets on
+     their own page instead. --}%
+<g:if test="${!request.xhr}">
 <content tag="footScripts">
     <asset:stylesheet src="library/bootstrap-datetimepicker.min.css" />
     <asset:javascript src="scheduler.js" />
 </content tag="footScripts">
-
-<asset:stylesheet src="library/bootstrap-datetimepicker.min.css" />
-<asset:javascript src="scheduler.js" />
+</g:if>
