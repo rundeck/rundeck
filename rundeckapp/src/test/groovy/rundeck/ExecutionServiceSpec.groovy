@@ -6273,6 +6273,70 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ""                      | 1     | [node1: [summaryState:'SUCCEEDED'], node2: [summaryState:'SUCCEEDED'], node3: [summaryState:'SUCCEEDED']]   | ["node2","node3","node1"] | true
     }
 
+    def "saveExecutionState records dimensional metrics with the final persisted execution state"() {
+        given:
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'abc',
+                project: project,
+                groupPath: 'path',
+                description: 'a job',
+                argString: '-args b',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ),
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea01'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                workflow: job.workflow
+        )
+        e1.scheduledExecution = job
+        e1.save() != null
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
+        service.workflowService = Mock(WorkflowService)
+        service.notificationService = Mock(NotificationService)
+        service.reportService = Mock(ReportService) {
+            reportExecutionResult(_) >> [:]
+        }
+        service.micrometerExecutionMetricsService = Mock(MicrometerExecutionMetricsService)
+
+        def dateCompleted = new Date()
+        Map resultMap = [
+                status       : ExecutionState.succeeded.toString(),
+                dateCompleted: dateCompleted,
+                cancelled    : false,
+                timedOut     : false,
+        ]
+        ExecutionService.AsyncStarted execmap = new ExecutionService.AsyncStarted(
+                execution         : e1,
+                scheduledExecution: job
+        )
+
+        when:
+        service.saveExecutionState(job.uuid, e1.id, resultMap, execmap, [:])
+
+        then:
+        // must fire with the freshly-saved Execution.get(exId) instance, which carries the real
+        // final state -- not execmap.execution, whose dateCompleted/status are never mutated.
+        1 * service.micrometerExecutionMetricsService.recordExecution({ Execution saved ->
+            saved.id == e1.id &&
+            saved.getExecutionState() == ExecutionState.succeeded.toString() &&
+            saved.dateCompleted == dateCompleted
+        })
+    }
+
     def "opt enforced allowed values from Remote Url with sending the username"() {
         given:
         ScheduledExecution se = new ScheduledExecution()
@@ -6814,6 +6878,93 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         true         | false
         false        | true
         false        | false
+    }
+
+    def "executeAsyncBegin records the execution start for the running-executions gauge"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'original command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: 'testJob',
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
+                getWorkflow() >> Mock(IWorkflow)
+            }
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+        service.micrometerExecutionMetricsService = Mock(MicrometerExecutionMetricsService)
+
+        and: "execution lifecycle handler setup"
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> Mock(ExecutionLifecycleComponentHandler) {
+                beforeWorkflowIsSet(_, _) >> Optional.empty()
+            }
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "the execution start is recorded, using the same execution reference passed in"
+        result != null
+        1 * service.micrometerExecutionMetricsService.recordExecutionStart(execution)
+
+        cleanup:
+        result?.thread?.interrupt()
     }
 
     def "executeAsyncBegin workflow modification - execution context updated when useNewValues is true"() {

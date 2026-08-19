@@ -164,6 +164,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def LoggingService loggingService
     def WorkflowService workflowService
     def StorageService storageService
+    MicrometerExecutionMetricsService micrometerExecutionMetricsService
 
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
@@ -1444,6 +1445,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             thread.start()
             log.debug("started thread")
+            micrometerExecutionMetricsService?.recordExecutionStart(execution)
             return new AsyncStarted(
                     thread            : thread,
                     loghandler        : loghandler,
@@ -3496,6 +3498,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobUuid = scheduledExecution.uuid
         }
         if(execSaved) {
+            // execution now carries its final persisted state (status, dateCompleted, cancelled,
+            // timedOut, ...) via `execution.properties = props` above -- unlike execmap.execution,
+            // which is the pre-completion in-memory reference and never gets these fields set.
+            // This is the single convergence point for every completion path (normal finish via
+            // ExecutionJob.saveState, abort via abortExecutionDirect, stale cleanup via
+            // cleanupExecution), so recording here (rather than in
+            // ExecutionUtilService.finishExecutionMetrics) captures all of them exactly once.
+            micrometerExecutionMetricsService?.recordExecution(execution)
+
             //summarize node success
             String node=null
             int sucCount=-1;
