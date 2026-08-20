@@ -74,7 +74,7 @@ jobquery.title.endafterFilter
 saved.filters
 search
 "/>
-    <script type="text/javascript">
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
         function showError(message){
              appendText('#error',message);
@@ -378,7 +378,7 @@ search
     </style>
 
 
-      <g:javascript>
+      <script nonce="${security.cspNonce()}" type="text/javascript">
 
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
@@ -405,7 +405,7 @@ search
             }
         }
 })
-      </g:javascript>
+      </script>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|customFilters|idlist$/)}"/>
     <g:embedJSON data="${paginateParams?.subMap(wasfiltered)?:[:]}" id="filterParams"/>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>

@@ -56,7 +56,7 @@
 
 <g:set var="projectKeyStorageEnabled" value="${cfg.getBoolean(config: 'feature.projectKeyStorage.enabled', default: true)}"/>
 
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
     [
         {
             type: 'link',

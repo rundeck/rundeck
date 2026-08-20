@@ -23,12 +23,12 @@
     <!-- BEGIN: firefox hack https://bugzilla.mozilla.org/show_bug.cgi?id=1119063 -->
     <input type="text" style="display:none" class="ixnay">
     <input type="password" style="display:none" class="ixnay">
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
     jQuery(function(){
         var nay=function(){jQuery('.ixnay').val('');},ix=setTimeout;
         nay(); ix(nay,50); ix(nay,200); ix(nay, 1000);
     });
-    </g:javascript>
+    </script>
     <!-- END: firefox hack -->
 <div class="exec-options-body container-fluid">
 
@@ -380,7 +380,7 @@
                     </g:if>
             </div>
             </div>
-            <g:javascript>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
 
                 jQuery('div.jobmatchednodes').on( 'click','span.selectall', function (evt) {
                     jQuery(this).closest('.group_section').find('input').each(function (i,el) {
@@ -442,7 +442,7 @@
                     jQuery(this).trigger('focus');
                 });
 
-            </g:javascript>
+            </script>
 
     </div>
         </div>
@@ -466,7 +466,7 @@
 </div>
 </g:uploadForm>
 
-<script lang="text/javascript">
+<script nonce="${security.cspNonce()}" lang="text/javascript">
 
     window._rundeck.data = Object.assign(window._rundeck.data || {}, {
         "jobComponentProperties": loadJsonData('jobComponentProperties')
@@ -575,10 +575,15 @@
     }
     jQuery(document).ready(init);
 </script>
+%{-- Skipped for ajax fragment requests (e.g. rundeckpro's paged job list "run" panel, which
+     loads this template via jQuery .load()): outside of a decorated full-page render, this
+     <content> block isn't captured by the layout and renders inline as a literal <script src>,
+     which a CSP nonce can't protect once loaded via .load() (jQuery's _evalUrl ignores nonces on
+     fetched <script src> tags). Callers that AJAX-load this template must include these assets on
+     their own page instead. --}%
+<g:if test="${!request.xhr}">
 <content tag="footScripts">
     <asset:stylesheet src="library/bootstrap-datetimepicker.min.css" />
     <asset:javascript src="scheduler.js" />
 </content tag="footScripts">
-
-<asset:stylesheet src="library/bootstrap-datetimepicker.min.css" />
-<asset:javascript src="scheduler.js" />
+</g:if>

@@ -25,6 +25,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.gui.AuthMenuItem
 import org.grails.web.gsp.io.GrailsConventionGroovyPageLocator
+import org.rundeck.grails.plugins.securityheaders.CspNonceProvider
 import org.rundeck.app.gui.GroupedMenuItem
 import org.rundeck.app.gui.MenuItem
 import com.dtolabs.rundeck.core.common.FrameworkResourceException
@@ -565,7 +566,7 @@ class UtilityTagLib{
                     """
 
         out << """
-            <script type='text/javascript'>
+            <script nonce='${enc(attr: CspNonceProvider.getNonce(request))}' type='text/javascript'>
             jQuery(document).ready(function(){\n
                  jQuery('#${namePicker}').datetimepicker(${options});\n
                  jQuery('#${namePicker}').datetimepicker('option',jQuery.timepicker.regional['${locale}']);\n
@@ -1147,7 +1148,8 @@ class UtilityTagLib{
             }
         }
         embedJSON.call([id: id, data: msgs],null)
-        out << '<script>_loadMessages(\''+enc(js: id)+'\');</script>'
+        def nonce = CspNonceProvider.getNonce(request)
+        out << '<script' + (nonce ? ' nonce="' + enc(attr: nonce) + '"' : '') + '>_loadMessages(\''+enc(js: id)+'\');</script>'
     }
     def refreshFormTokensHeader = { attrs, body ->
         SynchronizerTokensHolder tokensHolder = tokensHolder()

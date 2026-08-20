@@ -82,7 +82,7 @@
 
     <asset:javascript src="framework/editProject.js"/>
     <asset:javascript src="static/pages/project-config.js" defer="defer" />
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
     function init(){
         jQuery('input[type=text]').on('keydown', noenter);
@@ -93,7 +93,7 @@
             pluginGroups: loadJsonData("pluginGroupJSON")
         }
     })
-    </g:javascript>
+    </script>
     <style type="text/css">
     #configs li {
         margin-top: 5px;

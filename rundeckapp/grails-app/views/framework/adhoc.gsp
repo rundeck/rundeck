@@ -89,7 +89,7 @@ saved.filters
 search
 "/>
 
-  <g:javascript>
+  <script nonce="${security.cspNonce()}" type="text/javascript">
 
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
@@ -116,7 +116,7 @@ search
             }
         }
 })
-  </g:javascript>
+  </script>
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
@@ -263,8 +263,8 @@ search
                         </button>
 
                         <a class="btn btn-cta btn-fill runbutton "
-                           data-bind="attr: { disabled: nodefilter.total()<1 || nodefilter.error() || running || !canRun() } "
-                           onclick="runFormSubmit('runbox');">
+                           id="runFormSubmitBtn"
+                           data-bind="attr: { disabled: nodefilter.total()<1 || nodefilter.error() || running || !canRun() } ">
                           <span data-bind="if: !running()">
                           <span data-bind="if: nodefilter.total() > 0 ">
                             <span data-bind="messageTemplate: [ nodefilter.total(), nodefilter.nodesTitle() ] "><g:message
@@ -277,6 +277,11 @@ search
                             <g:message code="running1"/>
                           </span>
                         </a>
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
+                        document.getElementById('runFormSubmitBtn').addEventListener('click', function(event) {
+                          runFormSubmit('runbox');
+                        });
+                        </script>
 
                       </span>
                     </span>

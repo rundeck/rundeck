@@ -28,7 +28,7 @@
         <asset:stylesheet src="static/css/pages/job/upload.css"/>
     </g:if>
     <g:else>
-    <script type="text/javascript">
+    <script nonce="${security.cspNonce()}" type="text/javascript">
         jQuery(function(){
             jQuery('.act_job_action_dropdown').on('click',function(){
                 var id=jQuery(this).data('jobId');

@@ -77,7 +77,7 @@
                 </span>
 
         </g:each>
-            <g:javascript>jQuery(function () {
+            <script nonce="${security.cspNonce()}" type="text/javascript">jQuery(function () {
                 "use strict";
                 jQuery('[name="orchestratorId"]').on('change', function (d) {
                     jQuery('.orchestratorPlugin').hide();
@@ -88,7 +88,7 @@
 
                 });
             });
-            </g:javascript>
+            </script>
 
 
         </div>

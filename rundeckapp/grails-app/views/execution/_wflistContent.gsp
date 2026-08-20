@@ -64,9 +64,9 @@
 </g:each>
 </g:if>
 <g:if test="${workflow && workflow.commands && null!=highlight}">
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
         fireWhenReady('wfivis_${enc(js:highlight)}',function(){
             jQuery("#wfivis_${enc(js:highlight)}").fadeTo("slow",1);
         });
-    </g:javascript>
+    </script>
 </g:if>

@@ -31,7 +31,7 @@
     )}"/>
     <g:appTitle/> - <g:message code="userController.page.profile.title"/>: ${user.login}</title>
     <asset:javascript src="user/profile.js"/>
-    <script type="text/javascript">
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
     function changeLanguage() {
         var url = '${g.createLink(controller: 'user', action: 'profile')}';
@@ -106,11 +106,16 @@
                                 zh_CN : '简体中文',
                             ]
                         }"/>
-                        <g:select class="form-control" name="language" id="language" onchange="changeLanguage();"
+                        <g:select class="form-control" name="language" id="language"
                                   value="${currentLang}" from="${supportedLangs}" optionKey="key"
                                   optionValue="value">
 
                         </g:select>
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
+                        document.getElementById('language').addEventListener('change', function(event) {
+                          changeLanguage();
+                        });
+                        </script>
 
 
                     </div>

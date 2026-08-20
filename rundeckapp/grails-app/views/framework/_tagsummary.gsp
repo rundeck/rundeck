@@ -24,11 +24,16 @@
 <g:if test="${tagsummary}">
         <g:set var="hidetop" value="${hidetop?:tagsummary.findAll {it.value>1}.size()>30}"/>
         <g:if test="${hidetop}">
-            <span class="textbtn textbtn-secondary tag"
-                  title="Show tag demographics" onclick="jQuery(this).next().toggle(); jQuery(this).toggleClass('active');">
+            <span class="textbtn textbtn-secondary tag" id="${enc(attr:urkey)}tagdemographics"
+                  title="Show tag demographics">
                 <i class="glyphicon glyphicon-tags text-strong "></i>
                 <g:enc>${tagsummary.size()}</g:enc> tags
                 <i class="glyphicon glyphicon-chevron-right"></i></span>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
+            document.getElementById('${enc(js:urkey)}tagdemographics').addEventListener('click', function(event) {
+              jQuery(this).next().toggle(); jQuery(this).toggleClass('active');
+            });
+            </script>
         </g:if>
         <span id="nodes_tags" style="display:block;${wdgt.styleVisible(unless: hidetop)}">
             <g:if test="${!hidetop}">
@@ -44,10 +49,15 @@
                                       />
                         </g:if>
                         <g:elseif test="${action}">
-                            <span class="${enc(attr:action.classnames)}" onclick="${enc(attr:action.onclick)}"
+                            <span class="${enc(attr:action.classnames)}" id="${enc(attr:urkey)}_${enc(attr:tag)}_tagaction"
                                   data-tag="${enc(attr:tag)}" title="Filter by tag: ${enc(attr:tag)}">
                                 <g:enc>${tag}:${tagsummary[tag]}</g:enc>
                             </span>
+                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                            document.getElementById('${enc(js:urkey)}_${enc(js:tag)}_tagaction').addEventListener('click', function(event) {
+                              ${action.onclick}
+                            });
+                            </script>
                         </g:elseif>
                         <g:else>
                             <g:enc>${tag}:${tagsummary[tag]}</g:enc>
@@ -60,8 +70,13 @@
             </g:each>
             <g:if test="${singletag}">
                 <span class="btn btn-sm btn-default receiver" title="See all tags"
-                      onclick="jQuery('#${enc(attr:urkey)}singletags').show();
-                      jQuery(this).hide();">Show All&hellip;</span>
+                      id="${enc(attr:urkey)}showalltags">Show All&hellip;</span>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
+                document.getElementById('${enc(js:urkey)}showalltags').addEventListener('click', function(event) {
+                  jQuery('#${enc(js:urkey)}singletags').show();
+                  jQuery(this).hide();
+                });
+                </script>
                 <span style="display:none" id="${enc(attr:urkey)}singletags">
                     <g:each var="tag" in="${singletag}">
                         <span class="summary">
@@ -70,11 +85,16 @@
                                           model="[key: 'tags', value: tag, linktext: tag + ' (' + tagsummary[tag]+')', css: 'tag textbtn']"/>
                             </g:if>
                             <g:elseif test="${action}">
-                                <span class=" ${enc(attr:action.classnames)}" onclick="${enc(attr:action.onclick)}"
+                                <span class=" ${enc(attr:action.classnames)}" id="${enc(attr:urkey)}_${enc(attr:tag)}_singletagaction"
                                       data-tag="${enc(attr:tag)}"
                                       title="Filter by tag: ${enc(attr:tag)}">
                                     <g:enc>${tag}:${tagsummary[tag]}</g:enc>
                                 </span>
+                                <script nonce="${security.cspNonce()}" type="text/javascript">
+                                document.getElementById('${enc(js:urkey)}_${enc(js:tag)}_singletagaction').addEventListener('click', function(event) {
+                                  ${action.onclick}
+                                });
+                                </script>
                             </g:elseif>
                             <g:else>
                                 <g:enc>${tag}

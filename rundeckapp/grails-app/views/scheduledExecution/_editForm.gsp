@@ -36,8 +36,7 @@
         action="update"
         params="[project:params.project]"
         useToken="true"
-        class="form-horizontal"
-        onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
+        class="form-horizontal">
 
 <div class="card " id="editForm">
     <g:if test="${uiType=='next'}">
@@ -79,7 +78,6 @@
 
     <div class="card-footer" data-ko-bind="jobeditor">
       <g:actionSubmit id="editFormCancelButton" value="${g.message(code: 'cancel')}"
-                      onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                       class="btn btn-default reset_page_confirm"
                       action="Cancel"/>
       <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-cta reset_page_confirm " id="jobUpdateSaveButton"/>
@@ -95,3 +93,13 @@
 </div>
 
 </g:form>
+<script nonce="${security.cspNonce()}" type="text/javascript">
+document.getElementById('editForm').closest('form').addEventListener('submit', function(event) {
+  if (typeof(validateJobEditForm) == 'function') {
+    if (validateJobEditForm(this) === false) { event.preventDefault(); }
+  }
+});
+document.getElementById('editFormCancelButton').addEventListener('click', function(event) {
+  if (typeof(jobEditCancelled) == 'function') { jobEditCancelled(); }
+});
+</script>

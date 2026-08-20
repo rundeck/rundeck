@@ -34,6 +34,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="locale" content="${response.locale.toString()}"/>
+    <meta property="csp-nonce" content="${security.cspNonce()}"/>
     <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: g.appFavicon())}"/>
@@ -85,7 +86,7 @@
     </g:if>
     <!-- /VUE CSS MODULES -->
 
-    <script language="javascript">
+    <script nonce="${security.cspNonce()}" language="javascript">
         function oopsEmbeddedLogin() {
         <%
             if (g.pageProperty(name: 'meta.tabpage')) { %>
@@ -117,10 +118,11 @@
 
 
     <asset:javascript src="global/rundeckui.js"/>
-    <script type="text/javascript">
+    <script nonce="${security.cspNonce()}" type="text/javascript">
         var isOpera = Object.prototype.toString.call(window.opera) == '[object Opera]';
 
         window._rundeck = Object.assign(window._rundeck || {}, {
+        cspNonce: '${security.cspNonce()}',
         rdBase: '${g.createLink(uri:"/",absolute:true).replaceAll('/$', '')}',
         context: '${grailsApplication.config.getProperty("server.servlet.context-path", String.class)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
@@ -312,13 +314,13 @@
 </section>
 
 <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
-    <script type="text/javascript" defer>
+    <script nonce="${security.cspNonce()}" type="text/javascript" defer>
         //call after gsp page has loaded javascript
         jQuery(function(){window.rundeckPage.onPageLoad();});
     </script>
 </g:if>
 
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
     jQuery('.modal-container').appendTo('body');
     jQuery('body > :not(.modal-container) .modal').appendTo('body');
 </script>

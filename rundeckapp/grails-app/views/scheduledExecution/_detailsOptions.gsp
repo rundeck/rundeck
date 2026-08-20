@@ -53,13 +53,13 @@
     </ul>
     <div id="optionDropFinal" class="dragdropfinal droppableitem" data-abs-index="${options?.size()?:1}" data-is-final="true" style="display:none"></div>
     <g:embedJSON id="optDataList" data="${options.collect{[name:it.name,type:it.optionType,multivalued:it.multivalued, delimiter: it.delimiter]}}"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
     jQuery(function(){
         "use strict";
         _enableOptDragDrop();
         _optionData(loadJsonData('optDataList'));
     });
-</g:javascript>
+</script>
 
     <div class="empty note ${error?'error':''}" id="optempty" style="${wdgt.styleVisible(unless:options && options.size()>0)}">
         <g:message code="no.options.message" />
@@ -67,10 +67,15 @@
 
     <g:if test="${edit}">
         <div id="optnewbutton" style="margin:10px 0; ">
-            <span class="btn btn-default btn-sm ready" onclick="_optaddnew();" title="${message(code:'add.an.option')}">
+            <span class="btn btn-default btn-sm ready" id="optAddNewBtn" title="${message(code:'add.an.option')}">
                 <b class="glyphicon glyphicon-plus"></b>
                 <g:message code="add.an.option" />
             </span>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
+            document.getElementById('optAddNewBtn').addEventListener('click', function(event) {
+              _optaddnew();
+            });
+            </script>
         </div>
     </g:if>
 </div>

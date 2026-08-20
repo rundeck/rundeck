@@ -15,6 +15,7 @@ import rundeck.AuthToken
 import rundeck.ConfigTagLib
 import rundeck.User
 import rundeck.UtilityTagLib
+import rundeck.security.CspTagLib
 import rundeck.codecs.HTMLAttributeCodec
 import rundeck.codecs.HTMLContentCodec
 import rundeck.codecs.URIComponentCodec
@@ -99,6 +100,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         mockCodec(HTMLAttributeCodec)
         mockTagLib(UtilityTagLib)
         mockTagLib(ConfigTagLib)
+        mockTagLib(CspTagLib)
 
         def userServiceMock = Mock(UserService) {
             getUserGroupSourcePluginRoles(username) >> { groups }
@@ -154,6 +156,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         mockCodec(HTMLAttributeCodec)
         mockTagLib(UtilityTagLib)
         mockTagLib(ConfigTagLib)
+        mockTagLib(CspTagLib)
 
         def userServiceMock = Mock(UserService) {
             getUserGroupSourcePluginRoles("User") >> { groups }
@@ -354,6 +357,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         mockCodec(HTMLAttributeCodec)
         mockTagLib(UtilityTagLib)
         mockTagLib(ConfigTagLib)
+        mockTagLib(CspTagLib)
 
         def username = "_runner"
         def role = "_runner"

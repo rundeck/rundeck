@@ -39,18 +39,34 @@
                 </g:if>
                 <span id="${modalid}_buttons">
                     <g:each in="${buttons}" var="button" status="n">
+                        <g:set var="btnId" value="${button.id?:modalid+'_btn_'+n}"/>
                         <button class="btn ${button.css ?: 'btn-default'} " data-bind="${button.bind ?: ''}"
-                                onclick="${button.js ?: ''}" id="${button.id?:modalid+'_btn_'+n}">
+                                id="${btnId}">
                             ${button.message ?: button.messageCode ? message(code: button.messageCode) : 'button'}
                         </button>
+                        <g:if test="${button.js}">
+                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                            document.getElementById('${btnId}').addEventListener('click', function(event) {
+                              ${raw(button.js)}
+                            });
+                            </script>
+                        </g:if>
                     </g:each>
                     <g:if test="${links}">
-                        <g:each in="${links}" var="link">
+                        <g:each in="${links}" var="link" status="ln">
+                            <g:set var="linkId" value="${link.id?:modalid+'_link_'+ln}"/>
                             <a class="btn ${link.css ?: 'btn-default'} " data-bind="${link.bind ?: ''}"
-                               onclick="${link.js ?: ''}"
+                               id="${linkId}"
                                href="${link.href ?: '#'}">
                                 ${link.message ?: link.messageCode ? message(code: link.messageCode) : 'link'}
                             </a>
+                            <g:if test="${link.js}">
+                                <script nonce="${security.cspNonce()}" type="text/javascript">
+                                document.getElementById('${linkId}').addEventListener('click', function(event) {
+                                  ${raw(link.js)}
+                                });
+                                </script>
+                            </g:if>
                         </g:each>
                     </g:if>
                 </span>

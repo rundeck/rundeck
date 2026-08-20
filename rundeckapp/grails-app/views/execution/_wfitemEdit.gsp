@@ -15,7 +15,6 @@
   --}%
 
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec;org.rundeck.app.data.workflow.ConditionalStep" %>
-<asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
 
 <%--
     _wfitemEdit.gsp
@@ -45,8 +44,12 @@
                         <g:set var="isUseName" value="${ item?.useName || false }"/>
                         <div class="radio">
                             <g:radio id="useNameTrue"  name="useName" value="true"
-                                     onclick="_enableNameJobRefFields(true,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');"
                                      checked="${!!isUseName}"/>
+                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                            document.getElementById('useNameTrue').addEventListener('click', function(event) {
+                              _enableNameJobRefFields(true,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');
+                            });
+                            </script>
                             <label for="useNameTrue">
                                 <g:message code="Workflow.Step.jobreference.name.label" />
                             </label>
@@ -54,8 +57,12 @@
                         </div>
                         <div class="radio">
                             <g:radio id="useNameFalse"  name="useName" value="false"
-                                     onclick="_enableNameJobRefFields(false,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');"
                                      checked="${!isUseName}"/>
+                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                            document.getElementById('useNameFalse').addEventListener('click', function(event) {
+                              _enableNameJobRefFields(false,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');
+                            });
+                            </script>
                             <label for="useNameFalse">
                                 <g:message code="Workflow.Step.jobreference.uuid.label" />
                             </label>
@@ -71,20 +78,25 @@
                     </div>
 
                     <div class="col-sm-2">
-                        <g:javascript>
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
                         fireWhenReady('jobProjectField${rkey}',function(){
                             _enableNameJobRefFields(${isUseName},'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
                             _initJobPickerAutocomplete('jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
                         });
-                        </g:javascript>
+                        </script>
 
-                        <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooserModal(this,'jobUuidField${rkey}', 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
+                        <span class="btn btn-sm btn-default act_choose_job"
                               id="jobChooseBtn${rkey}"
                               title="${message(code:"select.an.existing.job.to.use")}"
                               data-loading-text="Loading...">
                             <g:message code="choose.a.job..." />
                             %{--<i class="caret"></i>--}%
                         </span>
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
+                        document.getElementById('jobChooseBtn${rkey}').addEventListener('click', function(event) {
+                          loadJobChooserModal(this,'jobUuidField${rkey}', 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');
+                        });
+                        </script>
                         <span id="jobChooseSpinner"></span>
                         <g:render template="/common/modal" model="${[modalid:'jobrefpicker'+rkey,modalsize:'modal-lg',title:message(code:"choose.a.job..."),buttons:[]]}"/>
                     </div>
@@ -429,11 +441,11 @@
                 </div>
             </section>
             <g:embedJSON id="jobrefFilterParamsJSON${rkey}" data="${[filter: item?.nodeFilter]}"/>
-            <g:javascript>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
             fireWhenReady("nodeFilterOverride${rkey}",function(){
                 setupJobExecNodeFilterBinding('#nodeFilterOverride${rkey}','matchednodes${rkey}','jobrefFilterParamsJSON${rkey}');
             });
-            </g:javascript>
+            </script>
         </g:if>
     %{--Script or Command item--}%
         <g:elseif test="${(newitemtype in ['command','script','scriptfile']) || item instanceof CommandExec }">
@@ -643,14 +655,14 @@
                             </div>
 
                             <g:embedJSON id="scriptStepData_${rkey}" data="${[invocationString: item?.scriptInterpreter?:'',fileExtension: item?.fileExtension?:'',args: item?.argString?:'',argsQuoted: item?.interpreterArgsQuoted?true:false, expandToken: item?.expandTokenInScriptFile?true:false]}"/>
-                            <g:javascript>
+                            <script nonce="${security.cspNonce()}" type="text/javascript">
                 fireWhenReady("scriptStep_${rkey}",function(){
                     workflowEditor.bindScriptStepKey('${rkey}','scriptStep_${rkey}',loadJsonData('scriptStepData_${rkey}'));
                     if (typeof(_initPopoverContentRef) == 'function') {
                         _initPopoverContentRef("#scriptStep_${rkey}");
                     }
                 });
-                            </g:javascript>
+                            </script>
                         </div>
                     </div>
                 </g:if>
@@ -756,23 +768,47 @@
 
                 <g:if test="${isErrorHandler}">
                     <g:hiddenField name="num" value="${num}"/>
-                    <span class="btn btn-default btn-sm" onclick="_wficancelnewEH(this);"
+                    <span class="btn btn-default btn-sm" id="wfiCancelNewEHBtn_${rkey}"
                           title="${message(code:"Workflow.stepErrorHandler.cancel.title")}"><g:message code="button.action.Cancel" /></span>
-                    <span class="btn btn-cta btn-sm" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',true);" title="${message(code:"Workflow.stepErrorHandler.savenew.title")}"><g:message code="button.action.Save" /></span>
+                    <span class="btn btn-cta btn-sm" id="wfiSaveNewEHBtn_${rkey}" title="${message(code:"Workflow.stepErrorHandler.savenew.title")}"><g:message code="button.action.Save" /></span>
+                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                    document.getElementById('wfiCancelNewEHBtn_${rkey}').addEventListener('click', function(event) {
+                      _wficancelnewEH(this);
+                    });
+                    document.getElementById('wfiSaveNewEHBtn_${rkey}').addEventListener('click', function(event) {
+                      _wfisave('${key}', ${num}, 'wfiedit_${rkey}',true);
+                    });
+                    </script>
                 </g:if>
                 <g:else>
 
-                    <span class="btn btn-default btn-sm" onclick="_wficancelnew(${num});"
+                    <span class="btn btn-default btn-sm" id="wfiCancelNewBtn_${rkey}"
                           title="${message(code:"Workflow.step.cancel.title")}"><g:message code="button.action.Cancel" /></span>
-                    <span class="btn btn-cta btn-sm" onclick="_wfisavenew('wfiedit_${rkey}');" title="${message(code:"Workflow.step.savenew.title")}"><g:message code="button.action.Save" /></span>
+                    <span class="btn btn-cta btn-sm" id="wfiSaveNewBtn_${rkey}" title="${message(code:"Workflow.step.savenew.title")}"><g:message code="button.action.Save" /></span>
+                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                    document.getElementById('wfiCancelNewBtn_${rkey}').addEventListener('click', function(event) {
+                      _wficancelnew(${num});
+                    });
+                    document.getElementById('wfiSaveNewBtn_${rkey}').addEventListener('click', function(event) {
+                      _wfisavenew('wfiedit_${rkey}');
+                    });
+                    </script>
                 </g:else>
             </g:if>
             <g:else>
                 <g:hiddenField name="num" value="${num}"/>
                 <g:hiddenField name="origitemtype" value="${origitemtype}"/>
-                <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="${message(code:"Workflow."+msgItem+".discard.title")}" ><g:message code="button.action.Cancel" /></span>
-                <span class="btn btn-cta btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});"
+                <span class="btn btn-default btn-sm" id="wfiViewCancelBtn_${rkey}" title="${message(code:"Workflow."+msgItem+".discard.title")}" ><g:message code="button.action.Cancel" /></span>
+                <span class="btn btn-cta btn-sm" id="wfiSaveBtn_${rkey}"
                       title="${message(code:"Workflow."+msgItem+".save.title")}"><g:message code="button.action.Save" /></span>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
+                document.getElementById('wfiViewCancelBtn_${rkey}').addEventListener('click', function(event) {
+                  _wfiview('${key}',${num},${isErrorHandler?true:false});
+                });
+                document.getElementById('wfiSaveBtn_${rkey}').addEventListener('click', function(event) {
+                  _wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});
+                });
+                </script>
             </g:else>
             <span class="text-warning cancelsavemsg" style="display:none;">
                 <g:message code="scheduledExecution.workflow.${msgItem}.Item.unsaved.warning"
@@ -780,6 +816,6 @@
             </span>
         </div>
         <div class="clear"></div>
-        <script type="text/javascript">jQuery('.wfitemEditForm .modal').appendTo('body')</script>
+        <script nonce="${security.cspNonce()}" type="text/javascript">jQuery('.wfitemEditForm .modal').appendTo('body')</script>
     </div>
 </div>

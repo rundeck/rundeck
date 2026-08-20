@@ -41,7 +41,7 @@
             url:createLink(controller: 'project', action: 'exportWait', params: [project: params.project, token: params.token,instance:params.instance, iproject:params.iproject, format: 'json'])
     ]}" id="requestdata"/>
     <g:jsMessages code="archive.request.please.wait.pagetitle.ready"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
         function Wait() {
             var self = this;
             self.ready = ko.observable(false);
@@ -91,7 +91,7 @@
             ko.mapping.fromJS(loadJsonData('requestdata'), {}, request);
             ko.applyBindings(request);
         });
-    </g:javascript>
+    </script>
 </head>
 
 <body>

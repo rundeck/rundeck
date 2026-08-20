@@ -28,7 +28,7 @@
 
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
     function init(){
         jQuery('input[type=text]').on('keydown', noenter);
@@ -38,7 +38,7 @@
         });
     }
     jQuery(init);
-    </g:javascript>
+    </script>
 </head>
 
 <body>
@@ -51,7 +51,7 @@
       </div>
     </div>
     <div class="row">
-      <g:form action="saveProjectConfig" method="post" params="${[project:params.project]}" useToken="true" onsubmit="" class="form">
+      <g:form action="saveProjectConfig" method="post" params="${[project:params.project]}" useToken="true" class="form">
       <div class="col-xs-12">
         <div class="card"  id="createform">
           <div class="card-header">

@@ -84,10 +84,14 @@
                   recentfilts << [value: '-', label: 'Other...']
 
               %>
-              <g:select name="recentFilter" from="${recentfilts}" value="${query.recentFilter?.encodeAsHTML()}"
+              <g:select name="recentFilter" id="recentFilter" from="${recentfilts}" value="${query.recentFilter?.encodeAsHTML()}"
                         noSelection="['': 'Any Time']" optionKey="value" optionValue="label"
-                        onchange="if(this.value=='-'){Element.show('extDateFilters')}else{Element.hide('extDateFilters')};"
                   class="form-control"/>
+              <script nonce="${security.cspNonce()}" type="text/javascript">
+              document.getElementById('recentFilter').addEventListener('change', function(event) {
+                if(this.value=='-'){Element.show('extDateFilters')}else{Element.hide('extDateFilters')};
+              });
+              </script>
           </span>
         </div>
       </div>

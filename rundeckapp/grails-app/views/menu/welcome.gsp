@@ -59,7 +59,12 @@ Time: 12:54 PM
               <h3 >UNSUPPORTED SOFTWARE. NO WARRANTY.</h3>
             </div>
             <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
-            <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
+            <asset:image id="welcome-logo-image" src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px"/>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
+            document.getElementById('welcome-logo-image').addEventListener('load', function(event) {
+              SVGInject(this);
+            });
+            </script>
             <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
             <div style="margin-top:2em;">
               <g:link controller="menu" action="index" class="btn btn-lg btn-primary">

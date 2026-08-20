@@ -37,13 +37,13 @@
                     )
     ]
 }}" id="logFilterPluginsData"/>
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
     jQuery(function () {
         workflowEditor.loadStepFilterPlugins(loadJsonData('logFilterPluginsData'));
         ko.applyBindings(workflowEditor, jQuery('#addLogFilterPluginModal')[0]);
         ko.applyBindings(workflowEditor, jQuery('#editLogFilterPluginModal')[0]);
     });
-</g:javascript>
+</script>
 %{--add log filter plugin modal--}%
 <div class="modal" id="addLogFilterPluginModal" tabindex="-1" role="dialog"
      aria-labelledby="addLogFilterPluginModaltitle" aria-hidden="true">

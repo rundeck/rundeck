@@ -48,6 +48,9 @@ for (let i = 0; i < els.length; i++) {
   app.use(uiv);
   app.use(i18n);
   app.use(PrimeVue, {
+    csp: {
+      nonce: context.cspNonce,
+    },
     theme: {
       preset: Lara,
       options: {

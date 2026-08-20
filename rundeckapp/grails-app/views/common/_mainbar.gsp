@@ -80,9 +80,9 @@
               </g:ifPageProperty>
             </g:if>
             <g:unless test="${session.frameworkProjects}">
-              <g:javascript>
+              <script nonce="${security.cspNonce()}" type="text/javascript">
                 jQuery(function(){ jQuery('#projectSelect').load('${enc(js:createLink(controller: 'framework', action: 'projectSelect', params: selectParams))}',{},function(x,r){ jQuery('#projectSelect').removeClass('disabled'); }); });
-              </g:javascript>
+              </script>
             </g:unless>
           </g:if>
           <g:else>

@@ -95,8 +95,13 @@
 
 							<div class="card-content">
 								<g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
-								<asset:image src="${logoImage}" alt="${[g.appTitle()]}"
-								             style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
+								<asset:image id="home-logo-image" src="${logoImage}" alt="${[g.appTitle()]}"
+								             style="width: 400px; padding-bottom: 10px"/>
+								<script nonce="${security.cspNonce()}" type="text/javascript">
+								document.getElementById('home-logo-image').addEventListener('load', function(event) {
+								  SVGInject(this);
+								});
+								</script>
 								<g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
 								<p class="h6 text-strong" style="margin-top:1em;">
 									<g:message code="you.can.see.this.message.again.by.clicking.the"/>

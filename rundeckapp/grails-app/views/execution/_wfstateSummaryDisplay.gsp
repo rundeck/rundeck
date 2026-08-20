@@ -14,7 +14,7 @@
   limitations under the License.
   --}%
 <div>
-    <script type="text/html" id="node-current-state-simple">
+    <script nonce="${security.cspNonce()}" type="text/html" id="node-current-state-simple">
     <g:render template="nodeCurrentStateSimpleKO"/>
     </script>
 

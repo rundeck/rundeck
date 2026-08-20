@@ -28,6 +28,7 @@ import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.PluginStep
 import rundeck.UtilityTagLib
+import rundeck.security.CspTagLib
 
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -617,6 +618,7 @@ class WorkflowControllerSpec extends Specification implements ControllerUnitTest
     def "save with error should call dynamic properties"() {
         given:
         def assetTaglib = mockTagLib(UtilityTagLib)
+        mockTagLib(CspTagLib)
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
 

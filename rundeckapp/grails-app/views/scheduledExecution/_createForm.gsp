@@ -20,7 +20,6 @@
     <g:render template="/common/errorFragment"/>
     <g:render template="editLogFilterModal"/>
     <g:form method="POST"
-            onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}"
             useToken="true"
             controller="scheduledExecution" action="save" params="[project: params.project]"
             class="form-horizontal">
@@ -57,7 +56,6 @@
                 <g:actionSubmit id="createFormCancelButton"
                                 value="${g.message(code:'cancel')}"
                                 action="cancel"
-                                onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                                 class="btn btn-default reset_page_confirm"/>
                 <g:submitButton name="Create" value="${g.message(code: 'button.action.Create')}"
                                     class="btn btn-cta reset_page_confirm" />
@@ -78,3 +76,13 @@
 
       </div>
     </g:form>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
+    document.getElementById('schedCreateButtons').closest('form').addEventListener('submit', function(event) {
+      if (typeof(validateJobEditForm) == 'function') {
+        if (validateJobEditForm(this) === false) { event.preventDefault(); }
+      }
+    });
+    document.getElementById('createFormCancelButton').addEventListener('click', function(event) {
+      if (typeof(jobEditCancelled) == 'function') { jobEditCancelled(); }
+    });
+    </script>

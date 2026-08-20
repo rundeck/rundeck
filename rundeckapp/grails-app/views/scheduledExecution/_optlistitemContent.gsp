@@ -38,10 +38,15 @@
             </g:else>
               <div class="btn-group">
                 <g:if test="${canMoveUp}">
-                    <span class="btn btn-xs btn-default" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
+                    <span class="btn btn-xs btn-default" id="optMoveUpBtn_${enc(attr:ukey)}"
                           title="${message(code:"move.up")}">
                         <i class="glyphicon glyphicon-arrow-up"></i>
                     </span>
+                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                    document.getElementById('optMoveUpBtn_${enc(js:ukey)}').addEventListener('click', function(event) {
+                      _doReorderOption('${enc(js:option.name)}',{pos:-1});
+                    });
+                    </script>
                 </g:if>
                 <g:else>
                     <span class="btn btn-xs btn-default disabled" >
@@ -50,10 +55,15 @@
                 </g:else>
                 <g:if test="${canMoveDown}">
 
-                    <span class="btn btn-xs btn-default" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
+                    <span class="btn btn-xs btn-default" id="optMoveDownBtn_${enc(attr:ukey)}"
                           title="${message(code:"move.down")}">
                         <i class="glyphicon glyphicon-arrow-down"></i>
                     </span>
+                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                    document.getElementById('optMoveDownBtn_${enc(js:ukey)}').addEventListener('click', function(event) {
+                      _doReorderOption('${enc(js:option.name)}',{pos:1});
+                    });
+                    </script>
                 </g:if>
                 <g:else>
                     <span class="btn btn-xs btn-default disabled" >
@@ -79,11 +89,17 @@
             <g:jsonToken id="reqtoken_del_${ukey}" url="${request.forwardURI}"/>
 
             <div class="panel-footer">
-                <span class="btn btn-default btn-xs"
-                      onclick="jQuery('#optdel_${enc(js:ukey)}').collapse('toggle');"><g:message code="cancel"/></span>
-                <span class="btn btn-danger btn-xs"
-                      onclick=" _doRemoveOption('${enc(js:option.name)}', jQuery(this).closest('li.optEntry'),'reqtoken_del_${enc(js:ukey)}');"><g:message
+                <span class="btn btn-default btn-xs" id="optDelCancelBtn_${enc(attr:ukey)}"><g:message code="cancel"/></span>
+                <span class="btn btn-danger btn-xs" id="optDelConfirmBtn_${enc(attr:ukey)}"><g:message
                         code="delete"/></span>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
+                document.getElementById('optDelCancelBtn_${enc(js:ukey)}').addEventListener('click', function(event) {
+                  jQuery('#optdel_${enc(js:ukey)}').collapse('toggle');
+                });
+                document.getElementById('optDelConfirmBtn_${enc(js:ukey)}').addEventListener('click', function(event) {
+                  _doRemoveOption('${enc(js:option.name)}', jQuery(this).closest('li.optEntry'),'reqtoken_del_${enc(js:ukey)}');
+                });
+                </script>
             </div>
         </div>
 
@@ -91,16 +107,24 @@
         <g:jsonToken id="reqtoken_duplicate_${ukey}" url="${request.requestURI}"/>
 
         <span class="optctrl opteditcontrols controls " id="optctrls_${enc(attr:option.name)}" style="position:absolute; right:0;">
-            <span class="btn btn-xs btn-default" onclick="_optedit('${enc(js:option.name)}',jQuery(this).closest('li.optEntry'));"
+            <span class="btn btn-xs btn-default" id="optEditBtn_${enc(attr:ukey)}"
                   title="${message(code:"edit.this.option")}">
                 <i class="glyphicon glyphicon-edit"></i>
                 <g:message code="edit" />
             </span>
-            <span class="btn btn-xs btn-default" onclick="_optcopy('${enc(js:option.name)}','reqtoken_duplicate_${ukey}');"
+            <span class="btn btn-xs btn-default" id="optDuplicateBtn_${enc(attr:ukey)}"
                   title="${message(code:"duplicate.this.option")}">
                 <i class="glyphicon glyphicon-duplicate"></i>
                 <g:message code="duplicate" />
             </span>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
+            document.getElementById('optEditBtn_${enc(js:ukey)}').addEventListener('click', function(event) {
+              _optedit('${enc(js:option.name)}',jQuery(this).closest('li.optEntry'));
+            });
+            document.getElementById('optDuplicateBtn_${enc(js:ukey)}').addEventListener('click', function(event) {
+              _optcopy('${enc(js:option.name)}','reqtoken_duplicate_${enc(js:ukey)}');
+            });
+            </script>
             <span class="btn btn-xs btn-danger "
                   data-toggle="collapse"
                   data-target="#optdel_${enc(attr:ukey)}"
@@ -111,7 +135,7 @@
     </g:if>
     <g:if test="${edit}">
 
-            <g:javascript>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
             fireWhenReady('opt_${enc(js:option.name)}',function(){
                 var options = jQuery('#opt_${enc(js:option.name)}').find( '.autoedit' )
                 options.each(function (indx, elem) {
@@ -120,7 +144,7 @@
                     }, false);
                 });
                 });
-            </g:javascript>
+            </script>
     </g:if>
   </div>
 </div>

@@ -73,7 +73,7 @@
     <!-- /VUE JS REQUIREMENTS -->
 
     <asset:javascript src="menu/aclListing.js"/>
-    <script type="application/javascript">
+    <script nonce="${security.cspNonce()}" type="application/javascript">
         function SysPoliciesPage(data) {
             var self = this;
             self.show = ko.observable(false);

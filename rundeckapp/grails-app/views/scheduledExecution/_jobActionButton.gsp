@@ -49,13 +49,13 @@
 %{--<g:set var="authEnableDisableExecution" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_EXECUTION])}"/>--}%
 <g:if test="${isScheduled}">
     <auth:jobAllowed action="${AuthConstants.ACTION_TOGGLE_SCHEDULE}" job="${scheduledExecution}" project="${scheduledExecution.project}">
-        <g:javascript>
+        <script nonce="${security.cspNonce()}" type="text/javascript">
             jQuery(function(){
                 //register modal as the handler for 'job_delete_single'
                 PageActionHandlers.registerModalHandler('enable_job_schedule_single','#jobdschedtoggle',{});
                 PageActionHandlers.registerModalHandler('disable_job_schedule_single','#jobdschedtoggle',{});
             });
-        </g:javascript>
+        </script>
         <div class="modal" id="jobdschedtoggle" tabindex="-1" role="dialog"
              aria-labelledby="schedenablejobtitle" aria-hidden="true">
             <div class="modal-dialog">
@@ -121,13 +121,13 @@
     </auth:jobAllowed>
 </g:if>
 <auth:jobAllowed action="${AuthConstants.ACTION_TOGGLE_EXECUTION}" job="${scheduledExecution}" project="${scheduledExecution.project}">
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
         jQuery(function(){
             //register modal as the handler for 'job_delete_single'
             PageActionHandlers.registerModalHandler('enable_job_execution_single','#jobexectoggle',{});
             PageActionHandlers.registerModalHandler('disable_job_execution_single','#jobexectoggle',{});
         });
-    </g:javascript>
+    </script>
     <div class="modal" id="jobexectoggle" tabindex="-1" role="dialog"
          aria-labelledby="toggleexecjobtitle" aria-hidden="true">
         <div class="modal-dialog">
@@ -194,12 +194,12 @@
 <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_DELETE}"
                       project="${scheduledExecution.project ?: params.project ?: request.project}">
     <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}">
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
 jQuery(function(){
    //register modal as the handler for 'job_delete_single'
     PageActionHandlers.registerModalHandler('job_delete_single','#jobdelete',{});
 });
-</g:javascript>
+</script>
         <div class="modal" id="jobdelete" tabindex="-1" role="dialog"
              aria-labelledby="deletejobtitle" aria-hidden="true">
             <div class="modal-dialog">

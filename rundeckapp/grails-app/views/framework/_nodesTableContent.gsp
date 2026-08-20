@@ -127,7 +127,12 @@
                             nodecontextdata.project=nodedata.project.name
                         %>
                         <g:set var="remoteUrl" value="${DataContextUtils.replaceDataReferencesInString(node.attributes?.remoteUrl,[node:nodecontextdata])}" />
-                        <span class="action " title="Edit this node via remote URL..." onclick='doRemoteEdit("${enc(js: node.nodename)}","${enc(js: nodedata.project.name)}","${enc(js: remoteUrl)}");'>Edit&hellip;</span>
+                        <span class="action " title="Edit this node via remote URL..." id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_remoteedit">Edit&hellip;</span>
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
+                        document.getElementById('${enc(js:ukey)}_${enc(js:node.nodename)}_remoteedit').addEventListener('click', function(event) {
+                          doRemoteEdit("${enc(js: node.nodename)}","${enc(js: nodedata.project.name)}","${enc(js: remoteUrl)}");
+                        });
+                        </script>
                     </g:if>
                     <g:elseif test="${node.attributes?.editUrl}">
                         <g:set var="nodecontextdata" value="${DataContextUtils.nodeData(node)}"/>

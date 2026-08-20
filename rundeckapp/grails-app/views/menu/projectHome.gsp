@@ -41,7 +41,7 @@
             any: true
     )}"/>
         <g:set var="projectEventsAuth" value="${auth.resourceAllowedTest(kind: AuthConstants.TYPE_EVENT, project: params.project, action: AuthConstants.ACTION_READ) || projAdminAuth}"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
             projectEventsAuth:${enc(js:projectEventsAuth)},
@@ -52,7 +52,7 @@
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:params.project]))}"
         }
     })
-    </g:javascript>
+    </script>
     <style type="text/css">
 
     .subtitlebar.no-min-height {

@@ -183,13 +183,13 @@
 </div>
 
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
     fireWhenReady('difftext', function (z) {
         jQuery('.apply_ace').each(function () {
             _applyAce(this, '400px');
         });
     });
-</g:javascript>
+</script>
 </div>
 </div>
 </body>
