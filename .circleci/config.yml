@@ -700,8 +700,7 @@ jobs:
       - run-build-step:
           step-name: Runs gradle test task << parameters.gradle-task >>
           command: |
-            TEST_FILES=$(circleci tests glob "<< parameters.test_file_pattern >>" | circleci tests split)
-            echo $TEST_FILES | tee test_file_listing.txt
+            rundeck_select_functional_test_files "<< parameters.test_file_pattern >>"
             TEST_IMAGE=<< parameters.test-image >>
             GRADLE_TASK=<< parameters.gradle-task >>
             rundeck_gradle_functional_tests
