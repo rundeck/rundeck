@@ -13,6 +13,7 @@ import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet
 class ConditionalSetImpl implements ConditionalSet {
     List<List<ConditionalDefinition>> conditionGroups
     boolean nodeStep
+    boolean invertLogic
 
     private final ConditionalSet dataModelConditionalSet;
 
@@ -27,6 +28,7 @@ class ConditionalSetImpl implements ConditionalSet {
         this.dataModelConditionalSet = dataModelConditionalSet;
         this.conditionGroups = dataModelConditionalSet.conditionGroups;
         this.nodeStep = dataModelConditionalSet.isNodeStep();
+        this.invertLogic = dataModelConditionalSet.isInvertLogic();
     }
 
     /**
@@ -64,6 +66,7 @@ class ConditionalSetImpl implements ConditionalSet {
             }
             condSet.conditionGroups = groups
             condSet.nodeStep = setMap.nodeStep == true
+            condSet.invertLogic = setMap.invertLogic == true
         }
         return condSet
     }
@@ -98,6 +101,7 @@ class ConditionalSetImpl implements ConditionalSet {
             }
             map.conditionGroups = groups
             map.nodeStep = nodeStep
+            map.invertLogic = invertLogic
         }
         return map
     }
