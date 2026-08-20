@@ -171,6 +171,7 @@ allprojects {
     ext["micrometer.version"] = micrometerVersion          // CVE-2026-40983, CVE-2026-40984
     ext["spring-retry.version"] = springRetryVersion       // CVE-2026-41710
     ext["httpcore5.version"] = httpCore5Version             // CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)
+    ext["httpclient5.version"] = httpClient5Version         // CVE-2026-64607 (connection pool exhaustion DoS)
     // CVE-2026-54512, CVE-2026-54513 (jackson-databind PolymorphicTypeValidator bypass). Grails/Spring
     // Boot dependency management pins jackson to 2.21.2 and downgrades transitive 2.21.4; a plain
     // platform import or resolutionStrategy.force does NOT override it. Overriding the Boot BOM property
@@ -261,6 +262,19 @@ allprojects {
                 if (details.requested.group == 'org.apache.httpcomponents.core5') {
                     details.useVersion httpCore5Version
                     details.because 'httpcore5 5.4.2 fixes CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)'
+                }
+                // CVE-2026-64607: httpclient5's classic transport leaks the pooled connection on an
+                // invalid/unsupported Content-Encoding header (pool exhaustion DoS), fixed in 5.6.3.
+                // Every project applying org.apache.grails.gradle.grails-plugin gets an auto-created
+                // "profile" configuration (used by the Grails Shell to find profile artifacts) that
+                // independently resolves org.apache.grails.profiles:web-plugin -> ... -> grails-shell-cli
+                // -> spring-boot-cli -> httpclient5 via the grails-bom constraint (5.5.2). Like httpcore5
+                // above, the Spring Boot BOM manages httpclient5.version and overrides this useVersion
+                // call; the ext["httpclient5.version"] override above is what actually moves it, this
+                // rule is kept for defense-in-depth on any resolution path that doesn't go through the BOM.
+                if (details.requested.group == 'org.apache.httpcomponents.client5' && details.requested.name == 'httpclient5') {
+                    details.useVersion httpClient5Version
+                    details.because 'httpclient5 5.6.4 fixes CVE-2026-64607 (connection pool exhaustion DoS)'
                 }
             }
 
