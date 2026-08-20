@@ -3741,10 +3741,11 @@ Since: v23''',
         // Path validation for writeable sources (RUN-4671): this is the nextUi (legacyUi=false)
         // counterpart of editProjectNodeSourceFile, used by the Vue node source editor to fetch
         // raw source content, and must enforce the same containment check.
-        if (source.source instanceof WriteableModelSource) {
+        WriteableModelSource writeableModelSource = source.source.writeable
+        if (writeableModelSource) {
             try {
                 Map<String, Object> configProps = buildConfigPropertiesForValidation()
-                ((WriteableModelSource) source.source).validateWriteableSource(
+                writeableModelSource.validateWriteableSource(
                     configProps,
                     fmk,
                     project

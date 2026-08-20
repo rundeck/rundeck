@@ -92,6 +92,9 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
         long writeData(InputStream data) throws IOException, ResourceModelSourceException { 0 }
 
         @Override
+        WriteableModelSource getWriteable() { this }
+
+        @Override
         void validateWriteableSource(
             Map<String, Object> configProperties,
             com.dtolabs.rundeck.core.common.Framework framework,
