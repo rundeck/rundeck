@@ -334,6 +334,14 @@ allprojects {
                 dependency "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
                 dependency "org.apache.ant:ant:${antVersion}"
                 dependency "org.apache.ant:ant-launcher:${antVersion}"
+                // Same story again: grails-bom 7.2.x newly manages log4j2 as a strict constraint
+                // (2.25.5), which plain resolutionStrategy.force can't override, causing duplicate
+                // log4j jars (2.25.5 alongside our forced log4j2.version) in the packaged WAR.
+                dependency "org.apache.logging.log4j:log4j-api:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-core:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-jul:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-slf4j2-impl:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-to-slf4j:${project.'log4j2.version'}"
             }
         }
     }
