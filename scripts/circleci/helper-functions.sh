@@ -17,33 +17,6 @@ collect_gradle_tests() {
     find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
 }
 
-# Select the Groovy/Java specs assigned to this parallel node.
-# Uses `circleci tests run` so CircleCI can offer "Rerun failed tests" and only
-# re-execute failing files. Writes newline-separated paths (required by
-# functional-test/build.gradle explicitTestIncluder) and sets TEST_FILES.
-rundeck_select_functional_test_files() {
-    local pattern="${1}"
-    if [[ -z "${pattern}" ]]; then
-        echo "No test file glob specified"
-        return 1
-    fi
-
-    circleci tests glob "${pattern}" \
-        | circleci tests run \
-            --command="xargs -r printf '%s\n' > test_file_listing.txt" \
-            --verbose \
-            --split-by=timings
-
-    if [[ ! -s test_file_listing.txt ]]; then
-        echo "No tests assigned to this node; halting."
-        circleci-agent step halt
-    fi
-
-    TEST_FILES="$(cat test_file_listing.txt)"
-    echo "Selected test files:"
-    echo "${TEST_FILES}"
-}
-
 collect_build_artifacts() {
     shopt -s globstar
     mkdir -p "${WORKDIR}/artifacts"
