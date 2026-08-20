@@ -39,6 +39,7 @@ services:
       - "../../../test-files/job-run-steps-test-script1.txt:/home/rundeck/job-run-steps-test-script1.txt"
       - "../../../test-files/simpleScript.sh:/home/rundeck/simpleScript.sh"
       - "../../../test-files/test-resources.xml:/home/rundeck/test-resources.xml"
+      - "../../../test-project-resources/etc:/home/rundeck/projects/test-project-resources/etc"
       - "../../../test-files/saved_searches-A.json:/home/option1/saved_searches.json"
       - "../../../test-files/saved_searches-B.json:/home/option2/saved_searches.json"
       - "../../../test-files/saved_searches-C.json:/home/option3/saved_searches.json"
