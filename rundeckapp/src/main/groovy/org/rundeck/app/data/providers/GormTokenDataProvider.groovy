@@ -62,7 +62,7 @@ class GormTokenDataProvider implements TokenDataProvider {
                     creator: data.creator,
                     name: data.name,
                     type: tokenType,
-                    tokenMode: (tokenType == AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
+                    tokenMode: AuthTokenMode.SECURED
             )
             if (token.save(flush: true)) {
                 return token.uuid
