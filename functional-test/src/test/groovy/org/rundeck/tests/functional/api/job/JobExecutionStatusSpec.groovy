@@ -117,7 +117,8 @@ class JobExecutionStatusSpec extends BaseContainer {
         def response = JobUtils.waitForExecution(
                 ExecutionStatus.FAILED_WITH_RETRY.state,
                 execId as String,
-                client)
+                client,
+                WaitingTime.EXCESSIVE)
 
         then:
         verifyAll {
@@ -128,7 +129,8 @@ class JobExecutionStatusSpec extends BaseContainer {
         def responseExec1 = JobUtils.waitForExecution(
                 ExecutionStatus.TIMEDOUT.state,
                 response.retriedExecution.id as String,
-                client)
+                client,
+                WaitingTime.EXCESSIVE)
 
         then:
         verifyAll {
