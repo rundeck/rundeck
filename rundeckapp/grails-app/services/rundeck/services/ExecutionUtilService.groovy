@@ -89,6 +89,12 @@ class ExecutionUtilService {
         } else {
             metricService.markMeter(ExecutionService.name, 'executionSuccessMeter')
         }
+        // NOTE: dimensional execution metrics are NOT recorded here. execMap.execution is the
+        // pre-completion in-memory reference from executeAsyncBegin -- its dateCompleted/status
+        // are never mutated in place; the real final state only exists on the fresh instance
+        // ExecutionService.saveCompletedExecution_currentTransaction loads via Execution.get(exId)
+        // after execution.save(flush:true). See MicrometerExecutionMetricsService.recordExecution
+        // call there instead.
     }
     @CompileStatic
     def finishExecutionLogging(ExecutionService.AsyncStarted execMap) {
