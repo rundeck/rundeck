@@ -254,8 +254,11 @@ rundeck:
                         default-src: 'none'
                         connect-src: 'self https://api.rundeck.com https://data.analytics.rundeck.com'
                         style-src: 'self unsafe-inline'
-                        # the 'nonce' marker keyword injects a fresh per-request nonce value,
-                        # matched by the nonce attribute of each inline script tag
+                        # nonce support is opt-in: set nonce-enabled: true to have the 'nonce' marker
+                        # keyword below injected as a fresh per-request nonce value, matched by the
+                        # nonce attribute of each inline script tag. While disabled (the default), the
+                        # marker resolves to 'unsafe-inline' instead, preserving prior behavior.
+                        nonce-enabled: false
                         script-src: 'self https://content.analytics.rundeck.com nonce unsafe-eval'
                         font-src: 'self data:'
                         img-src: '* data:'

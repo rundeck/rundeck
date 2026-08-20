@@ -135,14 +135,14 @@ class CSPSecurityHeaderProviderSpec extends Specification {
     }
 
     @Unroll
-    def "nonce marker #confVal is replaced with the per-request nonce"() {
+    def "nonce marker #confVal is replaced with the per-request nonce when nonce-enabled"() {
         given:
             def request = new MockHttpServletRequest('GET', "/test/uri")
             request.setAttribute(CspNonceProvider.HTTP_ATTRIBUTE_NAME, 'abc123nonce')
             def response = new MockHttpServletResponse()
             def secHeaderProvider = new CSPSecurityHeaderProvider()
 
-            def config = ['script-src': confVal]
+            def config = ['nonce-enabled': true, 'script-src': confVal]
         when:
             def list = secHeaderProvider.getSecurityHeaders(request, response, config)
         then:
@@ -158,24 +158,52 @@ class CSPSecurityHeaderProviderSpec extends Specification {
             'self nonce unsafe-eval'   | "script-src 'self' 'nonce-abc123nonce' 'unsafe-eval' ;"
     }
 
-    def "nonce marker is dropped when no nonce is available for the request"() {
-        given: "a request with no nonce attribute set"
+    def "nonce marker resolves to unsafe-inline when nonce-enabled is not set (opt-in default)"() {
+        given: "a request with a nonce available, but no nonce-enabled config"
             def request = new MockHttpServletRequest('GET', "/test/uri")
+            request.setAttribute(CspNonceProvider.HTTP_ATTRIBUTE_NAME, 'abc123nonce')
             def response = new MockHttpServletResponse()
             def secHeaderProvider = new CSPSecurityHeaderProvider()
 
             def config = ['script-src': 'self nonce']
         when:
             def list = secHeaderProvider.getSecurityHeaders(request, response, config)
+        then: "the marker falls back to 'unsafe-inline' instead of the nonce"
+            list[0].value == "script-src 'self' 'unsafe-inline' ;"
+    }
+
+    def "nonce marker resolves to unsafe-inline when nonce-enabled is explicitly false"() {
+        given:
+            def request = new MockHttpServletRequest('GET', "/test/uri")
+            request.setAttribute(CspNonceProvider.HTTP_ATTRIBUTE_NAME, 'abc123nonce')
+            def response = new MockHttpServletResponse()
+            def secHeaderProvider = new CSPSecurityHeaderProvider()
+
+            def config = ['nonce-enabled': false, 'script-src': 'self nonce']
+        when:
+            def list = secHeaderProvider.getSecurityHeaders(request, response, config)
+        then:
+            list[0].value == "script-src 'self' 'unsafe-inline' ;"
+    }
+
+    def "nonce marker is dropped when nonce-enabled but no nonce is available for the request"() {
+        given: "a request with no nonce attribute set"
+            def request = new MockHttpServletRequest('GET', "/test/uri")
+            def response = new MockHttpServletResponse()
+            def secHeaderProvider = new CSPSecurityHeaderProvider()
+
+            def config = ['nonce-enabled': true, 'script-src': 'self nonce']
+        when:
+            def list = secHeaderProvider.getSecurityHeaders(request, response, config)
         then: "no literal 'nonce' keyword is emitted"
             list[0].value == "script-src 'self' ;"
     }
 
-    def "nonce differs between requests and header is not cached"() {
+    def "nonce differs between requests and header is not cached, when nonce-enabled"() {
         given:
             def response = new MockHttpServletResponse()
             def secHeaderProvider = new CSPSecurityHeaderProvider()
-            def config = ['script-src': 'self nonce']
+            def config = ['nonce-enabled': true, 'script-src': 'self nonce']
 
             def request1 = new MockHttpServletRequest('GET', "/test/uri")
             def request2 = new MockHttpServletRequest('GET', "/test/uri")
@@ -218,12 +246,14 @@ class CSPSecurityHeaderProviderSpec extends Specification {
             CSPSecurityHeaderProvider.isNonceRequested(config) == expected
 
         where:
-            config                                             | expected
-            [:]                                                | false
-            ['script-src': 'self unsafe-inline']                | false
-            ['script-src': 'self nonce-fixedvalue']             | false
-            ['script-src': 'self nonce']                        | true
-            ['style-src': "'nonce'"]                            | true
-            ['policy': 'script-src nonce ;']                    | false
+            config                                                                  | expected
+            [:]                                                                     | false
+            ['script-src': 'self unsafe-inline']                                    | false
+            ['script-src': 'self nonce-fixedvalue']                                 | false
+            ['script-src': 'self nonce']                                            | false
+            ['nonce-enabled': false, 'script-src': 'self nonce']                     | false
+            ['nonce-enabled': true, 'script-src': 'self nonce']                      | true
+            ['nonce-enabled': true, 'style-src': "'nonce'"]                         | true
+            ['nonce-enabled': true, 'policy': 'script-src nonce ;']                  | false
     }
 }
