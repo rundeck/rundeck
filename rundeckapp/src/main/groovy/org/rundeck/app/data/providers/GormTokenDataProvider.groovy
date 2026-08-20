@@ -169,10 +169,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
     @Override
     AuthenticationToken findByTokenAndType(final String token, AuthTokenType type) {
-        def tokenType = AuthTokenType.valueOf(type.toString())
-        AuthenticationToken authToken = AuthToken.findByTokenAndType(token, tokenType)
-        return authToken ?: null
-
+        return tokenLookupWithType(token, type)
     }
 
     @Override
