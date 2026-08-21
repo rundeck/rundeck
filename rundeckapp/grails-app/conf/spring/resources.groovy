@@ -187,6 +187,7 @@ import rundeck.services.workflow.DefaultStateExecutionFileProducer
 import rundeck.services.workflow.DefaultWorkflowStateDataLoader
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
+import rundeckapp.init.InfrastructureRoleBeanDefinitionRegistryPostProcessor
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
@@ -220,6 +221,11 @@ beans={
             advisor('pointcut-ref': "rdAuthProjectAclInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
         }
     }
+
+    // Marks the rdAuth* advisors above (and a couple of Grails plugin infrastructure beans) as
+    // ROLE_INFRASTRUCTURE so Spring's BeanPostProcessorChecker doesn't log spurious startup warnings
+    // for them. See the class Javadoc for details.
+    infrastructureRoleBeanDefinitionRegistryPostProcessor(InfrastructureRoleBeanDefinitionRegistryPostProcessor)
 
     rdAuthorizeInterceptor(RdAuthorizeInterceptor)
     rundeckWebDefaultParameterNamesMapper(RdWebDefaultParameterNamesMapper) {
