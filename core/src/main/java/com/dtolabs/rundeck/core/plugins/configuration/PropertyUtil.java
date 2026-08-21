@@ -211,6 +211,39 @@ public class PropertyUtil {
                                    final boolean dynamicValues,
                                    final boolean blankIfUnexpandable
     ) {
+        return forType(
+                type,
+                name,
+                title,
+                description,
+                required,
+                defaultValue,
+                values,
+                labels,
+                validator,
+                scope,
+                renderingOptions,
+                dynamicValues,
+                blankIfUnexpandable,
+                null
+        );
+    }
+
+    public static Property forType(final Property.Type type,
+                                   final String name,
+                                   final String title,
+                                   final String description,
+                                   final boolean required,
+                                   final String defaultValue,
+                                   final List<String> values,
+                                   final Map<String, String> labels,
+                                   final PropertyValidator validator,
+                                   final PropertyScope scope,
+                                   final Map<String, Object> renderingOptions,
+                                   final boolean dynamicValues,
+                                   final boolean blankIfUnexpandable,
+                                   final String unexpandableBehaviorFrom
+    ) {
         switch (type) {
             case Integer:
                 return integer(name, title, description, required, defaultValue, validator, scope, renderingOptions);
@@ -255,9 +288,31 @@ public class PropertyUtil {
                         renderingOptions
                 );
             case AutogenInstanceId:
-                return PropertyUtil.autogenInstanceId(name, title, description, required, defaultValue, validator, scope, renderingOptions, blankIfUnexpandable);
+                return PropertyUtil.autogenInstanceId(
+                        name,
+                        title,
+                        description,
+                        required,
+                        defaultValue,
+                        validator,
+                        scope,
+                        renderingOptions,
+                        blankIfUnexpandable,
+                        unexpandableBehaviorFrom
+                );
             default:
-                return string(name, title, description, required, defaultValue, validator, scope, renderingOptions,blankIfUnexpandable);
+                return string(
+                        name,
+                        title,
+                        description,
+                        required,
+                        defaultValue,
+                        validator,
+                        scope,
+                        renderingOptions,
+                        blankIfUnexpandable,
+                        unexpandableBehaviorFrom
+                );
         }
     }
 
@@ -294,7 +349,22 @@ public class PropertyUtil {
                                   final String defaultValue, final PropertyValidator validator,
                                   final PropertyScope scope, final Map<String, Object> renderingOptions,
                                   final boolean blankIfUnexpandable) {
-        return new AutogenInstanceId(name, title, description, required, defaultValue, validator, scope, renderingOptions, blankIfUnexpandable);
+        return autogenInstanceId(
+                name, title, description, required, defaultValue, validator, scope, renderingOptions,
+                blankIfUnexpandable, null
+        );
+    }
+
+    public static Property autogenInstanceId(final String name, final String title, final String description,
+                                  final boolean required,
+                                  final String defaultValue, final PropertyValidator validator,
+                                  final PropertyScope scope, final Map<String, Object> renderingOptions,
+                                  final boolean blankIfUnexpandable,
+                                  final String unexpandableBehaviorFrom) {
+        return new AutogenInstanceId(
+                name, title, description, required, defaultValue, validator, scope, renderingOptions,
+                blankIfUnexpandable, unexpandableBehaviorFrom
+        );
     }
 
     /**
@@ -367,7 +437,22 @@ public class PropertyUtil {
                                   final String defaultValue, final PropertyValidator validator,
                                   final PropertyScope scope, final Map<String, Object> renderingOptions,
                                   final boolean blankIfUnexpandable) {
-        return new StringProperty(name, title, description, required, defaultValue, validator, scope, renderingOptions, blankIfUnexpandable);
+        return string(
+                name, title, description, required, defaultValue, validator, scope, renderingOptions,
+                blankIfUnexpandable, null
+        );
+    }
+
+    public static Property string(final String name, final String title, final String description,
+                                  final boolean required,
+                                  final String defaultValue, final PropertyValidator validator,
+                                  final PropertyScope scope, final Map<String, Object> renderingOptions,
+                                  final boolean blankIfUnexpandable,
+                                  final String unexpandableBehaviorFrom) {
+        return new StringProperty(
+                name, title, description, required, defaultValue, validator, scope, renderingOptions,
+                blankIfUnexpandable, unexpandableBehaviorFrom
+        );
     }
 
     /**
@@ -932,7 +1017,22 @@ public class PropertyUtil {
                               final PropertyScope scope,
                               final Map<String, Object> renderingOptions,
                               final boolean blankIfUnexpandable) {
-            super(name, title, description, required, defaultValue, validator, scope, renderingOptions,blankIfUnexpandable);
+            this(name, title, description, required, defaultValue, validator, scope, renderingOptions,
+                    blankIfUnexpandable, null);
+        }
+
+        public StringProperty(final String name,
+                              final String title,
+                              final String description,
+                              final boolean required,
+                              final String defaultValue,
+                              final PropertyValidator validator,
+                              final PropertyScope scope,
+                              final Map<String, Object> renderingOptions,
+                              final boolean blankIfUnexpandable,
+                              final String unexpandableBehaviorFrom) {
+            super(name, title, description, required, defaultValue, validator, scope, renderingOptions,
+                    blankIfUnexpandable, unexpandableBehaviorFrom);
         }
 
         public Type getType() {
@@ -951,7 +1051,22 @@ public class PropertyUtil {
                               final PropertyScope scope,
                               final Map<String, Object> renderingOptions,
                               final boolean blankIfUnexpandable) {
-            super(name, title, description, required, defaultValue, validator, scope, renderingOptions,blankIfUnexpandable);
+            this(name, title, description, required, defaultValue, validator, scope, renderingOptions,
+                    blankIfUnexpandable, null);
+        }
+
+        public AutogenInstanceId(final String name,
+                              final String title,
+                              final String description,
+                              final boolean required,
+                              final String defaultValue,
+                              final PropertyValidator validator,
+                              final PropertyScope scope,
+                              final Map<String, Object> renderingOptions,
+                              final boolean blankIfUnexpandable,
+                              final String unexpandableBehaviorFrom) {
+            super(name, title, description, required, defaultValue, validator, scope, renderingOptions,
+                    blankIfUnexpandable, unexpandableBehaviorFrom);
         }
 
         public Type getType() {

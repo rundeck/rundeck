@@ -16,6 +16,10 @@ buildscript {
     configurations.all {
         resolutionStrategy {
             force "org.liquibase:liquibase-core:${liquibaseVersion}"
+            // CVE-2026-64607: httpclient5 connection-pool exhaustion DoS, fixed in 5.6.3. Pulled onto
+            // this buildscript classpath via grails-data-hibernate5-dbmigration -> grails-shell-cli ->
+            // spring-boot-cli. Build-tooling only (never shipped), forced to stop the Snyk finding.
+            force "org.apache.httpcomponents.client5:httpclient5:${httpClient5Version}"
         }
     }
     dependencies {
@@ -209,7 +213,7 @@ dependencies {
     // Force CVE-patched mchange libraries (transitively brought by quartz:2.5.x)
     implementation "com.mchange:mchange-commons-java:${mchangeCommonsJavaVersion}"
     implementation "com.mchange:c3p0:${c3p0Version}"
-    implementation "org.grails.plugins:grails-mail:${grailsMailPluginVersion}"
+    implementation "org.apache.grails:grails-mail:${grailsMailVersion}"
 
     // Liquibase for compile-time exception classes (runtime provided by Spring Boot)
     compileOnly "org.liquibase:liquibase-core:${liquibaseVersion}"
