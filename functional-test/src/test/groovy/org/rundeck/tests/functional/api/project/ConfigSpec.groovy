@@ -664,8 +664,25 @@ class ConfigSpec extends BaseContainer{
         given:
         def client = getClient()
         def projectName = "test-project-resources" // delete me
-        def resourceFile1 = "/home/rundeck/writable-resource-file.xml"
-        def resourceFile2 = "/home/rundeck/test-resources.xml"
+
+        // Fetch server base dir up-front so the writeable source path below can be built
+        // relative to it (RDECK_BASE differs between Docker CI and local dev environments).
+        def systemInfoResponse = doGet("/system/info")
+        SystemInfo systemInfo = MAPPER.readValue(systemInfoResponse.body().string(), SystemInfo.class)
+        def localNode = systemInfo.system?.rundeck?.node
+        def rdeckBase = systemInfo.system?.rundeck?.base
+
+        // RUN-4671: writeable file sources are now restricted to the project directory by
+        // default, so this path must live under the project's own directory.
+        // NOTE: must be a real String, not a GString: RdClient serializes request bodies with
+        // a plain Jackson ObjectMapper (no Groovy module), which serializes GString via
+        // reflection as a JSON object instead of a string, corrupting this value server-side.
+        def resourceFile1 = (rdeckBase + "/projects/" + projectName + "/etc/writable-resource-file.xml").toString()
+        // source 2 is not writeable, so path validation does not apply to it (see getWriteable()
+        // scoping in FrameworkController.apiSourceGetContent). Keep it outside the project
+        // directory as originally mounted, so it isn't affected by ownership of the
+        // project dir that source 1 (writeable) needs to create/write into.
+        def resourceFile2 = (rdeckBase + "/test-resources.xml").toString()
         Object projectJsonMap = [
             "name"  : projectName,
             "config": [
@@ -687,11 +704,6 @@ class ConfigSpec extends BaseContainer{
         ]
 
         def responseProject = createSampleProject(projectJsonMap)
-
-        //Extract local nodename
-        def systemInfoResponse = doGet("/system/info")
-        SystemInfo systemInfo = MAPPER.readValue(systemInfoResponse.body().string(), SystemInfo.class)
-        def localNode = systemInfo.system?.rundeck?.node
 
         when: "we request all sources"
         def allSourcesResponse = client.doGetAcceptAll("/project/$projectName/sources")
