@@ -166,11 +166,15 @@ public class ResourceJsonFormatParser implements ResourceFormatParser, Describab
         NodeEntryImpl node = new NodeEntryImpl(nodename);
         Map<String, String> safe = safe(attrs);
         node.getAttributes().putAll(safe);
-        if (attrs.get("attributes") instanceof Map) {
-            node.getAttributes().putAll(safe((Map) attrs.get("attributes")));
+        Map nestedAttributes = attrs.get("attributes") instanceof Map ? (Map) attrs.get("attributes") : null;
+        if (nestedAttributes != null) {
+            node.getAttributes().putAll(safe(nestedAttributes));
         }
-        if (safe.get("tags") != null && !"".equals(safe.get("tags").trim())) {
-            node.setTags(new HashSet<>(Arrays.asList(safe.get("tags").split(", *"))));
+        String tags = node.getAttributes().get("tags");
+        if (tags != null && !"".equals(tags.trim())) {
+            node.setTags(new HashSet<>(Arrays.asList(tags.split(", *"))));
+        } else if (nestedAttributes != null && nestedAttributes.get("tags") instanceof Collection) {
+            node.setTags(new HashSet<>(stringSet((Collection) nestedAttributes.get("tags"))));
         } else if (attrs.get("tags") instanceof Collection) {
             node.setTags(new HashSet<>(stringSet((Collection) attrs.get("tags"))));
         }
