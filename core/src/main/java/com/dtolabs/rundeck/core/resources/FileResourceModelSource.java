@@ -125,6 +125,16 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
     }
 
     public long writeFileData(final InputStream dataStream) throws IOException {
+        // Create missing parent directories, mirroring generateResourcesFile()'s behavior for
+        // reads. Without this, writing to a writeable file source whose parent directory does
+        // not yet exist (e.g. a project's etc/ dir before anything else creates it) fails with
+        // a raw FileNotFoundException.
+        File parentDir = configuration.nodesFile.getParentFile();
+        if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
+            throw new IOException(
+                "Parent dir for resource file does not exist, and could not be created: " + parentDir
+            );
+        }
         try (FileOutputStream fos = new FileOutputStream(configuration.nodesFile)) {
             return Streams.copyStream(dataStream, fos);
         }

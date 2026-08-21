@@ -554,6 +554,35 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         assertEquals(0, nodes.getNodes().size());
     }
 
+    public void testWriteFileDataCreatesMissingParentDirectory() throws Exception {
+        File tempDir = File.createTempFile("test-write-parent-dir", "");
+        tempDir.delete();
+        File missingParentDir = new File(tempDir, "nested/etc");
+        File nodesFile = new File(missingParentDir, "writable-resource-file.xml");
+        try {
+            assertFalse("parent dir should not exist yet", missingParentDir.exists());
+
+            Properties props = new Properties();
+            props.setProperty("project", PROJ_NAME);
+            props.setProperty("file", nodesFile.getAbsolutePath());
+            props.setProperty("generateFileAutomatically", "false");
+            props.setProperty("includeServerNode", "false");
+            props.setProperty("writeable", "true");
+            final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
+            fileNodesProvider.configure(props);
+
+            File testfile = new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml");
+            try (InputStream is = new FileInputStream(testfile)) {
+                fileNodesProvider.writeData(is);
+            }
+
+            assertTrue("parent dir should have been created", missingParentDir.exists());
+            assertTrue("file should have been written", nodesFile.exists());
+        } finally {
+            FileUtils.deleteDir(tempDir);
+        }
+    }
+
     // Security validation tests for RUN-4671
 
     public void testValidateWriteableSource_PathWithinProjectDirectory() throws Exception {
