@@ -2165,6 +2165,28 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         validation
     }
 
+    def "validate option values, default input pattern applies to enforced option when remote values fail to load"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        // enforced option with no static values (dynamic remote dropdown)
+        se.addToOptions(new Option(name: 'test1', enforced: true))
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> { it[0] }
+        }
+        // remote value load errors → opt.optionValues stays null, so the enforced check can't fire
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            loadOptionsRemoteValues(*_) >> [err: 'remote load failed']
+        }
+
+        when: 'a run-user supplies a value with shell metacharacters'
+        service.validateOptionValues(se, ['test1': '"; id; echo "'])
+
+        then: 'it falls through to the default allowlist and is rejected (fail-closed)'
+        ExecutionServiceException e = thrown()
+        e.message == 'domain.Option.validation.default.pattern.invalid'
+    }
+
     def "validate option values, default input pattern multivalued failure"() {
         given:
         ScheduledExecution se = new ScheduledExecution(project: 'AProject')

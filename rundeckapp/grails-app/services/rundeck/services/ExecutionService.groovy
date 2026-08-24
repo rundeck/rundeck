@@ -3145,11 +3145,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             sb << msg
             failedkeys[opt.name] += msg
         }
-        // RUN-4693: project/system-wide default allowlist applied to option values that have no
-        // per-option regex. Only resolved when at least one option would actually be validated by
-        // it, to avoid a config lookup on executions that cannot use it. Null when unset/empty/invalid.
+        // RUN-4693: project/system-wide default allowlist applied to option values that are not
+        // already constrained by the option's own definition. Only resolved when at least one
+        // option could need it, to avoid a config lookup on executions that cannot use it. Enforced
+        // options are included here because their remote/plugin value list may fail to resolve at
+        // execution time (checked per-option via hasOwnValueConstraint after the remote load).
+        // Null when unset/empty/invalid.
         boolean anyDefaultValidatable = scheduledExecution.options?.any { Option o ->
-            !o.regex && !o.enforced && optparams[o.name]
+            !o.regex && optparams[o.name]
         }
         Pattern defaultInputPattern = anyDefaultValidatable ?
                 resolveDefaultOptionInputPattern(scheduledExecution.project) : null
@@ -3235,7 +3238,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (!opt.regex && defaultInputPattern && !opt.enforced && optparams[opt.name]) {
+                    if (!hasOwnValueConstraint(opt) && defaultInputPattern && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
                             val = [optparams[opt.name]].flatten();
@@ -3279,7 +3282,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (!opt.regex && defaultInputPattern && !opt.enforced && optparams[opt.name]) {
+                    if (!hasOwnValueConstraint(opt) && defaultInputPattern && optparams[opt.name]) {
                         if (!defaultInputPattern.matcher(optparams[opt.name].toString()).matches()) {
                             invalidOpt opt, opt.secureInput ?
                                     lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
@@ -3317,6 +3320,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param project project name
      * @return compiled {@link Pattern} or null
      */
+    /**
+     * RUN-4693: whether an option value is already constrained by the option's own definition — it
+     * has a per-option regex, or it is enforced AND its allowed values actually resolved (static
+     * list, or remote/plugin values that loaded successfully). An enforced option whose remote
+     * value list errors or returns empty leaves {@code optionValues} null and is therefore NOT
+     * constrained; such values must fall through to the default input allowlist instead of skipping
+     * server-side validation entirely.
+     * @param opt option
+     * @return true when the option constrains its own value
+     */
+    private static boolean hasOwnValueConstraint(Option opt) {
+        opt.regex || (opt.enforced && opt.optionValues)
+    }
+
     private Pattern resolveDefaultOptionInputPattern(String project) {
         String pattern = null
         try {
