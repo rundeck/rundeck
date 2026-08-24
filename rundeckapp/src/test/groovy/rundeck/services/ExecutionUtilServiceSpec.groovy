@@ -39,6 +39,7 @@ class ExecutionUtilServiceSpec extends Specification implements ServiceUnitTest<
             false   | 'executionFailureMeter'
     }
 
+
     /**
      * Finish logging when no error cause
      */
