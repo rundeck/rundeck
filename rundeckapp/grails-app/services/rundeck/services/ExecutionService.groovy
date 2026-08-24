@@ -3152,7 +3152,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         // execution time (checked per-option via hasOwnValueConstraint after the remote load).
         // Null when unset/empty/invalid.
         boolean anyDefaultValidatable = scheduledExecution.options?.any { Option o ->
-            !o.regex && optparams[o.name]
+            !o.regex && !o.typeFile && optparams[o.name]
         }
         Pattern defaultInputPattern = anyDefaultValidatable ?
                 resolveDefaultOptionInputPattern(scheduledExecution.project) : null
@@ -3219,7 +3219,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 if (opt.multivalued) {
                     boolean multivaluedOptionEvalFailed = false
-                    if (opt.regex && !opt.enforced && optparams[opt.name]) {
+                    if (opt.regex && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
                             val = [optparams[opt.name]].flatten();
@@ -3238,7 +3238,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (!hasOwnValueConstraint(opt) && defaultInputPattern && optparams[opt.name]) {
+                    if (!hasOwnValueConstraint(opt) && !opt.typeFile && defaultInputPattern && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
                             val = [optparams[opt.name]].flatten();
@@ -3273,7 +3273,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         }
                     }
                 } else {
-                    if (opt.regex && !opt.enforced && optparams[opt.name]) {
+                    if (opt.regex && optparams[opt.name]) {
                         if (!(optparams[opt.name] ==~ opt.regex)) {
                             invalidOpt opt, opt.secureInput ?
                                     lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
@@ -3282,7 +3282,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (!hasOwnValueConstraint(opt) && defaultInputPattern && optparams[opt.name]) {
+                    if (!hasOwnValueConstraint(opt) && !opt.typeFile && defaultInputPattern && optparams[opt.name]) {
                         if (!defaultInputPattern.matcher(optparams[opt.name].toString()).matches()) {
                             invalidOpt opt, opt.secureInput ?
                                     lookupMessage("domain.Option.validation.secure.invalid",[opt.name])

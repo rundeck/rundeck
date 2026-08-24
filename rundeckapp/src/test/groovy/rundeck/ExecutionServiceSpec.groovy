@@ -2187,6 +2187,43 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e.message == 'domain.Option.validation.default.pattern.invalid'
     }
 
+    def "validate option values, enforced option with its own regex now validates the regex"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        // enforced AND has a regex; 'a b' is an allowed value but violates the regex (space)
+        final Option option = new Option(name: 'test1', enforced: true, regex: '[A-Za-z0-9]+')
+        option.valuesList = 'a b,c'
+        se.addToOptions(option)
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> { it[0] }
+        }
+
+        when: 'a value that is in the enforced list but violates the regex'
+        service.validateOptionValues(se, ['test1': 'a b'])
+
+        then: 'the per-option regex is now enforced even though the option is enforced'
+        ExecutionServiceException e = thrown()
+        e.message == 'domain.Option.validation.regex.invalid'
+    }
+
+    def "validate option values, default input pattern does not apply to typeFile options"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        // a plain option (triggers pattern resolution) plus a typeFile option that must be exempt
+        se.addToOptions(new Option(name: 'plain', enforced: false))
+        se.addToOptions(new Option(name: 'thefile', enforced: false, optionType: 'file'))
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+        service.fileUploadService = Mock(FileUploadService) {
+            validateFileRefForJobOption(*_) >> [valid: true]
+        }
+
+        when: 'the file-ref value contains dashes (would fail the pattern) while the plain value is clean'
+        def validation = service.validateOptionValues(se, ['plain': 'clean', 'thefile': 'abc-123-def-456'])
+
+        then: 'the typeFile option is exempt from the allowlist and validation passes'
+        validation
+    }
+
     def "validate option values, default input pattern multivalued failure"() {
         given:
         ScheduledExecution se = new ScheduledExecution(project: 'AProject')
