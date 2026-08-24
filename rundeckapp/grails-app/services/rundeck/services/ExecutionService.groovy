@@ -5467,6 +5467,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     authRequired("app_admin")
                     build()
                 },
+                SystemConfig.builder().with {
+                    key "rundeck.execution.rejectUndeclaredOptions"
+                    description "When enabled (default), an execution that provides options not defined on the job is created and then failed at start, with a message in the execution log. Disable to allow undeclared options to pass through (e.g. re-running a job whose option set has since changed)."
+                    defaultValue "true"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'Execution'
+                    authRequired("app_admin")
+                    build()
+                },
         ] as List<SysConfigProp>
     }
 }
