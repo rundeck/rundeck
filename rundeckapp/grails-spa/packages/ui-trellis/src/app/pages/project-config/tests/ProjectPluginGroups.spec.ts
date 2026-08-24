@@ -1,13 +1,22 @@
 // @ts-nocheck
 import { mount } from "@vue/test-utils";
 import ProjectPluginGroups from "../ProjectPluginGroups.vue";
+import { getRundeckContext } from "@/library/rundeckService";
 
-jest.mock("@/library/rundeckService", () => ({
-  getRundeckContext: () => ({
-    rundeckClient: {},
-    rdBase: "",
-  }),
-}));
+// eventBus is created once inside the factory closure (not referencing an
+// outer variable, which jest.mock hoisting would otherwise break) so every
+// call to getRundeckContext() — including the one ProjectPluginGroups.vue
+// makes at its own module top-level — shares the same emit mock.
+jest.mock("@/library/rundeckService", () => {
+  const eventBus = { emit: jest.fn() };
+  return {
+    getRundeckContext: () => ({
+      rundeckClient: {},
+      rdBase: "",
+      eventBus,
+    }),
+  };
+});
 
 jest.mock("@/library/modules/pluginService", () => ({
   __esModule: true,
@@ -22,7 +31,7 @@ jest.mock("@/library/modules/pluginService", () => ({
 }));
 
 // The real pluginConfig.vue drags in rundeckClient.ts, which reads a token
-// out of the DOM at module-load time and isn't relevant to this guard.
+// out of the DOM at module-load time and isn't relevant to this behavior.
 jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
   name: "PluginConfig",
   props: ["mode", "serviceName", "provider", "showDescription", "showTitle", "config", "validation", "validationWarningText"],
@@ -31,11 +40,10 @@ jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
 
 import pluginService from "../../../../library/modules/pluginService";
 
-const mountInForm = async (props: Record<string, any> = {}) => {
-  const formEl = document.createElement("form");
-  document.body.appendChild(formEl);
+const mockEmit = getRundeckContext().eventBus.emit;
+
+const mountWidget = async (props: Record<string, any> = {}) => {
   const wrapper = mount(ProjectPluginGroups, {
-    attachTo: formEl,
     props: {
       serviceName: "PluginGroup",
       configPrefix: "pluginValues.PluginGroup.",
@@ -53,16 +61,10 @@ const mountInForm = async (props: Record<string, any> = {}) => {
   });
   await wrapper.vm.$nextTick();
   await wrapper.vm.$nextTick();
-  return { wrapper, formEl };
+  return wrapper;
 };
 
-const submitForm = (formEl: HTMLFormElement) => {
-  const event = new Event("submit", { cancelable: true, bubbles: true });
-  formEl.dispatchEvent(event);
-  return event;
-};
-
-describe("ProjectPluginGroups unsaved-edit submit guard", () => {
+describe("ProjectPluginGroups editing-state event", () => {
   beforeEach(() => {
     (window as any)._rundeck = {
       projectName: "testProject",
@@ -71,40 +73,37 @@ describe("ProjectPluginGroups unsaved-edit submit guard", () => {
   });
 
   afterEach(() => {
-    document.body.innerHTML = "";
-    jest.clearAllMocks();
+    mockEmit.mockClear();
   });
 
-  it("does not block the page-level submit when no plugin is being edited", async () => {
-    const { wrapper, formEl } = await mountInForm();
+  it("does not emit an editing signal on mount when nothing is being edited", async () => {
+    await mountWidget();
 
-    const event = submitForm(formEl);
-
-    expect(event.defaultPrevented).toBe(false);
-    expect(wrapper.vm.errors).toHaveLength(0);
+    expect(mockEmit).not.toHaveBeenCalledWith(
+      "project-plugin-group-editing",
+      expect.anything(),
+    );
   });
 
-  it("blocks the page-level submit and shows an error while a plugin edit is unsaved", async () => {
-    const { wrapper, formEl } = await mountInForm();
+  it("emits editing=true as soon as a plugin is opened for editing", async () => {
+    const wrapper = await mountWidget();
 
-    // Simulate a user opening a new plugin group for editing without
-    // clicking that plugin's own inline Save button.
+    // Opening a new plugin group entry (or clicking Edit on an existing
+    // one) puts it in edit mode without yet committing any field values —
+    // this is the state that used to let the page-level Save silently
+    // discard the in-progress edit.
     wrapper.vm.addPlugin("test-plugin");
     await wrapper.vm.$nextTick();
+
     expect(wrapper.vm.editFocus).toBe(0);
-
-    const event = submitForm(formEl);
-
-    expect(event.defaultPrevented).toBe(true);
-    expect(wrapper.vm.errors).toHaveLength(1);
-    // $t isn't backed by a real i18n instance in this unit test, so it
-    // returns the raw translation key (consistent with other specs in
-    // this package, e.g. EditProjectFile.spec.ts).
-    expect(wrapper.vm.errors[0]).toContain("plugin.config.unsaved.edit.message");
+    expect(mockEmit).toHaveBeenLastCalledWith(
+      "project-plugin-group-editing",
+      true,
+    );
   });
 
-  it("allows the page-level submit again once the plugin's own Save has been clicked", async () => {
-    const { wrapper, formEl } = await mountInForm();
+  it("emits editing=false once the plugin's own Save has been clicked", async () => {
+    const wrapper = await mountWidget();
 
     wrapper.vm.addPlugin("test-plugin");
     wrapper.vm.workingData[0].entry.config = { host: "example.com" };
@@ -113,9 +112,36 @@ describe("ProjectPluginGroups unsaved-edit submit guard", () => {
 
     expect(pluginService.validatePluginConfig).toHaveBeenCalled();
     expect(wrapper.vm.editFocus).toBe(-1);
+    expect(mockEmit).toHaveBeenLastCalledWith(
+      "project-plugin-group-editing",
+      false,
+    );
+  });
 
-    const event = submitForm(formEl);
+  it("emits editing=false when the edit is cancelled instead of saved", async () => {
+    const wrapper = await mountWidget();
 
-    expect(event.defaultPrevented).toBe(false);
+    wrapper.vm.addPlugin("test-plugin");
+    await wrapper.vm.$nextTick();
+    wrapper.vm.didCancel(wrapper.vm.workingData[0], 0);
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.editFocus).toBe(-1);
+    expect(mockEmit).toHaveBeenLastCalledWith(
+      "project-plugin-group-editing",
+      false,
+    );
+  });
+
+  it("emits editing=false on unmount as a safety net against a stuck-hidden Save button", async () => {
+    const wrapper = await mountWidget();
+
+    wrapper.vm.addPlugin("test-plugin");
+    await wrapper.vm.$nextTick();
+    mockEmit.mockClear();
+
+    wrapper.unmount();
+
+    expect(mockEmit).toHaveBeenCalledWith("project-plugin-group-editing", false);
   });
 });
