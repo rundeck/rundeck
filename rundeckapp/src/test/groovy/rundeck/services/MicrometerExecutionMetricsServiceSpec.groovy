@@ -91,7 +91,7 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
             meterRegistry.meters.size() == registrySize
     }
 
-    void "recordExecution never emits execution_id, job_name, or user tags"() {
+    void "recordExecution never emits execution_id or user tags, and omits job_name when the job dimension flag is disabled (default)"() {
         given:
             def exec = execution([:])
 
