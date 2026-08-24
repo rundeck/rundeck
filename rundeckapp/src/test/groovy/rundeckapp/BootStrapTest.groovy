@@ -1,10 +1,12 @@
 package rundeckapp
 
 import groovy.sql.Sql
-import org.h2.jdbcx.JdbcDataSource
 import rundeck.data.util.AuthenticationTokenUtils
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import spock.lang.Specification
+
+import javax.sql.DataSource
+import java.sql.DriverManager
 
 class BootStrapTest  extends Specification {
     def "Test convertToTokenMap"() {
@@ -30,8 +32,7 @@ class BootStrapTest  extends Specification {
 
     def "migrateWebhookTokensToSecured hashes LEGACY and null-mode webhook rows, leaves everything else alone"() {
         given:
-        def dataSource = new JdbcDataSource()
-        dataSource.setURL("jdbc:h2:mem:${UUID.randomUUID()};DB_CLOSE_DELAY=-1")
+        def dataSource = h2DataSource()
         def sql = new Sql(dataSource)
         sql.execute('''
             CREATE TABLE auth_token (
@@ -71,8 +72,7 @@ class BootStrapTest  extends Specification {
 
     def "migrateWebhookTokensToSecured is a no-op the second time it runs"() {
         given:
-        def dataSource = new JdbcDataSource()
-        dataSource.setURL("jdbc:h2:mem:${UUID.randomUUID()};DB_CLOSE_DELAY=-1")
+        def dataSource = h2DataSource()
         def sql = new Sql(dataSource)
         sql.execute('''
             CREATE TABLE auth_token (
@@ -102,5 +102,18 @@ class BootStrapTest  extends Specification {
 
     private String token(String suffix) {
         return "0123456701234567012345670000000${suffix}"
+    }
+
+    /**
+     * Builds a plain {@link DataSource} backed by a fresh H2 in-memory database, reachable via
+     * {@link DriverManager}. This avoids a compile-time dependency on {@code org.h2.jdbcx.JdbcDataSource}
+     * (H2 is only declared {@code runtimeOnly} in this module, so it is present on the test runtime
+     * classpath but not the test compile classpath); the H2 driver self-registers with
+     * {@link DriverManager} via the JDBC 4 service-loader mechanism once its jar is on the runtime
+     * classpath, so no explicit driver class reference is needed here either.
+     */
+    private static DataSource h2DataSource() {
+        String jdbcUrl = "jdbc:h2:mem:${UUID.randomUUID()};DB_CLOSE_DELAY=-1"
+        return [getConnection: { -> DriverManager.getConnection(jdbcUrl) }] as DataSource
     }
 }
