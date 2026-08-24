@@ -1235,6 +1235,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
             loghandler.openStream()
 
+            // RUN-4693: reject options that are not declared on the job. Undeclared option values
+            // bypass all server-side validation (validateOptionValues only iterates the job's declared
+            // options) yet are still parsed into the option DataContext and exported as RD_OPTION_*
+            // env vars. Fail the (already created) execution here — before any workflow step runs —
+            // with a clear message in the log output. Gated by rundeck.execution.rejectUndeclaredOptions
+            // (default true; set false to restore the legacy passthrough, e.g. re-running a job whose
+            // option set has since changed).
+            if (scheduledExecution != null
+                    && configurationService.getBoolean("execution.rejectUndeclaredOptions", true)) {
+                Set<String> declaredOptionNames = (scheduledExecution.options?.collect { it.name } ?: []) as Set
+                Set<String> providedOptionNames = OptionsParserUtil.parseOptsFromString(execution.argString)?.keySet() ?: ([] as Set)
+                List<String> undeclaredOptionNames = providedOptionNames.findAll { !declaredOptionNames.contains(it) }.sort()
+                if (undeclaredOptionNames) {
+                    loghandler.logError(
+                            "Execution rejected: option(s) not defined on this job were provided: " +
+                            "${undeclaredOptionNames}. Update the job definition or remove these options, " +
+                            "or set rundeck.execution.rejectUndeclaredOptions=false to allow them. (RUN-4693)"
+                    )
+                    throw new ExecutionServiceException(
+                            "Options not defined on this job were provided: ${undeclaredOptionNames}",
+                            "options-not-declared"
+                    )
+                }
+            }
+
             // Before execute the job, check if there is any pre execution check error. If there is some error throw a JobLifecycleComponentException
             // This will let the loghandler save the error message into the execution log file.
             String preExecutionCheckError = execution.getExtraMetadataMap().get(JobPreExecutionEvent.getName())
