@@ -21,6 +21,15 @@ services:
       MANAGEMENT_ENDPOINT_HEALTH_VALIDATE_GROUP_MEMBERSHIP: "false"
       RUNDECK_FEATURE_FEATURETOTEST_ENABLED: "true"
       RUNDECK_FEATURE_FEATURETOTEST_NAME: ${TEST_RUNDECK_FEATURE_NAME}
+      # RUN-4671: allow writeable file resource-model sources used by functional test
+      # fixtures that live outside any project directory (e.g. ConfigSpec's
+      # writable-resource-file.xml under /home/rundeck, AceEditorSpec's resource-model
+      # fixture). RUNDECK_ENVARS_UNSETALL=false is required for this to take effect: by
+      # default the entrypoint strips all RUNDECK_* env vars before the JVM starts (only
+      # vars explicitly templated by remco are baked into rundeck-config.properties before
+      # that happens), and this property isn't part of that curated template.
+      RUNDECK_ENVARS_UNSETALL: "false"
+      RUNDECK_RESOURCEMODELSOURCE_FILE_ALLOWEDBASEPATHS: "/home/rundeck,/home/resource-model"
       # Grails 7: Increase Hikari connection pool for Selenium tests
       SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "20"
       SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "5"
