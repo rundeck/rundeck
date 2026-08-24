@@ -2224,6 +2224,31 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         validation
     }
 
+    def "validate option values does NOT validate options not declared on the job (RUN-4693 #4 characterization)"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'declared', enforced: false))
+        stubProjectOptionPattern('[A-Za-z0-9]+')   // a strict allowlist IS configured
+
+        when: 'the request injects an option that does not exist in the job definition, with shell metacharacters'
+        def validation = service.validateOptionValues(se, ['declared': 'clean', 'ghost': '"; id; echo "'])
+
+        then: 'validateOptionValues only iterates declared options, so the injected option bypasses validation entirely (current behavior)'
+        validation
+    }
+
+    def "generateJobArgline carries through options not declared on the job (RUN-4693 #4 characterization)"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'declared', enforced: false))
+
+        when: 'opts include a declared option plus an injected one not in the job definition'
+        String argline = ExecutionService.generateJobArgline(se, [declared: 'x', ghost: 'y'])
+
+        then: 'the injected option is preserved in the generated argline (passthrough "to preserve information")'
+        argline == '-declared x -ghost y'
+    }
+
     def "validate option values, default input pattern multivalued failure"() {
         given:
         ScheduledExecution se = new ScheduledExecution(project: 'AProject')
