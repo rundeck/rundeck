@@ -1251,7 +1251,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     loghandler.logError(
                             "Execution rejected: option(s) not defined on this job were provided: " +
                             "${undeclaredOptionNames}. Update the job definition or remove these options, " +
-                            "or set rundeck.execution.rejectUndeclaredOptions=false to allow them. (RUN-4693)"
+                            "or set rundeck.execution.rejectUndeclaredOptions=false to allow them."
                     )
                     throw new ExecutionServiceException(
                             "Options not defined on this job were provided: ${undeclaredOptionNames}",
