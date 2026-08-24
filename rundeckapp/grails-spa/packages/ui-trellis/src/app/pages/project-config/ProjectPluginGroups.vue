@@ -379,10 +379,6 @@ export default defineComponent({
         this.errors = [];
       }
 
-      if (Object.keys(plugin.entry.config).length === 0) {
-        this.removePlugin(plugin, index);
-        return;
-      }
       const type = plugin.entry.type;
       this.pluginProviders.forEach((item: any, index: any) => {
         if (item.name == type) {
