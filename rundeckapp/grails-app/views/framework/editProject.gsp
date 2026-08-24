@@ -107,8 +107,10 @@
         // Mirror the resource model source page: hide the main Save button
         // while a Plugin Group config form is open for editing, so it can't
         // be clicked mid-edit and silently discard the unsaved values.
+        // Selected by name (not #save id) because Selenium page objects rely
+        // on the id Grails auto-assigns from name="save".
         window._rundeck.eventBus.on('project-plugin-group-editing', function(editing){
-            jQuery('#editProjectSaveButton').toggle(!editing);
+            jQuery('input[name=save]').toggle(!editing);
         });
     }
     var _storageBrowseSelected=confirm.setNeedsConfirm;
@@ -179,7 +181,7 @@
         </div>
         <div class="card-footer">
           <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
-          <g:submitButton id="editProjectSaveButton" name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-cta reset_page_confirm"/>
+          <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-cta reset_page_confirm"/>
 
             <div class="project-config-plugins-vue">
                 <page-confirm :event-bus="EventBus"
