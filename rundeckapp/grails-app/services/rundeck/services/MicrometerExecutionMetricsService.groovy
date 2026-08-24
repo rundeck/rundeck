@@ -10,6 +10,9 @@ import io.micrometer.core.instrument.Meter
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Tag
 import io.micrometer.core.instrument.Timer
+import org.rundeck.app.config.SysConfigProp
+import org.rundeck.app.config.SystemConfig
+import org.rundeck.app.config.SystemConfigurable
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -32,7 +35,7 @@ import java.util.function.ToDoubleFunction
  */
 @Slf4j
 @CompileStatic
-class MicrometerExecutionMetricsService {
+class MicrometerExecutionMetricsService implements SystemConfigurable {
 
     // NOTE: no 'rundeck.' prefix here. ConfigurationService.getBoolean(String, boolean) resolves
     // against appCfg, which is already grailsApplication.config.getProperty("rundeck", Map.class)
@@ -146,6 +149,35 @@ class MicrometerExecutionMetricsService {
 
     private boolean jobDimensionEnabled() {
         configurationService != null && configurationService.getBoolean(JOB_DIMENSION_ENABLED_PROPERTY, false)
+    }
+
+    /**
+     * Exposes {@code rundeck.metrics.execution.job.dimension.enabled} on the admin System
+     * Configuration page, so it's discoverable/editable without hand-editing
+     * rundeck-config.properties. Same pattern as ExecutionService's
+     * rundeck.executionDailyMetrics.enabled entry.
+     */
+    @Override
+    List<SysConfigProp> getSystemConfigProps() {
+        [
+            SystemConfig.builder().with {
+                key "rundeck.metrics.execution.job.dimension.enabled"
+                label "Execution Metrics: job_id/job_name dimension"
+                description "Tag rundeck_executions_total/rundeck_execution_duration_seconds/" +
+                    "rundeck_executions_running with job_id and job_name (scheduled jobs only, " +
+                    "ad-hoc executions excluded). Off by default: cardinality is bounded by the " +
+                    "job catalog size, not execution volume, but large job catalogs should size " +
+                    "this before enabling."
+                defaultValue "false"
+                required false
+                restart false
+                datatype "Boolean"
+                visibility 'Advanced'
+                category 'Execution'
+                authRequired "app_admin"
+                build()
+            }
+        ] as List<SysConfigProp>
     }
 
     /**
