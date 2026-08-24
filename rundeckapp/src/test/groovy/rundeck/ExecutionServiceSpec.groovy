@@ -6815,7 +6815,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.loggingService = Mock(LoggingService) { openLogWriter(_, _, _, _) >> loghandler }
         service.frameworkService = Mock(FrameworkService) { getDefaultInputCharsetForProject(_) >> 'UTF-8' }
         service.configurationService = Mock(ConfigurationService) {
-            getBoolean('execution.rejectUndeclaredOptions', true) >> true
+            getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true) >> true
         }
         service.grailsLinkGenerator = Mock(LinkGenerator)
         service.metricService = Mock(MetricService)

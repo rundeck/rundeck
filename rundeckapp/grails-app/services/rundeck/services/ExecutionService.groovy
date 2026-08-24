@@ -1243,7 +1243,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // (default true; set false to restore the legacy passthrough, e.g. re-running a job whose
             // option set has since changed).
             if (scheduledExecution != null
-                    && configurationService.getBoolean("execution.rejectUndeclaredOptions", true)) {
+                    && configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true)) {
                 Set<String> declaredOptionNames = (scheduledExecution.options?.collect { it.name } ?: []) as Set
                 Set<String> providedOptionNames = OptionsParserUtil.parseOptsFromString(execution.argString)?.keySet() ?: ([] as Set)
                 List<String> undeclaredOptionNames = providedOptionNames.findAll { !declaredOptionNames.contains(it) }.sort()
@@ -5468,7 +5468,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     build()
                 },
                 SystemConfig.builder().with {
-                    key "rundeck.execution.rejectUndeclaredOptions"
+                    key AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY
                     description "When enabled (default), an execution that provides options not defined on the job is created and then failed at start, with a message in the execution log. Disable to allow undeclared options to pass through (e.g. re-running a job whose option set has since changed)."
                     defaultValue "true"
                     required false

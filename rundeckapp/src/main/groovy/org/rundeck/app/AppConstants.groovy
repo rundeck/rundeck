@@ -41,4 +41,16 @@ class AppConstants {
      * regex of their own. Takes precedence over {@link #SYSTEM_OPTION_INPUT_DEFAULT_PATTERN}.
      */
     static final String PROJECT_OPTION_INPUT_DEFAULT_PATTERN = "project.option.input.validation.default.pattern"
+
+    /**
+     * When true (default), an execution that provides options not declared on the job is created and
+     * then failed at start. Resolved through ConfigurationService; this constant holds the sub-key
+     * (without the {@code rundeck.} prefix) used with {@code ConfigurationService.getBoolean}.
+     */
+    static final String SYSTEM_REJECT_UNDECLARED_OPTIONS = "execution.rejectUndeclaredOptions"
+    /**
+     * Full config key (with {@code rundeck.} prefix) of {@link #SYSTEM_REJECT_UNDECLARED_OPTIONS},
+     * as exposed in the System Configuration UI via SysConfigProp.
+     */
+    static final String SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY = "rundeck." + SYSTEM_REJECT_UNDECLARED_OPTIONS
 }
