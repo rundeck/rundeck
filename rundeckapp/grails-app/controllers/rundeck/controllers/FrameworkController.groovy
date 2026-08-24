@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.NodeFileParserException
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
@@ -66,6 +67,7 @@ import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
+import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -2266,6 +2268,41 @@ List of config values, each value contains:
             'application/json': 'json',
     ]
 
+    /**
+     * Convert MIME type to format name for FileResourceModelSource.parseFile()
+     */
+    private String getFormatFromMimeType(String mimeType) {
+        def formatMap = [
+            'application/yaml': 'resourceyaml',
+            'text/yaml': 'resourceyaml',
+            'application/xml': 'resourcexml',
+            'text/xml': 'resourcexml',
+            'application/json': 'resourcejson',
+        ]
+        return formatMap[mimeType]
+    }
+
+    /**
+     * Build configuration properties map for path validation
+     */
+    private Map<String, Object> buildConfigPropertiesForValidation() {
+        Map<String, Object> configProps = [:]
+
+        // Read allowed paths from rundeck-config.properties
+        // Note: ConfigurationService automatically adds "rundeck." prefix,
+        // so this reads "rundeck.resourceModelSource.file.allowedBasePaths" from the properties file
+        String allowedPaths = grailsApplication.config.getProperty(
+                "rundeck.resourceModelSource.file.allowedBasePaths",
+                String.class,
+                null
+        )
+        if (allowedPaths != null) {
+            configProps.put("resourceModelSource.file.allowedBasePaths", allowedPaths)
+        }
+
+        return configProps
+    }
+
     def editProjectNodeSourceFile() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
@@ -2296,22 +2333,80 @@ List of config values, each value contains:
             return redirect(action: 'projectNodeSources', params: [project: project])
         }
 
-
-        def baos = new ByteArrayOutputStream()
-        def emptydata = false
-        if (source.writeableSource.hasData()) {
-            source.writeableSource.readData(baos)
-        } else {
-            emptydata = true
-        }
-        def fileText = baos.toString('UTF-8')
         def modelFormat = source.writeableSource.syntaxMimeType
         def sourceDesc = source.writeableSource.sourceDescription
-        def providerType = source.type;
+        def providerType = source.type
         def desc = pluginService.getPluginDescriptor(
             providerType,
             frameworkService.rundeckFramework.getResourceModelSourceService()
         )?.description
+
+        def emptydata = false
+        def fileText = ""
+        def warning = null
+
+        try {
+            // Path validation using validateWriteableSource
+            Map<String, Object> configProps = buildConfigPropertiesForValidation()
+            source.writeableSource.validateWriteableSource(
+                configProps,
+                frameworkService.getRundeckFramework(),
+                project
+            )
+
+            // Content validation using FileResourceModelSource.parseFile()
+            File sourceFile = new File(sourceDesc).getCanonicalFile()
+
+            if (sourceFile.exists() && sourceFile.length() > 0) {
+                // Attempt to parse as node source
+                String format = getFormatFromMimeType(modelFormat)
+
+                if (format) {
+                    INodeSet nodes = com.dtolabs.rundeck.core.resources.FileResourceModelSource.parseFile(
+                        sourceFile,
+                        format,
+                        frameworkService.getRundeckFramework(),
+                        project
+                    )
+
+                    // Success - file is a valid node source
+                    log.debug("Validated node source: ${nodes.nodes.size()} nodes in ${sourceDesc}")
+
+                    // Read file content (original code)
+                    def baos = new ByteArrayOutputStream()
+                    source.writeableSource.readData(baos)
+                    fileText = baos.toString('UTF-8')
+                } else {
+                    // Unknown format - treat as invalid
+                    emptydata = true
+                    warning = "Unknown file format: ${modelFormat}"
+                }
+            } else {
+                emptydata = true
+            }
+
+        } catch (com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException e) {
+            // Path validation failed (security check)
+            log.warn("Node source path validation failed for ${sourceDesc}: ${e.message}")
+            emptydata = true
+            warning = e.message  // Use the validation error message
+
+        } catch (ResourceModelSourceException e) {
+            // File is not a valid node source (content validation failed)
+            log.warn("Node source content validation failed for ${sourceDesc}: ${e.message}")
+            emptydata = true
+            warning = "File content is not a valid ${modelFormat} node source format"
+        } catch (IOException e) {
+            // IO error during canonicalization or file access
+            log.warn("IO error during node source validation for ${sourceDesc}: ${e.message}")
+            emptydata = true
+            warning = "Unable to access file"
+        }
+
+        // Set flash warning if validation failed
+        if (warning) {
+            flash.warning = warning
+        }
 
         [
                 project     : project,
@@ -2367,6 +2462,23 @@ List of config values, each value contains:
         def format = source.writeableSource.syntaxMimeType
         //validate
 
+        // Path validation before writing (RUN-4671)
+        try {
+            Map<String, Object> configProps = buildConfigPropertiesForValidation()
+            source.writeableSource.validateWriteableSource(
+                configProps,
+                frameworkService.getRundeckFramework(),
+                project
+            )
+        } catch (com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException e) {
+            log.warn("Node source path validation failed for save operation: ${e.message}")
+            flash.error = e.message
+            return redirect(
+                controller: 'framework',
+                action: 'projectNodeSources',
+                params: [project: project]
+            )
+        }
 
         def bais = new ByteArrayInputStream(params.fileText.toString().getBytes("UTF-8"))
         long size = -1
@@ -3625,7 +3737,33 @@ Since: v23''',
         if (!apiService.requireExists(response, source, ['source index', params.index])) {
             return
         }
-        return apiRenderNodeResult(source.source.nodes, fmk, params.project)
+
+        // Path validation for writeable sources (RUN-4671): this is the nextUi (legacyUi=false)
+        // counterpart of editProjectNodeSourceFile, used by the Vue node source editor to fetch
+        // raw source content, and must enforce the same containment check.
+        WriteableModelSource writeableModelSource = source.source.writeable
+        if (writeableModelSource) {
+            try {
+                Map<String, Object> configProps = buildConfigPropertiesForValidation()
+                writeableModelSource.validateWriteableSource(
+                    configProps,
+                    fmk,
+                    project
+                )
+            } catch (ConfigurationException e) {
+                log.warn("Node source path validation failed for project=${project} index=${index}: ${e.message}")
+                render(status: HttpServletResponse.SC_NO_CONTENT)
+                return
+            }
+        }
+
+        try {
+            return apiRenderNodeResult(source.source.nodes, fmk, params.project)
+        } catch (ResourceModelSourceException e) {
+            // File content is not a valid node source format (defense-in-depth)
+            log.warn("Node source content validation failed for project=${project} index=${index}: ${e.message}")
+            render(status: HttpServletResponse.SC_NO_CONTENT)
+        }
     }
 
     @Get(uri='/project/{project}/resource/{name}', produces = [io.micronaut.http.MediaType.APPLICATION_JSON, 'text/yaml'])

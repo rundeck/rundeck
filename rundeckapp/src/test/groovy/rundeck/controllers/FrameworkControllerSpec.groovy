@@ -30,6 +30,8 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.resources.ResourceModelSource
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
@@ -60,6 +62,47 @@ import static org.rundeck.core.auth.AuthConstants.*
 class FrameworkControllerSpec extends Specification implements ControllerUnitTest<FrameworkController>, DataTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper()
+
+    /**
+     * Minimal double implementing both ResourceModelSource and WriteableModelSource,
+     * mirroring how FileResourceModelSource implements both interfaces on the same
+     * instance. Used instead of a Spock Mock() with additionalInterfaces, since Spock's
+     * generic-return-type resolution for combined-interface mocks is unreliable with
+     * closure-based responses in this Spock version.
+     */
+    private static class FakeWriteableFileSource implements ResourceModelSource, WriteableModelSource {
+        Closure onValidate
+        Closure onGetNodes
+
+        @Override
+        INodeSet getNodes() throws ResourceModelSourceException {
+            onGetNodes ? onGetNodes.call() as INodeSet : null
+        }
+
+        @Override
+        String getSyntaxMimeType() { 'application/xml' }
+
+        @Override
+        long readData(OutputStream sink) throws IOException, ResourceModelSourceException { 0 }
+
+        @Override
+        boolean hasData() { true }
+
+        @Override
+        long writeData(InputStream data) throws IOException, ResourceModelSourceException { 0 }
+
+        @Override
+        WriteableModelSource getWriteable() { this }
+
+        @Override
+        void validateWriteableSource(
+            Map<String, Object> configProperties,
+            com.dtolabs.rundeck.core.common.Framework framework,
+            String project
+        ) throws com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException {
+            onValidate?.call()
+        }
+    }
 
     def setupSpec() { mockDomains User }
 
@@ -2404,6 +2447,7 @@ project.label=A Label
 
         setup:
         def source = Mock(WriteableModelSource) {
+            1 * validateWriteableSource(_, _, _) >> { /* validation passes */ }
             1 * writeData(_) >> {
                 throw new IOException("expected error")
             }
@@ -2422,6 +2466,7 @@ project.label=A Label
                     ]
                 }
             }
+            1 * getRundeckFramework() >> Mock(com.dtolabs.rundeck.core.common.Framework)
             0 * _(*_)
         }
 
@@ -2448,6 +2493,7 @@ project.label=A Label
 
         setup:
         def source = Mock(WriteableModelSource) {
+            1 * validateWriteableSource(_, _, _) >> { /* validation passes */ }
             1 * writeData(_) >> {
                 throw new StorageException()
             }
@@ -2466,6 +2512,7 @@ project.label=A Label
                     ]
                 }
             }
+            1 * getRundeckFramework() >> Mock(com.dtolabs.rundeck.core.common.Framework)
             0 * _(*_)
         }
 
@@ -2486,6 +2533,102 @@ project.label=A Label
         then:
         view=='/framework/saveProjectNodeSourceFile.gsp'
         flash.error == "archive.import.importNodesSource.failed.message"
+    }
+
+    def "GET project source resources, writeable, path validation fails, returns 204"() {
+        setup:
+        def writeableSource = new FakeWriteableFileSource(
+            onValidate: {
+                throw new com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException(
+                    "File path must be within the project directory"
+                )
+            }
+        )
+        def readableSource = Mock(IProjectNodes.ReadableProjectNodes) {
+            getIndex() >> 1
+            getType() >> 'file'
+            getSource() >> writeableSource
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * existsFrameworkProject('test') >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * listResourceModelConfigurations() >> [[:]]
+                    1 * getResourceModelSources() >> [readableSource]
+                }
+            }
+            1 * getRundeckFramework() >> Mock(com.dtolabs.rundeck.core.common.Framework)
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, 23) >> true
+            1 * requireParameters(_, _, ['project', 'index']) >> true
+            1 * requireExists(_, _, ['project', 'test']) >> true
+            1 * requireExists(_, { it instanceof Integer }, ['source index', '1']) >> true
+            1 * requireExists(_, { !(it instanceof Integer) }, ['source index', '1']) >> true
+            0 * _(*_)
+        }
+
+        params.project = "test"
+        params.index = "1"
+        request.method = 'GET'
+
+        when:
+        controller.apiSourceGetContent()
+
+        then:
+        response.status == 204
+    }
+
+    def "GET project source resources, writeable, invalid content, returns 204"() {
+        setup:
+        def source = new FakeWriteableFileSource(
+            onGetNodes: {
+                throw new ResourceModelSourceException("not a valid node source format")
+            }
+        )
+        def readableSource = Mock(IProjectNodes.ReadableProjectNodes) {
+            getIndex() >> 1
+            getType() >> 'file'
+            getSource() >> source
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * existsFrameworkProject('test') >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * listResourceModelConfigurations() >> [[:]]
+                    1 * getResourceModelSources() >> [readableSource]
+                }
+            }
+            1 * getRundeckFramework() >> Mock(com.dtolabs.rundeck.core.common.Framework)
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, 23) >> true
+            1 * requireParameters(_, _, ['project', 'index']) >> true
+            1 * requireExists(_, _, ['project', 'test']) >> true
+            1 * requireExists(_, { it instanceof Integer }, ['source index', '1']) >> true
+            1 * requireExists(_, { !(it instanceof Integer) }, ['source index', '1']) >> true
+            0 * _(*_)
+        }
+
+        params.project = "test"
+        params.index = "1"
+        request.method = 'GET'
+
+        when:
+        controller.apiSourceGetContent()
+
+        then:
+        response.status == 204
     }
 
     def "createProject should enable cleanup by default based on EXECUTION_CLEANUP_ENABLE feature"() {
