@@ -201,5 +201,40 @@ public class TestOptsUtil extends TestCase {
         );
     }
 
+    /**
+     * RUN-4693: a value containing a TAB (or any char <= 32 not already covered) must be quoted by
+     * join() so burst() does not re-split it into extra tokens.
+     */
+    public void testJoinQuotesTab() {
+        assertEquals("-arg \"a\tb\"",
+                OptsUtil.join(new String[]{"-arg", "a\tb"})
+        );
+    }
+
+    /**
+     * RUN-4693: burst(join(x)) must round-trip. Values containing whitespace/control chars <= 32
+     * must survive as single tokens; non-ASCII text (Japanese, full-width space U+3000) is above 32
+     * and must be unaffected.
+     */
+    public void testJoinBurstRoundTrip() {
+        String[][] cases = new String[][]{
+                {"-arg", "plain"},
+                {"-arg", "a b"},
+                {"-arg", "a\tb"},                 // TAB
+                {"-arg", "a\r\nb"},               // CR/LF
+                {"-x", "foo\t-inject\tvalue"},    // smuggling attempt: must stay ONE token
+                {"-arg", "あ　日"},   // Japanese あ　日 incl. full-width space U+3000
+        };
+        for (String[] input : cases) {
+            String joined = OptsUtil.join(input);
+            String[] burst = OptsUtil.burst(joined);
+            assertEquals(
+                    "round-trip failed for " + Arrays.asList(input) + " joined=[" + joined + "]",
+                    Arrays.asList(input),
+                    Arrays.asList(burst)
+            );
+        }
+    }
+
 }
 
