@@ -94,7 +94,8 @@ class BootStrapTest  extends Specification {
 
         then:
         afterFirstRun.token == afterSecondRun.token
-        afterFirstRun.token_mode == afterSecondRun.token_mode == 'SECURED'
+        afterFirstRun.token_mode == 'SECURED'
+        afterSecondRun.token_mode == 'SECURED'
 
         cleanup:
         sql.close()
