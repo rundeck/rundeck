@@ -246,6 +246,30 @@ public class RundeckConfigBase {
         String servletUrlPattern;
         Datasource datasource;
         Api api;
+        Execution execution;
+
+        // Backs rundeck.metrics.execution.job.dimension.enabled (MicrometerExecutionMetricsService).
+        // Without a declared field here, the Spring Binder that populates
+        // ConfigurationService.appCfg (see rundeckpro-config's ConfigServiceRefresher.resetAppCfg)
+        // has nothing to bind this property into, so it never appears in appCfg regardless of what's
+        // set in rundeck-config.properties. There is deliberately no sibling "dimensional.enabled"
+        // field: that flag was removed from MicrometerExecutionMetricsService entirely (dimensional
+        // counter/timer/running-gauge recording is unconditional), so no config field should exist
+        // to bind it either -- a field with no corresponding check would silently do nothing.
+        @Data
+        public static class Execution {
+            Job job;
+
+            @Data
+            public static class Job {
+                Dimension dimension;
+
+                @Data
+                public static class Dimension {
+                    Boolean enabled;
+                }
+            }
+        }
 
         @Data
         public static class Api {
