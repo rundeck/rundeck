@@ -20,7 +20,9 @@
         <hr />
         <workflow-global-log-filters v-model="logFiltersData" />
         <hr />
-        <workflow-steps v-model="stepsData" />
+        <ui-socket section="workflow-editor" location="steps" v-model="stepsData">
+          <workflow-steps v-model="stepsData" />
+        </ui-socket>
       </div>
     </div>
   </section>
@@ -44,7 +46,7 @@ import WorkflowStrategy from "./WorkflowStrategy.vue";
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import { defineComponent, type PropType } from "vue";
 import OptionsEditorSection from "@/app/pages/job/editor/OptionsEditorSection.vue";
-import { getFeatureEnabled } from "@/library/services/feature";
+import UiSocket from "@/library/components/utils/UiSocket.vue";
 
 export default defineComponent({
   name: "WorkflowEditor",
@@ -54,6 +56,7 @@ export default defineComponent({
     WorkflowSteps,
     WorkflowGlobalLogFilters,
     WorkflowStrategy,
+    UiSocket,
   },
   props: {
     modelValue: {
@@ -102,10 +105,7 @@ export default defineComponent({
     this.basicData = createBasicData(this.modelValue);
     this.strategyData = createStrategyData(this.modelValue);
     this.logFiltersData = createLogFiltersData(this.modelValue);
-
-    // Filter conditional steps when feature flag is disabled
-    const isConditionalEnabled = await getFeatureEnabled('earlyAccessJobConditional');
-    this.stepsData = createStepsData(this.modelValue, !isConditionalEnabled);
+    this.stepsData = createStepsData(this.modelValue);
 
     this.loaded = true;
   },
