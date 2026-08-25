@@ -290,7 +290,9 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     WebElement optionInputText(String name) {
-        el By.cssSelector("#optionSelect #_commandOptions input[type=text][name='extra.option.${name}']")
+        def by = By.cssSelector("#optionSelect #_commandOptions input[type=text][name='extra.option.${name}']")
+        waitForElementVisible(by)
+        el by
     }
 
     WebElement runJobLink(String uuid) {

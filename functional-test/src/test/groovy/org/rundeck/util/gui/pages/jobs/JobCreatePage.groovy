@@ -420,14 +420,17 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement addNotificationButtonByType(NotificationEvent notificationType) {
+        waitForElementToBeClickable notificationType.notificationEvent
         el notificationType.notificationEvent
     }
 
     WebElement getNotificationDropDown() {
+        waitForElementToBeClickable notificationDropDownBy
         el notificationDropDownBy
     }
 
     WebElement notificationByType(NotificationType notificationType) {
+        waitForElementToBeClickable notificationType.notificationType
         el notificationType.notificationType
     }
 
@@ -438,6 +441,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getNotificationSaveButton() {
+        waitForElementToBeClickable notificationSaveBy
         el notificationSaveBy
     }
 
