@@ -76,7 +76,8 @@ class JobExecutionStatusSpec extends BaseContainer {
         def responseExec = JobUtils.waitForExecution(
                 ExecutionStatus.TIMEDOUT.state,
                 execId as String,
-                client)
+                client,
+                WaitingTime.EXCESSIVE)
 
         then:
         verifyAll {
