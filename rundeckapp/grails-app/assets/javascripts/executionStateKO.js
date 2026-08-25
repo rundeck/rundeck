@@ -830,7 +830,10 @@ function RDNode(name, steps,flow){
      */
     self.summarize=function(){
         var currentStep=null;
-        var hideSkipped = self.flow.hideSkippedSteps && self.flow.hideSkippedSteps();
+        // Only hide skipped steps for completed successful executions
+        // NOT_STARTED could mean "never reached due to failure" not just "conditional skipped"
+        var hideSkipped = self.flow.hideSkippedSteps && self.flow.hideSkippedSteps()
+                          && self.flow.completed() && self.flow.executionState() === 'SUCCEEDED';
 
         //step summary info
         var summarydata = {
@@ -942,8 +945,9 @@ function RDNode(name, steps,flow){
         self._originalSummaryState = state;
         self._originalSummary = originalSummary;
 
-        // Check if hideSkippedSteps is enabled and adjust state accordingly
-        var hideSkipped = self.flow.hideSkippedSteps && self.flow.hideSkippedSteps();
+        // Only hide skipped steps for completed successful executions
+        var hideSkipped = self.flow.hideSkippedSteps && self.flow.hideSkippedSteps()
+                          && self.flow.completed() && self.flow.executionState() === 'SUCCEEDED';
 
         if (hideSkipped && (state === 'PARTIAL_NOT_STARTED' || state === 'NOT_STARTED')) {
             // When hiding skipped steps, show these as succeeded
@@ -1239,7 +1243,9 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     };
 
     self.resummarizeAllNodes = function() {
-        var hideSkipped = self.hideSkippedSteps();
+        // Only hide skipped steps for completed successful executions
+        var hideSkipped = self.hideSkippedSteps()
+                          && self.completed() && self.executionState() === 'SUCCEEDED';
         ko.utils.arrayForEach(self.nodes(), function (n) {
             // Only call summarize() if the node has steps loaded
             if (n.steps() && n.steps().length > 0) {
