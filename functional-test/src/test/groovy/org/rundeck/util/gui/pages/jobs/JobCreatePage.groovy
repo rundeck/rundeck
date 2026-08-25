@@ -419,15 +419,18 @@ class JobCreatePage extends BasePage {
         el nodeFilterInputBy
     }
 
-    WebElement addNotificationButtonByType(NotificationEvent notificationType) {
-        el notificationType.notificationEvent
+    WebElement addNotificationButtonByType(NotificationEvent notificationEvent) {
+        waitForElementToBeClickable notificationEvent.notificationEvent
+        el notificationEvent.notificationEvent
     }
 
     WebElement getNotificationDropDown() {
+        waitForElementToBeClickable notificationDropDownBy
         el notificationDropDownBy
     }
 
     WebElement notificationByType(NotificationType notificationType) {
+        waitForElementToBeClickable notificationType.notificationType
         el notificationType.notificationType
     }
 
@@ -438,6 +441,7 @@ class JobCreatePage extends BasePage {
     }
 
     WebElement getNotificationSaveButton() {
+        waitForElementToBeClickable notificationSaveBy
         el notificationSaveBy
     }
 
