@@ -26,7 +26,7 @@ class ConditionalStep implements WorkflowStepData, Validateable {
     Boolean keepgoingOnSuccess
     String description
     Boolean nodeStep
-    Boolean invertLogic
+    Boolean invertLogic = false
 
     static constraints = {
         importFrom SharedWorkflowStepConstraints
