@@ -830,6 +830,7 @@ function RDNode(name, steps,flow){
      */
     self.summarize=function(){
         var currentStep=null;
+        var hideSkipped = self.flow.hideSkippedSteps && self.flow.hideSkippedSteps();
 
         //step summary info
         var summarydata = {
@@ -883,11 +884,30 @@ function RDNode(name, steps,flow){
                 self.summary("Waiting to run " + summarydata.WAITING + " " + flow.pluralize(summarydata.WAITING, "Step"));
                 self.summaryState("WAITING");
             } else if (summarydata.NOT_STARTED == summarydata.total && summarydata.pending < 1) {
-                self.summary("No steps were run");
-                self.summaryState("NOT_STARTED");
+                // All steps are NOT_STARTED (skipped)
+                if (hideSkipped) {
+                    self.summary("All Steps OK");
+                    self.summaryState("SUCCEEDED");
+                } else {
+                    self.summary("No steps were run");
+                    self.summaryState("NOT_STARTED");
+                }
             } else if (summarydata.NOT_STARTED > 0) {
-                self.summary(summarydata.NOT_STARTED + " " + flow.pluralize(summarydata.NOT_STARTED, "Step") + " not run");
-                self.summaryState("PARTIAL_NOT_STARTED");
+                // Some steps are NOT_STARTED (skipped)
+                if (hideSkipped) {
+                    // Show only the steps that ran
+                    var ranSteps = summarydata.total - summarydata.NOT_STARTED;
+                    if (ranSteps == summarydata.SUCCEEDED) {
+                        self.summary("All Steps OK");
+                        self.summaryState("SUCCEEDED");
+                    } else {
+                        self.summary(ranSteps + " " + flow.pluralize(ranSteps, "Step") + " ran");
+                        self.summaryState("PARTIAL_SUCCEEDED");
+                    }
+                } else {
+                    self.summary(summarydata.NOT_STARTED + " " + flow.pluralize(summarydata.NOT_STARTED, "Step") + " not run");
+                    self.summaryState("PARTIAL_NOT_STARTED");
+                }
             }else if(summarydata.pending > 0 ){
                 self.summary("Waiting");
                 self.summaryState("WAITING");
@@ -915,8 +935,24 @@ function RDNode(name, steps,flow){
             return;
         }
         self.lastUpdated(nodesummary.lastUpdated);
-        self.summaryState(nodesummary.summaryState);
-        self.summary(self.summaryDescriptionForState(nodesummary));
+
+        // Store original server state for restoring when toggle is off
+        var state = nodesummary.summaryState;
+        var originalSummary = self.summaryDescriptionForState(nodesummary);
+        self._originalSummaryState = state;
+        self._originalSummary = originalSummary;
+
+        // Check if hideSkippedSteps is enabled and adjust state accordingly
+        var hideSkipped = self.flow.hideSkippedSteps && self.flow.hideSkippedSteps();
+
+        if (hideSkipped && (state === 'PARTIAL_NOT_STARTED' || state === 'NOT_STARTED')) {
+            // When hiding skipped steps, show these as succeeded
+            self.summaryState('SUCCEEDED');
+            self.summary('All Steps OK');
+        } else {
+            self.summaryState(state);
+            self.summary(originalSummary);
+        }
 
         self.durationMs(nodesummary.duration);
         self.summaryStartTime(nodesummary.startTime || null);
@@ -990,6 +1026,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.endTime=ko.observable();
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
+    self.hideSkippedSteps = ko.observable(false);
     self.activeView = ko.observable("nodes");
     /**
      * synonym with activeView, to maintain compatibility
@@ -1200,6 +1237,31 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.percentageFixed = function(a,b){
         return (b==0)?0:(100*(a/b)).toFixed(0);
     };
+
+    self.resummarizeAllNodes = function() {
+        var hideSkipped = self.hideSkippedSteps();
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            // Only call summarize() if the node has steps loaded
+            if (n.steps() && n.steps().length > 0) {
+                n.summarize();
+            } else {
+                // For collapsed nodes (no steps loaded), adjust state based on toggle
+                var currentState = n.summaryState();
+                if (hideSkipped && (currentState === 'PARTIAL_NOT_STARTED' || currentState === 'NOT_STARTED')) {
+                    n.summaryState('SUCCEEDED');
+                    n.summary('All Steps OK');
+                } else if (!hideSkipped && n._originalSummaryState) {
+                    // Restore original state when toggle is off
+                    n.summaryState(n._originalSummaryState);
+                    n.summary(n._originalSummary);
+                }
+            }
+        });
+    };
+
+    self.hideSkippedSteps.subscribe(function(newValue) {
+        self.resummarizeAllNodes();
+    });
 
     self.stopShowingOutput= function () {
         if(self.followingControl){
