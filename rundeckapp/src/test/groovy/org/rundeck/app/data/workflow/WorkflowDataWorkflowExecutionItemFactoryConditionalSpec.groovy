@@ -559,6 +559,31 @@ class WorkflowDataWorkflowExecutionItemFactoryConditionalSpec extends Specificat
         combined.conditionGroups[0] == [envProd, regionEast]
     }
 
+    def "consolidateWorkflowSteps rejects invertLogic condition set that would expand beyond the DNF combination limit"() {
+        given: "invertLogic=true with two groups of 17 conditions each (17*17=289 > 256 combination limit)"
+        featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def group1 = (1..17).collect { ConditionalDefinitionImpl.fromMap([key: 'option.a', operator: '==', value: "v${it}"]) }
+        def group2 = (1..17).collect { ConditionalDefinitionImpl.fromMap([key: 'option.b', operator: '==', value: "v${it}"]) }
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [group1, group2]
+        condSet.invertLogic = true
+
+        def conditionalStep = new ConditionalStep()
+        conditionalStep.conditionSet = condSet
+        conditionalStep.subSteps = [new CommandExec(adhocRemoteString: 'echo test')]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [conditionalStep]
+
+        when:
+        factory.createExecutionItemForWorkflow(workflow)
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message.contains("more than 256")
+    }
+
     def "consolidateWorkflowSteps preserves step order with nested conditionals"() {
         given:
         featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true

@@ -105,6 +105,12 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
     }
 
     /**
+     * Upper bound on the number of combinations {@link #normalizeToDnf} may generate, to guard
+     * against combinatorial (Cartesian product) blowup from a pathological invertLogic condition set.
+     */
+    private static final int MAX_DNF_COMBINATIONS = 256
+
+    /**
      * Normalize a ConditionalSet to standard OR-of-ANDs (DNF) form so it can be safely combined
      * by {@link #combineConditionSets}, which assumes both inputs are in that form.
      * If invertLogic is false, the set is already in this form and is returned unchanged.
@@ -113,6 +119,7 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
      * groups, picking exactly one condition from each group per combination.
      * @param set The condition set to normalize (can be null)
      * @return An equivalent ConditionalSet with invertLogic == false, or the original if already normalized/null
+     * @throws IllegalArgumentException if expanding to DNF would exceed {@link #MAX_DNF_COMBINATIONS}
      */
     private ConditionalSet normalizeToDnf(ConditionalSet set) {
         if (set == null || !set.isInvertLogic()) return set
@@ -122,6 +129,13 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
         List<List> combinations = [[]]
         groups.each { group ->
             if (group == null || group.isEmpty()) return // neutral OR-branch, skip
+            int nextSize = combinations.size() * group.size()
+            if (nextSize > MAX_DNF_COMBINATIONS) {
+                throw new IllegalArgumentException(
+                    "Conditional step with invertLogic expands to more than ${MAX_DNF_COMBINATIONS} " +
+                    "condition combinations. Reduce the number of condition groups or conditions per group."
+                )
+            }
             List<List> next = []
             combinations.each { partial -> group.each { cond -> next.add(partial + [cond]) } }
             combinations = next
