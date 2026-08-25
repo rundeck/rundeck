@@ -622,7 +622,7 @@ search
                           </a>
                           <!-- /ko -->
 
-                          <span data-bind="visible: activeTab()==='nodes'" class="pull-right" style="margin-left: 10px;">
+                          <div data-bind="visible: activeTab()==='nodes'" class="pull-right" style="margin-left: 10px;">
                               <div class="checkbox-inline">
                                   <input type="checkbox"
                                          data-bind="checked: hideSkippedSteps"
@@ -633,7 +633,7 @@ search
                                       <g:message code="execution.show.nodes.hideSkippedSteps.label" default="Hide skipped steps"/>
                                   </label>
                               </div>
-                          </span>
+                          </div>
 
                           <span data-bind="visible: activeTab().startsWith('output')">
 
