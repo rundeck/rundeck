@@ -286,14 +286,64 @@ class ExecutionUtilService {
     }
 
     /**
+     * Upper bound on the number of combinations {@link #normalizeToDnf} may generate, to guard
+     * against combinatorial (Cartesian product) blowup from a pathological invertLogic condition set.
+     */
+    private static final int MAX_DNF_COMBINATIONS = 256
+
+    /**
+     * Normalize a ConditionalSet to standard OR-of-ANDs (DNF) form so it can be safely combined
+     * by {@link #combineConditionSets}, which assumes both inputs are in that form.
+     * If invertLogic is false, the set is already in this form and is returned unchanged.
+     * If invertLogic is true (AND-of-ORs: groups=[[A,B],[C,D]] meaning (A OR B) AND (C OR D)),
+     * distributes AND over OR to produce the equivalent DNF: the Cartesian product across
+     * groups, picking exactly one condition from each group per combination.
+     * @param set The condition set to normalize (can be null)
+     * @return An equivalent ConditionalSet with invertLogic == false, or the original if already normalized/null
+     * @throws IllegalArgumentException if expanding to DNF would exceed {@link #MAX_DNF_COMBINATIONS}
+     */
+    private ConditionalSet normalizeToDnf(ConditionalSet set) {
+        if (set == null || !set.isInvertLogic()) return set
+        def groups = set.conditionGroups
+        if (groups == null || groups.isEmpty()) return set
+
+        List<List> combinations = [[]]
+        groups.each { group ->
+            if (group == null || group.isEmpty()) return // neutral OR-branch, skip
+            int nextSize = combinations.size() * group.size()
+            if (nextSize > MAX_DNF_COMBINATIONS) {
+                throw new IllegalArgumentException(
+                    "Conditional step with invertLogic expands to more than ${MAX_DNF_COMBINATIONS} " +
+                    "condition combinations. Reduce the number of condition groups or conditions per group."
+                )
+            }
+            List<List> next = []
+            combinations.each { partial -> group.each { cond -> next.add(partial + [cond]) } }
+            combinations = next
+        }
+
+        def normalized = new org.rundeck.app.data.workflow.ConditionalSetImpl()
+        normalized.nodeStep = set.nodeStep
+        normalized.invertLogic = false
+        normalized.conditionGroups = combinations
+        return normalized
+    }
+
+    /**
      * Combine two ConditionalSets using Cartesian product of OR groups to implement AND logic.
      * Example: Parent [A, B] + Child [C, D] → Combined [A+C, A+D, B+C, B+D]
      * All conditions in a group must be true (AND), at least one group must match (OR)
+     * Both inputs are normalized to DNF (OR-of-ANDs) form via {@link #normalizeToDnf} before
+     * combining, so the result is always in standard OR-of-ANDs form with invertLogic == false,
+     * regardless of whether either input had invertLogic set.
      * @param parent parent conditional set (may be null)
      * @param child child conditional set (may be null)
      * @return combined conditional set, or the non-null input if one is null
      */
     private ConditionalSet combineConditionSets(ConditionalSet parent, ConditionalSet child) {
+        parent = normalizeToDnf(parent)
+        child = normalizeToDnf(child)
+
         if (parent == null) return child
         if (child == null) return parent
 

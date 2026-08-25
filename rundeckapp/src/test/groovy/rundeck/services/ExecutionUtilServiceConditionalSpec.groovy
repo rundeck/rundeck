@@ -594,6 +594,143 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
         cmd.conditions.conditionGroups.every { it.size() == 2 }
     }
 
+    def "consolidateWorkflowSteps normalizes to DNF when inverted parent combines with plain child"() {
+        given: "outer (invertLogic=true): (env==prod OR env==staging) AND (region==us-east OR region==us-west); inner (plain): status==ok"
+        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def envProd = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def envStaging = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'staging'])
+        def regionEast = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])
+        def regionWest = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-west'])
+        def outerCondSet = new ConditionalSetImpl()
+        outerCondSet.conditionGroups = [[envProd, envStaging], [regionEast, regionWest]]
+        outerCondSet.invertLogic = true
+
+        def statusOk = ConditionalDefinitionImpl.fromMap([key: 'option.status', operator: '==', value: 'ok'])
+        def innerCondSet = new ConditionalSetImpl()
+        innerCondSet.conditionGroups = [[statusOk]]
+
+        def innerConditional = new ConditionalStep()
+        innerConditional.conditionSet = innerCondSet
+        innerConditional.subSteps = [new CommandExec(adhocRemoteString: 'echo nested')]
+
+        def outerConditional = new ConditionalStep()
+        outerConditional.conditionSet = outerCondSet
+        outerConditional.subSteps = [innerConditional]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [outerConditional]
+
+        when:
+        def result = service.createExecutionItemForWorkflow(workflow, 'testProject')
+
+        then:
+        result.workflow.commands.size() == 1
+        def combined = result.workflow.commands[0].conditions
+        combined.invertLogic == false
+        // DNF of outer: (prod AND east), (prod AND west), (staging AND east), (staging AND west) -- 4 combinations
+        combined.conditionGroups.size() == 4
+        combined.conditionGroups.every { it.size() == 3 }
+        combined.conditionGroups.every { it.contains(statusOk) }
+    }
+
+    def "consolidateWorkflowSteps normalizes to DNF when both parent and child are inverted"() {
+        given: "outer (invertLogic=true): env==prod OR env==staging (single group); inner (invertLogic=true): status==ok OR status==warn (single group)"
+        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def envProd = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def envStaging = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'staging'])
+        def outerCondSet = new ConditionalSetImpl()
+        outerCondSet.conditionGroups = [[envProd, envStaging]]
+        outerCondSet.invertLogic = true
+
+        def statusOk = ConditionalDefinitionImpl.fromMap([key: 'option.status', operator: '==', value: 'ok'])
+        def statusWarn = ConditionalDefinitionImpl.fromMap([key: 'option.status', operator: '==', value: 'warn'])
+        def innerCondSet = new ConditionalSetImpl()
+        innerCondSet.conditionGroups = [[statusOk, statusWarn]]
+        innerCondSet.invertLogic = true
+
+        def innerConditional = new ConditionalStep()
+        innerConditional.conditionSet = innerCondSet
+        innerConditional.subSteps = [new CommandExec(adhocRemoteString: 'echo nested')]
+
+        def outerConditional = new ConditionalStep()
+        outerConditional.conditionSet = outerCondSet
+        outerConditional.subSteps = [innerConditional]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [outerConditional]
+
+        when:
+        def result = service.createExecutionItemForWorkflow(workflow, 'testProject')
+
+        then:
+        result.workflow.commands.size() == 1
+        def combined = result.workflow.commands[0].conditions
+        combined.invertLogic == false
+        combined.conditionGroups.size() == 4
+        combined.conditionGroups.every { it.size() == 2 }
+    }
+
+    def "consolidateWorkflowSteps combine path unaffected when neither side is inverted (regression)"() {
+        given:
+        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def envProd = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def outerCondSet = new ConditionalSetImpl()
+        outerCondSet.conditionGroups = [[envProd]]
+
+        def regionEast = ConditionalDefinitionImpl.fromMap([key: 'option.region', operator: '==', value: 'us-east'])
+        def innerCondSet = new ConditionalSetImpl()
+        innerCondSet.conditionGroups = [[regionEast]]
+
+        def innerConditional = new ConditionalStep()
+        innerConditional.conditionSet = innerCondSet
+        innerConditional.subSteps = [new CommandExec(adhocRemoteString: 'echo nested')]
+
+        def outerConditional = new ConditionalStep()
+        outerConditional.conditionSet = outerCondSet
+        outerConditional.subSteps = [innerConditional]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [outerConditional]
+
+        when:
+        def result = service.createExecutionItemForWorkflow(workflow, 'testProject')
+
+        then:
+        result.workflow.commands.size() == 1
+        def combined = result.workflow.commands[0].conditions
+        combined.invertLogic == false
+        combined.conditionGroups.size() == 1
+        combined.conditionGroups[0] == [envProd, regionEast]
+    }
+
+    def "consolidateWorkflowSteps rejects invertLogic condition set that would expand beyond the DNF combination limit"() {
+        given: "invertLogic=true with two groups of 17 conditions each (17*17=289 > 256 combination limit)"
+        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
+
+        def group1 = (1..17).collect { ConditionalDefinitionImpl.fromMap([key: 'option.a', operator: '==', value: "v${it}"]) }
+        def group2 = (1..17).collect { ConditionalDefinitionImpl.fromMap([key: 'option.b', operator: '==', value: "v${it}"]) }
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [group1, group2]
+        condSet.invertLogic = true
+
+        def conditionalStep = new ConditionalStep()
+        conditionalStep.conditionSet = condSet
+        conditionalStep.subSteps = [new CommandExec(adhocRemoteString: 'echo test')]
+
+        def workflow = new WorkflowDataImpl()
+        workflow.steps = [conditionalStep]
+
+        when:
+        service.createExecutionItemForWorkflow(workflow, 'testProject')
+
+        then:
+        def ex = thrown(IllegalArgumentException)
+        ex.message.contains("more than 256")
+    }
+
     def "consolidateWorkflowSteps throws exception for nesting depth >= 2"() {
         given: "A workflow with 2-level nested conditionals"
         service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true

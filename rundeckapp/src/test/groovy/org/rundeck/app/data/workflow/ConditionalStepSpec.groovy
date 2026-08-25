@@ -510,6 +510,97 @@ class ConditionalStepSpec extends Specification implements DataTest {
         nestedStep.subSteps[0].errorHandler != null
     }
 
+    def "ConditionalStep fromMap reads invertLogic and propagates it to conditionSet"() {
+        given:
+        def stepMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod']
+                ]
+            ],
+            subSteps: [
+                [type: 'exec', exec: 'echo test']
+            ],
+            invertLogic: true
+        ]
+
+        when:
+        ConditionalStep step = ConditionalStep.fromMap(stepMap)
+
+        then:
+        step.invertLogic == true
+        step.conditionSet.invertLogic == true
+    }
+
+    def "ConditionalStep toMap serializes invertLogic at top level"() {
+        given:
+        def condDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[condDef]]
+        condSet.invertLogic = true
+
+        ConditionalStep step = new ConditionalStep()
+        step.conditionSet = condSet
+        step.subSteps = [new CommandExec(adhocRemoteString: 'echo test')]
+        step.invertLogic = true
+
+        when:
+        def map = step.toMap()
+
+        then:
+        map.invertLogic == true
+    }
+
+    def "ConditionalStep round-trip fromMap(toMap()) preserves invertLogic"() {
+        given:
+        def stepMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod']
+                ]
+            ],
+            subSteps: [
+                [type: 'exec', exec: 'echo test']
+            ],
+            invertLogic: true
+        ]
+
+        when:
+        ConditionalStep step = ConditionalStep.fromMap(stepMap)
+        Map exportedMap = step.toMap()
+        ConditionalStep roundTripped = ConditionalStep.fromMap(exportedMap)
+
+        then:
+        exportedMap.invertLogic == true
+        roundTripped.invertLogic == true
+        roundTripped.conditionSet.invertLogic == true
+    }
+
+    def "ConditionalStep fromMap on legacy map lacking invertLogic defaults to false (backward compatibility)"() {
+        given: "a legacy job definition map with no invertLogic key at all"
+        def legacyStepMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod'],
+                    [key: 'option.region', operator: '==', value: 'us-east']
+                ]
+            ],
+            subSteps: [
+                [type: 'exec', exec: 'echo test']
+            ],
+            nodeStep: false
+        ]
+
+        when:
+        ConditionalStep step = ConditionalStep.fromMap(legacyStepMap)
+
+        then: "invertLogic defaults to false and AND-within/OR-across semantics are unchanged"
+        step.invertLogic == false
+        step.conditionSet.invertLogic == false
+        step.conditionSet.conditionGroups.size() == 1
+        step.conditionSet.conditionGroups[0].size() == 2
+    }
+
     def "ConditionalStep validation fails with two levels of nesting (depth=2)"() {
         given: "A conditional with nested conditionals 2 levels deep"
         def condSet = new ConditionalSetImpl()
