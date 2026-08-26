@@ -45,7 +45,7 @@ See the [Release Notes](https://docs.rundeck.com/docs/history/) for the latest v
 
 Primary build is supported with gradle. More info in the [wiki](https://github.com/rundeck/rundeck/wiki/Building-and-Testing).
 
-Requirements: Java 11, NodeJs 18
+Requirements: Java 17, NodeJs 18
 
 ## Cloudsmith Authentication Setup
 
