@@ -1899,22 +1899,14 @@ Failed results will contain:
         withFormat {
             '*' {
                 return apiService.renderSuccessJson(response) {
-                    requestCount= ids.size()
-                    enabled=params.status
-                    allsuccessful=(successful.size()==ids.size())
+                    requestCount(ids.size())
+                    enabled(params.status)
+                    allsuccessful(successful.size()==ids.size())
                     if(successful){
-                        delegate.'succeeded'=array {
-                            successful.each{del->
-                                delegate.'element'(id:del.id,message:del.message)
-                            }
-                        }
+                        delegate.succeeded(successful.collect{del-> [id:del.id,message:del.message]})
                     }
                     if(errors){
-                        delegate.'failed'=array {
-                            errors.each{del->
-                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
-                            }
-                        }
+                        delegate.failed(errors.collect{del-> [id:del.id,errorCode:del.errorCode,message:del.message]})
                     }
                 }
             }
@@ -2130,22 +2122,14 @@ Failed results will contain:
         withFormat {
             '*' {
                 return apiService.renderSuccessJson(response) {
-                    requestCount= ids.size()
-                    enabled=params.status
-                    allsuccessful=(successful.size()==ids.size())
+                    requestCount(ids.size())
+                    enabled(params.status)
+                    allsuccessful(successful.size()==ids.size())
                     if(successful){
-                        delegate.'succeeded'=array {
-                            successful.each{del->
-                                delegate.'element'(id:del.id,message:del.message)
-                            }
-                        }
+                        delegate.succeeded(successful.collect{del-> [id:del.id,message:del.message]})
                     }
                     if(errors){
-                        delegate.'failed'=array {
-                            errors.each{del->
-                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
-                            }
-                        }
+                        delegate.failed(errors.collect{del-> [id:del.id,errorCode:del.errorCode,message:del.message]})
                     }
                 }
             }
@@ -2328,21 +2312,13 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         withFormat {
             '*' {
                 return apiService.renderSuccessJson(response) {
-                    requestCount= ids.size()
-                    allsuccessful=(successful.size()==ids.size())
+                    requestCount(ids.size())
+                    allsuccessful(successful.size()==ids.size())
                     if(successful){
-                        delegate.'succeeded'=array {
-                            successful.each{del->
-                                delegate.'element'(id:del.job.extid,message:del.message)
-                            }
-                        }
+                        delegate.succeeded(successful.collect{del-> [id:del.job.extid,message:del.message]})
                     }
                     if(deleteerrs){
-                        delegate.'failed'=array {
-                            deleteerrs.each{del->
-                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
-                            }
-                        }
+                        delegate.failed(deleteerrs.collect{del-> [id:del.id,errorCode:del.errorCode,message:del.message]})
                     }
                 }
             }
@@ -3924,69 +3900,62 @@ Since: v56''',
      * Utility, render content for jobs/import response
      */
     private def renderJobsImportApiJson(jobs,jobsi,errjobs,skipjobs, delegate){
-        delegate.'succeeded'=delegate.array{
-            jobsi.each { Map job ->
-                delegate.element(
-                        index: job.entrynum,
-                        href: apiService.apiHrefForJob(job.scheduledExecution),
-                        id:job.scheduledExecution.extid,
-                        name:job.scheduledExecution.jobName,
-                        group:job.scheduledExecution.groupPath ?: '',
-                        project:job.scheduledExecution.project,
-                        permalink:apiService.guiHrefForJob(job.scheduledExecution)
-                )
+        delegate.succeeded(jobsi.collect { Map job ->
+            [
+                    index: job.entrynum,
+                    href: apiService.apiHrefForJob(job.scheduledExecution),
+                    id:job.scheduledExecution.extid,
+                    name:job.scheduledExecution.jobName,
+                    group:job.scheduledExecution.groupPath ?: '',
+                    project:job.scheduledExecution.project,
+                    permalink:apiService.guiHrefForJob(job.scheduledExecution)
+            ]
+        })
+        delegate.failed(errjobs.collect{ Map job ->
+            def jmap=[index:job.entrynum]
+            if(job.scheduledExecution.id){
+                jmap.href=apiService.apiHrefForJob(job.scheduledExecution)
+                jmap.id=job.scheduledExecution.extid
+                jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
             }
-        }
-        delegate.failed=delegate.array{
-            errjobs.each{ Map job ->
-                def jmap=[index:job.entrynum]
-                if(job.scheduledExecution.id){
-                    jmap.href=apiService.apiHrefForJob(job.scheduledExecution)
-                    jmap.id=job.scheduledExecution.extid
-                    jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
+            StringBuffer sb = new StringBuffer()
+            job.scheduledExecution?.errors?.allErrors?.each{err->
+                if(sb.size()>0){
+                    sb<<"\n"
                 }
-                StringBuffer sb = new StringBuffer()
-                job.scheduledExecution?.errors?.allErrors?.each{err->
-                    if(sb.size()>0){
-                        sb<<"\n"
-                    }
-                    sb << g.message(error:err)
-                }
-                if(job.errmsg){
-                    if(sb.size()>0){
-                        sb<<"\n"
-                    }
-                    sb<<job.errmsg
-                }
-                jmap.'error'=(sb.toString())
-                delegate.element(jmap + [name:(job.scheduledExecution.jobName),
-                                           group:(job.scheduledExecution.groupPath?:''),
-                                           project:(job.scheduledExecution.project)])
+                sb << g.message(error:err)
             }
-        }
-        delegate.skipped=delegate.array{
-
-            skipjobs.each{ Map job ->
-                def jmap = [index: job.entrynum]
-                if (job.scheduledExecution.id) {
-                    jmap.href = apiService.apiHrefForJob(job.scheduledExecution)
-                    jmap.id=(job.scheduledExecution.extid)
-                    jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
+            if(job.errmsg){
+                if(sb.size()>0){
+                    sb<<"\n"
                 }
-                StringBuffer sb = new StringBuffer()
-                if(job.errmsg){
-                    if(sb.size()>0){
-                        sb<<"\n"
-                    }
-                    sb<<job.errmsg
-                }
-                jmap.'error'=(sb.toString())
-                jmap.name=(job.scheduledExecution.jobName)
-                jmap.group=(job.scheduledExecution.groupPath?:'')
-                jmap.project=(job.scheduledExecution.project)
-                delegate.element(jmap)
+                sb<<job.errmsg
             }
-        }
+            jmap.'error'=(sb.toString())
+            jmap + [name:(job.scheduledExecution.jobName),
+                    group:(job.scheduledExecution.groupPath?:''),
+                    project:(job.scheduledExecution.project)]
+        })
+        delegate.skipped(skipjobs.collect{ Map job ->
+            def jmap = [index: job.entrynum]
+            if (job.scheduledExecution.id) {
+                jmap.href = apiService.apiHrefForJob(job.scheduledExecution)
+                jmap.id=(job.scheduledExecution.extid)
+                jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
+            }
+            StringBuffer sb = new StringBuffer()
+            if(job.errmsg){
+                if(sb.size()>0){
+                    sb<<"\n"
+                }
+                sb<<job.errmsg
+            }
+            jmap.'error'=(sb.toString())
+            jmap.name=(job.scheduledExecution.jobName)
+            jmap.group=(job.scheduledExecution.groupPath?:'')
+            jmap.project=(job.scheduledExecution.project)
+            jmap
+        })
     }
 
     @Post(uri = "/project/{project}/jobs/import", produces = [MediaType.APPLICATION_JSON])
@@ -4213,7 +4182,7 @@ Each job entry contains:
         withFormat {
             '*' {
                 apiService.renderSuccessJson(response){
-                    renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
+                    this.renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
                 }
             }
             if(controller.isAllowXml()) {
@@ -5839,12 +5808,12 @@ For Content-Type: `multipart/form-data`
             withFormat {
                 '*' {
                     return apiService.renderSuccessJson(response) {
-                        delegate.'message'=("Immediate execution scheduled (${results.id})")
-                        delegate.'execution' = [
+                        delegate.message("Immediate execution scheduled (${results.id})")
+                        delegate.execution([
                                 id       : results.id,
                                 href     : apiService.apiHrefForExecution(results.execution),
                                 permalink: apiService.guiHrefForExecution(results.execution)
-                        ]
+                        ])
                     }
                 }
                 if(controller.isAllowXml()) {
@@ -6402,10 +6371,10 @@ Since: v14''',
                 '*'  {
 
                     return apiService.renderSuccessJson(response) {
-                        delegate.'message'=("No action performed, cluster mode is not enabled.")
-                        success=true
-                        apiversion=ApiVersions.API_CURRENT_VERSION
-                        self=[server:[uuid:frameworkService.getServerUUID()]]
+                        delegate.message("No action performed, cluster mode is not enabled.")
+                        success(true)
+                        apiversion(ApiVersions.API_CURRENT_VERSION)
+                        self([server:[uuid:frameworkService.getServerUUID()]])
                     }
                 }
                 if(controller.isAllowXml()) {
