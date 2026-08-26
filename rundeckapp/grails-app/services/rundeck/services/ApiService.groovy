@@ -23,7 +23,7 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
-import grails.web.JSONBuilder
+import groovy.json.JsonBuilder
 import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -431,9 +431,12 @@ class ApiService implements WebUtilService{
     def renderSuccessJson(HttpServletResponse response,Closure recall){
         response.contentType=JSON_CONTENT_TYPE
         response.characterEncoding='UTF-8'
-        JSONBuilder builder = new JSONBuilder();
-        JSON json = builder.build(recall);
-        json.render(response);
+        JsonBuilder builder = new JsonBuilder()
+        builder(recall)
+        def writer = response.writer
+        writer << builder.toString()
+        writer.flush()
+        writer.close()
     }
 
     /**
@@ -665,7 +668,7 @@ class ApiService implements WebUtilService{
      */
     public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response,execlist,paging=[:]) {
         renderSuccessJson(response){
-            renderExecutionsJson(execlist, paging, delegate)
+            this.renderExecutionsJson(execlist, paging, delegate)
         }
     }
     /**
@@ -836,11 +839,11 @@ class ApiService implements WebUtilService{
             }
 
         if(!isSingle) {
-            delegate.'paging' = execAttrs
-            delegate.'executions' = execarr
+            delegate.paging(execAttrs)
+            delegate.executions(execarr)
         }else{
             execarr[0].each{k,v->
-                delegate[k]=v
+                delegate."$k"(v)
             }
         }
     }
