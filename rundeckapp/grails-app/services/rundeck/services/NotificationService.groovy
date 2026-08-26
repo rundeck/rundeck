@@ -43,7 +43,7 @@ import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import org.springframework.transaction.annotation.Propagation
 import grails.util.Holders
-import grails.web.JSONBuilder
+import groovy.json.JsonBuilder
 import grails.web.mapping.LinkGenerator
 import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
@@ -722,16 +722,14 @@ public class NotificationService implements ApplicationContextAware, EventBusAwa
 
     String createJsonNotificationPayload(String triggerName, Execution exec) {
 
-        def writer = new StringWriter()
-        JSONBuilder b = new JSONBuilder()
-        JSON json = b.build {
-            trigger = triggerName
-            status = exec.executionState
-            executionId = exec.id
-            execution { renderApiExecutionsJson(grailsLinkGenerator,[exec], [single:true], delegate) }
+        JsonBuilder b = new JsonBuilder()
+        b {
+            trigger(triggerName)
+            status(exec.executionState)
+            executionId(exec.id)
+            execution { this.renderApiExecutionsJson(grailsLinkGenerator,[exec], [single:true], delegate) }
         }
-        json.render(writer)
-        return writer.toString()
+        return b.toString()
     }
 /*
     * Render execution list xml given a List of executions, and a builder delegate

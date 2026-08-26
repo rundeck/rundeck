@@ -1518,4 +1518,26 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         [{ -> true }, { -> null }]                      || true
         [{ -> true }, { -> throw new RuntimeException('x') }] || true
     }
+
+    def "createJsonNotificationPayload renders same JSON shape as before the JSONBuilder to JsonBuilder migration"() {
+        given:
+        def wf = new Workflow(commands: [new CommandExec(adhocRemoteString: 'echo hi')])
+        Execution e = new Execution(
+            project: 'test', user: 'bob',
+            dateStarted: new Date(1000), dateCompleted: new Date(2000),
+            status: 'succeeded', workflow: wf
+        )
+        e.save(flush: true)
+        assert !e.hasErrors() && e.id != null
+        service.apiService = new ApiService()
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'http://x/execution/show'
+        }
+
+        when:
+        def json = service.createJsonNotificationPayload('onsuccess', e)
+
+        then:
+        json == '{"trigger":"onsuccess","status":"succeeded","executionId":1,"execution":{"id":1,"href":"http://x/execution/show","permalink":null,"status":"succeeded","project":"test","executionType":null,"user":"bob","date-started":{"unixtime":1000,"date":"1970-01-01T00:00:01Z"},"date-ended":{"unixtime":2000,"date":"1970-01-01T00:00:02Z"},"description":"echo hi","argstring":null,"jobDeleted":false}}'
+    }
 }
