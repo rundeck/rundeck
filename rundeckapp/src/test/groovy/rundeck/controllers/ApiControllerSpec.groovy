@@ -27,7 +27,8 @@ import grails.converters.JSON
 import grails.converters.XML
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
-import grails.web.JSONBuilder
+import groovy.json.JsonBuilder
+import groovy.json.JsonDelegate
 import grails.web.mapping.LinkGenerator
 import org.quartz.Scheduler
 import org.quartz.SchedulerMetaData
@@ -570,9 +571,15 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         then:
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.apiService.renderSuccessJson(_,_) >> {
-            JSONBuilder builder = new JSONBuilder();
-            JSON json = builder.build(it[1]);
-            json.toString() == jsonResult
+            // Mirrors ApiService#renderSuccessJson's own JsonDelegate fallback: this
+            // action's closure just returns systemInfoModel without any builder calls.
+            Closure cloned = (Closure) it[1].clone()
+            JsonDelegate jsonDelegate = new JsonDelegate()
+            cloned.delegate = jsonDelegate
+            cloned.resolveStrategy = Closure.DELEGATE_FIRST
+            def returnValue = cloned.call()
+            def content = jsonDelegate.content ?: returnValue
+            new JsonBuilder(content).toString() == jsonResult
         }
 
         where:
