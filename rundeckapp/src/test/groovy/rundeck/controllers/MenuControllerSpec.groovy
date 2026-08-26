@@ -272,7 +272,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
         0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
-        1 * controller.apiService.renderSuccessJson(_,_)
+        1 * controller.apiService.renderSuccessJsonArray(_,_)
 
     }
     def "scheduler list this servers jobs apiv18"() {
@@ -350,7 +350,7 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,job2,['read','view'],'AProject')>>true
         0 * controller.rundeckAuthContextProcessor.authorizeProjectJobAny(_,unscheduledJob,['read','view'],'AProject')
         1 * controller.frameworkService.isClusterModeEnabled()>>true
-        1 * controller.apiService.renderSuccessJson(_,_)
+        1 * controller.apiService.renderSuccessJsonArray(_,_)
 
     }
 
