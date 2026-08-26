@@ -882,4 +882,18 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
         then:
         sw.toString() == '{"id":1,"href":"http://x/1","permalink":"http://p/1","status":"succeeded","project":"test","executionType":null,"user":"bob","date-started":{"unixtime":1000,"date":"1970-01-01T00:00:01Z"},"date-ended":{"unixtime":2000,"date":"1970-01-01T00:00:02Z"},"description":"sum1","argstring":null,"jobDeleted":false}'
     }
+
+    def "renderSuccessJsonArray renders a raw JSON array from a list of maps"() {
+        given:
+        def sw = new StringWriter()
+        def response = Mock(HttpServletResponse) {
+            getWriter() >> new PrintWriter(sw)
+        }
+
+        when:
+        service.renderSuccessJsonArray(response, [[id: 1, name: 'a'], [id: 2, name: 'b']])
+
+        then:
+        sw.toString() == '[{"id":1,"name":"a"},{"id":2,"name":"b"}]'
+    }
 }
