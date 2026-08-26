@@ -24,6 +24,7 @@ import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.json.JsonBuilder
+import groovy.json.JsonDelegate
 import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -431,8 +432,16 @@ class ApiService implements WebUtilService{
     def renderSuccessJson(HttpServletResponse response,Closure recall){
         response.contentType=JSON_CONTENT_TYPE
         response.characterEncoding='UTF-8'
-        JsonBuilder builder = new JsonBuilder()
-        builder(recall)
+        // Mirrors grails.web.JSONBuilder#buildRoot: if the closure doesn't call any
+        // builder methods (e.g. it just returns a bean directly), fall back to
+        // rendering the closure's own return value instead of an empty object.
+        Closure cloned = (Closure) recall.clone()
+        JsonDelegate jsonDelegate = new JsonDelegate()
+        cloned.delegate = jsonDelegate
+        cloned.resolveStrategy = Closure.DELEGATE_FIRST
+        def returnValue = cloned.call()
+        def content = jsonDelegate.content ?: returnValue
+        JsonBuilder builder = new JsonBuilder(content)
         def writer = response.writer
         writer << builder.toString()
         writer.flush()
