@@ -1277,7 +1277,7 @@ Since: V14''',
             description = "Job ID",
             in = ParameterIn.PATH,
             required = true,
-            content = @Content(schema = @Schema(implementation = String))
+            schema = @Schema(type = 'string')
         )
     )
     @ApiResponse(
@@ -1313,7 +1313,7 @@ Since: V14''',
             description = "Job ID",
             in = ParameterIn.PATH,
             required = true,
-            content = @Content(schema = @Schema(implementation = String))
+            schema = @Schema(type = 'string')
         )
     )
     @ApiResponse(
@@ -1403,7 +1403,7 @@ Since: V14''',
             description = "Job ID",
             in = ParameterIn.PATH,
             required = true,
-            content = @Content(schema = @Schema(implementation = String))
+            schema = @Schema(type = 'string')
         )
     )
     @ApiResponse(
@@ -1439,7 +1439,7 @@ Since: V14''',
             description = "Job ID",
             in = ParameterIn.PATH,
             required = true,
-            content = @Content(schema = @Schema(implementation = String))
+            schema = @Schema(type = 'string')
         )
     )
     @ApiResponse(
@@ -4242,13 +4242,13 @@ Authorization required: `read` for the Job.''',
                 description = "Job ID",
                 in = ParameterIn.PATH,
                 required = true,
-                content = @Content(schema = @Schema(implementation = String))
+                schema = @Schema(type = 'string')
             ),
             @Parameter(
                 name = "format",
                 description = '''can be "yaml" or "json" (API v44+) to specify the output format''',
                 in = ParameterIn.QUERY,
-                content = @Content(schema = @Schema(implementation = String))
+                schema = @Schema(type = 'string')
             )
         ]
     )
@@ -5161,7 +5161,7 @@ Since: v19''',
             description = "File ID",
             in = ParameterIn.PATH,
             required = true,
-            content = @Content(schema = @Schema(implementation = String))
+            schema = @Schema(type = 'string')
         )
     )
     @ApiResponse(
@@ -5322,7 +5322,7 @@ Authorization required: `delete` for the job.''',
                 description = "Job ID",
                 in = ParameterIn.PATH,
                 required = true,
-                content = @Content(schema = @Schema(implementation = String))
+                schema = @Schema(type = 'string')
             )
         ]
     )
