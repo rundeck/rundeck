@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import grails.testing.web.GrailsWebUnitTest
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -34,7 +35,11 @@ import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
 
 import rundeck.AuthToken
+import rundeck.CommandExec
+import rundeck.Execution
+import rundeck.ScheduledExecution
 import rundeck.User
+import rundeck.Workflow
 import rundeck.controllers.ApiController
 import rundeck.data.util.AuthenticationTokenUtils
 import rundeck.services.data.AuthTokenDataService
@@ -50,7 +55,7 @@ import java.time.ZoneId
 /**
  * Created by greg on 7/28/15.
  */
-class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService>, DataTest {
+class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService>, DataTest, GrailsWebUnitTest {
 
     ApiService service
     GormTokenDataProvider provider = new GormTokenDataProvider()
@@ -815,5 +820,66 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
 
         then:
         thrown(RuntimeException)
+    }
+
+    def "respondExecutionsJson renders same JSON shape as before the JSONBuilder to JsonBuilder migration (multiple executions)"() {
+        given:
+        mockDomains(Execution, ScheduledExecution, Workflow, CommandExec)
+        def wf1 = new Workflow(commands: [new CommandExec(adhocRemoteString: 'echo hi')])
+        Execution e1 = new Execution(
+            project: 'test', user: 'bob',
+            dateStarted: new Date(1000), dateCompleted: new Date(2000),
+            status: 'succeeded', workflow: wf1
+        )
+        e1.save(flush: true)
+        def wf2 = new Workflow(commands: [new CommandExec(adhocRemoteString: 'echo hi2')])
+        Execution e2 = new Execution(
+            project: 'test', user: 'alice',
+            dateStarted: new Date(3000), dateCompleted: new Date(4000),
+            status: 'failed', workflow: wf2
+        )
+        e2.save(flush: true)
+        def execlist = [
+            [execution: e1, href: 'http://x/1', permalink: 'http://p/1', status: 'succeeded', summary: 'sum1'],
+            [execution: e2, href: 'http://x/2', permalink: 'http://p/2', status: 'failed', summary: 'sum2'],
+        ]
+        def sw = new StringWriter()
+        def response = Mock(HttpServletResponse) {
+            getWriter() >> new PrintWriter(sw)
+        }
+        def request = Mock(HttpServletRequest)
+
+        when:
+        service.respondExecutionsJson(request, response, execlist, [max: 20, offset: 0])
+
+        then:
+        sw.toString() == '{"paging":{"count":2,"max":20,"offset":0},"executions":[{"id":1,"href":"http://x/1","permalink":"http://p/1","status":"succeeded","project":"test","executionType":null,"user":"bob","date-started":{"unixtime":1000,"date":"1970-01-01T00:00:01Z"},"date-ended":{"unixtime":2000,"date":"1970-01-01T00:00:02Z"},"description":"sum1","argstring":null,"jobDeleted":false},{"id":2,"href":"http://x/2","permalink":"http://p/2","status":"failed","project":"test","executionType":null,"user":"alice","date-started":{"unixtime":3000,"date":"1970-01-01T00:00:03Z"},"date-ended":{"unixtime":4000,"date":"1970-01-01T00:00:04Z"},"description":"sum2","argstring":null,"jobDeleted":false}]}'
+    }
+
+    def "respondExecutionsJson renders same JSON shape as before the JSONBuilder to JsonBuilder migration (single execution)"() {
+        given:
+        mockDomains(Execution, ScheduledExecution, Workflow, CommandExec)
+        def wf1 = new Workflow(commands: [new CommandExec(adhocRemoteString: 'echo hi')])
+        Execution e1 = new Execution(
+            project: 'test', user: 'bob',
+            dateStarted: new Date(1000), dateCompleted: new Date(2000),
+            status: 'succeeded', workflow: wf1
+        )
+        e1.save(flush: true)
+        assert !e1.hasErrors() && e1.id != null
+        def execlist = [
+            [execution: e1, href: 'http://x/1', permalink: 'http://p/1', status: 'succeeded', summary: 'sum1'],
+        ]
+        def sw = new StringWriter()
+        def response = Mock(HttpServletResponse) {
+            getWriter() >> new PrintWriter(sw)
+        }
+        def request = Mock(HttpServletRequest)
+
+        when:
+        service.respondExecutionsJson(request, response, execlist, [max: 20, offset: 0, single: true])
+
+        then:
+        sw.toString() == '{"id":1,"href":"http://x/1","permalink":"http://p/1","status":"succeeded","project":"test","executionType":null,"user":"bob","date-started":{"unixtime":1000,"date":"1970-01-01T00:00:01Z"},"date-ended":{"unixtime":2000,"date":"1970-01-01T00:00:02Z"},"description":"sum1","argstring":null,"jobDeleted":false}'
     }
 }
