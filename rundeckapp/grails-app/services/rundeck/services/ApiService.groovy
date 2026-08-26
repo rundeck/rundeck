@@ -440,6 +440,26 @@ class ApiService implements WebUtilService{
     }
 
     /**
+     * Render a JSON array (not an object) to the response, given a pre-built list.
+     * grails.web.JSONBuilder allowed switching its root to an array mid-closure via a bare
+     * `element(...)` call; groovy.json.JsonBuilder's closure-based builder always produces an
+     * object (via JsonDelegate), so a raw top-level array has to be rendered from an already-built
+     * List instead.
+     * @param response
+     * @param list
+     */
+    def renderSuccessJsonArray(HttpServletResponse response, List list){
+        response.contentType=JSON_CONTENT_TYPE
+        response.characterEncoding='UTF-8'
+        JsonBuilder builder = new JsonBuilder()
+        builder(list)
+        def writer = response.writer
+        writer << builder.toString()
+        writer.flush()
+        writer.close()
+    }
+
+    /**
      * Return the final portion of the request URI with the stripped extension restored
      * @param request request
      * @param paramValue value of final path parameter extracted via URL mapping, e.g. "/path/$paramValue**"

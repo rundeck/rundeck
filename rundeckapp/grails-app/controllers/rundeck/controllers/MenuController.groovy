@@ -2403,10 +2403,10 @@ Fields:
         withFormat {
             '*' {
                 apiService.renderSuccessJson(response) {
-                    enabled = data.pluginName ? true : false
-                    pluginName = data.pluginName
+                    enabled(data.pluginName ? true : false)
+                    pluginName(data.pluginName)
                     for (String name : propnames) {
-                        delegate.setProperty(name, data[name])
+                        delegate."$name"(data[name])
                     }
                 }
             }
@@ -2541,10 +2541,10 @@ Since: V17''',
         withFormat {
             '*' {
                 apiService.renderSuccessJson(response) {
-                    delegate.'total' = total
-                    max = query.max ?: 20
-                    offset = query.offset ?: 0
-                    executions = list.collect { LogFileStorageRequest req ->
+                    delegate.total(total)
+                    max(query.max ?: 20)
+                    offset(query.offset ?: 0)
+                    executions(list.collect { LogFileStorageRequest req ->
                         def data=exportRequestMap(
                                 req,
                                 retryIds.contains(req.id) || queuedIds.contains(req.id) || queuedIncompleteIds.contains(req.id),
@@ -2565,7 +2565,7 @@ Since: V17''',
                                 ],
                                 errors:data.messages
                         ]
-                    }
+                    })
                 }
             }
             if(controller.isAllowXml()) {
@@ -2645,7 +2645,7 @@ Since: V17''',
         withFormat {
             '*'  {
                 apiService.renderSuccessJson(response) {
-                    resumed=true
+                    resumed(true)
                 }
             }
             if(controller.isAllowXml()) {
@@ -3076,27 +3076,26 @@ Format is a string like `2d1h4n5s` using the following characters for time units
                 }
             }
             '*'  {
-                return apiService.renderSuccessJson(response) {
-                    results.each { ScheduledExecution se ->
-                        def jobparams = [id         : se.extid,
-                                         name       : (se.jobName),
-                                         group      : (se.groupPath),
-                                         project    : (se.project),
-                                         description: (se.description),
-                                         href       : apiService.apiHrefForJob(se),
-                                         permalink  : apiService.guiHrefForJob(se)]
-                        if (request.api_version >= ApiVersions.V17) {
-                            jobparams.scheduled = se.scheduled
-                            jobparams.scheduleEnabled = se.scheduleEnabled
-                            jobparams.enabled = se.executionEnabled
-                            if (clusterModeEnabled && se.scheduled) {
-                                jobparams.serverNodeUUID = se.serverNodeUUID
-                                jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
-                            }
+                def jobList = results.collect { ScheduledExecution se ->
+                    def jobparams = [id         : se.extid,
+                                     name       : (se.jobName),
+                                     group      : (se.groupPath),
+                                     project    : (se.project),
+                                     description: (se.description),
+                                     href       : apiService.apiHrefForJob(se),
+                                     permalink  : apiService.guiHrefForJob(se)]
+                    if (request.api_version >= ApiVersions.V17) {
+                        jobparams.scheduled = se.scheduled
+                        jobparams.scheduleEnabled = se.scheduleEnabled
+                        jobparams.enabled = se.executionEnabled
+                        if (clusterModeEnabled && se.scheduled) {
+                            jobparams.serverNodeUUID = se.serverNodeUUID
+                            jobparams.serverOwner = jobparams.serverNodeUUID == serverNodeUUID
                         }
-                        element(jobparams)
                     }
+                    jobparams
                 }
+                return apiService.renderSuccessJsonArray(response, jobList)
             }
             if(controller.isAllowXml()) {
                 xml xmlresponse
