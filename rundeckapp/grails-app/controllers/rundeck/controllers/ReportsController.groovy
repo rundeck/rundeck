@@ -576,58 +576,54 @@ List the event history for a project.''',
         withFormat{
             '*' {
                 return apiService.renderSuccessJson(response){
-                    paging=[
+                    paging([
                             count:model.reports.size(),
                             total:model.total,
                             max: model.max,
                             offset: model.offset
-                    ]
+                    ])
 
-                    delegate.'events'=array{
-                        model.reports.each{  rpt->
-                            def nodes=rpt.node
-                            final Matcher matcher = nodes =~ /^(\d+)\/(\d+)\/(\d+)$/
-                            def nodesum=[rpt.status =='succeed'?1:0,rpt.status =='succeed'?0:1,1]
-                            if(matcher.matches()){
-                                nodesum[0]=Integer.parseInt matcher.group(1)
-                                nodesum[1]=Integer.parseInt matcher.group(2)
-                                nodesum[2]=Integer.parseInt matcher.group(3)
+                    delegate.events(model.reports) { rpt ->
+                        def nodes=rpt.node
+                        final Matcher matcher = nodes =~ /^(\d+)\/(\d+)\/(\d+)$/
+                        def nodesum=[rpt.status =='succeed'?1:0,rpt.status =='succeed'?0:1,1]
+                        if(matcher.matches()){
+                            nodesum[0]=Integer.parseInt matcher.group(1)
+                            nodesum[1]=Integer.parseInt matcher.group(2)
+                            nodesum[2]=Integer.parseInt matcher.group(3)
+                        }
+                        starttime(rpt.dateStarted.time)
+                        endtime(rpt.dateCompleted.time)
+                        title(rpt.reportId?:'adhoc')
+                        status(statusMap[rpt.status]?:ExecutionService.EXECUTION_STATE_OTHER)
+                        statusString(rpt.status)
+                        summary(rpt.adhocScript?:rpt.title)
+                        delegate.'node-summary'([succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2]])
+                        user(rpt.author)
+                        project(rpt.project)
+                        if(rpt.status=='cancel' && rpt.abortedByUser){
+                            abortedby(rpt.abortedByUser)
+                        }
+                        delegate.'date-started'(g.w3cDateValue(date:rpt.dateStarted))
+                        delegate.'date-ended'(g.w3cDateValue(date:rpt.dateCompleted))
+                        if(rpt.jobId){
+                            def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jobId)
+                            if(foundjob){
+                                job([
+                                        id       : foundjob.extid,
+                                        href     : apiService.apiHrefForJob(foundjob),
+                                        permalink: apiService.guiHrefForJob(foundjob)
+                                ])
                             }
-                            delegate.'element'{
-                                starttime=rpt.dateStarted.time
-                                endtime=rpt.dateCompleted.time
-                                title=(rpt.reportId?:'adhoc')
-                                status=(statusMap[rpt.status]?:ExecutionService.EXECUTION_STATE_OTHER)
-                                statusString=(rpt.status)
-                                summary=(rpt.adhocScript?:rpt.title)
-                                delegate.'node-summary'=[succeeded:nodesum[0],failed:nodesum[1],total:nodesum[2]]
-                                user=(rpt.author)
-                                project=(rpt.project)
-                                if(rpt.status=='cancel' && rpt.abortedByUser){
-                                    abortedby=(rpt.abortedByUser)
-                                }
-                                delegate.'date-started'=(g.w3cDateValue(date:rpt.dateStarted))
-                                delegate.'date-ended'=(g.w3cDateValue(date:rpt.dateCompleted))
-                                if(rpt.jobId){
-                                    def foundjob=scheduledExecutionService.getByIDorUUID(rpt.jobId)
-                                    if(foundjob){
-                                        job = [
-                                                id       : foundjob.extid,
-                                                href     : apiService.apiHrefForJob(foundjob),
-                                                permalink: apiService.guiHrefForJob(foundjob)
-                                        ]
-                                    }
-                                }
-                                if(rpt.executionId){
-                                    def foundExec=Execution.get(rpt.executionId)
-                                    if(foundExec) {
-                                        execution = [
-                                                id       : rpt.executionId,
-                                                href     : apiService.apiHrefForExecution(foundExec),
-                                                permalink: apiService.guiHrefForExecution(foundExec)
-                                        ]
-                                    }
-                                }
+                        }
+                        if(rpt.executionId){
+                            def foundExec=Execution.get(rpt.executionId)
+                            if(foundExec) {
+                                execution([
+                                        id       : rpt.executionId,
+                                        href     : apiService.apiHrefForExecution(foundExec),
+                                        permalink: apiService.guiHrefForExecution(foundExec)
+                                ])
                             }
                         }
                     }
