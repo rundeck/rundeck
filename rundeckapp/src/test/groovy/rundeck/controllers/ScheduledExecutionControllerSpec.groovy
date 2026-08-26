@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.support.ExtraCommand
+import groovy.json.JsonDelegate
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
@@ -605,8 +606,11 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
             1 * requireApi(_,_) >> true
             1* renderSuccessJson(_,_)>> {
                 def clos=it[1]
-                clos.delegate=data
+                def jsonDelegate = new JsonDelegate()
+                clos.delegate=jsonDelegate
+                clos.resolveStrategy=Closure.DELEGATE_FIRST
                 clos.call()
+                data = jsonDelegate.content
                 null
             }
         }
