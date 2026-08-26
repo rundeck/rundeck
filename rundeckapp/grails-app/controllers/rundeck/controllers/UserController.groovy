@@ -464,10 +464,10 @@ Since: v21''',
             }
             '*' {
                 return apiService.renderSuccessJson(response) {
-                    delegate.login=u.login
-                    delegate.firstName=u.firstName
-                    delegate.lastName=u.lastName
-                    delegate.email=u.email
+                    delegate.login(u.login)
+                    delegate.firstName(u.firstName)
+                    delegate.lastName(u.lastName)
+                    delegate.email(u.email)
                 }
             }
             if(controller.isAllowXml()) {
@@ -520,7 +520,7 @@ Since: v30''',
             }
             '*' {
                 return apiService.renderSuccessJson(response) {
-                    delegate.roles=authContext.getRoles()
+                    delegate.roles(authContext.getRoles())
                 }
             }
             if(controller.isAllowXml()) {
@@ -653,29 +653,28 @@ For APIv53+, the results will also include:
                     }
             }
             '*' {
-                return apiService.renderSuccessJson(response) {
-                    users.each {
-                        def u
-                        if(request.api_version >= ApiVersions.V27){
-                            u = [
-                                    login: it.login,
-                                    firstName: it.firstName,
-                                    lastName: it.lastName,
-                                    email: it.email,
-                                    created: it.created,
-                                    updated: it.updated,
-                                    lastJob: it.lastJob,
-                                    tokens: it.tokens
-                            ]
-                            if (request.api_version >= ApiVersions.V53) {
-                                u.lastLogin = it.lastLogin
-                            }
-                        } else {
-                            u = [login: it.login, firstName: it.firstName, lastName: it.lastName, email: it.email]
+                def userList = users.collect {
+                    def u
+                    if(request.api_version >= ApiVersions.V27){
+                        u = [
+                                login: it.login,
+                                firstName: it.firstName,
+                                lastName: it.lastName,
+                                email: it.email,
+                                created: it.created,
+                                updated: it.updated,
+                                lastJob: it.lastJob,
+                                tokens: it.tokens
+                        ]
+                        if (request.api_version >= ApiVersions.V53) {
+                            u.lastLogin = it.lastLogin
                         }
-                        element(u)
+                    } else {
+                        u = [login: it.login, firstName: it.firstName, lastName: it.lastName, email: it.email]
                     }
+                    u
                 }
+                return apiService.renderSuccessJsonArray(response, userList)
             }
             if(controller.isAllowXml()) {
                 xml {
