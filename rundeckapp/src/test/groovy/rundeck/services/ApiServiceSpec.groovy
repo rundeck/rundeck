@@ -25,7 +25,6 @@ import grails.converters.JSON
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
-import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
