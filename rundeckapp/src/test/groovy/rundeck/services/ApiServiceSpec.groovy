@@ -896,4 +896,21 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
         then:
         sw.toString() == '[{"id":1,"name":"a"},{"id":2,"name":"b"}]'
     }
+
+    def "renderSuccessJson falls back to the closure's return value when it makes no builder calls"() {
+        // Matches ApiController's systemInfo action: `renderSuccessJson(response){ systemInfoModel }` -
+        // the old grails.web.JSONBuilder#buildRoot did this when the closure body never touched the
+        // builder delegate (root stayed empty), and this must keep working the same way.
+        given:
+        def sw = new StringWriter()
+        def response = Mock(HttpServletResponse) {
+            getWriter() >> new PrintWriter(sw)
+        }
+
+        when:
+        service.renderSuccessJson(response) { [name: 'x', count: 5] }
+
+        then:
+        sw.toString() == '{"name":"x","count":5}'
+    }
 }
