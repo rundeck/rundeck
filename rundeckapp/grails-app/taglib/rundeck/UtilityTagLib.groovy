@@ -634,9 +634,9 @@ class UtilityTagLib{
                             if(it[1]=='title'){
                                 appTitle()
                             }else if(it[1]=='version'){
-                                grailsApplication.metadata['info.app.version']
+                                grailsApplication.metadata.getProperty('info.app.version', String, null)
                             }else if(it[1]=='ident'){
-                                grailsApplication.metadata['build.ident']
+                                grailsApplication.metadata.getProperty('build.ident', String, null)
                             }
                         }
                 ]
@@ -835,7 +835,7 @@ class UtilityTagLib{
         }
     }
     def helpLinkParams={attrs,body->
-        def medium = "${grailsApplication.metadata['info.app.version']} ${System.getProperty('os.name')} java ${System.getProperty('java.version')}"
+        def medium = "${grailsApplication.metadata.getProperty('info.app.version', String, null)} ${System.getProperty('os.name')} java ${System.getProperty('java.version')}"
         def campaign = attrs.campaign?:'helplink'
         def sourceName = g.message(code:'main.app.id',default: 'rundeckapp')
         def helpParams = [utm_source: sourceName, utm_medium: medium, utm_campaign: campaign, utm_content: (controllerName + '/' + actionName)]
@@ -859,7 +859,7 @@ class UtilityTagLib{
                 fragment='#'+split[1]
             }
         }
-        def rdversion = grailsApplication.metadata['info.app.version']
+        def rdversion = grailsApplication.metadata.getProperty('info.app.version', String, null)
         def rdversionShort = rdversion.split('-')[0]
 
         def helpBase

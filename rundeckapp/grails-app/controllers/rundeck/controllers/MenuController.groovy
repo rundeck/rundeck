@@ -119,7 +119,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ajaxSystemAclMeta              : 'POST',
     ]
 
-    static final enum ConfigAccess{
+    static enum ConfigAccess{
         app_admin,
         ops_admin
     }
@@ -1648,7 +1648,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         Date nowDate = new Date();
         String nodeName = servletContext.getAttribute("FRAMEWORK_NODE")
-        String appVersion = grailsApplication.metadata['info.app.version']
+        String appVersion = grailsApplication.metadata.getProperty('info.app.version', String, null)
         double load = ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
         int processorsCount = ManagementFactory.getOperatingSystemMXBean().availableProcessors
         String osName = ManagementFactory.getOperatingSystemMXBean().name
@@ -1662,8 +1662,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long durationTime = ManagementFactory.getRuntimeMXBean().uptime
         Date startupDate = new Date(nowDate.getTime() - durationTime)
         int threadActiveCount = Thread.activeCount()
-        def build = grailsApplication.metadata['build.ident']
-        def buildGit = grailsApplication.metadata['build.core.git.description']
+        def build = grailsApplication.metadata.getProperty('build.ident', String, null)
+        def buildGit = grailsApplication.metadata.getProperty('build.core.git.description', String, null)
         def base = servletContext.getAttribute("RDECK_BASE")
         boolean executionModeActive=configurationService.executionModeActive
         String apiVersion = ApiVersions.API_CURRENT_VERSION
