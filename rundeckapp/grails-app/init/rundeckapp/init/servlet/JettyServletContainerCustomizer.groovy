@@ -21,8 +21,8 @@ import org.eclipse.jetty.server.Handler
 import org.eclipse.jetty.server.HostHeaderCustomizer
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.ContextHandler
-import org.eclipse.jetty.ee10.webapp.AbstractConfiguration
-import org.eclipse.jetty.ee10.webapp.WebAppContext
+import org.eclipse.jetty.ee11.webapp.AbstractConfiguration
+import org.eclipse.jetty.ee11.webapp.WebAppContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.jetty.JettyServerCustomizer
@@ -76,7 +76,9 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
      * @param factory the servlet web server factory being customized
      */
     void applySecureSessionCookieDefault(final JettyServletWebServerFactory factory) {
-        def cookie = factory.session?.cookie
+        // Spring Boot 4: `session` is write-only on the factory itself (set via the
+        // ConfigurableServletWebServerFactory interface); the readable copy lives on settings.
+        def cookie = factory.settings?.session?.cookie
         if (cookie != null && cookie.secure == null && isHttpsUrl(serverUrl)) {
             cookie.secure = true
         }

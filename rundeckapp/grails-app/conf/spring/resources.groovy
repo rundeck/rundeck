@@ -154,7 +154,7 @@ import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
-import org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator
+import org.springframework.boot.jdbc.health.DataSourceHealthIndicator
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor

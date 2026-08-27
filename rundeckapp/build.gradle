@@ -303,7 +303,9 @@ dependencies {
         exclude(group:'org.eclipse.jetty.websocket',module:'websocket-server')
         exclude(group:'org.eclipse.jetty.websocket',module:'javax-websocket-server-impl')
     }
-    implementation "org.eclipse.jetty.ee10:jetty-ee10-webapp:${project.property('jetty.version')}"
+    // Spring Boot 4.1's spring-boot-jetty targets Jetty EE11 (Jetty 12.1.x), not EE10 (12.0.x);
+    // version is BOM-managed via spring-boot-dependencies rather than pinned to jetty.version.
+    implementation "org.eclipse.jetty.ee11:jetty-ee11-webapp"
 
     implementation "org.apache.grails:grails-web-boot"
     implementation "org.apache.grails:grails-logging"
@@ -334,6 +336,9 @@ dependencies {
     implementation "org.eclipse.jetty:jetty-security"
     implementation "org.apache.mina:mina-core:${minaCoreVersion}"
     implementation "org.springframework.boot:spring-boot-security"
+    // Spring Boot 4 modularization: DataSourceHealthIndicator moved out of spring-boot-actuator
+    // into its own module, used directly in grails-app/conf/spring/resources.groovy
+    implementation "org.springframework.boot:spring-boot-jdbc"
     implementation ("org.apache.grails:grails-spring-security:${grailsSpringSecurityVersion}"){
         exclude(group:'net.sf.ehcache',module:'ehcache')
         exclude(group:'org.grails',module:'grails-core')
@@ -401,7 +406,7 @@ dependencies {
     testImplementation "org.apache.groovy:groovy-xml:${groovyVersion}"
     testImplementation "org.apache.groovy:groovy-test:${groovyVersion}"
     testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
-    testImplementation "org.eclipse.jetty.ee10:jetty-ee10-webapp:${project.property('jetty.version')}"
+    testImplementation "org.eclipse.jetty.ee11:jetty-ee11-webapp"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     // testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}") // Managed by Grails BOM
