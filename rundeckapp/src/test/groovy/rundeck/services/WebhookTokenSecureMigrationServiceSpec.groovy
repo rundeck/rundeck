@@ -123,6 +123,76 @@ class WebhookTokenSecureMigrationServiceSpec extends Specification
         sql.close()
     }
 
+    def "migrateWebhookTokensToSecured runs when this server is the configured primary in a cluster"() {
+        given:
+        def dataSource = h2DataSource()
+        def sql = new Sql(dataSource)
+        sql.execute('''
+            CREATE TABLE auth_token (
+                id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                token VARCHAR(255) NOT NULL UNIQUE,
+                type VARCHAR(255),
+                token_mode VARCHAR(255)
+            )
+        ''')
+        sql.execute("INSERT INTO auth_token (token, type, token_mode) VALUES ('legacy-clear-1', 'WEBHOOK', 'LEGACY')")
+
+        service.dataSource = dataSource
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+            getServerUUID() >> "this-server-uuid"
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString("primaryServerId") >> "this-server-uuid"
+        }
+
+        when:
+        service.migrateWebhookTokensToSecured()
+        def row = sql.rows("SELECT token, token_mode FROM auth_token")[0]
+
+        then:
+        row.token == AuthenticationTokenUtils.encodeTokenValue('legacy-clear-1', AuthTokenMode.SECURED)
+        row.token_mode == 'SECURED'
+
+        cleanup:
+        sql.close()
+    }
+
+    def "migrateWebhookTokensToSecured runs in cluster mode when no primaryServerId is configured"() {
+        given:
+        def dataSource = h2DataSource()
+        def sql = new Sql(dataSource)
+        sql.execute('''
+            CREATE TABLE auth_token (
+                id BIGINT PRIMARY KEY AUTO_INCREMENT,
+                token VARCHAR(255) NOT NULL UNIQUE,
+                type VARCHAR(255),
+                token_mode VARCHAR(255)
+            )
+        ''')
+        sql.execute("INSERT INTO auth_token (token, type, token_mode) VALUES ('legacy-clear-1', 'WEBHOOK', 'LEGACY')")
+
+        service.dataSource = dataSource
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+            getServerUUID() >> "this-server-uuid"
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString("primaryServerId") >> null
+        }
+
+        when:
+        service.migrateWebhookTokensToSecured()
+        def row = sql.rows("SELECT token, token_mode FROM auth_token")[0]
+
+        then:
+        row.token == AuthenticationTokenUtils.encodeTokenValue('legacy-clear-1', AuthTokenMode.SECURED)
+        row.token_mode == 'SECURED'
+
+        cleanup:
+        sql.close()
+    }
+
     /**
      * Builds a plain {@link DataSource} backed by a fresh H2 in-memory database, reachable via
      * {@link DriverManager}. This avoids a compile-time dependency on {@code org.h2.jdbcx.JdbcDataSource}
