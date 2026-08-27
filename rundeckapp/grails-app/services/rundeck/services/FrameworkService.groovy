@@ -117,7 +117,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
      */
     def listEmbeddedPlugins(GrailsApplication grailsApplication) {
         def loader = new ApplicationContextPluginFileSource(grailsApplication.mainContext, '/WEB-INF/rundeck/plugins/')
-        def result = [success: true, logs: []]
+        Map<String, Object> result = [success: true, logs: []]
         def pluginList
         try {
             pluginList = loader.listManifests()
