@@ -1397,6 +1397,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def logOutFlusher = new LogFlusher()
             def logErrFlusher = new LogFlusher()
             def wfStepMetricsListener = new WorkflowExecutionListenerStepMetrics(new WorkflowMetricsWriterImpl(metricService))
+            def stepNodeSecondsListener = new StepNodeSecondsWorkflowListener(execution.id)
             def listenersList = [
                     contextmanager,
                     executionListener, //manages context for logging
@@ -1405,6 +1406,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logOutFlusher, //flushes stdout output after node steps
                     logErrFlusher, //flush stderr output after node steps
                     wfStepMetricsListener, //collects step metrics
+                    stepNodeSecondsListener, //accumulates step_node_seconds for RBA consumption metering
                     /*new EchoExecListener() */
             ]
             def multiListener = MultiWorkflowExecutionListener.create(
@@ -3629,7 +3631,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execution: execution,
                     job: scheduledExecution,
                     nodeStatus: [succeeded: sucCount, failed: failedCount, total: totalCount],
-                    context: context?.dataContext
+                    context: context?.dataContext,
+                    stepNodeSeconds: StepNodeSecondsStore.getInstance().takeFinishedTotal(execution.id)
             )
 
             notify('executionComplete', completedEvent)
