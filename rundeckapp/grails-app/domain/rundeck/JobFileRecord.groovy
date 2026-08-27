@@ -54,7 +54,19 @@ class JobFileRecord {
         fileName(nullable: true, maxSize: 1024)
         size(nullable: false)
         recordType(nullable: false, maxSize: 255)
-        fileState(nullable: false, maxSize: 255, inList: [STATE_TEMP, STATE_DELETED, STATE_EXPIRED, STATE_RETAINED])
+        // Grails 8/GORM hibernate5: constraints closures are evaluated with HibernateMappingBuilder
+        // as delegate, which doesn't fall back to the owner class for bare static field lookups
+        // (unlike constraints closures elsewhere) -- fully qualify to avoid MissingPropertyException.
+        fileState(
+            nullable: false,
+            maxSize: 255,
+            inList: [
+                JobFileRecord.STATE_TEMP,
+                JobFileRecord.STATE_DELETED,
+                JobFileRecord.STATE_EXPIRED,
+                JobFileRecord.STATE_RETAINED
+            ]
+        )
         user(nullable: false, maxSize: 255)
         expirationDate(nullable: true)
         uuid(nullable: false)
