@@ -40,8 +40,6 @@ import rundeck.services.LogFileStorageService
 import rundeck.services.feature.FeatureService
 import rundeckapp.cli.CommandLineSetup
 import webhooks.Webhook
-import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
-import rundeck.data.util.AuthenticationTokenUtils
 
 import jakarta.servlet.ServletContext
 import java.nio.charset.Charset
@@ -560,7 +558,6 @@ class BootStrap {
             }
             if(canApplyServerUpdates) {
                 ensureTypeOnAuthToken()
-                migrateWebhookTokensToSecured()
             }
 
         }
@@ -583,41 +580,6 @@ class BootStrap {
             log.warn("Unable to ensure all auth tokens have a type. Please run the following sql statement manually on your Rundeck database: ")
             log.warn("UPDATE auth_token SET type = 'USER' WHERE type = ''")
             log.error("Update execution error: ",ex)
-        }
-    }
-
-    /**
-     * One-time startup fixup (PS-1686): re-hashes any WEBHOOK auth_token rows still in LEGACY
-     * or null token_mode to SECURED, using the same SHA-256 helper every other token type
-     * already uses. Runs one row per statement so a single bad row can't abort the batch, and
-     * is naturally idempotent — converted rows no longer match the LEGACY/null filter on the
-     * next boot. The webhook's public secret lives in the separate `webhook.auth_token` column
-     * and is never touched here, so existing webhook URLs keep working unchanged.
-     */
-    def migrateWebhookTokensToSecured() {
-        Sql sql = new Sql(dataSource)
-        try {
-            List<groovy.sql.GroovyRowResult> rows = sql.rows(
-                    "SELECT id, token FROM auth_token WHERE type = 'WEBHOOK' AND (token_mode IS NULL OR token_mode = 'LEGACY')"
-            )
-            int converted = 0
-            rows.each { row ->
-                try {
-                    String hashed = AuthenticationTokenUtils.encodeTokenValue(row.token as String, AuthTokenMode.SECURED)
-                    converted += sql.executeUpdate(
-                            "UPDATE auth_token SET token = ?, token_mode = 'SECURED' WHERE id = ? AND token = ?",
-                            [hashed, row.id, row.token]
-                    )
-                } catch (Exception rowEx) {
-                    log.error("Unable to migrate webhook auth_token id ${row.id} to SECURED mode: ", rowEx)
-                }
-            }
-            if (converted) {
-                log.info("Migrated ${converted} webhook auth_token row(s) from LEGACY to SECURED mode")
-            }
-        } catch (Exception ex) {
-            log.warn("Unable to migrate webhook auth tokens to SECURED mode. Please investigate the auth_token table manually.")
-            log.error("Webhook token migration error: ", ex)
         }
     }
 
