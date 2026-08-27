@@ -303,6 +303,7 @@ dependencies {
         exclude(group:'org.eclipse.jetty.websocket',module:'websocket-server')
         exclude(group:'org.eclipse.jetty.websocket',module:'javax-websocket-server-impl')
     }
+    implementation "org.eclipse.jetty.ee10:jetty-ee10-webapp:${project.property('jetty.version')}"
 
     implementation "org.apache.grails:grails-web-boot"
     implementation "org.apache.grails:grails-logging"
@@ -332,6 +333,7 @@ dependencies {
     implementation "org.eclipse.jetty:jetty-util"
     implementation "org.eclipse.jetty:jetty-security"
     implementation "org.apache.mina:mina-core:${minaCoreVersion}"
+    implementation "org.springframework.boot:spring-boot-security"
     implementation ("org.apache.grails:grails-spring-security:${grailsSpringSecurityVersion}"){
         exclude(group:'net.sf.ehcache',module:'ehcache')
         exclude(group:'org.grails',module:'grails-core')
@@ -351,6 +353,7 @@ dependencies {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     implementation "org.apache.grails:grails-data-hibernate5-dbmigration"
+    implementation "org.apache.grails:grails-data-hibernate5-dbmigration-cli"
     implementation "org.apache.commons:commons-lang3:${commonsLang3Version}"
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
@@ -387,7 +390,6 @@ dependencies {
     }
 
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:${tomcatJdbcVersion}"
-    runtimeOnly "org.springframework:spring-jcl"  // Version managed by Spring Boot BOM
     runtimeOnly "org.apache.groovy:groovy-dateutil"  // Version managed by Grails BOM
     api ("cloud.wondrify:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "cloud.wondrify:asset-pipeline-grails:$assetPluginVersion"
@@ -399,7 +401,7 @@ dependencies {
     testImplementation "org.apache.groovy:groovy-xml:${groovyVersion}"
     testImplementation "org.apache.groovy:groovy-test:${groovyVersion}"
     testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
-    testImplementation "org.eclipse.jetty.ee10:jetty-ee10-webapp"
+    testImplementation "org.eclipse.jetty.ee10:jetty-ee10-webapp:${project.property('jetty.version')}"
     testImplementation "com.squareup.okhttp3:mockwebserver:${okhttpVersion}"
     testImplementation "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     // testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}") // Managed by Grails BOM

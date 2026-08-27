@@ -19,7 +19,7 @@ enum NavLinkTypes {
     SETUP_SCM("nav-project-settings-setup-scm", "/scm", true),
     EXPORT_ARCHIVE("nav-project-settings-export-archive", "/export", true),
     IMPORT_ARCHIVE("nav-project-settings-import-archive", "/import", true),
-    DELETE_PROJECT("nav-project-settings-delete-project", "/admin/delete", true),
+    DELETE_PROJECT("nav-project-settings-delete-project", "/admin/delete", true);
 
     private String id
     private String url
