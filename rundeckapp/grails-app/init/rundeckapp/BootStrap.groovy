@@ -135,7 +135,7 @@ class BootStrap {
         servletContext.setAttribute("version.ident",VersionConstants.VERSION_IDENT)
         def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
 
-        servletContext.setAttribute("app.ident",grailsApplication.metadata['build.ident'])
+        servletContext.setAttribute("app.ident",grailsApplication.metadata.getProperty('build.ident', String, null))
         log.info("Starting ${appname} ${servletContext.getAttribute('app.ident')} ($shortBuildDate) ...")
         if(Boolean.getBoolean('rundeck.bootstrap.build.info')){
             def buildInfo=grailsApplication.metadata.findAll{it.key?.startsWith('build.core.git.')}

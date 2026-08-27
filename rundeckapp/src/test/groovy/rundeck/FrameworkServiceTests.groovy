@@ -93,7 +93,7 @@ class FrameworkServiceTests  {
     void testParseOptsFromString1(){
             def m1 = OptionsParserUtil.parseOptsFromString("-test 1")
             assertNotNull(m1)
-            assertTrue(m1 instanceof Map<String, String>)
+            assertTrue(m1 instanceof Map)
             assertEquals(1, m1.size())
             assertNotNull(m1['test'])
             assertEquals("1", m1['test'])
@@ -103,7 +103,7 @@ class FrameworkServiceTests  {
     void testParseOptsFromString2() {
             def m1 = OptionsParserUtil.parseOptsFromString("-test 1 -test2 flamjamps")
             assertNotNull(m1)
-            assertTrue(m1 instanceof Map<String, String>)
+            assertTrue(m1 instanceof Map)
             assertEquals(2, m1.keySet().size())
             assertNotNull(m1['test'])
             assertEquals("1", m1['test'])
@@ -115,7 +115,7 @@ class FrameworkServiceTests  {
     void testParseOptsFromStringQuoted() {
             def m1 = OptionsParserUtil.parseOptsFromString("-test 1 -test2 'flam jamps'")
             assertNotNull(m1)
-            assertTrue(m1 instanceof Map<String, String>)
+            assertTrue(m1 instanceof Map)
             assertEquals(2, m1.size())
             assertNotNull(m1['test'])
             assertEquals("1", m1['test'])
@@ -127,7 +127,7 @@ class FrameworkServiceTests  {
     void testParseOptsFromStringIgnored() {
             def m1 = OptionsParserUtil.parseOptsFromString("-test 1 -test2 'flam jamps' notparsed")
             assertNotNull(m1)
-            assertTrue(m1 instanceof Map<String, String>)
+            assertTrue(m1 instanceof Map)
             assertEquals(2, m1.size())
             assertNotNull(m1['test'])
             assertEquals("1", m1['test'])
@@ -147,7 +147,7 @@ class FrameworkServiceTests  {
     void testParseOptsFromStringShouldPreserveDashedValue() {
         def m1 = OptionsParserUtil.parseOptsFromString("-test -blah")
         assertNotNull(m1)
-        assertTrue(m1 instanceof Map<String, String>)
+        assertTrue(m1 instanceof Map)
         assertEquals(1, m1.size())
         assertNotNull(m1['test'])
         assertEquals("-blah", m1['test'])
@@ -156,7 +156,7 @@ class FrameworkServiceTests  {
     void testParseOptsFromArrayShouldPreserveDashedValue() {
         def m1 = OptionsParserUtil.parseOptsFromArray(["-test", "-blah"] as String[])
         assertNotNull(m1)
-        assertTrue(m1 instanceof Map<String, String>)
+        assertTrue(m1 instanceof Map)
         assertEquals(1, m1.size())
         assertNotNull(m1['test'])
         assertEquals("-blah", m1['test'])

@@ -211,8 +211,8 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
             return
         }
 
-        String version = grailsApplication?.metadata?.get('info.app.version') as String
-        String build = grailsApplication?.metadata?.get('build.ident') as String
+        String version = grailsApplication?.metadata?.getProperty('info.app.version', String, null)
+        String build = grailsApplication?.metadata?.getProperty('build.ident', String, null)
         String nodeUuid = frameworkService?.getServerUUID()
 
         Gauge.builder('rundeck.system.info', { -> 1.0d } as Supplier<Number>)
