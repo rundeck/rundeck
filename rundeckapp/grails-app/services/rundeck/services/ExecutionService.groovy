@@ -3340,10 +3340,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * property {@link AppConstants#PROJECT_OPTION_INPUT_DEFAULT_PATTERN} takes precedence over the
      * system-wide {@link AppConstants#SYSTEM_OPTION_INPUT_DEFAULT_PATTERN}. The system value is read
      * through ConfigurationService so it is editable via the System Configuration UI. Returns null
-     * when no pattern is configured, the configured value is blank, or the value is not a valid regex
-     * (in which case a warning is logged and no default validation is applied).
+     * when no pattern is configured or the configured value is blank (validation is simply not
+     * applied). If a pattern IS configured but is not a valid regular expression, this fails closed:
+     * it logs an error and throws {@link ExecutionServiceValidationException} so executions are
+     * blocked, rather than silently disabling the control (RUN-4693).
      * @param project project name
-     * @return compiled {@link Pattern} or null
+     * @return compiled {@link Pattern}, or null when no pattern is configured
+     * @throws ExecutionServiceValidationException when a configured pattern is not a valid regex
      */
     /**
      * RUN-4693: whether an option value is already constrained by the option's own definition — it
@@ -3377,8 +3380,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
             return Pattern.compile(pattern)
         } catch (PatternSyntaxException e) {
-            log.warn("Ignoring invalid default option input validation pattern '${pattern}'", e)
-            return null
+            // RUN-4693: fail closed. A configured-but-invalid pattern must NOT silently disable the
+            // control — an operator typo would otherwise leave option values unvalidated while the
+            // setting still appears to be "on". Refuse to run instead, and point at the
+            // misconfiguration in the log. The user-facing message deliberately omits the pattern
+            // string to avoid leaking configuration to job runners.
+            log.error("Invalid default option input validation pattern '${pattern}'; refusing to run (fail closed). Fix or unset the pattern.", e)
+            throw new ExecutionServiceValidationException(
+                    "Option input validation is misconfigured: the configured validation pattern is not a valid " +
+                    "regular expression. Executions are blocked until an administrator fixes or removes it.",
+                    [:], [:]
+            )
         }
     }
 
@@ -5469,7 +5481,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 },
                 SystemConfig.builder().with {
                     key AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY
-                    description "When enabled (default), an execution that provides options not defined on the job is created and then failed at start, with a message in the execution log. Disable to allow undeclared options to pass through (e.g. re-running a job whose option set has since changed)."
+                    description "Security control. When enabled (default), an execution that provides options not defined on the job is created and then failed at start. Disable ONLY if you must allow undeclared options to pass through."
                     defaultValue "true"
                     required false
                     datatype "Boolean"

@@ -2112,6 +2112,20 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ['test1': 'PlainVal'] | _
     }
 
+    def "validate option values, invalid configured pattern fails closed (RUN-4693)"() {
+        given: 'a configured default input pattern that is not a valid regex (operator typo)'
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'test1', enforced: false))
+        stubProjectOptionPattern('[unclosed')
+
+        when: 'a value is validated'
+        service.validateOptionValues(se, ['test1': 'anything'])
+
+        then: 'the execution is blocked rather than silently allowed (control not disabled)'
+        ExecutionServiceValidationException e = thrown()
+        e.message.contains('misconfigured')
+    }
+
     def "validate option values, default input pattern failure"() {
         given:
         ScheduledExecution se = new ScheduledExecution(project: 'AProject')
@@ -2306,8 +2320,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e.message == 'domain.Option.validation.default.pattern.invalid'
     }
 
-    def "validate option values, blank or invalid default input pattern is ignored"() {
-        given:
+    def "validate option values, blank default input pattern is ignored"() {
+        given: 'a blank/whitespace pattern means the control is simply not configured'
         ScheduledExecution se = new ScheduledExecution(project: 'AProject')
         se.addToOptions(new Option(name: 'test1', enforced: false))
         stubProjectOptionPattern(pattern)
@@ -2315,14 +2329,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def validation = service.validateOptionValues(se, ['test1': 'any value ; here'])
 
-        then:
+        then: 'validation is not applied (an invalid — non-blank — pattern is handled separately, fail-closed)'
         validation
 
         where:
         pattern    | _
         ''         | _
         '   '      | _
-        '[unclosed'| _
     }
 
     def "validate option values, enforced valid"() {
