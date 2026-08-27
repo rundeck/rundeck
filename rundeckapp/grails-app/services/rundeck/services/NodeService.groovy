@@ -49,7 +49,7 @@ import org.rundeck.core.projects.ProjectPluginListConfigurable
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.core.task.AsyncListenableTaskExecutor
+import org.springframework.core.task.AsyncTaskExecutor
 import rundeck.services.nodes.CachedProjectNodes
 
 import java.util.concurrent.TimeUnit
@@ -68,7 +68,7 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
     def configurationService
     def projectManagerService
     def pluginService
-    def AsyncListenableTaskExecutor nodeTaskExecutor
+    def AsyncTaskExecutor nodeTaskExecutor
     def Services rundeckSpiBaseServicesProvider
 
     def nodeSourceLoaderService

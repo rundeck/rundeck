@@ -50,7 +50,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationListener
 import org.springframework.context.event.ContextClosedEvent
-import org.springframework.core.task.AsyncListenableTaskExecutor
+import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
@@ -93,8 +93,8 @@ class LogFileStorageService
     ExecutionFileStoragePluginProviderService executionFileStoragePluginProviderService
     PluginService pluginService
     def frameworkService
-    AsyncListenableTaskExecutor logFileTaskExecutor
-    AsyncListenableTaskExecutor logFileStorageTaskExecutor
+    AsyncTaskExecutor logFileTaskExecutor
+    AsyncTaskExecutor logFileStorageTaskExecutor
     TaskScheduler logFileStorageTaskScheduler
     TaskExecutor logFileStorageDeleteRemoteTask
     def executorService

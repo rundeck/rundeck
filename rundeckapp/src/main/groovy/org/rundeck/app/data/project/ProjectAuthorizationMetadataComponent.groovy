@@ -21,7 +21,7 @@ class ProjectAuthorizationMetadataComponent implements ProjectMetadataComponent 
             (AuthConstants.TYPE_EVENT): [
                 AuthConstants.ACTION_READ
             ]
-        ]
+        ] as Map<String, List<String>>
     )
 
     public static final List<String> PROJ_AUTH_CHECK_ACTIONS = Collections.unmodifiableList(
@@ -56,7 +56,7 @@ class ProjectAuthorizationMetadataComponent implements ProjectMetadataComponent 
         result.putAll(getTypeAuthzMeta(project, authContext))
         result.putAll(getProjAuthzMeta(project, authContext, PROJ_AUTH_CHECK_ACTIONS))
         return Optional.of(
-            [ComponentMeta.with(NAME, result)]
+            [ComponentMeta.with(NAME, result)] as List<ComponentMeta>
         )
     }
 
