@@ -154,7 +154,20 @@ class SshjSession implements RemoteSession {
 
         void closeOutputStream() {
             if (outputStream != null) {
-                outputStream.close()
+                try {
+                    outputStream.close()
+                } catch (IOException ignored) {
+                    // Closing/flushing the process output stream after the underlying SSH
+                    // channel has already been torn down (see destroy(), which closes the
+                    // command before this) can throw - e.g. SSHJ's ChannelOutputStream throws
+                    // ConnectionException("Stream closed") if any buffered bytes remain
+                    // in the timeout>0 BufferedOutputStream/IsolatedOutputStream wrapper
+                    // (see setupStreams()) when the channel is no longer open. At this point
+                    // the process/channel is already being abandoned, so a failure to flush
+                    // leftover output is not an actionable error. JGit's own reference
+                    // RemoteSession implementation (JschSession.JSchProcess) swallows this
+                    // exact case the same way; do the same here.
+                }
             }
         }
     }
