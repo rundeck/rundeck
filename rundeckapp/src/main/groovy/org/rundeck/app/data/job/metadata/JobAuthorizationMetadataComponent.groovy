@@ -44,7 +44,7 @@ class JobAuthorizationMetadataComponent implements JobMetadataComponent {
         }
         def job = jobDataProvider.findBasicByUuid(id)
         return job.map {
-            [ComponentMeta.with(NAME, getAuthzMeta(it, authContext))]
+            [ComponentMeta.with(NAME, getAuthzMeta(it, authContext))] as List<ComponentMeta>
         }
     }
 
@@ -57,7 +57,7 @@ class JobAuthorizationMetadataComponent implements JobMetadataComponent {
         if (!names.contains(NAME) && !names.contains('*')) {
             return Optional.empty()
         }
-        return Optional.of([ComponentMeta.with(NAME, getAuthzMeta(job, authContext))])
+        return Optional.of([ComponentMeta.with(NAME, getAuthzMeta(job, authContext))] as List<ComponentMeta>)
     }
 
     Map<String, Object> getAuthzMeta(JobData jobDataSummary, UserAndRolesAuthContext authContext) {

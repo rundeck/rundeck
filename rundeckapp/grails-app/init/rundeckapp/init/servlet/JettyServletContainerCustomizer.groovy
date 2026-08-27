@@ -25,8 +25,8 @@ import org.eclipse.jetty.ee10.webapp.AbstractConfiguration
 import org.eclipse.jetty.ee10.webapp.WebAppContext
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer
-import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
+import org.springframework.boot.jetty.JettyServerCustomizer
+import org.springframework.boot.jetty.servlet.JettyServletWebServerFactory
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
 import rundeck.services.feature.FeatureService
 

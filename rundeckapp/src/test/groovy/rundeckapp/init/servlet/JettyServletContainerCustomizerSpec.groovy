@@ -1,6 +1,6 @@
 package rundeckapp.init.servlet
 
-import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
+import org.springframework.boot.jetty.servlet.JettyServletWebServerFactory
 import spock.lang.Specification
 import spock.lang.Unroll
 
