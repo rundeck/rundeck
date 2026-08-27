@@ -25,7 +25,7 @@ class JobStatsMetadataComponent implements JobMetadataComponent {
         if (!names.contains(STATS_NAME) && !names.contains('*')) {
             return Optional.empty()
         }
-        return Optional.of([ComponentMeta.with(STATS_NAME, getJobStats(id, project))])
+        return Optional.of([ComponentMeta.with(STATS_NAME, getJobStats(id, project))] as List<ComponentMeta>)
     }
 
     @Override
@@ -33,7 +33,7 @@ class JobStatsMetadataComponent implements JobMetadataComponent {
         if (!names.contains(STATS_NAME) && !names.contains('*')) {
             return Optional.empty()
         }
-        return Optional.of([ComponentMeta.with(STATS_NAME, getJobStats(job.uuid, job.project))])
+        return Optional.of([ComponentMeta.with(STATS_NAME, getJobStats(job.uuid, job.project))] as List<ComponentMeta>)
     }
 
     Map<String, Object> getJobStats(String uuid, String project) {
