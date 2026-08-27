@@ -55,6 +55,11 @@ class JobExecutionStatusSpec extends BaseContainer {
                       <group>api-test/job-run-timeout</group>
                       <description></description>
                       <loglevel>INFO</loglevel>
+                      <context>
+                        <options>
+                          <option name='opt2' />
+                        </options>
+                      </context>
                       <timeout>3s</timeout>
                       <dispatch>
                         <threadcount>1</threadcount>
@@ -95,6 +100,11 @@ class JobExecutionStatusSpec extends BaseContainer {
                           <group>api-test/job-run-timeout-retry</group>
                           <description></description>
                           <loglevel>INFO</loglevel>
+                          <context>
+                            <options>
+                              <option name='opt2' />
+                            </options>
+                          </context>
                           <timeout>3s</timeout>
                           <retry>1</retry>
                           <dispatch>
@@ -137,5 +147,53 @@ class JobExecutionStatusSpec extends BaseContainer {
             responseExec1.status == 'timedout'
             response.retriedExecution != null
         }
+    }
+
+    def "job/id/run rejects options not declared on the job (RUN-4693)"() {
+        setup: "a job that declares NO options"
+        def projectName = UUID.randomUUID().toString()
+        setupProject(projectName)
+        def xml = """
+                <joblist>
+                   <job>
+                      <name>no-options job</name>
+                      <group>api-test/job-run-undeclared</group>
+                      <description></description>
+                      <loglevel>INFO</loglevel>
+                      <sequence>
+                        <command>
+                        <exec>echo hello</exec>
+                        </command>
+                      </sequence>
+                   </job>
+                </joblist>
+            """
+        def path = JobUtils.generateFileToImport(xml, 'xml')
+        def jobId = JobUtils.jobImportFile(projectName, path, client).succeeded[0].id
+
+        when: "the job is run with an option it does not declare (option injection attempt)"
+        def jobRun = JobUtils.executeJobWithArgs(jobId, client, "-ghost pwned")
+        def execId = jsonValue(jobRun.body()).id
+
+        then: "the execution is created"
+        execId != null
+
+        when: "the execution finishes"
+        def execFinal = JobUtils.waitForExecution(
+                ExecutionStatus.FAILED.state,
+                execId as String,
+                client,
+                WaitingTime.EXCESSIVE)
+
+        then: "it is failed at start because the option is not declared on the job"
+        execFinal.status == 'failed'
+
+        when:
+        def output = JobUtils.getExecutionOutput(execId as String, client)
+        def logs = output.entries.collect { it.log }
+
+        then: "the rejection is reported in the log and the job step never ran"
+        logs.any { it.contains('Execution rejected') && it.contains('ghost') }
+        !logs.any { it.contains('hello') }
     }
 }
