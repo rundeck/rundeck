@@ -3,6 +3,8 @@ package grails.persistlocale
 import grails.plugins.*
 import org.springframework.web.servlet.i18n.CookieLocaleResolver
 
+import java.time.Duration
+
 class PersistlocaleGrailsPlugin extends Plugin {
 
     // the version or versions of Grails the plugin is designed for
@@ -27,9 +29,15 @@ use Cookie based resolver for Locale.
 
     Closure doWithSpring() {
         { ->
-            localeResolver(CookieLocaleResolver) {
-                cookieMaxAge = grailsApplication.config.getProperty("rundeck.web.cookie.localeCookieExpiration",Integer.class, 7776000) //90days
-                cookieName = grailsApplication.config.getProperty("rundeck.web.cookie.localeCookieName",String.class, 'rundeck.LOCALE')
+            // Spring Framework 7: CookieLocaleResolver's cookie name is now constructor-only
+            // (no setCookieName setter), and cookieMaxAge takes a Duration instead of an int.
+            localeResolver(
+                CookieLocaleResolver,
+                grailsApplication.config.getProperty("rundeck.web.cookie.localeCookieName", String.class, 'rundeck.LOCALE')
+            ) {
+                cookieMaxAge = Duration.ofSeconds(
+                    grailsApplication.config.getProperty("rundeck.web.cookie.localeCookieExpiration", Integer.class, 7776000) as long
+                ) //90days
             }
         }
     }
