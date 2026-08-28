@@ -387,7 +387,7 @@ jobs:
             java -Xmx2g -cp "$JARS/*" org.codenarc.CodeNarc \
               -basedir=. \
               -includes='**/*.groovy' \
-              -excludes='**/build/**,**/node_modules/**,**/.gradle/**' \
+              -excludes='**/build/**,**/node_modules/**,**/.gradle/**,**/src/test/**,functional-test/**,test/**,**/*Spec.groovy,**/*Test.groovy' \
               -rulesetfiles=file:config/codenarc/rules.groovy \
               -report=html:"$REPORTS/codenarc.html" \
               -report=xml:"$REPORTS/codenarc.xml" \

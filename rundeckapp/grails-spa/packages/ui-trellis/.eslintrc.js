@@ -53,6 +53,14 @@ module.exports = {
     complexity: ["warn", 25],
   },
   ignorePatterns: ["build", "test", ".storybook"],
+  overrides: [
+    {
+      files: ["**/*.spec.ts", "**/*.spec.js", "**/tests/**", "**/__tests__/**"],
+      rules: {
+        complexity: "off",
+      },
+    },
+  ],
   extends: [
     "@vue/typescript/recommended",
     "plugin:vue/vue3-recommended",
