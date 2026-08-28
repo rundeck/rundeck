@@ -6,6 +6,8 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
 # Fires once a renovate PR labeled 'sync-rundeckpro' (see renovate.json packageRules)
 # merges here. Extracts the exact package/version bump from ui-trellis's package.json
 # diff and hands it to rundeckpro's sync-renovate-dependency.yml, which decides
