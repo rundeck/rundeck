@@ -1,6 +1,19 @@
-import { mount } from "@vue/test-utils";
+import { mount, DOMWrapper } from "@vue/test-utils";
 import FilterList from "./FilterList.vue";
 import { Webhook } from "../../stores/Webhooks";
+
+function sortByVisualPosition(elements: DOMWrapper<Element>[]) {
+  const offsetOf = (el: DOMWrapper<Element>) => {
+    const view = el.element.closest(
+      ".vue-recycle-scroller__item-view",
+    ) as HTMLElement | null;
+    const match = view?.style.transform.match(
+      /translateY\((-?\d+(\.\d+)?)px\)/,
+    );
+    return match ? parseFloat(match[1]) : 0;
+  };
+  return [...elements].sort((a, b) => offsetOf(a) - offsetOf(b));
+}
 
 describe("FilterList", () => {
   const items = [
@@ -24,8 +37,8 @@ describe("FilterList", () => {
     // Set the search query
     await input.setValue("an");
 
-    // Find the rendered items
-    const renderedItems = wrapper.findAll(".item");
+    // Find the rendered items, in visual (not DOM insertion) order
+    const renderedItems = sortByVisualPosition(wrapper.findAll(".item"));
 
     // Assert that the filtered items are rendered correctly
     expect(renderedItems).toHaveLength(3);
@@ -68,8 +81,10 @@ describe("FilterList", () => {
     // Set the search query
     await input.setValue("a");
 
-    // Find the first rendered item
-    const firstItem = wrapper.find(".scroller__item");
+    // Find the first rendered item, in visual (not DOM insertion) order
+    const firstItem = sortByVisualPosition(
+      wrapper.findAll(".scroller__item"),
+    )[0];
 
     // Trigger a click on the item
     await firstItem.trigger("click");

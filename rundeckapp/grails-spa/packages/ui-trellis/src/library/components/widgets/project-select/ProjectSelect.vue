@@ -6,9 +6,9 @@
           <i class="fas fa-search form-control-feedback" />
           <input
             ref="search"
+            v-model="searchTerm"
             type="text"
             class="form-control form-control-sm"
-            v-model="searchTerm"
             placeholder="Search all projects"
             data-testid="search-projects"
           />
@@ -17,12 +17,14 @@
       <Skeleton :loading="!projectStore.loaded">
         <RecycleScroller
           ref="scroller"
+          :key="`${options.length}scroller`"
+          v-slot="{ item }"
           :items="options"
           :item-size="25"
-          :key="`${options.length}scroller`"
-          v-slot:default="{ item }"
           key-field="name"
           class="scroller"
+          @update="onScrollerUpdate"
+          @resize="onScrollerUpdate"
         >
           <a
             v-if="mode === 'single'"
@@ -43,11 +45,11 @@
             </span>
           </a>
           <label
-            class="scroller__item scroller__item__checkbox"
             v-else-if="mode === 'multi'"
-            @keydown.space="handleSelect(item.name)"
+            class="scroller__item scroller__item__checkbox"
             tabindex="0"
             :data-testid="`projectItem${item.name}`"
+            @keydown.space="handleSelect(item.name)"
           >
             <input
               :checked="
@@ -57,8 +59,8 @@
               type="checkbox"
               :value="item.name"
               class="vue-multiselect-checkbox"
-              @click="handleSelect(item.name)"
               :data-testid="`projectCheckbox-${item.name}`"
+              @click="handleSelect(item.name)"
             />
             <span class="text-ellipsis">
               {{ item.label || item.name }}
@@ -110,7 +112,7 @@
 </template>
 
 <script lang="ts">
-import { ref, nextTick, defineComponent } from "vue";
+import { nextTick, defineComponent } from "vue";
 import PerfectScrollbar from "perfect-scrollbar";
 import { RecycleScroller } from "vue-virtual-scroller";
 import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
@@ -119,26 +121,6 @@ import { getAppLinks } from "../../../rundeckService";
 import Skeleton from "../../skeleton/Skeleton.vue";
 import { url } from "../../../rundeckService";
 import { Project } from "../../../stores/Projects";
-
-const ps = ref<PerfectScrollbar>();
-RecycleScroller.updated = function () {
-  if (!ps.value)
-    nextTick().then(() => {
-      ps.value = new PerfectScrollbar(this.$el, { minScrollbarLength: 20 });
-    });
-  else ps.value.update();
-};
-
-const unmount = RecycleScroller.beforeUnmount;
-RecycleScroller.beforeUnmount = function () {
-  unmount.bind(this)();
-  if (ps.value) {
-    try {
-      ps.value.destroy();
-      ps.value = null;
-    } catch {}
-  }
-};
 
 export default defineComponent({
   name: "ProjectSelect",
@@ -169,6 +151,7 @@ export default defineComponent({
       projectStore: window._rundeck.rootStore.projects,
       searchTerm: "",
       allProjectsAreSelected: false,
+      ps: undefined as PerfectScrollbar | undefined,
     };
   },
   computed: {
@@ -203,23 +186,22 @@ export default defineComponent({
       return this.projectStore.search("").map((proj) => proj.name);
     },
   },
-  methods: {
-    itemHref(project: Project) {
-      return url(`?project=${project.name}`).href;
-    },
-    handleSelect(projectName: string) {
-      let arrayToEmit = [projectName];
-      if (projectName === "_all") {
-        arrayToEmit =
-          this.selectedProjects.length === this.allProjectNames.length
-            ? []
-            : this.allProjectNames;
-      }
-      this.$emit("update:selection", arrayToEmit);
+  watch: {
+    selectedProjects(newVal) {
+      this.allProjectsAreSelected =
+        newVal.length === this.allProjectNames.length;
     },
   },
   beforeMount() {
     this.projectStore.load();
+  },
+  beforeUnmount() {
+    if (this.ps) {
+      try {
+        this.ps.destroy();
+      } catch {}
+      this.ps = undefined;
+    }
   },
   mounted() {
     if (this.projectStore.projects.length) {
@@ -235,10 +217,32 @@ export default defineComponent({
       (<HTMLElement>this.$refs["search"]).focus();
     });
   },
-  watch: {
-    selectedProjects(newVal) {
-      this.allProjectsAreSelected =
-        newVal.length === this.allProjectNames.length;
+  methods: {
+    itemHref(project: Project) {
+      return url(`?project=${project.name}`).href;
+    },
+    handleSelect(projectName: string) {
+      let arrayToEmit = [projectName];
+      if (projectName === "_all") {
+        arrayToEmit =
+          this.selectedProjects.length === this.allProjectNames.length
+            ? []
+            : this.allProjectNames;
+      }
+      this.$emit("update:selection", arrayToEmit);
+    },
+    onScrollerUpdate() {
+      const scrollerRef = this.$refs["scroller"] as
+        InstanceType<typeof RecycleScroller> | undefined;
+      const scroller = scrollerRef?.$el as HTMLElement | undefined;
+      if (!scroller) return;
+      if (!this.ps) {
+        nextTick().then(() => {
+          this.ps = new PerfectScrollbar(scroller, { minScrollbarLength: 20 });
+        });
+      } else {
+        this.ps.update();
+      }
     },
   },
 });

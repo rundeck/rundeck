@@ -1,6 +1,24 @@
-import { mount, VueWrapper, flushPromises } from "@vue/test-utils";
+import { mount, VueWrapper, flushPromises, DOMWrapper } from "@vue/test-utils";
 import ProjectSelect from "../ProjectSelect.vue";
 import { EventBus } from "../../../../utilities/vueEventBus";
+
+/**
+ * vue-virtual-scroller positions recycled items via CSS transform rather than
+ * DOM order, so DOM insertion order is not guaranteed to match visual order.
+ * Sort by the item's translateY offset to get the actual rendered order.
+ */
+function sortByVisualPosition(elements: DOMWrapper<Element>[]) {
+  const offsetOf = (el: DOMWrapper<Element>) => {
+    const view = el.element.closest(
+      ".vue-recycle-scroller__item-view",
+    ) as HTMLElement | null;
+    const match = view?.style.transform.match(
+      /translateY\((-?\d+(\.\d+)?)px\)/,
+    );
+    return match ? parseFloat(match[1]) : 0;
+  };
+  return [...elements].sort((a, b) => offsetOf(a) - offsetOf(b));
+}
 
 jest.mock("../../../../rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({}),
@@ -9,7 +27,6 @@ jest.mock("../../../../rundeckService", () => ({
     menuHome: "http://localhost",
   })),
   url: jest.fn((path: string) => ({ href: `http://localhost${path}` })),
-
 }));
 jest.mock("../../../../stores/RootStore", () => ({
   RootStore: jest.fn().mockImplementation(() => ({
@@ -70,7 +87,7 @@ describe("ProjectSelect.vue", () => {
     };
   });
   afterAll(() => {
-    Reflect.deleteProperty(window, '_rundeck');
+    Reflect.deleteProperty(window, "_rundeck");
   });
   afterEach(() => {
     jest.clearAllMocks();
@@ -89,7 +106,9 @@ describe("ProjectSelect.vue", () => {
   it("navigates to correct URL when clicking on a project in single mode", async () => {
     const wrapper = await createWrapper({ mode: "single" });
     await flushPromises();
-    const projectLink = wrapper.findAll(".scroller__item");
+    const projectLink = sortByVisualPosition(
+      wrapper.findAll(".scroller__item"),
+    );
     await flushPromises();
     expect(projectLink).toHaveLength(2);
     expect(projectLink[0].attributes("href")).toBe(
@@ -119,6 +138,5 @@ describe("ProjectSelect.vue", () => {
     expect(createProjectButton.attributes("href")).toBe(
       "http://localhostresources/createProject",
     );
-
   });
 });
