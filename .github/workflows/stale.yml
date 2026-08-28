@@ -1,0 +1,63 @@
+name: Close stale issues
+
+# Replaces the old .github/stale.yml (a Probot Stale config with no workflow
+# ever running it — confirmed dead for 13+ months with issues sitting
+# labeled but never closed). This workflow is the live equivalent.
+#
+# DO NOT MERGE until the one-time backlog cleanup (closing issues older
+# than 1 year, tied to the release support window) has been run. Merging
+# before then would let this immediately start processing the same old
+# backlog on its own, less deliberate terms.
+
+on:
+  schedule:
+    - cron: '30 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: none
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v11
+        with:
+          # Issues only — PR staleness isn't in scope here.
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+
+          days-before-issue-stale: 365
+          days-before-issue-close: 14
+
+          # Confirmed/reproduced bugs and issues already tracked internally
+          # (to-jira) must never be silently auto-closed on age alone — only
+          # a deliberate version-support sweep should touch those.
+          exempt-issue-labels: 'enhancement,security,status:reproduced,to-jira'
+          stale-issue-label: 'wontfix:stale'
+
+          stale-issue-message: >
+            This issue has had no activity in the last 12 months. Runbook
+            Automation supports released versions for one year from their
+            release date — see the [release
+            calendar](https://docs.rundeck.com/docs/history/release-calendar.html)
+            for currently supported versions. If you're still seeing this on
+            a supported release, comment with your version and reproduction
+            steps within the next 14 days to keep this open.
+
+
+            Thank you,
+
+            The Rundeck Team
+
+          close-issue-message: >
+            Closing due to inactivity. If this is still occurring on a
+            currently supported version (see the [release
+            calendar](https://docs.rundeck.com/docs/history/release-calendar.html)),
+            please open a new issue using our [bug report
+            template](https://github.com/rundeck/rundeck/issues/new?template=bug_report.yml)
+            with reproduction details — please don't reopen this one.
+
+          remove-stale-when-updated: true
+          operations-per-run: 200
