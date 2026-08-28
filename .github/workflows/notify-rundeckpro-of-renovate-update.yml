@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 # Fires once a renovate PR labeled 'sync-rundeckpro' (see renovate.json packageRules)
 # merges here. Extracts the exact package/version bump from ui-trellis's package.json
 # diff and hands it to rundeckpro's sync-renovate-dependency.yml, which decides
@@ -20,6 +21,42 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'sync-rundeckpro')
     runs-on: ubuntu-latest
     steps:
+      # Same pattern as prepare-community-pr.yml's "Verify approval for current PR
+      # head": Renovate branches live in this repo, not a fork, so any collaborator
+      # with write access could push an extra commit onto an already-approved,
+      # still-open renovate PR before it merges. Require an APPROVED review recorded
+      # against the exact merged head commit, not just "a review exists somewhere".
+      - name: Verify approval for merged head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          head_lc="${HEAD_SHA,,}"
+
+          reviews_json="$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json reviews,headRefOid)"
+
+          pr_head="$(jq -r '.headRefOid // ""' <<<"${reviews_json}")"
+          pr_head_lc="${pr_head,,}"
+          if [[ "${pr_head_lc}" != "${head_lc}" ]]; then
+            echo "PR head from view (${pr_head}) does not match event head.sha ${HEAD_SHA}." >&2
+            exit 1
+          fi
+
+          approved_for_head="$(
+            jq --arg head "${head_lc}" '
+              [.reviews[]? | select(.state == "APPROVED" and (((.commit.oid // "") | ascii_downcase) == $head))]
+              | length
+            ' <<<"${reviews_json}"
+          )"
+
+          if [[ "${approved_for_head}" -lt 1 ]]; then
+            echo "PR #${PR_NUMBER} has no APPROVED review recorded for head ${HEAD_SHA}; refusing to sync." >&2
+            exit 1
+          fi
+
       - name: Checkout merge commit
         uses: actions/checkout@v7
         with:
