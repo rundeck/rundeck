@@ -156,6 +156,57 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
             meterRegistry.find('rundeck.executions').tag('job_name', 'my-job').counter() == null
     }
 
+    void "recordStepNodeSeconds records a timer with project/status tags"() {
+        given:
+            def exec = execution([:])
+
+        when:
+            service.recordStepNodeSeconds(exec, 42L)
+
+        then:
+            meterRegistry.get('rundeck.execution.step_node_seconds')
+                .tag('project', 'p1').tag('status', 'succeeded')
+                .timer().count() == 1L
+    }
+
+    void "recordStepNodeSeconds is a no-op when stepNodeSeconds is null"() {
+        given:
+            def exec = execution([:])
+            def registrySize = meterRegistry.meters.size()
+
+        when:
+            service.recordStepNodeSeconds(exec, null)
+
+        then:
+            meterRegistry.meters.size() == registrySize
+    }
+
+    void "recordStepNodeSeconds is a no-op when execution is null"() {
+        given:
+            def registrySize = meterRegistry.meters.size()
+
+        when:
+            service.recordStepNodeSeconds(null, 42L)
+
+        then:
+            meterRegistry.meters.size() == registrySize
+    }
+
+    void "recordStepNodeSeconds adds job_id and job_name tags when the job dimension flag is enabled and the execution is scheduled"() {
+        given:
+            configurationService.getBoolean(MicrometerExecutionMetricsService.JOB_DIMENSION_ENABLED_PROPERTY, false) >> true
+            def job = new ScheduledExecution(uuid: 'job-uuid-1', jobName: 'my-job', groupPath: null)
+            def exec = execution(scheduledExecution: job)
+
+        when:
+            service.recordStepNodeSeconds(exec, 42L)
+
+        then:
+            meterRegistry.get('rundeck.execution.step_node_seconds')
+                .tag('project', 'p1').tag('status', 'succeeded').tag('job_id', 'job-uuid-1').tag('job_name', 'my-job')
+                .timer().count() == 1L
+    }
+
     void "recordExecutionStart increments the running gauge, recordExecution decrements it back to zero"() {
         given:
             def exec = execution([:])
@@ -206,6 +257,7 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
             def keptJob = new ScheduledExecution(uuid: 'job-uuid-2')
             service.recordExecutionStart(execution(scheduledExecution: deletedJob))
             service.recordExecution(execution(scheduledExecution: deletedJob))
+            service.recordStepNodeSeconds(execution(scheduledExecution: deletedJob), 42L)
             service.recordExecution(execution(scheduledExecution: keptJob))
             def event = Stub(JobChangeEvent) {
                 getEventType() >> JobChangeEvent.JobChangeEventType.DELETE
@@ -220,6 +272,7 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
         then:
             meterRegistry.find('rundeck.executions').tag('job_id', 'job-uuid-1').counter() == null
             meterRegistry.find('rundeck.execution.duration').tag('job_id', 'job-uuid-1').timer() == null
+            meterRegistry.find('rundeck.execution.step_node_seconds').tag('job_id', 'job-uuid-1').timer() == null
             meterRegistry.find('rundeck.executions.running').tag('job_id', 'job-uuid-1').gauge() == null
             meterRegistry.get('rundeck.executions').tag('job_id', 'job-uuid-2').counter().count() == 1.0d
     }
