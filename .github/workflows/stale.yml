@@ -34,7 +34,11 @@ jobs:
           # Confirmed/reproduced bugs and issues already tracked internally
           # (to-jira) must never be silently auto-closed on age alone — only
           # a deliberate version-support sweep should touch those.
-          exempt-issue-labels: 'enhancement,security,status:reproduced,to-jira'
+          # stalebot:ignore is the general escape hatch for pinned/perpetual
+          # issues (e.g. Renovate's "Dependency Dashboard", #7759 - it's old,
+          # unlabeled, and permanently open by design, so it matched every
+          # other criterion here before this label existed).
+          exempt-issue-labels: 'enhancement,security,status:reproduced,to-jira,stalebot:ignore'
           stale-issue-label: 'wontfix:stale'
 
           stale-issue-message: >
