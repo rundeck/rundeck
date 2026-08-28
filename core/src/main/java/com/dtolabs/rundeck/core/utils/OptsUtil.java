@@ -88,7 +88,12 @@ public class OptsUtil {
     }
 
     public static void escapeChars(StringBuilder out, String str) {
-        if (StringUtils.containsNone(str, CSV_SEARCH_CHARS) && !"".equals(str)) {
+        // A value is only safe to emit unquoted if it contains none of the CSV search chars AND no
+        // control/whitespace char with code <= 32. QuotedStringTokenizer.burst() splits on any char
+        // <= 32 (StrMatcher.trimMatcher()), so a value containing e.g. a TAB that is not quoted here
+        // would be re-split on burst() — breaking the join()/burst() round-trip and allowing extra
+        // tokens (arg smuggling). Quoting such values keeps the round-trip intact. See RUN-4693.
+        if (StringUtils.containsNone(str, CSV_SEARCH_CHARS) && !"".equals(str) && !containsControlChar(str)) {
             if (str != null) {
                 out.append(str);
             }
@@ -103,6 +108,25 @@ public class OptsUtil {
             out.append(c);
         }
         out.append(DBL_QUOTE);
+    }
+
+    /**
+     * @param str input (may be null)
+     * @return true if the string contains any character with code point &lt;= 32 (space and control
+     * characters such as TAB, VT, FF), which {@link QuotedStringTokenizer} treats as a delimiter.
+     * Only ASCII control/whitespace is matched; all non-ASCII text (e.g. Japanese, full-width space
+     * U+3000) is above 32 and is not affected.
+     */
+    private static boolean containsControlChar(final String str) {
+        if (str == null) {
+            return false;
+        }
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) <= 32) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

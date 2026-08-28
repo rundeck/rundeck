@@ -89,7 +89,9 @@ dependencies {
         exclude(group:"org.rundeck", module:"rundeck-storage-filesys")
         exclude(group:"com.squareup.okhttp3", module:"okhttp")
         exclude(group:"javax.mail", module:"mailapi")
-        exclude(group:"org.codehaus.groovy", module:"groovy-all")
+        // Groovy 4 renamed the group, so this exclusion stopped matching and the whole
+        // groovy-all aggregate started leaking in again.
+        exclude(group:"org.apache.groovy", module:"groovy-all")
         exclude(group: 'ch.qos.logback', module: 'logback-classic')
     }
 

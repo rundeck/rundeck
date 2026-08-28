@@ -159,6 +159,13 @@ public class RundeckConfigBase {
         RetryConfig finalize;
         RetryConfig status;
         ExecutionLogs logs;
+        /**
+         * RUN-4693: when true (default), an execution that provides options not declared on the job
+         * is created and then failed at start. Set false to restore the legacy passthrough. Bound
+         * from {@code rundeck.execution.rejectUndeclaredOptions} so it is resolvable via
+         * ConfigurationService and editable in the System Configuration UI.
+         */
+        Boolean rejectUndeclaredOptions;
 
         @Data
         public static class RetryConfig {
