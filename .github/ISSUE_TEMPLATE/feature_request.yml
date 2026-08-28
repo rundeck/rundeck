@@ -1,0 +1,52 @@
+name: Feature Request
+description: Suggest an idea or enhancement for Rundeck
+title: "[Feature]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please use this template for **feature requests** *only*. Have a configuration or troubleshooting question instead? Ask in the [Community forum](https://community.pagerduty.com/) rather than filing an issue here.
+
+        Note: feature requests are typically closed after any clarification discussion, to keep the open issues list focused on active work — closed requests are still tracked as part of the feature backlog. Since this is an Open Source project, Pull Requests implementing an enhancement are always welcome.
+
+  - type: input
+    id: version
+    attributes:
+      label: Rundeck Version
+      description: The version you're currently using. Helps us confirm this isn't already addressed in a later release.
+      placeholder: e.g. 6.1.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear and concise description of the business problem. Ex. I'm always frustrated when [...] / I am trying to [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: Any alternative solutions or features you've considered.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context or screenshots about the feature request here.
+    validations:
+      required: false
