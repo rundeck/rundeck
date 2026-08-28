@@ -1,7 +1,6 @@
 name: Bug Report
 description: Report a reproducible bug in Rundeck (community / self-hosted use)
 title: "[Bug]: "
-labels: []
 body:
   - type: markdown
     attributes:
