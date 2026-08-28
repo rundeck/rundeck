@@ -1,0 +1,70 @@
+name: Notify rundeckpro of renovate dependency update
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+# Fires once a renovate PR labeled 'sync-rundeckpro' (see renovate.json packageRules)
+# merges here. Extracts the exact package/version bump from ui-trellis's package.json
+# diff and hands it to rundeckpro's sync-renovate-dependency.yml, which decides
+# whether that package is actually vendored into rundeckpro-ui-components.
+jobs:
+  notify:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.user.login == 'renovate[bot]' &&
+      contains(github.event.pull_request.labels.*.name, 'sync-rundeckpro')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Diff ui-trellis package.json for changed deps
+        id: diff
+        run: |
+          FILE="rundeckapp/grails-spa/packages/ui-trellis/package.json"
+          git diff HEAD~1 HEAD -- "$FILE" > diff.txt || true
+          if [ ! -s diff.txt ]; then
+            echo "::warning::No change to $FILE in this merge — nothing to sync."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Compare dependency name/version pairs before and after the merge
+          jq -r '(.dependencies // {}) + (.devDependencies // {}) | to_entries[] | "\(.key)=\(.value)"' "$FILE" > after.txt
+          git show HEAD~1:"$FILE" | jq -r '(.dependencies // {}) + (.devDependencies // {}) | to_entries[] | "\(.key)=\(.value)"' > before.txt
+
+          CHANGED=$(comm -13 <(sort before.txt) <(sort after.txt))
+          if [ -z "$CHANGED" ]; then
+            echo "::warning::package.json touched but no dependency version actually changed — nothing to sync."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "changed<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGED" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch to rundeckpro
+        if: steps.diff.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CI_BUILD_PAT }}
+          SOURCE_PR: ${{ github.event.pull_request.html_url }}
+          CHANGED_DEPS: ${{ steps.diff.outputs.changed }}
+        run: |
+          # One dispatch per changed dependency, in case a single PR bumps more than one.
+          while IFS='=' read -r package version; do
+            [ -z "$package" ] && continue
+            version="${version#^}"
+            version="${version#~}"
+            gh api repos/rundeckpro/rundeckpro/dispatches \
+              -f event_type=renovate-dep-update \
+              -f "client_payload[package]=$package" \
+              -f "client_payload[version]=$version" \
+              -f "client_payload[source_pr]=$SOURCE_PR"
+          done <<< "$CHANGED_DEPS"
