@@ -361,6 +361,8 @@ jobs:
     <<: *job-defaults
     executor:
       name: docker-builder
+      # small (2GB) gets OOM-killed by the CodeNarc JVM / ESLint node process
+      resource_class: medium
     steps:
       - checkout
       - run:
@@ -382,7 +384,7 @@ jobs:
             curl -sfO "https://repo1.maven.org/maven2/org/slf4j/slf4j-api/${SLF4J_VERSION}/slf4j-api-${SLF4J_VERSION}.jar"
             curl -sfO "https://repo1.maven.org/maven2/org/slf4j/slf4j-simple/${SLF4J_VERSION}/slf4j-simple-${SLF4J_VERSION}.jar"
             cd /home/circleci/workspace
-            java -cp "$JARS/*" org.codenarc.CodeNarc \
+            java -Xmx1g -cp "$JARS/*" org.codenarc.CodeNarc \
               -basedir=. \
               -includes='**/*.groovy' \
               -excludes='**/build/**,**/node_modules/**,**/.gradle/**' \
@@ -398,6 +400,7 @@ jobs:
             REPORTS=/tmp/complexity-reports
             cd rundeckapp/grails-spa/packages/ui-trellis
             npm ci --no-audit --no-fund
+            export NODE_OPTIONS=--max-old-space-size=2048
             npx eslint src --format unix --output-file "$REPORTS/eslint.txt" || true
             echo "ESLint complexity findings:"
             grep complexity "$REPORTS/eslint.txt" || echo "No complexity violations"
