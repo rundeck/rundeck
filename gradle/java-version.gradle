@@ -1,3 +1,7 @@
 apply plugin: 'java'
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
+// Gradle 9 removed JavaPluginConvention, which is what backed the project-level
+// sourceCompatibility/targetCompatibility properties. Set them on the java extension instead.
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
