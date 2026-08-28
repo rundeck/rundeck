@@ -199,15 +199,18 @@ dependencies {
         implementation project("$proj")
     }
 
+    // NB: inside a dependencies{} block, project("path") resolves against DependencyHandler and
+    // returns a ProjectDependency (Gradle 9 tightened this), not a Project -- so it has no
+    // .configurations. Use rootProject.findProject(..) to get the actual Project for the lookup.
     //api spec file dependencies from extra grails plugins
     for(proj in project.findProperty('extraGrailsPlugins')) {
-        if(project("$proj").configurations.findByName('apiSpecFiles')) {
+        if(rootProject.findProject(proj)?.configurations?.findByName('apiSpecFiles')) {
             apiSpecFiles project(path: proj, configuration: 'apiSpecFiles')
         }
     }
     //api spec file dependencies from core grails plugins
     for(proj in project.findProperty('coreGrailsPlugins')) {
-        if(project("$proj").configurations.findByName('apiSpecFiles')) {
+        if(rootProject.findProject(proj)?.configurations?.findByName('apiSpecFiles')) {
             apiSpecFiles project(path: proj, configuration: 'apiSpecFiles')
         }
     }
@@ -488,8 +491,10 @@ bootRun {
         }
     }
     dependsOn 'copySpa', copyRuntimeLibs, 'vendorAssetDeps', 'assetCompile'
-    main 'rundeckapp.Application'
-    ignoreExitValue true
+    // Gradle 9: JavaExecSpec.main was removed in favour of mainClass, and space-assignment
+    // (`prop value`) is deprecated for removal in Gradle 10 -- use explicit assignment.
+    mainClass = 'rundeckapp.Application'
+    ignoreExitValue = true
     jvmArgs(
             '-Dspring.output.ansi.enabled=always',
             '-noverify',
@@ -892,7 +897,8 @@ task copyCompiledAssets(type: Copy) {
 processResources.dependsOn copyAssetManifest
 bootRun.dependsOn processResources, copyCompiledAssets
 
-archivesBaseName = 'rundeck'
+// Gradle 9: archivesBaseName moved to the base extension (see core/build.gradle). Value unchanged.
+base { archivesName = 'rundeck' }
 
 tasks.withType(War).configureEach { War war ->
     war.dependsOn compileGroovyPages
