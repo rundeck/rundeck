@@ -6492,6 +6492,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         def capturedEvent = null
         service.metaClass.notify = { String name, Object evt -> capturedEvent = evt }
+        Long recordedStepNodeSeconds = null
+        service.micrometerExecutionMetricsService.recordStepNodeSeconds(_, _) >> { Execution e, Long sns -> recordedStepNodeSeconds = sns }
 
         Map resultMap = [
                 status       : ExecutionState.succeeded.toString(),
@@ -6510,6 +6512,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         capturedEvent instanceof ExecutionCompleteEvent
         capturedEvent.stepNodeSeconds != null
+
+        and: "the metric is recorded with the same value as the event, read from the store exactly once"
+        recordedStepNodeSeconds == capturedEvent.stepNodeSeconds
 
         and: "the store's read-and-remove semantics mean a second lookup for the same execution finds nothing left"
         StepNodeSecondsStore.getInstance().takeFinishedTotal(e1.id) == null
