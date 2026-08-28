@@ -911,9 +911,10 @@ beans={
             realmProperties.load(realmFile.newInputStream())
         }
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
-        realmAuthProvider(DaoAuthenticationProvider) {
+        // Spring Security 7: DaoAuthenticationProvider takes the UserDetailsService as a
+        // constructor argument; the setUserDetailsService setter no longer exists.
+        realmAuthProvider(DaoAuthenticationProvider, ref('realmPropertyFileDataSource')) {
             passwordEncoder = ref("jettyCompatiblePasswordEncoder")
-            userDetailsService = ref('realmPropertyFileDataSource')
         }
     }
 
