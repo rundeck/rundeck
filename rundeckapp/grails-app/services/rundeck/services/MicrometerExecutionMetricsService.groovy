@@ -188,7 +188,7 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
                 key "rundeck.metrics.execution.job.dimension.enabled"
                 label "Execution Metrics: job_id/job_name dimension"
                 description "Tag rundeck_executions_total/rundeck_execution_duration_seconds/" +
-                    "rundeck_execution_step_node_seconds_seconds/rundeck_executions_running with " +
+                    "rundeck_execution_step_node_seconds/rundeck_executions_running with " +
                     "job_id and job_name (scheduled jobs only, ad-hoc executions excluded). Off by " +
                     "default: cardinality is bounded by the job catalog size, not execution volume, " +
                     "but large job catalogs should size this before enabling."
