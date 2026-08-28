@@ -29,7 +29,8 @@ subprojects{
     apply from: "../../gradle/java-version.gradle"
 
     defaultTasks 'clean','build'
-    archivesBaseName = "rundeck-$project.name"
+    // Gradle 9: archivesBaseName moved to the base extension (see core/build.gradle). Value unchanged.
+    base { archivesName = "rundeck-$project.name" }
 
     dependencies {
         implementation project(":core")
