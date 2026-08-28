@@ -2114,6 +2114,20 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ['test1': 'PlainVal'] | _
     }
 
+    def "validate option values, invalid configured pattern fails closed (RUN-4693)"() {
+        given: 'a configured default input pattern that is not a valid regex (operator typo)'
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'test1', enforced: false))
+        stubProjectOptionPattern('[unclosed')
+
+        when: 'a value is validated'
+        service.validateOptionValues(se, ['test1': 'anything'])
+
+        then: 'the execution is blocked rather than silently allowed (control not disabled)'
+        ExecutionServiceValidationException e = thrown()
+        e.message.contains('misconfigured')
+    }
+
     def "validate option values, default input pattern failure"() {
         given:
         ScheduledExecution se = new ScheduledExecution(project: 'AProject')
@@ -2165,6 +2179,90 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         validation
+    }
+
+    def "validate option values, default input pattern applies to enforced option when remote values fail to load"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        // enforced option with no static values (dynamic remote dropdown)
+        se.addToOptions(new Option(name: 'test1', enforced: true))
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> { it[0] }
+        }
+        // remote value load errors → opt.optionValues stays null, so the enforced check can't fire
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            loadOptionsRemoteValues(*_) >> [err: 'remote load failed']
+        }
+
+        when: 'a run-user supplies a value with shell metacharacters'
+        service.validateOptionValues(se, ['test1': '"; id; echo "'])
+
+        then: 'it falls through to the default allowlist and is rejected (fail-closed)'
+        ExecutionServiceException e = thrown()
+        e.message == 'domain.Option.validation.default.pattern.invalid'
+    }
+
+    def "validate option values, enforced option with its own regex now validates the regex"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        // enforced AND has a regex; 'a b' is an allowed value but violates the regex (space)
+        final Option option = new Option(name: 'test1', enforced: true, regex: '[A-Za-z0-9]+')
+        option.valuesList = 'a b,c'
+        se.addToOptions(option)
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> { it[0] }
+        }
+
+        when: 'a value that is in the enforced list but violates the regex'
+        service.validateOptionValues(se, ['test1': 'a b'])
+
+        then: 'the per-option regex is now enforced even though the option is enforced'
+        ExecutionServiceException e = thrown()
+        e.message == 'domain.Option.validation.regex.invalid'
+    }
+
+    def "validate option values, default input pattern does not apply to typeFile options"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        // a plain option (triggers pattern resolution) plus a typeFile option that must be exempt
+        se.addToOptions(new Option(name: 'plain', enforced: false))
+        se.addToOptions(new Option(name: 'thefile', enforced: false, optionType: 'file'))
+        stubProjectOptionPattern('[A-Za-z0-9]+')
+        service.fileUploadService = Mock(FileUploadService) {
+            validateFileRefForJobOption(*_) >> [valid: true]
+        }
+
+        when: 'the file-ref value contains dashes (would fail the pattern) while the plain value is clean'
+        def validation = service.validateOptionValues(se, ['plain': 'clean', 'thefile': 'abc-123-def-456'])
+
+        then: 'the typeFile option is exempt from the allowlist and validation passes'
+        validation
+    }
+
+    def "validate option values does NOT validate options not declared on the job (RUN-4693 #4 characterization)"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'declared', enforced: false))
+        stubProjectOptionPattern('[A-Za-z0-9]+')   // a strict allowlist IS configured
+
+        when: 'the request injects an option that does not exist in the job definition, with shell metacharacters'
+        def validation = service.validateOptionValues(se, ['declared': 'clean', 'ghost': '"; id; echo "'])
+
+        then: 'validateOptionValues only iterates declared options, so the injected option bypasses validation entirely (current behavior)'
+        validation
+    }
+
+    def "generateJobArgline carries through options not declared on the job (RUN-4693 #4 characterization)"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(project: 'AProject')
+        se.addToOptions(new Option(name: 'declared', enforced: false))
+
+        when: 'opts include a declared option plus an injected one not in the job definition'
+        String argline = ExecutionService.generateJobArgline(se, [declared: 'x', ghost: 'y'])
+
+        then: 'the injected option is preserved in the generated argline (passthrough "to preserve information")'
+        argline == '-declared x -ghost y'
     }
 
     def "validate option values, default input pattern multivalued failure"() {
@@ -2224,8 +2322,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e.message == 'domain.Option.validation.default.pattern.invalid'
     }
 
-    def "validate option values, blank or invalid default input pattern is ignored"() {
-        given:
+    def "validate option values, blank default input pattern is ignored"() {
+        given: 'a blank/whitespace pattern means the control is simply not configured'
         ScheduledExecution se = new ScheduledExecution(project: 'AProject')
         se.addToOptions(new Option(name: 'test1', enforced: false))
         stubProjectOptionPattern(pattern)
@@ -2233,14 +2331,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def validation = service.validateOptionValues(se, ['test1': 'any value ; here'])
 
-        then:
+        then: 'validation is not applied (an invalid — non-blank — pattern is handled separately, fail-closed)'
         validation
 
         where:
         pattern    | _
         ''         | _
         '   '      | _
-        '[unclosed'| _
     }
 
     def "validate option values, enforced valid"() {
@@ -6861,6 +6958,50 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
 
     @Unroll
+    def "executeAsyncBegin rejects options not declared on the job when flag enabled (RUN-4693 #4)"() {
+        given: "an execution whose argString carries an option not declared on the job"
+        def project = 'TestProject'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                argString: '-declared x -ghost y',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
+                )
+        )
+        execution.save(flush: true)
+        def scheduledExecution = new ScheduledExecution(jobName: 'j', project: project, workflow: execution.workflow)
+        scheduledExecution.addToOptions(new Option(name: 'declared', enforced: false))
+        scheduledExecution.save(flush: true)
+
+        def framework = Mock(IFramework) { getFrameworkNodeName() >> 'n' }
+        def authContext = Mock(UserAndRolesAuthContext)
+        def loghandler = Mock(ExecutionLogWriter) {
+            filepath >> new File('/tmp/test.log')
+            openStream() >> {}
+        }
+        service.loggingService = Mock(LoggingService) { openLogWriter(_, _, _, _) >> loghandler }
+        service.frameworkService = Mock(FrameworkService) { getDefaultInputCharsetForProject(_) >> 'UTF-8' }
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true) >> true
+        }
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+        service.metricService = Mock(MetricService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        when:
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "the execution fails to start and the undeclared option is reported in the log output"
+        result == null
+        1 * loghandler.logError({ String m -> m.contains('Execution rejected') && m.contains('ghost') })
+    }
+
     def "executeAsyncBegin workflow modification - workflow updated when isUpdateWorkflowDataValues is #updateWorkflowDataValues"() {
         given: "an execution with scheduled job"
         def project = 'TestProject'

@@ -36,6 +36,7 @@ import grails.util.Environment
 import groovy.sql.Sql
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
+import org.rundeck.app.AppConstants
 import rundeck.services.LogFileStorageService
 import rundeck.services.feature.FeatureService
 import rundeckapp.cli.CommandLineSetup
@@ -329,6 +330,18 @@ class BootStrap {
             log.warn("=" * 80)
         }else{
             log.info("RSS feeds disabled")
+        }
+
+        // RUN-4693: warn at startup when the undeclared-option reject control is turned off. This is a
+        // security control (it stops option values that are not declared on a job from reaching the
+        // option data context and RD_OPTION_* environment variables without validation); disabling it
+        // re-opens that passthrough, so make the weakened posture visible in the logs.
+        if (!configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true)) {
+            log.warn("=" * 80)
+            log.warn("SECURITY: ${AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY}=false")
+            log.warn("Undeclared job options are ALLOWED to pass through to executions.")
+            log.warn("Option values not defined on a job will reach the option data context and")
+            log.warn("RD_OPTION_* environment variables WITHOUT server-side validation.")
         }
 
         //Setup the correct authentication provider for the configured authentication mechanism
