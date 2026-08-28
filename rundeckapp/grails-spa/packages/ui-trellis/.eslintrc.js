@@ -50,6 +50,7 @@ module.exports = {
     "prefer-const": "warn",
     "storybook/story-exports": "warn",
     "storybook/context-in-play-function": "warn",
+    complexity: ["warn", 25],
   },
   ignorePatterns: ["build", "test", ".storybook"],
   extends: [

@@ -353,6 +353,57 @@ jobs:
           command: rundeck_gui_tests
       - collect-gradle-tests
 
+  # Cyclomatic complexity check (RUN-4839). Informative only: analysis steps
+  # never fail the pipeline. CodeNarc runs as a standalone CLI over Groovy
+  # sources (no Gradle build needed), and ESLint runs the `complexity` rule
+  # over ui-trellis.
+  test-complexity:
+    <<: *job-defaults
+    executor:
+      name: docker-builder
+    steps:
+      - checkout
+      - run:
+          name: Run CodeNarc cyclomatic complexity (informative only)
+          command: |
+            CODENARC_VERSION=3.6.0-groovy-4.0
+            GMETRICS_VERSION=2.1.0
+            GROOVY_VERSION=4.0.33
+            SLF4J_VERSION=1.7.36
+            JARS=/tmp/codenarc-jars
+            REPORTS=/tmp/complexity-reports
+            mkdir -p "$JARS" "$REPORTS"
+            cd "$JARS"
+            curl -sfO "https://repo1.maven.org/maven2/org/codenarc/CodeNarc/${CODENARC_VERSION}/CodeNarc-${CODENARC_VERSION}.jar"
+            curl -sfO "https://repo1.maven.org/maven2/org/gmetrics/GMetrics-Groovy4/${GMETRICS_VERSION}/GMetrics-Groovy4-${GMETRICS_VERSION}.jar"
+            for artifact in groovy groovy-xml groovy-templates groovy-ant; do
+              curl -sfO "https://repo1.maven.org/maven2/org/apache/groovy/${artifact}/${GROOVY_VERSION}/${artifact}-${GROOVY_VERSION}.jar"
+            done
+            curl -sfO "https://repo1.maven.org/maven2/org/slf4j/slf4j-api/${SLF4J_VERSION}/slf4j-api-${SLF4J_VERSION}.jar"
+            curl -sfO "https://repo1.maven.org/maven2/org/slf4j/slf4j-simple/${SLF4J_VERSION}/slf4j-simple-${SLF4J_VERSION}.jar"
+            cd /home/circleci/workspace
+            java -cp "$JARS/*" org.codenarc.CodeNarc \
+              -basedir=. \
+              -includes='**/*.groovy' \
+              -excludes='**/build/**,**/node_modules/**,**/.gradle/**' \
+              -rulesetfiles=file:config/codenarc/rules.groovy \
+              -report=html:"$REPORTS/codenarc.html" \
+              -report=xml:"$REPORTS/codenarc.xml" \
+              -report=text:stdout \
+              || echo "CodeNarc reported an error (non-blocking)"
+      - install-node
+      - run:
+          name: Run ESLint complexity rule (informative only)
+          command: |
+            REPORTS=/tmp/complexity-reports
+            cd rundeckapp/grails-spa/packages/ui-trellis
+            npm ci --no-audit --no-fund
+            npx eslint src --format unix --output-file "$REPORTS/eslint.txt" || true
+            echo "ESLint complexity findings:"
+            grep complexity "$REPORTS/eslint.txt" || echo "No complexity violations"
+      - store_artifacts:
+          path: /tmp/complexity-reports
+
   # WizCLI Image Scan
   wizcli-scan:
     <<: *job-defaults
@@ -858,7 +909,10 @@ workflows:
       - test-gui:
           name: T Unit UI
           <<: *cloudsmith-slack-defaults
-      
+      # Informative-only complexity report (RUN-4839): no gates, never blocks
+      - test-complexity:
+          name: T Complexity (informative)
+
       # Step 2: Integration and functional tests require Build + unit tests
       # Don't waste CI dollars on expensive tests if unit tests are broken
       - test-docker:
