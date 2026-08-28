@@ -501,6 +501,9 @@ bootRun {
     //    addResources = true
     // Full resources/main so classpath:/assets/ resolves; duplicateFileMode=WARN avoids Liquibase failure on duplicate migrations
     classpath += files("$buildDir/resources/main", "$buildDir/resources/main/META-INF")
+    // Compiled assets under classpath:/assets/. Only bootRun needs these; the packaged
+    // WAR serves the same files from its root instead (see copyCompiledAssets).
+    classpath += files("$buildDir/bootrun-assets")
     // Strip liquibase-commercial: it ships LicenseValidationChange (extends AbstractChange)
     // compiled against the 4.26 API, whose bytecode references liquibase.ChecksumVersion.
     // We pin liquibase-core to 4.19.0 for DB compatibility, so 4.26's commercial jar causes
@@ -858,16 +861,29 @@ task copyAssetManifest(type: Copy) {
     into "$buildDir/resources/main/META-INF/assets"
 }
 
-// Copy compiled assets to classpath:/assets/ (resources/main/assets/) for bootRun and WAR
+// Copy compiled assets to classpath:/assets/ for bootRun only.
+//
+// This deliberately does NOT go into resources/main: the packaged WAR already
+// carries the compiled assets at its root (assets/**), added by the
+// asset-pipeline Gradle plugin, and asset-pipeline resolves that copy first.
+// Both AssetPipelineFilter and AssetPipelineGrailsPlugin do:
+//
+//     resource = applicationContext.getResource("assets/${uri}")
+//     if (!resource.exists()) resource = applicationContext.getResource("classpath:assets/${uri}")
+//
+// In a WebApplicationContext the first lookup is a ServletContextResource, i.e.
+// the WAR root, which always hits. Staging the same files under
+// resources/main/assets therefore only duplicated ~32 MiB of the WAR without
+// ever being read. bootRun has no WAR root, so it needs the classpath copy.
 task copyCompiledAssets(type: Copy) {
     dependsOn assetCompile
     from "$buildDir/assets"
-    into "$buildDir/resources/main/assets"
+    into "$buildDir/bootrun-assets/assets"
     exclude 'manifest.properties'
 }
 
-processResources.dependsOn copyAssetManifest, copyCompiledAssets
-bootRun.dependsOn processResources
+processResources.dependsOn copyAssetManifest
+bootRun.dependsOn processResources, copyCompiledAssets
 
 archivesBaseName = 'rundeck'
 
