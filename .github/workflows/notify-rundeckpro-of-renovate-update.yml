@@ -30,7 +30,7 @@ jobs:
         id: diff
         run: |
           FILE="rundeckapp/grails-spa/packages/ui-trellis/package.json"
-          git diff HEAD~1 HEAD -- "$FILE" > diff.txt || true
+          git diff HEAD~1 HEAD -- "$FILE" > diff.txt
           if [ ! -s diff.txt ]; then
             echo "::warning::No change to $FILE in this merge — nothing to sync."
             echo "skip=true" >> "$GITHUB_OUTPUT"
