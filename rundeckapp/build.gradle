@@ -128,8 +128,12 @@ configurations {
         exclude group: 'org.junit.platform'
         exclude group: 'org.apache.groovy', module: 'groovy-test-junit5'
         exclude group: 'org.apache.ant', module: 'ant-junit'
-        exclude group: 'org.codehaus.groovy', module: 'groovy-ant'
-        exclude group: 'org.grails', module: 'grails-shell'
+        // Grails 7 / Groovy 4 renamed both of these coordinates
+        // (org.grails:grails-shell -> org.apache.grails:grails-shell-cli,
+        // org.codehaus.groovy -> org.apache.groovy), so the exclusions stopped matching
+        // and the `grails` CLI toolchain reappeared on the runtime classpath.
+        exclude group: 'org.apache.groovy', module: 'groovy-ant'
+        exclude group: 'org.apache.grails', module: 'grails-shell-cli'
     }
 
     implementation.exclude module: "spring-boot-starter-tomcat"
