@@ -345,6 +345,23 @@ class BootStrap {
             log.warn("RD_OPTION_* environment variables WITHOUT server-side validation.")
         }
 
+        // Grails 8 / grails-spring-security 8: the plugin's ComponentBasedConfigBlender
+        // unconditionally registers its GORM-backed daoAuthenticationProvider as the *primary*
+        // provider and merely appends user-defined ones, ignoring the explicit
+        // grails.plugin.springsecurity.providerNames list in application.groovy (which deliberately
+        // omits it, because Rundeck authenticates against realm.properties/JAAS, not a GORM user
+        // domain class). With no userDomainClassName configured, that provider throws
+        // InternalAuthenticationServiceException -- which ProviderManager rethrows immediately
+        // instead of falling through, so realmAuthProvider/jaasAuthProvider never run and every
+        // login fails. Remove it to restore the configured intent.
+        if (grailsApplication.mainContext.containsBean('daoAuthenticationProvider')) {
+            def gormAuthProvider = grailsApplication.mainContext.getBean('daoAuthenticationProvider')
+            if (authenticationManager.providers.remove(gormAuthProvider)) {
+                log.info("Removed the plugin's GORM-backed daoAuthenticationProvider from the " +
+                         "authentication chain (not used by Rundeck; see providerNames config)")
+            }
+        }
+
         //Setup the correct authentication provider for the configured authentication mechanism
         if(grailsApplication.config.getProperty("rundeck.useJaas",Boolean.class, false)) {
             log.info("Using jaas authentication")
