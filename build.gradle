@@ -561,10 +561,8 @@ task alljavadoc(type: Javadoc) {
      }
 }
 
-buildScan {
-    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-    termsOfServiceAgree = 'yes'
-}
+// Build-scan config moved to settings.gradle's `develocity { buildScan { } }` block:
+// the com.gradle.develocity plugin exposes its extension on Settings, not on the root Project.
 
 // Limit heap size in forked test processes for CI
 test {
