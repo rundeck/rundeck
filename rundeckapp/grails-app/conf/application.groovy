@@ -41,7 +41,11 @@ environments {
 
         dataSource {
             dbCreate = "none" // one of 'create', 'create-drop','update'
-            url = "jdbc:h2:file:./db/devDb"
+            // NON_KEYWORDS is mandatory: ScheduledExecution has columns named MINUTE, HOUR, MONTH,
+            // YEAR and SECONDS, all reserved in H2, and Hibernate emits them unquoted. Without it
+            // every job-listing query dies with "Syntax error ... expected identifier".
+            // The `test` block below already had this; `development` did not.
+            url = "jdbc:h2:file:./db/devDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
         grails.plugin.databasemigration.updateOnStart=true
 
@@ -77,7 +81,8 @@ environments {
 
         dataSource {
             dbCreate = "none"
-            url = "jdbc:h2:file:/rundeck/grailsh2"
+            //NON_KEYWORDS required -- see the development block above
+            url = "jdbc:h2:file:/rundeck/grailsh2;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
             properties {
                 jmxEnabled= true
                 initialSize= 5
