@@ -1209,8 +1209,12 @@ class UtilityTagLib{
             def tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user, request.remoteAddr])
         }
         //call original form tag
+        // Grails 8: taglib tags are no longer exposed as `Closure` fields, only as methods --
+        // FormTagLib went from `private Closure form` + `Object form(Map, Closure)` to just the
+        // method. `applicationTagLib.form` therefore resolves to null and `.call(..)` NPEs, which
+        // surfaces as "Error executing tag <g:form>: null" on every page using g:form.
         def applicationTagLib = grailsApplication.mainContext.getBean('org.grails.plugins.web.taglib.FormTagLib')
-        applicationTagLib.form.call(attrs,body)
+        applicationTagLib.form(attrs, body)
     }
 
     def appTitle={attrs,body->
