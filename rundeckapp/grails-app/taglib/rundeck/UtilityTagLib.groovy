@@ -38,6 +38,8 @@ import rundeck.interceptors.FormTokenInterceptor
 import rundeck.services.FrameworkService
 
 import java.text.MessageFormat
+import org.grails.taglib.GrailsTagException
+
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
@@ -436,6 +438,40 @@ class UtilityTagLib{
 
     }
 
+
+    /**
+     * Replacement for Grails' g:actionSubmit, which was REMOVED in Grails 8.
+     *
+     * Grails 8's FormTagLib keeps actionSubmitImage and formActionSubmit but drops actionSubmit
+     * entirely (verified: the name appears in no Grails 8 jar). formActionSubmit is not a drop-in
+     * replacement -- it emits the HTML5 `formaction` attribute so the browser posts directly to a
+     * URL, whereas actionSubmit emits name="_action_<action>" and lets the controller dispatch on
+     * that parameter. Swapping one for the other would change where 24 forms submit.
+     *
+     * The _action_ dispatch mechanism itself still exists in Grails 8
+     * (org.grails.web.util.WebUtils), so this reproduces the Grails 7 output exactly:
+     *     <input type="submit" name="_action_<action|value>" value="<value>" ...other attrs/>
+     *
+     * @attr value REQUIRED the button label, and the action name when `action` is omitted
+     * @attr action the controller action to dispatch to
+     */
+    def actionSubmit = { attrs, body ->
+        if (!attrs.value) {
+            throw new GrailsTagException("Tag [actionSubmit] is missing required attribute [value]")
+        }
+        def myattrs = new LinkedHashMap(attrs)
+        //Grails' actionSubmit ignored an explicit name, since it owns the name attribute
+        if (myattrs.containsKey('name')) {
+            log.warn("[actionSubmit] 'name' attribute will be ignored")
+            myattrs.remove('name')
+        }
+        def value = myattrs.remove('value')
+        def action = myattrs.remove('action') ?: value
+        //rebuild in the same attribute order Grails emitted: type, name, value, then the rest
+        def outattrs = [type: 'submit', name: "_action_${action}".toString(), value: value]
+        outattrs.putAll(myattrs)
+        out << makeTag('input', [nocontent: true, attrs: outattrs])
+    }
 
     /**
     * Utility tag for declaring an <img> tag
