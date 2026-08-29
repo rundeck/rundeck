@@ -331,6 +331,35 @@ class BootStrap {
             log.info("RSS feeds disabled")
         }
 
+        // RUN-4693: warn at startup when the undeclared-option reject control is turned off. This is a
+        // security control (it stops option values that are not declared on a job from reaching the
+        // option data context and RD_OPTION_* environment variables without validation); disabling it
+        // re-opens that passthrough, so make the weakened posture visible in the logs.
+        if (!configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true)) {
+            log.warn("=" * 80)
+            log.warn("SECURITY: ${AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY}=false")
+            log.warn("Undeclared job options are ALLOWED to pass through to executions.")
+            log.warn("Option values not defined on a job will reach the option data context and")
+            log.warn("RD_OPTION_* environment variables WITHOUT server-side validation.")
+        }
+
+        // Grails 8 / grails-spring-security 8: the plugin's ComponentBasedConfigBlender
+        // unconditionally registers its GORM-backed daoAuthenticationProvider as the *primary*
+        // provider and merely appends user-defined ones, ignoring the explicit
+        // grails.plugin.springsecurity.providerNames list in application.groovy (which deliberately
+        // omits it, because Rundeck authenticates against realm.properties/JAAS, not a GORM user
+        // domain class). With no userDomainClassName configured, that provider throws
+        // InternalAuthenticationServiceException -- which ProviderManager rethrows immediately
+        // instead of falling through, so realmAuthProvider/jaasAuthProvider never run and every
+        // login fails. Remove it to restore the configured intent.
+        if (grailsApplication.mainContext.containsBean('daoAuthenticationProvider')) {
+            def gormAuthProvider = grailsApplication.mainContext.getBean('daoAuthenticationProvider')
+            if (authenticationManager.providers.remove(gormAuthProvider)) {
+                log.info("Removed the plugin's GORM-backed daoAuthenticationProvider from the " +
+                         "authentication chain (not used by Rundeck; see providerNames config)")
+            }
+        }
+
         //Setup the correct authentication provider for the configured authentication mechanism
         if(grailsApplication.config.getProperty("rundeck.useJaas",Boolean.class, false)) {
             log.info("Using jaas authentication")
