@@ -893,7 +893,11 @@ class UtilityTagLib{
      * @attr properties REQUIRED properties list
      */
     def filterPluginPropertiesByFeature = { attrs, body ->
-        List<Property> props=attrs.properties
+        // NB: must be attrs.get('properties'), not attrs.properties. `properties` is a built-in
+        // Groovy meta-property (Object.getProperties()), and on Grails 8's GroovyPageAttributes it
+        // now wins over the map entry -- returning [wrappedMap:.., gspTagSyntaxCall:false] instead
+        // of this tag's `properties` attribute, which then fails to cast to List.
+        List<Property> props=(List<Property>) attrs.get('properties')
         def filtered=[]
         for (Property prop : props) {
             def featureTest = prop.renderingOptions?.get(StringRenderingConstants.FEATURE_FLAG_REQUIRED)
@@ -910,7 +914,8 @@ class UtilityTagLib{
      * @attr allowedScope REQUIRED allowed scope
      */
     def groupPluginProperties = { attrs,body ->
-        List<Property> properties=attrs.properties
+        //NB: attrs.get('properties') -- see note in filterPluginPropertiesByFeature
+        List<Property> properties=(List<Property>) attrs.get('properties')
         PropertyScope allowedScope=attrs.allowedScope
         def groupSet=[:]
         def ungrouped=[]
