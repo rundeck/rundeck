@@ -1129,13 +1129,15 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         then:
         assertEquals HttpServletResponse.SC_OK, response.status
         response.text==expected
-        with(controller.apiService) {
-            1 * requireApi(_, _) >> true
-            1 * restoreUriPath(_, _) >> 'prop1'
-            1 * extractResponseFormat(_, _, _, _) >> format
-            (format == 'xml' ? 1 : 0) * renderSuccessXml(_, _, _ as Closure) >> {
-                it[1].writer << '<property key=\'prop1\' value=\'value1\' />'
-            }
+        // Spock's with() is for grouping conditions; interactions belong at the top level of then:.
+        // Inside with(), `_` resolves against the delegate -- the ApiService mock -- so Groovy 5
+        // looks for a `_` property and fails with "No signature of method: get_". Qualifying the
+        // interactions directly avoids the delegate entirely.
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.restoreUriPath(_, _) >> 'prop1'
+        1 * controller.apiService.extractResponseFormat(_, _, _, _) >> format
+        (format == 'xml' ? 1 : 0) * controller.apiService.renderSuccessXml(_, _, _ as Closure) >> {
+            it[1].writer << '<property key=\'prop1\' value=\'value1\' />'
         }
         where:
             format | expected
@@ -1183,22 +1185,20 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         then:
             assertEquals HttpServletResponse.SC_OK, response.status
             response.text==expected
-            with(controller.apiService) {
-                1 * requireApi(_, _) >> true
-                1 * restoreUriPath(_, _) >> 'prop1'
-                1 * extractResponseFormat(_, _, _) >> format
-                (format == 'xml' ? 1 : 0) * renderSuccessXml(_, _, _ as Closure) >> {
-                    it[1].writer << '<property key=\'prop1\' value=\'value1\' />'
-                }
-                (format!='text'?1:0) * parseJsonXmlWith(_,_,_)>>{
-                    if(format=='json'){
-                        it[2].get('json').call(it[0].JSON)
-                    }else{
+            1 * controller.apiService.requireApi(_, _) >> true
+            1 * controller.apiService.restoreUriPath(_, _) >> 'prop1'
+            1 * controller.apiService.extractResponseFormat(_, _, _) >> format
+            (format == 'xml' ? 1 : 0) * controller.apiService.renderSuccessXml(_, _, _ as Closure) >> {
+                it[1].writer << '<property key=\'prop1\' value=\'value1\' />'
+            }
+            (format!='text'?1:0) * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                if(format=='json'){
+                    it[2].get('json').call(it[0].JSON)
+                }else{
 
-                        it[2].get('xml').call(it[0].XML)
-                    }
-                    true
+                    it[2].get('xml').call(it[0].XML)
                 }
+                true
             }
         where:
             format |input                                   |expected
@@ -1275,14 +1275,12 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
                 0*_(*_)
             }
 
-            with(controller.apiService) {
-                requireApi(_, _) >> true
-                restoreUriPath(_, _) >> 'project.plugin.provider1.prop1'
-                extractResponseFormat(_, _, _) >> 'JSON'
-                parseJsonXmlWith(_,_,_)>>{
-                    it[2].get('json').call(it[0].JSON)
-                    true
-                }
+            controller.apiService.requireApi(_, _) >> true
+            controller.apiService.restoreUriPath(_, _) >> 'project.plugin.provider1.prop1'
+            controller.apiService.extractResponseFormat(_, _, _) >> 'JSON'
+            controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('json').call(it[0].JSON)
+                true
             }
 
             request.api_version = 11
@@ -1294,16 +1292,12 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         when:
             controller.apiProjectConfigKeyPut()
         then:
-            with(controller.frameworkService) {
-                (enableValidation ? 1 : 0) * validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
-            }
-            with(controller.apiService){
-                (valid ? 0 : 1) * renderErrorFormat(_, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        message:["provider1 configuration was invalid: " + reportError?.errors],
-                        format: 'JSON'
-                ])
-            }
+            (enableValidation ? 1 : 0) * controller.frameworkService.validateDescription(desc, "", ["prop1": inputValue, "prop2": "value2"])>>[valid: valid, report: reportError]
+            (valid ? 0 : 1) * controller.apiService.renderErrorFormat(_, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    message:["provider1 configuration was invalid: " + reportError?.errors],
+                    format: 'JSON'
+            ])
 
         where:
         inputValue     | enableValidation   | valid | reportError
@@ -1330,10 +1324,8 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
 
         then:
             assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
-            with(controller.apiService) {
-                1 * requireApi(_, _) >> true
-                1 * restoreUriPath(_, _) >> 'prop1'
-            }
+            1 * controller.apiService.requireApi(_, _) >> true
+            1 * controller.apiService.restoreUriPath(_, _) >> 'prop1'
     }
 
     void "apiProjectExport"() {
@@ -1622,9 +1614,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
         when:
             controller.apiProjectImport()
         then:
-            with(controller.projectService){
-                0 * handleApiImport(*_)>>[success:true]
-            }
+            0 * controller.projectService.handleApiImport(*_)>>[success:true]
             1 * controller.apiService.renderErrorFormat(_,
                 [
                     status: HttpServletResponse.SC_FORBIDDEN,
@@ -1661,9 +1651,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiProjectImport()
         then:
 
-            with(controller.projectService){
-                1 * handleApiImport(*_)>>[success:true]
-            }
+            1 * controller.projectService.handleApiImport(*_)>>[success:true]
             assertEquals HttpServletResponse.SC_OK,response.status
             assertEquals( [
                                   import_status: 'successful',
@@ -1743,9 +1731,7 @@ class ProjectController2Spec extends Specification implements ControllerUnitTest
             controller.apiProjectImport()
 
         then:
-            with(controller.projectService){
-                1 * handleApiImport(*_)>>[success:true]
-            }
+            1 * controller.projectService.handleApiImport(*_)>>[success:true]
             assertEquals HttpServletResponse.SC_OK,response.status
             assertEquals( [
                     import_status: 'successful',
