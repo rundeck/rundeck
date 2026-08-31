@@ -915,6 +915,10 @@ workflows:
       # Informative-only complexity report (RUN-4839): no gates, never blocks
       - test-complexity:
           name: T Complexity (informative)
+          # Cloudsmith provides CLOUDSMITH_NPM_TOKEN required by .npmrc
+          # (npm.artifacts.pd-internal.com registry)
+          context:
+            - Cloudsmith
 
       # Step 2: Integration and functional tests require Build + unit tests
       # Don't waste CI dollars on expensive tests if unit tests are broken
