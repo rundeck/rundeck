@@ -153,7 +153,7 @@
                 <button type="button" class="btn btn-default" data-dismiss="modal">
                   <g:message code="cancel"/>
                 </button>
-                <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary "/>
+                <g:formActionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary "/>
               </div>
             </div>
           </g:form>
@@ -320,7 +320,7 @@
                           data-bind="click: cancel"
                           data-dismiss="modal" ><g:message code="no"/>
                         </button>
-                        <g:actionSubmit controller="menu"
+                        <g:formActionSubmit controller="menu"
                           action="projectToggleSCM"
                           form="toggleScmForm"
                           value="${message(code:'job.toggle.scm.button.label.'+status)}"
@@ -356,25 +356,25 @@
                         data-dismiss="modal" ><g:message code="no"/>
                       </button>
                       <span data-bind="if: isDisableSchedule">
-                        <g:actionSubmit action="flipScheduleDisabledBulk"
+                        <g:formActionSubmit action="flipScheduleDisabledBulk"
                           form="jobsListForm"
                           value="${message(code:'job.bulk.disable.schedule.button')}"
                           class="btn btn-danger"/>
                       </span>
                       <span data-bind="if: isEnableSchedule">
-                        <g:actionSubmit action="flipScheduleEnabledBulk"
+                        <g:formActionSubmit action="flipScheduleEnabledBulk"
                           form="jobsListForm"
                           value="${message(code:'job.bulk.enable.schedule.button')}"
                           class="btn btn-danger"/>
                         </span>
                         <span data-bind="if: isDisableExecution">
-                          <g:actionSubmit action="flipExecutionDisabledBulk"
+                          <g:formActionSubmit action="flipExecutionDisabledBulk"
                             form="jobsListForm"
                             value="${message(code:'scheduledExecution.action.disable.execution.button.label')}"
                             class="btn btn-danger"/>
                         </span>
                         <span data-bind="if: isEnableExecution">
-                          <g:actionSubmit action="flipExecutionEnabledBulk"
+                          <g:formActionSubmit action="flipExecutionEnabledBulk"
                             form="jobsListForm"
                             value="${message(code:'scheduledExecution.action.enable.execution.button.label')}"
                             class="btn btn-danger"/>
@@ -382,7 +382,7 @@
                         <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_DELETE  }"
                           project="${params.project ?: request.project}">
                           <span data-bind="if: isDelete">
-                            <g:actionSubmit action="deleteBulk"
+                            <g:formActionSubmit action="deleteBulk"
                               form="jobsListForm"
                               value="${message(code:'job.bulk.delete.button')}" class="btn btn-danger"/>
                           </span>

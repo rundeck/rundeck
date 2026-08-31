@@ -18,7 +18,7 @@
 <div id="formbuttons" data-ko-bind="runformoptions" class="px-row">
   <div>
     <g:if test="${!hideCancel}">
-      %{-- <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/> --}%
+      %{-- <g:formActionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/> --}%
       <button type="button" class="btn btn-default " id="execFormCancelButton" data-dismiss="modal">${g.message(code:'button.action.Cancel',default:'Cancel')}</button>
     </g:if>
     <input type="hidden"
@@ -75,9 +75,14 @@
       <g:message code="job.starting.execution"/>
     </div>
     <div class="btn-group pull-right" id="execOptFormRunButtons">
-      <button 
+      %{-- Grails 8 removed server-side _action_ dispatch (DefaultUrlMappingInfo no longer resolves
+           name="_action_X" to an action), so this posted to the controller's default action and
+           silently did nothing. Use the HTML5 formaction attribute instead -- the same mechanism
+           g:formActionSubmit now emits. A <button> is kept rather than g:formActionSubmit because
+           this one carries icon markup and Knockout data-bind attributes. --}%
+      <button
         type="submit"
-        name="_action_runJobNow"
+        formaction="${createLink(controller: 'scheduledExecution', action: 'runJobNow')}"
         id="execFormRunButton"
         ${scheduledExecution.hasExecutionEnabled() ? '' : 'disabled'}
         class=" btn btn-cta  ">
