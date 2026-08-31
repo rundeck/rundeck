@@ -2327,7 +2327,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             outwriter.flush()
         }
 //        zipmock.demand.file(1..1){name,File outfile-> }
-        def zip = zipmock.proxyInstance()
+        // MockFor.proxyInstance() with no args instantiates the class via its no-arg
+        // constructor; ZipBuilder only declares ZipBuilder(ZipOutputStream), so Groovy 5
+        // fails with NoSuchMethodException: ZipBuilder.<init>(). The instance is never used
+        // for real work here -- every call is intercepted -- so any valid arg will do.
+        def zip = zipmock.proxyInstance(new ZipOutputStream(new ByteArrayOutputStream()))
         Execution exec = new Execution(
             uuid: EXEC_UUID,
             argString: "-test args",
@@ -2403,7 +2407,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             outwriter.flush()
         }
 
-        def zip = zipmock.proxyInstance()
+        def zip = zipmock.proxyInstance(new ZipOutputStream(new ByteArrayOutputStream()))
 
         def logmock = new MockFor(LoggingService)
         logmock.demand.getLogFileForExecution(1..1) { Execution e ->
@@ -2476,7 +2480,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         zipmock.demand.file(1..1, validateZipCall)
 
-        def zip = zipmock.proxyInstance()
+        def zip = zipmock.proxyInstance(new ZipOutputStream(new ByteArrayOutputStream()))
 
         def logmock = new MockFor(LoggingService)
         logmock.demand.getLogFileForExecution(1..1) { Execution e ->
@@ -2821,7 +2825,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             withwriter.call(outwriter)
             outwriter.flush()
         }
-        def zip = zipmock.proxyInstance()
+        def zip = zipmock.proxyInstance(new ZipOutputStream(new ByteArrayOutputStream()))
         ExecReport exec = new ExecReport(
             executionId:123L,
             jobId: oldJobId.toString(),
@@ -2917,7 +2921,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             withwriter.call(outwriter)
             outwriter.flush()
         }
-        def zip = zipmock.proxyInstance()
+        def zip = zipmock.proxyInstance(new ZipOutputStream(new ByteArrayOutputStream()))
         ExecReport exec = new ExecReport(
             ctxController: 'ct',
             executionId: 123,
@@ -2981,7 +2985,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             withwriter.call(outwriter)
             outwriter.flush()
         }
-        def zip = zipmock.proxyInstance()
+        def zip = zipmock.proxyInstance(new ZipOutputStream(new ByteArrayOutputStream()))
 
         ExecReport exec = new ExecReport(
                 executionId:123L,
@@ -3135,7 +3139,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             outwriter.flush()
         }
 
-        def zip = zipmock.proxyInstance()
+        def zip = zipmock.proxyInstance(new ZipOutputStream(new ByteArrayOutputStream()))
         ScheduledExecution job = new ScheduledExecution(
             jobName: 'blue',
             project: 'testproj',
@@ -3286,7 +3290,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             outwriter.flush()
         }
 
-        def zip = zipmock.proxyInstance()
+        def zip = zipmock.proxyInstance(new ZipOutputStream(new ByteArrayOutputStream()))
         ScheduledExecution job = new ScheduledExecution(
             jobName: 'blue',
             project: 'testproj',
