@@ -15,6 +15,18 @@ testlogger {
     slowThreshold 10000
 }
 
+// Every suite in this module runs through a named Test task (apiTest, seleniumCoreTest, ...)
+// which sets useJUnitPlatform() plus its own spock.configuration include-filter. The default
+// `test` task sets neither, so it cannot discover Spock 2 specs and has always executed zero
+// tests -- Gradle 8 passed that silently. Gradle 9 added failOnNoDiscoveredTests (default true),
+// which turns that long-standing no-op into a build failure whenever `check`/`build` runs.
+// Opting out here preserves the previous behaviour; it deliberately does NOT enable the task,
+// because these suites need Docker Compose and a built image and must only run via their
+// dedicated tasks.
+test {
+    failOnNoDiscoveredTests = false
+}
+
 project.evaluationDependsOn(":rundeckapp")
 
 configurations.all {
