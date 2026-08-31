@@ -14,29 +14,44 @@ dependencies_install_zulu11jdk() {
 
 }
 
-# Install JDK 17 (skips if already provided by the Docker image, e.g. cimg/openjdk:17.0)
-dependencies_install_zulu17jdk() {
-      if java -version 2>&1 | grep -q 'version "17' && javac -version >/dev/null 2>&1; then
-        echo "JDK 17 already installed — skipping apt install"
+# Install JDK 21 (skips if already provided by the Docker image, e.g. cimg/openjdk:21.0).
+# Grails 8 / Gradle 9 require a JDK 21 build JVM.
+dependencies_install_zulu21jdk() {
+      if java -version 2>&1 | grep -q 'version "21' && javac -version >/dev/null 2>&1; then
+        echo "JDK 21 already installed — skipping apt install"
         java -version
         javac -version
         return 0
       fi
 
-      echo "JDK 17 not found — installing Azul Zulu JDK 17 via apt"
+      echo "JDK 21 not found — installing Azul Zulu JDK 21 via apt"
       sudo apt-get update
       sudo apt install gnupg ca-certificates curl
       curl -s https://repos.azul.com/azul-repo.key | sudo gpg --dearmor -o /usr/share/keyrings/azul.gpg
       echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | sudo tee /etc/apt/sources.list.d/zulu.list
 
       sudo apt-get update
-      sudo apt-get -y --no-install-recommends install zulu17-jdk-headless
+      sudo apt-get -y --no-install-recommends install zulu21-jdk-headless
 
-      if [[ -n "${BASH_ENV:-}" ]]; then
-        echo "export JAVA_HOME=/usr/lib/jvm/zulu17" >> "${BASH_ENV}"
-        echo "export PATH=\"/usr/lib/jvm/zulu17/bin:\${PATH}\"" >> "${BASH_ENV}"
+      local java_home=""
+      for candidate in /usr/lib/jvm/zulu21-ca-amd64 /usr/lib/jvm/zulu21-amd64 /usr/lib/jvm/zulu21; do
+        if [[ -x "${candidate}/bin/java" ]]; then
+          java_home="${candidate}"
+          break
+        fi
+      done
+      if [[ -z "${java_home}" ]]; then
+        echo "Could not find Zulu 21 under /usr/lib/jvm; listing:"
+        ls -la /usr/lib/jvm || true
+        exit 1
       fi
-      export JAVA_HOME=/usr/lib/jvm/zulu17
+      echo "Using JAVA_HOME=${java_home}"
+      "${java_home}/bin/java" -version
+      if [[ -n "${BASH_ENV:-}" ]]; then
+        echo "export JAVA_HOME=${java_home}" >> "${BASH_ENV}"
+        echo "export PATH=\"${java_home}/bin:\${PATH}\"" >> "${BASH_ENV}"
+      fi
+      export JAVA_HOME="${java_home}"
 }
 
 # Install Azul Zulu JDK 25 (forward-compat / newer-LTS testing on CI host).
