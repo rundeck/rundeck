@@ -218,6 +218,69 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         username | _
         'auser'  | _
     }
+
+    def "findUser requests demographic and password attributes explicitly"() {
+        // Some directories (e.g. Active Directory over JNDI) return null for every attribute
+        // when no returning-attribute list is set on the search, even though the same
+        // attributes are readable via ldapsearch. findUser() must request them by name.
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = false
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = 'apassword' }
+        })  // Use setter instead of @field access (Groovy 4)
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+            getAttributes() >> Mock(Attributes) {
+                get(module._userFirstNameAttribute) >> new BasicAttribute(module._userFirstNameAttribute, "First")
+                get(module._userLastNameAttribute) >> new BasicAttribute(module._userLastNameAttribute, "Last")
+                get(module._userEmailAttribute) >> new BasicAttribute(module._userEmailAttribute, "user@example.com")
+            }
+        }]
+        def dirContext = Mock(DirContext) {
+            1 * search(
+                _,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._userObjectClass, module._userIdAttribute, username],
+                { SearchControls ctls ->
+                    ctls.getReturningAttributes() as List == [
+                        module._userIdAttribute,
+                        module._userPasswordAttribute,
+                        module._userFirstNameAttribute,
+                        module._userLastNameAttribute,
+                        module._userEmailAttribute,
+                    ]
+                }
+            ) >> {new EnumImpl<SearchResult>(found)}
+            0 * search(*_)
+        }
+        module._rootContext = dirContext
+        DirContext userDir = Mock(DirContext) {
+            _ * search(*_) >> {new EnumImpl<SearchResult>([])}
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            userDir
+        }
+        when:
+        boolean result = module.login()
+
+        then:
+        result
+        module._userFirstName == "First"
+        module._userLastName == "Last"
+        module._userEmail == "user@example.com"
+
+        where:
+        username | _
+        'auser'  | _
+    }
+
     class EnumImpl<T> implements NamingEnumeration<T>{
         List<T> list
 
