@@ -26,6 +26,11 @@ dependencies {
     testImplementation "org.objenesis:objenesis:${objenesisVersion}"
     testImplementation "cglib:cglib-nodep:${cglibNoDepVersion}"
     testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
+    // Gradle 9 no longer puts the JUnit Platform launcher on the test runtime classpath
+    // implicitly; without it useJUnitPlatform() fails with "Failed to load JUnit Platform".
+    // Modules that depend on groovy-all get it transitively via groovy-test-junit5; this one
+    // depends on plain groovy, so declare it. Version comes from the junit BOM already present.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
 repositories {
