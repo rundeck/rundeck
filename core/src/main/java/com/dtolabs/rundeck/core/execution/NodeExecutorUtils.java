@@ -1,7 +1,9 @@
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.execution.component.SshExportQuotingConfig;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -33,14 +35,24 @@ public class NodeExecutorUtils {
             List<String> envArgs = new ArrayList<>();
             String replacementPattern = node.getAttributes().get(RD_VARIABLE_PATTERN);
             final Map<String, String> envVars = DataContextUtils.generateEnvVarsFromContext(nodeContext.getDataContext());
+            // RUN-4579: option values reach the remote sh -c through this export prefix; without shell
+            // quoting a value containing metacharacters (;, $(), backticks, ...) is a command-injection
+            // sink. Quoting is opt-in and gated by a component resolved in the application layer
+            // (project/system config); default false (legacy unquoted behavior) when absent. When
+            // enabled, quoteUnixShellArg is a no-op for benign values, so ordinary configurations are
+            // unaffected.
+            final boolean quoteExport = nodeContext.componentForType(SshExportQuotingConfig.class)
+                    .map(SshExportQuotingConfig::isQuoteExportedValues)
+                    .orElse(false);
             envVars.forEach((k,v)->{
+                final String value = quoteExport ? CLIUtils.quoteUnixShellArg(v) : v;
                 if(node.getAttributes().get(RD_VARIABLE_PATTERN_EXCLUDE_NODES) != null
                         && Boolean.TRUE.equals(Boolean.valueOf(node.getAttributes().get(RD_VARIABLE_PATTERN_EXCLUDE_NODES)))){
                     if(!k.startsWith(RD_VARIABLE_PATTERN_EXCLUDE_NODES_PATTERN)){
-                        envArgs.add(replacementPattern.replace("{key}", k).replace("{value}", v));
+                        envArgs.add(replacementPattern.replace("{key}", k).replace("{value}", value));
                     }
                 }else{
-                    envArgs.add(replacementPattern.replace("{key}", k).replace("{value}", v));
+                    envArgs.add(replacementPattern.replace("{key}", k).replace("{value}", value));
                 }
             });
             if(!envArgs.isEmpty()){
