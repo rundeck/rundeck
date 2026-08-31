@@ -78,7 +78,13 @@ class GitExportPluginSpec extends Specification {
                 committerEmail       : 'test@example.com',
                 strictHostKeyChecking: 'yes',
                 format               : 'xml',
-                url                  : new File(tempdir, 'origin'),
+                // Groovy 5 gave File an asBoolean() based on existence, so a File pointing at a
+                // path that does not exist is now falsy. Config.configure() tests required inputs
+                // with `if (!input[prop.name])`, so this entry -- a File in a Map<String,String>,
+                // for a directory this feature never creates -- started reading as missing and
+                // made every iteration fail on "url cannot be null". Pass the String the map type
+                // already declares, as the sibling `dir` entry does.
+                url                  : new File(tempdir, 'origin').absolutePath,
         ]
         input.remove(requiredInputName)
 
