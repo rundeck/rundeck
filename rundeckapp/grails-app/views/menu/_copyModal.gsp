@@ -18,7 +18,7 @@
                             data-bind="click: cancel"
                             data-dismiss="modal" ><g:message code="cancel"/></button>
 
-                    <g:actionSubmit action="copy"
+                    <g:formActionSubmit action="copy"
                                     value="${message(code:'yes')}"
                                     id="submittbn"
                                     class="btn btn-default"/>

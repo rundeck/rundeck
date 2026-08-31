@@ -243,7 +243,7 @@
           </div>
           <div class="card-footer">
             <div id="uploadFormButtons">
-              <g:actionSubmit id="createFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+              <g:formActionSubmit id="createFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
               <g:submitButton name="Upload" id="uploadFormUpload"
                               value="${g.message(code:'button.action.Upload',default:'Upload')}"
                               onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)"
