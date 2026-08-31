@@ -78,11 +78,11 @@
     </div>
 
     <div class="card-footer" data-ko-bind="jobeditor">
-      <g:actionSubmit id="editFormCancelButton" value="${g.message(code: 'cancel')}"
+      <g:formActionSubmit id="editFormCancelButton" value="${g.message(code: 'cancel')}"
                       onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                       class="btn btn-default reset_page_confirm"
                       action="Cancel"/>
-      <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-cta reset_page_confirm " id="jobUpdateSaveButton"/>
+      <g:formActionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-cta reset_page_confirm " id="jobUpdateSaveButton"/>
         <span class="vue-ui-socket">
           <ui-socket section="job-editor" location="workflow-edit-warning">
             <span data-bind="if: inPageError()" class="text-warning">
