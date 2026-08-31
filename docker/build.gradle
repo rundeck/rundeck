@@ -1,6 +1,20 @@
 plugins{
     id 'base'
 }
+
+import javax.inject.Inject
+
+/**
+ * Gradle 9 removed Project.exec() and Project.copy() from the execution phase, so calling them
+ * from doLast now fails with "Could not find method exec()". The supported replacement is to
+ * inject ExecOperations/FileSystemOperations; in a build script that means an interface
+ * instantiated via objects.newInstance().
+ */
+interface InjectedBuildOps {
+    @Inject ExecOperations getExecOps()
+    @Inject FileSystemOperations getFsOps()
+}
+
 configurations{
     docker
 }
@@ -55,6 +69,9 @@ tasks.register('officialBuild') {
         outputs.file "$outputDir/$tag"
     }
 
+    //resolved at configuration time; see InjectedBuildOps at the top of this file
+    def buildOps = project.objects.newInstance(InjectedBuildOps)
+
     doLast {
         file(outputDir).mkdir()
 
@@ -62,7 +79,7 @@ tasks.register('officialBuild') {
         def bootArchiveFile = rundeckapp.bootWar.archiveFile.get()
         def bootArchiveFilename = rundeckapp.bootWar.archiveFileName.get()
 
-        copy {
+        buildOps.fsOps.copy {
             from bootArchiveFile
             into "$projectDir/official/.build"
             rename "${bootArchiveFilename}", "rundeck.war"
@@ -82,7 +99,7 @@ tasks.register('officialBuild') {
 
         args.add(".")
 
-        exec {
+        buildOps.execOps.exec {
             workingDir "./official"
             commandLine args
         }
@@ -100,9 +117,13 @@ tasks.register('officialBuild') {
 
 tasks.register('officialPush') {
     dependsOn officialBuild
+
+    //resolved at configuration time; see InjectedBuildOps at the top of this file
+    def buildOps = project.objects.newInstance(InjectedBuildOps)
+
     doLast {
         for (tag in dockerTags) {
-            exec {
+            buildOps.execOps.exec {
                 commandLine "docker", "push", "${dockerRepository}:$tag"
             }
         }
@@ -111,8 +132,11 @@ tasks.register('officialPush') {
 }
 
 tasks.register('buildUbuntuBase') {
+    //resolved at configuration time; see InjectedBuildOps at the top of this file
+    def buildOps = project.objects.newInstance(InjectedBuildOps)
+
     doLast {
-        exec {
+        buildOps.execOps.exec {
             workingDir "./ubuntu-base"
             commandLine "docker", "build", "--no-cache", "--build-arg", "JRE_VERSION=$jreVersion", "-t=rundeck/ubuntu-base", "."
         }
@@ -122,8 +146,12 @@ officialBuild.dependsOn buildUbuntuBase
 
 tasks.register('pushUbuntuBase') {
     dependsOn buildUbuntuBase
+
+    //resolved at configuration time; see InjectedBuildOps at the top of this file
+    def buildOps = project.objects.newInstance(InjectedBuildOps)
+
     doLast {
-        exec {
+        buildOps.execOps.exec {
             commandLine "docker", "push", "rundeck/ubuntu-base"
         }
     }
