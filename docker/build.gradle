@@ -14,7 +14,7 @@ def dockerRepository = findProperty("dockerRepository")?: 'rundeck/rundeck'
 def providedTags = findProperty('dockerTags')?: ''
 // openjdk-17-jre-headless is a sentinel: ubuntu-base installs pinned Azul Zulu
 // 17.0.21.1 for it. Any other value is installed as an Ubuntu apt package.
-def jreVersion = findProperty("jreVersion")?: 'openjdk-17-jre-headless'
+def jreVersion = findProperty("jreVersion")?: 'openjdk-21-jre-headless'
 
 def dockerTags = [].plus(providedTags.split(',').findAll())
 
