@@ -897,7 +897,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def results = Execution.isScheduledAdHoc()
         if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
+            results = results.where { serverNodeUUID == serverUUID }
         }
         results.list().each { Execution e ->
             ScheduledExecution se = e.scheduledExecution
@@ -923,9 +923,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def results = Execution.isScheduledAdHoc()
         if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
+            results = results.where { serverNodeUUID == serverUUID }
         }
-        results = results.withProject(project)
+        results = results.where { delegate.project == project }
 
         results.list().each { Execution e ->
             ScheduledExecution se = e.scheduledExecution
@@ -1009,10 +1009,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         // Reschedule any executions which were scheduled ad hoc
         def results = Execution.isScheduledAdHoc()
         if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
+            results = results.where { serverNodeUUID == serverUUID }
         }
         if(project) {
-            results = results.withProject(project)
+            results = results.where { delegate.project == project }
         }
         def executionList = results.list()
 
@@ -1242,8 +1242,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     private def scheduleAdHocExecutionsForJob(ScheduledExecution se, String targetServerUUID) {
         // Reschedule any executions which were scheduled ad hoc
         def executionList = Execution.isScheduledAdHoc()
-                .withScheduledExecution(se)
-                .withServerNodeUUID(targetServerUUID)
+                .where { scheduledExecution == se }
+                .where { serverNodeUUID == targetServerUUID }
                 .list()
 
         rescheduleOnetimeExecutions(executionList)
