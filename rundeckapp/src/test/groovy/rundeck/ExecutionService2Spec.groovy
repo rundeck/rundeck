@@ -1227,7 +1227,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
     void testCreateContextArgsarray() {
 
         def fcontrol = new MockFor(FrameworkService, true)
-        fcontrol.demand.parseOptsFromArray(1..1) {String[] argString ->
+        fcontrol.demand.parseOptsFromArray(1..1) {argString ->
             [test: 'args',test2:'monkey args']
         }
 
@@ -2139,13 +2139,13 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                                           .user('aUser')
                                           .build()
         service.frameworkService = mockWith(FrameworkService) {
-            parseOptsFromArray(1..1) { String[] args ->
+            parseOptsFromArray(1..1) { args ->
                 ['test1':'value']
             }
             getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
             getProjectProperties(0..1) { project -> [:] }
-            parseOptsFromArray(1..1) { String[] args ->
+            parseOptsFromArray(1..1) { args ->
                 ['test1':'value']
             }
             getProjectGlobals(1..1) { project ->
@@ -2213,13 +2213,13 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                                           .user('aUser')
                                           .build()
         service.frameworkService = mockWith(FrameworkService) {
-            parseOptsFromArray(1..1) { String[] args ->
+            parseOptsFromArray(1..1) { args ->
                 ['test1':'value']
             }
             getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
             getProjectProperties(0..1) { project -> [:] }
-            parseOptsFromArray(1..1) { String[] args ->
+            parseOptsFromArray(1..1) { args ->
                 ['test1':'value']
             }
             getProjectGlobals(1..1) { project ->
@@ -2298,7 +2298,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                                           .build()
         def parseOptsCount = 0
         service.frameworkService = mockWith(FrameworkService) {
-            parseOptsFromArray(1..1) { String[] args ->
+            parseOptsFromArray(1..1) { args ->
                 def argsl = args as List
                 assertEquals(['test1','wakeful'], argsl)
                 parseOptsCount++
@@ -2307,7 +2307,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
             getProjectProperties(0..1) { project -> [:] }
-            parseOptsFromArray(1..1) { String[] args ->
+            parseOptsFromArray(1..1) { args ->
                 def argsl = args as List
                 assertTrue(argsl.indexOf('-test1') >= 0 && argsl.indexOf('-test1') <= argsl.size() - 2)
                 assertTrue(argsl.indexOf('-test2') >= 0 && argsl.indexOf('-test2') <= argsl.size() - 2)
@@ -2388,7 +2388,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                                           .build()
         def parseOptsCount = 0
         service.frameworkService = mockWith(FrameworkService) {
-            parseOptsFromArray(1..1) { String[] args ->
+            parseOptsFromArray(1..1) { args ->
                 def argsl = args as List
                 assertEquals(4, argsl.size())
                 parseOptsCount++
@@ -2407,7 +2407,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
             getProjectProperties(0..1) { project -> [:] }
-            parseOptsFromArray(1..1) { String[] args ->
+            parseOptsFromArray(1..1) { args ->
                 def argsl = args as List
                 assertTrue(argsl.indexOf('-test1') >= 0 && argsl.indexOf('-test1') <= argsl.size() - 2)
                 assertTrue(argsl.indexOf('-test2') >= 0 && argsl.indexOf('-test2') <= argsl.size() - 2)
