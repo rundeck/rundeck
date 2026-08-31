@@ -36,6 +36,9 @@ dependencies{
 
     testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
+    // Spock needs a class mock maker for Mock(SomeClass). cglib is not supported on Java 21+,
+    // so byte-buddy has to provide it, as it already does in core/jsch-plugin/script-node-step-plugin.
+    testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
     testImplementation "cglib:cglib-nodep:2.2.2"
 }
 
