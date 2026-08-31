@@ -625,12 +625,12 @@ search
                           <div data-bind="visible: activeTab()==='nodes'" class="pull-right" style="margin-left: 10px;">
                               <div class="checkbox-inline">
                                   <input type="checkbox"
-                                         data-bind="checked: hideSkippedSteps"
-                                         id="hide-skipped-steps"
-                                         title="${g.message(code: 'execution.show.nodes.hideSkippedSteps.description',
-                                                 default: 'Hide steps that were skipped due to conditional evaluation')}"/>
-                                  <label for="hide-skipped-steps">
-                                      <g:message code="execution.show.nodes.hideSkippedSteps.label" default="Hide skipped steps"/>
+                                         data-bind="checked: ignoreSkippedSteps, enable: ignoreSkippedStepsApplies"
+                                         id="ignore-skipped-steps"
+                                         title="${g.message(code: 'execution.show.nodes.ignoreSkippedSteps.description',
+                                                 default: 'Count a node as complete when the only steps that did not run were skipped. Successful executions only.')}"/>
+                                  <label for="ignore-skipped-steps">
+                                      <g:message code="execution.show.nodes.ignoreSkippedSteps.label" default="Ignore skipped steps"/>
                                   </label>
                               </div>
                           </div>

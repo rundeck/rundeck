@@ -722,6 +722,30 @@ RDNode.computeNodeDurationMs = function (durationMs, steps, execDurationMs) {
     return ms != null ? ms : -1;
 };
 
+/**
+ * Whether a node's only unrun steps were skipped, and everything that did run succeeded.
+ *
+ * A NOT_STARTED step is not proof of a skipped conditional: a step is also NOT_STARTED when it
+ * was never reached because an earlier step aborted. Reclassifying the node therefore requires
+ * the step counts, not just the summary state. Server summaries from a node whose steps have not
+ * been loaded omit these counts on older releases, in which case the node is left as reported.
+ * @param counts object with total, SUCCEEDED, NOT_STARTED and optional pending counts
+ * @returns {boolean}
+ */
+RDNode.isSkippedOnlySuccess = function (counts) {
+    if (!counts) {
+        return false;
+    }
+    var total = counts.total, succeeded = counts.SUCCEEDED, notStarted = counts.NOT_STARTED;
+    if (typeof total !== 'number' || typeof succeeded !== 'number' || typeof notStarted !== 'number') {
+        return false;
+    }
+    if (counts.pending > 0 || notStarted < 1 || total < 1) {
+        return false;
+    }
+    return total - notStarted === succeeded;
+};
+
 function RDNode(name, steps,flow){
     var self=this;
     self.flow= flow;
@@ -826,14 +850,21 @@ function RDNode(name, steps,flow){
         return null;
     };
     /**
+     * Whether the flow-level skipped-step toggle is on and applies to this execution.
+     * @returns {boolean}
+     */
+    self.ignoreSkippedActive=function(){
+        return !!(self.flow.ignoreSkippedSteps
+            && self.flow.ignoreSkippedSteps()
+            && self.flow.ignoreSkippedStepsApplies
+            && self.flow.ignoreSkippedStepsApplies());
+    };
+    /**
      * Determine summary data for the node, sets the summaryState and summary and currentStep
      */
     self.summarize=function(){
         var currentStep=null;
-        // Only hide skipped steps for completed successful executions
-        // NOT_STARTED could mean "never reached due to failure" not just "conditional skipped"
-        var hideSkipped = self.flow.hideSkippedSteps && self.flow.hideSkippedSteps()
-                          && self.flow.completed() && self.flow.executionState() === 'SUCCEEDED';
+        var ignoreSkipped = self.ignoreSkippedActive();
 
         //step summary info
         var summarydata = {
@@ -887,8 +918,7 @@ function RDNode(name, steps,flow){
                 self.summary("Waiting to run " + summarydata.WAITING + " " + flow.pluralize(summarydata.WAITING, "Step"));
                 self.summaryState("WAITING");
             } else if (summarydata.NOT_STARTED == summarydata.total && summarydata.pending < 1) {
-                // All steps are NOT_STARTED (skipped)
-                if (hideSkipped) {
+                if (ignoreSkipped && RDNode.isSkippedOnlySuccess(summarydata)) {
                     self.summary("All Steps OK");
                     self.summaryState("SUCCEEDED");
                 } else {
@@ -896,17 +926,9 @@ function RDNode(name, steps,flow){
                     self.summaryState("NOT_STARTED");
                 }
             } else if (summarydata.NOT_STARTED > 0) {
-                // Some steps are NOT_STARTED (skipped)
-                if (hideSkipped) {
-                    // Show only the steps that ran
-                    var ranSteps = summarydata.total - summarydata.NOT_STARTED;
-                    if (ranSteps == summarydata.SUCCEEDED) {
-                        self.summary("All Steps OK");
-                        self.summaryState("SUCCEEDED");
-                    } else {
-                        self.summary(ranSteps + " " + flow.pluralize(ranSteps, "Step") + " ran");
-                        self.summaryState("PARTIAL_SUCCEEDED");
-                    }
+                if (ignoreSkipped && RDNode.isSkippedOnlySuccess(summarydata)) {
+                    self.summary("All Steps OK");
+                    self.summaryState("SUCCEEDED");
                 } else {
                     self.summary(summarydata.NOT_STARTED + " " + flow.pluralize(summarydata.NOT_STARTED, "Step") + " not run");
                     self.summaryState("PARTIAL_NOT_STARTED");
@@ -932,31 +954,38 @@ function RDNode(name, steps,flow){
     self.currentStepFromData=function(data){
         self.currentStep(new RDNodeStep(data, self, self.flow));
     };
+    /**
+     * Apply the last summary reported by the server to the display, honouring the skipped-step
+     * toggle. Used for nodes whose steps have not been loaded, where summarize() has no data.
+     */
+    self.applyServerSummary=function(){
+        var data=self._serverSummary;
+        if(!data){
+            return;
+        }
+        var counts={
+            total: data.total,
+            SUCCEEDED: data.SUCCEEDED,
+            NOT_STARTED: data.NOT_STARTED,
+            pending: self.flow.pendingStepsForNode(self.name)
+        };
+        if(self.ignoreSkippedActive() && RDNode.isSkippedOnlySuccess(counts)){
+            self.summaryState('SUCCEEDED');
+            self.summary('All Steps OK');
+        }else{
+            self.summaryState(data.summaryState);
+            self.summary(self.summaryDescriptionForState(data));
+        }
+    };
     self.updateSummary=function(nodesummary){
+        //compare against the reported state, not the displayed one, which the toggle may have rewritten
         if(nodesummary.lastUpdated && self.lastUpdated()==nodesummary.lastUpdated
-            && nodesummary.summaryState==self.summaryState()){
+            && self._serverSummary && nodesummary.summaryState==self._serverSummary.summaryState){
             return;
         }
         self.lastUpdated(nodesummary.lastUpdated);
-
-        // Store original server state for restoring when toggle is off
-        var state = nodesummary.summaryState;
-        var originalSummary = self.summaryDescriptionForState(nodesummary);
-        self._originalSummaryState = state;
-        self._originalSummary = originalSummary;
-
-        // Only hide skipped steps for completed successful executions
-        var hideSkipped = self.flow.hideSkippedSteps && self.flow.hideSkippedSteps()
-                          && self.flow.completed() && self.flow.executionState() === 'SUCCEEDED';
-
-        if (hideSkipped && (state === 'PARTIAL_NOT_STARTED' || state === 'NOT_STARTED')) {
-            // When hiding skipped steps, show these as succeeded
-            self.summaryState('SUCCEEDED');
-            self.summary('All Steps OK');
-        } else {
-            self.summaryState(state);
-            self.summary(originalSummary);
-        }
+        self._serverSummary=nodesummary;
+        self.applyServerSummary();
 
         self.durationMs(nodesummary.duration);
         self.summaryStartTime(nodesummary.startTime || null);
@@ -1030,7 +1059,14 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.endTime=ko.observable();
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
-    self.hideSkippedSteps = ko.observable(false);
+    self.ignoreSkippedSteps = ko.observable(false);
+    /**
+     * Skipped steps can only be told apart from steps that were never reached once the execution
+     * has finished successfully, so the toggle has no effect on any other execution.
+     */
+    self.ignoreSkippedStepsApplies = ko.pureComputed(function () {
+        return !!self.completed() && self.executionState() === 'SUCCEEDED';
+    });
     self.activeView = ko.observable("nodes");
     /**
      * synonym with activeView, to maintain compatibility
@@ -1242,31 +1278,24 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         return (b==0)?0:(100*(a/b)).toFixed(0);
     };
 
-    self.resummarizeAllNodes = function() {
-        // Only hide skipped steps for completed successful executions
-        var hideSkipped = self.hideSkippedSteps()
-                          && self.completed() && self.executionState() === 'SUCCEEDED';
+    self.resummarizeAllNodes = function () {
         ko.utils.arrayForEach(self.nodes(), function (n) {
-            // Only call summarize() if the node has steps loaded
             if (n.steps() && n.steps().length > 0) {
                 n.summarize();
             } else {
-                // For collapsed nodes (no steps loaded), adjust state based on toggle
-                var currentState = n.summaryState();
-                if (hideSkipped && (currentState === 'PARTIAL_NOT_STARTED' || currentState === 'NOT_STARTED')) {
-                    n.summaryState('SUCCEEDED');
-                    n.summary('All Steps OK');
-                } else if (!hideSkipped && n._originalSummaryState) {
-                    // Restore original state when toggle is off
-                    n.summaryState(n._originalSummaryState);
-                    n.summary(n._originalSummary);
-                }
+                n.applyServerSummary();
             }
         });
     };
 
-    self.hideSkippedSteps.subscribe(function(newValue) {
+    self.ignoreSkippedSteps.subscribe(function () {
         self.resummarizeAllNodes();
+    });
+    //an execution finishing while the toggle is on changes whether it applies
+    self.ignoreSkippedStepsApplies.subscribe(function () {
+        if (self.ignoreSkippedSteps()) {
+            self.resummarizeAllNodes();
+        }
     });
 
     self.stopShowingOutput= function () {
