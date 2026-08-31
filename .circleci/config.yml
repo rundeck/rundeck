@@ -73,10 +73,13 @@ slack-fail-post-step: &slack-fail-post-step
 
 executors:
 
-  # Main docker executor (cimg/openjdk:17.0 includes Eclipse Temurin JDK 17)
+  # Main docker executor (cimg/openjdk:21.0 includes Eclipse Temurin JDK 21).
+  # Grails 8 / Gradle 9 require a JDK 21 build JVM: the grails-gradle-plugin
+  # variant metadata declares `org.gradle.jvm.version = 21`, so resolving the
+  # buildscript classpath on a Java 17 JVM fails outright.
   docker-builder:
     docker:
-      - image: cimg/openjdk:17.0.20
+      - image: cimg/openjdk:21.0.12
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -197,11 +200,11 @@ commands:
 
   # Install/verify Java JDK (pre-installed on cimg/openjdk, installed via apt on machine executor)
   install-java-jdk:
-    description: Ensure JDK 17 is available
+    description: Ensure JDK 21 is available
     steps:
       - run-build-step:
           step-name: Install Java JDK
-          command: dependencies_install_zulu17jdk
+          command: dependencies_install_zulu21jdk
 
   install-java-jdk-25:
     description: Install JDK 25 for host-side tests (BASH_ENV JAVA_HOME)
@@ -274,7 +277,7 @@ jobs:
     parameters:
       jreVersion:
         type: string
-        default: "openjdk-17-jre-headless"
+        default: "openjdk-21-jre-headless"
       jre25Publish:
         description: Also build and push a Docker image with JRE 25
         type: boolean
@@ -489,8 +492,8 @@ jobs:
     parameters:
       jreVersion:
         type: string
-        # Grails 7: Java 17 required
-        default: "openjdk-17-jre-headless"
+        # Grails 8: Java 21 required
+        default: "openjdk-21-jre-headless"
     steps:
       - setup_docker
       - checkout
@@ -1021,7 +1024,7 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build with Docker image using JRE 17
-          jreVersion: "openjdk-17-jre-headless"
+          jreVersion: "openjdk-21-jre-headless"
           jre25Publish: true
       - test-docker:
           name: T Integration SSL (host JDK 25, image JRE 17)
