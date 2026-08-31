@@ -16,6 +16,7 @@
 
 package rundeck
 
+import grails.gorm.DetachedCriteria
 import com.dtolabs.rundeck.app.domain.EmbeddedJsonData
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
@@ -203,29 +204,33 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         }
     }
 
-    static namedQueries = {
-		scheduledJobs {
-			eq 'scheduled', true
-		}
-		withServerUUID { uuid ->
-			eq 'serverNodeUUID', uuid
-		}
-		withoutServerUUID { uuid ->
-			ne 'serverNodeUUID', uuid
-		}
-		withAdHocScheduledExecutions {
-			executions {
-				eq 'status', 'scheduled'
-			}
-		}
-        withProject { project ->
-            eq 'project', project
-        }
-        findByUUID{ uuid ->
-            eq 'uuid', uuid
-            cache false
-            setUniqueResult true
-        }
+    // GORM named queries (`static namedQueries`) were removed in Grails 8 -- the runtime support in
+    // GormEnhancer/NamedCriteriaProxy is gone, so they compile but throw MissingMethodException
+    // ("No signature of static method: createNamedQuery") when called. Replaced with static methods
+    // returning DetachedCriteria, which compose the same way via .where { }.
+    // Note `withoutServerUUID` and `withAdHocScheduledExecutions` had no call sites and were dropped.
+
+    static DetachedCriteria<ScheduledExecution> scheduledJobs() {
+        where { scheduled == true }
+    }
+
+    static DetachedCriteria<ScheduledExecution> withServerUUID(String uuid) {
+        where { serverNodeUUID == uuid }
+    }
+
+    //NB: parameter is `proj`, not `project` -- inside a where closure the latter would shadow the
+    //domain property and silently compare it to itself.
+    static DetachedCriteria<ScheduledExecution> withProject(String proj) {
+        where { project == proj }
+    }
+
+    /**
+     * Replaces the findByUUID named query, which used setUniqueResult/cache false.
+     * Callers terminate with .find() (see ExecutionJob.fetchScheduledExecution), which yields the
+     * single result, so the DetachedCriteria itself just carries the uuid restriction.
+     */
+    static DetachedCriteria<ScheduledExecution> findByUUID(String theUuid) {
+        where { uuid == theUuid }
     }
 
 
