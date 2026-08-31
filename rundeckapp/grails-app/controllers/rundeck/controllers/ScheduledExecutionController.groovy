@@ -2923,7 +2923,11 @@ Since: v56''',
     protected def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
         params["user"] = authContext.username
-        params.request = request
+        // Groovy 5: GrailsParameterMap has a read-only `request` property, and dot-assignment now
+        // resolves to the property rather than falling through to the map -- it throws
+        // ReadOnlyPropertyException instead of storing a "request" key as it did on Groovy 4.
+        // Use put() explicitly, which behaves the same on both versions.
+        params.put('request', request)
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
 
