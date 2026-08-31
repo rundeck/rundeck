@@ -27,11 +27,17 @@ apply from: "../../gradle/java-version.gradle"
 
 dependencies{
 
-    testImplementation "junit:junit:${junitVersion}",
-                "org.mockito:mockito-all:${mockitoAllVersion}"
+    // mockito-all 1.10.19 was declared here but never referenced by any test in this module.
+    // Spock 2.4 registers a MockitoMockMaker whenever org.mockito.Mockito is on the classpath and
+    // it needs Mockito >= 4.11; against 1.x it fails to instantiate and takes down every mock in
+    // the module. Dropping the unused dependency removes the provider entirely. Same as git-plugin.
+    testImplementation "junit:junit:${junitVersion}"
 
     testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
+    // Spock needs a class mock maker for Mock(SomeClass); cglib is not supported on Java 21+.
+    testImplementation "net.bytebuddy:byte-buddy:${byteBuddyVersion}"
+    testImplementation "org.objenesis:objenesis:${objenesisVersion}"
 }
 jar {
     manifest {
