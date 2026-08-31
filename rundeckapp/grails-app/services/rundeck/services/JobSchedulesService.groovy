@@ -240,12 +240,13 @@ class LocalJobSchedulesManager implements SchedulesManager {
      * @return
      */
     def listScheduledJobs(String serverUUID = null, String project = null){
+        //named queries are gone in Grails 8; compose the DetachedCriteria with .where { } instead
         def results = ScheduledExecution.scheduledJobs()
         if (serverUUID) {
-            results = results.withServerUUID(serverUUID)
+            results = results.where { serverNodeUUID == serverUUID }
         }
         if(project) {
-            results = results.withProject(project)
+            results = results.where { delegate.project == project }
         }
         results.list()
     }
