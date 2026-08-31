@@ -87,8 +87,8 @@ Uses the war artifact and creates the `rundeck/rundeck:SNAPSHOT` docker image:
 
 - `dockerTags` adds additional tags on the image
 -   - Ex: `-PdockerTags=local,local-RUN-123`
-- `jreVersion=openjdk-17-jre-headless` specifies the JRE version for the image
-  - Ex: `-PjreVersion=openjdk-17-jre-headless`
+- `jreVersion=openjdk-21-jre-headless` specifies the JRE version for the image
+  - Ex: `-PjreVersion=openjdk-21-jre-headless`
 
 ## Run UI Tests
 
