@@ -359,7 +359,10 @@ class ExecutionContextImplSpec extends Specification {
             result.nodeService == (nodeservice2)
             result.orchestrator == (orc2)
             result.outputContext == (outcontext2)
-            result.sharedDataContext.consolidate().getData(ContextView.global()).data == [bob: 'data2', blee: 'blah', blah: 'blee']
+            // Groovy 5: BaseDataContext both implements Map and declares getData(), so the
+            // `.data` property now resolves to the bean getter (the whole backing map) instead
+            // of get("data"). Access the key explicitly so this is version-independent.
+            result.sharedDataContext.consolidate().getData(ContextView.global()).get('data') == [bob: 'data2', blee: 'blah', blah: 'blee']
             result.loggingManager == (logmanager2)
             result.execution == (execRef2)
             result.singleNodeContext == null
