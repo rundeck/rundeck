@@ -52,16 +52,16 @@ class SshjSession implements RemoteSession {
         }
     }
 
-    private SSHClient createConnection(){
+    private SSHClient createConnection() {
 
         String user = uri.getUser()
         String host = uri.getHost()
         int port = uri.getPort()
 
-        if(config){
-            OpenSshConfig.Host hc = config.lookup(host);
+        if (config) {
+            OpenSshConfig.Host hc = config.lookup(host)
             if (port <= 0)
-                port = hc.getPort();
+                port = hc.getPort()
             if (user == null)
                 user = hc.getUser()
         }
@@ -70,26 +70,26 @@ class SshjSession implements RemoteSession {
         defaultConfig.setKeepAliveProvider(KeepAliveProvider.KEEP_ALIVE)
         SSHClient ssh = new SSHClient(defaultConfig)
 
-        if(sshConfig.get("StrictHostKeyChecking") == "no"){
+        if (sshConfig.get("StrictHostKeyChecking") == "no") {
             ssh.addHostKeyVerifier(new PromiscuousVerifier())
-        }else{
+        } else {
             //fail secure: default to strict host key checking unless explicitly disabled
             ssh.loadKnownHosts()
         }
 
-        try{
+        try {
             if (port != null) {
                 ssh.connect(host, port)
             } else {
-                ssh.connect(host);
+                ssh.connect(host)
             }
 
-            if(privateKey){
-                KeyFormat format = KeyProviderUtil.detectKeyFileFormat(privateKey,true);
+            if (privateKey) {
+                KeyFormat format = KeyProviderUtil.detectKeyFileFormat(privateKey, true)
                 if (format == null || format == KeyFormat.Unknown) {
                     throw new IOException("Unrecognized or invalid SSH private key format")
                 }
-                FileKeyProvider keys = Factory.Named.Util.create(ssh.getTransport().getConfig().getFileKeyProviderFactories(), format.toString());
+                FileKeyProvider keys = Factory.Named.Util.create(ssh.getTransport().getConfig().getFileKeyProviderFactories(), format.toString())
                 if (keys == null) {
                     throw new IOException("No key provider available for SSH private key format: ${format}")
                 }
@@ -98,7 +98,7 @@ class SshjSession implements RemoteSession {
             }
 
             return ssh
-        }catch(IOException e){
+        } catch (IOException e) {
             ssh.close()
             throw new TransportException(uri, e.getMessage(), e)
         }
@@ -130,7 +130,7 @@ class SshjSession implements RemoteSession {
 
         @Override
         int waitFor() throws InterruptedException {
-            while (isRunning()){
+            while (isRunning()) {
                 Thread.sleep(100)
             }
             return exitValue()
@@ -138,7 +138,7 @@ class SshjSession implements RemoteSession {
 
         @Override
         int exitValue() {
-            if (isRunning()){
+            if (isRunning()) {
                 throw new IllegalStateException()
             }
             return cmd.getExitStatus()
@@ -146,7 +146,7 @@ class SshjSession implements RemoteSession {
 
         @Override
         void destroy() {
-            if(cmd != null) cmd.close()
+            if (cmd != null) cmd.close()
             closeOutputStream()
             session.close()
         }

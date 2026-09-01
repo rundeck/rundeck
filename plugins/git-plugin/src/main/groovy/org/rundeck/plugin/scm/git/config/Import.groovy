@@ -83,7 +83,7 @@ class Import extends Common{
         validatorClass = PathTemplateValidator
     )
     @SelectValues(
-        values = ['.*\\.xml','.*\\.yaml','.*\\.json'],
+        values = ['.*\\.xml', '.*\\.yaml', '.*\\.json'],
         freeSelect = true
     )
     @RenderingOption(
@@ -119,11 +119,11 @@ class Import extends Common{
         importUuidBehavior == 'remove'
     }
 
-    boolean shouldPullAutomatically(){
-        return pullAutomatically in [null,'true']
+    boolean shouldPullAutomatically() {
+        return pullAutomatically in [null, 'true']
     }
 
-    boolean shouldUseFilePattern(){
-        return useFilePattern in [null,'true']
+    boolean shouldUseFilePattern() {
+        return useFilePattern in [null, 'true']
     }
 }

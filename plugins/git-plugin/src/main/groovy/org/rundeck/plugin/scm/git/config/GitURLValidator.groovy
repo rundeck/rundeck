@@ -34,6 +34,6 @@ class GitURLValidator implements PropertyValidator {
         } catch (URISyntaxException e) {
             throw new ValidationException("Not a valid git URL: ${e.message}")
         }
-        return true;
+        return true
     }
 }

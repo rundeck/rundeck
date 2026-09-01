@@ -77,8 +77,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             final JobImporter importer,
             final List<String> selectedPaths,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
+    ) throws ScmPluginException {
         return actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
     }
 
@@ -90,8 +89,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         final List<String> selectedPaths,
         final List<String> deletedJobs,
         final Map<String, String> input
-    ) throws ScmPluginException
-    {
+    ) throws ScmPluginException {
         if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
             deletedJobs.each { jobid ->
                 jobStateMap.remove(jobid)
@@ -104,7 +102,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 deletedJobs,
                 input
             )
-        }else{
+        } else {
             log.debug("deletedJobs list to non import action, ignored")
             actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
         }
@@ -179,12 +177,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     @Override
-    void totalClean(){
+    void totalClean() {
         git?.getRepository()?.close()
         File base = new File(config.dir)
         try {
             FileUtils.delete(base, FileUtils.RECURSIVE)
-        } catch(IOException e){
+        } catch (IOException e) {
             logger.error("Failed to delete repo folder")
         }
     }
@@ -204,7 +202,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
         def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
 
-        if(loadingStatus){
+        if (loadingStatus) {
             def synchState = new GitExportSynchState()
             synchState.state = SynchState.LOADING
             return synchState
@@ -214,8 +212,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (performFetch) {
             try {
                 fetchFromRemote(context)
-                if(config.shouldPullAutomatically()){
-                    actions[ACTION_PULL].performAction(context,this,null,null,null)
+                if (config.shouldPullAutomatically()) {
+                    actions[ACTION_PULL].performAction(context, this, null, null, null)
                 }
             } catch (Exception e) {
                 msgs << "Fetch from the repository failed: ${e.message}"
@@ -236,9 +234,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         Set<String> notExpected = new HashSet()
         importTracker.trackedPaths().each {
             def commitId = importTracker.trackedCommits?.get(it)
-            if(commitId){
+            if (commitId) {
                 def gitCommit = GitUtil.getCommit(repo, commitId)
-                if(!gitCommit){
+                if (!gitCommit) {
                     notExpected.add(it)
                 }
             }
@@ -252,7 +250,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 //saw an existing tracked item
                 expected.remove(walk.getPathString())
                 def jobSatus = jobsCache[walk.getPathString()]
-                if(jobSatus  && jobSatus["synch"] == ImportSynchState.IMPORT_NEEDED ){
+                if (jobSatus && jobSatus["synch"] == ImportSynchState.IMPORT_NEEDED) {
                     importNeeded++
                     tracked = true
                 }
@@ -267,26 +265,26 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 notFound++
                 tracked = true
             }
-            if(notExpected.contains(walk.getPathString())){
+            if (notExpected.contains(walk.getPathString())) {
                 notExpected.remove(walk.getPathString())
                 tracked = true
             }
-            if(!tracked && importTracker.getTrackedJobIds().get(walk.getPathString()) && jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))){
+            if (!tracked && importTracker.getTrackedJobIds().get(walk.getPathString()) && jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))) {
 
                 def originalValue = importTracker.originalValue(walk.getPathString())
                 def renamedJob = null
-                if(originalValue){
+                if (originalValue) {
                     renamedJob = importTracker.wasRenamed(originalValue)
-                    if(renamedJob){
+                    if (renamedJob) {
                         //item is tracked to a job which was renamed
                         expected.remove(originalValue)
                         renamed.add(walk.getPathString())
                         tracked = true
                     }
                 }
-                if(!renamedJob){
+                if (!renamedJob) {
                     def jobState = jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))
-                    if(!ImportSynchState.CLEAN.equals(jobState.get("synch"))){
+                    if (!ImportSynchState.CLEAN.equals(jobState.get("synch"))) {
                         importNeeded++
                     }
                 }
@@ -423,8 +421,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             JobScmReference job,
             RevCommit commit,
             String path
-    )
-    {
+    ) {
         if (!isTrackedPath(path) || !commit) {
             //not tracked
             return ImportSynchState.UNKNOWN
@@ -461,7 +458,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     def findNewPath = changes.find { it.changeType == DiffEntry.ChangeType.ADD && it.newPath && it.newPath.contains(jobSerializerId) }
                     def findOldPath = changes.find { it.changeType == DiffEntry.ChangeType.DELETE && it.oldPath && it.oldPath.contains(jobSerializerId) }
 
-                    if(findNewPath && findOldPath){
+                    if (findNewPath && findOldPath) {
                         def oldPath = findOldPath.oldPath
                         def newPath = findNewPath.newPath
                         log.error("Rename detected from ${oldPath} to ${newPath}")
@@ -519,13 +516,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             status = refreshJobStatus(job, originalPath)
         }
         JobRenamed jobRenamed = null
-        if(importTracker.wasRenamed(path)){
+        if (importTracker.wasRenamed(path)) {
             jobRenamed = new JobRenamedImp()
             jobRenamed.sourceId = job.sourceId
             jobRenamed.uuid = job.id
             jobRenamed.renamedPath = importTracker.renamedValue(path)
         }
-        return createJobImportStatus(status,jobActionsForStatus(status), jobRenamed)
+        return createJobImportStatus(status, jobActionsForStatus(status), jobRenamed)
     }
 
     @Override
@@ -555,8 +552,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 importTracker.untrackPath(path)
 
                 def status = [synch: ImportSynchState.IMPORT_NEEDED]
-                return createJobImportStatus(status,jobActionsForStatus(status))
-                break;
+                return createJobImportStatus(status, jobActionsForStatus(status))
+                break
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
                 importTracker.jobRenamed(reference, path, newpath)
@@ -580,7 +577,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     Action getSetupAction(ScmOperationContext context) {
         if (!config.shouldUseFilePattern()) {
             return actions[ACTION_INITIALIZE_TRACKING]
-        }else{
+        } else {
             log.debug("SetupTracking: ${input} (true)")
             trackedItems = null
         }
@@ -601,7 +598,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             } else {
 
                 def avail = []
-                if(!status){
+                if (!status) {
                     status = getStatusInternal(context, false)
                 }
 
@@ -615,7 +612,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 if (status.state != ImportSynchState.CLEAN) {
                     avail << actions[ACTION_IMPORT_JOBS]
                 }
-                if(!config.shouldFetchAutomatically()){
+                if (!config.shouldFetchAutomatically()) {
                     avail << actions[ACTION_FETCH]
                 }
                 return avail
@@ -649,8 +646,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
             def id = latestCommit ? lookupId(latestCommit, path) : null
 
-            if(importTracker.wasRenamed(path)){
-                def newPath =  importTracker.renamedValue(path)
+            if (importTracker.wasRenamed(path)) {
+                def newPath = importTracker.renamedValue(path)
                 id = latestCommit ? lookupId(latestCommit, newPath) : null
             }
 
@@ -697,7 +694,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             //files to delete
             jobStateMap?.each {job->
                 String status = job.getValue()?.get("synch")
-                if (status?.equalsIgnoreCase('DELETE_NEEDED')){
+                if (status?.equalsIgnoreCase('DELETE_NEEDED')) {
                     found << trackPath(
                         job.getValue().get("path").toString(),
                         true,
@@ -745,7 +742,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     void walkTreePaths(String ref, boolean useFilter = false, Closure callback) {
         ObjectId head = repo.resolve ref
-        if(!head){
+        if (!head) {
             return
         }
         def tree = new TreeWalk(repo)
@@ -754,7 +751,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (useFilter) {
             if (config.shouldUseFilePattern()) {
                 tree.setFilter(PathRegexFilter.create(config.filePattern))
-            } else if(trackedItems) {
+            } else if (trackedItems) {
                 tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
             }
         }
@@ -764,7 +761,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 callback(tree)
             }
         } finally {
-            tree.close();
+            tree.close()
         }
     }
 
@@ -773,7 +770,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
+    Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String, String> originalPaths) {
         //force fetch
         fetchFromRemote(context)
 
@@ -787,7 +784,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             }
         }
         jobs.each{job ->
-            refreshJobStatus(job,originalPaths?.get(job.id))
+            refreshJobStatus(job, originalPaths?.get(job.id))
         }
         return (pullResult != null)? [updated:true]:[:]
     }
@@ -795,7 +792,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     void initJobsStatus(List<JobScmReference> jobs) {
         jobs.each {job->
-            if(!jobStateMap[job.id]){
+            if (!jobStateMap[job.id]) {
                 def jobstat = initJobStatus(job)
                 jobStateMap[job.id] = jobstat
             }
@@ -813,7 +810,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     @Override
-    void refreshJobsStatus(List<JobScmReference> jobs){
+    void refreshJobsStatus(List<JobScmReference> jobs) {
         jobs.each{job ->
             refreshJobStatus(job,null)
         }

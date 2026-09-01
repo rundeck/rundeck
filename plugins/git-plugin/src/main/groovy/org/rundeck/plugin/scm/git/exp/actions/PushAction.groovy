@@ -81,8 +81,7 @@ Pushing to remote branch: `${plugin.branch}`"""
             final Set<String> pathsToDelete,
             final ScmOperationContext context,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
+    ) throws ScmPluginException {
         def result = new ScmExportResultImpl()
 
         Ref tagref

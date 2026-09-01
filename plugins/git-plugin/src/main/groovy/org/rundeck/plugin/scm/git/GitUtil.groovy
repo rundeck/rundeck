@@ -57,16 +57,16 @@ class GitUtil {
      * @return RevCommit or null if HEAD not found (empty git)
      */
     static RevCommit getCommit(Repository repo, String commitId) {
-        final RevWalk walk = new RevWalk(repo);
-        walk.setRetainBody(true);
+        final RevWalk walk = new RevWalk(repo)
+        walk.setRetainBody(true)
 
         try {
             def resolve = repo.resolve(commitId)
             if (!resolve) {
                 return null
             }
-            return walk.parseCommit(resolve);
-        }catch (IOException e){
+            return walk.parseCommit(resolve)
+        } catch (IOException e) {
 
             return null
         }finally{
@@ -78,15 +78,15 @@ class GitUtil {
         if (!commit) {
             return null
         }
-        final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree());
+        final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree())
 
         if (walk2 == null) {
             return null
-        };
+        }
         try {
             if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
                 return null
-            };
+            }
 
             return walk2.getObjectId(0)
         } finally {
@@ -122,10 +122,9 @@ class GitUtil {
             byte[] leftSide,
             File rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
-    )
-    {
-        RawText rt1 = new RawText(leftSide);
-        RawText rt2 = new RawText(rightSide);
+    ) {
+        RawText rt1 = new RawText(leftSide)
+        RawText rt2 = new RawText(rightSide)
         return diffContent(out, rt1, rt2, COMP)
     }
 
@@ -142,10 +141,9 @@ class GitUtil {
             File leftSide,
             byte[] rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
-    )
-    {
-        RawText rt1 = new RawText(leftSide);
-        RawText rt2 = new RawText(rightSide);
+    ) {
+        RawText rt1 = new RawText(leftSide)
+        RawText rt2 = new RawText(rightSide)
         return diffContent(out, rt1, rt2, COMP)
     }
 
@@ -162,8 +160,7 @@ class GitUtil {
             byte[] leftSide,
             byte[] rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
-    )
-    {
+    ) {
         RawText rt1 = new RawText(leftSide)
         RawText rt2 = new RawText(rightSide)
         return diffContent(out, rt1, rt2, COMP)
@@ -182,14 +179,13 @@ class GitUtil {
             RawText leftSide,
             RawText rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
-    )
-    {
-        EditList diffList = new EditList();
+    ) {
+        EditList diffList = new EditList()
         DiffAlgorithm differ = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.HISTOGRAM)
 
-        diffList.addAll(differ.diff(COMP, leftSide, rightSide));
+        diffList.addAll(differ.diff(COMP, leftSide, rightSide))
         if (diffList.size() > 0 && out != null) {
-            new DiffFormatter(out).format(diffList, leftSide, rightSide);
+            new DiffFormatter(out).format(diffList, leftSide, rightSide)
         }
         diffList.size()
     }
@@ -223,20 +219,20 @@ class GitUtil {
     }
 
     static List<DiffEntry> listChanges(Git git, String oldRef, String newRef) {
-        ObjectReader reader = git.getRepository().newObjectReader();
+        ObjectReader reader = git.getRepository().newObjectReader()
         try {
-            CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
-            ObjectId oldTree = git.getRepository().resolve(oldRef);
-            oldTreeIter.reset(reader, oldTree);
+            CanonicalTreeParser oldTreeIter = new CanonicalTreeParser()
+            ObjectId oldTree = git.getRepository().resolve(oldRef)
+            oldTreeIter.reset(reader, oldTree)
 
-            CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
-            ObjectId newTree = git.getRepository().resolve(newRef);
-            newTreeIter.reset(reader, newTree);
+            CanonicalTreeParser newTreeIter = new CanonicalTreeParser()
+            ObjectId newTree = git.getRepository().resolve(newRef)
+            newTreeIter.reset(reader, newTree)
 
-            DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
+            DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)
             try {
-                diffFormatter.setRepository(git.getRepository());
-                diffFormatter.scan(oldTreeIter, newTreeIter);
+                diffFormatter.setRepository(git.getRepository())
+                diffFormatter.scan(oldTreeIter, newTreeIter)
             } finally {
                 diffFormatter.close()
             }
@@ -282,9 +278,9 @@ class GitUtil {
         }
         return found
     }
-    static List<String> listPaths(Git git, String ref, List<String> trackedItems=null, String trackingRegex=null){
+    static List<String> listPaths(Git git, String ref, List<String> trackedItems=null, String trackingRegex=null) {
         ObjectId head = git.repository.resolve ref
-        if(!head){
+        if (!head) {
             return null
         }
         def tree = new TreeWalk(git.repository)
@@ -304,7 +300,7 @@ class GitUtil {
                 list.add(tree.getPathString())
             }
         } finally {
-            tree.close();
+            tree.close()
         }
         list
     }

@@ -36,8 +36,8 @@ class RenameTracker<A> {
      * @param newval
      * @return original value for renamed item, or null
      */
-    A originalValue(A newval){
-        if(renamedTrackedItems.values().contains(newval)){
+    A originalValue(A newval) {
+        if (renamedTrackedItems.values().contains(newval)) {
             return renamedTrackedItems.keySet().find{renamedTrackedItems[it] == newval}
         }
         null
@@ -80,6 +80,6 @@ class RenameTracker<A> {
     public String toString() {
         return "RenameTracker{" +
                 "renamedTrackedItems=" + renamedTrackedItems +
-                '}';
+                '}'
     }
 }

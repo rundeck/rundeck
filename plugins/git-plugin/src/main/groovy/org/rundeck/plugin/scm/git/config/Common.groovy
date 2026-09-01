@@ -239,8 +239,8 @@ Path can include variable references
     )
     String fetchAutomatically
 
-    boolean shouldFetchAutomatically(){
-        return fetchAutomatically in [null,'true']
+    boolean shouldFetchAutomatically() {
+        return fetchAutomatically in [null, 'true']
     }
 
     static class FetchTimeoutValidator implements PropertyValidator {

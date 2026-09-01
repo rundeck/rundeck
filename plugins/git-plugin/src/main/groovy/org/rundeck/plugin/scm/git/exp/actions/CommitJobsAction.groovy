@@ -82,8 +82,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
             final Set<String> pathsToDelete,
             final ScmOperationContext context,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
+    ) throws ScmPluginException {
         //determine action
         def internal = plugin.getStatusInternal(context, false)
         def localGitChanges = !internal.gitStatus.isClean()
@@ -174,8 +173,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
             final ScmOperationContext context,
             final Map<String, String> input,
             final ScmExportResult result
-    )
-    {
+    ) {
         if (input[TagAction.P_TAG_NAME]) {
             def tagResult = plugin.export(context, GitExportPlugin.PROJECT_TAG_ACTION_ID, jobs, pathsToDelete, input)
             if (!tagResult.success) {
