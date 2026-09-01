@@ -213,14 +213,8 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         environment.propertySources.addFirst(
                 new PropertiesPropertySource("hardcoded-rundeck-props", hardCodedRundeckConfigs)
         )
-        println "=== Application.groovy: About to add ReloadableRundeckPropertySource to environment ==="
         def propertySource = ReloadableRundeckPropertySource.getRundeckPropertySourceInstance()
         environment.propertySources.addFirst(propertySource)
-        println "=== Application.groovy: ReloadableRundeckPropertySource added to environment ==="
-        println "  Property source name: ${propertySource.name}"
-        println "  Testing if password is accessible from environment:"
-        println "    rundeck.config.storage.converter.1.config.password = ${environment.getProperty('rundeck.config.storage.converter.1.config.password')}"
-        println "    rundeck.storage.converter.1.config.password = ${environment.getProperty('rundeck.storage.converter.1.config.password')}"
         if(rundeckConfig.migrate) {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }
