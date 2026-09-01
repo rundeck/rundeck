@@ -47,6 +47,10 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
     }
     def setup(){
         controller.featureService = Mock(FeatureService)
+        // A feature asserts 0 * controller.apiService._(*_), but apiService was never assigned, so
+        // the target was null and the assertion verified nothing. Spock's MockitoMockMaker now NPEs
+        // on a null target instead of passing vacuously.
+        controller.apiService = Mock(ApiService)
     }
 
     def "key storage access no params"() {
