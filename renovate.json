@@ -121,10 +121,10 @@
       "enabled": true
     },
     {
-      "description": "Node/npm engine bumps are handled manually — .nvmrc, test/.nvmrc and npm engines must move in lockstep with rundeckpro, so a partial automated bump is worse than none",
+      "description": "Group Node.js version (.nvmrc) with the npm engine pin so they update together",
       "matchManagers": ["nvm", "npm"],
       "matchDepNames": ["node", "npm"],
-      "enabled": false
+      "groupName": "node and npm engine versions"
     },
     {
       "description": "Default registry for the vast majority of Gradle dependencies (Spring, Netty, Jackson, JUnit, etc.) instead of checking every globally-declared repo (m2proxy, PackageCloud, Sonatype, Grails, Gradle Plugin Portal, ...) for every dependency. Only ~9% of our gradle deps are actually Grails/Groovy-namespaced, so grails.org is scoped separately below rather than checked for everything.",
