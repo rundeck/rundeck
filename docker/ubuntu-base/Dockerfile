@@ -2,11 +2,10 @@
 ###################################################
 FROM golang:1.27.0 AS remco
 
-# Pinned to rundeck/remco @ v0.12.6 (synced to upstream HeavyHorst/remco).
-# Includes CVE fixes through v0.12.6: go-jose/go-jose/v4 4.1.4 for
-# CVE-2026-34986 (GHSA-78h2-9frx-2jm8), plus CVE-2025-47914,
-# CVE-2025-61727, CVE-2026-33186 (grpc v1.79.3).
-ENV REMCO_COMMIT=777d12eaff303faa220f7686cdfa583a84f9bda4
+# Pinned to a rundeck/remco commit synced with upstream HeavyHorst/remco.
+# Fixes golang.org/x/crypto 0.52.0, golang.org/x/net 0.55.0, and
+# google.golang.org/grpc 1.82.1 - see RUN-4857 for the full CVE list.
+ENV REMCO_COMMIT=bbc9243fec2e05c2fc8bf8a66bd9e24f04a2762b
 
 RUN git clone https://github.com/rundeck/remco.git /tmp/remco && \
     cd /tmp/remco && \
