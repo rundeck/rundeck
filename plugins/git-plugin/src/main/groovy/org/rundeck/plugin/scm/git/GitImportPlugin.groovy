@@ -169,7 +169,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         inited = true
     }
 
-
     @Override
     void cleanup() {
         git?.getRepository()?.close()
@@ -186,12 +185,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
     }
 
-
     @Override
     ScmImportSynchState getStatus(ScmOperationContext context) {
         return getStatusInternal(context, config.shouldFetchAutomatically())
     }
-
 
     GitImportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //look for any unimported paths
@@ -381,7 +378,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 //        log.debug(debugStatus(status))
         ImportSynchState synchState = importSynchStateForStatus(job, latestCommit, path)
 
-
         if (originalPath && synchState == ImportSynchState.UNKNOWN) {
             //job was renamed but not file
             synchState = ImportSynchState.IMPORT_NEEDED
@@ -413,7 +409,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
         jobstat
     }
-
 
     private ImportSynchState importSynchStateForStatus(
             JobScmReference job,
@@ -536,7 +531,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
     }
 
-
     @Override
     JobImportState jobChanged(JobChangeEvent event, JobScmReference reference) {
         def path = getRelativePathForJob(event.originalJobReference)
@@ -564,7 +558,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 //        return createJobImportStatus(status)
         null
     }
-
 
     @Override
     BasicInputView getInputViewForAction(final ScmOperationContext context, final String actionId) {
@@ -623,7 +616,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     String getRelativePathForJob(final JobReference job) {
         importTracker.trackedPath(job.id)?:relativePath(job)
     }
-
 
     @Override
     ScmImportDiffResult getFileDiff(final JobScmReference job) {
@@ -726,7 +718,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         commit == null || commit.name != importTracker.trackedCommit(path)
     }
 
-
     ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null, final boolean deleted = false) {
         ScmImportTrackedItemBuilder.builder().
                 id(path).
@@ -765,7 +756,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     boolean isTrackedPath(final String path) {
         return trackedItems?.contains(path) || config.shouldUseFilePattern() && config.filePattern && path.matches(config.filePattern)
     }
-
 
     Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String, String> originalPaths) {
         //force fetch

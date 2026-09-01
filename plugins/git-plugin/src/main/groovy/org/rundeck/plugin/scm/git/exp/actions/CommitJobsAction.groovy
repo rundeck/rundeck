@@ -29,7 +29,6 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitScmCommit
 import org.rundeck.plugin.scm.git.GitUtil
 
-
 /**
  * Created by greg on 9/8/15.
  */

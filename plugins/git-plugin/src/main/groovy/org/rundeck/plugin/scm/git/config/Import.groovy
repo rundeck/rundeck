@@ -60,8 +60,6 @@ class Import extends Common{
     )
     String pullAutomatically
 
-
-
     @PluginProperty(
         title = "Match a Regular Expression?",
         description = "Check to match all paths that match the regular expression. If is not set, a list of files will be asked on next step.",
@@ -107,7 +105,6 @@ class Import extends Common{
             }
         }
     }
-
 
     boolean isImportPreserve() {
         importUuidBehavior == 'preserve' || !importUuidBehavior

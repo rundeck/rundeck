@@ -24,7 +24,6 @@ import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
-
 /**
  * Created by greg on 9/8/15.
  */

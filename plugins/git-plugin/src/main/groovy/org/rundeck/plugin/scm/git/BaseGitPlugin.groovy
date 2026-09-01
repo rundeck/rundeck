@@ -711,7 +711,6 @@ class BaseGitPlugin {
         }
     }
 
-
     /**
      * Configure authentication for the git command depending on the configured ssh private Key storage path, or password
      *

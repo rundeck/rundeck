@@ -104,7 +104,6 @@ class SshjSession implements RemoteSession {
         }
     }
 
-
     private class SshjProcess extends Process {
 
         int timeout
@@ -182,6 +181,5 @@ class SshjSession implements RemoteSession {
             }
         }
     }
-
 
 }

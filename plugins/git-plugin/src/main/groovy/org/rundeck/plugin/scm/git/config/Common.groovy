@@ -86,7 +86,6 @@ as it the job UUID after import will be different than the one on disk.
         }
     }
 
-
     @PluginProperty(
             title = "Git URL",
             description = '''Checkout url.
@@ -277,7 +276,6 @@ Path can include variable references
     int getFetchTimeoutSeconds() {
         fetchTimeout ?: 30
     }
-
 
     static List<Property> addDirDefaultValue(List<Property> properties, File basedir, String finalDir) {
         if (null == basedir) {

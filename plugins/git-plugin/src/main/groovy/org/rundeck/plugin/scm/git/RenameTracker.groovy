@@ -74,8 +74,6 @@ class RenameTracker<A> {
         }
     }
 
-
-
     @Override
     public String toString() {
         return "RenameTracker{" +

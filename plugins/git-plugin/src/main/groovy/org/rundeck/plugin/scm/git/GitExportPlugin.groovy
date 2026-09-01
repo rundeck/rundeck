@@ -53,7 +53,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     public static final String PROJECT_FETCH_ACTION_ID = "project-fetch"
     public static final String PLUGIN_INTEGRATION = 'export'
 
-
     String format = SERIALIZE_FORMAT
     boolean inited = false
     String committerName
@@ -188,12 +187,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
     }
 
-
     @Override
     BasicInputView getInputViewForAction(final ScmOperationContext context, String actionId) {
         actions[actionId]?.getInputView(context, this)
     }
-
 
     @Override
     ScmExportResult export(
@@ -209,7 +206,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
         actions[actionId].perform(this, jobs, pathsToDelete, context, input)
     }
-
 
     @Override
     List<String> getDeletedFiles() {
@@ -272,12 +268,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
     }
 
-
     @Override
     ScmExportSynchState getStatus(ScmOperationContext context) {
         return getStatusInternal(context, config.shouldFetchAutomatically())
     }
-
 
     GitExportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //perform fetch
@@ -440,7 +434,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
 
-
         //check if local commit has changed from the stored status
         def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
         if (storedCommitId != null && commit == null) {
@@ -491,7 +484,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
         jobstat
     }
-
 
     private SynchState synchStateForStatus(Status status, RevCommit commit, String path) {
         if (path && status.untracked.contains(path) || !path && status.untracked) {
@@ -567,7 +559,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         relativePath(job)
     }
 
-
     ScmDiffResult getFileDiff(final JobExportReference job) throws ScmPluginException {
         return getFileDiff(job, null)
     }
@@ -585,15 +576,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def baos = new ByteArrayOutputStream()
         def diffs = diffContent(baos, bytes, file)
 
-
-
         def availableActions = diffs > 0 ? [actions[JOB_COMMIT_ACTION_ID]] : null
         return new GitDiffResult(content: baos.toString(),
                                  modified: diffs > 0,
                                  actions: availableActions
         )
     }
-
 
     Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs, final Map<String, String> originalPaths) {
         //force fetch

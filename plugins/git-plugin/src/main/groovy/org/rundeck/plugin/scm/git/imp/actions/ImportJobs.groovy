@@ -32,7 +32,6 @@ import org.rundeck.plugin.scm.git.GitImportPlugin
 import org.rundeck.plugin.scm.git.GitUtil
 import org.rundeck.plugin.scm.git.JobRenamedImp
 
-
 /**
  * Action to import selected jobs from git HEAD commit
  */
@@ -40,7 +39,6 @@ class ImportJobs extends BaseAction implements GitImportAction {
     ImportJobs(final String id, final String title, final String description, final String iconName) {
         super(id, title, description, iconName)
     }
-
 
     BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
         BuilderUtil.inputViewBuilder(id) {
