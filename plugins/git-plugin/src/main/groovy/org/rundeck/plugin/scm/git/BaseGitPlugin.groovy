@@ -383,7 +383,6 @@ class BaseGitPlugin {
             result.message = result.success ? "Merge was successful" : "Merge failed"
             result.extendedMessage = mergeresult.toString()
             return result
-
         }
     }
 

@@ -262,7 +262,6 @@ class GitUtil {
                 setMessage(message)
 
         return tagb.call()
-
     }
 
     /**

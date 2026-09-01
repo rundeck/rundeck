@@ -628,7 +628,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     ScmImportDiffResult getFileDiff(final JobScmReference job) {
         return getFileDiff(job, null)
-
     }
 
     @Override
@@ -803,7 +802,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         jobstat['id'] = job.id
         jobstat['version'] = job.version
         return jobstat
-
     }
 
     @Override

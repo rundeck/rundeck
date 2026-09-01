@@ -151,6 +151,5 @@ class ImportJobs extends BaseAction implements GitImportAction {
         result.message = "Git Import " + (success ? "successful" : "failed")
         result.extendedMessage = sb.toString()
         return result
-
     }
 }
