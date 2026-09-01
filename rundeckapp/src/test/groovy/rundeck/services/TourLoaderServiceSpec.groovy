@@ -22,7 +22,7 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
     def "list all tour manifests"() {
         setup:
         service.pluginService = Mock(PluginService)
-        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
+        service.frameworkService.getFrameworkPropertyResolver(*_) >> new PropertyResolver() {
             @Override
             Object resolvePropertyValue(final String name, final PropertyScope scope) {
                 return null
@@ -46,6 +46,16 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
     def "list all tour manifests - project specific"() {
         setup:
         service.pluginService = Mock(PluginService)
+        // Without this, the unstubbed mock returns null for the resolver, and a null third
+        // argument makes PluginService#configurePlugin ambiguous between its PropertyResolver and
+        // PropertyResolverFactory.Factory overloads -- so configurePlugin is never reached.
+        // Same stub the sibling features already use.
+        service.frameworkService.getFrameworkPropertyResolver(*_) >> new PropertyResolver() {
+            @Override
+            Object resolvePropertyValue(final String name, final PropertyScope scope) {
+                return null
+            }
+        }
 
         when:
         TestTourLoader tourLoader = new TestTourLoader()
@@ -70,7 +80,7 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
     def "list tours"() {
         setup:
         service.pluginService = Mock(PluginService)
-        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
+        service.frameworkService.getFrameworkPropertyResolver(*_) >> new PropertyResolver() {
             @Override
             Object resolvePropertyValue(final String name, final PropertyScope scope) {
                 return null
@@ -89,7 +99,7 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
     def "get tours"() {
         setup:
         service.pluginService = Mock(PluginService)
-        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
+        service.frameworkService.getFrameworkPropertyResolver(*_) >> new PropertyResolver() {
             @Override
             Object resolvePropertyValue(final String name, final PropertyScope scope) {
                 return null
@@ -110,7 +120,7 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
         String project = "Demo"
 
         service.pluginService = Mock(PluginService)
-        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
+        service.frameworkService.getFrameworkPropertyResolver(*_) >> new PropertyResolver() {
             @Override
             Object resolvePropertyValue(final String name, final PropertyScope scope) {
                 return null
