@@ -545,7 +545,23 @@ export default defineComponent({
 
       this.props.forEach((prop: any) => {
         if (data.dynamicProps && data.dynamicProps[prop.name]) {
-          prop.allowed = data.dynamicProps[prop.name];
+          const dynamic = data.dynamicProps[prop.name];
+          if (
+            dynamic &&
+            typeof dynamic === "object" &&
+            !Array.isArray(dynamic)
+          ) {
+            // Dynamic values can arrive as a { value: label } map, e.g.
+            // ServiceNow urgency { "1": "1 - High" }. Keep the map as
+            // selectLabels (what pluginPropVal renders) and expose only the
+            // keys as allowed values, otherwise iterating the object yields
+            // the labels and the submitted value becomes "1 - High" instead
+            // of "1".
+            prop.selectLabels = dynamic;
+            prop.allowed = Object.keys(dynamic);
+          } else {
+            prop.allowed = dynamic;
+          }
         }
         if (data.dynamicDefaults && data.dynamicDefaults[prop.name]) {
           prop.defaultValue = data.dynamicDefaults[prop.name];

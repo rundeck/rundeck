@@ -1,11 +1,7 @@
 import { mount, flushPromises, VueWrapper } from "@vue/test-utils";
 import DynamicFormPluginProp from "../DynamicFormPluginProp.vue";
 import { Btn, Modal, Alert } from "uiv";
-import VueMultiselect from "vue-multiselect";
-
-const mockElement = document.createElement("input");
-mockElement.id = "test-element";
-document.body.appendChild(mockElement);
+import PtSelect from "../../primeVue/PtSelect/PtSelect.vue";
 
 const createWrapper = (props = {}) => {
   return mount(DynamicFormPluginProp, {
@@ -19,7 +15,6 @@ const createWrapper = (props = {}) => {
         },
       }),
       options: JSON.stringify({ field1: ["option1", "option2"] }),
-      element: "test-element",
       hasOptions: "true",
       name: "test-name",
       ...props,
@@ -30,7 +25,7 @@ const createWrapper = (props = {}) => {
       };
     },
     global: {
-      components: { Btn, Modal, Alert, VueMultiselect },
+      components: { Btn, Modal, Alert, PtSelect },
       stubs: {
         Modal: {
           template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
@@ -39,9 +34,9 @@ const createWrapper = (props = {}) => {
         Alert: {
           template: `<div ref="duplicateWarningRef">Duplicate warning text</div>`,
         },
-        VueMultiselect: {
-          template: `<div data-testid="multiselect">Multiselect Stub</div>`,
-        },
+        // PtSelect is deliberately NOT stubbed: the previous vue-multiselect
+        // stub is what hid RUN-4764 (a render crash in the real select
+        // component) from this suite.
       },
     },
     attachTo: document.body,
@@ -63,7 +58,7 @@ describe("DynamicFormPluginProp.vue", () => {
     const wrapper = createWrapper();
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
-    const multiselect = wrapper.findComponent(VueMultiselect);
+    const multiselect = wrapper.findComponent(PtSelect);
     await (multiselect as VueWrapper<any>).vm.$emit("update:modelValue", {
       value: "Option1",
       label: "Field 1",
@@ -104,7 +99,7 @@ describe("DynamicFormPluginProp.vue", () => {
     const addField = await wrapper.find('[data-testid="add-field-button"]');
     await addField.trigger("click");
     await wrapper.vm.$nextTick();
-    const multiselect = wrapper.findComponent(VueMultiselect);
+    const multiselect = wrapper.findComponent(PtSelect);
     await multiselect.vm.$emit("update:modelValue", {
       value: "field1",
       label: "Field 1",
@@ -128,5 +123,61 @@ describe("DynamicFormPluginProp.vue", () => {
     await flushPromises();
     const updatedFieldValue = (wrapper.vm as any).customFields[0].value;
     expect(updatedFieldValue).toBe("Updated Value");
+  });
+
+  describe("regression for RUN-4764", () => {
+    it("adds a field via the free-text Field Label/Field Key path without throwing", async () => {
+      // hasOptions "false" is the free-text path, used whenever the plugin
+      // supplies no allowed values. The tests above only covered the
+      // select path, so this branch was previously untested.
+      const wrapper = createWrapper({
+        hasOptions: "false",
+      });
+      await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+      await flushPromises();
+
+      await wrapper
+        .find('[data-testid="field-label-input"]')
+        .setValue("Root Cause");
+      await wrapper
+        .find('[data-testid="field-key-input"]')
+        .setValue("u_root_cause");
+      await wrapper
+        .find('[data-testid="confirm-add-field-button"]')
+        .trigger("click");
+      await flushPromises();
+
+      const fields = wrapper.findAll('[data-testid="field-item"]');
+      expect(fields.length).toBe(2);
+      expect(fields.at(1)?.find("label")?.text()).toBe("Root Cause");
+    });
+
+    it("syncs the fields prop reactively when it changes after mount", async () => {
+      const wrapper = createWrapper();
+      await flushPromises();
+      expect(wrapper.findAll('[data-testid="field-item"]').length).toBe(1);
+
+      await wrapper.setProps({
+        fields: JSON.stringify({
+          field1: {
+            key: "field1",
+            label: "Option1",
+            value: "field1",
+            desc: "Description1",
+          },
+          field2: {
+            key: "field2",
+            label: "Option2",
+            value: "field2",
+            desc: "Description2",
+          },
+        }),
+      });
+      await flushPromises();
+
+      const fields = wrapper.findAll('[data-testid="field-item"]');
+      expect(fields.length).toBe(2);
+      expect(fields.at(1)?.find("label")?.text()).toBe("Option2");
+    });
   });
 });

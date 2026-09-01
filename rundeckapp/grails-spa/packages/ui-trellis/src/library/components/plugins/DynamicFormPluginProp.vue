@@ -1,5 +1,6 @@
 <template>
   <div id="fieldcustomeditor" class="col-sm-12">
+    <input ref="hiddenFieldInput" type="hidden" :name="name" />
     <hr />
 
     <div v-if="customFields != null">
@@ -74,15 +75,21 @@
             <div :class="['form-data']">
               <label class="col-md-4">{{ $t("message_select") }}</label>
               <div class="col-md-8">
-                <vue-multiselect
+                <!--
+                  append-to="self" keeps the dropdown overlay inside this
+                  modal's stacking context. The default ("body") renders it at
+                  z-index 1001, below the surrounding modal (1070), which makes
+                  the options render but stay unclickable.
+                -->
+                <pt-select
                   v-model="selectedField"
                   :options="customOptions"
-                  track-by="label"
-                  label="label"
+                  option-label="label"
+                  :filter="true"
                   :placeholder="$t('message_select')"
+                  append-to="self"
                   data-testid="multiselect"
-                >
-                </vue-multiselect>
+                />
               </div>
             </div>
 
@@ -108,6 +115,7 @@
                   v-model="newLabelField"
                   type="text"
                   :class="['form-control']"
+                  data-testid="field-label-input"
                 />
               </div>
             </div>
@@ -165,9 +173,9 @@
 </template>
 
 <script lang="ts">
-import VueMultiselect from "vue-multiselect";
 import { defineComponent } from "vue";
 import { Btn, Alert, Modal } from "uiv";
+import PtSelect from "../primeVue/PtSelect/PtSelect.vue";
 
 interface CustomField {
   key?: string;
@@ -179,7 +187,7 @@ interface CustomField {
 export default defineComponent({
   name: "DynamicFormPluginProp",
   components: {
-    VueMultiselect,
+    PtSelect,
     Btn,
     Alert,
     Modal,
@@ -192,10 +200,6 @@ export default defineComponent({
     options: {
       type: String,
       required: false,
-    },
-    element: {
-      type: String,
-      required: true,
     },
     hasOptions: {
       type: String,
@@ -220,23 +224,23 @@ export default defineComponent({
       selectedField: { value: "", label: "" },
     };
   },
+  watch: {
+    fields(newFields: string) {
+      // Keep local state in sync if the prop changes after mount (e.g. the
+      // parent round-trips the value through its own v-model chain). Skip
+      // when the incoming value already matches what we just emitted
+      // ourselves, to avoid fighting with in-flight edits.
+      if (newFields === JSON.stringify(this.customFields)) {
+        return;
+      }
+      this.syncFieldsFromProp(newFields);
+    },
+  },
   mounted() {
     if (this.hasOptions === "true") {
       this.useOptions = true;
     }
-    if (this.fields != null && this.fields !== "") {
-      const customFieldsObject = JSON.parse(this.fields);
-      if (customFieldsObject != null) {
-        const fields = Object.keys(customFieldsObject).map((key: any) => {
-          const value = customFieldsObject[key];
-          if (value.desc == null) {
-            value.desc = "Field key: " + value.key;
-          }
-          return value;
-        });
-        this.customFields = fields;
-      }
-    }
+    this.syncFieldsFromProp(this.fields);
 
     if (this.useOptions && this.options !== null && this.options !== undefined && this.options !== "") {
       const optionsObject = JSON.parse(this.options!);
@@ -251,6 +255,22 @@ export default defineComponent({
     this.customFields = null as any;
   },
   methods: {
+    syncFieldsFromProp(fields: string) {
+      if (fields == null || fields === "") {
+        return;
+      }
+      const customFieldsObject = JSON.parse(fields);
+      if (customFieldsObject != null) {
+        const parsedFields = Object.keys(customFieldsObject).map((key: any) => {
+          const value = customFieldsObject[key];
+          if (value.desc == null) {
+            value.desc = "Field key: " + value.key;
+          }
+          return value;
+        });
+        this.customFields = parsedFields;
+      }
+    },
     openNewField() {
       this.modalAddField = true;
     },
@@ -323,15 +343,15 @@ export default defineComponent({
     },
     refreshPlugin() {
       const fieldsJson = JSON.stringify(this.customFields);
-      const cFields = document.getElementById(this.element) as HTMLInputElement;
-      cFields.value = fieldsJson;
+      const hiddenFieldInput = this.$refs.hiddenFieldInput as HTMLInputElement;
+      if (hiddenFieldInput) {
+        hiddenFieldInput.value = fieldsJson;
+      }
       this.$emit("update:modelValue", fieldsJson);
     },
   },
 });
 </script>
-<style scoped src="vue-multiselect/dist/vue-multiselect.min.css"></style>
-
 <style scoped>
 .form-data {
   padding-bottom: 30px;

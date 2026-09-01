@@ -515,4 +515,38 @@ describe("PluginConfig", () => {
       expect(wrapper.find('[data-testid="prop-field-host"]').classes()).not.toContain("has-error");
     });
   });
+
+  describe("dynamic select values — regression for RUN-4764", () => {
+    it("exposes map keys as allowed values so the submitted value is the code, not the label", async () => {
+      const wrapper = await createWrapper();
+
+      (wrapper.vm as any).loadPluginData({
+        props: [{ name: "urgency", type: "FreeSelect", options: {} }],
+        dynamicProps: { urgency: { "1": "1 - High", "3": "3 - Low" } },
+      });
+      await wrapper.vm.$nextTick();
+
+      const prop = (wrapper.vm as any).props.find(
+        (p: any) => p.name === "urgency",
+      );
+      expect(prop.allowed).toEqual(["1", "3"]);
+      expect(prop.selectLabels).toEqual({ "1": "1 - High", "3": "3 - Low" });
+    });
+
+    it("leaves list-style dynamic values untouched", async () => {
+      const wrapper = await createWrapper();
+
+      (wrapper.vm as any).loadPluginData({
+        props: [{ name: "assignmentGroup", type: "FreeSelect", options: {} }],
+        dynamicProps: { assignmentGroup: ["App Support", "Network Ops"] },
+      });
+      await wrapper.vm.$nextTick();
+
+      const prop = (wrapper.vm as any).props.find(
+        (p: any) => p.name === "assignmentGroup",
+      );
+      expect(prop.allowed).toEqual(["App Support", "Network Ops"]);
+      expect(prop.selectLabels).toBeUndefined();
+    });
+  });
 });

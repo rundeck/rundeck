@@ -212,6 +212,11 @@ export default defineComponent({
       innerValue: this.value as string,
     };
   },
+  watch: {
+    value(newValue: string) {
+      this.innerValue = newValue;
+    },
+  },
   methods: {
     getCustomValues(): any[] {
       if (this.innerValue !== "") {
