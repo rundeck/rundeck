@@ -45,8 +45,11 @@ class SshjSession implements RemoteSession {
 
     @Override
     void disconnect() {
-        session.close()
-        sshClient.close()
+        try {
+            session?.close()
+        } finally {
+            sshClient.close()
+        }
     }
 
     private SSHClient createConnection(){
@@ -89,6 +92,7 @@ class SshjSession implements RemoteSession {
 
             return ssh
         }catch(IOException e){
+            ssh.close()
             throw new TransportException(uri, e.getMessage(), e)
         }
     }

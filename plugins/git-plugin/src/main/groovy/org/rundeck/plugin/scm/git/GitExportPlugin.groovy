@@ -164,7 +164,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     void cleanup() {
-        git?.close()
+        git?.getRepository()?.close()
     }
 
     @Override

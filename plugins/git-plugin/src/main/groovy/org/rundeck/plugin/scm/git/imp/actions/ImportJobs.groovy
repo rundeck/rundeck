@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.rundeck.plugin.scm.git.BaseAction
@@ -99,9 +100,15 @@ class ImportJobs extends BaseAction implements GitImportAction {
                 return
             }
             def objectId = walk.getObjectId(0)
-            def size = plugin.repo.open(objectId, Constants.OBJ_BLOB).getSize()
+            def loader = plugin.repo.open(objectId, Constants.OBJ_BLOB)
+            def size = loader.getSize()
             plugin.log.debug("import data: ${size} = ${path}")
-            def bytes = plugin.repo.open(objectId, Constants.OBJ_BLOB).getBytes(Integer.MAX_VALUE)
+            if (size > GitUtil.MAX_BLOB_SIZE) {
+                throw new ScmPluginException(
+                        "Job definition file at path ${path} is too large to import (${size} bytes, max ${GitUtil.MAX_BLOB_SIZE})"
+                )
+            }
+            def bytes = loader.getBytes(GitUtil.MAX_BLOB_SIZE as int)
 
             def commit = GitUtil.lastCommitForPath plugin.repo, plugin.git, path
             def meta = GitUtil.metaForCommit(commit)

@@ -642,31 +642,33 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
         path = originalPath ?: getRelativePathForJob(job)
         def temp = serializeTemp(job, config.format, config.importPreserve, config.importArchive)
-        def latestCommit = GitUtil.lastCommitForPath repo, git, path
+        try {
+            def latestCommit = GitUtil.lastCommitForPath repo, git, path
 
-        def id = latestCommit ? lookupId(latestCommit, path) : null
+            def id = latestCommit ? lookupId(latestCommit, path) : null
 
-        if(importTracker.wasRenamed(path)){
-            def newPath =  importTracker.renamedValue(path)
-            id = latestCommit ? lookupId(latestCommit, newPath) : null
+            if(importTracker.wasRenamed(path)){
+                def newPath =  importTracker.renamedValue(path)
+                id = latestCommit ? lookupId(latestCommit, newPath) : null
+            }
+
+            if (!latestCommit || !id) {
+                return new GitDiffResult(newNotFound: true)
+            }
+            def bytes = getBytes(id)
+            def baos = new ByteArrayOutputStream()
+            def diffs = diffContent(baos, temp, bytes)
+
+            def availableActions = diffs > 0 ? [actions[ACTION_IMPORT_JOBS]] : null
+            return new GitDiffResult(
+                    content: baos.toString(),
+                    modified: diffs > 0,
+                    incomingCommit: new GitScmCommit(GitUtil.metaForCommit(latestCommit)),
+                    actions: availableActions
+            )
+        } finally {
+            temp.delete()
         }
-        
-        if (!latestCommit || !id) {
-            return new GitDiffResult(newNotFound: true)
-        }
-        def bytes = getBytes(id)
-        def baos = new ByteArrayOutputStream()
-        def diffs = diffContent(baos, temp, bytes)
-        temp.delete()
-
-
-        def availableActions = diffs > 0 ? [actions[ACTION_IMPORT_JOBS]] : null
-        return new GitDiffResult(
-                content: baos.toString(),
-                modified: diffs > 0,
-                incomingCommit: new GitScmCommit(GitUtil.metaForCommit(latestCommit)),
-                actions: availableActions
-        )
     }
 
     @Override
@@ -754,10 +756,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             }
         }
 
-        while (tree.next()) {
-            callback(tree)
+        try {
+            while (tree.next()) {
+                callback(tree)
+            }
+        } finally {
+            tree.close();
         }
-        tree.close();
     }
 
     boolean isTrackedPath(final String path) {

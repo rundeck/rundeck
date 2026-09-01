@@ -60,11 +60,11 @@ class GitUtil {
         final RevWalk walk = new RevWalk(repo);
         walk.setRetainBody(true);
 
-        def resolve = repo.resolve(commitId)
-        if (!resolve) {
-            return null
-        }
         try {
+            def resolve = repo.resolve(commitId)
+            if (!resolve) {
+                return null
+            }
             return walk.parseCommit(resolve);
         }catch (IOException e){
 
@@ -83,17 +83,30 @@ class GitUtil {
         if (walk2 == null) {
             return null
         };
-        if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
-            return null
-        };
+        try {
+            if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
+                return null
+            };
 
-        def id = walk2.getObjectId(0)
-        walk2.close()
-        return id;
+            return walk2.getObjectId(0)
+        } finally {
+            walk2.close()
+        }
     }
 
+    /**
+     * Guard against loading an oversized blob fully into memory: reject rather than risk an OOM.
+     */
+    static final long MAX_BLOB_SIZE = 100L * 1024 * 1024
+
     static byte[] getBytes(Repository repo, ObjectId id) {
-        repo.open(id, Constants.OBJ_BLOB).getCachedBytes(Integer.MAX_VALUE)
+        def loader = repo.open(id, Constants.OBJ_BLOB)
+        if (loader.getSize() > MAX_BLOB_SIZE) {
+            throw new ScmPluginException(
+                    "Object ${id.name} is too large to load (${loader.getSize()} bytes, max ${MAX_BLOB_SIZE})"
+            )
+        }
+        loader.getCachedBytes(MAX_BLOB_SIZE as int)
     }
 
     /**
@@ -195,30 +208,41 @@ class GitUtil {
             logb.addPath(path)
         }
         def log = logb.call()
-        def iter = log.iterator()
-        if (iter.hasNext()) {
-            def commit = iter.next()
-            if (commit) {
-                return commit
+        try {
+            def iter = log.iterator()
+            if (iter.hasNext()) {
+                def commit = iter.next()
+                if (commit) {
+                    return commit
+                }
             }
+            null
+        } finally {
+            log.close()
         }
-        null
     }
 
     static List<DiffEntry> listChanges(Git git, String oldRef, String newRef) {
         ObjectReader reader = git.getRepository().newObjectReader();
+        try {
+            CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
+            ObjectId oldTree = git.getRepository().resolve(oldRef);
+            oldTreeIter.reset(reader, oldTree);
 
-        CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
-        ObjectId oldTree = git.getRepository().resolve(oldRef);
-        oldTreeIter.reset(reader, oldTree);
+            CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
+            ObjectId newTree = git.getRepository().resolve(newRef);
+            newTreeIter.reset(reader, newTree);
 
-        CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
-        ObjectId newTree = git.getRepository().resolve(newRef);
-        newTreeIter.reset(reader, newTree);
-
-        DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
-        diffFormatter.setRepository(git.getRepository());
-        diffFormatter.scan(oldTreeIter, newTreeIter);
+            DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
+            try {
+                diffFormatter.setRepository(git.getRepository());
+                diffFormatter.scan(oldTreeIter, newTreeIter);
+            } finally {
+                diffFormatter.close()
+            }
+        } finally {
+            reader.close()
+        }
     }
 
     static Map<String, Serializable> metaForCommit(RevCommit commit) {
@@ -275,10 +299,13 @@ class GitUtil {
         }
         List<String> list= []
 
-        while (tree.next()) {
-            list.add(tree.getPathString())
+        try {
+            while (tree.next()) {
+                list.add(tree.getPathString())
+            }
+        } finally {
+            tree.close();
         }
-        tree.close();
         list
     }
 }

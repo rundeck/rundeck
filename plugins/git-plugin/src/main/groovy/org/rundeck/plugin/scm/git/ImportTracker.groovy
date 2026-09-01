@@ -77,7 +77,10 @@ class ImportTracker {
 
     String untrackPath(String path) {
         trackedCommits.remove(path)
-        trackedJobIds.remove(path)
+        def jobId = trackedJobIds.remove(path)
+        if (jobId != null) {
+            trackedPathsMap.remove(jobId)
+        }
     }
 
     String trackedCommit(String path) {

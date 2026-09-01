@@ -61,6 +61,14 @@ class RenameTracker<A> {
         if (renamedTrackedItems[newval] == oldval) {
             //reverted name change
             renamedTrackedItems.remove(newval)
+            return
+        }
+        //if oldval is itself the result of a previous rename, collapse the chain to origin -> newval
+        //so intermediate links don't accumulate forever
+        def origin = originalValue(oldval)
+        if (origin != null) {
+            renamedTrackedItems.remove(oldval)
+            renamedTrackedItems[origin] = newval
         } else {
             renamedTrackedItems[oldval] = newval
         }

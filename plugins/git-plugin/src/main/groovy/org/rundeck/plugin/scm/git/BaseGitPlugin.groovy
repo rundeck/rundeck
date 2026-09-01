@@ -193,7 +193,6 @@ class BaseGitPlugin {
                 }
 
                 File temp = new File(outfile.parentFile, outfile.name + ".tmp${job.version}")
-                temp.deleteOnExit()
                 Throwable thrown = null
                 try {
                     try {
@@ -237,7 +236,6 @@ class BaseGitPlugin {
 
     def serializeTemp(final JobExportReference job, String format, boolean preserveId, boolean useSourceId) {
         File outfile = File.createTempFile("${this.class.name}-serializeTemp", ".${format}")
-        outfile.deleteOnExit()
         outfile.withOutputStream { out ->
             job.jobSerializer.serialize(
                     format,
@@ -560,6 +558,7 @@ class BaseGitPlugin {
             def projectName = config.getString("rundeck", "scm-plugin", "project-name")
             def gitIntegration = config.getString("rundeck", "scm-plugin", "integration")
             if (projectName && !projectName.equals(context.frameworkProject) || gitIntegration && !gitIntegration.equals(integration)) {
+                agit.getRepository().close()
                 throw new ScmPluginInvalidInput(
                         "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}",
                         Validator.errorReport(
@@ -584,7 +583,8 @@ class BaseGitPlugin {
             }
 
             if(needsClone){
-                //need to reconfigured
+                //need to reconfigured: release the old repository's file handles before deleting it on disk
+                agit.getRepository().close()
                 removeWorkdir(base)
                 performClone(base, url, context, integration)
                 return
@@ -595,6 +595,7 @@ class BaseGitPlugin {
             } catch (Exception e) {
                 logger.debug("Failed fetch from the repository: ${e.message}", e)
                 String msg = collectCauseMessages(e)
+                agit.getRepository().close()
                 throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
             }
             git = agit
