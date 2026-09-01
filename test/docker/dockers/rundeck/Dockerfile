@@ -26,7 +26,7 @@ RUN apt-get -y update && \
         zip \
         file \
         apt-transport-https \
-        openjdk-17-jdk \
+        openjdk-21-jdk \
         dos2unix
 
 RUN curl -s https://packagecloud.io/install/repositories/pagerduty/rundeck/script.deb.sh | os=any dist=any bash \
