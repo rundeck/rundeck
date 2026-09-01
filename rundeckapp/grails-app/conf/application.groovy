@@ -83,29 +83,6 @@ environments {
             dbCreate = "none"
             //NON_KEYWORDS required -- see the development block above
             url = "jdbc:h2:file:/rundeck/grailsh2;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
-            properties {
-                jmxEnabled= true
-                initialSize= 5
-                maxActive= 50
-                minIdle= 5
-                maxIdle= 25
-                maxWait= 10000
-                maxAge= 600000
-                timeBetweenEvictionRunsMillis= 5000
-                minEvictableIdleTimeMillis= 60000
-                validationInterval= 15000
-                testOnBorrow= true
-                testWhileIdle= true
-                testOnReturn= false
-                jdbcInterceptors= "ConnectionState"
-                defaultTransactionIsolation= java.sql.Connection.TRANSACTION_READ_COMMITTED // Tomcat JDBC pool property (ignored by HikariCP)
-                // The properties above (maxActive, testOnBorrow, jdbcInterceptors, defaultTransactionIsolation, etc.)
-                // use Tomcat JDBC pool naming and are silently ignored by HikariCP (the Grails 7 default pool).
-                // Set the isolation level via HikariCP's own property name so it takes effect.
-                // READ_COMMITTED reduces gap/next-key locking on MySQL/InnoDB, reducing
-                // deadlocks on unique-index INSERTs. No-op on PostgreSQL/Oracle (already their default).
-                transactionIsolation= "TRANSACTION_READ_COMMITTED"
-            }
         }
     }
 }
