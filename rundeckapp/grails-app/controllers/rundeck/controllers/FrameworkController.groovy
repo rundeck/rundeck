@@ -3416,10 +3416,33 @@ Since: v23''',
                  args  : ["POST to readonly project source index $index"]]
             )
         }
+
+        def framework = frameworkService.rundeckFramework
+
+        // Path validation before writing (RUN-4671): apiSourceWriteContent is the API
+        // counterpart of saveProjectNodeSourceFile (writes via the same writeData()), and
+        // must enforce the same containment check to prevent writing a valid node document
+        // to an arbitrary/cross-project path.
+        try {
+            Map<String, Object> configProps = buildConfigPropertiesForValidation()
+            source.writeableSource.validateWriteableSource(
+                configProps,
+                framework,
+                project
+            )
+        } catch (ConfigurationException e) {
+            log.warn("Node source path validation failed for project=${project} index=${index}: ${e.message}")
+            return apiService.renderErrorFormat(
+                response,
+                [status: HttpServletResponse.SC_FORBIDDEN,
+                 code  : 'api.error.item.unauthorized',
+                 args  : ['Write Resource Model Source', 'Project', project]]
+            )
+        }
+
         def format = source.writeableSource.syntaxMimeType
         def inputStream = request.getInputStream()
         //validate
-        def framework = frameworkService.rundeckFramework
         if (format != contentType) {
             //attempt to convert to expected format
             ResourceFormatParser parser
@@ -3741,8 +3764,14 @@ Since: v23''',
         // Path validation for writeable sources (RUN-4671): this is the nextUi (legacyUi=false)
         // counterpart of editProjectNodeSourceFile, used by the Vue node source editor to fetch
         // raw source content, and must enforce the same containment check.
-        WriteableModelSource writeableModelSource = source.source.writeable
-        if (writeableModelSource) {
+        //
+        // Check `instanceof WriteableModelSource` directly rather than `source.source.writeable`
+        // (getWriteable()): a FileResourceModelSource always implements WriteableModelSource
+        // regardless of its configured writeable flag, but getWriteable() returns null when
+        // writeable=false, which previously let a source bypass path validation entirely just by
+        // setting writeable=false.
+        if (source.source instanceof WriteableModelSource) {
+            WriteableModelSource writeableModelSource = (WriteableModelSource) source.source
             try {
                 Map<String, Object> configProps = buildConfigPropertiesForValidation()
                 writeableModelSource.validateWriteableSource(

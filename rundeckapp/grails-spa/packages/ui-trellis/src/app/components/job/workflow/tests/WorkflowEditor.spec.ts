@@ -1,6 +1,9 @@
 import { flushPromises, VueWrapper, shallowMount } from "@vue/test-utils";
 import WorkflowEditor from "../WorkflowEditor.vue";
 import WorkflowBasic from "@/app/components/job/workflow/WorkflowBasic.vue";
+import WorkflowStrategy from "@/app/components/job/workflow/WorkflowStrategy.vue";
+import WorkflowGlobalLogFilters from "@/app/components/job/workflow/WorkflowGlobalLogFilters.vue";
+import UiSocket from "@/library/components/utils/UiSocket.vue";
 import { createTestingPinia } from "@pinia/testing";
 
 jest.mock("@/library/modules/rundeckClient", () => ({
@@ -19,10 +22,6 @@ jest.mock("@/library/services/projects");
 
 jest.mock("@/library/stores/NodesStorePinia", () => ({
   useNodesStore: jest.fn().mockImplementation(() => ({})),
-}));
-
-jest.mock("@/library/services/feature", () => ({
-  getFeatureEnabled: jest.fn().mockResolvedValue(false),
 }));
 
 const createWrapper = async (propsData = {}): Promise<VueWrapper<any>> => {
@@ -56,15 +55,29 @@ describe("WorkflowEditor", () => {
   it("initializes data correctly on mount", async () => {
     const wrapper = await createWrapper();
 
-    expect(wrapper.vm.basicData).toEqual({ keepgoing: true });
-    expect(wrapper.vm.strategyData).toEqual({ type: "default", config: {} });
-    expect(wrapper.vm.logFiltersData).toEqual({
+    const workflowBasicComponent = wrapper.findComponent(WorkflowBasic);
+    expect(workflowBasicComponent.exists()).toBe(true);
+    expect(workflowBasicComponent.props("modelValue")).toEqual({
+      keepgoing: true,
+    });
+
+    const workflowStrategyComponent = wrapper.findComponent(WorkflowStrategy);
+    expect(workflowStrategyComponent.props("modelValue")).toEqual({
+      type: "default",
+      config: {},
+    });
+
+    const workflowGlobalLogFiltersComponent = wrapper.findComponent(
+      WorkflowGlobalLogFilters,
+    );
+    expect(workflowGlobalLogFiltersComponent.props("modelValue")).toEqual({
       LogFilter: [{ type: "filter1" }],
     });
-    expect(wrapper.vm.stepsData).toEqual({
+
+    const uiSocketComponent = wrapper.findComponent(UiSocket);
+    expect(uiSocketComponent.props("modelValue")).toEqual({
       commands: [{ description: "step1" }],
     });
-    expect(wrapper.vm.loaded).toBe(true);
   });
 
   it("emits update:modelValue when data changes", async () => {

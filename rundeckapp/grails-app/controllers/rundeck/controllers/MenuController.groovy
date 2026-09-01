@@ -2679,7 +2679,7 @@ Since: V18''',
             description = "Job ID",
             in = ParameterIn.PATH,
             required = true,
-            content = @Content(schema = @Schema(implementation = String))
+            schema = @Schema(type = 'string')
         )
     )
     @ApiResponse(
@@ -3373,7 +3373,7 @@ Since: v14
                 name = "format",
                 description = '''can be "yaml" or "json" (API v44+) to specify the output format''',
                 in = ParameterIn.QUERY,
-                content = @Content(schema = @Schema(implementation = String,allowableValues = ['json','yaml']))
+                schema = @Schema(type = 'string', allowableValues = ['json', 'yaml'])
             )
         ]
     )

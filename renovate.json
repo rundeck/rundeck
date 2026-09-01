@@ -7,7 +7,7 @@
   "commitMessagePrefix": "[RUN-0000]",
   "dependencyDashboard": true,
   "fetchChangeLogs": "off",
-  "rebaseWhen": "never",
+  "rebaseWhen": "conflicted",
   "hostRules": [
     {
       "description": "Concentrating almost all Gradle lookups onto Maven Central (see registryUrls scoping below) increased request density enough to trip its rate limiter (429s). Throttle our own concurrency here instead of bursting and eating retry/backoff costs.",

@@ -3,6 +3,17 @@
     border-style: solid;
     color: var(--colors-gray-800);
 
+    /*
+     * PrimeVue's own runtime-injected `.p-message` rule sets an
+     * outline-width/style on top of this border, rendering as a second,
+     * thick ring around the whole message. Same cascade-tie situation as
+     * the `.p-message-*` overrides below - `&.p-component` compounds for
+     * higher specificity so this reliably wins.
+     */
+    &.p-component {
+        outline: none;
+    }
+
     .p-message-text {
         display: flex;
         align-items: center;
@@ -19,36 +30,51 @@
         color: var(--colors-gray-800);
     }
 
-    &-success {
+    /*
+     * `&.p-message-*` (not `&-*`) is intentional: PrimeVue injects its own
+     * `.p-message-*` theme rules into a runtime <style> tag AFTER this
+     * stylesheet loads, so a bare single-class selector loses the cascade
+     * tie on `background` and `color` alike (PrimeVue's own `color: var(
+     * --p-message-{severity}-color)` assumes its own dark/saturated
+     * severity background, not our overridden light one, and renders
+     * unreadable white text). Compounding with `.p-message` raises
+     * specificity so these overrides always win regardless of injection
+     * order.
+     */
+    &.p-message-success {
         background: var(--colors-green-100);
         border-color: var(--colors-green-600);
+        color: var(--colors-gray-800);
 
         .p-message-close:focus-visible {
             box-shadow: 0 0 0 0.2rem var(--colors-green-600)
         }
     }
 
-    &-info {
+    &.p-message-info {
         background: var(--colors-blue-100-original);
         border-color: var(--colors-blue-600-original);
+        color: var(--colors-gray-800);
 
         .p-message-close:focus-visible {
             box-shadow: 0 0 0 0.2rem var(--colors-blue-600-original)
         }
     }
 
-    &-warn {
+    &.p-message-warn {
         background: var(--colors-orange-100);
         border-color: var(--colors-orange-600);
+        color: var(--colors-gray-800);
 
         .p-message-close:focus-visible {
             box-shadow: 0 0 0 0.2rem var(--colors-orange-600)
         }
     }
 
-    &-error {
+    &.p-message-error {
         background: var(--colors-red-100);
         border-color: var(--colors-red-600);
+        color: var(--colors-gray-800);
 
         .p-message-close:focus-visible {
             box-shadow: 0 0 0 0.2rem var(--colors-red-600)

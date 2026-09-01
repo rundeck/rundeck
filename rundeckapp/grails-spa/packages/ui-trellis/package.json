@@ -3,7 +3,7 @@
   "version": "3.3.8",
   "description": "A collection of utilities used across various javascript applications and components.",
   "engines": {
-    "npm": "11.16.0"
+    "npm": "11.19.0"
   },
   "main": "./lib/index.js",
   "scripts": {
@@ -52,7 +52,7 @@
     "core-js": "3.50.0",
     "dagre": "^0.8.5",
     "deep-object-diff": "^1.1.9",
-    "dompurify": "^3.4.12",
+    "dompurify": "3.4.14",
     "fuse.js": "^6.6.2",
     "graphlib": "^2.1.8",
     "jointjs": "^3.2.0",
@@ -80,7 +80,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
-    "@happy-dom/jest-environment": "20.6.1",
+    "@happy-dom/jest-environment": "20.11.6",
     "@pinia/testing": "^0.1.7",
     "@storybook/addon-a11y": "^8.4.5",
     "@storybook/addon-essentials": "^8.4.5",
@@ -147,7 +147,7 @@
     "ts-jest": "29.4.12",
     "ts-node": "^10.9.1",
     "typescript": "^5.4.5",
-    "uuid": "^11.1.1",
+    "uuid": "^14.0.0",
     "vue-eslint-parser": "^9.4.0",
     "vue-loader": "^17.4.2",
     "walk": "^2.3.15",

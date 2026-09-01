@@ -73,6 +73,9 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
     private static class FakeWriteableFileSource implements ResourceModelSource, WriteableModelSource {
         Closure onValidate
         Closure onGetNodes
+        // Mirrors FileResourceModelSource: the source always implements WriteableModelSource,
+        // but getWriteable() advertises write capability based on the configured writeable flag.
+        boolean writeable = true
 
         @Override
         INodeSet getNodes() throws ResourceModelSourceException {
@@ -92,7 +95,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
         long writeData(InputStream data) throws IOException, ResourceModelSourceException { 0 }
 
         @Override
-        WriteableModelSource getWriteable() { this }
+        WriteableModelSource getWriteable() { writeable ? this : null }
 
         @Override
         void validateWriteableSource(
@@ -1250,6 +1253,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
     def "POST project source resources,  writeable, catch IO Exception"() {
         setup:
             def source =Mock(WriteableModelSource){
+                1 * validateWriteableSource(_, _, _) >> { /* validation passes */ }
                 1 * writeData(_)>>{
                     throw new IOException("expected error")
                 }
@@ -1313,6 +1317,58 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
                 'application/json; charset=utf8'
             ]
     }
+
+    def "POST project source resources, writeable, path validation fails, returns 403"() {
+        setup:
+        def writeableSource = new FakeWriteableFileSource(
+            onValidate: {
+                throw new com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException(
+                    "File path must be within the project directory"
+                )
+            }
+        )
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * existsFrameworkProject('test') >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * getWriteableResourceModelSources() >> [
+                            Mock(IProjectNodes.WriteableProjectNodes) {
+                                getWriteableSource() >> writeableSource
+                                getIndex() >> 1
+                                getType() >> 'file'
+                            }
+                    ]
+                }
+            }
+            1 * getRundeckFramework() >> Mock(com.dtolabs.rundeck.core.common.Framework)
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, 23) >> true
+            1 * requireParameters(_, _, ['project', 'index']) >> true
+            1 * requireExists(_, _, ['project', 'test']) >> true
+            1 * requireExists(_, 1, ['source index', '1']) >> true
+            1 * requireAuthorized(_, _, ['configure', 'Project', 'test']) >> true
+            1 * renderErrorFormat(_, { it.status == 403 }) >> { it[0].status = it[1].status }
+            0 * _(*_)
+        }
+
+        params.project = "test"
+        params.index = "1"
+        request.method = 'POST'
+        request.contentType = 'application/xml'
+
+        when:
+        controller.apiSourceWriteContent()
+
+        then:
+        response.status == 403
+    }
+
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
@@ -2548,6 +2604,59 @@ project.label=A Label
             getIndex() >> 1
             getType() >> 'file'
             getSource() >> writeableSource
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * existsFrameworkProject('test') >> true
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * listResourceModelConfigurations() >> [[:]]
+                    1 * getResourceModelSources() >> [readableSource]
+                }
+            }
+            1 * getRundeckFramework() >> Mock(com.dtolabs.rundeck.core.common.Framework)
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, 23) >> true
+            1 * requireParameters(_, _, ['project', 'index']) >> true
+            1 * requireExists(_, _, ['project', 'test']) >> true
+            1 * requireExists(_, { it instanceof Integer }, ['source index', '1']) >> true
+            1 * requireExists(_, { !(it instanceof Integer) }, ['source index', '1']) >> true
+            0 * _(*_)
+        }
+
+        params.project = "test"
+        params.index = "1"
+        request.method = 'GET'
+
+        when:
+        controller.apiSourceGetContent()
+
+        then:
+        response.status == 204
+    }
+
+    def "GET project source resources, writeable=false, path validation still enforced, returns 204"() {
+        // Regression test: getWriteable() returns null when the source's writeable config
+        // flag is false, which previously let `source.source.writeable` (falsy) skip path
+        // validation entirely. Validation must run regardless of the writeable flag.
+        setup:
+        def nonWriteableSource = new FakeWriteableFileSource(
+            writeable: false,
+            onValidate: {
+                throw new com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException(
+                    "File path must be within the project directory"
+                )
+            }
+        )
+        def readableSource = Mock(IProjectNodes.ReadableProjectNodes) {
+            getIndex() >> 1
+            getType() >> 'file'
+            getSource() >> nonWriteableSource
         }
         controller.frameworkService = Mock(FrameworkService) {
             1 * existsFrameworkProject('test') >> true

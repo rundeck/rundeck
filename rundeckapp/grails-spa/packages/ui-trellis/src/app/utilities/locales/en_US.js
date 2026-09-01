@@ -1439,13 +1439,7 @@ const messages = {
   commonNodeSteps: "Common Node Steps",
   commonWorkflowSteps: "Common Workflow Steps",
   learnMore: "Learn more",
-  plugins: "plugins",
-  earlyAccess: "Early Access",
-  earlyAccessDescriptionWorkflow: "We've made some improvements to the \"Workflow\" authoring experience! Try the updated experience - you can switch back anytime.",
-  earlyAccessTryNow: "Try Now",
-  earlyAccessRemindMeLater: "Remind me later",
-  earlyAccessRemindLaterToast: "Got it! We'll remind you next time you return to this page.",
-  earlyAccessGoToSettings: "You can try the updated experience by enabling early access on the system configuration page."
+  plugins: "plugins"
 };
 
 export default messages;

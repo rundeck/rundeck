@@ -700,8 +700,22 @@ jobs:
       - run-build-step:
           step-name: Runs gradle test task << parameters.gradle-task >>
           command: |
-            TEST_FILES=$(circleci tests glob "<< parameters.test_file_pattern >>" | circleci tests split)
-            echo $TEST_FILES | tee test_file_listing.txt
+            # circleci tests run must appear in this config.yml (not only a helper)
+            # so the UI offers "Rerun failed tests" instead of "Set up rerun failed tests".
+            MATCHED_FILES="$(circleci tests glob "<< parameters.test_file_pattern >>" || true)"
+            if [[ -z "${MATCHED_FILES}" ]]; then
+              echo "WARNING: glob matched no files; running full Gradle task without -PtestFiles"
+              unset TEST_FILES
+            else
+              echo "${MATCHED_FILES}" | circleci tests run --command="xargs -r printf '%s\n' > test_file_listing.txt" --verbose --split-by=timings
+              if [[ ! -s test_file_listing.txt ]]; then
+                echo "No tests assigned to this node; halting."
+                circleci-agent step halt
+                exit 0
+              fi
+              TEST_FILES="$(cat test_file_listing.txt)"
+              echo "${TEST_FILES}"
+            fi
             TEST_IMAGE=<< parameters.test-image >>
             GRADLE_TASK=<< parameters.gradle-task >>
             rundeck_gradle_functional_tests
