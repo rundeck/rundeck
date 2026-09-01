@@ -6,7 +6,11 @@ applyTo: "**/package.json,**/.npmrc"
 
 # NPM Dependency Pinning Rules
 
-Reference: [NPM Remediation Strategy (Confluence)](https://pagerduty.atlassian.net/wiki/spaces/~62d5e36b3ace3a8e7388b3f1/pages/5023989761/NPM+Remediation+Strategy)
+## Why
+
+The npm ecosystem has seen repeated large-scale supply chain attacks: the September 2025 compromise of `chalk`, `debug`, and 16 other packages with a combined 2.6 billion weekly downloads (attacker phished a maintainer's npm account and published malicious versions that hijacked crypto transactions — see [Wiz](https://www.wiz.io/blog/widespread-npm-supply-chain-attack-breaking-down-impact-scope-across-debug-chalk) and [Aikido](https://www.aikido.dev/blog/npm-debug-and-chalk-packages-compromised)), and the ongoing "Shai-Hulud" self-propagating worm that has trojanized 1,300+ package versions since late 2025 by stealing publish credentials and re-infecting every package a compromised maintainer can push to (see [Unit 42](https://unit42.paloaltonetworks.com/npm-supply-chain-attack/) and [Elastic Security Labs](https://www.elastic.co/security-labs/shai-hulud-chaindrop-npm-supply-chain)).
+
+Caret/tilde ranges (`^1.2.3`, `~1.2.3`) mean a `npm install` — or any lockfile regeneration — can silently pull in a newer, compromised version of a transitive dependency without a code review noticing. Exact pinning plus a lockfile that only resolves to a known-good version closes that window: a compromised release can't be installed until someone deliberately bumps the pin.
 
 ## Mandatory
 
