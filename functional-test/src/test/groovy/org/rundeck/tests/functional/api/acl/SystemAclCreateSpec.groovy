@@ -27,7 +27,7 @@ context:
 '''
 
         when:
-        int code
+        Integer code
         String contentType
         Map json
         try (def resp = client.doPost(
