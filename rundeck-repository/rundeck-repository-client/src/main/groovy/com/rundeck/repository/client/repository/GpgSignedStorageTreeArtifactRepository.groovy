@@ -92,7 +92,10 @@ class GpgSignedStorageTreeArtifactRepository extends StorageTreeArtifactReposito
 
     @Override
     ResponseBatch uploadArtifact(final InputStream artifactInputStream) {
-        if(!gpgPrivateKey) return super.uploadArtifact(artifactInputStream)
+        // Groovy 5 gave File an asBoolean() based on existence, so this asked "does the key file
+        // exist?" instead of "was a key configured?". A configured key whose file is missing would
+        // silently fall through to an unsigned upload rather than failing. Test for null.
+        if(gpgPrivateKey == null) return super.uploadArtifact(artifactInputStream)
 
         ResponseBatch responseBatch = new ResponseBatch()
         ArtifactFileset artifactFileset = ArtifactUtils.constructArtifactFileset(artifactInputStream)
@@ -115,7 +118,7 @@ class GpgSignedStorageTreeArtifactRepository extends StorageTreeArtifactReposito
     ResponseBatch saveNewArtifact(final RepositoryArtifact artifact) {
         ResponseBatch batch = new ResponseBatch()
         try {
-        if(gpgPrivateKey) {
+        if(gpgPrivateKey != null) {   // null check, not File-exists -- see uploadArtifact above
             ByteArrayOutputStream bout = new ByteArrayOutputStream()
             ArtifactUtils.saveArtifactToOutputStream(artifact,bout)
             File metaSig = File.createTempFile("meta","sig")
