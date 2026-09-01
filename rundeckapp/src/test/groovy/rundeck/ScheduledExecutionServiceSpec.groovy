@@ -96,7 +96,10 @@ public class ScheduledExecutionServiceSpec extends Specification implements Data
             it.validateJobDefinition(_) >> false
             it.runBeforeSave(_,_) >> [success: true]
             it.saveComponents(_,_) >> [success: true]
-            it.rundeckJobDefinitionManager.waspersisted(_,_) >> true
+            // Removed: it.rundeckJobDefinitionManager.waspersisted(_,_) >> true
+            // That stubbed a chained call on a *field* of the mock, not a method on it. The field
+            // is null on a Spock Mock, so the stub never took effect -- it silently did nothing.
+            // Spock's MockitoMockMaker now NPEs on the null target instead of ignoring it.
         }
         def authContext = Mock(UserAndRolesAuthContext)
         service._dosaveupdated([:],importedJob,mockedOldJob,authContext,[method: "update", user: "admin", change: "modify"],false)
