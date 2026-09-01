@@ -30,7 +30,12 @@ class Project implements RdProject {
     State state
 
     static constraints={
-        name(matches: '^[a-zA-Z0-9\\.,@\\(\\)_\\\\/-]+$',unique: true)
+        // nullable:false was previously implicit. Under Grails 8 a null name validates cleanly --
+        // `unique` and `matches` still fire, but the not-null default no longer does -- so the
+        // insert reached the database and was rejected there instead of by validation. Stated
+        // explicitly to restore the intended check. No migration needed: the project.name column
+        // is already declared nullable:"false" in the Liquibase changelog.
+        name(nullable: false, matches: '^[a-zA-Z0-9\\.,@\\(\\)_\\\\/-]+$',unique: true)
         description(nullable:true, maxSize: 255)
         state(nullable:true)
     }
