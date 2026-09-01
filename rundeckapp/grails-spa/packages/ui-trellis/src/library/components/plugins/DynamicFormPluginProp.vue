@@ -267,7 +267,7 @@ export default defineComponent({
         const parsedFields = Object.keys(customFieldsObject).map((key: any) => {
           const value = customFieldsObject[key];
           if (value.desc == null) {
-            value.desc = "Field key: " + value.key;
+            value.desc = this.$t("message_fieldKeyDescription", [value.key]);
           }
           return value;
         });
@@ -287,9 +287,14 @@ export default defineComponent({
 
           let description = this.newFieldDescription;
           if (description == "") {
-            description = "Field key " + newField.value;
+            description = this.$t("message_fieldKeyOnlyDescription", [
+              newField.value,
+            ]);
           } else {
-            description = description + " (Field key: " + newField.value + ")";
+            description = this.$t("message_fieldKeyAppendedDescription", [
+              description,
+              newField.value,
+            ]);
           }
 
           field = {
@@ -301,9 +306,14 @@ export default defineComponent({
       } else {
         let description = this.newFieldDescription;
         if (description == "") {
-          description = "Field key " + this.newField;
+          description = this.$t("message_fieldKeyOnlyDescription", [
+            this.newField,
+          ]);
         } else {
-          description = description + " (Field key: " + this.newField + ")";
+          description = this.$t("message_fieldKeyAppendedDescription", [
+            description,
+            this.newField,
+          ]);
         }
 
         field = {

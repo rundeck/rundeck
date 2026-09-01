@@ -3,6 +3,20 @@ import DynamicFormPluginProp from "../DynamicFormPluginProp.vue";
 import { Btn, Modal, Alert } from "uiv";
 import PtSelect from "../../primeVue/PtSelect/PtSelect.vue";
 
+// The global $t mock returns the key and drops the arguments, which would
+// make the generated descriptions unverifiable. Interpolate the real en_US
+// templates instead so the assertions below still check the composed text.
+const messages: Record<string, string> = {
+  message_fieldKeyDescription: "Field key: {0}",
+  message_fieldKeyOnlyDescription: "Field key {0}",
+  message_fieldKeyAppendedDescription: "{0} (Field key: {1})",
+};
+const translate = (key: string, params: string[] = []) =>
+  (messages[key] ?? key).replace(
+    /\{(\d+)\}/g,
+    (_match, index) => params[Number(index)],
+  );
+
 const createWrapper = (props = {}) => {
   return mount(DynamicFormPluginProp, {
     props: {
@@ -25,6 +39,7 @@ const createWrapper = (props = {}) => {
       };
     },
     global: {
+      mocks: { $t: translate },
       components: { Btn, Modal, Alert, PtSelect },
       stubs: {
         Modal: {
