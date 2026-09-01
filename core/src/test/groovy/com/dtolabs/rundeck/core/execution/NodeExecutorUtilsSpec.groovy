@@ -104,8 +104,8 @@ class NodeExecutorUtilsSpec extends Specification {
         new SshExportQuotingConfig(true)  || "export RD_B_C='; id';"   // opt-in on: quoted, injection neutralized
     }
 
-    def "getExportedVariablesForNode leaves benign values unquoted (quoting is a no-op)"() {
-        given: 'a benign value contains no shell metacharacters'
+    def "getExportedVariablesForNode leaves values without whitespace or metacharacters unquoted even when quoting is enabled"() {
+        given: 'quoting is ENABLED and the value has no whitespace or shell metacharacters'
         def nodea = new NodeEntryImpl("nodea.host", "nodea")
         nodea.setAttribute(NodeExecutorUtils.RD_VARIABLE_PATTERN, 'export {key}={value}')
         nodea.setAttribute(NodeExecutorUtils.RD_VARIABLE_PATTERN_SEPARATOR, ";")
@@ -114,13 +114,14 @@ class NodeExecutorUtilsSpec extends Specification {
                 .stepContext([1, 2])
                 .stepNumber(3)
                 .dataContext(DataContextUtils.context('b', [c: 'd']))
+                .addComponent(SshExportQuotingConfig.COMPONENT_NAME, new SshExportQuotingConfig(true), SshExportQuotingConfig)
                 .build()
         def commandList = ["ls"]
 
         when:
         def result = NodeExecutorUtils.getExportedVariablesForNode(nodea, orig, commandList)
 
-        then: 'quoteUnixShellArg adds no quotes, so ordinary configurations are unaffected'
+        then: 'quoteUnixShellArg adds no quotes for such values, so ordinary configurations are unaffected'
         result[0] == 'export RD_B_C=d;'
     }
 }

@@ -38,9 +38,9 @@ public class NodeExecutorUtils {
             // RUN-4579: option values reach the remote sh -c through this export prefix; without shell
             // quoting a value containing metacharacters (;, $(), backticks, ...) is a command-injection
             // sink. Quoting is opt-in and gated by a component resolved in the application layer
-            // (project/system config); default false (legacy unquoted behavior) when absent. When
-            // enabled, quoteUnixShellArg is a no-op for benign values, so ordinary configurations are
-            // unaffected.
+            // (system config); default false (legacy unquoted behavior) when absent. When enabled,
+            // quoteUnixShellArg only adds quotes to values that contain whitespace or shell
+            // metacharacters; values without those are emitted unchanged.
             final boolean quoteExport = nodeContext.componentForType(SshExportQuotingConfig.class)
                     .map(SshExportQuotingConfig::isQuoteExportedValues)
                     .orElse(false);
