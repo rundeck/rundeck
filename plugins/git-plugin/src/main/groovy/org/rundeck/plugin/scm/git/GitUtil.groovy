@@ -278,7 +278,7 @@ class GitUtil {
         }
         return found
     }
-    static List<String> listPaths(Git git, String ref, List<String> trackedItems=null, String trackingRegex=null) {
+    static List<String> listPaths(Git git, String ref, List<String> trackedItems = null, String trackingRegex = null) {
         ObjectId head = git.repository.resolve ref
         if (!head) {
             return null
@@ -293,7 +293,7 @@ class GitUtil {
                 tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
             }
         }
-        List<String> list= []
+        List<String> list = []
 
         try {
             while (tree.next()) {

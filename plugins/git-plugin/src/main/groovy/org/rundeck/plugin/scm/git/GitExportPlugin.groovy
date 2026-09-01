@@ -282,7 +282,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     GitExportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //perform fetch
-        def msgs=[]
+        def msgs = []
 
         def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
 
@@ -292,12 +292,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             return synchState
         }
 
-        boolean fetchError=false
+        boolean fetchError = false
         if (performFetch) {
             try {
                 fetchFromRemote(context)
             } catch (Exception e) {
-                fetchError=true
+                fetchError = true
                 msgs<<"Fetch from the repository failed: ${e.message}"
                 logger.error("Failed fetch from the repository: ${e.message}")
                 logger.debug("Failed fetch from the repository: ${e.message}", e)
@@ -357,7 +357,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (fetchError) {
             throw new ScmPluginException(msgs.join(', '))
         }
-        synchState.message=msgs? msgs.join(', ') : null
+        synchState.message = msgs ? msgs.join(', ') : null
 
         return synchState
     }
@@ -639,7 +639,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             try {
                 gitPull(context)
             } catch (JGitInternalException e) {
-                retSt.error=e
+                retSt.error = e
             } catch (GitAPIException e) {
                 retSt.error = e
                 log.info("Git error", e)

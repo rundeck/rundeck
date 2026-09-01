@@ -117,7 +117,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         plugin.serializeAll(jobs, plugin.format, plugin.config.exportPreserve, plugin.config.exportOriginal)
         String commitMessage = input[P_MESSAGE].toString()
         Status status = plugin.git.status().call()
-        int pathcount=0
+        int pathcount = 0
         //add all changes to index
         if (jobs) {
             AddCommand addCommand = plugin.git.add()
@@ -156,7 +156,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         commit = commit1.call()
         result.success = true
         result.id = commit?.name
-        result.commit=new GitScmCommit(GitUtil.metaForCommit(commit))
+        result.commit = new GitScmCommit(GitUtil.metaForCommit(commit))
         plugin.cleanJobStatusCache(jobs)
 
         return performTagAndPush(plugin, jobs, pathsToDelete, context, input, result)

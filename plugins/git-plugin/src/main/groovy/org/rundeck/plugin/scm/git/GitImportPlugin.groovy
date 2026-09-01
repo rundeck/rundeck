@@ -66,7 +66,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     GitImportPlugin(final Import config, List<String> trackedItems) {
         super(config)
-        this.config=config
+        this.config = config
         this.trackedItems = trackedItems
     }
 

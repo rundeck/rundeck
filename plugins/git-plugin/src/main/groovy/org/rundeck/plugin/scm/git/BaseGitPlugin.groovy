@@ -615,7 +615,7 @@ class BaseGitPlugin {
         return msgs.join("; ")
     }
 
-    private void performClone(File base, String url, ScmOperationContext context, String branch=this.branch, String integration) {
+    private void performClone(File base, String url, ScmOperationContext context, String branch = this.branch, String integration) {
         logger.debug("cloning...")
         def cloneCommand = Git.cloneRepository().
                 setBranch(branch).
