@@ -37,4 +37,42 @@ class DefaultRundeckConfigPropertyLoader implements CoreConfigurationPropertiesL
         return rundeckConfigs
     }
 
+    /**
+     * Reads <code>dataSource.url</code> straight out of the deployment's rundeck-config file.
+     *
+     * Grails 8 builds the dataSource bean from the nested <code>dataSource { }</code> map in the
+     * application config and does not consult the flat <code>dataSource.url</code> key that Rundeck
+     * publishes as a Spring property source, so the URL an operator sets was ignored in favour of
+     * the one packaged inside the WAR. rundeck-config is the only file a deployment can edit, so
+     * application.groovy asks for the value here and places it in the nested map itself -- the one
+     * place the framework is guaranteed to read.
+     *
+     * Deliberately reads the file rather than the Spring environment: this is called while the
+     * application config is still being parsed, before any property source is queryable.
+     *
+     * @return the configured JDBC URL, or null when none is set or the file cannot be read
+     */
+    static String configuredDataSourceUrl() {
+        String location = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
+        if (!location) {
+            return null
+        }
+        File configFile = new File(location)
+        if (!configFile.isFile()) {
+            return null
+        }
+        try {
+            if (location.endsWith(".groovy")) {
+                def url = new ConfigSlurper().parse(configFile.toURI().toURL())?.flatten()?.get("dataSource.url")
+                return url ? url.toString() : null
+            }
+            Properties props = new Properties()
+            configFile.withInputStream { props.load(it) }
+            return props.getProperty("dataSource.url") ?: null
+        } catch (Exception ex) {
+            LOG.warn("Unable to read dataSource.url from ${location}", ex)
+            return null
+        }
+    }
+
 }
