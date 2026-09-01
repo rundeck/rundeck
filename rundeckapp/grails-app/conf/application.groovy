@@ -45,7 +45,13 @@ environments {
             // YEAR and SECONDS, all reserved in H2, and Hibernate emits them unquoted. Without it
             // every job-listing query dies with "Syntax error ... expected identifier".
             // The `test` block below already had this; `development` did not.
-            url = "jdbc:h2:file:./db/devDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
+            // rundeck-config.properties is the only file a deployment can edit, and on Grails 8
+            // the flat dataSource.url key it publishes is not consulted when the framework builds
+            // the bean -- only this nested map is. Asking for the value here puts the operator's
+            // choice where it is actually read; the literal below stays as the fallback for when
+            // no rundeck-config supplies one.
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
+                    "jdbc:h2:file:./db/devDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
         grails.plugin.databasemigration.updateOnStart=true
 
@@ -61,7 +67,13 @@ environments {
         grails.profiler.disable=true
         dataSource {
             dbCreate = "none"
-            url = "jdbc:h2:file:./db/testDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
+            // rundeck-config.properties is the only file a deployment can edit, and on Grails 8
+            // the flat dataSource.url key it publishes is not consulted when the framework builds
+            // the bean -- only this nested map is. Asking for the value here puts the operator's
+            // choice where it is actually read; the literal below stays as the fallback for when
+            // no rundeck-config supplies one.
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
+                    "jdbc:h2:file:./db/testDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
         grails.plugin.databasemigration.updateOnStart=true
 
@@ -82,7 +94,13 @@ environments {
         dataSource {
             dbCreate = "none"
             //NON_KEYWORDS required -- see the development block above
-            url = "jdbc:h2:file:/rundeck/grailsh2;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
+            // rundeck-config.properties is the only file a deployment can edit, and on Grails 8
+            // the flat dataSource.url key it publishes is not consulted when the framework builds
+            // the bean -- only this nested map is. Asking for the value here puts the operator's
+            // choice where it is actually read; the literal below stays as the fallback for when
+            // no rundeck-config supplies one.
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
+                    "jdbc:h2:file:/rundeck/grailsh2;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
     }
 }
