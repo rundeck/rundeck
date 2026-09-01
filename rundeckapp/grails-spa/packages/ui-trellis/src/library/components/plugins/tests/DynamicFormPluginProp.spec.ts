@@ -152,6 +152,17 @@ describe("DynamicFormPluginProp.vue", () => {
       expect(fields.at(1)?.find("label")?.text()).toBe("Root Cause");
     });
 
+    it("clears the list when the fields prop is emptied after mount", async () => {
+      const wrapper = createWrapper();
+      await flushPromises();
+      expect(wrapper.findAll('[data-testid="field-item"]').length).toBe(1);
+
+      await wrapper.setProps({ fields: "" });
+      await flushPromises();
+
+      expect(wrapper.findAll('[data-testid="field-item"]').length).toBe(0);
+    });
+
     it("syncs the fields prop reactively when it changes after mount", async () => {
       const wrapper = createWrapper();
       await flushPromises();

@@ -213,8 +213,10 @@ export default defineComponent({
     };
   },
   watch: {
-    value(newValue: string) {
-      this.innerValue = newValue;
+    value(newValue: boolean | string) {
+      // Mirrors the cast in data(): the prop accepts a boolean, but every
+      // consumer of innerValue treats it as a string.
+      this.innerValue = newValue as string;
     },
   },
   methods: {

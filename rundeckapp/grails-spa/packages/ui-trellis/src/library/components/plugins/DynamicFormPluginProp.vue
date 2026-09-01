@@ -257,6 +257,9 @@ export default defineComponent({
   methods: {
     syncFieldsFromProp(fields: string) {
       if (fields == null || fields === "") {
+        // Clearing the prop must clear the list too, otherwise the previous
+        // fields stay on screen after the parent resets the value.
+        this.customFields = [];
         return;
       }
       const customFieldsObject = JSON.parse(fields);

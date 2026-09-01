@@ -533,6 +533,50 @@ describe("PluginConfig", () => {
       expect(prop.selectLabels).toEqual({ "1": "1 - High", "3": "3 - Low" });
     });
 
+    it("drops map-derived labels when the same prop is reloaded with a list", async () => {
+      const wrapper = await createWrapper();
+      const props = [{ name: "urgency", type: "FreeSelect", options: {} }];
+
+      (wrapper.vm as any).loadPluginData({
+        props,
+        dynamicProps: { urgency: { "1": "1 - High" } },
+      });
+      await wrapper.vm.$nextTick();
+      expect(props[0]).toHaveProperty("selectLabels", { "1": "1 - High" });
+
+      // loadPluginData runs again over the very same prop objects when it is
+      // called with the pluginConfig prop.
+      (wrapper.vm as any).loadPluginData({
+        props,
+        dynamicProps: { urgency: ["High", "Low"] },
+      });
+      await wrapper.vm.$nextTick();
+
+      expect((props[0] as any).allowed).toEqual(["High", "Low"]);
+      expect((props[0] as any).selectLabels).toBeUndefined();
+    });
+
+    it("keeps labels the descriptor supplied when dynamic values are a list", async () => {
+      const wrapper = await createWrapper();
+      const descriptorLabels = { High: "Very high" };
+      const props = [
+        {
+          name: "urgency",
+          type: "FreeSelect",
+          options: {},
+          selectLabels: descriptorLabels,
+        },
+      ];
+
+      (wrapper.vm as any).loadPluginData({
+        props,
+        dynamicProps: { urgency: ["High", "Low"] },
+      });
+      await wrapper.vm.$nextTick();
+
+      expect((props[0] as any).selectLabels).toEqual(descriptorLabels);
+    });
+
     it("leaves list-style dynamic values untouched", async () => {
       const wrapper = await createWrapper();
 
