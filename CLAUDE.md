@@ -60,6 +60,7 @@ Context-aware rules that load automatically based on file patterns:
 - **`.claude/rules/vue.md`** — Vue component standards (Options API, scoped styles, component placement)
 - **`.claude/rules/database-migrations.md`** — Database migration rules (Liquibase, multi-DB support)
 - **`.claude/rules/okhttp-client-response.md`** — OkHttp response cleanup in functional/Selenium tests
+- **`.claude/rules/npm-dependencies.md`** — Exact npm version pinning (no `^`/`~`, `save-prefix=""`, internal registry only) per PagerDuty's NPM Remediation Strategy
 
 ## Skills
 
