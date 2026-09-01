@@ -492,7 +492,12 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
             getBoolean(_, _) >> false
         }
 
+        // withRequest(controller:,action:) only feeds the doesMatch() URL matcher, not the plain
+        // controllerName/actionName properties SetUserInterceptor.before() reads directly, so those
+        // request attributes must be set explicitly to exercise the webhookType branch.
         withRequest(controller: "webhook", action: "post")
+        request.setAttribute("org.grails.CONTROLLER_NAME_ATTRIBUTE", "webhook")
+        request.setAttribute("org.grails.ACTION_NAME_ATTRIBUTE", "post")
         request.api_version = 44
         interceptor.params.authtoken = "valid-token"
 
