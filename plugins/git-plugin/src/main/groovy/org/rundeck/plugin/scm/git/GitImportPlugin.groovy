@@ -116,14 +116,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         "Select Files to Import",
                         "Choose files and options for importing",
                         "glyphicon-cog"
-
                 ),
                 (ACTION_IMPORT_JOBS)         : new ImportJobs(
                     ACTION_IMPORT_JOBS,
                         "Import Remote Changes",
                         "Import Changes",
                         null
-
                 ),
                 //preserve compatibility with action name 'import-all'
                 (ACTION_IMPORT_ALL)         : new ImportJobs(
@@ -131,7 +129,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         "Import Remote Changes",
                         "Import Changes",
                         null
-
                 ),
 
                 (ACTION_PULL)               : new PullAction(
