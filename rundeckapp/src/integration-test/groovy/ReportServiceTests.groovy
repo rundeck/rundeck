@@ -16,8 +16,8 @@
 
 import com.dtolabs.rundeck.app.support.ExecQuery
 import grails.gorm.transactions.Rollback
+import spock.lang.Specification
 import grails.testing.mixin.integration.Integration
-import org.junit.Test
 import org.rundeck.app.data.providers.v1.report.ExecReportDataProvider
 import rundeck.ExecReport
 import rundeck.BaseReport
@@ -35,7 +35,16 @@ import static org.junit.Assert.*
  */
 @Integration
 @Rollback
-class ReportServiceTests {
+// Grails' @Integration support bootstraps the Spring context through Spock. As a plain JUnit 4
+// class this spec produced its own, different, MergedContextConfiguration instead of sharing the
+// one its siblings already use, so Spring Boot 4 built a second context that came up without the
+// framework base dir (FileNotFoundException: null/artifact-repositories.yaml). Converted to a
+// Spock Specification like every other integration spec here so it reuses the same context.
+// Method bodies are unchanged and kept under `setup:`, where JUnit's assert* calls still throw
+// on failure and Spock does not reinterpret them as implicit conditions. Multi-variable
+// declarations were split one per line because Groovy copies a preceding label onto every
+// declaration in the group, which Spock then reads as a repeated `setup:` block.
+class ReportServiceTests extends Specification {
     ReportService reportService
     ExecReportDataProvider execReportDataProvider
     def sessionFactory
@@ -45,9 +54,11 @@ class ReportServiceTests {
         message:'message',title:'title']
         return new ExecReport(repprops+props)
     }
-    @Test
-    void testGetExecReportsReportIdFilter(){
-        def r1, r2, r3
+        void "testGetExecReportsReportIdFilter"() {
+        setup:
+        def r1
+        def r2
+        def r3
 
         r1 = proto(reportId: 'blah', executionId: '123', executionUuid: 'uuid1')
         assert r1.validate()
@@ -77,9 +88,12 @@ class ReportServiceTests {
         assertQueryResult([reportIdFilter: 'blah3'], [r3])
         assertQueryResult([reportIdFilter: 'blah4'], [])
     }
-    @Test
-    void testGetExecNodeFilterReportIdFilter(){
-        def r1,r2,r3, r4
+        void "testGetExecNodeFilterReportIdFilter"() {
+        setup:
+        def r1
+        def r2
+        def r3
+        def r4
 
             r1=proto(reportId:'blah', executionId: '123', succeededNodeList:'test', executionUuid: 'uuid1')
             assert r1.validate()
@@ -119,9 +133,11 @@ class ReportServiceTests {
 
     }
 
-    @Test
-    void testGetExecReportsProjFilterIsExact(){
-        def r1,r2,r3
+        void "testGetExecReportsProjFilterIsExact"() {
+        setup:
+        def r1
+        def r2
+        def r3
 
         r1=proto(reportId:'blah', executionId: '123', project:'abc', executionUuid: 'uuid1')
         assert r1.validate()
@@ -152,8 +168,8 @@ class ReportServiceTests {
         assertQueryResult([projFilter: 'abcd'], [])
         assertQueryResult([projFilter: 'abcdef'], [r3])
     }
-    @Test
-    void testGetExecReportsJobListFilter(){
+        void "testGetExecReportsJobListFilter"() {
+        setup:
         def r1 = proto(reportId: 'group/name', executionId: '1', executionUuid: 'uuid1')
         assert null != r1.save(flush: true)
         def r2 = proto(reportId: 'group/name2', executionId: '2', executionUuid: 'uuid2')
@@ -169,8 +185,8 @@ class ReportServiceTests {
         assertQueryResult([jobListFilter: ['group/name2', 'group/name3']], [r2, r3])
         assertQueryResult([jobListFilter: ['group/name', 'group/name2', 'group/name3']], [r1, r2, r3])
     }
-    @Test
-    void testGetExecReportsStatusStringVariations(){
+        void "testGetExecReportsStatusStringVariations"() {
+        setup:
         def r1 = proto(reportId: 'group/name', executionId: '1', status: 'failed', actionType: 'failed', executionUuid: 'uuid1')
         assert null != r1.save(flush: true)
         def r2 = proto(reportId: 'group/name2', executionId: '2', status: 'fail', actionType: 'fail', executionUuid: 'uuid2')
@@ -185,8 +201,8 @@ class ReportServiceTests {
         assertQueryResult([statFilter: 'succeed'], [r3, r4])
 
     }
-    @Test
-    void testGetCombinedReportsExcludeJobListFilter(){
+        void "testGetCombinedReportsExcludeJobListFilter"() {
+        setup:
         def r1 = proto(reportId: 'group/name', executionId: '1', executionUuid: 'uuid1')
         assert null != r1.save(flush: true)
         def r2 = proto(reportId: 'group/name2', executionId: '2', executionUuid: 'uuid2')
@@ -202,8 +218,8 @@ class ReportServiceTests {
         assertQueryResult([excludeJobListFilter: ['group/name', 'group/name2', 'group/name3']], [])
     }
 
-    @Test
-    void testConvertUUIDJobIdFilterToInternalId(){
+        void "testConvertUUIDJobIdFilterToInternalId"() {
+        setup:
         String seUUID = UUID.randomUUID().toString()
         String seUUID2 = UUID.randomUUID().toString()
         def se = new ScheduledExecution(project:"one",jobName: "TestJob",uuid: seUUID)
@@ -236,9 +252,11 @@ class ReportServiceTests {
         assert result.reports.containsAll(results)
     }
 
-    @Test
-    void testGetExecReportsFailedStat(){
-        def r1,r2,r3
+        void "testGetExecReportsFailedStat"() {
+        setup:
+        def r1
+        def r2
+        def r3
 
         r1 = proto(reportId: 'blah', executionId: '123', status: 'fail', executionUuid: 'uuid1')
         assert r1.validate()
@@ -269,9 +287,11 @@ class ReportServiceTests {
 
     }
 
-    @Test
-    void testGetExecReportsKilledStat(){
-        def r1,r2,r3
+        void "testGetExecReportsKilledStat"() {
+        setup:
+        def r1
+        def r2
+        def r3
 
         r1=proto(reportId:'blah', executionId: '123', status: 'fail', abortedByUser: 'admin', executionUuid: 'uuid1')
         assert r1.validate()
