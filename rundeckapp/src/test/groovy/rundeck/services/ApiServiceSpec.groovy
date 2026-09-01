@@ -112,6 +112,13 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
         'application/xml'            | 'all'     | 'xml'
         'text/plain'                 | 'all'     | 'text'
         'yaml'                       | 'yaml'    | 'yaml'
+        'application/json'           | 'yaml'    | 'json'
+        'application/json'           | 'xml'     | 'json'
+        // RUN-4790 non-regression: when Accept doesn't resolve to an allowed format,
+        // request.format (the body's own content type) must still decide the response format.
+        '*/*'                        | 'yaml'    | 'yaml'
+        null                         | 'yaml'    | 'yaml'
+        'text/html'                  | 'yaml'    | 'yaml'
     }
 
     def "jsonRenderDirlist"(){
