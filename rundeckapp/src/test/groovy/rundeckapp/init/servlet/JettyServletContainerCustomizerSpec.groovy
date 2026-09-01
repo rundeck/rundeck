@@ -17,7 +17,7 @@ class JettyServletContainerCustomizerSpec extends Specification {
         customizer.applySecureSessionCookieDefault(factory)
 
         then:
-        factory.session.cookie.secure == true
+        factory.settings.session.cookie.secure == true
     }
 
     def "applySecureSessionCookieDefault leaves cookie secure unset when serverUrl is http"() {
@@ -31,7 +31,7 @@ class JettyServletContainerCustomizerSpec extends Specification {
         customizer.applySecureSessionCookieDefault(factory)
 
         then:
-        factory.session.cookie.secure == null
+        factory.settings.session.cookie.secure == null
     }
 
     def "applySecureSessionCookieDefault does not override an explicit secure=false setting"() {
@@ -40,13 +40,13 @@ class JettyServletContainerCustomizerSpec extends Specification {
                 serverUrl: 'https://rundeck.example.com/rundeck'
         )
         JettyServletWebServerFactory factory = new JettyServletWebServerFactory()
-        factory.session.cookie.secure = false
+        factory.settings.session.cookie.secure = false
 
         when:
         customizer.applySecureSessionCookieDefault(factory)
 
         then:
-        factory.session.cookie.secure == false
+        factory.settings.session.cookie.secure == false
     }
 
     def "applySecureSessionCookieDefault is a no-op when serverUrl is not set"() {
@@ -58,7 +58,7 @@ class JettyServletContainerCustomizerSpec extends Specification {
         customizer.applySecureSessionCookieDefault(factory)
 
         then:
-        factory.session.cookie.secure == null
+        factory.settings.session.cookie.secure == null
     }
 
     @Unroll
