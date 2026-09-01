@@ -187,7 +187,11 @@ class LoggingService implements ExecutionFileProducer {
             loglevelWriter = new ThresholdLogWriter(loglevelWriter, threshold)
         }
         def writer = new ExecutionLogWriter(loglevelWriter)
-        if (outfilepath) {
+        // Groovy 5 gave File an asBoolean() based on existence, so `if (outfilepath)` became
+        // "if the log file already exists" instead of "if a path was resolved". For a new
+        // execution the file has not been written yet, so the path was silently dropped and
+        // ExecutionLogWriter.filepath stayed null. Test explicitly for null.
+        if (outfilepath != null) {
             //file path support
             writer.filepath = outfilepath
         }
