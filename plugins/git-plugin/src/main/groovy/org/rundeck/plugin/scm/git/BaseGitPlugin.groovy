@@ -773,7 +773,6 @@ class BaseGitPlugin {
             })
 
             if (null != data && data.length > 0) {
-
                 def pass = new String(data)
                 command.setCredentialsProvider(new UsernamePasswordCredentialsProvider(u.user, pass))
             }

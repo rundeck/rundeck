@@ -19,7 +19,6 @@ import org.eclipse.jgit.util.io.IsolatedOutputStream
 
 @CompileStatic
 class SshjSession implements RemoteSession {
-
     Session session
     SSHClient sshClient
     URIish uri
@@ -53,7 +52,6 @@ class SshjSession implements RemoteSession {
     }
 
     private SSHClient createConnection() {
-
         String user = uri.getUser()
         String host = uri.getHost()
         int port = uri.getPort()
@@ -105,7 +103,6 @@ class SshjSession implements RemoteSession {
     }
 
     private class SshjProcess extends Process {
-
         int timeout
         Session.Command cmd
         InputStream inputStream

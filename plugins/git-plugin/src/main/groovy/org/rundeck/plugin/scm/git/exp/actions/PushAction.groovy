@@ -33,7 +33,6 @@ import org.rundeck.plugin.scm.git.GitUtil
  * Created by greg on 9/8/15.
  */
 class PushAction extends BaseAction implements GitExportAction {
-
     PushAction(final String id, final String title, final String description) {
         super(id, title, description)
     }

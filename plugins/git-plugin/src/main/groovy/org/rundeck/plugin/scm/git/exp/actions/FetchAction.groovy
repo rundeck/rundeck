@@ -58,7 +58,6 @@ class FetchAction extends BaseAction implements GitExportAction {
             final ScmOperationContext context,
             final Map<String, String> input
     ) throws ScmPluginException {
-
         //fetch remote changes
         def update
         try {

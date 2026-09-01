@@ -30,8 +30,7 @@ import java.util.regex.PatternSyntaxException
 /**
  * Created by greg on 10/13/15.
  */
-class Import extends Common{
-
+class Import extends Common {
     @PluginProperty(
             title = "Import UUID Behavior",
             description = '''How to handle UUIDs from imported Job source files

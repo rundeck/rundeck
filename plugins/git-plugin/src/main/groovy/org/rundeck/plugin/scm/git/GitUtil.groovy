@@ -44,7 +44,6 @@ import org.eclipse.jgit.util.io.DisabledOutputStream
  * Created by greg on 9/10/15.
  */
 class GitUtil {
-
     /**
      * get RevCommit for HEAD rev of the path
      * @return RevCommit or null if HEAD not found (empty git)
@@ -67,7 +66,6 @@ class GitUtil {
             }
             return walk.parseCommit(resolve)
         } catch (IOException e) {
-
             return null
         }finally{
             walk.close()

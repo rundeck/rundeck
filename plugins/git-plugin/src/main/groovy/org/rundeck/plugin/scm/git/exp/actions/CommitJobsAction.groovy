@@ -33,7 +33,6 @@ import org.rundeck.plugin.scm.git.GitUtil
  * Created by greg on 9/8/15.
  */
 class CommitJobsAction extends BaseAction implements GitExportAction {
-
     public static final String P_MESSAGE = 'message'
     public static final String P_PUSH = 'push'
 

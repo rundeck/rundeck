@@ -103,7 +103,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     void setup(ScmOperationContext context, Export config) throws ScmPluginException {
-
         if (inited) {
             log.debug("already inited, not doing setup")
             return
@@ -227,7 +226,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.jobId) {
             //todo: get job status to determine actions
-//            actionRefs JOB_COMMIT_ACTION_ID
+            //            actionRefs JOB_COMMIT_ACTION_ID
             null
         } else if (context.frameworkProject) {
             //actions in project view
@@ -424,7 +423,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     private refreshJobStatus(final JobRevReference job, final String originalPath, boolean doSerialize = true) {
-
         def path = relativePath(job)
 
         //mark as loading (rather than removing) so a concurrent initJobsStatus() call doesn't
@@ -467,7 +465,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         def ident = createStatusCacheIdent(job, commit)
-//job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
+        //job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
 
         jobstat['ident'] = ident
         jobstat['id'] = job.id

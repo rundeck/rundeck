@@ -147,7 +147,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     void setup(final ScmOperationContext context) throws ScmPluginException {
-
         if (inited) {
             log.debug("already inited, not doing setup")
             return
@@ -263,7 +262,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 tracked = true
             }
             if (!tracked && importTracker.getTrackedJobIds().get(walk.getPathString()) && jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))) {
-
                 def originalValue = importTracker.originalValue(walk.getPathString())
                 def renamedJob = null
                 if (originalValue) {
@@ -357,7 +355,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     private refreshJobStatus(final JobScmReference job, final String originalPath) {
-
         def previousImportCommit = job.scmImportMetadata?.commitId ? GitUtil.getCommit(
                 repo,
                 job.scmImportMetadata.commitId
@@ -372,7 +369,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         def jobstat = Collections.synchronizedMap([:])
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
 
-//        log.debug(debugStatus(status))
+        //        log.debug(debugStatus(status))
         ImportSynchState synchState = importSynchStateForStatus(job, latestCommit, path)
 
         if (originalPath && synchState == ImportSynchState.UNKNOWN) {
@@ -547,12 +544,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
                 importTracker.jobRenamed(reference, path, newpath)
         //TODO
-//            case JobChangeEvent.JobChangeEventType.CREATE:
-//            case JobChangeEvent.JobChangeEventType.MODIFY:
+            //            case JobChangeEvent.JobChangeEventType.CREATE:
+            //            case JobChangeEvent.JobChangeEventType.MODIFY:
 
         }
-//        def status = refreshJobStatus(reference, origPath)
-//        return createJobImportStatus(status)
+        //        def status = refreshJobStatus(reference, origPath)
+        //        return createJobImportStatus(status)
         null
     }
 
@@ -584,7 +581,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             if (!config.shouldUseFilePattern() && !trackedItems) {
                 return [actions[ACTION_INITIALIZE_TRACKING]]
             } else {
-
                 def avail = []
                 if (!status) {
                     status = getStatusInternal(context, false)
@@ -674,7 +670,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 }
             }
         } else if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
-
             List<ScmImportTrackedItem> found = []
 
             //files to delete
