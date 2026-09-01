@@ -139,9 +139,8 @@ class ImportJobs extends BaseAction implements GitImportAction {
             } else {
                 if(importResult.getJob()){
                     jobsChanged.add(importResult.getJob())
+                    plugin.importTracker.trackJobAtPath(importResult.job,walk.getPathString())
                 }
-                plugin.importTracker.trackJobAtPath(importResult.job,walk.getPathString())
-                success = true
                 sb << ("Succeeded importing ${walk.getPathString()}: ${importResult}")
             }
         }

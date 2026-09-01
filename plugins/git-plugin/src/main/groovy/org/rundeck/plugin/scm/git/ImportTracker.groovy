@@ -70,6 +70,12 @@ class ImportTracker {
     }
 
     void trackJobAtPath(JobScmReference job, String path) {
+        def previousJobId = trackedJobIds[path]
+        if (previousJobId != null && previousJobId != job.id) {
+            //path is being claimed by a different job than the one previously tracked there:
+            //remove the stale reverse mapping so it doesn't keep resolving to the old job
+            trackedPathsMap.remove(previousJobId)
+        }
         trackedCommits[path] = job.scmImportMetadata?.commitId
         trackedJobIds[path] = job.id
         trackedPathsMap[job.id] = path

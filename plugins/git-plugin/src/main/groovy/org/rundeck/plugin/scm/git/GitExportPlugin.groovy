@@ -370,7 +370,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         String origPath = null
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
-                origfile.delete()
+                if (origfile.exists() && !origfile.delete()) {
+                    logger.error("Failed to delete job file: ${origfile.absolutePath}")
+                }
                 def status = refreshJobStatus(exportReference, origPath, false)
                 jobStateMap.remove(exportReference.id)
                 resetFileCounterFor(outfile)
@@ -434,7 +436,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
         def path = relativePath(job)
 
-        jobStateMap.remove(job.id)
+        //mark as loading (rather than removing) so a concurrent initJobsStatus() call doesn't
+        //re-insert a stale placeholder into the gap after this refresh completes
+        jobStateMap[job.id] = initJobStatus(job)
 
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
@@ -507,7 +511,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     def scmStateForStatus(Status status, RevCommit commit, String path) {
         if (!commit) {
             new File(workingDir, path).exists() ? 'NEW' : 'NOT_FOUND'
-        } else if (path in status.added || path in status.untracked) {
+        } else if (path in status.added) {
             'NEW'
         } else if (path in status.changed || path in status.modified) {
             //changed== changes in index

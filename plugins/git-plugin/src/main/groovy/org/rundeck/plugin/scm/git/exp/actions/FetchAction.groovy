@@ -62,7 +62,13 @@ class FetchAction extends BaseAction implements GitExportAction {
     {
 
         //fetch remote changes
-        def update = plugin.fetchFromRemote(context)
+        def update
+        try {
+            update = plugin.fetchFromRemote(context)
+        } catch (Exception e) {
+            plugin.logger.debug("Failed fetch from the repository: ${e.message}", e)
+            throw new ScmPluginException("Failed fetch from the repository: ${e.message}", e)
+        }
 
         def result = new ScmExportResultImpl()
         result.success = true

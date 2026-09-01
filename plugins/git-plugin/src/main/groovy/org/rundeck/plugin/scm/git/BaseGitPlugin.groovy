@@ -606,11 +606,13 @@ class BaseGitPlugin {
     }
 
     private static String collectCauseMessages(Exception e) {
-        List<String> msgs = [e.message]
+        List<String> msgs = [e.message ?: e.class.simpleName]
         def cause = e.cause
         while (cause) {
-            if (cause.message != msgs.last() && !msgs.last().endsWith(cause.message)) {
-                msgs << cause.message
+            def causeMsg = cause.message ?: cause.class.simpleName
+            def lastMsg = msgs.last()
+            if (causeMsg != lastMsg && !(lastMsg && lastMsg.endsWith(causeMsg))) {
+                msgs << causeMsg
             }
             cause = cause.cause
         }

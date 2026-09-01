@@ -95,6 +95,10 @@ class Import extends Common{
     static class PathTemplateValidator implements PropertyValidator {
         @Override
         boolean isValid(final String value) throws ValidationException {
+            if (!value) {
+                //optional field, nothing to validate
+                return true
+            }
             try {
                 Pattern.compile(value)
                 return true

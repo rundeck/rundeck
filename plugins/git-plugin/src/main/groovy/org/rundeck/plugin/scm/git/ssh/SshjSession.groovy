@@ -70,10 +70,11 @@ class SshjSession implements RemoteSession {
         defaultConfig.setKeepAliveProvider(KeepAliveProvider.KEEP_ALIVE)
         SSHClient ssh = new SSHClient(defaultConfig)
 
-        if(sshConfig.get("StrictHostKeyChecking") == "yes"){
-            ssh.loadKnownHosts()
-        }else{
+        if(sshConfig.get("StrictHostKeyChecking") == "no"){
             ssh.addHostKeyVerifier(new PromiscuousVerifier())
+        }else{
+            //fail secure: default to strict host key checking unless explicitly disabled
+            ssh.loadKnownHosts()
         }
 
         try{
@@ -85,7 +86,13 @@ class SshjSession implements RemoteSession {
 
             if(privateKey){
                 KeyFormat format = KeyProviderUtil.detectKeyFileFormat(privateKey,true);
+                if (format == null || format == KeyFormat.Unknown) {
+                    throw new IOException("Unrecognized or invalid SSH private key format")
+                }
                 FileKeyProvider keys = Factory.Named.Util.create(ssh.getTransport().getConfig().getFileKeyProviderFactories(), format.toString());
+                if (keys == null) {
+                    throw new IOException("No key provider available for SSH private key format: ${format}")
+                }
                 keys.init(new StringReader(privateKey), (PasswordFinder) null)
                 ssh.authPublickey(user, keys)
             }

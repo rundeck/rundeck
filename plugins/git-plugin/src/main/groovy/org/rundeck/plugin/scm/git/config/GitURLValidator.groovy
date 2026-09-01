@@ -18,12 +18,21 @@ package org.rundeck.plugin.scm.git.config
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
+import org.eclipse.jgit.transport.URIish
 
 class GitURLValidator implements PropertyValidator {
     @Override
     boolean isValid(String value) throws ValidationException {
+        if (!value) {
+            throw new ValidationException("URL is required.")
+        }
         if (value.trim() != value) {
             throw new ValidationException("Leading/trailing whitespace must be removed.")
+        }
+        try {
+            new URIish(value)
+        } catch (URISyntaxException e) {
+            throw new ValidationException("Not a valid git URL: ${e.message}")
         }
         return true;
     }

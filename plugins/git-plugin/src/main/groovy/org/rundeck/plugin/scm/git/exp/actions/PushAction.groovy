@@ -122,20 +122,22 @@ Pushing to remote branch: `${plugin.branch}`"""
             plugin.logger.debug("Failed push to remote: ${e.message}", e)
             throw new ScmPluginException("Failed push to remote: ${e.message}", e)
         }
-        def sb = new StringBuilder()
         def updates = (push*.remoteUpdates).flatten()
-        updates.each {
-            sb.append it.toString()
+        def failedUpdates = updates.findAll {
+            it.status != RemoteRefUpdate.Status.OK && it.status != RemoteRefUpdate.Status.UP_TO_DATE
         }
-        def failedUpdates = updates.findAll { it.status != RemoteRefUpdate.Status.OK }
         result.success = !failedUpdates
         if (failedUpdates) {
             result.message = "Some updates failed: " + failedUpdates
-        } else {
+        } else if (commit) {
             result.message = "Remote push result: OK. (Commit: ${commit.name})"
+        } else {
+            result.message = "Remote push result: OK."
         }
         result.id = commit?.name
-        result.commit=new GitScmCommit(GitUtil.metaForCommit(commit))
+        if (commit) {
+            result.commit = new GitScmCommit(GitUtil.metaForCommit(commit))
+        }
         return result
     }
 

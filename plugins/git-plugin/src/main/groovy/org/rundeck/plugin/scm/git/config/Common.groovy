@@ -79,6 +79,9 @@ as it the job UUID after import will be different than the one on disk.
     static class PathTemplateValidator implements PropertyValidator {
         @Override
         boolean isValid(final String value) throws ValidationException {
+            if (!value) {
+                throw new ValidationException("Path Template is required.")
+            }
             value ==~ ('^.*' + Pattern.quote('${job.id}') + '.*$')
         }
     }

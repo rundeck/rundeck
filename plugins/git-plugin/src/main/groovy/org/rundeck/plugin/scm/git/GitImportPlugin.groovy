@@ -375,7 +375,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
         def path = getRelativePathForJob(job)
 
-        jobStateMap.remove(job.id)
+        //mark as loading (rather than removing) so a concurrent initJobsStatus() call doesn't
+        //re-insert a stale placeholder into the gap after this refresh completes
+        jobStateMap[job.id] = initJobStatus(job)
 
         def jobstat = Collections.synchronizedMap([:])
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
@@ -726,7 +728,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
      */
     private boolean trackedItemNeedsImport(String path) {
         def commit = lastCommitForPath(path)
-        commit.name != importTracker.trackedCommit(path)
+        //if no commit can be found for the path, treat it as needing import rather than throwing
+        commit == null || commit.name != importTracker.trackedCommit(path)
     }
 
 
