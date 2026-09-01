@@ -6,7 +6,7 @@
     "dev:all": "concurrently --restart-tries 10 --restart-after 5000 -n ui,trellis \"cd packages/ui; npm run dev\" \"cd packages/ui-trellis; npm run dev\""
   },
   "devDependencies": {
-    "concurrently": "^5.2.0"
+    "concurrently": "5.3.0"
   },
   "name": "grails-spa"
 }
