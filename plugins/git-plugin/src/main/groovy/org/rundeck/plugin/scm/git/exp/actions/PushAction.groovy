@@ -71,7 +71,6 @@ Pushing to remote branch: `${plugin.branch}`"""
             ]
             )
         }
-
     }
 
     @Override
@@ -139,5 +138,4 @@ Pushing to remote branch: `${plugin.branch}`"""
         }
         return result
     }
-
 }

@@ -185,5 +185,4 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         }
         result
     }
-
 }

@@ -186,7 +186,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 logger.error("Failed to delete repo folder ", e)
             }
         }
-
     }
 
 
@@ -313,7 +312,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     logger.error("Failed automatic pull from the repository: ${e.message}")
                     logger.debug("Failed automatic pull from the repository: ${e.message}", e)
                 }
-
             }
         }
 
@@ -680,7 +678,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 def jobstat = initJobStatus(job)
                 jobStateMap[job.id] = jobstat
             }
-
         }
     }
 
@@ -703,5 +700,4 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     String getExportPushActionId() {
         return PROJECT_PUSH_ACTION_ID
     }
-
 }

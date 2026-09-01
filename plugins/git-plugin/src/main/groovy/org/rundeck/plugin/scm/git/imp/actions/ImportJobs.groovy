@@ -85,7 +85,6 @@ class ImportJobs extends BaseAction implements GitImportAction {
             } else {
                 sb << ("Succeeded deleting job with id ${jobId} ")
             }
-
         }
 
         def jobsChanged = []
@@ -154,5 +153,4 @@ class ImportJobs extends BaseAction implements GitImportAction {
         return result
 
     }
-
 }

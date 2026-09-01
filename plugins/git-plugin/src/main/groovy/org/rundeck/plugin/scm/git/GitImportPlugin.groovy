@@ -106,7 +106,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             log.debug("deletedJobs list to non import action, ignored")
             actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
         }
-
     }
 
     void initialize(final ScmOperationContext context) {
@@ -288,7 +287,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         importNeeded++
                     }
                 }
-
             }
         }
 
@@ -796,7 +794,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 def jobstat = initJobStatus(job)
                 jobStateMap[job.id] = jobstat
             }
-
         }
     }
 
@@ -815,5 +812,4 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             refreshJobStatus(job,null)
         }
     }
-
 }
