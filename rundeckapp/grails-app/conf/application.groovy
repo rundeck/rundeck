@@ -58,7 +58,7 @@ environments {
             // the bean -- only this nested map is. Asking for the value here puts the operator's
             // choice where it is actually read; the literal below stays as the fallback for when
             // no rundeck-config supplies one.
-            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('url') ?:
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
                     "jdbc:h2:file:./db/devDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
         grails.plugin.databasemigration.updateOnStart=true
@@ -80,7 +80,7 @@ environments {
             // the bean -- only this nested map is. Asking for the value here puts the operator's
             // choice where it is actually read; the literal below stays as the fallback for when
             // no rundeck-config supplies one.
-            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('url') ?:
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
                     "jdbc:h2:file:./db/testDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
         grails.plugin.databasemigration.updateOnStart=true
@@ -107,7 +107,7 @@ environments {
             // the bean -- only this nested map is. Asking for the value here puts the operator's
             // choice where it is actually read; the literal below stays as the fallback for when
             // no rundeck-config supplies one.
-            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('url') ?:
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
                     "jdbc:h2:file:/rundeck/grailsh2;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
     }
