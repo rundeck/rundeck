@@ -1018,18 +1018,6 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setCountLimit(1);
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        // Explicitly request the attributes this class reads off of the search result
-        // (setDemographicAttributes() and the userPassword lookup in getUserCredentials()).
-        // Some directories (e.g. Active Directory over JNDI) return null for every attribute
-        // when no returning-attribute list is set, even though the same attributes are readable
-        // via ldapsearch, so they must be requested by name.
-        ctls.setReturningAttributes(new String[]{
-            _userIdAttribute,
-            _userPasswordAttribute,
-            _userFirstNameAttribute,
-            _userLastNameAttribute,
-            _userEmailAttribute
-        });
 
         String filter = OBJECT_CLASS_FILTER;
 
