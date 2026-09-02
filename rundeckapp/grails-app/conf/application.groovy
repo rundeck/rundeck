@@ -17,9 +17,17 @@ hibernate {
 dataSource {
     pooled = true
     jmxExport = true
-    driverClassName= "org.h2.Driver"
-    username = "sa"
-    password = ''
+    // Same reason as the url in the environment blocks below: Grails 8 reads only this nested map,
+    // not the flat dataSource.* keys from rundeck-config.properties. Supplying the url alone is not
+    // enough -- it would be opened with the H2 driver, which fails with "Access to
+    // DialectResolutionInfo cannot be null" against MySQL or PostgreSQL. The literals stay as the
+    // defaults for an H2 deployment that configures nothing.
+    driverClassName= rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('driverClassName') ?:
+            "org.h2.Driver"
+    username = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('username') ?:
+            "sa"
+    password = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('password') ?:
+            ''
 }
 
 grails.controllers.upload.maxFileSize=26214400
@@ -50,7 +58,7 @@ environments {
             // the bean -- only this nested map is. Asking for the value here puts the operator's
             // choice where it is actually read; the literal below stays as the fallback for when
             // no rundeck-config supplies one.
-            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('url') ?:
                     "jdbc:h2:file:./db/devDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
         grails.plugin.databasemigration.updateOnStart=true
@@ -72,7 +80,7 @@ environments {
             // the bean -- only this nested map is. Asking for the value here puts the operator's
             // choice where it is actually read; the literal below stays as the fallback for when
             // no rundeck-config supplies one.
-            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('url') ?:
                     "jdbc:h2:file:./db/testDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
         grails.plugin.databasemigration.updateOnStart=true
@@ -99,7 +107,7 @@ environments {
             // the bean -- only this nested map is. Asking for the value here puts the operator's
             // choice where it is actually read; the literal below stays as the fallback for when
             // no rundeck-config supplies one.
-            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('url') ?:
                     "jdbc:h2:file:/rundeck/grailsh2;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
     }
