@@ -746,6 +746,7 @@ export default defineComponent({
     query: {
       handler(newValue, oldValue) {
         this.reload();
+        this.syncQueryToUrl();
       },
       deep: true,
     },
@@ -1222,6 +1223,21 @@ export default defineComponent({
         }
       }
       return params;
+    },
+    syncQueryToUrl() {
+      // Reflect the current filters in the address bar (without navigating) so
+      // that browser back/forward restores the filter state instead of losing
+      // it. See https://github.com/rundeck/rundeck/issues/10031 -- filters
+      // previously only lived in component state, so opening an execution and
+      // going back returned to the URL as it was on the original page load.
+      if (
+        typeof history.replaceState !== "function" ||
+        !this.activityPageHref
+      ) {
+        return;
+      }
+      const url = _genUrl(this.activityPageHref, this.fullQueryParams());
+      history.replaceState(history.state, "", url);
     },
   },
 });

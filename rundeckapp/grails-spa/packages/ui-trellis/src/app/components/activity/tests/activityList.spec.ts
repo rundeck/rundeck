@@ -328,6 +328,55 @@ describe("ActivityList", () => {
     );
   });
 
+  describe("filter URL sync", () => {
+    // Regression tests for https://github.com/rundeck/rundeck/issues/10031:
+    // filters were only ever kept in component state, so opening an
+    // execution and using the browser back button returned to the URL as it
+    // was on the original page load, silently clearing any applied filter.
+    let replaceStateSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      replaceStateSpy = jest
+        .spyOn(window.history, "replaceState")
+        .mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      replaceStateSpy.mockRestore();
+    });
+
+    it("reflects an applied filter into the URL via history.replaceState", async () => {
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+      replaceStateSpy.mockClear();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      expect(replaceStateSpy).toHaveBeenCalled();
+      const [, , url] =
+        replaceStateSpy.mock.calls[replaceStateSpy.mock.calls.length - 1];
+      expect(url).toBe("/project/test/activity?statFilter=failed");
+    });
+
+    it("does not touch the URL when replaceState is unsupported", async () => {
+      const originalReplaceState = window.history.replaceState;
+      // @ts-ignore - simulate an environment without history.replaceState
+      delete window.history.replaceState;
+
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      expect(() => {
+        wrapper.vm.query.statFilter = "failed";
+      }).not.toThrow();
+
+      window.history.replaceState = originalReplaceState;
+    });
+  });
+
   it("automatically fetches data and displays a message when there are new executions since the last timestamp", async () => {
     jest.useFakeTimers();
     
