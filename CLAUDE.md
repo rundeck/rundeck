@@ -63,6 +63,7 @@ Context-aware rules that load automatically based on file patterns:
 - **`.claude/rules/vue.md`** — Vue component standards (Options API, scoped styles, component placement)
 - **`.claude/rules/database-migrations.md`** — Database migration rules (Liquibase, multi-DB support)
 - **`.claude/rules/okhttp-client-response.md`** — OkHttp response cleanup in functional/Selenium tests
+- **`.claude/rules/npm-dependencies.md`** — Exact npm version pinning (no `^`/`~`, `save-prefix=""` when a registry is configured) for supply-chain hardening
 - **`.claude/rules/complexity.md`** — Cyclomatic complexity ≤ 25 for new/modified code only (informative; `./gradlew codenarcComplexity`, ESLint `complexity` rule)
 
 ## Skills
