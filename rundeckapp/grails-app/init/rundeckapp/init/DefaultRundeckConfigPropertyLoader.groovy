@@ -38,21 +38,27 @@ class DefaultRundeckConfigPropertyLoader implements CoreConfigurationPropertiesL
     }
 
     /**
-     * Reads <code>dataSource.url</code> straight out of the deployment's rundeck-config file.
+     * Reads a <code>dataSource.*</code> setting straight out of the deployment's rundeck-config file.
      *
      * Grails 8 builds the dataSource bean from the nested <code>dataSource { }</code> map in the
-     * application config and does not consult the flat <code>dataSource.url</code> key that Rundeck
-     * publishes as a Spring property source, so the URL an operator sets was ignored in favour of
-     * the one packaged inside the WAR. rundeck-config is the only file a deployment can edit, so
-     * application.groovy asks for the value here and places it in the nested map itself -- the one
-     * place the framework is guaranteed to read.
+     * application config and does not consult the flat <code>dataSource.*</code> keys that Rundeck
+     * publishes as a Spring property source, so whatever the packaged config declares wins. That
+     * silently overrode the database an operator configured -- and rundeck-config is the only file a
+     * deployment can edit, so there was no way around it. application.groovy asks for the values
+     * here and places them in the nested map itself, the one place the framework is guaranteed to
+     * read.
+     *
+     * All of url, driverClassName, username and password have to come through this way. Supplying
+     * only the url leaves the rest on their H2 defaults, which fails for any other database with
+     * "Access to DialectResolutionInfo cannot be null" -- a MySQL URL opened by the H2 driver.
      *
      * Deliberately reads the file rather than the Spring environment: this is called while the
      * application config is still being parsed, before any property source is queryable.
      *
-     * @return the configured JDBC URL, or null when none is set or the file cannot be read
+     * @param key the setting name below <code>dataSource.</code>, e.g. <code>url</code>
+     * @return the configured value, or null when unset or the file cannot be read
      */
-    static String configuredDataSourceUrl() {
+    static String configuredDataSourceSetting(String key) {
         String location = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
         if (!location) {
             return null
@@ -63,14 +69,14 @@ class DefaultRundeckConfigPropertyLoader implements CoreConfigurationPropertiesL
         }
         try {
             if (location.endsWith(".groovy")) {
-                def url = new ConfigSlurper().parse(configFile.toURI().toURL())?.flatten()?.get("dataSource.url")
-                return url ? url.toString() : null
+                def value = new ConfigSlurper().parse(configFile.toURI().toURL())?.flatten()?.get("dataSource.${key}".toString())
+                return value ? value.toString() : null
             }
             Properties props = new Properties()
             configFile.withInputStream { props.load(it) }
-            return props.getProperty("dataSource.url") ?: null
+            return props.getProperty("dataSource.${key}".toString()) ?: null
         } catch (Exception ex) {
-            LOG.warn("Unable to read dataSource.url from ${location}", ex)
+            LOG.warn("Unable to read dataSource.${key} from ${location}", ex)
             return null
         }
     }

@@ -80,8 +80,10 @@ cat > $HOME/etc/profile <<END
 RDECK_BASE=$RDECK_BASE
 export RDECK_BASE
 
-# Grails 8: Java 21 required. Must track the JDK installed by the rdtest Dockerfile.
-JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-21-openjdk-amd64}
+# Derive JAVA_HOME from the java on PATH instead of naming a JDK directory. The literal used
+# before embedded both the major version and the architecture, so it had to be edited in lockstep
+# with the Dockerfile and only ever resolved on amd64.
+JAVA_HOME=${JAVA_HOME:-$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")}
 export JAVA_HOME
 
 PATH=\$JAVA_HOME/bin:\$RDECK_BASE/tools/bin:\$PATH
@@ -297,7 +299,12 @@ do
         echo >&2 "FAIL: Reached max attempts to find success message in logfile. Exiting."
         exit 1
     }
-    tail -n 5 $LOGFILE
+    # Guard the tail: this runs on the first iteration, before any sleep, so with `set -e` a
+    # not-yet-created logfile killed the whole script right here -- taking down the container and
+    # hiding whatever the real startup problem was.
+    if [ -f "$LOGFILE" ] ; then
+      tail -n 5 "$LOGFILE"
+    fi
     $HOME/server/sbin/rundeckd status || {
         echo >&2 "FAIL: rundeckd is not running. Exiting."
         exit 1
