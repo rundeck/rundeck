@@ -328,6 +328,118 @@ describe("ActivityList", () => {
     );
   });
 
+  describe("filter URL sync", () => {
+    // Regression tests for https://github.com/rundeck/rundeck/issues/10031:
+    // filters were only ever kept in component state, so opening an
+    // execution and using the browser back button returned to the URL as it
+    // was on the original page load, silently clearing any applied filter.
+    let replaceStateSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      replaceStateSpy = jest
+        .spyOn(window.history, "replaceState")
+        .mockImplementation(() => {});
+      // The component only syncs the URL when the browser is already on the
+      // Activity page itself (see "does not touch the URL when embedded on
+      // a different page" below) -- default to that for the rest of these
+      // tests, which are about the sync behavior itself.
+      window.history.pushState({}, "", "/project/test/activity");
+    });
+
+    afterEach(() => {
+      replaceStateSpy.mockRestore();
+    });
+
+    it("reflects an applied filter into the URL via history.replaceState", async () => {
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+      replaceStateSpy.mockClear();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      expect(replaceStateSpy).toHaveBeenCalled();
+      const [, , url] =
+        replaceStateSpy.mock.calls[replaceStateSpy.mock.calls.length - 1];
+      expect(url).toBe("/project/test/activity?statFilter=failed");
+    });
+
+    it("preserves existing URL params it doesn't manage, e.g. ?max=", async () => {
+      // Regression test: a URL like /project/x/activity?max=1 (page size,
+      // not part of this component's `query`) was getting silently dropped
+      // because syncQueryToUrl used to replace the whole query string with
+      // only the filter params derived from `query` (see PR #10547 CI
+      // failures in ActivitySpec, which navigate directly to ?max=N and
+      // expect it to still be there after the page settles).
+      window.history.pushState({}, "", "/project/test/activity?max=1");
+      replaceStateSpy.mockClear();
+
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+      replaceStateSpy.mockClear();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      expect(replaceStateSpy).toHaveBeenCalled();
+      const [, , url] =
+        replaceStateSpy.mock.calls[replaceStateSpy.mock.calls.length - 1];
+      const params = new URLSearchParams(url.split("?")[1]);
+      expect(params.get("max")).toBe("1");
+      expect(params.get("statFilter")).toBe("failed");
+    });
+
+    it("does not touch the URL when replaceState is unsupported", async () => {
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      // Force the "unsupported" branch: assigning undefined (rather than
+      // `delete`) is required here because `delete` on a jest.spyOn'd
+      // property just removes the spy's own-property and falls through to
+      // the real History.prototype.replaceState, which is still a function
+      // -- so the component's `typeof history.replaceState !== "function"`
+      // guard would never actually be exercised.
+      // @ts-ignore - simulate an environment without history.replaceState
+      window.history.replaceState = undefined;
+      replaceStateSpy.mockClear();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      // There's no spy left to assert a call count on once replaceState is
+      // undefined -- the meaningful assertion is that the watcher ran to
+      // completion (the reactive value updated) without the missing
+      // replaceState causing an error.
+      expect(wrapper.vm.query.statFilter).toBe("failed");
+    });
+
+    it("does not touch the URL when embedded on a different page", async () => {
+      // Regression test: this component is also embedded on pages other
+      // than the standalone Activity page -- e.g. the ad hoc Command page
+      // (adhocNext.gsp) sets activityPageHref to the Activity page's URL
+      // and bootstraps query as { adhoc: true } even though the browser is
+      // actually on /command/run. Before this guard, mounting there
+      // immediately clobbered the address bar to the Activity page's URL,
+      // breaking every Selenium test that expected to land on /command/run
+      // (see PR #10547 CI failures).
+      window.history.pushState({}, "", "/project/test/command/run");
+      replaceStateSpy.mockClear();
+
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      expect(replaceStateSpy).not.toHaveBeenCalled();
+      expect(window.location.pathname).toBe("/project/test/command/run");
+    });
+  });
+
   it("automatically fetches data and displays a message when there are new executions since the last timestamp", async () => {
     jest.useFakeTimers();
     
