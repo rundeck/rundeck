@@ -28,6 +28,12 @@ class ExecutionCompleteEvent {
     ScheduledExecution job
     Map nodeStatus
     Map context
+    /**
+     * Sum of step-node-second durations for this execution (Section 2 of the RBA
+     * consumption-billing proposal), or null if none was recorded -- e.g. the
+     * StepNodeSecondsWorkflowListener never finalized a total for this execution.
+     */
+    Long stepNodeSeconds
 
 
     @Override
@@ -38,6 +44,7 @@ class ExecutionCompleteEvent {
                 ", job=" + job +
                 ", nodeStatus=" + nodeStatus +
                 ", context=" + context +
+                ", stepNodeSeconds=" + stepNodeSeconds +
                 '}';
     }
 }

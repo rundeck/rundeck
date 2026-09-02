@@ -64,6 +64,11 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeSecondsStore
+import com.dtolabs.rundeck.core.execution.StatusResult
+import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
+import rundeck.services.events.ExecutionCompleteEvent
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
@@ -75,6 +80,7 @@ import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
 import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeSecondsWorkflowListener
 import com.dtolabs.rundeck.core.execution.workflow.IWorkflow
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
@@ -6436,6 +6442,84 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         })
     }
 
+    def "saveExecutionState includes the step_node_seconds total on the completion event"() {
+        given:
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'abc',
+                project: project,
+                groupPath: 'path',
+                description: 'a job',
+                argString: '-args b',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ),
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea02'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                workflow: job.workflow
+        )
+        e1.scheduledExecution = job
+        e1.save() != null
+
+        // simulate what StepNodeSecondsWorkflowListener would have already done during the
+        // real execution: accumulate a total and finalize it into the store under this
+        // execution's id, before saveExecutionState ever runs.
+        def listener = new StepNodeSecondsWorkflowListener(e1.id)
+        def item = Mock(StepExecutionItem)
+        listener.beginStepExecution(Mock(StepExecutor), Mock(StepExecutionContext), item)
+        listener.finishStepExecution(Mock(StepExecutor), Mock(StatusResult), Mock(StepExecutionContext), item)
+        listener.finishWorkflowExecution(Mock(WorkflowExecutionResult), Mock(StepExecutionContext), null)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
+        service.workflowService = Mock(WorkflowService)
+        service.notificationService = Mock(NotificationService)
+        service.reportService = Mock(ReportService) {
+            reportExecutionResult(_) >> [:]
+        }
+        service.micrometerExecutionMetricsService = Mock(MicrometerExecutionMetricsService)
+
+        def capturedEvent = null
+        service.metaClass.notify = { String name, Object evt -> capturedEvent = evt }
+        Long recordedStepNodeSeconds = null
+        service.micrometerExecutionMetricsService.recordStepNodeSeconds(_, _) >> { Execution e, Long sns -> recordedStepNodeSeconds = sns }
+
+        Map resultMap = [
+                status       : ExecutionState.succeeded.toString(),
+                dateCompleted: new Date(),
+                cancelled    : false,
+                timedOut     : false,
+        ]
+        ExecutionService.AsyncStarted execmap = new ExecutionService.AsyncStarted(
+                execution         : e1,
+                scheduledExecution: job
+        )
+
+        when:
+        service.saveExecutionState(job.uuid, e1.id, resultMap, execmap, [:])
+
+        then:
+        capturedEvent instanceof ExecutionCompleteEvent
+        capturedEvent.stepNodeSeconds != null
+
+        and: "the metric is recorded with the same value as the event, read from the store exactly once"
+        recordedStepNodeSeconds == capturedEvent.stepNodeSeconds
+
+        and: "the store's read-and-remove semantics mean a second lookup for the same execution finds nothing left"
+        StepNodeSecondsStore.getInstance().takeFinishedTotal(e1.id) == null
+    }
+
     def "opt enforced allowed values from Remote Url with sending the username"() {
         given:
         ScheduledExecution se = new ScheduledExecution()
@@ -7198,6 +7282,94 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then: "the execution start is recorded, using the same execution reference passed in"
         result != null
         1 * service.micrometerExecutionMetricsService.recordExecutionStart(execution)
+
+        cleanup:
+        result?.thread?.interrupt()
+    }
+
+    def "executeAsyncBegin registers a StepNodeSecondsWorkflowListener for step_node_seconds tracking"() {
+        given: "an execution with scheduled job"
+        def project = 'TestProject'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'original command'])]
+                )
+        )
+        execution.save(flush: true)
+
+        def scheduledExecution = new ScheduledExecution(
+                jobName: 'testJob',
+                project: project,
+                workflow: execution.workflow
+        )
+        scheduledExecution.save(flush: true)
+
+        and: "mocked services"
+        def framework = Mock(IFramework) {
+            getFrameworkNodeName() >> 'testNode'
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+
+        service.loggingService = Mock(LoggingService) {
+            openLogWriter(_, _, _, _) >> Mock(ExecutionLogWriter) {
+                filepath >> new File('/tmp/test.log')
+                openStream() >> {}
+            }
+        }
+        service.pluginService = Mock(PluginService) {
+            getRundeckPluginRegistry() >> Mock(PluginRegistry) {
+                createPluggableService(_) >> Mock(PluggableProviderService)
+            }
+            createSimplePluginLoader(_, _, _) >> Mock(SimplePluginProviderLoader)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getDefaultInputCharsetForProject(_) >> 'UTF-8'
+            getProjectProperties(_) >> [:]
+            getFrameworkPropertiesMap() >> [:]
+        }
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem) {
+                getWorkflow() >> Mock(IWorkflow)
+            }
+        }
+        service.workflowService = Mock(WorkflowService) {
+            createWorkflowStateListenerForExecution(*_) >> Mock(WorkflowExecutionListener)
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+        }
+        service.metricService = Mock(MetricService)
+        service.configurationService = Mock(ConfigurationService)
+        service.grailsLinkGenerator   = Mock(LinkGenerator)
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.notificationService = Mock(NotificationService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+        service.micrometerExecutionMetricsService = Mock(MicrometerExecutionMetricsService)
+
+        and: "execution lifecycle handler setup"
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService) {
+            getExecutionLifecyclePluginConfigSetForJob(_) >> Mock(PluginConfigSet)
+            getExecutionHandler(_, _) >> Mock(ExecutionLifecycleComponentHandler) {
+                beforeWorkflowIsSet(_, _) >> Optional.empty()
+            }
+        }
+
+        when: "executeAsyncBegin is called"
+        def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "the constructed workflow execution listener set includes a StepNodeSecondsWorkflowListener"
+        result != null
+        def multiListener = result.thread.context.workflowExecutionListener
+        multiListener.listenerList.any { it instanceof StepNodeSecondsWorkflowListener }
 
         cleanup:
         result?.thread?.interrupt()
