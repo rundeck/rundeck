@@ -1,5 +1,5 @@
 /**
- * CodeNarc ruleset for RUN-4839: deterministic cyclomatic complexity check.
+ * CodeNarc ruleset: deterministic cyclomatic complexity check.
  * Informative-only initial threshold; lower gradually as violations are refactored.
  */
 ruleset {

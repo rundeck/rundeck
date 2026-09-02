@@ -2,7 +2,7 @@
 
 The project has deterministic complexity checking enabled (CodeNarc for Groovy,
 ESLint `complexity` for TS/Vue in ui-trellis), threshold **25**, informative only —
-nothing blocks builds or PRs. See RUN-4839.
+nothing blocks builds or PRs.
 
 ## Mandatory for NEW or MODIFIED code only
 
