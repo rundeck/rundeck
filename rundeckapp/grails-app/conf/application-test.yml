@@ -9,6 +9,20 @@ grails:
     assets: {}  # url and mapping removed - let Grails derive from context-path (RUN-4332)
 
 spring:
+    cloud:
+        # rundeckpro puts spring-cloud-context on the classpath (plugins/rundeckpro-config), and it
+        # is compiled against Spring Boot 3: RefreshAutoConfiguration's configDataContextRefresher
+        # references org.springframework.boot.ConfigurableBootstrapContext, which Boot 4 removed, so
+        # the whole application context dies with NoClassDefFoundError and every integration test
+        # fails with the resulting "LifecycleProcessor not initialized" cascade.
+        #
+        # Application.main() already disables cloud bootstrap for the running server, but integration
+        # tests are started by the Grails test runner and never go through main(), so they were the
+        # one path the existing mitigation did not cover. Disabling it here restores that parity.
+        refresh:
+            enabled: false
+        bootstrap:
+            enabled: false
     liquibase:
         enabled: false  # Disable Liquibase for unit tests
     jpa:
