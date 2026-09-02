@@ -1236,7 +1236,9 @@ export default defineComponent({
       ) {
         return;
       }
-      const url = _genUrl(this.activityPageHref, this.fullQueryParams());
+      // Reuse the same URL the "N executions" summary link already computes,
+      // rather than re-deriving it, so there's a single source of truth.
+      const url = this.activityHref;
       history.replaceState(history.state, "", url);
     },
   },

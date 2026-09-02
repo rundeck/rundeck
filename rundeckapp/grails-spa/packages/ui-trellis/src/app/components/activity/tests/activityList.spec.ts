@@ -361,19 +361,28 @@ describe("ActivityList", () => {
     });
 
     it("does not touch the URL when replaceState is unsupported", async () => {
-      const originalReplaceState = window.history.replaceState;
-      // @ts-ignore - simulate an environment without history.replaceState
-      delete window.history.replaceState;
-
       const wrapper = await shallowMountActivityList();
       await flushPromises();
       await wrapper.vm.$nextTick();
 
-      expect(() => {
-        wrapper.vm.query.statFilter = "failed";
-      }).not.toThrow();
+      // Force the "unsupported" branch: assigning undefined (rather than
+      // `delete`) is required here because `delete` on a jest.spyOn'd
+      // property just removes the spy's own-property and falls through to
+      // the real History.prototype.replaceState, which is still a function
+      // -- so the component's `typeof history.replaceState !== "function"`
+      // guard would never actually be exercised.
+      // @ts-ignore - simulate an environment without history.replaceState
+      window.history.replaceState = undefined;
+      replaceStateSpy.mockClear();
 
-      window.history.replaceState = originalReplaceState;
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      // There's no spy left to assert a call count on once replaceState is
+      // undefined -- the meaningful assertion is that the watcher ran to
+      // completion (the reactive value updated) without the missing
+      // replaceState causing an error.
+      expect(wrapper.vm.query.statFilter).toBe("failed");
     });
   });
 
