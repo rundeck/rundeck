@@ -27,6 +27,22 @@ test {
     failOnNoDiscoveredTests = false
 }
 
+// 🔴 Without this every suite in this module silently runs zero tests.
+//
+// A Test task created by hand does not get testClassesDirs or classpath from the test source set;
+// only the `test` task the java plugin creates is wired. Gradle 8 papered over that with convention
+// mapping applied to all Test tasks. Gradle 9 removed it, so the seven named tasks here were left
+// with no test classes at all: Gradle reports "NO-SOURCE ... has no source files", skips the task,
+// and the build passes.
+//
+// It is silent in the worst way. failOnNoDiscoveredTests cannot catch it, because the task is
+// skipped before any discovery happens, and CI shows a green job that finished in ~20s. Compare
+// `gradlew :functional-test:apiTest --dry-run` (no dependencies at all) with the same for `test`.
+tasks.withType(Test).configureEach {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+}
+
 project.evaluationDependsOn(":rundeckapp")
 
 // Consumable view of this project's test dependencies.
