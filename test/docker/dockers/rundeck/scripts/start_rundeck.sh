@@ -287,6 +287,16 @@ do
       echo "Still working. hang on..."; # output a progress character.
     else  break; # found successful startup message.
     fi
+    # Stop as soon as the server is known to be dead, instead of waiting out every attempt. The
+    # outer harness gives up at almost the same time as this loop, so the dump below was never
+    # reached on a startup failure and the exception stayed invisible -- the periodic `tail -n 5`
+    # only ever showed the bottom of the stack trace.
+    if [ -f "$LOGFILE" ] && grep -qE "APPLICATION FAILED TO START|Application run failed" "$LOGFILE" ; then
+      echo >&2 "FAIL: the server failed during startup."
+      echo >&2 "--- last 200 lines of $LOGFILE ---"
+      tail -n 200 "$LOGFILE" >&2
+      exit 1
+    fi
     if [ -n "$STARTUP_FAILURE_MSG" ] ; then
       if grep "${STARTUP_FAILURE_MSG}" "$LOGFILE" ; then
         >&2 grep "${STARTUP_FAILURE_MSG}" "$LOGFILE"
