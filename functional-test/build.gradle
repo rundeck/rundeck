@@ -55,6 +55,11 @@ configurations.all {
 
 
 dependencies {
+    // Gradle 9 no longer puts junit-platform-launcher on the test runtime classpath implicitly
+    // (G11). Declared here so it also reaches consumers through testRuntimeExport: pro-functional-test
+    // used to inherit it by resolving this project's testRuntimeClasspath, and without it its Test
+    // tasks die with "Failed to load JUnit Platform" after executing zero tests.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
     testImplementation "org.testcontainers:spock:${testContainersVersion}"
