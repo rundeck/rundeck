@@ -29,6 +29,22 @@ test {
 
 project.evaluationDependsOn(":rundeckapp")
 
+// Consumable view of this project's test dependencies.
+//
+// pro-functional-test used to build its classpath with
+//   classpath += project(':functional-test').sourceSets.test.runtimeClasspath
+// which reaches into another project and resolves its configuration. Gradle 9 rejects that outright:
+// "Resolution of the configuration ':functional-test:testRuntimeClasspath' was attempted without an
+// exclusive lock. This is unsafe and not allowed." Exposing the dependencies here lets the consumer
+// declare them as an ordinary project dependency instead of resolving them across the boundary.
+configurations {
+    testRuntimeExport {
+        canBeConsumed = true
+        canBeResolved = false
+        extendsFrom configurations.testImplementation, configurations.testRuntimeOnly
+    }
+}
+
 configurations.all {
     resolutionStrategy {
         // Force safe commons-compress versions to fix CVE-2024-25710
