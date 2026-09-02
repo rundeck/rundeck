@@ -297,6 +297,12 @@ do
     (( count += 1 ))  ; # increment attempts counter.
     (( count == MAX_ATTEMPTS )) && {
         echo >&2 "FAIL: Reached max attempts to find success message in logfile. Exiting."
+        # Dump the log before giving up. The periodic `tail -n 5` below only ever shows the bottom
+        # of a stack trace, so a startup failure left no trace of what actually went wrong.
+        if [ -f "$LOGFILE" ] ; then
+          echo >&2 "--- last 200 lines of $LOGFILE ---"
+          tail -n 200 "$LOGFILE" >&2
+        fi
         exit 1
     }
     # Guard the tail: this runs on the first iteration, before any sleep, so with `set -e` a
