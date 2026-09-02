@@ -51,6 +51,9 @@ Only make changes that are directly requested or clearly necessary. Don't add fe
 ### PR Title
 Format: `[RUN-XXXX] Description` when linked to an issue (recommended), or a clear description.
 
+### PR Body
+Always use this repo's PR template (`.github/pull_request_template.md`) as the PR body — read it and fill in every section (change type, solution, alternatives, context, release notes). Tools like `create_pull_request` do NOT auto-populate it.
+
 ## Rules
 
 Context-aware rules that load automatically based on file patterns:
