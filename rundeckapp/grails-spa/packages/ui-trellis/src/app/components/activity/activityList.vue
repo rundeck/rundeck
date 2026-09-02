@@ -1254,9 +1254,17 @@ export default defineComponent({
       if (window.location.pathname !== activityPathname) {
         return;
       }
-      // Reuse the same URL the "N executions" summary link already computes,
-      // rather than re-deriving it, so there's a single source of truth.
-      const url = this.activityHref;
+      // Merge into the existing query string rather than reusing activityHref
+      // wholesale (which only reflects this.query): the URL may already carry
+      // params this component doesn't manage, e.g. ?max=1 for page size, and
+      // replacing the whole query string would silently drop them.
+      const params = new URLSearchParams(window.location.search);
+      Object.keys(this.query).forEach((key) => params.delete(key));
+      Object.entries(this.fullQueryParams()).forEach(([key, value]) => {
+        params.set(key, value);
+      });
+      const queryString = params.toString();
+      const url = activityPathname + (queryString ? `?${queryString}` : "");
       history.replaceState(history.state, "", url);
     },
   },

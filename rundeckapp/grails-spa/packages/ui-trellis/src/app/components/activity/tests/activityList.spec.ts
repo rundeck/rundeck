@@ -365,6 +365,32 @@ describe("ActivityList", () => {
       expect(url).toBe("/project/test/activity?statFilter=failed");
     });
 
+    it("preserves existing URL params it doesn't manage, e.g. ?max=", async () => {
+      // Regression test: a URL like /project/x/activity?max=1 (page size,
+      // not part of this component's `query`) was getting silently dropped
+      // because syncQueryToUrl used to replace the whole query string with
+      // only the filter params derived from `query` (see PR #10547 CI
+      // failures in ActivitySpec, which navigate directly to ?max=N and
+      // expect it to still be there after the page settles).
+      window.history.pushState({}, "", "/project/test/activity?max=1");
+      replaceStateSpy.mockClear();
+
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+      replaceStateSpy.mockClear();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      expect(replaceStateSpy).toHaveBeenCalled();
+      const [, , url] =
+        replaceStateSpy.mock.calls[replaceStateSpy.mock.calls.length - 1];
+      const params = new URLSearchParams(url.split("?")[1]);
+      expect(params.get("max")).toBe("1");
+      expect(params.get("statFilter")).toBe("failed");
+    });
+
     it("does not touch the URL when replaceState is unsupported", async () => {
       const wrapper = await shallowMountActivityList();
       await flushPromises();
