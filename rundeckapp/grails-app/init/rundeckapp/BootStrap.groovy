@@ -140,7 +140,18 @@ class BootStrap {
         servletContext.setAttribute("app.ident",grailsApplication.metadata.getProperty('build.ident', String, null))
         log.info("Starting ${appname} ${servletContext.getAttribute('app.ident')} ($shortBuildDate) ...")
         if(Boolean.getBoolean('rundeck.bootstrap.build.info')){
-            def buildInfo=grailsApplication.metadata.findAll{it.key?.startsWith('build.core.git.')}
+            // grails.util.Metadata no longer implements Map (R12), so it cannot be iterated: findAll
+            // fell through to the Object variant and handed the closure the Metadata itself, failing
+            // with "No such property: key for class: grails.util.Metadata" and killing startup. There
+            // is no key-enumeration API left, and these are the only keys build.gradle writes, so they
+            // are looked up by name like every other metadata read in this codebase.
+            def buildInfo = [
+                    'build.core.git.description',
+                    'build.core.git.commit',
+                    'build.core.git.branch',
+            ].collectEntries { String k ->
+                [(k): grailsApplication.metadata.getProperty(k, String, null)]
+            }.findAll { it.value != null }
             log.info("${appname} Build: ${buildInfo}")
         }
         /*filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
