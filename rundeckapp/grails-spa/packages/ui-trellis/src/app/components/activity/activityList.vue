@@ -1236,6 +1236,24 @@ export default defineComponent({
       ) {
         return;
       }
+      // This component is also embedded on other pages that share the same
+      // bootstrap data shape (e.g. the ad hoc Command page sets
+      // activityPageHref to the standalone Activity page's URL even though
+      // the browser is actually on /command/run). Only touch the address bar
+      // when it already matches the Activity page itself, otherwise this
+      // would clobber the URL of whatever page embeds this component.
+      let activityPathname;
+      try {
+        activityPathname = new URL(
+          this.activityPageHref,
+          window.location.origin,
+        ).pathname;
+      } catch (e) {
+        return;
+      }
+      if (window.location.pathname !== activityPathname) {
+        return;
+      }
       // Reuse the same URL the "N executions" summary link already computes,
       // rather than re-deriving it, so there's a single source of truth.
       const url = this.activityHref;

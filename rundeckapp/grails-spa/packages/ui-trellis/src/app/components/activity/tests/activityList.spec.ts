@@ -339,6 +339,11 @@ describe("ActivityList", () => {
       replaceStateSpy = jest
         .spyOn(window.history, "replaceState")
         .mockImplementation(() => {});
+      // The component only syncs the URL when the browser is already on the
+      // Activity page itself (see "does not touch the URL when embedded on
+      // a different page" below) -- default to that for the rest of these
+      // tests, which are about the sync behavior itself.
+      window.history.pushState({}, "", "/project/test/activity");
     });
 
     afterEach(() => {
@@ -383,6 +388,29 @@ describe("ActivityList", () => {
       // completion (the reactive value updated) without the missing
       // replaceState causing an error.
       expect(wrapper.vm.query.statFilter).toBe("failed");
+    });
+
+    it("does not touch the URL when embedded on a different page", async () => {
+      // Regression test: this component is also embedded on pages other
+      // than the standalone Activity page -- e.g. the ad hoc Command page
+      // (adhocNext.gsp) sets activityPageHref to the Activity page's URL
+      // and bootstraps query as { adhoc: true } even though the browser is
+      // actually on /command/run. Before this guard, mounting there
+      // immediately clobbered the address bar to the Activity page's URL,
+      // breaking every Selenium test that expected to land on /command/run
+      // (see PR #10547 CI failures).
+      window.history.pushState({}, "", "/project/test/command/run");
+      replaceStateSpy.mockClear();
+
+      const wrapper = await shallowMountActivityList();
+      await flushPromises();
+      await wrapper.vm.$nextTick();
+
+      wrapper.vm.query.statFilter = "failed";
+      await wrapper.vm.$nextTick();
+
+      expect(replaceStateSpy).not.toHaveBeenCalled();
+      expect(window.location.pathname).toBe("/project/test/command/run");
     });
   });
 
