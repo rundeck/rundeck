@@ -23,18 +23,30 @@ import spock.lang.Specification
 /**
  * Integration tests for {@link User} persistence against a real database.
  *
- * Regression coverage for https://github.com/rundeck/rundeck/issues/10493:
- * the {@code rduser} table's {@code id} column is created via a plain
- * Liquibase {@code autoIncrement: "true"} column definition, the same
- * pattern used for {@code scheduled_execution.id} and other core tables.
- * Long-lived (repeatedly upgraded) Postgres installations may not have a
- * real DB-level IDENTITY/SERIAL sequence attached to that column, so
- * mapping {@code User}'s id with an explicit {@code generator: 'identity'}
- * strategy -- which requires the database itself to generate the value --
- * caused saving a brand new user to fail with a not-null constraint
- * violation on {@code id}. These tests exercise real GORM persistence
- * (not mocked via DataTest) so they actually go through Hibernate's id
- * generator resolution, unlike the existing unit specs for User.
+ * Background for https://github.com/rundeck/rundeck/issues/10493: the
+ * {@code rduser} table's {@code id} column is created via a plain Liquibase
+ * {@code autoIncrement: "true"} column definition, the same pattern used for
+ * {@code scheduled_execution.id} and other core tables. Long-lived
+ * (repeatedly upgraded) Postgres installations may not have a real DB-level
+ * IDENTITY/SERIAL sequence attached to that column, so mapping {@code User}'s
+ * id with an explicit {@code generator: 'identity'} strategy -- which
+ * requires the database itself to generate the value -- caused saving a
+ * brand new user to fail with a not-null constraint violation on
+ * {@code id}.
+ *
+ * Note on coverage: the test datasource here uses Hibernate
+ * {@code ddl-auto: create-drop} (see {@code application-test.yml}), which
+ * generates the schema fresh from the current mapping rather than from
+ * Liquibase -- so it does not reproduce the specific legacy-schema mismatch
+ * from #10493 (a schema that predates/lacks a real identity column). What
+ * these tests verify is that real (non-DataTest-mocked) GORM persistence of
+ * a new User works end-to-end and assigns distinct ids, exercising
+ * Hibernate's actual id generator resolution instead of DataTest's mocked
+ * persistence, which the existing unit specs for User use and which would
+ * not have caught this class of bug either way. The specific regression --
+ * reintroducing an explicit {@code identity} generator on User -- is guarded
+ * against directly by {@code UserTests#"does not map id with an explicit
+ * generator"}, which asserts on the mapping itself.
  */
 @Integration
 @Rollback
