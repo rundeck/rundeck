@@ -69,6 +69,39 @@ apply plugin: 'java'
 apply plugin: 'eclipse';
 apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
+apply plugin: 'codenarc'
+
+/**
+ * [RUN-4839] Deterministic cyclomatic complexity check (informative only).
+ * Run: ./gradlew codenarcComplexity — report in build/reports/codenarc/complexity.html
+ * Applied to the root project only; production Groovy sources, tests excluded.
+ */
+codenarc {
+    configFile = file("${rootDir}/config/codenarc/rules.groovy")
+    ignoreFailures = true
+}
+
+dependencies {
+    codenarc "org.codenarc:CodeNarc:${codenarcVersion}"
+    // CyclomaticComplexity rule requires GMetrics on the codenarc classpath
+    codenarc "org.gmetrics:GMetrics:${gmetricsVersion}"
+}
+
+tasks.register('codenarcComplexity', CodeNarc) {
+    description = 'Reports methods above the cyclomatic complexity threshold (production Groovy only)'
+    group = 'verification'
+    source = fileTree(rootDir) {
+        include '**/*.groovy'
+        exclude '**/build/**', '**/node_modules/**', '**/.gradle/**', '**/src/test/**',
+                'functional-test/**', 'test/**', '**/*Spec.groovy', '**/*Test.groovy'
+    }
+    reports {
+        html.required = true
+        html.outputLocation = layout.buildDirectory.file('reports/codenarc/complexity.html')
+        text.required = true
+        text.outputLocation = layout.buildDirectory.file('reports/codenarc/complexity.txt')
+    }
+}
 apply plugin: 'org.owasp.dependencycheck'
 
 dependencyCheck {

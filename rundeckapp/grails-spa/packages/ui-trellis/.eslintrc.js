@@ -50,14 +50,14 @@ module.exports = {
     "prefer-const": "warn",
     "storybook/story-exports": "warn",
     "storybook/context-in-play-function": "warn",
-    complexity: ["warn", 25],
+    "complexity": ["warn", 25],
   },
   ignorePatterns: ["build", "test", ".storybook"],
   overrides: [
     {
       files: ["**/*.spec.ts", "**/*.spec.js", "**/tests/**", "**/__tests__/**"],
       rules: {
-        complexity: "off",
+        "complexity": "off",
       },
     },
   ],
