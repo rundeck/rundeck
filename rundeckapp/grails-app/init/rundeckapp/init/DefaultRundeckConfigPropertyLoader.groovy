@@ -58,6 +58,53 @@ class DefaultRundeckConfigPropertyLoader implements CoreConfigurationPropertiesL
      * @param key the setting name below <code>dataSource.</code>, e.g. <code>url</code>
      * @return the configured value, or null when unset or the file cannot be read
      */
+    /** The driver Rundeck ships for MySQL and MariaDB connectivity. */
+    private static final String MARIADB_DRIVER = "org.mariadb.jdbc.Driver"
+
+    /** Connection parameter that makes the MariaDB 3.x driver accept jdbc:mysql: URLs again. */
+    private static final String PERMIT_MYSQL_SCHEME = "permitMysqlScheme"
+
+    /**
+     * Reads the configured JDBC url, keeping <code>jdbc:mysql:</code> urls working.
+     *
+     * Rundeck's documented url for MySQL has always used the <code>jdbc:mysql:</code> scheme, and
+     * mariadb-java-client 2.x accepted it. The Spring Boot 4 platform brings 3.x, which rejects that
+     * scheme unless the connection carries <code>permitMysqlScheme</code>; without it the driver
+     * simply returns no connection:
+     *
+     *   java.sql.SQLException: Driver:org.mariadb.jdbc.Driver@2a9b482d returned null for
+     *   URL:jdbc:mysql://host/rundeck
+     *
+     * Appending the parameter here keeps every existing deployment working untouched, which matters
+     * because rundeck-config is the only file they can edit. Only urls that are actually going to be
+     * opened by the MariaDB driver are touched, so anyone supplying their own MySQL driver keeps the
+     * url they wrote.
+     *
+     * @return the configured url, with permitMysqlScheme appended where required, or null
+     */
+    static String configuredDataSourceUrl() {
+        String url = configuredDataSourceSetting("url")
+        if (!url || !url.startsWith("jdbc:mysql:")) {
+            return url
+        }
+        if (configuredDataSourceSetting("driverClassName") != MARIADB_DRIVER) {
+            return url
+        }
+        if (url.contains(PERMIT_MYSQL_SCHEME)) {
+            return url
+        }
+        String separator = url.contains("?") ? "&" : "?"
+        String permitted = "${url}${separator}${PERMIT_MYSQL_SCHEME}"
+        // Not LOG: this runs while the application config is being parsed, before logging is
+        // initialised, so a logger call here is silently dropped (verified). stderr is what the
+        // prebootstrap phase already uses, and it reaches service.log where operators look.
+        System.err.println(
+                "Added ${PERMIT_MYSQL_SCHEME} to dataSource.url: ${MARIADB_DRIVER} 3.x rejects the " +
+                "jdbc:mysql: scheme without it. Configure a jdbc:mariadb: url to avoid this."
+        )
+        return permitted
+    }
+
     static String configuredDataSourceSetting(String key) {
         String location = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
         if (!location) {
