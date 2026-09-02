@@ -25,8 +25,8 @@ class FeatureFlagConfigurable implements SystemConfigurable {
         guiConfig(
             'rundeck.feature.guiAceEditorMinLines',
             'Code Editor - Minimum Lines',
-            'Minimum number of visible lines in the ACE code editor rendered inside plugin configuration forms. Default: 12.',
-            '12',
+            'Minimum number of visible lines in the ACE code editor rendered inside plugin configuration forms. Default: 20.',
+            '20',
             'Integer'
         ),
         guiConfig(
