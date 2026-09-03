@@ -457,7 +457,12 @@ export default defineComponent({
         if (config[prop.name]) {
           this.inputValues[prop.name] = config[prop.name];
         }
-        if (modeCreate && !this.inputValues[prop.name] && prop.defaultValue) {
+        if (
+          modeCreate &&
+          !this.isStaticTextProp(prop) &&
+          !this.inputValues[prop.name] &&
+          prop.defaultValue
+        ) {
           this.inputValues[prop.name] = prop.defaultValue;
         }
         if (
@@ -506,6 +511,12 @@ export default defineComponent({
       const values: { [index: string]: any } = {};
       //convert true boolean to 'true'
       this.props.forEach((prop: any) => {
+        if (this.isStaticTextProp(prop)) {
+          // STATIC_TEXT properties are display-only help text (e.g. workflow strategy
+          // "info" panels) and must never be persisted as real config data.
+          // See https://github.com/rundeck/rundeck/issues/10420
+          return;
+        }
         if (prop.type === "Boolean") {
           if (
             this.inputValues[prop.name] === true ||
@@ -604,6 +615,14 @@ export default defineComponent({
     },
     isPropHidden(testProp: any): boolean {
       return testProp.options && testProp.options["displayType"] === "HIDDEN";
+    },
+    isStaticTextProp(testProp: any): boolean {
+      // STATIC_TEXT properties (e.g. the WorkflowStrategy "info" help table) are
+      // rendered from prop.staticTextDefaultValue and are never user-editable, so
+      // they must not be seeded with a default value or exported as config data.
+      return (
+        testProp.options && testProp.options["displayType"] === "STATIC_TEXT"
+      );
     },
     isPropInScope(testProp: any): boolean {
       // determine if property is visible in scope
