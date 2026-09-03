@@ -17,13 +17,48 @@
 package org.rundeck.plugins.jsch.net
 
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.utils.FileUtils
+import com.jcraft.jsch.JSchException
+import com.jcraft.jsch.Session
+import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Project
+import org.apache.tools.ant.taskdefs.optional.ssh.ScpToMessage
 import spock.lang.Specification
 
 import java.nio.file.Files
 import java.nio.file.Path
+
+/**
+ * ExtScp test double that records the host the task would connect to and aborts before any network I/O.
+ */
+class HostCapturingScp extends ExtScp {
+    String capturedHost
+
+    @Override
+    protected Session openSession() throws JSchException {
+        capturedHost = getHost()
+        throw new JSchException('test-abort: no real connection')
+    }
+}
+
+/**
+ * ExtScp test double that captures the prepared upload message instead of transferring anything.
+ */
+class MessageCapturingScp extends ExtScp {
+    ScpToMessage captured
+
+    @Override
+    protected Session openSession() throws JSchException {
+        return null
+    }
+
+    @Override
+    protected void sendMessage(final ScpToMessage message) {
+        captured = message
+    }
+}
 
 /**
  * @author greg
@@ -106,7 +141,7 @@ class SSHTaskBuilderSpec extends Specification {
         result != null
         result instanceof ExtScp
         ExtScp built = (ExtScp) result
-        built.getIfaceToDir() == 'bob@ahostname:monkey/test'
+        built.getIfaceRemotePath() == 'monkey/test'
         built.getIfaceFileSets() != null
         built.getIfaceFileSets().size() == 1
         built.getIfaceFileSets()[0].getDir() == basedir
@@ -164,7 +199,7 @@ class SSHTaskBuilderSpec extends Specification {
         result != null
         result instanceof ExtScp
         ExtScp built = (ExtScp) result
-        built.getIfaceToDir() == 'bob@ahostname:monkey/test'
+        built.getIfaceRemotePath() == 'monkey/test'
         built.getIfaceFileSets() != null
         built.getIfaceFileSets().size() == 1
         built.getIfaceFileSets()[0].getDir() == basedir
@@ -224,7 +259,7 @@ class SSHTaskBuilderSpec extends Specification {
         result != null
         result instanceof ExtScp
         ExtScp built = (ExtScp) result
-        built.getIfaceToDir() == 'bob@ahostname:monkey/test'
+        built.getIfaceRemotePath() == 'monkey/test'
         built.getIfaceFileSets() != null
         built.getIfaceFileSets().size() == 1
         built.getIfaceFileSets()[0].getDir() == basedir
@@ -381,5 +416,278 @@ class SSHTaskBuilderSpec extends Specification {
 
         built.getBindAddress() == "192.168.0.120"
 
+    }
+
+    def "windows remote path with colon does not corrupt scp host"() {
+        given:
+        def scp = new HostCapturingScp()
+        def keyfile = Files.createTempFile(testDir, 'key', 'file').toFile()
+        def sourceFile = Files.createTempFile(testDir, 'src', 'file').toFile()
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        def nodeAuthentication = Mock(SSHTaskBuilder.SSHConnectionInfo) {
+            getUsername() >> 'bob'
+            getAuthenticationType() >> SSHTaskBuilder.AuthenticationType.privateKey
+            getPrivateKeyfilePath() >> keyfile.absolutePath
+        }
+        SSHTaskBuilder.buildScp(
+                scp,
+                node,
+                new Project(),
+                'C:\\WINDOWS\\TEMP\\test.bat',
+                sourceFile,
+                nodeAuthentication,
+                0,
+                Mock(ExecutionListener)
+        )
+
+        when:
+        scp.execute()
+
+        then:
+        thrown(BuildException)
+        scp.capturedHost == 'ahostname'
+    }
+
+    SSHTaskBuilder.SSHConnectionInfo storageKeyAuth(String username = 'bob') {
+        Mock(SSHTaskBuilder.SSHConnectionInfo) {
+            getUsername() >> username
+            getAuthenticationType() >> SSHTaskBuilder.AuthenticationType.privateKey
+            getPrivateKeyStoragePath() >> 'keys/fake/path'
+            getPrivateKeyStorageData() >> {
+                new ByteArrayInputStream('data'.bytes)
+            }
+        }
+    }
+
+    def "single file remote path reaches scp transfer verbatim"() {
+        given:
+        def scp = new MessageCapturingScp()
+        def sourceFile = Files.createTempFile(testDir, 'src', 'file').toFile()
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        SSHTaskBuilder.buildScp(scp, node, new Project(), remotePath, sourceFile, storageKeyAuth(), 0, Mock(ExecutionListener))
+
+        when:
+        scp.execute()
+
+        then:
+        scp.captured != null
+        scp.captured.remotePath == remotePath
+        scp.captured.localFile == sourceFile
+        scp.host == 'ahostname'
+
+        where:
+        remotePath                    | _
+        'C:\\WINDOWS\\TEMP\\test.bat' | _
+        '/tmp/rundeck/test.sh'        | _
+        '/tmp/with:colon/test.sh'     | _
+        'monkey/test'                 | _
+    }
+
+    def "multi scp remote path reaches scp transfer verbatim"() {
+        given:
+        def scp = new MessageCapturingScp()
+        def basedir = copyDir.toFile()
+        def files = makeDirFiles(copyDir, ['test1.txt', 'sub1/test3.xml']).values().toList()
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        SSHTaskBuilder.buildMultiScp(scp, node, new Project(), basedir, files, 'C:\\WINDOWS\\TEMP', storageKeyAuth(), 0, Mock(ExecutionListener))
+
+        when:
+        scp.execute()
+
+        then:
+        scp.captured != null
+        scp.captured.remotePath == 'C:\\WINDOWS\\TEMP'
+        scp.captured.localFile == null
+        scp.host == 'ahostname'
+    }
+
+    def "recursive scp remote path reaches scp transfer verbatim"() {
+        given:
+        def scp = new MessageCapturingScp()
+        makeDirFiles(copyDir, ['test1.txt', 'sub1/test3.xml'])
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        SSHTaskBuilder.buildRecursiveScp(scp, node, new Project(), 'C:\\WINDOWS\\TEMP', copyDir.toFile(), storageKeyAuth(), 0, Mock(ExecutionListener))
+
+        when:
+        scp.execute()
+
+        then:
+        scp.captured != null
+        scp.captured.remotePath == 'C:\\WINDOWS\\TEMP'
+        scp.captured.localFile == null
+        scp.host == 'ahostname'
+    }
+
+    def "execute falls back to ant behavior when remotePath unset"() {
+        given:
+        def scp = new HostCapturingScp()
+        def keyfile = Files.createTempFile(testDir, 'key', 'file').toFile()
+        def sourceFile = Files.createTempFile(testDir, 'src', 'file').toFile()
+        scp.setProject(new Project())
+        scp.setFailonerror(true)
+        scp.setKeyfile(keyfile.absolutePath)
+        scp.setLocalFile(sourceFile.absolutePath)
+        scp.setRemoteTofile('bob@ahostname:/some/path')
+
+        when:
+        scp.execute()
+
+        then:
+        thrown(BuildException)
+        scp.capturedHost == 'ahostname'
+    }
+
+    def "execute failure honours failonerror and sets location"() {
+        given:
+        def scp = new HostCapturingScp()
+        def sourceFile = Files.createTempFile(testDir, 'src', 'file').toFile()
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        SSHTaskBuilder.buildScp(scp, node, new Project(), '/tmp/test.sh', sourceFile, storageKeyAuth(), 0, Mock(ExecutionListener))
+
+        when:
+        scp.execute()
+
+        then:
+        def e = thrown(BuildException)
+        e.location != null
+        e.cause instanceof JSchException
+    }
+
+    def "execute failure is logged when failonerror is false"() {
+        given:
+        def scp = new HostCapturingScp()
+        def sourceFile = Files.createTempFile(testDir, 'src', 'file').toFile()
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        SSHTaskBuilder.buildScp(scp, node, new Project(), '/tmp/test.sh', sourceFile, storageKeyAuth(), 0, Mock(ExecutionListener))
+        scp.setFailonerror(false)
+
+        when:
+        scp.execute()
+
+        then:
+        notThrown(BuildException)
+        scp.capturedHost == 'ahostname'
+    }
+
+    def "execute with remotePath and no localFile or filesets fails"() {
+        given:
+        def scp = new MessageCapturingScp()
+        scp.setProject(new Project())
+        scp.setFailonerror(true)
+        scp.setRemotePath('/tmp/test.sh')
+
+        when:
+        scp.execute()
+
+        then:
+        def e = thrown(BuildException)
+        e.message.contains('localFile')
+        scp.captured == null
+    }
+
+    def "buildScp with private key sets connection params and raw remote path"() {
+        given:
+        def built = new ExtScp()
+        def keyfile = Files.createTempFile(testDir, 'key', 'file').toFile()
+        def sourceFile = Files.createTempFile(testDir, 'src', 'file').toFile()
+        def project = new Project()
+        def nodeAuthentication = Mock(SSHTaskBuilder.SSHConnectionInfo) {
+            getUsername() >> 'testusername'
+            getAuthenticationType() >> SSHTaskBuilder.AuthenticationType.privateKey
+            getPrivateKeyfilePath() >> keyfile.absolutePath
+        }
+
+        when:
+        SSHTaskBuilder.buildScp(built, new NodeEntryImpl('hostname', 'nodename'), project, '/test/path', sourceFile, nodeAuthentication, 0, Mock(ExecutionListener))
+
+        then:
+        built.ifaceRemotePath == '/test/path'
+        built.host == 'hostname'
+        built.port == 22
+        built.keyfile == keyfile.absolutePath
+        built.userInfo.passphrase == ''
+        built.userInfo.password == null
+        built.userInfo.name == 'testusername'
+        !built.verbose
+        built.failonerror
+        built.userInfo.trust
+        built.knownhosts == null
+        built.project == project
+    }
+
+    def "buildScp with password auth"() {
+        given:
+        def built = new ExtScp()
+        def sourceFile = Files.createTempFile(testDir, 'src', 'file').toFile()
+        def nodeAuthentication = Mock(SSHTaskBuilder.SSHConnectionInfo) {
+            getUsername() >> 'testusername'
+            getAuthenticationType() >> SSHTaskBuilder.AuthenticationType.password
+            getPassword() >> 'passwordValue'
+        }
+
+        when:
+        SSHTaskBuilder.buildScp(built, new NodeEntryImpl('hostname', 'nodename'), new Project(), '/test/path', sourceFile, nodeAuthentication, 0, Mock(ExecutionListener))
+
+        then:
+        built.ifaceRemotePath == '/test/path'
+        built.host == 'hostname'
+        built.keyfile == null
+        built.userInfo.password == 'passwordValue'
+        built.userInfo.name == 'testusername'
+        built.failonerror
+        built.userInfo.trust
+    }
+
+    def "buildScp fails when username not set"() {
+        given:
+        def sourceFile = Files.createTempFile(testDir, 'src', 'file').toFile()
+        def nodeAuthentication = Mock(SSHTaskBuilder.SSHConnectionInfo) {
+            getUsername() >> null
+            getAuthenticationType() >> authType
+            getPassword() >> 'passwordValue'
+        }
+
+        when:
+        SSHTaskBuilder.buildScp(new ExtScp(), new NodeEntryImpl('hostname', 'nodename'), new Project(), '/test/path', sourceFile, nodeAuthentication, 0, Mock(ExecutionListener))
+
+        then:
+        def e = thrown(SSHTaskBuilder.BuilderException)
+        e.message == 'username was not set'
+
+        where:
+        authType << [SSHTaskBuilder.AuthenticationType.privateKey, SSHTaskBuilder.AuthenticationType.password]
+    }
+
+    def "buildScp fails when sourceFile not set"() {
+        when:
+        SSHTaskBuilder.buildScp(new ExtScp(), new NodeEntryImpl('hostname', 'nodename'), new Project(), '/test/path', null, storageKeyAuth('testusername'), 0, Mock(ExecutionListener))
+
+        then:
+        def e = thrown(SSHTaskBuilder.BuilderException)
+        e.message == 'sourceFile was not set'
+    }
+
+    def "buildScp fails when remotePath not set"() {
+        given:
+        def sourceFile = Files.createTempFile(testDir, 'src', 'file').toFile()
+
+        when:
+        SSHTaskBuilder.buildScp(new ExtScp(), new NodeEntryImpl('hostname', 'nodename'), new Project(), null, sourceFile, storageKeyAuth('testusername'), 0, Mock(ExecutionListener))
+
+        then:
+        def e = thrown(SSHTaskBuilder.BuilderException)
+        e.message == 'remotePath was not set'
     }
 }

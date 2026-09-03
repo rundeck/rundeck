@@ -321,6 +321,13 @@ public class SSHTaskBuilder {
         void addFileset(FileSet set);
 
         void setTodir(String aToUri);
+
+        /**
+         * Set the remote destination path verbatim (no {@code user@host:} prefix).
+         *
+         * @param remotePath remote path
+         */
+        void setRemotePath(String remotePath);
     }
 
     private static abstract class SSHBaseImpl implements SSHBaseInterface {
@@ -547,6 +554,10 @@ public class SSHTaskBuilder {
         public void addFileset(FileSet set) { instance.addFileset(set);}
 
         public void setTodir(String uri){instance.setTodir(uri);}
+
+        public void setRemotePath(String remotePath) {
+            instance.setRemotePath(remotePath);
+        }
 
     }
 
@@ -821,8 +832,7 @@ public class SSHTaskBuilder {
         //Set the local and remote file paths
 
         scp.setLocalFile(sourceFile.getAbsolutePath());
-        final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
-        scp.setRemoteTofile(sshUriPrefix + remotepath);
+        scp.setRemotePath(remotepath);
     }
 
 
@@ -854,8 +864,7 @@ public class SSHTaskBuilder {
             scp.addFileset(set);
 
 
-        final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
-        scp.setTodir(sshUriPrefix + remotePath);
+        scp.setRemotePath(remotePath);
 
     }
 
@@ -918,8 +927,7 @@ public class SSHTaskBuilder {
             top.setIncludes(dirpath);
         }
 
-        final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
-        scp.setTodir(sshUriPrefix + remotePath);
+        scp.setRemotePath(remotePath);
     }
 
     public static class BuilderException extends Exception {
