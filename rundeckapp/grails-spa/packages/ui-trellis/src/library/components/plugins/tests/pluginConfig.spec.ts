@@ -515,4 +515,82 @@ describe("PluginConfig", () => {
       expect(wrapper.find('[data-testid="prop-field-host"]').classes()).not.toContain("has-error");
     });
   });
+
+  describe("dynamic select values — regression for RUN-4764", () => {
+    it("exposes map keys as allowed values so the submitted value is the code, not the label", async () => {
+      const wrapper = await createWrapper();
+
+      (wrapper.vm as any).loadPluginData({
+        props: [{ name: "urgency", type: "FreeSelect", options: {} }],
+        dynamicProps: { urgency: { "1": "1 - High", "3": "3 - Low" } },
+      });
+      await wrapper.vm.$nextTick();
+
+      const prop = (wrapper.vm as any).props.find(
+        (p: any) => p.name === "urgency",
+      );
+      expect(prop.allowed).toEqual(["1", "3"]);
+      expect(prop.selectLabels).toEqual({ "1": "1 - High", "3": "3 - Low" });
+    });
+
+    it("drops map-derived labels when the same prop is reloaded with a list", async () => {
+      const wrapper = await createWrapper();
+      const props = [{ name: "urgency", type: "FreeSelect", options: {} }];
+
+      (wrapper.vm as any).loadPluginData({
+        props,
+        dynamicProps: { urgency: { "1": "1 - High" } },
+      });
+      await wrapper.vm.$nextTick();
+      expect(props[0]).toHaveProperty("selectLabels", { "1": "1 - High" });
+
+      // loadPluginData runs again over the very same prop objects when it is
+      // called with the pluginConfig prop.
+      (wrapper.vm as any).loadPluginData({
+        props,
+        dynamicProps: { urgency: ["High", "Low"] },
+      });
+      await wrapper.vm.$nextTick();
+
+      expect((props[0] as any).allowed).toEqual(["High", "Low"]);
+      expect((props[0] as any).selectLabels).toBeUndefined();
+    });
+
+    it("keeps labels the descriptor supplied when dynamic values are a list", async () => {
+      const wrapper = await createWrapper();
+      const descriptorLabels = { High: "Very high" };
+      const props = [
+        {
+          name: "urgency",
+          type: "FreeSelect",
+          options: {},
+          selectLabels: descriptorLabels,
+        },
+      ];
+
+      (wrapper.vm as any).loadPluginData({
+        props,
+        dynamicProps: { urgency: ["High", "Low"] },
+      });
+      await wrapper.vm.$nextTick();
+
+      expect((props[0] as any).selectLabels).toEqual(descriptorLabels);
+    });
+
+    it("leaves list-style dynamic values untouched", async () => {
+      const wrapper = await createWrapper();
+
+      (wrapper.vm as any).loadPluginData({
+        props: [{ name: "assignmentGroup", type: "FreeSelect", options: {} }],
+        dynamicProps: { assignmentGroup: ["App Support", "Network Ops"] },
+      });
+      await wrapper.vm.$nextTick();
+
+      const prop = (wrapper.vm as any).props.find(
+        (p: any) => p.name === "assignmentGroup",
+      );
+      expect(prop.allowed).toEqual(["App Support", "Network Ops"]);
+      expect(prop.selectLabels).toBeUndefined();
+    });
+  });
 });
