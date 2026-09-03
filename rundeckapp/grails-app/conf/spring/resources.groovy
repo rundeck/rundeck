@@ -154,7 +154,7 @@ import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
-import org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator
+import org.springframework.boot.jdbc.health.DataSourceHealthIndicator
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -911,9 +911,10 @@ beans={
             realmProperties.load(realmFile.newInputStream())
         }
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
-        realmAuthProvider(DaoAuthenticationProvider) {
+        // Spring Security 7: DaoAuthenticationProvider takes the UserDetailsService as a
+        // constructor argument; the setUserDetailsService setter no longer exists.
+        realmAuthProvider(DaoAuthenticationProvider, ref('realmPropertyFileDataSource')) {
             passwordEncoder = ref("jettyCompatiblePasswordEncoder")
-            userDetailsService = ref('realmPropertyFileDataSource')
         }
     }
 

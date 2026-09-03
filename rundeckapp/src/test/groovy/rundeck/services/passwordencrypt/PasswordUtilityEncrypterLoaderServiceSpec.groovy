@@ -17,7 +17,11 @@ class PasswordUtilityEncrypterLoaderServiceSpec extends Specification implements
     def setup() {
         service.rundeckPluginRegistry = Stub(RundeckPluginRegistry)
         service.frameworkService = Mock(FrameworkService)
-        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
+        // PasswordUtilityEncrypterLoaderService calls getFrameworkPropertyResolverWithProps(params),
+        // not getFrameworkPropertyResolver. Stubbing the wrong method left the resolver null, and a
+        // null third argument makes PluginService#configurePlugin ambiguous between its
+        // PropertyResolver and PropertyResolverFactory.Factory overloads.
+        service.frameworkService.getFrameworkPropertyResolverWithProps(*_) >> new PropertyResolver() {
             @Override
             Object resolvePropertyValue(final String name, final PropertyScope scope) {
                 return null

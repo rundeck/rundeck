@@ -17,9 +17,17 @@ hibernate {
 dataSource {
     pooled = true
     jmxExport = true
-    driverClassName= "org.h2.Driver"
-    username = "sa"
-    password = ''
+    // Same reason as the url in the environment blocks below: Grails 8 reads only this nested map,
+    // not the flat dataSource.* keys from rundeck-config.properties. Supplying the url alone is not
+    // enough -- it would be opened with the H2 driver, which fails with "Access to
+    // DialectResolutionInfo cannot be null" against MySQL or PostgreSQL. The literals stay as the
+    // defaults for an H2 deployment that configures nothing.
+    driverClassName= rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('driverClassName') ?:
+            "org.h2.Driver"
+    username = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('username') ?:
+            "sa"
+    password = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('password') ?:
+            ''
 }
 
 grails.controllers.upload.maxFileSize=26214400
@@ -41,7 +49,17 @@ environments {
 
         dataSource {
             dbCreate = "none" // one of 'create', 'create-drop','update'
-            url = "jdbc:h2:file:./db/devDb"
+            // NON_KEYWORDS is mandatory: ScheduledExecution has columns named MINUTE, HOUR, MONTH,
+            // YEAR and SECONDS, all reserved in H2, and Hibernate emits them unquoted. Without it
+            // every job-listing query dies with "Syntax error ... expected identifier".
+            // The `test` block below already had this; `development` did not.
+            // rundeck-config.properties is the only file a deployment can edit, and on Grails 8
+            // the flat dataSource.url key it publishes is not consulted when the framework builds
+            // the bean -- only this nested map is. Asking for the value here puts the operator's
+            // choice where it is actually read; the literal below stays as the fallback for when
+            // no rundeck-config supplies one.
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
+                    "jdbc:h2:file:./db/devDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
         grails.plugin.databasemigration.updateOnStart=true
 
@@ -57,7 +75,13 @@ environments {
         grails.profiler.disable=true
         dataSource {
             dbCreate = "none"
-            url = "jdbc:h2:file:./db/testDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
+            // rundeck-config.properties is the only file a deployment can edit, and on Grails 8
+            // the flat dataSource.url key it publishes is not consulted when the framework builds
+            // the bean -- only this nested map is. Asking for the value here puts the operator's
+            // choice where it is actually read; the literal below stays as the fallback for when
+            // no rundeck-config supplies one.
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
+                    "jdbc:h2:file:./db/testDb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
         grails.plugin.databasemigration.updateOnStart=true
 
@@ -77,30 +101,14 @@ environments {
 
         dataSource {
             dbCreate = "none"
-            url = "jdbc:h2:file:/rundeck/grailsh2"
-            properties {
-                jmxEnabled= true
-                initialSize= 5
-                maxActive= 50
-                minIdle= 5
-                maxIdle= 25
-                maxWait= 10000
-                maxAge= 600000
-                timeBetweenEvictionRunsMillis= 5000
-                minEvictableIdleTimeMillis= 60000
-                validationInterval= 15000
-                testOnBorrow= true
-                testWhileIdle= true
-                testOnReturn= false
-                jdbcInterceptors= "ConnectionState"
-                defaultTransactionIsolation= java.sql.Connection.TRANSACTION_READ_COMMITTED // Tomcat JDBC pool property (ignored by HikariCP)
-                // The properties above (maxActive, testOnBorrow, jdbcInterceptors, defaultTransactionIsolation, etc.)
-                // use Tomcat JDBC pool naming and are silently ignored by HikariCP (the Grails 7 default pool).
-                // Set the isolation level via HikariCP's own property name so it takes effect.
-                // READ_COMMITTED reduces gap/next-key locking on MySQL/InnoDB, reducing
-                // deadlocks on unique-index INSERTs. No-op on PostgreSQL/Oracle (already their default).
-                transactionIsolation= "TRANSACTION_READ_COMMITTED"
-            }
+            //NON_KEYWORDS required -- see the development block above
+            // rundeck-config.properties is the only file a deployment can edit, and on Grails 8
+            // the flat dataSource.url key it publishes is not consulted when the framework builds
+            // the bean -- only this nested map is. Asking for the value here puts the operator's
+            // choice where it is actually read; the literal below stays as the fallback for when
+            // no rundeck-config supplies one.
+            url = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceUrl() ?:
+                    "jdbc:h2:file:/rundeck/grailsh2;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS"
         }
     }
 }

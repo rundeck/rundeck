@@ -35,7 +35,7 @@ class JobScheduleMetadataComponent implements JobMetadataComponent {
         return foundJob.map {
             toMapData(it)
         }.map {
-            [ComponentMeta.with(SCHEDULE_NAME, it)]
+            [ComponentMeta.with(SCHEDULE_NAME, it)] as List<ComponentMeta>
         }
     }
 
@@ -46,7 +46,7 @@ class JobScheduleMetadataComponent implements JobMetadataComponent {
         }
         def data = toMapData(job)
         if (data) {
-            return Optional.of([ComponentMeta.with(SCHEDULE_NAME, data)])
+            return Optional.of([ComponentMeta.with(SCHEDULE_NAME, data)] as List<ComponentMeta>)
         }
         return Optional.empty()
     }

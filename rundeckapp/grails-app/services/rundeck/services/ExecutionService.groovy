@@ -503,12 +503,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             case 'json':
             default:
                 return apiService.renderSuccessJson(response) {
-                    requestCount = total
-                    allsuccessful = result.successTotal == total
-                    successCount = result.successTotal
-                    failedCount = result.failures ? result.failures.size() : 0
+                    requestCount(total)
+                    allsuccessful(result.successTotal == total)
+                    successCount(result.successTotal)
+                    failedCount(result.failures ? result.failures.size() : 0)
                     if (result.failures) {
-                        failures = result.failures.collect { [message: it.message, id: it.id] }
+                        failures(result.failures.collect { [message: it.message, id: it.id] })
                     }
                 }
                 break

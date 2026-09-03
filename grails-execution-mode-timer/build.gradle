@@ -81,7 +81,7 @@ dependencies {
     compileOnly "io.micronaut:micronaut-core"
     implementation "org.apache.grails:grails-core"
     implementation "org.apache.grails:grails-events"
-    annotationProcessor "org.apache.grails.events:grails-events-transforms"
+    annotationProcessor "org.apache.grails.events:grails-events-transforms:$grailsVersion"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "org.apache.grails:grails-web-boot"
     implementation "org.apache.grails:grails-logging"

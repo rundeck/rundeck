@@ -137,10 +137,21 @@ class BootStrap {
         servletContext.setAttribute("version.ident",VersionConstants.VERSION_IDENT)
         def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
 
-        servletContext.setAttribute("app.ident",grailsApplication.metadata['build.ident'])
+        servletContext.setAttribute("app.ident",grailsApplication.metadata.getProperty('build.ident', String, null))
         log.info("Starting ${appname} ${servletContext.getAttribute('app.ident')} ($shortBuildDate) ...")
         if(Boolean.getBoolean('rundeck.bootstrap.build.info')){
-            def buildInfo=grailsApplication.metadata.findAll{it.key?.startsWith('build.core.git.')}
+            // grails.util.Metadata no longer implements Map (R12), so it cannot be iterated: findAll
+            // fell through to the Object variant and handed the closure the Metadata itself, failing
+            // with "No such property: key for class: grails.util.Metadata" and killing startup. There
+            // is no key-enumeration API left, and these are the only keys build.gradle writes, so they
+            // are looked up by name like every other metadata read in this codebase.
+            def buildInfo = [
+                    'build.core.git.description',
+                    'build.core.git.commit',
+                    'build.core.git.branch',
+            ].collectEntries { String k ->
+                [(k): grailsApplication.metadata.getProperty(k, String, null)]
+            }.findAll { it.value != null }
             log.info("${appname} Build: ${buildInfo}")
         }
         /*filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
@@ -343,6 +354,23 @@ class BootStrap {
             log.warn("Undeclared job options are ALLOWED to pass through to executions.")
             log.warn("Option values not defined on a job will reach the option data context and")
             log.warn("RD_OPTION_* environment variables WITHOUT server-side validation.")
+        }
+
+        // Grails 8 / grails-spring-security 8: the plugin's ComponentBasedConfigBlender
+        // unconditionally registers its GORM-backed daoAuthenticationProvider as the *primary*
+        // provider and merely appends user-defined ones, ignoring the explicit
+        // grails.plugin.springsecurity.providerNames list in application.groovy (which deliberately
+        // omits it, because Rundeck authenticates against realm.properties/JAAS, not a GORM user
+        // domain class). With no userDomainClassName configured, that provider throws
+        // InternalAuthenticationServiceException -- which ProviderManager rethrows immediately
+        // instead of falling through, so realmAuthProvider/jaasAuthProvider never run and every
+        // login fails. Remove it to restore the configured intent.
+        if (grailsApplication.mainContext.containsBean('daoAuthenticationProvider')) {
+            def gormAuthProvider = grailsApplication.mainContext.getBean('daoAuthenticationProvider')
+            if (authenticationManager.providers.remove(gormAuthProvider)) {
+                log.info("Removed the plugin's GORM-backed daoAuthenticationProvider from the " +
+                         "authentication chain (not used by Rundeck; see providerNames config)")
+            }
         }
 
         //Setup the correct authentication provider for the configured authentication mechanism

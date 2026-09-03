@@ -66,6 +66,7 @@
         scheduledExecutionExecuteFragment: '${createLink(controller:"scheduledExecution",action:"executeFragment",params:projParams)}',
         scheduledExecutionActionMenuFragment: '${createLink(controller:"scheduledExecution",action:"actionMenuFragment",params:projParams)}',
         scheduledExecutionRunJobInline: '${createLink(controller:"scheduledExecution",action:"runJobInline",params:projParams)}',
+        scheduledExecutionRunJobLater: '${createLink(controller:"scheduledExecution",action:"runJobLater",params:projParams)}',
         scheduledExecutionScheduleJobInline: '${createLink(controller:"scheduledExecution",action:"scheduleJobInline",params:projParams)}',
         scheduledExecutionDetailFragmentAjax: '${createLink(controller:'scheduledExecution',action:'detailFragmentAjax',params: projParams)}',
         scheduledExecutionJobExecutionsAjax: '${createLink(controller:'scheduledExecution',action:'jobExecutionsAjax',params: projParams)}',

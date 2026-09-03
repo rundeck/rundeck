@@ -249,4 +249,19 @@ afterEvaluate {
             dependsOn runNpmBuild
         }
     }
+    // Gradle 9 strictness: same family as the jar case above, now an error instead of a warning.
+    // buildDir is `lib` here (see gradle.properties), and runNpmBuild declares the whole of it as
+    // its output, so the java plugin's testClassesDirs (`lib/classes/java/test`) sits inside another
+    // task's output and Gradle reports an implicit dependency.
+    //
+    // The root build applies the java plugin to every subproject, but this module is pure
+    // TypeScript/Vue: compileJava, compileTestJava and test are all NO-SOURCE. So unlike `jar`,
+    // which really does package the npm output, `test` consumes nothing -- dependsOn would force an
+    // npm build for a task that is always skipped. mustRunAfter states the ordering Gradle asks for
+    // without adding work, and leaves `test` functional if JVM tests are ever added here.
+    if (tasks.findByName('test')) {
+        tasks.named('test').configure {
+            mustRunAfter runNpmBuild
+        }
+    }
 }
