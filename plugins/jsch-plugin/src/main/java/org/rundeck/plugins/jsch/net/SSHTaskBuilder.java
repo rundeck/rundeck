@@ -844,6 +844,9 @@ public class SSHTaskBuilder {
         if (null == sourceFolder) {
             throw new BuilderException("sourceFolder was not set");
         }
+        if (null == remotePath) {
+            throw new BuilderException("remotePath was not set");
+        }
         final String username = sshConnectionInfo.getUsername();
         if (null == username) {
             throw new BuilderException("username was not set");
@@ -884,6 +887,9 @@ public class SSHTaskBuilder {
 
         if (null == files || files.size()==0) {
             throw new BuilderException("files was not set");
+        }
+        if (null == remotePath) {
+            throw new BuilderException("remotePath was not set");
         }
         final String username = sshConnectionInfo.getUsername();
         if (null == username) {

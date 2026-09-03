@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.utils.FileUtils
 import com.jcraft.jsch.JSchException
 import com.jcraft.jsch.Session
 import org.apache.tools.ant.BuildException
+import org.apache.tools.ant.Location
 import org.apache.tools.ant.Project
 import org.apache.tools.ant.taskdefs.optional.ssh.ScpToMessage
 import spock.lang.Specification
@@ -553,13 +554,15 @@ class SSHTaskBuilderSpec extends Specification {
             extractHostname() >> 'ahostname'
         }
         SSHTaskBuilder.buildScp(scp, node, new Project(), '/tmp/test.sh', sourceFile, storageKeyAuth(), 0, Mock(ExecutionListener))
+        def location = new Location('jsch-scp-test', 7, 1)
+        scp.setLocation(location)
 
         when:
         scp.execute()
 
         then:
         def e = thrown(BuildException)
-        e.location != null
+        e.location == location
         e.cause instanceof JSchException
     }
 
@@ -685,6 +688,27 @@ class SSHTaskBuilderSpec extends Specification {
 
         when:
         SSHTaskBuilder.buildScp(new ExtScp(), new NodeEntryImpl('hostname', 'nodename'), new Project(), null, sourceFile, storageKeyAuth('testusername'), 0, Mock(ExecutionListener))
+
+        then:
+        def e = thrown(SSHTaskBuilder.BuilderException)
+        e.message == 'remotePath was not set'
+    }
+
+    def "buildRecursiveScp fails when remotePath not set"() {
+        when:
+        SSHTaskBuilder.buildRecursiveScp(new ExtScp(), new NodeEntryImpl('hostname', 'nodename'), new Project(), null, copyDir.toFile(), storageKeyAuth('testusername'), 0, Mock(ExecutionListener))
+
+        then:
+        def e = thrown(SSHTaskBuilder.BuilderException)
+        e.message == 'remotePath was not set'
+    }
+
+    def "buildMultiScp fails when remotePath not set"() {
+        given:
+        def files = makeDirFiles(copyDir, ['test1.txt']).values().toList()
+
+        when:
+        SSHTaskBuilder.buildMultiScp(new ExtScp(), new NodeEntryImpl('hostname', 'nodename'), new Project(), copyDir.toFile(), files, null, storageKeyAuth('testusername'), 0, Mock(ExecutionListener))
 
         then:
         def e = thrown(SSHTaskBuilder.BuilderException)

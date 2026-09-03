@@ -22,6 +22,7 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DirectoryScanner;
+import org.apache.tools.ant.Location;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.Directory;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
@@ -141,14 +142,11 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
             }
         } catch (final Exception e) {
             if (getFailonerror()) {
-                if (e instanceof BuildException) {
-                    final BuildException be = (BuildException) e;
-                    if (be.getLocation() == null) {
-                        be.setLocation(getLocation());
-                    }
-                    throw be;
+                final BuildException be = e instanceof BuildException ? (BuildException) e : new BuildException(e);
+                if (be.getLocation() == null || Location.UNKNOWN_LOCATION.equals(be.getLocation())) {
+                    be.setLocation(getLocation());
                 }
-                throw new BuildException(e);
+                throw be;
             }
             log("Caught exception: " + e.getMessage(), Project.MSG_ERR);
         }
