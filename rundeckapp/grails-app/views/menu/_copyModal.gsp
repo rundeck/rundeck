@@ -18,7 +18,10 @@
                             data-bind="click: cancel"
                             data-dismiss="modal" ><g:message code="cancel"/></button>
 
-                    <g:formActionSubmit action="copy"
+                    <%-- controller is explicit: the enclosing g:form declares no action, so this button does need a
+                         formaction, and g:formActionSubmit would otherwise build it from the current controller
+                         (menu) rather than scheduledExecution. Params still come from the form's hidden inputs. --%>
+                    <g:formActionSubmit action="copy" controller="scheduledExecution"
                                     value="${message(code:'yes')}"
                                     id="submittbn"
                                     class="btn btn-default"/>
