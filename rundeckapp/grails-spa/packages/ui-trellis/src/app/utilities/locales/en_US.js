@@ -62,6 +62,12 @@ const messages = {
   message_description: "Description",
   message_fieldLabel: "Field Label",
   message_fieldKey: "Field Key",
+  // Descriptions generated for a custom field. The wording differs between
+  // these three on purpose: it reproduces the text these fields have always
+  // shown, so existing configurations read the same as before.
+  message_fieldKeyDescription: "Field key: {0}",
+  message_fieldKeyOnlyDescription: "Field key {0}",
+  message_fieldKeyAppendedDescription: "{0} (Field key: {1})",
   message_fieldFilter: "Type to filter a field",
   message_empty: "Can be empty",
   message_cancel: "Cancel",
