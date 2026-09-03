@@ -82,7 +82,7 @@
            this one carries icon markup and Knockout data-bind attributes. --}%
       <button
         type="submit"
-        formaction="${createLink(controller: 'scheduledExecution', action: 'runJobNow')}"
+        formaction="${createLink(controller: 'scheduledExecution', action: 'runJobNow', params: [project: scheduledExecution.project])}"
         id="execFormRunButton"
         ${scheduledExecution.hasExecutionEnabled() ? '' : 'disabled'}
         class=" btn btn-cta  ">

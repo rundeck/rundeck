@@ -153,7 +153,7 @@
                 <button type="button" class="btn btn-default" data-dismiss="modal">
                   <g:message code="cancel"/>
                 </button>
-                <g:formActionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary "/>
+                <g:formActionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' params="[project: params.project, jobListType: params.jobListType]" class="btn btn-primary "/>
               </div>
             </div>
           </g:form>
@@ -322,6 +322,7 @@
                         </button>
                         <g:formActionSubmit controller="menu"
                           action="projectToggleSCM"
+                          params="[project: params.project ?: request.project]"
                           form="toggleScmForm"
                           value="${message(code:'job.toggle.scm.button.label.'+status)}"
                           class="btn btn-danger"
