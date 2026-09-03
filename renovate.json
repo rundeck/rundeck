@@ -101,6 +101,12 @@
       "enabled": false
     },
     {
+      "description": "Label every npm dep bump in ui-trellis so a GitHub Action can check whether it's also vendored into rundeckpro-ui-components and mirror the update there once this PR merges. The actual 'is this shared' decision is made downstream against rundeckpro-ui-components/package.json (single source of truth), not maintained here as a name list — see rundeckpro's sync-renovate-dependency.yml workflow.",
+      "matchManagers": ["npm"],
+      "matchFileNames": ["rundeckapp/grails-spa/packages/ui-trellis/package.json"],
+      "addLabels": ["sync-rundeckpro"]
+    },
+    {
       "description": "Group ESLint ecosystem updates",
       "matchPackageNames": ["/eslint/"],
       "groupName": "eslint packages"
