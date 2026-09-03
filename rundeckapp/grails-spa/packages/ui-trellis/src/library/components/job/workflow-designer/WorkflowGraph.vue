@@ -993,11 +993,14 @@ export default defineComponent({
     },
     getSidePanelWidthBounds(): { min: number; max: number } {
       const containerWidth = (this.$el as HTMLElement)?.clientWidth || 0;
+      if (!containerWidth) {
+        return { min: this.sidePanelWidth, max: this.sidePanelWidth };
+      }
       return {
         min: containerWidth * SIDE_PANEL_MIN_WIDTH_RATIO,
         max: containerWidth * SIDE_PANEL_MAX_WIDTH_RATIO,
       };
-    },
+    }
     nudgeSidePanelWidth(delta: number) {
       const { min, max } = this.getSidePanelWidthBounds();
       this.sidePanelWidth = Math.min(
