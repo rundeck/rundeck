@@ -34,12 +34,61 @@ class JsonUtil {
     /**
      * Grails 7: Parse JSON from HttpServletRequest body using Jackson ObjectMapper.
      * This replaces the broken request.JSON property in Grails 7/Spring Boot 3.
-     * 
+     *
      * @param request HttpServletRequest with JSON body
-     * @return Parsed JSON as Map, or null if request body is empty or already consumed
+     * @return Parsed JSON as Map, or null if request body is empty, already consumed, or not a JSON object
      * @throws IOException if JSON parsing fails (but not if body is unavailable)
      */
     static Map parseRequestBody(HttpServletRequest request) throws IOException {
+        def content = readRequestBodyContent(request, 'parseRequestBody')
+        if (!content) {
+            return null
+        }
+
+        try {
+            return objectMapper.readValue(content, Map.class)
+        } catch (JsonProcessingException parseEx) {
+            // Body readable but not a JSON object (array, primitive, malformed) — return null
+            log.error("parseRequestBody: JSON parsing failed [${parseEx.class.simpleName}: ${parseEx.originalMessage}] — body was readable but not a JSON object")
+            return null
+        }
+    }
+
+    /**
+     * Grails 7: Parse a JSON array from HttpServletRequest body using Jackson ObjectMapper.
+     * Some endpoints (e.g. the legacy-UI job list export status request) send a bare JSON
+     * array as the request body rather than a JSON object; {@link #parseRequestBody} always
+     * expects an object and would fail to parse those requests (RUN-10468).
+     *
+     * @param request HttpServletRequest with a JSON array body
+     * @return Parsed JSON as a List, or null if request body is empty, already consumed, or not a JSON array
+     * @throws IOException if JSON parsing fails (but not if body is unavailable)
+     */
+    static List parseRequestBodyAsList(HttpServletRequest request) throws IOException {
+        def content = readRequestBodyContent(request, 'parseRequestBodyAsList')
+        if (!content) {
+            return null
+        }
+
+        try {
+            return objectMapper.readValue(content, List.class)
+        } catch (JsonProcessingException parseEx) {
+            // Body readable but not a JSON array (object, primitive, malformed) — return null
+            log.error("parseRequestBodyAsList: JSON parsing failed [${parseEx.class.simpleName}: ${parseEx.originalMessage}] — body was readable but not a JSON array")
+            return null
+        }
+    }
+
+    /**
+     * Reads the raw text content of a request body intended to contain JSON, or null if the
+     * content-type is not JSON or the body is empty/unavailable. Shared by
+     * {@link #parseRequestBody} and {@link #parseRequestBodyAsList}.
+     *
+     * @param request HttpServletRequest with JSON body
+     * @param logPrefix label used in log messages to identify the calling method
+     * @return the raw body content, or null
+     */
+    private static String readRequestBodyContent(HttpServletRequest request, String logPrefix) {
         def contentType = request.contentType
         if (contentType && !contentType.toLowerCase().contains('json')) {
             return null
@@ -57,7 +106,7 @@ class JsonUtil {
             // call, etc.) — fall back to reading raw bytes without the available() check.
             // Do NOT use available(): it returns only buffered bytes and silently truncates
             // data not yet in the local buffer on proxied/slow connections.
-            log.error("parseRequestBody: getReader() failed [${readerEx.class.simpleName}: ${readerEx.message}], falling back to getInputStream()")
+            log.error("${logPrefix}: getReader() failed [${readerEx.class.simpleName}: ${readerEx.message}], falling back to getInputStream()")
             try {
                 def bytes = request.getInputStream()?.readAllBytes()
                 if (bytes?.length > 0) {
@@ -65,21 +114,11 @@ class JsonUtil {
                 }
             } catch (Exception streamEx) {
                 // Both reader and stream unavailable — body cannot be read
-                log.error("parseRequestBody: getInputStream() also failed [${streamEx.class.simpleName}: ${streamEx.message}] — body is unreadable")
+                log.error("${logPrefix}: getInputStream() also failed [${streamEx.class.simpleName}: ${streamEx.message}] — body is unreadable")
             }
         }
 
-        if (!content?.trim()) {
-            return null
-        }
-
-        try {
-            return objectMapper.readValue(content, Map.class)
-        } catch (JsonProcessingException parseEx) {
-            // Body readable but not a JSON object (array, primitive, malformed) — return null
-            log.error("parseRequestBody: JSON parsing failed [${parseEx.class.simpleName}: ${parseEx.originalMessage}] — body was readable but not a JSON object")
-            return null
-        }
+        content?.trim() ? content : null
     }
 
     /**
