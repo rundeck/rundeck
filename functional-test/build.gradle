@@ -227,6 +227,19 @@ task alphaUiSeleniumCoreTest(type: Test){
     systemProperty('spock.configuration', 'spock-configs/IncludeAlphaUiSeleniumCoreTestsConfig.groovy')
     description = "Run Rundeck OSS Selenium Tests with Alpha UI feature flag enabled"
 
+    // This suite is legitimately empty today: its Spock config includes only specs annotated
+    // @AlphaUiSeleniumCoreTest, and nothing carries that annotation yet -- the only file naming it
+    // is the annotation's own declaration, on this branch and on main alike. Nothing was lost in
+    // the migration.
+    //
+    // Gradle cannot see that filter. It reports "there are test sources present and no filters are
+    // applied" and fails the task, because the include-filter lives inside Spock. Gradle 8 tolerated
+    // the empty run; Gradle 9 does not.
+    //
+    // Scoped to this task on purpose. The other suites here should still fail if they discover
+    // nothing, because for them an empty run would mean something is broken.
+    failOnNoDiscoveredTests = false
+
     if (project.hasProperty("testFiles")) {
         include(explicitTestIncluder(project.properties["testFiles"]))
     }
