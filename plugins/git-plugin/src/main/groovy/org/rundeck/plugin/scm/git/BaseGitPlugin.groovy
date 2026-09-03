@@ -221,7 +221,7 @@ class BaseGitPlugin {
                     }
 
                     Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-                }finally{
+                } finally {
                     if (temp.exists()) {
                         temp.delete()
                     }

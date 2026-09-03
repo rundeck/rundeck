@@ -34,6 +34,6 @@ class JobGitState implements JobState {
         return "JobGitState{" +
                 "synchState=" + synchState +
                 ", commit=" + commit +
-                '}';
+                '}'
     }
 }

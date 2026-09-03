@@ -189,7 +189,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return null
         }
 
-        def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
+        def loadingStatus = jobStateMap.find { key, meta -> meta["synch"] == SynchState.LOADING }
 
         if (loadingStatus) {
             def synchState = new GitExportSynchState()
@@ -231,7 +231,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             }
         }
 
-        Map jobsCache = jobStateMap.collectEntries {key, value -> [value.path, value]}
+        Map jobsCache = jobStateMap.collectEntries { key, value -> [value.path, value] }
 
         walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
             def tracked = false
@@ -545,7 +545,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             // TODO:
             // case JobChangeEvent.JobChangeEventType.CREATE:
             // case JobChangeEvent.JobChangeEventType.MODIFY:
-
         }
 
         // def status = refreshJobStatus(reference, origPath)
@@ -571,7 +570,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
-        actionsAvailableForContext(context,null)
+        actionsAvailableForContext(context, null)
     }
 
     @Override
@@ -673,7 +672,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             List<ScmImportTrackedItem> found = []
 
             // files to delete
-            jobStateMap?.each {job->
+            jobStateMap?.each { job ->
                 String status = job.getValue()?.get("synch")
                 if (status?.equalsIgnoreCase('DELETE_NEEDED')) {
                     found << trackPath(
@@ -762,7 +761,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 log.warn("skipping automatic fix jobs between cluster on https configuration issue")
             }
         }
-        jobs.each{job ->
+        jobs.each { job ->
             refreshJobStatus(job, originalPaths?.get(job.id))
         }
         return (pullResult != null)? [updated:true]:[:]
@@ -770,7 +769,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     void initJobsStatus(List<JobScmReference> jobs) {
-        jobs.each {job->
+        jobs.each { job ->
             if (!jobStateMap[job.id]) {
                 def jobstat = initJobStatus(job)
                 jobStateMap[job.id] = jobstat
@@ -788,8 +787,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     void refreshJobsStatus(List<JobScmReference> jobs) {
-        jobs.each{job ->
-            refreshJobStatus(job,null)
+        jobs.each { job ->
+            refreshJobStatus(job, null)
         }
     }
 }

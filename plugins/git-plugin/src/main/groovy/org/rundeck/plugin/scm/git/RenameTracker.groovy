@@ -38,7 +38,7 @@ class RenameTracker<A> {
      */
     A originalValue(A newval) {
         if (renamedTrackedItems.values().contains(newval)) {
-            return renamedTrackedItems.keySet().find{renamedTrackedItems[it] == newval}
+            return renamedTrackedItems.keySet().find { renamedTrackedItems[it] == newval }
         }
         null
     }

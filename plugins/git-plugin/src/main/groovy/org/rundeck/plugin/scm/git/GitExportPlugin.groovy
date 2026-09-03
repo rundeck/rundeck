@@ -276,7 +276,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         //perform fetch
         def msgs = []
 
-        def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
+        def loadingStatus = jobStateMap.find { key, meta -> meta["synch"] == SynchState.LOADING }
 
         if (loadingStatus) {
             def synchState = new GitExportSynchState()
@@ -631,7 +631,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         try {
-            refreshJobCache.each{job ->
+            refreshJobCache.each { job ->
                 refreshJobStatus(job, originalPaths?.get(job.id))
             }
         } catch (ScmPluginException e) {
@@ -646,7 +646,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             return null
         }
 
-        jobs.each {job->
+        jobs.each { job ->
             log.debug("cleanJobStatusCache(${job.id}): ${job}")
 
             def status = getCachedStatusIfValid(job, null)
@@ -659,7 +659,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     void initJobsStatus(List<JobExportReference> jobs) {
-        jobs.each {job->
+        jobs.each { job ->
             if (!jobStateMap[job.id]) {
                 def jobstat = initJobStatus(job)
                 jobStateMap[job.id] = jobstat
@@ -677,8 +677,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     void refreshJobsStatus(List<JobExportReference> jobs) {
-        jobs.each{job ->
-            refreshJobStatus(job,null)
+        jobs.each { job ->
+            refreshJobStatus(job, null)
         }
     }
 

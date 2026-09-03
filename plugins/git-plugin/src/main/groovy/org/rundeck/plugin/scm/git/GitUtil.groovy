@@ -67,7 +67,7 @@ class GitUtil {
             return walk.parseCommit(resolve)
         } catch (IOException e) {
             return null
-        }finally{
+        } finally {
             walk.close()
         }
     }

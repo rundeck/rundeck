@@ -33,7 +33,6 @@ class SshjSession implements RemoteSession {
         this.uri = uri
 
         this.sshClient = createConnection()
-
     }
 
     @Override
@@ -183,5 +182,4 @@ class SshjSession implements RemoteSession {
             }
         }
     }
-
 }
