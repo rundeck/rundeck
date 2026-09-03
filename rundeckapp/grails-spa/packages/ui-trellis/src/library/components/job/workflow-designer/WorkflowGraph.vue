@@ -991,6 +991,7 @@ export default defineComponent({
     },
     aceInit(editor: Ace.Ace.Editor) {
       this.editor = editor;
+      editor.setOption("showFoldWidgets", false);
     },
     getSidePanelWidthBounds(): { min: number; max: number } {
       const containerWidth = (this.$el as HTMLElement)?.clientWidth || 0;
@@ -1091,10 +1092,6 @@ export default defineComponent({
   flex-direction: column;
 }
 
-:deep(.rdtabs__tabheader) {
-  justify-content: center;
-}
-
 :deep(.rdtabs__pane) {
   flex-grow: 1;
   min-height: 0;
@@ -1105,5 +1102,10 @@ export default defineComponent({
 .workflow-graph-resizer:focus,
 .workflow-graph-resizer--active {
   background-color: var(--border-color, #ccc);
+}
+
+:deep(#wf_editor .ace_gutter-cell) {
+  padding-left: 8px;
+  padding-right: 4px;
 }
 </style>
