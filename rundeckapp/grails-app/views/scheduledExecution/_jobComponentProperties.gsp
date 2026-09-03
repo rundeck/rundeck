@@ -14,13 +14,23 @@
   - limitations under the License.
   --}%
 
+%{--
+  - NB: jobComponent.get('properties'), not jobComponent.properties. jobComponent is the Map the
+  - jobComponentSectionProperties tag builds, [name:.., properties:..], and Groovy 5 resolves the
+  - `properties` meta-property (Object.getProperties()) ahead of the map entry:
+  -     groovy 4: [name:'x', properties:[1,2]].properties -> [1, 2]   (truthy)
+  -     groovy 5: [name:'x', properties:[1,2]].properties -> [:]      (falsy)
+  - so the g:if below was false and every custom job component section rendered an empty panel --
+  - the tab appeared, because jobComponentSections reads inputLocation instead, but the body did not.
+  - Same collision the UtilityTagLib attrs.get('properties') comments describe, on a Map this time.
+  --}%
 <g:each in="${g.jobComponentSectionProperties(section:sectionName,jobComponents:jobComponents)}" var="jobComponent">
-    <g:if test="${jobComponent.properties}">
+    <g:if test="${jobComponent.get('properties')}">
         <g:set var="prefix" value="${g.jobComponentFieldPrefix(name:jobComponent.name)}"/>
         <g:set var="pluginConfig" value="${jobComponentValues?.get(jobComponent.name)}"/>
         <g:set var="validation" value="${jobComponentValidation?.get(jobComponent.name)}"/>
         <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                properties:jobComponent.properties,
+                properties:jobComponent.get('properties'),
                 report: validation,
                 prefix:prefix,
                 values:pluginConfig?:[:],
