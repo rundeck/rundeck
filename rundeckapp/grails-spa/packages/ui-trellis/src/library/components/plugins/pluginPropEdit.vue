@@ -217,11 +217,9 @@
                 prop.options['codeSyntaxSelectable'] === 'true' &&
                 !renderReadOnly
               "
-              height="200"
-              width="100%"
               :read-only="renderReadOnly"
               :context-variable-suggestions="scriptTypeContextVariables"
-              :min-lines="aceEditorMinLines"
+              :min-lines="aceEditorMinLines > 0 ? aceEditorMinLines : undefined"
               :max-lines="aceEditorMaxLines"
             />
           </ui-socket>
@@ -436,10 +434,7 @@ import {
   WorkflowStepType,
 } from "../utils/contextVariableUtils";
 
-// RUN-4277/#10321: default raised from 12 to 20 — Ace no longer supports a manual resize
-// handle (upstream removed it), so a taller out-of-the-box default is the supported way to
-// make the inline-script/code editor more usable without configuration.
-const ACE_EDITOR_DEFAULT_MIN_LINES = 20;
+const ACE_EDITOR_DEFAULT_MIN_LINES = 0;
 const ACE_EDITOR_DEFAULT_MAX_LINES = 0;
 
 interface Prop {
@@ -602,7 +597,8 @@ export default defineComponent({
       return this.appMeta.aceEditorMinLines ?? ACE_EDITOR_DEFAULT_MIN_LINES;
     },
     aceEditorMaxLines(): number {
-      const raw = this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
+      const raw =
+        this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
       return raw === 0 ? Infinity : raw;
     },
   },
