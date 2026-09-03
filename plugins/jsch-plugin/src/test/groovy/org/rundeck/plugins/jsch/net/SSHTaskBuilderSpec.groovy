@@ -49,9 +49,11 @@ class HostCapturingScp extends ExtScp {
  */
 class MessageCapturingScp extends ExtScp {
     ScpToMessage captured
+    boolean sessionOpened
 
     @Override
     protected Session openSession() throws JSchException {
+        sessionOpened = true
         return null
     }
 
@@ -713,5 +715,22 @@ class SSHTaskBuilderSpec extends Specification {
         then:
         def e = thrown(SSHTaskBuilder.BuilderException)
         e.message == 'remotePath was not set'
+    }
+
+    def "execute does not open a session when filesets match no files"() {
+        given:
+        def scp = new MessageCapturingScp()
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        SSHTaskBuilder.buildRecursiveScp(scp, node, new Project(), '/tmp/dest', copyDir.toFile(), storageKeyAuth(), 0, Mock(ExecutionListener))
+
+        when:
+        scp.execute()
+
+        then:
+        notThrown(BuildException)
+        !scp.sessionOpened
+        scp.captured == null
     }
 }

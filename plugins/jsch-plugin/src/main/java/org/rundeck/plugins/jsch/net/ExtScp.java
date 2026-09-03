@@ -118,22 +118,25 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
             if (localFile == null && (fileSets == null || fileSets.isEmpty())) {
                 throw new BuildException("Either 'localFile' or one or more nested filesets are required.");
             }
+            final List<Directory> list = new ArrayList<>();
+            if (localFile == null) {
+                for (FileSet set : fileSets) {
+                    final Directory d = createDirectory(set);
+                    if (d != null) {
+                        list.add(d);
+                    }
+                }
+                if (list.isEmpty()) {
+                    return;
+                }
+            }
             Session session = null;
             try {
                 session = openSession();
                 if (localFile != null) {
                     sendMessage(new ScpToMessage(getVerbose(), session, getProject().resolveFile(localFile), remotePath));
                 } else {
-                    final List<Directory> list = new ArrayList<>(fileSets.size());
-                    for (FileSet set : fileSets) {
-                        final Directory d = createDirectory(set);
-                        if (d != null) {
-                            list.add(d);
-                        }
-                    }
-                    if (!list.isEmpty()) {
-                        sendMessage(new ScpToMessage(getVerbose(), session, list, remotePath));
-                    }
+                    sendMessage(new ScpToMessage(getVerbose(), session, list, remotePath));
                 }
             } finally {
                 if (session != null) {

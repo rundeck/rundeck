@@ -816,11 +816,6 @@ public class SSHTaskBuilder {
         if (null == remotepath) {
             throw new BuilderException("remotePath was not set");
         }
-        final String username = sshConnectionInfo.getUsername();
-        if (null == username) {
-            throw new BuilderException("username was not set");
-        }
-
 
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
 
@@ -847,11 +842,6 @@ public class SSHTaskBuilder {
         if (null == remotePath) {
             throw new BuilderException("remotePath was not set");
         }
-        final String username = sshConnectionInfo.getUsername();
-        if (null == username) {
-            throw new BuilderException("username was not set");
-        }
-
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
 
         scp.setTimeout(sshConnectionInfo.getTimeout());
@@ -891,11 +881,6 @@ public class SSHTaskBuilder {
         if (null == remotePath) {
             throw new BuilderException("remotePath was not set");
         }
-        final String username = sshConnectionInfo.getUsername();
-        if (null == username) {
-            throw new BuilderException("username was not set");
-        }
-
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
 
         scp.setTimeout(sshConnectionInfo.getTimeout());
