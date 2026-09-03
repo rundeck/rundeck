@@ -91,8 +91,8 @@
         :class="{ 'workflow-graph-resizer--active': resizingSidePanel }"
         style="width: 6px; cursor: col-resize; flex-shrink: 0; z-index: 101"
         @mousedown="startResizeSidePanel"
-        @keydown.left="nudgeSidePanelWidth(20)"
-        @keydown.right="nudgeSidePanelWidth(-20)"
+        @keydown.left.prevent="nudgeSidePanelWidth(20)"
+        @keydown.right.prevent="nudgeSidePanelWidth(-20)"
       />
       <div
         :style="sidePanelStyle"
