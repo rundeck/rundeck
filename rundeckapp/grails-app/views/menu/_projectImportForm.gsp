@@ -237,7 +237,12 @@
       <div class="card-footer">
         <div id="uploadFormButtons">
           <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
-          <g:formActionSubmit action="importArchive" value="${g.message(code:'button.action.Import',default:'Import')}" id="uploadFormUpload" onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)" class="btn btn-cta btn-sm"/>
+          <%-- The enclosing g:form already targets project/importArchive. g:formActionSubmit would emit a
+               formaction built from the CURRENT controller (menu, since this renders from menu/projectImport),
+               and per the HTML spec a button's formaction overrides the form's action -- so the upload posted
+               to /menu/importArchive, which does not exist. A plain submit button inherits the form's action,
+               which is what g:actionSubmit effectively did here before Grails 8. --%>
+          <g:submitButton name="doImport" value="${g.message(code:'button.action.Import',default:'Import')}" id="uploadFormUpload" onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)" class="btn btn-cta btn-sm"/>
         </div>
         <div id="importUploadSpinner" class="spinner block" style="display:none;">
           <i class="fas fa-spinner fa-pulse"></i>
