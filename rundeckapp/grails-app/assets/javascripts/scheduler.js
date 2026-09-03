@@ -85,9 +85,19 @@ function onScheduleSubmit() {
         return false;
     }
     $form.on('submit',function onScheduleFormSubmit() {
-        var $tempElement = jQuery('<input type="hidden"/>');
-        $tempElement.attr('name', '_action_runJobLater')
-            .appendTo($form);
+        // Grails 8 removed server-side _action_ dispatch (DefaultUrlMappingInfo no longer resolves
+        // a field named "_action_X" to an action), so injecting _action_runJobLater here posted to
+        // the controller's default action: the schedule was never created and nothing reported an
+        // error. Point the form at the action instead.
+        //
+        // The neighbouring runJobNow button uses the formaction attribute, which cannot work here:
+        // formaction lives on the submit button, and this submit is triggered programmatically with
+        // no button involved.
+        // method is set explicitly rather than relied upon: runJobLater is declared POST-only in
+        // the controller's allowedMethods, and the enclosing form is not declared in this template
+        // -- closest('form') resolves it at runtime.
+        $form.attr('action', appLinks.scheduledExecutionRunJobLater);
+        $form.attr('method', 'post');
 
         var $timeElement = jQuery('#runAtTime');
         $timeElement.appendTo($form);
