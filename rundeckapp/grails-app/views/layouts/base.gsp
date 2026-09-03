@@ -134,7 +134,7 @@
             logo:'${g.appLogo()}',
             logocss:'${g.appLogocss()}',
             appRundeckGatewayUrl: '${g.appRundeckGatewayUrl()}',
-            aceEditorMinLines: ${cfg.getInteger(config:'feature.guiAceEditorMinLines', default:20)},
+            aceEditorMinLines: ${cfg.getInteger(config:'feature.guiAceEditorMinLines', default:0)},
             aceEditorMaxLines: ${cfg.getInteger(config:'feature.guiAceEditorMaxLines', default:0)}
         },
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',

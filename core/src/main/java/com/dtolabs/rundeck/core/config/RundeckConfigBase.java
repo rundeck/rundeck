@@ -510,10 +510,10 @@ public class RundeckConfigBase {
         Enabled activityDefaultTimeFilter = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
-        // RUN-4277/#10321: default raised from 12 to 20 — Ace no longer supports a manual
-        // resize handle (upstream removed it), so a taller out-of-the-box default is the
-        // supported way to make the inline-script/code editor more usable without configuration.
-        int guiAceEditorMinLines = 20;
+        // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0
+        // (the default) makes the editor manually resizable via drag handle instead of
+        // auto-sizing to a fixed number of lines.
+        int guiAceEditorMinLines = 0;
         int guiAceEditorMaxLines = 0;
 
         @Data
