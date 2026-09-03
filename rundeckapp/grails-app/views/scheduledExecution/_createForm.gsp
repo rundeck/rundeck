@@ -56,7 +56,7 @@
             <div id="schedCreateButtons">
                 <g:formActionSubmit id="createFormCancelButton"
                                 value="${g.message(code:'cancel')}"
-                                action="cancel"
+                                action="cancel" params="[project: params.project]"
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                                 class="btn btn-default reset_page_confirm"/>
                 <g:submitButton name="Create" value="${g.message(code: 'button.action.Create')}"

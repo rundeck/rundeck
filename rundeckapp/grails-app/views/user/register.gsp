@@ -40,7 +40,10 @@
 
                 <div class="panel-footer">
 
-                    <g:formActionSubmit id="editFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+                    %{-- g:actionSubmit derived the action from value and uncapitalized it ("Cancel" -> cancel).
+                    g:formActionSubmit does not: with no action attribute it links to the controller
+                    default action, so the action is now explicit. --}%
+                    <g:formActionSubmit id="editFormCancelButton" action="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
                     <g:submitButton name="${g.message(code:'button.action.Create',default:'Create')}" class="btn btn-primary"/>
 
                 </div>
