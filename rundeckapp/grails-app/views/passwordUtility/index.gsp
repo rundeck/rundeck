@@ -36,7 +36,9 @@
                         <div id="encryptionFormProps">
                             <g:render template="renderSelectedEncrypter" model="${[selectedEncrypter:properties]}" />
                         </div>
-                        <div class="form-group"><div class="col-sm-10 col-sm-offset-2"><g:formActionSubmit value="Encode" class="btn btn-sm btn-cta" /></div></div>
+                        %{-- action is explicit because g:formActionSubmit, unlike the g:actionSubmit it
+                             replaced, does not derive it from value ("Encode" -> encode). --}%
+                        <div class="form-group"><div class="col-sm-10 col-sm-offset-2"><g:formActionSubmit action="encode" value="Encode" class="btn btn-sm btn-cta" /></div></div>
                     </g:form>
                 </div>
             </div>

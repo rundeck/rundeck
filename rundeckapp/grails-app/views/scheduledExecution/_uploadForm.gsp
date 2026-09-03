@@ -243,7 +243,10 @@
           </div>
           <div class="card-footer">
             <div id="uploadFormButtons">
-              <g:formActionSubmit id="createFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+              %{-- g:actionSubmit derived the action from value and uncapitalized it ("Cancel" -> cancel).
+              g:formActionSubmit does not: with no action attribute it links to the controller
+              default action, so the action is now explicit. --}%
+              <g:formActionSubmit id="createFormCancelButton" action="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
               <g:submitButton name="Upload" id="uploadFormUpload"
                               value="${g.message(code:'button.action.Upload',default:'Upload')}"
                               onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)"
