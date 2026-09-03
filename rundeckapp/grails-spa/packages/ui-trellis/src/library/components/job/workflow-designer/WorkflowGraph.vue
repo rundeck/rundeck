@@ -80,12 +80,28 @@
         </div>
       </div>
       <div
+        role="separator"
+        aria-orientation="vertical"
+        :aria-valuenow="sidePanelWidth"
+        :aria-valuemin="sidePanelMinWidth"
+        :aria-valuemax="sidePanelMaxWidth"
+        aria-label="Resize rules panel"
+        tabindex="0"
+        class="workflow-graph-resizer"
+        :class="{ 'workflow-graph-resizer--active': resizingSidePanel }"
+        style="width: 6px; cursor: col-resize; flex-shrink: 0; z-index: 101"
+        @mousedown="startResizeSidePanel"
+        @keydown.left="nudgeSidePanelWidth(20)"
+        @keydown.right="nudgeSidePanelWidth(-20)"
+      />
+      <div
+        :style="sidePanelStyle"
         style="
-          width: 600px;
           box-shadow: rgba(0, 0, 0, 0.15) 2px 0px 8px 0px;
           z-index: 100;
           padding: 10px;
           height: 100%;
+          flex-shrink: 0;
         "
       >
         <Tabs style="height: 100%">
@@ -136,6 +152,10 @@ const MAX_SCALE = 1;
 let transitions = 0;
 
 const SEPERATION_RANK = 50;
+
+const SIDE_PANEL_MIN_WIDTH_RATIO = 0.25;
+const SIDE_PANEL_MAX_WIDTH_RATIO = 0.75;
+const SIDE_PANEL_DEFAULT_WIDTH_RATIO = 0.6;
 
 const TRANSITION_SPEED = 300;
 
@@ -201,7 +221,23 @@ export default defineComponent({
       editor: {} as Ace.Ace.Editor,
       interactive: false,
       inited: false,
+      sidePanelWidth: 600,
+      resizingSidePanel: false,
+      resizeMouseMoveHandler: null as ((e: MouseEvent) => void) | null,
+      resizeMouseUpHandler: null as (() => void) | null,
     };
+  },
+
+  computed: {
+    sidePanelStyle(): Record<string, string> {
+      return { width: `${this.sidePanelWidth}px` };
+    },
+    sidePanelMinWidth(): number {
+      return this.getSidePanelWidthBounds().min;
+    },
+    sidePanelMaxWidth(): number {
+      return this.getSidePanelWidthBounds().max;
+    },
   },
 
   watch: {
@@ -532,6 +568,17 @@ export default defineComponent({
     this.inited = true;
     this.updateNodes(initialNodes);
     this.updateRules(initialRules, false);
+
+    this.$nextTick(() => {
+      const containerWidth = (this.$el as HTMLElement)?.clientWidth || 0;
+      if (containerWidth) {
+        this.sidePanelWidth = containerWidth * SIDE_PANEL_DEFAULT_WIDTH_RATIO;
+      }
+    });
+  },
+
+  beforeUnmount() {
+    this.stopResizeSidePanel();
   },
 
   methods: {
@@ -945,6 +992,54 @@ export default defineComponent({
     aceInit(editor: Ace.Ace.Editor) {
       this.editor = editor;
     },
+    getSidePanelWidthBounds(): { min: number; max: number } {
+      const containerWidth = (this.$el as HTMLElement)?.clientWidth || 0;
+      return {
+        min: containerWidth * SIDE_PANEL_MIN_WIDTH_RATIO,
+        max: containerWidth * SIDE_PANEL_MAX_WIDTH_RATIO,
+      };
+    },
+    nudgeSidePanelWidth(delta: number) {
+      const { min, max } = this.getSidePanelWidthBounds();
+      this.sidePanelWidth = Math.min(
+        max,
+        Math.max(min, this.sidePanelWidth + delta),
+      );
+    },
+    startResizeSidePanel(event: MouseEvent) {
+      event.preventDefault();
+      this.resizingSidePanel = true;
+
+      const startX = event.clientX;
+      const startWidth = this.sidePanelWidth;
+      const { min, max } = this.getSidePanelWidthBounds();
+
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "col-resize";
+
+      this.resizeMouseMoveHandler = (e: MouseEvent) => {
+        const proposedWidth = startWidth + (startX - e.clientX);
+        this.sidePanelWidth = Math.min(max, Math.max(min, proposedWidth));
+      };
+      this.resizeMouseUpHandler = () => this.stopResizeSidePanel();
+
+      window.addEventListener("mousemove", this.resizeMouseMoveHandler);
+      window.addEventListener("mouseup", this.resizeMouseUpHandler);
+    },
+    stopResizeSidePanel() {
+      this.resizingSidePanel = false;
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+
+      if (this.resizeMouseMoveHandler) {
+        window.removeEventListener("mousemove", this.resizeMouseMoveHandler);
+        this.resizeMouseMoveHandler = null;
+      }
+      if (this.resizeMouseUpHandler) {
+        window.removeEventListener("mouseup", this.resizeMouseUpHandler);
+        this.resizeMouseUpHandler = null;
+      }
+    },
   },
 });
 </script>
@@ -996,9 +1091,19 @@ export default defineComponent({
   flex-direction: column;
 }
 
+:deep(.rdtabs__tabheader) {
+  justify-content: center;
+}
+
 :deep(.rdtabs__pane) {
   flex-grow: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+.workflow-graph-resizer:hover,
+.workflow-graph-resizer:focus,
+.workflow-graph-resizer--active {
+  background-color: var(--border-color, #ccc);
 }
 </style>
