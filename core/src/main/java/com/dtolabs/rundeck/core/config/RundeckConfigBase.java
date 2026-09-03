@@ -167,6 +167,15 @@ public class RundeckConfigBase {
          */
         Boolean rejectUndeclaredOptions;
 
+        /**
+         * RUN-4579: opt-in (default false). When true, values exported to remote nodes via the node's
+         * {@code ssh-variable-export-pattern} are POSIX shell-quoted, preventing command injection
+         * through option values. Left false by default to preserve the current behavior. Bound from
+         * {@code rundeck.execution.sshExportQuoting} so it is resolvable via ConfigurationService and
+         * editable in the System Configuration UI.
+         */
+        Boolean sshExportQuoting;
+
         @Data
         public static class RetryConfig {
             Integer retryMax;
