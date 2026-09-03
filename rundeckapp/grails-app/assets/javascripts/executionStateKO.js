@@ -722,6 +722,31 @@ RDNode.computeNodeDurationMs = function (durationMs, steps, execDurationMs) {
     return ms != null ? ms : -1;
 };
 
+/**
+ * Whether a node's only unrun steps were skipped, and everything that did run succeeded.
+ *
+ * A NOT_STARTED step is not proof of a skipped conditional: a step is also NOT_STARTED when it
+ * was never reached because an earlier step aborted. Identifying hide-able incomplete nodes
+ * therefore requires the step counts, not just the summary state. Server summaries from a node
+ * whose steps have not been loaded omit these counts on older releases, in which case the node
+ * is left visible.
+ * @param counts object with total, SUCCEEDED, NOT_STARTED and optional pending counts
+ * @returns {boolean}
+ */
+RDNode.isSkippedOnlySuccess = function (counts) {
+    if (!counts) {
+        return false;
+    }
+    var total = counts.total, succeeded = counts.SUCCEEDED, notStarted = counts.NOT_STARTED;
+    if (typeof total !== 'number' || typeof succeeded !== 'number' || typeof notStarted !== 'number') {
+        return false;
+    }
+    if (counts.pending > 0 || notStarted < 1 || total < 1) {
+        return false;
+    }
+    return total - notStarted === succeeded;
+};
+
 function RDNode(name, steps,flow){
     var self=this;
     self.flow= flow;
@@ -825,6 +850,30 @@ function RDNode(name, steps,flow){
         }
         return null;
     };
+    self.skipCounts = ko.observable(null);
+    /**
+     * Store the counts used to decide whether this node is incomplete only because of skipped steps.
+     * @param counts object with total, SUCCEEDED, NOT_STARTED and optional pending
+     */
+    self.captureSkipCounts=function(counts){
+        if(!counts){
+            self.skipCounts(null);
+            return;
+        }
+        self.skipCounts({
+            total: counts.total,
+            SUCCEEDED: counts.SUCCEEDED,
+            NOT_STARTED: counts.NOT_STARTED,
+            pending: counts.pending != null ? counts.pending : self.flow.pendingStepsForNode(self.name)
+        });
+    };
+    /**
+     * Whether this node should be hidden when the hide-incomplete toggle is on.
+     * @returns {boolean}
+     */
+    self.isIncompleteSkipOnly=function(){
+        return RDNode.isSkippedOnlySuccess(self.skipCounts());
+    };
     /**
      * Determine summary data for the node, sets the summaryState and summary and currentStep
      */
@@ -863,6 +912,7 @@ function RDNode(name, steps,flow){
                 currentStep = step;
             }
         });
+        self.captureSkipCounts(summarydata);
         self.currentStep(currentStep);
 
         //based on step states set the summary for this node
@@ -911,10 +961,13 @@ function RDNode(name, steps,flow){
     };
     self.updateSummary=function(nodesummary){
         if(nodesummary.lastUpdated && self.lastUpdated()==nodesummary.lastUpdated
-            && nodesummary.summaryState==self.summaryState()){
+            && self._serverSummary && nodesummary.summaryState==self._serverSummary.summaryState){
+            self.captureSkipCounts(nodesummary);
             return;
         }
         self.lastUpdated(nodesummary.lastUpdated);
+        self._serverSummary=nodesummary;
+        self.captureSkipCounts(nodesummary);
         self.summaryState(nodesummary.summaryState);
         self.summary(self.summaryDescriptionForState(nodesummary));
 
@@ -990,6 +1043,14 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.endTime=ko.observable();
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
+    self.hideIncompleteNodes = ko.observable(false);
+    /**
+     * Skipped conditionals can only be told apart from steps that were never reached once the
+     * execution has finished successfully, so the toggle has no effect on any other execution.
+     */
+    self.hideIncompleteNodesApplies = ko.pureComputed(function () {
+        return !!self.completed() && self.executionState() === 'SUCCEEDED';
+    });
     self.activeView = ko.observable("nodes");
     /**
      * synonym with activeView, to maintain compatibility
@@ -1033,6 +1094,35 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.activeNodes=ko.pureComputed(function(){
         return ko.utils.arrayFilter(self.nodes(), function (n) {
             return n.summaryState() !== 'NONE';
+        });
+    });
+    /**
+     * Names of nodes that are incomplete only because skipped conditionals did not run.
+     */
+    self.incompleteSkipNodeNames=ko.pureComputed(function(){
+        var names=[];
+        ko.utils.arrayForEach(self.nodes(), function (n) {
+            if (n.isIncompleteSkipOnly && n.isIncompleteSkipOnly()) {
+                names.push(n.name);
+            }
+        });
+        return names;
+    });
+    /**
+     * Nodes shown in the Nodes tab. When the hide-incomplete toggle is on, skip-only
+     * incomplete nodes are omitted from the list (completion counts are unchanged).
+     */
+    self.visibleNodes=ko.pureComputed(function(){
+        var nodes=self.activeNodes();
+        if (!self.hideIncompleteNodes() || !self.hideIncompleteNodesApplies()) {
+            return nodes;
+        }
+        var hide={};
+        ko.utils.arrayForEach(self.incompleteSkipNodeNames(), function (name) {
+            hide[name]=true;
+        });
+        return ko.utils.arrayFilter(nodes, function (n) {
+            return !hide[n.name];
         });
     });
     self.displayStatusString = ko.computed(function () {
@@ -1200,6 +1290,41 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.percentageFixed = function(a,b){
         return (b==0)?0:(100*(a/b)).toFixed(0);
     };
+
+    self.publishHideIncompleteState = function () {
+        var bus = window._rundeck && window._rundeck.eventBus;
+        if (!bus || typeof bus.emit !== 'function') {
+            return;
+        }
+        var hide = !!(self.hideIncompleteNodes() && self.hideIncompleteNodesApplies());
+        bus.emit('execution-hide-incomplete-nodes-state', {
+            hide: hide,
+            applies: self.hideIncompleteNodesApplies(),
+            nodeNames: hide ? self.incompleteSkipNodeNames() : []
+        });
+    };
+    self.hideIncompleteNodes.subscribe(function () {
+        self.publishHideIncompleteState();
+    });
+    self.hideIncompleteNodesApplies.subscribe(function () {
+        self.publishHideIncompleteState();
+    });
+    self.incompleteSkipNodeNames.subscribe(function () {
+        self.publishHideIncompleteState();
+    });
+    (function bindHideIncompleteEventBus() {
+        var bus = window._rundeck && window._rundeck.eventBus;
+        if (!bus || typeof bus.on !== 'function') {
+            return;
+        }
+        bus.on('execution-hide-incomplete-nodes-toggle', function (hide) {
+            self.hideIncompleteNodes(!!hide);
+        });
+        bus.on('execution-hide-incomplete-nodes-request', function () {
+            self.publishHideIncompleteState();
+        });
+        self.publishHideIncompleteState();
+    })();
 
     self.stopShowingOutput= function () {
         if(self.followingControl){

@@ -143,9 +143,17 @@ class StateMapping {
                 summary.WAITING=summarydata.WAITING;
                 summary.summaryState=("WAITING");
             } else if (summarydata.NOT_STARTED == summarydata.total && summarydata.pending < 1) {
+                summary.total=summarydata.total;
+                summary.SUCCEEDED=summarydata.SUCCEEDED;
+                summary.NOT_STARTED=summarydata.NOT_STARTED;
                 summary.summaryState=("NOT_STARTED");
             } else if (summarydata.NOT_STARTED > 0) {
                 summary.PARTIAL_NOT_STARTED=summarydata.NOT_STARTED;
+                //the summary state alone cannot tell a skipped conditional apart from a step that was
+                //never reached, so expose the counts the UI needs to make that distinction
+                summary.total=summarydata.total;
+                summary.SUCCEEDED=summarydata.SUCCEEDED;
+                summary.NOT_STARTED=summarydata.NOT_STARTED;
                 summary.summaryState=("PARTIAL_NOT_STARTED");
             }else if(summarydata.pending > 0 ){
                 summary.summaryState=("WAITING");
