@@ -387,7 +387,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         return createJobStatus(status, jobActionsForStatus(status))
     }
 
-    private hasJobStatusCached(final JobExportReference job, final String originalPath) {
+    private getCachedStatusIfValid(final JobExportReference job, final String originalPath) {
         def path = relativePath(job)
         def state = jobStateMap[job.id]
 
@@ -530,7 +530,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (!inited) {
             return null
         }
-        def status = hasJobStatusCached(job, originalPath)
+        def status = getCachedStatusIfValid(job, originalPath)
 
         if (!status) {
             status = refreshJobStatus(job, originalPath, serialize)
@@ -649,9 +649,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         jobs.each {job->
             log.debug("cleanJobStatusCache(${job.id}): ${job}")
 
-            def status = hasJobStatusCached(job, null)
+            def status = getCachedStatusIfValid(job, null)
 
-            if (status) {
+            if (!status) {
                 refreshJobStatus(job, null, false)
             }
         }

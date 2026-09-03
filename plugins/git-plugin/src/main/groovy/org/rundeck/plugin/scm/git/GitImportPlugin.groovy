@@ -331,7 +331,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         ident
     }
 
-    private hasJobStatusCached(final JobScmReference job, final String originalPath) {
+    private getCachedStatusIfValid(final JobScmReference job, final String originalPath) {
         def path = relativePath(job)
         def state = jobStateMap[job.id]
 
@@ -343,10 +343,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         String ident = createStatusCacheIdent(job, commit)
 
         if (state && state.ident == ident) {
-            log.debug("hasJobStatusCached(${ident}): FOUND for path $path")
+            log.debug("getCachedStatusIfValid(${ident}): FOUND for path $path")
             return state
         }
-        log.debug("hasJobStatusCached(${ident}): (no) for path $path")
+        log.debug("getCachedStatusIfValid(${ident}): (no) for path $path")
 
         null
     }
@@ -495,7 +495,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (null == originalPath) {
             originalPath = importTracker.originalValue(path)
         }
-        def status = hasJobStatusCached(job, originalPath)
+        def status = getCachedStatusIfValid(job, originalPath)
         if (!status) {
             status = refreshJobStatus(job, originalPath)
         }

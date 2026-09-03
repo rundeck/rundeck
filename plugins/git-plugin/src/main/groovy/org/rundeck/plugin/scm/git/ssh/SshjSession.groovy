@@ -68,15 +68,15 @@ class SshjSession implements RemoteSession {
         defaultConfig.setKeepAliveProvider(KeepAliveProvider.KEEP_ALIVE)
         SSHClient ssh = new SSHClient(defaultConfig)
 
-        if (sshConfig.get("StrictHostKeyChecking") == "no") {
-            ssh.addHostKeyVerifier(new PromiscuousVerifier())
-        } else {
-            //fail secure: default to strict host key checking unless explicitly disabled
-            ssh.loadKnownHosts()
-        }
-
         try {
-            if (port != null) {
+            if (sshConfig.get("StrictHostKeyChecking") == "no") {
+                ssh.addHostKeyVerifier(new PromiscuousVerifier())
+            } else {
+                //fail secure: default to strict host key checking unless explicitly disabled
+                ssh.loadKnownHosts()
+            }
+
+            if (port > 0) {
                 ssh.connect(host, port)
             } else {
                 ssh.connect(host)
@@ -99,6 +99,11 @@ class SshjSession implements RemoteSession {
         } catch (IOException e) {
             ssh.close()
             throw new TransportException(uri, e.getMessage(), e)
+        } catch (Throwable t) {
+            //ensure the client is never leaked, even if a non-IOException escapes
+            //host-key setup, connect, or key-provider/auth handling above
+            ssh.close()
+            throw t
         }
     }
 
