@@ -986,12 +986,10 @@ class ApiService implements WebUtilService{
 
     @Override
     String extractResponseFormat(HttpServletRequest request, HttpServletResponse response, List<String> allowed, String defformat) {
-        def requestFormat = request.format
-        if (allowed && requestFormat && allowed.contains(requestFormat)) {
-            return requestFormat
-        }
-        
-        // Grails 7: request.format might not be set from Accept header, check it explicitly.
+        // Accept header takes precedence: content negotiation should honor what the client asked
+        // to receive, independent of the format of the request body it sent. Checking request.format
+        // first (RUN-4790) meant a YAML-bodied request with Accept: application/json was answered
+        // with raw YAML, since 'yaml' matched request.format before the Accept header was consulted.
         // HTTP media types are case-insensitive (RFC 7231), so normalize before matching.
         String acceptHeader = request.getHeader('Accept')?.toLowerCase()
         if (acceptHeader && allowed) {
@@ -1009,7 +1007,12 @@ class ApiService implements WebUtilService{
                 return 'text'
             }
         }
-        
+
+        def requestFormat = request.format
+        if (allowed && requestFormat && allowed.contains(requestFormat)) {
+            return requestFormat
+        }
+
         if (defformat) {
             return defformat
         }
