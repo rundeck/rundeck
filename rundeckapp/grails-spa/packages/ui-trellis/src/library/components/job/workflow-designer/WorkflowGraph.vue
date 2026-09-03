@@ -293,9 +293,7 @@ export default defineComponent({
       },
     } as Joint.dia.Paper.Options));
 
-    window.addEventListener("resize", () => {
-      this.scaleContentToFit();
-    });
+    window.addEventListener("resize", this.scaleContentToFit);
 
     paper.on("link:mouseenter", (linkView) => {
       if (this.interactive) linkView.showTools();
