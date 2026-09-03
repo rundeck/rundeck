@@ -37,9 +37,8 @@ class JsonUtil {
      *
      * @param request HttpServletRequest with JSON body
      * @return Parsed JSON as Map, or null if request body is empty, already consumed, or not a JSON object
-     * @throws IOException if JSON parsing fails (but not if body is unavailable)
      */
-    static Map parseRequestBody(HttpServletRequest request) throws IOException {
+    static Map parseRequestBody(HttpServletRequest request) {
         def content = readRequestBodyContent(request, 'parseRequestBody')
         if (!content) {
             return null
@@ -62,9 +61,8 @@ class JsonUtil {
      *
      * @param request HttpServletRequest with a JSON array body
      * @return Parsed JSON as a List, or null if request body is empty, already consumed, or not a JSON array
-     * @throws IOException if JSON parsing fails (but not if body is unavailable)
      */
-    static List parseRequestBodyAsList(HttpServletRequest request) throws IOException {
+    static List parseRequestBodyAsList(HttpServletRequest request) {
         def content = readRequestBodyContent(request, 'parseRequestBodyAsList')
         if (!content) {
             return null
