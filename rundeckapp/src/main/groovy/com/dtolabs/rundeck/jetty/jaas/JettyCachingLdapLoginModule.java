@@ -30,6 +30,7 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
@@ -79,6 +80,7 @@ import rundeck.services.ConfigurationService;
  *    authenticationMethod="simple"
  *    forceBindingLogin="false"
  *    forceBindingLoginUseRootContextForRoles="false"
+ *    forceBindingLoginNoAnonymousSearch="false"
  *    userBaseDn="ou=people,dc=alcatel"
  *    userRdnAttribute="uid"
  *    userIdAttribute="uid"
@@ -247,6 +249,19 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * is true, then role memberships are obtained using _rootContext
      */
     protected boolean _forceBindingLoginUseRootContextForRoles = false;
+
+    /**
+     * Enable this when _forceBindingLogin is true and the LDAP server does not allow anonymous or
+     * bind-user search (only binding as a real user). Normally, forceBindingLogin still looks up the
+     * user's DN via a search using _rootContext before binding as that user; that search fails with
+     * "insufficient access" or similar errors if anonymous/bind-user search is disabled.
+     * <br>
+     * When this is true, the search is skipped entirely, and the user's bind DN is instead constructed
+     * directly from _userRdnAttribute, the username, and _userBaseDn (e.g. "uid=jsmith,ou=people,dc=example,dc=com").
+     * This requires that pattern to actually match the user's real DN. Defaults to false to preserve
+     * prior behavior.
+     */
+    protected boolean _forceBindingLoginNoAnonymousSearch = false;
 
     protected DirContext _rootContext;
 
@@ -956,13 +971,23 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             }
         }
 
-        SearchResult searchResult = findUser(username);
+        String userDn;
+        DirContext dirContext;
+        if (_forceBindingLoginNoAnonymousSearch) {
+            // Skip the _rootContext search and bind directly with a DN constructed from
+            // configuration, so no anonymous or bind-user search permissions are required.
+            userDn = constructUserDn(normalizedUsername);
+            LOG.info("Attempting authentication: " + userDn);
+            dirContext = createBindUserDirContext(userDn, password);
+            setDemographicAttributes(fetchUserAttributes(dirContext, userDn));
+        } else {
+            SearchResult searchResult = findUser(username);
+            userDn = searchResult.getNameInNamespace();
 
-        String userDn = searchResult.getNameInNamespace();
-
-        LOG.info("Attempting authentication: " + userDn);
-        DirContext dirContext = createBindUserDirContext(userDn, password);
-        setDemographicAttributes(searchResult.getAttributes());
+            LOG.info("Attempting authentication: " + userDn);
+            dirContext = createBindUserDirContext(userDn, password);
+            setDemographicAttributes(searchResult.getAttributes());
+        }
 
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
@@ -1036,6 +1061,79 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         return (SearchResult) results.nextElement();
     }
 
+    /**
+     * Constructs a user's bind DN directly from configuration (userRdnAttribute=username,userBaseDn),
+     * without performing an LDAP search. Used by {@link #bindingLogin(String, Object)} when
+     * {@link #_forceBindingLoginNoAnonymousSearch} is enabled, to support LDAP servers that do not
+     * permit anonymous or bind-user searches.
+     *
+     * @param username the normalized username supplied by the authenticating user
+     * @return the constructed DN
+     */
+    protected String constructUserDn(final String username) {
+        return _userRdnAttribute + "=" + escapeDnValue(username) + "," + _userBaseDn;
+    }
+
+    /**
+     * Escapes special characters in a value being used as an RDN component of a distinguished name,
+     * per RFC 4514, to prevent DN injection when constructing a DN from user-supplied input.
+     *
+     * @param value the raw value to escape
+     * @return the escaped value, safe for inclusion in a DN
+     */
+    protected String escapeDnValue(final String value) {
+        if (value == null) {
+            return "";
+        }
+        StringBuilder escaped = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '\\':
+                case ',':
+                case '+':
+                case '"':
+                case '<':
+                case '>':
+                case ';':
+                case '=':
+                    escaped.append('\\').append(c);
+                    break;
+                case '\0':
+                    escaped.append("\\00");
+                    break;
+                default:
+                    boolean leadingSpaceOrHash = i == 0 && (c == ' ' || c == '#');
+                    boolean trailingSpace = i == value.length() - 1 && c == ' ';
+                    if (leadingSpaceOrHash || trailingSpace) {
+                        escaped.append('\\').append(c);
+                    } else {
+                        escaped.append(c);
+                    }
+            }
+        }
+        return escaped.toString();
+    }
+
+    /**
+     * Reads the LDAP attributes of the given userDn using the supplied (already bound) dirContext.
+     * Used when the user's DN was constructed directly (see {@link #_forceBindingLoginNoAnonymousSearch})
+     * rather than discovered via a directory search, so demographic attributes (name, email) can
+     * still be populated from a self-lookup performed as the authenticated user.
+     *
+     * @param dirContext a context already bound as userDn
+     * @param userDn the user's distinguished name
+     * @return the user's attributes, or an empty set of attributes if they could not be read
+     */
+    protected Attributes fetchUserAttributes(final DirContext dirContext, final String userDn) {
+        try {
+            return dirContext.getAttributes(userDn);
+        } catch (NamingException e) {
+            debug("Unable to read user attributes for " + userDn + ": " + e.getMessage());
+            return new BasicAttributes();
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState,
                            Map<String, ?> options) {
@@ -1104,6 +1202,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         if (options.containsKey("forceBindingLoginUseRootContextForRoles")) {
             _forceBindingLoginUseRootContextForRoles = Boolean.parseBoolean((String) options.get("forceBindingLoginUseRootContextForRoles"));
+        }
+
+        if (options.containsKey("forceBindingLoginNoAnonymousSearch")) {
+            _forceBindingLoginNoAnonymousSearch = Boolean.parseBoolean((String) options.get("forceBindingLoginNoAnonymousSearch"));
         }
 
         _userObjectClass = getOption(options, "userObjectClass", _userObjectClass);

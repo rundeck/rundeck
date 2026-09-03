@@ -154,6 +154,95 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         'auser'  | false
     }
 
+    def "constructUserDn builds dn from rdn attribute, username and base dn"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._userRdnAttribute = 'uid'
+        module._userBaseDn = 'ou=people,dc=example,dc=com'
+        expect:
+        module.constructUserDn('auser') == 'uid=auser,ou=people,dc=example,dc=com'
+    }
+
+    def "escapeDnValue escapes special dn characters"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        expect:
+        module.escapeDnValue(null) == ''
+        module.escapeDnValue('plain') == 'plain'
+        module.escapeDnValue('a,b') == 'a\\,b'
+        module.escapeDnValue('a+b') == 'a\\+b'
+        module.escapeDnValue('a"b') == 'a\\"b'
+        module.escapeDnValue('a<b') == 'a\\<b'
+        module.escapeDnValue('a>b') == 'a\\>b'
+        module.escapeDnValue('a;b') == 'a\\;b'
+        module.escapeDnValue('a=b') == 'a\\=b'
+        module.escapeDnValue('a\\b') == 'a\\\\b'
+        module.escapeDnValue(' leading') == '\\ leading'
+        module.escapeDnValue('trailing ') == 'trailing\\ '
+        module.escapeDnValue('#leading') == '\\#leading'
+    }
+
+    def "bindingLogin with forceBindingLoginNoAnonymousSearch skips root context search"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._forceBindingLogin = true
+        module._forceBindingLoginNoAnonymousSearch = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._userRdnAttribute = 'cn'
+        module._userBaseDn = 'dc=test,dc=com'
+        module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = false
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = 'apassword' }
+        })  // Use setter instead of @field access (Groovy 4)
+        def expectedUserDn = "cn=$username,dc=test,dc=com"
+        // no search should ever be issued against _rootContext, since the DN is constructed directly
+        def rootContext = Mock(DirContext) {
+            0 * _(*_)
+        }
+        module._rootContext = rootContext
+        def stringRoles = ['role1', 'role2']
+        def foundRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get(module._roleNameAttribute) >> Mock(Attribute) {
+                    getAll() >> {new EnumImpl<String>(stringRoles)}
+                }
+            }
+        }]
+        DirContext userDir = Mock(DirContext) {
+            1 * getAttributes(expectedUserDn) >> new BasicAttributes()
+            1 * search(
+                'roleBaseDn',
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._roleObjectClass, 'roleUsernameMemberAttribute', username],
+                _
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
+            0 * _(*_)
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            assert user == expectedUserDn
+            userDir
+        }
+        Subject testSubject = new Subject()
+        when:
+        boolean result = module.login()
+        module.getCurrentUser().setJAASInfo(testSubject)  // Use getter instead of @field access (Groovy 4)
+
+        then:
+        result
+        null != testSubject.getPrincipals(Principal)
+        username == testSubject.getPrincipals(Principal).first().name
+        null != testSubject.getPrincipals(RundeckRole)
+        2 == testSubject.getPrincipals(RundeckRole).size()
+        ['role1', 'role2'] == testSubject.getPrincipals(RundeckRole)*.name
+
+
+        where:
+        username | _
+        'auser'  | _
+    }
+
     def "bindingLogin should set user roles without pagination"() {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
         module._debug = true
