@@ -383,8 +383,8 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         cached.userInfo.getCredential() == null
 
         where:
-        username | passwordvalue
-        'auser'  | 'apassword'
+        username             | passwordvalue
+        'credentialcacheuser' | 'credentialcachepassword'
     }
 
     @Unroll
