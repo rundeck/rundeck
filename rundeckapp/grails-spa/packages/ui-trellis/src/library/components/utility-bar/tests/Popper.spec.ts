@@ -9,14 +9,25 @@ interface MountOptions {
   slots?: Record<string, string>;
 }
 
-const createWrapper = (options: MountOptions = {}) => {
-  return mount(Popper, {
-    attachTo: document.body,
+// Popper.vue reads this.$refs.wrapper.parentElement at mount time to know
+// what counts as "inside" for the outside-click check, so the test mounts it
+// into an explicit trigger element (as it's used in real usage, e.g. a
+// button) rather than relying on Vue Test Utils' own attachTo container.
+let triggerEl: HTMLElement | null = null;
+
+const createWrapper = async (options: MountOptions = {}) => {
+  triggerEl = document.createElement("button");
+  document.body.appendChild(triggerEl);
+
+  const wrapper = mount(Popper, {
+    attachTo: triggerEl,
     slots: {
       default: '<div data-testid="slot-content">Popper body</div>',
       ...options.slots,
     },
   });
+  await wrapper.vm.$nextTick();
+  return wrapper;
 };
 
 // Popper.vue moves its content node onto document.body for positioning, so it
@@ -31,24 +42,26 @@ describe("Popper", () => {
   afterEach(() => {
     wrapper?.unmount();
     wrapper = null;
+    triggerEl?.remove();
+    triggerEl = null;
   });
 
   describe("rendering", () => {
-    it("renders slot content", () => {
-      wrapper = createWrapper();
+    it("renders slot content", async () => {
+      wrapper = await createWrapper();
 
       expect(findInDocument("slot-content")?.textContent).toBe("Popper body");
     });
 
-    it("attaches its content to document.body", () => {
-      wrapper = createWrapper();
+    it("attaches its content to document.body", async () => {
+      wrapper = await createWrapper();
 
       const popperContent = findInDocument("popper-content");
       expect(popperContent?.parentElement).toBe(document.body);
     });
 
-    it("removes its content from document.body on unmount", () => {
-      wrapper = createWrapper();
+    it("removes its content from document.body on unmount", async () => {
+      wrapper = await createWrapper();
       wrapper.unmount();
       wrapper = null;
 
@@ -58,7 +71,7 @@ describe("Popper", () => {
 
   describe("close on outside click", () => {
     it("emits close when clicking outside the popper and its parent", async () => {
-      wrapper = createWrapper();
+      wrapper = await createWrapper();
 
       const outside = document.createElement("div");
       document.body.appendChild(outside);
@@ -72,7 +85,7 @@ describe("Popper", () => {
     });
 
     it("does not emit close when clicking inside the popper content", async () => {
-      wrapper = createWrapper();
+      wrapper = await createWrapper();
 
       findInDocument("slot-content")?.dispatchEvent(
         new MouseEvent("click", { bubbles: true }),

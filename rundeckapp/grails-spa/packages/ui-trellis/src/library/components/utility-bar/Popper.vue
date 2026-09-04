@@ -1,5 +1,5 @@
 <template>
-  <div ref="wrapper" data-testid="popper-wrapper" style="display: none">
+  <div ref="wrapper" class="popper-wrapper">
     <div ref="popper" class="popper" data-testid="popper-content" @click.stop>
       <slot />
     </div>
@@ -77,17 +77,12 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
+.popper-wrapper {
+  display: none;
+}
+
 .popper {
-  // Must stay above the fixed layout sections used in Next UI
-  // (#section-navbar/#section-utility/#section-header, which use
-  // $zindex-navbar-fixed [1030] and $zindex-navbar-fixed + 2 [1032]
-  // in _view.scss), or the left nav renders on top of this popup.
-  //
-  // Can't reference $zindex-navbar-fixed directly here: _variables.scss
-  // depends on other partials (e.g. $cyan-500 from a colors file) that are
-  // only in scope when the whole theme is assembled via app.scss - importing
-  // it standalone into this scoped SFC style block fails to compile
-  // ("Undefined variable $cyan-500"). Keep this a hardcoded literal.
+  // Above Next UI's fixed sections (z-index 1032), below the modal backdrop (1040).
   z-index: 1035;
   cursor: auto;
 }
