@@ -242,5 +242,44 @@ describe("WorkflowGraph", () => {
       expect(document.body.style.userSelect).toBe("");
       expect(document.body.style.cursor).toBe("");
     });
+
+    it("clears active resize state when unmounted during a drag", async () => {
+      const wrapper = await createWrapper();
+      setContainerWidth(wrapper, 1200);
+
+      await findByTestId(wrapper, "workflow-graph-resizer").trigger(
+        "mousedown",
+        { clientX: 500 },
+      );
+      await wrapper.vm.$nextTick();
+
+      const renderedValue = findByTestId(
+        wrapper,
+        "workflow-graph-resizer",
+      ).attributes("aria-valuenow");
+      const renderedPanelStyle = findByTestId(
+        wrapper,
+        "workflow-graph-side-panel",
+      ).attributes("style");
+      const renderedResizer = findByTestId(wrapper, "workflow-graph-resizer")
+        .element as HTMLElement;
+      const renderedSidePanel = findByTestId(
+        wrapper,
+        "workflow-graph-side-panel",
+      ).element as HTMLElement;
+
+      wrapper.unmount();
+
+      expect(document.body.style.userSelect).toBe("");
+      expect(document.body.style.cursor).toBe("");
+
+      window.dispatchEvent(new MouseEvent("mousemove", { clientX: 450 }));
+      window.dispatchEvent(new MouseEvent("mouseup"));
+
+      expect(document.body.style.userSelect).toBe("");
+      expect(document.body.style.cursor).toBe("");
+      expect(renderedResizer.getAttribute("aria-valuenow")).toBe(renderedValue);
+      expect(renderedSidePanel.getAttribute("style")).toBe(renderedPanelStyle);
+    });
   });
 });
