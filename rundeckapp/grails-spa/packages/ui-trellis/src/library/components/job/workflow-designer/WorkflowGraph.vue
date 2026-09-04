@@ -1042,9 +1042,13 @@ export default defineComponent({
       window.addEventListener("mouseup", this.resizeMouseUpHandler);
     },
     stopResizeSidePanel() {
+      const wasResizing = this.resizingSidePanel;
       this.resizingSidePanel = false;
-      document.body.style.userSelect = this.previousBodyUserSelect;
-      document.body.style.cursor = this.previousBodyCursor;
+
+      if (wasResizing) {
+        document.body.style.userSelect = this.previousBodyUserSelect;
+        document.body.style.cursor = this.previousBodyCursor;
+      }
 
       if (this.resizeMouseMoveHandler) {
         window.removeEventListener("mousemove", this.resizeMouseMoveHandler);
