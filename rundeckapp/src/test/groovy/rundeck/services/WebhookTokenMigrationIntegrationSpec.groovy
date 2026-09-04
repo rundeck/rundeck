@@ -1,12 +1,13 @@
 package rundeck.services
 
-import groovy.sql.Sql
+import grails.testing.gorm.DataTest
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
-import rundeck.data.util.AuthenticationTokenUtils
+import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.rundeck.app.data.providers.GormTokenDataProvider
+import rundeck.AuthToken
+import rundeck.User
 import spock.lang.Specification
-
-import javax.sql.DataSource
-import java.sql.DriverManager
+import webhooks.Webhook
 
 /**
  * End-to-end regression coverage for PS-1686: a webhook created before this fix — auth_token
@@ -17,82 +18,67 @@ import java.sql.DriverManager
  * This ties together the two independent storage paths involved in webhook auth (the
  * auth_token row consulted by {@code GormTokenDataProvider.tokenLookupWithType}, and the
  * separate webhook.auth_token column consulted by {@code Webhook.findByAuthToken}) plus the
- * migration itself. {@code GormTokenDataProviderSpec}'s "token lookup test" already proves
- * the hybrid SECURED-hash-or-LEGACY-raw lookup correctly resolves a SECURED row by re-hashing
- * the caller's raw input; what's verified here is the piece that closes the loop: the
- * migration produces exactly that SECURED shape (raw input hashes to the persisted value)
- * while leaving the webhook's separate public-secret column untouched.
+ * migration itself.
  */
-class WebhookTokenMigrationIntegrationSpec extends Specification {
+class WebhookTokenMigrationIntegrationSpec extends Specification implements DataTest {
 
-    Sql sql
-    WebhookTokenSecureMigrationService migrationService
+    GormTokenDataProvider tokenProvider = new GormTokenDataProvider()
+    WebhookTokenSecureMigrationService migrationService = new WebhookTokenSecureMigrationService()
 
-    def setup() {
-        String jdbcUrl = "jdbc:h2:mem:${UUID.randomUUID()};DB_CLOSE_DELAY=-1"
-        DataSource dataSource = [getConnection: { -> DriverManager.getConnection(jdbcUrl) }] as DataSource
-        sql = new Sql(dataSource)
-        sql.execute('''
-            CREATE TABLE auth_token (
-                id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                token VARCHAR(255) NOT NULL UNIQUE,
-                type VARCHAR(255),
-                token_mode VARCHAR(255)
-            )
-        ''')
-        sql.execute('''
-            CREATE TABLE webhook (
-                id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                uuid VARCHAR(255),
-                name VARCHAR(255) NOT NULL,
-                project VARCHAR(255) NOT NULL,
-                auth_token VARCHAR(255) NOT NULL,
-                event_plugin VARCHAR(255) NOT NULL
-            )
-        ''')
-
-        migrationService = new WebhookTokenSecureMigrationService()
-        migrationService.dataSource = dataSource
+    void setup() {
+        mockDomains(AuthToken, User, Webhook)
         migrationService.frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> false
         }
     }
 
-    def cleanup() {
-        sql.close()
-    }
-
-    def "an old LEGACY webhook token keeps resolving via both storage paths after the SECURED migration runs"() {
-        given: "a webhook created before PS-1686: auth_token is LEGACY, and webhook.auth_token holds the same plaintext value"
+    def "an old LEGACY webhook token keeps authenticating after the SECURED migration runs"() {
+        given: "a webhook created before PS-1686: the auth_token row is LEGACY, and the webhook's public secret is the same plaintext value"
+        User owner = new User(login: 'webhookUser').save(flush: true, failOnError: true)
         String clearToken = 'old-plaintext-webhook-secret'
-        sql.execute("INSERT INTO auth_token (token, type, token_mode) VALUES (${clearToken}, 'WEBHOOK', 'LEGACY')")
-        sql.execute("INSERT INTO webhook (uuid, name, project, auth_token, event_plugin) VALUES ('old-webhook', 'legacy-webhook', 'Test', ${clearToken}, 'log-webhook-event')")
+        new AuthToken(
+                user: owner,
+                uuid: 'old-webhook-token',
+                authRoles: 'webhook,test',
+                token: clearToken,
+                tokenMode: AuthTokenMode.LEGACY,
+                type: AuthTokenType.WEBHOOK,
+        ).save(flush: true, failOnError: true)
+        new Webhook(
+                uuid: 'old-webhook',
+                name: 'legacy-webhook',
+                project: 'Test',
+                authToken: clearToken,
+                eventPlugin: 'log-webhook-event',
+        ).save(flush: true, failOnError: true)
 
         when: "the webhook is triggered before the migration runs"
-        def webhookRowBefore = sql.firstRow("SELECT auth_token FROM webhook WHERE auth_token = ${clearToken}")
-        def authTokenRowBefore = sql.firstRow("SELECT token, token_mode FROM auth_token WHERE type = 'WEBHOOK' AND token = ${clearToken}")
+        def webhookBefore = Webhook.findByAuthToken(clearToken)
+        def authTokenBefore = tokenProvider.tokenLookupWithType(clearToken, AuthTokenType.WEBHOOK)
 
-        then: "both independent lookups resolve using the raw clear-text value — the webhook works"
-        webhookRowBefore?.auth_token == clearToken
-        authTokenRowBefore?.token == clearToken
-        authTokenRowBefore?.token_mode == 'LEGACY'
+        then: "both lookups succeed using the raw clear-text value"
+        webhookBefore?.uuid == 'old-webhook'
+        authTokenBefore?.uuid == 'old-webhook-token'
+        authTokenBefore.getAuthRolesSet() == ['webhook', 'test'] as Set
 
         when: "the startup migration re-hashes existing LEGACY webhook tokens"
         migrationService.migrateWebhookTokensToSecured()
 
         and: "the webhook is triggered again after the migration, with the SAME raw token"
-        def webhookRowAfter = sql.firstRow("SELECT auth_token FROM webhook WHERE auth_token = ${clearToken}")
-        String expectedHash = AuthenticationTokenUtils.encodeTokenValue(clearToken, AuthTokenMode.SECURED)
-        def authTokenRowAfter = sql.firstRow("SELECT token, token_mode FROM auth_token WHERE type = 'WEBHOOK' AND token = ${expectedHash}")
+        def webhookAfter = Webhook.findByAuthToken(clearToken)
+        def authTokenAfter = tokenProvider.tokenLookupWithType(clearToken, AuthTokenType.WEBHOOK)
 
-        then: "the webhook definition still resolves by the identical raw value — its URL is unaffected"
-        webhookRowAfter?.auth_token == clearToken
+        then: "both lookups still succeed with the identical raw value — the webhook keeps working"
+        webhookAfter?.uuid == 'old-webhook'
+        authTokenAfter?.uuid == 'old-webhook-token'
+        authTokenAfter.getAuthRolesSet() == ['webhook', 'test'] as Set
 
-        and: "the auth_token row is now SECURED, and its hash is exactly what re-hashing the original raw value produces"
-        authTokenRowAfter?.token == expectedHash
-        authTokenRowAfter?.token_mode == 'SECURED'
+        and: "the row is now actually hashed at rest, not left in plaintext"
+        AuthToken migrated = AuthToken.findByUuid('old-webhook-token')
+        migrated.tokenMode == AuthTokenMode.SECURED
+        migrated.token != clearToken
 
-        and: "no row is left behind under the old plaintext value — it was converted in place, not duplicated"
-        sql.firstRow("SELECT COUNT(*) AS c FROM auth_token WHERE type = 'WEBHOOK' AND token = ${clearToken}").c == 0
+        and: "the webhook's public secret column was never touched by the migration"
+        Webhook.findByUuid('old-webhook').authToken == clearToken
     }
 }
