@@ -14,8 +14,10 @@ Quick reference for common build and test commands in the rundeck OSS repo.
 # Build without tests or quality checks (fastest — 4-8 min)
 ./gradlew build -x check
 
-# Run in dev mode
-./gradlew bootRun
+# Run in dev mode (-Dgrails.env=development is REQUIRED for asset hot-reload
+# to work without a bootRun restart — see "Hot-reloading SPA assets" below.
+# In IntelliJ, add it to the Gradle run config's "Script parameters" / VM options.)
+./gradlew bootRun -Dgrails.env=development
 
 # Clean build artifacts
 ./gradlew clean
@@ -68,6 +70,46 @@ npm run --prefix "$UI" dev:test:watch         # Watch mode
 # - Code quality checks (spotless, checkstyle)
 # CI will run the full test suite
 ```
+
+## Hot-Reloading SPA Assets During `bootRun`
+
+> **⚠️ WORK IN PROGRESS — not fully working yet.** The `useManifest`/`bundle`
+> config below is confirmed to help pick up changes on a `bootRun` restart,
+> but no-restart hot-reload (editing a file, running `copySpa`, and seeing it
+> without restarting) is **not yet working** — see `HOT_RELOAD_HANDOFF.md` at
+> the repo root for the full investigation and next steps. Don't rely on the
+> "no restart needed" claim below until that's resolved.
+
+By default, `bootRun` serves assets through a precompiled digest manifest that
+is loaded into memory once at JVM startup — recompiling SCSS/JS on disk does
+nothing until the JVM restarts. Running with `-Dgrails.env=development` (see
+above) activates a dev-scoped `grails.assets.useManifest: false` override
+(`rundeckapp/grails-app/conf/application.yml`), which makes asset-pipeline
+serve assets dynamically instead: it recompiles only the files whose content
+actually changed (content-hash + dependency tracked, not a full project
+rebuild) on each request.
+
+With `-Dgrails.env=development` set, the loop to see a Vue/SCSS/JS change
+under `rundeckapp/grails-spa/packages/ui-trellis/src` is:
+
+```bash
+# 1. Edit a file under src/app or src/library
+
+# 2. Recompile + copy into the Grails asset tree
+./gradlew :rundeckapp:copySpa
+
+# 3. Hard-reload the browser — no bootRun restart needed
+```
+
+No `assetClean`/`assetCompile`/`copyCompiledAssets` dance is required — those
+still run as part of `bootRun`'s normal dependency chain, but their output
+(the digest manifest) is simply unused for serving in dev mode. Production/WAR
+builds (`./gradlew build`) are unaffected — the `useManifest: false` override
+is scoped to `environments: development:` only.
+
+If you forget `-Dgrails.env=development`, `bootRun` falls back to the default
+manifest-based serving and you'll need a full restart to see asset changes,
+same as before this change.
 
 ## Troubleshooting
 
