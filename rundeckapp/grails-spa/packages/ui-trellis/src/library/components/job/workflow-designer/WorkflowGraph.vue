@@ -81,6 +81,7 @@
       </div>
       <div
         role="separator"
+        data-testid="workflow-graph-resizer"
         aria-orientation="vertical"
         :aria-valuenow="sidePanelWidth"
         :aria-valuemin="sidePanelMinWidth"
@@ -95,6 +96,7 @@
         @keydown.right.prevent="nudgeSidePanelWidth(-20)"
       />
       <div
+        data-testid="workflow-graph-side-panel"
         :style="sidePanelStyle"
         style="
           box-shadow: rgba(0, 0, 0, 0.15) 2px 0px 8px 0px;
