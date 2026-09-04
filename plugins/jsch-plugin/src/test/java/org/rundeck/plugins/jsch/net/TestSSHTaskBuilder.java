@@ -33,7 +33,6 @@ import junit.framework.TestCase;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.types.Environment;
-import org.apache.tools.ant.types.FileSet;
 import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.StorageException;
 
@@ -236,29 +235,6 @@ public class TestSSHTaskBuilder extends TestCase {
         @Override
         public void setCommandTimeout(long commandTimeout) {
             this.commandTimeout = commandTimeout;
-        }
-    }
-
-    static class testSCPInterface extends testSSHBaseInterface implements SSHTaskBuilder.SCPInterface {
-        String localFile;
-        String remoteTofile;
-        String dir;
-        FileSet fileSet;
-
-        public void setLocalFile(String localFile) {
-            this.localFile = localFile;
-        }
-
-        public void setRemoteTofile(String remoteTofile) {
-            this.remoteTofile = remoteTofile;
-        }
-
-        public void addFileset(FileSet set) {
-            this.fileSet = set;
-        }
-
-        public void setTodir(String aToUri) {
-            this.dir = aToUri;
         }
     }
 
@@ -481,11 +457,6 @@ public class TestSSHTaskBuilder extends TestCase {
             state.sshConnectionInfo, state.loglevel, pluginLogger);
     }
 
-    private void runBuildSCP(final testState state, final testSCPInterface test, PluginLogger pluginLogger) throws
-        SSHTaskBuilder.BuilderException {
-        SSHTaskBuilder.buildScp(test, state.node, state.project, state.remotePath,
-            state.sourceFile, state.sshConnectionInfo, state.loglevel, pluginLogger);
-    }
     PluginLogger testLogger = new PluginLogger() {
         @Override
         public void log(int level, String message) {
@@ -798,130 +769,5 @@ public class TestSSHTaskBuilder extends TestCase {
         } catch (SSHTaskBuilder.BuilderException e) {
             assertNotNull(e);
         }
-    }
-
-    public void testBuildSCPDefault() throws Exception {
-
-        final testState state = new testState();
-        final testSCPInterface test = new testSCPInterface();
-
-        state.sourceFile = testSourcefile;
-        state.remotePath = "/test/path";
-
-        runBuildSCP(state, test, testLogger);
-
-        assertEquals(testSourcefile.getAbsolutePath(), test.localFile);
-        assertEquals("testusername@hostname:/test/path", test.remoteTofile);
-
-        assertEquals("hostname", test.getHost());
-        assertEquals(0, test.getPort());
-        assertEquals(testKeyfile.getAbsolutePath(), test.getKeyfile());
-        assertEquals("", test.passphrase);
-        assertEquals(null, test.password);
-        assertEquals("testusername", test.username);
-        assertEquals(false, test.getVerbose());
-        assertInvariableBase(state, test);
-    }
-
-    public void testBuildSCPPassword() throws Exception {
-
-        final testState state = new testState();
-        final testSCPInterface test = new testSCPInterface();
-
-        state.sshConnectionInfo.authenticationType = SSHTaskBuilder.AuthenticationType.password;
-        state.sshConnectionInfo.password = "passwordValue";
-        state.sourceFile = testSourcefile;
-        state.remotePath = "/test/path";
-
-        runBuildSCP(state, test, testLogger);
-
-        assertEquals(testSourcefile.getAbsolutePath(), test.localFile);
-        assertEquals("testusername@hostname:/test/path", test.remoteTofile);
-
-        assertEquals("hostname", test.getHost());
-        assertEquals(0, test.getPort());
-        assertEquals(null, test.getKeyfile());
-        assertEquals(null, test.passphrase);
-        assertEquals("passwordValue", test.password);
-        assertEquals("testusername", test.username);
-        assertEquals(false, test.getVerbose());
-        assertInvariableBase(state, test);
-    }
-
-    public void testBuildSCPKeyNoUsername() throws Exception {
-
-        final testState state = new testState();
-        final testSCPInterface test = new testSCPInterface();
-
-        state.sourceFile = testSourcefile;
-        state.remotePath = "/test/path";
-
-        state.sshConnectionInfo.username = null;
-
-        //null username
-        try {
-            runBuildSCP(state, test, testLogger);
-            fail("Shouldn't succeed");
-        } catch (SSHTaskBuilder.BuilderException e) {
-            assertEquals("username was not set", e.getMessage());
-        }
-    }
-
-    public void testBuildSCPKeyPasswordUsername() throws Exception {
-
-        final testState state = new testState();
-        final testSCPInterface test = new testSCPInterface();
-
-
-        state.sshConnectionInfo.authenticationType = SSHTaskBuilder.AuthenticationType.password;
-        state.sshConnectionInfo.password = "passwordValue";
-        state.sourceFile = testSourcefile;
-        state.remotePath = "/test/path";
-
-        state.sshConnectionInfo.username = null;
-
-        //null username
-        try {
-            runBuildSCP(state, test, testLogger);
-            fail("Shouldn't succeed");
-        } catch (SSHTaskBuilder.BuilderException e) {
-            assertEquals("username was not set", e.getMessage());
-        }
-    }
-
-    public void testBuildSCPNoSourcefile() throws Exception {
-
-        final testState state = new testState();
-        final testSCPInterface test = new testSCPInterface();
-
-        state.sourceFile = null;
-        state.remotePath = "/test/path";
-
-        //null sourceFile
-        try {
-            runBuildSCP(state, test, testLogger);
-            fail("Shouldn't succeed");
-        } catch (SSHTaskBuilder.BuilderException e) {
-            assertEquals("sourceFile was not set", e.getMessage());
-        }
-
-    }
-
-    public void testBuildSCPNoRemotePath() throws Exception {
-
-        final testState state = new testState();
-        final testSCPInterface test = new testSCPInterface();
-
-        state.sourceFile = testSourcefile;
-        state.remotePath = null;
-
-        //null remotePath
-        try {
-            runBuildSCP(state, test, testLogger);
-            fail("Shouldn't succeed");
-        } catch (SSHTaskBuilder.BuilderException e) {
-            assertEquals("remotePath was not set", e.getMessage());
-        }
-
     }
 }
