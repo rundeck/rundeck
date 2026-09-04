@@ -90,7 +90,6 @@
         tabindex="0"
         class="workflow-graph-resizer"
         :class="{ 'workflow-graph-resizer--active': resizingSidePanel }"
-        style="width: 6px; cursor: col-resize; flex-shrink: 0; z-index: 101"
         @mousedown="startResizeSidePanel"
         @keydown.left.prevent="nudgeSidePanelWidth(20)"
         @keydown.right.prevent="nudgeSidePanelWidth(-20)"
@@ -666,6 +665,8 @@ export default defineComponent({
         maxScale: 1,
         preserveAspectRatio: true,
       });
+      const { min, max } = this.getSidePanelWidthBounds();
+      this.sidePanelWidth = Math.min(max, Math.max(min, this.sidePanelWidth));
     },
     /** Resize element to fit width of rendered SVG text. */
     fitText() {
@@ -1013,6 +1014,7 @@ export default defineComponent({
     },
     startResizeSidePanel(event: MouseEvent) {
       event.preventDefault();
+      this.stopResizeSidePanel();
       this.resizingSidePanel = true;
 
       const startX = event.clientX;
@@ -1100,6 +1102,13 @@ export default defineComponent({
   flex-grow: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+.workflow-graph-resizer {
+  width: 6px;
+  cursor: col-resize;
+  flex-shrink: 0;
+  z-index: 101;
 }
 
 .workflow-graph-resizer:hover,
