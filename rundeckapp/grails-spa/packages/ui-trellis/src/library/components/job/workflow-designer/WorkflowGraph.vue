@@ -90,7 +90,7 @@
         :aria-valuenow="sidePanelWidth"
         :aria-valuemin="sidePanelMinWidth"
         :aria-valuemax="sidePanelMaxWidth"
-        aria-label="Resize rules panel"
+        :aria-label="$t('graph.action.resizeRulesPanel')"
         tabindex="0"
         class="workflow-graph-resizer"
         :class="{ 'workflow-graph-resizer--active': resizingSidePanel }"
