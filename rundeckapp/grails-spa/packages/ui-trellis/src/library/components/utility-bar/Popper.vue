@@ -1,6 +1,6 @@
 <template>
-  <div ref="wrapper" style="display: none">
-    <div ref="popper" class="popper" @click.stop>
+  <div ref="wrapper" data-testid="popper-wrapper" style="display: none">
+    <div ref="popper" class="popper" data-testid="popper-content" @click.stop>
       <slot />
     </div>
   </div>
@@ -78,7 +78,11 @@ export default defineComponent({
 
 <style scoped lang="scss">
 .popper {
-  z-index: 1000;
+  // Must stay above the fixed layout sections used in Next UI
+  // (#section-navbar/#section-utility/#section-header, which use
+  // $zindex-navbar-fixed [1030] and $zindex-navbar-fixed + 2 [1032]
+  // in _view.scss), or the left nav renders on top of this popup.
+  z-index: 1035;
   cursor: auto;
 }
 </style>
