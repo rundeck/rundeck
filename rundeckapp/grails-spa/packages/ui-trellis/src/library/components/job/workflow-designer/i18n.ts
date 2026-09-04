@@ -9,6 +9,7 @@ const messages: any = {
       action: {
         scaleToFit: "Scale to fit",
         edit: "Edit",
+        resizeRulesPanel: "Resize rules panel",
       },
     },
   },
