@@ -260,3 +260,174 @@ across machines/sessions — re-extract if needed):
   first, per the original plan's ordering.
 - No `./gradlew build -x check` production-build sanity check has been run
   yet against the current `application.yml`/`build.gradle` changes.
+
+---
+
+# Round 3 handoff (source-code audit, no bootRun triggered)
+
+This round did **not** touch the running `bootRun` process at all (explicit
+instruction from the user — a live server was already running against a
+*different* checkout, `~/dev/rundeckpro/rundeck`, on this same branch/commit,
+and was left untouched). Everything below is static analysis of the actual
+`asset-pipeline-grails`/`asset-pipeline-core`/`asset-pipeline-gradle` 5.0.35
+source (pulled from the already-downloaded `-sources.jar`s in
+`~/.gradle/caches/modules-2/files-2.1/cloud.wondrify/...`), plus filesystem
+inspection of `~/dev/rundeckpro/rundeck/rundeckapp/build/**`. No code or
+config was changed this round — see "Why nothing was changed yet" below.
+
+## Confirmed from source (higher confidence than round 2's inference)
+
+1. **The `useManifest:false`/`bundle:false` combo does route to the intended
+   dynamic path.** `AssetPipelineGrailsPlugin.groovy:90-96`: if
+   `useManifest` is false, `AssetPipelineConfigHolder.manifest` is never
+   populated. `AssetPipelineFilter.groovy:40`
+   (`warDeployed = AssetPipelineConfigHolder.manifest ? true : false`) then
+   evaluates false, so **every** request falls through to the `else` branch
+   at line 278, which calls `AssetPipeline.serveAsset()` — the per-request,
+   no-manifest, dynamically-compiled path. This part of round 2's model is
+   correct, not just empirically observed.
+2. **The runtime `CacheManager` (the thing backing the `.assetcache` file)
+   is content-hash-safe on paper.** `CacheManager.findCache()`
+   (`CacheManager.groovy:47-73`) recomputes the MD5 of the live file *and*
+   of every tracked dependency on every single call, and evicts on any
+   mismatch. `AssetHelper.fileForUri()` (`AssetHelper.groovy:51-59`) does a
+   fresh resolver lookup on every call too — there is no AssetFile-level
+   cache sitting above `CacheManager`. **This means the documented
+   cache-invalidation logic, read in isolation, should already handle a
+   plain content edit correctly** — which does not match what round 2
+   observed. I could not find a bug in this logic by reading it; if it's
+   really the culprit, it's something more subtle than "the cache doesn't
+   check content" (e.g. a key-collision, a resolver returning the wrong
+   file for the same key, or a bug only reachable through the specific
+   require-tree/bundling code path `home.css` uses — not verified either
+   way).
+3. **`FileSystemAssetResolver`'s subdirectory list is fixed at Spring-bean
+   construction time** (`FileSystemAssetResolver.groovy:44-55`,
+   `baseDirectory.listFiles()` runs once in the constructor). This only
+   matters if a *new* subdirectory appears under `grails-app/assets` after
+   `bootRun` starts (an existing directory being edited is fine) — noting
+   this since it's a real, if narrow, restart-required case that isn't
+   about caching at all.
+
+## New finding: multiple stale duplicate `home.css` build artifacts exist
+
+Ran a filesystem sweep in `~/dev/rundeckpro/rundeck/rundeckapp` (the checkout
+actually backing the live `bootRun`) for every `home.css`/`home-*.css`.
+Found **far more copies than expected**, with wildly different mtimes:
+
+```
+grails-app/assets/provided/static/css/pages/home.css          21:15:50  (live source, edited this session)
+grails-spa/gradle-build/spa/provided/static/css/pages/home.css 21:15:47  (npm/webpack output, pre-copySpa)
+build/assets/static/css/pages/home-15033c2f....css             20:44:46
+build/assets/static/css/pages/home-7b08b0b3....css              21:17:00
+build/assets/static/css/pages/home-89110725....css              18:20:10
+build/assets/static/css/pages/home-f48211b9....css              18:57:24
+build/resources/main/assets/static/css/pages/home-15033c2f....css  21:17:05
+build/resources/main/assets/static/css/pages/home-4cd052a3....css  Aug 31 16:24  <- orphan, days old
+build/resources/main/assets/static/css/pages/home-7b08b0b3....css  21:17:05
+build/resources/main/assets/static/css/pages/home-89110725....css  21:17:05
+build/resources/main/assets/static/css/pages/home-f48211b9....css  21:17:05
+build/bootrun-assets/assets/static/css/pages/home-89110725....css  11:49:48  <- much staler than everything else
+build/assets/manifest.properties -> currently points at home-7b08b0b3....css
+```
+
+`build/assets/` and `build/resources/main/assets/` never get pruned of old
+digest-named files by `assetCompile`/`copyCompiledAssets` (each run just adds
+a new hash file alongside old ones), so **you cannot use "which hash files
+exist" as a freshness signal** — always check `build/assets/manifest.properties`
+for the currently-active hash, and diff its *content* (not just its
+existence) against what you expect.
+
+### `build/bootrun-assets/` — investigated, inconclusive, do not assume it's the culprit
+
+This directory looked like a strong lead at first (it's a **complete parallel
+mirror** of the whole compiled asset tree, frozen at 11:49:48 — hours staler
+than every other artifact, which would perfectly explain "recompiles happen
+but old content keeps being served"). I could not find where this directory
+comes from in source: it's not referenced anywhere in
+`asset-pipeline-gradle` (`AssetPipelinePlugin.groovy`'s `configureBootRun()`
+only adds *configuration classpaths*, not this directory), not in
+`grails-gradle-plugins` sources, and not in any `.gradle`/`.groovy`/`.kts`
+file anywhere in the `rundeckpro` tree (`grep -rl bootrun-assets` came back
+empty everywhere except the directory itself). So its origin is unknown —
+possibly an IntelliJ-managed working directory from an unrelated earlier
+run config, possibly something else.
+
+I tried to confirm/deny it's actually on the live JVM's classpath by
+`ps -p 90068 -o pid,lstart,command`. The output was ambiguous — a single
+90KB argv line that contains **both** `org.gradle.launcher.daemon.bootstrap.GradleDaemon`
+*and* `rundeckapp.Application` substrings, which doesn't cleanly parse as
+"this is process X's actual command line" (it may be the Gradle Daemon's own
+line with an embedded description of a task it's running, not the forked
+app JVM's own argv — needs a cleaner tool to disambiguate, not text grepping
+a concatenated ps line). From what I could parse out, the classpath *does*
+explicitly list `.../rundeckapp/build/resources/main` but I did **not** find
+`bootrun-assets` in it. That's a point against it being the culprit, but the
+parsing was not clean enough to treat as proof.
+
+**Do not delete `build/bootrun-assets/` or anything else under
+`~/dev/rundeckpro/rundeck/rundeckapp/build/` while that checkout's bootRun
+is live** — I deliberately did not touch it, since deleting build outputs
+out from under a running server (even ones that look orphaned) risks
+breaking your current session.
+
+### Resolver-shadowing across Grails plugins — mostly ruled out
+
+Round 2 didn't check this; I considered it a strong lead going in
+(`AssetPipelineGrailsPlugin.doWithApplicationContext()` registers a
+resolver for the primary app's `grails-app/assets`, then one per
+`BinaryGrailsPlugin` — order matters, first match wins). But the live
+process's own args show `-Dbase.dir=.../rundeckpro/rundeck/rundeckapp` and
+main class `rundeckapp.Application` — i.e. `rundeckapp` **is** the primary
+Spring Boot app for this `bootRun`, not a plugin wrapped by some other
+"Enterprise" module. So the `'application'` resolver already points at the
+right live directory, ruling out the specific multi-module shadowing
+scenario I'd guessed at in the previous message. **Not fully ruled out**:
+whether any *other* Grails plugin on the classpath (there are several
+first-party ones under `rundeckpro/plugins/*` and the rundeck submodule's
+own `grails-*` modules) ships its own `grails-app/assets/static/css/pages/home.css`
+— unchecked, low-probability but cheap to check (see next steps).
+
+## Why nothing was fixed/changed this round
+
+Every theory I could build confident evidence for either (a) turned out to
+be already-correct-in-source (the cache invalidation logic), or (b) got
+knocked down by a subsequent check (multi-module resolver shadowing;
+`bootrun-assets` not conclusively on the classpath). I did not want to make
+a speculative code/config change with no live way to verify it actually
+fixes the no-restart case, per the instruction not to trigger `bootRun`.
+The most responsible use of this round was narrowing the search space, not
+guessing.
+
+## Concrete next steps, in priority order, once bootRun is live on this branch
+
+1. **Get a clean, unambiguous read of the live JVM's classpath and open file
+   handles**, since the `ps` text-grep approach this round was inconclusive:
+   ```bash
+   jcmd <pid> VM.command_line          # clean argv/classpath, no concatenation issues
+   lsof -p <pid> | grep -i 'assets\|home.css'   # confirms which physical files are actually open
+   ```
+   This settles definitively whether `build/bootrun-assets/` (or any other
+   surprise directory) is in play.
+2. **Reproduce the round-2 repro** (edit `HomeHeader.vue`'s color,
+   `./gradlew :rundeckapp:copySpa`, `curl` the served CSS) and *before*
+   concluding it's stale, check `build/assets/manifest.properties`'s
+   `static/css/pages/home.css=` line — confirm whether the manifest hash
+   changed at all. If it **didn't** change, the bug is upstream of serving,
+   in `assetCompile` itself deciding nothing changed (a Gradle
+   inputs/up-to-date problem, same species as the `runNpmBuild` /
+   `src/library` bug already fixed in round 1 — check `assetCompile`'s
+   declared `inputs`/`outputs` next). If it **did** change, the bug is
+   downstream, in serving/resolving — proceed to step 1's `lsof` check to
+   see which physical file got opened for that request.
+3. **Check the other Grails plugins' asset directories** for a colliding
+   `static/css/pages/home.css` (cheap, rules the last open theory in/out):
+   ```bash
+   find ~/dev/rundeckpro -path '*/grails-app/assets/static/css/pages/home.css' \
+     -not -path '*/rundeck/rundeckapp/*'
+   ```
+4. Only once one of the above pinpoints the actual mechanism: implement the
+   fix, then run the full `./gradlew build -x check` sanity pass (per this
+   repo's critical rules) before committing anything, and fix/remove the
+   `.claude/docs/build-commands.md` WIP banner once no-restart hot-reload is
+   confirmed working end-to-end.
