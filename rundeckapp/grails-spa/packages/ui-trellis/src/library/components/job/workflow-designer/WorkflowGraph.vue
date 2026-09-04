@@ -48,7 +48,7 @@
                   color: var(--warning-color);
                 "
               >
-                Beta!
+                {{ $t("graph.badge.beta") }}
               </div>
             </div>
           </div>
@@ -62,7 +62,7 @@
             @keydown.enter="commit"
             @keydown.space.prevent="commit"
           >
-            Commit
+            {{ $t("graph.action.commit") }}
           </div>
           <div
             v-if="editing"
@@ -74,7 +74,7 @@
             @keydown.enter="revert"
             @keydown.space.prevent="revert"
           >
-            Revert
+            {{ $t("graph.action.revert") }}
           </div>
         </div>
         <div style="position: absolute; top: 0">
@@ -110,7 +110,7 @@
         "
       >
         <Tabs style="height: 100%">
-          <Tab :index="0" title="Rules">
+          <Tab :index="0" :title="$t('graph.tab.rules')">
             <div style="padding: 5px; height: 100%">
               <div v-if="editorElm" ref="editor" style="height: 100%" />
               <AceEditor
