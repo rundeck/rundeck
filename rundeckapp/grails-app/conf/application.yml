@@ -218,6 +218,25 @@ grails:
                 excludes: ["**/*.less"]
                 includes: ["bootstrap.less"]
 ---
+spring:
+    config:
+        activate:
+            on-profile: development
+grails:
+    assets:
+        # Disables loading of the precompiled digest manifest so
+        # AssetPipelineFilter serves assets dynamically (content-hash
+        # cached, recompiled only on change) instead of the baked-in
+        # manifest that requires a bootRun restart to pick up
+        # changes. Requires bootRun to actually run with
+        # -Dgrails.env=development (see .claude/docs/build-commands.md).
+        useManifest: false
+        # AssetsTagLib hardcodes useManifest=true when bundle:true
+        # (see asset.pipeline.grails.AssetsTagLib#element), which overrides
+        # the useManifest:false above for URL/digest generation. bundle:false
+        # is required here for useManifest:false to actually take effect.
+        bundle: false
+---
 
 rdeck:
     base: ${user.home}/dev-3-svr/server/config
