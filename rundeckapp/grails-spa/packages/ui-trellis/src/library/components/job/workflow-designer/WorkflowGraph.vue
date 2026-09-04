@@ -578,6 +578,7 @@ export default defineComponent({
   },
 
   beforeUnmount() {
+    window.removeEventListener("resize", this.scaleContentToFit);
     this.stopResizeSidePanel();
   },
 
