@@ -178,14 +178,14 @@
                     <g:else>
                         <g:if test="${!knockout}">
                             <g:embedJSON id="nodeFilterData" data="${jsdata}"/>
-                            <g:javascript>
+                            <script nonce="${security.cspNonce()}" type="text/javascript">
                                 jQuery(function(){
                                     var nfilter=loadJsonData('nodeFilterData');
                                     jQuery('#nodeFilterUpdate').on('click',function(e){
                                         _updateMatchedNodes(nfilter,'matchednodes_${ enc(js: rkey) }','${enc(js:execdata?.project)}',false,{requireRunAuth:true});
                                     });
                                 });
-                            </g:javascript>
+                            </script>
                             <span class="action textbtn  textbtn query " title="${message(code:"display.matching.nodes")}" id="nodeFilterUpdate">
                                 <g:render template="/framework/displayNodeFilters" model="${[displayParams:execdata]}"/>
                             </span>
@@ -299,11 +299,11 @@
         </tbody>
 
             <g:if test="${!knockout}">
-                <g:javascript>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
                 jQuery('#serverNodeUpdate').on('click',function(e){
                    _updateMatchedNodes({},'matchednodes_${enc(js: rkey)}','${enc(js: execdata?.project)}', true, {requireRunAuth:true});
                 });
-                </g:javascript>
+                </script>
             </g:if>
         </g:if>
     </g:else>
@@ -474,7 +474,7 @@
         </g:if>
     </g:if>
 
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
         jQuery(function(){
             jQuery('.dateCreated.has_tooltip, .lastUpdated.has_tooltip').tooltip({
                 html: false,
@@ -484,7 +484,7 @@
                 delay: { show: 100, hide: 300 }
             });
         });
-    </g:javascript>
+    </script>
 
 </table>
 </div>

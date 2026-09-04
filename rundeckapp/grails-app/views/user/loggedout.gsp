@@ -73,7 +73,12 @@
                         <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
                         <g:set var="titleLink" value="${cfg.getString(config: "gui.titleLink")}"/>
                         <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}" title="Home">
-                            <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;" onload="SVGInject(this)"/>
+                            <asset:image id="loggedout-logo-image" src="${logoImage}" alt="Rundeck" style="width: 200px;"/>
+                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                            document.getElementById('loggedout-logo-image').addEventListener('load', function(event) {
+                              SVGInject(this);
+                            });
+                            </script>
                         </a>
 
                         <g:set var="userDefinedLogo" value="${cfg.getString(config: "gui.logo")}"/>

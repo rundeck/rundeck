@@ -71,7 +71,7 @@
     <!-- /VUE JS REQUIREMENTS -->
 
     <asset:javascript src="menu/aclListing.js"/>
-    <script type="application/javascript">
+    <script nonce="${security.cspNonce()}" type="application/javascript">
         var checkUploadForm;
         let project="${enc(js:params.project)}"
         jQuery(function () {

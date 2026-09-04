@@ -92,12 +92,12 @@
         <wdgt:eventHandler for="workflow.strategy" equals="${pluginName}"
                            target="strategyPlugin${pluginName}" visible="true"/>
     </g:each>
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
 jQuery(function(){
     "use strict";
     jQuery('#workflowstrategyplugins').find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
 })
-</g:javascript>
+</script>
 
 </div>
 <hr>
@@ -163,7 +163,7 @@ jQuery(function(){
                                 filters: workflowLogFilterPluginConfigs ?: []
                         ]
                         }"/>
-                        <script type="text/javascript">
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
                             fireWhenReady("logfilterplugins_wf", function () {
                                 var step = workflowEditor.bindStepFilters('logfilterplugins_wf', 'logfilterplugins_wf', loadJsonData('logFilterData_wf'), {
                                     editor: function (x) {
@@ -196,10 +196,15 @@ jQuery(function(){
     <g:if test="${edit}">
     <div >
     <div id="wfnewbutton" style="margin-top:5px;">
-        <span class="btn btn-default btn-sm ready" onclick="jQuery('#wfnewtypes').show();jQuery('#wfnewbutton').hide();" title="${message(code:'Workflow.step.label.add')}">
+        <span class="btn btn-default btn-sm ready" id="wfnewtypesShowBtn" title="${message(code:'Workflow.step.label.add')}">
             <b class="glyphicon glyphicon-plus"></b>
             <g:message code="Workflow.step.label.add"/>
         </span>
+        <script nonce="${security.cspNonce()}" type="text/javascript">
+        document.getElementById('wfnewtypesShowBtn').addEventListener('click', function(event) {
+          jQuery('#wfnewtypes').show();jQuery('#wfnewbutton').hide();
+        });
+        </script>
     </div>
     <div id="wfnewtypes" style="display:none; margin-top:10px; margin-left:20px;" class="panel panel-default">
         <g:render template="/execution/wfAddStep"
@@ -214,7 +219,7 @@ jQuery(function(){
         />
     </div>
     </div>
-        <script type="text/javascript">
+        <script nonce="${security.cspNonce()}" type="text/javascript">
             fireWhenReady('wfnew_eh_types',function(){
 
                 jQuery('#wfnew_eh_types').find( '.add_step_type' ).each(function (indx,e) {

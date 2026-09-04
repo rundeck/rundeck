@@ -41,7 +41,7 @@
                                                            params: [project: project],absolute:true)]}"
                  id="editProjectNodeSourceData"></g:embedJSON>
     <g:set var="legacyUi" value="${params.legacyUi || feature.isEnabled(name:'legacyUi')}"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
         function init() {
             <g:if test="${legacyUi}">
@@ -60,7 +60,7 @@
             })
         }
         jQuery(init);
-    </g:javascript>
+    </script>
 </head>
 
 <body>

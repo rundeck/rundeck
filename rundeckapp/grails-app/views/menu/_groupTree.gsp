@@ -77,10 +77,16 @@
         <g:if test="${jscallback}">
             <span class="expandComponentControl textbtn textbtn-success groupname jobgroupexpand"
                   title="Select this group"
-                  onclick="groupChosen('${enc(js:prefix ? prefix + '/' + group.key : group.key)}'); return false;"
+                  id="groupChosen_${currkey}"
                   >
               <i class="glyphicon glyphicon-folder-close"></i> <g:enc>${displaygroup}</g:enc>
             </span>
+            <script nonce="${security.cspNonce()}" type="text/javascript">
+            document.getElementById('groupChosen_${currkey}').addEventListener('click', function(event) {
+              groupChosen('${enc(js:prefix ? prefix + '/' + group.key : group.key)}');
+              event.preventDefault();
+            });
+            </script>
         </g:if>
         <g:else>
             <g:set var="jsfunc" value="Expander.toggle(this,null,'.expandComponentHolder.sub_${currkey}_group');"/>

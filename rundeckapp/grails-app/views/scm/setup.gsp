@@ -30,7 +30,7 @@
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[params.project]:params.project}"/>
     <title><g:appTitle/> - <g:message code="scmController.page.setup.title" args="[projectLabel]"/></title>
     <asset:javascript src="storageBrowseKO.js"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
         var configControl;
         function init() {
@@ -41,7 +41,7 @@
             });
         }
         jQuery(init);
-    </g:javascript>
+    </script>
 </head>
 
 <body>

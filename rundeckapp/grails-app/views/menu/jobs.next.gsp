@@ -31,7 +31,7 @@
 
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
 
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 //LEGACY, to be removed
         function showError(message){
              appendText('#error',message);
@@ -233,7 +233,7 @@
           }
   }
 })
-    </g:javascript>
+    </script>
     <g:embedJSON id="pageQueryParams" data="${[queryParams:params]}"/>
     <g:embedJSON id="pageParams" data="${[project: params.project?:request.project]}"/>
 </head>

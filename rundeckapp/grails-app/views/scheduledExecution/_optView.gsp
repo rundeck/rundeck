@@ -85,9 +85,9 @@
     </g:else>
 </span>
 
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
     fireWhenReady('opt_${enc(js:rkey)}',function(){
         _initPopoverContentRef('#opt_${enc(js: rkey)}');
     });
-</g:javascript>
+</script>
 

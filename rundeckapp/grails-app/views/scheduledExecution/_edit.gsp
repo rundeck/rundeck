@@ -181,7 +181,7 @@
                       <g:message code="ScheduledExecution.property.description.plain.description"/>
                   </g:else>
               </div>
-              <g:javascript>
+              <script nonce="${security.cspNonce()}" type="text/javascript">
                   jQuery(function () {
                       jQuery('textarea.ace_editor._job_description').each(function () {
                           var editor = _addAceTextarea(this, function (editor) {
@@ -200,7 +200,7 @@
 
                       });
                   });
-              </g:javascript>
+              </script>
           </div>
       </div>
 
@@ -257,12 +257,12 @@
                                                                             strategyPlugins:strategyPlugins]}"/>
               <g:hiddenField name="_sessionwf" value="true"/>
               <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
-                <g:javascript>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
                   fireWhenReady('workflowContent',function(){
                     jQuery('#wfnewtypes').show();
                     jQuery('#wfnewbutton').hide();
                   });
-                </g:javascript>
+                </script>
               </g:if>
             </div>
           </div>
@@ -453,7 +453,7 @@
              data="${jobComponentValidation?.collectEntries { [it.key, it.value.errors] } ?: [:]}"/>
 %{-- end: json component validation data --}%
 
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
 //<!CDATA[
         var selFrameworkProject='${enc(js:project)}';
         var selArgs='${enc(js:scheduledExecution?.argString)}';
@@ -633,11 +633,11 @@ function getCurSEID(){
 //]>
 </script>
 
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
     if (typeof(_initPopoverContentRef) == 'function') {
         _initPopoverContentRef();
     }
-</g:javascript>
+</script>
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace/ext-language_tools.js"/><!--<![endif]-->
 <div id="msg"></div>

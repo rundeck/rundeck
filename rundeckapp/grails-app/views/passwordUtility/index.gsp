@@ -30,7 +30,12 @@
                         <div class="form-group">
                             <label class="col-sm-2 control-label input-sm"><g:message code="passwordUtility.encoder.label"/></label>
                             <div class="col-sm-10">
-                                <g:select from="${encrypters.keySet().toSorted()}" name="encrypter" class="form-control" onchange="updateEncrypterProps()" value="${flash.encrypter}"></g:select>
+                                <g:select from="${encrypters.keySet().toSorted()}" name="encrypter" id="encrypter" class="form-control" value="${flash.encrypter}"></g:select>
+                                <script nonce="${security.cspNonce()}" type="text/javascript">
+                                document.getElementById('encrypter').addEventListener('change', function(event) {
+                                  updateEncrypterProps();
+                                });
+                                </script>
                             </div>
                         </div>
                         <div id="encryptionFormProps">
@@ -55,7 +60,7 @@
         </div>
     </div>
 </div>
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
 function updateEncrypterProps() {
     jQuery.ajax({
         url: "${f.createLink(controller:'passwordUtility',action:'selectedEncrypterProps')}",

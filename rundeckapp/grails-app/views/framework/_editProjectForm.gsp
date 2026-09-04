@@ -22,7 +22,7 @@
 
 <%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; rundeck.UtilityTagLib; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
 <g:render template="/common/messages" model="[notDismissable:true]"/>
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
     function changeCronExpression(elem){
         clearHtml(document.getElementById('crontooltip'));
         var params={crontabString:elem.value};
@@ -117,8 +117,12 @@
                           value="${enableCleanHistory}"
                           class="fcopy"
                           id="${nkey+'enable_cleaner_input'}"
-                          onchange='cleanerchkbox(this)'
                           checked="${isSelected}"/>
+                  <script nonce="${security.cspNonce()}" type="text/javascript">
+                  document.getElementById('${enc(js:nkey+'enable_cleaner_input')}').addEventListener('change', function(event) {
+                    cleanerchkbox(this);
+                  });
+                  </script>
                   <label for="${nkey+'enable_cleaner_input'}">
                       <b><g:message code="execution.history.cleanup.enable.label" default="Enable"/></b>
                   </label>
@@ -185,12 +189,22 @@
                         <g:textField id="cronTextField"
                                      name="crontabString"
                                      value="${cronExression}"
-                                     onchange="changeCronExpression(this);"
-                                     onblur="changeCronExpression(this);"
-                                     onkeyup='tkeyup(this);'
-                                     onclick='tkeyup(this);'
                                      class="form-control input-sm"
                                      size="50"/>
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
+                        document.getElementById('cronTextField').addEventListener('change', function(event) {
+                          changeCronExpression(this);
+                        });
+                        document.getElementById('cronTextField').addEventListener('blur', function(event) {
+                          changeCronExpression(this);
+                        });
+                        document.getElementById('cronTextField').addEventListener('keyup', function(event) {
+                          tkeyup(this);
+                        });
+                        document.getElementById('cronTextField').addEventListener('click', function(event) {
+                          tkeyup(this);
+                        });
+                        </script>
                         <g:if test="${cleanerHistoryConfigError}">
                             <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
                         </g:if>
@@ -203,9 +217,13 @@
                     <g:select name="${'example_cron_period_sel'}" from="${propSelectValues}" id="example_cron_period"
                               optionKey="key" optionValue="value"
                               noSelection="['':'-choose an example-']"
-                              onchange="if(this.value){document.getElementById('cronTextField').value=this.value;}"
                               class="${formControlType} form-control"
                     />
+                    <script nonce="${security.cspNonce()}" type="text/javascript">
+                    document.getElementById('example_cron_period').addEventListener('change', function(event) {
+                      if (this.value) { document.getElementById('cronTextField').value = this.value; }
+                    });
+                    </script>
                 </div>
                 <div class="col-sm-4">
                     <span id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;"></span>

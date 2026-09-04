@@ -15,7 +15,7 @@
   --}%
 
 <%@ page import="grails.util.Environment" %>
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
     <g:set var="currentProject" value="${params.project?:request.project}"/>
     <%
         def projParams = currentProject ? [project: currentProject] : [:]

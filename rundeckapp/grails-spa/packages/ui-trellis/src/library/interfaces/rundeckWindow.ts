@@ -25,6 +25,7 @@ export interface RundeckContext {
   rootStore: RootStore;
   locale?: string;
   language?: string;
+  cspNonce?: string;
 }
 
 export interface RundeckToken {

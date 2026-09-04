@@ -88,7 +88,7 @@ search
     ) || projAdminAuth}"/>
     <cfg:setVar var="defaultMax" defaultValue="${30}" key="pagination.default.max"/>
     <g:set var="pageMax" value="${params.max?params.int('max'):defaultMax}"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
             projectAdminAuth:${enc(js:projAdminAuth)},
@@ -105,7 +105,7 @@ search
             query:loadJsonData('eventsparamsJSON')
         }
     })
-    </g:javascript>
+    </script>
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>

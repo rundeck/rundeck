@@ -148,7 +148,7 @@ search
         }
       </style>
       <g:set var="projectName" value="${execution.project}"/>
-      <g:javascript>
+      <script nonce="${security.cspNonce()}" type="text/javascript">
     var execInfo=loadJsonData('execInfoJSON');
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
@@ -175,7 +175,7 @@ search
             }
     }
 })
-      </g:javascript>
+      </script>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 
       <asset:stylesheet href="static/css/chunk-vendors.css"/>
@@ -998,18 +998,18 @@ search
   %{--/delete execution modal--}%
 
 
-  <script type="text/html" id="step-info-simple">
+  <script nonce="${security.cspNonce()}" type="text/html" id="step-info-simple">
     %{--Display the lowest level step info: [icon] identity --}%
         <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
         <span data-bind="text: stepinfo.stepident"></span>
   </script>
-  <script type="text/html" id="step-info">
+  <script nonce="${security.cspNonce()}" type="text/html" id="step-info">
     %{--wrap step-info-simple in tooltip --}%
     <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
         <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
     </span>
   </script>
-  <script type="text/html" id="step-info-simple-link">
+  <script nonce="${security.cspNonce()}" type="text/html" id="step-info-simple-link">
     %{--wrap step-info-simple in tooltip --}%
     <span data-bind="if: stepinfo.hasLink() && stepinfo.linkJobId()">
         <a data-bind="urlPathParam: stepinfo.linkJobId(), attr: {title: 'Click to view Job: '+stepinfo.linkTitle() }"
@@ -1030,7 +1030,7 @@ search
         <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
     </span>
   </script>
-  <script type="text/html" id="step-info-path">
+  <script nonce="${security.cspNonce()}" type="text/html" id="step-info-path">
     %{-- Display the full step path with icon and identity --}%
     <span data-bind="if: stepinfo.hasParent()">
         <span data-bind="with: stepinfo.parentStepInfo()">
@@ -1041,7 +1041,7 @@ search
     </span>
     <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
   </script>
-  <script type="text/html" id="step-info-path-links">
+  <script nonce="${security.cspNonce()}" type="text/html" id="step-info-path-links">
     %{-- Display the full step path with icon and identity --}%
     <span data-bind="if: stepinfo.hasParent()">
         <span data-bind="with: stepinfo.parentStepInfo()">
@@ -1052,7 +1052,7 @@ search
     </span>
     <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
   </script>
-  <script type="text/html" id="step-info-parent-path">
+  <script nonce="${security.cspNonce()}" type="text/html" id="step-info-parent-path">
     %{-- Display the full step path with icon and identity --}%
 
     <span data-bind="if: stepinfo.hasParent()">
@@ -1062,7 +1062,7 @@ search
         <g:icon name="menu-right" css="text-strong"/>
     </span>
   </script>
-  <script type="text/html" id="step-info-parent-path-links">
+  <script nonce="${security.cspNonce()}" type="text/html" id="step-info-parent-path-links">
     %{-- Display the full step path with icon and identity --}%
 
     <span data-bind="if: stepinfo.hasParent()">
@@ -1073,14 +1073,14 @@ search
     </span>
   </script>
 
-  <script type="text/html" id="step-info-path-base">
+  <script nonce="${security.cspNonce()}" type="text/html" id="step-info-path-base">
     %{-- Display the full step path with icon and identity --}%
     <span data-bind="template: { name: 'step-info-parent-path', data:stepinfo, as: 'stepinfo' }"></span>
 
     <span data-bind="template: { name: 'step-info', data:stepinfo, as: 'stepinfo' }"></span>
   </script>
 
-  <script type="text/html" id="step-info-extended">
+  <script nonce="${security.cspNonce()}" type="text/html" id="step-info-extended">
   %{--Display the lowest level extended info:  [icon] number. identity --}%
     <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
     <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
@@ -1089,7 +1089,7 @@ search
   </script>
   <g:jsonToken id="exec_cancel_token" url="${request.forwardURI}"/>
   <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
-        <script type="application/javascript">
+        <script nonce="${security.cspNonce()}" type="application/javascript">
     var workflow=null;
     var followControl=null;
     var flowState=null;
@@ -1150,7 +1150,7 @@ search
         updatepagetitle:${enc(js:null == execution?.dateCompleted)},
         killjobauth:${enc(js: authChecks[AuthConstants.ACTION_KILL] ? true : false)},
       <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-          killjobhtml: '<span class="btn btn-danger btn-xs textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
+          killjobhtml: '<span class="btn btn-danger btn-xs textbtn js-followcontrol-cancel">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
       </g:if>
       <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
           killjobhtml: "",
@@ -1159,6 +1159,12 @@ search
         totalCount: '${enc(js: scheduledExecutionService.getTotalTimeStats(scheduledExecution?.uuid) ?: -1)}',
         colStep:{value:${enc(js: !isAdhoc)} },
         colNode:{value:false}
+      });
+      document.addEventListener('click', function(event) {
+        var target = event.target.closest('.js-followcontrol-cancel');
+        if (target) {
+          followControl.docancel();
+        }
       });
       nodeflowvm=new NodeFlowViewModel(
         workflow,

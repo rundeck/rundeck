@@ -221,7 +221,7 @@
 <g:embedJSON id="jobTreeUiMeta" data="[hideActions: true, hideHeader: true, hideTags: true]"/>
 
 
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
     window._rundeck = Object.assign(window._rundeck || {}, {
         data: {
             detailsData: loadJsonData('jobDetailsJSON'),
@@ -251,7 +251,7 @@
         setupTabRouter('#job_edit_tabs', 'tab_');
         jQuery('input').not(".allowenter").on('keydown', noenter);
     })
-</g:javascript>
+</script>
 <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
 <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
 <asset:javascript src="static/pages/job/browse.js" defer="defer"/>

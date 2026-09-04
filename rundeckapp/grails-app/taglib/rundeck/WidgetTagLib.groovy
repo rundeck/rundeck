@@ -23,6 +23,7 @@ package rundeck
  * $Id$
  */
 import grails.util.Environment;
+import org.rundeck.grails.plugins.securityheaders.CspNonceProvider
 
 public class WidgetTagLib {
     def static namespace="wdgt"
@@ -224,7 +225,8 @@ public class WidgetTagLib {
         funcstr<<"}"
 
         if('true'!=attrs.jsonly){
-            out<<"<script language='javascript'>"
+            def nonce = CspNonceProvider.getNonce(request)
+            out<<"<script" + (nonce ? " nonce='" + nonce + "'" : "") + " language='javascript'>"
         }
         if('true'!=attrs.inline){
             out<<"window.addEventListener('load', (z) => {"

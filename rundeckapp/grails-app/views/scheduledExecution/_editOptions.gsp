@@ -51,7 +51,7 @@
 </div>
 
 
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
     fireWhenReady('optionSelect', function() {
         jQuery('input[type=text]').each(function (i, e) {
             jQuery(e).on('keydown', noenter);
@@ -60,4 +60,4 @@
             jQuery(e).on('keydown', noenter);
         });
     });
-</g:javascript>
+</script>

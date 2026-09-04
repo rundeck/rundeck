@@ -246,7 +246,6 @@
               <g:actionSubmit id="createFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
               <g:submitButton name="Upload" id="uploadFormUpload"
                               value="${g.message(code:'button.action.Upload',default:'Upload')}"
-                              onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)"
                               class="btn btn-cta"/>
             </div>
             <div id="schedUploadSpinner" class="spinner block" style="display:none;">
@@ -255,6 +254,11 @@
             </div>
           </div>
         </g:uploadForm>
+        <script nonce="${security.cspNonce()}" type="text/javascript">
+        document.getElementById('uploadFormUpload').addEventListener('click', function(event) {
+          ['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)
+        });
+        </script>
       </div>
     </div>
   </div>

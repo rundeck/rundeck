@@ -64,7 +64,7 @@ search
 
     <g:set var="uiType" value="${params.nextUi?'next':params.legacyUi?'legacy':'current'}"/>
     <g:jsMessages code="Node,Node.plural,option.value.required,options.remote.dependency.missing.required,option.default.button.title,option.default.button.text,option.select.choose.text"/>
-    <script type="text/javascript">
+    <script nonce="${security.cspNonce()}" type="text/javascript">
         var joboptions;
         var remotecontroller;
 
@@ -161,7 +161,7 @@ search
                  ]}"/>
 
 
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
             projectAdminAuth:${enc(js:projAdminAuth)},
@@ -189,7 +189,7 @@ search
             }
     }
 })
-    </g:javascript>
+    </script>
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
     <asset:javascript src="static/components/copybox.js"/>
 </head>

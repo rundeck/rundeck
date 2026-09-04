@@ -5,16 +5,31 @@
                 <div class="modal-pagination">
                     <g:set var="numPages" value="${new java.math.BigDecimal(total/max).setScale(0, java.math.RoundingMode.UP)}"/>
                     <div class="modal-pagination-item">
-                        <a class="prevLink" style="display: none" onclick="handleModalPagination(this, ${offset-max}, ${max}, ${total});">Previous</a>
+                        <a class="prevLink" id="modalPaginationPrevLink" style="display: none">Previous</a>
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
+                        document.getElementById('modalPaginationPrevLink').addEventListener('click', function(event) {
+                          handleModalPagination(this, ${offset-max}, ${max}, ${total});
+                        });
+                        </script>
                     </div>
                     <g:each in="${1..numPages}" var="step">
                         <div class="modal-pagination-item">
                             <span style="display: ${step == 1 ? 'inline' : 'none'}" class="currentStep step-${step}">${step}</span>
-                            <a style="display: ${step == 1 ? 'none' : 'inline'}" onclick="handleModalPagination(this, ${(step-1)*max}, ${max}, ${total});" class="step step-${step}">${step}</a>
+                            <a style="display: ${step == 1 ? 'none' : 'inline'}" id="modalPaginationStep-${step}" class="step step-${step}">${step}</a>
+                            <script nonce="${security.cspNonce()}" type="text/javascript">
+                            document.getElementById('modalPaginationStep-${step}').addEventListener('click', function(event) {
+                              handleModalPagination(this, ${(step-1)*max}, ${max}, ${total});
+                            });
+                            </script>
                         </div>
                     </g:each>
                     <div class="modal-pagination-item">
-                        <a class="nextLink" onclick="handleModalPagination(this, ${offset+max}, ${max}, ${total});">Next</a>
+                        <a class="nextLink" id="modalPaginationNextLink">Next</a>
+                        <script nonce="${security.cspNonce()}" type="text/javascript">
+                        document.getElementById('modalPaginationNextLink').addEventListener('click', function(event) {
+                          handleModalPagination(this, ${offset+max}, ${max}, ${total});
+                        });
+                        </script>
                     </div>
                 </div>
             </div>
@@ -25,7 +40,7 @@
     </div>
 </g:if>
 
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
     function handleModalPagination(elem, offset, max, total) {
         jQuery(document).ready(function() {
         jQuery(".modal").on("hidden.bs.modal", function() {
@@ -75,5 +90,5 @@
             }
         });
     }
-</g:javascript>
+</script>
 

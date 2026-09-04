@@ -64,12 +64,22 @@
             <span class="welcomeMessage">Edit node: <i class="fas fa-hdd"></i> <span id="editNodeIdent"></span></span>
     </span>
     <span class="toolbar" id="remoteEditToolbar">
-        <span class="action " onclick="_remoteEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> Close remote editing</span>
+        <span class="action " id="remoteEditCompletedBtn" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> Close remote editing</span>
+        <script nonce="${security.cspNonce()}" type="text/javascript">
+        document.getElementById('remoteEditCompletedBtn').addEventListener('click', function(event) {
+          _remoteEditCompleted();
+        });
+        </script>
     </span>
     <div id="remoteEditResultHolder" class="info message" style="display:none">
         <span id="remoteEditResultText" class="info message" >
         </span>
-        <span class="action " onclick="_remoteEditContinue();"> Continue&hellip;</span>
+        <span class="action " id="remoteEditContinueBtn"> Continue&hellip;</span>
+        <script nonce="${security.cspNonce()}" type="text/javascript">
+        document.getElementById('remoteEditContinueBtn').addEventListener('click', function(event) {
+          _remoteEditContinue();
+        });
+        </script>
     </div>
     <div id="remoteEditError" class="error note" style="display:none">
     </div>

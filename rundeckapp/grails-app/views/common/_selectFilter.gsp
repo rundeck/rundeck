@@ -54,7 +54,12 @@
     </span>
 </g:elseif>
 <g:elseif test="${filterset}">
-    <g:select class="form-control" name="filterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"
-        noSelection="${['':noSelection?noSelection:'-select a filter-']}" onchange="setFilter('${enc(attr:prefName)}',this.value);"/>
+    <g:select class="form-control" name="filterName" id="selectFilter_${enc(attr:prefName)}" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"
+        noSelection="${['':noSelection?noSelection:'-select a filter-']}"/>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
+    document.getElementById('selectFilter_${enc(js:prefName)}').addEventListener('change', function(event) {
+      setFilter('${enc(js:prefName)}', this.value);
+    });
+    </script>
 </g:elseif>
 <g:jsonToken id="filter_select_tokens" url="${request.forwardURI}"/>

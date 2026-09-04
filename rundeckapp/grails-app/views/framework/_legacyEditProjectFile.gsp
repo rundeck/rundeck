@@ -18,7 +18,7 @@
                 </div>
             </div>
             <div class="row">
-                <g:form action="saveProjectFile" method="post" params="${[project:params.project]}" useToken="true" onsubmit="" class="form">
+                <g:form action="saveProjectFile" method="post" params="${[project:params.project]}" useToken="true" class="form">
                     <g:hiddenField name="filename" value="${filename}"/>
                     <div class="col-xs-12">
                         <div class="card"  id="createform">

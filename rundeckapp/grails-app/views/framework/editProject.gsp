@@ -91,7 +91,7 @@
     <asset:javascript src="framework/editProject.js"/>
     <asset:javascript src="static/pages/project-config.js" defer="defer" />
     <g:jsMessages code="page.unsaved.changes"/>
-    <g:javascript>
+    <script nonce="${security.cspNonce()}" type="text/javascript">
 
     var confirm = new PageConfirm(message('page.unsaved.changes'),{
         skipbehavior:true,
@@ -120,7 +120,7 @@
             pluginGroups: loadJsonData("pluginGroupJSON")
         }
     })
-    </g:javascript>
+    </script>
 </head>
 
 <body>

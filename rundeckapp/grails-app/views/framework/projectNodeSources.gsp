@@ -38,7 +38,7 @@
   </title>
 
   <asset:javascript src="util/tab-router.js"/>
-  <g:javascript>
+  <script nonce="${security.cspNonce()}" type="text/javascript">
 
     jQuery(function () {
       setupTabRouter('#node_config_tabs', 'node_');
@@ -50,7 +50,7 @@
 
             }
         });
-  </g:javascript>
+  </script>
   <!-- VUE JS MODULES -->
   <asset:javascript src="static/pages/project-nodes-config.js" defer="defer" />
   <asset:stylesheet href="static/css/pages/project-nodes-config.css" />

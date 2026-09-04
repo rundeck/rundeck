@@ -15,7 +15,7 @@
   --}%
 
 <%@ page import="rundeck.UtilityTagLib" %>
-<script type="text/javascript">
+<script nonce="${security.cspNonce()}" type="text/javascript">
     function changeCronExpression(elem){
         clearHtml(jQuery('#crontooltip'));
         var params={crontabString:jQuery(elem).val()};
@@ -65,13 +65,13 @@
     </li>
 </ul>
 </div></div>
-<g:javascript>
+<script nonce="${security.cspNonce()}" type="text/javascript">
 jQuery(window).load(function(){
     jQuery('.crontab-edit a[data-toggle="tab"]').on('show.bs.tab', function (e) {
         jQuery('#useCrontabString').val(jQuery(e.delegateTarget).data('crontabstring'));
     })
 });
-</g:javascript>
+</script>
 
 <div class="tab-content">
 <div class="tab-pane ${!useCrontabString?'active':''}" id="cronsimple">
@@ -156,13 +156,24 @@ jQuery(window).load(function(){
         <div class="col-sm-4">
             <div  class="form-group">
                 <g:textField name="crontabString"
+                             id="crontabStringField"
                              value="${scheduledExecution?.crontabString?scheduledExecution?.crontabString:scheduledExecution?.generateCrontabExression()}"
-                             onchange="changeCronExpression(this);"
-                             onblur="changeCronExpression(this);"
-                             onkeyup='tkeyup(this);'
-                             onclick='tkeyup(this);'
                              class="form-control input-sm"
                              size="50"/>
+                <script nonce="${security.cspNonce()}" type="text/javascript">
+                document.getElementById('crontabStringField').addEventListener('change', function(event) {
+                  changeCronExpression(this);
+                });
+                document.getElementById('crontabStringField').addEventListener('blur', function(event) {
+                  changeCronExpression(this);
+                });
+                document.getElementById('crontabStringField').addEventListener('keyup', function(event) {
+                  tkeyup(this);
+                });
+                document.getElementById('crontabStringField').addEventListener('click', function(event) {
+                  tkeyup(this);
+                });
+                </script>
 
             </div>
         </div>
