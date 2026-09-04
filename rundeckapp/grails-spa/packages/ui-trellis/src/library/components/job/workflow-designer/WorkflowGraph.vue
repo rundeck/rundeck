@@ -17,6 +17,8 @@
               class="btn btn-default"
               role="button"
               tabindex="0"
+              :aria-label="$t('graph.action.scaleToFit')"
+              :title="$t('graph.action.scaleToFit')"
               @click="scaleContentToFit"
               @keydown.enter="scaleContentToFit"
               @keydown.space.prevent="scaleContentToFit"
@@ -28,6 +30,8 @@
               class="btn btn-default"
               role="button"
               tabindex="0"
+              :aria-label="$t('graph.action.edit')"
+              :title="$t('graph.action.edit')"
               @click="edit"
               @keydown.enter="edit"
               @keydown.space.prevent="edit"
@@ -226,6 +230,8 @@ export default defineComponent({
       resizingSidePanel: false,
       resizeMouseMoveHandler: null as ((e: MouseEvent) => void) | null,
       resizeMouseUpHandler: null as (() => void) | null,
+      previousBodyUserSelect: "",
+      previousBodyCursor: "",
     };
   },
 
@@ -1021,6 +1027,8 @@ export default defineComponent({
       const startWidth = this.sidePanelWidth;
       const { min, max } = this.getSidePanelWidthBounds();
 
+      this.previousBodyUserSelect = document.body.style.userSelect;
+      this.previousBodyCursor = document.body.style.cursor;
       document.body.style.userSelect = "none";
       document.body.style.cursor = "col-resize";
 
@@ -1035,8 +1043,8 @@ export default defineComponent({
     },
     stopResizeSidePanel() {
       this.resizingSidePanel = false;
-      document.body.style.userSelect = "";
-      document.body.style.cursor = "";
+      document.body.style.userSelect = this.previousBodyUserSelect;
+      document.body.style.cursor = this.previousBodyCursor;
 
       if (this.resizeMouseMoveHandler) {
         window.removeEventListener("mousemove", this.resizeMouseMoveHandler);

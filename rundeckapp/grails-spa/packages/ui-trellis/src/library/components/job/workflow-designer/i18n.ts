@@ -6,6 +6,10 @@ const messages: any = {
         script: "Script",
         job: "Job: {0}",
       },
+      action: {
+        scaleToFit: "Scale to fit",
+        edit: "Edit",
+      },
     },
   },
 };
