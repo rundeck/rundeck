@@ -13,10 +13,29 @@
         <div ref="canvas" style="width: 100%; height: 100%"></div>
         <div style="position: absolute; top: 10px; right: 10px">
           <div class="btn-group">
-            <div class="btn btn-default" @click="scaleContentToFit">
+            <div
+              class="btn btn-default"
+              role="button"
+              tabindex="0"
+              :aria-label="$t('graph.action.scaleToFit')"
+              :title="$t('graph.action.scaleToFit')"
+              @click="scaleContentToFit"
+              @keydown.enter="scaleContentToFit"
+              @keydown.space.prevent="scaleContentToFit"
+            >
               <i class="fa fa-crosshairs" />
             </div>
-            <div v-if="!editing" class="btn btn-default" @click="edit">
+            <div
+              v-if="!editing"
+              class="btn btn-default"
+              role="button"
+              tabindex="0"
+              :aria-label="$t('graph.action.edit')"
+              :title="$t('graph.action.edit')"
+              @click="edit"
+              @keydown.enter="edit"
+              @keydown.space.prevent="edit"
+            >
               <i class="fa fa-pen" style="transform: translate(0, -5px)" />
               <div
                 style="
@@ -29,25 +48,33 @@
                   color: var(--warning-color);
                 "
               >
-                Beta!
+                {{ $t("graph.badge.beta") }}
               </div>
             </div>
           </div>
           <div
             v-if="editing"
             class="btn btn-cta"
-            @click="commit"
+            role="button"
+            tabindex="0"
             style="margin-left: 5px"
+            @click="commit"
+            @keydown.enter="commit"
+            @keydown.space.prevent="commit"
           >
-            Commit
+            {{ $t("graph.action.commit") }}
           </div>
           <div
             v-if="editing"
             class="btn btn-default"
-            @click="revert"
+            role="button"
+            tabindex="0"
             style="margin-left: 5px"
+            @click="revert"
+            @keydown.enter="revert"
+            @keydown.space.prevent="revert"
           >
-            Revert
+            {{ $t("graph.action.revert") }}
           </div>
         </div>
         <div style="position: absolute; top: 0">
@@ -57,22 +84,39 @@
         </div>
       </div>
       <div
+        role="separator"
+        data-testid="workflow-graph-resizer"
+        aria-orientation="vertical"
+        :aria-valuenow="sidePanelWidth"
+        :aria-valuemin="getSidePanelWidthBounds().min"
+        :aria-valuemax="getSidePanelWidthBounds().max"
+        :aria-label="$t('graph.action.resizeRulesPanel')"
+        tabindex="0"
+        class="workflow-graph-resizer"
+        :class="{ 'workflow-graph-resizer--active': resizingSidePanel }"
+        @mousedown="startResizeSidePanel"
+        @keydown.left.prevent="nudgeSidePanelWidth(20)"
+        @keydown.right.prevent="nudgeSidePanelWidth(-20)"
+      />
+      <div
+        data-testid="workflow-graph-side-panel"
+        :style="sidePanelStyle"
         style="
-          width: 600px;
           box-shadow: rgba(0, 0, 0, 0.15) 2px 0px 8px 0px;
           z-index: 100;
           padding: 10px;
           height: 100%;
+          flex-shrink: 0;
         "
       >
         <Tabs style="height: 100%">
-          <Tab :index="0" title="Rules">
+          <Tab :index="0" :title="$t('graph.tab.rules')">
             <div style="padding: 5px; height: 100%">
-              <div v-if="editorElm" ref="editor" style="height: 100%"/>
+              <div v-if="editorElm" ref="editor" style="height: 100%" />
               <AceEditor
-                identifier="wf_editor"
                 v-else-if="!editorElm"
                 v-model="rulesInternal"
+                identifier="wf_editor"
                 :read-only="false"
                 lang="javascript"
                 height="500px"
@@ -88,24 +132,22 @@
 </template>
 
 <script lang="ts">
-import {Tab, Tabs} from '../../containers/tabs'
-import AceEditor from '../../utils/AceEditor.vue'
+import { Tab, Tabs } from "../../containers/tabs";
+import AceEditor from "../../utils/AceEditor.vue";
 
-import * as Ace from 'ace-builds'
+import * as Ace from "ace-builds";
 
-import * as dagre from 'dagre'
-import * as graphlib from 'graphlib'
-import {Graph} from 'graphlib'
-import * as Joint from 'jointjs'
-import type {PropType} from 'vue'
-import {defineComponent} from 'vue'
-import NodeEditor from './components/NodeEditor.vue'
+import * as dagre from "dagre";
+import * as graphlib from "graphlib";
+import { Graph } from "graphlib";
+import * as Joint from "jointjs";
+import type { PropType } from "vue";
+import { defineComponent } from "vue";
 
-import {WorkflowStep} from './elements/Step'
-import GeneratedRules from './GeneratedRules.vue'
+import { WorkflowStep } from "./elements/Step";
 
-import {GNode, NodeDescription, WorkflowGraph} from './Graph'
-import {RuleSetParser} from './RuleSetParser'
+import { GNode, NodeDescription, WorkflowGraph } from "./Graph";
+import { RuleSetParser } from "./RuleSetParser";
 
 const ROUTER = "normal";
 
@@ -115,6 +157,10 @@ const MAX_SCALE = 1;
 let transitions = 0;
 
 const SEPERATION_RANK = 50;
+
+const SIDE_PANEL_MIN_WIDTH_RATIO = 0.25;
+const SIDE_PANEL_MAX_WIDTH_RATIO = 0.75;
+const SIDE_PANEL_DEFAULT_WIDTH_RATIO = 0.6;
 
 const TRANSITION_SPEED = 300;
 
@@ -145,10 +191,7 @@ export default defineComponent({
     AceEditor,
     Tabs,
     Tab,
-    GeneratedRules,
-    NodeEditor,
   },
-  emits: ['update:modelValue'],
   props: {
     modelValue: {
       type: String,
@@ -160,11 +203,14 @@ export default defineComponent({
     },
     intersectRoot: {
       type: HTMLElement,
+      default: undefined,
     },
     editorElm: {
       type: HTMLElement,
+      default: undefined,
     },
   },
+  emits: ["update:modelValue"],
 
   data() {
     return {
@@ -180,7 +226,19 @@ export default defineComponent({
       editor: {} as Ace.Ace.Editor,
       interactive: false,
       inited: false,
+      sidePanelWidth: 600,
+      resizingSidePanel: false,
+      resizeMouseMoveHandler: null as ((e: MouseEvent) => void) | null,
+      resizeMouseUpHandler: null as (() => void) | null,
+      previousBodyUserSelect: "",
+      previousBodyCursor: "",
     };
+  },
+
+  computed: {
+    sidePanelStyle(): Record<string, string> {
+      return { width: `${this.sidePanelWidth}px` };
+    },
   },
 
   watch: {
@@ -189,8 +247,8 @@ export default defineComponent({
     },
     rulesInternal(newVal) {
       if (newVal != this.rules) {
-        this.updateRules(newVal, true)
-        this.emitChange(newVal)
+        this.updateRules(newVal, true);
+        this.emitChange(newVal);
       }
     },
     nodes(newVal) {
@@ -207,9 +265,325 @@ export default defineComponent({
     },
   },
 
+  created() {
+    this.rulesInternal = this.modelValue;
+  },
+
+  mounted() {
+    const dia = (this.dia = new Joint.dia.Graph());
+
+    const paper = (this.paper = new Joint.dia.Paper({
+      el: this.$refs["canvas"],
+      async: false,
+      model: dia,
+      gridSize: 1,
+      background: {
+        color: "var(--background-color)",
+      },
+      width: "100%",
+      height: "100%",
+      interactive: (cellView: Joint.dia.CellView) => {
+        if (!this.interactive) return false;
+
+        if (!cellView.model.isElement()) return true;
+
+        if (["START", "END"].includes(cellView.model.id as string))
+          return false;
+
+        return true;
+      },
+    } as Joint.dia.Paper.Options));
+
+    window.addEventListener("resize", this.scaleContentToFit);
+
+    paper.on("link:mouseenter", (linkView) => {
+      if (this.interactive) linkView.showTools();
+    });
+
+    paper.on("link:mouseleave", function (linkView) {
+      linkView.hideTools();
+    });
+
+    // this.updateGraph()
+    // this.layout()
+
+    if (this.intersectRoot) {
+      const observer = new IntersectionObserver(
+        () => {
+          this.dia.getElements().forEach((e) => {
+            e.getTransitions().forEach((t) => e.stopTransitions(t));
+            e.remove();
+          });
+          this.updateGraph();
+          this.layout();
+        },
+        { root: this.intersectRoot },
+      );
+      observer.observe(this.$refs["canvas"] as HTMLElement);
+    }
+
+    // let rules = () => {
+    //     alert('Rules')
+    //     graph.graphlib = dia.toGraphLib({graphlib})
+    //     this.rules = graph.generateRulesFromGraphlib().map(r => r.toString()).join('\n')
+    //     this.layout()
+    // }
+
+    // rules()
+
+    dia.on("remove", () => {
+      // TODO: Something
+    });
+
+    dia.on("add", function () {
+      // TODO: Update graph
+    });
+
+    dia.on("transition:end", () => {
+      transitions--;
+      if (!transitions) {
+        this.scaleContentToFit();
+      }
+    });
+
+    paper.on({
+      scale: function () {
+        // TODO: Some action on scale event
+      },
+
+      "cell:mousewheel": (event, e, x, y, delta) => {
+        this.handleCanvasMouseWheel(e, x, y, delta);
+      },
+
+      "blank:mousewheel": (e, x, y, delta) => {
+        this.handleCanvasMouseWheel(e, x, y, delta);
+      },
+
+      "blank:pointermove": (evt) => {
+        const deltaX = (<PointerEvent>evt.originalEvent)?.movementX;
+        const deltaY = (<PointerEvent>evt.originalEvent)?.movementY;
+
+        const origin = this.paper.translate();
+        this.paper.translate(origin.tx + deltaX, origin.ty + deltaY);
+      },
+
+      "link:connect": () => {
+        alert("Connect");
+      },
+
+      "blank:pointerclick": () => {
+        dia
+          .getElements()
+          .forEach((e) => e.attr("body/rundeck-highlight", false));
+        // this.paper.scaleContentToFit({padding: 25})
+      },
+
+      "element:pointerclick": (elementView: Joint.dia.ElementView) => {
+        if (!this.interactive) return;
+
+        if (["START", "END"].includes(elementView.model.id as string)) return;
+
+        dia
+          .getElements()
+          .forEach((e) => e.attr("body/rundeck-highlight", false));
+        elementView.model.attr("body/rundeck-highlight", true);
+        this.selectedNode = this.graph.getNode(elementView.model.id as string);
+      },
+
+      "element:pointerdown": function (
+        elementView: Joint.dia.ElementView,
+        evt,
+      ) {
+        // @ts-ignore
+        if (!this.interactive) return;
+
+        if (["START", "END"].includes(elementView.model.id as string)) return;
+
+        // Ensure captured element and links are drawn on top
+        dia.getConnectedLinks(elementView.model).forEach((l) => l.toFront());
+        elementView.model.toFront();
+
+        // elementView.model.attr('body/rundeck-selected', true)
+        evt.data = elementView.model.position();
+      },
+
+      "element:pointermove": (elementView: Joint.dia.ElementView) => {
+        if (!this.interactive) return;
+
+        if (["START", "END"].includes(elementView.model.id as string)) return;
+
+        elementView.model.toFront();
+
+        dia.getConnectedLinks(elementView.model).forEach((l) => {
+          /**
+           * Move bottom link verts(elbows) with element
+           */
+          const elPos = elementView.model.position();
+          const linkSrcPost = l.getSourcePoint();
+          const verts = l.vertices();
+          if (linkSrcPost.y > elPos.y && verts.length > 0)
+            l.vertices([
+              { x: linkSrcPost.x, y: linkSrcPost.y + SEPERATION_RANK },
+            ]);
+
+          // Highlight links connected to dragged element
+          l.attr("line/rundeck-selected", true);
+        });
+        elementView.model.attr("body/rundeck-selected", true);
+
+        const intersects = [] as Array<{
+          el: Joint.dia.Element;
+          intersect: Joint.g.Rect;
+        }>;
+
+        dia.getElements().forEach((el) => {
+          if (
+            elementView.model === el ||
+            ["START", "END"].includes(el.id as string)
+          )
+            return;
+
+          const intersect = elementView.model.getBBox().intersect(el.getBBox());
+
+          if (intersect) intersects.push({ el, intersect });
+          else el.attr("body/rundeck-selected", false);
+        });
+
+        if (intersects.length) {
+          intersects.sort((a, b) => {
+            return a.intersect.width * a.intersect.height >
+              b.intersect.width * b.intersect.height
+              ? 1
+              : -1;
+          });
+
+          intersects.pop()!.el.attr("body/rundeck-selected", true);
+          intersects.forEach((i) => i.el.attr("body/rundeck-selected", false));
+        }
+      },
+
+      "element:pointerup": (elementView: Joint.dia.ElementView, evt, x, y) => {
+        if (!this.interactive) return;
+        dia
+          .getConnectedLinks(elementView.model)
+          .forEach((l) => l.attr("line/rundeck-selected", false));
+        elementView.model.attr("body/rundeck-selected", "false");
+        const coordinates = new Joint.g.Point(x, y);
+        const elementAbove = elementView.model;
+        if (!evt.data || elementAbove.position().equals(evt.data)) {
+          return;
+        }
+        // @ts-ignore
+        let elementBelow = paper.model
+          .findModelsFromPoint(coordinates)
+          .find(function (el) {
+            // elementView.model.attr('/rundeck-selected', 'false')
+            return el.id !== elementAbove.id;
+          });
+
+        const intersects = [] as Array<{
+          el: Joint.dia.Element;
+          intersect: Joint.g.Rect;
+        }>;
+        dia.getElements().forEach((el) => {
+          el.attr("body/rundeck-selected", false);
+
+          if (el.id === elementView.model.id) return;
+
+          const intersect = elementView.model.getBBox().intersect(el.getBBox());
+
+          if (intersect) intersects.push({ el, intersect });
+        });
+
+        if (intersects.length) {
+          intersects.sort((a, b) => {
+            return a.intersect.width * a.intersect.height >
+              b.intersect.width * b.intersect.height
+              ? 1
+              : -1;
+          });
+          elementBelow = intersects.pop()!.el;
+        }
+
+        if (
+          elementBelow &&
+          ["START", "END"].includes(elementBelow.id as string)
+        )
+          return;
+
+        // If the two elements are connected already, don't
+        // connect them again (this is application-specific though).
+        if (
+          elementBelow &&
+          dia.getNeighbors(elementBelow).indexOf(elementAbove) === -1
+        ) {
+          this.graph.setEdge(
+            elementBelow.id.toString(),
+            elementAbove.id as string,
+          );
+
+          this.updateGraph(true);
+          this.updateOutputRules();
+
+          // Create a connection between elements.
+
+          // var link = new Joint.shapes.standard.Link();
+          // link.source(elementBelow);
+          // link.target(elementAbove);
+          // link.router(ROUTER)
+          // link.addTo(dia);
+
+          // Add remove button to the link.
+          // var tools = new Joint.dia.ToolsView({
+          //     tools: [new Joint.linkTools.Remove()]
+          // });
+          // @ts-ignore
+          // link.findView(this).addTools(tools).hideTools();
+        } else {
+          // Move the element to the position before dragging.
+          elementAbove.position(evt.data.x, evt.data.y);
+          this.layout(true);
+        }
+      },
+    });
+
+    const initialNodes = this.nodes.length != 0 ? this.nodes : [];
+    const initialRules = this.modelValue || "";
+
+    this.graph = new WorkflowGraph(new Map([]));
+
+    if (this.editorElm) {
+      this.editorElm.parentElement?.removeChild(this.editorElm);
+      const editor = this.$refs.editor as HTMLElement;
+      editor.appendChild(this.editorElm);
+
+      setTimeout(() => {
+        const win = window as any;
+        this.editor = win.ace.edit(
+          document.getElementById("_id1"),
+        ) as Ace.Ace.Editor;
+      }, 1000);
+    }
+    this.inited = true;
+    this.updateNodes(initialNodes);
+    this.updateRules(initialRules, false);
+
+    this.$nextTick(() => {
+      const containerWidth = (this.$el as HTMLElement)?.clientWidth || 0;
+      if (containerWidth) {
+        this.sidePanelWidth = containerWidth * SIDE_PANEL_DEFAULT_WIDTH_RATIO;
+      }
+    });
+  },
+
+  beforeUnmount() {
+    window.removeEventListener("resize", this.scaleContentToFit);
+    this.stopResizeSidePanel();
+  },
+
   methods: {
     emitChange(newVal: string) {
-      this.$emit('update:modelValue', newVal)
+      this.$emit("update:modelValue", newVal);
     },
     edit() {
       this.editing = true;
@@ -223,9 +597,9 @@ export default defineComponent({
       const session = this.editor;
       this.updateRules(this.rules);
       session.setValue(this.rules);
-      this.rulesInternal = this.rules
+      this.rulesInternal = this.rules;
       // manually emit change, since the rulesInternal watcher will skip it, and we also don't want a transition
-      this.emitChange(this.rules)
+      this.emitChange(this.rules);
       this.editor.setReadOnly(false);
     },
     revert() {
@@ -291,6 +665,8 @@ export default defineComponent({
         maxScale: 1,
         preserveAspectRatio: true,
       });
+      const { min, max } = this.getSidePanelWidthBounds();
+      this.sidePanelWidth = Math.min(max, Math.max(min, this.sidePanelWidth));
     },
     /** Resize element to fit width of rendered SVG text. */
     fitText() {
@@ -460,12 +836,16 @@ export default defineComponent({
             fontSize: "10",
           };
 
-          let icon = {
-            class: node.icon.image ? '' : node.icon.class,
-            style: {display: !node.icon.image ? 'block' : 'none'},
+          const icon = {
+            class: node.icon.image ? "" : node.icon.class,
+            style: { display: !node.icon.image ? "block" : "none" },
           } as any;
-          if (node.icon.class?.indexOf('glyphicon') >= 0 || node.icon.class?.indexOf('fas') >= 0 || node.icon.class?.indexOf('fab') >= 0) {
-            icon.style.fontSize = '30px';
+          if (
+            node.icon.class?.indexOf("glyphicon") >= 0 ||
+            node.icon.class?.indexOf("fas") >= 0 ||
+            node.icon.class?.indexOf("fab") >= 0
+          ) {
+            icon.style.fontSize = "30px";
           }
           const attrs = {
             image: {
@@ -496,7 +876,7 @@ export default defineComponent({
           )[0] as any as SVGGraphicsElement;
 
           /** Detect change in label element size */
-          const reszObs = new ResizeObserver((entries) => {});
+          const reszObs = new ResizeObserver(() => {});
           reszObs.observe(elLabel);
         },
         importEdge: (edge: any, gl: Graph, g: Joint.dia.Graph) => {
@@ -507,9 +887,6 @@ export default defineComponent({
             // @ts-ignore
 
             if (g.getNeighbors(target).indexOf(src) > -1) {
-              const link = g
-                .getConnectedLinks(target)
-                .filter((l) => l.getSourceElement() === src);
               return;
             }
           }
@@ -528,7 +905,7 @@ export default defineComponent({
 
           /** Add link tools if graph is interactive */
           if (!["START", "END"].some((i) => [edge.v, edge.w].includes(i))) {
-            let tools = new Joint.dia.ToolsView({
+            const tools = new Joint.dia.ToolsView({
               tools: [
                 new Joint.linkTools.Remove({
                   distance: "50%", // Place button at link mid-point
@@ -588,7 +965,7 @@ export default defineComponent({
     handleCanvasMouseWheel(e: any, x: number, y: number, delta: number) {
       e.preventDefault();
 
-      let { originalEvent } = e;
+      const { originalEvent } = e;
 
       /** FireFox may throw in horizontal scroll events which we discard */
       if (
@@ -615,321 +992,69 @@ export default defineComponent({
       }
     },
     aceInit(editor: Ace.Ace.Editor) {
-      this.editor = editor
-    }
-  },
-
-  created() {
-    this.rulesInternal = this.modelValue
-  },
-
-  mounted() {
-    let dia = (this.dia = new Joint.dia.Graph());
-
-    const paper = (this.paper = new Joint.dia.Paper({
-      el: this.$refs["canvas"],
-      async: false,
-      model: dia,
-      gridSize: 1,
-      background: {
-        color: "var(--background-color)",
-      },
-      width: "100%",
-      height: "100%",
-      interactive: (cellView: Joint.dia.CellView) => {
-        if (!this.interactive) return false;
-
-        if (!cellView.model.isElement()) return true;
-
-        if (["START", "END"].includes(cellView.model.id as string))
-          return false;
-
-        return true;
-      },
-    } as Joint.dia.Paper.Options));
-
-    window.addEventListener("resize", () => {
-      this.scaleContentToFit();
-    });
-
-    paper.on("link:mouseenter", (linkView) => {
-      if (this.interactive) linkView.showTools();
-    });
-
-    paper.on("link:mouseleave", function (linkView) {
-      linkView.hideTools();
-    });
-
-    // this.updateGraph()
-    // this.layout()
-
-    if (this.intersectRoot) {
-      const observer = new IntersectionObserver(
-        () => {
-          this.dia.getElements().forEach((e) => {
-            e.getTransitions().forEach((t) => e.stopTransitions(t));
-            e.remove();
-          });
-          this.updateGraph();
-          this.layout();
-        },
-        { root: this.intersectRoot },
-      );
-      observer.observe(this.$refs["canvas"] as HTMLElement);
-    }
-
-    // let rules = () => {
-    //     alert('Rules')
-    //     graph.graphlib = dia.toGraphLib({graphlib})
-    //     this.rules = graph.generateRulesFromGraphlib().map(r => r.toString()).join('\n')
-    //     this.layout()
-    // }
-
-    // rules()
-
-    dia.on("remove", (cell) => {
-      // TODO: Something
-    });
-
-    dia.on("add", function (cell) {
-      // TODO: Update graph
-    });
-
-    dia.on("transition:end", (...args) => {
-      transitions--;
-      if (!transitions) {
-        this.scaleContentToFit();
+      this.editor = editor;
+      editor.setOption("showFoldWidgets", false);
+    },
+    getSidePanelWidthBounds(): { min: number; max: number } {
+      const containerWidth = (this.$el as HTMLElement)?.clientWidth || 0;
+      if (!containerWidth) {
+        return { min: this.sidePanelWidth, max: this.sidePanelWidth };
       }
-    });
+      return {
+        min: containerWidth * SIDE_PANEL_MIN_WIDTH_RATIO,
+        max: containerWidth * SIDE_PANEL_MAX_WIDTH_RATIO,
+      };
+    },
+    nudgeSidePanelWidth(delta: number) {
+      const { min, max } = this.getSidePanelWidthBounds();
+      this.sidePanelWidth = Math.min(
+        max,
+        Math.max(min, this.sidePanelWidth + delta),
+      );
+    },
+    startResizeSidePanel(event: MouseEvent) {
+      if (event.button !== 0) return;
 
-    paper.on({
-      scale: function (...args) {
-        // TODO: Some action on scale event
-      },
+      event.preventDefault();
+      this.stopResizeSidePanel();
+      this.resizingSidePanel = true;
 
-      "cell:mousewheel": (event, e, x, y, delta) => {
-        this.handleCanvasMouseWheel(e, x, y, delta);
-      },
+      const startX = event.clientX;
+      const startWidth = this.sidePanelWidth;
+      const { min, max } = this.getSidePanelWidthBounds();
 
-      "blank:mousewheel": (e, x, y, delta) => {
-        this.handleCanvasMouseWheel(e, x, y, delta);
-      },
+      this.previousBodyUserSelect = document.body.style.userSelect;
+      this.previousBodyCursor = document.body.style.cursor;
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "col-resize";
 
-      "blank:pointermove": (evt, x, y) => {
-        const deltaX = (<PointerEvent>evt.originalEvent)?.movementX;
-        const deltaY = (<PointerEvent>evt.originalEvent)?.movementY;
+      this.resizeMouseMoveHandler = (e: MouseEvent) => {
+        const proposedWidth = startWidth + (startX - e.clientX);
+        this.sidePanelWidth = Math.min(max, Math.max(min, proposedWidth));
+      };
+      this.resizeMouseUpHandler = () => this.stopResizeSidePanel();
 
-        const origin = this.paper.translate();
-        this.paper.translate(origin.tx + deltaX, origin.ty + deltaY);
-      },
+      window.addEventListener("mousemove", this.resizeMouseMoveHandler);
+      window.addEventListener("mouseup", this.resizeMouseUpHandler);
+    },
+    stopResizeSidePanel() {
+      const wasResizing = this.resizingSidePanel;
+      this.resizingSidePanel = false;
 
-      "link:connect": () => {
-        alert("Connect");
-      },
+      if (wasResizing) {
+        document.body.style.userSelect = this.previousBodyUserSelect;
+        document.body.style.cursor = this.previousBodyCursor;
+      }
 
-      "blank:pointerclick": () => {
-        dia
-          .getElements()
-          .forEach((e) => e.attr("body/rundeck-highlight", false));
-        // this.paper.scaleContentToFit({padding: 25})
-      },
-
-      "element:pointerclick": (elementView: Joint.dia.ElementView, evt) => {
-        if (!this.interactive) return;
-
-        if (["START", "END"].includes(elementView.model.id as string)) return;
-
-        dia
-          .getElements()
-          .forEach((e) => e.attr("body/rundeck-highlight", false));
-        elementView.model.attr("body/rundeck-highlight", true);
-        this.selectedNode = this.graph.getNode(elementView.model.id as string);
-      },
-
-      "element:pointerdown": function (
-        elementView: Joint.dia.ElementView,
-        evt,
-      ) {
-        // @ts-ignore
-        if (!this.interactive) return;
-
-        if (["START", "END"].includes(elementView.model.id as string)) return;
-
-        // Ensure captured element and links are drawn on top
-        dia.getConnectedLinks(elementView.model).forEach((l) => l.toFront());
-        elementView.model.toFront();
-
-        // elementView.model.attr('body/rundeck-selected', true)
-        evt.data = elementView.model.position();
-      },
-
-      "element:pointermove": (
-        elementView: Joint.dia.ElementView,
-        evt,
-        x,
-        y,
-      ) => {
-        if (!this.interactive) return;
-
-        if (["START", "END"].includes(elementView.model.id as string)) return;
-
-        elementView.model.toFront();
-
-        dia.getConnectedLinks(elementView.model).forEach((l) => {
-          /**
-           * Move bottom link verts(elbows) with element
-           */
-          const elPos = elementView.model.position();
-          const linkSrcPost = l.getSourcePoint();
-          const verts = l.vertices();
-          if (linkSrcPost.y > elPos.y && verts.length > 0)
-            l.vertices([
-              { x: linkSrcPost.x, y: linkSrcPost.y + SEPERATION_RANK },
-            ]);
-
-          // Highlight links connected to dragged element
-          l.attr("line/rundeck-selected", true);
-        });
-        elementView.model.attr("body/rundeck-selected", true);
-
-        const intersects = [] as Array<{
-          el: Joint.dia.Element;
-          intersect: Joint.g.Rect;
-        }>;
-
-        dia.getElements().forEach((el) => {
-          if (
-            elementView.model === el ||
-            ["START", "END"].includes(el.id as string)
-          )
-            return;
-
-          const intersect = elementView.model.getBBox().intersect(el.getBBox());
-
-          if (intersect) intersects.push({ el, intersect });
-          else el.attr("body/rundeck-selected", false);
-        });
-
-        if (intersects.length) {
-          intersects.sort((a, b) => {
-            return a.intersect.width * a.intersect.height >
-              b.intersect.width * b.intersect.height
-              ? 1
-              : -1;
-          });
-
-          intersects.pop()!.el.attr("body/rundeck-selected", true);
-          intersects.forEach((i) => i.el.attr("body/rundeck-selected", false));
-        }
-      },
-
-      "element:pointerup": (elementView: Joint.dia.ElementView, evt, x, y) => {
-        if (!this.interactive) return;
-        dia
-          .getConnectedLinks(elementView.model)
-          .forEach((l) => l.attr("line/rundeck-selected", false));
-        elementView.model.attr("body/rundeck-selected", "false");
-        let coordinates = new Joint.g.Point(x, y);
-        let elementAbove = elementView.model;
-        if (!evt.data || elementAbove.position().equals(evt.data)) {
-          return;
-        }
-        // @ts-ignore
-        let elementBelow = paper.model
-          .findModelsFromPoint(coordinates)
-          .find(function (el) {
-            // elementView.model.attr('/rundeck-selected', 'false')
-            return el.id !== elementAbove.id;
-          });
-
-        const intersects = [] as Array<{
-          el: Joint.dia.Element;
-          intersect: Joint.g.Rect;
-        }>;
-        dia.getElements().forEach((el) => {
-          el.attr("body/rundeck-selected", false);
-
-          if (el.id === elementView.model.id) return;
-
-          const intersect = elementView.model.getBBox().intersect(el.getBBox());
-
-          if (intersect) intersects.push({ el, intersect });
-        });
-
-        if (intersects.length) {
-          intersects.sort((a, b) => {
-            return a.intersect.width * a.intersect.height >
-              b.intersect.width * b.intersect.height
-              ? 1
-              : -1;
-          });
-          elementBelow = intersects.pop()!.el;
-        }
-
-        if (
-          elementBelow &&
-          ["START", "END"].includes(elementBelow.id as string)
-        )
-          return;
-
-        // If the two elements are connected already, don't
-        // connect them again (this is application-specific though).
-        if (
-          elementBelow &&
-          dia.getNeighbors(elementBelow).indexOf(elementAbove) === -1
-        ) {
-          this.graph.setEdge(
-            elementBelow.id.toString(),
-            elementAbove.id as string,
-          );
-
-          this.updateGraph(true);
-          this.updateOutputRules();
-
-          // Create a connection between elements.
-
-          // var link = new Joint.shapes.standard.Link();
-          // link.source(elementBelow);
-          // link.target(elementAbove);
-          // link.router(ROUTER)
-          // link.addTo(dia);
-
-          // Add remove button to the link.
-          // var tools = new Joint.dia.ToolsView({
-          //     tools: [new Joint.linkTools.Remove()]
-          // });
-          // @ts-ignore
-          // link.findView(this).addTools(tools).hideTools();
-        } else {
-          // Move the element to the position before dragging.
-          elementAbove.position(evt.data.x, evt.data.y);
-          this.layout(true);
-        }
-      },
-    });
-
-    const initialNodes = this.nodes.length != 0 ? this.nodes : [];
-    const initialRules = this.modelValue || "";
-
-    this.graph = new WorkflowGraph(new Map([]));
-
-    if (this.editorElm) {
-      this.editorElm.parentElement?.removeChild(this.editorElm);
-      const editor = this.$refs.editor as HTMLElement;
-      editor.appendChild(this.editorElm);
-
-      const win = window as any;
-
-      setTimeout(() => {
-        const win = window as any;
-        this.editor = win.ace.edit(
-          document.getElementById("_id1"),
-        ) as Ace.Ace.Editor;
-      }, 1000);
-    }
-    this.inited = true;
-    this.updateNodes(initialNodes);
-    this.updateRules(initialRules, false);
+      if (this.resizeMouseMoveHandler) {
+        window.removeEventListener("mousemove", this.resizeMouseMoveHandler);
+        this.resizeMouseMoveHandler = null;
+      }
+      if (this.resizeMouseUpHandler) {
+        window.removeEventListener("mouseup", this.resizeMouseUpHandler);
+        this.resizeMouseUpHandler = null;
+      }
+    },
   },
 });
 </script>
@@ -983,5 +1108,25 @@ export default defineComponent({
 
 :deep(.rdtabs__pane) {
   flex-grow: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.workflow-graph-resizer {
+  width: 6px;
+  cursor: col-resize;
+  flex-shrink: 0;
+  z-index: 101;
+}
+
+.workflow-graph-resizer:hover,
+.workflow-graph-resizer:focus,
+.workflow-graph-resizer--active {
+  background-color: var(--border-color, #ccc);
+}
+
+:deep(#wf_editor .ace_gutter-cell) {
+  padding-left: 8px;
+  padding-right: 4px;
 }
 </style>
