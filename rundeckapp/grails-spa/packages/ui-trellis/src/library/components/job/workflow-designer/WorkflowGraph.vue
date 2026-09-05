@@ -88,8 +88,8 @@
         data-testid="workflow-graph-resizer"
         aria-orientation="vertical"
         :aria-valuenow="sidePanelWidth"
-        :aria-valuemin="sidePanelMinWidth"
-        :aria-valuemax="sidePanelMaxWidth"
+        :aria-valuemin="Math.round(getSidePanelWidthBounds().min)"
+        :aria-valuemax="Math.round(getSidePanelWidthBounds().max)"
         :aria-label="$t('graph.action.resizeRulesPanel')"
         tabindex="0"
         class="workflow-graph-resizer"
@@ -238,12 +238,6 @@ export default defineComponent({
   computed: {
     sidePanelStyle(): Record<string, string> {
       return { width: `${this.sidePanelWidth}px` };
-    },
-    sidePanelMinWidth(): number {
-      return this.getSidePanelWidthBounds().min;
-    },
-    sidePanelMaxWidth(): number {
-      return this.getSidePanelWidthBounds().max;
     },
   },
 
@@ -1019,6 +1013,8 @@ export default defineComponent({
       );
     },
     startResizeSidePanel(event: MouseEvent) {
+      if (event.button !== 0) return;
+
       event.preventDefault();
       this.stopResizeSidePanel();
       this.resizingSidePanel = true;
