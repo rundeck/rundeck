@@ -50,8 +50,17 @@ module.exports = {
     "prefer-const": "warn",
     "storybook/story-exports": "warn",
     "storybook/context-in-play-function": "warn",
+    "complexity": ["warn", 25],
   },
   ignorePatterns: ["build", "test", ".storybook"],
+  overrides: [
+    {
+      files: ["**/*.spec.ts", "**/*.spec.js", "**/tests/**", "**/__tests__/**"],
+      rules: {
+        "complexity": "off",
+      },
+    },
+  ],
   extends: [
     "@vue/typescript/recommended",
     "plugin:vue/vue3-recommended",

@@ -37,6 +37,7 @@ import groovy.sql.Sql
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
 import org.rundeck.app.AppConstants
+import org.rundeck.security.RealmPropertiesWeakFormatScanner
 import rundeck.services.LogFileStorageService
 import rundeck.services.feature.FeatureService
 import rundeckapp.cli.CommandLineSetup
@@ -353,6 +354,27 @@ class BootStrap {
         } else {
             log.info("Using builtin realm authentication")
             authenticationManager.providers.add(grailsApplication.mainContext.getBean("realmAuthProvider"))
+
+            // RUN-4555: warn at startup when realm.properties contains accounts stored in a weak
+            // or unrecognized password format (MD5/CRYPT/plaintext). The password encoder no longer
+            // accepts a plaintext fallback, but weak formats are still accepted for compatibility;
+            // surface them so admins know to migrate those accounts to BCrypt.
+            String realmFilePath = grailsApplication.config.getProperty("rundeck.security.fileUserDataSource", String.class)
+            File realmFile = realmFilePath ? new File(realmFilePath) : null
+            if (realmFile?.exists()) {
+                Properties realmProperties = new Properties()
+                realmFile.withInputStream { realmProperties.load(it) }
+                List<String> weakUsernames = RealmPropertiesWeakFormatScanner.findWeakFormatUsernames(realmProperties)
+                if (weakUsernames) {
+                    log.warn("=" * 80)
+                    log.warn("SECURITY: realm.properties contains accounts using a weak or unrecognized")
+                    log.warn("password format (MD5, CRYPT, or plaintext instead of BCrypt).")
+                    log.warn("Affected accounts: ${weakUsernames.join(', ')}")
+                    log.warn("If this file is disclosed, these credentials are exposed to offline cracking.")
+                    log.warn("Migrate affected accounts to BCRYPT-encoded passwords.")
+                    log.warn("=" * 80)
+                }
+            }
         }
 
         if(grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled",Boolean.class, false)
