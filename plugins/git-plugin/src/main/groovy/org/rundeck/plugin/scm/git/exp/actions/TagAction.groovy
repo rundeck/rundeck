@@ -32,12 +32,10 @@ import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitUtil
 
-
 /**
  * Create a tag
  */
 class TagAction extends BaseAction implements GitExportAction {
-
     public static final String P_MESSAGE = 'message'
     public static final String P_TAG_NAME = 'tagName'
 
@@ -77,8 +75,7 @@ class TagAction extends BaseAction implements GitExportAction {
             final Set<String> pathsToDelete,
             final ScmOperationContext context,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
+    ) throws ScmPluginException {
         if (!input[P_TAG_NAME]) {
             throw new ScmPluginInvalidInput(
                     Validator.errorReport(P_TAG_NAME, "Tag name is required.")

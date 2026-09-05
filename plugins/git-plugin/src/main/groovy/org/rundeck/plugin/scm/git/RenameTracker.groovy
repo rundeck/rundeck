@@ -36,9 +36,9 @@ class RenameTracker<A> {
      * @param newval
      * @return original value for renamed item, or null
      */
-    A originalValue(A newval){
-        if(renamedTrackedItems.values().contains(newval)){
-            return renamedTrackedItems.keySet().find{renamedTrackedItems[it] == newval}
+    A originalValue(A newval) {
+        if (renamedTrackedItems.values().contains(newval)) {
+            return renamedTrackedItems.keySet().find { renamedTrackedItems[it] == newval }
         }
         null
     }
@@ -61,17 +61,23 @@ class RenameTracker<A> {
         if (renamedTrackedItems[newval] == oldval) {
             //reverted name change
             renamedTrackedItems.remove(newval)
+            return
+        }
+        //if oldval is itself the result of a previous rename, collapse the chain to origin -> newval
+        //so intermediate links don't accumulate forever
+        def origin = originalValue(oldval)
+        if (origin != null) {
+            renamedTrackedItems.remove(oldval)
+            renamedTrackedItems[origin] = newval
         } else {
             renamedTrackedItems[oldval] = newval
         }
     }
 
-
-
     @Override
     public String toString() {
         return "RenameTracker{" +
                 "renamedTrackedItems=" + renamedTrackedItems +
-                '}';
+                '}'
     }
 }

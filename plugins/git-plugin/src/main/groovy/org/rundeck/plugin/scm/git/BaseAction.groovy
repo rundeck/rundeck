@@ -35,7 +35,6 @@ abstract class BaseAction implements Action {
     }
 
     BaseAction(String id, String title, String description) {
-        this(id, title, description, null);
+        this(id, title, description, null)
     }
-
 }

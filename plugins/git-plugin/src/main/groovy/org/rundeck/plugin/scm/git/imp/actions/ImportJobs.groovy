@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.rundeck.plugin.scm.git.BaseAction
@@ -31,7 +32,6 @@ import org.rundeck.plugin.scm.git.GitImportPlugin
 import org.rundeck.plugin.scm.git.GitUtil
 import org.rundeck.plugin.scm.git.JobRenamedImp
 
-
 /**
  * Action to import selected jobs from git HEAD commit
  */
@@ -39,7 +39,6 @@ class ImportJobs extends BaseAction implements GitImportAction {
     ImportJobs(final String id, final String title, final String description, final String iconName) {
         super(id, title, description, iconName)
     }
-
 
     BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
         BuilderUtil.inputViewBuilder(id) {
@@ -57,9 +56,8 @@ class ImportJobs extends BaseAction implements GitImportAction {
         final JobImporter importer,
         final List<String> selectedPaths,
         final Map<String, String> input
-    )
-    {
-        performAction(context, plugin, importer, selectedPaths,null,input)
+    ) {
+        performAction(context, plugin, importer, selectedPaths, null, input)
     }
 
     ScmExportResult performAction(
@@ -69,8 +67,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
             final List<String> selectedPaths,
             final List<String> deletedJobs,
             final Map<String, String> input
-    )
-    {
+    ) {
         //perform git
         StringBuilder sb = new StringBuilder()
         boolean success = true
@@ -86,7 +83,6 @@ class ImportJobs extends BaseAction implements GitImportAction {
             } else {
                 sb << ("Succeeded deleting job with id ${jobId} ")
             }
-
         }
 
         def jobsChanged = []
@@ -99,21 +95,27 @@ class ImportJobs extends BaseAction implements GitImportAction {
                 return
             }
             def objectId = walk.getObjectId(0)
-            def size = plugin.repo.open(objectId, Constants.OBJ_BLOB).getSize()
+            def loader = plugin.repo.open(objectId, Constants.OBJ_BLOB)
+            def size = loader.getSize()
             plugin.log.debug("import data: ${size} = ${path}")
-            def bytes = plugin.repo.open(objectId, Constants.OBJ_BLOB).getBytes(Integer.MAX_VALUE)
+            if (size > GitUtil.MAX_BLOB_SIZE) {
+                throw new ScmPluginException(
+                        "Job definition file at path ${path} is too large to import (${size} bytes, max ${GitUtil.MAX_BLOB_SIZE})"
+                )
+            }
+            def bytes = loader.getBytes(GitUtil.MAX_BLOB_SIZE as int)
 
             def commit = GitUtil.lastCommitForPath plugin.repo, plugin.git, path
             def meta = GitUtil.metaForCommit(commit)
             meta.url = plugin.config.url
 
             JobRenamedImp renamedJob = null
-            if(plugin.importTracker.originalValue(path)){
+            if (plugin.importTracker.originalValue(path)) {
                 def originalPath = plugin.importTracker.originalValue(path)
                 def jobUUID = plugin.importTracker.trackedJob(originalPath)
                 def jobCache = plugin.jobStateMap[jobUUID]
                 renamedJob = new JobRenamedImp(uuid: jobUUID)
-                if(jobCache?.sourceId){
+                if (jobCache?.sourceId) {
                     renamedJob.sourceId = jobCache.sourceId
                 }
             }
@@ -130,16 +132,15 @@ class ImportJobs extends BaseAction implements GitImportAction {
                 success = false
                 sb << ("Failed importing: ${walk.getPathString()}: " + importResult.errorMessage)
             } else {
-                if(importResult.getJob()){
+                if (importResult.getJob()) {
                     jobsChanged.add(importResult.getJob())
+                    plugin.importTracker.trackJobAtPath(importResult.job, walk.getPathString())
                 }
-                plugin.importTracker.trackJobAtPath(importResult.job,walk.getPathString())
-                success = true
                 sb << ("Succeeded importing ${walk.getPathString()}: ${importResult}")
             }
         }
 
-        if(jobsChanged){
+        if (jobsChanged) {
             plugin.refreshJobsStatus(jobsChanged)
         }
 
@@ -148,7 +149,5 @@ class ImportJobs extends BaseAction implements GitImportAction {
         result.message = "Git Import " + (success ? "successful" : "failed")
         result.extendedMessage = sb.toString()
         return result
-
     }
-
 }

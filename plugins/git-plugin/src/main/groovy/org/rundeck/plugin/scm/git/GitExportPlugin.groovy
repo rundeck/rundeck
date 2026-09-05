@@ -53,11 +53,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     public static final String PROJECT_FETCH_ACTION_ID = "project-fetch"
     public static final String PLUGIN_INTEGRATION = 'export'
 
-
     String format = SERIALIZE_FORMAT
     boolean inited = false
-    String committerName;
-    String committerEmail;
+    String committerName
+    String committerEmail
     Map<String, GitExportAction> actions = [:]
     Export config
 
@@ -104,7 +103,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     void setup(ScmOperationContext context, Export config) throws ScmPluginException {
-
         if (inited) {
             log.debug("already inited, not doing setup")
             return
@@ -164,17 +162,17 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     void cleanup() {
-        git?.close()
+        git?.getRepository()?.close()
     }
 
     @Override
-    void totalClean(){
+    void totalClean() {
         repo?.close()
         git?.getRepository()?.close()
         git?.close()
         File base = new File(config.dir)
 
-        if(base.exists()){
+        if (base.exists()) {
             try {
                 if (System.getProperty("os.name").toLowerCase().contains("windows")) {
                     //this operation forces a cache clean freeing any lock -> windows only issue!
@@ -182,19 +180,16 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     windowCacheConfig.install()
                 }
                 FileUtils.delete(base, FileUtils.RECURSIVE | FileUtils.RETRY)
-            } catch(IOException e){
+            } catch (IOException e) {
                 logger.error("Failed to delete repo folder ", e)
             }
         }
-
     }
-
 
     @Override
     BasicInputView getInputViewForAction(final ScmOperationContext context, String actionId) {
         actions[actionId]?.getInputView(context, this)
     }
-
 
     @Override
     ScmExportResult export(
@@ -204,14 +199,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             final Set<String> pathsToDelete,
             final Map<String, String> input
     )
-            throws ScmPluginException
-    {
+            throws ScmPluginException {
         if (!actions[actionId]) {
             throw new ScmPluginException("Unexpected action ID: " + actionId)
         }
         actions[actionId].perform(this, jobs, pathsToDelete, context, input)
     }
-
 
     @Override
     List<String> getDeletedFiles() {
@@ -233,7 +226,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.jobId) {
             //todo: get job status to determine actions
-//            actionRefs JOB_COMMIT_ACTION_ID
+            //            actionRefs JOB_COMMIT_ACTION_ID
             null
         } else if (context.frameworkProject) {
             //actions in project view
@@ -243,19 +236,19 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 return []
             } else if (!status.gitStatus.clean) {
                 actions << PROJECT_COMMIT_ACTION_ID
-            }else if (status.state == SynchState.EXPORT_NEEDED) {
+            } else if (status.state == SynchState.EXPORT_NEEDED) {
                 //need a push
                 actions << PROJECT_PUSH_ACTION_ID
             } else if (status.state == SynchState.REFRESH_NEEDED) {
                 //need to fast forward
                 actions << PROJECT_SYNCH_ACTION_ID
-            } else if(!config.shouldFetchAutomatically()){
+            } else if (!config.shouldFetchAutomatically()) {
                 actions << PROJECT_FETCH_ACTION_ID
-            }else{
+            } else {
                 null
             }
             //It only checks for push action if no push or refresh is yet added to actions
-            if((!actions || !actions.contains(PROJECT_PUSH_ACTION_ID)) && !actions.contains(PROJECT_SYNCH_ACTION_ID)){
+            if ((!actions || !actions.contains(PROJECT_PUSH_ACTION_ID)) && !actions.contains(PROJECT_SYNCH_ACTION_ID)) {
                 status = git.status().call()
                 def synchState = new GitExportSynchState()
                 synchState.gitStatus = status
@@ -264,9 +257,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     actions << PROJECT_PUSH_ACTION_ID
                 }
             }
-            if(actions && !actions.isEmpty()){
+            if (actions && !actions.isEmpty()) {
                 return actionRefs(actions)
-            }else{
+            } else {
                 return null
             }
         } else {
@@ -274,39 +267,37 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
     }
 
-
     @Override
     ScmExportSynchState getStatus(ScmOperationContext context) {
         return getStatusInternal(context, config.shouldFetchAutomatically())
     }
 
-
     GitExportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //perform fetch
-        def msgs=[]
+        def msgs = []
 
-        def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
+        def loadingStatus = jobStateMap.find { key, meta -> meta["synch"] == SynchState.LOADING }
 
-        if(loadingStatus){
+        if (loadingStatus) {
             def synchState = new GitExportSynchState()
             synchState.state = SynchState.LOADING
             return synchState
         }
 
-        boolean fetchError=false
+        boolean fetchError = false
         if (performFetch) {
             try {
                 fetchFromRemote(context)
             } catch (Exception e) {
-                fetchError=true
+                fetchError = true
                 msgs<<"Fetch from the repository failed: ${e.message}"
                 logger.error("Failed fetch from the repository: ${e.message}")
                 logger.debug("Failed fetch from the repository: ${e.message}", e)
             }
-            if(config.shouldPullAutomatically()){
-                try{
+            if (config.shouldPullAutomatically()) {
+                try {
                     def pullResult = gitPull(context)
-                    if(pullResult.successful){
+                    if (pullResult.successful) {
                         logger.debug(pullResult.mergeResult?.toString())
                     }
                 } catch (Exception e) {
@@ -314,7 +305,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     logger.error("Failed automatic pull from the repository: ${e.message}")
                     logger.debug("Failed automatic pull from the repository: ${e.message}", e)
                 }
-
             }
         }
 
@@ -358,7 +348,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (fetchError) {
             throw new ScmPluginException(msgs.join(', '))
         }
-        synchState.message=msgs? msgs.join(', ') : null
+        synchState.message = msgs ? msgs.join(', ') : null
 
         return synchState
     }
@@ -370,12 +360,14 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         String origPath = null
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
-                origfile.delete()
+                if (origfile.exists() && !origfile.delete()) {
+                    logger.error("Failed to delete job file: ${origfile.absolutePath}")
+                }
                 def status = refreshJobStatus(exportReference, origPath, false)
                 jobStateMap.remove(exportReference.id)
                 resetFileCounterFor(outfile)
                 return createJobStatus(status, jobActionsForStatus(status))
-                break;
+                break
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
                 origPath = relativePath(event.originalJobReference)
@@ -395,7 +387,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         return createJobStatus(status, jobActionsForStatus(status))
     }
 
-    private hasJobStatusCached(final JobExportReference job, final String originalPath) {
+    private getCachedStatusIfValid(final JobExportReference job, final String originalPath) {
         def path = relativePath(job)
         def state = jobStateMap[job.id]
 
@@ -403,9 +395,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             return state
         }
 
-        if(originalPath && originalPath!=path){
+        if (originalPath && originalPath != path) {
             //job renamed can lost last commit track, so not check it again
-            if(state && state.synch == SynchState.EXPORT_NEEDED){
+            if (state && state.synch == SynchState.EXPORT_NEEDED) {
                 return state
             }
         }
@@ -431,20 +423,20 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     private refreshJobStatus(final JobRevReference job, final String originalPath, boolean doSerialize = true) {
-
         def path = relativePath(job)
 
-        jobStateMap.remove(job.id)
+        //mark as loading (rather than removing) so a concurrent initJobsStatus() call doesn't
+        //re-insert a stale placeholder into the gap after this refresh completes
+        jobStateMap[job.id] = initJobStatus(job)
 
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
 
-
         //check if local commit has changed from the stored status
         def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
-        if(storedCommitId != null && commit == null){
+        if (storedCommitId != null && commit == null) {
             fileSerializeRevisionCounter.remove(mapper.fileForJob(job))
-        }else if(storedCommitId != null && commit?.name != storedCommitId){
+        } else if (storedCommitId != null && commit?.name != storedCommitId) {
             fileSerializeRevisionCounter.remove(mapper.fileForJob(job))
         }
 
@@ -473,7 +465,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         def ident = createStatusCacheIdent(job, commit)
-//job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
+        //job.id + ':' + String.valueOf(job.version) + ':' + (commit ? commit.name : '')
 
         jobstat['ident'] = ident
         jobstat['id'] = job.id
@@ -491,7 +483,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         jobstat
     }
 
-
     private SynchState synchStateForStatus(Status status, RevCommit commit, String path) {
         if (path && status.untracked.contains(path) || !path && status.untracked) {
             SynchState.CREATE_NEEDED
@@ -507,7 +498,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     def scmStateForStatus(Status status, RevCommit commit, String path) {
         if (!commit) {
             new File(workingDir, path).exists() ? 'NEW' : 'NOT_FOUND'
-        } else if (path in status.added || path in status.untracked) {
+        } else if (path in status.added) {
             'NEW'
         } else if (path in status.changed || path in status.modified) {
             //changed== changes in index
@@ -539,10 +530,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (!inited) {
             return null
         }
-        def status = hasJobStatusCached(job, originalPath)
+        def status = getCachedStatusIfValid(job, originalPath)
 
         if (!status) {
-            status = refreshJobStatus(job, originalPath,serialize)
+            status = refreshJobStatus(job, originalPath, serialize)
         }
 
         return createJobStatus(status, jobActionsForStatus(status))
@@ -566,7 +557,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         relativePath(job)
     }
 
-
     ScmDiffResult getFileDiff(final JobExportReference job) throws ScmPluginException {
         return getFileDiff(job, null)
     }
@@ -584,8 +574,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def baos = new ByteArrayOutputStream()
         def diffs = diffContent(baos, bytes, file)
 
-
-
         def availableActions = diffs > 0 ? [actions[JOB_COMMIT_ACTION_ID]] : null
         return new GitDiffResult(content: baos.toString(),
                                  modified: diffs > 0,
@@ -593,8 +581,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         )
     }
 
-
-    Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs, final Map<String,String> originalPaths){
+    Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs, final Map<String, String> originalPaths) {
         //force fetch
         fetchFromRemote(context)
 
@@ -612,19 +599,19 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             retSt.behind = true
         }
 
-        if(toPull){
+        if (toPull) {
             jobs.each { job ->
                 def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
                 def path = getRelativePathForJob(job)
                 def commitId = lastCommitForPath(path)
 
-                if(storedCommitId != null && commitId == null){
+                if (storedCommitId != null && commitId == null) {
                     //file to delete-pull
                     git.rm().addFilepattern(path).call()
                     retSt.deleted.add(path)
                     refreshJobCache.add(job)
-                }else if(storedCommitId != null && commitId?.name != storedCommitId){
-                    if(toPull){
+                } else if (storedCommitId != null && commitId?.name != storedCommitId) {
+                    if (toPull) {
                         git.checkout().addPath(path).call()
                     }
                     retSt.restored.add(job)
@@ -633,51 +620,50 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             }
 
             retSt.pull = true
-            try{
+            try {
                 gitPull(context)
-            }catch (JGitInternalException e){
-                retSt.error=e
-            }catch(GitAPIException e){
+            } catch (JGitInternalException e) {
                 retSt.error = e
-                log.info("Git error",e)
+            } catch (GitAPIException e) {
+                retSt.error = e
+                log.info("Git error", e)
             }
         }
 
-        try{
-            refreshJobCache.each{job ->
+        try {
+            refreshJobCache.each { job ->
                 refreshJobStatus(job, originalPaths?.get(job.id))
             }
-        }catch (ScmPluginException e){
+        } catch (ScmPluginException e) {
             retSt.error = e
         }
 
         retSt
     }
 
-    def cleanJobStatusCache(Set<JobExportReference> jobs){
+    def cleanJobStatusCache(Set<JobExportReference> jobs) {
         if (!inited) {
             return null
         }
 
-        jobs.each {job->
+        jobs.each { job ->
             log.debug("cleanJobStatusCache(${job.id}): ${job}")
 
-            def status = hasJobStatusCached(job, null)
+            def status = getCachedStatusIfValid(job, null)
 
-            if (status) {
-                refreshJobStatus(job, null,false)
+            if (!status) {
+                refreshJobStatus(job, null, false)
             }
         }
     }
 
     @Override
     void initJobsStatus(List<JobExportReference> jobs) {
-        jobs.each {job->
-            if(!jobStateMap[job.id]){
+        jobs.each { job ->
+            if (!jobStateMap[job.id]) {
                 def jobstat = initJobStatus(job)
                 jobStateMap[job.id] = jobstat
             }
-
         }
     }
 
@@ -690,15 +676,14 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     @Override
-    void refreshJobsStatus(List<JobExportReference> jobs){
-        jobs.each{job ->
-            refreshJobStatus(job,null)
+    void refreshJobsStatus(List<JobExportReference> jobs) {
+        jobs.each { job ->
+            refreshJobStatus(job, null)
         }
     }
 
     @Override
-    String getExportPushActionId(){
+    String getExportPushActionId() {
         return PROJECT_PUSH_ACTION_ID
     }
-
 }

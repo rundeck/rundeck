@@ -44,7 +44,6 @@ import org.eclipse.jgit.util.io.DisabledOutputStream
  * Created by greg on 9/10/15.
  */
 class GitUtil {
-
     /**
      * get RevCommit for HEAD rev of the path
      * @return RevCommit or null if HEAD not found (empty git)
@@ -57,19 +56,18 @@ class GitUtil {
      * @return RevCommit or null if HEAD not found (empty git)
      */
     static RevCommit getCommit(Repository repo, String commitId) {
-        final RevWalk walk = new RevWalk(repo);
-        walk.setRetainBody(true);
+        final RevWalk walk = new RevWalk(repo)
+        walk.setRetainBody(true)
 
-        def resolve = repo.resolve(commitId)
-        if (!resolve) {
-            return null
-        }
         try {
-            return walk.parseCommit(resolve);
-        }catch (IOException e){
-
+            def resolve = repo.resolve(commitId)
+            if (!resolve) {
+                return null
+            }
+            return walk.parseCommit(resolve)
+        } catch (IOException e) {
             return null
-        }finally{
+        } finally {
             walk.close()
         }
     }
@@ -78,22 +76,35 @@ class GitUtil {
         if (!commit) {
             return null
         }
-        final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree());
+        final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree())
 
         if (walk2 == null) {
             return null
-        };
-        if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
-            return null
-        };
+        }
+        try {
+            if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
+                return null
+            }
 
-        def id = walk2.getObjectId(0)
-        walk2.close()
-        return id;
+            return walk2.getObjectId(0)
+        } finally {
+            walk2.close()
+        }
     }
 
+    /**
+     * Guard against loading an oversized blob fully into memory: reject rather than risk an OOM.
+     */
+    static final long MAX_BLOB_SIZE = 100L * 1024 * 1024
+
     static byte[] getBytes(Repository repo, ObjectId id) {
-        repo.open(id, Constants.OBJ_BLOB).getCachedBytes(Integer.MAX_VALUE)
+        def loader = repo.open(id, Constants.OBJ_BLOB)
+        if (loader.getSize() > MAX_BLOB_SIZE) {
+            throw new ScmPluginException(
+                    "Object ${id.name} is too large to load (${loader.getSize()} bytes, max ${MAX_BLOB_SIZE})"
+            )
+        }
+        loader.getCachedBytes(MAX_BLOB_SIZE as int)
     }
 
     /**
@@ -109,10 +120,9 @@ class GitUtil {
             byte[] leftSide,
             File rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
-    )
-    {
-        RawText rt1 = new RawText(leftSide);
-        RawText rt2 = new RawText(rightSide);
+    ) {
+        RawText rt1 = new RawText(leftSide)
+        RawText rt2 = new RawText(rightSide)
         return diffContent(out, rt1, rt2, COMP)
     }
 
@@ -129,10 +139,9 @@ class GitUtil {
             File leftSide,
             byte[] rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
-    )
-    {
-        RawText rt1 = new RawText(leftSide);
-        RawText rt2 = new RawText(rightSide);
+    ) {
+        RawText rt1 = new RawText(leftSide)
+        RawText rt2 = new RawText(rightSide)
         return diffContent(out, rt1, rt2, COMP)
     }
 
@@ -149,8 +158,7 @@ class GitUtil {
             byte[] leftSide,
             byte[] rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
-    )
-    {
+    ) {
         RawText rt1 = new RawText(leftSide)
         RawText rt2 = new RawText(rightSide)
         return diffContent(out, rt1, rt2, COMP)
@@ -169,14 +177,13 @@ class GitUtil {
             RawText leftSide,
             RawText rightSide,
             RawTextComparator COMP = RawTextComparator.DEFAULT
-    )
-    {
-        EditList diffList = new EditList();
+    ) {
+        EditList diffList = new EditList()
         DiffAlgorithm differ = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.HISTOGRAM)
 
-        diffList.addAll(differ.diff(COMP, leftSide, rightSide));
+        diffList.addAll(differ.diff(COMP, leftSide, rightSide))
         if (diffList.size() > 0 && out != null) {
-            new DiffFormatter(out).format(diffList, leftSide, rightSide);
+            new DiffFormatter(out).format(diffList, leftSide, rightSide)
         }
         diffList.size()
     }
@@ -195,30 +202,41 @@ class GitUtil {
             logb.addPath(path)
         }
         def log = logb.call()
-        def iter = log.iterator()
-        if (iter.hasNext()) {
-            def commit = iter.next()
-            if (commit) {
-                return commit
+        try {
+            def iter = log.iterator()
+            if (iter.hasNext()) {
+                def commit = iter.next()
+                if (commit) {
+                    return commit
+                }
             }
+            null
+        } finally {
+            log.close()
         }
-        null
     }
 
     static List<DiffEntry> listChanges(Git git, String oldRef, String newRef) {
-        ObjectReader reader = git.getRepository().newObjectReader();
+        ObjectReader reader = git.getRepository().newObjectReader()
+        try {
+            CanonicalTreeParser oldTreeIter = new CanonicalTreeParser()
+            ObjectId oldTree = git.getRepository().resolve(oldRef)
+            oldTreeIter.reset(reader, oldTree)
 
-        CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
-        ObjectId oldTree = git.getRepository().resolve(oldRef);
-        oldTreeIter.reset(reader, oldTree);
+            CanonicalTreeParser newTreeIter = new CanonicalTreeParser()
+            ObjectId newTree = git.getRepository().resolve(newRef)
+            newTreeIter.reset(reader, newTree)
 
-        CanonicalTreeParser newTreeIter = new CanonicalTreeParser();
-        ObjectId newTree = git.getRepository().resolve(newRef);
-        newTreeIter.reset(reader, newTree);
-
-        DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
-        diffFormatter.setRepository(git.getRepository());
-        diffFormatter.scan(oldTreeIter, newTreeIter);
+            DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE)
+            try {
+                diffFormatter.setRepository(git.getRepository())
+                diffFormatter.scan(oldTreeIter, newTreeIter)
+            } finally {
+                diffFormatter.close()
+            }
+        } finally {
+            reader.close()
+        }
     }
 
     static Map<String, Serializable> metaForCommit(RevCommit commit) {
@@ -242,7 +260,6 @@ class GitUtil {
                 setMessage(message)
 
         return tagb.call()
-
     }
 
     /**
@@ -258,9 +275,9 @@ class GitUtil {
         }
         return found
     }
-    static List<String> listPaths(Git git, String ref, List<String> trackedItems=null, String trackingRegex=null){
+    static List<String> listPaths(Git git, String ref, List<String> trackedItems = null, String trackingRegex = null) {
         ObjectId head = git.repository.resolve ref
-        if(!head){
+        if (!head) {
             return null
         }
         def tree = new TreeWalk(git.repository)
@@ -273,12 +290,15 @@ class GitUtil {
                 tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
             }
         }
-        List<String> list= []
+        List<String> list = []
 
-        while (tree.next()) {
-            list.add(tree.getPathString())
+        try {
+            while (tree.next()) {
+                list.add(tree.getPathString())
+            }
+        } finally {
+            tree.close()
         }
-        tree.close();
         list
     }
 }

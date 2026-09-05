@@ -27,7 +27,6 @@ import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
 
-
 /**
  * Created by greg on 9/8/15.
  */
@@ -61,8 +60,7 @@ class FetchAction extends BaseAction implements GitImportAction {
             final JobImporter importer,
             final List<String> selectedPaths,
             final Map<String, String> input
-    )
-    {
+    ) {
         //fetch remote changes
         def update = plugin.fetchFromRemote(context)
 
