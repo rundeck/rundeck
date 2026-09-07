@@ -105,7 +105,36 @@ class DefaultRundeckConfigPropertyLoader implements CoreConfigurationPropertiesL
         return permitted
     }
 
+    /**
+     * Like {@link #configuredDataSourceSetting}, but tells a key that is present and empty apart from
+     * one that is absent, and answers with defaultValue only for the latter.
+     *
+     * dataSource.username= with no value is a real setting -- it is H2's anonymous user, and it is
+     * what the packaged rundeck-config.properties ships. Reading it through the plain accessor turns
+     * it into null, the caller substitutes its own default, and the datasource bean then connects as
+     * "sa" to a database that a different resolution path had already created for the empty user:
+     *
+     *     org.h2.jdbc.JdbcSQLInvalidAuthorizationSpecException: Wrong user name or password [28000-240]
+     *
+     * which takes down hibernateDatastore and every bean behind it. Verified by opening the file the
+     * failed startup left behind: it accepts the empty user and rejects sa.
+     *
+     * @return the configured value, empty included, or defaultValue when the key is absent
+     */
+    static String configuredDataSourceSettingOrDefault(String key, String defaultValue) {
+        String value = rawConfiguredDataSourceSetting(key)
+        return value != null ? value : defaultValue
+    }
+
     static String configuredDataSourceSetting(String key) {
+        return rawConfiguredDataSourceSetting(key) ?: null
+    }
+
+    /**
+     * Reads dataSource.<key> from the rundeck-config file without collapsing an empty value to null.
+     * @return the raw value, or null when unset or unreadable
+     */
+    private static String rawConfiguredDataSourceSetting(String key) {
         String location = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
         if (!location) {
             return null
@@ -117,11 +146,11 @@ class DefaultRundeckConfigPropertyLoader implements CoreConfigurationPropertiesL
         try {
             if (location.endsWith(".groovy")) {
                 def value = new ConfigSlurper().parse(configFile.toURI().toURL())?.flatten()?.get("dataSource.${key}".toString())
-                return value ? value.toString() : null
+                return value != null ? value.toString() : null
             }
             Properties props = new Properties()
             configFile.withInputStream { props.load(it) }
-            return props.getProperty("dataSource.${key}".toString()) ?: null
+            return props.getProperty("dataSource.${key}".toString())
         } catch (Exception ex) {
             LOG.warn("Unable to read dataSource.${key} from ${location}", ex)
             return null
