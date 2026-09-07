@@ -24,8 +24,11 @@ dataSource {
     // defaults for an H2 deployment that configures nothing.
     driverClassName= rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('driverClassName') ?:
             "org.h2.Driver"
-    username = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('username') ?:
-            "sa"
+    // OrDefault, not elvis: dataSource.username= with no value is H2's anonymous user and is what the
+    // packaged rundeck-config ships. Treating it as unset substituted "sa" here, while the path that
+    // creates the database used the empty user, so startup died on "Wrong user name or password".
+    username = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSettingOrDefault(
+            'username', "sa")
     password = rundeckapp.init.DefaultRundeckConfigPropertyLoader.configuredDataSourceSetting('password') ?:
             ''
 }
