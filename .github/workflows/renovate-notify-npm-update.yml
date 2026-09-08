@@ -77,8 +77,8 @@ jobs:
           # where merge_commit_sha is just the last of possibly several replayed
           # commits — a multi-commit rebase-merged PR would otherwise silently
           # miss earlier commits' dependency changes.
-          after="$(gh api "repos/${{ github.repository }}/contents/${FILE}?ref=${MERGE_SHA}" --jq -r '.content' | base64 -d)"
-          before="$(gh api "repos/${{ github.repository }}/contents/${FILE}?ref=${BASE_SHA}" --jq -r '.content' | base64 -d)"
+          after="$(gh api "repos/${{ github.repository }}/contents/${FILE}?ref=${MERGE_SHA}" --jq '.content' | base64 -d)"
+          before="$(gh api "repos/${{ github.repository }}/contents/${FILE}?ref=${BASE_SHA}" --jq '.content' | base64 -d)"
 
           # Walk each section separately (not merged with '+') and tag each entry
           # with its section: package.json declares some packages (e.g. mobx-utils)
