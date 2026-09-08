@@ -73,24 +73,30 @@ npm run --prefix "$UI" dev:test:watch         # Watch mode
 
 ## Hot-Reloading SPA Assets During `bootRun`
 
-> **⚠️ WORK IN PROGRESS — not fully working yet.** The `useManifest`/`bundle`
-> config below is confirmed to help pick up changes on a `bootRun` restart,
-> but no-restart hot-reload (editing a file, running `copySpa`, and seeing it
-> without restarting) is **not yet working** — see `HOT_RELOAD_HANDOFF.md` at
-> the repo root for the full investigation and next steps. Don't rely on the
-> "no restart needed" claim below until that's resolved.
+By default, `bootRun` serves assets through a precompiled digest manifest
+(`asset.pipeline.AssetPipelineConfigHolder.manifest`) that's loaded into
+memory once at JVM startup — recompiling SCSS/JS on disk does nothing until
+the JVM restarts.
 
-By default, `bootRun` serves assets through a precompiled digest manifest that
-is loaded into memory once at JVM startup — recompiling SCSS/JS on disk does
-nothing until the JVM restarts. Running with `-Dgrails.env=development` (see
-above) activates a dev-scoped `grails.assets.useManifest: false` override
-(`rundeckapp/grails-app/conf/application.yml`), which makes asset-pipeline
-serve assets dynamically instead: it recompiles only the files whose content
-actually changed (content-hash + dependency tracked, not a full project
-rebuild) on each request.
+The actual blocker turned out **not** to be the `grails.assets.useManifest`
+config flag (several attempts to flip it — YAML, `.groovy` environments
+closure, JVM system property — had no effect; full investigation in
+`HOT_RELOAD_HANDOFF.md`). The real cause: `bootRun`'s own `classpath +=
+files(..., "$buildDir/resources/main/META-INF")` line (added to expose
+`META-INF/services/*` ServiceLoader files) has the side effect of exposing
+`META-INF/assets/manifest.properties` at the exact classpath path
+`AssetPipelineGrailsPlugin` checks as a fallback — so the manifest loads on
+every `bootRun` regardless of any config. The fix (`rundeckapp/build.gradle`)
+is a small `Delete` task, `removeDevManifestForBootRun`, that removes that
+one file after it's produced and before `bootRun` launches, wired in via
+`bootRun.dependsOn removeDevManifestForBootRun`. `grails.assets.bundle=false`
+(also set as a `bootRun` JVM arg) is still required alongside it — `AssetsTagLib`
+forces digest-style URLs into rendered HTML unless `bundle=false`, which
+would otherwise 404 against the live (non-digest-named) source files the
+now-active dynamic filter path actually serves.
 
-With `-Dgrails.env=development` set, the loop to see a Vue/SCSS/JS change
-under `rundeckapp/grails-spa/packages/ui-trellis/src` is:
+With this in place, the loop to see a Vue/SCSS/JS change under
+`rundeckapp/grails-spa/packages/ui-trellis/src` is:
 
 ```bash
 # 1. Edit a file under src/app or src/library
@@ -101,15 +107,16 @@ under `rundeckapp/grails-spa/packages/ui-trellis/src` is:
 # 3. Hard-reload the browser — no bootRun restart needed
 ```
 
-No `assetClean`/`assetCompile`/`copyCompiledAssets` dance is required — those
-still run as part of `bootRun`'s normal dependency chain, but their output
-(the digest manifest) is simply unused for serving in dev mode. Production/WAR
-builds (`./gradlew build`) are unaffected — the `useManifest: false` override
-is scoped to `environments: development:` only.
+Verified end-to-end: editing `HomeHeader.vue`, running `copySpa`, and
+curling the already-running server picked up the change with zero restart
+(see `HOT_RELOAD_HANDOFF.md` round 7).
 
-If you forget `-Dgrails.env=development`, `bootRun` falls back to the default
-manifest-based serving and you'll need a full restart to see asset changes,
-same as before this change.
+No `assetClean`/`assetCompile`/`copyCompiledAssets` dance is required — those
+still run as part of `bootRun`'s normal dependency chain, but their manifest
+output is simply removed before it can be used for serving in dev mode.
+Production/WAR builds (`./gradlew build`) are unaffected —
+`removeDevManifestForBootRun` only runs as part of the `bootRun` task, and
+`processResources`/packaging tasks depend on `copyAssetManifest` directly.
 
 ## Troubleshooting
 

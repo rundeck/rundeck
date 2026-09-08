@@ -431,3 +431,447 @@ guessing.
    repo's critical rules) before committing anything, and fix/remove the
    `.claude/docs/build-commands.md` WIP banner once no-restart hot-reload is
    confirmed working end-to-end.
+
+---
+
+# Round 4 — root cause found and fixed (live bootRun, no restart yet re-tested)
+
+The user restarted `bootRun` from `~/dev/rundeckpro/rundeck` on this branch.
+With it live, I ran the round-3 "next steps" for real:
+
+## Step 1 (clean classpath read) — `bootrun-assets` theory killed
+
+`jcmd <pid> VM.command_line` (works fine live; the earlier `ps` attempt on
+the now-dead process was just unreliable) shows the classpath does **not**
+contain `build/bootrun-assets` anywhere. That directory is an orphan/red
+herring — leave it alone, it's not part of this bug.
+
+## The actual root cause: the dev-profile YAML block never activates
+
+`curl -sD - http://localhost:4440/assets/static/css/pages/home.css` on the
+freshly-restarted server returned:
+
+```
+ETag: "static/css/pages/home-89110725d402daffc4896d512a63febc.css"
+Cache-Control: no-cache
+Last-Modified: Fri, 04 Sep 2026 03:56:07 GMT
+```
+
+Per `AssetPipelineResponseBuilder.groovy` (asset-pipeline-core 5.0.35), an
+ETag containing the **digest-named path** only happens when
+`AssetPipelineConfigHolder.manifest.getProperty(manifestPath)` returns a
+non-null value — i.e. **the manifest is loaded and populated**. If
+`useManifest: false` had actually taken effect, `AssetPipelineFilter`'s
+`warDeployed` (line 40) would be false and the dynamic `else` branch (line
+278) would run instead, which never builds an ETag or ResponseBuilder at
+all. So: **the dev-mode config block added in round 1 has never actually
+been active**, on any of the "confirmed working after a restart" tests in
+round 2 either — those just happened to look right because a fresh restart
+always serves fresh manifest content, coincidentally masking that dev mode
+never engaged.
+
+**Why it never activates**: the block was gated with
+```yaml
+spring:
+  config:
+    activate:
+      on-profile: development
+```
+which requires the **Spring Boot profile** "development" to be active
+(`spring.profiles.active=development`). `jcmd <pid> VM.command_line` on the
+live process shows `-Dspring.profiles.active` present with **no value** —
+it's never set to `development`. Only `-Dgrails.env=development` is set
+(a distinct, older Grails-specific mechanism). I verified in
+`org.grails.config.EnvironmentAwarePropertySource` (grails-core 7.2.2
+source) that the classic `environments.<name>.*` config key is resolved via
+`grails.util.Environment.getCurrent()`, which reads `-Dgrails.env` —
+completely independent of Spring profiles. **The gating key and the actual
+runtime signal never matched.**
+
+## Fix applied
+
+Changed the block in `rundeckapp/grails-app/conf/application.yml` (both
+checkouts, `~/dev/rundeckpro` and `~/dev/rundeckpro2`, kept in sync; **not
+committed**, per the submodule rule) from the `spring.config.activate.on-profile`
+form to the classic nested form:
+
+```yaml
+environments:
+    development:
+        grails:
+            assets:
+                useManifest: false
+                bundle: false
+```
+
+This is gated on `-Dgrails.env=development`, which the IntelliJ run config
+already sets correctly and reliably (confirmed via `jcmd`).
+
+## Not yet verified — needs a bootRun restart to test
+
+I have **not** restarted `bootRun` again to confirm this fixes it — that's
+a multi-minute, disruptive action and should be a deliberate choice, not
+something done silently mid-investigation. Once you restart on this branch:
+
+1. Re-run the `curl` header check above. If the fix worked, the ETag should
+   **not** contain a digest-named path, and `Cache-Control` should be
+   `no-cache, no-store, must-revalidate` (the dynamic branch's literal
+   header set) instead of just `no-cache`.
+2. Only then move to the actual no-restart repro: edit a `src/app` or
+   `src/library` file, `./gradlew :rundeckapp:copySpa`, `curl` again with no
+   restart in between. This is the real test round 2 could never get past —
+   now that dev mode will *actually* be engaged for the first time, it's
+   possible this just works, or it's possible the original round-2 "wrong
+   content" symptom (missing CSS rule after a full recompile) resurfaces for
+   a different reason now that the correct code path is finally exercised.
+   Don't assume it's fully fixed until this specific case is checked.
+3. If step 2 still fails, the investigation continues from a much smaller,
+   correctly-scoped starting point: dev mode is now definitely engaged, so
+   any remaining staleness is a real bug in the dynamic-serving/CacheManager
+   path itself, not a config-activation problem.
+
+---
+
+# Round 5 — round 4's fix didn't work; corrected, needs another restart to verify
+
+User restarted `bootRun` on `~/dev/rundeckpro/rundeck` with round 4's
+`environments: development:` YAML fix in place. Re-ran the same `curl`
+header check:
+
+```
+ETag: "static/css/pages/home-89110725d402daffc4896d512a63febc.css"
+Cache-Control: no-cache
+```
+
+**Identical to before the fix** — still manifest/production mode. The YAML
+`environments:` key form did not activate.
+
+## Why: this Grails 7 app's YAML config doesn't honor `environments:` the way I assumed
+
+Checked whether the classic Grails `environments`-scoping mechanism works
+*at all* in this app by looking for an existing, demonstrably-active example.
+Found one: `rundeckapp/grails-app/conf/application.groovy` has a
+**classic ConfigSlurper-style Groovy closure**,
+`environments { development { grails.serverURL = ...; dataSource { url =
+"jdbc:h2:file:./db/devDb" }; ... } }`. This is proven active — it's what
+sets the dev H2 datasource URL and dev `serverURL` on every local run. So
+`-Dgrails.env=development` **does** correctly scope config — but only
+through this legacy `.groovy` ConfigSlurper closure form, not through a
+`environments:` key written in `application.yml`. In this Grails
+7/Spring-Boot config setup, the YAML nested-key form apparently isn't wired
+through the same environment-scoping mechanism (`EnvironmentAwarePropertySource`
+theoretically should handle it per its source, but empirically, live, it does
+not take effect here — possibly because that PropertySource isn't part of
+the chain Spring Boot's YAML loader actually builds `grailsApplication.config`
+from in this Grails version; not root-caused further since a working
+alternative was immediately available).
+
+## Corrected fix
+
+1. **Removed** the non-functional YAML block from
+   `rundeckapp/grails-app/conf/application.yml`.
+2. **Added** the same two settings into the *existing, proven-active*
+   `environments { development { ... } }` closure in
+   `rundeckapp/grails-app/conf/application.groovy`, right after the existing
+   `spring.h2.console.enabled=true` line:
+   ```groovy
+   grails.assets.useManifest=false
+   grails.assets.bundle=false
+   ```
+3. Updated `.claude/docs/build-commands.md`'s file/mechanism reference to
+   point at `application.groovy`'s closure instead of `application.yml`.
+
+All three files synced between `~/dev/rundeckpro` and `~/dev/rundeckpro2`
+checkouts; none committed (submodule rule). YAML re-validated with
+`python3 -c "import yaml; yaml.safe_load_all(...)"` after the removal — still
+parses cleanly (6 documents).
+
+## Still not verified — needs a third restart
+
+Same verification procedure as round 4: after restart, re-run
+```bash
+curl -sD - -o /dev/null http://localhost:4440/assets/static/css/pages/home.css \
+  | grep -iE 'cache-control|etag'
+```
+Expect **no** digest-named ETag and `Cache-Control: no-cache, no-store,
+must-revalidate` (not just `no-cache`) if this activates correctly this
+time. If it still shows the old manifest-mode signature, the next thing to
+check is whether `AssetPipelineGrailsPlugin.doWithSpring()`'s
+`config.getProperty('grails.assets', Map, [:])` call actually sees
+`.groovy`-closure-scoped values merged in at the point it runs (plugin
+`doWithSpring` closures execute quite early in context startup — worth
+checking if `grailsApplication.config` is fully environment-merged by then,
+via a temporary log line if this round's fix also fails).
+
+---
+
+# Round 6 — round 5's fix ALSO didn't work; switched to a JVM system property
+
+User restarted again with round 5's `application.groovy` closure fix in
+place. Same `curl` check, **exact same result again**:
+
+```
+ETag: "static/css/pages/home-89110725d402daffc4896d512a63febc.css"
+Cache-Control: no-cache
+```
+
+Two independent environment-scoping mechanisms (`application.yml`'s YAML
+`environments:` key, and `application.groovy`'s classic ConfigSlurper
+`environments { development { ... } } ` closure) have now both failed to
+affect `grails.assets.useManifest`/`bundle`, even though I confirmed the
+`.groovy` closure form **is** active for other keys in the very same block
+(`spring.h2.console.enabled=true` → verified `/h2-console` returns a live
+302, not 404; `dataSource.url` → verified `rundeckapp/db/devDb.mv.db`
+exists at the exact configured path).
+
+## Working theory (not fully proven, but well-supported)
+
+Traced `GrailsApplication.getConfig()` (`grails-core` 7.2.2,
+`DefaultGrailsApplication.java:326-342`) — it lazily builds a
+`PropertySourcesConfig` wrapping Spring's real `PropertySources`, the same
+object backing generic `Environment.getProperty(...)` calls (which is what
+resolves `spring.h2.console.enabled` correctly). So it's **not** a case of
+"legacy Groovy config is a separate, disconnected object" — same underlying
+source. That leaves plugin **load/read ordering** as the most likely
+explanation: `AssetPipelineGrailsPlugin.doWithSpring()`
+(`asset-pipeline-grails`) calls `application.config.getProperty('grails.assets',
+Map, [:])` directly inside its `doWithSpring` closure, i.e. at Spring
+bean-definition time. If that runs before whatever finalizes the
+environment-scoped merge of file-based config (YAML `environments:` key or
+`.groovy` `environments{}` closure) into the property sources
+`PropertySourcesConfig` wraps, it would silently read the pre-merge,
+env-agnostic value every time — explaining why the *unscoped* base
+`grails.assets` block (bundle:true etc., always in effect regardless of env)
+works fine, but every environment-scoped override of that same map has
+failed. This wasn't proven with a debugger/log line (didn't want to burn
+another restart on non-actionable instrumentation) — treat it as the
+working theory that motivated round 6's fix, not a certainty.
+
+## Round 6 fix: bypass config-merge timing entirely via a JVM system property
+
+Reverted round 5's `application.groovy` closure addition (confirmed
+ineffective, removed to avoid dead/misleading config). Instead, added the
+override directly as JVM args on the `bootRun` Gradle task itself
+(`rundeckapp/build.gradle`, inside the existing `jvmArgs(...)` call, right
+after the existing `-XX:MaxMetaspaceSize` line):
+
+```groovy
+'-Dgrails.assets.useManifest=false',
+'-Dgrails.assets.bundle=false'
+```
+
+Rationale: JVM system properties (`-D` flags) are wired into Spring's
+`Environment` as one of the **highest-priority, earliest-available**
+property sources — present from JVM/`Environment` construction, before any
+custom YAML/Groovy file parsing happens. This sidesteps the suspected
+ordering bug entirely, regardless of whether the theory above is exactly
+right. It's also correctly scoped: this only affects the `bootRun` Gradle
+task, so production/WAR builds (which don't invoke `bootRun`) are
+unaffected by construction, without needing any `grails.env`/profile
+gating at all.
+
+Synced to both checkouts. `application.yml` and `application.groovy` are
+now both back to their pre-investigation state (no dev-only asset overrides
+left in either) — the *only* active override is the `bootRun` jvmArgs in
+`build.gradle`.
+
+## Still not verified — needs a fourth restart
+
+Same check as before:
+```bash
+curl -sD - -o /dev/null http://localhost:4440/assets/static/css/pages/home.css \
+  | grep -iE 'cache-control|etag'
+```
+If this **still** shows a digest-named ETag, the config-timing theory above
+is wrong and the investigation needs to go a level deeper: add a temporary
+log line inside a local copy of `AssetPipelineGrailsPlugin.doWithSpring()`
+(or attach a debugger) to print `assetsConfig.useManifest` and
+`assetsConfig.bundle` at the moment they're read, to see definitively what
+value/timing is actually in play — stop guessing at config mechanisms and
+get a direct empirical read at the exact point of failure.
+
+---
+
+# Round 7 — round 6 confirmed a JVM system property WAS set, still no effect; found and fixed the actual root cause
+
+User restarted again with round 6's `bootRun` JVM-args fix in place.
+`jcmd <pid> VM.command_line` confirmed `-Dgrails.assets.useManifest=false`
+and `-Dgrails.assets.bundle=false` were genuinely present on the live
+process. **Same result again** — byte-identical ETag/headers to every prior
+round.
+
+## Definitive, zero-restart proof of what's actually happening
+
+Rather than form a fourth config theory, ran a test that doesn't depend on
+guessing about config internals at all: edited
+`grails-app/assets/provided/static/css/pages/home.css` **directly on disk**
+(appended a comment marker) and `curl`'d immediately — **no Gradle task,
+no restart**. If dynamic serving were active at all, `AssetPipeline.serveAsset()`
+reads that exact file fresh on every request, so the marker would appear
+instantly. **It did not appear.** This is airtight, mechanism-agnostic proof
+that `warDeployed` (manifest mode) is active, independent of ETag/hash
+reasoning. (Reverted the marker immediately after.)
+
+Also ruled out two more theories empirically:
+- **Wrong `asset-pipeline-grails` version resolved**: `./gradlew
+  :rundeckapp:dependencies --configuration runtimeClasspath` confirms 5.0.35
+  wins conflict resolution everywhere — the version I'd been reading source
+  for the whole time was correct.
+- **A Groovy Elvis-operator bug** (`assetsConfig.useManifest ?: true` would
+  silently discard an explicit `false` and substitute the `true` default,
+  since real Groovy `false` is itself falsy) — a real footgun in the
+  library's own code, worth knowing about, but turned out not to be the
+  actual blocker here (see below, the `if` never even reaches that
+  evaluation in a way that matters once the real cause is fixed).
+
+## Actual root cause, found by re-reading `AssetPipelineGrailsPlugin.doWithSpring()`'s manifest-file lookup, not just the useManifest flag
+
+```groovy
+manifestFile = applicationContext.getResource("assets/manifest.properties")
+if (!manifestFile.exists()) {
+    manifestFile = applicationContext.getResource("classpath:assets/manifest.properties")
+}
+...
+if (useManifest && manifestFile?.exists()) { ... AssetPipelineConfigHolder.manifest = manifestProps }
+```
+
+Checked whether `manifestFile?.exists()` is even reachable as `true` in this
+project's `bootRun` classpath, independent of `useManifest`. It is — found
+in `rundeckapp/build.gradle`'s `bootRun` block:
+
+```groovy
+// Full resources/main so classpath:/assets/ resolves; duplicateFileMode=WARN avoids Liquibase failure on duplicate migrations
+classpath += files("$buildDir/resources/main", "$buildDir/resources/main/META-INF")
+```
+
+This was added (per its own comment) to expose `META-INF/services/*`
+ServiceLoader files (`PasswordUtilityEncrypter`, `PreBootstrap`,
+`CredentialProvider`, `PluginProviderServices` — confirmed these are the
+only other files under `build/resources/main/META-INF/`). Side effect:
+adding `build/resources/main/META-INF` **itself** as a classpath root means
+its `assets/manifest.properties` subpath (populated by the separate
+`copyAssetManifest` task, `build/resources/main/META-INF/assets/manifest.properties`
+— confirmed this is the *only* file under that `assets/` subfolder) becomes
+directly reachable via a plain classpath lookup for `"assets/manifest.properties"`
+— exactly the fallback path `AssetPipelineGrailsPlugin` checks. So
+`manifestFile.exists()` is `true` on every single `bootRun`, **completely
+independent of the `grails.assets.useManifest` config value** — explaining
+why all three prior config-based fix attempts (YAML profile-gate, `.groovy`
+environments closure, JVM system property) were each individually correct
+in isolation but could never have worked, because they were solving the
+wrong half of an `&&` condition. The manifest digest matching the current
+file content on every restart (verified: freshly restarted process's
+`build/assets/manifest.properties` mtime exactly matches boot time, and its
+`home.css` hash matches what's served) also explains why round 2's "confirmed
+working after a restart" observation was real and reproducible — manifest
+mode correctly reflects current content on a fresh boot, by design; restarts
+were never actually broken, only the *dynamic, no-restart* path was
+unreachable.
+
+## Round 7 fix
+
+Kept round 6's `-Dgrails.assets.useManifest=false`/`-Dgrails.assets.bundle=false`
+JVM args in place (harmless, and correctly scoped even if their effect was
+previously masked). Added a new Gradle task in `rundeckapp/build.gradle`,
+right after `copyAssetManifest`:
+
+```groovy
+task removeDevManifestForBootRun(type: Delete) {
+    dependsOn copyAssetManifest
+    delete "$buildDir/resources/main/META-INF/assets/manifest.properties"
+}
+bootRun.dependsOn removeDevManifestForBootRun
+```
+
+This deletes the one file that makes `manifestFile.exists()` true, ordered
+to run after `copyAssetManifest` produces it and before `bootRun`'s own JVM
+launches (via Gradle's task-graph `dependsOn` ordering — no risk of a later
+task recreating it, since `copyAssetManifest` is the only writer and nothing
+depends on `removeDevManifestForBootRun` in a way that would trigger a
+rerun). Scoped to the `bootRun` task only — production/WAR packaging goes
+through `processResources`/`copyAssetManifest` directly and is untouched, and
+Gradle's own output-tampering detection will correctly re-copy the file on
+any subsequent normal `./gradlew build`/`war` run regardless.
+
+Verified the Groovy parses (`./gradlew :rundeckapp:tasks --all -q` lists the
+new task with no errors) before asking for another restart — didn't want to
+burn a fifth restart on a syntax typo.
+
+Synced to both checkouts.
+
+## Still not verified — needs a fifth restart
+
+Same check as every prior round:
+```bash
+curl -sD - -o /dev/null http://localhost:4440/assets/static/css/pages/home.css \
+  | grep -iE 'cache-control|etag'
+```
+This time, if `manifestFile.exists()` is genuinely false, `AssetPipelineConfigHolder.manifest`
+should stay `null` for the entire life of the process — meaning the earlier
+"does useManifest's value even matter" question becomes moot regardless of
+the Elvis-operator concern above. If this **still** fails, the next
+zero-restart diagnostic to reach for is the direct-file-edit test above
+(cheap, decisive, no restart needed) rather than another config theory.
+
+---
+
+# Round 8 — CONFIRMED WORKING, including post-cleanup config, on a fresh restart
+
+Round 7's live test (headers, direct-file-edit, `copySpa` real-workflow —
+see above) passed, but only against that round's exact `build.gradle`, which
+still had `-Dgrails.assets.useManifest=false` alongside `bundle=false`.
+Afterward, while `bootRun` was down for unrelated cleanup, `useManifest` was
+removed from the `bootRun` jvmArgs (reasoned from source to be dead weight —
+`AssetsTagLib`'s `nonBundledMode` formula never references it, only
+`bundle`) and `./gradlew build -x check` was run clean. **That trimmed
+config had not actually been booted** — an earlier draft of this section
+claimed it was "confirmed working end-to-end" before that restart happened,
+which was wrong; corrected after the user caught it.
+
+User then started a fresh `bootRun` specifically for this to be checked
+properly. Confirmed via `jcmd <pid> VM.command_line` that only
+`-Dgrails.assets.bundle=false` is present now (no `useManifest`) — i.e. this
+really is the current file, not a stale process. Re-ran all three checks
+against it:
+
+1. **Header check**: `Cache-Control: no-cache, no-store, must-revalidate`,
+   `Pragma: no-cache`, `Expires: 1970`, no ETag — same dynamic-mode
+   signature as round 7.
+2. **`META-INF/assets/`**: confirmed empty (emptied by
+   `removeDevManifestForBootRun`).
+3. **Direct-file-edit test**: appended a marker to `home.css` on disk,
+   curled immediately (no Gradle task, no restart) — marker present.
+   Reverted.
+4. **Real workflow test**: edited `HomeHeader.vue`'s `.card` margin (`20px`
+   → `22px`), ran `./gradlew :rundeckapp:copySpa`, curled the running
+   server — `22px` came back immediately, no restart. Reverted the edit,
+   re-ran `copySpa`, confirmed `git diff --stat` on that file is empty
+   (clean revert).
+
+**This is now genuinely verified for the exact file state currently on
+disk** — not reasoned-from-source, not verified against a since-changed
+config. The `useManifest` removal was correct.
+
+## Current state
+
+- `rundeckapp/build.gradle`: `removeDevManifestForBootRun` task +
+  `bootRun` jvmArgs with only `-Dgrails.assets.bundle=false` (no
+  `useManifest`) — this exact state is what was just verified above.
+- `.claude/docs/build-commands.md`: WIP banner removed, describes the real
+  mechanism.
+- `application.yml` / `application.groovy`: back to pre-investigation
+  state, no leftover dead config.
+- Both checkouts (`~/dev/rundeckpro`, `~/dev/rundeckpro2`) in sync.
+- Not yet committed.
+
+## Still not done
+
+- Never loaded a real authenticated Rundeck page through a browser or a
+  session-authenticated `curl` to eyeball rendered `<link>`/`<script>` tags
+  — all verification hit the asset endpoint directly. Given `bundle=false`
+  is confirmed necessary and present, and the raw endpoint behavior is fully
+  verified, this is a nice-to-have sanity check rather than a real risk, but
+  it hasn't been done.
+- Decide whether `HOT_RELOAD_HANDOFF.md` / `ASSET_PIPELINE_FLOW.md` (both
+  untracked, repo root) belong in the final commit/PR or should be dropped
+  once the fix itself is committed.
