@@ -484,7 +484,18 @@ bootRun {
             '-noverify',
             '-XX:TieredStopAtLevel=1',
             '-Xmx4096m',
-            '-XX:MaxMetaspaceSize=1024m')
+            '-XX:MaxMetaspaceSize=1024m',
+            // AssetsTagLib's URL-generation logic (asset.pipeline.grails.AssetsTagLib#element)
+            // computes `nonBundledMode = uniqMode || (!AssetPipelineConfigHolder.manifest &&
+            // bundle != true && ...)` -- with no manifest loaded (see
+            // removeDevManifestForBootRun below, the actual fix for dynamic serving),
+            // this still forces digest-style URLs into rendered HTML unless
+            // bundle=false, which would 404 against the live (non-digest-named)
+            // source files the dynamic filter path actually serves. NOTE: the
+            // `useManifest` flag itself (tried in HOT_RELOAD_HANDOFF.md rounds
+            // 4-6) does NOT appear in this formula at all and is not needed here
+            // -- removed as dead config once round 7 found the real cause.
+            '-Dgrails.assets.bundle=false')
     systemProperties(System.properties)
     String springProfilesActive = 'spring.profiles.active'
     systemProperty springProfilesActive, System.getProperty(springProfilesActive)
@@ -853,6 +864,29 @@ task copyAssetManifest(type: Copy) {
     from "$buildDir/assets/manifest.properties"
     into "$buildDir/resources/main/META-INF/assets"
 }
+
+// bootRun's classpath adds build/resources/main/META-INF directly (see the
+// `bootRun { classpath += files(...) }` block below, "so classpath:/assets/
+// resolves" for META-INF/services/* ServiceLoader files) as a side effect,
+// this also exposes META-INF/assets/manifest.properties at the plain
+// classpath path "assets/manifest.properties" -- exactly the fallback path
+// AssetPipelineGrailsPlugin#doWithSpring checks via
+// `applicationContext.getResource("classpath:assets/manifest.properties")`.
+// That means AssetPipelineConfigHolder.manifest gets populated on every
+// bootRun (findManifestFile().exists() == true) regardless of the
+// grails.assets.useManifest config value, which silently defeats any attempt
+// to enable dynamic (no-restart) asset serving in dev -- see
+// HOT_RELOAD_HANDOFF.md rounds 4-6 for the investigation that found this.
+// Deleting just this one file (nothing else lives under that META-INF/assets
+// dir -- confirmed) after copyAssetManifest, only for the bootRun task chain,
+// restores real dynamic-mode eligibility for local dev without touching
+// production/WAR packaging, which depends on copyAssetManifest/processResources
+// directly and is unaffected by this bootRun-only task.
+task removeDevManifestForBootRun(type: Delete) {
+    dependsOn copyAssetManifest
+    delete "$buildDir/resources/main/META-INF/assets/manifest.properties"
+}
+bootRun.dependsOn removeDevManifestForBootRun
 
 // Copy compiled assets to classpath:/assets/ (resources/main/assets/) for bootRun and WAR
 task copyCompiledAssets(type: Copy) {
