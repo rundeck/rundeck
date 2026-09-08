@@ -74,15 +74,23 @@ jobs:
           fi
           
           # Count APPROVED reviews for the current head commit
+          # author_association must be OWNER or MEMBER — anyone with a GitHub
+          # account can leave an "Approved" review on a public repo's PR, so an
+          # unfiltered state==APPROVED check could be satisfied by a reviewer
+          # outside the org, not just outside collaborators with repo access.
           approved_for_head="$(
             jq --arg head "${head_lc}" '
-              [.reviews[]? | select(.state == "APPROVED" and (((.commit.oid // "") | ascii_downcase) == $head))]
+              [.reviews[]? | select(
+                .state == "APPROVED" and
+                (((.commit.oid // "") | ascii_downcase) == $head) and
+                (.authorAssociation == "OWNER" or .authorAssociation == "MEMBER")
+              )]
               | length
             ' <<<"${reviews_json}"
           )"
-          
+
           if [[ "${approved_for_head}" -lt 1 ]]; then
-            echo "PR #${PR_NUMBER} has no APPROVED review recorded for head ${HEAD_SHA}." >&2
+            echo "PR #${PR_NUMBER} has no APPROVED review from an org member recorded for head ${HEAD_SHA}." >&2
             echo "Push a new commit or re-request review, then remove and re-apply the label." >&2
             exit 1
           fi

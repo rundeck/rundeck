@@ -1,0 +1,117 @@
+name: Renovate notify npm update
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  notify:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.user.login == 'renovate[bot]' &&
+      contains(github.event.pull_request.labels.*.name, 'sync-rundeckpro')
+    runs-on: ubuntu-latest
+    steps:
+      # Same pattern as prepare-community-pr.yml's "Verify approval for current PR
+      # head": Renovate branches live in this repo, not a fork, so any collaborator
+      # with write access could push an extra commit onto an already-approved,
+      # still-open renovate PR before it merges. Require an APPROVED review recorded
+      # against the exact merged head commit, not just "a review exists somewhere".
+      - name: Verify approval for merged head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          head_lc="${HEAD_SHA,,}"
+
+          reviews_json="$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json reviews,headRefOid)"
+
+          pr_head="$(jq -r '.headRefOid // ""' <<<"${reviews_json}")"
+          pr_head_lc="${pr_head,,}"
+          if [[ "${pr_head_lc}" != "${head_lc}" ]]; then
+            echo "PR head from view (${pr_head}) does not match event head.sha ${HEAD_SHA}." >&2
+            exit 1
+          fi
+
+          # author_association must be OWNER or MEMBER — anyone with a GitHub
+          # account can leave an "Approved" review on a public repo's PR, so an
+          # unfiltered state==APPROVED check could be satisfied by a reviewer
+          # outside the org, not just outside collaborators with repo access.
+          approved_for_head="$(
+            jq --arg head "${head_lc}" '
+              [.reviews[]? | select(
+                .state == "APPROVED" and
+                (((.commit.oid // "") | ascii_downcase) == $head) and
+                (.authorAssociation == "OWNER" or .authorAssociation == "MEMBER")
+              )]
+              | length
+            ' <<<"${reviews_json}"
+          )"
+
+          if [[ "${approved_for_head}" -lt 1 ]]; then
+            echo "PR #${PR_NUMBER} has no APPROVED review from an org member recorded for head ${HEAD_SHA}; refusing to sync." >&2
+            exit 1
+          fi
+
+      - name: Diff ui-trellis package.json for changed deps
+        id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          set -euo pipefail
+          FILE="rundeckapp/grails-spa/packages/ui-trellis/package.json"
+
+          # Diff against the PR's actual pre-merge base, not merge_commit_sha's
+          # immediate git parent: this repo's ruleset allows "rebase" merges,
+          # where merge_commit_sha is just the last of possibly several replayed
+          # commits — a multi-commit rebase-merged PR would otherwise silently
+          # miss earlier commits' dependency changes.
+          after="$(gh api "repos/${{ github.repository }}/contents/${FILE}?ref=${MERGE_SHA}" --jq -r '.content' | base64 -d)"
+          before="$(gh api "repos/${{ github.repository }}/contents/${FILE}?ref=${BASE_SHA}" --jq -r '.content' | base64 -d)"
+
+          # Walk each section separately (not merged with '+') and tag each entry
+          # with its section: package.json declares some packages (e.g. mobx-utils)
+          # in more than one section, and merging with '+' lets one section's value
+          # silently shadow a real version change in another. peerDependencies is
+          # included too — it's a real section here, not just dependencies/devDependencies.
+          extract='["dependencies","devDependencies","peerDependencies"][] as $s | (.[$s] // {}) | to_entries[] | "\($s).\(.key)=\(.value)"'
+          after_deps="$(jq -r "$extract" <<<"$after")"
+          before_deps="$(jq -r "$extract" <<<"$before")"
+          CHANGED="$(comm -13 <(sort <<<"$before_deps") <(sort <<<"$after_deps") || true)"
+
+          if [ -z "$CHANGED" ]; then
+            echo "::warning::package.json touched but no dependency version actually changed — nothing to sync."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+      - name: Generate renovate-sync-notify App token
+        if: steps.diff.outputs.skip != 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.NOTIFY_APP_ID }}
+          private-key: ${{ secrets.NOTIFY_APP_PRIVATE_KEY }}
+          owner: rundeckpro
+          repositories: rundeckpro
+
+      - name: Dispatch to rundeckpro
+        if: steps.diff.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh workflow run sync-renovate-dependency.yml \
+            --repo rundeckpro/rundeckpro \
+            -f pr_number="$PR_NUMBER"
