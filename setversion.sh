@@ -69,7 +69,7 @@ if [ "$1" == "--tag" ]; then
     VNUM="$1"
     shift
     VTAG="${1:-GA}"
-    shift
+    [ $# -gt 0 ] && shift
 
     # rc2+ is not handled here - checking out an existing release branch and tagging its HEAD
     # is owned by external release tooling, for rc2+ (check rdcore), which calls release-tag.sh
@@ -126,7 +126,7 @@ if [ "$1" == "--tag" ]; then
     fi
 
     create_and_push_tag "$TAG_NAME" "$TARGET_COMMIT" "Release $VNUM $VTAG"
-    exit 0
+    exit $?
 
 # Create a release branch for patch releases
 elif [ "$1" == "--create-release-branch" ]; then

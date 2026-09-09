@@ -2,9 +2,9 @@
 #
 # release-tag.sh - creates (and optionally pushes) an annotated git tag at a specific commit.
 #
-# This is the single mechanism used to cut release tags. It has no opinion about GA/rc/alpha/RBA -
+# This is the single mechanism used to cut release tags. It has no opinion about GA/rc/alpha -
 # the caller resolves the tag name and target commit and hands them here. Shared by:
-#   - setversion.sh, for GA / rc1 / alpha# / RBA (it resolves tag name + commit itself)
+#   - setversion.sh, for GA / rc1 / alpha# (it resolves tag name + commit itself)
 #   - external release tooling, for rc2+ (check rdcore)
 #
 # Can be sourced for its create_and_push_tag() function (callers set PUSH_TO_ORIGIN/DRY_RUN
@@ -22,13 +22,14 @@ function git() {
             rev-parse|show-ref|diff|log|status|branch|ls-remote|symbolic-ref)
                 command git "$@"
                 ;;
-            # `git tag -l`/`--list` is read-only; only `-a`/create is a write
+            # `git tag` is read-only by default (listing, with or without -l/--list/--sort/etc);
+            # only creating (-a/--annotate) or deleting (-d/--delete) a tag is a write.
             tag)
-                if [[ " $* " == *" -l "* || " $* " == *" --list"* ]]; then
-                    command git "$@"
-                else
+                if [[ " $* " == *" -a "* || " $* " == *" --annotate"* || " $* " == *" -d "* || " $* " == *" --delete"* ]]; then
                     echo "[DRY-RUN] git $*"
                     return 0
+                else
+                    command git "$@"
                 fi
                 ;;
             # Write commands - just show what would be done
@@ -57,23 +58,29 @@ function create_and_push_tag {
 
     if [ -z "$TAG_NAME" ] || [ -z "$COMMIT_REF" ]; then
         echo "Error: create_and_push_tag requires a tag name and a commit"
-        exit 5
+        return 5
     fi
 
     if ! git rev-parse --verify "${COMMIT_REF}^{commit}" >/dev/null 2>&1; then
         echo "Error: Commit '$COMMIT_REF' not found in repository"
-        exit 5
+        return 5
     fi
     local TARGET_COMMIT
     TARGET_COMMIT="$(git rev-parse "${COMMIT_REF}^{commit}")"
 
     echo "Creating tag: $TAG_NAME"
-    git tag -a "$TAG_NAME" "$TARGET_COMMIT" -m "$MESSAGE"
+    if ! git tag -a "$TAG_NAME" "$TARGET_COMMIT" -m "$MESSAGE"; then
+        echo "Error: Failed to create tag $TAG_NAME"
+        return 1
+    fi
     echo "Tag created: $TAG_NAME"
 
     if [ "$PUSH_TO_ORIGIN" = true ]; then
         echo "Pushing tag to remote..."
-        git push origin "$TAG_NAME"
+        if ! git push origin "$TAG_NAME"; then
+            echo "Error: Failed to push tag $TAG_NAME"
+            return 1
+        fi
         echo "Tag pushed to remote."
     else
         echo "Use 'git push origin $TAG_NAME' to push the tag to remote."
