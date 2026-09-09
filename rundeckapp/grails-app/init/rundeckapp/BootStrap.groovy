@@ -36,8 +36,6 @@ import grails.util.Environment
 import groovy.sql.Sql
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
-import org.rundeck.app.AppConstants
-import org.rundeck.security.RealmPropertiesWeakFormatScanner
 import rundeck.services.LogFileStorageService
 import rundeck.services.feature.FeatureService
 import rundeckapp.cli.CommandLineSetup
@@ -333,18 +331,6 @@ class BootStrap {
             log.info("RSS feeds disabled")
         }
 
-        // RUN-4693: warn at startup when the undeclared-option reject control is turned off. This is a
-        // security control (it stops option values that are not declared on a job from reaching the
-        // option data context and RD_OPTION_* environment variables without validation); disabling it
-        // re-opens that passthrough, so make the weakened posture visible in the logs.
-        if (!configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true)) {
-            log.warn("=" * 80)
-            log.warn("SECURITY: ${AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY}=false")
-            log.warn("Undeclared job options are ALLOWED to pass through to executions.")
-            log.warn("Option values not defined on a job will reach the option data context and")
-            log.warn("RD_OPTION_* environment variables WITHOUT server-side validation.")
-        }
-
         //Setup the correct authentication provider for the configured authentication mechanism
         if(grailsApplication.config.getProperty("rundeck.useJaas",Boolean.class, false)) {
             log.info("Using jaas authentication")
@@ -354,27 +340,6 @@ class BootStrap {
         } else {
             log.info("Using builtin realm authentication")
             authenticationManager.providers.add(grailsApplication.mainContext.getBean("realmAuthProvider"))
-
-            // RUN-4555: warn at startup when realm.properties contains accounts stored in a weak
-            // or unrecognized password format (MD5/CRYPT/plaintext). The password encoder no longer
-            // accepts a plaintext fallback, but weak formats are still accepted for compatibility;
-            // surface them so admins know to migrate those accounts to BCrypt.
-            String realmFilePath = grailsApplication.config.getProperty("rundeck.security.fileUserDataSource", String.class)
-            File realmFile = realmFilePath ? new File(realmFilePath) : null
-            if (realmFile?.exists()) {
-                Properties realmProperties = new Properties()
-                realmFile.withInputStream { realmProperties.load(it) }
-                List<String> weakUsernames = RealmPropertiesWeakFormatScanner.findWeakFormatUsernames(realmProperties)
-                if (weakUsernames) {
-                    log.warn("=" * 80)
-                    log.warn("SECURITY: realm.properties contains accounts using a weak or unrecognized")
-                    log.warn("password format (MD5, CRYPT, or plaintext instead of BCrypt).")
-                    log.warn("Affected accounts: ${weakUsernames.join(', ')}")
-                    log.warn("If this file is disclosed, these credentials are exposed to offline cracking.")
-                    log.warn("Migrate affected accounts to BCRYPT-encoded passwords.")
-                    log.warn("=" * 80)
-                }
-            }
         }
 
         if(grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled",Boolean.class, false)
