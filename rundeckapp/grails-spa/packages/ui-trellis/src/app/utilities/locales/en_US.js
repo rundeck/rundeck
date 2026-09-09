@@ -1445,7 +1445,10 @@ const messages = {
   commonNodeSteps: "Common Node Steps",
   commonWorkflowSteps: "Common Workflow Steps",
   learnMore: "Learn more",
-  plugins: "plugins"
+  plugins: "plugins",
+  hideIncompleteNodes: "Hide incomplete nodes",
+  hideIncompleteNodesDescription:
+    "Hide nodes whose only unfinished steps were skipped by a conditional. Successful executions only.",
 };
 
 export default messages;

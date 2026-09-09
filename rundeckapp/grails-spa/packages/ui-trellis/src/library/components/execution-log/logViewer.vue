@@ -84,6 +84,20 @@
           <input id="logview_stats" v-model="settings.stats" type="checkbox" data-testid="log-viewer-stats-checkbox" />
           <label for="logview_stats">Display Stats</label>
         </div>
+        <div class="checkbox">
+          <input
+            id="logview_hideIncomplete"
+            type="checkbox"
+            data-testid="log-viewer-hide-incomplete-checkbox"
+            :checked="hideIncompleteNodes"
+            :disabled="!hideIncompleteApplies"
+            :title="$t('hideIncompleteNodesDescription')"
+            @change="onHideIncompleteCheckboxChange"
+          />
+          <label for="logview_hideIncomplete">{{
+            $t("hideIncompleteNodes")
+          }}</label>
+        </div>
         <ui-socket
           section="execution-log-viewer"
           location="settings"
@@ -349,6 +363,16 @@ export default defineComponent({
       viewerEntriesByNodeCtx: null,
       viewerFilteredEntries: [] as any[],
       autorunDisposer: null as IReactionDisposer | null,
+      hideIncompleteNodes: false,
+      hideIncompleteApplies: false,
+      incompleteNodeNames: [] as string[],
+      hideIncompleteStateListener: null as
+        | ((payload: {
+            hide?: boolean;
+            applies?: boolean;
+            nodeNames?: string[];
+          }) => void)
+        | null,
     };
   },
   computed: {
@@ -391,10 +415,18 @@ export default defineComponent({
       if (this.viewer == null) {
         return [];
       }
-      if (this.node) {
-        return this.viewerFilteredEntries;
+      const entries = this.node
+        ? this.viewerFilteredEntries
+        : this.entriesFromViewer;
+      if (
+        !this.hideIncompleteNodes ||
+        !this.incompleteNodeNames ||
+        this.incompleteNodeNames.length < 1
+      ) {
+        return entries;
       }
-      return this.entriesFromViewer;
+      const hidden = new Set(this.incompleteNodeNames);
+      return (entries || []).filter((entry) => !hidden.has(entry.node));
     },
   },
   watch: {
@@ -449,6 +481,13 @@ export default defineComponent({
       this.autorunDisposer();
       this.autorunDisposer = null;
     }
+    if (this.eventBus && this.hideIncompleteStateListener) {
+      this.eventBus.off(
+        "execution-hide-incomplete-nodes-state",
+        this.hideIncompleteStateListener,
+      );
+      this.hideIncompleteStateListener = null;
+    }
   },
   async mounted() {
     await this.viewer.init();
@@ -467,6 +506,7 @@ export default defineComponent({
 
     this.execCompleted = this.viewer.execCompleted;
     this.mfollow = !this.viewer.execCompleted;
+    this.bindHideIncompleteNodes();
 
     if (this.viewer.execCompleted && this.viewer.size > this.maxLogSize) {
       this.logSize = this.viewer.size;
@@ -478,6 +518,38 @@ export default defineComponent({
     this.populateLogsProm = await this.populateLogs();
   },
   methods: {
+    bindHideIncompleteNodes() {
+      if (!this.eventBus) {
+        return;
+      }
+      this.hideIncompleteStateListener = (payload) => {
+        this.onHideIncompleteState(payload);
+      };
+      this.eventBus.on(
+        "execution-hide-incomplete-nodes-state",
+        this.hideIncompleteStateListener,
+      );
+      this.eventBus.emit("execution-hide-incomplete-nodes-request");
+    },
+    onHideIncompleteState(payload: {
+      hide?: boolean;
+      applies?: boolean;
+      nodeNames?: string[];
+    }) {
+      this.hideIncompleteNodes = !!payload && !!payload.hide;
+      this.hideIncompleteApplies = !!payload && !!payload.applies;
+      this.incompleteNodeNames =
+        payload && payload.nodeNames ? payload.nodeNames : [];
+    },
+    onHideIncompleteCheckboxChange(event: Event) {
+      const target = event.target as HTMLInputElement;
+      if (this.eventBus) {
+        this.eventBus.emit(
+          "execution-hide-incomplete-nodes-toggle",
+          !!target.checked,
+        );
+      }
+    },
     loadConfig() {
       if (this.useUserSettings) {
         const _settings = localStorage.getItem(CONFIG_STORAGE_KEY);
