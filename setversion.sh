@@ -67,6 +67,10 @@ if [ "$1" == "--tag" ]; then
         usage
     fi
     VNUM="$1"
+    if [[ ! "$VNUM" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Error: Version ($VNUM) must be in MAJOR.MINOR.PATCH format (e.g., 5.19.1)"
+        exit 3
+    fi
     shift
     VTAG="${1:-GA}"
     [ $# -gt 0 ] && shift
@@ -125,7 +129,7 @@ if [ "$1" == "--tag" ]; then
         exit 5
     fi
 
-    create_and_push_tag "$TAG_NAME" "$TARGET_COMMIT"
+    create_and_push_tag "$TAG_NAME" "$TARGET_COMMIT" "Release $VNUM $VTAG"
     exit $?
 
 # Create a release branch for patch releases
