@@ -78,11 +78,22 @@ jobs:
           # would misattribute those unrelated changes to this PR. This PR's own
           # file patch is the only thing guaranteed to reflect just its own change,
           # regardless of merge strategy or what else landed on main meanwhile.
-          patch="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --paginate --jq ".[] | select(.filename == \"${FILE}\") | .patch // empty")"
+          file_entry="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --paginate --jq ".[] | select(.filename == \"${FILE}\")")"
 
-          if [ -z "$patch" ]; then
+          if [ -z "$file_entry" ]; then
             echo "::warning::No change to $FILE in this merge — nothing to sync."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          patch="$(jq -r '.patch // empty' <<<"$file_entry")"
+
+          if [ -z "$patch" ]; then
+            # The file entry above confirms this PR DID change $FILE, but GitHub
+            # omitted the patch text (undocumented cap on large diffs). We can't
+            # tell what changed from here, so don't skip — dispatch anyway and
+            # let rundeckpro re-derive the actual change itself.
+            echo "::notice::$FILE changed but its patch was omitted by GitHub (large diff?) — dispatching anyway."
             exit 0
           fi
 
