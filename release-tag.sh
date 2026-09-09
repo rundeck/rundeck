@@ -26,14 +26,28 @@ function git() {
             # Anything else (creating a tag, -d/--delete, etc.) is a write.
             # Matched as exact arguments, not substring, so a tag message
             # containing "-l" or "--list" can't be misclassified as a listing.
+            # Options that take a following value (e.g. `-m <message>`) have
+            # their value skipped so it's never scanned as an option itself -
+            # otherwise a message whose entire value is "-l" would be
+            # misclassified as list mode and let a real tag creation through.
             tag)
                 shift
                 local is_list=false
+                local skip_next=false
                 for arg in "$@"; do
-                    if [ "$arg" = "-l" ] || [ "$arg" = "--list" ]; then
-                        is_list=true
-                        break
+                    if [ "$skip_next" = true ]; then
+                        skip_next=false
+                        continue
                     fi
+                    case "$arg" in
+                        -l|--list)
+                            is_list=true
+                            break
+                            ;;
+                        -m|--message|-F|--file|-u|--local-user|--cleanup)
+                            skip_next=true
+                            ;;
+                    esac
                 done
                 if [ $# -eq 0 ] || [ "$is_list" = true ]; then
                     command git tag "$@"
