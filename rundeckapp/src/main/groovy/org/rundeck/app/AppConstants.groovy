@@ -43,9 +43,10 @@ class AppConstants {
     static final String PROJECT_OPTION_INPUT_DEFAULT_PATTERN = "project.option.input.validation.default.pattern"
 
     /**
-     * When true (default), an execution that provides options not declared on the job is created and
-     * then failed at start. Resolved through ConfigurationService; this constant holds the sub-key
-     * (without the {@code rundeck.} prefix) used with {@code ConfigurationService.getBoolean}.
+     * Opt-in (default false). When true, an execution that provides options not declared on the job is
+     * created and then failed at start. Left false by default so undeclared options pass through.
+     * Resolved through ConfigurationService; this constant holds the sub-key (without the
+     * {@code rundeck.} prefix) used with {@code ConfigurationService.getBoolean}.
      */
     static final String SYSTEM_REJECT_UNDECLARED_OPTIONS = "execution.rejectUndeclaredOptions"
     /**
