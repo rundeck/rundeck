@@ -1,8 +1,10 @@
 package rundeck.services
 
 import grails.events.annotation.Subscriber
+import grails.gorm.transactions.Transactional
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenMode
 import org.rundeck.app.data.model.v1.authtoken.AuthTokenType
+import org.springframework.transaction.annotation.Propagation
 import rundeck.AuthToken
 import rundeck.data.util.AuthenticationTokenUtils
 
@@ -33,8 +35,15 @@ class WebhookTokenSecureMigrationService {
      * Subscribes to the {@code rundeck.bootstrap} event and, if this server is allowed to
      * apply server updates (see {@link #canApplyServerUpdates}), migrates any WEBHOOK
      * auth_token rows still in LEGACY or null token_mode to SECURED.
+     *
+     * Runs in its own independent transaction ({@code REQUIRES_NEW}) so it never
+     * participates in whatever transactional context (if any) the {@code rundeck.bootstrap}
+     * event happens to fire from. This is separate from — and does not replace — the
+     * per-row {@code AuthToken.withNewTransaction} below, which exists to isolate one bad
+     * row's failure from the rest of the batch, not to isolate the method as a whole.
      */
     @Subscriber('rundeck.bootstrap')
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     void migrateWebhookTokensToSecured() {
         if (!canApplyServerUpdates()) {
             return
