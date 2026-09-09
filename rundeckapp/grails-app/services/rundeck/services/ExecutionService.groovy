@@ -1240,11 +1240,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // bypass all server-side validation (validateOptionValues only iterates the job's declared
             // options) yet are still parsed into the option DataContext and exported as RD_OPTION_*
             // env vars. Fail the (already created) execution here — before any workflow step runs —
-            // with a clear message in the log output. Gated by rundeck.execution.rejectUndeclaredOptions
-            // (default true; set false to restore the legacy passthrough, e.g. re-running a job whose
-            // option set has since changed).
+            // with a clear message in the log output. Opt-in, gated by
+            // rundeck.execution.rejectUndeclaredOptions (default false: undeclared options pass through,
+            // preserving the legacy behavior; set true to reject them).
             if (scheduledExecution != null
-                    && configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true)) {
+                    && configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, false)) {
                 Set<String> declaredOptionNames = (scheduledExecution.options?.collect { it.name } ?: []) as Set
                 Set<String> providedOptionNames = OptionsParserUtil.parseOptsFromString(execution.argString)?.keySet() ?: ([] as Set)
                 List<String> undeclaredOptionNames = providedOptionNames.findAll { !declaredOptionNames.contains(it) }.sort()
@@ -5528,8 +5528,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 },
                 SystemConfig.builder().with {
                     key AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY
-                    description "Security control. When enabled (default), an execution that provides options not defined on the job is created and then failed at start. Disable ONLY if you must allow undeclared options to pass through."
-                    defaultValue "true"
+                    description "Security control (opt-in; default off). When enabled, an execution that provides options not defined on the job is created and then failed at start. Left off by default so undeclared options pass through, preserving the current behavior."
+                    defaultValue "false"
                     required false
                     datatype "Boolean"
                     visibility 'Advanced'
