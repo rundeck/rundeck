@@ -6987,7 +6987,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.loggingService = Mock(LoggingService) { openLogWriter(_, _, _, _) >> loghandler }
         service.frameworkService = Mock(FrameworkService) { getDefaultInputCharsetForProject(_) >> 'UTF-8' }
         service.configurationService = Mock(ConfigurationService) {
-            getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true) >> true
+            getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, false) >> true
         }
         service.grailsLinkGenerator = Mock(LinkGenerator)
         service.metricService = Mock(MetricService)
@@ -7000,6 +7000,49 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then: "the execution fails to start and the undeclared option is reported in the log output"
         result == null
         1 * loghandler.logError({ String m -> m.contains('Execution rejected') && m.contains('ghost') })
+    }
+
+    def "executeAsyncBegin does NOT reject undeclared options by default (flag off) (RUN-4693 #4)"() {
+        given: "an execution whose argString carries an option not declared on the job, with the reject control at its default (off)"
+        def project = 'TestProject'
+        def execution = new Execution(
+                project: project,
+                user: 'testuser',
+                dateStarted: new Date(),
+                status: 'running',
+                loglevel: 'INFO',
+                argString: '-declared x -ghost y',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
+                )
+        )
+        execution.save(flush: true)
+        def scheduledExecution = new ScheduledExecution(jobName: 'j', project: project, workflow: execution.workflow)
+        scheduledExecution.addToOptions(new Option(name: 'declared', enforced: false))
+        scheduledExecution.save(flush: true)
+
+        def framework = Mock(IFramework) { getFrameworkNodeName() >> 'n' }
+        def authContext = Mock(UserAndRolesAuthContext)
+        def loghandler = Mock(ExecutionLogWriter) {
+            filepath >> new File('/tmp/test.log')
+            openStream() >> {}
+        }
+        service.loggingService = Mock(LoggingService) { openLogWriter(_, _, _, _) >> loghandler }
+        service.frameworkService = Mock(FrameworkService) { getDefaultInputCharsetForProject(_) >> 'UTF-8' }
+        service.configurationService = Mock(ConfigurationService) {
+            getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, false) >> false
+        }
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+        service.metricService = Mock(MetricService)
+        service.sysThreadBoundOut = new ThreadBoundOutputStream(System.out)
+        service.sysThreadBoundErr = new ThreadBoundOutputStream(System.err)
+
+        when:
+        service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
+
+        then: "the undeclared option is NOT rejected (no rejection is logged); it passes through"
+        0 * loghandler.logError({ String m -> m.contains('Execution rejected') })
     }
 
     def "executeAsyncBegin workflow modification - workflow updated when isUpdateWorkflowDataValues is #updateWorkflowDataValues"() {

@@ -160,10 +160,11 @@ public class RundeckConfigBase {
         RetryConfig status;
         ExecutionLogs logs;
         /**
-         * RUN-4693: when true (default), an execution that provides options not declared on the job
-         * is created and then failed at start. Set false to restore the legacy passthrough. Bound
-         * from {@code rundeck.execution.rejectUndeclaredOptions} so it is resolvable via
-         * ConfigurationService and editable in the System Configuration UI.
+         * RUN-4693: opt-in (default false). When true, an execution that provides options not declared
+         * on the job is created and then failed at start. Left false by default so undeclared options
+         * pass through, preserving the current behavior. Bound from
+         * {@code rundeck.execution.rejectUndeclaredOptions} so it is resolvable via ConfigurationService
+         * and editable in the System Configuration UI.
          */
         Boolean rejectUndeclaredOptions;
 
