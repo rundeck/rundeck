@@ -20,6 +20,9 @@ import org.rundeck.jaas.PasswordCredential
 import org.rundeck.jaas.jetty.BcryptCredentialProvider
 import org.springframework.security.crypto.password.PasswordEncoder
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+
 /**
  * Password encoder compatible with Jetty password formats.
  * Updated for JAAS refactoring - uses org.rundeck.jaas.PasswordCredential
@@ -44,9 +47,8 @@ class JettyCompatibleSpringSecurityPasswordEncoder implements PasswordEncoder {
     /**
      * Checks a raw password against an encoded password, dispatching on the encoded
      * password's prefix ({@code MD5:}, {@code CRYPT:}, {@code OBF:}, {@code BCRYPT:}).
-     * Encoded passwords with no recognized prefix are rejected: there is no plaintext
-     * fallback, since a plaintext comparison would let any realm.properties entry that
-     * is not explicitly hashed authenticate successfully.
+     * Encoded passwords with no recognized prefix are compared as plaintext using a
+     * constant-time comparison.
      * @param rawPass the raw password to check
      * @param encPass the stored encoded (or plaintext) password
      * @return true if the raw password matches
@@ -73,7 +75,10 @@ class JettyCompatibleSpringSecurityPasswordEncoder implements PasswordEncoder {
             return new BcryptCredentialProvider().getCredential(encPass).check(rawPass)
         }
 
-        // No recognized prefix: reject. Do not compare as plaintext.
-        return false
+        // Plain text comparison - constant-time to avoid leaking length/content via timing
+        return MessageDigest.isEqual(
+            encPass.getBytes(StandardCharsets.UTF_8),
+            rawPass.toString().getBytes(StandardCharsets.UTF_8)
+        )
     }
 }
