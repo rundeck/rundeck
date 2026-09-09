@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# release-tag.sh - creates (and optionally pushes) an annotated git tag at a specific commit.
+# release-tag.sh - creates (and optionally pushes) a git tag at a specific commit.
 #
 # This is the single mechanism used to cut release tags. It has no opinion about GA/rc/alpha -
 # the caller resolves the tag name and target commit and hands them here. Shared by:
@@ -9,7 +9,7 @@
 #
 # Can be sourced for its create_and_push_tag() function (callers set PUSH_TO_ORIGIN/DRY_RUN
 # before calling), or invoked directly as a CLI:
-#   release-tag.sh <tag-name> <commit> [message] [--push] [--dry-run] [--debug]
+#   release-tag.sh <tag-name> <commit> [--push] [--dry-run] [--debug]
 
 : "${PUSH_TO_ORIGIN:=false}"
 : "${DRY_RUN:=false}"
@@ -22,14 +22,15 @@ function git() {
             rev-parse|show-ref|diff|log|status|branch|ls-remote|symbolic-ref)
                 command git "$@"
                 ;;
-            # `git tag` is read-only by default (listing, with or without -l/--list/--sort/etc);
-            # only creating (-a/--annotate) or deleting (-d/--delete) a tag is a write.
+            # `git tag` with no args, or with -l/--list, is a read-only listing.
+            # Anything else (creating a tag, -d/--delete, etc.) is a write.
             tag)
-                if [[ " $* " == *" -a "* || " $* " == *" --annotate"* || " $* " == *" -d "* || " $* " == *" --delete"* ]]; then
-                    echo "[DRY-RUN] git $*"
-                    return 0
+                shift
+                if [ $# -eq 0 ] || [[ " $* " == *" -l "* || " $* " == *" --list"* ]]; then
+                    command git tag "$@"
                 else
-                    command git "$@"
+                    echo "[DRY-RUN] git tag $*"
+                    return 0
                 fi
                 ;;
             # Write commands - just show what would be done
@@ -46,15 +47,14 @@ function git() {
     fi
 }
 
-# create_and_push_tag <tag-name> <commit> [message]
+# create_and_push_tag <tag-name> <commit>
 #
-# Creates an annotated tag named <tag-name> pointing at <commit>, and pushes it if
+# Creates a tag named <tag-name> pointing at <commit>, and pushes it if
 # PUSH_TO_ORIGIN=true. Does not resolve branches, does not know about GA/rc/alpha -
 # the caller is responsible for deciding what <commit> should be.
 function create_and_push_tag {
     local TAG_NAME="$1"
     local COMMIT_REF="$2"
-    local MESSAGE="${3:-Release $TAG_NAME}"
 
     if [ -z "$TAG_NAME" ] || [ -z "$COMMIT_REF" ]; then
         echo "Error: create_and_push_tag requires a tag name and a commit"
@@ -69,7 +69,7 @@ function create_and_push_tag {
     TARGET_COMMIT="$(git rev-parse "${COMMIT_REF}^{commit}")"
 
     echo "Creating tag: $TAG_NAME"
-    if ! git tag -a "$TAG_NAME" "$TARGET_COMMIT" -m "$MESSAGE"; then
+    if ! git tag "$TAG_NAME" "$TARGET_COMMIT"; then
         echo "Error: Failed to create tag $TAG_NAME"
         return 1
     fi
@@ -90,7 +90,7 @@ function create_and_push_tag {
 # Allow running this file directly as a CLI, not just sourcing it for the function
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     function usage {
-        echo "Usage: release-tag.sh <tag-name> <commit> [message] [--push] [--dry-run] [--debug]"
+        echo "Usage: release-tag.sh <tag-name> <commit> [--push] [--dry-run] [--debug]"
         exit 2
     }
 
@@ -122,5 +122,5 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         usage
     fi
 
-    create_and_push_tag "$1" "$2" "$3"
+    create_and_push_tag "$1" "$2"
 fi

@@ -113,19 +113,19 @@ if [ "$1" == "--tag" ]; then
         # rc1, alpha3, etc. - always tag an explicit commit, never a bare HEAD
         TAG_NAME="v$VNUM-$VTAG"
         COMMIT_ARG="$1"
-        shift
         if [ -z "$COMMIT_ARG" ]; then
             echo "Error: '$VTAG' requires an explicit commit to tag."
             echo "Usage: setversion.sh --tag $VNUM $VTAG <commit> [--push]"
             exit 5
         fi
+        shift
         TARGET_COMMIT="$COMMIT_ARG"
     else
         echo "Error: Invalid tag format '$VTAG'. Expected 'GA' or to match [a-z]+[0-9]+ (e.g., rc1, alpha3)."
         exit 5
     fi
 
-    create_and_push_tag "$TAG_NAME" "$TARGET_COMMIT" "Release $VNUM $VTAG"
+    create_and_push_tag "$TAG_NAME" "$TARGET_COMMIT"
     exit $?
 
 # Create a release branch for patch releases
