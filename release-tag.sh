@@ -24,9 +24,18 @@ function git() {
                 ;;
             # `git tag` with no args, or with -l/--list, is a read-only listing.
             # Anything else (creating a tag, -d/--delete, etc.) is a write.
+            # Matched as exact arguments, not substring, so a tag message
+            # containing "-l" or "--list" can't be misclassified as a listing.
             tag)
                 shift
-                if [ $# -eq 0 ] || [[ " $* " == *" -l "* || " $* " == *" --list"* ]]; then
+                local is_list=false
+                for arg in "$@"; do
+                    if [ "$arg" = "-l" ] || [ "$arg" = "--list" ]; then
+                        is_list=true
+                        break
+                    fi
+                done
+                if [ $# -eq 0 ] || [ "$is_list" = true ]; then
                     command git tag "$@"
                 else
                     echo "[DRY-RUN] git tag $*"
