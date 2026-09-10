@@ -1,6 +1,6 @@
 <template>
-  <div ref="wrapper" style="display: none">
-    <div ref="popper" class="popper" @click.stop>
+  <div ref="wrapper" class="popper-wrapper">
+    <div ref="popper" class="popper" data-testid="popper-content" @click.stop>
       <slot />
     </div>
   </div>
@@ -77,8 +77,13 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
+.popper-wrapper {
+  display: none;
+}
+
 .popper {
-  z-index: 1000;
+  // Above Next UI's fixed sections (z-index 1032), below the modal backdrop (1040).
+  z-index: 1035;
   cursor: auto;
 }
 </style>
