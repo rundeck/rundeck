@@ -1,12 +1,9 @@
 ---
 globs:
-  - "**/src/**/*.vue"
-  - "**/src/**/*.ts"
-  - "**/src/**/*.js"
-  - "**/tests/**/*.ts"
-  - "**/tests/**/*.js"
+  - "**/ui-trellis/src/**/*.{vue,ts,js}"
+  - "**/ui-trellis/tests/**/*.{ts,js}"
 alwaysApply: false
-applyTo: "**/src/**/*.{vue,ts,js}, **/tests/**/*.{ts,js}"
+applyTo: "**/ui-trellis/src/**/*.{vue,ts,js}, **/ui-trellis/tests/**/*.{ts,js}"
 ---
 
 # Jest Rules
