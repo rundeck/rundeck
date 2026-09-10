@@ -397,6 +397,86 @@ describe("PluginConfig", () => {
     });
   });
 
+  describe("STATIC_TEXT props", () => {
+    // Regression tests for https://github.com/rundeck/rundeck/issues/10420:
+    // WorkflowStrategy's "info" property is a STATIC_TEXT/display-only help table
+    // (rendered from prop.staticTextDefaultValue, never user-editable). It was
+    // being seeded from prop.defaultValue in create mode and then persisted into
+    // the saved job config as literal HTML, polluting exported YAML and causing
+    // spurious SCM diffs.
+    it("does not seed a STATIC_TEXT prop with its default value in create mode", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "create",
+          modelValue: { type: "test", config: {} },
+          pluginConfig: {
+            props: [
+              {
+                name: "info",
+                type: "String",
+                defaultValue: "<table><tr><td>1.</td></tr></table>",
+                options: { displayType: "STATIC_TEXT" },
+              },
+            ],
+          },
+        },
+      });
+
+      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toBeFalsy();
+    });
+
+    it("never includes a STATIC_TEXT prop in the exported config payload", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "create",
+          modelValue: { type: "test", config: {} },
+          pluginConfig: {
+            props: [
+              {
+                name: "info",
+                type: "String",
+                defaultValue: "<table><tr><td>1.</td></tr></table>",
+                options: { displayType: "STATIC_TEXT" },
+              },
+            ],
+          },
+        },
+      });
+
+      const emitted = wrapper.emitted("update:modelValue");
+      if (emitted) {
+        for (const call of emitted) {
+          expect((call[0] as any).config).not.toHaveProperty("info");
+        }
+      }
+    });
+
+    it("strips an already-persisted STATIC_TEXT value out of the exported config (self-heals legacy data)", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "edit",
+          modelValue: {
+            type: "test",
+            config: { info: "<table><tr><td>1.</td></tr></table>" },
+          },
+          pluginConfig: {
+            props: [
+              { name: "info", type: "String", options: { displayType: "STATIC_TEXT" } },
+              { name: "host", type: "String", options: {} },
+            ],
+          },
+        },
+      });
+
+      // trigger the exportInputs/update:modelValue path via an edit to an unrelated field
+      await wrapper.findAllComponents(PluginPropEdit)[1].vm.$emit("update:modelValue", "localhost");
+      await wrapper.vm.$nextTick();
+
+      const emitted = wrapper.emitted("update:modelValue")!;
+      expect((emitted[emitted.length - 1][0] as any).config).not.toHaveProperty("info");
+    });
+  });
+
   describe("boolean export", () => {
     it("emits the string 'true' in the config payload when a Boolean field is set to true", async () => {
       const wrapper = await createWrapper({
