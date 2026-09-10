@@ -1,7 +1,12 @@
 ---
-globs: ["**/*.spec.ts", "**/*.test.ts"]
+globs:
+  - "**/src/**/*.vue"
+  - "**/src/**/*.ts"
+  - "**/src/**/*.js"
+  - "**/tests/**/*.ts"
+  - "**/tests/**/*.js"
 alwaysApply: false
-applyTo: "**/*.{spec,test}.{ts,js}"
+applyTo: "**/src/**/*.{vue,ts,js}, **/tests/**/*.{ts,js}"
 ---
 
 # Jest Rules
