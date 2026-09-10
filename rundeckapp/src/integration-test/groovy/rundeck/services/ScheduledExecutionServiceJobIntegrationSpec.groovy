@@ -33,6 +33,7 @@ import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.springframework.context.MessageSource
 import rundeck.CommandExec
+import rundeck.Notification
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
@@ -343,5 +344,80 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         def savedJob = ScheduledExecution.get(job.id)
         Option.countByScheduledExecution(savedJob) == 1
         Option.findAllByScheduledExecution(savedJob)*.name == ['newopt']
+    }
+
+    void "update with invalid email notification does not delete existing notifications or options"() {
+        given: "the persisted job from setup() already has one Option and one Notification"
+        def job = findSetupJob()
+        def existingNotification = Notification.fromMap('onsuccess', [recipients: 'valid@example.com'])
+        existingNotification.scheduledExecution = job
+        job.addToNotifications(existingNotification)
+        job.save(flush: true, failOnError: true)
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+        mockUpdateCollaborators()
+
+        when: "an update is submitted with a new notification containing an invalid email address"
+        def params = [
+            id                : job.id,
+            jobNotificationsJson: '[{"type":"email","trigger":"onsuccess","config":{"recipients":"not-an-email"}}]'
+        ]
+        def results = service._doupdate(params, auth)
+        // Force a flush: the production bug only manifests when the surrounding transaction
+        // commits (flushing any pending, unflushed delete actions queued earlier in the
+        // pipeline). @Rollback test transactions never commit, so without an explicit flush
+        // here we'd only be observing in-memory session state, not what would actually be
+        // persisted in production.
+        ScheduledExecution.withSession { it.flush() }
+
+        then: "the update fails validation on the invalid notification"
+        !results.success
+
+        and: "the original notification is still present in the database, unreplaced"
+        Notification.findAllByScheduledExecution(job)*.eventTrigger == ['onsuccess']
+        Notification.findAllByScheduledExecution(job)[0].mailConfiguration().recipients == 'valid@example.com'
+
+        and: "the original option is unaffected, since this update didn't submit any option input"
+        Option.findAllByScheduledExecution(job)*.name == ['optvals']
+    }
+
+    void "successful update fully replaces the notification set"() {
+        given: "the persisted job from setup() already has one Option and one Notification"
+        def job = findSetupJob()
+        // setup()'s 'optvals' Option has no defaultValue, which is only valid because it's
+        // never independently revalidated by the other tests in this file (they replace it
+        // with a fully-valid Option first). Since this test intentionally leaves options
+        // untouched, give it a valid defaultValue here so the full-job revalidation this
+        // update triggers isn't rejected for an unrelated, pre-existing reason.
+        Option.findAllByScheduledExecution(job)[0].with {
+            defaultValue = 'default'
+            save(flush: true, failOnError: true)
+        }
+        def existingNotification = Notification.fromMap('onsuccess', [recipients: 'valid@example.com'])
+        existingNotification.scheduledExecution = job
+        job.addToNotifications(existingNotification)
+        job.save(flush: true, failOnError: true)
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+        mockUpdateCollaborators()
+
+        when: "a valid update replaces the notification set"
+        def params = [
+            id                  : job.id,
+            jobNotificationsJson: '[{"type":"email","trigger":"onfailure","config":{"recipients":"other@example.com"}}]'
+        ]
+        def results = service._doupdate(params, auth)
+
+        then: "the update succeeds"
+        results.success
+
+        and: "the database reflects only the new notification definition"
+        def savedJob = ScheduledExecution.get(job.id)
+        Notification.countByScheduledExecution(savedJob) == 1
+        Notification.findAllByScheduledExecution(savedJob)*.eventTrigger == ['onfailure']
     }
 }
