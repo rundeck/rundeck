@@ -3256,11 +3256,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public void jobDefinitionNotifications(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         Collection<Notification> notificationSet=[]
         boolean replaceAll=false
+        boolean hasNotificationInput=false
         if(input){
+            hasNotificationInput=true
             if(input.notifications) {
                 notificationSet.addAll(input.notifications.collect{Notification.fromMap(it.eventTrigger,it.toMap())})
             }
         }else if(params.jobNotificationsJson){
+            hasNotificationInput=true
             def notificationsData = JSON.parse(params.jobNotificationsJson.toString())
             if(notificationsData instanceof JSONArray){
                 replaceAll=true
@@ -3272,16 +3275,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
-        // Do not delete/attach yet: the candidate list is validated first (see
-        // validateDefinitionNotifications()) and only spliced into the persisted job once the
-        // whole update is known to succeed (see applyPendingOptionsAndNotifications()), so a
-        // failed update never loses the previously-saved notifications.
-        List<Notification> candidates = []
-        notificationSet.each { Notification notif ->
-            notif.scheduledExecution = scheduledExecution
-            candidates << notif
+        // Only stage a pending replacement when the caller actually supplied notification
+        // input (an imported job definition, or jobNotificationsJson) -- otherwise leave the
+        // job's existing notifications untouched. Do not delete/attach yet either way: the
+        // candidate list is validated first (see validateDefinitionNotifications()) and only
+        // spliced into the persisted job once the whole update is known to succeed (see
+        // applyPendingOptionsAndNotifications()), so a failed update never loses the
+        // previously-saved notifications.
+        if (hasNotificationInput) {
+            List<Notification> candidates = []
+            notificationSet.each { Notification notif ->
+                notif.scheduledExecution = scheduledExecution
+                candidates << notif
+            }
+            params?.put('_pendingNotifications', candidates)
         }
-        params?.put('_pendingNotifications', candidates)
     }
 
 
@@ -3442,8 +3450,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * this does NOT call deleteExistingOptions()/deleteExistingNotification() (no real Hibernate
      * delete is queued against the previously-persisted rows) — it only replaces the in-memory
      * collection reference. Must only be used on a failure path immediately followed by
-     * scheduledExecution.discard(), so this in-memory-only substitution is never flushed
-     *.
+     * scheduledExecution.discard(), so this in-memory-only substitution is never flushed.
      */
     private void attachPendingOptionsAndNotificationsForDisplay(ScheduledExecution scheduledExecution, Map params) {
         if (params?.containsKey('_pendingOptions')) {
