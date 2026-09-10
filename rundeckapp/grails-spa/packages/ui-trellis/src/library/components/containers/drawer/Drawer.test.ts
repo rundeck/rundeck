@@ -37,5 +37,12 @@ describe("Drawer", () => {
     const mask = openWrapper.find('[data-testid="drawer-mask-close"]');
     expect(mask.exists()).toBe(true);
     expect(mask.attributes("aria-label")).toBe("message_close");
+
+    await mask.trigger("keydown.enter");
+    await openWrapper.vm.$nextTick();
+    await mask.trigger("keydown.space");
+    await openWrapper.vm.$nextTick();
+
+    expect(openWrapper.emitted("close")).toHaveLength(2);
   });
 });
