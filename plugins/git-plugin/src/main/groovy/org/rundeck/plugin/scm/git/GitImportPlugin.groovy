@@ -202,7 +202,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return null
         }
 
-        def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
+        def loadingStatus = snapshotJobStateMap().find {key, meta -> meta["synch"] == SynchState.LOADING }
 
         if(loadingStatus){
             def synchState = new GitExportSynchState()
@@ -244,7 +244,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             }
         }
 
-        Map jobsCache = jobStateMap.collectEntries {key, value -> [value.path, value]}
+        Map jobsCache = snapshotJobStateMap().collectEntries {key, value -> [value.path, value]}
 
         walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
             def tracked = false
@@ -689,9 +689,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         } else if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
 
             List<ScmImportTrackedItem> found = []
+            Map<String, Map> jobStateSnapshot = snapshotJobStateMap()
 
             //files to delete
-            jobStateMap?.each {job->
+            jobStateSnapshot.each {job->
                 String status = job.getValue()?.get("synch")
                 if (status?.equalsIgnoreCase('DELETE_NEEDED')){
                     found << trackPath(
@@ -709,7 +710,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         walk.getPathString(),
                         trackedItemNeedsImport(walk.getPathString()),
                         importTracker.trackedJob(walk.getPathString()) ?:
-                                jobStateMap.find {String key, Map values -> values.path?.equals(walk.getPathString())}?.key?.toString() //get job id from jobStateMap if importTracker is empty
+                                jobStateSnapshot.find {String key, Map values -> values.path?.equals(walk.getPathString())}?.key?.toString() //get job id from jobStateMap if importTracker is empty
                 )
             }
             return found
