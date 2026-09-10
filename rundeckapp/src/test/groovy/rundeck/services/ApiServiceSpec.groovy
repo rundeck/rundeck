@@ -435,6 +435,38 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
         'generate_service_token' | _
     }
 
+    def "generate webhook token defaults to SECURED mode and hashes the persisted value"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenUser = 'auser'
+        def tokenRoles = ['role1'] as Set
+
+        def tokenTime = 3600
+
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: 'auser').save()
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles, false, AuthTokenType.WEBHOOK)
+        then:
+        result != null
+        result.getTokenMode() == org.rundeck.app.data.model.v1.authtoken.AuthTokenMode.SECURED
+        result.getClearToken() != null
+        result.getToken() == AuthenticationTokenUtils.encodeTokenValue(result.getClearToken(), org.rundeck.app.data.model.v1.authtoken.AuthTokenMode.SECURED)
+        result.getToken() != result.getClearToken()
+        AuthToken.findByUuid(result.getUuid()).tokenMode == org.rundeck.app.data.model.v1.authtoken.AuthTokenMode.SECURED
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_USER, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(*_) >> true
+
+        service.userService.findOrCreateUser('auser') >> user
+    }
+
     @Unroll
     def "generate service token service groups #tokenaction auth"() {
         given:

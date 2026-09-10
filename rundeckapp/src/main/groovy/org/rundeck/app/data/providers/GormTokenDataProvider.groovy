@@ -62,7 +62,7 @@ class GormTokenDataProvider implements TokenDataProvider {
                     creator: data.creator,
                     name: data.name,
                     type: tokenType,
-                    tokenMode: (tokenType == AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
+                    tokenMode: AuthTokenMode.SECURED
             )
             if (token.save(flush: true)) {
                 return token.uuid
@@ -169,10 +169,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
     @Override
     AuthenticationToken findByTokenAndType(final String token, AuthTokenType type) {
-        def tokenType = AuthTokenType.valueOf(type.toString())
-        AuthenticationToken authToken = AuthToken.findByTokenAndType(token, tokenType)
-        return authToken ?: null
-
+        return tokenLookupWithType(token, type)
     }
 
     @Override

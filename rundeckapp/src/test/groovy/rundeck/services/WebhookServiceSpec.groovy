@@ -276,8 +276,38 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         created.enabled == true
         created.eventPlugin == "log-webhook-event"
         created.pluginConfigurationJson == '{"cfg1":"val1"}'
-        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
+        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345", clearToken:"12345"] }
 
+    }
+    def "save new webhook publishes the clear token value, not the persisted one"() {
+        given:
+        def mockUserAuth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "webhookUser" }
+            getRoles() >> { ["webhook","test"] }
+        }
+        service.apiService = Mock(MockApiService)
+        service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
+            parseAuthRoles(_) >> { ["webhook","test"] }
+        }
+        service.userService = Mock(MockUserService) {
+            validateUserExists(_) >> { true }
+        }
+        service.pluginService = Mock(MockPluginService) {
+            validatePluginConfig(_,_,_) >> { return new ValidatedPlugin(report: new Validator.Report(),valid:true) }
+            getPlugin(_,_) >> { new TestWebhookEventPlugin() }
+            listPlugins(WebhookEventPlugin) >> { ["log-webhook-event":new TestWebhookEventPlugin()] }
+        }
+
+        when:
+        def result = service.saveHook(mockUserAuth,[name:"test-clear-token",project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
+        Webhook created = Webhook.findByName("test-clear-token")
+
+        then:
+        result.msg == "Saved webhook"
+        // the persisted `.token` would be a SHA-256 hash under SECURED mode; the published
+        // webhook secret must be the transient `.clearToken` value instead.
+        created.authToken == "clear-secret-999"
+        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"ef29b1e7-hash-stand-in", clearToken:"clear-secret-999"] }
     }
     def "save new webhook validation fails"() {
         given:
@@ -407,7 +437,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         then:
         result.err
         !created
-        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
+        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345", clearToken:"12345"] }
         1 * service.rundeckAuthTokenManagerService.deleteByTokenWithType('12345', AuthTokenType.WEBHOOK )
 
     }
@@ -433,7 +463,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def result = service.saveHook(mockUserAuth,[name:"test",project:"Test",user:"webhookUser",roles:"webhook,test",eventPlugin:"log-webhook-event","config":["cfg1":"val1"]])
 
         then:
-        _ * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
+        _ * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345", clearToken:"12345"] }
         result.msg == "Saved webhook"
 
     }
@@ -555,7 +585,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         created.eventPlugin == "log-webhook-event"
         created.pluginConfigurationJson == '{}'
         1 * service.rundeckAuthTokenManagerService.parseAuthRoles("webhook,test") >> { new HashSet(['webhook','test']) }
-        expectGenTokenCall * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
+        expectGenTokenCall * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345", clearToken:"12345"] }
         expectImportWhkToken * service.rundeckAuthTokenManagerService.importWebhookToken(authContext,'abc123','webhookUser',new HashSet(['webhook','test'])) >> { true }
         if(regenUuid){
             created.uuid != uuid
@@ -725,7 +755,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def result = service.importWebhook(mockUserAuth, [id: 1, uuid: "d1c6dcf7-dd12-4858-9373-c12639c689d4", name: "test", project: "Test", authToken: "12345", eventPlugin: "log-webhook-event"], true,false)
         then:
         result.msg == "Webhook test imported"
-        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
+        1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345", clearToken:"12345"] }
     }
 
     def "Cannot import a webhook with existing token"() {
