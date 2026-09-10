@@ -36,7 +36,7 @@
               @keydown.enter="edit"
               @keydown.space.prevent="edit"
             >
-              <i class="fa fa-pen" style="transform: translate(0, -5px)" />
+              <i class="fa fa-pen" />
               <div
                 style="
                   border-radius: 500px;
