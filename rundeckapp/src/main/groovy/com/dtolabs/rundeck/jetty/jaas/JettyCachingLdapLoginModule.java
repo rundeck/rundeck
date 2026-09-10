@@ -265,8 +265,6 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     protected DirContext _rootContext;
 
-    protected LdapContext ldapContext;
-
     protected boolean _reportStatistics;
 
     /**
@@ -541,13 +539,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     /**
      * It searches for roles with pagination, using the given dirContext to perform the search
-     * rather than the module-level anonymous/root {@link #ldapContext}, so that role lookups
-     * still succeed when authenticated as a specific user (e.g. when
+     * so that role lookups still succeed when authenticated as a specific user (e.g. when
      * {@link #_forceBindingLoginNoAnonymousSearch} is enabled and anonymous search is unavailable).
      *
      * @param dirContext dirContext to search with; if it does not already support paging
      *                   controls, an {@link LdapContext} bound to the same identity is derived
-     *                   from it via {@link DirContext#lookup(String)}
+     *                   from it via {@link DirContext#lookup(String)} and closed before returning
+     *                   (a dirContext that is already an {@link LdapContext} is caller-owned and
+     *                   left open)
      * @param userDn userDn
      * @param username username
      *
@@ -557,52 +556,65 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     private List<SearchResult> getPaginatedRoles(DirContext dirContext, String userDn, String username) throws IOException, NamingException {
         List<SearchResult> searchResults = new ArrayList<>();
 
-        LdapContext pagingContext = (dirContext instanceof LdapContext)
-                ? (LdapContext) dirContext
-                : (LdapContext) dirContext.lookup(_providerUrl);
+        boolean derivedPagingContext = !(dirContext instanceof LdapContext);
+        LdapContext pagingContext = derivedPagingContext
+                ? (LdapContext) dirContext.lookup(_providerUrl)
+                : (LdapContext) dirContext;
 
-        int pageSize = rolesPerPage;
-        byte[] cookie = null;
-        pagingContext.setRequestControls(new Control[]{
-                new PagedResultsControl(pageSize, Control.CRITICAL) });
-        do {
-            String filter = OBJECT_CLASS_FILTER;
+        try {
+            int pageSize = rolesPerPage;
+            byte[] cookie = null;
+            pagingContext.setRequestControls(new Control[]{
+                    new PagedResultsControl(pageSize, Control.CRITICAL) });
+            do {
+                String filter = OBJECT_CLASS_FILTER;
 
-            Object[] filterArguments = null;
-            if(null !=_roleUsernameMemberAttribute){
-                filterArguments = new Object[]{_roleObjectClass, _roleUsernameMemberAttribute, username};
-            }else{
-                filterArguments = new Object[]{_roleObjectClass, _roleMemberAttribute, userDn};
-            }
+                Object[] filterArguments = null;
+                if(null !=_roleUsernameMemberAttribute){
+                    filterArguments = new Object[]{_roleObjectClass, _roleUsernameMemberAttribute, username};
+                }else{
+                    filterArguments = new Object[]{_roleObjectClass, _roleMemberAttribute, userDn};
+                }
 
-            SearchControls searchControls = new SearchControls();
-            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            NamingEnumeration results = pagingContext.search(
-                    _roleBaseDn,
-                    filter,
-                    filterArguments,
-                    searchControls);
+                SearchControls searchControls = new SearchControls();
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+                NamingEnumeration results = pagingContext.search(
+                        _roleBaseDn,
+                        filter,
+                        filterArguments,
+                        searchControls);
 
-            // Iterate over a batch of search results
-            while (results != null && results.hasMoreElements()) {
-                searchResults.add((SearchResult)results.nextElement());
-            }
-            // Examine the paged results control response
-            Control[] controls = pagingContext.getResponseControls();
-            if (controls != null) {
-                for (int i = 0; i < controls.length; i++) {
-                    if (controls[i] instanceof PagedResultsResponseControl) {
-                        PagedResultsResponseControl prrc =
-                                (PagedResultsResponseControl)controls[i];
-                        cookie = prrc.getCookie();
+                // Iterate over a batch of search results
+                while (results != null && results.hasMoreElements()) {
+                    searchResults.add((SearchResult)results.nextElement());
+                }
+                // Examine the paged results control response
+                Control[] controls = pagingContext.getResponseControls();
+                if (controls != null) {
+                    for (int i = 0; i < controls.length; i++) {
+                        if (controls[i] instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc =
+                                    (PagedResultsResponseControl)controls[i];
+                            cookie = prrc.getCookie();
+                        }
                     }
                 }
-            }
-            pagingContext.setRequestControls(new Control[]{
-                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-        } while (cookie != null);
+                pagingContext.setRequestControls(new Control[]{
+                        new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+            } while (cookie != null);
 
-        return searchResults;
+            return searchResults;
+        } finally {
+            // Only close the LdapContext this method derived via lookup(); a dirContext that
+            // arrived already as an LdapContext is owned by the caller.
+            if (derivedPagingContext) {
+                try {
+                    pagingContext.close();
+                } catch (NamingException e) {
+                    debug("Unable to close paginated role LDAP context: " + e.getMessage());
+                }
+            }
+        }
     }
 
     private List<String> getRoleList(List<SearchResult> results) throws NamingException {
@@ -1154,9 +1166,6 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         try {
             _rootContext = new InitialDirContext(getEnvironment());
-            if(rolePagination){
-                ldapContext = new InitialLdapContext(_rootContext.getEnvironment(), null);
-            }
         } catch (NamingException ex) {
             LOG.error("Naming error",ex);
             throw new IllegalStateException("Unable to establish root context: "+ex.getMessage());

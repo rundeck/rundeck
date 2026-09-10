@@ -455,19 +455,22 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         // user logging in with different case than what's stored in LDAP would fail the search
         // (on directories with case-sensitive attribute matching), defeating the point of the
         // case-insensitive feature. Reported by Copilot review on PR #10530.
+        //
+        // Calls bindingLogin() directly with the raw (un-normalized) username, rather than
+        // going through login(). login()'s authenticate() already normalizes the username
+        // before ever calling bindingLogin(), so driving this test through login() would pass
+        // regardless of whether bindingLogin() itself normalizes correctly -- it would only be
+        // proving authenticate()'s normalization, not the fix under test. Calling bindingLogin()
+        // directly with a raw username isolates and proves its own internal normalization.
         JettyCachingLdapLoginModule module = Spy(JettyCachingLdapLoginModule)
         module.isCaseInsensitiveUsernameEnabled() >> true
         module._debug = true
-        module._forceBindingLogin = true
         module._contextFactory = "notnull"
         module._providerUrl = "notnull"
         module._forceBindingLoginUseRootContextForRoles = false
         module._roleBaseDn = 'roleBaseDn'
         module.rolePagination = false
         module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
-        module.setCallbackHandler(Mock(CallbackHandler) {
-            1 * handle(_) >> { it[0][0].name = rawUsername; it[0][1].object = 'apassword' }
-        })
         def found = [Mock(SearchResult) {
             getNameInNamespace() >> "cn=$normalizedUsername,dc=test,dc=com"
             getAttributes() >> new BasicAttributes()
@@ -488,7 +491,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         }
 
         when:
-        boolean result = module.login()
+        boolean result = module.bindingLogin(rawUsername, 'apassword')
 
         then:
         result

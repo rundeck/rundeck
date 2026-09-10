@@ -520,7 +520,6 @@ public class JettyCachingLdapLoginModuleTest2 {
         }
 
         module._rootContext = rootContext;
-        module.ldapContext = ldapContext;
         return module;
     }
 
