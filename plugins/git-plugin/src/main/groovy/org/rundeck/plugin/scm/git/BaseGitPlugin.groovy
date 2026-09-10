@@ -546,55 +546,65 @@ class BaseGitPlugin {
         if (base.isDirectory() && new File(base, ".git").isDirectory()) {
             def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
             def agit = new Git(arepo)
-
-            //test url matches origin
-            def config = agit.getRepository().getConfig()
-            def found = config.getString("remote", REMOTE_NAME, "url")
-            def projectName = config.getString("rundeck", "scm-plugin", "project-name")
-            def gitIntegration = config.getString("rundeck", "scm-plugin", "integration")
-            if (projectName && !projectName.equals(context.frameworkProject) || gitIntegration && !gitIntegration.equals(integration)) {
-                agit.getRepository().close()
-                throw new ScmPluginInvalidInput(
-                        "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}",
-                        Validator.errorReport(
-                                'dir',
-                                "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}"
-                        )
-                )
-            } else if (!projectName) {
-                config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
-                config.setString("rundeck", "scm-plugin", "integration", integration)
-                config.save()
-            }
-            def needsClone = false
-
-            if (found != url) {
-                logger.debug("url differs, re-cloning ${found}!=${url}")
-                needsClone = true
-            } else if (agit.repository.getFullBranch() != "refs/heads/$branch") {
-                //check same branch
-                logger.debug("branch differs, re-cloning")
-                needsClone = true
-            }
-
-            if (needsClone) {
-                //need to reconfigured: release the old repository's file handles before deleting it on disk
-                agit.getRepository().close()
-                removeWorkdir(base)
-                performClone(base, url, context, integration)
-                return
-            }
-
+            //set once ownership of agit/arepo has been handed off (to git/repo, or closed
+            //and replaced via a reclone), so the finally block below doesn't leak arepo on
+            //any exception thrown while inspecting/configuring it, but also doesn't
+            //double-close it once handed off or already closed
+            boolean handedOff = false
             try {
-                fetchFromRemote(context, agit)
-            } catch (Exception e) {
-                logger.debug("Failed fetch from the repository: ${e.message}", e)
-                String msg = collectCauseMessages(e)
-                agit.getRepository().close()
-                throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
+                //test url matches origin
+                def config = agit.getRepository().getConfig()
+                def found = config.getString("remote", REMOTE_NAME, "url")
+                def projectName = config.getString("rundeck", "scm-plugin", "project-name")
+                def gitIntegration = config.getString("rundeck", "scm-plugin", "integration")
+                if (projectName && !projectName.equals(context.frameworkProject) || gitIntegration && !gitIntegration.equals(integration)) {
+                    throw new ScmPluginInvalidInput(
+                            "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}",
+                            Validator.errorReport(
+                                    'dir',
+                                    "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}"
+                            )
+                    )
+                } else if (!projectName) {
+                    config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
+                    config.setString("rundeck", "scm-plugin", "integration", integration)
+                    config.save()
+                }
+                def needsClone = false
+
+                if (found != url) {
+                    logger.debug("url differs, re-cloning ${found}!=${url}")
+                    needsClone = true
+                } else if (agit.repository.getFullBranch() != "refs/heads/$branch") {
+                    //check same branch
+                    logger.debug("branch differs, re-cloning")
+                    needsClone = true
+                }
+
+                if (needsClone) {
+                    //need to reconfigured: release the old repository's file handles before deleting it on disk
+                    agit.getRepository().close()
+                    handedOff = true
+                    removeWorkdir(base)
+                    performClone(base, url, context, integration)
+                    return
+                }
+
+                try {
+                    fetchFromRemote(context, agit)
+                } catch (Exception e) {
+                    logger.debug("Failed fetch from the repository: ${e.message}", e)
+                    String msg = collectCauseMessages(e)
+                    throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
+                }
+                git = agit
+                repo = arepo
+                handedOff = true
+            } finally {
+                if (!handedOff) {
+                    agit.getRepository().close()
+                }
             }
-            git = agit
-            repo = arepo
         } else {
             performClone(base, url, context, integration)
         }
@@ -628,10 +638,16 @@ class BaseGitPlugin {
             logger.debug("Failed cloning the repository from ${url}: ${e.message}", e)
             throw new ScmPluginException("Failed cloning the repository from ${url}: ${e.message}", e)
         }
-        git.getRepository().config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
-        git.getRepository().config.setString("rundeck", "scm-plugin", "integration", integration)
-        git.getRepository().config.save()
-        repo = git.getRepository()
+        try {
+            git.getRepository().config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
+            git.getRepository().config.setString("rundeck", "scm-plugin", "integration", integration)
+            git.getRepository().config.save()
+            repo = git.getRepository()
+        } catch (Exception e) {
+            logger.debug("Failed configuring cloned repository from ${url}: ${e.message}", e)
+            git.getRepository().close()
+            throw new ScmPluginException("Failed configuring cloned repository from ${url}: ${e.message}", e)
+        }
     }
 
     protected boolean existBranch(String remoteName) {

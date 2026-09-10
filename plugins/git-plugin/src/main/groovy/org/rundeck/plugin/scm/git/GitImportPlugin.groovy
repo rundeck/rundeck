@@ -725,17 +725,17 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return
         }
         def tree = new TreeWalk(repo)
-        tree.addTree(head)
-        tree.setRecursive(true)
-        if (useFilter) {
-            if (config.shouldUseFilePattern()) {
-                tree.setFilter(PathRegexFilter.create(config.filePattern))
-            } else if (trackedItems) {
-                tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
-            }
-        }
-
         try {
+            tree.addTree(head)
+            tree.setRecursive(true)
+            if (useFilter) {
+                if (config.shouldUseFilePattern()) {
+                    tree.setFilter(PathRegexFilter.create(config.filePattern))
+                } else if (trackedItems) {
+                    tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
+                }
+            }
+
             while (tree.next()) {
                 callback(tree)
             }

@@ -281,18 +281,18 @@ class GitUtil {
             return null
         }
         def tree = new TreeWalk(git.repository)
-        tree.addTree(head)
-        tree.setRecursive(true)
-        if (trackedItems || trackingRegex) {
-            if (trackingRegex) {
-                tree.setFilter(PathRegexFilter.create(trackingRegex))
-            } else {
-                tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
-            }
-        }
         List<String> list = []
-
         try {
+            tree.addTree(head)
+            tree.setRecursive(true)
+            if (trackedItems || trackingRegex) {
+                if (trackingRegex) {
+                    tree.setFilter(PathRegexFilter.create(trackingRegex))
+                } else {
+                    tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
+                }
+            }
+
             while (tree.next()) {
                 list.add(tree.getPathString())
             }
