@@ -25,7 +25,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.naming.CompositeName;
 import javax.naming.Context;
+import javax.naming.Name;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -1155,6 +1157,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      * Used when the user's DN was constructed directly (see {@link #_forceBindingLoginNoAnonymousSearch})
      * rather than discovered via a directory search, so demographic attributes (name, email) can
      * still be populated from a self-lookup performed as the authenticated user.
+     * <br>
+     * userDn is passed as a single {@link CompositeName} component rather than a raw String,
+     * since {@link DirContext#getAttributes(String)} parses its argument as a JNDI composite
+     * name, where '/' separates components across different naming systems. A DN can legitimately
+     * contain a literal '/' in an RDN value, which the String overload would otherwise silently
+     * mis-parse as a composite-name boundary -- resolving the wrong name and (via the catch below)
+     * silently dropping the user's demographic attributes despite a successful bind.
      *
      * @param dirContext a context already bound as userDn
      * @param userDn the user's distinguished name
@@ -1162,7 +1171,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      */
     protected Attributes fetchUserAttributes(final DirContext dirContext, final String userDn) {
         try {
-            return dirContext.getAttributes(userDn);
+            Name compositeUserDn = new CompositeName().add(userDn);
+            return dirContext.getAttributes(compositeUserDn);
         } catch (NamingException e) {
             debug("Unable to read user attributes for " + userDn + ": " + e.getMessage());
             return new BasicAttributes();

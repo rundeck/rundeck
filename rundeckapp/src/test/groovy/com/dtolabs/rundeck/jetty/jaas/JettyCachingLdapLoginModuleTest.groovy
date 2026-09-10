@@ -15,12 +15,14 @@
  */
 package com.dtolabs.rundeck.jetty.jaas
 
+import org.rundeck.jaas.RundeckPrincipal
 import org.rundeck.jaas.RundeckRole
 import org.rundeck.jaas.UserInfo
 import rundeck.services.ConfigurationService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.naming.CompositeName
 import javax.naming.NamingEnumeration
 import javax.naming.NamingException
 import javax.naming.directory.Attribute
@@ -227,7 +229,12 @@ class JettyCachingLdapLoginModuleTest extends Specification {
             }
         }]
         DirContext userDir = Mock(DirContext) {
-            1 * getAttributes(expectedUserDn) >> new BasicAttributes()
+            // Regression coverage per Copilot review on PR #10530: fetchUserAttributes() must pass
+            // userDn as a single CompositeName component, not a raw String -- DirContext.getAttributes(String)
+            // parses its argument as a JNDI composite name, where '/' is a component separator, so a
+            // DN containing a literal '/' (valid in an RDN value, e.g. username "a/b") would otherwise
+            // be silently mis-parsed, targeting the wrong name and dropping demographic attributes.
+            1 * getAttributes(new CompositeName().add(expectedUserDn)) >> new BasicAttributes()
             1 * search(
                 'roleBaseDn',
                 JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
@@ -248,7 +255,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         then:
         result
         null != testSubject.getPrincipals(Principal)
-        username == testSubject.getPrincipals(Principal).first().name
+        username == testSubject.getPrincipals(RundeckPrincipal).first().name
         null != testSubject.getPrincipals(RundeckRole)
         2 == testSubject.getPrincipals(RundeckRole).size()
         ['role1', 'role2'] == testSubject.getPrincipals(RundeckRole)*.name
@@ -257,6 +264,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         where:
         username | _
         'auser'  | _
+        'a/b'    | _
     }
 
     def "bindingLogin with forceBindingLoginNoAnonymousSearch resolves paginated roles via the authenticated context"() {
@@ -313,9 +321,11 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         // userDir is the authenticated context created by binding as the user; getPaginatedRoles
         // must derive its paging LdapContext from *this* context (via a lookup("") self-lookup,
         // which works with multi-server providerUrl failover lists too), never from the anonymous
-        // module-level ldapContext field.
+        // module-level ldapContext field. getAttributes() must be called with userDn wrapped as a
+        // single CompositeName component (not a raw String), so a '/' in the username (valid in an
+        // RDN value) isn't mis-parsed as a JNDI composite-name separator.
         DirContext userDir = Mock(DirContext) {
-            1 * getAttributes(expectedUserDn) >> new BasicAttributes()
+            1 * getAttributes(new CompositeName().add(expectedUserDn)) >> new BasicAttributes()
             1 * lookup("") >> pagingContext
             0 * _(*_)
         }
@@ -331,7 +341,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         then:
         result
         null != testSubject.getPrincipals(Principal)
-        username == testSubject.getPrincipals(Principal).first().name
+        username == testSubject.getPrincipals(RundeckPrincipal).first().name
         null != testSubject.getPrincipals(RundeckRole)
         2 == testSubject.getPrincipals(RundeckRole).size()
         ['role1', 'role2'] == testSubject.getPrincipals(RundeckRole)*.name
@@ -340,6 +350,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         where:
         username | _
         'auser'  | _
+        'a/b'    | _
     }
 
     def "initializeOptions parses forceBindingLoginNoAnonymousSearch and bindingLogin honors it"() {
@@ -384,7 +395,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
             }
         }]
         DirContext userDir = Mock(DirContext) {
-            1 * getAttributes(expectedUserDn) >> new BasicAttributes()
+            1 * getAttributes(new CompositeName().add(expectedUserDn)) >> new BasicAttributes()
             1 * search(
                 'roleBaseDn',
                 JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
