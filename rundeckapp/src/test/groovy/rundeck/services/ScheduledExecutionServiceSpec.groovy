@@ -5707,10 +5707,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionOptions(job, null, params, auth)
         then:
-            job.options!=null
-            job.options.size()==2
-            job.options[0].toMap()==params._sessionEditOPTSObject['opt1'].toMap()
-            job.options[1].toMap()==params._sessionEditOPTSObject['opt2'].toMap()
+            params._pendingOptions!=null
+            params._pendingOptions.size()==2
+            params._pendingOptions[0].toMap()==params._sessionEditOPTSObject['opt1'].toMap()
+            params._pendingOptions[1].toMap()==params._sessionEditOPTSObject['opt2'].toMap()
     }
 
     def "job definition options from params.options list"() {
@@ -5728,10 +5728,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionOptions(job, null, params, auth)
         then:
-            job.options!=null
-            job.options.size()==2
-            job.options[0].toMap()==opt1.toMap()
-            job.options[1].toMap()==opt2.toMap()
+            params._pendingOptions!=null
+            params._pendingOptions.size()==2
+            params._pendingOptions[0].toMap()==opt1.toMap()
+            params._pendingOptions[1].toMap()==opt2.toMap()
     }
 
     def "job definition options from options json"() {
@@ -5750,10 +5750,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionOptions(job, null, params, auth)
         then:
-            job.options!=null
-            job.options.size()==2
-            job.options[0].toMap()==new Option(opt1).toMap()
-            job.options[1].toMap()==new Option(opt2).toMap()
+            params._pendingOptions!=null
+            params._pendingOptions.size()==2
+            params._pendingOptions[0].toMap()==new Option(opt1).toMap()
+            params._pendingOptions[1].toMap()==new Option(opt2).toMap()
     }
     def "job definition options from params.options map"() {
         given:
@@ -5770,10 +5770,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionOptions(job, null, params, auth)
         then:
-            job.options!=null
-            job.options.size()==2
-            job.options[0].toMap()==opt1
-            job.options[1].toMap()==opt2
+            params._pendingOptions!=null
+            params._pendingOptions.size()==2
+            params._pendingOptions[0].toMap()==opt1
+            params._pendingOptions[1].toMap()==opt2
     }
     def "job definition options from input job"() {
         given:
@@ -5784,10 +5784,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionOptions(job, job2, params, auth)
         then:
-            job.options!=null
-            job.options.size()==2
-            job.options[0].toMap()==job2.options[0].toMap()
-            job.options[1].toMap()==job2.options[1].toMap()
+            params._pendingOptions!=null
+            params._pendingOptions.size()==2
+            params._pendingOptions[0].toMap()==job2.options[0].toMap()
+            params._pendingOptions[1].toMap()==job2.options[1].toMap()
     }
     def "job definition options without input"() {
 
@@ -5850,7 +5850,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def failed = service.validateDefinitionOptions(job, params)
         then:
             failed
-            def erropt = job.options.find{it.name=='opt2'}
+            def erropt = params._pendingOptions.find{it.name=='opt2'}
             erropt.errors.hasFieldErrors('defaultValue')
             !erropt.errors.hasFieldErrors('scheduledExecution.name')
             job.errors.hasErrors()
@@ -5871,7 +5871,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def failed = service.validateDefinitionOptions(job, params)
         then:
             failed
-            def erropt = job.options.find{it.name=='opt2'}
+            def erropt = params._pendingOptions.find{it.name=='opt2'}
             erropt.errors.hasFieldErrors('defaultValue')
             !erropt.errors.hasFieldErrors('scheduledExecution.name')
             job.errors.hasErrors()
@@ -5892,7 +5892,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def failed = service.validateDefinitionOptions(job, params)
         then:
             !failed
-            def erropt = job.options.find{it.name=='opt2'}
+            def erropt = params._pendingOptions.find{it.name=='opt2'}
             !erropt.hasErrors()
             !erropt.errors.hasFieldErrors('defaultValue')
             !erropt.errors.hasFieldErrors('scheduledExecution.name')
@@ -5914,7 +5914,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def failed = service.validateDefinitionOptions(job, params)
         then:
             !failed
-            def erropt = job.options.find{it.name=='opt2'}
+            def erropt = params._pendingOptions.find{it.name=='opt2'}
             !erropt.hasErrors()
             !erropt.errors.hasFieldErrors('defaultValue')
             !erropt.errors.hasFieldErrors('scheduledExecution.name')
@@ -5939,12 +5939,20 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when: "same job is uploaded with no options "
 
         service.jobDefinitionBasic(baseJob,emptyOptionsJob,params,auth)
+
+        then: "jobDefinitionBasic alone does not delete the existing options before validation"
+
+        Option.findAllByScheduledExecution(baseJob).size() == 1
+
+        when: "the new (empty) option set is computed and then applied, as happens at save time"
+
+        service.jobDefinitionOptions(baseJob,emptyOptionsJob,params,auth)
+        service.applyPendingOptionsAndNotifications(baseJob, params)
         baseJob.save(flush:true)
-        def options = Option.findAll()
 
         then: "job options are empty"
 
-        options.size() == 0
+        !baseJob.options
 
     }
     @Unroll
@@ -5965,6 +5973,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         def importedJob = RundeckJobDefinitionManager.importedJob(updatedJob, [:])
         service.updateJobDefinition(importedJob, params, mockAuth(), baseJob)
+        service.applyPendingOptionsAndNotifications(baseJob, params)
         baseJob.save(flush:true)
         def options = baseJob.options.size()
 
@@ -5989,9 +5998,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionNotifications(job, job2, params, auth)
         then:
-            job.notifications.size()==2
-            job.notifications.find{it.toMap()== job2.notifications[0].toMap()}!=null
-            job.notifications.find{it.toMap()== job2.notifications[1].toMap()}!=null
+            params._pendingNotifications.size()==2
+            params._pendingNotifications.find{it.toMap()== job2.notifications[0].toMap()}!=null
+            params._pendingNotifications.find{it.toMap()== job2.notifications[1].toMap()}!=null
     }
 
     def "job definition notifications from input job should remove notifications"() {
@@ -6008,10 +6017,17 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         when:"uploading the same job without any notifications"
         service.jobDefinitionBasic(baseJob, jobEmptyNotifications, params, auth)
-        def notifications = Notification.findAllByScheduledExecution(baseJob)
+
+        then:"jobDefinitionBasic alone does not delete the existing notifications before validation"
+        Notification.findAllByScheduledExecution(baseJob).size()==2
+
+        when:"the new (empty) notification set is computed and then applied, as happens at save time"
+        service.jobDefinitionNotifications(baseJob, jobEmptyNotifications, params, auth)
+        service.applyPendingOptionsAndNotifications(baseJob, params)
+        baseJob.save(flush:true)
 
         then:"base job should not have any notifications"
-        notifications.size()==0
+        baseJob.notifications.size()==0
     }
 
     def "job definition notifications from jobNotificationsJson email"() {
@@ -6023,10 +6039,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionNotifications(job, null, params, auth)
         then:
-            job.notifications.size() == 1
-            job.notifications[0].type == 'email'
-            job.notifications[0].eventTrigger == 'onsuccess'
-            job.notifications[0].configuration == [recipients:  'c@example.com,d@example.com']
+            params._pendingNotifications.size() == 1
+            params._pendingNotifications[0].type == 'email'
+            params._pendingNotifications[0].eventTrigger == 'onsuccess'
+            params._pendingNotifications[0].configuration == [recipients:  'c@example.com,d@example.com']
     }
     def "job definition notifications from jobNotificationsJson url"() {
         given:
@@ -6037,11 +6053,11 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionNotifications(job, null, params, auth)
         then:
-            job.notifications.size() == 1
-            job.notifications[0].type == 'url'
-            job.notifications[0].eventTrigger == 'onsuccess'
-            job.notifications[0].urlConfiguration().urls=='aurl'
-            job.notifications[0].format==formatin
+            params._pendingNotifications.size() == 1
+            params._pendingNotifications[0].type == 'url'
+            params._pendingNotifications[0].eventTrigger == 'onsuccess'
+            params._pendingNotifications[0].urlConfiguration().urls=='aurl'
+            params._pendingNotifications[0].format==formatin
         where:
             formatin | _
             'xml'    | _
@@ -6056,10 +6072,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionNotifications(job, null, params, auth)
         then:
-            job.notifications.size() == 1
-            job.notifications[0].type == 'aplugin'
-            job.notifications[0].eventTrigger == 'onsuccess'
-            job.notifications[0].configuration==[blah:'blee',bloo:123]
+            params._pendingNotifications.size() == 1
+            params._pendingNotifications[0].type == 'aplugin'
+            params._pendingNotifications[0].eventTrigger == 'onsuccess'
+            params._pendingNotifications[0].configuration==[blah:'blee',bloo:123]
     }
     def "job definition notifications from jobNotificationsJson multi replaces all"() {
         given:
@@ -6072,10 +6088,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionNotifications(job, null, params, auth)
         then:
-            job.notifications.size() == 1
-            job.notifications[0].type == 'aplugin'
-            job.notifications[0].eventTrigger == 'onsuccess'
-            job.notifications[0].configuration==[blah:'blee',bloo:123]
+            params._pendingNotifications.size() == 1
+            params._pendingNotifications[0].type == 'aplugin'
+            params._pendingNotifications[0].eventTrigger == 'onsuccess'
+            params._pendingNotifications[0].configuration==[blah:'blee',bloo:123]
     }
     def "job definition notifications from jobNotificationsJson multi replaces all 2"() {
         given:
@@ -6089,10 +6105,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionNotifications(job, null, params, auth)
         then:
-            job.notifications.size() == 1
-            job.notifications[0].type == 'aplugin'
-            job.notifications[0].eventTrigger == 'onsuccess'
-            job.notifications[0].configuration==[blah:'blee',bloo:123]
+            params._pendingNotifications.size() == 1
+            params._pendingNotifications[0].type == 'aplugin'
+            params._pendingNotifications[0].eventTrigger == 'onsuccess'
+            params._pendingNotifications[0].configuration==[blah:'blee',bloo:123]
     }
 
     def "job definition notifications from jobNotificationsJson allow multiple with same trigger and type"() {
@@ -6107,9 +6123,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
             service.jobDefinitionNotifications(job, null, params, auth)
         then:
-            job.notifications.size() == 2
-            job.notifications.find{it.configuration==[blah:'blee',bloo:123]}!=null
-            job.notifications.find{it.configuration==[blem:'blee',beef:456]}!=null
+            params._pendingNotifications.size() == 2
+            params._pendingNotifications.find{it.configuration==[blah:'blee',bloo:123]}!=null
+            params._pendingNotifications.find{it.configuration==[blem:'blee',beef:456]}!=null
     }
     def "scm create jobs using scm_create without permission"(){
         given:
