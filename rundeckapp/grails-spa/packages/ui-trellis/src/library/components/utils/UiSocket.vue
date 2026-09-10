@@ -3,7 +3,7 @@
   <template v-for="(i, x) in items" :key="x">
     <template v-if="i.text">{{ i.text }}</template>
     <!-- eslint-disable-next-line vue/no-v-html -->
-    <span v-else-if="i.html" v-html="sanitizeHtml(i.html)"></span>
+    <span v-else-if="i.html" v-html="i.html"></span>
     <component
       :is="i.widget"
       v-else-if="i.widget && eventBus"
@@ -26,7 +26,6 @@
 <script lang="ts">
 import { defineComponent, ref } from "vue";
 import type { PropType } from "vue";
-import DOMPurify from "dompurify";
 
 import { getRundeckContext } from "../../rundeckService";
 import { UIItem, UIWatcher } from "../../stores/UIStore";
@@ -105,9 +104,6 @@ export default defineComponent({
     this.unload();
   },
   methods: {
-    sanitizeHtml(html: string) {
-      return DOMPurify.sanitize(html);
-    },
     load() {
       this.loadItems();
       if (this.rootStore) {

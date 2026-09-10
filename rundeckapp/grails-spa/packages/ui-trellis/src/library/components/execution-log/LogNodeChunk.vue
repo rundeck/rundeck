@@ -55,8 +55,7 @@ export default defineComponent({
   props: {
     eventBus: {
       type: Object as PropType<typeof EventBus>,
-      required: false,
-      default: undefined,
+      required: true,
     },
     selectedLine: {
       type: Number,

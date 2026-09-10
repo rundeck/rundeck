@@ -33,8 +33,16 @@
       :size="size"
     >
       <div v-if="showProjectSelector">
-        <label for="projectPickerSelect">Project:</label
-        ><project-picker v-model="project"></project-picker>
+        <label
+          :for="projectPickerId"
+          data-testid="job-config-picker-project-label"
+        >
+          Project:
+        </label>
+        <project-picker
+          v-model="project"
+          :select-id="projectPickerId"
+        ></project-picker>
       </div>
 
       <div v-if="showScheduledToggle" class="form-group">
@@ -95,6 +103,8 @@ import { JobTree } from "../../types/JobTree";
 import { Job } from "@rundeck/client/dist/lib/models";
 import { client } from "../../modules/rundeckClient";
 
+let jobConfigPickerInstanceCount = 0;
+
 export default defineComponent({
   name: "JobConfigPicker",
   components: {
@@ -142,6 +152,7 @@ export default defineComponent({
     return {
       selectedJob: null as Job | null,
       modalOpen: false,
+      projectPickerId: `job-config-picker-project-${++jobConfigPickerInstanceCount}`,
       jobs: [] as Job[],
       jobTree: new JobTree(),
       project: "",

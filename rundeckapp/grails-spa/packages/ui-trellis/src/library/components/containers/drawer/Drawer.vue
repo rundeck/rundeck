@@ -3,6 +3,7 @@
     <div
       v-if="display"
       ref="drawer"
+      data-testid="drawer-panel"
       class="rd-drawer"
       :class="[`rd-drawer--${placement}`, display ? 'rd-drawer--active' : '']"
     >
@@ -11,25 +12,29 @@
         <button
           v-if="closeable"
           type="button"
+          data-testid="drawer-close-button"
           class="btn btn-default btn-link"
           style="margin-left: auto"
+          :aria-label="$t('message_close')"
           @click="
             () => {
               $emit('close');
             }
           "
         >
-          Close
+          {{ $t("message_close") }}
         </button>
       </div>
       <slot />
     </div>
     <div
-      v-if="mask"
+      v-if="mask && display"
+      data-testid="drawer-mask-close"
       class="rd-drawer__mask"
       :class="{ 'rd-drawer__mask--active': display }"
       role="button"
       tabindex="0"
+      :aria-label="$t('message_close')"
       @click="
         () => {
           $emit('close');

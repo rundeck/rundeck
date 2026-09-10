@@ -204,6 +204,7 @@ const messages = {
 
   "page.keyStorage.description":
     "Key Storage provides a global directory-like structure to save Public and Private Keys and Passwords, for use with Node Execution authentication.",
+  "storage.path.link.aria.label": "Enlace de la ruta de almacenamiento",
 
   Duplicate: "duplicar",
   "bulk.delete": "Borrar en lote",

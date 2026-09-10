@@ -89,6 +89,7 @@ describe("LogNodeChunk.vue", () => {
   const createWrapper = (props = {}): VueWrapper<any> => {
     return shallowMount(LogNodeChunk, {
       props: {
+        eventBus: mockEventBus,
         ...defaultProps,
         ...props,
       },

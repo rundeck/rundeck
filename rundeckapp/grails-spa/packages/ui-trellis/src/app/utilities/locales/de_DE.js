@@ -22,6 +22,7 @@ const messages = {
   "Any Time": "Jederzeit",
   Any: "Beliebig",
   "page.home.link.aria.label": "Startseite",
+  "storage.path.link.aria.label": "Link zum Speicherpfad",
   "Other...": "Andere...",
   "More...": "Mehr...",
   "Save Filter": "Filter speichern",

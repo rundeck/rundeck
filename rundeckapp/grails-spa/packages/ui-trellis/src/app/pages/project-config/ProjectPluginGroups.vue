@@ -275,7 +275,7 @@ export default defineComponent({
     exportedData(): any[] {
       const data = [] as any;
       const inputData = this.pluginConfigs;
-      inputData.forEach((plugin, index) => {
+      inputData.forEach((plugin) => {
         data.push({ type: plugin.entry.type, config: plugin.entry.config });
       });
       return data;

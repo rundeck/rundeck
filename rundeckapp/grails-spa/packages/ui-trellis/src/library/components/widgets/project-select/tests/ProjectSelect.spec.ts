@@ -119,4 +119,15 @@ describe("ProjectSelect.vue", () => {
       "http://localhostresources/createProject",
     );
   });
+  it("uses the shared localized project search label for placeholder and aria-label", async () => {
+    const wrapper = await createWrapper();
+    const searchInput = wrapper.find('[data-testid="search-projects"]');
+
+    expect(searchInput.attributes("placeholder")).toBe(
+      "page.home.search.projects.input.placeholder",
+    );
+    expect(searchInput.attributes("aria-label")).toBe(
+      "page.home.search.projects.input.placeholder",
+    );
+  });
 });

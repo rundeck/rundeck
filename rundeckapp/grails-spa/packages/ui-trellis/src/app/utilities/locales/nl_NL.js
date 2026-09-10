@@ -80,6 +80,7 @@ const messages = {
   "storage.enter.path": "Voer een pad in",
   "storage.enter.password": "Voer een wachtwoord in",
   "storage.enter.directory.name": "Voer de mapnaam in",
+  "storage.path.link.aria.label": "Link naar opslagpad",
   "storage.specify.name": "Geef een naam op.",
   "soft.wrap": "Regelafbreking",
   "page.home.link.aria.label": "Startpagina",

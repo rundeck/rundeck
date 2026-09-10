@@ -271,7 +271,8 @@
                 <code class="text-success">{{ selectedKey.path }}</code>
                 <a
                   href="#"
-                  aria-label="Storage path link"
+                  :aria-label="$t('storage.path.link.aria.label')"
+                  data-testid="storage-path-link"
                   data-bind="attr: { href: selectedPathUrl() }"
                 >
                   <i class="glyphicon glyphicon-link"></i>

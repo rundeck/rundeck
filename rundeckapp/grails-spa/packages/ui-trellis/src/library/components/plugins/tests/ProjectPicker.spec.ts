@@ -45,4 +45,17 @@ describe("ProjectPicker.vue", () => {
     expect(options.length).toBe(1);
     expect(options[0].text()).toBe("");
   });
+  it("uses the provided selectId for the project select element", async () => {
+    const wrapper = await mount(ProjectPicker, {
+      props: {
+        modelValue: "",
+        selectId: "custom-project-picker-id",
+      },
+    });
+    await flushPromises();
+
+    expect(
+      wrapper.find('[data-testid="project-select"]').attributes("id"),
+    ).toBe("custom-project-picker-id");
+  });
 });

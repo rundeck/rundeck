@@ -27,6 +27,7 @@ const messages = {
   "storage.enter.password": "Enter a password",
   "storage.enter.directory.name": "Enter the directory name",
   "storage.specify.name": "Specify a name.",
+  "storage.path.link.aria.label": "Storage path link",
   "storage.keyPath.error.traversal":
     "Directory traversal '..' is not allowed in key storage paths.",
   "storage.keyPath.error.leadingSpace":

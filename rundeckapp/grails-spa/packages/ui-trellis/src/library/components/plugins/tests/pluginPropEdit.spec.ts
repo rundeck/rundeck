@@ -110,6 +110,32 @@ describe("pluginPropEdit aceEditor computed props", () => {
 });
 
 describe("pluginPropEdit", () => {
+  it.each([true, ["red", "blue"]])(
+    "accepts %p as a valid modelValue without an invalid prop warning",
+    async (modelValue: boolean | string[]) => {
+      const consoleErrorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      await createWrapper({
+        modelValue,
+        prop: {
+          type: Array.isArray(modelValue) ? "Options" : "Boolean",
+          title: "Property Name",
+          name: "prop1",
+          options: {},
+        },
+        selectorData: {},
+      });
+
+      expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Invalid prop: type check failed for prop "modelValue"',
+        ),
+      );
+      consoleErrorSpy.mockRestore();
+    },
+  );
   it.each([true, false])(
     "hides the label when labelHidden option is %p for text property",
     async (hidden: boolean) => {

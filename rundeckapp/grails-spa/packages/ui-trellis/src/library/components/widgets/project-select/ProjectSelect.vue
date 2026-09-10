@@ -9,8 +9,8 @@
             v-model="searchTerm"
             type="text"
             class="form-control form-control-sm"
-            placeholder="Search all projects"
-            aria-label="Search all projects"
+            :placeholder="$t('page.home.search.projects.input.placeholder')"
+            :aria-label="$t('page.home.search.projects.input.placeholder')"
             data-testid="search-projects"
           />
         </div>

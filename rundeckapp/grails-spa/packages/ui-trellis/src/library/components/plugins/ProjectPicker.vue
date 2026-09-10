@@ -17,7 +17,7 @@
 <template>
   <div>
     <select
-      id="projectPickerSelect"
+      :id="selectElementId"
       v-model="value"
       class="form-control"
       data-testid="project-select"
@@ -37,6 +37,8 @@
 import { defineComponent } from "vue";
 import { client } from "../../modules/rundeckClient";
 
+let projectPickerInstanceCount = 0;
+
 export default defineComponent({
   name: "ProjectPicker",
   props: {
@@ -45,13 +47,24 @@ export default defineComponent({
       required: false,
       default: "",
     },
+    selectId: {
+      type: String,
+      required: false,
+      default: "",
+    },
   },
   emits: ["update:modelValue"],
   data() {
     return {
+      instanceId: `project-picker-${++projectPickerInstanceCount}`,
       value: this.modelValue,
       projects: [] as string[],
     };
+  },
+  computed: {
+    selectElementId(): string {
+      return this.selectId || this.instanceId;
+    },
   },
   watch: {
     value() {

@@ -711,6 +711,7 @@ const messages = {
     "Vous n\u02bcavez aucun acc\u00e8s autoris\u00e9 aux projets.",
   "no.authorized.access.to.projects.contact.your.administrator.user.roles.0":
     "Contactez votre administrateur. (R\u00f4les de l\u02bcutilisateur \: {0})",
+  "storage.path.link.aria.label": "Lien du chemin de stockage",
   "page.home.loading.projects": "Chargement de projets",
   "app.firstRun.md":
     "Merci d'\u00eatre abonn\u00e9 \u00e0 {0}.\n\n" +

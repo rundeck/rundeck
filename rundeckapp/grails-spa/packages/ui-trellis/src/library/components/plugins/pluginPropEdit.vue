@@ -488,7 +488,7 @@ export default defineComponent({
       required: false,
     },
     modelValue: {
-      type: String,
+      type: [String, Boolean, Array] as PropType<string | boolean | string[]>,
       required: false,
       default: "",
     },
