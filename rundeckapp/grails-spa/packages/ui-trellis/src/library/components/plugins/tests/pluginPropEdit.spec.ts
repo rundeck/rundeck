@@ -60,11 +60,11 @@ describe("pluginPropEdit aceEditor computed props", () => {
   });
 
   describe("aceEditorMinLines", () => {
-    it("passes minLines of 20 to AceEditorVue when appMeta has no aceEditorMinLines", async () => {
+    it("passes minLines of 0 to AceEditorVue when appMeta has no aceEditorMinLines", async () => {
       mockGetRundeckContext.mockReturnValueOnce({ appMeta: {} });
       const wrapper = await createCodeWrapper({ prop: codeProp });
 
-      expect(wrapper.findComponent(AceEditorVue).props("minLines")).toBe(20);
+      expect(wrapper.findComponent(AceEditorVue).props("minLines")).toBe(0);
     });
 
     it("passes the configured minLines to AceEditorVue when appMeta provides it", async () => {
