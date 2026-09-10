@@ -977,3 +977,14 @@ apply from: "../gradle/java-version.gradle"
 
 // Signing block removed along with WAR publication (RUN-4570).
 
+// M6 validates i18n bundle names and rejects the 'es_419' suffix, because it expects ISO codes and
+// 419 is a UN M.49 area code (Latin America). java.util.Locale does accept a numeric-3 area code as
+// the country, so this bundle resolves at runtime as it always has. Both names are declared because
+// the validator classifies every file in the directory; order is what keeps it safe, since Spring
+// tries base names in order and 'messages' answers first for every locale -- including es_419,
+// whose variant file it finds through that same base.
+grails {
+    i18n {
+        basenames = ['messages', 'messages_es_419']
+    }
+}
