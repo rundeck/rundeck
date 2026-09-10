@@ -50,7 +50,8 @@
             role="button"
             tabindex="0"
             :data-testid="`projectItem${item.name}`"
-            @keydown.space="handleSelect(item.name)"
+            @keydown.enter="handleSelect(item.name)"
+            @keydown.space.prevent="handleSelect(item.name)"
           >
             <input
               :id="`projectCheckbox-${item.name}`"
