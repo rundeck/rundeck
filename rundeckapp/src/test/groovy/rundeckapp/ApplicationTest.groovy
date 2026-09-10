@@ -100,37 +100,83 @@ class ApplicationTest extends Specification {
 
         when:
         File customGroovy = File.createTempFile("my-custom-file",".groovy")
-        customGroovy << "grails { customvalue {} } "
+        customGroovy.deleteOnExit()
+        customGroovy << 'grails.customvalue = "loaded-from-custom" '
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,customGroovy.absolutePath)
 
         Application app = new Application()
         TestEnvironment env = new TestEnvironment()
         app.loadGroovyRundeckConfigIfExists(env)
 
-        List<String> propertiesLoaded = env.propertySources.iterator().collect { it.source }
+        def groovyConfigSource = env.propertySources.iterator().find { it.name == "rundeck-config-groovy" }
 
         then:
-        propertiesLoaded['grails'][0].toString().compareToIgnoreCase("customvalue")
+        groovyConfigSource != null
+        groovyConfigSource.source.get("grails.customvalue") == "loaded-from-custom"
+
+        cleanup:
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
 
     }
 
     def "load my-custom-file.groovy over default rundeck-config.groovy if both exist and RDECK_CONFIG_LOCATION is set"() {
 
         when:
-        File defaultGroovy = File.createTempFile("rundeck-config",".groovy")
+        File tmpCfgDir = File.createTempDir()
+        File defaultGroovy = new File(tmpCfgDir, "rundeck-config.groovy")
         File customGroovy = File.createTempFile("my-custom-file",".groovy")
-        defaultGroovy << "grails { mail {} } "
-        customGroovy << "grails { customvalue {} } "
+        customGroovy.deleteOnExit()
+        defaultGroovy << 'grails.customvalue = "loaded-from-default" '
+        customGroovy << 'grails.customvalue = "loaded-from-custom" '
 
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR,tmpCfgDir.absolutePath)
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,customGroovy.absolutePath)
         Application app = new Application()
         TestEnvironment env = new TestEnvironment()
         app.loadGroovyRundeckConfigIfExists(env)
 
-        List<String> propertiesLoaded = env.propertySources.iterator().collect { it.source }
+        def groovyConfigSource = env.propertySources.iterator().find { it.name == "rundeck-config-groovy" }
 
         then:
-        propertiesLoaded['grails'][0].toString().compareToIgnoreCase("customvalue")
+        groovyConfigSource != null
+        groovyConfigSource.source.get("grails.customvalue") == "loaded-from-custom"
+
+        cleanup:
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)
+        defaultGroovy.delete()
+        tmpCfgDir.delete()
+
+    }
+
+    def "grails.serverURL set in a .groovy config file is resolvable as a literal dotted key"() {
+        // Regression test for https://github.com/rundeck/rundeck/issues/10416:
+        // grails.* namespaced keys in a rundeck-config.groovy file were silently ignored
+        // because the nested ConfigObject was wrapped in a MapPropertySource, and a literal
+        // Environment.getProperty("grails.serverURL") lookup does a plain Map.get() against
+        // the property source, which only had a nested "grails" -> "serverURL" key, not a
+        // literal "grails.serverURL" key. The property source's backing Map must expose a
+        // literal "grails.serverURL" key for that direct lookup to succeed.
+
+        when:
+        File customGroovy = File.createTempFile("my-custom-file",".groovy")
+        customGroovy.deleteOnExit()
+        customGroovy << '''
+            grails.serverURL = "https://rundeck.example.com"
+            dataSource.url = "jdbc:mysql://host:3307/rundeck"
+        '''
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,customGroovy.absolutePath)
+
+        Application app = new Application()
+        TestEnvironment env = new TestEnvironment()
+        app.loadGroovyRundeckConfigIfExists(env)
+
+        def groovyConfigSource = env.propertySources.iterator().find { it.name == "rundeck-config-groovy" }
+
+        then:
+        groovyConfigSource != null
+        groovyConfigSource.source.get("grails.serverURL") == "https://rundeck.example.com"
+        groovyConfigSource.source.get("dataSource.url") == "jdbc:mysql://host:3307/rundeck"
 
         cleanup:
         System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)

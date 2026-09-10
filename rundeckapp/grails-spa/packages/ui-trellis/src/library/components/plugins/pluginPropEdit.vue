@@ -63,15 +63,11 @@
     <template
       v-else-if="prop.options && prop.options['displayType'] === 'DYNAMIC_FORM'"
     >
-      <input :id="rkey" type="hidden" :name="prop.name" />
-
       <dynamic-form-plugin-prop
-        :id="rkey"
         v-model="currentValue"
         :fields="modelValue"
         :has-options="hasAllowedValues()"
         :options="parseAllowedValues()"
-        :element="rkey"
         :name="prop.name"
       ></dynamic-form-plugin-prop>
     </template>
@@ -440,7 +436,10 @@ import {
   WorkflowStepType,
 } from "../utils/contextVariableUtils";
 
-const ACE_EDITOR_DEFAULT_MIN_LINES = 12;
+// RUN-4277/#10321: default raised from 12 to 20 — Ace no longer supports a manual resize
+// handle (upstream removed it), so a taller out-of-the-box default is the supported way to
+// make the inline-script/code editor more usable without configuration.
+const ACE_EDITOR_DEFAULT_MIN_LINES = 20;
 const ACE_EDITOR_DEFAULT_MAX_LINES = 0;
 
 interface Prop {
@@ -450,6 +449,10 @@ interface Prop {
   required: boolean;
   options: any;
   allowed: string;
+  // Optional { value: label } map supplied when a plugin provides dynamic
+  // values as a map; pluginConfig keeps it here while `allowed` holds the
+  // keys. Rendered by pluginPropVal.
+  selectLabels?: Record<string, string>;
   name: string;
   desc: string;
   staticTextDefaultValue: string;
@@ -679,6 +682,12 @@ export default defineComponent({
       }
     },
     parseAllowedValues() {
+      // DYNAMIC_FORM consumers expect the original { value: label } map,
+      // which pluginConfig keeps in selectLabels when the plugin supplies
+      // dynamic values as a map rather than a plain list.
+      if (this.prop.selectLabels) {
+        return JSON.stringify(this.prop.selectLabels);
+      }
       return JSON.stringify(this.prop.allowed);
     },
     handleUpdate(val: any) {

@@ -462,6 +462,31 @@ describe("PluginPropView", () => {
 
       expect(wrapper.findAll('[data-testid="configpair"]')).toHaveLength(0);
     });
+
+    it("reflects a value prop change after mount — regression for RUN-4764", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          prop: {
+            type: "String",
+            title: "Config",
+            desc: "Dynamic form",
+            options: { displayType: "DYNAMIC_FORM" },
+          },
+          value: "",
+        },
+      });
+      expect(wrapper.findAll('[data-testid="configpair"]')).toHaveLength(0);
+
+      await wrapper.setProps({
+        value: JSON.stringify([{ label: "Host", value: "localhost" }]),
+      });
+      await wrapper.vm.$nextTick();
+
+      const pairs = wrapper.findAll('[data-testid="configpair"]');
+      expect(pairs).toHaveLength(1);
+      expect(pairs[0].text()).toContain("Host:");
+      expect(pairs[0].text()).toContain("localhost");
+    });
   });
 
   describe("prop.desc undefined — regression for RUN-4521", () => {

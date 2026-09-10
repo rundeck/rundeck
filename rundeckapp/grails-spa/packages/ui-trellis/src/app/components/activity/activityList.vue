@@ -746,6 +746,7 @@ export default defineComponent({
     query: {
       handler(newValue, oldValue) {
         this.reload();
+        this.syncQueryToUrl();
       },
       deep: true,
     },
@@ -1222,6 +1223,49 @@ export default defineComponent({
         }
       }
       return params;
+    },
+    syncQueryToUrl() {
+      // Reflect the current filters in the address bar (without navigating) so
+      // that browser back/forward restores the filter state instead of losing
+      // it. See https://github.com/rundeck/rundeck/issues/10031 -- filters
+      // previously only lived in component state, so opening an execution and
+      // going back returned to the URL as it was on the original page load.
+      if (
+        typeof history.replaceState !== "function" ||
+        !this.activityPageHref
+      ) {
+        return;
+      }
+      // This component is also embedded on other pages that share the same
+      // bootstrap data shape (e.g. the ad hoc Command page sets
+      // activityPageHref to the standalone Activity page's URL even though
+      // the browser is actually on /command/run). Only touch the address bar
+      // when it already matches the Activity page itself, otherwise this
+      // would clobber the URL of whatever page embeds this component.
+      let activityPathname;
+      try {
+        activityPathname = new URL(
+          this.activityPageHref,
+          window.location.origin,
+        ).pathname;
+      } catch (e) {
+        return;
+      }
+      if (window.location.pathname !== activityPathname) {
+        return;
+      }
+      // Merge into the existing query string rather than reusing activityHref
+      // wholesale (which only reflects this.query): the URL may already carry
+      // params this component doesn't manage, e.g. ?max=1 for page size, and
+      // replacing the whole query string would silently drop them.
+      const params = new URLSearchParams(window.location.search);
+      Object.keys(this.query).forEach((key) => params.delete(key));
+      Object.entries(this.fullQueryParams()).forEach(([key, value]) => {
+        params.set(key, value);
+      });
+      const queryString = params.toString();
+      const url = activityPathname + (queryString ? `?${queryString}` : "");
+      history.replaceState(history.state, "", url);
     },
   },
 });

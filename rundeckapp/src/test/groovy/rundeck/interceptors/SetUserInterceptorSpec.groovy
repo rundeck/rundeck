@@ -369,6 +369,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
             getString("security.requiredRole","")>>"enter,admin"
             getString(_,_)>>""
             getString(_)>>""
+            getBoolean(_,_)>>true
         }
 
         when:
@@ -386,6 +387,147 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         allowed
 
 
+    }
+
+    def "api token via query param is honored and logs deprecation warning when enabled"() {
+        given:
+        User user = new User(login: "admin")
+        AuthToken token = new AuthToken(
+                token: "valid-token",
+                user: user,
+                authRoles: "admin",
+                type: AuthTokenType.USER,
+                tokenMode: AuthTokenMode.LEGACY
+        )
+        user.save()
+        token.save()
+
+        def apiService = new ApiService()
+        apiService.tokenDataProvider = new GormTokenDataProvider()
+        interceptor.apiService = apiService
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString(_, _) >> ""
+            getBoolean(_, _) >> true
+        }
+
+        request.api_version = 44
+        interceptor.params.authtoken = "valid-token"
+
+        def logOutput = new StringWriter()
+        def ctx = (org.apache.logging.log4j.core.LoggerContext) org.apache.logging.log4j.LogManager.getContext(false)
+        def config = ctx.getConfiguration()
+        def appender = org.apache.logging.log4j.core.appender.WriterAppender.newBuilder()
+                .setConfiguration(config)
+                .setName("SetUserInterceptorTestCapture")
+                .setTarget(logOutput)
+                .setLayout(org.apache.logging.log4j.core.layout.PatternLayout.newBuilder().withPattern("[%level] %msg%n").withConfiguration(config).build())
+                .build()
+        appender.start()
+        config.getRootLogger().addAppender(appender, org.apache.logging.log4j.Level.WARN, null)
+        ctx.updateLoggers()
+
+        when:
+        boolean result = interceptor.before()
+
+        then:
+        result
+        !request.invalidApiAuthentication
+        request.authenticatedUser == "admin"
+        session.user == "admin"
+        logOutput.toString().contains("deprecated")
+
+        cleanup:
+        config.getRootLogger().removeAppender("SetUserInterceptorTestCapture")
+        appender.stop()
+        ctx.updateLoggers()
+    }
+
+    def "api token via query param is ignored and falls back to header when disabled"() {
+        given:
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString(_, _) >> ""
+            getBoolean(_, _) >> false
+        }
+
+        request.api_version = 44
+        interceptor.params.authtoken = "valid-token"
+
+        when:
+        boolean result = interceptor.before()
+
+        then:
+        result
+        request.invalidApiAuthentication
+        request.authenticatedUser == null
+        session.user == null
+    }
+
+    def "webhook requests honor authtoken path token regardless of query-param auth flag"() {
+        given:
+        User user = new User(login: "admin")
+        AuthToken token = new AuthToken(
+                token: "valid-token",
+                user: user,
+                authRoles: "admin",
+                type: AuthTokenType.WEBHOOK,
+                tokenMode: AuthTokenMode.LEGACY
+        )
+        user.save()
+        token.save()
+
+        def apiService = new ApiService()
+        apiService.tokenDataProvider = new GormTokenDataProvider()
+        interceptor.apiService = apiService
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_, _) >> false
+        }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString(_, _) >> ""
+            getBoolean(_, _) >> false
+        }
+
+        // withRequest(controller:,action:) only feeds the doesMatch() URL matcher, not the plain
+        // controllerName/actionName properties SetUserInterceptor.before() reads directly, so those
+        // request attributes must be set explicitly to exercise the webhookType branch.
+        withRequest(controller: "webhook", action: "post")
+        request.setAttribute("org.grails.CONTROLLER_NAME_ATTRIBUTE", "webhook")
+        request.setAttribute("org.grails.ACTION_NAME_ATTRIBUTE", "post")
+        request.api_version = 44
+        interceptor.params.authtoken = "valid-token"
+
+        def logOutput = new StringWriter()
+        def ctx = (org.apache.logging.log4j.core.LoggerContext) org.apache.logging.log4j.LogManager.getContext(false)
+        def config = ctx.getConfiguration()
+        def appender = org.apache.logging.log4j.core.appender.WriterAppender.newBuilder()
+                .setConfiguration(config)
+                .setName("SetUserInterceptorWebhookTestCapture")
+                .setTarget(logOutput)
+                .setLayout(org.apache.logging.log4j.core.layout.PatternLayout.newBuilder().withPattern("[%level] %msg%n").withConfiguration(config).build())
+                .build()
+        appender.start()
+        config.getRootLogger().addAppender(appender, org.apache.logging.log4j.Level.WARN, null)
+        ctx.updateLoggers()
+
+        when:
+        boolean result = interceptor.before()
+
+        then:
+        result
+        !request.invalidApiAuthentication
+        request.authenticatedUser == "admin"
+        session.user == "admin"
+        !logOutput.toString().contains("deprecated")
+
+        cleanup:
+        config.getRootLogger().removeAppender("SetUserInterceptorWebhookTestCapture")
+        appender.stop()
+        ctx.updateLoggers()
     }
 
     static class TestRequireRoleProvider implements RequiredRoleProvider {

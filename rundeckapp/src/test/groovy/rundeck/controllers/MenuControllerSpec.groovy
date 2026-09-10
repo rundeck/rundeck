@@ -1640,6 +1640,45 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
         !response.json.scmImportEnabled
     }
 
+    def "list Export parses bare JSON array body sent by legacy job list page"() {
+        // RUN-10468: the legacy (non-NextUI) job list page POSTs a bare JSON array of job ids
+        // as the request body, not a JSON object. Ensure it is parsed into query.idlist correctly
+        // instead of silently failing to parse (which previously left idlist null).
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        def project = 'test'
+        def jobIds = ['7add463a-93c1-4936-9ac0-01a25321554f', '3b66b5b7-c066-46f9-9c4d-b448cb7cb990']
+
+        when:
+        request.method = 'POST'
+        request.JSON = jobIds
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+
+        then:
+        1 * controller.scheduledExecutionService.listWorkflows(
+            { ScheduledExecutionQuery query -> query.idlist == jobIds.join(",") },
+            _
+        ) >> [schedlist: []]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max: 20,
+                                                                           offset: 0,
+                                                                           paginateParams: [:],
+                                                                           displayParams: [:]]
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                            AuthConstants.ACTION_EXPORT,
+                                                                                            AuthConstants.ACTION_SCM_EXPORT]) >> false
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                            AuthConstants.ACTION_IMPORT,
+                                                                                            AuthConstants.ACTION_SCM_IMPORT]) >> false
+
+        response.status == 200
+    }
+
     @Unroll
     def "list export calls exportStatusForJobs when export is enabled"() {
         given:

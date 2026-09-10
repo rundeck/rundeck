@@ -213,14 +213,8 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         environment.propertySources.addFirst(
                 new PropertiesPropertySource("hardcoded-rundeck-props", hardCodedRundeckConfigs)
         )
-        println "=== Application.groovy: About to add ReloadableRundeckPropertySource to environment ==="
         def propertySource = ReloadableRundeckPropertySource.getRundeckPropertySourceInstance()
         environment.propertySources.addFirst(propertySource)
-        println "=== Application.groovy: ReloadableRundeckPropertySource added to environment ==="
-        println "  Property source name: ${propertySource.name}"
-        println "  Testing if password is accessible from environment:"
-        println "    rundeck.config.storage.converter.1.config.password = ${environment.getProperty('rundeck.config.storage.converter.1.config.password')}"
-        println "    rundeck.storage.converter.1.config.password = ${environment.getProperty('rundeck.storage.converter.1.config.password')}"
         if(rundeckConfig.migrate) {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }
@@ -300,7 +294,16 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
         if (Files.exists(Paths.get(rundeckGroovyConfigFile))) {
             def config = new ConfigSlurper().parse(new File(rundeckGroovyConfigFile).toURL())
-            environment.propertySources.addFirst(new MapPropertySource("rundeck-config-groovy", config))
+            // Flatten the nested ConfigObject (e.g. grails.serverURL, dataSource.url) into a
+            // dotted-key Map, matching the flat key representation used by the .properties config
+            // format. A MapPropertySource wrapping the raw *nested* ConfigObject only resolves keys
+            // that go through Spring Boot/Grails' relaxed-binding lookup; framework beans that call
+            // Environment.getProperty("grails.serverURL") directly (e.g. Grails' LinkGenerator) do a
+            // literal Map.get() against the property source, which fails against a nested ConfigObject
+            // since there is no literal "grails.serverURL" key, only nested "grails" -> "serverURL".
+            // ConfigObject#flatten() (rather than #toProperties()) is used so non-String values
+            // (booleans, integers, etc.) keep their original type instead of being coerced to String.
+            environment.propertySources.addFirst(new MapPropertySource("rundeck-config-groovy", config.flatten()))
         }
 
     }
