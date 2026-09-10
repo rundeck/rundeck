@@ -213,7 +213,6 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         environment.propertySources.addFirst(
                 new PropertiesPropertySource("hardcoded-rundeck-props", hardCodedRundeckConfigs)
         )
-        println "=== Application.groovy: About to add ReloadableRundeckPropertySource to environment ==="
         def propertySource = ReloadableRundeckPropertySource.getRundeckPropertySourceInstance()
         environment.propertySources.addFirst(propertySource)
         if(rundeckConfig.migrate) {
