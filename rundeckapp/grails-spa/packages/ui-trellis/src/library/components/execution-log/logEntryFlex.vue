@@ -97,10 +97,9 @@ export default defineComponent({
       required: false,
       default: undefined,
     },
-eventBus: {
+    eventBus: {
       type: Object as PropType<typeof EventBus>,
       required: true,
-    }
     },
     config: {
       type: Object as PropType<IBuilderOpts>,
