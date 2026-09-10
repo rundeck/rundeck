@@ -73,6 +73,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
         boolean success = true
 
         deletedJobs?.each { jobId ->
+            def path = plugin.importTracker.trackedPath(jobId)
             def importResult = importer.deleteJob(
                     context.frameworkProject,
                     jobId
@@ -81,6 +82,11 @@ class ImportJobs extends BaseAction implements GitImportAction {
                 success = false
                 sb << ("Failed deleting job with id: ${jobId}: " + importResult.errorMessage)
             } else {
+                // stop tracking the path so getStatusInternal doesn't keep reporting
+                // DELETE_NEEDED for a job that has already been deleted
+                if (path) {
+                    plugin.importTracker.untrackPath(path)
+                }
                 sb << ("Succeeded deleting job with id ${jobId} ")
             }
         }
