@@ -589,8 +589,9 @@ public class SSHTaskBuilder {
 
         configureSSHBase(nodeentry, project, sshConnectionInfo, sshexecTask, loglevel, logger);
 
-        //nb: args are already quoted as necessary
-
+        // nb: the job command args are quoted as necessary by ExecArgList. RUN-4579: any exported
+        // variable prefix from NodeExecutorUtils.getExportedVariablesForNode is quoted at its source
+        // (CLIUtils.quoteUnixShellArg), so joining here does not re-open a shell-injection sink.
         final String commandString = String.join(" ", args);
         sshexecTask.setCommand(commandString);
         sshexecTask.setTimeout(sshConnectionInfo.getTimeout());
