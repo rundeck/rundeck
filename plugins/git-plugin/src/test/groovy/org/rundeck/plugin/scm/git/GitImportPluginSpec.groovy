@@ -294,6 +294,33 @@ class GitImportPluginSpec extends Specification {
         ret[0].jobId=='0001'
     }
 
+    /**
+     * Verifies that callers hold the synchronized-map monitor while creating an iterable view.
+     */
+    def "get tracked items safely snapshots job state before iteration"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+        plugin.jobStateMap = new MonitorCheckedMap<String, Map>()
+        plugin.jobStateMap['0001'] = ['synch': 'DELETE_NEEDED', 'path': 'job/xy-0001.xml']
+
+        when:
+        def ret = plugin.getTrackedItemsForAction('import-jobs')
+
+        then:
+        ret*.jobId == ['0001']
+    }
+
     def "perform pull on clean state withouth npe"() {
         given:
         def projectName = 'GitImportPluginSpec'
@@ -725,6 +752,20 @@ class GitImportPluginSpec extends Specification {
 
         then:
         status != null
+    }
+
+    /**
+     * Test map that rejects iteration unless its monitor is held, matching the contract of
+     * {@link Collections#synchronizedMap(Map)}.
+     */
+    private static class MonitorCheckedMap<K, V> extends LinkedHashMap<K, V> {
+        @Override
+        Set<Map.Entry<K, V>> entrySet() {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('Iteration requires the map monitor')
+            }
+            super.entrySet()
+        }
     }
 
 }
