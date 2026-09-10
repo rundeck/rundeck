@@ -544,9 +544,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      *
      * @param dirContext dirContext to search with; if it does not already support paging
      *                   controls, an {@link LdapContext} bound to the same identity is derived
-     *                   from it via {@link DirContext#lookup(String)} and closed before returning
-     *                   (a dirContext that is already an {@link LdapContext} is caller-owned and
-     *                   left open)
+     *                   from it via {@code dirContext.lookup("")} (a self-lookup, per the standard
+     *                   JNDI idiom for obtaining a distinct request-controls scope on the same
+     *                   connection -- this preserves the bound identity and provider failover list
+     *                   without re-parsing {@link #_providerUrl}, which may be a space-separated
+     *                   multi-server list that {@link DirContext#lookup(String)} cannot parse as a
+     *                   name) and closed before returning (a dirContext that is already an
+     *                   {@link LdapContext} is caller-owned and left open)
      * @param userDn userDn
      * @param username username
      *
@@ -558,7 +562,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         boolean derivedPagingContext = !(dirContext instanceof LdapContext);
         LdapContext pagingContext = derivedPagingContext
-                ? (LdapContext) dirContext.lookup(_providerUrl)
+                ? (LdapContext) dirContext.lookup("")
                 : (LdapContext) dirContext;
 
         try {
@@ -1100,6 +1104,11 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     /**
      * Escapes special characters in a value being used as an RDN component of a distinguished name,
      * per RFC 4514, to prevent DN injection when constructing a DN from user-supplied input.
+     * <br>
+     * All ASCII control characters (including NUL and, notably, CR/LF) are hex-escaped rather than
+     * passed through, since {@link #constructUserDn(String)}'s result is logged via {@code LOG.info}
+     * before the bind attempt succeeds or fails -- passing them through unescaped would let an
+     * unauthenticated username inject or forge arbitrary log records.
      *
      * @param value the raw value to escape
      * @return the escaped value, safe for inclusion in a DN
@@ -1122,16 +1131,19 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 case '=':
                     escaped.append('\\').append(c);
                     break;
-                case '\0':
-                    escaped.append("\\00");
-                    break;
                 default:
-                    boolean leadingSpaceOrHash = i == 0 && (c == ' ' || c == '#');
-                    boolean trailingSpace = i == value.length() - 1 && c == ' ';
-                    if (leadingSpaceOrHash || trailingSpace) {
-                        escaped.append('\\').append(c);
+                    if (c < 0x20 || c == 0x7F) {
+                        // RFC 4514 hex-pair escape for ASCII control characters (0x00-0x1F, 0x7F),
+                        // including NUL and CR/LF -- see the log-injection note in the Javadoc above.
+                        escaped.append('\\').append(String.format("%02X", (int) c));
                     } else {
-                        escaped.append(c);
+                        boolean leadingSpaceOrHash = i == 0 && (c == ' ' || c == '#');
+                        boolean trailingSpace = i == value.length() - 1 && c == ' ';
+                        if (leadingSpaceOrHash || trailingSpace) {
+                            escaped.append('\\').append(c);
+                        } else {
+                            escaped.append(c);
+                        }
                     }
             }
         }

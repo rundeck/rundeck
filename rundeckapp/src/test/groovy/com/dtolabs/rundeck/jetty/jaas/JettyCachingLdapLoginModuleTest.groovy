@@ -178,6 +178,22 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         module.escapeDnValue(' leading') == '\\ leading'
         module.escapeDnValue('trailing ') == 'trailing\\ '
         module.escapeDnValue('#leading') == '\\#leading'
+        module.escapeDnValue('a\u0000b') == 'a\\00b'
+    }
+
+    def "escapeDnValue hex-escapes control characters to prevent log injection"() {
+        // Regression test per Copilot review on PR #10530: constructUserDn()'s result is logged
+        // via LOG.info("Attempting authentication: " + userDn) before the bind attempt succeeds or
+        // fails, so a username containing raw CR/LF (or other ASCII control characters) previously
+        // passed through escapeDnValue() unescaped, letting an unauthenticated caller inject or
+        // forge log records. All ASCII control characters must now be hex-escaped per RFC 4514.
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        expect:
+        module.escapeDnValue("a\rb") == 'a\\0Db'
+        module.escapeDnValue("a\nb") == 'a\\0Ab'
+        module.escapeDnValue("a\r\nFAKE LOG LINE\r\nb") == 'a\\0D\\0AFAKE LOG LINE\\0D\\0Ab'
+        module.escapeDnValue("a\tb") == 'a\\09b'
+        module.escapeDnValue("a\u007Fb") == 'a\\7Fb'
     }
 
     def "bindingLogin with forceBindingLoginNoAnonymousSearch skips root context search"() {
@@ -250,12 +266,18 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         // getUserRolesByDn(). With the default rolePagination=true, this meant a directory that
         // disallows anonymous search would still fail to authenticate once roles are configured,
         // defeating forceBindingLoginNoAnonymousSearch's entire purpose.
+        //
+        // providerUrl is deliberately a space-separated multi-server failover list here (valid
+        // JNDI config, per Context.PROVIDER_URL), to cover a second regression Copilot caught:
+        // deriving the paging context via dirContext.lookup(_providerUrl) broke multi-URL configs,
+        // since lookup() parses its argument as a single name/URL, not a failover list. The fix
+        // uses dirContext.lookup("") (a self-lookup) instead, which never touches providerUrl.
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
         module._debug = true
         module._forceBindingLogin = true
         module._forceBindingLoginNoAnonymousSearch = true
         module._contextFactory = "notnull"
-        module._providerUrl = "notnull"
+        module._providerUrl = "ldap://host1.example.com ldap://host2.example.com"
         module._forceBindingLoginUseRootContextForRoles = false
         module._userRdnAttribute = 'cn'
         module._userBaseDn = 'dc=test,dc=com'
@@ -289,11 +311,12 @@ class JettyCachingLdapLoginModuleTest extends Specification {
             0 * search(*_)
         }
         // userDir is the authenticated context created by binding as the user; getPaginatedRoles
-        // must derive its paging LdapContext from *this* context (via lookup(providerUrl)), never
-        // from the anonymous module-level ldapContext field.
+        // must derive its paging LdapContext from *this* context (via a lookup("") self-lookup,
+        // which works with multi-server providerUrl failover lists too), never from the anonymous
+        // module-level ldapContext field.
         DirContext userDir = Mock(DirContext) {
             1 * getAttributes(expectedUserDn) >> new BasicAttributes()
-            1 * lookup(module._providerUrl) >> pagingContext
+            1 * lookup("") >> pagingContext
             0 * _(*_)
         }
         module.userBindDirContextCreator = { String user, Object pass ->
@@ -677,11 +700,12 @@ class JettyCachingLdapLoginModuleTest extends Specification {
             0 * search(*_)
         }
         // Paginated role lookup must derive its LdapContext from the authenticated
-        // user-bound dirContext (via lookup(providerUrl)), not the module-level
+        // user-bound dirContext (via a lookup("") self-lookup, which works with
+        // multi-server providerUrl failover lists too), not the module-level
         // anonymous/root ldapContext field, so it still works when no anonymous
         // search is available.
         DirContext userDir = Mock(DirContext) {
-            1 * lookup(module._providerUrl) >> ldapContext
+            1 * lookup("") >> ldapContext
             0 * _(*_)
         }
         module.userBindDirContextCreator = { String user, Object pass ->
@@ -1038,9 +1062,11 @@ class JettyCachingLdapLoginModuleTest extends Specification {
             }
         }]
 
-        // getPaginatedRoles derives its LdapContext from dirContext.lookup(providerUrl), so both
-        // the top-level paginated role search and the nested-groups search (buildRoleMemberOfMap)
-        // are served by this single LdapContext mock, returned from _rootContext's lookup().
+        // getPaginatedRoles derives its LdapContext via dirContext.lookup("") (a self-lookup, so
+        // it works regardless of whether providerUrl is a single URL or a multi-server failover
+        // list), while buildRoleMemberOfMap's nested-groups search still derives its own via
+        // dirContext.lookup(providerUrl). Both are served by this single LdapContext mock,
+        // returned from _rootContext's lookup() for either argument.
         LdapContext ldapContext = Mock(LdapContext) {
             1 * search(
                     module._roleBaseDn,
@@ -1065,6 +1091,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
                     [module._userObjectClass, module._userIdAttribute, user1],
                     _ as SearchControls
             ) >> { new EnumImpl<SearchResult>(foundRoles) }
+            lookup("") >> ldapContext
             lookup(module._providerUrl) >> ldapContext
         }
 
