@@ -1,5 +1,8 @@
 <template>
   <div class="pt-input-wrapper">
+    <!-- for/id already pair this label to its control below; the a11y plugin's
+         default rule also requires DOM nesting, which this sibling layout can't satisfy -->
+    <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
     <label
       v-if="label"
       :for="inputId"
@@ -9,11 +12,19 @@
       {{ label }}
     </label>
 
-    <p v-if="helpText" class="text-body--sm pt-input__help" data-testid="pt-input-help">
+    <p
+      v-if="helpText"
+      class="text-body--sm pt-input__help"
+      data-testid="pt-input-help"
+    >
       {{ helpText }}
     </p>
 
-    <IconField v-if="leftIcon || rightIcon" class="pt-input__field" data-testid="pt-input-icon-container">
+    <IconField
+      v-if="leftIcon || rightIcon"
+      class="pt-input__field"
+      data-testid="pt-input-icon-container"
+    >
       <InputIcon v-if="leftIcon" :class="leftIcon" />
       <InputText
         :id="inputId"
@@ -56,7 +67,11 @@
       @input="onInput"
     />
 
-    <p v-if="invalid && errorText" class="text-body--sm pt-input__error" data-testid="pt-input-error">
+    <p
+      v-if="invalid && errorText"
+      class="text-body--sm pt-input__error"
+      data-testid="pt-input-error"
+    >
       {{ errorText }}
     </p>
   </div>
@@ -170,7 +185,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 @import "../_form-inputs.scss";
 
 .pt-input-wrapper {

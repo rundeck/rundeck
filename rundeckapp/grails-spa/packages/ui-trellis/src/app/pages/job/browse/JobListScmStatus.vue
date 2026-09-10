@@ -7,11 +7,11 @@
       append-to="#section-content"
       position-by="#section-main"
     >
-      <span class="text-info" v-if="displayExportState || displayImportState">
+      <span v-if="displayExportState || displayImportState" class="text-info">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
         {{ defaultDisplayText }}
       </span>
-      <span class="text-danger" v-if="exportError || importError">
+      <span v-if="exportError || importError" class="text-danger">
         <i class="glyphicon glyphicon-exclamation-sign"></i>
         {{ $t("scm.status.ERROR.display.text") }}
       </span>
@@ -51,7 +51,7 @@ import {
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
 import { defineComponent, inject } from "vue";
-import {ScmTextUtilities} from "../../../../library/utilities/scm/scmTextUtilities";
+import { ScmTextUtilities } from "../../../../library/utilities/scm/scmTextUtilities";
 
 export default defineComponent({
   name: "JobListScmStatus",
@@ -64,10 +64,10 @@ export default defineComponent({
       jobPageStore,
     };
   },
-  data(){
+  data() {
     return {
-      scmTextProcessor: new ScmTextUtilities(this.$t)
-    }
+      scmTextProcessor: new ScmTextUtilities(this.$t),
+    };
   },
   computed: {
     scmImport: function () {

@@ -109,7 +109,9 @@ describe("NodeTable Component", () => {
     const pages = wrapper.findAll("#nodesPaging li");
     expect(pages.length).toBe(5);
 
-    const arrayOfPageTexts = pages.map((page: DOMWrapper<Element>) => page.text());
+    const arrayOfPageTexts = pages.map((page: DOMWrapper<Element>) =>
+      page.text(),
+    );
     expect(arrayOfPageTexts).toEqual([
       "default.paginate.prev",
       "1",
@@ -128,7 +130,9 @@ describe("NodeTable Component", () => {
     await wrapper.vm.$nextTick();
     const pages = wrapper.findAll("#nodesPaging li");
 
-    const arrayOfPageTexts = pages.map((page: DOMWrapper<Element>) => page.text());
+    const arrayOfPageTexts = pages.map((page: DOMWrapper<Element>) =>
+      page.text(),
+    );
     expect(arrayOfPageTexts).toEqual([
       "default.paginate.prev",
       "1",

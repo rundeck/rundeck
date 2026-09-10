@@ -1,6 +1,10 @@
 <template>
   <div class="step-card-content">
-    <div v-if="config.jobref" class="plugin-config-section" data-testid="step-card-content-jobref-section">
+    <div
+      v-if="config.jobref"
+      class="plugin-config-section"
+      data-testid="step-card-content-jobref-section"
+    >
       <span v-for="prop in jobRefProps" :key="prop.name" class="configprop">
         <plugin-prop-view
           :prop="prop"
@@ -12,15 +16,15 @@
     <div v-else data-testid="step-card-content-plugin-config">
       <plugin-config
         class="plugin-config-section"
-        :serviceName="serviceName"
+        :service-name="serviceName"
         :provider="config.type"
         :config="config.config"
-        :readOnly="true"
-        :showTitle="false"
-        :showIcon="false"
-        :showDescription="false"
+        :read-only="true"
+        :show-title="false"
+        :show-icon="false"
+        :show-description="false"
         mode="show"
-        allowCopy
+        allow-copy
       />
     </div>
     <ConfigSection
@@ -31,8 +35,8 @@
       :model-value="logFilters"
       :disabled="disabled"
       @update:model-value="$emit('update:logFilters', $event)"
-      @addElement="handleAddElement"
-      @editElement="handleEditLogFilter"
+      @add-element="handleAddElement"
+      @edit-element="handleEditLogFilter"
     />
     <ConfigSection
       v-if="!hideConfigSection"
@@ -41,36 +45,36 @@
       :tooltip="$t('Workflow.errorHandlerDescription')"
       :model-value="errorHandler"
       :disabled="disabled"
-      @addElement="handleAddErrorHandler"
-      @editElement="handleEditErrorHandler"
-      @removeElement="handleRemoveErrorHandler"
-      hideWhenSingle
-      :hideIcon="true"
+      hide-when-single
+      :hide-icon="true"
       class="error-handler"
+      @add-element="handleAddErrorHandler"
+      @edit-element="handleEditErrorHandler"
+      @remove-element="handleRemoveErrorHandler"
     >
-      <template #header v-if="errorHandler.length >= 1">
+      <template v-if="errorHandler.length >= 1" #header>
         <plugin-info
           :key="errorHandlerKey"
           :detail="errorHandlerData"
           :show-description="false"
           :show-extended="false"
           :show-icon="false"
-          titleCss="link-step-plugin"
+          title-css="link-step-plugin"
         />
       </template>
-      <template #content v-if="errorHandler.length >= 1">
+      <template v-if="errorHandler.length >= 1" #content>
         <plugin-config
           :key="errorHandlerKey"
           class="plugin-config-section"
-          :serviceName="errorHandlerServiceName"
+          :service-name="errorHandlerServiceName"
           :provider="errorHandlerProvider"
           :config="errorHandlerConfig"
-          :readOnly="true"
-          :showTitle="false"
-          :showIcon="false"
-          :showDescription="false"
+          :read-only="true"
+          :show-title="false"
+          :show-icon="false"
+          :show-description="false"
           mode="show"
-          allowCopy
+          allow-copy
         />
       </template>
     </ConfigSection>
@@ -150,14 +154,6 @@ export default defineComponent({
       errorHandlerKey: 0,
     };
   },
-  watch: {
-    errorHandlerConfig: {
-      handler() {
-        this.errorHandlerKey++;
-      },
-      deep: true,
-    },
-  },
   computed: {
     errorHandlerData() {
       if (!this.errorHandler || this.errorHandler.length === 0) {
@@ -170,7 +166,7 @@ export default defineComponent({
       if (handler.jobref) {
         return {
           ...handler,
-          title: this.$t('Job reference')
+          title: this.$t("Job reference"),
         };
       }
 
@@ -246,6 +242,14 @@ export default defineComponent({
       };
     },
   },
+  watch: {
+    errorHandlerConfig: {
+      handler() {
+        this.errorHandlerKey++;
+      },
+      deep: true,
+    },
+  },
   methods: {
     handleAddErrorHandler() {
       this.$emit("add-error-handler", this.elementId);
@@ -282,7 +286,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .plugin-config-section {
   border-bottom: 1px solid var(--p-accordion-panel-border-color);
   padding-bottom: var(--sizes-2);

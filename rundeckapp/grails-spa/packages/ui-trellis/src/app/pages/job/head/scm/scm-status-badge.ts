@@ -23,14 +23,14 @@ function init() {
           components: { JobScmStatus },
           props: ["itemData"],
           setup(props) {
-            let scmItemData = reactive({
+            const scmItemData = reactive({
               job: {
                 job: true,
                 groupPath: "",
                 id: props.itemData.jobUuid,
               } as JobBrowseItem,
             });
-            let loading = ref(true);
+            const loading = ref(true);
 
             jobPageStore
               .getJobBrowser()

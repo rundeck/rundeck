@@ -14,11 +14,16 @@
             :name="`${rkey}prop_` + pindex"
             value="true"
           />
+          <!-- for/id already pair this label to the checkbox above; the
+               a11y plugin's default rule also requires DOM nesting, which
+               this sibling layout can't satisfy -->
+          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
           <label :for="`${rkey}prop_` + pindex">{{
             translatedTitle(prop)
           }}</label>
         </div>
       </div>
+      <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
       <label
         v-if="prop.defaultValue === 'true'"
         :class="
@@ -72,6 +77,10 @@
       ></dynamic-form-plugin-prop>
     </template>
     <template v-else>
+      <!-- for/id already pair this label to whichever control below is
+           rendered for this prop.type; the a11y plugin's default rule also
+           requires DOM nesting, which this sibling layout can't satisfy -->
+      <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
       <label
         v-if="!prop.options || prop.options['labelHidden'] !== 'true'"
         data-testid="plugin-prop-label"
@@ -119,6 +128,7 @@
         <div class="col-sm-5">
           <select
             v-if="!renderReadOnly"
+            :id="`${rkey}prop_` + pindex + '_free'"
             v-model="currentValue"
             class="form-control input-sm"
           >
@@ -128,6 +138,7 @@
           </select>
           <select
             v-else
+            :id="`${rkey}prop_` + pindex + '_free'"
             v-model="currentValue"
             class="form-control input-sm"
             :disabled="true"
@@ -161,6 +172,11 @@
                 :value="opt"
                 :disabled="true"
               />
+              <!-- for/id already pair this label to the checkbox above,
+                   unique per option via pindex+oindex; the a11y plugin's
+                   default rule also requires DOM nesting, which this
+                   sibling layout can't satisfy -->
+              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
               <label :for="`${rkey}opt_` + pindex + '_' + oindex"
                 ><plugin-prop-val :prop="prop" :value="opt"
               /></label>
@@ -267,13 +283,15 @@
             "
             >{{ prop.staticTextDefaultValue }}</span
           >
+          <!-- eslint-disable vue/no-v-html -->
           <span
             v-else-if="
               prop.options['staticTextContentType'] ===
               'application/x-text-html-sanitized'
             "
-            v-html="prop.staticTextDefaultValue"
+            v-html="sanitizedStaticText"
           ></span>
+          <!-- eslint-enable vue/no-v-html -->
           <span v-else>{{ prop.staticTextDefaultValue }}</span>
         </template>
         <template
@@ -325,7 +343,11 @@
         "
         class="col-sm-5"
       >
-        <select v-model="currentValue" class="form-control input-sm">
+        <select
+          :id="`${rkey}prop_` + pindex + '_plugintype'"
+          v-model="currentValue"
+          class="form-control input-sm"
+        >
           <option disabled value>-- Select Plugin Type --</option>
           <option
             v-for="opt in selectorDataForName"
@@ -425,6 +447,7 @@ import PluginPropVal from "./pluginPropVal.vue";
 import { client } from "../../modules/rundeckClient";
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
 import { getRundeckContext } from "../../rundeckService";
+import DOMPurify from "dompurify";
 import { EventBus } from "../../../library";
 import UiSocket from "../utils/UiSocket.vue";
 import PluginDetails from "./PluginDetails.vue";
@@ -479,11 +502,13 @@ export default defineComponent({
       required: false,
     },
     modelValue: {
+      type: String,
       required: false,
       default: "",
     },
     pluginType: {
-      require: true,
+      type: String,
+      required: false,
       default: "",
     },
     useRunnerSelector: {
@@ -494,14 +519,17 @@ export default defineComponent({
     inputValues: {
       type: Object,
       required: false,
+      default: null,
     },
     validation: {
       type: Object as PropType<any>,
       required: false,
+      default: null,
     },
     eventBus: {
       type: Object as PropType<typeof EventBus>,
       required: false,
+      default: undefined,
     },
     rkey: {
       type: String,
@@ -531,6 +559,7 @@ export default defineComponent({
     autocompleteCallback: {
       type: Function,
       required: false,
+      default: undefined,
     },
     selectorData: {
       type: Object as PropType<any>,
@@ -602,8 +631,12 @@ export default defineComponent({
       return this.appMeta.aceEditorMinLines ?? ACE_EDITOR_DEFAULT_MIN_LINES;
     },
     aceEditorMaxLines(): number {
-      const raw = this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
+      const raw =
+        this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
       return raw === 0 ? Infinity : raw;
+    },
+    sanitizedStaticText(): string {
+      return DOMPurify.sanitize(this.prop.staticTextDefaultValue || "");
     },
   },
   watch: {

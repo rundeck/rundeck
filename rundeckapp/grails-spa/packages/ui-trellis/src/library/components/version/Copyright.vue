@@ -8,6 +8,7 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
+  name: "CopyrightNotice",
   data() {
     return {
       copyright: process.env.VUE_APP_BUILD_COPYRIGHT,

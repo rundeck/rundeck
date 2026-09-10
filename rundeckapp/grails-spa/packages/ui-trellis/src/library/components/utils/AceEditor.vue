@@ -17,9 +17,9 @@
 <template>
   <div>
     <div v-if="codeSyntaxSelectable" class="ace_text_controls form-inline">
-      <label>
+      <label for="ace_syntax">
         Syntax Mode:
-        <select v-model="modeInternal" class="form-control">
+        <select id="ace_syntax" v-model="modeInternal" class="form-control">
           <option value="-">-None-</option>
           <option v-for="mode in aceModes" :key="mode" :value="mode">
             {{ mode }}
@@ -28,10 +28,10 @@
       </label>
     </div>
     <div v-if="softWrapControl" class="checkbox ace_text_controls">
-      <input id="ace_wrap" v-model="wrapInternal" type="checkbox" /><label
-        for="ace_wrap"
-        >{{ $t("soft.wrap") }}</label
-      >
+      <label for="ace_wrap">
+        <input id="ace_wrap" v-model="wrapInternal" type="checkbox" />
+        {{ $t("soft.wrap") }}
+      </label>
     </div>
     <ace
       v-model="valueInternal"
@@ -79,12 +79,30 @@ export default defineComponent({
   name: "AceEditor",
   components: { Ace },
   props: {
-    identifier: String,
-    modelValue: String,
-    height: String,
-    width: String,
-    lang: String,
-    theme: String,
+    identifier: {
+      type: String,
+      default: "",
+    },
+    modelValue: {
+      type: String,
+      default: "",
+    },
+    height: {
+      type: String,
+      default: "",
+    },
+    width: {
+      type: String,
+      default: "",
+    },
+    lang: {
+      type: String,
+      default: "",
+    },
+    theme: {
+      type: String,
+      default: "",
+    },
     codeSyntaxSelectable: Boolean,
     softWrapControl: Boolean,
     readOnly: Boolean,
@@ -121,13 +139,13 @@ export default defineComponent({
     };
   },
   watch: {
-    valueInternal(newValue, oldValue) {
+    valueInternal(newValue) {
       this.$emit("update:modelValue", newValue);
     },
-    modelValue(newValue, oldValue) {
+    modelValue(newValue) {
       this.valueInternal = newValue;
     },
-    lang(newValue, oldValue) {
+    lang(newValue) {
       this.modeInternal = newValue;
     },
   },

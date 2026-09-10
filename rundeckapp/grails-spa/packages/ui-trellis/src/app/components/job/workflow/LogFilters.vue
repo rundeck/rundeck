@@ -5,7 +5,12 @@
     data-testid="log-filters-container"
   >
     <template v-if="showIfEmpty || model.length > 0">{{ title }}</template>
-    <div v-if="model.length > 0 && mode === 'inline'" class="add-gap" data-testid="log-filters-inline-buttons" :id="id">
+    <div
+      v-if="model.length > 0 && mode === 'inline'"
+      :id="id"
+      class="add-gap"
+      data-testid="log-filters-inline-buttons"
+    >
       <template v-for="(entry, i) in model">
         <LogFilterButton
           v-if="findProvider(entry.type)"
@@ -19,9 +24,9 @@
   </div>
   <div
     v-if="model.length > 0 && mode !== 'inline'"
+    :id="id"
     class="log-filters-container"
     data-testid="log-filters-button-container"
-    :id="id"
   >
     <template v-for="(entry, i) in model">
       <LogFilterButton
@@ -142,7 +147,11 @@ export default defineComponent({
     }
     if (this.editEvent) {
       this.editEventHandler = (filterIndex: number) => {
-        if (typeof filterIndex === 'number' && filterIndex >= 0 && filterIndex < this.model.length) {
+        if (
+          typeof filterIndex === "number" &&
+          filterIndex >= 0 &&
+          filterIndex < this.model.length
+        ) {
           this.editFilterByIndex(filterIndex);
         }
       };

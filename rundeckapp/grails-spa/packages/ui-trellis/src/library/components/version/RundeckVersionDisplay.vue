@@ -6,22 +6,22 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   props: {
-    title: { type: String },
-    number: { type: String },
-    tag: { type: String },
-    logo: { default: true },
-    logocss: { default: "rdicon" },
+    title: { type: String, default: "" },
+    number: { type: String, default: "" },
+    tag: { type: String, default: "" },
+    logo: { type: Boolean, default: true },
+    logocss: { type: String, default: "rdicon" },
   },
   computed: {
     cssclass(): string {
       return `${this.logocss} app-logo`;
     },
     text(): string {
-      const { title, number, tag } = this;
+      const { title, number } = this;
       let text = "";
       text += `${title ? title + " " : ""}`;
       text += `${number}`;

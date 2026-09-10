@@ -29,8 +29,8 @@
 
           <node-filter-results
             v-if="hasFilter"
-            :node-filter="nodeFilterStore.selectedFilter"
             ref="nodeFilterResultsRef"
+            :node-filter="nodeFilterStore.selectedFilter"
             :max-shown="maxShown"
             :project="project"
             empty-mode="blank"

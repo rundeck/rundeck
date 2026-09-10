@@ -1,13 +1,18 @@
 <template>
-  <btn v-if="showButton" size="sm" data-testid="add-filter-button" @click="addFilter">
+  <btn
+    v-if="showButton"
+    size="sm"
+    data-testid="add-filter-button"
+    @click="addFilter"
+  >
     <i class="glyphicon glyphicon-plus"></i>
     {{ $t("message_add") }}
   </btn>
   <Teleport to="body">
     <choose-plugin-modal
       v-if="addFilterModal"
-      data-testid="add-filter-modal"
       v-model="addFilterModal"
+      data-testid="add-filter-modal"
       :title="addFilterTitle"
       :services="[ServiceType.LogFilter]"
       @cancel="addFilterModal = false"
@@ -17,9 +22,9 @@
   </Teleport>
   <Teleport to="body">
     <edit-plugin-modal
-      data-testid="edit-filter-modal"
       v-model:modal-active="editFilterModal"
       v-model="model"
+      data-testid="edit-filter-modal"
       :validation="editModelValidation"
       :service-name="ServiceType.LogFilter"
       :title="editFilterTitle"
@@ -103,7 +108,7 @@ export default defineComponent({
   },
   async mounted() {
     await this.getLogFilterPlugins();
-    this.model = cloneDeep(this.modelValue) as { type: string; config: any; };
+    this.model = cloneDeep(this.modelValue) as { type: string; config: any };
     this.eventBus.on("edit", () => {
       if (!this.addFilterModal) {
         this.editFilterModal = true;

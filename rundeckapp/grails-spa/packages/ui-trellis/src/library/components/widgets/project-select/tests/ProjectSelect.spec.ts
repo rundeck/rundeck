@@ -9,7 +9,6 @@ jest.mock("../../../../rundeckService", () => ({
     menuHome: "http://localhost",
   })),
   url: jest.fn((path: string) => ({ href: `http://localhost${path}` })),
-
 }));
 jest.mock("../../../../stores/RootStore", () => ({
   RootStore: jest.fn().mockImplementation(() => ({
@@ -70,7 +69,7 @@ describe("ProjectSelect.vue", () => {
     };
   });
   afterAll(() => {
-    Reflect.deleteProperty(window, '_rundeck');
+    Reflect.deleteProperty(window, "_rundeck");
   });
   afterEach(() => {
     jest.clearAllMocks();
@@ -119,6 +118,5 @@ describe("ProjectSelect.vue", () => {
     expect(createProjectButton.attributes("href")).toBe(
       "http://localhostresources/createProject",
     );
-
   });
 });

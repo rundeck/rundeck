@@ -101,50 +101,53 @@
           </div>
         </div>
         <div v-for="(group, gindex) in groupedProperties" :key="group.name">
-          <div
-            v-for="(prop, pindex) in group.props"
-            v-if="!group.name"
-            :key="'g_' + gindex + '/' + prop.name"
-          >
-            <input
-              v-if="isPropHidden(prop)"
-              type="hidden"
-              :value="inputValues[prop.name]"
-              :data-hidden-field-identity="prop.options['hidden_identity']"
-              :data-testid="`prop-hidden-${prop.name}`"
-              class="_config_prop_display_hidden"
-            />
-
+          <template v-if="!group.name">
             <div
-              v-else
-              :class="
-                'form-group ' +
-                (prop.required ? 'required' : '') +
-                (validation && validation.errors[prop.name] ? ' has-error' : '')
-              "
-              :data-prop-name="prop.name"
-              :data-testid="`prop-field-${prop.name}`"
+              v-for="(prop, pindex) in group.props"
+              :key="'g_' + gindex + '/' + prop.name"
             >
-              <plugin-prop-edit
-                v-model="inputValues[prop.name]"
-                :prop="prop"
-                :event-bus="eventBus"
-                :input-values="inputValues"
-                :use-runner-selector="useRunnerSelector"
-                :context-autocomplete="inputContextAutocomplete"
-                :validation="validation"
-                :rkey="'g_' + gindex + '_' + rkey"
-                :read-only="readOnly"
-                :pindex="pindex"
-                :selector-data="propsComputedSelectorData"
-                :autocomplete-callback="autocompleteCallback"
-                :step-type="serviceName"
-                :plugin-type="modelValue.type"
-                :extra-autocomplete-vars="extraAutocompleteVars"
-                @plugin-props-mounted="notifyHandleAutoComplete"
+              <input
+                v-if="isPropHidden(prop)"
+                type="hidden"
+                :value="inputValues[prop.name]"
+                :data-hidden-field-identity="prop.options['hidden_identity']"
+                :data-testid="`prop-hidden-${prop.name}`"
+                class="_config_prop_display_hidden"
               />
+
+              <div
+                v-else
+                :class="
+                  'form-group ' +
+                  (prop.required ? 'required' : '') +
+                  (validation && validation.errors[prop.name]
+                    ? ' has-error'
+                    : '')
+                "
+                :data-prop-name="prop.name"
+                :data-testid="`prop-field-${prop.name}`"
+              >
+                <plugin-prop-edit
+                  v-model="inputValues[prop.name]"
+                  :prop="prop"
+                  :event-bus="eventBus"
+                  :input-values="inputValues"
+                  :use-runner-selector="useRunnerSelector"
+                  :context-autocomplete="inputContextAutocomplete"
+                  :validation="validation"
+                  :rkey="'g_' + gindex + '_' + rkey"
+                  :read-only="readOnly"
+                  :pindex="pindex"
+                  :selector-data="propsComputedSelectorData"
+                  :autocomplete-callback="autocompleteCallback"
+                  :step-type="serviceName"
+                  :plugin-type="modelValue.type"
+                  :extra-autocomplete-vars="extraAutocompleteVars"
+                  @plugin-props-mounted="notifyHandleAutoComplete"
+                />
+              </div>
             </div>
-          </div>
+          </template>
           <details
             v-if="group.name"
             :open="!group.secondary"
@@ -228,9 +231,7 @@ import { cleanConfigInput, convertArrayInput } from "../../modules/InputUtils";
 
 import { diff } from "deep-object-diff";
 
-import {
-  getPluginProvidersForService,
-} from "../../modules/pluginService";
+import { getPluginProvidersForService } from "../../modules/pluginService";
 
 interface PropGroup {
   name?: string;
@@ -246,26 +247,55 @@ export default defineComponent({
     PluginPropEdit,
   },
   props: {
-    serviceName: { required: false },
-    provider: { required: false },
-    config: { required: false },
-    mode: { required: false },
-    showTitle: { required: false },
-    showIcon: { required: false },
-    showDescription: { required: false },
-    modelValue: { type: Object as PropType<PluginConfig>, required: false },
-    savedProps: { type: Array as PropType<string[]>, required: false },
-    pluginConfig: { required: false },
-    validation: { required: false },
-    readOnly: { required: false },
-    validationWarningText: { required: false },
-    scope: { required: false },
-    defaultScope: { required: false },
-    contextAutocomplete: { required: false },
-    autocompleteCallback: { required: false },
-    useRunnerSelector: { required: false },
-    eventBus: { required: false },
+    serviceName: { type: String, required: false, default: "" },
+    provider: { type: String, required: false, default: "" },
+    config: {
+      type: Object as PropType<Record<string, any>>,
+      required: false,
+      default: null,
+    },
+    mode: { type: String, required: false, default: "" },
+    showTitle: { type: Boolean, required: false },
+    showIcon: { type: Boolean, required: false },
+    showDescription: { type: Boolean, required: false },
+    modelValue: {
+      type: Object as PropType<PluginConfig>,
+      required: false,
+      default: () => ({ type: "", config: {} }),
+    },
+    savedProps: {
+      type: Array as PropType<string[]>,
+      required: false,
+      default: () => ["type"],
+    },
+    pluginConfig: {
+      type: Object as PropType<Record<string, any>>,
+      required: false,
+      default: null,
+    },
+    validation: {
+      type: Object as PropType<Record<string, any>>,
+      required: false,
+      default: null,
+    },
+    readOnly: { type: Boolean, required: false },
+    validationWarningText: { type: String, required: false, default: "" },
+    scope: { type: String, required: false, default: "" },
+    defaultScope: { type: String, required: false, default: "" },
+    contextAutocomplete: { type: Boolean, required: false },
+    autocompleteCallback: {
+      type: Function as PropType<(...args: any[]) => any>,
+      required: false,
+      default: undefined,
+    },
+    useRunnerSelector: { type: Boolean, required: false },
+    eventBus: {
+      type: Object as PropType<Record<string, any>>,
+      required: false,
+      default: undefined,
+    },
     groupCss: {
+      type: String,
       required: false,
       default: "col-sm-2 control-label h5 header-reset",
     },
@@ -295,8 +325,9 @@ export default defineComponent({
         this.showDescription !== null ? this.showDescription : true,
       inputValues: {} as any,
       inputSaved: {} as any,
-      inputSavedProps:
-        (typeof this.savedProps !== "undefined" ? this.savedProps : ["type"]) as string[] | null,
+      inputSavedProps: (typeof this.savedProps !== "undefined"
+        ? this.savedProps
+        : ["type"]) as string[] | null,
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },
@@ -385,7 +416,7 @@ export default defineComponent({
   },
   watch: {
     inputValues: {
-      handler(newValue, oldValue) {
+      handler() {
         if (this.isShowConfigForm) {
           this.$emit(
             "update:modelValue",
@@ -403,7 +434,7 @@ export default defineComponent({
       deep: true,
     },
     mode: {
-      handler(newValue, oldValue) {
+      handler() {
         this.loadForMode();
       },
     },
@@ -660,7 +691,7 @@ export default defineComponent({
     },
     hasKeyStorageAccess(): boolean {
       let storageAccess = false;
-      this.props.forEach((prop: any, index) => {
+      this.props.forEach((prop: any) => {
         if (prop.options != null && prop.options["selectionAccessor"]) {
           storageAccess = true;
         }
@@ -690,16 +721,15 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 .configprop + .configprop:before {
   content: " ";
 }
 
-.has-error .ace_editor {
+.has-error :deep(.ace_editor) {
   border: 1px solid var(--danger-color);
 }
-</style>
-<style lang="scss" scoped>
+
 .header-reset {
   margin: 0;
 }

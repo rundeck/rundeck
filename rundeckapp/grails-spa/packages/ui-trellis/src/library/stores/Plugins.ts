@@ -24,7 +24,7 @@ export class PluginStore {
       service === ServiceType.WorkflowNodeStep ||
       service === ServiceType.WorkflowStep
     ) {
-        this._injectStaticPlugins(service);
+      this._injectStaticPlugins(service);
     }
     const plugins = await apiClient(57).get("plugin/list", {
       params: { service },
@@ -40,36 +40,37 @@ export class PluginStore {
     return void 0;
   }
 
-    private _injectStaticPlugins(service: string) {
-        const jobRefPlugin = {
-            artifactName: "Job reference",
-            author: "",
-            builtin: true,
-            id: "",
-            name: "job.reference",
-            pluginVersion: "",
-            service: service,
-            description: service === ServiceType.WorkflowNodeStep
-                ? "Run a job on the remote node"
-                : "Execute another job",
-            title: "Job reference",
-            providerMetadata: {
-                glyphicon: "book",
-            },
-            isHighlighted: true,
-            highlightedOrder: 5,
-        };
-        const staticPlugins = [jobRefPlugin];
+  private _injectStaticPlugins(service: string) {
+    const jobRefPlugin = {
+      artifactName: "Job reference",
+      author: "",
+      builtin: true,
+      id: "",
+      name: "job.reference",
+      pluginVersion: "",
+      service: service,
+      description:
+        service === ServiceType.WorkflowNodeStep
+          ? "Run a job on the remote node"
+          : "Execute another job",
+      title: "Job reference",
+      providerMetadata: {
+        glyphicon: "book",
+      },
+      isHighlighted: true,
+      highlightedOrder: 5,
+    };
+    const staticPlugins = [jobRefPlugin];
 
-        for(const staticPlugin of staticPlugins) {
-            const pluginKey = this._getPluginByIdKey(staticPlugin);
-            if (!this.pluginsById[pluginKey]) {
-                this.plugins.push(staticPlugin);
-            }
-        }
+    for (const staticPlugin of staticPlugins) {
+      const pluginKey = this._getPluginByIdKey(staticPlugin);
+      if (!this.pluginsById[pluginKey]) {
+        this.plugins.push(staticPlugin);
+      }
     }
+  }
 
-    /**
+  /**
    * Get the plugin detail for a service provider, caching the result
    * @param serviceName
    * @param provider

@@ -57,7 +57,9 @@ describe("workflowFuncs", () => {
 
       expect(result.type).toBe("script-inline");
       expect(result.nodeStep).toBe(true);
-      expect((result.config as any).adhocLocalString).toBe("#!/bin/bash\necho world");
+      expect((result.config as any).adhocLocalString).toBe(
+        "#!/bin/bash\necho world",
+      );
       expect((result.config as any).argString).toBe("-v");
       expect((result.config as any).scriptInterpreter).toBe("bash");
       expect((result.config as any).interpreterArgsQuoted).toBe(false);
@@ -322,7 +324,9 @@ describe("workflowFuncs", () => {
 
       const result = editToCommandConfig(plugin);
 
-      expect(result.plugins).toEqual({ LogFilter: [{ type: "my-filter", config: {} }] });
+      expect(result.plugins).toEqual({
+        LogFilter: [{ type: "my-filter", config: {} }],
+      });
     });
 
     it("does not add plugins when filters is empty", () => {
@@ -391,8 +395,18 @@ describe("workflowFuncs", () => {
     it("converts StepsEditData to StepsData", () => {
       const editData: StepsEditData = {
         commands: [
-          { type: "exec-command", config: { adhocRemoteString: "echo a" }, nodeStep: true, id: "1" },
-          { type: "exec-command", config: { adhocRemoteString: "echo b" }, nodeStep: true, id: "2" },
+          {
+            type: "exec-command",
+            config: { adhocRemoteString: "echo a" },
+            nodeStep: true,
+            id: "1",
+          },
+          {
+            type: "exec-command",
+            config: { adhocRemoteString: "echo b" },
+            nodeStep: true,
+            id: "2",
+          },
         ],
       };
 
@@ -414,7 +428,9 @@ describe("workflowFuncs", () => {
 
   describe("mergePreservedLogFiltersIntoSaveData", () => {
     it("fills filters from original when saveData.filters is undefined", () => {
-      const orig = [{ type: "mask-passwords", config: {} }] as EditStepData["filters"];
+      const orig = [
+        { type: "mask-passwords", config: {} },
+      ] as EditStepData["filters"];
       const saveData: Pick<EditStepData, "filters"> = {};
       mergePreservedLogFiltersIntoSaveData(saveData, orig);
       expect(saveData.filters).toEqual(orig);
@@ -428,16 +444,22 @@ describe("workflowFuncs", () => {
     });
 
     it("restores from original when save has empty array but original had filters", () => {
-      const orig = [{ type: "mask-passwords", config: { a: 1 } }] as EditStepData["filters"];
+      const orig = [
+        { type: "mask-passwords", config: { a: 1 } },
+      ] as EditStepData["filters"];
       const saveData: Pick<EditStepData, "filters"> = { filters: [] };
       mergePreservedLogFiltersIntoSaveData(saveData, orig);
       expect(saveData.filters).toEqual(orig);
     });
 
     it("does not overwrite when save already has filters", () => {
-      const kept = [{ type: "quiet-output", config: {} }] as EditStepData["filters"];
+      const kept = [
+        { type: "quiet-output", config: {} },
+      ] as EditStepData["filters"];
       const saveData: Pick<EditStepData, "filters"> = { filters: kept };
-      const orig = [{ type: "mask-passwords", config: {} }] as EditStepData["filters"];
+      const orig = [
+        { type: "mask-passwords", config: {} },
+      ] as EditStepData["filters"];
       mergePreservedLogFiltersIntoSaveData(saveData, orig);
       expect(saveData.filters).toEqual(kept);
     });

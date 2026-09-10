@@ -52,7 +52,7 @@ export default defineComponent({
   },
   inheritAttrs: false,
   props: {
-    projectLabel: { type: String },
+    projectLabel: { type: String, default: "" },
     showDefaultLabel: {
       type: Boolean,
       default: true,

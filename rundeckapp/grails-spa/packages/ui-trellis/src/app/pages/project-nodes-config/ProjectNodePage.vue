@@ -19,7 +19,7 @@
                     :display="true"
                     style="display: inline-block"
                   >
-                    <template v-slot:default="{ confirm }">
+                    <template #default="{ confirm }">
                       <div class="well well-sm">
                         <span class="text-warning">
                           {{ $t("page.unsaved.changes") }}
@@ -52,7 +52,9 @@
                   >
                     <tab>
                       <template #title>
-                        <div><i class="fas fa-pencil-alt"></i> {{ $t("Edit") }}</div>
+                        <div>
+                          <i class="fas fa-pencil-alt"></i> {{ $t("Edit") }}
+                        </div>
                       </template>
                       <div class="help-block">
                         {{ $t("modifiable.node.sources.will.appear.here") }}
@@ -63,7 +65,7 @@
                           class="list-group"
                           item-css="list-group-item"
                         >
-                          <template v-slot:empty>
+                          <template #empty>
                             <div class="list-group-item">
                               <span class="text-info"
                                 ><i class="glyphicon glyphicon-info-sign"></i>
@@ -96,6 +98,7 @@
                         :edit-mode="true"
                         :add-button-text="$t('add.node.source')"
                         :mode-toggle="false"
+                        :event-bus="rundeckContext.eventBus"
                         @saved="
                           rundeckContext.eventBus.emit(
                             'project-node-sources-saved',
@@ -113,7 +116,6 @@
                             'Node Sources',
                           )
                         "
-                        :event-bus="rundeckContext.eventBus"
                       >
                       </project-node-sources-config>
 
@@ -140,6 +142,8 @@
                         :add-button-text="$t('add.node.enhancer')"
                         :edit-button-text="$t('edit.node.enhancers')"
                         :mode-toggle="false"
+                        :event-bus="rundeckContext.eventBus"
+                        :edit-mode="true"
                         @modified="
                           rundeckContext.eventBus.emit(
                             'page-modified',
@@ -152,14 +156,14 @@
                             'Node Enhancers',
                           )
                         "
-                        :event-bus="rundeckContext.eventBus"
-                        :edit-mode="true"
                       >
                       </project-plugin-config>
                     </tab>
                     <tab>
                       <template #title>
-                        <div><i class="fas fa-cog"></i>{{ $t("Configuration") }}</div>
+                        <div>
+                          <i class="fas fa-cog"></i>{{ $t("Configuration") }}
+                        </div>
                       </template>
                       <project-configurable-form
                         :category="'resourceModelSource'"

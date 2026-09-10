@@ -512,7 +512,11 @@ describe("OptionEdit", () => {
     ["delimiter", { multivalued: true }],
   ])(
     "shows validation errors for field %p",
-    async (fieldName: string, optData: any, errorName: string | null = null) => {
+    async (
+      fieldName: string,
+      optData: any,
+      errorName: string | null = null,
+    ) => {
       const wrapper = await mountOptionEdit({
         modelValue: Object.assign({ name: "aname", type: "text" }, optData),
         editable: true,

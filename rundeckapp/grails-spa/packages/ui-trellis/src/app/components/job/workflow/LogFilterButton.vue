@@ -4,8 +4,8 @@
       size="sm"
       class="autohilite"
       style="border-right: 0"
-      @click="$emit('editFilter')"
       title="Click to Edit Filter"
+      @click="$emit('editFilter')"
     >
       <plugin-info
         :detail="pluginDescription"
@@ -16,8 +16,8 @@
     <btn
       size="sm"
       type="danger"
-      @click="$emit('removeFilter')"
       title="Remove Filter"
+      @click="$emit('removeFilter')"
     >
       <i class="glyphicon glyphicon-remove"></i
     ></btn>
@@ -29,7 +29,6 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "LogFilterButton",
-  emits: ["editFilter", "removeFilter"],
   components: {
     pluginInfo,
   },
@@ -39,6 +38,7 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ["editFilter", "removeFilter"],
 });
 </script>
 <style scoped lang="scss">

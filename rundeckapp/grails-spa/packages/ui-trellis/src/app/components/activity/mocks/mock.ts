@@ -104,7 +104,8 @@ export const mockReports = [
       description: "",
       options: {},
       href: "http://localhost:4440/api/56/job/ce8b97b8-bef0-4ec0-9387-65644cebbaf4",
-      permalink: "http://localhost:4440/project/aaa/job/show/ce8b97b8-bef0-4ec0-9387-65644cebbaf4",
+      permalink:
+        "http://localhost:4440/project/aaa/job/show/ce8b97b8-bef0-4ec0-9387-65644cebbaf4",
     },
     description: "Plugin[builtin-script, nodeStep: true]",
     argstring: null,

@@ -12,7 +12,11 @@
     @toggle="contentExpanded = !contentExpanded"
   >
     <template #content>
-      <div v-if="isJobRef" class="jobref-form-content" data-testid="jobref-form-content">
+      <div
+        v-if="isJobRef"
+        class="jobref-form-content"
+        data-testid="jobref-form-content"
+      >
         <div class="step-name-section">
           <div class="form-group">
             <label
@@ -24,8 +28,8 @@
             <div class="col-sm-10">
               <input
                 id="stepDescription"
-                data-testid="step-description"
                 v-model="stepDescription"
+                data-testid="step-description"
                 type="text"
                 name="stepDescription"
                 size="100"
@@ -56,8 +60,8 @@
             <div class="col-sm-10">
               <input
                 id="stepDescription"
-                data-testid="step-description"
                 v-model="stepDescription"
+                data-testid="step-description"
                 type="text"
                 name="stepDescription"
                 size="100"
@@ -89,7 +93,11 @@
         />
       </div>
 
-      <div v-else-if="loading" class="loading-container" data-testid="loading-container">
+      <div
+        v-else-if="loading"
+        class="loading-container"
+        data-testid="loading-container"
+      >
         <i class="fas fa-spinner fa-spin"></i>
         <span>{{ $t("loading.text") }}</span>
       </div>
@@ -130,7 +138,11 @@ import { getRundeckContext } from "../../../../library";
 import type { EditStepData } from "./types/workflowTypes";
 import JobRefFormFields from "./JobRefFormFields.vue";
 import VueScrollTo from "vue-scrollto";
-import { resetValidation, createJobRefDefinition, type PluginDetails } from "./stepEditorUtils";
+import {
+  resetValidation,
+  createJobRefDefinition,
+  type PluginDetails,
+} from "./stepEditorUtils";
 
 const rundeckContext = getRundeckContext();
 
@@ -217,6 +229,23 @@ export default defineComponent({
       return Boolean(this.validation?.errors?.jobref);
     },
   },
+  watch: {
+    async modelValue(newVal) {
+      this.stepDescription = newVal.description || "";
+
+      if (newVal.jobref) {
+        this.editModel = merge(cloneDeep(this.jobRefDefaults), newVal);
+      } else {
+        const { description, ...rest } = newVal;
+        this.editModel = cloneDeep(rest);
+      }
+
+      await this.loadProvider();
+    },
+    async pluginDetails() {
+      await this.loadProvider();
+    },
+  },
   async mounted() {
     this.stepDescription = this.modelValue.description || "";
 
@@ -251,7 +280,8 @@ export default defineComponent({
               easing: "ease-in-out",
               onDone: () => {
                 setTimeout(() => {
-                  const inputElement = document.getElementById("stepDescription");
+                  const inputElement =
+                    document.getElementById("stepDescription");
                   if (inputElement) {
                     inputElement.focus({ preventScroll: true });
                   }
@@ -320,23 +350,6 @@ export default defineComponent({
       }
     },
   },
-  watch: {
-    async modelValue(newVal) {
-      this.stepDescription = newVal.description || "";
-
-      if (newVal.jobref) {
-        this.editModel = merge(cloneDeep(this.jobRefDefaults), newVal);
-      } else {
-        const { description, ...rest } = newVal;
-        this.editModel = cloneDeep(rest);
-      }
-
-      await this.loadProvider();
-    },
-    async pluginDetails() {
-      await this.loadProvider();
-    }
-  }
 });
 </script>
 

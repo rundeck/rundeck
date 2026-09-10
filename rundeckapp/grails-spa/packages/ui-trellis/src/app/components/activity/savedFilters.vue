@@ -47,8 +47,8 @@
         >
           <a
             role="button"
-            @click="selectFilter(filter)"
             data-test="filter-link"
+            @click="selectFilter(filter)"
           >
             {{ filter.filterName }}
             <span v-if="query && filter.filterName === query.filterName"

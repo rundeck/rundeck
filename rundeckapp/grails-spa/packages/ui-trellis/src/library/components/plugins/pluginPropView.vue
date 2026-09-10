@@ -7,7 +7,11 @@
           (prop.defaultValue === 'true' && innerValue === 'false')
         "
       >
-        <span data-testid="boolean-prop-title" :title="prop.desc ? $t(prop.desc) : ''">{{ $t(prop.title) }}: </span>
+        <span
+          data-testid="boolean-prop-title"
+          :title="prop.desc ? $t(prop.desc) : ''"
+          >{{ $t(prop.title) }}:
+        </span>
         <span
           v-if="innerValue === 'true'"
           data-testid="boolean-true-value"
@@ -16,10 +20,18 @@
               'text-success',
             'copiable-text',
           ]"
+          role="button"
+          tabindex="0"
           @click="copyText(innerValue)"
+          @keydown.enter.prevent="copyText(innerValue)"
+          @keydown.space.prevent="copyText(innerValue)"
         >
           <plugin-prop-val :prop="prop" :value="innerValue" />
-          <i v-show="allowCopy" class="pi pi-copy copy-icon" data-testid="copy-icon"></i>
+          <i
+            v-show="allowCopy"
+            class="pi pi-copy copy-icon"
+            data-testid="copy-icon"
+          ></i>
         </span>
         <span
           v-else-if="innerValue === 'false'"
@@ -29,16 +41,27 @@
               'text-success',
             'copiable-text',
           ]"
+          role="button"
+          tabindex="0"
           @click="copyText(innerValue)"
+          @keydown.enter.prevent="copyText(innerValue)"
+          @keydown.space.prevent="copyText(innerValue)"
         >
           <plugin-prop-val :prop="prop" :value="innerValue" />
-          <i v-show="allowCopy" class="pi pi-copy copy-icon" data-testid="copy-icon"></i>
+          <i
+            v-show="allowCopy"
+            class="pi pi-copy copy-icon"
+            data-testid="copy-icon"
+          ></i>
         </span>
       </template>
       <template v-else></template>
     </span>
     <span v-else-if="prop.type === 'Integer'" class="configpair">
-      <span :title="prop.desc ? $t(prop.desc) : ''" data-testid="integer-prop-title">
+      <span
+        :title="prop.desc ? $t(prop.desc) : ''"
+        data-testid="integer-prop-title"
+      >
         {{ $t(prop.title) }}:
       </span>
       <span
@@ -53,43 +76,74 @@
       class="configpair"
     >
       <span>
-        <span data-testid="options-prop-title" :title="prop.desc ? $t(prop.desc) : ''">{{ $t(prop.title) }}:</span>
+        <span
+          data-testid="options-prop-title"
+          :title="prop.desc ? $t(prop.desc) : ''"
+          >{{ $t(prop.title) }}:</span
+        >
         <template v-if="prop.type !== 'Options'">
-          <span class="text-success copiable-text" @click="copyText(innerValue)">
+          <span
+            class="text-success copiable-text"
+            role="button"
+            tabindex="0"
+            @click="copyText(innerValue)"
+            @keydown.enter.prevent="copyText(innerValue)"
+            @keydown.space.prevent="copyText(innerValue)"
+          >
             <plugin-prop-val :prop="prop" :value="innerValue" />
-            <i v-show="allowCopy" class="pi pi-copy copy-icon" data-testid="copy-icon"></i>
+            <i
+              v-show="allowCopy"
+              class="pi pi-copy copy-icon"
+              data-testid="copy-icon"
+            ></i>
           </span>
         </template>
         <template v-else>
           <span v-if="typeof value === 'string'">
             <span
-                v-for="optval in innerValue.split(/, */)"
-                :key="optval"
-                data-testid="option-value"
-                class="text-success copiable-text"
-                @click="copyText(optval)"
+              v-for="optval in innerValue.split(/, */)"
+              :key="optval"
+              data-testid="option-value"
+              class="text-success copiable-text"
+              role="button"
+              tabindex="0"
+              @click="copyText(optval)"
+              @keydown.enter.prevent="copyText(optval)"
+              @keydown.space.prevent="copyText(optval)"
             >
               <i
-                  v-show="!(prop.options && prop.options['valueDisplayType'])"
-                  class="glyphicon glyphicon-ok-circle"
+                v-show="!(prop.options && prop.options['valueDisplayType'])"
+                class="glyphicon glyphicon-ok-circle"
               ></i>
               <plugin-prop-val :prop="prop" :value="optval" />
-              <i v-show="allowCopy" class="pi pi-copy copy-icon" data-testid="copy-icon"></i>
+              <i
+                v-show="allowCopy"
+                class="pi pi-copy copy-icon"
+                data-testid="copy-icon"
+              ></i>
             </span>
           </span>
           <span v-else-if="typeof value !== 'string' && innerValue.length > 0">
             <span
-                v-for="optval in innerValue"
-                :key="optval"
-                class="text-success copiable-text"
-                @click="copyText(optval)"
+              v-for="optval in innerValue"
+              :key="optval"
+              class="text-success copiable-text"
+              role="button"
+              tabindex="0"
+              @click="copyText(optval)"
+              @keydown.enter.prevent="copyText(optval)"
+              @keydown.space.prevent="copyText(optval)"
             >
               <i
-                  v-show="!(prop.options && prop.options['valueDisplayType'])"
-                  class="glyphicon glyphicon-ok-circle"
+                v-show="!(prop.options && prop.options['valueDisplayType'])"
+                class="glyphicon glyphicon-ok-circle"
               ></i>
               <plugin-prop-val :prop="prop" :value="optval" />
-              <i v-show="allowCopy" class="pi pi-copy copy-icon" data-testid="copy-icon"></i>
+              <i
+                v-show="allowCopy"
+                class="pi pi-copy copy-icon"
+                data-testid="copy-icon"
+              ></i>
             </span>
           </span>
           <template v-else></template>
@@ -100,7 +154,11 @@
       <template v-if="prop.options && prop.options['displayType'] === 'CODE'">
         <expandable>
           <template #label>
-            <span data-testid="code-prop-title" :title="prop.desc ? $t(prop.desc) : ''">{{ $t(prop.title) }}:</span>
+            <span
+              data-testid="code-prop-title"
+              :title="prop.desc ? $t(prop.desc) : ''"
+              >{{ $t(prop.title) }}:</span
+            >
             <span data-testid="code-line-count" class="text-info">
               {{ innerValue.split(/\r?\n/).length }} lines
             </span>
@@ -119,7 +177,11 @@
       >
         <expandable>
           <template #label
-            ><span data-testid="multiline-prop-title" :title="prop.desc ? $t(prop.desc) : ''">{{ $t(prop.title) }}:</span>
+            ><span
+              data-testid="multiline-prop-title"
+              :title="prop.desc ? $t(prop.desc) : ''"
+              >{{ $t(prop.title) }}:</span
+            >
             <span data-testid="multiline-line-count" class="text-info"
               >{{ `${innerValue}`.split(/\r?\n/).length }} lines</span
             ></template
@@ -148,33 +210,61 @@
           <span title="">{{ custom.label }}:</span>
           <span
             class="text-success copiable-text"
+            role="button"
+            tabindex="0"
             @click="copyText(custom.value)"
+            @keydown.enter.prevent="copyText(custom.value)"
+            @keydown.space.prevent="copyText(custom.value)"
           >
             {{ custom.value }}
-            <i v-show="allowCopy" class="pi pi-copy copy-icon" data-testid="copy-icon"></i>
+            <i
+              v-show="allowCopy"
+              class="pi pi-copy copy-icon"
+              data-testid="copy-icon"
+            ></i>
           </span>
         </span>
       </template>
-      <span class="" v-else>
-        <span data-testid="string-prop-title" :title="prop.desc ? $t(prop.desc) : ''">{{ $t(prop.title) }}:</span>
+      <span v-else class="">
+        <span
+          data-testid="string-prop-title"
+          :title="prop.desc ? $t(prop.desc) : ''"
+          >{{ $t(prop.title) }}:</span
+        >
         <span
           v-if="prop.options && prop.options['displayType'] === 'PASSWORD'"
           data-testid="password-prop-value"
           class="text-success copiable-text"
-          @click="copyText(innerValue)"
           :title="allowCopy ? 'Click to copy password' : ''"
+          role="button"
+          tabindex="0"
+          @click="copyText(innerValue)"
+          @keydown.enter.prevent="copyText(innerValue)"
+          @keydown.space.prevent="copyText(innerValue)"
         >
           &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;
-          <i v-show="allowCopy" class="pi pi-copy copy-icon" data-testid="copy-icon"></i>
+          <i
+            v-show="allowCopy"
+            class="pi pi-copy copy-icon"
+            data-testid="copy-icon"
+          ></i>
         </span>
         <span
           v-else
           data-testid="string-prop-value"
           class="text-success copiable-text"
+          role="button"
+          tabindex="0"
           @click="copyText(innerValue)"
+          @keydown.enter.prevent="copyText(innerValue)"
+          @keydown.space.prevent="copyText(innerValue)"
         >
           {{ innerValue }}
-          <i v-show="allowCopy" class="pi pi-copy copy-icon" data-testid="copy-icon"></i>
+          <i
+            v-show="allowCopy"
+            class="pi pi-copy copy-icon"
+            data-testid="copy-icon"
+          ></i>
         </span>
       </span>
     </span>
@@ -236,7 +326,7 @@ export default defineComponent({
   },
 });
 </script>
-<style>
+<style scoped>
 .customattributes {
   border-bottom: 1px solid #eeeeee;
   margin-top: 10px;

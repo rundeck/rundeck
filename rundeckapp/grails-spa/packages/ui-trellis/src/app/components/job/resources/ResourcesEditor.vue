@@ -69,11 +69,11 @@
             <node-filter-input
               id="job_edit__node_filter_include"
               :value="modelData.filter"
-              @update:value="newValue => modelData.filter = newValue"
               :project="modelData.project"
               :filter-name="modelData.filterName"
               :node-summary="nodeSummary"
               :allow-filter-default="false"
+              @update:value="(newValue) => (modelData.filter = newValue)"
               @filters-updated="loadNodeSummary"
               @filter="handleFilterClick"
             />
@@ -102,7 +102,6 @@
             <node-filter-input
               id="job_edit__node_filter_exclude"
               :value="modelData.filterExclude"
-              @update:value="newvalue => modelData.filterExclude = newvalue"
               :project="modelData.project"
               :filter-name="modelData.filterNameExclude"
               :node-summary="nodeSummary"
@@ -111,6 +110,7 @@
               filter-field-id="schedJobNodeFilterExclude"
               :help-button="false"
               search-btn-type="default"
+              @update:value="(newvalue) => (modelData.filterExclude = newvalue)"
               @filters-updated="loadNodeSummary"
               @filter="handleFilterExcludeClick"
             />
@@ -521,7 +521,7 @@ export default defineComponent({
     },
     handleFilterClick(val: any) {
       if (val.filter) {
-        if(val.filter ===".*" || this.modelData.filter === ".*") {
+        if (val.filter === ".*" || this.modelData.filter === ".*") {
           this.modelData.filter = val.filter;
         } else {
           this.modelData.filter = [this.modelData.filter, val.filter].join(" ");
@@ -532,10 +532,13 @@ export default defineComponent({
       }
       if (val.filterExclude) {
         if (val.filter) {
-          if(val.filter ===".*" || this.modelData.filter === ".*") {
+          if (val.filter === ".*" || this.modelData.filter === ".*") {
             this.modelData.filterExclude = val.filter;
           } else {
-            this.modelData.filterExclude = [this.modelData.filterExclude, val.filter].join(" ");
+            this.modelData.filterExclude = [
+              this.modelData.filterExclude,
+              val.filter,
+            ].join(" ");
           }
         }
       }

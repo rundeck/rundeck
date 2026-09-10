@@ -12,8 +12,13 @@
         :select="selectItem"
         :highlight="highlight"
       >
-        <li v-for="(item, index) in items">
+        <li
+          v-for="(item, index) in items"
+          :key="itemKey ? item[itemKey] : index"
+        >
           <a href="#" @click.prevent="selectItem(item)">
+            <!-- highlight() escapes then DOMPurify.sanitize()s the value before injecting -->
+            <!-- eslint-disable-next-line vue/no-v-html -->
             <span v-html="highlight(item)"></span>
           </a>
         </li>
@@ -25,6 +30,7 @@
 
 <script lang="ts">
 import { Dropdown } from "uiv";
+import DOMPurify from "dompurify";
 
 import { defineComponent } from "vue";
 
@@ -33,19 +39,28 @@ export default defineComponent({
   extends: Dropdown,
   props: {
     modelValue: {
+      type: String,
       required: true,
     },
-    data: Array,
-    itemKey: String,
+    data: {
+      type: Array,
+      default: () => [],
+    },
+    itemKey: {
+      type: String,
+      default: "",
+    },
     limit: {
       type: Number,
       default: 10,
     },
     target: {
+      type: [String, Object],
       required: true,
     },
     autocompleteKey: {
       type: String,
+      default: "",
     },
   },
   emits: ["update:modelValue"],
@@ -88,14 +103,21 @@ export default defineComponent({
       this.currentSelection = 0;
       this.selectedValue = "";
     },
+    escapeHtml(value: string) {
+      const div = document.createElement("div");
+      div.textContent = value;
+      return div.innerHTML;
+    },
     highlight(item: any) {
-      const _value = this.itemKey ? item[this.itemKey] : item;
+      const _value = this.escapeHtml(
+        (this.itemKey ? item[this.itemKey] : item).toString(),
+      );
       const inputValue =
         "\\" +
         this.autocompleteKey +
         this.selectedValue.substr(1, this.selectedValue.length);
       const regex = new RegExp(`${inputValue}`);
-      return _value.replace(regex, "<b>$&</b>");
+      return DOMPurify.sanitize(_value.replace(regex, "<b>$&</b>"));
     },
     getItems(data: any) {
       this.items = [];

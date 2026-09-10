@@ -2,7 +2,7 @@
   <div class="group-detail-view">
     <Breadcrumb :model="breadcrumbItems" class="group-breadcrumb">
       <template #item="{ item }">
-        <a v-if="item.command" @click="item.command" class="breadcrumb-link">
+        <a v-if="item.command" class="breadcrumb-link" @click="item.command">
           {{ item.label }}
         </a>
         <span v-else class="breadcrumb-current">{{ item.label }}</span>
@@ -16,7 +16,7 @@
         icon-class="group-icon"
       />
       <h3 class="group-title text-heading--lg">{{ groupName }}</h3>
-      <Badge :value="filteredProviders.length" severity="secondary"/>
+      <Badge :value="filteredProviders.length" severity="secondary" />
     </div>
 
     <div v-if="filteredProviders.length === 0" class="no-results">
@@ -27,8 +27,8 @@
       v-else
       :value="[]"
       multiple
-      expandIcon="pi pi-chevron-right"
-      collapseIcon="pi pi-chevron-right"
+      expand-icon="pi pi-chevron-right"
+      collapse-icon="pi pi-chevron-right"
     >
       <AccordionPanel
         v-for="provider in filteredProviders"
@@ -47,7 +47,11 @@
               class="accordion-title-text text-body"
             >
               <template #descriptionprefix>
-                <span class="accordion-description-separator text-body--secondary"> - </span>
+                <span
+                  class="accordion-description-separator text-body--secondary"
+                >
+                  -
+                </span>
               </template>
             </PluginInfo>
           </div>
@@ -78,7 +82,7 @@ export default defineComponent({
     Accordion,
     AccordionPanel,
     AccordionHeader,
-    Badge
+    Badge,
   },
   props: {
     group: {
@@ -126,7 +130,7 @@ export default defineComponent({
 
       // Use parent's matchesSearchQuery logic
       return this.group.providers.filter((provider: Plugin) =>
-        this.matchesSearchQuery(provider)
+        this.matchesSearchQuery(provider),
       );
     },
   },
@@ -151,7 +155,13 @@ export default defineComponent({
             this.checkMatch(provider, "description", value);
     },
     checkMatch(obj: Plugin, field: string, val: string) {
-      return obj[field as keyof Plugin] && val && String(obj[field as keyof Plugin]).toLowerCase().indexOf(val) >= 0;
+      return (
+        obj[field as keyof Plugin] &&
+        val &&
+        String(obj[field as keyof Plugin])
+          .toLowerCase()
+          .indexOf(val) >= 0
+      );
     },
   },
 });

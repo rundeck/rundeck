@@ -9,7 +9,7 @@ export interface ProjectListResponseItem {
 }
 
 export async function listProjects(): Promise<Array<ProjectListResponseItem>> {
-  let resp = await api.get("projects");
+  const resp = await api.get("projects");
   if (resp.status !== 200) {
     throw { message: resp.data.message, response: resp };
   } else {

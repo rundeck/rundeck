@@ -21,7 +21,9 @@ describe("PtSelectButton", () => {
   describe("when the user selects an option", () => {
     it("emits update:modelValue with the selected value so v-model binding works in the parent", async () => {
       const wrapper = await createWrapper();
-      await wrapper.findComponent(SelectButton).vm.$emit("update:modelValue", "Option A");
+      await wrapper
+        .findComponent(SelectButton)
+        .vm.$emit("update:modelValue", "Option A");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
@@ -30,7 +32,9 @@ describe("PtSelectButton", () => {
 
     it("also emits a change event with the same value so parents listening to change are notified", async () => {
       const wrapper = await createWrapper();
-      await wrapper.findComponent(SelectButton).vm.$emit("update:modelValue", "Option A");
+      await wrapper
+        .findComponent(SelectButton)
+        .vm.$emit("update:modelValue", "Option A");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("change")).toHaveLength(1);
@@ -39,19 +43,25 @@ describe("PtSelectButton", () => {
 
     it("emits both update:modelValue and change in a single selection so the parent never needs to listen to two separate events", async () => {
       const wrapper = await createWrapper();
-      await wrapper.findComponent(SelectButton).vm.$emit("update:modelValue", "Option B");
+      await wrapper
+        .findComponent(SelectButton)
+        .vm.$emit("update:modelValue", "Option B");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("update:modelValue")).toHaveLength(1);
       expect(wrapper.emitted("change")).toHaveLength(1);
-      expect(wrapper.emitted("update:modelValue")![0]).toEqual(wrapper.emitted("change")![0]);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual(
+        wrapper.emitted("change")![0],
+      );
     });
   });
 
   describe("clearing the selection", () => {
     it("emits null when the user deselects the current option so the parent knows nothing is selected", async () => {
       const wrapper = await createWrapper({ modelValue: "Option A" });
-      await wrapper.findComponent(SelectButton).vm.$emit("update:modelValue", null);
+      await wrapper
+        .findComponent(SelectButton)
+        .vm.$emit("update:modelValue", null);
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("update:modelValue")![0]).toEqual([null]);
@@ -62,10 +72,14 @@ describe("PtSelectButton", () => {
   describe("multiple selection", () => {
     it("emits an array when multiple is enabled and the user picks several options", async () => {
       const wrapper = await createWrapper({ multiple: true, modelValue: [] });
-      await wrapper.findComponent(SelectButton).vm.$emit("update:modelValue", ["Option A", "Option C"]);
+      await wrapper
+        .findComponent(SelectButton)
+        .vm.$emit("update:modelValue", ["Option A", "Option C"]);
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.emitted("update:modelValue")![0]).toEqual([["Option A", "Option C"]]);
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([
+        ["Option A", "Option C"],
+      ]);
       expect(wrapper.emitted("change")![0]).toEqual([["Option A", "Option C"]]);
     });
   });
@@ -83,7 +97,9 @@ describe("PtSelectButton", () => {
         modelValue: null,
       });
 
-      await wrapper.findComponent(SelectButton).vm.$emit("update:modelValue", "workflow");
+      await wrapper
+        .findComponent(SelectButton)
+        .vm.$emit("update:modelValue", "workflow");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("update:modelValue")![0]).toEqual(["workflow"]);

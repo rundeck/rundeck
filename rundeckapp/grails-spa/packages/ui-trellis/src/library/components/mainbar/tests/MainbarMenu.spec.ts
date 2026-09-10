@@ -183,9 +183,9 @@ describe("MainbarMenu", () => {
     it("should render no header for an empty links array without header prop", async () => {
       const wrapper = await createWrapper({ props: { links: [] } });
 
-      expect(
-        wrapper.find('[data-testid="mainbar-menu-header"]').exists(),
-      ).toBe(false);
+      expect(wrapper.find('[data-testid="mainbar-menu-header"]').exists()).toBe(
+        false,
+      );
       expect(
         wrapper.findAll('[data-testid^="mainbar-menu-link-"]').length,
       ).toBe(0);
@@ -218,9 +218,9 @@ describe("MainbarMenu", () => {
       expect(renderedLinks.at(0)?.attributes("href")).toBe("/system/info");
       expect(renderedLinks.at(1)?.attributes("href")).toBe("/system/log");
 
-      expect(
-        wrapper.find('[data-testid="mainbar-menu-header"]').exists(),
-      ).toBe(false);
+      expect(wrapper.find('[data-testid="mainbar-menu-header"]').exists()).toBe(
+        false,
+      );
 
       const icon = wrapper.find('[data-testid="mainbar-menu-icon"]');
       expect(icon.classes()).toEqual(

@@ -1,16 +1,17 @@
 <template>
   <div>
     <div
-      v-if="!!uploadSetting.errorMsg"
+      v-if="!!localUploadSetting.errorMsg"
       class="alert alert-danger"
       data-testid="error-msg"
     >
-      <span>{{ uploadSetting.errorMsg }}</span>
+      <span>{{ localUploadSetting.errorMsg }}</span>
     </div>
 
     <div class="row">
       <div class="col-md-12">
         <div class="form-group row text-right">
+          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -- label/for and select/id are correctly paired; the plugin additionally requires nesting, which this Bootstrap horizontal-form layout (label and control in separate grid columns) can't do without breaking the layout -->
           <label
             for="storageuploadtype"
             class="col-sm-3 control-label label-key"
@@ -19,7 +20,8 @@
           </label>
           <div class="col-sm-9">
             <select
-              v-model="uploadSetting.keyType"
+              id="storageuploadtype"
+              v-model="localUploadSetting.keyType"
               name="uploadKeyType"
               class="form-control"
             >
@@ -43,13 +45,14 @@
           :class="[validInput() === true ? 'has-success' : 'has-warning']"
         >
           <div
-            v-if="uploadSetting.keyType !== 'password'"
+            v-if="localUploadSetting.keyType !== 'password'"
             class="col-sm-3 label-key"
           >
             <select
-              v-model="uploadSetting.inputType"
+              v-model="localUploadSetting.inputType"
               class="form-control"
               name="inputType"
+              aria-label="Input Type"
             >
               <option
                 v-for="option in inputTypes"
@@ -60,8 +63,9 @@
               </option>
             </select>
           </div>
+          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -- label/for and input/id are correctly paired; the plugin additionally requires nesting, which this Bootstrap horizontal-form layout (label and control in separate grid columns) can't do without breaking the layout -->
           <label
-            v-if="uploadSetting.keyType === 'password'"
+            v-if="localUploadSetting.keyType === 'password'"
             for="uploadpasswordfield"
             class="col-sm-3 control-label label-key"
           >
@@ -70,20 +74,20 @@
           <div class="col-sm-9">
             <div
               v-if="
-                uploadSetting.inputType === 'text' &&
-                uploadSetting.keyType !== 'password'
+                localUploadSetting.inputType === 'text' &&
+                localUploadSetting.keyType !== 'password'
               "
             >
               <textarea
                 id="storageuploadtext"
-                v-model="uploadSetting.textArea"
+                v-model="localUploadSetting.textArea"
                 class="form-control"
                 rows="5"
                 name="uploadText"
               ></textarea>
             </div>
 
-            <div v-if="uploadSetting.inputType === 'file'">
+            <div v-if="localUploadSetting.inputType === 'file'">
               <input
                 id="file"
                 ref="file"
@@ -94,13 +98,13 @@
 
             <div
               v-if="
-                uploadSetting.inputType === 'text' &&
-                uploadSetting.keyType === 'password'
+                localUploadSetting.inputType === 'text' &&
+                localUploadSetting.keyType === 'password'
               "
             >
               <input
                 id="uploadpasswordfield"
-                v-model="uploadSetting.password"
+                v-model="localUploadSetting.password"
                 name="uploadPassword"
                 type="password"
                 :placeholder="$t('storage.enter.password')"
@@ -112,6 +116,7 @@
         </div>
 
         <div class="form-group row text-right">
+          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -- label/for and input/id are correctly paired; the plugin additionally requires nesting, which this Bootstrap horizontal-form layout (label and control in separate grid columns) can't do without breaking the layout -->
           <label
             for="uploadResourcePath2"
             class="col-sm-3 control-label label-key"
@@ -126,8 +131,8 @@
               </div>
               <input
                 id="uploadResourcePath2"
-                v-model="uploadSetting.inputPath"
-                :disabled="uploadSetting.modifyMode === true"
+                v-model="localUploadSetting.inputPath"
+                :disabled="localUploadSetting.modifyMode === true"
                 name="relativePath"
                 class="form-control"
                 data-testid="key-path-input"
@@ -135,8 +140,8 @@
               />
               <input
                 id="uploadResourcePath3"
-                v-model="uploadSetting.inputPath"
-                :disabled="uploadSetting.modifyMode === false"
+                v-model="localUploadSetting.inputPath"
+                :disabled="localUploadSetting.modifyMode === false"
                 type="hidden"
                 name="relativePath"
               />
@@ -148,14 +153,17 @@
           :class="[
             'form-group',
             'row',
-            uploadSetting.fileName == null && uploadSetting.inputType !== 'file'
+            localUploadSetting.fileName == null &&
+            localUploadSetting.inputType !== 'file'
               ? 'has-warning'
               : '',
-            uploadSetting.fileName != null && uploadSetting.inputType !== 'file'
+            localUploadSetting.fileName != null &&
+            localUploadSetting.inputType !== 'file'
               ? 'has-success'
               : '',
           ]"
         >
+          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -- label/for and input/id are correctly paired; the plugin additionally requires nesting, which this Bootstrap horizontal-form layout (label and control in separate grid columns) can't do without breaking the layout -->
           <label
             for="uploadResourceName2"
             class="col-sm-3 control-label label-key text-right"
@@ -166,21 +174,24 @@
           <div class="col-sm-9">
             <input
               id="uploadResourceName2"
-              v-model="uploadSetting.fileName"
-              :disabled="uploadSetting.modifyMode === true"
+              v-model="localUploadSetting.fileName"
+              :disabled="localUploadSetting.modifyMode === true"
               name="fileName"
               class="form-control"
               data-testid="key-name-input"
               :placeholder="$t('storage.specify.name')"
             />
-            <div v-if="uploadSetting.inputType === 'file'" class="help-block">
+            <div
+              v-if="localUploadSetting.inputType === 'file'"
+              class="help-block"
+            >
               If not set, the name of the uploaded file is used.
             </div>
             <input
               id="uploadResourceName3"
-              v-model="uploadSetting.fileName"
+              v-model="localUploadSetting.fileName"
               type="hidden"
-              :disabled="uploadSetting.modifyMode === false"
+              :disabled="localUploadSetting.modifyMode === false"
               name="fileName"
             />
           </div>
@@ -188,13 +199,16 @@
         <div class="form-group row">
           <div class="col-sm-offset-3 col-sm-9">
             <div class="checkbox">
-              <input
-                v-model="uploadSetting.dontOverwrite"
-                type="checkbox"
-                value="true"
-                name="dontOverwrite"
-              />
-              <label> Do not overwrite a file with the same name. </label>
+              <label for="dontOverwrite">
+                <input
+                  id="dontOverwrite"
+                  v-model="localUploadSetting.dontOverwrite"
+                  type="checkbox"
+                  value="true"
+                  name="dontOverwrite"
+                />
+                Do not overwrite a file with the same name.
+              </label>
             </div>
           </div>
         </div>
@@ -238,12 +252,16 @@
 </template>
 
 <script lang="ts">
-import {storageKeyCreate, storageKeyExists, storageKeyGetMetadata, storageKeyUpdate,} from '../../services/storage'
-import type {PropType} from 'vue'
-import {defineComponent} from 'vue'
-import {getRundeckContext} from '../../index'
-import InputType from '../../types/InputType'
-import KeyType from '../../types/KeyType'
+import {
+  storageKeyCreate,
+  storageKeyExists,
+  storageKeyGetMetadata,
+  storageKeyUpdate,
+} from "../../services/storage";
+import type { PropType } from "vue";
+import { defineComponent } from "vue";
+import InputType from "../../types/InputType";
+import KeyType from "../../types/KeyType";
 
 export interface UploadSetting {
   modifyMode: boolean;
@@ -267,8 +285,8 @@ export default defineComponent({
       type: Object as PropType<UploadSetting>,
       required: true,
     },
-    project: String,
-    rootPath: String,
+    project: { type: String, default: "" },
+    rootPath: { type: String, default: "" },
   },
   emits: ["cancelEditing", "finishEditing", "keyCreated"],
   data() {
@@ -279,6 +297,9 @@ export default defineComponent({
       directories: [] as any,
       files: [] as any,
       createdKey: {} as any,
+      // Local editable copy of the `uploadSetting` prop: the form binds to this
+      // instead of mutating the prop directly (see the `uploadSetting` watcher below).
+      localUploadSetting: { ...this.uploadSetting } as UploadSetting,
       keyTypes: [
         { text: "Private Key", value: "privateKey" },
         { text: "Public Key", value: "publicKey" },
@@ -298,15 +319,20 @@ export default defineComponent({
       return this.calcBrowsePath(this.path);
     },
   },
+  watch: {
+    uploadSetting(newVal: UploadSetting) {
+      this.localUploadSetting = { ...newVal };
+    },
+  },
   methods: {
     handleCancel() {
       this.$emit("cancelEditing");
     },
     validInput() {
-      const intype = this.uploadSetting.inputType;
-      const file = this.uploadSetting.file;
-      const textarea = this.uploadSetting.textArea;
-      const pass = this.uploadSetting.password;
+      const intype = this.localUploadSetting.inputType;
+      const file = this.localUploadSetting.file;
+      const textarea = this.localUploadSetting.textArea;
+      const pass = this.localUploadSetting.password;
       if (intype == "text") {
         return textarea || pass ? true : false;
       } else {
@@ -330,78 +356,72 @@ export default defineComponent({
       //   - cannot be exactly ".." (directory traversal)
       //   - first char: [a-zA-Z0-9,.+_-] (no leading space)
       //   - subsequent chars: [\sa-zA-Z0-9,.+_-] (space allowed)
-      const backendPattern = /^\/?((?!\.\.(\/|$))[a-zA-Z0-9,.+_-][\sa-zA-Z0-9,.+_-]*?\/?)+$/;
+      const backendPattern =
+        /^\/?((?!\.\.(\/|$))[a-zA-Z0-9,.+_-][\sa-zA-Z0-9,.+_-]*?\/?)+$/;
 
       if (backendPattern.test(path)) {
         return null;
       }
 
-      const components = path.split('/').filter(c => c.length > 0);
+      const components = path.split("/").filter((c) => c.length > 0);
 
       // Only flag ".." when it is a full path component (matches backend behavior).
       // Strings like "foo..bar" are valid and must not be reported as traversal.
-      if (components.some(component => component === '..')) {
-        return this.$t('storage.keyPath.error.traversal');
+      if (components.some((component) => component === "..")) {
+        return this.$t("storage.keyPath.error.traversal");
       }
 
-      if (components.some(component => component.startsWith(' '))) {
-        return this.$t('storage.keyPath.error.leadingSpace');
+      if (components.some((component) => component.startsWith(" "))) {
+        return this.$t("storage.keyPath.error.leadingSpace");
       }
 
       const validChars = /^[a-zA-Z0-9,.+_\s/-]$/;
-      const invalidChar = path.split('').find(char => !validChars.test(char));
+      const invalidChar = path.split("").find((char) => !validChars.test(char));
       if (invalidChar) {
-        return this.$t('storage.keyPath.error.invalidChar', [invalidChar]);
+        return this.$t("storage.keyPath.error.invalidChar", [invalidChar]);
       }
 
-      return this.$t('storage.keyPath.error.invalidFormat');
+      return this.$t("storage.keyPath.error.invalidFormat");
     },
     async handleUploadKey() {
-      const rundeckContext = getRundeckContext();
-
       const fullPath = this.calcBrowsePath(this.getKeyPath());
 
       // Validate path for new items only (skip for legacy items being edited)
-      if (!this.uploadSetting.modifyMode) {
+      if (!this.localUploadSetting.modifyMode) {
         const pathError = this.validateKeyPath();
         if (pathError) {
-          this.uploadSetting.errorMsg = pathError;
+          this.localUploadSetting.errorMsg = pathError;
           return;
         }
       }
 
-      let contentType = "application/pgp-keys";
-
       let value = null as any;
 
-      switch (this.uploadSetting.keyType) {
+      switch (this.localUploadSetting.keyType) {
         case KeyType.Password:
-          contentType = "application/x-rundeck-data-password";
-          value = this.uploadSetting.password;
+          value = this.localUploadSetting.password;
           break;
         case KeyType.Private:
-          contentType = "application/octet-stream";
-
-          if (this.uploadSetting.inputType === InputType.Text) {
-            value = this.uploadSetting.textArea;
+          if (this.localUploadSetting.inputType === InputType.Text) {
+            value = this.localUploadSetting.textArea;
           } else {
-            if (this.uploadSetting.fileContent == "") {
-              this.uploadSetting.errorMsg = "File content was not read";
-              this.uploadSetting.file = null;
+            if (this.localUploadSetting.fileContent == "") {
+              this.localUploadSetting.errorMsg = "File content was not read";
+              this.localUploadSetting.file = null;
             } else {
-              value = this.uploadSetting.fileContent;
+              value = this.localUploadSetting.fileContent;
             }
           }
           break;
         case KeyType.Public:
-          if (this.uploadSetting.inputType === InputType.Text) {
-            value = this.uploadSetting.textArea;
+          if (this.localUploadSetting.inputType === InputType.Text) {
+            value = this.localUploadSetting.textArea;
           } else {
-            if (this.uploadSetting.fileContent == "") {
-              this.uploadSetting.errorMsg = "File content was not read";
-              this.uploadSetting.file = null;
+            if (this.localUploadSetting.fileContent == "") {
+              this.localUploadSetting.errorMsg = "File content was not read";
+              this.localUploadSetting.file = null;
             } else {
-              value = this.uploadSetting.fileContent;
+              value = this.localUploadSetting.fileContent;
             }
           }
           break;
@@ -410,34 +430,38 @@ export default defineComponent({
       const exists = await storageKeyExists(fullPath);
 
       if (exists) {
-        if (this.uploadSetting.dontOverwrite) {
-          this.uploadSetting.errorMsg = "key already exists";
+        if (this.localUploadSetting.dontOverwrite) {
+          this.localUploadSetting.errorMsg = "key already exists";
           return;
         }
         try {
-          let response=await storageKeyUpdate(fullPath, value, {type: this.uploadSetting.keyType})
+          const response = await storageKeyUpdate(fullPath, value, {
+            type: this.localUploadSetting.keyType,
+          });
           this.$emit("finishEditing", response);
         } catch (err: unknown) {
           let errorMessage = "";
-          if (err && typeof err === 'object' && 'message' in err) {
+          if (err && typeof err === "object" && "message" in err) {
             errorMessage = (err as Error).message;
           }
-          this.uploadSetting.errorMsg = errorMessage;
+          this.localUploadSetting.errorMsg = errorMessage;
         }
       } else {
-        try{
-          let response=await storageKeyCreate(fullPath, value, {type: this.uploadSetting.keyType})
-          this.getCreatedKey(fullPath).then((r: any) => {
+        try {
+          const response = await storageKeyCreate(fullPath, value, {
+            type: this.localUploadSetting.keyType,
+          });
+          this.getCreatedKey(fullPath).then(() => {
             this.$emit("keyCreated", this.createdKey);
             this.$emit("finishEditing", response);
           });
-        }catch(err: unknown){
-            let errorMessage = "";
-            if (err && typeof err === 'object' && 'message' in err) {
-              errorMessage = (err as Error).message;
-            }
-            this.uploadSetting.errorMsg = errorMessage;
+        } catch (err: unknown) {
+          let errorMessage = "";
+          if (err && typeof err === "object" && "message" in err) {
+            errorMessage = (err as Error).message;
           }
+          this.localUploadSetting.errorMsg = errorMessage;
+        }
       }
     },
     async getCreatedKey(path: string) {
@@ -460,34 +484,34 @@ export default defineComponent({
       if (!files.length) return;
 
       const file = files[0];
-      this.uploadSetting.file = file.name;
+      this.localUploadSetting.file = file.name;
 
       const reader = new FileReader();
       reader.onload = (event: any) => {
         const text = event.target.result;
-        this.uploadSetting.fileContent = text;
-        if (this.uploadSetting.errorMsg != null) {
-          this.uploadSetting.errorMsg = null;
+        this.localUploadSetting.fileContent = text;
+        if (this.localUploadSetting.errorMsg != null) {
+          this.localUploadSetting.errorMsg = null;
         }
       };
-      reader.onerror = (event: any) => {
-        this.uploadSetting.errorMsg = "file cannot be read";
-        this.uploadSetting.file = null;
+      reader.onerror = () => {
+        this.localUploadSetting.errorMsg = "file cannot be read";
+        this.localUploadSetting.file = null;
       };
       reader.readAsText(file);
     },
     getKeyPath() {
       let fullPath =
-        this.uploadSetting.inputPath != null &&
-        this.uploadSetting.inputPath != ""
-          ? this.uploadSetting.inputPath + "/"
+        this.localUploadSetting.inputPath != null &&
+        this.localUploadSetting.inputPath != ""
+          ? this.localUploadSetting.inputPath + "/"
           : "";
 
-      if (this.uploadSetting.fileName != null) {
-        fullPath = fullPath + this.uploadSetting.fileName;
+      if (this.localUploadSetting.fileName != null) {
+        fullPath = fullPath + this.localUploadSetting.fileName;
       } else {
-        if (this.uploadSetting.file != null) {
-          fullPath = fullPath + this.uploadSetting.file;
+        if (this.localUploadSetting.file != null) {
+          fullPath = fullPath + this.localUploadSetting.file;
         }
       }
 
@@ -497,4 +521,8 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.label-key {
+  vertical-align: middle;
+}
+</style>

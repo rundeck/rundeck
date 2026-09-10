@@ -4,7 +4,8 @@ const messages = {
   Delete: "Supprimer",
   Cancel: "Annuler",
   Revert: "Retour arri\u00e8re",
-  jobAverageDurationPlaceholder: "laisser vide pour la dur\u00e9e moyenne du traitement",
+  jobAverageDurationPlaceholder:
+    "laisser vide pour la dur\u00e9e moyenne du traitement",
   resourcesEditor: {
     "Dispatch to Nodes": "Envoyer vers les n\u0153uds",
     Nodes: "N\u0153uds",
@@ -99,7 +100,8 @@ const messages = {
   message_webhookRolesHelp:
     "Les r\u00f4les d\u02bcautorisation assum\u00e9s lors de l\u02bcex\u00e9cution de ce webhook (s\u00e9par\u00e9s par des virgules). Toutes les politiques ACL correspondant \u00e0 ces r\u00f4les s\u02bcappliqueront.",
   message_webhookAuthLabel: "Cha\u00eene d\u02bcautorisation HTTP",
-  message_webhookGenerateSecurityLabel: "Utiliser l\u02bcen-t\u00eate d\u02bcautorisation",
+  message_webhookGenerateSecurityLabel:
+    "Utiliser l\u02bcen-t\u00eate d\u02bcautorisation",
   message_webhookGenerateSecretCheckboxHelp:
     "[Optionnel] Un jeton d\u02bcautorisation Webhook peut \u00eatre g\u00e9n\u00e9r\u00e9e pour augmenter la s\u00e9curit\u00e9 de ce webhook. Tous les messages devront inclure le jeton g\u00e9n\u00e9r\u00e9e dans l\u02bcen-t\u00eate Autorisation.",
   message_webhookSecretMessageHelp:
@@ -108,9 +110,11 @@ const messages = {
     "Un nouveau jeton d\u02bcautorisation sera g\u00e9n\u00e9r\u00e9 et affich\u00e9 lorsque le webhook sera enregistr\u00e9.",
   message_webhookPluginLabel: "Choisir le plugin webhook",
   message_hello: "Bonjour",
-  message_sidebarNotificationText: "Une mise \u00e0 jour pour Rundeck est disponible",
+  message_sidebarNotificationText:
+    "Une mise \u00e0 jour pour Rundeck est disponible",
   message_updateAvailable: "Mise \u00e0 jour disponible",
-  message_updateHasBeenReleased: "Une mise \u00e0 jour de Rundeck a \u00e9t\u00e9 publi\u00e9e.",
+  message_updateHasBeenReleased:
+    "Une mise \u00e0 jour de Rundeck a \u00e9t\u00e9 publi\u00e9e.",
   message_installedVersion: "La version install\u00e9e de Rundeck est",
   message_currentVersion: "La version la plus r\u00e9cente de Rundeck est",
   message_getUpdate: "Obtenir la mise \u00e0 jour",
@@ -121,12 +125,16 @@ const messages = {
   "in.of": "dans",
   execution: "Ex\u00e9cution | Ex\u00e9cutions",
   "execution.count": "1 Ex\u00e9cution | {0} Ex\u00e9cutions",
-  "Bulk Delete Executions: R\u00e9sultats": "Suppression en masse des ex\u00e9cutions: R\u00e9sultats",
+  "Bulk Delete Executions: R\u00e9sultats":
+    "Suppression en masse des ex\u00e9cutions: R\u00e9sultats",
   "Requesting bulk delete, please wait.":
     "Demande de suppression en masse, veuillez patienter.",
-  "bulkresult.attempted.text": "{0} ex\u00e9cutions ont \u00e9t\u00e9 tent\u00e9es.",
-  "bulkresult.success.text": "{0} Les ex\u00e9cutions ont \u00e9t\u00e9 supprim\u00e9es avec succ\u00e8s.",
-  "bulkresult.failed.text": "{0} Les \u00e9x\u00e9cutions n\u02bcont pas pu \u00eatre supprim\u00e9es:",
+  "bulkresult.attempted.text":
+    "{0} ex\u00e9cutions ont \u00e9t\u00e9 tent\u00e9es.",
+  "bulkresult.success.text":
+    "{0} Les ex\u00e9cutions ont \u00e9t\u00e9 supprim\u00e9es avec succ\u00e8s.",
+  "bulkresult.failed.text":
+    "{0} Les \u00e9x\u00e9cutions n\u02bcont pas pu \u00eatre supprim\u00e9es:",
   "delete.confirm.text": "Vraiment supprimer {0} {1}?",
   "clearselected.confirm.text":
     "Effacer tous les {0} \u00e9l\u00e9ments s\u00e9lectionn\u00e9s ou uniquement les \u00e9l\u00e9ments affich\u00e9s sur cette page ?",
@@ -134,7 +142,8 @@ const messages = {
   "results.empty.text": "Pas de r\u00e9sultats pour cette requ\u00eate",
   "Only shown executions": "Uniquement les ex\u00e9cutions affich\u00e9es",
   "Clear bulk selection": "D\u00e9cocher la s\u00e9lection en masse",
-  "Click to edit Search Query": "Cliquez pour modifier la requ\u00eate de recherche",
+  "Click to edit Search Query":
+    "Cliquez pour modifier la requ\u00eate de recherche",
   "Auto refresh": "Actualisation automatique",
   "error.message.0": "Une erreur est survenue: {0}",
   "info.completed.0": "Termin\u00e9: {0}",
@@ -177,7 +186,8 @@ const messages = {
   "Edit Nodes": "Modifier les n\u0153uds",
   Modify: "Modifier",
   "Edit Node Sources": "Modifier les sources de n\u0153ud",
-  "The Node Source had an error": "La source de n\u0153ud a rencontr\u00e9 une erreur",
+  "The Node Source had an error":
+    "La source de n\u0153ud a rencontr\u00e9 une erreur",
   "Validation errors": "Erreurs de validation",
 
   "unauthorized.status.help.1":
@@ -186,9 +196,12 @@ const messages = {
     "Le plugin de source de n\u0153ud peut avoir besoin d\u02bcacc\u00e9der \u00e0 la ressource de stockage de cl\u00e9s. il pourrait \u00eatre activ\u00e9 par les entr\u00e9es de la politique de contr\u00f4le d\u02bcacc\u00e8s.",
   "unauthorized.status.help.3":
     "Assurez-vous que les strat\u00e9gies ACL autorisent l\u02bcacc\u00e8s en lecture au stockage de cl\u00e9s dans ce projet pour le chemin URN du projet (urn:project:name). ",
-  "unauthorized.status.help.4": "Aller \u00e0 {0} pour cr\u00e9er une ACL de projet ",
-  "unauthorized.status.help.5": "Aller \u00e0 {0} pour cr\u00e9er une ACL syst\u00e8me ",
-  "use.the.node.sources.tab.2": " Onglet pour mettre \u00e0 jour vos sources de n\u0153uds.",
+  "unauthorized.status.help.4":
+    "Aller \u00e0 {0} pour cr\u00e9er une ACL de projet ",
+  "unauthorized.status.help.5":
+    "Aller \u00e0 {0} pour cr\u00e9er une ACL syst\u00e8me ",
+  "use.the.node.sources.tab.2":
+    " Onglet pour mettre \u00e0 jour vos sources de n\u0153uds.",
   "project.node.sources.title.short": "Sources",
   "use.the.node.sources.tab.1": "Utiliser le ",
   "no.modifiable.sources.found": "Aucune source modifiable trouv\u00e9e",
@@ -204,11 +217,14 @@ const messages = {
   "project.edit.ResourceModelSource.explanation":
     "Sources de nœuds pour le projet. Les sources sont chargées dans l'ordre défini, les sources ultérieures remplaçant les précédentes. (Vous pouvez utiliser {'${project.name}'} dans les valeurs de configuration pour substituer le nom du projet.)",
 
-  "acl.config.link.title": "Param\u00e8tres du projet > Contr\u00f4le d\u02bcacc\u00e8s",
-  "acl.config.system.link.title": "Param\u00e8tres syst\u00e8me > Contr\u00f4le d\u02bcacc\u00e8s",
+  "acl.config.link.title":
+    "Param\u00e8tres du projet > Contr\u00f4le d\u02bcacc\u00e8s",
+  "acl.config.system.link.title":
+    "Param\u00e8tres syst\u00e8me > Contr\u00f4le d\u02bcacc\u00e8s",
   "acl.example.summary": "Exemple de strat\u00e9gie ACL",
 
-  "empty.message.default": "Aucune configuration trouv\u00e9e. Cliquez sur {0} pour ajouter un nouveau plugin.",
+  "empty.message.default":
+    "Aucune configuration trouv\u00e9e. Cliquez sur {0} pour ajouter un nouveau plugin.",
 
   "page.keyStorage.description":
     "Le stockage de cl\u00e9s fournit une structure globale de type r\u00e9pertoire pour enregistrer les cl\u00e9s et mots de passe publics et priv\u00e9s, \u00e0 utiliser avec l\u02bcauthentification des n\u0153uds d\u02bcex\u00e9cution..",
@@ -217,7 +233,8 @@ const messages = {
   "select.none": "Ne rien s\u00e9lectionner",
   "select.all": "Tout s\u00e9lectionner",
   "cancel.bulk.delete": "Annuler la suppression en masse",
-  "delete.selected.executions": "Supprimer les ex\u00e9cutions s\u00e9lectionn\u00e9es",
+  "delete.selected.executions":
+    "Supprimer les ex\u00e9cutions s\u00e9lectionn\u00e9es",
   "click.to.refresh": "cliquez pour actualiser",
   "count.nodes.matched": "{0} {1} Correspondant",
   "count.nodes.shown": "{0} n\u0153uds affich\u00e9s.",
@@ -226,9 +243,11 @@ const messages = {
   "saved.filters": "Filtres enregistr\u00e9s",
   "save.node.filter": "Enregistrer le filtre de n\u0153ud",
   "name.prompt": "Nom",
-  "delete.saved.node.filter": "Supprimer le filtre de n\u0153ud enregistr\u00e9",
+  "delete.saved.node.filter":
+    "Supprimer le filtre de n\u0153ud enregistr\u00e9",
   duplicate: "Dupliquer",
-  "enter.a.node.filter": "Entrez un filtre de n\u0153ud, ou .* Pour tous les n\u0153uds",
+  "enter.a.node.filter":
+    "Entrez un filtre de n\u0153ud, ou .* Pour tous les n\u0153uds",
   "execute.locally": "Ex\u00e9cuter localement",
   "execution.page.show.tab.Nodes.title": "N\u0153uds",
   "execution.show.mode.Log.title": "Sortie de journal",
@@ -252,7 +271,8 @@ const messages = {
   "notification.event.onsuccess": "En cas de succ\u00e8s",
   "notification.event.onstart": "Au d\u00e9marrage",
   "notification.event.onavgduration": "Dur\u00e9e moyenne d\u00e9pass\u00e9e",
-  "notification.event.onretryablefailure": "En cas d\u02bc\u00e9chec r\u00e9essayable",
+  "notification.event.onretryablefailure":
+    "En cas d\u02bc\u00e9chec r\u00e9essayable",
   refresh: "rafra\u00eechir",
   "save.filter.ellipsis": "Enregistrer le filtre \u2026",
   "search.ellipsis": "Rechercher\u2026",
@@ -265,7 +285,8 @@ const messages = {
     "Montrer les n\u0153uds exclus",
   "scheduledExecution.property.excludeFilterUncheck.description":
     "Si vrai, les n\u0153uds exclus seront indiqu\u00e9s lors de l\u02bcex\u00e9cution du Job. Sinon, ils ne seront pas affich\u00e9s du tout.",
-  "scheduledExecution.property.logOutputThreshold.label": "Limite de sortie du journal",
+  "scheduledExecution.property.logOutputThreshold.label":
+    "Limite de sortie du journal",
   "scheduledExecution.property.logOutputThreshold.description":
     'Entrez soit le nombre de lignes total maximum (par exemple "100"), le nombre maximum de lignes par n\u0153ud ("100 / n\u0153ud") ou la taille maximale du fichier journal ("100MB", "100KB", etc. "," MB "," KB "," B "comme Giga- Mega-Kilo et octets.',
   "scheduledExecution.property.logOutputThreshold.placeholder":
@@ -290,32 +311,36 @@ const messages = {
     "Autoriser ce traitement \u00e0 \u00eatre ex\u00e9cut\u00e9 plus d\u02bcune fois simultan\u00e9ment ?",
   "scheduledExecution.property.nodeKeepgoing.false.description":
     "Faire \u00e9chouer l\u02bc\u00e9tape sans continuer d\u02bcex\u00e9cuter sur les n\u0153uds restants.",
-  "scheduledExecution.property.nodeKeepgoing.prompt": "Si un n\u0153ud \u00e9choue",
+  "scheduledExecution.property.nodeKeepgoing.prompt":
+    "Si un n\u0153ud \u00e9choue",
   "scheduledExecution.property.nodeKeepgoing.true.description":
     "Continuez l\u02bcex\u00e9cution sur tous les n\u0153uds restants avant de faire \u00e9chouer l\u02bc\u00e9tape.",
   "scheduledExecution.property.nodeRankAttribute.description":
     "Attribut des n\u0153uds utilis\u00e9 pour le tri. La valeur par d\u00e9faut est le nom du n\u0153ud.",
-  "scheduledExecution.property.nodeRankAttribute.label": "Attribut de classement",
+  "scheduledExecution.property.nodeRankAttribute.label":
+    "Attribut de classement",
   "scheduledExecution.property.nodeRankOrder.label": "Ordre de classement",
   "scheduledExecution.property.nodeRankOrder.ascending.label": "Croissant",
-  "scheduledExecution.property.nodeRankOrder.descending.label": "D\u00e9croissant",
+  "scheduledExecution.property.nodeRankOrder.descending.label":
+    "D\u00e9croissant",
   "scheduledExecution.property.nodeThreadcount.label": "Nombre de threads",
   "scheduledExecution.property.nodeThreadcount.description":
     "Nombre maximal de threads parall\u00e8les \u00e0 utiliser. (Par d\u00e9faut : 1)",
   "scheduledExecution.property.nodefiltereditable.label": "Filtre modifiable",
   "scheduledExecution.property.nodesSelectedByDefault.false.description":
     "L\u02bcutilisateur doit s\u00e9lectionner explicitement les n\u0153uds cibles",
-  "scheduledExecution.property.nodesSelectedByDefault.label": "S\u00e9lection de n\u0153ud",
+  "scheduledExecution.property.nodesSelectedByDefault.label":
+    "S\u00e9lection de n\u0153ud",
   "scheduledExecution.property.nodesSelectedByDefault.true.description":
     "Les n\u0153uds cibles sont s\u00e9lectionn\u00e9s par d\u00e9faut",
   "scheduledExecution.property.notifyAvgDurationThreshold.description":
     "Ajoutez ou d\u00e9finissez une valeur de seuil \u00e0 la dur\u00e9e moyenne pour d\u00e9clencher les notifications.\n\n" +
-	"- pourcentage => ex .: 20%\n" +
-	"- temps delta => ex .: + 20s, +20\n" +
-	"- temps absolu => 30s, 5m\n" +
-	"Utilisez `s`,`m`,`h`,`d`,`w`,`y` etc. comme unit\u00e9s de temps pour les secondes, les minutes, les heures, etc..." +
-	"L\u02bcunit\u00e9 de temps par d\u00e9faut sera la seconde si elle n\u02bcest pas sp\u00e9cifi\u00e9e\n" +
-	"Peut inclure des r\u00e9f\u00e9rences de valeur d\u02bcoption telles que `{'$'}{'{'}option{'.'}avgDurationThreshold{'}'}`.",
+    "- pourcentage => ex .: 20%\n" +
+    "- temps delta => ex .: + 20s, +20\n" +
+    "- temps absolu => 30s, 5m\n" +
+    "Utilisez `s`,`m`,`h`,`d`,`w`,`y` etc. comme unit\u00e9s de temps pour les secondes, les minutes, les heures, etc..." +
+    "L\u02bcunit\u00e9 de temps par d\u00e9faut sera la seconde si elle n\u02bcest pas sp\u00e9cifi\u00e9e\n" +
+    "Peut inclure des r\u00e9f\u00e9rences de valeur d\u02bcoption telles que `{'$'}{'{'}option{'.'}avgDurationThreshold{'}'}`.",
   "scheduledExecution.property.notifyAvgDurationThreshold.label": "Seuil",
   "scheduledExecution.property.orchestrator.label": "Orchestrateur",
   "scheduledExecution.property.orchestrator.description":
@@ -338,10 +363,12 @@ const messages = {
     "r\u00e9f\u00e9rences comme \"{'$'}{'{'}option{'.'}timeout{'}'}\".",
   "scheduledExecution.property.scheduleEnabled.description":
     "Autoriser ce traitement \u00e0 \u00eatre planifi\u00e9 ?",
-  "scheduledExecution.property.scheduleEnabled.label": "Activer la planification ?",
+  "scheduledExecution.property.scheduleEnabled.label":
+    "Activer la planification ?",
   "scheduledExecution.property.executionEnabled.description":
     "Autoriser l\u02bcex\u00e9cution de ce traitement ?",
-  "scheduledExecution.property.executionEnabled.label": "Activer l\u02bcex\u00e9cution?",
+  "scheduledExecution.property.executionEnabled.label":
+    "Activer l\u02bcex\u00e9cution?",
   "scheduledExecution.property.timezone.prompt": "Fuseau horaire",
   "scheduledExecution.property.timezone.description":
     'Un fuseau horaire valide, soit une abr\u00e9viation telle que "PST", un nom complet tel que "America / Los_Angeles", ou un identifiant personnalis\u00e9 tel que "GMT-8{\':\'} 00".',
@@ -408,8 +435,10 @@ const messages = {
   "project.node.file.source.label": "Source",
   "file.display.format.label": "Format",
   "project.node.file.source.description.label": "Description",
-  "project.nodes.edit.save.error.message": "Erreur lors de l\u02bcenregistrement du contenu:",
-  "project.nodes.edit.empty.description": "Remarque : Aucun contenu n'\u00e9tait disponible.",
+  "project.nodes.edit.save.error.message":
+    "Erreur lors de l\u02bcenregistrement du contenu:",
+  "project.nodes.edit.empty.description":
+    "Remarque : Aucun contenu n'\u00e9tait disponible.",
   "button.action.Cancel": "Annuler",
   "button.action.Save": "Enregistrer",
   "job-edit-page": {
@@ -417,7 +446,8 @@ const messages = {
     "node-dispatch-true-label": "Envoi aux n\u0153uds via le Runner",
     "node-dispatch-false-label": "Ex\u00e9cuter sur le Runner",
     "section-title": "Dispatch",
-    "section-title-help": "Choisissez le Runner et les n\u0153uds s\u00e9lectionn\u00e9s",
+    "section-title-help":
+      "Choisissez le Runner et les n\u0153uds s\u00e9lectionn\u00e9s",
   },
   "job-exec-page": {
     "nodes-tab-title": "Runner/N\u0153uds",
@@ -438,36 +468,46 @@ const messages = {
   actions: "Actions",
   none: "Aucun",
   set: {
-    "all.nodes.as.default.filter": "D\u00e9finir tous les n\u0153uds comme filtre par d\u00e9faut",
+    "all.nodes.as.default.filter":
+      "D\u00e9finir tous les n\u0153uds comme filtre par d\u00e9faut",
     "as.default.filter": "D\u00e9finir en tant que filtre par d\u00e9faut",
   },
   remove: {
-    "all.nodes.as.default.filter": "Supprimer tous les n\u0153uds comme filtre par d\u00e9faut",
+    "all.nodes.as.default.filter":
+      "Supprimer tous les n\u0153uds comme filtre par d\u00e9faut",
     "default.filter": "Supprimer le filtre par d\u00e9faut",
   },
-  "run.a.command.on.count.nodes.ellipsis": "Ex\u00e9cuter une commande sur {0} {1}",
-  "create.a.job.for.count.nodes.ellipsis": "Cr\u00e9er un traitement pour {0} {1}",
+  "run.a.command.on.count.nodes.ellipsis":
+    "Ex\u00e9cuter une commande sur {0} {1}",
+  "create.a.job.for.count.nodes.ellipsis":
+    "Cr\u00e9er un traitement pour {0} {1}",
   "resource.metadata.entity.tags": "Tags",
   filters: "Filtres",
   "all.nodes": "Tous les n\u0153uds",
   "delete.this.filter.ellipsis": "Supprimer ce filtre...",
   "enter.a.filter": "Entrer un filtre",
-  "remove.all.nodes.as.default.filter": "Supprimer tous les n\u0153uds comme filtre par d\u00e9faut",
-  "set.all.nodes.as.default.filter": "D\u00e9finir tous les n\u0153uds comme filtre par d\u00e9faut",
+  "remove.all.nodes.as.default.filter":
+    "Supprimer tous les n\u0153uds comme filtre par d\u00e9faut",
+  "set.all.nodes.as.default.filter":
+    "D\u00e9finir tous les n\u0153uds comme filtre par d\u00e9faut",
   "not.authorized": "Non autoris\u00e9",
   "disabled.execution.run": "Les ex\u00e9cutions sont d\u00e9sactiv\u00e9es.",
   "user.at.host": "Utilisateur {'@'} nom d\u02bch\u00f4te",
-  "node.changes.success": "Les modifications de n\u0153ud ont \u00e9t\u00e9 enregistr\u00e9es avec succ\u00e8s.",
-  "node.changes.notsaved": "Les modifications de n\u0153ud n\u0027ont pas \u00e9t\u00e9 enregistr\u00e9es.",
+  "node.changes.success":
+    "Les modifications de n\u0153ud ont \u00e9t\u00e9 enregistr\u00e9es avec succ\u00e8s.",
+  "node.changes.notsaved":
+    "Les modifications de n\u0153ud n\u0027ont pas \u00e9t\u00e9 enregistr\u00e9es.",
   "node.remoteEdit.edit": "Modifier le n\u0153ud:",
   "node.remoteEdit.continue": "Continuer...",
   node: "N\u0153ud",
   "this.will.select.both.nodes": "Cela s\u00e9lectionnera les deux n\u0153uds.",
   "node.metadata.hostname": "Nom d\u02bch\u00f4te",
   "select.nodes.by.name": "S\u00e9lectionner les n\u0153uds par leur nom",
-  "filter.nodes.by.attribute.value": "Filtrer les n\u0153uds par valeur d\u02bcattribut",
+  "filter.nodes.by.attribute.value":
+    "Filtrer les n\u0153uds par valeur d\u02bcattribut",
   "use.regular.expressions": "Utiliser des expressions r\u00e9guli\u00e8res:",
-  "regex.syntax.checking": "V\u00e9rification de la syntaxe de l\u02bcexpression r\u00e9guli\u00e8re",
+  "regex.syntax.checking":
+    "V\u00e9rification de la syntaxe de l\u02bcexpression r\u00e9guli\u00e8re",
   "edit.ellipsis": "Modifier...",
   "node.metadata.username-at-hostname": "Nom d\u02bcutilisateur & h\u00f4te",
   "node.metadata.osFamily": "Famille OS",
@@ -484,31 +524,42 @@ const messages = {
   "per.page": "Par page",
   "remove.default.filter": "Supprimer le filtre par d\u00e9faut",
   "scheduledExecution.action.edit.button.label": "Modifier ce traitement...",
-  "scheduledExecution.action.duplicate.button.label": "Dupliquer ce traitement...",
+  "scheduledExecution.action.duplicate.button.label":
+    "Dupliquer ce traitement...",
   "scheduledExecution.action.duplicate.other.button.label":
     "Dupliquer ce traitement vers un autre projet...",
-  "scheduledExecution.action.download.button.label": "T\u00e9l\u00e9charger la d\u00e9finition",
+  "scheduledExecution.action.download.button.label":
+    "T\u00e9l\u00e9charger la d\u00e9finition",
   "scheduledExecution.action.downloadformat.button.label":
     "T\u00e9l\u00e9charger la d\u00e9finition du traitement vers {0}",
   "scheduledExecution.action.delete.button.label": "Supprimer ce traitement",
   "scheduledExecution.action.edit.button.tooltip": "Modifier ce traitement",
-  "scheduledExecution.action.duplicate.button.tooltip": "Dupliquer le traitement",
+  "scheduledExecution.action.duplicate.button.tooltip":
+    "Dupliquer le traitement",
   "enable.schedule.this.job": "Activer la planification",
   "disable.schedule.this.job": "D\u00e9sctiver la planification",
-  "scheduledExecution.action.enable.schedule.button.label": "Activer la planification",
-  "scheduledExecution.action.disable.schedule.button.label": "D\u00e9sactiver la planification",
-  "scheduleExecution.schedule.disabled": "La planification du traitement est d\u00e9sactiv\u00e9e",
+  "scheduledExecution.action.enable.schedule.button.label":
+    "Activer la planification",
+  "scheduledExecution.action.disable.schedule.button.label":
+    "D\u00e9sactiver la planification",
+  "scheduleExecution.schedule.disabled":
+    "La planification du traitement est d\u00e9sactiv\u00e9e",
   "enable.execution.this.job": "Activer l\u02bcex\u00e9cution",
   "disable.execution.this.job": "D\u00e9sactiver l\u02bcex\u00e9cution",
-  "scheduledExecution.action.enable.execution.button.label": "Activer l\u02bcex\u00e9cution",
+  "scheduledExecution.action.enable.execution.button.label":
+    "Activer l\u02bcex\u00e9cution",
   "scheduledExecution.action.disable.execution.button.label":
     "D\u00e9sactiver l\u02bcex\u00e9cution",
-  "scheduleExecution.execution.disabled": "L\u02bcex\u00e9cution du traitement est d\u00e9sactiv\u00e9e",
+  "scheduleExecution.execution.disabled":
+    "L\u02bcex\u00e9cution du traitement est d\u00e9sactiv\u00e9e",
   "delete.this.job": "Supprimer ce traitement",
-  "action.prepareAndRun.tooltip": "Choisir les options et lancer l\u02bcex\u00e9cution du traitement…",
-  "job.bulk.modify.confirm.panel.title": "Confirmer la modification du traitement en masse",
+  "action.prepareAndRun.tooltip":
+    "Choisir les options et lancer l\u02bcex\u00e9cution du traitement…",
+  "job.bulk.modify.confirm.panel.title":
+    "Confirmer la modification du traitement en masse",
 
-  "job.bulk.delete.confirm.message": "Voulez-vous vraiment supprimer les traitements s\u00e9lectionn\u00e9s ?",
+  "job.bulk.delete.confirm.message":
+    "Voulez-vous vraiment supprimer les traitements s\u00e9lectionn\u00e9s ?",
   "job.bulk.disable_schedule.confirm.message":
     "D\u00e9planifier la planification pour tous les traitements s\u00e9lectionn\u00e9s ?",
   "job.bulk.enable_schedule.confirm.message":
@@ -523,13 +574,18 @@ const messages = {
   "job.bulk.delete.button": "Supprimer les traitements",
   "job.bulk.disable_execution.button": "D\u00e9sactiver l\u02bcex\u00e9cution",
   "job.bulk.enable_execution.button": "Activer l\u02bcex\u00e9cution",
-  "job.bulk.enable_execution.success": "Ex\u00e9cution activ\u00e9e pour {0} traitements.",
-  "job.bulk.enable_schedule.success": "Planification activ\u00e9e pour {0} traitements.",
-  "job.bulk.disable_schedule.success": "Planification d\u00e9sactiv\u00e9e pour {0} traitements.",
-  "job.bulk.disable_execution.success": "Ex\u00e9cution d\u00e9sactiv\u00e9e pour {0} traitements.",
+  "job.bulk.enable_execution.success":
+    "Ex\u00e9cution activ\u00e9e pour {0} traitements.",
+  "job.bulk.enable_schedule.success":
+    "Planification activ\u00e9e pour {0} traitements.",
+  "job.bulk.disable_schedule.success":
+    "Planification d\u00e9sactiv\u00e9e pour {0} traitements.",
+  "job.bulk.disable_execution.success":
+    "Ex\u00e9cution d\u00e9sactiv\u00e9e pour {0} traitements.",
   "job.bulk.delete.success": " {0} traitements supprim\u00e9s.",
   "delete.selected.jobs": "Supprimer les traitements s\u00e9lectionn\u00e9s",
-  "job.bulk.panel.select.title": "S\u00e9lectionner les traitements pour une modification en masse",
+  "job.bulk.panel.select.title":
+    "S\u00e9lectionner les traitements pour une modification en masse",
   "job.bulk.perform.action.menu.label": "Effectuer une action",
   "job.create.button": "Cr\u00e9er un nouveau traitement",
   "job.upload.button.title": "Charger une d\u00e9finition de traitement",
@@ -539,48 +595,64 @@ const messages = {
   "job.bulk.deactivate.menu.label": "Quitter le mode d'\u00e9dition en masse",
   "upload.definition.button.label": "Charger une d\u00e9finition",
   "new.job.button.label": "Nouveau traitement",
-  "job.bulk.panel.select.message": "{n} Traitement s\u00e9lectionn\u00e9 | {n} Traitements s\u00e9lectionn\u00e9s",
+  "job.bulk.panel.select.message":
+    "{n} Traitement s\u00e9lectionn\u00e9 | {n} Traitements s\u00e9lectionn\u00e9s",
   "cannot.run.job": "Ne peut pas ex\u00e9cuter le traitement",
   "disabled.schedule.run": "Les ex\u00e9cutions sont d\u00e9sactiv\u00e9es.",
   "disabled.job.run": "Les ex\u00e9cutions sont d\u00e9sactiv\u00e9es.",
-  "schedule.on.server.x.at.y": "Planifi\u00e9 pour \u00eatre ex\u00e9cut\u00e9 sur le serveur {0} \u00e0 {1}",
+  "schedule.on.server.x.at.y":
+    "Planifi\u00e9 pour \u00eatre ex\u00e9cut\u00e9 sur le serveur {0} \u00e0 {1}",
   "schedule.time.in.future": "dans {0}",
   never: "Jamais",
   disabled: "D\u00e9sactiv\u00e9",
-  "project.schedule.disabled": "La planification du projet est d\u00e9sactiv\u00e9e",
-  "project.execution.disabled": "L\u02bcex\u00e9cution du projet est d\u00e9sactiv\u00e9e",
-  "job.schedule.will.never.fire": "La planification du traitement ne se lancera jamais",
-  "scm.import.status.UNKNOWN.display.text": "Statut de l\u02bcimport : non suivi",
-  "scm.import.status.LOADING.description": "Import: le status du traitement est en cours de chargement",
+  "project.schedule.disabled":
+    "La planification du projet est d\u00e9sactiv\u00e9e",
+  "project.execution.disabled":
+    "L\u02bcex\u00e9cution du projet est d\u00e9sactiv\u00e9e",
+  "job.schedule.will.never.fire":
+    "La planification du traitement ne se lancera jamais",
+  "scm.import.status.UNKNOWN.display.text":
+    "Statut de l\u02bcimport : non suivi",
+  "scm.import.status.LOADING.description":
+    "Import: le status du traitement est en cours de chargement",
   "scm.export.status.DELETED.display.text": "Supprim\u00e9",
   "scm.export.status.EXPORT_NEEDED.display.text": "Modifi\u00e9",
   "scm.export.status.CLEAN.description": "Status de l\u02bcexport: propre",
-  "scm.import.status.DELETE_NEEDED.title.text": "Import: fichiers supprim\u00e9s",
+  "scm.import.status.DELETE_NEEDED.title.text":
+    "Import: fichiers supprim\u00e9s",
   "scm.export.status.EXPORT_NEEDED.title.text": "Export: Modifi\u00e9",
   "scm.import.status.UNKNOWN.description": "Non suivi pour l\u02bcimport SCM",
-  "scm.import.status.REFRESH_NEEDED.display.text": "Synchronisation n\u00e9cessaire",
+  "scm.import.status.REFRESH_NEEDED.display.text":
+    "Synchronisation n\u00e9cessaire",
   "scm.export.status.CREATE_NEEDED.description":
     "Status de l\u02bcexport: Nouveau traitement, pas encore ajout\u00e9 \u00e0 SCM",
   "scm.import.status.DELETE_NEEDED.description":
     "Status de l\u02bcimport: le fichier source a \u00e9t\u00e9 supprim\u00e9",
   "scm.export.status.CLEAN.display.text": "Pas de changement",
-  "scm.export.status.LOADING.description": "Export: le status du traitement est en cours de chargement",
+  "scm.export.status.LOADING.description":
+    "Export: le status du traitement est en cours de chargement",
   "scm.import.status.IMPORT_NEEDED.description":
     "Status de l\u02bcimport: Les modifications du traitement doivent \u00eatre synchronis\u00e9es",
-  "scm.import.status.REFRESH_NEEDED.title.text": "Import: Synchroniser les changements",
+  "scm.import.status.REFRESH_NEEDED.title.text":
+    "Import: Synchroniser les changements",
   "scm.export.status.REFRESH_NEEDED.title.text":
     "Export: Les modifications \u00e0 distance doivent \u00eatre synchronis\u00e9es",
   "scm.export.status.LOADING.display.text": "En cours de chargement",
-  "scm.export.status.EXPORT_NEEDED.description": "Statut d\u02bcexportation \: modifi\u00e9",
+  "scm.export.status.EXPORT_NEEDED.description":
+    "Statut d\u02bcexportation \: modifi\u00e9",
   "scm.export.status.CREATE_NEEDED.display.text": "Cr\u00e9\u00e9",
   "scm.import.status.IMPORT_NEEDED.display.text": "Importation n\u00e9cessaire",
-  "scm.import.status.DELETE_NEEDED.display.text": "Le fichier source a \u00e9t\u00e9 supprim\u00e9",
-  "scm.import.status.IMPORT_NEEDED.title.text": "Import: modifications entrantes",
+  "scm.import.status.DELETE_NEEDED.display.text":
+    "Le fichier source a \u00e9t\u00e9 supprim\u00e9",
+  "scm.import.status.IMPORT_NEEDED.title.text":
+    "Import: modifications entrantes",
   "scm.import.status.CLEAN.display.text": "\u00c0 jour",
-  "scm.import.status.CLEAN.description": "Statut d\u02bcimportation: \u00e0 jour",
+  "scm.import.status.CLEAN.description":
+    "Statut d\u02bcimportation: \u00e0 jour",
   "scm.import.status.REFRESH_NEEDED.description":
     "Statut d\u02bcimportation : les modifications du traitement doivent \u00eatre extraites",
-  "scm.export.status.REFRESH_NEEDED.display.text": "Synchronisation n\u00e9cessaire",
+  "scm.export.status.REFRESH_NEEDED.display.text":
+    "Synchronisation n\u00e9cessaire",
   "scm.import.status.LOADING.display.text": "En cours de chargement",
   "scm.export.status.ERROR.display.text": "Une erreur inconnue est survenue.",
   "scm.import.status.ERROR.display.text": "Une erreur inconnue est survenue.",
@@ -592,8 +664,10 @@ const messages = {
   "scm.action.diff.clean.button.label": "Afficher les informations de Commit",
   "scm.import.plugin": "Plugin d\u02bcimportation SCM",
   "scm.action.diff.button.label": "Modifications des diff\u00e9rences",
-  "scm.export.commit.job.link.title": "Cliquer pour valider ou ajouter ce traitement",
-  "scm.export.commit.link.title": "Cliquer pour valider ou ajouter des changements",
+  "scm.export.commit.job.link.title":
+    "Cliquer pour valider ou ajouter ce traitement",
+  "scm.export.commit.link.title":
+    "Cliquer pour valider ou ajouter des changements",
   "scm.export.plugin": "Plugin d'export SCM",
   "job.toggle.scm.menu.on": "Activer SCM",
   "job.toggle.scm.menu.off": "D\u00e9sactiver SCM",
@@ -603,8 +677,10 @@ const messages = {
   "scm.import.title": "Import SCM",
   "job.toggle.scm.button.label.off": "D\u00e9sactiver SCM",
   "job.toggle.scm.confirm.panel.title": "Confirmer la modification SCM",
-  "job.toggle.scm.confirm.on": "Activer tous les plugins configur\u00e9s par SCM ?",
-  "job.toggle.scm.confirm.off": "D\u00e9sctiver tous les plugins configur\u00e9s par SCM ?",
+  "job.toggle.scm.confirm.on":
+    "Activer tous les plugins configur\u00e9s par SCM ?",
+  "job.toggle.scm.confirm.off":
+    "D\u00e9sctiver tous les plugins configur\u00e9s par SCM ?",
   "job.toggle.scm.button.label.on": "Activer SCM",
   "job.scm.status.loading.message": "Chargement du status SCM...",
   "page.section.Activity.for.jobs": "Activit\u00e9 des traitements",
@@ -620,7 +696,8 @@ const messages = {
   all: "Tous",
   "job.tree.breakpoint.hit.info":
     "Remarque : Tous les d\u00e9tails du traitement n'ont pas \u00e9t\u00e9 charg\u00e9s car ce groupe contient trop de traitements. Cliquez sur le bouton pour charger les d\u00e9tails manquants.",
-  "job.tree.breakpoint.load.button.title": "Charger tous les d\u00e9tails du traitement",
+  "job.tree.breakpoint.load.button.title":
+    "Charger tous les d\u00e9tails du traitement",
   "job.list.filter.save.modal.title": "Enregistrer le filtre",
   "job.filter.save.button.title": "Enregistrer en tant que filtre...",
   "job.list.filter.save.button": "Enregistrer le filtre",
@@ -646,10 +723,12 @@ const messages = {
   by: "par",
   user: "Utilisateur",
   "user.plural": "Utilisateurs",
-  "page.home.project.executions.0.failed.parenthetical": "({0} \u00e9chou\u00e9)",
+  "page.home.project.executions.0.failed.parenthetical":
+    "({0} \u00e9chou\u00e9)",
   "page.home.search.projects.input.placeholder":
     "Recherche de projet : nom, label ou /regex/",
-  "page.home.search.project.title": "{n} Projet trouv\u00e9 | {n} Projets trouv\u00e9s",
+  "page.home.search.project.title":
+    "{n} Projet trouv\u00e9 | {n} Projets trouv\u00e9s",
   "button.Action": "Action",
   "edit.configuration": "Modifier la configuration",
   "page.home.new.project.button.label": "Nouveau project",
@@ -657,7 +736,8 @@ const messages = {
   in: "dans",
   "Project.plural": "Projets",
   discard: "Ignorer",
-  "commandline.arguments.prompt.unquoted": "Arguments de la ligne de commande (sans quotes):",
+  "commandline.arguments.prompt.unquoted":
+    "Arguments de la ligne de commande (sans quotes):",
   usage: "Utilisation",
   "form.label.valuesType.list.label": "Liste",
   "scheduledExecution.option.unsaved.warning":
@@ -680,9 +760,11 @@ const messages = {
   "form.option.enforcedType.label": "Restrictions",
   "form.option.usage.file.fileName.preview.description":
     "Le nom du fichier d'origine:",
-  "form.option.discard.title": "Annuler les modifications apport\u00e9es \u00e0 l\u02bcoption",
+  "form.option.discard.title":
+    "Annuler les modifications apport\u00e9es \u00e0 l\u02bcoption",
   "form.option.valuesType.url.authentication.password.label": "Mot de passe",
-  "form.option.enforcedType.none.label": "N\u02bcimporte quelle valeur peut \u00eatre utilis\u00e9e",
+  "form.option.enforcedType.none.label":
+    "N\u02bcimporte quelle valeur peut \u00eatre utilis\u00e9e",
   "form.option.inputType.label": "Type d'entr\u00e9e",
   "form.option.defaultStoragePath.present.description":
     "Une valeur par d\u00e9faut sera charg\u00e9e \u00e0 partir du stockage de cl\u00e9s",
@@ -701,18 +783,24 @@ const messages = {
   "form.option.valuesType.url.authentication.key.label": "Cl\u00e9",
   "form.option.date.description":
     "La date sera transmise \u00e0 votre traitement sous forme de cha\u00eene format\u00e9e de cette fa\u00e7on : mm/jj/aa HH:MM",
-  "form.option.valuesType.url.authentication.username.label": "Nom d'utilisateur",
+  "form.option.valuesType.url.authentication.username.label":
+    "Nom d'utilisateur",
   "form.option.valuesType.url.authType.bearerToken.label": "Bearer Token",
-  "form.option.enforced.label": "Appliqu\u00e9 \u00e0 partir des valeurs autoris\u00e9es",
+  "form.option.enforced.label":
+    "Appliqu\u00e9 \u00e0 partir des valeurs autoris\u00e9es",
   "form.option.description.label": "Description",
-  "form.option.save.title": "Enregistrer les modifications apport\u00e9es \u00e0 l\u02bcoption",
+  "form.option.save.title":
+    "Enregistrer les modifications apport\u00e9es \u00e0 l\u02bcoption",
   "form.option.type.label": "Type d'option",
-  "form.option.multivalueAllSelected.label": "S\u00e9lectionner toutes les valeurs par d\u00e9faut",
-  "form.option.secureExposed.false.label": "Authentification \u00e0 distance s\u00e9curis\u00e9e",
+  "form.option.multivalueAllSelected.label":
+    "S\u00e9lectionner toutes les valeurs par d\u00e9faut",
+  "form.option.secureExposed.false.label":
+    "Authentification \u00e0 distance s\u00e9curis\u00e9e",
   "form.option.valuesType.url.authentication.token.label": "Jeton",
   "form.option.delimiter.label": "D\u00e9limiteur",
   "form.option.valuesURL.placeholder": "URL distante",
-  "form.option.valuesType.url.authType.empty.label": "S\u00e9lectionner le type d\u02bcauthentification",
+  "form.option.valuesType.url.authType.empty.label":
+    "S\u00e9lectionner le type d\u02bcauthentification",
   "form.option.valuesDelimiter.description":
     "D\u00e9finir le d\u00e9limiteur pour les valeurs autoris\u00e9es",
   "form.option.usage.file.preview.description":
@@ -723,7 +811,8 @@ const messages = {
     "Le filtre de chemin JSON de l\u02bcURL distante a une syntaxe non valide",
   "form.option.valuesType.url.authType.apiKey.label": "Cl\u00e9 API",
   "form.option.optionType.text.label": "Texte",
-  "form.option.secureExposed.true.label": "Texte brut avec saisie du mot de passe",
+  "form.option.secureExposed.true.label":
+    "Texte brut avec saisie du mot de passe",
   "form.option.valuesType.url.filter.description":
     'Filtrez les r\u00e9sultats JSON \u00e0 l\u02bcaide d\u02bcun chemin de cl\u00e9. Par exemple "$.key.path"',
   "form.option.valuesType.url.authentication.tokenInformer.header.label":
@@ -736,7 +825,8 @@ const messages = {
   "form.option.valuesType.url.authentication.tokenInformer.query.label":
     "Requ\u00eater un param\u00e8tre",
   "form.option.create.title": "Enregistrer la nouvelle option",
-  "form.option.regex.label": "Correspondance avec une expression r\u00e9guli\u00e8re",
+  "form.option.regex.label":
+    "Correspondance avec une expression r\u00e9guli\u00e8re",
   "form.option.optionType.file.label": "Fichier",
   "form.option.valuesDelimiter.label": "D\u00e9limiteur de liste",
   "form.option.cancel.title": "Annuler l\u02bcajout d\u02bcune nouvelle option",
@@ -779,7 +869,8 @@ const messages = {
     "Les valeurs autoris\u00e9es (liste ou URL distante) doivent \u00eatre sp\u00e9cifi\u00e9es si les valeurs sont obligatoires",
   "option.file.required.message":
     "Le type d'option de fichier ne peut pas \u00eatre obligatoire lorsque le traitement est planifi\u00e9.",
-  "option.regex.invalid.message": "Expression r\u00e9guli\u00e8re non valide : {0}",
+  "option.regex.invalid.message":
+    "Expression r\u00e9guli\u00e8re non valide : {0}",
   "option.file.config.invalid.message":
     "La configuration du type d'option de fichier n'est pas valide : {0}",
   "option.delimiter.blank.message":
@@ -791,7 +882,8 @@ const messages = {
   "option.defaultValue.multivalued.notallowed.message":
     'La valeur par d\u00e9faut contient une cha\u00eene qui ne figurait pas dans la liste des valeurs autoris\u00e9es et ces valeurs sont pr\u00e9d\u00e9fnies : "{0}". Remarque : les espaces sont importants.',
   "Option.required.label": "Obligatoire",
-  "Option.hidden.description": "Doit \u00eatre masqu\u00e9 sur la page d\u02bcex\u00e9cution du traitement",
+  "Option.hidden.description":
+    "Doit \u00eatre masqu\u00e9 sur la page d\u02bcex\u00e9cution du traitement",
   "Option.required.description":
     "Exiger que cette option ait une valeur non vide lors de l\u02bcex\u00e9cution du traitement",
   "Option.hidden.label": "Devrait \u00eatre masqu\u00e9",
@@ -814,15 +906,20 @@ const messages = {
   "util.undoredo.undo": "Annuler",
   "util.undoredo.redo": "Refaire",
   "util.undoredo.revertAll": "Annuler toutes les modifications",
-  "util.undoredo.revertAll.confirm": "Vraiment annuler toutes les modifications ?",
+  "util.undoredo.revertAll.confirm":
+    "Vraiment annuler toutes les modifications ?",
   "option.view.required.title": " (Obligatoire)",
   "option.view.allowedValues.label": "Valeurs autoris\u00e9es",
-  "option.view.valuesUrl.title": "Valeurs charg\u00e9es \u00e0 partir de l\u02bcURL distante : {0}",
+  "option.view.valuesUrl.title":
+    "Valeurs charg\u00e9es \u00e0 partir de l\u02bcURL distante : {0}",
   "option.view.valuesUrl.placeholder": "URL",
-  "option.view.enforced.title": "L\u02bcentr\u00e9e doit \u00eatre une valeur autoris\u00e9e",
+  "option.view.enforced.title":
+    "L\u02bcentr\u00e9e doit \u00eatre une valeur autoris\u00e9e",
   "option.view.enforced.placeholder": "Strict",
-  "option.view.regex.info.note": "Les valeurs doivent correspondre \u00e0 l\u02bcexpression r\u00e9guli\u00e8re:",
-  "option.view.notenforced.title": "Aucune restriction sur la valeur d\u02bcentr\u00e9e",
+  "option.view.regex.info.note":
+    "Les valeurs doivent correspondre \u00e0 l\u02bcexpression r\u00e9guli\u00e8re:",
+  "option.view.notenforced.title":
+    "Aucune restriction sur la valeur d\u02bcentr\u00e9e",
   "option.view.notenforced.placeholder": "Aucun",
   "option.view.action.delete.title": "Supprimer cette option",
   "option.view.action.edit.title": "Modifier cette option",

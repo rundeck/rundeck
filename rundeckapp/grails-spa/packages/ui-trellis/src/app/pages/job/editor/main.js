@@ -88,7 +88,7 @@ const jobSections = [
     elementClass: "job-editor-workflow-vue",
     addUiMessages: true,
     visible: true,
-  }
+  },
 ];
 
 const mountSection = (section) => {

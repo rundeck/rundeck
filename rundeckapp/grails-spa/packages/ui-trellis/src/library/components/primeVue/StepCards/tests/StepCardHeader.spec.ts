@@ -24,29 +24,47 @@ describe("StepCardHeader", () => {
   describe("step type tag", () => {
     it("shows the node step tag when showAsNodeStep is explicitly true", async () => {
       const wrapper = await createWrapper({ showAsNodeStep: true });
-      expect(wrapper.find('[data-testid="step-card-header-step-type-tag"]').classes()).toContain("tag-node");
+      expect(
+        wrapper
+          .find('[data-testid="step-card-header-step-type-tag"]')
+          .classes(),
+      ).toContain("tag-node");
     });
 
     it("shows the workflow step tag when showAsNodeStep is explicitly false", async () => {
       const wrapper = await createWrapper({ showAsNodeStep: false });
-      expect(wrapper.find('[data-testid="step-card-header-step-type-tag"]').classes()).toContain("tag-workflow");
+      expect(
+        wrapper
+          .find('[data-testid="step-card-header-step-type-tag"]')
+          .classes(),
+      ).toContain("tag-workflow");
     });
 
     it("shows the node step tag when config.nodeStep is true and showAsNodeStep is not provided", async () => {
       const wrapper = await createWrapper({ config: { nodeStep: true } });
-      expect(wrapper.find('[data-testid="step-card-header-step-type-tag"]').classes()).toContain("tag-node");
+      expect(
+        wrapper
+          .find('[data-testid="step-card-header-step-type-tag"]')
+          .classes(),
+      ).toContain("tag-node");
     });
 
     it("shows the workflow step tag by default when neither showAsNodeStep nor config.nodeStep is set", async () => {
       const wrapper = await createWrapper({ config: {} });
-      expect(wrapper.find('[data-testid="step-card-header-step-type-tag"]').classes()).toContain("tag-workflow");
+      expect(
+        wrapper
+          .find('[data-testid="step-card-header-step-type-tag"]')
+          .classes(),
+      ).toContain("tag-workflow");
     });
   });
 
   describe("delete button", () => {
     it("emits delete when the user clicks the delete button", async () => {
       const wrapper = await createWrapper();
-      await wrapper.find('[data-testid="step-card-header-delete-btn"]').trigger("click");
+      await wrapper
+        .find('[data-testid="step-card-header-delete-btn"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("delete")).toHaveLength(1);
@@ -56,7 +74,9 @@ describe("StepCardHeader", () => {
   describe("edit action", () => {
     it("emits edit when the user clicks the plugin info area", async () => {
       const wrapper = await createWrapper();
-      await wrapper.find('[data-testid="step-card-header-plugin-info"]').trigger("click");
+      await wrapper
+        .find('[data-testid="step-card-header-plugin-info"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("edit")).toHaveLength(1);
@@ -64,7 +84,9 @@ describe("StepCardHeader", () => {
 
     it("does not emit edit when the component is disabled", async () => {
       const wrapper = await createWrapper({ disabled: true });
-      await wrapper.find('[data-testid="step-card-header-plugin-info"]').trigger("click");
+      await wrapper
+        .find('[data-testid="step-card-header-plugin-info"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("edit")).toBeFalsy();
@@ -74,27 +96,37 @@ describe("StepCardHeader", () => {
   describe("toggle vs more actions button", () => {
     it("shows the toggle button when showToggle is true", async () => {
       const wrapper = await createWrapper({ showToggle: true });
-      expect(wrapper.find('[data-testid="step-card-header-toggle-btn"]').exists()).toBe(true);
+      expect(
+        wrapper.find('[data-testid="step-card-header-toggle-btn"]').exists(),
+      ).toBe(true);
     });
 
     it("hides the toggle button when showToggle is false", async () => {
       const wrapper = await createWrapper({ showToggle: false });
-      expect(wrapper.find('[data-testid="step-card-header-toggle-btn"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="step-card-header-toggle-btn"]').exists(),
+      ).toBe(false);
     });
 
     it("shows the more actions button when showToggle is false", async () => {
       const wrapper = await createWrapper({ showToggle: false });
-      expect(wrapper.find('[data-testid="step-card-header-more-btn"]').exists()).toBe(true);
+      expect(
+        wrapper.find('[data-testid="step-card-header-more-btn"]').exists(),
+      ).toBe(true);
     });
 
     it("hides the more actions button when showToggle is true", async () => {
       const wrapper = await createWrapper({ showToggle: true });
-      expect(wrapper.find('[data-testid="step-card-header-more-btn"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="step-card-header-more-btn"]').exists(),
+      ).toBe(false);
     });
 
     it("emits toggle when the user clicks the toggle button", async () => {
       const wrapper = await createWrapper({ showToggle: true });
-      await wrapper.find('[data-testid="step-card-header-toggle-btn"]').trigger("click");
+      await wrapper
+        .find('[data-testid="step-card-header-toggle-btn"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("toggle")).toHaveLength(1);
@@ -107,7 +139,9 @@ describe("StepCardHeader", () => {
         editing: true,
         validationErrors: { valid: false, errors: { name: "Required" } },
       });
-      expect(wrapper.find('[data-testid="step-card-header-error-tag"]').exists()).toBe(true);
+      expect(
+        wrapper.find('[data-testid="step-card-header-error-tag"]').exists(),
+      ).toBe(true);
     });
 
     it("does not show the error tag when validation passes", async () => {
@@ -115,7 +149,9 @@ describe("StepCardHeader", () => {
         editing: true,
         validationErrors: { valid: true, errors: {} },
       });
-      expect(wrapper.find('[data-testid="step-card-header-error-tag"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="step-card-header-error-tag"]').exists(),
+      ).toBe(false);
     });
 
     it("does not show the error tag when not editing even if there are errors", async () => {
@@ -123,7 +159,9 @@ describe("StepCardHeader", () => {
         editing: false,
         validationErrors: { valid: false, errors: { name: "Required" } },
       });
-      expect(wrapper.find('[data-testid="step-card-header-error-tag"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="step-card-header-error-tag"]').exists(),
+      ).toBe(false);
     });
   });
 
@@ -131,7 +169,10 @@ describe("StepCardHeader", () => {
     it("shows the plugin description when in editing mode", async () => {
       const wrapper = await createWrapper({
         editing: true,
-        pluginDetails: { title: "My Plugin", description: "Does useful things" },
+        pluginDetails: {
+          title: "My Plugin",
+          description: "Does useful things",
+        },
       });
       const desc = wrapper.find('[data-testid="step-card-header-plugin-desc"]');
       expect(desc.exists()).toBe(true);
@@ -140,7 +181,9 @@ describe("StepCardHeader", () => {
 
     it("does not show the plugin description text when not in editing mode", async () => {
       const wrapper = await createWrapper({ editing: false });
-      expect(wrapper.find('[data-testid="step-card-header-plugin-desc"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="step-card-header-plugin-desc"]').exists(),
+      ).toBe(false);
     });
   });
 });

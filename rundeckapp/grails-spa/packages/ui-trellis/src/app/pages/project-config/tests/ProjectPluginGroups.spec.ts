@@ -34,8 +34,17 @@ jest.mock("@/library/modules/pluginService", () => ({
 // out of the DOM at module-load time and isn't relevant to this behavior.
 jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
   name: "PluginConfig",
-  props: ["mode", "serviceName", "provider", "showDescription", "showTitle", "config", "validation", "validationWarningText"],
-  template: "<div><slot name=\"extra\"></slot></div>",
+  props: [
+    "mode",
+    "serviceName",
+    "provider",
+    "showDescription",
+    "showTitle",
+    "config",
+    "validation",
+    "validationWarningText",
+  ],
+  template: '<div><slot name="extra"></slot></div>',
 }));
 
 import pluginService from "../../../../library/modules/pluginService";
@@ -142,6 +151,9 @@ describe("ProjectPluginGroups editing-state event", () => {
 
     wrapper.unmount();
 
-    expect(mockEmit).toHaveBeenCalledWith("project-plugin-group-editing", false);
+    expect(mockEmit).toHaveBeenCalledWith(
+      "project-plugin-group-editing",
+      false,
+    );
   });
 });

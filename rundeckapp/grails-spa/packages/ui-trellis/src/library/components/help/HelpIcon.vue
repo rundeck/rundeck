@@ -24,11 +24,15 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "HelpIcon",
   props: {
-    title: String,
+    title: {
+      type: String,
+      default: "",
+    },
   },
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- .popover-content is rendered by Bootstrap's popover JS outside this component's DOM subtree, so scoped styles can't reach it -->
 <style>
 .popover-content {
   max-height: 50vh;

@@ -73,7 +73,7 @@ describe("RundeckInfo", () => {
 
   it("renders Rundeck's version display name", async () => {
     const wrapper = await mountRundeckInfo();
-    const versionDisplayElement = wrapper.find("span.rundeck-version-icon")
+    const versionDisplayElement = wrapper.find("span.rundeck-version-icon");
     expect(versionDisplayElement.text()).toBe("Erebus red glass");
   });
 
@@ -86,21 +86,23 @@ describe("RundeckInfo", () => {
 
   it("renders the correct Rundeck version based on number and title props", async () => {
     const wrapper = await mountRundeckInfo();
-    const rundeckVersionElement = wrapper.find('div.rundeck-version-display');
+    const rundeckVersionElement = wrapper.find("div.rundeck-version-display");
     expect(rundeckVersionElement.exists()).toBe(true);
     expect(rundeckVersionElement.find("span").text()).toBe("Rundeck 1.0.0");
   });
 
   it("renders only the version when there is no title", async () => {
-    const wrapper = await mountRundeckInfo({ appInfo: {  } });
-    const rundeckVersionElement = wrapper.find('div.rundeck-version-display');
+    const wrapper = await mountRundeckInfo({ appInfo: {} });
+    const rundeckVersionElement = wrapper.find("div.rundeck-version-display");
     expect(rundeckVersionElement.exists()).toBe(true);
     expect(rundeckVersionElement.find("span").text()).toBe("1.0.0");
   });
 
   it("renders the latest release information correctly", async () => {
     const wrapper = await mountRundeckInfo();
-    const rundeckVersionElements = wrapper.findAll('div.rundeck-version-display');
+    const rundeckVersionElements = wrapper.findAll(
+      "div.rundeck-version-display",
+    );
     const latestReleaseComponent = rundeckVersionElements[1];
     expect(latestReleaseComponent.exists()).toBe(true);
     expect(latestReleaseComponent.find("span").text()).toBe("v5.2.0-20240410");

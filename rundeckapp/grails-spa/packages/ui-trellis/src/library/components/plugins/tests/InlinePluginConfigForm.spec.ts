@@ -1,5 +1,6 @@
 import { mount, flushPromises } from "@vue/test-utils";
 import InlinePluginConfigForm from "../InlinePluginConfigForm.vue";
+import { getServiceProviderDescription } from "@/library/modules/pluginService";
 
 jest.mock("@/library/modules/rundeckClient", () => ({
   client: { sendRequest: jest.fn() },
@@ -20,10 +21,6 @@ jest.mock("@/library/modules/pluginService", () => ({
     props: [],
   }),
 }));
-
-const {
-  getServiceProviderDescription,
-} = require("@/library/modules/pluginService");
 
 const mockErrorHandler = {
   type: "exec",
@@ -173,8 +170,8 @@ describe("InlinePluginConfigForm", () => {
     expect(wrapper.find("[data-testid='custom-header-actions']").exists()).toBe(
       false,
     );
-    expect(wrapper.find(".inline-plugin-config-form-header-actions").exists()).toBe(
-      false,
-    );
+    expect(
+      wrapper.find(".inline-plugin-config-form-header-actions").exists(),
+    ).toBe(false);
   });
 });

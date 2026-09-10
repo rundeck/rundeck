@@ -39,7 +39,11 @@ describe("OptionRemoteUrlConfig", () => {
     ],
   ])(
     "shows validation errors for field %p",
-    async (fieldName: string, optData: any, errorName: string | null = null) => {
+    async (
+      fieldName: string,
+      optData: any,
+      errorName: string | null = null,
+    ) => {
       const wrapper = await mountOptionEdit(
         Object.assign(
           {
@@ -51,9 +55,9 @@ describe("OptionRemoteUrlConfig", () => {
         ),
       );
 
-      let section = wrapper.get(`[data-test=option.${fieldName}]`);
+      const section = wrapper.get(`[data-test=option.${fieldName}]`);
       expect(section.classes()).toContain("has-error");
-      let errorslist = section.get("div.help-block errorslist");
+      const errorslist = section.get("div.help-block errorslist");
       expect(errorslist.attributes()["errors"]).toContain("error1");
     },
   );

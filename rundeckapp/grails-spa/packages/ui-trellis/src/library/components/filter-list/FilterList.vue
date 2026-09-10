@@ -1,31 +1,32 @@
 <template>
-  <div class="widget-wrapper" ref="root">
+  <div ref="root" class="widget-wrapper">
     <div class="widget-section" style="flex-grow: 1; flex-shrink: 1">
       <div>
         <div class="form-group form-group-sm has-feedback has-search">
           <i class="fas fa-search form-control-feedback"></i>
           <input
             ref="search"
+            v-model="searchTerm"
             type="text"
             class="filter-list__input form-control form-control-sm"
-            v-model="searchTerm"
             :placeholder="searchText"
+            :aria-label="searchText"
           />
         </div>
       </div>
       <Skeleton :loading="loading">
         <RecycleScroller
           ref="scroller"
+          :key="items.length"
           :items="filtered"
           :item-size="itemSize"
-          :key="items.length"
           key-field="id"
           class="scroller"
         >
-          <template v-slot:default="{ item }">
+          <template #default="{ item }">
             <div
-              style="height: 100%"
               :ref="item[idField]"
+              style="height: 100%"
               role="button"
               tabindex="0"
               class="scroller__item"
@@ -64,12 +65,6 @@ export default defineComponent({
     RecycleScroller,
     Skeleton,
   },
-  emits: ["item:selected"],
-  data() {
-    return {
-      searchTerm: "",
-    };
-  },
   props: {
     loading: {
       type: Boolean,
@@ -96,17 +91,17 @@ export default defineComponent({
       default: "id",
     },
   },
+  emits: ["item:selected"],
+  data() {
+    return {
+      searchTerm: "",
+    };
+  },
   computed: {
     filtered() {
       return this.items.filter((i) =>
         i.name.toLowerCase().includes(this.searchTerm.toLowerCase()),
       );
-    },
-  },
-  methods: {
-    itemClicked(item: any) {
-      (<HTMLElement>this.$refs[item[this.idField]]).blur();
-      this.$emit("item:selected", item);
     },
   },
   mounted() {
@@ -117,6 +112,12 @@ export default defineComponent({
     nextTick().then(() => {
       (<HTMLElement>this.$refs["search"]).focus();
     });
+  },
+  methods: {
+    itemClicked(item: any) {
+      (<HTMLElement>this.$refs[item[this.idField]]).blur();
+      this.$emit("item:selected", item);
+    },
   },
 });
 </script>

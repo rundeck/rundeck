@@ -12,8 +12,10 @@ import { defineComponent } from "vue";
 import { createPopper, Instance } from "@popperjs/core";
 
 export default defineComponent({
+  name: "RdPopper",
   props: {
     open: {
+      type: Boolean,
       default: false,
     },
   },

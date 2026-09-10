@@ -54,7 +54,8 @@ export default defineComponent({
     size: {
       type: String,
       default: undefined,
-      validator: (val: string) => val === undefined || ["small", "large"].includes(val),
+      validator: (val: string) =>
+        val === undefined || ["small", "large"].includes(val),
     },
     fluid: {
       type: Boolean,
@@ -95,8 +96,8 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
-.p-selectbutton .p-togglebutton {
+<style scoped lang="scss">
+.p-selectbutton :deep(.p-togglebutton) {
   // Unselected state - based on Figma design
   background: var(--colors-white);
   border-color: var(--colors-gray-300-original);
@@ -123,11 +124,9 @@ export default defineComponent({
       border-color: var(--colors-blue-600);
     }
 
-
     &:active {
       background: var(--colors-blue-700);
       border-color: var(--colors-blue-700);
-
     }
   }
 

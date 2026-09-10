@@ -30,3 +30,9 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+.rundeck-version-date {
+  color: lightgray;
+  font-style: italic;
+}
+</style>

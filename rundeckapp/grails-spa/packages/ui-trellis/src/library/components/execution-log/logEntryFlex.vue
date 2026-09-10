@@ -11,7 +11,11 @@
       :class="{
         'execution-log__gutter--slim': timestamps && !command,
       }"
+      role="button"
+      tabindex="0"
       @click="onLineSelect"
+      @keydown.enter="onLineSelect"
+      @keydown.space.prevent="onLineSelect"
     >
       <span class="gutter line-number">
         <span
@@ -52,13 +56,15 @@
       <span v-if="displayNodeBadge" class="execution-log__node-badge"
         ><i class="fas fa-hdd" /><span :pseudo-content="logEntry.node"
       /></span>
+      <!-- eslint-disable vue/no-v-html -- sanitizedLogHtml is passed through DOMPurify.sanitize() in the computed below -->
       <span
         v-if="logEntry.logHtml"
         class="execution-log__content-text"
         :class="{ 'execution-log__content-text--overflow': !lineWrap }"
         data-test-id="log-entry-content-text"
-        v-html="logEntry.logHtml"
+        v-html="sanitizedLogHtml"
       />
+      <!-- eslint-enable vue/no-v-html -->
       <span
         v-if="!logEntry.logHtml"
         class="execution-log__content-text"
@@ -73,6 +79,7 @@
 <script lang="ts">
 import moment from "moment/moment";
 import { defineComponent } from "vue";
+import DOMPurify from "dompurify";
 import UiSocket from "../utils/UiSocket.vue";
 import { IBuilderOpts } from "./logBuilder";
 import { EventBus } from "../../utilities/vueEventBus";
@@ -88,10 +95,12 @@ export default defineComponent({
     title: {
       type: String,
       required: false,
+      default: undefined,
     },
     eventBus: {
       type: Object as PropType<typeof EventBus>,
       required: false,
+      default: undefined,
     },
     config: {
       type: Object as PropType<IBuilderOpts>,
@@ -100,6 +109,7 @@ export default defineComponent({
     prevEntry: {
       type: Object as PropType<ExecutionOutputEntry>,
       required: false,
+      default: undefined,
     },
     logEntry: {
       type: Object as PropType<ExecutionOutputEntry>,
@@ -144,6 +154,9 @@ export default defineComponent({
         this.cfg.gutter?.visible &&
         (this.cfg.time?.visible || this.cfg.command?.visible)
       );
+    },
+    sanitizedLogHtml(): string {
+      return DOMPurify.sanitize(this.logEntry.logHtml || "");
     },
   },
   beforeMount() {

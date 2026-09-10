@@ -15,7 +15,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import type { PropType } from "vue";
 import UtilItem from "./UtilityBarItem.vue";
 
 export default defineComponent({
@@ -68,8 +67,8 @@ ul {
 }
 </style>
 
-<style lang="scss">
-.utility-bar__item {
+<style scoped lang="scss">
+:deep(.utility-bar__item) {
   display: flex;
   align-items: center;
   height: 100%;

@@ -36,9 +36,9 @@
     <li v-if="importSynchState !== 'UNKNOWN'">
       <a :href="scmDiffHref('import')">
         <job-scm-status-badge
-            :notext="true"
-            icon="glyphicon-eye-open"
-            :exportStatus="importSynchState"
+          :notext="true"
+          icon="glyphicon-eye-open"
+          :export-status="importSynchState"
         />
         <template v-if="importSynchState === 'CLEAN'">
           {{ $t("scm.action.diff.clean.button.label") }}

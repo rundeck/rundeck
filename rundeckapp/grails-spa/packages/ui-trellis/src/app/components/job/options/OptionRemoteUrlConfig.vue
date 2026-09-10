@@ -1,18 +1,18 @@
 <template>
   <div
-    data-test="option.valuesUrl"
     id="vurl_section"
+    data-test="option.valuesUrl"
     :class="{ 'has-error': hasError('valuesUrl') }"
   >
     <input
+      v-model="internal.valuesUrl"
       type="url"
       class="form-control"
       name="valuesUrl"
-      v-model="internal.valuesUrl"
       size="60"
       :placeholder="$t('form.option.valuesURL.placeholder')"
     />
-    <div class="help-block" v-if="validationErrors['valuesUrl']">
+    <div v-if="validationErrors['valuesUrl']" class="help-block">
       <ErrorsList :errors="validationErrors['valuesUrl']" />
     </div>
     <div class="help-block">
@@ -40,16 +40,16 @@
       <div class="col-md-4">
         <div class="">
           <input
+            v-model="internal.configRemoteUrl.jsonFilter"
             type="text"
             class="form-control"
             name="remoteUrlJsonFilter"
-            v-model="internal.configRemoteUrl.jsonFilter"
             size="30"
           />
         </div>
         <div
-          class="help-block"
           v-if="validationErrors['configRemoteUrl.jsonFilter']"
+          class="help-block"
         >
           <ErrorsList
             :errors="validationErrors['configRemoteUrl.jsonFilter']"
@@ -74,16 +74,16 @@
 
       <div class="col-md-4">
         <select
-          class="form-control"
           v-model="internal.remoteUrlAuthenticationType"
+          class="form-control"
         >
           <option value="" disabled>
             {{ $t("form.option.valuesType.url.authType.empty.label") }}
           </option>
           <option
             v-for="option in remoteUrlAuthenticationList"
-            :value="option.value"
             :key="option.value"
+            :value="option.value"
           >
             {{ option.label }}
           </option>
@@ -93,8 +93,8 @@
       <div class="col-md-8">
         <!--USER/PASSSWORD AUTH-->
         <div
-          id="remoteUrlUserAuth"
           v-if="remoteUrlAuthenticationType === 'BASIC'"
+          id="remoteUrlUserAuth"
         >
           <div>
             <div class="col-md-3">
@@ -104,10 +104,10 @@
             </div>
             <div class="col-md-8 input-group">
               <input
+                v-model="internal.configRemoteUrl.username"
                 type="text"
                 class="form-control"
                 name="remoteUrlUsername"
-                v-model="internal.configRemoteUrl.username"
                 size="30"
               />
             </div>
@@ -127,9 +127,9 @@
               </span>
 
               <input
+                v-model="internal.configRemoteUrl.passwordStoragePath"
                 type="text"
                 class="form-control"
-                v-model="internal.configRemoteUrl.passwordStoragePath"
                 size="20"
               />
 
@@ -148,8 +148,8 @@
 
         <!--TOKEN AUTH-->
         <div
-          id="remoteUrlTokenAuth"
           v-if="remoteUrlAuthenticationType === 'API_KEY'"
+          id="remoteUrlTokenAuth"
         >
           <div>
             <div class="col-md-3">
@@ -159,10 +159,10 @@
             </div>
             <div class="col-md-8 input-group">
               <input
+                v-model="internal.configRemoteUrl.keyName"
                 type="text"
                 class="form-control"
                 name="remoteUrlKey"
-                v-model="internal.configRemoteUrl.keyName"
                 size="30"
               />
             </div>
@@ -182,10 +182,10 @@
               </span>
 
               <input
+                v-model="internal.configRemoteUrl.tokenStoragePath"
                 type="text"
                 class="form-control"
                 name="remoteUrlToken"
-                v-model="internal.configRemoteUrl.tokenStoragePath"
                 size="20"
                 placeholder=""
               />
@@ -210,9 +210,9 @@
             </div>
             <div class="col-md-8 input-group">
               <select
+                v-model="internal.configRemoteUrl.apiTokenReporter"
                 name="remoteUrlApiTokenReporter"
                 class="form-control"
-                v-model="internal.configRemoteUrl.apiTokenReporter"
               >
                 <option value="HEADER">
                   {{
@@ -236,8 +236,8 @@
 
         <!--bearerToken AUTH-->
         <div
-          id="remoteUrlBearerTokenAuth"
           v-if="remoteUrlAuthenticationType === 'BEARER_TOKEN'"
+          id="remoteUrlBearerTokenAuth"
         >
           <div class="col-md-3">
             <label class="control-label">{{
@@ -253,10 +253,10 @@
             </span>
 
             <input
+              v-model="internal.configRemoteUrl.tokenStoragePath"
               type="text"
               class="form-control"
               name="remoteUrlBearerToken"
-              v-model="internal.configRemoteUrl.tokenStoragePath"
               size="20"
               placeholder=""
             />
@@ -286,11 +286,6 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "OptionRemoteUrlConfig",
   components: { ErrorsList, PluginInfo, KeyStorageSelector },
-  emits: [
-    "update:configRemoteUrl",
-    "update:remoteUrlAuthenticationType",
-    "update:valuesUrl",
-  ],
   props: {
     validationErrors: {
       type: Object,
@@ -309,6 +304,11 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: [
+    "update:configRemoteUrl",
+    "update:remoteUrlAuthenticationType",
+    "update:valuesUrl",
+  ],
   data() {
     return {
       remoteUrlAuthenticationList: [

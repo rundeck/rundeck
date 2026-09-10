@@ -21,6 +21,7 @@
                 class="form-control bg-2"
                 style="padding-left: 18px"
                 :placeholder="$t('storage.enter.path')"
+                :aria-label="$t('storage.enter.path')"
                 @keyup.enter="loadDirInputPath()"
               />
               <div
@@ -268,7 +269,11 @@
               <div>
                 Storage path:
                 <code class="text-success">{{ selectedKey.path }}</code>
-                <a href="#" data-bind="attr: { href: selectedPathUrl() }">
+                <a
+                  href="#"
+                  aria-label="Storage path link"
+                  data-bind="attr: { href: selectedPathUrl() }"
+                >
                   <i class="glyphicon glyphicon-link"></i>
                 </a>
               </div>
@@ -360,11 +365,14 @@ export default defineComponent({
   props: {
     readOnly: Boolean,
     allowUpload: Boolean,
-    modelValue: String,
-    storageFilter: String,
-    rootPath: String,
-    createdKey: {},
-    runnerId: String,
+    modelValue: { type: String, default: "" },
+    storageFilter: { type: String, default: "" },
+    rootPath: { type: String, default: "" },
+    createdKey: {
+      type: Object as PropType<Record<string, unknown> | null>,
+      default: null,
+    },
+    runnerId: { type: String, default: "" },
     getKeyMetadata: {
       type: Function as PropType<
         (path: string) => Promise<StorageKeyListResponse>
@@ -446,7 +454,7 @@ export default defineComponent({
         this.selectKey(newValue);
       }
     },
-    rootPath: function (newValue: string) {
+    rootPath: function () {
       // Reset current path when rootPath changed.
 
       this.path = "";
@@ -932,7 +940,7 @@ export default defineComponent({
 });
 </script>
 
-<style>
+<style scoped>
 .keySelector span {
   content: " ";
   margin: 0 2px;
@@ -946,10 +954,6 @@ export default defineComponent({
 .keySelector-button-group button {
   content: " ";
   margin: 0 2px;
-}
-
-.label-key {
-  vertical-align: middle;
 }
 
 .input-group-addon {

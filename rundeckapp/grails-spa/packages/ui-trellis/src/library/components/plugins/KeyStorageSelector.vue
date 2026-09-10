@@ -15,7 +15,7 @@
   -->
 
 <template>
-  <btn @click="openSelector()" data-testid="open-selector-btn">
+  <btn data-testid="open-selector-btn" @click="openSelector()">
     <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
   </btn>
   <modal
@@ -68,7 +68,12 @@ import { UploadSetting } from "../storage/KeyStorageEdit.vue";
 export default defineComponent({
   name: "KeyStorageSelector",
   components: { KeyStorageEdit, KeyStorageView },
-  props: ["modelValue", "storageFilter", "allowUpload", "readOnly"],
+  props: {
+    modelValue: { type: String, default: "" },
+    storageFilter: { type: String, default: "" },
+    allowUpload: Boolean,
+    readOnly: Boolean,
+  },
   emits: ["update:modelValue"],
   data() {
     return {

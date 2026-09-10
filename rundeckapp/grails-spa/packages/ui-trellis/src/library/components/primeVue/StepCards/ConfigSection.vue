@@ -362,8 +362,8 @@ export default defineComponent({
 }
 </style>
 
-<style>
-.p-chip-icon.fa {
+<style scoped>
+:deep(.p-chip-icon.fa) {
   width: auto !important;
   height: auto !important;
 }

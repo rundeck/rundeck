@@ -2,29 +2,29 @@
   <div class="flow-h">
     <btn
       :class="{ disabled: !hasUndo }"
-      @click="doUndo"
       size="xs"
       data-testid="undo-btn"
+      @click="doUndo"
     >
       <i class="glyphicon glyphicon-step-backward"></i>
       {{ $t("util.undoredo.undo") }}
     </btn>
     <btn
       :class="{ disabled: !hasRedo }"
-      @click="doRedo"
       size="xs"
       data-testid="redo-btn"
+      @click="doRedo"
     >
       {{ $t("util.undoredo.redo") }}
       <i class="glyphicon glyphicon-step-forward"></i>
     </btn>
     <btn
+      v-if="revertAllEnabled && hasUndo"
       size="xs"
       type="simple"
       class="btn-muted"
-      v-if="revertAllEnabled && hasUndo"
-      @click="doRevertAll"
       data-testid="revertAll-btn"
+      @click="doRevertAll"
     >
       <i class="glyphicon glyphicon-fast-backward"></i>
       {{ $t("util.undoredo.revertAll") }}
@@ -59,6 +59,12 @@ export default defineComponent({
       return this.index > 0;
     },
   },
+  mounted() {
+    this.eventBus?.on("change", this.addChange);
+  },
+  beforeUnmount() {
+    this.eventBus?.off("change");
+  },
   methods: {
     addChange(val: any) {
       if (this.index > 0) {
@@ -71,8 +77,8 @@ export default defineComponent({
       if (this.index >= this.stack.length) {
         return;
       }
-      let newindex = this.index + 1;
-      let change = this.stack[this.index];
+      const newindex = this.index + 1;
+      const change = this.stack[this.index];
       this.index = newindex;
       this.eventBus?.emit("undo", change);
     },
@@ -80,8 +86,8 @@ export default defineComponent({
       if (this.index < 1) {
         return;
       }
-      let newindex = this.index - 1;
-      let change = this.stack[newindex];
+      const newindex = this.index - 1;
+      const change = this.stack[newindex];
       this.index = newindex;
       this.eventBus?.emit("redo", change);
     },
@@ -89,12 +95,6 @@ export default defineComponent({
       this.index = this.stack.length;
       this.eventBus?.emit("revertAll");
     },
-  },
-  mounted() {
-    this.eventBus?.on("change", this.addChange);
-  },
-  beforeUnmount() {
-    this.eventBus?.off("change");
   },
 });
 </script>

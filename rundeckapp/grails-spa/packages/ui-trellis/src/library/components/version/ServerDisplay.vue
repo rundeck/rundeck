@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent } from "vue";
 
 import UiSocket from "../utils/UiSocket.vue";
 import { RundeckVersion } from "../../utilities/RundeckVersion";
@@ -26,11 +26,11 @@ import { RundeckVersion } from "../../utilities/RundeckVersion";
 export default defineComponent({
   components: { UiSocket },
   props: {
-    glyphicon: String,
-    uuid: String,
-    name: String,
-    nameClass: String,
-    showId: { default: true },
+    glyphicon: { type: String, default: "" },
+    uuid: { type: String, default: "" },
+    name: { type: String, default: "" },
+    nameClass: { type: String, default: "" },
+    showId: { type: Boolean, default: true },
   },
   computed: {
     css(): string {

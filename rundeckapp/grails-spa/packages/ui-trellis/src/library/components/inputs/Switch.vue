@@ -16,8 +16,10 @@
   >
     <input
       ref="input"
-      v-model="modelValue"
+      :checked="modelValue"
       type="checkbox"
+      aria-hidden="true"
+      tabindex="-1"
       style="height: 0; width: 0; appearance: none"
       @input="
         $emit('update:modelValue', ($event.target as HTMLInputElement).value)

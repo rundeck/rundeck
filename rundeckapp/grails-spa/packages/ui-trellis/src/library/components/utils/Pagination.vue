@@ -80,7 +80,7 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: "Pagination",
+  name: "PaginationControls",
   props: {
     modelValue: {
       type: Number,
@@ -143,7 +143,6 @@ export default defineComponent({
     pageList() {
       const pages: any[] = [];
       let skipped = false;
-      const curPage = this.modelValue;
 
       // creates sliding window of size pagingWindowSize
 

@@ -88,8 +88,12 @@ describe("PluginConfig", () => {
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="prop-field-port"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
+        true,
+      );
+      expect(wrapper.find('[data-testid="prop-field-port"]').exists()).toBe(
+        true,
+      );
     });
 
     it("does not render form fields in show mode", async () => {
@@ -97,11 +101,15 @@ describe("PluginConfig", () => {
         props: {
           mode: "show",
           config: {},
-          pluginConfig: { props: [{ name: "host", type: "String", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "host", type: "String", options: {} }],
+          },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
+        false,
+      );
     });
   });
 
@@ -118,7 +126,9 @@ describe("PluginConfig", () => {
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
+        true,
+      );
     });
 
     it("hides props scoped to Framework when the component scope is Instance", async () => {
@@ -128,12 +138,16 @@ describe("PluginConfig", () => {
           scope: "Instance",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "host", type: "String", scope: "Framework", options: {} }],
+            props: [
+              { name: "host", type: "String", scope: "Framework", options: {} },
+            ],
           },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
+        false,
+      );
     });
 
     it("shows props scoped to InstanceOnly when the component scope is Instance", async () => {
@@ -143,12 +157,21 @@ describe("PluginConfig", () => {
           scope: "Instance",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "host", type: "String", scope: "InstanceOnly", options: {} }],
+            props: [
+              {
+                name: "host",
+                type: "String",
+                scope: "InstanceOnly",
+                options: {},
+              },
+            ],
           },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
+        true,
+      );
     });
 
     it("shows Project-scoped props when the component scope is Framework", async () => {
@@ -158,12 +181,16 @@ describe("PluginConfig", () => {
           scope: "Framework",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "host", type: "String", scope: "Project", options: {} }],
+            props: [
+              { name: "host", type: "String", scope: "Project", options: {} },
+            ],
           },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
+        true,
+      );
     });
 
     it("hides Instance-scoped props when the component scope is Framework", async () => {
@@ -173,12 +200,21 @@ describe("PluginConfig", () => {
           scope: "Framework",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "host", type: "String", scope: "InstanceOnly", options: {} }],
+            props: [
+              {
+                name: "host",
+                type: "String",
+                scope: "InstanceOnly",
+                options: {},
+              },
+            ],
           },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
+        false,
+      );
     });
 
     it("shows props with Unspecified scope regardless of the component scope", async () => {
@@ -188,12 +224,21 @@ describe("PluginConfig", () => {
           scope: "Instance",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "host", type: "String", scope: "Unspecified", options: {} }],
+            props: [
+              {
+                name: "host",
+                type: "String",
+                scope: "Unspecified",
+                options: {},
+              },
+            ],
           },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
+        true,
+      );
     });
   });
 
@@ -209,8 +254,12 @@ describe("PluginConfig", () => {
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-section-Auth"]').exists()).toBe(false);
-      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="prop-section-Auth"]').exists()).toBe(
+        false,
+      );
+      expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
+        true,
+      );
     });
 
     it("renders named group props inside a collapsible details section", async () => {
@@ -227,9 +276,15 @@ describe("PluginConfig", () => {
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-section-Auth"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="prop-field-user"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="prop-field-pass"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="prop-section-Auth"]').exists()).toBe(
+        true,
+      );
+      expect(wrapper.find('[data-testid="prop-field-user"]').exists()).toBe(
+        true,
+      );
+      expect(wrapper.find('[data-testid="prop-field-pass"]').exists()).toBe(
+        true,
+      );
     });
 
     it("renders a primary named group as an open details section", async () => {
@@ -238,13 +293,17 @@ describe("PluginConfig", () => {
           mode: "edit",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "user", type: "String", options: { groupName: "Auth" } }],
+            props: [
+              { name: "user", type: "String", options: { groupName: "Auth" } },
+            ],
           },
         },
       });
 
       // open=!group.secondary=!false → open="" (HTML boolean attribute)
-      expect(wrapper.find('[data-testid="prop-section-Auth"]').attributes("open")).toBe("");
+      expect(
+        wrapper.find('[data-testid="prop-section-Auth"]').attributes("open"),
+      ).toBe("");
     });
 
     it("renders a secondary group as a collapsed details section by default", async () => {
@@ -253,13 +312,17 @@ describe("PluginConfig", () => {
           mode: "edit",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "extra", type: "String", options: { grouping: true } }],
+            props: [
+              { name: "extra", type: "String", options: { grouping: true } },
+            ],
           },
         },
       });
 
       // open=!group.secondary=!true → open not set (collapsed)
-      expect(wrapper.find('[data-testid="prop-section--"]').attributes("open")).toBeUndefined();
+      expect(
+        wrapper.find('[data-testid="prop-section--"]').attributes("open"),
+      ).toBeUndefined();
     });
   });
 
@@ -270,13 +333,23 @@ describe("PluginConfig", () => {
           mode: "edit",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "secret", type: "String", options: { displayType: "HIDDEN" } }],
+            props: [
+              {
+                name: "secret",
+                type: "String",
+                options: { displayType: "HIDDEN" },
+              },
+            ],
           },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-hidden-secret"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="prop-field-secret"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="prop-hidden-secret"]').exists()).toBe(
+        true,
+      );
+      expect(wrapper.find('[data-testid="prop-field-secret"]').exists()).toBe(
+        false,
+      );
     });
   });
 
@@ -286,7 +359,9 @@ describe("PluginConfig", () => {
         props: {
           mode: "show",
           config: { host: "localhost" },
-          pluginConfig: { props: [{ name: "host", type: "String", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "host", type: "String", options: {} }],
+          },
         },
       });
 
@@ -298,7 +373,9 @@ describe("PluginConfig", () => {
         props: {
           mode: "show",
           config: {},
-          pluginConfig: { props: [{ name: "host", type: "String", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "host", type: "String", options: {} }],
+          },
         },
       });
 
@@ -310,7 +387,9 @@ describe("PluginConfig", () => {
         props: {
           mode: "show",
           config: {},
-          pluginConfig: { props: [{ name: "enabled", type: "Boolean", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "enabled", type: "Boolean", options: {} }],
+          },
         },
       });
 
@@ -324,11 +403,15 @@ describe("PluginConfig", () => {
         props: {
           mode: "edit",
           modelValue: { type: "test", config: { tags: "red, blue, green" } },
-          pluginConfig: { props: [{ name: "tags", type: "Options", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "tags", type: "Options", options: {} }],
+          },
         },
       });
 
-      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toEqual(["red", "blue", "green"]);
+      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toEqual(
+        ["red", "blue", "green"],
+      );
     });
 
     it("passes an empty array to PluginPropEdit for an Options prop with no value in config", async () => {
@@ -336,11 +419,15 @@ describe("PluginConfig", () => {
         props: {
           mode: "edit",
           modelValue: { type: "test", config: {} },
-          pluginConfig: { props: [{ name: "tags", type: "Options", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "tags", type: "Options", options: {} }],
+          },
         },
       });
 
-      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toEqual([]);
+      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toEqual(
+        [],
+      );
     });
 
     it("passes an empty string to PluginPropEdit for an undefined Select prop", async () => {
@@ -348,11 +435,15 @@ describe("PluginConfig", () => {
         props: {
           mode: "edit",
           modelValue: { type: "test", config: {} },
-          pluginConfig: { props: [{ name: "strategy", type: "Select", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "strategy", type: "Select", options: {} }],
+          },
         },
       });
 
-      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toBe("");
+      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toBe(
+        "",
+      );
     });
 
     it("converts a string 'true' Boolean config value to a real boolean for the form", async () => {
@@ -360,11 +451,15 @@ describe("PluginConfig", () => {
         props: {
           mode: "edit",
           modelValue: { type: "test", config: { enabled: "true" } },
-          pluginConfig: { props: [{ name: "enabled", type: "Boolean", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "enabled", type: "Boolean", options: {} }],
+          },
         },
       });
 
-      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toBe(true);
+      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toBe(
+        true,
+      );
     });
 
     it("applies the prop default value in create mode when no config value exists", async () => {
@@ -373,12 +468,21 @@ describe("PluginConfig", () => {
           mode: "create",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "timeout", type: "String", defaultValue: "30", options: {} }],
+            props: [
+              {
+                name: "timeout",
+                type: "String",
+                defaultValue: "30",
+                options: {},
+              },
+            ],
           },
         },
       });
 
-      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toBe("30");
+      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toBe(
+        "30",
+      );
     });
 
     it("does not apply the prop default in edit mode when no config value exists", async () => {
@@ -387,13 +491,22 @@ describe("PluginConfig", () => {
           mode: "edit",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "timeout", type: "String", defaultValue: "30", options: {} }],
+            props: [
+              {
+                name: "timeout",
+                type: "String",
+                defaultValue: "30",
+                options: {},
+              },
+            ],
           },
         },
       });
 
       // Default must not be applied — value should be absent/empty, not "30"
-      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).not.toBe("30");
+      expect(
+        wrapper.findComponent(PluginPropEdit).props("modelValue"),
+      ).not.toBe("30");
     });
   });
 
@@ -409,7 +522,9 @@ describe("PluginConfig", () => {
         },
       });
 
-      await wrapper.findComponent(PluginPropEdit).vm.$emit("update:modelValue", true);
+      await wrapper
+        .findComponent(PluginPropEdit)
+        .vm.$emit("update:modelValue", true);
       await wrapper.vm.$nextTick();
 
       const emitted = wrapper.emitted("update:modelValue");
@@ -423,16 +538,27 @@ describe("PluginConfig", () => {
           mode: "edit",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "enabled", type: "Boolean", defaultValue: "true", options: {} }],
+            props: [
+              {
+                name: "enabled",
+                type: "Boolean",
+                defaultValue: "true",
+                options: {},
+              },
+            ],
           },
         },
       });
 
-      await wrapper.findComponent(PluginPropEdit).vm.$emit("update:modelValue", false);
+      await wrapper
+        .findComponent(PluginPropEdit)
+        .vm.$emit("update:modelValue", false);
       await wrapper.vm.$nextTick();
 
       const emitted = wrapper.emitted("update:modelValue");
-      expect((emitted![emitted!.length - 1][0] as any).config.enabled).toBe("false");
+      expect((emitted![emitted!.length - 1][0] as any).config.enabled).toBe(
+        "false",
+      );
     });
 
     it("emits the string 'false' in the config payload when a Boolean with no true default is explicitly set to false", async () => {
@@ -446,12 +572,16 @@ describe("PluginConfig", () => {
         },
       });
 
-      await wrapper.findComponent(PluginPropEdit).vm.$emit("update:modelValue", false);
+      await wrapper
+        .findComponent(PluginPropEdit)
+        .vm.$emit("update:modelValue", false);
       await wrapper.vm.$nextTick();
 
       const emitted = wrapper.emitted("update:modelValue")!;
       expect(emitted![emitted.length - 1][0]).toEqual(
-        expect.objectContaining({ config: expect.objectContaining({ enabled: "false" }) }),
+        expect.objectContaining({
+          config: expect.objectContaining({ enabled: "false" }),
+        }),
       );
     });
 
@@ -469,7 +599,9 @@ describe("PluginConfig", () => {
       const emitted = wrapper.emitted("update:modelValue")!;
       expect(emitted).toBeDefined();
       expect(emitted[emitted.length - 1][0]).toEqual(
-        expect.objectContaining({ config: expect.objectContaining({ extraQuotes: "false" }) }),
+        expect.objectContaining({
+          config: expect.objectContaining({ extraQuotes: "false" }),
+        }),
       );
     });
   });
@@ -481,12 +613,16 @@ describe("PluginConfig", () => {
           mode: "edit",
           modelValue: { type: "test", config: {} },
           pluginConfig: {
-            props: [{ name: "host", type: "String", required: true, options: {} }],
+            props: [
+              { name: "host", type: "String", required: true, options: {} },
+            ],
           },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').classes()).toContain("required");
+      expect(
+        wrapper.find('[data-testid="prop-field-host"]').classes(),
+      ).toContain("required");
     });
 
     it("applies the has-error class when validation errors exist for a prop", async () => {
@@ -495,11 +631,15 @@ describe("PluginConfig", () => {
           mode: "edit",
           modelValue: { type: "test", config: {} },
           validation: { valid: false, errors: { host: "is required" } },
-          pluginConfig: { props: [{ name: "host", type: "String", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "host", type: "String", options: {} }],
+          },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').classes()).toContain("has-error");
+      expect(
+        wrapper.find('[data-testid="prop-field-host"]').classes(),
+      ).toContain("has-error");
     });
 
     it("does not apply the has-error class when there are no validation errors", async () => {
@@ -508,11 +648,15 @@ describe("PluginConfig", () => {
           mode: "edit",
           modelValue: { type: "test", config: {} },
           validation: { valid: true, errors: {} },
-          pluginConfig: { props: [{ name: "host", type: "String", options: {} }] },
+          pluginConfig: {
+            props: [{ name: "host", type: "String", options: {} }],
+          },
         },
       });
 
-      expect(wrapper.find('[data-testid="prop-field-host"]').classes()).not.toContain("has-error");
+      expect(
+        wrapper.find('[data-testid="prop-field-host"]').classes(),
+      ).not.toContain("has-error");
     });
   });
 

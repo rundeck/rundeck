@@ -35,7 +35,7 @@ export interface RunAdhocResponse {
 /**
  * Execute an adhoc command via REST API endpoint
  * Uses: POST /api/{api_version}/project/{project}/run/command/inline
- * 
+ *
  * IMPORTANT: Sends data as query parameters (not JSON body) to match original jQuery.serialize() behavior
  * This ensures meta.* fields are sent as flat query parameters (meta.jobRunnerFilter, etc.)
  * which Grails automatically parses into the meta map object
@@ -44,7 +44,7 @@ export async function runAdhocCommand(
   request: RunAdhocRequest,
 ): Promise<RunAdhocResponse> {
   const rundeckContext = getRundeckContext();
-  
+
   // Build API endpoint URL: /api/{api_version}/project/{project}/run/command/inline/api
   // Use the new API authentication endpoint for v56+
   // The api client already has baseURL set to rdBase + "api/" + apiVersion + "/"
@@ -60,7 +60,7 @@ export async function runAdhocCommand(
     filter: request.filter,
     doNodedispatch: request.doNodedispatch || "true",
   };
-  
+
   if (request.filterExclude) {
     params.filterExclude = request.filterExclude;
   }
@@ -70,7 +70,7 @@ export async function runAdhocCommand(
   if (request.nodeKeepgoing !== undefined) {
     params.nodeKeepgoing = request.nodeKeepgoing;
   }
-  
+
   // Add meta fields as flat query parameters (meta.jobRunnerFilter, etc.)
   // Grails will automatically parse these into the meta map object
   // IMPORTANT: For runner-related meta fields, if they're empty, set them to LOCAL_RUNNER defaults
@@ -86,7 +86,7 @@ export async function runAdhocCommand(
   let hasRunnerFilter = false;
   let hasRunnerFilterType = false;
   let hasRunnerFilterMode = false;
-  
+
   if (request.meta) {
     Object.keys(request.meta).forEach((key) => {
       const value = request.meta![key];

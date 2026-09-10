@@ -47,14 +47,14 @@ export default defineComponent({
       default: false,
     },
   },
-  data() {
-    return {
-      scmUtilities: new ScmTextUtilities(this.$t),
-    };
-  },
   setup() {
     return {
       jobPageStore: inject(JobPageStoreInjectionKey) as JobPageStore,
+    };
+  },
+  data() {
+    return {
+      scmUtilities: new ScmTextUtilities(this.$t),
     };
   },
   computed: {

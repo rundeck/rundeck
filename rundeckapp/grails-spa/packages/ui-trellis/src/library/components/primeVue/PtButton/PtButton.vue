@@ -61,8 +61,8 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
-.p-button {
+<style scoped lang="scss">
+:deep(.p-button) {
   background: var(--colors-primaryButtonOnLight);
   border-color: var(--colors-primaryButtonOnLight);
   color: var(--colors-white);
@@ -90,11 +90,11 @@ export default defineComponent({
   }
 }
 
-.p-button-label {
+:deep(.p-button-label) {
   font-weight: var(--fontWeights-medium);
 }
 
-.p-button-danger {
+:deep(.p-button-danger) {
   background: var(--colors-dangerButtonOnLight);
   border-color: var(--colors-dangerButtonOnLight);
   color: var(--colors-white);
@@ -120,7 +120,7 @@ export default defineComponent({
   }
 }
 
-.p-button-secondary {
+:deep(.p-button-secondary) {
   background-color: var(--colors-white);
   border-color: var(--colors-gray-600);
   color: var(--colors-gray-800);
@@ -153,8 +153,8 @@ export default defineComponent({
   }
 }
 
-.p-button-link,
-.p-button-text {
+:deep(.p-button-link),
+:deep(.p-button-text) {
   background: transparent;
   border-color: transparent;
   color: var(--colors-blue-500);
@@ -206,7 +206,7 @@ export default defineComponent({
   }
 }
 
-.p-button-link:hover {
+:deep(.p-button-link):hover {
   background-color: transparent;
 }
 </style>

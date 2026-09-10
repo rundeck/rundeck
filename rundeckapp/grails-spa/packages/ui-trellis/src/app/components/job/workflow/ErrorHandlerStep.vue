@@ -4,19 +4,19 @@
       <strong>{{ $t("Workflow.stepErrorHandler.label.on.error") }}:</strong>
       <div class="configuration" @click.stop="$emit('edit')">
         <plugin-config
-            v-if="!step.errorhandler.jobref"
-            :service-name="
-          step.errorhandler.nodeStep
-            ? ServiceType.WorkflowNodeStep
-            : ServiceType.WorkflowStep
-        "
-            :provider="step.errorhandler.type"
-            :config="step.errorhandler.config"
-            :read-only="true"
-            :show-title="true"
-            :show-icon="true"
-            :show-description="true"
-            mode="show"
+          v-if="!step.errorhandler.jobref"
+          :service-name="
+            step.errorhandler.nodeStep
+              ? ServiceType.WorkflowNodeStep
+              : ServiceType.WorkflowStep
+          "
+          :provider="step.errorhandler.type"
+          :config="step.errorhandler.config"
+          :read-only="true"
+          :show-title="true"
+          :show-icon="true"
+          :show-description="true"
+          mode="show"
         >
           <template v-if="step.errorhandler.nodeStep" #iconSuffix>
             <i class="fas fa-hdd node-icon"></i>
@@ -39,7 +39,12 @@
       </span>
     </div>
     <div class="btn-group" role="group" aria-label="item controls">
-      <button data-testid="remove-handler-button" class="btn btn-xs btn-default" type="button" @click.stop="$emit('removeHandler', step)">
+      <button
+        data-testid="remove-handler-button"
+        class="btn btn-xs btn-default"
+        type="button"
+        @click.stop="$emit('removeHandler', step)"
+      >
         <i class="glyphicon glyphicon-remove"></i>
       </button>
     </div>
@@ -61,12 +66,12 @@ export default {
       required: true,
     },
   },
+  emits: ["removeHandler", "edit"],
   data() {
     return {
       ServiceType,
     };
   },
-  emits: ["removeHandler", "edit"]
 };
 </script>
 <style lang="scss">

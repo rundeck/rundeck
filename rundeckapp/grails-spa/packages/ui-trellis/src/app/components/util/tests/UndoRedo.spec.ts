@@ -58,9 +58,9 @@ describe("UndoRedo", () => {
 
       await wrapper.vm.$nextTick();
 
-      expect(
-        wrapper.find('[data-testid="undo-btn"]').classes(),
-      ).not.toContain("disabled");
+      expect(wrapper.find('[data-testid="undo-btn"]').classes()).not.toContain(
+        "disabled",
+      );
       expect(wrapper.find('[data-testid="redo-btn"]').classes()).toContain(
         "disabled",
       );

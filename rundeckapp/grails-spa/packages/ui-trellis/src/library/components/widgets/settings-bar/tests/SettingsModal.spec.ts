@@ -93,7 +93,9 @@ describe("SettingsModal", () => {
   describe("Modal visibility", () => {
     it("does not render overlay initially", async () => {
       const wrapper = await createWrapper();
-      expect(wrapper.find('[data-testid="settings-modal-overlay"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="settings-modal-overlay"]').exists(),
+      ).toBe(false);
     });
 
     it("opens modal when settings:open-modal event is emitted", async () => {
@@ -103,8 +105,12 @@ describe("SettingsModal", () => {
       await wrapper.vm.$nextTick();
       await flushPromises();
 
-      expect(wrapper.find('[data-testid="settings-modal-overlay"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="settings-tab-theme"]').classes()).toContain("settings-modal__tab--active");
+      expect(
+        wrapper.find('[data-testid="settings-modal-overlay"]').exists(),
+      ).toBe(true);
+      expect(
+        wrapper.find('[data-testid="settings-tab-theme"]').classes(),
+      ).toContain("settings-modal__tab--active");
     });
 
     it("opens to specified tab via event parameter", async () => {
@@ -114,7 +120,9 @@ describe("SettingsModal", () => {
       await wrapper.vm.$nextTick();
       await flushPromises();
 
-      expect(wrapper.find('[data-testid="settings-tab-ui-early-access"]').classes()).toContain("settings-modal__tab--active");
+      expect(
+        wrapper.find('[data-testid="settings-tab-ui-early-access"]').classes(),
+      ).toContain("settings-modal__tab--active");
     });
 
     it("closes modal when close button is clicked", async () => {
@@ -124,10 +132,14 @@ describe("SettingsModal", () => {
       await wrapper.vm.$nextTick();
       await flushPromises();
 
-      await wrapper.find('[data-testid="settings-modal-close"]').trigger("click");
+      await wrapper
+        .find('[data-testid="settings-modal-close"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.find('[data-testid="settings-modal-overlay"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="settings-modal-overlay"]').exists(),
+      ).toBe(false);
     });
 
     it("closes modal when overlay is clicked", async () => {
@@ -137,10 +149,14 @@ describe("SettingsModal", () => {
       await wrapper.vm.$nextTick();
       await flushPromises();
 
-      await wrapper.find('[data-testid="settings-modal-overlay"]').trigger("click");
+      await wrapper
+        .find('[data-testid="settings-modal-overlay"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.find('[data-testid="settings-modal-overlay"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="settings-modal-overlay"]').exists(),
+      ).toBe(false);
     });
 
     it("does not respond to events after unmount", async () => {
@@ -150,7 +166,9 @@ describe("SettingsModal", () => {
       eventBus.emit("settings:open-modal", "theme");
       await flushPromises();
 
-      expect(wrapper.find('[data-testid="settings-modal-overlay"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="settings-modal-overlay"]').exists(),
+      ).toBe(false);
     });
   });
 
@@ -162,11 +180,17 @@ describe("SettingsModal", () => {
       await wrapper.vm.$nextTick();
       await flushPromises();
 
-      await wrapper.find('[data-testid="settings-tab-ui-early-access"]').trigger("click");
+      await wrapper
+        .find('[data-testid="settings-tab-ui-early-access"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.find('[data-testid="settings-tab-ui-early-access"]').classes()).toContain("settings-modal__tab--active");
-      expect(wrapper.find('[data-testid="settings-panel-title"]').text()).toBe("settings.uiEarlyAccess.title");
+      expect(
+        wrapper.find('[data-testid="settings-tab-ui-early-access"]').classes(),
+      ).toContain("settings-modal__tab--active");
+      expect(wrapper.find('[data-testid="settings-panel-title"]').text()).toBe(
+        "settings.uiEarlyAccess.title",
+      );
     });
 
     it("displays theme panel when theme tab is active", async () => {
@@ -176,8 +200,12 @@ describe("SettingsModal", () => {
       await wrapper.vm.$nextTick();
       await flushPromises();
 
-      expect(wrapper.find('[data-testid="settings-panel-theme"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="settings-panel-ui-early-access"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="settings-panel-theme"]').exists(),
+      ).toBe(true);
+      expect(
+        wrapper.find('[data-testid="settings-panel-ui-early-access"]').exists(),
+      ).toBe(false);
     });
 
     it("displays ui-early-access panel when ui-early-access tab is active", async () => {
@@ -187,8 +215,12 @@ describe("SettingsModal", () => {
       await wrapper.vm.$nextTick();
       await flushPromises();
 
-      expect(wrapper.find('[data-testid="settings-panel-ui-early-access"]').exists()).toBe(true);
-      expect(wrapper.find('[data-testid="settings-panel-theme"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="settings-panel-ui-early-access"]').exists(),
+      ).toBe(true);
+      expect(
+        wrapper.find('[data-testid="settings-panel-theme"]').exists(),
+      ).toBe(false);
     });
   });
 

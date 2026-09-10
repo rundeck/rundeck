@@ -33,7 +33,12 @@
       :size="size"
     >
       <div v-if="showProjectSelector">
-        <label>Project:</label
+        <!-- for/id pair this label to ProjectPicker's internal <select
+             id="projectPickerSelect">; the a11y plugin's default rule also
+             requires DOM nesting, which isn't visible across component
+             boundaries -->
+        <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+        <label for="projectPickerSelect">Project:</label
         ><project-picker v-model="project"></project-picker>
       </div>
 
@@ -187,4 +192,4 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss"></style>
+<style scoped lang="scss"></style>

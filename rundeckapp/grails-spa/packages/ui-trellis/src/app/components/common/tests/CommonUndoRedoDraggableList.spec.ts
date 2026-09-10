@@ -31,7 +31,10 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   return wrapper;
 };
 
-const assertRenderedItems = (wrapper: VueWrapper<any>, itemsArray: any[] = []) => {
+const assertRenderedItems = (
+  wrapper: VueWrapper<any>,
+  itemsArray: any[] = [],
+) => {
   expect(wrapper.find('[data-testid="item-container"]').exists()).toBe(true);
   const allRenderedItems = wrapper.findAll('[data-testid="rendered-items"]');
   expect(allRenderedItems).toHaveLength(itemsArray.length);
@@ -94,9 +97,7 @@ describe("CommonUndoRedoDraggableList", () => {
 
     await wrapper.vm.$nextTick();
     const emitted = wrapper.emitted("update:modelValue");
-    expect(emitted![0][0]).toEqual(
-      expectedResult,
-    );
+    expect(emitted![0][0]).toEqual(expectedResult);
   });
 
   it("does not emit update:modelValue when data changes from parent", async () => {

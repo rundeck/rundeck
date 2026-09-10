@@ -1,8 +1,21 @@
 <template>
-  <li v-if="item.inline" :id="item.id" class="utility-bar__item utility-bar__item--inline">
+  <li
+    v-if="item.inline"
+    :id="item.id"
+    class="utility-bar__item utility-bar__item--inline"
+  >
     <component :is="item.widget" />
   </li>
-  <li v-else :id="item.id" class="utility-bar__item" @click="handleClick">
+  <li
+    v-else
+    :id="item.id"
+    class="utility-bar__item"
+    role="button"
+    tabindex="0"
+    @click="handleClick"
+    @keydown.enter="handleClick"
+    @keydown.space.prevent="handleClick"
+  >
     <i class="utility-bar__item-icon" :class="item.class"></i>
     <span v-if="item.label">{{ item.label }}</span>
     <span v-if="item.count" class="utility-bar__item-counter">{{
@@ -61,7 +74,7 @@ export default defineComponent({
 .utility-bar__item--inline {
   padding: 0;
   cursor: default;
-  
+
   &:hover {
     background-color: transparent;
   }

@@ -93,19 +93,19 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .baseStepCard {
   box-shadow: none;
   overflow: hidden;
   border-radius: var(--radii-md);
   border: 1px solid var(--colors-gray-300-original);
 
-  .p-card-body {
+  :deep(.p-card-body) {
     padding: var(--sizes-4);
   }
 
   &.collapsed {
-    .p-card-body {
+    :deep(.p-card-body) {
       display: none;
     }
 

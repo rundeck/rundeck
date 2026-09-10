@@ -16,7 +16,12 @@
 
 <template>
   <div>
-    <select v-model="value" class="form-control" data-testid="project-select">
+    <select
+      id="projectPickerSelect"
+      v-model="value"
+      class="form-control"
+      data-testid="project-select"
+    >
       <option
         v-for="project in projects"
         :key="project"
@@ -36,6 +41,7 @@ export default defineComponent({
   name: "ProjectPicker",
   props: {
     modelValue: {
+      type: String,
       required: false,
       default: "",
     },
@@ -70,4 +76,4 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss"></style>
+<style scoped lang="scss"></style>

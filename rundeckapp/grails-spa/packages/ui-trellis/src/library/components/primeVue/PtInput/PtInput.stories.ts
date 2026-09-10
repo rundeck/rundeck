@@ -6,7 +6,8 @@ const meta: Meta<typeof PtInput> = {
   title: "PtInput",
   component: PtInput,
   parameters: {
-    componentSubtitle: "A wrapper component for PrimeVue InputText and IconField with custom styling, labels, helper text, and error states",
+    componentSubtitle:
+      "A wrapper component for PrimeVue InputText and IconField with custom styling, labels, helper text, and error states",
     actions: {
       disable: true,
     },
@@ -39,7 +40,8 @@ const meta: Meta<typeof PtInput> = {
         type: "boolean",
       },
       type: "boolean",
-      description: "When true, displays the input in an invalid state with error styling.",
+      description:
+        "When true, displays the input in an invalid state with error styling.",
     },
     label: {
       control: {
@@ -60,35 +62,40 @@ const meta: Meta<typeof PtInput> = {
         type: "text",
       },
       type: "string",
-      description: "Error message displayed below the input when invalid is true.",
+      description:
+        "Error message displayed below the input when invalid is true.",
     },
     leftIcon: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "Icon class for left icon (e.g., 'pi pi-search'). When provided, renders IconField component.",
+      description:
+        "Icon class for left icon (e.g., 'pi pi-search'). When provided, renders IconField component.",
     },
     rightIcon: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "Icon class for right icon (e.g., 'pi pi-times'). When provided, renders IconField component.",
+      description:
+        "Icon class for right icon (e.g., 'pi pi-times'). When provided, renders IconField component.",
     },
     inputId: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "ID for the input element. Used to associate label with input.",
+      description:
+        "ID for the input element. Used to associate label with input.",
     },
     name: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "Name attribute for the element, typically used in form submissions.",
+      description:
+        "Name attribute for the element, typically used in form submissions.",
     },
     type: {
       options: ["text", "password", "email", "number", "tel", "url", "search"],
@@ -96,7 +103,8 @@ const meta: Meta<typeof PtInput> = {
         type: "select",
       },
       type: "string",
-      description: "Input type. Options: 'text', 'password', 'email', 'number', 'tel', 'url', 'search'.",
+      description:
+        "Input type. Options: 'text', 'password', 'email', 'number', 'tel', 'url', 'search'.",
     },
     readonly: {
       control: {
@@ -131,7 +139,8 @@ const meta: Meta<typeof PtInput> = {
         type: "text",
       },
       type: "string",
-      description: "Identifier of the element that labels the input for accessibility.",
+      description:
+        "Identifier of the element that labels the input for accessibility.",
     },
   },
   args: {

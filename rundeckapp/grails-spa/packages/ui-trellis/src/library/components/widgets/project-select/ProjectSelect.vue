@@ -6,10 +6,11 @@
           <i class="fas fa-search form-control-feedback" />
           <input
             ref="search"
+            v-model="searchTerm"
             type="text"
             class="form-control form-control-sm"
-            v-model="searchTerm"
             placeholder="Search all projects"
+            aria-label="Search all projects"
             data-testid="search-projects"
           />
         </div>
@@ -17,10 +18,10 @@
       <Skeleton :loading="!projectStore.loaded">
         <RecycleScroller
           ref="scroller"
+          :key="`${options.length}scroller`"
+          v-slot="{ item }"
           :items="options"
           :item-size="25"
-          :key="`${options.length}scroller`"
-          v-slot:default="{ item }"
           key-field="name"
           class="scroller"
         >
@@ -43,13 +44,16 @@
             </span>
           </a>
           <label
-            class="scroller__item scroller__item__checkbox"
             v-else-if="mode === 'multi'"
-            @keydown.space="handleSelect(item.name)"
+            :for="`projectCheckbox-${item.name}`"
+            class="scroller__item scroller__item__checkbox"
+            role="button"
             tabindex="0"
             :data-testid="`projectItem${item.name}`"
+            @keydown.space="handleSelect(item.name)"
           >
             <input
+              :id="`projectCheckbox-${item.name}`"
               :checked="
                 selectedProjects.includes(item.name) ||
                 (item.name === '_all' && allProjectsAreSelected)
@@ -57,8 +61,8 @@
               type="checkbox"
               :value="item.name"
               class="vue-multiselect-checkbox"
-              @click="handleSelect(item.name)"
               :data-testid="`projectCheckbox-${item.name}`"
+              @click="handleSelect(item.name)"
             />
             <span class="text-ellipsis">
               {{ item.label || item.name }}
@@ -203,19 +207,10 @@ export default defineComponent({
       return this.projectStore.search("").map((proj) => proj.name);
     },
   },
-  methods: {
-    itemHref(project: Project) {
-      return url(`?project=${project.name}`).href;
-    },
-    handleSelect(projectName: string) {
-      let arrayToEmit = [projectName];
-      if (projectName === "_all") {
-        arrayToEmit =
-          this.selectedProjects.length === this.allProjectNames.length
-            ? []
-            : this.allProjectNames;
-      }
-      this.$emit("update:selection", arrayToEmit);
+  watch: {
+    selectedProjects(newVal) {
+      this.allProjectsAreSelected =
+        newVal.length === this.allProjectNames.length;
     },
   },
   beforeMount() {
@@ -235,10 +230,19 @@ export default defineComponent({
       (<HTMLElement>this.$refs["search"]).focus();
     });
   },
-  watch: {
-    selectedProjects(newVal) {
-      this.allProjectsAreSelected =
-        newVal.length === this.allProjectNames.length;
+  methods: {
+    itemHref(project: Project) {
+      return url(`?project=${project.name}`).href;
+    },
+    handleSelect(projectName: string) {
+      let arrayToEmit = [projectName];
+      if (projectName === "_all") {
+        arrayToEmit =
+          this.selectedProjects.length === this.allProjectNames.length
+            ? []
+            : this.allProjectNames;
+      }
+      this.$emit("update:selection", arrayToEmit);
     },
   },
 });

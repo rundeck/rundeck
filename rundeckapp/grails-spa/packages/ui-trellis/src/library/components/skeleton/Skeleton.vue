@@ -2,9 +2,10 @@
 import { h, defineComponent, VNode } from "vue";
 
 export default defineComponent({
+  name: "RdSkeleton",
   props: {
-    loading: { default: false },
-    type: { default: "list" },
+    loading: { type: Boolean, default: false },
+    type: { type: String, default: "list" },
   },
 
   methods: {
@@ -16,14 +17,12 @@ export default defineComponent({
       const slot = this.$slots.default;
       if (!slot) {
         return h("div");
-      } else if (Array.isArray(slot)) {
-        if (slot.length == 1) {
-          return slot[0];
-        } else {
-          return h("div", slot);
-        }
+      }
+      const rendered = slot();
+      if (rendered.length == 1) {
+        return rendered[0];
       } else {
-        return slot();
+        return h("div", rendered);
       }
     },
     skeleton(h): VNode {
@@ -47,7 +46,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss"></style>
+<style scoped lang="scss"></style>
 
 <style scoped lang="scss">
 :root {
@@ -57,7 +56,8 @@ export default defineComponent({
 .skeleton--list {
   height: 100%;
   background-repeat: repeat-y;
-  background-image: linear-gradient(
+  background-image:
+    linear-gradient(
       100deg,
       rgba(255, 255, 255, 0),
       rgba(255, 255, 255, 0.5) 50%,

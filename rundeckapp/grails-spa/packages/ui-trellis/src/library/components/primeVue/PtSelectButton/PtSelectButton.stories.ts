@@ -6,7 +6,8 @@ const meta: Meta<typeof PtSelectButton> = {
   title: "PtSelectButton",
   component: PtSelectButton,
   parameters: {
-    componentSubtitle: "A wrapper component for PrimeVue SelectButton with custom styling",
+    componentSubtitle:
+      "A wrapper component for PrimeVue SelectButton with custom styling",
     actions: {
       disable: true,
     },
@@ -25,28 +26,32 @@ const meta: Meta<typeof PtSelectButton> = {
       control: {
         type: "object",
       },
-      description: "An array of options to display. Can be simple values or objects.",
+      description:
+        "An array of options to display. Can be simple values or objects.",
     },
     optionLabel: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "Property name or getter function to use as the label of an option.",
+      description:
+        "Property name or getter function to use as the label of an option.",
     },
     optionValue: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "Property name or getter function to use as the value of an option.",
+      description:
+        "Property name or getter function to use as the value of an option.",
     },
     optionDisabled: {
       control: {
         type: "text",
       },
       type: "string",
-      description: "Property name or getter function to use as the disabled flag of an option.",
+      description:
+        "Property name or getter function to use as the disabled flag of an option.",
     },
     multiple: {
       control: {
@@ -60,7 +65,8 @@ const meta: Meta<typeof PtSelectButton> = {
         type: "boolean",
       },
       type: "boolean",
-      description: "When true, the select button takes up the full width of its container.",
+      description:
+        "When true, the select button takes up the full width of its container.",
     },
     disabled: {
       control: {
@@ -95,7 +101,8 @@ const meta: Meta<typeof PtSelectButton> = {
         type: "text",
       },
       type: "string",
-      description: "Name attribute for the element, typically used in form submissions.",
+      description:
+        "Name attribute for the element, typically used in form submissions.",
     },
     ariaLabelledby: {
       control: {
@@ -143,7 +150,7 @@ const generateTemplate = (args: Record<string, any>) => {
 };
 
 export const Default: Story = {
-  render: args => ({
+  render: (args) => ({
     props: Object.keys(args),
     components: { PtSelectButton },
     setup() {
@@ -155,7 +162,7 @@ export const Default: Story = {
 };
 
 export const WithObjects: Story = {
-  render: args => ({
+  render: (args) => ({
     props: Object.keys(args),
     components: { PtSelectButton },
     setup() {
@@ -175,7 +182,7 @@ export const WithObjects: Story = {
 };
 
 export const Multiple: Story = {
-  render: args => ({
+  render: (args) => ({
     props: Object.keys(args),
     components: { PtSelectButton },
     setup() {
@@ -191,7 +198,7 @@ export const Multiple: Story = {
 };
 
 export const Fluid: Story = {
-  render: args => ({
+  render: (args) => ({
     props: Object.keys(args),
     components: { PtSelectButton },
     setup() {
@@ -205,7 +212,7 @@ export const Fluid: Story = {
 };
 
 export const PreventEmpty: Story = {
-  render: args => ({
+  render: (args) => ({
     props: Object.keys(args),
     components: { PtSelectButton },
     setup() {

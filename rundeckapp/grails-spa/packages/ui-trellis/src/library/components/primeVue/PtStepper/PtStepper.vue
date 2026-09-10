@@ -57,8 +57,8 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
-.p-step {
+<style scoped lang="scss">
+:deep(.p-step) {
   &-header {
     //display: flex;
     //flex-direction: column;

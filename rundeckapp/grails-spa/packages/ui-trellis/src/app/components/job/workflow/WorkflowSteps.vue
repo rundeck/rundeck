@@ -15,78 +15,89 @@
           <div class="step-item-display">
             <div class="step-item-row">
               <div
-                  :id="`wfitem_${index}`"
-                  class="step-item-config"
-                  data-testid="edit-step-item"
-                  :title="$t('Workflow.clickToEdit')"
-                  @click="editStepByIndex(index)"
+                :id="`wfitem_${index}`"
+                class="step-item-config"
+                data-testid="edit-step-item"
+                :title="$t('Workflow.clickToEdit')"
+                @click="editStepByIndex(index)"
               >
                 <plugin-config
-                    v-if="!element.jobref"
-                    :service-name="
-                  element.nodeStep
-                    ? ServiceType.WorkflowNodeStep
-                    : ServiceType.WorkflowStep
-                "
-                    :provider="element.type"
-                    :config="element.config"
-                    :read-only="true"
-                    :show-title="true"
-                    :show-icon="true"
-                    :show-description="true"
-                    mode="show"
+                  v-if="!element.jobref"
+                  :service-name="
+                    element.nodeStep
+                      ? ServiceType.WorkflowNodeStep
+                      : ServiceType.WorkflowStep
+                  "
+                  :provider="element.type"
+                  :config="element.config"
+                  :read-only="true"
+                  :show-title="true"
+                  :show-icon="true"
+                  :show-description="true"
+                  mode="show"
                 >
                   <template v-if="element.nodeStep" #iconSuffix>
                     <i class="fas fa-hdd node-icon"></i>
                   </template>
                 </plugin-config>
-                <job-ref-step v-else-if="element.jobref" :step="element"></job-ref-step>
+                <job-ref-step
+                  v-else-if="element.jobref"
+                  :step="element"
+                ></job-ref-step>
 
-                <div v-if="element.description" :data-testid="`wfstep-description-${index}`" class="wfstep-description">
+                <div
+                  v-if="element.description"
+                  :data-testid="`wfstep-description-${index}`"
+                  class="wfstep-description"
+                >
                   {{ element.description }}
                 </div>
               </div>
               <div class="step-item-controls">
                 <div
-                    class="btn-group"
-                    role="group"
-                    :aria-label="$t('Workflow.itemControls')"
+                  class="btn-group"
+                  role="group"
+                  :aria-label="$t('Workflow.itemControls')"
                 >
                   <btn
-                      size="xs"
-                      style="min-height: 21px"
-                      @click.stop="editStepByIndex(index)"
+                    size="xs"
+                    style="min-height: 21px"
+                    @click.stop="editStepByIndex(index)"
                   >
                     <i class="fas fa-edit"></i>
                     {{ $t("Workflow.edit") }}
                   </btn>
                   <btn
-                      size="xs"
-                      :title="$t('Workflow.duplicateStep')"
-                      @click.stop="duplicateStep(index)"
+                    size="xs"
+                    :title="$t('Workflow.duplicateStep')"
+                    @click.stop="duplicateStep(index)"
                   >
                     <i class="glyphicon glyphicon-duplicate"></i>
                   </btn>
                   <dropdown menu-right>
-                    <btn size="xs" data-role="trigger" :disabled="!!(element.errorhandler && element.jobref)">
+                    <btn
+                      size="xs"
+                      data-role="trigger"
+                      :disabled="!!(element.errorhandler && element.jobref)"
+                    >
                       <i class="glyphicon glyphicon-cog"></i>
                       <span class="caret"></span>
                     </btn>
                     <template #dropdown>
                       <li v-if="!element.errorhandler">
                         <a
-                            role="button"
-                            data-test="add-error-handler"
-                            @click="toggleAddErrorHandlerModal(index)"
+                          role="button"
+                          data-test="add-error-handler"
+                          @click="toggleAddErrorHandlerModal(index)"
                         >
                           {{ $t("Workflow.addErrorHandler") }}
                         </a>
                       </li>
                       <li v-if="!element.jobref">
                         <a
-                            role="button"
-                            data-test="add-log-filter"
-                            @click="addLogFilterForIndex(element.id)"
+                          role="button"
+                          data-test="add-log-filter"
+                          @click="addLogFilterForIndex(element.id)"
                         >
                           {{ $t("Workflow.addLogFilter") }}
                         </a>
@@ -94,46 +105,46 @@
                     </template>
                   </dropdown>
                   <btn
-                      size="xs"
-                      type="danger"
-                      :title="$t('Workflow.deleteThisStep')"
-                      data-test="remove-step"
-                      @click.prevent="removeStep(index)"
+                    size="xs"
+                    type="danger"
+                    :title="$t('Workflow.deleteThisStep')"
+                    data-test="remove-step"
+                    @click.prevent="removeStep(index)"
                   >
                     <i class="glyphicon glyphicon-remove"></i>
                   </btn>
                 </div>
 
                 <span
-                    class="btn btn-xs dragHandle"
-                    :title="$t('Workflow.dragToReorder')"
+                  class="btn btn-xs dragHandle"
+                  :title="$t('Workflow.dragToReorder')"
                 >
-                <i class="glyphicon glyphicon-resize-vertical" />
-              </span>
+                  <i class="glyphicon glyphicon-resize-vertical" />
+                </span>
               </div>
             </div>
 
             <div
-                v-if="!element.jobref"
-                :class="{'step-item-logfilters': element.filters?.length > 0 }"
+              v-if="!element.jobref"
+              :class="{ 'step-item-logfilters': element.filters?.length > 0 }"
             >
               <log-filters
-                  :model-value="element.filters || []"
-                  :title="$t('Workflow.logFilters')"
-                  :subtitle="stepTitle(element, index)"
-                  :add-event="'step-action:add-logfilter:' + element.id"
-                  mode="inline"
-                  @update:model-value="
-                updateHistoryWithLogFiltersData(index, $event)
-              "
+                :model-value="element.filters || []"
+                :title="$t('Workflow.logFilters')"
+                :subtitle="stepTitle(element, index)"
+                :add-event="'step-action:add-logfilter:' + element.id"
+                mode="inline"
+                @update:model-value="
+                  updateHistoryWithLogFiltersData(index, $event)
+                "
               />
             </div>
             <error-handler-step
-                v-if="element.errorhandler"
-                :step="element"
-                @edit="editStepByIndex(index, true)"
-                @removeHandler="removeStep(index, true)"
-                data-test="error-handler-step"
+              v-if="element.errorhandler"
+              :step="element"
+              data-test="error-handler-step"
+              @edit="editStepByIndex(index, true)"
+              @remove-handler="removeStep(index, true)"
             />
           </div>
         </div>
@@ -142,7 +153,7 @@
     <template #empty>
       <div class="w-full flex flex--direction-col items-center">
         <p data-testid="no-steps">{{ $t("Workflow.noSteps") }}</p>
-        <p> {{ $t("Workflow.clickAddStep") }}</p>
+        <p>{{ $t("Workflow.clickAddStep") }}</p>
       </div>
     </template>
     <template #extra>
@@ -166,7 +177,10 @@
       >
         <template v-if="isErrorHandler" #listHeader="{ service }">
           <div class="list-group-item">
-            <p class="list-group-heading text-info text-strong" data-testid="error-handler-title">
+            <p
+              class="list-group-heading text-info text-strong"
+              data-testid="error-handler-title"
+            >
               {{ $t(`framework.service.${service}.description`) }}
             </p>
           </div>
@@ -180,8 +194,8 @@
         </span>
       </ChoosePluginModal>
       <component
-        v-if="editStepModal || (editJobRefModal && modalComponent)"
         :is="modalComponent"
+        v-if="editStepModal || (editJobRefModal && modalComponent)"
         v-model="editModel"
         v-bind="modalAttributes"
         @cancel="cancelEditStep"
@@ -201,8 +215,8 @@
                 <div class="col-sm-10">
                   <input
                     id="stepDescription"
-                    data-testid="step-description"
                     v-model="editExtra.description"
+                    data-testid="step-description"
                     type="text"
                     class="form-control"
                   />
@@ -213,9 +227,9 @@
           <template v-else>
             <div class="presentation checkbox">
               <input
-                name="keepgoingOnSuccess"
                 id="keepgoingOnSuccess"
                 v-model="editExtra.errorhandler.keepgoingOnSuccess"
+                name="keepgoingOnSuccess"
                 type="checkbox"
               />
               <label for="keepgoingOnSuccess">
@@ -243,11 +257,7 @@ import {
   mergePreservedLogFiltersIntoSaveData,
   mkid,
 } from "./types/workflowFuncs";
-import {
-  EditStepData,
-  StepsData,
-  StepsEditData,
-} from "./types/workflowTypes";
+import { EditStepData, StepsData, StepsEditData } from "./types/workflowTypes";
 import { getRundeckContext } from "../../../../library";
 import ChoosePluginModal from "../../../../library/components/plugins/ChoosePluginModal.vue";
 import EditPluginModal from "../../../../library/components/plugins/EditPluginModal.vue";
@@ -336,7 +346,7 @@ export default defineComponent({
           modalActive: this.editJobRefModal,
           "onUpdate:modalActive": this.toggleModalActive,
           extraAutocompleteVars: createOptionVariables(
-              this.jobDefinition?.options || [],
+            this.jobDefinition?.options || [],
           ),
         };
       }
@@ -444,7 +454,7 @@ export default defineComponent({
       const originalData = cloneDeep(this.model.commands[index]);
       const commandToRemove = cloneDeep(this.model.commands[index]);
 
-      let dataForUpdatingHistory = {
+      const dataForUpdatingHistory = {
         operation: Operation.Remove,
         undo: Operation.Insert,
         orig: undefined,
@@ -487,13 +497,17 @@ export default defineComponent({
         this.editIndex = index;
         const command = this.model.commands[index];
         if (!command.errorhandler) {
-          console.warn("Cannot edit error handler: error handler does not exist");
+          console.warn(
+            "Cannot edit error handler: error handler does not exist",
+          );
           return;
         }
         this.editExtra = cloneDeep(command);
         this.isErrorHandler = true;
         this.editModel = cloneDeep(command.errorhandler);
-        const nodeStep = command.errorhandler.nodeStep || (command.errorhandler.jobref?.nodeStep);
+        const nodeStep =
+          command.errorhandler.nodeStep ||
+          command.errorhandler.jobref?.nodeStep;
         this.editService = nodeStep
           ? ServiceType.WorkflowNodeStep
           : ServiceType.WorkflowStep;
@@ -530,7 +544,7 @@ export default defineComponent({
             jobref: this.editModel.jobref,
             type: this.editModel.type,
             nodeStep: this.editService === ServiceType.WorkflowNodeStep,
-            id: mkid()
+            id: mkid(),
           };
         } else {
           saveData.type = this.editModel.type;
@@ -541,14 +555,28 @@ export default defineComponent({
         }
 
         const stepForValidation = this.isErrorHandler
-          ? { type: this.editModel.type, config: this.editModel.config, jobref: this.editModel.jobref }
-          : { type: saveData.type, config: saveData.config, jobref: saveData.jobref };
+          ? {
+              type: this.editModel.type,
+              config: this.editModel.config,
+              jobref: this.editModel.jobref,
+            }
+          : {
+              type: saveData.type,
+              config: saveData.config,
+              jobref: saveData.jobref,
+            };
 
-        const result = await validateStepForSave(stepForValidation as EditStepData, this.editService);
+        const result = await validateStepForSave(
+          stepForValidation as EditStepData,
+          this.editService,
+        );
 
         if (result.valid) {
           if (!stepForValidation.jobref && !this.isErrorHandler) {
-            mergePreservedLogFiltersIntoSaveData(saveData, this.editExtra?.filters);
+            mergePreservedLogFiltersIntoSaveData(
+              saveData,
+              this.editExtra?.filters,
+            );
           }
           this.handleSuccessOnValidation(saveData);
         } else {
@@ -605,7 +633,7 @@ export default defineComponent({
       });
     },
     handleSuccessOnValidation(saveData: any) {
-      let dataForUpdatingHistory = {
+      const dataForUpdatingHistory = {
         index: this.model.commands.length,
         operation: Operation.Insert,
         undo: Operation.Remove,

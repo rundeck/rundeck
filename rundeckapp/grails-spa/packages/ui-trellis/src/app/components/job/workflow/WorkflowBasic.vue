@@ -1,6 +1,8 @@
 <template>
   <div>
-    <div data-testid="simple-prompt">{{ $t("Workflow.property.keepgoing.prompt") }}</div>
+    <div data-testid="simple-prompt">
+      {{ $t("Workflow.property.keepgoing.prompt") }}
+    </div>
     <div class="radio radio-inline">
       <input
         id="workflowKeepGoingFail"
@@ -31,10 +33,7 @@
 </template>
 
 <script lang="ts">
-import {
-  BasicData,
-  createBasicData,
-} from "./types/workflowTypes";
+import { BasicData, createBasicData } from "./types/workflowTypes";
 import { defineComponent } from "vue";
 
 export default defineComponent({

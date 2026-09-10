@@ -20,7 +20,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 export default defineComponent({
-  name: "Expandable",
+  name: "ExpandablePanel",
   props: {
     options: {
       type: Object as () => {
@@ -30,11 +30,11 @@ export default defineComponent({
         linkCss: string;
         css: string;
       },
-      default: {
+      default: () => ({
         open: false,
         linkCss: "",
         css: "",
-      },
+      }),
     },
   },
   data() {

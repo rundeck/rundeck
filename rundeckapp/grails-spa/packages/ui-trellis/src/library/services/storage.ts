@@ -1,5 +1,5 @@
-import KeyType from '../types/KeyType'
-import {api} from './api'
+import KeyType from "../types/KeyType";
+import { api } from "./api";
 
 /**
  * An interface representing StorageKeyMetadata.
@@ -15,7 +15,7 @@ export interface StorageKeyMetadata {
 /**
  * An interface representing StorageKeyListResponse.
  */
-export interface StorageKeyListResponse extends StorageKeyMetadata{
+export interface StorageKeyListResponse extends StorageKeyMetadata {
   resources?: StorageKeyMetadata[];
 }
 
@@ -26,66 +26,74 @@ export interface KeyUploadContent {
 export async function storageKeyGetMetadata(
   path: string,
 ): Promise<StorageKeyListResponse> {
-  let resp = await api.get(`storage/keys/${path}`)
+  const resp = await api.get(`storage/keys/${path}`);
   if (resp.status === 404) {
-    return {}
-  }else if (resp.status !== 200) {
-    throw {message: resp.data.message, response: resp}
+    return {};
+  } else if (resp.status !== 200) {
+    throw { message: resp.data.message, response: resp };
   } else {
-    return resp.data
+    return resp.data;
   }
 }
 
-export async function storageKeyExists(path: string): Promise<Boolean> {
-  let resp = await api.get(`storage/keys/${path}`)
+export async function storageKeyExists(path: string): Promise<boolean> {
+  const resp = await api.get(`storage/keys/${path}`);
   if (resp.status === 404) {
-    return false
+    return false;
   }
   if (resp.status === 200) {
-    return true
+    return true;
   }
-  throw {message: resp.data.message, response: resp}
+  throw { message: resp.data.message, response: resp };
 }
 
 const KeyStorageContentTypes = {
-  privateKey: 'application/octet-stream',
-  publicKey: 'application/pgp-keys',
-  password: 'application/x-rundeck-data-password',
-}
+  privateKey: "application/octet-stream",
+  publicKey: "application/pgp-keys",
+  password: "application/x-rundeck-data-password",
+};
 
-export async function storageKeyUpdate(path: string, value: string, content: KeyUploadContent): Promise<StorageKeyMetadata> {
-  let resp = await api.put(`storage/keys/${path}`, value, {
+export async function storageKeyUpdate(
+  path: string,
+  value: string,
+  content: KeyUploadContent,
+): Promise<StorageKeyMetadata> {
+  const resp = await api.put(`storage/keys/${path}`, value, {
     headers: {
-      'Content-Type': KeyStorageContentTypes[content.type],
-      'Accept': 'application/json',
-    }
-  })
+      "Content-Type": KeyStorageContentTypes[content.type],
+      Accept: "application/json",
+    },
+  });
   if (resp.status === 200) {
-    return resp.data
+    return resp.data;
   }
-  throw {message: resp.data.message, response: resp}
+  throw { message: resp.data.message, response: resp };
 }
 
-export async function storageKeyCreate(path: string, value: string, content: KeyUploadContent): Promise<StorageKeyMetadata> {
-  let resp = await api.post(`storage/keys/${path}`, value, {
+export async function storageKeyCreate(
+  path: string,
+  value: string,
+  content: KeyUploadContent,
+): Promise<StorageKeyMetadata> {
+  const resp = await api.post(`storage/keys/${path}`, value, {
     headers: {
-      'Content-Type': KeyStorageContentTypes[content.type],
-      'Accept': 'application/json',
-    }
-  })
+      "Content-Type": KeyStorageContentTypes[content.type],
+      Accept: "application/json",
+    },
+  });
   if (resp.status == 201) {
-    return resp.data
+    return resp.data;
   }
-  throw {message: resp.data.message, response: resp}
+  throw { message: resp.data.message, response: resp };
 }
 
-export async function storageKeyDelete(path: string): Promise<Boolean> {
-  let resp = await api.delete(`storage/keys/${path}`)
+export async function storageKeyDelete(path: string): Promise<boolean> {
+  const resp = await api.delete(`storage/keys/${path}`);
   if (resp.status === 404) {
-    return false
+    return false;
   }
   if (resp.status === 204) {
-    return true
+    return true;
   }
-  throw {message: resp.data.message, response: resp}
+  throw { message: resp.data.message, response: resp };
 }

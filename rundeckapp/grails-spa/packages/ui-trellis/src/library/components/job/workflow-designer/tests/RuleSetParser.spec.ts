@@ -1,5 +1,3 @@
-import Util from "util";
-
 import "jest";
 
 import {
@@ -45,7 +43,7 @@ describe("RuleSet Parser", () => {
     const [rule1] = rulesSet.rules;
 
     expect(rule1.identifiers).toEqual(["1"]);
-    let parsedRule = rule1.rules[0];
+    const parsedRule = rule1.rules[0];
     expect(parsedRule.type).toEqual("if");
 
     expect(isCondition(parsedRule)).toBeTruthy();

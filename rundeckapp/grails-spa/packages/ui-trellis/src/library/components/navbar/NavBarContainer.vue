@@ -39,7 +39,7 @@
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
 
-import { NavBar, NavContainer, NavItem } from "../../stores/NavBar";
+import { NavContainer } from "../../stores/NavBar";
 
 import NavBarItem from "./NavBarItem.vue";
 
@@ -52,7 +52,10 @@ export default defineComponent({
     NavBarDrawer,
   },
   props: {
-    item: Object as PropType<NavContainer>,
+    item: {
+      type: Object as PropType<NavContainer>,
+      required: true,
+    },
   },
   data() {
     return {
@@ -233,7 +236,7 @@ a {
 }
 </style>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .v-popover,
 .v-popover .trigger {
   width: 100%;

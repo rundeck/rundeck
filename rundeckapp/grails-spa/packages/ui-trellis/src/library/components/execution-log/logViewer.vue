@@ -17,86 +17,108 @@
     >
       <form style="padding: 10px" data-testid="log-viewer-settings-form">
         <div class="form-group">
-          <label>Theme</label>
-          <select
-            v-model="settings.theme"
-            class="form-control select"
-            data-testid="log-viewer-theme-select"
-          >
-            <option
-              v-for="themeOpt in themes"
-              :key="themeOpt.value"
-              :value="themeOpt.value"
+          <label for="logview_theme">
+            Theme
+            <select
+              id="logview_theme"
+              v-model="settings.theme"
+              class="form-control select"
+              data-testid="log-viewer-theme-select"
             >
-              {{ themeOpt.label }}
-            </option>
-          </select>
+              <option
+                v-for="themeOpt in themes"
+                :key="themeOpt.value"
+                :value="themeOpt.value"
+              >
+                {{ themeOpt.label }}
+              </option>
+            </select>
+          </label>
         </div>
         <div class="checkbox">
-          <input
-            id="logview_gutter"
-            v-model="settings.gutter"
-            type="checkbox"
-          />
-          <label for="logview_gutter">Display Gutter</label>
+          <label for="logview_gutter">
+            <input
+              id="logview_gutter"
+              v-model="settings.gutter"
+              type="checkbox"
+            />
+            Display Gutter
+          </label>
         </div>
         <div class="checkbox">
-          <input
-            id="logview_timestamps"
-            v-model="settings.timestamps"
-            type="checkbox"
-          />
-          <label for="logview_timestamps">Display Timestamps</label>
+          <label for="logview_timestamps">
+            <input
+              id="logview_timestamps"
+              v-model="settings.timestamps"
+              type="checkbox"
+            />
+            Display Timestamps
+          </label>
         </div>
         <div class="checkbox">
-          <input
-            id="logview_command"
-            v-model="settings.command"
-            type="checkbox"
-          />
-          <label for="logview_command">Display Command</label>
+          <label for="logview_command">
+            <input
+              id="logview_command"
+              v-model="settings.command"
+              type="checkbox"
+            />
+            Display Command
+          </label>
         </div>
         <div class="checkbox">
-          <input
-            id="logview_nodeBadge"
-            v-model="settings.nodeBadge"
-            type="checkbox"
-          />
-          <label for="logview_nodeBadge">Display Node Badge</label>
+          <label for="logview_nodeBadge">
+            <input
+              id="logview_nodeBadge"
+              v-model="settings.nodeBadge"
+              type="checkbox"
+            />
+            Display Node Badge
+          </label>
         </div>
         <div class="checkbox">
-          <input
-            id="logview_ansiColor"
-            v-model="settings.ansiColor"
-            type="checkbox"
-          />
-          <label for="logview_ansiColor">Render ANSI Colors</label>
+          <label for="logview_ansiColor">
+            <input
+              id="logview_ansiColor"
+              v-model="settings.ansiColor"
+              type="checkbox"
+            />
+            Render ANSI Colors
+          </label>
         </div>
         <div class="checkbox">
-          <input
-            id="logview_lineWrap"
-            v-model="settings.lineWrap"
-            type="checkbox"
-          />
-          <label for="logview_lineWrap">Wrap Long Lines</label>
+          <label for="logview_lineWrap">
+            <input
+              id="logview_lineWrap"
+              v-model="settings.lineWrap"
+              type="checkbox"
+            />
+            Wrap Long Lines
+          </label>
         </div>
         <div class="checkbox">
-          <input id="logview_stats" v-model="settings.stats" type="checkbox" data-testid="log-viewer-stats-checkbox" />
-          <label for="logview_stats">Display Stats</label>
+          <label for="logview_stats">
+            <input
+              id="logview_stats"
+              v-model="settings.stats"
+              type="checkbox"
+              data-testid="log-viewer-stats-checkbox"
+            />
+            Display Stats
+          </label>
         </div>
         <div class="checkbox">
-          <input
-            id="logview_hideIncomplete"
-            type="checkbox"
-            data-testid="log-viewer-hide-incomplete-checkbox"
-            :checked="hideIncompleteNodes"
-            :disabled="!hideIncompleteApplies"
-            :title="$t('hideIncompleteNodesDescription')"
-            @change="onHideIncompleteCheckboxChange"
-          />
-          <label for="logview_hideIncomplete">{{
-            $t("hideIncompleteNodes")
-          }}</label>
+          <label for="logview_hideIncomplete">
+            <input
+              id="logview_hideIncomplete"
+              type="checkbox"
+              data-testid="log-viewer-hide-incomplete-checkbox"
+              :checked="hideIncompleteNodes"
+              :disabled="!hideIncompleteApplies"
+              :title="$t('hideIncompleteNodesDescription')"
+              @change="onHideIncompleteCheckboxChange"
+            />
+            {{ $t("hideIncompleteNodes") }}
+          </label>
         </div>
         <ui-socket
           section="execution-log-viewer"
@@ -112,7 +134,9 @@
         'execution-log--no-transition': logLines > 1000,
         'ansicolor-on': settings.ansiColor,
       }"
-      :style="node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}"
+      :style="
+        node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}
+      "
     >
       <div ref="log" class="execution-log__scroller-item-container">
         <div
@@ -134,7 +158,10 @@
               data-testid="log-viewer-follow-btn"
               @click="toggleFollow"
             >
-              <i :class="[followIcon]" data-testid="log-viewer-follow-icon" />Follow
+              <i
+                :class="[followIcon]"
+                data-testid="log-viewer-follow-icon"
+              />Follow
             </btn>
           </btn-group>
           <transition name="fade">
@@ -226,9 +253,8 @@ import RdDrawer from "../containers/drawer/Drawer.vue";
 import UiSocket from "../utils/UiSocket.vue";
 import { EventBus } from "../../utilities/vueEventBus";
 import { Btn, BtnGroup, ProgressBar } from "uiv";
-import { App, PropType } from "vue";
+import { PropType } from "vue";
 import LogNodeChunk from "./LogNodeChunk.vue";
-import { JobWorkflow } from "@/library/utilities/JobWorkflow";
 import { getRundeckContext } from "../../rundeckService";
 
 const CONFIG_STORAGE_KEY = "execution-viewer";
@@ -264,10 +290,12 @@ export default defineComponent({
     node: {
       type: String,
       required: false,
+      default: "",
     },
     stepCtx: {
       type: String,
       required: false,
+      default: "",
     },
     showStats: {
       type: Boolean,
@@ -287,6 +315,7 @@ export default defineComponent({
     jumpToLine: {
       type: Number,
       required: false,
+      default: 0,
     },
     theme: {
       type: String,
@@ -301,10 +330,12 @@ export default defineComponent({
     trimOutput: {
       type: Number,
       required: false,
+      default: 0,
     },
     config: {
       type: Object as PropType<IEventViewerSettings>,
       required: false,
+      default: () => ({}),
     },
     useUserSettings: {
       type: Boolean,
@@ -465,7 +496,9 @@ export default defineComponent({
     // Capture the raw ExecutionOutput reference before Vue wraps it in a
     // reactive proxy, so MobX can properly track ObservableGroupMap accesses
     // inside the autorun callback.
-    const rawViewer = rootStore.executionOutputStore.createOrGet(this.executionId);
+    const rawViewer = rootStore.executionOutputStore.createOrGet(
+      this.executionId,
+    );
     this.viewer = rawViewer;
     if (this.node) {
       const node = this.node;
@@ -603,7 +636,7 @@ export default defineComponent({
         };
         setTimeout(update, delay);
         while (!cancel.signaled) {
-          await new Promise((res, rej) => {
+          await new Promise((res) => {
             setTimeout(res, 1000);
           });
           if (this.progress == 100) this.cancelProgress?.cancel();
@@ -667,7 +700,7 @@ export default defineComponent({
     toggleProgressBar() {
       this.consumeLogs = !this.consumeLogs;
     },
-    handleJump(e: string) {
+    handleJump() {
       this.scrollToLine(this.jumpToLine || 0);
     },
     handleJumpToEnd() {
@@ -679,12 +712,12 @@ export default defineComponent({
     async populateLogs() {
       while (this.consumeLogs) {
         if (!this.resp) this.resp = this.viewer.getOutput(this.batchSize);
-        const res = await this.resp;
+        await this.resp;
         this.resp = undefined;
 
         if (!this.viewer.completed) {
           this.resp = this.viewer.getOutput(this.batchSize);
-          await new Promise<void>((res, rej) =>
+          await new Promise<void>((res) =>
             setTimeout(() => {
               res();
             }, 0),
@@ -715,10 +748,17 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "./ansi.css";
-@import "./theme-light.scss";
-@import "./theme-dark.scss";
+
+// theme-light.scss/theme-dark.scss style elements rendered deep inside child
+// components (LogNodeChunk/LogEntryFlex) and raw DOM nodes created outside
+// Vue's render tree (see logBuilder.ts), so their selectors must stay
+// reachable via :deep() even though this block is scoped.
+:deep(.execution-log) {
+  @import "./theme-light.scss";
+  @import "./theme-dark.scss";
+}
 
 .anticon {
   display: inline-block;
@@ -740,7 +780,7 @@ export default defineComponent({
   cursor: pointer;
 }
 
-.execution-log__progress-bar * {
+.execution-log__progress-bar :deep(*) {
   transition: all 0.3s ease;
 }
 
@@ -749,11 +789,11 @@ export default defineComponent({
   transition: opacity 0.5s;
 }
 .fade-enter-from,
-.fade-leave-to * {
+.fade-leave-to :deep(*) {
   opacity: 0;
 }
 
-.execution-log--no-transition * {
+.execution-log--no-transition :deep(*) {
   transition: none !important;
 }
 
@@ -765,7 +805,11 @@ export default defineComponent({
   overflow: hidden;
 }
 
-.execution-log__chunk {
+// Applied to vue-virtual-scroller's DynamicScroller (nested two components
+// deep via LogNodeChunk) and to elements created directly via
+// document.createElement in logBuilder.ts, neither of which carry this
+// component's scope attribute.
+:deep(.execution-log__chunk) {
   contain: layout;
 }
 

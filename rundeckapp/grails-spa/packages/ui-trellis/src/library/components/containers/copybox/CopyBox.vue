@@ -1,5 +1,13 @@
 <template>
-  <div class="rd-copybox" :title="title" @click="handleClick">
+  <div
+    class="rd-copybox"
+    :title="title"
+    role="button"
+    tabindex="0"
+    @click="handleClick"
+    @keydown.enter="handleClick"
+    @keydown.space.prevent="handleClick"
+  >
     <div
       ref="content"
       class="rd-copybox__content"
@@ -30,12 +38,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, VNode } from "vue";
+import { defineComponent } from "vue";
 
 import { CopyToClipboard } from "../../../utilities/Clipboard";
 
 export default defineComponent({
-  name: "rd-copybox",
+  name: "RdCopybox",
   props: {
     content: {
       type: String,

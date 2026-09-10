@@ -1,3 +1,4 @@
+// eslint-disable-next-line storybook/story-exports -- plain translation-message module, not a Storybook story
 const messages: any = {
   en_US: {
     graph: {

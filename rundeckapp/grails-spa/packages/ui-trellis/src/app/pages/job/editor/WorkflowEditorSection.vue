@@ -1,6 +1,6 @@
 <template>
   <div v-if="loaded">
-    <UiSocket section="workflow-editor" location="main" v-model="updatedData">
+    <UiSocket v-model="updatedData" section="workflow-editor" location="main">
       <workflow-editor v-model="updatedData" />
     </UiSocket>
     <json-embed :output-data="updatedData" field-name="jobWorkflowJson" />

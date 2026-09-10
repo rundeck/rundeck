@@ -1,15 +1,16 @@
 <template>
   <div class="rd-drawer__wrapper">
     <div
-      ref="drawer"
       v-if="display"
+      ref="drawer"
       class="rd-drawer"
       :class="[`rd-drawer--${placement}`, display ? 'rd-drawer--active' : '']"
     >
       <div v-if="displayHeader" class="rd-drawer__header">
         <div v-if="title" class="rd-drawer__title">{{ title }}</div>
-        <div
+        <button
           v-if="closeable"
+          type="button"
           class="btn btn-default btn-link"
           style="margin-left: auto"
           @click="
@@ -19,7 +20,7 @@
           "
         >
           Close
-        </div>
+        </button>
       </div>
       <slot />
     </div>
@@ -27,7 +28,19 @@
       v-if="mask"
       class="rd-drawer__mask"
       :class="{ 'rd-drawer__mask--active': display }"
+      role="button"
+      tabindex="0"
       @click="
+        () => {
+          $emit('close');
+        }
+      "
+      @keydown.enter="
+        () => {
+          $emit('close');
+        }
+      "
+      @keydown.space.prevent="
         () => {
           $emit('close');
         }
@@ -40,32 +53,21 @@
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: "rd-drawer",
+  name: "RdDrawer",
   props: {
-    title: { default: "" },
+    title: { type: String, default: "" },
     visible: { type: Boolean },
-    closeable: { default: true },
-    placement: { default: "left" },
-    width: { default: "" },
-    height: { default: "" },
-    mask: { default: true },
+    closeable: { type: Boolean, default: true },
+    placement: { type: String, default: "left" },
+    width: { type: String, default: "" },
+    height: { type: String, default: "" },
+    mask: { type: Boolean, default: true },
   },
   emits: ["close"],
   data() {
     return {
       display: false,
     };
-  },
-  mounted() {
-    this.display = this.visible;
-    (<HTMLElement>this.$el).style.setProperty(
-      "--rd-drawer-width",
-      this.drawerWidth,
-    );
-    (<HTMLElement>this.$el).style.setProperty(
-      "--rd-drawer-height",
-      this.drawerHeight,
-    );
   },
   computed: {
     displayHeader(): boolean {
@@ -83,9 +85,20 @@ export default defineComponent({
     },
   },
   watch: {
-    visible(newVal, oldVal) {
+    visible(newVal) {
       this.display = newVal;
     },
+  },
+  mounted() {
+    this.display = this.visible;
+    (<HTMLElement>this.$el).style.setProperty(
+      "--rd-drawer-width",
+      this.drawerWidth,
+    );
+    (<HTMLElement>this.$el).style.setProperty(
+      "--rd-drawer-height",
+      this.drawerHeight,
+    );
   },
 });
 </script>

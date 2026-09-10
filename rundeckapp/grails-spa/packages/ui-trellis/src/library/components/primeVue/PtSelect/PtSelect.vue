@@ -1,5 +1,8 @@
 <template>
   <div class="pt-select-wrapper">
+    <!-- for/id already pair this label to its control below; the a11y plugin's
+         default rule also requires DOM nesting, which this sibling layout can't satisfy -->
+    <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
     <label
       v-if="label"
       :for="inputId"
@@ -9,8 +12,8 @@
       {{ label }}
     </label>
     <Select
-      data-testid="pt-select-control"
       v-model="internalValue"
+      data-testid="pt-select-control"
       :options="options"
       :option-label="optionLabel"
       :option-value="optionValue"
@@ -74,7 +77,11 @@
         <slot name="clearicon" v-bind="slotProps" />
       </template>
     </Select>
-    <p v-if="invalid && errorText" class="text-body--sm pt-select__error" data-testid="pt-select-error">
+    <p
+      v-if="invalid && errorText"
+      class="text-body--sm pt-select__error"
+      data-testid="pt-select-error"
+    >
       {{ errorText }}
     </p>
   </div>
@@ -133,9 +140,17 @@ export default defineComponent({
       type: String,
       default: "contains",
       validator: (val: string) =>
-        ["contains", "startsWith", "endsWith", "equals", "notEquals", "lt", "lte", "gt", "gte"].includes(
-          val,
-        ),
+        [
+          "contains",
+          "startsWith",
+          "endsWith",
+          "equals",
+          "notEquals",
+          "lt",
+          "lte",
+          "gt",
+          "gte",
+        ].includes(val),
     },
     filterFields: {
       type: Array as PropType<string[]>,
@@ -202,14 +217,7 @@ export default defineComponent({
       default: 0,
     },
   },
-  emits: [
-    "update:modelValue",
-    "focus",
-    "blur",
-    "show",
-    "hide",
-    "filter",
-  ],
+  emits: ["update:modelValue", "focus", "blur", "show", "hide", "filter"],
   data() {
     return {
       debounceTimer: null as ReturnType<typeof setTimeout> | null,
@@ -262,7 +270,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 @import "../_form-inputs.scss";
 
 .pt-select-wrapper {
@@ -303,7 +311,7 @@ export default defineComponent({
   }
 
   // Input field styles - Default state
-  .p-select-label {
+  :deep(.p-select-label) {
     background: transparent;
     border: none;
     border-radius: 0;
@@ -323,7 +331,7 @@ export default defineComponent({
   }
 
   // Dropdown trigger button (contains the dropdown icon)
-  .p-select-dropdown {
+  :deep(.p-select-dropdown) {
     background: transparent;
     border: none;
     padding: 0;
@@ -346,28 +354,34 @@ export default defineComponent({
   }
 
   // Dropdown icon
-  .p-select-dropdown-icon {
+  :deep(.p-select-dropdown-icon) {
     color: var(--colors-gray-500);
     width: 14px;
     height: 14px;
 
     // Disabled icon color
-    .p-select-label:disabled ~ & {
+    :deep(.p-select-label):disabled ~ & {
       color: var(--colors-gray-300-original);
     }
   }
 
   // Clear icon
-  .p-select-clear-icon {
+  :deep(.p-select-clear-icon) {
     color: var(--colors-gray-500);
   }
 
   // Loading icon
-  .p-select-loading-icon {
+  :deep(.p-select-loading-icon) {
     color: var(--colors-gray-500);
   }
 }
+</style>
 
+<!-- The dropdown overlay panel is teleported to document.body (default appendTo="body"),
+     so it never exists inside this component's DOM subtree and can't be reached by
+     scoped styles, even with :deep() -- it has to stay global. -->
+<!-- eslint-disable-next-line vue/enforce-style-attribute -->
+<style lang="scss">
 // Overlay (dropdown panel) styles
 .p-select-overlay {
   background: var(--colors-white);
@@ -414,7 +428,9 @@ export default defineComponent({
     color: var(--colors-gray-800);
     font-size: 14px;
     padding: 10px 17px;
-    transition: background-color 0.2s, color 0.2s;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
 
     // Hover state
     &:hover:not(.p-disabled):not(.p-select-option-selected) {
@@ -467,5 +483,4 @@ export default defineComponent({
     padding: 10px 17px;
   }
 }
-
 </style>

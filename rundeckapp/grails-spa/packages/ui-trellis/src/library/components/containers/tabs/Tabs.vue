@@ -58,7 +58,7 @@
 import { defineComponent, computed } from "vue";
 
 export default defineComponent({
-  name: "Tabs",
+  name: "RdTabs",
   provide() {
     return {
       selectedIndex: computed(() => this.activeTab),
@@ -102,7 +102,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 @import "tabs.scss";
 @import "tabs-standard.scss";
 @import "tabs-rounded.scss";

@@ -16,7 +16,7 @@
             display: flex;
           "
         >
-          <img :src="article.imageUrl" />
+          <img :src="article.imageUrl" alt="" />
         </div>
         <div class="news-article__details">
           <p class="news-article__date">{{ article.date.toUTCString() }}</p>
@@ -29,7 +29,13 @@
     </Skeleton>
     <div style="padding: 10px">
       <span style="cursor: pointer"
-        ><a class="text-info" @click="$emit('news:select-all')"
+        ><a
+          class="text-info"
+          role="button"
+          tabindex="0"
+          @click="$emit('news:select-all')"
+          @keydown.enter="$emit('news:select-all')"
+          @keydown.space.prevent="$emit('news:select-all')"
           >View More Community News</a
         ></span
       >
@@ -43,7 +49,7 @@ import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 import Skeleton from "../../skeleton/Skeleton.vue";
 
 export default defineComponent({
-  name: "News",
+  name: "CommunityNewsWidget",
   components: {
     Skeleton,
   },
@@ -108,7 +114,8 @@ export default defineComponent({
 }
 
 .skeleton--community-news {
-  background-image: linear-gradient(
+  background-image:
+    linear-gradient(
       100deg,
       rgba(255, 255, 255, 0),
       rgba(255, 255, 255, 0.5) 50%,

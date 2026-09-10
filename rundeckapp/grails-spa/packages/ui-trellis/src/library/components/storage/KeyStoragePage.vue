@@ -46,7 +46,13 @@ import UiSocket from "../utils/UiSocket.vue";
 export default defineComponent({
   name: "KeyStoragePage",
   components: { UiSocket, KeyStorageEdit, KeyStorageView },
-  props: ["readOnly", "allowUpload", "modelValue", "storageFilter", "project"],
+  props: {
+    readOnly: Boolean,
+    allowUpload: Boolean,
+    modelValue: { type: String, default: "" },
+    storageFilter: { type: String, default: "" },
+    project: { type: String, default: "" },
+  },
 
   data() {
     return {
@@ -90,7 +96,7 @@ export default defineComponent({
       this.uploadSetting = uploadSetting;
       this.modalEdit = true;
     },
-    updateSelectedKey(key: {}) {
+    updateSelectedKey(key: Record<string, unknown>) {
       this.selectedKey = key;
     },
   },

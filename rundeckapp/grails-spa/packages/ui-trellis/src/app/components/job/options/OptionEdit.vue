@@ -840,7 +840,11 @@ import PluginConfig from "../../../../library/components/plugins/pluginConfig.vu
 import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 
 import AceEditor from "../../../../library/components/utils/AceEditor.vue";
-import { Validations, ValidationConfig, type ValidationSet } from "./model/Validations";
+import {
+  Validations,
+  ValidationConfig,
+  type ValidationSet,
+} from "./model/Validations";
 import {
   JobOption,
   JobOptionEdit,
@@ -1074,7 +1078,9 @@ export default defineComponent({
       delete this.validationErrors[field];
     },
     getProviderFor(name: string) {
-      return (this.optionValuesPlugins as Plugin[]).find((p: Plugin) => p.name === name);
+      return (this.optionValuesPlugins as Plugin[]).find(
+        (p: Plugin) => p.name === name,
+      );
     },
     validateLen(field: string, max: number): boolean {
       return !(this.option[field] && this.option[field].length > max);
@@ -1086,7 +1092,10 @@ export default defineComponent({
     validateFieldName(field: string): boolean {
       if (field in Validations) {
         this.clearValidation(field);
-        return this.validateField(field, Validations[field as keyof ValidationSet]);
+        return this.validateField(
+          field,
+          Validations[field as keyof ValidationSet],
+        );
       }
       return true;
     },

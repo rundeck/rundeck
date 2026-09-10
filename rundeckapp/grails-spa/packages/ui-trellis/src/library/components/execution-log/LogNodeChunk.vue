@@ -56,6 +56,7 @@ export default defineComponent({
     eventBus: {
       type: Object as PropType<typeof EventBus>,
       required: false,
+      default: undefined,
     },
     selectedLine: {
       type: Number,
@@ -68,6 +69,7 @@ export default defineComponent({
     stepCtx: {
       type: String,
       required: false,
+      default: undefined,
     },
     nodeIcon: {
       type: Boolean,
@@ -96,6 +98,7 @@ export default defineComponent({
     entries: {
       type: Array as PropType<ExecutionOutputEntry[]>,
       required: false,
+      default: undefined,
     },
     jumpToLine: {
       type: Number,
@@ -115,27 +118,6 @@ export default defineComponent({
     return {
       emitResize: true as boolean,
     };
-  },
-  watch: {
-    entries(newEntries: ExecutionOutputEntry[] | undefined) {
-      if (!this.follow || !newEntries || newEntries.length === 0) return;
-      this.$nextTick(() => {
-        if (this.follow) {
-          (this.$refs.scroller as any)?.scrollToBottom?.();
-        }
-      });
-    },
-    follow(newVal: boolean) {
-      // Scroll to bottom immediately when follow is re-enabled, even if no
-      // new entries have arrived since the last update.
-      if (newVal) {
-        this.$nextTick(() => {
-          if (this.follow) {
-            (this.$refs.scroller as any)?.scrollToBottom?.();
-          }
-        });
-      }
-    },
   },
   computed: {
     opts() {
@@ -170,6 +152,27 @@ export default defineComponent({
       return `key-${this.nodeIcon}-${this.command}-${this.time}-${this.gutter}-${this.lineWrap}`;
     },
   },
+  watch: {
+    entries(newEntries: ExecutionOutputEntry[] | undefined) {
+      if (!this.follow || !newEntries || newEntries.length === 0) return;
+      this.$nextTick(() => {
+        if (this.follow) {
+          (this.$refs.scroller as any)?.scrollToBottom?.();
+        }
+      });
+    },
+    follow(newVal: boolean) {
+      // Scroll to bottom immediately when follow is re-enabled, even if no
+      // new entries have arrived since the last update.
+      if (newVal) {
+        this.$nextTick(() => {
+          if (this.follow) {
+            (this.$refs.scroller as any)?.scrollToBottom?.();
+          }
+        });
+      }
+    },
+  },
   mounted() {
     if (this.jumpToLine && !this.jumped) {
       this.$emit("line-select", this.jumpToLine);
@@ -183,7 +186,8 @@ export default defineComponent({
     this._tryAttachScrollListener();
   },
   beforeUnmount() {
-    const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+    const scrollerEl = (this.$refs.scroller as any)?.$el as
+      HTMLElement | undefined;
     if (scrollerEl) {
       scrollerEl.removeEventListener("scroll", this.onScrollerScroll);
     }
@@ -243,7 +247,8 @@ export default defineComponent({
     },
     _tryAttachScrollListener() {
       if ((this as any)._scrollListenerAdded) return;
-      const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+      const scrollerEl = (this.$refs.scroller as any)?.$el as
+        HTMLElement | undefined;
       if (scrollerEl) {
         scrollerEl.addEventListener("scroll", this.onScrollerScroll);
         (this as any)._scrollListenerAdded = true;

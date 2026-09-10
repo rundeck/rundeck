@@ -10,25 +10,36 @@
         :class="['form-group']"
         data-testid="field-item"
       >
-        <label class="col-sm-2 control-label input-sm">{{
-          field.label || field.key
-        }}</label>
+        <!-- for/id already pair this label to the input below; the a11y
+             plugin's default rule also requires DOM nesting, which this
+             sibling layout can't satisfy -->
+        <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+        <label
+          :for="'field-input-' + index"
+          class="col-sm-2 control-label input-sm"
+          >{{ field.label || field.key }}</label
+        >
         <div class="col-sm-9">
           <input
+            :id="'field-input-' + index"
             v-model="field.value"
             type="text"
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
-            @change="changeField(field)"
             :data-testid="'field-input-' + index"
+            @change="changeField(field)"
           />
         </div>
         <div class="col-sm-1">
           <span
             class="btn btn-xs btn-default"
             :title="$t('message_delete')"
-            @click="removeField(field)"
+            role="button"
+            tabindex="0"
             data-testid="remove-field-button"
+            @click="removeField(field)"
+            @keydown.enter.prevent="removeField(field)"
+            @keydown.space.prevent="removeField(field)"
           >
             <i class="glyphicon glyphicon-remove"></i
           ></span>
@@ -43,8 +54,8 @@
 
     <btn
       type="primary"
-      @click="openNewField()"
       data-testid="add-field-button"
+      @click="openNewField()"
       >{{ $t("message_addField") }}</btn
     >
 
@@ -64,16 +75,19 @@
       <div class="row" style="padding-left: 30px !important">
         <alert
           v-if="duplicate"
+          ref="duplicateWarningRef"
           type="warning"
           data-testid="duplicate-warning"
-          ref="duplicateWarningRef"
           ><b>Warning!</b> {{ $t("message_duplicated") }}.</alert
         >
 
         <div class="col-md-10">
           <div v-if="useOptions" class="form">
             <div :class="['form-data']">
-              <label class="col-md-4">{{ $t("message_select") }}</label>
+              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+              <label for="dynamicFormFieldSelect" class="col-md-4">{{
+                $t("message_select")
+              }}</label>
               <div class="col-md-8">
                 <!--
                   append-to="self" keeps the dropdown overlay inside this
@@ -82,6 +96,7 @@
                   the options render but stay unclickable.
                 -->
                 <pt-select
+                  id="dynamicFormFieldSelect"
                   v-model="selectedField"
                   :options="customOptions"
                   option-label="label"
@@ -94,9 +109,13 @@
             </div>
 
             <div :class="['form-data']">
-              <label class="col-md-4">{{ $t("message_description") }}</label>
+              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+              <label for="newFieldDescriptionInput" class="col-md-4">{{
+                $t("message_description")
+              }}</label>
               <div class="col-md-8">
                 <input
+                  id="newFieldDescriptionInput"
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
@@ -109,9 +128,13 @@
 
           <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_fieldLabel") }}</label>
+              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+              <label for="newLabelFieldInput" class="col-md-4">{{
+                $t("message_fieldLabel")
+              }}</label>
               <div class="col-md-8">
                 <input
+                  id="newLabelFieldInput"
                   v-model="newLabelField"
                   type="text"
                   :class="['form-control']"
@@ -120,9 +143,13 @@
               </div>
             </div>
             <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_fieldKey") }}</label>
+              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+              <label for="newFieldKeyInput" class="col-md-4">{{
+                $t("message_fieldKey")
+              }}</label>
               <div class="col-md-8">
                 <input
+                  id="newFieldKeyInput"
                   v-model="newField"
                   type="text"
                   :class="['form-control']"
@@ -132,9 +159,13 @@
             </div>
 
             <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_description") }}</label>
+              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+              <label for="newFieldDescriptionInput2" class="col-md-4">{{
+                $t("message_description")
+              }}</label>
               <div class="col-md-8">
                 <input
+                  id="newFieldDescriptionInput2"
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
@@ -152,8 +183,8 @@
           <button
             type="button"
             class="btn btn-default reset_page_confirm"
-            @click="modalAddField = false"
             data-testid="cancel-button"
+            @click="modalAddField = false"
           >
             {{ $t("message_cancel") }}
           </button>
@@ -161,8 +192,8 @@
           <button
             type="button"
             class="btn btn-cta reset_page_confirm"
-            @click="addField()"
             data-testid="confirm-add-field-button"
+            @click="addField()"
           >
             {{ $t("message_add") }}
           </button>
@@ -200,6 +231,7 @@ export default defineComponent({
     options: {
       type: String,
       required: false,
+      default: "",
     },
     hasOptions: {
       type: String,
@@ -242,7 +274,12 @@ export default defineComponent({
     }
     this.syncFieldsFromProp(this.fields);
 
-    if (this.useOptions && this.options !== null && this.options !== undefined && this.options !== "") {
+    if (
+      this.useOptions &&
+      this.options !== null &&
+      this.options !== undefined &&
+      this.options !== ""
+    ) {
       const optionsObject = JSON.parse(this.options!);
       const options = Object.keys(optionsObject).map((key: any) => {
         const data = optionsObject[key];
@@ -351,7 +388,7 @@ export default defineComponent({
       this.customFields = fields;
       this.refreshPlugin();
     },
-    changeField(field: CustomField) {
+    changeField() {
       this.refreshPlugin();
     },
     refreshPlugin() {

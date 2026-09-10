@@ -22,8 +22,7 @@
               <summary>{{ $t("acl.example.summary") }}</summary>
               <pre
                 >{{ aclExample }}
-            </pre
-              >
+            </pre>
             </details>
           </form>
         </div>

@@ -1,4 +1,5 @@
 // Ready translated locale messages
+// eslint-disable-next-line storybook/story-exports -- plain i18n message module, not a Storybook story
 export default {
   en_US: {
     message: {

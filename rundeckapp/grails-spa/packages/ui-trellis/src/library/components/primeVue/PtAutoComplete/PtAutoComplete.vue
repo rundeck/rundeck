@@ -1,5 +1,8 @@
 <template>
   <div class="pt-autocomplete-wrapper">
+    <!-- for/id already pair this label to its control below; the a11y plugin's
+         default rule also requires DOM nesting, which this sibling layout can't satisfy -->
+    <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
     <label
       v-if="label"
       :for="inputId"
@@ -30,7 +33,10 @@
             v-for="(tab, index) in tabs"
             :key="index"
             type="button"
-            :class="['autocomplete-tab', { 'autocomplete-tab-active': selectedTabIndex === index }]"
+            :class="[
+              'autocomplete-tab',
+              { 'autocomplete-tab-active': selectedTabIndex === index },
+            ]"
             :disabled="tab.getCount(allSuggestions) === 0"
             @click="selectTab(index)"
           >
@@ -45,14 +51,26 @@
       </template>
       <template #option="slotProps">
         <div class="autocomplete-option-content">
-          <span v-if="getSuggestionTitle(slotProps.option)" class="autocomplete-option-title">
+          <span
+            v-if="getSuggestionTitle(slotProps.option)"
+            class="autocomplete-option-title"
+          >
             {{ getSuggestionTitle(slotProps.option) }}
           </span>
-          <span class="autocomplete-option-name" v-html="highlightQueryMatch(slotProps.option)"></span>
+          <!-- eslint-disable vue/no-v-html -- sanitized via DOMPurify.sanitize() in highlightQueryMatch() below -->
+          <span
+            class="autocomplete-option-name"
+            v-html="highlightQueryMatch(slotProps.option)"
+          ></span>
+          <!-- eslint-enable vue/no-v-html -->
         </div>
       </template>
     </AutoComplete>
-    <p v-if="invalid && errorText" class="text-body--sm pt-autocomplete__error" data-testid="pt-autocomplete-error">
+    <p
+      v-if="invalid && errorText"
+      class="text-body--sm pt-autocomplete__error"
+      data-testid="pt-autocomplete-error"
+    >
       {{ errorText }}
     </p>
   </div>
@@ -65,6 +83,7 @@ import AutoComplete, {
   AutoCompleteChangeEvent,
 } from "primevue/autocomplete";
 import Badge from "primevue/badge";
+import DOMPurify from "dompurify";
 import "../Badge/badge.scss";
 import { ContextVariable } from "../../../stores/contextVariables";
 import type { TabConfig } from "./PtAutoCompleteTypes";
@@ -147,17 +166,14 @@ export default defineComponent({
       debounceTimer: null as ReturnType<typeof setTimeout> | null,
     };
   },
-  watch: {
-    modelValue(newVal: string) {
-      this.value = newVal;
-    },
-  },
   computed: {
     tabFilteredSuggestions(): string[] | undefined {
       let suggestions: string[];
-      
+
       if (!this.tabMode || !this.tabs || this.tabs.length === 0) {
-        suggestions = this.filteredSuggestions.map((suggestion: ContextVariable) => suggestion.name);
+        suggestions = this.filteredSuggestions.map(
+          (suggestion: ContextVariable) => suggestion.name,
+        );
       } else {
         const activeTab = this.tabs[this.selectedTabIndex];
         if (!activeTab) {
@@ -168,9 +184,14 @@ export default defineComponent({
           .filter(activeTab.filter)
           .map((suggestion: ContextVariable) => suggestion.name);
       }
-      
+
       // Return undefined instead of empty array to prevent dropdown from showing
       return suggestions.length > 0 ? suggestions : undefined;
+    },
+  },
+  watch: {
+    modelValue(newVal: string) {
+      this.value = newVal;
     },
   },
   beforeUnmount() {
@@ -187,13 +208,13 @@ export default defineComponent({
       this.$emit("onComplete", event);
       this.debouncedFilterSuggestions(event);
     },
-    
+
     debouncedFilterSuggestions(event: AutoCompleteCompleteEvent): void {
       // Clear any existing timer
       if (this.filterDebounceTimer) {
         clearTimeout(this.filterDebounceTimer);
       }
-      
+
       // Set a new timer to filter after a short delay
       this.filterDebounceTimer = setTimeout(() => {
         this.filterSuggestions(event);
@@ -223,7 +244,8 @@ export default defineComponent({
 
     filterSuggestions(event: AutoCompleteCompleteEvent): void {
       const target = event?.originalEvent?.target as HTMLInputElement | null;
-      const cursorPos = target && "selectionStart" in target ? (target.selectionStart ?? 0) : 0;
+      const cursorPos =
+        target && "selectionStart" in target ? (target.selectionStart ?? 0) : 0;
       const currentWordRegex = /[^\s]*$/;
       const textToCursor = event.query?.slice(0, cursorPos) || "";
       const currentWord = textToCursor.match(currentWordRegex)?.[0] || "";
@@ -245,23 +267,28 @@ export default defineComponent({
         }
 
         // Filter suggestions based on the current word
-        const filtered = this.suggestions.filter((suggestion: ContextVariable) => {
-          const name = suggestion?.name;
-          if (!name) return false;
-          
-          // If currentWord starts with "${", match against the full suggestion name
-          if (currentWord.startsWith("${")) {
-            return this.isPartialWordMatch(currentWord, name);
-          }
-          
-          // Otherwise, match against the suggestion name without the ${} wrapper
-          // Extract the inner part (e.g., "job.id" from "${job.id}")
-          const innerName = name.replace(/^\$\{|\}$/g, "");
-          return this.isPartialWordMatch(currentWord, innerName) || this.isPartialWordMatch(currentWord, name);
-        });
+        const filtered = this.suggestions.filter(
+          (suggestion: ContextVariable) => {
+            const name = suggestion?.name;
+            if (!name) return false;
+
+            // If currentWord starts with "${", match against the full suggestion name
+            if (currentWord.startsWith("${")) {
+              return this.isPartialWordMatch(currentWord, name);
+            }
+
+            // Otherwise, match against the suggestion name without the ${} wrapper
+            // Extract the inner part (e.g., "job.id" from "${job.id}")
+            const innerName = name.replace(/^\$\{|\}$/g, "");
+            return (
+              this.isPartialWordMatch(currentWord, innerName) ||
+              this.isPartialWordMatch(currentWord, name)
+            );
+          },
+        );
         this.filteredSuggestions = filtered;
         this.allSuggestions = filtered;
-        
+
         // Auto-switch to tab with results if current tab has no results
         this.autoSwitchToTabWithResults();
       } catch (e) {
@@ -281,7 +308,8 @@ export default defineComponent({
       }
 
       // Check if current tab has any matching suggestions
-      const currentTabHasResults = this.filteredSuggestions.filter(activeTab.filter).length > 0;
+      const currentTabHasResults =
+        this.filteredSuggestions.filter(activeTab.filter).length > 0;
 
       // If current tab has results, don't switch
       if (currentTabHasResults) {
@@ -291,8 +319,9 @@ export default defineComponent({
       // Current tab has no results, find first tab with results
       for (let i = 0; i < this.tabs.length; i++) {
         const tab = this.tabs[i];
-        const tabHasResults = this.filteredSuggestions.filter(tab.filter).length > 0;
-        
+        const tabHasResults =
+          this.filteredSuggestions.filter(tab.filter).length > 0;
+
         if (tabHasResults) {
           this.selectedTabIndex = i;
           return;
@@ -301,7 +330,9 @@ export default defineComponent({
     },
 
     getSuggestionTitle(suggestionName: string): string | null {
-      const suggestion = this.filteredSuggestions.find((s: ContextVariable) => s.name === suggestionName);
+      const suggestion = this.filteredSuggestions.find(
+        (s: ContextVariable) => s.name === suggestionName,
+      );
       return suggestion?.title || null;
     },
 
@@ -309,20 +340,26 @@ export default defineComponent({
       if (!this.currentQuery) {
         return suggestionName;
       }
-      
+
       // Extract the actual query part (remove special characters like {, $, etc.)
       // This handles cases like "{job" or "${job" where we want to match "job"
-      const queryForMatch = this.currentQuery.replace(/^[^a-zA-Z0-9]*/, "").toLowerCase();
+      const queryForMatch = this.currentQuery
+        .replace(/^[^a-zA-Z0-9]*/, "")
+        .toLowerCase();
       if (!queryForMatch) {
         return suggestionName;
       }
-      
+
       // Use case-insensitive regex to find and highlight the match anywhere in the suggestion name
       // This handles both cases:
       // - User types "execid" → highlights "execid" in "${job.execid}"
       // - User types "${job.execid" → highlights "${job.execid" in "${job.execid}"
       const regex = new RegExp(`(${this.escapeRegex(queryForMatch)})`, "gi");
-      return suggestionName.replace(regex, '<span class="autocomplete-query-match">$1</span>');
+      const highlighted = suggestionName.replace(
+        regex,
+        '<span class="autocomplete-query-match">$1</span>',
+      );
+      return DOMPurify.sanitize(highlighted);
     },
 
     escapeRegex(str: string): string {
@@ -337,31 +374,35 @@ export default defineComponent({
       // Normalize both strings to lowercase for case-insensitive matching
       const normalizedInput = textInput.toLowerCase();
       const normalizedSuggestion = suggestion.toLowerCase();
-      
+
       // If input is empty, don't match
       if (!normalizedInput) return false;
-      
+
       // If input exactly matches the suggestion, return true
       if (normalizedInput === normalizedSuggestion) return true;
-      
+
       // Check if the suggestion starts with the input (for progressive typing like "${job" matching "${job.execid}")
       if (normalizedSuggestion.startsWith(normalizedInput)) return true;
-      
+
       // Check if the input is contained anywhere in the suggestion (for cases like "execid" matching "job.execid")
       if (normalizedSuggestion.includes(normalizedInput)) return true;
-      
-    // Check if input ends with any prefix of the suggestion (backwards matching)
-    // This handles cases like typing from the end of a variable name
-    // Require minimum prefix length of 2, except allow "$" as a single character match
-    const suggestionPrefixes = normalizedSuggestion
-      .split("")
-      .map((_element, index) => normalizedSuggestion.slice(0, normalizedSuggestion.length - index))
-      .filter((prefix) => prefix.length >= 2 || prefix === "$"); // Allow "$" or prefixes of 2+ characters
 
-    return suggestionPrefixes.some((prefix) => normalizedInput.endsWith(prefix));
+      // Check if input ends with any prefix of the suggestion (backwards matching)
+      // This handles cases like typing from the end of a variable name
+      // Require minimum prefix length of 2, except allow "$" as a single character match
+      const suggestionPrefixes = normalizedSuggestion
+        .split("")
+        .map((_element, index) =>
+          normalizedSuggestion.slice(0, normalizedSuggestion.length - index),
+        )
+        .filter((prefix) => prefix.length >= 2 || prefix === "$"); // Allow "$" or prefixes of 2+ characters
+
+      return suggestionPrefixes.some((prefix) =>
+        normalizedInput.endsWith(prefix),
+      );
     },
 
-    handleOptionSelect(event: any): void {
+    handleOptionSelect(): void {
       // If replaceOnSelect is true, use default PrimeVue behavior (replace entire value)
       // PrimeVue will automatically update the v-model value
       if (this.replaceOnSelect) {
@@ -370,7 +411,7 @@ export default defineComponent({
         this.updateValue();
         return;
       }
-      
+
       // Otherwise, use custom replacement logic (partial replacement)
       this.replaceSelection();
     },
@@ -378,7 +419,9 @@ export default defineComponent({
     replaceSelection(): void {
       const fullInputText = this.modelValue;
       const selectedSuggestion = this.value;
-      const autoCompleteInput = (this.$refs.autoInput as any)?.$el?.querySelector("input");
+      const autoCompleteInput = (
+        this.$refs.autoInput as any
+      )?.$el?.querySelector("input");
       if (!autoCompleteInput) return;
       const cursorPosition = autoCompleteInput.selectionStart;
       const cursorOffset = this.findSuggestionStart(
@@ -411,7 +454,9 @@ export default defineComponent({
       let offset = cursorPosition - 1;
       while (
         offset >= 0 &&
-        !selectedSuggestion.startsWith(fullInputText.slice(offset, cursorPosition))
+        !selectedSuggestion.startsWith(
+          fullInputText.slice(offset, cursorPosition),
+        )
       ) {
         offset--;
       }
@@ -445,7 +490,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 @import "../_form-inputs.scss";
 
 .pt-autocomplete-wrapper {
@@ -460,19 +505,21 @@ export default defineComponent({
   color: var(--colors-red-500);
 }
 
-.p-autocomplete-overlay {
+// PrimeVue's AutoComplete overlay is teleported to <body> (and rendered by
+// AutoComplete's own template, not ours), so it needs :deep() to be reached.
+:deep(.p-autocomplete-overlay) {
   z-index: 1200 !important;
   color: var(--colors-gray-800);
   margin-top: 0;
 }
 
 // Remove any spacing from PrimeVue's header container
-.p-autocomplete-overlay .p-autocomplete-header {
+:deep(.p-autocomplete-overlay .p-autocomplete-header) {
   padding: 0;
   margin: 0;
 }
 
-.p-autocomplete-list {
+:deep(.p-autocomplete-list) {
   padding: 0;
   margin: 0;
   min-height: 40px;
@@ -484,32 +531,41 @@ export default defineComponent({
   }
 }
 
-.p-autocomplete-option {
+:deep(.p-autocomplete-option) {
   color: var(--colors-gray-800);
   padding: 10px 17px;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
-.p-autocomplete-option:hover:not(.p-disabled):not(.p-autocomplete-option-selected) {
+:deep(
+  .p-autocomplete-option:hover:not(.p-disabled):not(
+      .p-autocomplete-option-selected
+    )
+) {
   background-color: var(--colors-cardNumber);
   color: var(--colors-gray-800);
 }
 
-.p-autocomplete-option.p-focus:not(.p-disabled) {
+:deep(.p-autocomplete-option.p-focus:not(.p-disabled)) {
   background-color: var(--colors-cardNumber);
   color: var(--colors-gray-800);
 }
 
-.p-autocomplete-option-selected {
+:deep(.p-autocomplete-option-selected) {
   background-color: var(--colors-blue-50);
   color: var(--colors-blue-500);
 }
 
-.p-autocomplete-option-selected.p-focus {
+:deep(.p-autocomplete-option-selected.p-focus) {
   background-color: var(--colors-blue-50);
   color: var(--colors-blue-500);
 }
 
+// These target our own markup (rendered via the #option scoped slot), which
+// is compiled as part of this component's template, so no :deep() is needed
+// for the rightmost class even though the ancestor is PrimeVue-owned.
 .p-autocomplete-option .autocomplete-option-content {
   display: flex !important;
   flex-direction: row !important;
@@ -540,7 +596,7 @@ export default defineComponent({
   font-weight: var(--fontWeights-semibold);
 }
 
-.p-autocomplete-list-container {
+:deep(.p-autocomplete-list-container) {
   background-color: var(--colors-white);
   border: 1px solid var(--colors-gray-300-original);
   border-radius: var(--radii-base);
@@ -554,7 +610,7 @@ export default defineComponent({
   border-bottom: 2px solid var(--colors-gray-200);
   width: 100%;
 
-  + .p-autocomplete-list-container {
+  + :deep(.p-autocomplete-list-container) {
     border: none;
   }
 }
@@ -574,7 +630,10 @@ export default defineComponent({
   font-size: 14px;
   line-height: 20px;
   color: var(--colors-gray-600);
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
   margin-bottom: -2px;
   position: relative;
   outline: none;
@@ -613,11 +672,13 @@ export default defineComponent({
   font-weight: var(--fontWeights-semibold);
 }
 
-
 .p-autocomplete {
   width: 100%;
 
-  .p-inputtext {
+  // The rendered <input> is InputText's own root element, nested one level
+  // deeper than AutoComplete's root (which .p-autocomplete above targets),
+  // so it needs :deep() to be reached from this component's scoped styles.
+  :deep(.p-inputtext) {
     @include form-input-base;
     padding: 10px;
     font-size: 14px;

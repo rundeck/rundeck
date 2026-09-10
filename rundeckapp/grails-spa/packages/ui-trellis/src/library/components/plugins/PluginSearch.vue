@@ -1,7 +1,16 @@
 <template>
   <div class="col-sm-12">
     <div class="form-group">
-      <label v-if="!ea" data-testid="plugin-search-label" for="stepFilter" class="col-sm-2 control-label">
+      <!-- for/id already pair this label to the input below; the a11y
+           plugin's default rule also requires DOM nesting, which this
+           sibling layout can't satisfy -->
+      <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
+      <label
+        v-if="!ea"
+        data-testid="plugin-search-label"
+        for="stepFilter"
+        class="col-sm-2 control-label"
+      >
         {{ $t("step.plugins.filter.prompt") }}
       </label>
       <div v-if="!ea" class="col-sm-10">
@@ -73,7 +82,10 @@
               </template>
             </popover>
 
-            <btn data-testid="plugin-search-button" @click="filterStepDescriptions">
+            <btn
+              data-testid="plugin-search-button"
+              @click="filterStepDescriptions"
+            >
               {{ $t("search") }}
             </btn>
           </div>
@@ -81,13 +93,13 @@
       </div>
       <div v-else>
         <PtInput
-            v-model="filterValue"
-            type="search"
-            name="nodeFilter"
-            :placeholder="$t('enter.a.step.filter.override')"
-            left-icon="pi pi-search"
-            input-id="stepFilter"
-            @keydown.enter.prevent="filterStepDescriptions"
+          v-model="filterValue"
+          type="search"
+          name="nodeFilter"
+          :placeholder="$t('enter.a.step.filter.override')"
+          left-icon="pi pi-search"
+          input-id="stepFilter"
+          @keydown.enter.prevent="filterStepDescriptions"
         />
       </div>
     </div>
@@ -117,7 +129,7 @@ export default defineComponent({
     };
   },
   watch: {
-    filterValue(newValue: string) {
+    filterValue() {
       // Only apply live search with debounce in EA mode
       if (!this.ea) {
         return;
@@ -138,15 +150,15 @@ export default defineComponent({
       }, 300);
     },
   },
-  methods: {
-    filterStepDescriptions() {
-      this.$emit("search", this.filterValue);
-    },
-  },
   beforeUnmount() {
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer);
     }
+  },
+  methods: {
+    filterStepDescriptions() {
+      this.$emit("search", this.filterValue);
+    },
   },
 });
 </script>

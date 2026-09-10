@@ -70,10 +70,12 @@ export default defineComponent({
     date: {
       type: String,
       required: false,
+      default: "",
     },
     appName: {
       type: String,
       required: false,
+      default: "",
     },
     showAppName: {
       type: Boolean,
@@ -186,14 +188,9 @@ export default defineComponent({
   },
 });
 </script>
-<style>
+<style scoped>
 .rundeck-version-info {
   color: #8a8a8a;
-}
-
-.rundeck-version-date {
-  color: lightgray;
-  font-style: italic;
 }
 
 .rundeck-version-tag {

@@ -14,7 +14,7 @@ export const observer = new MutationObserver(function (mutations_list) {
         return;
       }
       const added_elem = added_node as Element;
-      let uiSockets = added_elem.getElementsByClassName("vue-ui-socket");
+      const uiSockets = added_elem.getElementsByClassName("vue-ui-socket");
 
       if (added_elem.className && uiSockets?.length > 0) {
         const i18n = initI18n();

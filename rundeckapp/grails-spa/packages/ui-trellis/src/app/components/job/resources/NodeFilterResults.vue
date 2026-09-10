@@ -1,5 +1,8 @@
 <template>
-  <div class="well well-sm matchednodes node_filter_results__matched_nodes" :class="{ 'no-margin-bottom': noMarginBottom }">
+  <div
+    class="well well-sm matchednodes node_filter_results__matched_nodes"
+    :class="{ 'no-margin-bottom': noMarginBottom }"
+  >
     <div class="row">
       <div class="col-sm-6">
         <span
@@ -35,16 +38,16 @@
           >
             {{ $t("view.in.nodes.page.prompt") }}
           </a>
-        <btn
+          <btn
             type="default btn-sm refresh_nodes"
-          data-loading-text="${g.message(code: 'loading')}"
-          :disabled="loading"
-          :title="$t('click.to.refresh')"
-          @click="update"
-        >
-          {{ $t("refresh") }}
-          <i class="glyphicon glyphicon-refresh"></i>
-        </btn>
+            data-loading-text="${g.message(code: 'loading')}"
+            :disabled="loading"
+            :title="$t('click.to.refresh')"
+            @click="update"
+          >
+            {{ $t("refresh") }}
+            <i class="glyphicon glyphicon-refresh"></i>
+          </btn>
         </div>
       </div>
     </div>
@@ -119,7 +122,7 @@ export default defineComponent({
     const truncated = ref(false);
     const colkeys = ref([]);
     const nodeSet = ref({ nodes: [], tagsummary: {} });
-    
+
     const viewInNodesPageUrl = computed(() => {
       if (!props.nodeFilter) return "#";
       const projectName = props.project || getRundeckContext().projectName;
@@ -128,7 +131,7 @@ export default defineComponent({
       });
       return url(nodesUrl).href;
     });
-    
+
     return {
       paging,
       loaded,

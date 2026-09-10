@@ -150,9 +150,7 @@
         </ul>
 
         <strong>{{ $t("use.regular.expressions") }}</strong>
-        <p>
-          <code>hostname: dev(\d+).test.com</code>.
-        </p>
+        <p><code>hostname: dev(\d+).test.com</code>.</p>
 
         <strong>{{ $t("regex.syntax.checking") }}:</strong>
         <p>

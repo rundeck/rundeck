@@ -271,6 +271,19 @@ export default defineComponent({
       pluginStorageAccess: [] as any[],
     };
   },
+  computed: {
+    exportedData(): any[] {
+      const data = [] as any;
+      const inputData = this.pluginConfigs;
+      inputData.forEach((plugin, index) => {
+        data.push({ type: plugin.entry.type, config: plugin.entry.config });
+      });
+      return data;
+    },
+    filteredPluginProviders(): any[] {
+      return this.pluginProviders.filter((plugin) => !plugin["configSet"]);
+    },
+  },
   watch: {
     // A plugin's fields are only committed (and written to the hidden form
     // field the page submits) once its own Save is clicked. Hide the
@@ -283,19 +296,6 @@ export default defineComponent({
         "project-plugin-group-editing",
         newFocus !== -1,
       );
-    },
-  },
-  computed: {
-    exportedData(): any[] {
-      const data = [] as any;
-      const inputData = this.pluginConfigs;
-      inputData.forEach((plugin, index) => {
-        data.push({ type: plugin.entry.type, config: plugin.entry.config });
-      });
-      return data;
-    },
-    filteredPluginProviders(): any[] {
-      return this.pluginProviders.filter((plugin) => !plugin["configSet"]);
     },
   },
   async mounted() {
