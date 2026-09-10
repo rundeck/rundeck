@@ -307,6 +307,61 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         username | _
         'auser'  | _
     }
+
+    def "bindingLogin searches with the normalized username when case-insensitive matching is enabled"() {
+        // Regression test: findUser() in the search-based bindingLogin path used the raw,
+        // un-normalized username, while the role lookup and cached/returned UserInfo it feeds
+        // into all use normalizedUsername. With case-insensitive username matching enabled, a
+        // user logging in with different case than what's stored in LDAP would fail the search
+        // (on directories with case-sensitive attribute matching), defeating the point of the
+        // case-insensitive feature. Reported by Copilot review on PR #10530.
+        JettyCachingLdapLoginModule module = Spy(JettyCachingLdapLoginModule)
+        module.isCaseInsensitiveUsernameEnabled() >> true
+        module._debug = true
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = false
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = rawUsername; it[0][1].object = 'apassword' }
+        })
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$normalizedUsername,dc=test,dc=com"
+            getAttributes() >> new BasicAttributes()
+        }]
+        String[] capturedFilterArgs = null
+        def dirContext = Mock(DirContext) {
+            1 * search(_, _, _, _) >> { args ->
+                capturedFilterArgs = args[2] as String[]
+                new EnumImpl<SearchResult>(found)
+            }
+        }
+        module._rootContext = dirContext
+        DirContext userDir = Mock(DirContext) {
+            _ * search(*_) >> {new EnumImpl<SearchResult>([])}
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            userDir
+        }
+
+        when:
+        boolean result = module.login()
+
+        then:
+        result
+        // The key assertion: search() must be called with normalizedUsername, not
+        // rawUsername. If bindingLogin regresses to passing the raw username, this
+        // fails with the raw (wrong-case) value instead.
+        capturedFilterArgs[2] == normalizedUsername
+
+        where:
+        rawUsername | normalizedUsername
+        'AUser'     | 'auser'
+    }
+
     class EnumImpl<T> implements NamingEnumeration<T>{
         List<T> list
 

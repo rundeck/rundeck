@@ -981,7 +981,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             dirContext = createBindUserDirContext(userDn, password);
             setDemographicAttributes(fetchUserAttributes(dirContext, userDn));
         } else {
-            SearchResult searchResult = findUser(username);
+            SearchResult searchResult = findUser(normalizedUsername);
             userDn = searchResult.getNameInNamespace();
 
             LOG.info("Attempting authentication: " + userDn);
