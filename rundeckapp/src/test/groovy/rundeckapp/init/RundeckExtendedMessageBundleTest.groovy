@@ -16,6 +16,7 @@
 package rundeckapp.init
 
 import org.springframework.context.support.ReloadableResourceBundleMessageSource
+import org.springframework.context.support.ResourceBundleMessageSource
 import spock.lang.Specification
 
 class RundeckExtendedMessageBundleTest extends Specification {
@@ -39,6 +40,17 @@ class RundeckExtendedMessageBundleTest extends Specification {
         new RundeckExtendedMessageBundle(messageSource, null)
 
         then:
+        messageSource.basenameSet.isEmpty()
+    }
+
+    def "Test Rundeck message bundle extender leaves a classpath-only message source alone"() {
+        given: "a message source that reads base names from the classpath and cannot load a file location"
+        def messageSource = new ResourceBundleMessageSource()
+
+        when:
+        new RundeckExtendedMessageBundle(messageSource, "file:/tmp/i18n/messages")
+
+        then: "the base name is not added, so startup does not fail on a bundle that cannot be read"
         messageSource.basenameSet.isEmpty()
     }
 }
