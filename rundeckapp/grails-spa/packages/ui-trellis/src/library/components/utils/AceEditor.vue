@@ -92,7 +92,7 @@ export default defineComponent({
     readOnly: Boolean,
     minLines: {
       type: Number,
-      default: 12,
+      default: 0,
     },
     maxLines: {
       type: Number,

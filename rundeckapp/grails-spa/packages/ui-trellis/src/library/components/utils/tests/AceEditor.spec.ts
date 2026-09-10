@@ -17,7 +17,7 @@ describe("AceEditor", () => {
       const wrapper = createWrapper();
 
       const ace = wrapper.findComponent(AceEditorVue);
-      expect(ace.props("minLines")).toBe(12);
+      expect(ace.props("minLines")).toBe(0);
       expect(ace.props("maxLines")).toBe(Infinity);
     });
 

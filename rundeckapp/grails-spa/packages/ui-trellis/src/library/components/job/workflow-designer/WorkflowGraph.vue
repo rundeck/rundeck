@@ -109,6 +109,7 @@
                 lang="javascript"
                 height="500px"
                 width="100%"
+                :min-lines="20"
                 @init="aceInit"
               />
             </div>
