@@ -33,6 +33,11 @@ const mountRundeckInfo = async (props = {}) => {
       },
       ...props,
     },
+    global: {
+      mocks: {
+        $t: (key: string) => key,
+      },
+    },
   });
 };
 
@@ -82,6 +87,9 @@ describe("RundeckInfo", () => {
     const anchorElement = wrapper.find('[data-test-id="welcome-link"]');
 
     expect(anchorElement.attributes("href")).toBe("http://localhost");
+    expect(anchorElement.attributes("aria-label")).toBe(
+      "page.home.link.aria.label",
+    );
   });
 
   it("renders the correct Rundeck version based on number and title props", async () => {
