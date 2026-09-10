@@ -34,6 +34,7 @@ import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import groovy.sql.Sql
+import org.rundeck.app.AppConstants
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
 import rundeck.services.LogFileStorageService
