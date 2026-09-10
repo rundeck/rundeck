@@ -243,6 +243,146 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         'auser'  | _
     }
 
+    def "bindingLogin with forceBindingLoginNoAnonymousSearch resolves paginated roles via the authenticated context"() {
+        // Regression test per Copilot review on PR #10530: getPaginatedRoles() searched using the
+        // module-level ldapContext field, which is built from _rootContext's (anonymous/bind-user)
+        // environment at initialization, ignoring the authenticated user-bound dirContext passed to
+        // getUserRolesByDn(). With the default rolePagination=true, this meant a directory that
+        // disallows anonymous search would still fail to authenticate once roles are configured,
+        // defeating forceBindingLoginNoAnonymousSearch's entire purpose.
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._forceBindingLogin = true
+        module._forceBindingLoginNoAnonymousSearch = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._userRdnAttribute = 'cn'
+        module._userBaseDn = 'dc=test,dc=com'
+        module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = true
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = 'apassword' }
+        })  // Use setter instead of @field access (Groovy 4)
+        def expectedUserDn = "cn=$username,dc=test,dc=com"
+        // no search should ever be issued against _rootContext, since the DN is constructed directly
+        def rootContext = Mock(DirContext) {
+            0 * _(*_)
+        }
+        module._rootContext = rootContext
+        def stringRoles = ['role1', 'role2']
+        def foundRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get(module._roleNameAttribute) >> Mock(Attribute) {
+                    getAll() >> {new EnumImpl<String>(stringRoles)}
+                }
+            }
+        }]
+        def pagingContext = Mock(LdapContext) {
+            1 * search(
+                'roleBaseDn',
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._roleObjectClass, 'roleUsernameMemberAttribute', username],
+                _
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
+            0 * search(*_)
+        }
+        // userDir is the authenticated context created by binding as the user; getPaginatedRoles
+        // must derive its paging LdapContext from *this* context (via lookup(providerUrl)), never
+        // from the anonymous module-level ldapContext field.
+        DirContext userDir = Mock(DirContext) {
+            1 * getAttributes(expectedUserDn) >> new BasicAttributes()
+            1 * lookup(module._providerUrl) >> pagingContext
+            0 * _(*_)
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            assert user == expectedUserDn
+            userDir
+        }
+        Subject testSubject = new Subject()
+        when:
+        boolean result = module.login()
+        module.getCurrentUser().setJAASInfo(testSubject)  // Use getter instead of @field access (Groovy 4)
+
+        then:
+        result
+        null != testSubject.getPrincipals(Principal)
+        username == testSubject.getPrincipals(Principal).first().name
+        null != testSubject.getPrincipals(RundeckRole)
+        2 == testSubject.getPrincipals(RundeckRole).size()
+        ['role1', 'role2'] == testSubject.getPrincipals(RundeckRole)*.name
+
+
+        where:
+        username | _
+        'auser'  | _
+    }
+
+    def "initializeOptions parses forceBindingLoginNoAnonymousSearch and bindingLogin honors it"() {
+        // Regression test per Copilot review on PR #10530: the other forceBindingLoginNoAnonymousSearch
+        // tests set the protected _forceBindingLoginNoAnonymousSearch field directly, so a regression in
+        // the public JAAS option's parsing or key wiring in initializeOptions() would leave those tests
+        // green while the configured feature stayed silently disabled. This test instead drives the
+        // option through initializeOptions() using its real option key, then exercises the binding path
+        // through that parsed configuration.
+        given:
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module.initializeOptions([
+            forceBindingLogin                      : 'true',
+            forceBindingLoginNoAnonymousSearch     : 'true',
+            forceBindingLoginUseRootContextForRoles: 'false',
+            contextFactory                         : 'notnull',
+            providerUrl                            : 'notnull',
+            userRdnAttribute                       : 'cn',
+            userBaseDn                             : 'dc=test,dc=com',
+            roleBaseDn                              : 'roleBaseDn',
+            rolePagination                          : 'false',
+            roleUsernameMemberAttribute             : 'roleUsernameMemberAttribute',
+        ])
+
+        expect:
+        module._forceBindingLoginNoAnonymousSearch
+
+        when:
+        module._debug = true
+        def expectedUserDn = "cn=auser,dc=test,dc=com"
+        // no search should ever be issued against _rootContext, since the DN is constructed directly
+        // -- this only happens if initializeOptions actually wired up _forceBindingLoginNoAnonymousSearch
+        def rootContext = Mock(DirContext) {
+            0 * _(*_)
+        }
+        module._rootContext = rootContext
+        def foundRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get(module._roleNameAttribute) >> Mock(Attribute) {
+                    getAll() >> {new EnumImpl<String>(['role1', 'role2'])}
+                }
+            }
+        }]
+        DirContext userDir = Mock(DirContext) {
+            1 * getAttributes(expectedUserDn) >> new BasicAttributes()
+            1 * search(
+                'roleBaseDn',
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._roleObjectClass, 'roleUsernameMemberAttribute', 'auser'],
+                _
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
+            0 * _(*_)
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            assert user == expectedUserDn
+            userDir
+        }
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = 'auser'; it[0][1].object = 'apassword' }
+        })
+        boolean result = module.login()
+
+        then:
+        result
+    }
+
     def "bindingLogin should set user roles without pagination"() {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
         module._debug = true
@@ -533,8 +673,12 @@ class JettyCachingLdapLoginModuleTest extends Specification {
             ) >> {new EnumImpl<SearchResult>(foundRoles)}
             0 * search(*_)
         }
-        module.ldapContext = ldapContext
+        // Paginated role lookup must derive its LdapContext from the authenticated
+        // user-bound dirContext (via lookup(providerUrl)), not the module-level
+        // anonymous/root ldapContext field, so it still works when no anonymous
+        // search is available.
         DirContext userDir = Mock(DirContext) {
+            1 * lookup(module._providerUrl) >> ldapContext
             0 * _(*_)
         }
         module.userBindDirContextCreator = { String user, Object pass ->
@@ -891,22 +1035,9 @@ class JettyCachingLdapLoginModuleTest extends Specification {
             }
         }]
 
-        DirContext dirContext = Mock(DirContext) {
-            2 * search(
-                    module._userBaseDn,
-                    JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
-                    [module._userObjectClass, module._userIdAttribute, user1],
-                    _ as SearchControls
-            ) >> { new EnumImpl<SearchResult>(foundRoles) }
-            lookup(module._providerUrl) >> Mock(LdapContext) {
-                search(
-                        module._roleBaseDn,
-                        module._roleMemberFilter,
-                        _ as SearchControls
-                ) >> { new EnumImpl<SearchResult>(nestedRoles) }
-            }
-        }
-
+        // getPaginatedRoles derives its LdapContext from dirContext.lookup(providerUrl), so both
+        // the top-level paginated role search and the nested-groups search (buildRoleMemberOfMap)
+        // are served by this single LdapContext mock, returned from _rootContext's lookup().
         LdapContext ldapContext = Mock(LdapContext) {
             1 * search(
                     module._roleBaseDn,
@@ -917,10 +1048,24 @@ class JettyCachingLdapLoginModuleTest extends Specification {
             getResponseControls() >> [Mock(Control) {
                 0 * _(*_)
             }]
+            search(
+                    module._roleBaseDn,
+                    module._roleMemberFilter,
+                    _ as SearchControls
+            ) >> { new EnumImpl<SearchResult>(nestedRoles) }
+        }
+
+        DirContext dirContext = Mock(DirContext) {
+            2 * search(
+                    module._userBaseDn,
+                    JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                    [module._userObjectClass, module._userIdAttribute, user1],
+                    _ as SearchControls
+            ) >> { new EnumImpl<SearchResult>(foundRoles) }
+            lookup(module._providerUrl) >> ldapContext
         }
 
         module._rootContext = dirContext
-        module.ldapContext = ldapContext
 
         return module
     }

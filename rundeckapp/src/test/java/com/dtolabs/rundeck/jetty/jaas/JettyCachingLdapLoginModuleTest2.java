@@ -378,6 +378,10 @@ public class JettyCachingLdapLoginModuleTest2 {
 
         module._userBaseDn = "ou=users,dc=example,dc=com";
         module._roleBaseDn = "ou=groups,dc=example,dc=com";
+        // getPaginatedRoles() derives its LdapContext via dirContext.lookup(_providerUrl); this
+        // must be non-null so the rootContext.lookup(anyString()) stub below actually matches
+        // (Mockito's anyString() does not match a null argument).
+        module._providerUrl = "ldap://localhost";
 
         DirContext rootContext = mock(DirContext.class);
         LdapContext ldapContext = mock(LdapContext.class);

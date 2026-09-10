@@ -488,7 +488,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         List<SearchResult> results;
         if(rolePagination){
-            results = getPaginatedRoles(userDn, username);
+            results = getPaginatedRoles(dirContext, userDn, username);
         }else{
             results = getNonPaginatedRoles(dirContext, userDn, username);
         }
@@ -540,19 +540,30 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     /**
-     * It searches for roles with pagination
+     * It searches for roles with pagination, using the given dirContext to perform the search
+     * rather than the module-level anonymous/root {@link #ldapContext}, so that role lookups
+     * still succeed when authenticated as a specific user (e.g. when
+     * {@link #_forceBindingLoginNoAnonymousSearch} is enabled and anonymous search is unavailable).
+     *
+     * @param dirContext dirContext to search with; if it does not already support paging
+     *                   controls, an {@link LdapContext} bound to the same identity is derived
+     *                   from it via {@link DirContext#lookup(String)}
      * @param userDn userDn
      * @param username username
      *
      * @return List<SearchResult>
      * @throws NamingException
      */
-    private List<SearchResult> getPaginatedRoles(String userDn, String username) throws IOException, NamingException {
+    private List<SearchResult> getPaginatedRoles(DirContext dirContext, String userDn, String username) throws IOException, NamingException {
         List<SearchResult> searchResults = new ArrayList<>();
+
+        LdapContext pagingContext = (dirContext instanceof LdapContext)
+                ? (LdapContext) dirContext
+                : (LdapContext) dirContext.lookup(_providerUrl);
 
         int pageSize = rolesPerPage;
         byte[] cookie = null;
-        ldapContext.setRequestControls(new Control[]{
+        pagingContext.setRequestControls(new Control[]{
                 new PagedResultsControl(pageSize, Control.CRITICAL) });
         do {
             String filter = OBJECT_CLASS_FILTER;
@@ -566,7 +577,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
             SearchControls searchControls = new SearchControls();
             searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            NamingEnumeration results = ldapContext.search(
+            NamingEnumeration results = pagingContext.search(
                     _roleBaseDn,
                     filter,
                     filterArguments,
@@ -577,7 +588,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 searchResults.add((SearchResult)results.nextElement());
             }
             // Examine the paged results control response
-            Control[] controls = ldapContext.getResponseControls();
+            Control[] controls = pagingContext.getResponseControls();
             if (controls != null) {
                 for (int i = 0; i < controls.length; i++) {
                     if (controls[i] instanceof PagedResultsResponseControl) {
@@ -587,7 +598,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                     }
                 }
             }
-            ldapContext.setRequestControls(new Control[]{
+            pagingContext.setRequestControls(new Control[]{
                     new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
         } while (cookie != null);
 
