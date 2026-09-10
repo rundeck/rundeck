@@ -15,24 +15,26 @@
  */
 package rundeckapp.init
 
-import org.grails.spring.context.support.PluginAwareResourceBundleMessageSource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.context.support.AbstractResourceBasedMessageSource
 
-import java.lang.reflect.Field
-
-
+/**
+ * Puts an operator-supplied message bundle ahead of the ones shipped with the product, so
+ * translations under $RDECK_BASE/i18n override rather than supplement them.
+ *
+ * Grails 8.0.0-M6 removed PluginAwareResourceBundleMessageSource: plugin bundles are now declared
+ * through generated META-INF/grails/i18n.properties descriptors and served by Spring's own message
+ * source. Targeting Spring's AbstractResourceBasedMessageSource follows that move, and lets the base
+ * names be read and rewritten through the public API instead of a reflective field grab.
+ */
 class RundeckExtendedMessageBundle {
     private static final transient Logger LOG = LoggerFactory.getLogger(RundeckExtendedMessageBundle.class)
 
-    RundeckExtendedMessageBundle(PluginAwareResourceBundleMessageSource messageSource, String externalBase) {
-        if(externalBase) {
-            PluginAwareResourceBundleMessageSource msgSource = (PluginAwareResourceBundleMessageSource) messageSource
-            Field oldBaseNameField = msgSource.getClass().getSuperclass().getDeclaredField("basenames")
-            oldBaseNameField.setAccessible(true)
-            def oldBaseNames = oldBaseNameField.get(msgSource).toList()
-            oldBaseNames.add(0, externalBase)
-            msgSource.setBasenames(oldBaseNames.toArray(new String[oldBaseNames.size()]))
+    RundeckExtendedMessageBundle(AbstractResourceBasedMessageSource messageSource, String externalBase) {
+        if (externalBase) {
+            List<String> basenames = [externalBase] + messageSource.basenameSet.toList()
+            messageSource.setBasenames(basenames as String[])
             LOG.debug("adding external i18n message source: ${externalBase}")
         }
     }
