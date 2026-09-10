@@ -17,9 +17,14 @@
 <template>
   <div>
     <div v-if="codeSyntaxSelectable" class="ace_text_controls form-inline">
-      <label for="ace_syntax">
+      <label :for="syntaxSelectId" data-testid="ace-editor-syntax-label">
         Syntax Mode:
-        <select id="ace_syntax" v-model="modeInternal" class="form-control">
+        <select
+          :id="syntaxSelectId"
+          v-model="modeInternal"
+          class="form-control"
+          data-testid="ace-editor-syntax-select"
+        >
           <option value="-">-None-</option>
           <option v-for="mode in aceModes" :key="mode" :value="mode">
             {{ mode }}
@@ -28,8 +33,13 @@
       </label>
     </div>
     <div v-if="softWrapControl" class="checkbox ace_text_controls">
-      <label for="ace_wrap">
-        <input id="ace_wrap" v-model="wrapInternal" type="checkbox" />
+      <label :for="wrapCheckboxId" data-testid="ace-editor-wrap-label">
+        <input
+          :id="wrapCheckboxId"
+          v-model="wrapInternal"
+          data-testid="ace-editor-wrap-checkbox"
+          type="checkbox"
+        />
         {{ $t("soft.wrap") }}
       </label>
     </div>
@@ -75,6 +85,8 @@ import "ace-builds/src-noconflict/theme-chrome";
 import "ace-builds/src-noconflict/theme-tomorrow_night";
 import "ace-builds/src-noconflict/theme-tomorrow_night_eighties";
 
+let aceEditorInstanceCount = 0;
+
 export default defineComponent({
   name: "AceEditor",
   components: { Ace },
@@ -110,6 +122,7 @@ export default defineComponent({
   emits: ["update:modelValue", "init"],
   data() {
     return {
+      instanceId: `ace-editor-${++aceEditorInstanceCount}`,
       valueInternal: this.modelValue || "",
       modeInternal: this.lang || "text",
       wrapInternal: false,
@@ -137,6 +150,17 @@ export default defineComponent({
         "yaml",
       ],
     };
+  },
+  computed: {
+    controlIdPrefix(): string {
+      return this.identifier || this.instanceId;
+    },
+    syntaxSelectId(): string {
+      return `${this.controlIdPrefix}-syntax`;
+    },
+    wrapCheckboxId(): string {
+      return `${this.controlIdPrefix}-wrap`;
+    },
   },
   watch: {
     valueInternal(newValue) {
