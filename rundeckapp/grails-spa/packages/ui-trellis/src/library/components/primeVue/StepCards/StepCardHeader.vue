@@ -244,14 +244,13 @@ export default defineComponent({
     }
   }
 
-  :deep(.plugin) {
-    &-info {
-      display: flex;
-      align-items: center;
-    }
-    &-icon {
-      height: 16px !important;
-    }
+  :deep(.plugin-info) {
+    display: flex;
+    align-items: center;
+  }
+
+  :deep(.plugin-icon) {
+    height: 16px !important;
   }
 
   background-color: var(--colors-secondaryBackgroundOnLight);

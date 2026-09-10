@@ -87,27 +87,27 @@ ul {
     margin-left: 5px;
     font-weight: 700;
   }
+}
 
-  & &-icon.rdicon {
-    background-size: 14px 14px;
-    height: 14px;
-    width: 14px;
-  }
+:deep(.utility-bar__item-icon.rdicon) {
+  background-size: 14px 14px;
+  height: 14px;
+  width: 14px;
+}
 
-  &-counter {
-    height: 100%;
-    min-width: 19px;
-    padding: 0 5px;
-    border-radius: 50%;
-    // background-color: #808080;
-    background-color: var(--font-color);
-    text-align: center;
-    color: white;
-    font-size: 12px;
-  }
+:deep(.utility-bar__item-counter) {
+  height: 100%;
+  min-width: 19px;
+  padding: 0 5px;
+  border-radius: 50%;
+  // background-color: #808080;
+  background-color: var(--font-color);
+  text-align: center;
+  color: white;
+  font-size: 12px;
+}
 
-  &:hover &-counter {
-    background-color: var(--font-color);
-  }
+:deep(.utility-bar__item):hover .utility-bar__item-counter {
+  background-color: var(--font-color);
 }
 </style>

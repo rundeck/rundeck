@@ -58,18 +58,18 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-:deep(.p-step) {
-  &-header {
-    //display: flex;
-    //flex-direction: column;
+:deep(.p-step-header) {
+  //display: flex;
+  //flex-direction: column;
 
-    .p-step-number {
-      border-color: var(--colors-gray-500);
-      color: var(--colors-gray-500);
-      border-width: 1px;
-    }
+  .p-step-number {
+    border-color: var(--colors-gray-500);
+    color: var(--colors-gray-500);
+    border-width: 1px;
   }
+}
 
+:deep(.p-step) {
   .p-stepper-separator {
     //background: var(--colors-gray-300-original);
   }

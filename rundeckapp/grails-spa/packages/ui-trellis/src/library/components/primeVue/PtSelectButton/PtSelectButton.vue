@@ -113,27 +113,27 @@ export default defineComponent({
     background: var(--colors-gray-200);
     border-color: var(--colors-gray-300-original);
   }
+}
 
-  &-checked {
-    background: var(--colors-primaryButtonOnLight);
-    border-color: var(--colors-primaryButtonOnLight);
-    color: var(--colors-white);
+.p-selectbutton :deep(.p-togglebutton-checked) {
+  background: var(--colors-primaryButtonOnLight);
+  border-color: var(--colors-primaryButtonOnLight);
+  color: var(--colors-white);
 
-    &:hover {
-      background: var(--colors-blue-600);
-      border-color: var(--colors-blue-600);
-    }
-
-    &:active {
-      background: var(--colors-blue-700);
-      border-color: var(--colors-blue-700);
-    }
+  &:hover {
+    background: var(--colors-blue-600);
+    border-color: var(--colors-blue-600);
   }
 
-  &-label {
-    font-weight: var(--fontWeights-bold);
-    font-size: 14px;
-    line-height: 17px;
+  &:active {
+    background: var(--colors-blue-700);
+    border-color: var(--colors-blue-700);
   }
+}
+
+.p-selectbutton :deep(.p-togglebutton-label) {
+  font-weight: var(--fontWeights-bold);
+  font-size: 14px;
+  line-height: 17px;
 }
 </style>
