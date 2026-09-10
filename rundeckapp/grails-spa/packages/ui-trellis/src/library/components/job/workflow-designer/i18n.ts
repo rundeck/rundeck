@@ -1,9 +1,6 @@
 const messages: any = {
   en_US: {
     graph: {
-      badge: {
-        beta: "Beta!",
-      },
       stepLabel: {
         scriptFile: "Script File",
         script: "Script",

@@ -14,7 +14,7 @@
         <div style="position: absolute; top: 10px; right: 10px">
           <div class="btn-group">
             <div
-              class="btn btn-default"
+              class="btn btn-default workflow-graph-icon-btn"
               role="button"
               tabindex="0"
               :aria-label="$t('graph.action.scaleToFit')"
@@ -27,7 +27,7 @@
             </div>
             <div
               v-if="!editing"
-              class="btn btn-default"
+              class="btn btn-default workflow-graph-icon-btn"
               role="button"
               tabindex="0"
               :aria-label="$t('graph.action.edit')"
@@ -37,19 +37,6 @@
               @keydown.space.prevent="edit"
             >
               <i class="fa fa-pen" />
-              <div
-                style="
-                  border-radius: 500px;
-                  padding: 1px;
-                  position: absolute;
-                  bottom: -5px;
-                  left: 5px;
-                  font-weight: 800;
-                  color: var(--warning-color);
-                "
-              >
-                {{ $t("graph.badge.beta") }}
-              </div>
             </div>
           </div>
           <div
@@ -1123,6 +1110,11 @@ export default defineComponent({
 .workflow-graph-resizer:focus,
 .workflow-graph-resizer--active {
   background-color: var(--border-color, #ccc);
+}
+
+.workflow-graph-icon-btn:focus {
+  color: var(--font-color);
+  box-shadow: var(--default-states-color) 0 0 0 3px;
 }
 
 :deep(#wf_editor .ace_gutter-cell) {
