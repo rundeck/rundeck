@@ -364,11 +364,21 @@ class BootStrap {
         // InternalAuthenticationServiceException -- which ProviderManager rethrows immediately
         // instead of falling through, so realmAuthProvider/jaasAuthProvider never run and every
         // login fails. Remove it to restore the configured intent.
-        if (grailsApplication.mainContext.containsBean('daoAuthenticationProvider')) {
+        // ...but only when no user domain class is configured. A distribution that *does* configure
+        // one authenticates its own users through exactly this provider, and removing it there locks
+        // out every such user while realm.properties/JAAS logins keep working -- a failure that looks
+        // like a wrong password rather than a missing provider.
+        String userDomainClass = grailsApplication.config.getProperty(
+                'grails.plugin.springsecurity.userLookup.userDomainClassName', String)
+
+        if (userDomainClass) {
+            log.info("Keeping the GORM-backed daoAuthenticationProvider: a user domain class is " +
+                     "configured (${userDomainClass})")
+        } else if (grailsApplication.mainContext.containsBean('daoAuthenticationProvider')) {
             def gormAuthProvider = grailsApplication.mainContext.getBean('daoAuthenticationProvider')
             if (authenticationManager.providers.remove(gormAuthProvider)) {
                 log.info("Removed the plugin's GORM-backed daoAuthenticationProvider from the " +
-                         "authentication chain (not used by Rundeck; see providerNames config)")
+                         "authentication chain (no user domain class; see providerNames config)")
             }
         }
 
