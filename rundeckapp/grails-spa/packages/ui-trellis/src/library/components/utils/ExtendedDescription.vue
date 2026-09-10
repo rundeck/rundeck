@@ -66,8 +66,12 @@ export default defineComponent({
   },
 });
 </script>
-<style lang="scss" scoped>
-:deep(.markdown-body) {
-  @import "~vue3-markdown/dist/vue3-markdown.css";
-}
+<!-- vue3-markdown's base stylesheet must load as real top-level CSS to be
+     inlined/resolved correctly; nesting the @import inside a selector (even
+     under :deep()) produces literal, unresolved, invalid CSS (verified in
+     the built output). .markdown-body is already treated as a global class
+     elsewhere in the theme (see _code.scss), so this stays unscoped too. -->
+<!-- eslint-disable-next-line vue/enforce-style-attribute -->
+<style lang="scss">
+@import "~vue3-markdown/dist/vue3-markdown.css";
 </style>
