@@ -14,16 +14,11 @@
             :name="`${rkey}prop_` + pindex"
             value="true"
           />
-          <!-- for/id already pair this label to the checkbox above; the
-               a11y plugin's default rule also requires DOM nesting, which
-               this sibling layout can't satisfy -->
-          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
           <label :for="`${rkey}prop_` + pindex">{{
             translatedTitle(prop)
           }}</label>
         </div>
       </div>
-      <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
       <label
         v-if="prop.defaultValue === 'true'"
         :class="
@@ -77,10 +72,6 @@
       ></dynamic-form-plugin-prop>
     </template>
     <template v-else>
-      <!-- for/id already pair this label to whichever control below is
-           rendered for this prop.type; the a11y plugin's default rule also
-           requires DOM nesting, which this sibling layout can't satisfy -->
-      <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
       <label
         v-if="!prop.options || prop.options['labelHidden'] !== 'true'"
         data-testid="plugin-prop-label"
@@ -172,11 +163,6 @@
                 :value="opt"
                 :disabled="true"
               />
-              <!-- for/id already pair this label to the checkbox above,
-                   unique per option via pindex+oindex; the a11y plugin's
-                   default rule also requires DOM nesting, which this
-                   sibling layout can't satisfy -->
-              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
               <label :for="`${rkey}opt_` + pindex + '_' + oindex"
                 ><plugin-prop-val :prop="prop" :value="opt"
               /></label>

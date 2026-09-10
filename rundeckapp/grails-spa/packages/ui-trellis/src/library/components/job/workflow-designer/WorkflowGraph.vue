@@ -27,7 +27,7 @@
               @click="edit"
             >
               <i class="fa fa-pen" style="transform: translate(0, -5px)" />
-              <div
+              <span
                 style="
                   border-radius: 500px;
                   padding: 1px;
@@ -39,7 +39,7 @@
                 "
               >
                 Beta!
-              </div>
+              </span>
             </button>
           </div>
           <button
@@ -304,7 +304,7 @@ export default defineComponent({
         // TODO: Some action on scale event
       },
 
-      "cell:mousewheel": (e, x, y, delta) => {
+      "cell:mousewheel": (_cellView, e, x, y, delta) => {
         this.handleCanvasMouseWheel(e, x, y, delta);
       },
 

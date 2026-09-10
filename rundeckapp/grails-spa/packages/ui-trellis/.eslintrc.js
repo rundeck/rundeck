@@ -26,7 +26,13 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": "warn",
     "@typescript-eslint/ban-types": "warn",
     "@typescript-eslint/no-var-requires": "warn",
-    "vuejs-accessibility/label-has-for": "warn",
+    // Either nesting the control in the label OR a matching for/id pair is
+    // sufficient per WCAG; the plugin's own default requires both, which
+    // rejects this codebase's common sibling label/input layout.
+    "vuejs-accessibility/label-has-for": [
+      "warn",
+      { required: { some: ["nesting", "id"] } },
+    ],
     "vuejs-accessibility/click-events-have-key-events": "warn",
     "vuejs-accessibility/no-static-element-interactions": "warn",
     "vuejs-accessibility/form-control-has-label": "warn",

@@ -52,7 +52,7 @@ import { defineComponent } from "vue";
 // NavContainer is used only for `as NavContainer` type casts in the template,
 // which this rule's static analysis of the script block can't see.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { NavContainer, NavItem } from "../../stores/NavBar";
+import type { NavContainer, NavItem } from "../../stores/NavBar";
 
 import NavBarItem from "./NavBarItem.vue";
 import NavBarContainer from "./NavBarContainer.vue";

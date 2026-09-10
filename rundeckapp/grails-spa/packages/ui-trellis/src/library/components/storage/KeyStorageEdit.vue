@@ -11,7 +11,6 @@
     <div class="row">
       <div class="col-md-12">
         <div class="form-group row text-right">
-          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -- label/for and select/id are correctly paired; the plugin additionally requires nesting, which this Bootstrap horizontal-form layout (label and control in separate grid columns) can't do without breaking the layout -->
           <label
             for="storageuploadtype"
             class="col-sm-3 control-label label-key"
@@ -63,7 +62,6 @@
               </option>
             </select>
           </div>
-          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -- label/for and input/id are correctly paired; the plugin additionally requires nesting, which this Bootstrap horizontal-form layout (label and control in separate grid columns) can't do without breaking the layout -->
           <label
             v-if="localUploadSetting.keyType === 'password'"
             for="uploadpasswordfield"
@@ -116,7 +114,6 @@
         </div>
 
         <div class="form-group row text-right">
-          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -- label/for and input/id are correctly paired; the plugin additionally requires nesting, which this Bootstrap horizontal-form layout (label and control in separate grid columns) can't do without breaking the layout -->
           <label
             for="uploadResourcePath2"
             class="col-sm-3 control-label label-key"
@@ -163,7 +160,6 @@
               : '',
           ]"
         >
-          <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -- label/for and input/id are correctly paired; the plugin additionally requires nesting, which this Bootstrap horizontal-form layout (label and control in separate grid columns) can't do without breaking the layout -->
           <label
             for="uploadResourceName2"
             class="col-sm-3 control-label label-key text-right"

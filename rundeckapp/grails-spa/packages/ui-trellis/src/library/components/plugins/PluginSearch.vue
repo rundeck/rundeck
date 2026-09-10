@@ -1,10 +1,6 @@
 <template>
   <div class="col-sm-12">
     <div class="form-group">
-      <!-- for/id already pair this label to the input below; the a11y
-           plugin's default rule also requires DOM nesting, which this
-           sibling layout can't satisfy -->
-      <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
       <label
         v-if="!ea"
         data-testid="plugin-search-label"

@@ -1,8 +1,5 @@
 <template>
   <div class="pt-select-wrapper">
-    <!-- for/id already pair this label to its control below; the a11y plugin's
-         default rule also requires DOM nesting, which this sibling layout can't satisfy -->
-    <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
     <label
       v-if="label"
       :for="inputId"
@@ -358,11 +355,11 @@ export default defineComponent({
     color: var(--colors-gray-500);
     width: 14px;
     height: 14px;
+  }
 
-    // Disabled icon color
-    :deep(.p-select-label):disabled ~ & {
-      color: var(--colors-gray-300-original);
-    }
+  // Disabled icon color
+  :deep(.p-select-label:disabled ~ .p-select-dropdown-icon) {
+    color: var(--colors-gray-300-original);
   }
 
   // Clear icon

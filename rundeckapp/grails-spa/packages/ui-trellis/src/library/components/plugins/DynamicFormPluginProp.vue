@@ -10,10 +10,6 @@
         :class="['form-group']"
         data-testid="field-item"
       >
-        <!-- for/id already pair this label to the input below; the a11y
-             plugin's default rule also requires DOM nesting, which this
-             sibling layout can't satisfy -->
-        <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
         <label
           :for="'field-input-' + index"
           class="col-sm-2 control-label input-sm"
@@ -84,7 +80,6 @@
         <div class="col-md-10">
           <div v-if="useOptions" class="form">
             <div :class="['form-data']">
-              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
               <label for="dynamicFormFieldSelect" class="col-md-4">{{
                 $t("message_select")
               }}</label>
@@ -109,7 +104,6 @@
             </div>
 
             <div :class="['form-data']">
-              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
               <label for="newFieldDescriptionInput" class="col-md-4">{{
                 $t("message_description")
               }}</label>
@@ -128,7 +122,6 @@
 
           <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
-              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
               <label for="newLabelFieldInput" class="col-md-4">{{
                 $t("message_fieldLabel")
               }}</label>
@@ -143,7 +136,6 @@
               </div>
             </div>
             <div :class="['form-group']">
-              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
               <label for="newFieldKeyInput" class="col-md-4">{{
                 $t("message_fieldKey")
               }}</label>
@@ -159,7 +151,6 @@
             </div>
 
             <div :class="['form-group']">
-              <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
               <label for="newFieldDescriptionInput2" class="col-md-4">{{
                 $t("message_description")
               }}</label>

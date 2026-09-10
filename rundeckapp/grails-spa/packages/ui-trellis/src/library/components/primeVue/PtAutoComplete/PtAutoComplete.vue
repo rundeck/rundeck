@@ -1,8 +1,5 @@
 <template>
   <div class="pt-autocomplete-wrapper">
-    <!-- for/id already pair this label to its control below; the a11y plugin's
-         default rule also requires DOM nesting, which this sibling layout can't satisfy -->
-    <!-- eslint-disable-next-line vuejs-accessibility/label-has-for -->
     <label
       v-if="label"
       :for="inputId"
@@ -505,64 +502,6 @@ export default defineComponent({
   color: var(--colors-red-500);
 }
 
-// PrimeVue's AutoComplete overlay is teleported to <body> (and rendered by
-// AutoComplete's own template, not ours), so it needs :deep() to be reached.
-:deep(.p-autocomplete-overlay) {
-  z-index: 1200 !important;
-  color: var(--colors-gray-800);
-  margin-top: 0;
-}
-
-// Remove any spacing from PrimeVue's header container
-:deep(.p-autocomplete-overlay .p-autocomplete-header) {
-  padding: 0;
-  margin: 0;
-}
-
-:deep(.p-autocomplete-list) {
-  padding: 0;
-  margin: 0;
-  min-height: 40px;
-
-  li {
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-  }
-}
-
-:deep(.p-autocomplete-option) {
-  color: var(--colors-gray-800);
-  padding: 10px 17px;
-  transition:
-    background-color 0.2s,
-    color 0.2s;
-}
-
-:deep(
-  .p-autocomplete-option:hover:not(.p-disabled):not(
-      .p-autocomplete-option-selected
-    )
-) {
-  background-color: var(--colors-cardNumber);
-  color: var(--colors-gray-800);
-}
-
-:deep(.p-autocomplete-option.p-focus:not(.p-disabled)) {
-  background-color: var(--colors-cardNumber);
-  color: var(--colors-gray-800);
-}
-
-:deep(.p-autocomplete-option-selected) {
-  background-color: var(--colors-blue-50);
-  color: var(--colors-blue-500);
-}
-
-:deep(.p-autocomplete-option-selected.p-focus) {
-  background-color: var(--colors-blue-50);
-  color: var(--colors-blue-500);
-}
-
 // These target our own markup (rendered via the #option scoped slot), which
 // is compiled as part of this component's template, so no :deep() is needed
 // for the rightmost class even though the ancestor is PrimeVue-owned.
@@ -594,12 +533,6 @@ export default defineComponent({
   background-color: var(--colors-yellow-200) !important;
   color: var(--colors-blue-600) !important;
   font-weight: var(--fontWeights-semibold);
-}
-
-:deep(.p-autocomplete-list-container) {
-  background-color: var(--colors-white);
-  border: 1px solid var(--colors-gray-300-original);
-  border-radius: var(--radii-base);
 }
 
 .autocomplete-tabs {
@@ -708,5 +641,72 @@ export default defineComponent({
       cursor: not-allowed;
     }
   }
+}
+</style>
+
+<!-- PrimeVue's AutoComplete overlay is teleported to document.body (default
+     appendTo="body"), so its contents never exist inside this component's
+     scoped DOM subtree and can't be reached by scoped styles, even with
+     :deep() -- this has to stay global. -->
+<!-- eslint-disable-next-line vue/enforce-style-attribute -->
+<style lang="scss">
+.p-autocomplete-overlay {
+  z-index: 1200 !important;
+  color: var(--colors-gray-800);
+  margin-top: 0;
+}
+
+// Remove any spacing from PrimeVue's header container
+.p-autocomplete-overlay .p-autocomplete-header {
+  padding: 0;
+  margin: 0;
+}
+
+.p-autocomplete-list {
+  padding: 0;
+  margin: 0;
+  min-height: 40px;
+
+  li {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.p-autocomplete-option {
+  color: var(--colors-gray-800);
+  padding: 10px 17px;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.p-autocomplete-option:hover:not(.p-disabled):not(
+    .p-autocomplete-option-selected
+  ) {
+  background-color: var(--colors-cardNumber);
+  color: var(--colors-gray-800);
+}
+
+.p-autocomplete-option.p-focus:not(.p-disabled) {
+  background-color: var(--colors-cardNumber);
+  color: var(--colors-gray-800);
+}
+
+.p-autocomplete-option-selected {
+  background-color: var(--colors-blue-50);
+  color: var(--colors-blue-500);
+}
+
+.p-autocomplete-option-selected.p-focus {
+  background-color: var(--colors-blue-50);
+  color: var(--colors-blue-500);
+}
+
+.p-autocomplete-list-container {
+  background-color: var(--colors-white);
+  border: 1px solid var(--colors-gray-300-original);
+  border-radius: var(--radii-base);
 }
 </style>

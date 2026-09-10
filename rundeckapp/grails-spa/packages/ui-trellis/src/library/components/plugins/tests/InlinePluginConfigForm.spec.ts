@@ -1,6 +1,11 @@
 import { mount, flushPromises } from "@vue/test-utils";
 import InlinePluginConfigForm from "../InlinePluginConfigForm.vue";
-import { getServiceProviderDescription } from "@/library/modules/pluginService";
+import { getServiceProviderDescription } from "../../../modules/pluginService";
+
+const mockedGetServiceProviderDescription =
+  getServiceProviderDescription as jest.MockedFunction<
+    typeof getServiceProviderDescription
+  >;
 
 jest.mock("@/library/modules/rundeckClient", () => ({
   client: { sendRequest: jest.fn() },
@@ -65,7 +70,7 @@ describe("InlinePluginConfigForm", () => {
   });
 
   it("user sees loading indicator while provider loads", async () => {
-    getServiceProviderDescription.mockImplementationOnce(
+    mockedGetServiceProviderDescription.mockImplementationOnce(
       () => new Promise(() => {}),
     );
 
@@ -115,7 +120,7 @@ describe("InlinePluginConfigForm", () => {
   });
 
   it("user sees an error message when the provider fails to load", async () => {
-    getServiceProviderDescription.mockRejectedValueOnce(
+    mockedGetServiceProviderDescription.mockRejectedValueOnce(
       new Error("network error"),
     );
 
