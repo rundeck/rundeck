@@ -3451,13 +3451,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * delete is queued against the previously-persisted rows) — it only replaces the in-memory
      * collection reference. Must only be used on a failure path immediately followed by
      * scheduledExecution.discard(), so this in-memory-only substitution is never flushed.
+     *
+     * Best-effort only: some validation failures (e.g. an individual invalid Notification, see
+     * validateDefinitionNotifications()) already call scheduledExecution.discard() themselves
+     * before this method runs, detaching the entity from its Hibernate session. Reassigning a
+     * lazy collection property on an already-detached entity can throw a
+     * LazyInitializationException. Since this method exists purely to improve the failed-save
+     * UX, any such failure here is swallowed rather than allowed to replace the real validation
+     * error being returned to the caller.
      */
     private void attachPendingOptionsAndNotificationsForDisplay(ScheduledExecution scheduledExecution, Map params) {
-        if (params?.containsKey('_pendingOptions')) {
-            scheduledExecution.options = new TreeSet<Option>((List<Option>) params['_pendingOptions'])
+        try {
+            if (params?.containsKey('_pendingOptions')) {
+                scheduledExecution.options = new TreeSet<Option>((List<Option>) params['_pendingOptions'])
+            }
+        } catch (Exception ignored) {
         }
-        if (params?.containsKey('_pendingNotifications')) {
-            scheduledExecution.notifications = params['_pendingNotifications']
+        try {
+            if (params?.containsKey('_pendingNotifications')) {
+                scheduledExecution.notifications = params['_pendingNotifications']
+            }
+        } catch (Exception ignored) {
         }
     }
 
