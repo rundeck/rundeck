@@ -66,6 +66,8 @@ export default defineComponent({
   },
 });
 </script>
-<style scoped>
-@import "~vue3-markdown/dist/vue3-markdown.css";
+<style lang="scss" scoped>
+:deep(.markdown-body) {
+  @import "~vue3-markdown/dist/vue3-markdown.css";
+}
 </style>
