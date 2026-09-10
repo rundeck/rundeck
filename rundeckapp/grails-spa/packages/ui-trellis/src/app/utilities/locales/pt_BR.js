@@ -203,6 +203,7 @@ const messages = {
   "bulk.delete": "Exclus\u00e3o em massa",
   "select.none": "Selecionar nenhum",
   "select.all": "Selecionar todos",
+  "page.home.link.aria.label": "Início",
   "cancel.bulk.delete": "Cancelar a exclus\u00e3o em massa",
   "delete.selected.executions": "Excluir execu\u00e7\u00f5es selecionadas",
   "click.to.refresh": "clique para atualizar",

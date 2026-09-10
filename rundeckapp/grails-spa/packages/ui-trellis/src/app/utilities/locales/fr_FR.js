@@ -719,6 +719,7 @@ const messages = {
     "* [{0} Documentation &raquo;]({1})",
   "page.home.section.project.title": "{0} Projet",
   "page.home.section.project.title.plural": "{0} Projets",
+  "page.home.link.aria.label": "Accueil",
   "page.home.duration.in.the.last.day": "Au cours des derni\u00e8res 24 heures",
   by: "par",
   user: "Utilisateur",

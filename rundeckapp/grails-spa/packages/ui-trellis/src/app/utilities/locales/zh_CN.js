@@ -203,6 +203,7 @@ const messages = {
   "bulk.delete": "\u6279\u91CF\u5220\u9664",
   "select.none": "\u5168\u4E0D\u9009",
   "select.all": "\u5168\u9009",
+  "page.home.link.aria.label": "\u4E3B\u9875",
   "cancel.bulk.delete": "\u53D6\u6D88",
   "delete.selected.executions": "\u5220\u9664",
   "click.to.refresh": "\u70B9\u51FB\u5237\u65B0",

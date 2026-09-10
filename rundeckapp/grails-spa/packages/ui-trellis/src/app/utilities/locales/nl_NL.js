@@ -82,6 +82,7 @@ const messages = {
   "storage.enter.directory.name": "Voer de mapnaam in",
   "storage.specify.name": "Geef een naam op.",
   "soft.wrap": "Regelafbreking",
+  "page.home.link.aria.label": "Startpagina",
   cancel: "Annuleren",
   "button.action.Cancel": "Annuleren",
   "Search Activity": "Activiteit zoeken",
