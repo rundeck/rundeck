@@ -1,3 +1,10 @@
+---
+description: Cyclomatic complexity threshold for new/modified code (agents only, informative for humans)
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
 # Cyclomatic Complexity Rule (agents only, informative for humans)
 
 The project has deterministic complexity checking enabled (CodeNarc for Groovy,
