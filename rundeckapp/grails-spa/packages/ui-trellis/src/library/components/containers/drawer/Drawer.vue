@@ -13,8 +13,7 @@
           v-if="closeable"
           type="button"
           data-testid="drawer-close-button"
-          class="btn btn-default btn-link"
-          style="margin-left: auto"
+          class="btn btn-default btn-link rd-drawer__close-button"
           :aria-label="$t('message_close')"
           @click="
             () => {
@@ -132,6 +131,10 @@ export default defineComponent({
   &__title {
     font-weight: 800;
     font-size: 1.5em;
+  }
+
+  &__close-button {
+    margin-left: auto;
   }
 }
 

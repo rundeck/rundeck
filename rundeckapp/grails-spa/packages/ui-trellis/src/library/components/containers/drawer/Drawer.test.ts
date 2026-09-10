@@ -1,8 +1,13 @@
 import { mount } from "@vue/test-utils";
 import Drawer from "./Drawer.vue";
 
-const createWrapper = async (props = {}) => {
-  const wrapper = mount(Drawer, { props: { visible: true, ...props } });
+const createWrapper = async (props = {}, mocks = {}) => {
+  const wrapper = mount(Drawer, {
+    props: { visible: true, ...props },
+    global: {
+      mocks,
+    },
+  });
   await wrapper.vm.$nextTick();
   return wrapper;
 };
@@ -33,10 +38,15 @@ describe("Drawer", () => {
       closedWrapper.find('[data-testid="drawer-mask-close"]').exists(),
     ).toBe(false);
 
-    const openWrapper = await createWrapper();
+    const translate = jest.fn((key: string) => `translated:${key}`);
+    const openWrapper = await createWrapper({}, { $t: translate });
     const mask = openWrapper.find('[data-testid="drawer-mask-close"]');
+    const button = openWrapper.find('[data-testid="drawer-close-button"]');
     expect(mask.exists()).toBe(true);
-    expect(mask.attributes("aria-label")).toBe("message_close");
+    expect(button.text()).toBe("translated:message_close");
+    expect(button.attributes("aria-label")).toBe("translated:message_close");
+    expect(mask.attributes("aria-label")).toBe("translated:message_close");
+    expect(translate).toHaveBeenCalledWith("message_close");
 
     await mask.trigger("keydown.enter");
     await openWrapper.vm.$nextTick();
