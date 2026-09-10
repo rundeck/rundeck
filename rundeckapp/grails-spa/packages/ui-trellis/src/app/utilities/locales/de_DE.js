@@ -21,6 +21,7 @@ const messages = {
   "results.empty.text": "Keine Ergebnisse für diese Abfrage",
   "Any Time": "Jederzeit",
   Any: "Beliebig",
+  "page.home.link.aria.label": "Startseite",
   "Other...": "Andere...",
   "More...": "Mehr...",
   "Save Filter": "Filter speichern",

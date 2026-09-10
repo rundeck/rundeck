@@ -209,6 +209,7 @@ const messages = {
   "bulk.delete": "Borrar en lote",
   "select.none": "Seleccionar ninguno",
   "select.all": "Seleccionar todos",
+  "page.home.link.aria.label": "Inicio",
   "cancel.bulk.delete": "Cancelar Elimación a Granel",
   "delete.selected.executions": "Eliminar Ejecuciones seleccionadas",
   "click.to.refresh": "Hacer clic para actualizar",

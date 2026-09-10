@@ -508,6 +508,7 @@ const messages = {
   "job.filter.clear.button.title": "クリア",
   "page.home.section.project.title": "{0} プロジェクト",
   "page.home.section.project.title.plural": "{0} プロジェクト",
+  "page.home.link.aria.label": "ホーム",
   "page.home.new.project.button.label": "新しいプロジェクト",
   "page.home.loading.projects": "プロジェクトロード中",
   "page.home.search.project.title": "{n} のプロジェクトが見つかりました",
