@@ -57,6 +57,8 @@ set -- "${ARGS[@]}"  # Reset positional parameters without flags
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=release-tag.sh
 source "$SCRIPT_DIR/release-tag.sh"  # provides create_and_push_tag() and the dry-run git() wrapper
+# shellcheck source=release-version.sh
+source "$SCRIPT_DIR/release-version.sh"  # provides validate_version_format, parse_rc_number, version_tag_name
 
 # Handle tag creation directly on main
 if [ "$1" == "--tag" ]; then
@@ -67,10 +69,7 @@ if [ "$1" == "--tag" ]; then
         usage
     fi
     VNUM="$1"
-    if [[ ! "$VNUM" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo "Error: Version ($VNUM) must be in MAJOR.MINOR.PATCH format (e.g., 5.19.1)"
-        exit 3
-    fi
+    validate_version_format "$VNUM" || exit 3
     shift
     VTAG="${1:-GA}"
     [ $# -gt 0 ] && shift
@@ -78,7 +77,7 @@ if [ "$1" == "--tag" ]; then
     # rc2+ is not handled here - checking out an existing release branch and tagging its HEAD
     # is owned by external release tooling, for rc2+ (check rdcore), which calls release-tag.sh
     # directly once it has resolved the branch and commit itself.
-    if [[ "$VTAG" =~ ^rc([0-9]+)$ ]] && [ "${BASH_REMATCH[1]}" -ge 2 ]; then
+    if RC_NUM="$(parse_rc_number "$VTAG")" && [ "$RC_NUM" -ge 2 ]; then
         echo "Error: rc2+ releases are not created by setversion.sh."
         echo "That flow is owned by external release tooling, for rc2+ (check rdcore)."
         exit 13
@@ -115,7 +114,7 @@ if [ "$1" == "--tag" ]; then
         echo "Re-tagging highest RC $HIGHEST_RC as GA"
     elif [[ "$VTAG" =~ ^[a-z]+[0-9]+$ ]]; then
         # rc1, alpha3, etc. - always tag an explicit commit, never a bare HEAD
-        TAG_NAME="v$VNUM-$VTAG"
+        TAG_NAME="$(version_tag_name "$VNUM" "$VTAG")"
         COMMIT_ARG="$1"
         if [ -z "$COMMIT_ARG" ]; then
             echo "Error: '$VTAG' requires an explicit commit to tag."

@@ -14,57 +14,66 @@
 : "${PUSH_TO_ORIGIN:=false}"
 : "${DRY_RUN:=false}"
 
+# Commands the dry-run git() wrapper below treats as read-only (always run for real)
+# vs. as writes (echoed instead of run) when DRY_RUN=true. `git tag` is classified
+# separately (see _release_git_tag_is_write) since whether it's a write depends on
+# its arguments, not just the subcommand name.
+#
+# A caller that needs extra commands (e.g. release-rc.sh, which also runs
+# cherry-pick/fetch/cat-file/rev-list) appends to these after sourcing this file,
+# instead of redefining git() itself - see release-rc.sh.
+: "${RELEASE_GIT_READONLY_CMDS:="rev-parse show-ref diff log status branch ls-remote symbolic-ref"}"
+: "${RELEASE_GIT_WRITE_CMDS:="checkout push commit add"}"
+
+function _release_git_word_in_list {
+    local needle="$1" haystack="$2"
+    [[ " $haystack " == *" $needle "* ]]
+}
+
+# `git tag` with no args, or with -l/--list, is a read-only listing. Anything else
+# (creating a tag, -d/--delete, etc.) is a write. Matched as exact arguments, not
+# substring, so a tag message containing "-l" or "--list" can't be misclassified as
+# a listing. Options that take a following value (e.g. `-m <message>`) have their
+# value skipped so it's never scanned as an option itself - otherwise a message
+# whose entire value is "-l" would be misclassified as list mode and let a real tag
+# creation through.
+function _release_git_tag_is_write {
+    local skip_next=false
+    for arg in "$@"; do
+        if [ "$skip_next" = true ]; then
+            skip_next=false
+            continue
+        fi
+        case "$arg" in
+            -l|--list)
+                return 1
+                ;;
+            -m|--message|-F|--file|-u|--local-user|--cleanup)
+                skip_next=true
+                ;;
+        esac
+    done
+    [ $# -gt 0 ]
+}
+
 # Git wrapper function for dry-run support
 function git() {
     if [ "$DRY_RUN" = true ]; then
-        case "$1" in
-            # Read-only commands - safe to execute
-            rev-parse|show-ref|diff|log|status|branch|ls-remote|symbolic-ref)
-                command git "$@"
-                ;;
-            # `git tag` with no args, or with -l/--list, is a read-only listing.
-            # Anything else (creating a tag, -d/--delete, etc.) is a write.
-            # Matched as exact arguments, not substring, so a tag message
-            # containing "-l" or "--list" can't be misclassified as a listing.
-            # Options that take a following value (e.g. `-m <message>`) have
-            # their value skipped so it's never scanned as an option itself -
-            # otherwise a message whose entire value is "-l" would be
-            # misclassified as list mode and let a real tag creation through.
-            tag)
-                shift
-                local is_list=false
-                local skip_next=false
-                for arg in "$@"; do
-                    if [ "$skip_next" = true ]; then
-                        skip_next=false
-                        continue
-                    fi
-                    case "$arg" in
-                        -l|--list)
-                            is_list=true
-                            break
-                            ;;
-                        -m|--message|-F|--file|-u|--local-user|--cleanup)
-                            skip_next=true
-                            ;;
-                    esac
-                done
-                if [ $# -eq 0 ] || [ "$is_list" = true ]; then
-                    command git tag "$@"
-                else
-                    echo "[DRY-RUN] git tag $*"
-                    return 0
-                fi
-                ;;
-            # Write commands - just show what would be done
-            checkout|push|commit|add)
-                echo "[DRY-RUN] git $*"
-                return 0
-                ;;
-            *)
-                command git "$@"
-                ;;
-        esac
+        if _release_git_word_in_list "$1" "$RELEASE_GIT_READONLY_CMDS"; then
+            command git "$@"
+        elif [ "$1" = "tag" ]; then
+            shift
+            if _release_git_tag_is_write "$@"; then
+                echo "[DRY-RUN] git tag $*"
+            else
+                command git tag "$@"
+            fi
+        elif _release_git_word_in_list "$1" "$RELEASE_GIT_WRITE_CMDS"; then
+            echo "[DRY-RUN] git $*"
+            return 0
+        else
+            command git "$@"
+        fi
     else
         command git "$@"
     fi
