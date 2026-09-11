@@ -15,6 +15,7 @@
  */
 package com.dtolabs.rundeck.jetty.jaas
 
+import org.rundeck.jaas.PasswordCredential
 import org.rundeck.jaas.RundeckRole
 import org.rundeck.jaas.UserInfo
 import rundeck.services.ConfigurationService
@@ -319,6 +320,71 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         where:
         username | passwordvalue
         'auser'  | 'apassword'
+    }
+
+    def "bindingLogin does not cache plaintext password credential"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._cacheDuration = Integer.MAX_VALUE
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = false
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.setCallbackHandler(Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = passwordvalue }
+        })  // Use setter instead of @field access (Groovy 4)
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+            getAttributes() >> new BasicAttributes()
+        }]
+        def dirContext = Mock(DirContext) {
+            1 * search(
+                _,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._userObjectClass, module._userIdAttribute, username], _
+            ) >> {new EnumImpl<SearchResult>(found)}
+
+            0 * search(*_)
+        }
+        module._rootContext = dirContext
+        def stringRoles = ['role1', 'role2']
+        def foundRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get(module._roleNameAttribute) >> Mock(Attribute) {
+                    getAll() >> {new EnumImpl<String>(stringRoles)}
+                }
+            }
+        }]
+        DirContext userDir = Mock(DirContext) {
+            1 * search(
+                'roleBaseDn',
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._roleObjectClass, 'roleUsernameMemberAttribute', username],
+                _
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
+
+            0 * _(*_)
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            userDir
+        }
+
+        when:
+        boolean result = module.login()
+        def cacheToken = PasswordCredential.md5Digest(username + ":" + passwordvalue)
+        def cached = JettyCachingLdapLoginModule.USERINFOCACHE.get(cacheToken)
+
+        then:
+        result
+        cached != null
+        cached.userInfo.getCredential() == null
+
+        where:
+        username             | passwordvalue
+        'credentialcacheuser' | 'credentialcachepassword'
     }
 
     @Unroll
