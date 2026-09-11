@@ -26,6 +26,10 @@ const mockPaperMatrix = jest.fn((ctm?: { a: number; d: number }) => {
   }
   return { a: mockPaperCurrentScale, d: mockPaperCurrentScale };
 });
+const mockPaperClientToLocalPoint = jest.fn((x: number, y: number) => ({
+  x,
+  y,
+}));
 
 jest.mock("jointjs", () => {
   class MockGraph {
@@ -45,6 +49,7 @@ jest.mock("jointjs", () => {
     scale = mockPaperScale;
     translate = mockPaperTranslate;
     matrix = mockPaperMatrix;
+    clientToLocalPoint = mockPaperClientToLocalPoint;
   }
 
   return {
@@ -111,6 +116,8 @@ interface MountOptions {
 
 type WorkflowGraphWrapper = VueWrapper<any>;
 
+let mountedWrappers: WorkflowGraphWrapper[] = [];
+
 const createWrapper = async (
   options: MountOptions = {},
 ): Promise<WorkflowGraphWrapper> => {
@@ -127,9 +134,10 @@ const createWrapper = async (
         Tabs: true,
       },
     },
-  });
+  }) as WorkflowGraphWrapper;
   await wrapper.vm.$nextTick();
-  return wrapper as WorkflowGraphWrapper;
+  mountedWrappers.push(wrapper);
+  return wrapper;
 };
 
 const findByTestId = (wrapper: WorkflowGraphWrapper, testId: string) =>
@@ -155,6 +163,20 @@ describe("WorkflowGraph", () => {
     document.body.style.userSelect = "";
     document.body.style.cursor = "";
     mockPaperCurrentScale = 1;
+  });
+
+  afterEach(() => {
+    // Each mounted instance registers a window "resize" listener; leaving
+    // them mounted across tests means a resize dispatched in one test fires
+    // every earlier test's handler too.
+    mountedWrappers.forEach((wrapper) => {
+      try {
+        wrapper.unmount();
+      } catch {
+        // already unmounted by the test itself
+      }
+    });
+    mountedWrappers = [];
   });
 
   afterAll(() => {
@@ -349,34 +371,32 @@ describe("WorkflowGraph", () => {
       );
     });
 
-    it("clamps zooming in at the configured maximum scale", async () => {
+    it("clamps zooming in exactly at the configured maximum scale, not just short of it", async () => {
       const wrapper = await createWrapper();
 
       for (let i = 0; i < 20; i++) {
         await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
       }
 
-      const scaleAtLimit = mockPaperScale().sx;
-      expect(scaleAtLimit).toBeLessThanOrEqual(4);
-      expect(scaleAtLimit).toBeGreaterThan(3.8);
+      expect(mockPaperScale().sx).toBe(4);
 
       await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
 
-      expect(mockPaperScale().sx).toBe(scaleAtLimit);
+      expect(mockPaperScale().sx).toBe(4);
     });
 
-    it("clamps zooming out at the configured minimum scale instead of going to zero or negative", async () => {
+    it("clamps zooming out exactly at the configured minimum scale instead of going to zero or negative", async () => {
       const wrapper = await createWrapper();
 
       for (let i = 0; i < 20; i++) {
         await findByTestId(wrapper, "workflow-graph-zoom-out").trigger("click");
       }
 
-      expect(mockPaperScale().sx).toBeGreaterThanOrEqual(0.05);
+      expect(mockPaperScale().sx).toBe(0.05);
 
       await findByTestId(wrapper, "workflow-graph-zoom-out").trigger("click");
 
-      expect(mockPaperScale().sx).toBeGreaterThanOrEqual(0.05);
+      expect(mockPaperScale().sx).toBe(0.05);
     });
 
     it("stops auto-fitting the graph on updates once the user has zoomed manually", async () => {
@@ -402,6 +422,33 @@ describe("WorkflowGraph", () => {
       await wrapper.setProps({ nodes: [{ identifier: "a", label: "A" }] });
 
       expect(mockPaperTransformToFitContent).toHaveBeenCalled();
+    });
+
+    it("does not auto-fit on window resize once the user has zoomed manually", async () => {
+      const wrapper = await createWrapper();
+      await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
+      mockPaperTransformToFitContent.mockClear();
+
+      window.dispatchEvent(new Event("resize"));
+
+      expect(mockPaperTransformToFitContent).not.toHaveBeenCalled();
+    });
+
+    it("still auto-fits on window resize when the user has not zoomed", async () => {
+      await createWrapper();
+      mockPaperTransformToFitContent.mockClear();
+
+      window.dispatchEvent(new Event("resize"));
+
+      expect(mockPaperTransformToFitContent).toHaveBeenCalled();
+    });
+
+    it("centers zoom using the paper's local coordinates, not raw canvas pixels", async () => {
+      const wrapper = await createWrapper();
+
+      await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
+
+      expect(mockPaperClientToLocalPoint).toHaveBeenCalled();
     });
   });
 });

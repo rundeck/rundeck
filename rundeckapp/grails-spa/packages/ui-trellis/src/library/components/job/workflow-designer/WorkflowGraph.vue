@@ -66,10 +66,7 @@
             {{ $t("graph.action.revert") }}
           </div>
         </div>
-        <div
-          class="btn-group-vertical"
-          style="position: absolute; bottom: 10px; right: 10px"
-        >
+        <div class="btn-group-vertical workflow-graph-zoom-controls">
           <div
             data-testid="workflow-graph-zoom-in"
             class="btn btn-default workflow-graph-icon-btn"
@@ -321,7 +318,7 @@ export default defineComponent({
       },
     } as Joint.dia.Paper.Options));
 
-    window.addEventListener("resize", this.scaleContentToFit);
+    window.addEventListener("resize", this.handleWindowResize);
 
     paper.on("link:mouseenter", (linkView) => {
       if (this.interactive) linkView.showTools();
@@ -604,7 +601,7 @@ export default defineComponent({
   },
 
   beforeUnmount() {
-    window.removeEventListener("resize", this.scaleContentToFit);
+    window.removeEventListener("resize", this.handleWindowResize);
     this.stopResizeSidePanel();
   },
 
@@ -701,6 +698,16 @@ export default defineComponent({
       const { min, max } = this.getSidePanelWidthBounds();
       this.sidePanelWidth = Math.min(max, Math.max(min, this.sidePanelWidth));
       this.userHasZoomed = false;
+    },
+    /**
+     * Window resize should keep the graph fitted the same way an initial
+     * render does, but must not override a manual zoom the way an explicit
+     * "scale to fit" click is allowed to.
+     */
+    handleWindowResize() {
+      if (!this.userHasZoomed) {
+        this.scaleContentToFit();
+      }
     },
     /** Resize element to fit width of rendered SVG text. */
     fitText() {
@@ -974,39 +981,62 @@ export default defineComponent({
         this.layout(transition);
       }, 2);
     },
+    /**
+     * Zooms to nextScale, clamped to [MIN_SCALE, MAX_SCALE] rather than
+     * rejected outright when out of range — otherwise a fixed step (e.g.
+     * the +/- buttons) can overshoot a bound by less than one step and get
+     * stuck just short of it forever.
+     */
     scaleToPoint(nextScale: number, x: number, y: number) {
-      if (nextScale >= MIN_SCALE && nextScale <= MAX_SCALE) {
-        const currentScale = this.paper.scale().sx;
-
-        const beta = currentScale / nextScale;
-
-        const ax = x - x * beta;
-        const ay = y - y * beta;
-
-        const translate = this.paper.translate();
-
-        const nextTx = translate.tx - ax * nextScale;
-        const nextTy = translate.ty - ay * nextScale;
-
-        this.paper.translate(nextTx, nextTy);
-
-        const ctm = this.paper.matrix();
-
-        ctm.a = nextScale;
-        ctm.d = nextScale;
-
-        this.paper.matrix(ctm);
-        this.userHasZoomed = true;
-      }
-    },
-    /** Zoom in/out centered on the canvas, by a fixed step. */
-    zoomBy(delta: number) {
-      const canvasEl = this.$refs["canvas"] as HTMLElement | undefined;
-      const x = canvasEl ? canvasEl.clientWidth / 2 : 0;
-      const y = canvasEl ? canvasEl.clientHeight / 2 : 0;
+      const clampedScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, nextScale));
       const currentScale = this.paper.scale().sx;
 
-      this.scaleToPoint(currentScale + delta, x, y);
+      const beta = currentScale / clampedScale;
+
+      const ax = x - x * beta;
+      const ay = y - y * beta;
+
+      const translate = this.paper.translate();
+
+      const nextTx = translate.tx - ax * clampedScale;
+      const nextTy = translate.ty - ay * clampedScale;
+
+      this.paper.translate(nextTx, nextTy);
+
+      const ctm = this.paper.matrix();
+
+      ctm.a = clampedScale;
+      ctm.d = clampedScale;
+
+      this.paper.matrix(ctm);
+      this.userHasZoomed = true;
+    },
+    /**
+     * Zoom in/out centered on the canvas, by a fixed step. The mouse-wheel
+     * zoom gets local (paper-space) coordinates for free from JointJS's own
+     * pointer events, but a button click has no such event to read from, so
+     * the canvas's visual center has to be converted from client (viewport)
+     * space into that same local space via clientToLocalPoint — otherwise,
+     * once the graph has been panned, the "center" used here would no
+     * longer line up with the paper's local origin and zooming would shift
+     * the view instead of staying centered.
+     */
+    zoomBy(delta: number) {
+      const canvasEl = this.$refs["canvas"] as HTMLElement | undefined;
+      const currentScale = this.paper.scale().sx;
+
+      if (!canvasEl) {
+        this.scaleToPoint(currentScale + delta, 0, 0);
+        return;
+      }
+
+      const rect = canvasEl.getBoundingClientRect();
+      const center = this.paper.clientToLocalPoint(
+        rect.left + rect.width / 2,
+        rect.top + rect.height / 2,
+      );
+
+      this.scaleToPoint(currentScale + delta, center.x, center.y);
     },
     zoomIn() {
       this.zoomBy(ZOOM_STEP);
@@ -1162,6 +1192,12 @@ export default defineComponent({
   flex-grow: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+.workflow-graph-zoom-controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
 }
 
 .workflow-graph-resizer {
