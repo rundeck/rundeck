@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.component.SshExportQuotingConfig
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionValidator
@@ -1240,11 +1241,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // bypass all server-side validation (validateOptionValues only iterates the job's declared
             // options) yet are still parsed into the option DataContext and exported as RD_OPTION_*
             // env vars. Fail the (already created) execution here — before any workflow step runs —
-            // with a clear message in the log output. Gated by rundeck.execution.rejectUndeclaredOptions
-            // (default true; set false to restore the legacy passthrough, e.g. re-running a job whose
-            // option set has since changed).
+            // with a clear message in the log output. Opt-in, gated by
+            // rundeck.execution.rejectUndeclaredOptions (default false: undeclared options pass through,
+            // preserving the legacy behavior; set true to reject them).
             if (scheduledExecution != null
-                    && configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, true)) {
+                    && configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, false)) {
                 Set<String> declaredOptionNames = (scheduledExecution.options?.collect { it.name } ?: []) as Set
                 Set<String> providedOptionNames = OptionsParserUtil.parseOptsFromString(execution.argString)?.keySet() ?: ([] as Set)
                 List<String> undeclaredOptionNames = providedOptionNames.findAll { !declaredOptionNames.contains(it) }.sort()
@@ -1414,6 +1415,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             StepExecutionContext executioncontext = ExecutionContextImpl.builder(createInitContext)
                     .executionListener(multiListener)
                     .workflowExecutionListener(multiListener)
+                    .addComponent(
+                            SshExportQuotingConfig.COMPONENT_NAME,
+                            new SshExportQuotingConfig(resolveSshExportQuoting()),
+                            SshExportQuotingConfig
+                    )
                     .build()
 
             fileUploadService.executionBeforeStart(
@@ -3362,6 +3368,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     private static boolean hasOwnValueConstraint(Option opt) {
         opt.regex || (opt.enforced && opt.optionValues)
+    }
+
+    /**
+     * RUN-4579: resolve whether values exported to remote nodes via {@code ssh-variable-export-pattern}
+     * should be POSIX shell-quoted. System-level, opt-in: read from
+     * {@link AppConstants#SYSTEM_SSH_EXPORT_QUOTING} through ConfigurationService (editable via the
+     * System Configuration UI). Defaults to {@code false} (legacy unquoted behavior) when unset.
+     * @return true when exported variable values should be shell-quoted
+     */
+    private boolean resolveSshExportQuoting() {
+        try {
+            return configurationService.getBoolean(AppConstants.SYSTEM_SSH_EXPORT_QUOTING, false)
+        } catch (Exception e) {
+            log.warn("Could not resolve ssh export quoting setting; defaulting to legacy (unquoted)", e)
+            return false
+        }
     }
 
     private Pattern resolveDefaultOptionInputPattern(String project) {
@@ -5528,8 +5550,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 },
                 SystemConfig.builder().with {
                     key AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY
-                    description "Security control. When enabled (default), an execution that provides options not defined on the job is created and then failed at start. Disable ONLY if you must allow undeclared options to pass through."
-                    defaultValue "true"
+                    description "Security control (opt-in; default off). When enabled, an execution that provides options not defined on the job is created and then failed at start. Left off by default so undeclared options pass through, preserving the current behavior."
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'Execution'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key AppConstants.SYSTEM_SSH_EXPORT_QUOTING_KEY
+                    description "Security control (opt-in; default off). When enabled, values exported to remote nodes via the node's ssh-variable-export-pattern are POSIX shell-quoted, preventing command injection through option values. Left off by default to preserve the current behavior. Note: when enabling, node export patterns should reference {value} without surrounding quotes."
+                    defaultValue "false"
                     required false
                     datatype "Boolean"
                     visibility 'Advanced'

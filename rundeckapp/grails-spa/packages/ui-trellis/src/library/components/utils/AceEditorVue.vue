@@ -1,5 +1,7 @@
 <template>
-  <div :id="identifier" ref="root"></div>
+  <div :class="{ resizable: minLines === 0 }">
+    <div :id="identifier" ref="root"></div>
+  </div>
 </template>
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
@@ -31,7 +33,7 @@ export default defineComponent({
     },
     minLines: {
       type: Number,
-      default: 12,
+      default: 0,
     },
     maxLines: {
       type: Number,
@@ -63,14 +65,26 @@ export default defineComponent({
     editor: Ace.Editor | null;
     contentBackup: string;
     observer: MutationObserver | null;
+    resizeObserver: ResizeObserver | null;
     jsonSpaces: number;
   } {
     return {
       editor: null,
       contentBackup: "",
       observer: null,
+      resizeObserver: null,
       jsonSpaces: 2,
     };
+  },
+  computed: {
+    /**
+     * When minLines is 0, the editor is manually resizable via CSS instead of
+     * auto-growing/shrinking to fit its content, so minLines/maxLines must not
+     * be handed to ace or its own auto-sizing will fight the manual resize.
+     */
+    isResizable(): boolean {
+      return this.minLines === 0;
+    },
   },
   watch: {
     modelValue: function (val: string): void {
@@ -92,10 +106,14 @@ export default defineComponent({
       this.editor!.setOptions(newOption);
     },
     minLines: function (val: number): void {
-      this.editor!.setOptions({ minLines: val });
+      if (val && !this.isResizable) {
+        this.editor!.setOptions({ minLines: val });
+      }
     },
     maxLines: function (val: number): void {
-      this.editor!.setOptions({ maxLines: val });
+      if (!this.isResizable) {
+        this.editor!.setOptions({ maxLines: val });
+      }
     },
     height: function (): void {
       this.$nextTick(function () {
@@ -114,7 +132,7 @@ export default defineComponent({
 
     require("ace-builds/src-noconflict/ext-emmet");
 
-    const editor = (this.editor = ace.edit(this.$el));
+    const editor = (this.editor = ace.edit(this.$refs.root as HTMLElement));
 
     this.$emit("init", editor);
     editor.getSession().setUseWorker(false);
@@ -125,10 +143,13 @@ export default defineComponent({
       this.contextVariableSuggestions &&
       this.contextVariableSuggestions.length > 0;
     const autoCompleteDelay = shouldEnableAutoCompletion ? 150 : undefined;
+    // When resizable, ace must not auto-manage the container height via
+    // minLines/maxLines, since that fights with manually resizing it.
     editor.setOptions({
       ...(this.options || {}),
-      minLines: this.minLines,
-      maxLines: this.maxLines,
+      ...(this.isResizable
+        ? {}
+        : { minLines: this.minLines, maxLines: this.maxLines }),
       enableLiveAutocompletion: shouldEnableAutoCompletion,
       liveAutocompletionDelay: autoCompleteDelay,
     });
@@ -140,13 +161,25 @@ export default defineComponent({
     this.addContextVariableSuggestions();
     this.observeDarkMode();
     this.attachChangeEventToEditor();
+
+    if (this.isResizable) this.observeResize();
   },
   beforeUnmount: function () {
     this.editor!.destroy();
     this.editor!.container.remove();
     this.observer?.disconnect();
+    this.resizeObserver?.disconnect();
   },
   methods: {
+    /**
+     * Keep the ace renderer in sync when the container is manually resized
+     */
+    observeResize() {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.editor!.resize();
+      });
+      this.resizeObserver.observe(this.$refs.root as HTMLElement);
+    },
     /**
      * Observe the dark mode and update the theme for the editor
      */

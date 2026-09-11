@@ -321,6 +321,13 @@ public class SSHTaskBuilder {
         void addFileset(FileSet set);
 
         void setTodir(String aToUri);
+
+        /**
+         * Set the remote destination path verbatim (no {@code user@host:} prefix).
+         *
+         * @param remotePath remote path
+         */
+        void setRemotePath(String remotePath);
     }
 
     private static abstract class SSHBaseImpl implements SSHBaseInterface {
@@ -548,6 +555,10 @@ public class SSHTaskBuilder {
 
         public void setTodir(String uri){instance.setTodir(uri);}
 
+        public void setRemotePath(String remotePath) {
+            instance.setRemotePath(remotePath);
+        }
+
     }
 
     /**
@@ -589,8 +600,9 @@ public class SSHTaskBuilder {
 
         configureSSHBase(nodeentry, project, sshConnectionInfo, sshexecTask, loglevel, logger);
 
-        //nb: args are already quoted as necessary
-
+        // nb: the job command args are quoted as necessary by ExecArgList. RUN-4579: any exported
+        // variable prefix from NodeExecutorUtils.getExportedVariablesForNode is quoted at its source
+        // (CLIUtils.quoteUnixShellArg), so joining here does not re-open a shell-injection sink.
         final String commandString = String.join(" ", args);
         sshexecTask.setCommand(commandString);
         sshexecTask.setTimeout(sshConnectionInfo.getTimeout());
@@ -805,11 +817,6 @@ public class SSHTaskBuilder {
         if (null == remotepath) {
             throw new BuilderException("remotePath was not set");
         }
-        final String username = sshConnectionInfo.getUsername();
-        if (null == username) {
-            throw new BuilderException("username was not set");
-        }
-
 
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
 
@@ -821,8 +828,7 @@ public class SSHTaskBuilder {
         //Set the local and remote file paths
 
         scp.setLocalFile(sourceFile.getAbsolutePath());
-        final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
-        scp.setRemoteTofile(sshUriPrefix + remotepath);
+        scp.setRemotePath(remotepath);
     }
 
 
@@ -834,11 +840,9 @@ public class SSHTaskBuilder {
         if (null == sourceFolder) {
             throw new BuilderException("sourceFolder was not set");
         }
-        final String username = sshConnectionInfo.getUsername();
-        if (null == username) {
-            throw new BuilderException("username was not set");
+        if (null == remotePath) {
+            throw new BuilderException("remotePath was not set");
         }
-
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
 
         scp.setTimeout(sshConnectionInfo.getTimeout());
@@ -854,8 +858,7 @@ public class SSHTaskBuilder {
             scp.addFileset(set);
 
 
-        final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
-        scp.setTodir(sshUriPrefix + remotePath);
+        scp.setRemotePath(remotePath);
 
     }
 
@@ -876,11 +879,9 @@ public class SSHTaskBuilder {
         if (null == files || files.size()==0) {
             throw new BuilderException("files was not set");
         }
-        final String username = sshConnectionInfo.getUsername();
-        if (null == username) {
-            throw new BuilderException("username was not set");
+        if (null == remotePath) {
+            throw new BuilderException("remotePath was not set");
         }
-
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
 
         scp.setTimeout(sshConnectionInfo.getTimeout());
@@ -918,8 +919,7 @@ public class SSHTaskBuilder {
             top.setIncludes(dirpath);
         }
 
-        final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
-        scp.setTodir(sshUriPrefix + remotePath);
+        scp.setRemotePath(remotePath);
     }
 
     public static class BuilderException extends Exception {

@@ -160,12 +160,22 @@ public class RundeckConfigBase {
         RetryConfig status;
         ExecutionLogs logs;
         /**
-         * RUN-4693: when true (default), an execution that provides options not declared on the job
-         * is created and then failed at start. Set false to restore the legacy passthrough. Bound
-         * from {@code rundeck.execution.rejectUndeclaredOptions} so it is resolvable via
-         * ConfigurationService and editable in the System Configuration UI.
+         * RUN-4693: opt-in (default false). When true, an execution that provides options not declared
+         * on the job is created and then failed at start. Left false by default so undeclared options
+         * pass through, preserving the current behavior. Bound from
+         * {@code rundeck.execution.rejectUndeclaredOptions} so it is resolvable via ConfigurationService
+         * and editable in the System Configuration UI.
          */
         Boolean rejectUndeclaredOptions;
+
+        /**
+         * RUN-4579: opt-in (default false). When true, values exported to remote nodes via the node's
+         * {@code ssh-variable-export-pattern} are POSIX shell-quoted, preventing command injection
+         * through option values. Left false by default to preserve the current behavior. Bound from
+         * {@code rundeck.execution.sshExportQuoting} so it is resolvable via ConfigurationService and
+         * editable in the System Configuration UI.
+         */
+        Boolean sshExportQuoting;
 
         @Data
         public static class RetryConfig {
@@ -510,10 +520,10 @@ public class RundeckConfigBase {
         Enabled activityDefaultTimeFilter = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
-        // RUN-4277/#10321: default raised from 12 to 20 — Ace no longer supports a manual
-        // resize handle (upstream removed it), so a taller out-of-the-box default is the
-        // supported way to make the inline-script/code editor more usable without configuration.
-        int guiAceEditorMinLines = 20;
+        // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0
+        // (the default) makes the editor manually resizable via drag handle instead of
+        // auto-sizing to a fixed number of lines.
+        int guiAceEditorMinLines = 0;
         int guiAceEditorMaxLines = 0;
 
         @Data
