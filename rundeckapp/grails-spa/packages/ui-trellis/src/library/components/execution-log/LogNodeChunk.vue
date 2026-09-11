@@ -272,9 +272,23 @@ export default defineComponent({
       }
       // Re-enable follow when the user scrolls back to the bottom.
       // logViewer.vue only honors this in node view (onNodeFollowChange).
-      if (atBottom && !this.follow) {
+      //
+      // `el.scrollHeight` comes from DynamicScroller's virtualized layout,
+      // which estimates any not-yet-measured item as `min-item-size` (2px).
+      // On a large, actively-streaming log most of the trailing entries are
+      // still unmeasured, so scrollHeight is understated and `atBottom` can
+      // fire while the user is nowhere near the real end. Only trust it once
+      // the last entry has actually been measured.
+      if (atBottom && !this.follow && this._isLastEntryMeasured()) {
         this.$emit("follow-change", true);
       }
+    },
+    _isLastEntryMeasured(): boolean {
+      const entries = this.entryOutputs;
+      if (entries.length === 0) return true;
+      const scroller = this.$refs.scroller as any;
+      const lastEntry = entries[entries.length - 1];
+      return !!scroller?.getItemSize?.(lastEntry);
     },
     scrollToLine() {
       if (this.follow) {
