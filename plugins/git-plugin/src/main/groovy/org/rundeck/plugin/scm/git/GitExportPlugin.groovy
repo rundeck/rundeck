@@ -121,25 +121,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         committerEmail = config.committerEmail
         File base = new File(config.dir)
         mapper = new TemplateJobFileMapper(expand(config.pathTemplate, [format: config.format], "config"), base)
-        if (config.createBranch && config.baseBranch) {
-            // Clone baseBranch first since the target branch may not exist yet on the remote.
-            // This avoids a clone failure that would prevent the branch-creation logic from running.
-            branch = config.baseBranch
-            try {
-                cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
-            } catch (ScmPluginException e) {
-                branch = config.branch
-                if (isMissingRemoteBranch(e, config.baseBranch)) {
-                    def remapped = new ScmPluginException("Non existent remote branch: ${config.baseBranch}")
-                    remapped.initCause(e)
-                    throw remapped
-                }
-                throw e
-            }
-            branch = config.branch
-        } else {
-            cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
-        }
+        cloneOrCreateForExport(context, base, config)
         //check clone was ok
         if (git?.repository.getFullBranch() != "refs/heads/$branch") {
             logger.debug("branch differs")
@@ -160,6 +142,40 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
         workingDir = base
         inited = true
+    }
+
+    /**
+     * Opens or clones the export workdir.
+     * <p>
+     * When Create Branch is enabled, a <em>fresh</em> workdir is cloned from
+     * {@code baseBranch} first so a missing export branch can be created (RUN-4018).
+     * If the workdir is already checked out on the export branch, that base-first
+     * clone is skipped: {@code cloneOrCreate} treats a branch mismatch as a reason
+     * to delete and re-clone, which would wipe serialized-but-uncommitted job files
+     * on every ScmLoader initialize (RUN-4852).
+     */
+    private void cloneOrCreateForExport(ScmOperationContext context, File base, Export config)
+            throws ScmPluginException
+    {
+        if (config.createBranch && config.baseBranch && !workdirCheckedOutOn(base, config.branch)) {
+            // Clone baseBranch first since the target branch may not exist yet on the remote.
+            // This avoids a clone failure that would prevent the branch-creation logic from running.
+            branch = config.baseBranch
+            try {
+                cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
+            } catch (ScmPluginException e) {
+                branch = config.branch
+                if (isMissingRemoteBranch(e, config.baseBranch)) {
+                    def remapped = new ScmPluginException("Non existent remote branch: ${config.baseBranch}")
+                    remapped.initCause(e)
+                    throw remapped
+                }
+                throw e
+            }
+            branch = config.branch
+        } else {
+            cloneOrCreate(context, base, config.url, PLUGIN_INTEGRATION)
+        }
     }
 
     @Override

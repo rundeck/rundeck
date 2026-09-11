@@ -88,6 +88,22 @@ class BaseGitPluginSpec extends Specification {
         [:]                            | [strictHostKeyChecking: 'other']
     }
 
+    def "workdirCheckedOutOn is true only for existing checkout of that branch"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def git = Git.init().setDirectory(gitdir).call()
+        new File(gitdir, 'readme.txt') << 'hi'
+        git.add().addFilepattern('readme.txt').call()
+        git.commit().setMessage('init').setCommitter('test', 'test@example.com').call()
+        git.close()
+        def plugin = new BaseGitPlugin(new Common())
+
+        expect:
+        plugin.workdirCheckedOutOn(gitdir, 'master')
+        !plugin.workdirCheckedOutOn(gitdir, 'dev2')
+        !plugin.workdirCheckedOutOn(new File(tempdir, 'missing'), 'master')
+    }
+
     @Unroll
     def "serialize job to valid file path"() {
         given:
