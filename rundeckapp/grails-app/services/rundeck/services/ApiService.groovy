@@ -23,7 +23,8 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
-import grails.web.JSONBuilder
+import groovy.json.JsonBuilder
+import groovy.json.JsonDelegate
 import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -431,9 +432,40 @@ class ApiService implements WebUtilService{
     def renderSuccessJson(HttpServletResponse response,Closure recall){
         response.contentType=JSON_CONTENT_TYPE
         response.characterEncoding='UTF-8'
-        JSONBuilder builder = new JSONBuilder();
-        JSON json = builder.build(recall);
-        json.render(response);
+        // Mirrors grails.web.JSONBuilder#buildRoot: if the closure doesn't call any
+        // builder methods (e.g. it just returns a bean directly), fall back to
+        // rendering the closure's own return value instead of an empty object.
+        Closure cloned = (Closure) recall.clone()
+        JsonDelegate jsonDelegate = new JsonDelegate()
+        cloned.delegate = jsonDelegate
+        cloned.resolveStrategy = Closure.DELEGATE_FIRST
+        def returnValue = cloned.call()
+        def content = jsonDelegate.content ?: returnValue
+        JsonBuilder builder = new JsonBuilder(content)
+        def writer = response.writer
+        writer << builder.toString()
+        writer.flush()
+        writer.close()
+    }
+
+    /**
+     * Render a JSON array (not an object) to the response, given a pre-built list.
+     * grails.web.JSONBuilder allowed switching its root to an array mid-closure via a bare
+     * `element(...)` call; groovy.json.JsonBuilder's closure-based builder always produces an
+     * object (via JsonDelegate), so a raw top-level array has to be rendered from an already-built
+     * List instead.
+     * @param response
+     * @param list
+     */
+    def renderSuccessJsonArray(HttpServletResponse response, List list){
+        response.contentType=JSON_CONTENT_TYPE
+        response.characterEncoding='UTF-8'
+        JsonBuilder builder = new JsonBuilder()
+        builder(list)
+        def writer = response.writer
+        writer << builder.toString()
+        writer.flush()
+        writer.close()
     }
 
     /**
@@ -665,7 +697,7 @@ class ApiService implements WebUtilService{
      */
     public def respondExecutionsJson(HttpServletRequest request,HttpServletResponse response,execlist,paging=[:]) {
         renderSuccessJson(response){
-            renderExecutionsJson(execlist, paging, delegate)
+            this.renderExecutionsJson(execlist, paging, delegate)
         }
     }
     /**
@@ -836,11 +868,11 @@ class ApiService implements WebUtilService{
             }
 
         if(!isSingle) {
-            delegate.'paging' = execAttrs
-            delegate.'executions' = execarr
+            delegate.paging(execAttrs)
+            delegate.executions(execarr)
         }else{
             execarr[0].each{k,v->
-                delegate[k]=v
+                delegate."$k"(v)
             }
         }
     }

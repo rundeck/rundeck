@@ -6,7 +6,7 @@ import org.apache.http.HttpResponse
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpTrace
 import org.apache.http.impl.client.HttpClientBuilder
-import org.springframework.boot.web.embedded.jetty.JettyServletWebServerFactory
+import org.springframework.boot.jetty.servlet.JettyServletWebServerFactory
 import org.springframework.boot.web.server.WebServer
 import org.springframework.boot.web.servlet.ServletContextInitializer
 import spock.lang.Specification

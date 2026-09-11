@@ -39,7 +39,8 @@ class JobListPage extends BasePage implements ActivityListTrait {
     By bulkConfirmActionNoButtonBy = By.cssSelector('#bulk_confirm_action_no_button')
 
     By bulkJobRowItemsBy = By.className("job-list-row-item")
-    By executeJobModalRunJobNowButtonBy = By.cssSelector('[name="_action_runJobNow"][id="execFormRunButton"]')
+    // name="_action_runJobNow" was replaced by a formaction attribute; the id is unchanged.
+    By executeJobModalRunJobNowButtonBy = By.cssSelector('#execFormRunButton')
     Closure<By> executeJobInModalButtonBy = { By.cssSelector(".act_execute_job[data-job-id=\"$it\"]") }
 
     By jobsHeader = By.partialLinkText('All Jobs')

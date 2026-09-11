@@ -137,32 +137,42 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         }
     }
 
-    static namedQueries = {
-        isScheduledAdHoc {
-            eq 'status', ExecutionService.EXECUTION_SCHEDULED
-        }
-        withScheduledExecution { se ->
-            eq 'scheduledExecution', se
-        }
-        withServerNodeUUID { uuid ->
-            eq 'serverNodeUUID', uuid
-        }
-        withProject{ project ->
-            eq 'project', project
-        }
-        lastExecutionByUser{ user ->
-            eq 'user', user
-            maxResults 1
-            order 'dateStarted', 'desc'
-        }
-        lastExecutionDateByUser { user ->
-            eq 'user', user
-            projections {
-                property 'dateStarted'
-            }
-            maxResults 1
-            order 'dateStarted', 'desc'
-        }
+    // GORM named queries were removed in Grails 8 (the GormEnhancer/NamedCriteriaProxy runtime
+    // support is gone), so they compile but fail at runtime with
+    // "No signature of static method: createNamedQuery". Replaced with static methods returning
+    // DetachedCriteria, which compose via .where { } exactly as the named queries did.
+
+    static DetachedCriteria<Execution> isScheduledAdHoc() {
+        where { status == ExecutionService.EXECUTION_SCHEDULED }
+    }
+
+    static DetachedCriteria<Execution> withScheduledExecution(ScheduledExecution se) {
+        where { scheduledExecution == se }
+    }
+
+    static DetachedCriteria<Execution> withServerNodeUUID(String uuid) {
+        where { serverNodeUUID == uuid }
+    }
+
+    //NB: parameter is `proj`, not `project` -- inside a where closure the latter would shadow the
+    //domain property and silently compare it to itself.
+    static DetachedCriteria<Execution> withProject(String proj) {
+        where { project == proj }
+    }
+
+    static DetachedCriteria<Execution> lastExecutionByUser(String theUser) {
+        where { user == theUser }.order('dateStarted', 'desc').max(1)
+    }
+
+    /**
+     * Projects to just the dateStarted column, so callers get a Date rather than an Execution.
+     * Call site (UserController) terminates with .get().
+     */
+    static DetachedCriteria<Execution> lastExecutionDateByUser(String theUser) {
+        where { user == theUser }
+                .projections { property 'dateStarted' }
+                .order('dateStarted', 'desc')
+                .max(1)
     }
 
     static DetachedCriteria<Execution> runningExecutionsCriteria = new DetachedCriteria<>(Execution).build {

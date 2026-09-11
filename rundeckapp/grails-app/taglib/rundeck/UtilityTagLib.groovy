@@ -634,9 +634,9 @@ class UtilityTagLib{
                             if(it[1]=='title'){
                                 appTitle()
                             }else if(it[1]=='version'){
-                                grailsApplication.metadata['info.app.version']
+                                grailsApplication.metadata.getProperty('info.app.version', String, null)
                             }else if(it[1]=='ident'){
-                                grailsApplication.metadata['build.ident']
+                                grailsApplication.metadata.getProperty('build.ident', String, null)
                             }
                         }
                 ]
@@ -835,7 +835,7 @@ class UtilityTagLib{
         }
     }
     def helpLinkParams={attrs,body->
-        def medium = "${grailsApplication.metadata['info.app.version']} ${System.getProperty('os.name')} java ${System.getProperty('java.version')}"
+        def medium = "${grailsApplication.metadata.getProperty('info.app.version', String, null)} ${System.getProperty('os.name')} java ${System.getProperty('java.version')}"
         def campaign = attrs.campaign?:'helplink'
         def sourceName = g.message(code:'main.app.id',default: 'rundeckapp')
         def helpParams = [utm_source: sourceName, utm_medium: medium, utm_campaign: campaign, utm_content: (controllerName + '/' + actionName)]
@@ -859,7 +859,7 @@ class UtilityTagLib{
                 fragment='#'+split[1]
             }
         }
-        def rdversion = grailsApplication.metadata['info.app.version']
+        def rdversion = grailsApplication.metadata.getProperty('info.app.version', String, null)
         def rdversionShort = rdversion.split('-')[0]
 
         def helpBase
@@ -893,7 +893,11 @@ class UtilityTagLib{
      * @attr properties REQUIRED properties list
      */
     def filterPluginPropertiesByFeature = { attrs, body ->
-        List<Property> props=attrs.properties
+        // NB: must be attrs.get('properties'), not attrs.properties. `properties` is a built-in
+        // Groovy meta-property (Object.getProperties()), and on Grails 8's GroovyPageAttributes it
+        // now wins over the map entry -- returning [wrappedMap:.., gspTagSyntaxCall:false] instead
+        // of this tag's `properties` attribute, which then fails to cast to List.
+        List<Property> props=(List<Property>) attrs.get('properties')
         def filtered=[]
         for (Property prop : props) {
             def featureTest = prop.renderingOptions?.get(StringRenderingConstants.FEATURE_FLAG_REQUIRED)
@@ -910,7 +914,8 @@ class UtilityTagLib{
      * @attr allowedScope REQUIRED allowed scope
      */
     def groupPluginProperties = { attrs,body ->
-        List<Property> properties=attrs.properties
+        //NB: attrs.get('properties') -- see note in filterPluginPropertiesByFeature
+        List<Property> properties=(List<Property>) attrs.get('properties')
         PropertyScope allowedScope=attrs.allowedScope
         def groupSet=[:]
         def ungrouped=[]
@@ -1209,8 +1214,12 @@ class UtilityTagLib{
             def tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user, request.remoteAddr])
         }
         //call original form tag
+        // Grails 8: taglib tags are no longer exposed as `Closure` fields, only as methods --
+        // FormTagLib went from `private Closure form` + `Object form(Map, Closure)` to just the
+        // method. `applicationTagLib.form` therefore resolves to null and `.call(..)` NPEs, which
+        // surfaces as "Error executing tag <g:form>: null" on every page using g:form.
         def applicationTagLib = grailsApplication.mainContext.getBean('org.grails.plugins.web.taglib.FormTagLib')
-        applicationTagLib.form.call(attrs,body)
+        applicationTagLib.form(attrs, body)
     }
 
     def appTitle={attrs,body->

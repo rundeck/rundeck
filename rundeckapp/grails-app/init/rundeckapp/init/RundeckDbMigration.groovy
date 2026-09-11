@@ -1,7 +1,7 @@
 package rundeckapp.init
 
 import org.grails.build.parsing.CommandLineParser
-import org.grails.plugins.databasemigration.command.DbmRollbackCommand
+import org.apache.grails.data.hibernate5.dbmigration.cli.DbmRollbackCommand
 import org.springframework.context.ApplicationContext
 
 class RundeckDbMigration {

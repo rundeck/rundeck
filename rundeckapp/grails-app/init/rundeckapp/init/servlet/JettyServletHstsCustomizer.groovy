@@ -4,7 +4,7 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
-import org.springframework.boot.web.embedded.jetty.JettyServerCustomizer;
+import org.springframework.boot.jetty.JettyServerCustomizer;
 
 public class JettyServletHstsCustomizer implements JettyServerCustomizer {
 

@@ -168,7 +168,12 @@ class BaseGitPlugin {
             File outfile = null
     )
     {
-        if (!outfile) {
+        // Groovy 5 gave File an asBoolean() based on existence, so `!outfile` is now also true for
+        // a non-null File whose path does not exist yet -- the normal case on job CREATE. Today the
+        // only caller that supplies outfile passes mapper.fileForJob(exportReference), which is
+        // exactly what this fallback recomputes, so behaviour is unchanged; test explicitly for null
+        // so a future caller passing a different path cannot be silently ignored.
+        if (outfile == null) {
             outfile = mapper.fileForJob(job)
         }
         AtomicLong counter = fileCounterFor(outfile)

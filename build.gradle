@@ -200,6 +200,13 @@ allprojects {
     // Spring Boot's dependency-management BOM overrides Spring Framework via this property name
     // (ext["spring.version"] alone does NOT move the BOM-managed spring-framework version).
     ext["spring-framework.version"] = springVersion
+    // Jetty 12.1.10 leaks a jdk.nio.zipfs mount per ServletContext.getResource call and never
+    // closes it -- about 3 MB of unreclaimable heap for every static asset served
+    // (jetty/jetty.project#15228, "increased memory usage between 12.1.8 and 12.1.10 caused by
+    // ZipFileSystems", fixed in 12.1.11). Spring Boot's BOM pins the affected 12.1.10, and
+    // jetty-ee11-webapp is declared without a version, so bumping the gradle.properties value alone
+    // does nothing -- only this BOM property override moves it.
+    ext["jetty.version"] = project.property('jetty.version')
     // Override Spring Boot BOM-managed versions (eachDependency/force can't move Boot-managed deps).
     ext["micrometer.version"] = micrometerVersion          // CVE-2026-40983, CVE-2026-40984
     ext["spring-retry.version"] = springRetryVersion       // CVE-2026-41710
@@ -561,10 +568,8 @@ task alljavadoc(type: Javadoc) {
      }
 }
 
-buildScan {
-    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-    termsOfServiceAgree = 'yes'
-}
+// Build-scan config moved to settings.gradle's `develocity { buildScan { } }` block:
+// the com.gradle.develocity plugin exposes its extension on Settings, not on the root Project.
 
 // Limit heap size in forked test processes for CI
 test {

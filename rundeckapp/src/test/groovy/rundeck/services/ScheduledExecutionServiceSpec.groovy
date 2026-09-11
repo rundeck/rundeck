@@ -1848,6 +1848,13 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         service.quartzScheduler = Mock(Scheduler)
         service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
+        // Four features using this helper assert `0 * service.jobLifecycleComponentService
+        // .beforeJobSave(_,_)`, but the helper never assigned the collaborator, so the interaction
+        // target was null and those assertions verified nothing. Spock registers a MockitoMockMaker
+        // (mockito-core is legitimately on this classpath -- the Java jaas tests use it) and its
+        // asMockOrNull does not null-guard, so a null target now throws NullPointerException from
+        // WeakConcurrentMap.get instead of passing vacuously.
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
         service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{
                 RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations?:[:])
@@ -2812,7 +2819,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         ]
         // Allow additional calls for step validation
         service.frameworkService.validateDescription(*_) >> [valid: true]
-        0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
+        1 * service.jobLifecycleComponentService.beforeJobSave(_,_)   // save proceeds, so the lifecycle hook fires
         1 * service.frameworkService.getFrameworkNodeName()
         1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,['update'],'AProject')>>true
         2 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)
@@ -2866,7 +2873,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) >> pluginConfigSet
             1 * service.frameworkService.getFrameworkNodeName()
             1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,['update'],_)>>true
-            0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
+            1 * service.jobLifecycleComponentService.beforeJobSave(_,_)   // save proceeds, so the lifecycle hook fires
             1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
             1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
             service.jobSchedulesService = Mock(SchedulesManager){
@@ -2914,7 +2921,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_, _)
             1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) >> configSet
             0 * service.frameworkService.getFrameworkNodeName()
-            0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
+            0 * service.jobLifecycleComponentService.beforeJobSave(_,_) // validation fails, job is never saved, hook must not fire
             0 * service.rundeckJobDefinitionManager.persistComponents(_,_)>>true
             service.jobSchedulesService = Mock(SchedulesManager){
                 1 * isScheduled(_)
@@ -2964,7 +2971,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         ]
         // Allow additional calls for step validation
         service.frameworkService.validateDescription(*_) >> [valid: true]
-        0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
+        0 * service.jobLifecycleComponentService.beforeJobSave(_,_) // validation fails, job is never saved, hook must not fire
         0 * service.frameworkService.getFrameworkNodeName()
         2 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)
         1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
@@ -5085,6 +5092,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             getServerUUID() >> serverNodeUUID
             isClusterModeEnabled() >> clusterEnabled
         }
+        // The then: block asserts `0 * service.jobSchedulesService.handleScheduleDefinitions(_,_)`,
+        // a different field from jobSchedulerService above (SchedulesManager vs JobSchedulerService
+        // -- the names differ by one letter). It was never assigned, so the interaction target was
+        // null and the assertion verified nothing; Spock's MockitoMockMaker now NPEs on a null
+        // target instead of passing vacuously.
+        service.jobSchedulesService = Mock(SchedulesManager)
         service.jobSchedulerService=Mock(JobSchedulerService){
             determineExecNode(*_)>>{args->
                 return serverNodeUUID

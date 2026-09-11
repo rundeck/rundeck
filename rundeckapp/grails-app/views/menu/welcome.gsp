@@ -49,7 +49,7 @@ Time: 12:54 PM
                          socket-data="${g.enc(attr:[appTitle: g.appTitle()].encodeAsJSON())}">
                 <h2 class="card-title">
                   <g:message code="app.firstRun.title"
-                             args="${[g.appTitle(), grailsApplication.metadata['build.ident']]}"/>
+                             args="${[g.appTitle(), grailsApplication.metadata.getProperty('build.ident', String, null)]}"/>
                 </h2>
               </ui-socket>
             </div>
