@@ -256,5 +256,22 @@ describe("LogNodeChunk.vue", () => {
     expect(scrollToBottomMock).toHaveBeenCalledTimes(follow?1:0);
   });
 
+  it("computes the scroller offset for an item index via the scroller's getItemOffset", () => {
+    const wrapper = createWrapper();
+    const getItemOffsetMock = jest.fn().mockReturnValue(123);
+    (wrapper.vm as any).$refs.scroller.getItemOffset = getItemOffsetMock;
+
+    const result = (wrapper.vm as any).getScrollerOffset(1);
+    expect(getItemOffsetMock).toHaveBeenCalledWith(1);
+    expect(result.el).toBe((wrapper.vm as any).$refs.scroller.$el);
+    expect(result.offset).toBe(123);
+  });
+
+  it("returns a zero offset when the scroller ref is not yet mounted", () => {
+    const wrapper = createWrapper({ entries: [] });
+
+    const result = (wrapper.vm as any).getScrollerOffset(1);
+    expect(result).toEqual({ el: null, offset: 0 });
+  });
 
 });
