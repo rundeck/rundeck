@@ -28,12 +28,9 @@
 
 set -euo pipefail
 
-# TODO(release-process): label name is not finalized yet - update this constant once
-# the team agrees on it. Every other reference in this script goes through it.
-readonly RC_BACKPORT_LABEL="rc-backport"
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RELEASE_TAG_SH="$SCRIPT_DIR/release-tag.sh"
+RELEASE_VERSION_SH="$SCRIPT_DIR/release-version.sh"
 
 function usage {
     echo "Usage:"
@@ -92,49 +89,24 @@ if [ ! -f "$RELEASE_TAG_SH" ]; then
 fi
 # shellcheck source=./release-tag.sh
 source "$RELEASE_TAG_SH"  # provides create_and_push_tag() and a dry-run-aware git() wrapper
+# shellcheck source=./release-version.sh
+source "$RELEASE_VERSION_SH"  # provides validate_version_format, parse_rc_number, version_tag_name
 
-# Extend the git() wrapper sourced from release-tag.sh with the extra read/write
-# commands this script needs (cherry-pick, fetch, cat-file). Redefining the function
-# after sourcing is safe - create_and_push_tag() resolves `git` at call time.
-function git() {
-    if [ "$DRY_RUN" = true ]; then
-        case "$1" in
-            rev-parse|show-ref|diff|log|status|branch|ls-remote|symbolic-ref|cat-file|rev-list|fetch)
-                command git "$@"
-                ;;
-            tag)
-                if [[ " $* " == *" -l "* || " $* " == *" --list"* ]]; then
-                    command git "$@"
-                else
-                    echo "[DRY-RUN] git $*"
-                fi
-                ;;
-            checkout|cherry-pick|push|commit|add)
-                echo "[DRY-RUN] git $*"
-                return 0
-                ;;
-            *)
-                command git "$@"
-                ;;
-        esac
-    else
-        command git "$@"
-    fi
-}
+# Extend the read/write command lists the git() wrapper (sourced from release-tag.sh)
+# checks, with the extra commands this script needs. No need to redefine git()
+# itself - it re-reads these lists on every call.
+RELEASE_GIT_READONLY_CMDS+=" cat-file rev-list fetch"
+RELEASE_GIT_WRITE_CMDS+=" cherry-pick"
 
-if [[ ! "$VNUM" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "Error: version ($VNUM) must be in MAJOR.MINOR.PATCH format"
-    exit 3
-fi
+validate_version_format "$VNUM" || exit 3
 
 # Only rc2+ is handled here - reject rc1/alpha#/GA/RBA even if the caller's routing
 # logic misfires, rather than trusting it blindly.
-if [[ ! "$VTAG" =~ ^rc([0-9]+)$ ]]; then
+if ! NEW_RC_NUM="$(parse_rc_number "$VTAG")"; then
     echo "Error: '$VTAG' is not a valid RC tag type for release-rc.sh. Expected 'rc<N>'."
     echo "GA/alpha#/RBA/rc1 are handled by setversion.sh, not release-rc.sh."
     exit 3
 fi
-NEW_RC_NUM="${BASH_REMATCH[1]}"
 
 if [ "$NEW_RC_NUM" -lt 2 ]; then
     echo "Error: release-rc.sh only handles rc2 and above. Use setversion.sh for rc1."
@@ -142,9 +114,18 @@ if [ "$NEW_RC_NUM" -lt 2 ]; then
 fi
 
 VERSION="$VNUM"
-NEW_TAG="v$VERSION-$VTAG"
+NEW_TAG="$(version_tag_name "$VERSION" "$VTAG")"
 PREV_RC_NUM=$((NEW_RC_NUM - 1))
-PREV_TAG="v$VERSION-rc$PREV_RC_NUM"
+PREV_TAG="$(version_tag_name "$VERSION" "rc$PREV_RC_NUM")"
+
+# Scoped to this exact version, not a single global label - so two release lines
+# in flight at once (e.g. cutting 6.2.0-rc2 while 6.1.1 is being prepared, or even
+# 6.2.0-rc2 while 6.2.1-rc1 is being prepared) can't have a PR meant for one
+# version swept into another's RC by sharing one generic label. Matches the
+# granularity NEW_TAG/PREV_TAG already use (full MAJOR.MINOR.PATCH) - major.minor
+# alone would still collide between patch releases of the same minor.
+RC_BACKPORT_LABEL="rc-backport-$VERSION"
+readonly RC_BACKPORT_LABEL
 
 echo "New RC tag:      $NEW_TAG"
 echo "Previous RC tag: $PREV_TAG"
