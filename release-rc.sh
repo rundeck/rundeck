@@ -127,9 +127,38 @@ PREV_TAG="$(version_tag_name "$VERSION" "rc$PREV_RC_NUM")"
 RC_BACKPORT_LABEL="rc-backport-$VERSION"
 readonly RC_BACKPORT_LABEL
 
+# Applied (by this script, or by a human resolving a CONFLICT manually per the
+# rescue-branch instructions below) to a PR once it has actually landed in this
+# version's RC lineage. This is the authoritative "already applied" signal - the
+# cherry-pick commit trailer this script stamps via `-x` (see ALREADY_APPLIED
+# below) only survives when the exact same automated flow is used to continue a
+# cherry-pick; a human resolving a conflict is free to write any commit message,
+# so a manual backport that doesn't preserve the trailer would otherwise look
+# unapplied to the next RC run and get (harmlessly, but confusingly) re-attempted.
+#
+# Deliberately NOT named "backport-completed" - both rundeck and rundeckpro
+# already have a generic label with that exact name, paired with the unrelated
+# auto-backport/backport-to-release/X.Y.x GitHub Action that backports merged
+# PRs to maintenance branches post-GA (see .github/workflows/backport.yml).
+# Reusing that name here, even with a version suffix, would read as belonging
+# to that system. This is scoped per-version like $RC_BACKPORT_LABEL, and kept
+# in the same "rc-backport-" family so `gh pr list --label` filters can never
+# ambiguously match either the unrelated label or $RC_BACKPORT_LABEL itself.
+RC_BACKPORT_APPLIED_LABEL="rc-backport-$VERSION-applied"
+readonly RC_BACKPORT_APPLIED_LABEL
+
 echo "New RC tag:      $NEW_TAG"
 echo "Previous RC tag: $PREV_TAG"
 echo "PR label:        $RC_BACKPORT_LABEL"
+echo "Applied label:   $RC_BACKPORT_APPLIED_LABEL"
+
+if [ "$DRY_RUN" = true ]; then
+    echo "[DRY-RUN] gh label create $RC_BACKPORT_APPLIED_LABEL --force"
+else
+    gh label create "$RC_BACKPORT_APPLIED_LABEL" \
+        --description "Applied (by release-rc.sh or manually) to the $VERSION RC lineage - unrelated to the generic 'backport-completed' label" \
+        --color BFD4F2 --force >/dev/null
+fi
 
 git fetch --tags --quiet
 
@@ -149,16 +178,22 @@ git checkout --detach "$PREV_COMMIT"
 
 echo "Looking up merged PRs labeled '$RC_BACKPORT_LABEL'..."
 PR_DATA="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L 200 \
-    --json number,title,mergedAt,mergeCommit \
-    --jq 'sort_by(.mergedAt)[] | select(.mergeCommit != null) | [.number, .mergeCommit.oid, .title] | @tsv')"
+    --json number,title,mergedAt,mergeCommit,labels \
+    --jq 'sort_by(.mergedAt)[] | select(.mergeCommit != null) | [.number, .mergeCommit.oid, .title, ([.labels[].name] | join(","))] | @tsv')"
 
-# Every cherry-pick below uses `-x`, which appends "(cherry picked from commit <sha>)"
-# to the resulting commit message. That trailer is what makes "already applied"
-# trackable across RC generations: rc3 is cherry-picked on top of rc2, which already
-# carries rc1's and rc2's trailers in its history, so grepping $PREV_COMMIT's ancestry
-# for a PR's original merge-commit SHA reliably tells us it's already in the lineage -
-# comparing the PR's original SHA directly against our history (via merge-base
-# --is-ancestor) does NOT work, since cherry-pick always creates a brand new SHA.
+# Every automated cherry-pick below uses `-x`, which appends "(cherry picked from
+# commit <sha>)" to the resulting commit message. That trailer is what makes
+# "already applied" trackable across RC generations without the label below: rc3
+# is cherry-picked on top of rc2, which already carries rc1's and rc2's trailers in
+# its history, so grepping $PREV_COMMIT's ancestry for a PR's original merge-commit
+# SHA reliably tells us it's already in the lineage - comparing the PR's original
+# SHA directly against our history (via merge-base --is-ancestor) does NOT work,
+# since cherry-pick always creates a brand new SHA.
+#
+# This is a secondary signal, though: $RC_BACKPORT_APPLIED_LABEL (checked per-PR
+# below) is authoritative and catches manual backports that don't preserve the
+# trailer. Both are checked so a PR is never re-attempted just because one of the
+# two signals is missing.
 ALREADY_APPLIED="$(git log --format=%B "$PREV_COMMIT" | grep -oE '\(cherry picked from commit [0-9a-f]{40}\)' | grep -oE '[0-9a-f]{40}')"
 
 # Per-PR outcome, tab-separated: number / sha / status / detail / title.
@@ -171,11 +206,31 @@ if [ -z "$PR_DATA" ]; then
 else
     mapfile -t PR_LINES <<< "$PR_DATA"
     for line in "${PR_LINES[@]}"; do
-        IFS=$'\t' read -r PR_NUM PR_SHA PR_TITLE <<< "$line"
+        IFS=$'\t' read -r PR_NUM PR_SHA PR_TITLE PR_LABELS_CSV <<< "$line"
 
-        if grep -qxF "$PR_SHA" <<< "$ALREADY_APPLIED"; then
-            echo "PR #$PR_NUM ($PR_SHA): already cherry-picked into a previous RC, skipping"
+        ALREADY_LABELED=false
+        if [[ ",$PR_LABELS_CSV," == *",$RC_BACKPORT_APPLIED_LABEL,"* ]]; then
+            ALREADY_LABELED=true
+        fi
+
+        if [ "$ALREADY_LABELED" = true ] || grep -qxF "$PR_SHA" <<< "$ALREADY_APPLIED"; then
+            if [ "$ALREADY_LABELED" = true ]; then
+                echo "PR #$PR_NUM ($PR_SHA): already labeled '$RC_BACKPORT_APPLIED_LABEL', skipping"
+            else
+                echo "PR #$PR_NUM ($PR_SHA): already cherry-picked into a previous RC, skipping"
+            fi
             REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"already-applied"$'\t'"-"$'\t'"$PR_TITLE")
+            # Backfill the label if only the trailer caught it (e.g. a PR applied by an
+            # earlier run of this script, before this label existed) - keeps every
+            # completed PR converging on the same signal going forward.
+            if [ "$ALREADY_LABELED" = false ]; then
+                if [ "$DRY_RUN" = true ]; then
+                    echo "[DRY-RUN] gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
+                else
+                    gh pr edit "$PR_NUM" --add-label "$RC_BACKPORT_APPLIED_LABEL" \
+                        || echo "  Warning: failed to backfill '$RC_BACKPORT_APPLIED_LABEL' on PR #$PR_NUM"
+                fi
+            fi
             continue
         fi
 
@@ -192,6 +247,12 @@ else
 
         if git cherry-pick "${CHERRY_PICK_ARGS[@]}" "$PR_SHA"; then
             REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"applied"$'\t'"$(git rev-parse --short HEAD)"$'\t'"$PR_TITLE")
+            if [ "$DRY_RUN" = true ]; then
+                echo "[DRY-RUN] gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
+            else
+                gh pr edit "$PR_NUM" --add-label "$RC_BACKPORT_APPLIED_LABEL" \
+                    || echo "  Warning: failed to add '$RC_BACKPORT_APPLIED_LABEL' to PR #$PR_NUM - label it manually so future RC runs recognize it's applied"
+            fi
         else
             # Deliberately not auto-resolving (e.g. -X ours/theirs) - guessing wrong on a
             # release cherry-pick ships a silent regression, which is worse than stopping here.
@@ -238,6 +299,9 @@ if [ "$CONFLICT_COUNT" -gt 0 ]; then
     echo "  1. git checkout $RESCUE_BRANCH"
     echo "  2. For each CONFLICT PR above: git cherry-pick <sha> (add -m 1 if it's a merge commit),"
     echo "     resolve the listed files, git add <files>, git cherry-pick --continue"
+    echo "     Then label it, regardless of the commit message used to continue -"
+    echo "     future RC runs rely on this label, not the commit message, to know it's done:"
+    echo "       gh pr edit <PR#> --add-label $RC_BACKPORT_APPLIED_LABEL"
     echo "  3. Once every PR is in, tag manually:"
     echo "       $RELEASE_TAG_SH $NEW_TAG \$(git rev-parse HEAD) [--push]"
     exit 7
