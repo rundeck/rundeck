@@ -232,6 +232,9 @@ class BaseWorkflowExecutorSpec extends Specification {
                 getExecutionService()>>Mock(ExecutionService){
 
                     1 * executeStep(_, item)>> {
+                        StepExecutionContext ctx = (StepExecutionContext)it[0]
+                        // RUN-4837: the main step's own execution must not carry the error handler marker
+                        assert !ctx.componentForType(WorkflowItemErrorHandlerContext).present
                         return NodeDispatchStepExecutor.wrapDispatcherResult(
                             Mock(DispatcherResult) {
                                 isSuccess() >> false
@@ -243,6 +246,10 @@ class BaseWorkflowExecutorSpec extends Specification {
                         StepExecutionContext ctx = (StepExecutionContext)it[0]
                         assert !ctx.nodeSelector.acceptNode(testnode2)
                         assert ctx.nodeSelector.acceptNode(testnode1)
+                        // RUN-4837: the error handler's own execution must carry the marker, so
+                        // components that cannot otherwise distinguish it from the main step's
+                        // execution (e.g. Runner selection) can resolve handler-specific configuration
+                        assert ctx.componentForType(WorkflowItemErrorHandlerContext).present
                         return NodeDispatchStepExecutor.wrapDispatcherResult(
                             Mock(DispatcherResult) {
                                 isSuccess() >> true

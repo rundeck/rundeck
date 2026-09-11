@@ -1958,6 +1958,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //start a sub context
             builder.pushContextStep(1)
         }
+        //this context is about to become a referenced job's own top-level execution context.
+        //Any WorkflowItemErrorHandlerContext marker on origContext only describes how THIS job
+        //was invoked by its caller (e.g. as an error handler) - it must not leak into the
+        //referenced job's own internal steps, which are not error handlers of anything.
+        builder.removeComponentsOfType(WorkflowItemErrorHandlerContext)
         return builder.build()
     }
 
