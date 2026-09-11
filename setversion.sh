@@ -10,10 +10,7 @@ function usage {
     echo "Usage:"
     echo "  setversion.sh <version> [GA|rc#|alpha#]                                              - Update version in version.properties"
     echo "  setversion.sh --bump-minor                                                           - Bump minor version number"
-    echo "  setversion.sh --tag <version> GA [--push] [--dry-run] [--debug]                     - Re-tag the highest existing v<version>-rcN tag as GA (no commit argument)"
-    echo "  setversion.sh --tag <version> rc1 <commit> [--push] [--dry-run] [--debug]           - Tag rc1 at an explicit commit (no release branch exists yet)"
-    echo "  setversion.sh --tag <version> alpha# <commit> [--push] [--dry-run] [--debug]         - Tag other pre-releases at an explicit commit"
-    echo "  (rc2+ is NOT handled by setversion.sh - it is owned by external release tooling, for rc2+ (check rdcore))"
+    echo "  setversion.sh --tag <version> [GA|rc#|alpha#] [--push] [--dry-run] [--debug]        - Create git tag; checks out release branch if one exists for the version"
     echo "  setversion.sh --create-release-branch <version> [<commit>] [--push] [--dry-run] [--debug]     - Create release branch for patch releases (branches from GA tag or specified commit)"
     echo ""
     echo "Flags:"
@@ -54,9 +51,25 @@ for arg in "$@"; do
 done
 set -- "${ARGS[@]}"  # Reset positional parameters without flags
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=release-tag.sh
-source "$SCRIPT_DIR/release-tag.sh"  # provides create_and_push_tag() and the dry-run git() wrapper
+# Git wrapper function for dry-run support
+function git() {
+    if [ "$DRY_RUN" = true ]; then
+        case "$1" in
+            rev-parse|show-ref|diff|log|status|branch|ls-remote|symbolic-ref)
+                command git "$@"
+                ;;
+            checkout|tag|push|commit|add)
+                echo "[DRY-RUN] git $*"
+                return 0
+                ;;
+            *)
+                command git "$@"
+                ;;
+        esac
+    else
+        command git "$@"
+    fi
+}
 
 # Handle tag creation directly on main
 if [ "$1" == "--tag" ]; then
@@ -67,70 +80,72 @@ if [ "$1" == "--tag" ]; then
         usage
     fi
     VNUM="$1"
-    if [[ ! "$VNUM" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo "Error: Version ($VNUM) must be in MAJOR.MINOR.PATCH format (e.g., 5.19.1)"
-        exit 3
-    fi
     shift
     VTAG="${1:-GA}"
-    [ $# -gt 0 ] && shift
 
-    # rc2+ is not handled here - checking out an existing release branch and tagging its HEAD
-    # is owned by external release tooling, for rc2+ (check rdcore), which calls release-tag.sh
-    # directly once it has resolved the branch and commit itself.
-    if [[ "$VTAG" =~ ^rc([0-9]+)$ ]] && [ "${BASH_REMATCH[1]}" -ge 2 ]; then
-        echo "Error: rc2+ releases are not created by setversion.sh."
-        echo "That flow is owned by external release tooling, for rc2+ (check rdcore)."
-        exit 13
-    fi
-
-    # Resolve the tag name and target commit for the release type; the actual tag
-    # creation/push is delegated to create_and_push_tag (release-tag.sh).
+    # Create the appropriate tag
     if [ "$VTAG" == "GA" ]; then
-        if [ -n "$1" ]; then
-            echo "Error: GA does not take a commit argument - it re-tags the highest existing rc for the version."
-            exit 5
-        fi
-
         TAG_NAME="v$VNUM"
-
-        # GA is cut by re-tagging the highest existing RC for this version - never a fresh commit on main
-        HIGHEST_RC=""
-        HIGHEST_RC_NUM=-1
-        for RC_TAG in $(git tag -l "v${VNUM}-rc*"); do
-            RC_SUFFIX="${RC_TAG#v${VNUM}-rc}"
-            if [[ "$RC_SUFFIX" =~ ^[0-9]+$ ]] && [ "$RC_SUFFIX" -gt "$HIGHEST_RC_NUM" ]; then
-                HIGHEST_RC_NUM="$RC_SUFFIX"
-                HIGHEST_RC="$RC_TAG"
-            fi
-        done
-
-        if [ -z "$HIGHEST_RC" ]; then
-            echo "Error: No RC tag found matching v$VNUM-rcN. GA is cut by re-tagging the highest RC."
-            echo "Tag rc1 first with: setversion.sh --tag $VNUM rc1 <commit>"
-            exit 12
-        fi
-
-        TARGET_COMMIT="$HIGHEST_RC"
-        echo "Re-tagging highest RC $HIGHEST_RC as GA"
     elif [[ "$VTAG" =~ ^[a-z]+[0-9]+$ ]]; then
-        # rc1, alpha3, etc. - always tag an explicit commit, never a bare HEAD
         TAG_NAME="v$VNUM-$VTAG"
-        COMMIT_ARG="$1"
-        if [ -z "$COMMIT_ARG" ]; then
-            echo "Error: '$VTAG' requires an explicit commit to tag."
-            echo "Usage: setversion.sh --tag $VNUM $VTAG <commit> [--push]"
-            exit 5
-        fi
-        shift
-        TARGET_COMMIT="$COMMIT_ARG"
     else
-        echo "Error: Invalid tag format '$VTAG'. Expected 'GA' or to match [a-z]+[0-9]+ (e.g., rc1, alpha3)."
-        exit 5
+      echo "Error: Invalid tag format '$VTAG'. Expected 'GA' or to match [a-z]+[0-9]+ (e.g., rc1, rc2, alpha3)."
+      exit 5
     fi
 
-    create_and_push_tag "$TAG_NAME" "$TARGET_COMMIT" "Release $VNUM $VTAG"
-    exit $?
+    IFS='.' read -r MAJOR MINOR PATCH <<< "$VNUM"
+    if [ -z "$MAJOR" ] || [ -z "$MINOR" ] || [ -z "$PATCH" ]; then
+        echo "Error: Version ($VNUM) must be in MAJOR.MINOR.PATCH format"
+        exit 3
+    fi
+
+    RELEASE_BRANCH="release/$MAJOR.$MINOR.x"
+    if git rev-parse --verify "$RELEASE_BRANCH" >/dev/null 2>&1 ||
+       git ls-remote --heads origin "$RELEASE_BRANCH" | grep -q "refs/heads/${RELEASE_BRANCH}$"; then
+        RELEASE_BRANCH_EXISTS=true
+    else
+        RELEASE_BRANCH_EXISTS=false
+    fi
+
+    if [ "$PATCH" -ne 0 ] && [ "$RELEASE_BRANCH_EXISTS" = false ]; then
+        echo "Error: Release branch $RELEASE_BRANCH does not exist."
+        echo "Create it first with: setversion.sh --create-release-branch $VNUM"
+        exit 9
+    fi
+
+    if [ "$RELEASE_BRANCH_EXISTS" = true ]; then
+        # Use the release branch (required for patch > 0; preferred for patch == 0 when a branch was cut early)
+        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$CURRENT_BRANCH" != "$RELEASE_BRANCH" ]; then
+            echo "Checking out release branch: $RELEASE_BRANCH"
+            git checkout "$RELEASE_BRANCH" || exit 10
+        fi
+    else
+        echo "No release branch $RELEASE_BRANCH found, tagging from current HEAD"
+    fi
+
+    echo "Creating tag: $TAG_NAME"
+
+    # Verify we're on main or a release branch (skip in dry-run)
+    if [ "$DRY_RUN" = false ]; then
+        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        if [[ "$CURRENT_BRANCH" != "main" && ! "$CURRENT_BRANCH" =~ ^release/.* ]]; then
+            echo "Error: Must be on 'main' branch or a release branch to create release tags"
+            exit 4
+        fi
+    fi
+
+    git tag -a "$TAG_NAME" -m "Release $VNUM $VTAG"
+    echo "Tag created: $TAG_NAME"
+
+    if [ "$PUSH_TO_ORIGIN" = true ]; then
+        echo "Pushing tag to remote..."
+        git push origin "$TAG_NAME"
+        echo "Tag pushed to remote."
+    else
+        echo "Use 'git push origin $TAG_NAME' to push the tag to remote."
+    fi
+    exit 0
 
 # Create a release branch for patch releases
 elif [ "$1" == "--create-release-branch" ]; then
