@@ -62,8 +62,7 @@ class PluginSshSessionFactory extends JschConfigSessionFactory implements Transp
             final String host,
             final int port,
             final FS fs
-    ) throws JSchException
-    {
+    ) throws JSchException {
         return super.createSession(hc, user, host, port, fs)
     }
 

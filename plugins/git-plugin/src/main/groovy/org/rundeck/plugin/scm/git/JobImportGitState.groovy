@@ -39,6 +39,6 @@ class JobImportGitState implements JobImportState {
         return "JobImportGitState{" +
                 "state=" + synchState +
                 ", commit=" + commit +
-                '}';
+                '}'
     }
 }

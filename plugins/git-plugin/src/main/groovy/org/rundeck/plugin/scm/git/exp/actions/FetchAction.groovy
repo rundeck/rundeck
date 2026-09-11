@@ -24,7 +24,6 @@ import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 
-
 /**
  * Created by greg on 9/8/15.
  */
@@ -58,11 +57,15 @@ class FetchAction extends BaseAction implements GitExportAction {
             final Set<String> pathsToDelete,
             final ScmOperationContext context,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
-
+    ) throws ScmPluginException {
         //fetch remote changes
-        def update = plugin.fetchFromRemote(context)
+        def update
+        try {
+            update = plugin.fetchFromRemote(context)
+        } catch (Exception e) {
+            plugin.logger.debug("Failed fetch from the repository: ${e.message}", e)
+            throw new ScmPluginException("Failed fetch from the repository: ${e.message}", e)
+        }
 
         def result = new ScmExportResultImpl()
         result.success = true

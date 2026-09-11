@@ -24,8 +24,8 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportDiffResult
  * Created by greg on 8/25/15.
  */
 class GitDiffResult implements ScmImportDiffResult {
-    boolean modified;
-    boolean oldNotFound;
+    boolean modified
+    boolean oldNotFound
     boolean newNotFound
     String content
     List<Action> actions

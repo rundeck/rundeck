@@ -29,12 +29,10 @@ import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitScmCommit
 import org.rundeck.plugin.scm.git.GitUtil
 
-
 /**
  * Created by greg on 9/8/15.
  */
 class PushAction extends BaseAction implements GitExportAction {
-
     PushAction(final String id, final String title, final String description) {
         super(id, title, description)
     }
@@ -71,7 +69,6 @@ Pushing to remote branch: `${plugin.branch}`"""
             ]
             )
         }
-
     }
 
     @Override
@@ -81,8 +78,7 @@ Pushing to remote branch: `${plugin.branch}`"""
             final Set<String> pathsToDelete,
             final ScmOperationContext context,
             final Map<String, String> input
-    ) throws ScmPluginException
-    {
+    ) throws ScmPluginException {
         def result = new ScmExportResultImpl()
 
         Ref tagref
@@ -122,21 +118,22 @@ Pushing to remote branch: `${plugin.branch}`"""
             plugin.logger.debug("Failed push to remote: ${e.message}", e)
             throw new ScmPluginException("Failed push to remote: ${e.message}", e)
         }
-        def sb = new StringBuilder()
         def updates = (push*.remoteUpdates).flatten()
-        updates.each {
-            sb.append it.toString()
+        def failedUpdates = updates.findAll {
+            it.status != RemoteRefUpdate.Status.OK && it.status != RemoteRefUpdate.Status.UP_TO_DATE
         }
-        def failedUpdates = updates.findAll { it.status != RemoteRefUpdate.Status.OK }
         result.success = !failedUpdates
         if (failedUpdates) {
             result.message = "Some updates failed: " + failedUpdates
-        } else {
+        } else if (commit) {
             result.message = "Remote push result: OK. (Commit: ${commit.name})"
+        } else {
+            result.message = "Remote push result: OK."
         }
         result.id = commit?.name
-        result.commit=new GitScmCommit(GitUtil.metaForCommit(commit))
+        if (commit) {
+            result.commit = new GitScmCommit(GitUtil.metaForCommit(commit))
+        }
         return result
     }
-
 }

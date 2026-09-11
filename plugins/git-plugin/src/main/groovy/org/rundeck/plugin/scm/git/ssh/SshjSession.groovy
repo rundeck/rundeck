@@ -19,7 +19,6 @@ import org.eclipse.jgit.util.io.IsolatedOutputStream
 
 @CompileStatic
 class SshjSession implements RemoteSession {
-
     Session session
     SSHClient sshClient
     URIish uri
@@ -34,7 +33,6 @@ class SshjSession implements RemoteSession {
         this.uri = uri
 
         this.sshClient = createConnection()
-
     }
 
     @Override
@@ -45,20 +43,22 @@ class SshjSession implements RemoteSession {
 
     @Override
     void disconnect() {
-        session.close()
-        sshClient.close()
+        try {
+            session?.close()
+        } finally {
+            sshClient.close()
+        }
     }
 
-    private SSHClient createConnection(){
-
+    private SSHClient createConnection() {
         String user = uri.getUser()
         String host = uri.getHost()
         int port = uri.getPort()
 
-        if(config){
-            OpenSshConfig.Host hc = config.lookup(host);
+        if (config) {
+            OpenSshConfig.Host hc = config.lookup(host)
             if (port <= 0)
-                port = hc.getPort();
+                port = hc.getPort()
             if (user == null)
                 user = hc.getUser()
         }
@@ -67,35 +67,46 @@ class SshjSession implements RemoteSession {
         defaultConfig.setKeepAliveProvider(KeepAliveProvider.KEEP_ALIVE)
         SSHClient ssh = new SSHClient(defaultConfig)
 
-        if(sshConfig.get("StrictHostKeyChecking") == "yes"){
-            ssh.loadKnownHosts()
-        }else{
-            ssh.addHostKeyVerifier(new PromiscuousVerifier())
-        }
-
-        try{
-            if (port != null) {
-                ssh.connect(host, port)
+        try {
+            if (sshConfig.get("StrictHostKeyChecking") == "no") {
+                ssh.addHostKeyVerifier(new PromiscuousVerifier())
             } else {
-                ssh.connect(host);
+                //fail secure: default to strict host key checking unless explicitly disabled
+                ssh.loadKnownHosts()
             }
 
-            if(privateKey){
-                KeyFormat format = KeyProviderUtil.detectKeyFileFormat(privateKey,true);
-                FileKeyProvider keys = Factory.Named.Util.create(ssh.getTransport().getConfig().getFileKeyProviderFactories(), format.toString());
+            if (port > 0) {
+                ssh.connect(host, port)
+            } else {
+                ssh.connect(host)
+            }
+
+            if (privateKey) {
+                KeyFormat format = KeyProviderUtil.detectKeyFileFormat(privateKey, true)
+                if (format == null || format == KeyFormat.Unknown) {
+                    throw new IOException("Unrecognized or invalid SSH private key format")
+                }
+                FileKeyProvider keys = Factory.Named.Util.create(ssh.getTransport().getConfig().getFileKeyProviderFactories(), format.toString())
+                if (keys == null) {
+                    throw new IOException("No key provider available for SSH private key format: ${format}")
+                }
                 keys.init(new StringReader(privateKey), (PasswordFinder) null)
                 ssh.authPublickey(user, keys)
             }
 
             return ssh
-        }catch(IOException e){
+        } catch (IOException e) {
+            ssh.close()
             throw new TransportException(uri, e.getMessage(), e)
+        } catch (Throwable t) {
+            //ensure the client is never leaked, even if a non-IOException escapes
+            //host-key setup, connect, or key-provider/auth handling above
+            ssh.close()
+            throw t
         }
     }
 
-
     private class SshjProcess extends Process {
-
         int timeout
         Session.Command cmd
         InputStream inputStream
@@ -119,7 +130,7 @@ class SshjSession implements RemoteSession {
 
         @Override
         int waitFor() throws InterruptedException {
-            while (isRunning()){
+            while (isRunning()) {
                 Thread.sleep(100)
             }
             return exitValue()
@@ -127,7 +138,7 @@ class SshjSession implements RemoteSession {
 
         @Override
         int exitValue() {
-            if (isRunning()){
+            if (isRunning()) {
                 throw new IllegalStateException()
             }
             return cmd.getExitStatus()
@@ -135,7 +146,7 @@ class SshjSession implements RemoteSession {
 
         @Override
         void destroy() {
-            if(cmd != null) cmd.close()
+            if (cmd != null) cmd.close()
             closeOutputStream()
             session.close()
         }
@@ -171,6 +182,4 @@ class SshjSession implements RemoteSession {
             }
         }
     }
-
-
 }

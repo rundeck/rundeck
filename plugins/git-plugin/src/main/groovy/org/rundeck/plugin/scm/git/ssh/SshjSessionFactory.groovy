@@ -11,7 +11,6 @@ import org.eclipse.jgit.util.FS
 
 import java.nio.charset.StandardCharsets
 
-
 @CompileStatic
 class SshjSessionFactory extends SshSessionFactory {
     private byte[] privateKey

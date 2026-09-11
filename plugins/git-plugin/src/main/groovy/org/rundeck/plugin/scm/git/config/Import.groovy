@@ -30,8 +30,7 @@ import java.util.regex.PatternSyntaxException
 /**
  * Created by greg on 10/13/15.
  */
-class Import extends Common{
-
+class Import extends Common {
     @PluginProperty(
             title = "Import UUID Behavior",
             description = '''How to handle UUIDs from imported Job source files
@@ -60,8 +59,6 @@ class Import extends Common{
     )
     String pullAutomatically
 
-
-
     @PluginProperty(
         title = "Match a Regular Expression?",
         description = "Check to match all paths that match the regular expression. If is not set, a list of files will be asked on next step.",
@@ -83,7 +80,7 @@ class Import extends Common{
         validatorClass = PathTemplateValidator
     )
     @SelectValues(
-        values = ['.*\\.xml','.*\\.yaml','.*\\.json'],
+        values = ['.*\\.xml', '.*\\.yaml', '.*\\.json'],
         freeSelect = true
     )
     @RenderingOption(
@@ -95,6 +92,10 @@ class Import extends Common{
     static class PathTemplateValidator implements PropertyValidator {
         @Override
         boolean isValid(final String value) throws ValidationException {
+            if (!value) {
+                //optional field, nothing to validate
+                return true
+            }
             try {
                 Pattern.compile(value)
                 return true
@@ -103,7 +104,6 @@ class Import extends Common{
             }
         }
     }
-
 
     boolean isImportPreserve() {
         importUuidBehavior == 'preserve' || !importUuidBehavior
@@ -115,11 +115,11 @@ class Import extends Common{
         importUuidBehavior == 'remove'
     }
 
-    boolean shouldPullAutomatically(){
-        return pullAutomatically in [null,'true']
+    boolean shouldPullAutomatically() {
+        return pullAutomatically in [null, 'true']
     }
 
-    boolean shouldUseFilePattern(){
-        return useFilePattern in [null,'true']
+    boolean shouldUseFilePattern() {
+        return useFilePattern in [null, 'true']
     }
 }
