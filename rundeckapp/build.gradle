@@ -852,6 +852,35 @@ task vendorAssetDeps(type: NpmTask) { it ->
 }
 
 assetPluginPackage.dependsOn vendorAssetDeps
+
+task verifyVendorAssets(type: NpmTask) { it ->
+    group = 'verification'
+    description = 'Runs the _package-manager vendor asset build/verification tests (npm test).'
+    dependsOn vendorAssetDeps
+    def baseDir = "${projectDir}/grails-app/assets/javascripts"
+
+    it.inputs.file "${baseDir}/_package-manager/package.json"
+    it.inputs.file "${baseDir}/_package-manager/package-lock.json"
+    it.inputs.file "${baseDir}/_package-manager/build.js"
+    it.inputs.file "${baseDir}/_package-manager/verify-build.js"
+    it.inputs.file "${baseDir}/_package-manager/test-fileops.js"
+    it.inputs.dir "${baseDir}/_package-manager/lib"
+    it.inputs.dir "${baseDir}/vendor"
+
+    it.args = ['run', 'test']
+
+    execOverrides {
+        it.workingDir = "${baseDir}/_package-manager"
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
+        def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
+        if (token) {
+            it.environment('CLOUDSMITH_NPM_TOKEN', token)
+        }
+    }
+}
+check.dependsOn verifyVendorAssets
 assetCompile.dependsOn vendorAssetDeps
 
 // Copy manifest to META-INF for runtime asset resolution
