@@ -2866,9 +2866,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //v11
         if(failed){
             scheduledExecution.errors.fieldErrors.each{err->
+                String rejectedValueString
+                try {
+                    rejectedValueString = err.rejectedValue?.toString()
+                } catch (Exception ignored) {
+                    // err.rejectedValue can be a live reference to an uninitialized, lazy
+                    // Hibernate collection proxy (e.g. the 'options'/'notifications' fields,
+                    // now left untouched-and-unfetched by design until validation succeeds --
+                    // see applyPendingOptionsAndNotifications()). If the entity was
+                    // discarded/detached earlier in this same validation pass, .toString()
+                    // requires a live session that may no longer exist. Fall back gracefully
+                    // rather than letting this break the whole validation response.
+                    rejectedValueString = null
+                }
                 validation.put(
                     err.field,
-                    [reason: messageSource.getMessage(err, Locale.default), value: err.rejectedValue?.toString()]
+                    [reason: messageSource.getMessage(err, Locale.default), value: rejectedValueString]
                 )
             }
         }
@@ -3816,11 +3829,28 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Map validation=[:]
         def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
         if (failed) {
-            if( scheduledExecution.hasSecureOptions() && validation.containsKey("job-queue") ){
+            // Attach the submitted candidates for display/inspection purposes (see method doc)
+            // BEFORE anything else reads scheduledExecution.options/.notifications below --
+            // e.g. hasSecureOptions() reads the real 'options' property, which validation
+            // intentionally leaves untouched (still an unfetched lazy collection) until this
+            // point. An earlier validation step (e.g. an invalid Notification) may have
+            // already discarded scheduledExecution, detaching it from its Hibernate session,
+            // so reading that lazy proxy here would otherwise throw a
+            // LazyInitializationException instead of returning a clean validation error.
+            attachPendingOptionsAndNotificationsForDisplay(scheduledExecution, params)
+            // hasSecureOptions() reads the 'options' property directly; guard it the same way
+            // as attachPendingOptionsAndNotificationsForDisplay() in case the reassignment
+            // above didn't take effect (e.g. it was itself unable to run against an
+            // already-discarded entity) and 'options' is still an unfetched lazy proxy.
+            boolean hasSecureOptionsSafe = false
+            try {
+                hasSecureOptionsSafe = scheduledExecution.hasSecureOptions()
+            } catch (Exception ignored) {
+            }
+            if( hasSecureOptionsSafe && validation.containsKey("job-queue") ){
                 def message = 'Job Queueing is not supported in jobs with secure options.'
                 throw new Exception(message)
             }
-            attachPendingOptionsAndNotificationsForDisplay(scheduledExecution, params)
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution, error: "Validation failed", validation: validation]
         }
