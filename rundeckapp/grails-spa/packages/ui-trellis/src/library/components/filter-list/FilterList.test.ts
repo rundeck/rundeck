@@ -1,6 +1,29 @@
-import { mount } from "@vue/test-utils";
+import { mount, DOMWrapper } from "@vue/test-utils";
 import FilterList from "./FilterList.vue";
 import { Webhook } from "../../stores/Webhooks";
+
+/**
+ * vue-virtual-scroller reuses pooled DOM nodes and positions them with a CSS
+ * transform rather than reordering the DOM to match list order, so rendered
+ * items must be sorted by their visual position (translateY) before their
+ * text content can be compared against the expected list order.
+ */
+function byVisualOrder(items: DOMWrapper<Element>[]): DOMWrapper<Element>[] {
+  return [...items].sort((a, b) => {
+    const top = (el: DOMWrapper<Element>) => {
+      let node: HTMLElement | null = el.element.parentElement;
+      while (node) {
+        const match = node
+          .getAttribute("style")
+          ?.match(/translateY\((-?\d+(?:\.\d+)?)px\)/);
+        if (match) return parseFloat(match[1]);
+        node = node.parentElement;
+      }
+      return 0;
+    };
+    return top(a) - top(b);
+  });
+}
 
 describe("FilterList", () => {
   const items = [
@@ -24,8 +47,8 @@ describe("FilterList", () => {
     // Set the search query
     await input.setValue("an");
 
-    // Find the rendered items
-    const renderedItems = wrapper.findAll(".item");
+    // Find the rendered items, sorted by visual position
+    const renderedItems = byVisualOrder(wrapper.findAll(".item"));
 
     // Assert that the filtered items are rendered correctly
     expect(renderedItems).toHaveLength(3);
@@ -68,8 +91,8 @@ describe("FilterList", () => {
     // Set the search query
     await input.setValue("a");
 
-    // Find the first rendered item
-    const firstItem = wrapper.find(".scroller__item");
+    // Find the first rendered item, by visual position
+    const firstItem = byVisualOrder(wrapper.findAll(".scroller__item"))[0];
 
     // Trigger a click on the item
     await firstItem.trigger("click");
