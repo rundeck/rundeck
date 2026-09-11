@@ -7,9 +7,9 @@
   },
   "main": "",
   "scripts": {
-    "test": "true",
-    "dev:build": "npm install && npm run build",
-    "ci:build": "npm ci && npm run build",
+    "test": "node build.js && node verify-build.js",
+    "dev:build": "npm install && npm run test",
+    "ci:build": "npm ci && npm run test",
     "build": "node build.js"
   },
   "keywords": [],
