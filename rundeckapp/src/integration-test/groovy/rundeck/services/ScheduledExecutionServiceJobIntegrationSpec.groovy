@@ -420,4 +420,71 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         Notification.countByScheduledExecution(savedJob) == 1
         Notification.findAllByScheduledExecution(savedJob)*.eventTrigger == ['onfailure']
     }
+
+    void "successful update that removes all options actually deletes them from the database"() {
+        given: "the persisted job from setup() already has one Option"
+        def job = findSetupJob()
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+        mockUpdateCollaborators()
+
+        when: "a valid update replaces the session-edited option set with an empty one"
+        def params = [
+            id                     : job.id,
+            _sessionopts           : true,
+            _sessionEditOPTSObject : [:]
+        ]
+        def results = service._doupdate(params, auth)
+
+        then: "the update succeeds"
+        results.success
+
+        and: "the previously-persisted option is actually gone from the database"
+        def savedJob = ScheduledExecution.get(job.id)
+        Option.countByScheduledExecution(savedJob) == 0
+    }
+
+    void "create with job-queue enabled and a secure option is rejected"() {
+        given: "a brand-new job definition with a secure option, and a component validator that rejects it"
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+        mockUpdateCollaborators()
+        service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            updateJob(_, _, _) >> { args -> RundeckJobDefinitionManager.importedJob(args[0], args[1]?.associations) }
+            validateImportedJob(_) >> {
+                // Simulate the rundeckpro job-queue component's own validation: it inspects
+                // the real scheduledExecution.options directly (via hasSecureOptions()), so
+                // this only rejects correctly if that property reflects the submitted
+                // candidate options DURING validation, not just after a successful save.
+                ScheduledExecution se = (ScheduledExecution) it[0].job
+                if (se.hasSecureOptions()) {
+                    def report = new Validator.Report()
+                    report.errors.put('job-queue', 'Job Queueing is not supported in jobs with secure options.')
+                    return new Validator.ReportSet(false, ['job-queue': report])
+                }
+                return new Validator.ReportSet(true, [:])
+            }
+        }
+
+        def newJob = new ScheduledExecution(createJobParams(
+            jobName: 'job queue secure options test',
+            options: []
+        ))
+        newJob.addToOptions(new Option(name: 'secureopt', secureInput: true, defaultValue: '/keys/something'))
+        def importedJob = RundeckJobDefinitionManager.importedJob(newJob, [:])
+
+        when: "the job is created"
+        def results = service._docreateJobOrParams(importedJob, [:], auth)
+
+        then: "the create fails validation"
+        !results.success
+        results.validation?.containsKey('job-queue')
+
+        and: "nothing was persisted"
+        !ScheduledExecution.findByJobName('job queue secure options test')
+    }
 }
