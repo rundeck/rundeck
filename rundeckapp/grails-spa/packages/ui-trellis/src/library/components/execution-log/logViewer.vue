@@ -613,19 +613,25 @@ export default defineComponent({
     },
     scrollToLine(n: number | string) {
       const _scroller = this.$refs["scroller"] as HTMLElement;
-      if (this.$refs["logEntryChunk"]) {
-        this.$refs["logEntryChunk"].scrollToLine(Number(n));
-      }
+      const chunk = this.$refs["logEntryChunk"] as
+        | InstanceType<typeof LogNodeChunk>
+        | undefined;
+      if (!chunk) return;
 
-      const target = this.$refs["logEntryChunk"]._container;
-      let parent = target.parentNode;
+      chunk.scrollToLine(Number(n));
 
-      let offset = target.offsetTop;
+      const { el: target, offset: itemOffset } = chunk.getScrollerOffset(
+        Math.max(0, Number(n) - 1),
+      );
+      if (!target) return;
+
+      let parent = target.parentNode as HTMLElement | null;
+      let offset = itemOffset + target.offsetTop;
 
       // Traverse to root and accumulate offset
-      while (parent != _scroller) {
+      while (parent && parent != _scroller) {
         offset += parent.offsetTop;
-        parent = parent.parentNode;
+        parent = parent.parentNode as HTMLElement | null;
       }
 
       _scroller.scrollTop = offset - 24; // Insure under stick header
