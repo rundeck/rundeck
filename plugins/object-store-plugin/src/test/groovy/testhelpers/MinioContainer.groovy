@@ -26,7 +26,7 @@ class MinioContainer extends GenericContainer<MinioContainer> {
     private String secretKey
 
     MinioContainer() {
-        this("minio/minio:RELEASE.2019-09-18T21-55-05Z")
+        this("quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z")
     }
 
     MinioContainer(String dockerImageName) {
@@ -37,7 +37,7 @@ class MinioContainer extends GenericContainer<MinioContainer> {
     }
 
     MinioContainer withAccess(String accessKey, String secretKey) {
-        withEnv MINIO_ACCESS_KEY: accessKey, MINIO_SECRET_KEY: secretKey
+        withEnv MINIO_ROOT_USER: accessKey, MINIO_ROOT_PASSWORD: secretKey
         this.accessKey = accessKey
         this.secretKey = secretKey
         return self()
