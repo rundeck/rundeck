@@ -15,6 +15,7 @@
         <div style="position: absolute; top: 10px; right: 10px">
           <div class="btn-group">
             <div
+              data-testid="workflow-graph-scale-to-fit"
               class="btn btn-default workflow-graph-icon-btn"
               role="button"
               tabindex="0"
@@ -63,6 +64,37 @@
             @keydown.space.prevent="revert"
           >
             {{ $t("graph.action.revert") }}
+          </div>
+        </div>
+        <div
+          class="btn-group-vertical"
+          style="position: absolute; bottom: 10px; right: 10px"
+        >
+          <div
+            data-testid="workflow-graph-zoom-in"
+            class="btn btn-default workflow-graph-icon-btn"
+            role="button"
+            tabindex="0"
+            :aria-label="$t('graph.action.zoomIn')"
+            :title="$t('graph.action.zoomIn')"
+            @click="zoomIn"
+            @keydown.enter="zoomIn"
+            @keydown.space.prevent="zoomIn"
+          >
+            +
+          </div>
+          <div
+            data-testid="workflow-graph-zoom-out"
+            class="btn btn-default workflow-graph-icon-btn"
+            role="button"
+            tabindex="0"
+            :aria-label="$t('graph.action.zoomOut')"
+            :title="$t('graph.action.zoomOut')"
+            @click="zoomOut"
+            @keydown.enter="zoomOut"
+            @keydown.space.prevent="zoomOut"
+          >
+            −
           </div>
         </div>
         <div style="position: absolute; top: 0">
@@ -141,7 +173,12 @@ import { RuleSetParser } from "./RuleSetParser";
 const ROUTER = "normal";
 
 const MIN_SCALE = 0.05;
-const MAX_SCALE = 1;
+// Previously capped at 1 (native size), which meant zooming in could never
+// go past "fit to screen" scale on graphs with enough nodes that fitting
+// them all shrinks everything below native size — raised so zoom-in is
+// actually useful on large graphs.
+const MAX_SCALE = 4;
+const ZOOM_STEP = 0.2;
 
 let transitions = 0;
 
@@ -221,6 +258,7 @@ export default defineComponent({
       resizeMouseUpHandler: null as (() => void) | null,
       previousBodyUserSelect: "",
       previousBodyCursor: "",
+      userHasZoomed: false,
     };
   },
 
@@ -330,7 +368,7 @@ export default defineComponent({
 
     dia.on("transition:end", () => {
       transitions--;
-      if (!transitions) {
+      if (!transitions && !this.userHasZoomed) {
         this.scaleContentToFit();
       }
     });
@@ -648,6 +686,12 @@ export default defineComponent({
         }
       });
     },
+    /**
+     * Fits the graph to the visible canvas. Explicit calls (e.g. the
+     * "scale to fit" button) also clear userHasZoomed, re-enabling the
+     * automatic re-fit on subsequent graph updates until the user zooms
+     * manually again.
+     */
     scaleContentToFit() {
       this.paper.transformToFitContent({
         padding: 25,
@@ -656,6 +700,7 @@ export default defineComponent({
       });
       const { min, max } = this.getSidePanelWidthBounds();
       this.sidePanelWidth = Math.min(max, Math.max(min, this.sidePanelWidth));
+      this.userHasZoomed = false;
     },
     /** Resize element to fit width of rendered SVG text. */
     fitText() {
@@ -766,7 +811,9 @@ export default defineComponent({
       });
       // Ensure nodes are drawn over link arrows
       this.dia.getElements().forEach((e) => e.toFront());
-      this.scaleContentToFit();
+      if (!this.userHasZoomed) {
+        this.scaleContentToFit();
+      }
     },
     updateGraph(transition = false) {
       this.dia.getElements().forEach((e) => this.dia.removeLinks(e));
@@ -949,7 +996,23 @@ export default defineComponent({
         ctm.d = nextScale;
 
         this.paper.matrix(ctm);
+        this.userHasZoomed = true;
       }
+    },
+    /** Zoom in/out centered on the canvas, by a fixed step. */
+    zoomBy(delta: number) {
+      const canvasEl = this.$refs["canvas"] as HTMLElement | undefined;
+      const x = canvasEl ? canvasEl.clientWidth / 2 : 0;
+      const y = canvasEl ? canvasEl.clientHeight / 2 : 0;
+      const currentScale = this.paper.scale().sx;
+
+      this.scaleToPoint(currentScale + delta, x, y);
+    },
+    zoomIn() {
+      this.zoomBy(ZOOM_STEP);
+    },
+    zoomOut() {
+      this.zoomBy(-ZOOM_STEP);
     },
     handleCanvasMouseWheel(e: any, x: number, y: number, delta: number) {
       e.preventDefault();

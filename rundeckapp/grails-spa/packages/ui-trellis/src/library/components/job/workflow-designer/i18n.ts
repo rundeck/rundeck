@@ -8,6 +8,8 @@ const messages: any = {
       },
       action: {
         scaleToFit: "Scale to fit",
+        zoomIn: "Zoom in",
+        zoomOut: "Zoom out",
         edit: "Edit",
         commit: "Commit",
         revert: "Revert",

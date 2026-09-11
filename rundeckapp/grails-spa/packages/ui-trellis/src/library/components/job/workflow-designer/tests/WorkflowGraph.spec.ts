@@ -16,6 +16,17 @@ const mockDiaOn = jest.fn();
 const mockPaperOn = jest.fn();
 const mockPaperTransformToFitContent = jest.fn();
 
+let mockPaperCurrentScale = 1;
+const mockPaperScale = jest.fn(() => ({ sx: mockPaperCurrentScale }));
+const mockPaperTranslate = jest.fn(() => ({ tx: 0, ty: 0 }));
+const mockPaperMatrix = jest.fn((ctm?: { a: number; d: number }) => {
+  if (ctm) {
+    mockPaperCurrentScale = ctm.a;
+    return ctm;
+  }
+  return { a: mockPaperCurrentScale, d: mockPaperCurrentScale };
+});
+
 jest.mock("jointjs", () => {
   class MockGraph {
     getElements = mockDiaGetElements;
@@ -31,9 +42,9 @@ jest.mock("jointjs", () => {
   class MockPaper {
     on = mockPaperOn;
     transformToFitContent = mockPaperTransformToFitContent;
-    scale = jest.fn(() => ({ sx: 1 }));
-    translate = jest.fn(() => ({ tx: 0, ty: 0 }));
-    matrix = jest.fn(() => ({ a: 1, d: 1 }));
+    scale = mockPaperScale;
+    translate = mockPaperTranslate;
+    matrix = mockPaperMatrix;
   }
 
   return {
@@ -143,6 +154,7 @@ describe("WorkflowGraph", () => {
     jest.clearAllMocks();
     document.body.style.userSelect = "";
     document.body.style.cursor = "";
+    mockPaperCurrentScale = 1;
   });
 
   afterAll(() => {
@@ -280,6 +292,116 @@ describe("WorkflowGraph", () => {
       expect(document.body.style.cursor).toBe("");
       expect(renderedResizer.getAttribute("aria-valuenow")).toBe(renderedValue);
       expect(renderedSidePanel.getAttribute("style")).toBe(renderedPanelStyle);
+    });
+  });
+
+  describe("zoom controls", () => {
+    it("has accessible labels on the zoom-in and zoom-out buttons", async () => {
+      const wrapper = await createWrapper();
+
+      expect(
+        findByTestId(wrapper, "workflow-graph-zoom-in").attributes(
+          "aria-label",
+        ),
+      ).toBe("graph.action.zoomIn");
+      expect(
+        findByTestId(wrapper, "workflow-graph-zoom-out").attributes(
+          "aria-label",
+        ),
+      ).toBe("graph.action.zoomOut");
+    });
+
+    it("increases the paper scale when the zoom-in button is clicked", async () => {
+      const wrapper = await createWrapper();
+
+      await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
+
+      expect(mockPaperMatrix).toHaveBeenCalledWith(
+        expect.objectContaining({ a: 1.2, d: 1.2 }),
+      );
+    });
+
+    it("decreases the paper scale when the zoom-out button is clicked", async () => {
+      const wrapper = await createWrapper();
+
+      await findByTestId(wrapper, "workflow-graph-zoom-out").trigger("click");
+
+      expect(mockPaperMatrix).toHaveBeenCalledWith(
+        expect.objectContaining({ a: 0.8, d: 0.8 }),
+      );
+    });
+
+    it("zooms in on Enter and zooms out on Space, same as a click", async () => {
+      const wrapper = await createWrapper();
+
+      await findByTestId(wrapper, "workflow-graph-zoom-in").trigger(
+        "keydown.enter",
+      );
+      expect(mockPaperMatrix).toHaveBeenCalledWith(
+        expect.objectContaining({ a: 1.2, d: 1.2 }),
+      );
+
+      await findByTestId(wrapper, "workflow-graph-zoom-out").trigger(
+        "keydown.space",
+      );
+      expect(mockPaperMatrix).toHaveBeenCalledWith(
+        expect.objectContaining({ a: 1, d: 1 }),
+      );
+    });
+
+    it("clamps zooming in at the configured maximum scale", async () => {
+      const wrapper = await createWrapper();
+
+      for (let i = 0; i < 20; i++) {
+        await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
+      }
+
+      const scaleAtLimit = mockPaperScale().sx;
+      expect(scaleAtLimit).toBeLessThanOrEqual(4);
+      expect(scaleAtLimit).toBeGreaterThan(3.8);
+
+      await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
+
+      expect(mockPaperScale().sx).toBe(scaleAtLimit);
+    });
+
+    it("clamps zooming out at the configured minimum scale instead of going to zero or negative", async () => {
+      const wrapper = await createWrapper();
+
+      for (let i = 0; i < 20; i++) {
+        await findByTestId(wrapper, "workflow-graph-zoom-out").trigger("click");
+      }
+
+      expect(mockPaperScale().sx).toBeGreaterThanOrEqual(0.05);
+
+      await findByTestId(wrapper, "workflow-graph-zoom-out").trigger("click");
+
+      expect(mockPaperScale().sx).toBeGreaterThanOrEqual(0.05);
+    });
+
+    it("stops auto-fitting the graph on updates once the user has zoomed manually", async () => {
+      const wrapper = await createWrapper();
+
+      await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
+      mockPaperTransformToFitContent.mockClear();
+
+      await wrapper.setProps({ nodes: [{ identifier: "a", label: "A" }] });
+
+      expect(mockPaperTransformToFitContent).not.toHaveBeenCalled();
+    });
+
+    it("re-enables auto-fit on future updates after explicitly clicking scale-to-fit", async () => {
+      const wrapper = await createWrapper();
+
+      await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
+      await findByTestId(wrapper, "workflow-graph-scale-to-fit").trigger(
+        "click",
+      );
+      mockPaperTransformToFitContent.mockClear();
+
+      await wrapper.setProps({ nodes: [{ identifier: "a", label: "A" }] });
+
+      expect(mockPaperTransformToFitContent).toHaveBeenCalled();
     });
   });
 });
