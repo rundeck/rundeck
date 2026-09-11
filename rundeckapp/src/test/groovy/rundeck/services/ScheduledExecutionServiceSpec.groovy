@@ -5939,12 +5939,19 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when: "same job is uploaded with no options "
 
         service.jobDefinitionBasic(baseJob,emptyOptionsJob,params,auth)
+
+        then: "jobDefinitionBasic alone does not delete the existing options before validation"
+
+        Option.findAllByScheduledExecution(baseJob).size() == 1
+
+        when: "the new (empty) option set is computed, replacing the collection directly"
+
+        service.jobDefinitionOptions(baseJob,emptyOptionsJob,params,auth)
         baseJob.save(flush:true)
-        def options = Option.findAll()
 
         then: "job options are empty"
 
-        options.size() == 0
+        !baseJob.options
 
     }
     @Unroll
@@ -6008,10 +6015,16 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         when:"uploading the same job without any notifications"
         service.jobDefinitionBasic(baseJob, jobEmptyNotifications, params, auth)
-        def notifications = Notification.findAllByScheduledExecution(baseJob)
+
+        then:"jobDefinitionBasic alone does not delete the existing notifications before validation"
+        Notification.findAllByScheduledExecution(baseJob).size()==2
+
+        when:"the new (empty) notification set is computed, replacing the collection directly"
+        service.jobDefinitionNotifications(baseJob, jobEmptyNotifications, params, auth)
+        baseJob.save(flush:true)
 
         then:"base job should not have any notifications"
-        notifications.size()==0
+        baseJob.notifications.size()==0
     }
 
     def "job definition notifications from jobNotificationsJson email"() {
