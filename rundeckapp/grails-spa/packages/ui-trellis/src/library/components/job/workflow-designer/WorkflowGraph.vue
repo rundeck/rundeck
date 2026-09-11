@@ -11,7 +11,11 @@
       "
     >
       <div style="width: 100%; position: relative">
-        <div ref="canvas" style="width: 100%; height: 100%"></div>
+        <div
+          ref="canvas"
+          data-testid="workflow-graph-canvas"
+          style="width: 100%; height: 100%"
+        ></div>
         <div style="position: absolute; top: 10px; right: 10px">
           <div class="btn-group">
             <div
@@ -683,6 +687,11 @@ export default defineComponent({
         }
       });
     },
+    /** Clamps sidePanelWidth back into bounds for the container's current size. */
+    clampSidePanelWidth() {
+      const { min, max } = this.getSidePanelWidthBounds();
+      this.sidePanelWidth = Math.min(max, Math.max(min, this.sidePanelWidth));
+    },
     /**
      * Fits the graph to the visible canvas. Explicit calls (e.g. the
      * "scale to fit" button) also clear userHasZoomed, re-enabling the
@@ -695,16 +704,17 @@ export default defineComponent({
         maxScale: 1,
         preserveAspectRatio: true,
       });
-      const { min, max } = this.getSidePanelWidthBounds();
-      this.sidePanelWidth = Math.min(max, Math.max(min, this.sidePanelWidth));
+      this.clampSidePanelWidth();
       this.userHasZoomed = false;
     },
     /**
      * Window resize should keep the graph fitted the same way an initial
      * render does, but must not override a manual zoom the way an explicit
-     * "scale to fit" click is allowed to.
+     * "scale to fit" click is allowed to. The side panel's width still needs
+     * to stay in bounds either way, so that's clamped unconditionally.
      */
     handleWindowResize() {
+      this.clampSidePanelWidth();
       if (!this.userHasZoomed) {
         this.scaleContentToFit();
       }

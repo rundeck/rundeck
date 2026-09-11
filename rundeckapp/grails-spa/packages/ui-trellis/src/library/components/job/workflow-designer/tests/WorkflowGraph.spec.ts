@@ -443,12 +443,56 @@ describe("WorkflowGraph", () => {
       expect(mockPaperTransformToFitContent).toHaveBeenCalled();
     });
 
+    it("still clamps the side panel width on resize even after the user has zoomed", async () => {
+      const wrapper = await createWrapper();
+      setContainerWidth(wrapper, 1200);
+      await findByTestId(wrapper, "workflow-graph-resizer").trigger(
+        "keydown.right",
+      );
+      await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
+
+      setContainerWidth(wrapper, 400);
+      window.dispatchEvent(new Event("resize"));
+      await wrapper.vm.$nextTick();
+
+      // max is containerWidth * 0.75 (SIDE_PANEL_MAX_WIDTH_RATIO)
+      expect(
+        Number(
+          findByTestId(wrapper, "workflow-graph-resizer").attributes(
+            "aria-valuenow",
+          ),
+        ),
+      ).toBeLessThanOrEqual(300);
+    });
+
     it("centers zoom using the paper's local coordinates, not raw canvas pixels", async () => {
       const wrapper = await createWrapper();
+      const canvasEl = findByTestId(wrapper, "workflow-graph-canvas")
+        .element as HTMLElement;
+      canvasEl.getBoundingClientRect = () =>
+        ({ left: 100, top: 50, width: 200, height: 100 }) as DOMRect;
+
+      // Offset conversion so a test using the raw (unconverted) client
+      // coordinates would produce different, distinguishable numbers below.
+      mockPaperClientToLocalPoint.mockImplementationOnce((x, y) => ({
+        x: x + 1000,
+        y: y + 2000,
+      }));
 
       await findByTestId(wrapper, "workflow-graph-zoom-in").trigger("click");
 
-      expect(mockPaperClientToLocalPoint).toHaveBeenCalled();
+      // Canvas visual center in viewport (client) space: (100 + 200/2, 50 + 100/2)
+      expect(mockPaperClientToLocalPoint).toHaveBeenCalledWith(200, 100);
+
+      // scaleToPoint's translate math must reflect the converted point
+      // (1200, 2100), not the raw client-space center (200, 100).
+      const beta = 1 / 1.2; // currentScale (1) / nextScale (1 + ZOOM_STEP)
+      const expectedTx = -(1200 - 1200 * beta) * 1.2;
+      const expectedTy = -(2100 - 2100 * beta) * 1.2;
+      expect(mockPaperTranslate).toHaveBeenCalledWith(
+        expect.closeTo(expectedTx),
+        expect.closeTo(expectedTy),
+      );
     });
   });
 });
