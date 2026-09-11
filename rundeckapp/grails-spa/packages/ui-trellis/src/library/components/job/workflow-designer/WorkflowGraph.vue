@@ -11,10 +11,15 @@
       "
     >
       <div style="width: 100%; position: relative">
-        <div ref="canvas" style="width: 100%; height: 100%"></div>
+        <div
+          ref="canvas"
+          data-testid="workflow-graph-canvas"
+          style="width: 100%; height: 100%"
+        ></div>
         <div style="position: absolute; top: 10px; right: 10px">
           <div class="btn-group">
             <div
+              data-testid="workflow-graph-scale-to-fit"
               class="btn btn-default workflow-graph-icon-btn"
               role="button"
               tabindex="0"
@@ -63,6 +68,34 @@
             @keydown.space.prevent="revert"
           >
             {{ $t("graph.action.revert") }}
+          </div>
+        </div>
+        <div class="btn-group-vertical workflow-graph-zoom-controls">
+          <div
+            data-testid="workflow-graph-zoom-in"
+            class="btn btn-default workflow-graph-icon-btn"
+            role="button"
+            tabindex="0"
+            :aria-label="$t('graph.action.zoomIn')"
+            :title="$t('graph.action.zoomIn')"
+            @click="zoomIn"
+            @keydown.enter="zoomIn"
+            @keydown.space.prevent="zoomIn"
+          >
+            +
+          </div>
+          <div
+            data-testid="workflow-graph-zoom-out"
+            class="btn btn-default workflow-graph-icon-btn"
+            role="button"
+            tabindex="0"
+            :aria-label="$t('graph.action.zoomOut')"
+            :title="$t('graph.action.zoomOut')"
+            @click="zoomOut"
+            @keydown.enter="zoomOut"
+            @keydown.space.prevent="zoomOut"
+          >
+            −
           </div>
         </div>
         <div style="position: absolute; top: 0">
@@ -141,7 +174,12 @@ import { RuleSetParser } from "./RuleSetParser";
 const ROUTER = "normal";
 
 const MIN_SCALE = 0.05;
-const MAX_SCALE = 1;
+// Previously capped at 1 (native size), which meant zooming in could never
+// go past "fit to screen" scale on graphs with enough nodes that fitting
+// them all shrinks everything below native size — raised so zoom-in is
+// actually useful on large graphs.
+const MAX_SCALE = 4;
+const ZOOM_STEP = 0.2;
 
 let transitions = 0;
 
@@ -221,6 +259,7 @@ export default defineComponent({
       resizeMouseUpHandler: null as (() => void) | null,
       previousBodyUserSelect: "",
       previousBodyCursor: "",
+      userHasZoomed: false,
     };
   },
 
@@ -283,7 +322,7 @@ export default defineComponent({
       },
     } as Joint.dia.Paper.Options));
 
-    window.addEventListener("resize", this.scaleContentToFit);
+    window.addEventListener("resize", this.handleWindowResize);
 
     paper.on("link:mouseenter", (linkView) => {
       if (this.interactive) linkView.showTools();
@@ -330,7 +369,7 @@ export default defineComponent({
 
     dia.on("transition:end", () => {
       transitions--;
-      if (!transitions) {
+      if (!transitions && !this.userHasZoomed) {
         this.scaleContentToFit();
       }
     });
@@ -566,7 +605,7 @@ export default defineComponent({
   },
 
   beforeUnmount() {
-    window.removeEventListener("resize", this.scaleContentToFit);
+    window.removeEventListener("resize", this.handleWindowResize);
     this.stopResizeSidePanel();
   },
 
@@ -648,14 +687,37 @@ export default defineComponent({
         }
       });
     },
+    /** Clamps sidePanelWidth back into bounds for the container's current size. */
+    clampSidePanelWidth() {
+      const { min, max } = this.getSidePanelWidthBounds();
+      this.sidePanelWidth = Math.min(max, Math.max(min, this.sidePanelWidth));
+    },
+    /**
+     * Fits the graph to the visible canvas. Explicit calls (e.g. the
+     * "scale to fit" button) also clear userHasZoomed, re-enabling the
+     * automatic re-fit on subsequent graph updates until the user zooms
+     * manually again.
+     */
     scaleContentToFit() {
       this.paper.transformToFitContent({
         padding: 25,
         maxScale: 1,
         preserveAspectRatio: true,
       });
-      const { min, max } = this.getSidePanelWidthBounds();
-      this.sidePanelWidth = Math.min(max, Math.max(min, this.sidePanelWidth));
+      this.clampSidePanelWidth();
+      this.userHasZoomed = false;
+    },
+    /**
+     * Window resize should keep the graph fitted the same way an initial
+     * render does, but must not override a manual zoom the way an explicit
+     * "scale to fit" click is allowed to. The side panel's width still needs
+     * to stay in bounds either way, so that's clamped unconditionally.
+     */
+    handleWindowResize() {
+      this.clampSidePanelWidth();
+      if (!this.userHasZoomed) {
+        this.scaleContentToFit();
+      }
     },
     /** Resize element to fit width of rendered SVG text. */
     fitText() {
@@ -766,7 +828,9 @@ export default defineComponent({
       });
       // Ensure nodes are drawn over link arrows
       this.dia.getElements().forEach((e) => e.toFront());
-      this.scaleContentToFit();
+      if (!this.userHasZoomed) {
+        this.scaleContentToFit();
+      }
     },
     updateGraph(transition = false) {
       this.dia.getElements().forEach((e) => this.dia.removeLinks(e));
@@ -927,29 +991,68 @@ export default defineComponent({
         this.layout(transition);
       }, 2);
     },
+    /**
+     * Zooms to nextScale, clamped to [MIN_SCALE, MAX_SCALE] rather than
+     * rejected outright when out of range — otherwise a fixed step (e.g.
+     * the +/- buttons) can overshoot a bound by less than one step and get
+     * stuck just short of it forever.
+     */
     scaleToPoint(nextScale: number, x: number, y: number) {
-      if (nextScale >= MIN_SCALE && nextScale <= MAX_SCALE) {
-        const currentScale = this.paper.scale().sx;
+      const clampedScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, nextScale));
+      const currentScale = this.paper.scale().sx;
 
-        const beta = currentScale / nextScale;
+      const beta = currentScale / clampedScale;
 
-        const ax = x - x * beta;
-        const ay = y - y * beta;
+      const ax = x - x * beta;
+      const ay = y - y * beta;
 
-        const translate = this.paper.translate();
+      const translate = this.paper.translate();
 
-        const nextTx = translate.tx - ax * nextScale;
-        const nextTy = translate.ty - ay * nextScale;
+      const nextTx = translate.tx - ax * clampedScale;
+      const nextTy = translate.ty - ay * clampedScale;
 
-        this.paper.translate(nextTx, nextTy);
+      this.paper.translate(nextTx, nextTy);
 
-        const ctm = this.paper.matrix();
+      const ctm = this.paper.matrix();
 
-        ctm.a = nextScale;
-        ctm.d = nextScale;
+      ctm.a = clampedScale;
+      ctm.d = clampedScale;
 
-        this.paper.matrix(ctm);
+      this.paper.matrix(ctm);
+      this.userHasZoomed = true;
+    },
+    /**
+     * Zoom in/out centered on the canvas, by a fixed step. The mouse-wheel
+     * zoom gets local (paper-space) coordinates for free from JointJS's own
+     * pointer events, but a button click has no such event to read from, so
+     * the canvas's visual center has to be converted from client (viewport)
+     * space into that same local space via clientToLocalPoint — otherwise,
+     * once the graph has been panned, the "center" used here would no
+     * longer line up with the paper's local origin and zooming would shift
+     * the view instead of staying centered.
+     */
+    zoomBy(delta: number) {
+      const canvasEl = this.$refs["canvas"] as HTMLElement | undefined;
+      const currentScale = this.paper.scale().sx;
+
+      if (!canvasEl) {
+        this.scaleToPoint(currentScale + delta, 0, 0);
+        return;
       }
+
+      const rect = canvasEl.getBoundingClientRect();
+      const center = this.paper.clientToLocalPoint(
+        rect.left + rect.width / 2,
+        rect.top + rect.height / 2,
+      );
+
+      this.scaleToPoint(currentScale + delta, center.x, center.y);
+    },
+    zoomIn() {
+      this.zoomBy(ZOOM_STEP);
+    },
+    zoomOut() {
+      this.zoomBy(-ZOOM_STEP);
     },
     handleCanvasMouseWheel(e: any, x: number, y: number, delta: number) {
       e.preventDefault();
@@ -1099,6 +1202,12 @@ export default defineComponent({
   flex-grow: 1;
   min-height: 0;
   overflow-y: auto;
+}
+
+.workflow-graph-zoom-controls {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
 }
 
 .workflow-graph-resizer {

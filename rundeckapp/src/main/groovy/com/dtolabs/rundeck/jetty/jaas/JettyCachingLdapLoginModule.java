@@ -25,11 +25,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.naming.CompositeName;
 import javax.naming.Context;
+import javax.naming.Name;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
@@ -79,6 +82,7 @@ import rundeck.services.ConfigurationService;
  *    authenticationMethod="simple"
  *    forceBindingLogin="false"
  *    forceBindingLoginUseRootContextForRoles="false"
+ *    forceBindingLoginNoAnonymousSearch="false"
  *    userBaseDn="ou=people,dc=alcatel"
  *    userRdnAttribute="uid"
  *    userIdAttribute="uid"
@@ -248,9 +252,20 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      */
     protected boolean _forceBindingLoginUseRootContextForRoles = false;
 
-    protected DirContext _rootContext;
+    /**
+     * Enable this when _forceBindingLogin is true and the LDAP server does not allow anonymous or
+     * bind-user search (only binding as a real user). Normally, forceBindingLogin still looks up the
+     * user's DN via a search using _rootContext before binding as that user; that search fails with
+     * "insufficient access" or similar errors if anonymous/bind-user search is disabled.
+     * <br>
+     * When this is true, the search is skipped entirely, and the user's bind DN is instead constructed
+     * directly from _userRdnAttribute, the username, and _userBaseDn (e.g. "uid=jsmith,ou=people,dc=example,dc=com").
+     * This requires that pattern to actually match the user's real DN. Defaults to false to preserve
+     * prior behavior.
+     */
+    protected boolean _forceBindingLoginNoAnonymousSearch = false;
 
-    protected LdapContext ldapContext;
+    protected DirContext _rootContext;
 
     protected boolean _reportStatistics;
 
@@ -473,7 +488,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         List<SearchResult> results;
         if(rolePagination){
-            results = getPaginatedRoles(userDn, username);
+            results = getPaginatedRoles(dirContext, userDn, username);
         }else{
             results = getNonPaginatedRoles(dirContext, userDn, username);
         }
@@ -525,58 +540,87 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     /**
-     * It searches for roles with pagination
+     * It searches for roles with pagination, using the given dirContext to perform the search
+     * so that role lookups still succeed when authenticated as a specific user (e.g. when
+     * {@link #_forceBindingLoginNoAnonymousSearch} is enabled and anonymous search is unavailable).
+     *
+     * @param dirContext dirContext to search with; if it does not already support paging
+     *                   controls, an {@link LdapContext} bound to the same identity is derived
+     *                   from it via {@code dirContext.lookup("")} (a self-lookup, per the standard
+     *                   JNDI idiom for obtaining a distinct request-controls scope on the same
+     *                   connection -- this preserves the bound identity and provider failover list
+     *                   without re-parsing {@link #_providerUrl}, which may be a space-separated
+     *                   multi-server list that {@link DirContext#lookup(String)} cannot parse as a
+     *                   name) and closed before returning (a dirContext that is already an
+     *                   {@link LdapContext} is caller-owned and left open)
      * @param userDn userDn
      * @param username username
      *
      * @return List<SearchResult>
      * @throws NamingException
      */
-    private List<SearchResult> getPaginatedRoles(String userDn, String username) throws IOException, NamingException {
+    private List<SearchResult> getPaginatedRoles(DirContext dirContext, String userDn, String username) throws IOException, NamingException {
         List<SearchResult> searchResults = new ArrayList<>();
 
-        int pageSize = rolesPerPage;
-        byte[] cookie = null;
-        ldapContext.setRequestControls(new Control[]{
-                new PagedResultsControl(pageSize, Control.CRITICAL) });
-        do {
-            String filter = OBJECT_CLASS_FILTER;
+        boolean derivedPagingContext = !(dirContext instanceof LdapContext);
+        LdapContext pagingContext = derivedPagingContext
+                ? (LdapContext) dirContext.lookup("")
+                : (LdapContext) dirContext;
 
-            Object[] filterArguments = null;
-            if(null !=_roleUsernameMemberAttribute){
-                filterArguments = new Object[]{_roleObjectClass, _roleUsernameMemberAttribute, username};
-            }else{
-                filterArguments = new Object[]{_roleObjectClass, _roleMemberAttribute, userDn};
-            }
+        try {
+            int pageSize = rolesPerPage;
+            byte[] cookie = null;
+            pagingContext.setRequestControls(new Control[]{
+                    new PagedResultsControl(pageSize, Control.CRITICAL) });
+            do {
+                String filter = OBJECT_CLASS_FILTER;
 
-            SearchControls searchControls = new SearchControls();
-            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-            NamingEnumeration results = ldapContext.search(
-                    _roleBaseDn,
-                    filter,
-                    filterArguments,
-                    searchControls);
+                Object[] filterArguments = null;
+                if(null !=_roleUsernameMemberAttribute){
+                    filterArguments = new Object[]{_roleObjectClass, _roleUsernameMemberAttribute, username};
+                }else{
+                    filterArguments = new Object[]{_roleObjectClass, _roleMemberAttribute, userDn};
+                }
 
-            // Iterate over a batch of search results
-            while (results != null && results.hasMoreElements()) {
-                searchResults.add((SearchResult)results.nextElement());
-            }
-            // Examine the paged results control response
-            Control[] controls = ldapContext.getResponseControls();
-            if (controls != null) {
-                for (int i = 0; i < controls.length; i++) {
-                    if (controls[i] instanceof PagedResultsResponseControl) {
-                        PagedResultsResponseControl prrc =
-                                (PagedResultsResponseControl)controls[i];
-                        cookie = prrc.getCookie();
+                SearchControls searchControls = new SearchControls();
+                searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+                NamingEnumeration results = pagingContext.search(
+                        _roleBaseDn,
+                        filter,
+                        filterArguments,
+                        searchControls);
+
+                // Iterate over a batch of search results
+                while (results != null && results.hasMoreElements()) {
+                    searchResults.add((SearchResult)results.nextElement());
+                }
+                // Examine the paged results control response
+                Control[] controls = pagingContext.getResponseControls();
+                if (controls != null) {
+                    for (int i = 0; i < controls.length; i++) {
+                        if (controls[i] instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl prrc =
+                                    (PagedResultsResponseControl)controls[i];
+                            cookie = prrc.getCookie();
+                        }
                     }
                 }
-            }
-            ldapContext.setRequestControls(new Control[]{
-                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
-        } while (cookie != null);
+                pagingContext.setRequestControls(new Control[]{
+                        new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+            } while (cookie != null);
 
-        return searchResults;
+            return searchResults;
+        } finally {
+            // Only close the LdapContext this method derived via lookup(); a dirContext that
+            // arrived already as an LdapContext is owned by the caller.
+            if (derivedPagingContext) {
+                try {
+                    pagingContext.close();
+                } catch (NamingException e) {
+                    debug("Unable to close paginated role LDAP context: " + e.getMessage());
+                }
+            }
+        }
     }
 
     private List<String> getRoleList(List<SearchResult> results) throws NamingException {
@@ -956,13 +1000,23 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             }
         }
 
-        SearchResult searchResult = findUser(username);
+        String userDn;
+        DirContext dirContext;
+        if (_forceBindingLoginNoAnonymousSearch) {
+            // Skip the _rootContext search and bind directly with a DN constructed from
+            // configuration, so no anonymous or bind-user search permissions are required.
+            userDn = constructUserDn(normalizedUsername);
+            LOG.info("Attempting authentication: " + userDn);
+            dirContext = createBindUserDirContext(userDn, password);
+            setDemographicAttributes(fetchUserAttributes(dirContext, userDn));
+        } else {
+            SearchResult searchResult = findUser(normalizedUsername);
+            userDn = searchResult.getNameInNamespace();
 
-        String userDn = searchResult.getNameInNamespace();
-
-        LOG.info("Attempting authentication: " + userDn);
-        DirContext dirContext = createBindUserDirContext(userDn, password);
-        setDemographicAttributes(searchResult.getAttributes());
+            LOG.info("Attempting authentication: " + userDn);
+            dirContext = createBindUserDirContext(userDn, password);
+            setDemographicAttributes(searchResult.getAttributes());
+        }
 
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
@@ -1036,6 +1090,95 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         return (SearchResult) results.nextElement();
     }
 
+    /**
+     * Constructs a user's bind DN directly from configuration (userRdnAttribute=username,userBaseDn),
+     * without performing an LDAP search. Used by {@link #bindingLogin(String, Object)} when
+     * {@link #_forceBindingLoginNoAnonymousSearch} is enabled, to support LDAP servers that do not
+     * permit anonymous or bind-user searches.
+     *
+     * @param username the normalized username supplied by the authenticating user
+     * @return the constructed DN
+     */
+    protected String constructUserDn(final String username) {
+        return _userRdnAttribute + "=" + escapeDnValue(username) + "," + _userBaseDn;
+    }
+
+    /**
+     * Escapes special characters in a value being used as an RDN component of a distinguished name,
+     * per RFC 4514, to prevent DN injection when constructing a DN from user-supplied input.
+     * <br>
+     * All ASCII control characters (including NUL and, notably, CR/LF) are hex-escaped rather than
+     * passed through, since {@link #constructUserDn(String)}'s result is logged via {@code LOG.info}
+     * before the bind attempt succeeds or fails -- passing them through unescaped would let an
+     * unauthenticated username inject or forge arbitrary log records.
+     *
+     * @param value the raw value to escape
+     * @return the escaped value, safe for inclusion in a DN
+     */
+    protected String escapeDnValue(final String value) {
+        if (value == null) {
+            return "";
+        }
+        StringBuilder escaped = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '\\':
+                case ',':
+                case '+':
+                case '"':
+                case '<':
+                case '>':
+                case ';':
+                case '=':
+                    escaped.append('\\').append(c);
+                    break;
+                default:
+                    if (c < 0x20 || c == 0x7F) {
+                        // RFC 4514 hex-pair escape for ASCII control characters (0x00-0x1F, 0x7F),
+                        // including NUL and CR/LF -- see the log-injection note in the Javadoc above.
+                        escaped.append('\\').append(String.format("%02X", (int) c));
+                    } else {
+                        boolean leadingSpaceOrHash = i == 0 && (c == ' ' || c == '#');
+                        boolean trailingSpace = i == value.length() - 1 && c == ' ';
+                        if (leadingSpaceOrHash || trailingSpace) {
+                            escaped.append('\\').append(c);
+                        } else {
+                            escaped.append(c);
+                        }
+                    }
+            }
+        }
+        return escaped.toString();
+    }
+
+    /**
+     * Reads the LDAP attributes of the given userDn using the supplied (already bound) dirContext.
+     * Used when the user's DN was constructed directly (see {@link #_forceBindingLoginNoAnonymousSearch})
+     * rather than discovered via a directory search, so demographic attributes (name, email) can
+     * still be populated from a self-lookup performed as the authenticated user.
+     * <br>
+     * userDn is passed as a single {@link CompositeName} component rather than a raw String,
+     * since {@link DirContext#getAttributes(String)} parses its argument as a JNDI composite
+     * name, where '/' separates components across different naming systems. A DN can legitimately
+     * contain a literal '/' in an RDN value, which the String overload would otherwise silently
+     * mis-parse as a composite-name boundary -- resolving the wrong name and (via the catch below)
+     * silently dropping the user's demographic attributes despite a successful bind.
+     *
+     * @param dirContext a context already bound as userDn
+     * @param userDn the user's distinguished name
+     * @return the user's attributes, or an empty set of attributes if they could not be read
+     */
+    protected Attributes fetchUserAttributes(final DirContext dirContext, final String userDn) {
+        try {
+            Name compositeUserDn = new CompositeName().add(userDn);
+            return dirContext.getAttributes(compositeUserDn);
+        } catch (NamingException e) {
+            debug("Unable to read user attributes for " + userDn + ": " + e.getMessage());
+            return new BasicAttributes();
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState,
                            Map<String, ?> options) {
@@ -1045,9 +1188,6 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         try {
             _rootContext = new InitialDirContext(getEnvironment());
-            if(rolePagination){
-                ldapContext = new InitialLdapContext(_rootContext.getEnvironment(), null);
-            }
         } catch (NamingException ex) {
             LOG.error("Naming error",ex);
             throw new IllegalStateException("Unable to establish root context: "+ex.getMessage());
@@ -1104,6 +1244,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         if (options.containsKey("forceBindingLoginUseRootContextForRoles")) {
             _forceBindingLoginUseRootContextForRoles = Boolean.parseBoolean((String) options.get("forceBindingLoginUseRootContextForRoles"));
+        }
+
+        if (options.containsKey("forceBindingLoginNoAnonymousSearch")) {
+            _forceBindingLoginNoAnonymousSearch = Boolean.parseBoolean((String) options.get("forceBindingLoginNoAnonymousSearch"));
         }
 
         _userObjectClass = getOption(options, "userObjectClass", _userObjectClass);
