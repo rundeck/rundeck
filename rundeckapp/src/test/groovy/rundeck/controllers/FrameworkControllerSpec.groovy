@@ -1015,6 +1015,108 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
         respObject.tags.isEmpty()
     }
 
+    /**
+     * Regression coverage for RUN-4952: a failing node source's exceptions were previously passed
+     * as raw Throwable objects into the JSON/XML model, which could throw IllegalAccessException when
+     * the converter reflected over an exception's internal object graph (e.g. a third-party SDK
+     * exception with non-public internals), turning a normal node-source error into an HTTP 500.
+     */
+    def "nodesQueryAjax reduces failing node source exceptions to plain message strings for json format"() {
+        setup:
+        def projectName = 'testproj'
+        def emptyNodes = new NodeSetImpl()
+        def authCtx = Mock(UserAndRolesAuthContext)
+        def messagedException = new ResourceModelSourceException("boom: could not load source")
+        def unmessagedException = new ResourceModelSourceException((String) null)
+        def projectNodes = Mock(IProjectNodes) {
+            getResourceModelSourceExceptions() >> [messagedException, unmessagedException]
+        }
+        def projectMock = Mock(IRundeckProject) {
+            getNodeSet() >> emptyNodes
+            getName() >> projectName
+            getProjectNodes() >> projectNodes
+        }
+        def mgr = Mock(ProjectManager) {
+            getFrameworkProject(projectName) >> projectMock
+            existsFrameworkProject(projectName) >> true
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkProjectMgr() >> mgr
+                getFrameworkNodeName() >> 'localnode'
+            }
+            summarizeTags(_) >> [:]
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+            authorizeProjectResource(authCtx, _, _, projectName) >> true
+            filterAuthorizedNodes(projectName, _, _, authCtx) >> emptyNodes
+        }
+        params.project = projectName
+        request.addHeader('x-rundeck-ajax', 'true')
+        def query = new ExtNodeFilters(project: projectName, filter: '.*')
+
+        when:
+        controller.nodesQueryAjax(query)
+
+        then:
+        response.status == 200
+        response.json.nodeserror instanceof List
+        response.json.nodeserror.size() == 2
+        response.json.nodeserror[0] instanceof String
+        response.json.nodeserror[0] == 'boom: could not load source'
+        response.json.nodeserror[1] instanceof String
+        response.json.nodeserror[1] == unmessagedException.toString()
+    }
+
+    def "nodesQueryAjax reduces failing node source exceptions to plain message strings for xml format"() {
+        setup:
+        def projectName = 'testproj'
+        def emptyNodes = new NodeSetImpl()
+        def authCtx = Mock(UserAndRolesAuthContext)
+        def sourceException = new ResourceModelSourceException("boom: could not load source")
+        def projectNodes = Mock(IProjectNodes) {
+            getResourceModelSourceExceptions() >> [sourceException]
+        }
+        def projectMock = Mock(IRundeckProject) {
+            getNodeSet() >> emptyNodes
+            getName() >> projectName
+            getProjectNodes() >> projectNodes
+        }
+        def mgr = Mock(ProjectManager) {
+            getFrameworkProject(projectName) >> projectMock
+            existsFrameworkProject(projectName) >> true
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkProjectMgr() >> mgr
+                getFrameworkNodeName() >> 'localnode'
+            }
+            summarizeTags(_) >> [:]
+        }
+        controller.featureService = Mock(FeatureService) {
+            featurePresent(Features.LEGACY_XML) >> true
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+            authorizeProjectResource(authCtx, _, _, projectName) >> true
+            filterAuthorizedNodes(projectName, _, _, authCtx) >> emptyNodes
+        }
+        params.project = projectName
+        request.addHeader('x-rundeck-ajax', 'true')
+        response.format = 'xml'
+        def query = new ExtNodeFilters(project: projectName, filter: '.*')
+
+        when:
+        controller.nodesQueryAjax(query)
+
+        then:
+        response.status == 200
+        // the raw exception's stack trace/cause chain must never reach the XML converter either
+        !response.text.contains('stackTrace')
+        response.text.contains('boom: could not load source')
+    }
+
     @Unroll
     def "get project resources default #mime for api_version #api_version"() {
         setup:
