@@ -62,6 +62,7 @@ release-rc.sh 6.2.0 rc3 --push
 ```
 
 - The script detects `rescue/v6.2.0-rc3` already exists (checked on origin first, then locally) and treats that alone as proof this run should finish it, not start the backport over.
+- **It doesn't trust the branch blindly**: its tip must be a verified descendant of `v6.2.0-rc2` (the previous RC tag), via `git merge-base --is-ancestor`. A branch that happens to share the name but isn't actually built on the right base - stale, from an unrelated attempt, force-pushed over - is refused (exit 10), never silently tagged.
 - It does **not** cherry-pick anything in this mode. Instead it verifies every currently-labeled PR is present at the branch's tip, via the `-applied` label or the cherry-pick trailer.
 - If every PR checks out, it tags the branch's tip directly and backfills the `-applied` label on any PR that only had the trailer.
 - If anything is still missing, it refuses again (exit 7) and points back at the same branch.
@@ -69,6 +70,12 @@ release-rc.sh 6.2.0 rc3 --push
 This keeps the whole flow - and its Slack/audit trail - inside the Rundeck job, instead of requiring a bare `release-tag.sh` call that bypasses the completeness check entirely.
 
 **Label the PR immediately after any manual cherry-pick**, on the rescue branch or otherwise - the resume verification (and every future run) relies on the label or trailer, not on you remembering it got in.
+
+**The rescue branch is never force-created or force-pushed.** If one already exists locally or on origin with different content than what this run just produced - a race with a concurrent run, or in-progress manual work the auto-detection above somehow missed - creating/pushing refuses (exit 11) rather than overwriting it. Investigate what's there before proceeding.
+
+## Dry-run is a real rehearsal, not just a preview
+
+`--dry-run` actually checks out the base commit and attempts every cherry-pick for real (aborting cleanly on conflict) - both are fully local and reversible, so a dry run genuinely tells you whether the backport would succeed, including real `CONFLICT`s, instead of unconditionally reporting every PR as "applied." Only the release-affecting writes stay simulated: creating/pushing the tag, creating/pushing the rescue branch, and applying GitHub labels are all printed as `[DRY-RUN] ...` rather than executed.
 
 ## Scenario 5: A rebase-merged, multi-commit PR
 
@@ -106,13 +113,17 @@ The Rundeck job's `Commit SHA` option enforces this before running anything:
 
 ## Reference: exit codes (`release-rc.sh`)
 
+Only the codes the script actually assigns via an explicit `exit N`. A few other failures (e.g. `git rev-parse`/`git merge-base` erroring on something unexpected) propagate whatever raw exit status *that* command returned, under `set -e` - not one of these.
+
 | Code | Meaning |
 |---|---|
-| 2 | Usage error (missing args, unexpected extra argument, unknown `<rc#>`) |
-| 3 | Bad `<version>` format, or `<rc#>` isn't `rc2` or higher |
-| 4 | Previous RC tag not found (and not resuming from a rescue branch) |
+| 2 | Usage error: missing `<version>`/`<rc#>`, or an unexpected extra positional argument |
+| 3 | Bad `<version>` format; `<rc#>` doesn't match `rc<N>`; or `<rc#>` is below `rc2` |
+| 4 | Previous RC tag not found |
 | 5 | `<version>-<rc#>` tag already exists |
-| 6 | `release-tag.sh` not found, or (resume mode) the rescue branch's commit doesn't resolve |
+| 6 | `release-tag.sh` not found next to this script |
 | 7 | One or more PRs still CONFLICT/missing - see the rescue branch and per-PR resume commands |
 | 8 | No PR is labeled for this version at all |
 | 9 | The labeled-PR fetch hit its safety cap - there may be more than were retrieved |
+| 10 | A `rescue/<tag>` branch exists but isn't a descendant of the previous RC tag - refused rather than trusted |
+| 11 | A `rescue/<tag>` branch (or its remote) already exists with different content than this run's candidate - refused rather than force-overwritten |

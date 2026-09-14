@@ -129,8 +129,19 @@ source "$RELEASE_VERSION_SH"  # provides validate_version_format, parse_rc_numbe
 # "no changes" promise is about the release-affecting writes below (tagging,
 # pushing, cherry-picking), not this incidental, idempotent, easily-repeated
 # local ref sync.
-RELEASE_GIT_READONLY_CMDS+=" cat-file rev-list fetch"
-RELEASE_GIT_WRITE_CMDS+=" cherry-pick"
+# `checkout` (--detach onto an already-resolved commit, never a branch) and
+# `cherry-pick` are deliberately left to run for real even under --dry-run,
+# unlike release-tag.sh's own use of `checkout` for setversion.sh's release
+# branches: both are fully local, harmless, and reversible here (a detached
+# HEAD, undone by the next real checkout; a cherry-pick, undone by --abort or
+# simply never referenced by any branch/tag) - and it's the whole point of a
+# dry run for this script specifically to actually attempt the backport and
+# surface a real conflict, not just print what it would try. Read-only status
+# is checked before write status in the wrapper (see release-tag.sh), so
+# listing `checkout` here overrides its write classification from the base
+# list without needing to touch that shared list. `cherry-pick` isn't listed
+# in either list, so it falls through to the wrapper's default passthrough.
+RELEASE_GIT_READONLY_CMDS+=" cat-file rev-list fetch checkout"
 
 validate_version_format "$VNUM" || exit 3
 
@@ -148,7 +159,11 @@ if [ "$NEW_RC_NUM" -lt 2 ]; then
 fi
 
 VERSION="$VNUM"
-NEW_TAG="$(version_tag_name "$VERSION" "$VTAG")"
+# Built from $NEW_RC_NUM (already normalized to base-10 by parse_rc_number), not
+# the raw $VTAG: "rc02" would otherwise pass validation as RC 2 but produce tag
+# "v$VERSION-rc02", which the next run's PREV_TAG ("v$VERSION-rc2", built the
+# same normalized way) would never find - silently breaking the lineage.
+NEW_TAG="$(version_tag_name "$VERSION" "rc$NEW_RC_NUM")"
 PREV_RC_NUM=$((NEW_RC_NUM - 1))
 PREV_TAG="$(version_tag_name "$VERSION" "rc$PREV_RC_NUM")"
 
@@ -201,29 +216,47 @@ if git rev-parse --verify "refs/tags/$NEW_TAG^{commit}" >/dev/null 2>&1; then
     exit 5
 fi
 
+# The previous RC tag is required either way: normally as the cherry-pick base,
+# and when resuming, as the commit a rescue branch must be verifiably descended
+# from (see below) - a rescue branch is only ever meaningful relative to it.
+if ! git rev-parse --verify "refs/tags/$PREV_TAG^{commit}" >/dev/null 2>&1; then
+    echo "Error: previous RC tag '$PREV_TAG' not found. Cannot determine base commit."
+    exit 4
+fi
+PREV_COMMIT="$(git rev-parse "refs/tags/$PREV_TAG^{commit}")"
+
 # A rescue/<tag> branch already existing for the tag this run would create is
-# proof enough that a previous run left off here (see the CONFLICT output
-# below) - resume from it instead of starting the backport over. Checked on
-# both origin (the normal case - a previous --push run) and locally (in case
-# --push wasn't used, or this happens to be the same checkout).
+# taken as proof a previous run left off here (see the CONFLICT output below) -
+# resume from it instead of starting the backport over. Checked on both origin
+# (the normal case - a previous --push run) and locally (in case --push wasn't
+# used, or this happens to be the same checkout). Its tip must still be a
+# descendant of $PREV_COMMIT - trusting it otherwise would let a stale,
+# unrelated, or force-pushed-over branch silently become the release.
 RESCUE_BRANCH="rescue/$NEW_TAG"
 RESUME_COMMIT=""
+CANDIDATE_RESUME_COMMIT=""
 if git ls-remote --exit-code --heads origin "$RESCUE_BRANCH" >/dev/null 2>&1; then
     git fetch --quiet origin "$RESCUE_BRANCH"
-    RESUME_COMMIT="$(git rev-parse FETCH_HEAD)"
+    CANDIDATE_RESUME_COMMIT="$(git rev-parse FETCH_HEAD)"
 elif git rev-parse --verify "refs/heads/$RESCUE_BRANCH" >/dev/null 2>&1; then
-    RESUME_COMMIT="$(git rev-parse "refs/heads/$RESCUE_BRANCH")"
+    CANDIDATE_RESUME_COMMIT="$(git rev-parse "refs/heads/$RESCUE_BRANCH")"
+fi
+
+if [ -n "$CANDIDATE_RESUME_COMMIT" ]; then
+    if git merge-base --is-ancestor "$PREV_COMMIT" "$CANDIDATE_RESUME_COMMIT"; then
+        RESUME_COMMIT="$CANDIDATE_RESUME_COMMIT"
+        echo "Found existing $RESCUE_BRANCH ($RESUME_COMMIT), descended from $PREV_TAG - resuming from it instead of starting the backport over."
+    else
+        echo "Error: $RESCUE_BRANCH ($CANDIDATE_RESUME_COMMIT) exists but is NOT a descendant of $PREV_TAG ($PREV_COMMIT)."
+        echo "Refusing to treat it as a resume candidate - it may be stale, from an unrelated attempt, or overwritten by something else."
+        echo "Investigate manually; once you've confirmed it's safe to discard, delete/rename the branch and re-run."
+        exit 10
+    fi
 fi
 
 if [ -n "$RESUME_COMMIT" ]; then
-    echo "Found existing $RESCUE_BRANCH ($RESUME_COMMIT) - resuming from it instead of starting the backport over."
     TRAILER_SCAN_BASE="$RESUME_COMMIT"
 else
-    if ! git rev-parse --verify "refs/tags/$PREV_TAG^{commit}" >/dev/null 2>&1; then
-        echo "Error: previous RC tag '$PREV_TAG' not found. Cannot determine base commit."
-        exit 4
-    fi
-    PREV_COMMIT="$(git rev-parse "refs/tags/$PREV_TAG^{commit}")"
     echo "Checking out $PREV_TAG ($PREV_COMMIT) detached"
     git checkout --detach "$PREV_COMMIT"
     TRAILER_SCAN_BASE="$PREV_COMMIT"
@@ -244,9 +277,14 @@ if [ "$PR_RAW_COUNT" -ge "$PR_LABEL_FETCH_LIMIT" ]; then
     echo "a partial set be tagged as complete. Raise PR_LABEL_FETCH_LIMIT in this script and re-run."
     exit 9
 fi
+# Commit count is NOT fetched here via `--json commits` - `gh`'s underlying
+# GraphQL query for that field is a paginated node list capped well under 200
+# nodes, so `.commits | length` silently undercounts a PR with more commits
+# than that cap. Fetched per-PR below instead, from the REST API's plain
+# scalar `commits` count field, which has no such cap.
 PR_DATA="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
-    --json number,title,mergedAt,mergeCommit,labels,commits \
-    --jq 'sort_by(.mergedAt)[] | select(.mergeCommit != null) | [.number, .mergeCommit.oid, .title, ([.labels[].name] | join(",")), (.commits | length)] | @tsv')"
+    --json number,title,mergedAt,mergeCommit,labels \
+    --jq 'sort_by(.mergedAt)[] | select(.mergeCommit != null) | [.number, .mergeCommit.oid, .title, ([.labels[].name] | join(","))] | @tsv')"
 
 # Every automated cherry-pick below uses `-x`, which appends "(cherry picked from
 # commit <sha>)" to the resulting commit message. That trailer is what makes
@@ -301,7 +339,7 @@ if [ -z "$PR_DATA" ]; then
 else
     mapfile -t PR_LINES <<< "$PR_DATA"
     for line in "${PR_LINES[@]}"; do
-        IFS=$'\t' read -r PR_NUM PR_SHA PR_TITLE PR_LABELS_CSV PR_COMMIT_COUNT <<< "$line"
+        IFS=$'\t' read -r PR_NUM PR_SHA PR_TITLE PR_LABELS_CSV <<< "$line"
 
         ALREADY_LABELED=false
         if [[ ",$PR_LABELS_CSV," == *",$RC_BACKPORT_APPLIED_LABEL,"* ]]; then
@@ -351,40 +389,47 @@ else
         CHERRY_PICK_ARGS=(-x)
         if [ "${#PARENTS[@]}" -gt 1 ]; then
             CHERRY_PICK_ARGS+=(-m 1)
-        elif [ "${PR_COMMIT_COUNT:-1}" -gt 1 ]; then
-            # Single-parent PRs with more than one original commit are ambiguous:
-            # squash-merge folds every commit into this one (single cherry-pick is
-            # the whole PR diff, correct), but rebase-merge replays each original
-            # commit individually onto the base as its own commit and mergeCommit
-            # is only the LAST of that chain - cherry-picking just the tip would
-            # silently drop every earlier commit in the PR. (Verified against a
-            # real rebase-merged PR: a 4-commit PR's mergeCommit alone touched only
-            # 1 of the 4 changed files.) Parent count can't tell these apart -
-            # squash also produces a single-parent commit - so compare the tip
-            # commit's patch-id against the full PR's patch-id: identical means
-            # squash (or a rebase of a PR whose commits happen to net the same
-            # diff as its last commit alone, vanishingly unlikely in practice);
-            # different means rebase-merge, and the range of the last
-            # PR_COMMIT_COUNT first-parent commits ending at mergeCommit is
-            # cherry-picked instead of just the tip.
-            FULL_PR_PATCH_ID="$(gh pr diff "$PR_NUM" | git patch-id --stable | awk '{print $1}')"
-            TIP_PATCH_ID="$(git diff "$PR_SHA"^ "$PR_SHA" | git patch-id --stable | awk '{print $1}')"
-            if [ -n "$FULL_PR_PATCH_ID" ] && [ "$FULL_PR_PATCH_ID" != "$TIP_PATCH_ID" ]; then
-                RANGE_BASE="$PR_SHA~$PR_COMMIT_COUNT"
-                if git rev-parse --verify "${RANGE_BASE}^{commit}" >/dev/null 2>&1; then
-                    echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits (mergeCommit alone doesn't match the full PR diff) - cherry-picking the whole range $RANGE_BASE..$PR_SHA instead of just the tip"
-                    CHERRY_PICK_TARGET="${RANGE_BASE}..${PR_SHA}"
-                else
-                    # Refusing to fall back to a single-commit pick here - that would
-                    # silently ship an INCOMPLETE backport, the exact failure mode this
-                    # whole range-detection exists to prevent. Treated as a CONFLICT so
-                    # it blocks the tag like any other unresolved PR, instead of a
-                    # warning that's easy to miss in a long run's output.
-                    echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits, but $RANGE_BASE isn't reachable (shallow history?) - refusing to cherry-pick only the tip. Marking as CONFLICT."
-                    REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"range base $RANGE_BASE unreachable - fetch full history"$'\t'"$PR_TITLE")
-                    RESUME_CMDS["$PR_NUM"]="git fetch --unshallow (or otherwise deepen history) then: git cherry-pick -x ${RANGE_BASE}..${PR_SHA}"
-                    CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
-                    continue
+        else
+            # Fetched fresh here (not in the batched PR_DATA query above) from the
+            # REST API's plain scalar `commits` count field - unlike `--json commits`,
+            # this isn't a paginated node list, so it's never capped/undercounted
+            # regardless of how many commits the PR actually has.
+            PR_COMMIT_COUNT="$(gh api "repos/{owner}/{repo}/pulls/$PR_NUM" --jq '.commits')"
+            if [ "${PR_COMMIT_COUNT:-1}" -gt 1 ]; then
+                # Single-parent PRs with more than one original commit are ambiguous:
+                # squash-merge folds every commit into this one (single cherry-pick is
+                # the whole PR diff, correct), but rebase-merge replays each original
+                # commit individually onto the base as its own commit and mergeCommit
+                # is only the LAST of that chain - cherry-picking just the tip would
+                # silently drop every earlier commit in the PR. (Verified against a
+                # real rebase-merged PR: a 4-commit PR's mergeCommit alone touched only
+                # 1 of the 4 changed files.) Parent count can't tell these apart -
+                # squash also produces a single-parent commit - so compare the tip
+                # commit's patch-id against the full PR's patch-id: identical means
+                # squash (or a rebase of a PR whose commits happen to net the same
+                # diff as its last commit alone, vanishingly unlikely in practice);
+                # different means rebase-merge, and the range of the last
+                # PR_COMMIT_COUNT first-parent commits ending at mergeCommit is
+                # cherry-picked instead of just the tip.
+                FULL_PR_PATCH_ID="$(gh pr diff "$PR_NUM" | git patch-id --stable | awk '{print $1}')"
+                TIP_PATCH_ID="$(git diff "$PR_SHA"^ "$PR_SHA" | git patch-id --stable | awk '{print $1}')"
+                if [ -n "$FULL_PR_PATCH_ID" ] && [ "$FULL_PR_PATCH_ID" != "$TIP_PATCH_ID" ]; then
+                    RANGE_BASE="$PR_SHA~$PR_COMMIT_COUNT"
+                    if git rev-parse --verify "${RANGE_BASE}^{commit}" >/dev/null 2>&1; then
+                        echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits (mergeCommit alone doesn't match the full PR diff) - cherry-picking the whole range $RANGE_BASE..$PR_SHA instead of just the tip"
+                        CHERRY_PICK_TARGET="${RANGE_BASE}..${PR_SHA}"
+                    else
+                        # Refusing to fall back to a single-commit pick here - that would
+                        # silently ship an INCOMPLETE backport, the exact failure mode this
+                        # whole range-detection exists to prevent. Treated as a CONFLICT so
+                        # it blocks the tag like any other unresolved PR, instead of a
+                        # warning that's easy to miss in a long run's output.
+                        echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits, but $RANGE_BASE isn't reachable (shallow history?) - refusing to cherry-pick only the tip. Marking as CONFLICT."
+                        REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"range base $RANGE_BASE unreachable - fetch full history"$'\t'"$PR_TITLE")
+                        RESUME_CMDS["$PR_NUM"]="git fetch --unshallow (or otherwise deepen history) then: git cherry-pick -x ${RANGE_BASE}..${PR_SHA}"
+                        CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+                        continue
+                    fi
                 fi
             fi
         fi
@@ -439,12 +484,27 @@ if [ "$CONFLICT_COUNT" -gt 0 ]; then
     fi
 
     if [ "$DRY_RUN" = true ]; then
-        echo "[DRY-RUN] git branch -f $RESCUE_BRANCH HEAD"
+        echo "[DRY-RUN] git branch $RESCUE_BRANCH HEAD"
     else
-        command git branch -f "$RESCUE_BRANCH" "$FINAL_COMMIT"
+        # Deliberately not `-f`/`--force`: this path is only reached when no
+        # rescue branch was found for $NEW_TAG at the start of this run (an
+        # existing one routes to the resume flow above instead). If one exists
+        # here anyway - a race with a concurrent run, or created moments ago -
+        # force-creating/pushing over it could destroy in-progress manual
+        # resolution work. Fail loudly instead of silently clobbering it.
+        if ! command git branch "$RESCUE_BRANCH" "$FINAL_COMMIT"; then
+            echo "Error: local branch '$RESCUE_BRANCH' already exists and doesn't match this run's candidate - not overwriting it."
+            echo "Investigate: it may hold in-progress manual resolution work from elsewhere. Resolve manually, then tag with:"
+            echo "  $RELEASE_TAG_SH $NEW_TAG <resolved-commit> [--push]"
+            exit 11
+        fi
         echo "Every PR marked 'applied' above is saved to local branch '$RESCUE_BRANCH' ($FINAL_COMMIT) - none of that work is lost."
         if [ "$PUSH_TO_ORIGIN" = true ]; then
-            command git push --force origin "$RESCUE_BRANCH"
+            if ! command git push origin "$RESCUE_BRANCH"; then
+                echo "Error: failed to push '$RESCUE_BRANCH' to origin - it likely already exists there with different content."
+                echo "Investigate before retrying; do not force-push without confirming what's there isn't someone else's in-progress work."
+                exit 11
+            fi
             echo "Also pushed to origin/$RESCUE_BRANCH"
         fi
     fi
