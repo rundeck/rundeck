@@ -73,13 +73,14 @@ slack-fail-post-step: &slack-fail-post-step
 
 executors:
 
-  # Main docker executor (cimg/openjdk:21.0 includes Eclipse Temurin JDK 21).
-  # Grails 8 / Gradle 9 require a JDK 21 build JVM: the grails-gradle-plugin
+  # Main docker executor (cimg/openjdk:25.0 includes Eclipse Temurin JDK 25).
+  # Grails 8 / Gradle 9 require at least a JDK 21 build JVM: the grails-gradle-plugin
   # variant metadata declares `org.gradle.jvm.version = 21`, so resolving the
-  # buildscript classpath on a Java 17 JVM fails outright.
+  # buildscript classpath on a Java 17 JVM fails outright. The build compiles on 25
+  # and still emits Java 21 bytecode -- see rundeck/gradle/java-version.gradle.
   docker-builder:
     docker:
-      - image: cimg/openjdk:21.0.12
+      - image: cimg/openjdk:25.0.4
     parameters:
       # we set the resource class to small by default
       # however, any job that uses the setup_remote_docker step will be
@@ -200,11 +201,11 @@ commands:
 
   # Install/verify Java JDK (pre-installed on cimg/openjdk, installed via apt on machine executor)
   install-java-jdk:
-    description: Ensure JDK 21 is available
+    description: Ensure the JDK 25 build JVM is available
     steps:
       - run-build-step:
           step-name: Install Java JDK
-          command: dependencies_install_zulu21jdk
+          command: dependencies_install_zulu25jdk
 
   install-java-jdk-25:
     description: Install JDK 25 for host-side tests (BASH_ENV JAVA_HOME)
@@ -277,11 +278,7 @@ jobs:
     parameters:
       jreVersion:
         type: string
-        default: "openjdk-21-jre-headless"
-      jre25Publish:
-        description: Also build and push a Docker image with JRE 25
-        type: boolean
-        default: false
+        default: "openjdk-25-jre-headless"
     steps:
       - setup_docker:
           docker_layer_caching: true
@@ -296,14 +293,6 @@ jobs:
           command: |
             rundeck_docker_build << parameters.jreVersion >>
             rundeck_docker_push << parameters.jreVersion >>
-      - when:
-          condition: << parameters.jre25Publish >>
-          steps:
-            - run-build-step:
-                step-name: Build And Push Docker Images (JRE 25)
-                command: |
-                  rundeck_docker_build openjdk-25-jre-headless
-                  rundeck_docker_push openjdk-25-jre-headless
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build
@@ -492,8 +481,8 @@ jobs:
     parameters:
       jreVersion:
         type: string
-        # Grails 8: Java 21 required
-        default: "openjdk-21-jre-headless"
+        # Java 25 runtime; the build still emits Java 21 bytecode.
+        default: "openjdk-25-jre-headless"
     steps:
       - setup_docker
       - checkout
@@ -787,7 +776,7 @@ require-selenium: &require-selenium
 
 require-build-jre-17: &require-build-jre-17
   requires:
-    - Build with Docker image using JRE 17
+    - Build with Docker image using JRE 25
 
 filters:
   all: &filter-default
@@ -1006,7 +995,7 @@ workflows:
           filters:
             branches: { only: main }
 
-  # Build Rundeck Docker images with JRE 17; run downstream tests with JDK 25 on the host (Gradle / CI orchestration).
+  # Build Rundeck Docker images with JRE 25; downstream tests run on JDK 25.
   build_and_test_with_jre_17:
     triggers:
       - schedule:
@@ -1023,31 +1012,30 @@ workflows:
         - equal: [ main, << pipeline.git.branch >> ]
     jobs:
       - build-rundeck:
-          name: Build with Docker image using JRE 17
-          jreVersion: "openjdk-21-jre-headless"
-          jre25Publish: true
+          name: Build with Docker image using JRE 25
+          jreVersion: "openjdk-25-jre-headless"
       - test-docker:
-          name: T Integration SSL (host JDK 25, image JRE 17)
+          name: T Integration SSL (host JDK 25, image JRE 25)
           command: bash test/run-docker-ssl-tests.sh
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-docker:
-          name: T Integration Ansible (host JDK 25, image JRE 17)
+          name: T Integration Ansible (host JDK 25, image JRE 25)
           command: bash test/run-docker-ansible-tests.sh
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-machine:
-          name: T Integration LDAP (host JDK 25, image JRE 17)
+          name: T Integration LDAP (host JDK 25, image JRE 25)
           command: bash test/run-docker-ldap-tests.sh
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-machine:
-          name: T Integration LDAP Bind (host JDK 25, image JRE 17)
+          name: T Integration LDAP Bind (host JDK 25, image JRE 25)
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-docker:
-          name: T Integration PAM (host JDK 25, image JRE 17)
+          name: T Integration PAM (host JDK 25, image JRE 25)
           command: bash test/run-docker-pam-tests.sh
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
