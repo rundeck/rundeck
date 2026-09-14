@@ -30,7 +30,9 @@ class JobServerUrlContextSpec extends BaseContainer {
         def path = JobUtils.updateJobFileToImport(
                 "job-template-common.xml",
                 PROJECT_NAME,
-                ["job-name": jobName, "args": "echo ${OUTPUT_MARKER}\${job.serverUrl}"]
+                // the helper applies this through String.replaceAll, so the dollar must be escaped
+                // for the replacement string to keep the literal ${job.serverUrl} context expression
+                ["job-name": jobName, "args": "echo ${OUTPUT_MARKER}\\\${job.serverUrl}"]
         )
         def jobId = JobUtils.createJob(PROJECT_NAME, new File(path).text, client).succeeded.first().id.toString()
 
@@ -45,8 +47,8 @@ class JobServerUrlContextSpec extends BaseContainer {
         runJob.execution.status == 'succeeded'
         serverUrl
         !serverUrl.endsWith('/')
-        // absolute URL with non-empty path segments only (covers both plain and context-path deployments)
+        // absolute URL with non-empty path segments only, so appending /api/... never yields a double slash
+        // (covers both plain and context-path deployments)
         serverUrl ==~ /https?:\/\/[^\/]+(\/[^\/]+)*/
-        !"${serverUrl}/api/${client.apiVersion}/projects".replaceFirst(/^https?:\/\//, '').contains('//')
     }
 }

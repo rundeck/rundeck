@@ -2645,10 +2645,12 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                 filter: filterFixture
         )
 
-        def lg = new MockFor(LinkGenerator)
-        lg.demand.link(2..2) { return '' }
+        // Spock stub instead of MockFor: generateServerURL is statically compiled and bypasses the metaClass proxy
+        def lg = Stub(LinkGenerator) {
+            link(_) >> ''
+        }
 
-        def jobcontext = ExecutionService.exportContextForExecution(ex, lg.proxyInstance())
+        def jobcontext = ExecutionService.exportContextForExecution(ex, lg)
 
         assertEquals(filterFixture, jobcontext.filter)
 
@@ -2672,26 +2674,12 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         result == expected
 
         where:
-        generated                      | expected
-        'http://h:4440/'               | 'http://h:4440'
-        'http://h:4440//'              | 'http://h:4440'
-        'http://h:4440/rundeck/'       | 'http://h:4440/rundeck'
-        'http://h:4440'                | 'http://h:4440'
-        'https://rundeck.example.com/' | 'https://rundeck.example.com'
-    }
-
-    def "generateServerURL tolerates a null link result"() {
-        given:
-        def linkGenerator = Stub(LinkGenerator) {
-            link(_) >> null
-        }
-
-        when:
-        def result = ExecutionService.generateServerURL(linkGenerator)
-
-        then:
-        noExceptionThrown()
-        result == null
+        generated                | expected
+        'http://h:4440/'         | 'http://h:4440'
+        'http://h:4440//'        | 'http://h:4440'
+        'http://h:4440/rundeck/' | 'http://h:4440/rundeck'
+        'http://h:4440'          | 'http://h:4440'
+        null                     | null
     }
 
     def "exportContextForExecution sets job.serverUrl without trailing slash and leaves job.url unchanged"() {

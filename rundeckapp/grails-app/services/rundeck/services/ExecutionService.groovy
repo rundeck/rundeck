@@ -1188,6 +1188,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param grailsLinkGenerator link generator used to build the absolute URL
      * @return server base URL without trailing slashes, or null if no link could be generated
      */
+    @CompileStatic
     static String generateServerURL(LinkGenerator grailsLinkGenerator) {
         grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)?.replaceAll('/+$', '')
     }
