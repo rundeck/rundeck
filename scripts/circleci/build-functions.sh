@@ -43,10 +43,11 @@ rundeck_docker_build() {
     #Build image
     ./gradlew ${GRADLE_BASE_OPTS} cleanOfficialBuild officialBuild -Penvironment=${ENV} -PdockerRepository=${DOCKER_REPO} -PdockerTags=latest,SNAPSHOT -PjreVersion=${jreVersion}
 
-    # Append -j25 suffix to tags when JRE version contains 25
+    # Only the JRE 25 image is published today, on unsuffixed tags. The suffix is kept so that
+    # reintroducing an older-JRE variant tags it distinctly instead of overwriting the main image.
     local TAG_SUFFIX=""
-    if [[ "${jreVersion}" == *"25"* ]]; then
-        TAG_SUFFIX="-j25"
+    if [[ "${jreVersion}" == *"21"* ]]; then
+        TAG_SUFFIX="-j21"
     fi
 
     docker tag "${DOCKER_REPO}:latest" "${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}${TAG_SUFFIX}"
@@ -62,8 +63,8 @@ rundeck_docker_build() {
 rundeck_docker_push() {
     local jreVersion=${1}
     local TAG_SUFFIX=""
-    if [[ "${jreVersion}" == *"25"* ]]; then
-        TAG_SUFFIX="-j25"
+    if [[ "${jreVersion}" == *"21"* ]]; then
+        TAG_SUFFIX="-j21"
     fi
 
     docker_login
