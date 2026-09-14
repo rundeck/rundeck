@@ -34,6 +34,11 @@ import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.apache.logging.log4j.Level
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.core.LoggerContext
+import org.apache.logging.log4j.core.appender.WriterAppender
+import org.apache.logging.log4j.core.layout.PatternLayout
 import org.rundeck.app.config.ConfigService
 import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvider
 import org.rundeck.app.services.ExecutionFile
@@ -1838,5 +1843,55 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
         where:
         pluginName << [null, '']
+    }
+
+    def "afterPropertiesSet logs one source-neutral WARN naming the property only when no plugin is configured"() {
+        given: "a log4j2 appender capturing WARN output"
+        def logOutput = new StringWriter()
+        def ctx = (LoggerContext) LogManager.getContext(false)
+        def config = ctx.getConfiguration()
+        def appender = WriterAppender.newBuilder()
+            .setConfiguration(config)
+            .setName("LogFileStorageServiceSpecCapture")
+            .setTarget(logOutput)
+            .setLayout(PatternLayout.newBuilder().withPattern("[%level] %msg%n").withConfiguration(config).build())
+            .build()
+        appender.start()
+        config.getRootLogger().addAppender(appender, Level.WARN, null)
+        ctx.updateLoggers()
+
+        and: "the given plugin configuration"
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> pluginName
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'delayed'
+            _ * getInteger(_, _) >> 5
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+
+        when:
+        service.afterPropertiesSet()
+        def warnLines = logOutput.toString().readLines().findAll {
+            it.contains('LogFileStorage plugin is not configured')
+        }
+
+        then: "the diagnostic is emitted exactly as many times as expected, at WARN level"
+        warnLines.size() == expectedWarns
+        warnLines.every { it.startsWith('[WARN]') }
+
+        and: "the wording names the property and does not prescribe a configuration source"
+        warnLines.every { it.contains(LogFileStorageService.FILE_STORAGE_PLUGIN.key) }
+        warnLines.every { !it.contains('rundeck-config.properties') }
+
+        cleanup:
+        config.getRootLogger().removeAppender("LogFileStorageServiceSpecCapture")
+        appender.stop()
+        ctx.updateLoggers()
+
+        where:
+        pluginName | expectedWarns
+        null       | 1
+        'test1'    | 0
     }
 }
