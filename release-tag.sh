@@ -111,11 +111,41 @@ function create_and_push_tag {
     if [ "$PUSH_TO_ORIGIN" = true ]; then
         echo "Pushing tag to remote..."
         if ! git push origin "$TAG_NAME"; then
-            echo "Error: Failed to push tag $TAG_NAME"
-            # The tag was never truly created until it's pushed (nothing else
-            # can see it yet) - deleting the local-only copy here means a retry
-            # hits this same code path cleanly instead of failing at `git tag`
-            # with "already exists" because of a half-finished previous attempt.
+            echo "Error: Failed to push tag $TAG_NAME (client-reported failure)"
+            # A failed `git push` doesn't prove the remote doesn't have the
+            # tag: the connection can drop after the server's receive-pack
+            # updates the ref but before this client sees the ack. Blindly
+            # deleting the local tag and reporting failure in that case would
+            # leave release-rc.sh unable to add its applied labels for a tag
+            # that actually exists, and the next run's own `git fetch --tags`
+            # would then hit "already exists" against a tag it never pushed
+            # itself. Ask the remote directly what's actually there before
+            # deciding what to do.
+            if ! LS_REMOTE_TAG_OUTPUT="$(git ls-remote --tags origin "refs/tags/$TAG_NAME" 2>&1)"; then
+                echo "Error: could not check the remote for $TAG_NAME either (network/auth failure?): $LS_REMOTE_TAG_OUTPUT"
+                echo "Not deleting the local tag without knowing the remote's actual state - investigate manually before retrying."
+                return 1
+            fi
+            REMOTE_TAG_SHA="$(awk '{print $1}' <<< "$LS_REMOTE_TAG_OUTPUT")"
+            if [ -n "$REMOTE_TAG_SHA" ]; then
+                # git ls-remote of an annotated tag returns the tag OBJECT's
+                # sha, not the commit it points at - compare against the
+                # local tag ref the same way, not $TARGET_COMMIT directly.
+                LOCAL_TAG_OBJECT_SHA="$(git rev-parse "refs/tags/$TAG_NAME")"
+                if [ "$REMOTE_TAG_SHA" = "$LOCAL_TAG_OBJECT_SHA" ]; then
+                    echo "The remote actually has $TAG_NAME already (push succeeded despite the client-side error) - treating this as success."
+                    echo "Tag pushed to remote."
+                    return 0
+                fi
+                echo "Error: origin already has a DIFFERENT $TAG_NAME ($REMOTE_TAG_SHA) than what this run just created ($LOCAL_TAG_OBJECT_SHA)."
+                echo "Not deleting the local tag or guessing which is right - investigate manually before retrying."
+                return 1
+            fi
+            # Remote confirms no such tag exists there (empty, successful
+            # ls-remote) - the push genuinely never landed. Safe to delete
+            # the local-only copy so a retry isn't blocked by it already
+            # existing locally.
+            echo "Confirmed against the remote: $TAG_NAME does not exist there - the push genuinely failed."
             echo "Deleting local tag $TAG_NAME so a retry isn't blocked by it already existing locally."
             git tag -d "$TAG_NAME" >/dev/null 2>&1 || echo "  Warning: failed to delete local tag $TAG_NAME - remove it manually before retrying."
             return 1

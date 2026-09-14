@@ -461,10 +461,17 @@ else
         # report and rescue branch for every PR already applied. Treated as a
         # CONFLICT for just this PR instead.
         if ! git rev-parse --verify "${PR_SHA}^{commit}" >/dev/null 2>&1; then
+            # A plain `git cherry-pick -x $PR_SHA` here would be a guess: the
+            # commit is unavailable, so its parent count/merge strategy - which
+            # decides whether `-m 1` (merge-commit) or a range (rebase-merge)
+            # is actually required - is unknown at this point. Tell the
+            # operator to just re-run the script after fetching instead, so
+            # the existing classification logic below picks the right form
+            # rather than a manual command that may be wrong for this PR.
             mark_pr_conflict \
                 "PR #$PR_NUM references commit $PR_SHA, which isn't resolvable in this checkout (shallow clone? pruned?). Marking as CONFLICT." \
                 "commit not resolvable locally - fetch full history" \
-                "git fetch --unshallow (or otherwise deepen history) then retry: git cherry-pick -x $PR_SHA"
+                "git fetch --unshallow (or otherwise deepen history), then re-run this same release-rc.sh command - which cherry-pick form (plain/-m 1/range) is correct isn't knowable until the commit and its parents are resolvable"
             continue
         fi
 
@@ -679,6 +686,16 @@ if [ "$CONFLICT_COUNT" -gt 0 ]; then
     echo "Error: $CONFLICT_COUNT PR(s) marked CONFLICT above could not be cherry-picked cleanly."
     echo "Refusing to tag $NEW_TAG - a release tag must include every PR labeled '$RC_BACKPORT_LABEL', never a partial set."
     echo ""
+    if [ "$DRY_RUN" = true ]; then
+        # Under --dry-run, $RESCUE_BRANCH was only ever printed above
+        # ("[DRY-RUN] git branch ..."), never actually created - so the steps
+        # below (which assume it exists) don't apply yet. Point at re-running
+        # for real first instead of describing them against a branch that
+        # doesn't exist.
+        echo "This was a --dry-run: $RESCUE_BRANCH was NOT actually created, nothing below is real yet."
+        echo "Re-run this same command without --dry-run to actually attempt the backport and create it, then:"
+        echo ""
+    fi
     echo "To resolve:"
     echo "  1. git checkout $RESCUE_BRANCH"
     echo "  2. For each CONFLICT PR above, run its specific command (single-commit vs. range differs"
@@ -765,8 +782,20 @@ if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NU
             # tag-already-exists check before ever reaching a push or a label.
             # The only way to finish from here is to push this exact tag and
             # label these PRs directly.
-            echo "Not labeling any PR - $NEW_TAG only exists locally without --push."
-            echo "Re-running will NOT work now (it will fail - $NEW_TAG already exists locally). To make this durable instead:"
+            #
+            # Dry-run needs its own wording here: under --dry-run,
+            # create_and_push_tag() never actually created $NEW_TAG (that's
+            # simulated too), so claiming it "already exists locally" and
+            # that "re-running will fail" would both be false - a real rerun
+            # with the same flags is exactly what would create it.
+            if [ "$DRY_RUN" = true ]; then
+                echo "Not labeling any PR - this was a --dry-run, so $NEW_TAG was never actually created; nothing here is real yet."
+                echo "A real run with the same flags (no --push) would create $NEW_TAG locally only, and not label these PRs either -"
+                echo "to make that durable, you'd then need:"
+            else
+                echo "Not labeling any PR - $NEW_TAG only exists locally without --push."
+                echo "Re-running will NOT work now (it will fail - $NEW_TAG already exists locally). To make this durable instead:"
+            fi
             echo "  git push origin $NEW_TAG"
             for PR_NUM in "${PRS_TO_LABEL[@]}"; do
                 echo "  gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
