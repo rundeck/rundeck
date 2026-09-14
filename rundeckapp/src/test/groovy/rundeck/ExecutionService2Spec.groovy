@@ -2659,6 +2659,61 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         1 == 1
     }
 
+    def "generateServerURL strips trailing slashes so job.serverUrl can be concatenated with an absolute path"() {
+        given:
+        def linkGenerator = Stub(LinkGenerator) {
+            link(_) >> generated
+        }
+
+        when:
+        def result = ExecutionService.generateServerURL(linkGenerator)
+
+        then:
+        result == expected
+
+        where:
+        generated                      | expected
+        'http://h:4440/'               | 'http://h:4440'
+        'http://h:4440//'              | 'http://h:4440'
+        'http://h:4440/rundeck/'       | 'http://h:4440/rundeck'
+        'http://h:4440'                | 'http://h:4440'
+        'https://rundeck.example.com/' | 'https://rundeck.example.com'
+    }
+
+    def "generateServerURL tolerates a null link result"() {
+        given:
+        def linkGenerator = Stub(LinkGenerator) {
+            link(_) >> null
+        }
+
+        when:
+        def result = ExecutionService.generateServerURL(linkGenerator)
+
+        then:
+        noExceptionThrown()
+        result == null
+    }
+
+    def "exportContextForExecution sets job.serverUrl without trailing slash and leaves job.url unchanged"() {
+        given:
+        def executionUrl = 'http://h:4440/project/test/execution/show/1'
+        def linkGenerator = Stub(LinkGenerator) {
+            link(_) >> { Map attrs -> attrs.controller == 'menu' ? 'http://h:4440/' : executionUrl }
+        }
+        def ex = new Execution(
+                project: "test",
+                user: "test",
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "exec")]),
+        )
+
+        when:
+        def jobcontext = ExecutionService.exportContextForExecution(ex, linkGenerator)
+
+        then:
+        jobcontext.serverUrl == 'http://h:4440'
+        jobcontext.url == executionUrl
+    }
+
     def "ensureExecutionOutputFilePath"() {
         given:
         Execution e = new Execution(uuid:"execution-uuid",project:"AProject",user:'bob',dateStarted: new Date(),dateCompleted: null,jobUuid: "job-uuid",workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
