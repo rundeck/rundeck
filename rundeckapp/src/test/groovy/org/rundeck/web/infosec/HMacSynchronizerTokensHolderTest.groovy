@@ -95,6 +95,26 @@ class HMacSynchronizerTokensHolderTest  {
     }
 
     @Test
+    void testValidAndResetTokenConsumesToken(){
+        HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
+        def token = holder.generateToken('/my/url')
+
+        assertTrue("token should validate on first use", holder.isValidAndResetToken('/my/url', token))
+        assertFalse("token should be consumed after use", holder.isValidAndResetToken('/my/url', token))
+        assertFalse("token should no longer be valid", holder.isValid('/my/url', token))
+    }
+
+    @Test
+    void testValidAndResetTokenRejectsBadToken(){
+        HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
+        def token = holder.generateToken('/my/url')
+
+        assertFalse("wrong url should be rejected", holder.isValidAndResetToken('/not/my/url', token))
+        assertFalse("unknown token should be rejected", holder.isValidAndResetToken('/my/url', 'not-a-real-token'))
+        assertTrue("rejected attempts must not consume the token", holder.isValid('/my/url', token))
+    }
+
+    @Test
     void testIncorrectURL(){
         HMacSynchronizerTokensHolder holder = createHolder('123', ['abc', 'def'])
         def token = holder.generateToken( '/my/url')
