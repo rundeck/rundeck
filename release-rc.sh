@@ -400,6 +400,21 @@ else
 
         echo "Cherry-picking PR #$PR_NUM ($PR_SHA): $PR_TITLE"
 
+        # Verified resolvable before anything else touches it: a bare command
+        # substitution assignment (the PARENTS lookup right below) is NOT exempt
+        # from `set -e`, so an unresolvable SHA here - shallow/partial clone,
+        # pruned object, any other reason `mergeCommit.oid` doesn't check out
+        # locally - would otherwise kill the entire run immediately, losing the
+        # report and rescue branch for every PR already applied. Treated as a
+        # CONFLICT for just this PR instead.
+        if ! git rev-parse --verify "${PR_SHA}^{commit}" >/dev/null 2>&1; then
+            echo "  PR #$PR_NUM references commit $PR_SHA, which isn't resolvable in this checkout (shallow clone? pruned?). Marking as CONFLICT."
+            REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"commit not resolvable locally - fetch full history"$'\t'"$PR_TITLE")
+            RESUME_CMDS["$PR_NUM"]="git fetch --unshallow (or otherwise deepen history) then retry: git cherry-pick -x $PR_SHA"
+            CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+            continue
+        fi
+
         # A merge-commit-strategy PR has multiple parents; replay only the diff
         # against its first (mainline) parent - that one commit's diff against
         # mainline is always the PR's whole diff, regardless of how many commits
@@ -483,8 +498,15 @@ else
             # Abort just this PR and keep going, so one conflict doesn't hide the status of
             # every other labeled PR - the full picture is what lets a human triage in one pass.
             CONFLICT_FILES="$(git diff --name-only --diff-filter=U | paste -sd ',' -)"
-            git cherry-pick --abort
-            echo "  conflict on: $CONFLICT_FILES - left out, continuing with the rest"
+            # Not every cherry-pick failure leaves a resumable sequencer state to
+            # abort (e.g. a bad revision or unreadable tree fails before one ever
+            # starts) - if `--abort` itself then fails, this being a bare
+            # statement would let `set -e` kill the whole run right here, losing
+            # the report and rescue branch for every PR that already succeeded.
+            # `|| true` keeps that from happening; the working tree is left as
+            # `--abort` leaves it, which for a real conflict is already clean.
+            git cherry-pick --abort || echo "  Warning: 'git cherry-pick --abort' itself failed for PR #$PR_NUM - continuing anyway; verify the working tree isn't left in a partial state."
+            echo "  conflict on: ${CONFLICT_FILES:-<none captured - cherry-pick may have failed before leaving a conflict state>} - left out, continuing with the rest"
             REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"$CONFLICT_FILES"$'\t'"$PR_TITLE")
             CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
         fi

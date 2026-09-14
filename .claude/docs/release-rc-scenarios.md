@@ -51,6 +51,7 @@ release-rc.sh 6.2.0 rc3 --push
 - Everything that **did** apply cleanly is saved to a local `rescue/v6.2.0-rc3` branch (pushed too, with `--push`) - none of that work is lost.
 - **Nothing is labeled yet**, even for the PRs that successfully cherry-picked in this run. Labeling happens only after the tag actually exists - labeling early and then aborting without tagging would mean a later, fresh run sees the label, skips that PR, and produces an RC silently missing it while still reporting success.
 - The script refuses to tag (exit 7) and prints, **for each CONFLICT PR specifically**, the exact `git cherry-pick` command to resolve it by hand (a plain SHA for most PRs, or a `<range-base>..<tip>` range for a multi-commit rebase-merge - see Scenario 5, using the wrong form silently drops commits).
+- A PR whose commit isn't even resolvable in this checkout (shallow/partial clone, pruned object) is marked CONFLICT immediately, without ever attempting a cherry-pick - and a real conflict's cleanup (`git cherry-pick --abort`) itself failing (rare, but possible if the pick failed before starting a resumable sequencer state at all) is caught too. Neither can crash the whole run and lose the report/rescue branch for every PR that already succeeded.
 
 ## Scenario 4: Finishing a conflict - the rescue branch resume
 
