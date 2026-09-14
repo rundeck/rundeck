@@ -134,5 +134,6 @@ Only the codes the script actually assigns via an explicit `exit N`. A few other
 | 10 | A `rescue/<tag>` branch exists but isn't a descendant of the previous RC tag - refused rather than trusted |
 | 11 | A `rescue/<tag>` branch (or its remote) already exists with different content than this run's candidate - refused rather than force-overwritten |
 | 13 | A labeled, merged PR has no resolvable `mergeCommit` - refused rather than silently dropped from the set |
-| 14 | The labeled PR set changed (a PR was labeled, unlabeled, or newly merged) since this run started - refused rather than tagging a stale snapshot |
+| 14 | The labeled PR set changed (a PR was labeled, unlabeled, or newly merged) since this run started - refused rather than tagging a stale snapshot; also raised if the same re-check right before tagging can't reach GitHub at all |
 | 15 | Both a local and an `origin` `rescue/<tag>` branch exist with different tips - refused rather than guessing which is authoritative |
+| 16 | Could not check `origin` for an existing `rescue/<tag>` branch at all (network/auth failure) - refused rather than treating that the same as "doesn't exist" |
