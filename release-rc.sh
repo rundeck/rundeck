@@ -29,11 +29,21 @@
 #      almost always means the wrong version was labeled, not a genuine no-op -
 #      a deliberate no-op re-tag has to go through release-tag.sh directly instead.
 #
+# If a rescue/<tag> branch already exists for the tag this invocation would
+# create (see the CONFLICT output below - it's how a previous run leaves off
+# after a manual resolution), that alone is taken as proof this run should
+# finish it rather than start over: it skips resolving/checking out the
+# previous RC tag and cherry-picking altogether, and instead verifies every
+# currently-labeled PR is already present at the branch's tip (via
+# $RC_BACKPORT_APPLIED_LABEL or its cherry-pick trailer - the exact same
+# signals used elsewhere in this script) before tagging it directly. Still
+# refuses on any PR it can't verify, same as the normal flow refuses on any
+# CONFLICT - so re-running after a resolution goes through this same script,
+# and its Slack/audit trail, instead of a bare release-tag.sh call that
+# bypasses the completeness check entirely.
+#
 # Usage:
 #   release-rc.sh <version> <rc#> [--push] [--dry-run] [--debug]
-#
-# Example:
-#   release-rc.sh 7.4.10 rc2 --push
 
 set -euo pipefail
 
@@ -48,6 +58,8 @@ function usage {
     echo "  <version>  MAJOR.MINOR.PATCH, e.g. 7.4.10"
     echo "  <rc#>      rc2 or higher, e.g. rc2, rc3"
     echo "             rc1/alpha#/GA/RBA are not handled here - use setversion.sh for those."
+    echo "             If rescue/<tag> already exists for this <version>/<rc#>, it's finished"
+    echo "             (verified, then tagged) instead of starting the backport over."
     echo ""
     echo "Flags:"
     echo "  --push      Push the new tag to origin"
@@ -90,6 +102,11 @@ VTAG="${2:-}"
 if [ -z "$VNUM" ] || [ -z "$VTAG" ]; then
     usage
 fi
+if [ "$#" -gt 2 ]; then
+    echo "Error: Unexpected argument(s): ${*:3}"
+    echo "(a mistyped flag, e.g. --pus instead of --push, lands here silently otherwise)"
+    usage
+fi
 
 if [ ! -f "$RELEASE_TAG_SH" ]; then
     echo "Error: $RELEASE_TAG_SH not found."
@@ -104,6 +121,14 @@ source "$RELEASE_VERSION_SH"  # provides validate_version_format, parse_rc_numbe
 # Extend the read/write command lists the git() wrapper (sourced from release-tag.sh)
 # checks, with the extra commands this script needs. No need to redefine git()
 # itself - it re-reads these lists on every call.
+#
+# `fetch` is deliberately treated as read-only here even under --dry-run, even
+# though it technically updates local remote-tracking refs/tags: a dry run's
+# whole point is previewing whether $PREV_TAG/$NEW_TAG already exist against
+# real, current remote tag state, which requires actually fetching it - the
+# "no changes" promise is about the release-affecting writes below (tagging,
+# pushing, cherry-picking), not this incidental, idempotent, easily-repeated
+# local ref sync.
 RELEASE_GIT_READONLY_CMDS+=" cat-file rev-list fetch"
 RELEASE_GIT_WRITE_CMDS+=" cherry-pick"
 
@@ -171,22 +196,55 @@ fi
 
 git fetch --tags --quiet
 
-if ! git rev-parse --verify "refs/tags/$PREV_TAG^{commit}" >/dev/null 2>&1; then
-    echo "Error: previous RC tag '$PREV_TAG' not found. Cannot determine base commit."
-    exit 4
-fi
-
 if git rev-parse --verify "refs/tags/$NEW_TAG^{commit}" >/dev/null 2>&1; then
     echo "Error: tag '$NEW_TAG' already exists."
     exit 5
 fi
 
-PREV_COMMIT="$(git rev-parse "refs/tags/$PREV_TAG^{commit}")"
-echo "Checking out $PREV_TAG ($PREV_COMMIT) detached"
-git checkout --detach "$PREV_COMMIT"
+# A rescue/<tag> branch already existing for the tag this run would create is
+# proof enough that a previous run left off here (see the CONFLICT output
+# below) - resume from it instead of starting the backport over. Checked on
+# both origin (the normal case - a previous --push run) and locally (in case
+# --push wasn't used, or this happens to be the same checkout).
+RESCUE_BRANCH="rescue/$NEW_TAG"
+RESUME_COMMIT=""
+if git ls-remote --exit-code --heads origin "$RESCUE_BRANCH" >/dev/null 2>&1; then
+    git fetch --quiet origin "$RESCUE_BRANCH"
+    RESUME_COMMIT="$(git rev-parse FETCH_HEAD)"
+elif git rev-parse --verify "refs/heads/$RESCUE_BRANCH" >/dev/null 2>&1; then
+    RESUME_COMMIT="$(git rev-parse "refs/heads/$RESCUE_BRANCH")"
+fi
+
+if [ -n "$RESUME_COMMIT" ]; then
+    echo "Found existing $RESCUE_BRANCH ($RESUME_COMMIT) - resuming from it instead of starting the backport over."
+    TRAILER_SCAN_BASE="$RESUME_COMMIT"
+else
+    if ! git rev-parse --verify "refs/tags/$PREV_TAG^{commit}" >/dev/null 2>&1; then
+        echo "Error: previous RC tag '$PREV_TAG' not found. Cannot determine base commit."
+        exit 4
+    fi
+    PREV_COMMIT="$(git rev-parse "refs/tags/$PREV_TAG^{commit}")"
+    echo "Checking out $PREV_TAG ($PREV_COMMIT) detached"
+    git checkout --detach "$PREV_COMMIT"
+    TRAILER_SCAN_BASE="$PREV_COMMIT"
+fi
 
 echo "Looking up merged PRs labeled '$RC_BACKPORT_LABEL'..."
-PR_DATA="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L 200 \
+# A fixed page size could silently truncate the result, after which the checks
+# below would treat the truncated list as the complete labeled set and tag an
+# incomplete RC while reporting success. PR_LABEL_FETCH_LIMIT is set far above
+# any realistic number of PRs backported into a single RC line, but the count
+# is still checked against it below rather than trusted blindly.
+PR_LABEL_FETCH_LIMIT=1000
+PR_RAW_COUNT="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
+    --json number --jq 'length')"
+if [ "$PR_RAW_COUNT" -ge "$PR_LABEL_FETCH_LIMIT" ]; then
+    echo "Error: gh pr list returned $PR_RAW_COUNT PRs labeled '$RC_BACKPORT_LABEL', at or above the fetch"
+    echo "limit of $PR_LABEL_FETCH_LIMIT - there may be more matching merged PRs than were fetched, which would let"
+    echo "a partial set be tagged as complete. Raise PR_LABEL_FETCH_LIMIT in this script and re-run."
+    exit 9
+fi
+PR_DATA="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
     --json number,title,mergedAt,mergeCommit,labels,commits \
     --jq 'sort_by(.mergedAt)[] | select(.mergeCommit != null) | [.number, .mergeCommit.oid, .title, ([.labels[].name] | join(",")), (.commits | length)] | @tsv')"
 
@@ -203,19 +261,42 @@ PR_DATA="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L 200 \
 # below) is authoritative and catches manual backports that don't preserve the
 # trailer. Both are checked so a PR is never re-attempted just because one of the
 # two signals is missing.
-ALREADY_APPLIED="$(git log --format=%B "$PREV_COMMIT" | grep -oE '\(cherry picked from commit [0-9a-f]{40}\)' | grep -oE '[0-9a-f]{40}')"
+#
+# `|| true` guards the ordinary "no trailers yet" case (e.g. cutting the very
+# first rc2 of a release line, where $TRAILER_SCAN_BASE is rc1 and carries none) -
+# under `set -euo pipefail` an empty grep match exits 1, and since this is a
+# plain assignment (not part of an if/while condition), that would otherwise
+# kill the script here, before a single PR is even looked up.
+#
+# $TRAILER_SCAN_BASE is $PREV_COMMIT normally, or $RESUME_COMMIT when finishing
+# a manually-resolved rescue branch - either way, it's the commit whose ancestry
+# is checked for each PR's trailer.
+ALREADY_APPLIED="$(git log --format=%B "$TRAILER_SCAN_BASE" | grep -oE '\(cherry picked from commit [0-9a-f]{40}\)' | grep -oE '[0-9a-f]{40}' || true)"
 
 # Per-PR outcome, tab-separated: number / sha / status / detail / title.
 # status is one of: already-applied | applied | CONFLICT
 REPORT=()
 CONFLICT_COUNT=0
+# PR numbers cherry-picked fresh in this run - only labeled $RC_BACKPORT_APPLIED_LABEL
+# once $NEW_TAG is actually created (see below), never earlier: labeling them as
+# soon as each cherry-pick succeeds would be premature - if a LATER PR in this
+# same run conflicts, the run aborts without tagging (only a rescue branch is
+# saved), but those earlier PRs would already carry the label. A rerun then
+# starts fresh from $PREV_TAG, sees the label, and skips them even though their
+# commits only ever existed on the abandoned/rescue candidate - producing an RC
+# that's missing them while still reporting success.
+NEWLY_APPLIED_PR_NUMS=()
+# PR number -> the exact command that would apply it, for the resolve
+# instructions below - single-commit vs range (rebase-merge) needs a different
+# command, so a single generic hint would be wrong for some CONFLICT PRs.
+declare -A RESUME_CMDS
 
 if [ -z "$PR_DATA" ]; then
     echo "Error: No merged PRs found with label '$RC_BACKPORT_LABEL'. Refusing to cut $NEW_TAG with nothing to backport -"
     echo "this almost always means the wrong version was labeled, or nothing was labeled yet, not that $NEW_TAG is"
-    echo "genuinely a no-op re-tag of $PREV_TAG."
+    echo "genuinely a no-op re-tag of $TRAILER_SCAN_BASE."
     echo "If a no-op re-tag is really what's intended, do it explicitly instead of through this script:"
-    echo "  $RELEASE_TAG_SH $NEW_TAG $PREV_COMMIT [--push]"
+    echo "  $RELEASE_TAG_SH $NEW_TAG $TRAILER_SCAN_BASE [--push]"
     exit 8
 else
     mapfile -t PR_LINES <<< "$PR_DATA"
@@ -245,6 +326,17 @@ else
                         || echo "  Warning: failed to backfill '$RC_BACKPORT_APPLIED_LABEL' on PR #$PR_NUM"
                 fi
             fi
+            continue
+        fi
+
+        if [ -n "$RESUME_COMMIT" ]; then
+            # Resuming only ever verifies - it never cherry-picks onto $RESUME_COMMIT,
+            # since that would mean guessing at a base HEAD isn't even checked out
+            # to. A PR that isn't already-applied here is a genuine gap in the
+            # rescue branch, not something to fix by picking onto an unrelated tree.
+            echo "PR #$PR_NUM ($PR_SHA): NOT found at $RESUME_COMMIT (no '$RC_BACKPORT_APPLIED_LABEL' label, no matching cherry-pick trailer)"
+            REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"missing from $RESCUE_BRANCH"$'\t'"$PR_TITLE")
+            CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
             continue
         fi
 
@@ -283,19 +375,25 @@ else
                     echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits (mergeCommit alone doesn't match the full PR diff) - cherry-picking the whole range $RANGE_BASE..$PR_SHA instead of just the tip"
                     CHERRY_PICK_TARGET="${RANGE_BASE}..${PR_SHA}"
                 else
-                    echo "  Warning: PR #$PR_NUM looks like a multi-commit rebase-merge, but $RANGE_BASE isn't reachable (shallow history?) - falling back to a single-commit cherry-pick of the tip only, which may be INCOMPLETE. Verify manually."
+                    # Refusing to fall back to a single-commit pick here - that would
+                    # silently ship an INCOMPLETE backport, the exact failure mode this
+                    # whole range-detection exists to prevent. Treated as a CONFLICT so
+                    # it blocks the tag like any other unresolved PR, instead of a
+                    # warning that's easy to miss in a long run's output.
+                    echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits, but $RANGE_BASE isn't reachable (shallow history?) - refusing to cherry-pick only the tip. Marking as CONFLICT."
+                    REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"range base $RANGE_BASE unreachable - fetch full history"$'\t'"$PR_TITLE")
+                    RESUME_CMDS["$PR_NUM"]="git fetch --unshallow (or otherwise deepen history) then: git cherry-pick -x ${RANGE_BASE}..${PR_SHA}"
+                    CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+                    continue
                 fi
             fi
         fi
 
+        RESUME_CMDS["$PR_NUM"]="git cherry-pick ${CHERRY_PICK_ARGS[*]} $CHERRY_PICK_TARGET"
+
         if git cherry-pick "${CHERRY_PICK_ARGS[@]}" "$CHERRY_PICK_TARGET"; then
             REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"applied"$'\t'"$(git rev-parse --short HEAD)"$'\t'"$PR_TITLE")
-            if [ "$DRY_RUN" = true ]; then
-                echo "[DRY-RUN] gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
-            else
-                gh pr edit "$PR_NUM" --add-label "$RC_BACKPORT_APPLIED_LABEL" \
-                    || echo "  Warning: failed to add '$RC_BACKPORT_APPLIED_LABEL' to PR #$PR_NUM - label it manually so future RC runs recognize it's applied"
-            fi
+            NEWLY_APPLIED_PR_NUMS+=("$PR_NUM")
         else
             # Deliberately not auto-resolving (e.g. -X ours/theirs) - guessing wrong on a
             # release cherry-pick ships a silent regression, which is worse than stopping here.
@@ -319,10 +417,27 @@ for entry in "${REPORT[@]}"; do
 done
 echo ""
 
-FINAL_COMMIT="$(git rev-parse HEAD)"
+if [ -n "$RESUME_COMMIT" ]; then
+    FINAL_COMMIT="$RESUME_COMMIT"
+else
+    FINAL_COMMIT="$(git rev-parse HEAD)"
+fi
 
 if [ "$CONFLICT_COUNT" -gt 0 ]; then
-    RESCUE_BRANCH="rescue/$NEW_TAG"
+    if [ -n "$RESUME_COMMIT" ]; then
+        # Resuming never cherry-picks (see above), so there's nothing new to save
+        # to a rescue branch - $RESCUE_BRANCH is exactly the one just checked and
+        # still genuinely missing PR(s). Point back at it instead of restating the
+        # full cherry-pick instructions, which don't apply to how it got here.
+        echo ""
+        echo "Error: $RESCUE_BRANCH ($RESUME_COMMIT) is still missing $CONFLICT_COUNT PR(s) marked CONFLICT above."
+        echo "Refusing to tag $NEW_TAG - a release tag must include every PR labeled '$RC_BACKPORT_LABEL', never a partial set."
+        echo ""
+        echo "To resolve: on $RESCUE_BRANCH, cherry-pick the still-missing PR(s), label each"
+        echo "$RC_BACKPORT_APPLIED_LABEL as you go, push, then re-run this same command."
+        exit 7
+    fi
+
     if [ "$DRY_RUN" = true ]; then
         echo "[DRY-RUN] git branch -f $RESCUE_BRANCH HEAD"
     else
@@ -340,15 +455,40 @@ if [ "$CONFLICT_COUNT" -gt 0 ]; then
     echo ""
     echo "To resolve:"
     echo "  1. git checkout $RESCUE_BRANCH"
-    echo "  2. For each CONFLICT PR above: git cherry-pick <sha> (add -m 1 if it's a merge commit),"
-    echo "     resolve the listed files, git add <files>, git cherry-pick --continue"
+    echo "  2. For each CONFLICT PR above, run its specific command (single-commit vs. range differs"
+    echo "     per PR - using the wrong one can drop commits), resolve the listed files, git add <files>,"
+    echo "     git cherry-pick --continue:"
+    for entry in "${REPORT[@]}"; do
+        IFS=$'\t' read -r R_NUM R_SHA R_STATUS R_DETAIL R_TITLE <<< "$entry"
+        if [ "$R_STATUS" = "CONFLICT" ]; then
+            echo "       PR #$R_NUM: ${RESUME_CMDS[$R_NUM]:-git cherry-pick -x $R_SHA}"
+        fi
+    done
     echo "     Then label it, regardless of the commit message used to continue -"
     echo "     future RC runs rely on this label, not the commit message, to know it's done:"
     echo "       gh pr edit <PR#> --add-label $RC_BACKPORT_APPLIED_LABEL"
-    echo "  3. Once every PR is in, tag manually:"
-    echo "       $RELEASE_TAG_SH $NEW_TAG \$(git rev-parse HEAD) [--push]"
+    echo "  3. Once every PR is in, push $RESCUE_BRANCH (if not already) and re-run this same command -"
+    echo "     it will find the branch and finish by tagging it, instead of starting over:"
+    echo "       git push origin $RESCUE_BRANCH"
     exit 7
 fi
 
-echo "All labeled PRs applied cleanly. Final commit for $NEW_TAG: $FINAL_COMMIT"
-create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NUM"
+echo "All labeled PRs verified present. Final commit for $NEW_TAG: $FINAL_COMMIT"
+if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NUM"; then
+    # Only now that $NEW_TAG genuinely exists are freshly-cherry-picked PRs
+    # labeled - see NEWLY_APPLIED_PR_NUMS above for why not sooner.
+    if [ "${#NEWLY_APPLIED_PR_NUMS[@]}" -gt 0 ]; then
+        echo ""
+        echo "Labeling newly-applied PRs '$RC_BACKPORT_APPLIED_LABEL' now that $NEW_TAG exists..."
+        for PR_NUM in "${NEWLY_APPLIED_PR_NUMS[@]}"; do
+            if [ "$DRY_RUN" = true ]; then
+                echo "[DRY-RUN] gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
+            else
+                gh pr edit "$PR_NUM" --add-label "$RC_BACKPORT_APPLIED_LABEL" \
+                    || echo "  Warning: failed to add '$RC_BACKPORT_APPLIED_LABEL' to PR #$PR_NUM - label it manually so future RC runs recognize it's applied"
+            fi
+        done
+    fi
+else
+    exit $?
+fi

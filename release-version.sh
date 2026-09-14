@@ -30,7 +30,10 @@ function version_major_minor {
 function parse_rc_number {
     local tag="$1"
     if [[ "$tag" =~ ^rc([0-9]+)$ ]]; then
-        echo "${BASH_REMATCH[1]}"
+        # Force base-10 and strip any leading zeros (e.g. "rc08" -> 8): callers
+        # use the result in bash arithmetic ($((...))), which parses a leading
+        # zero as an (invalid, for digits 8/9) octal literal otherwise.
+        echo "$((10#${BASH_REMATCH[1]}))"
         return 0
     fi
     return 1
