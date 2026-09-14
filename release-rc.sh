@@ -11,11 +11,17 @@
 # What it does:
 #   1. Resolves the previous RC tag (new rcN - 1) for the same version and checks it
 #      out detached - that commit is the base, not whatever is on the release branch now.
-#   2. Attempts to cherry-pick the merge commit of every merged PR labeled
-#      $RC_BACKPORT_LABEL, in merge order, regardless of whether the PR was
-#      merge-commit, squash, or rebase merged. Every PR is attempted - a conflict on
-#      one does not stop the others from being tried - and a full status report
-#      (applied / already-applied / CONFLICT) is printed at the end.
+#   2. Attempts to cherry-pick every merged PR labeled $RC_BACKPORT_LABEL, in merge
+#      order, regardless of whether it was merge-commit, squash, or rebase merged:
+#      merge-commit PRs replay mergeCommit's diff against its mainline parent;
+#      squash (and single-commit) PRs cherry-pick mergeCommit alone; multi-commit
+#      rebase-merged PRs - where mergeCommit is only the LAST of several commits
+#      individually replayed onto the base, detected by comparing its patch-id
+#      against the full PR diff's - cherry-pick the whole commit range instead of
+#      just the tip, so no earlier commit in the PR is silently dropped. Every PR
+#      is attempted - a conflict on one does not stop the others from being tried -
+#      and a full status report (applied / already-applied / CONFLICT) is printed
+#      at the end.
 #   3. Refuses to tag if even one PR failed to apply: a release tag must represent
 #      the complete labeled set, never a partial one. Only tags + optionally pushes
 #      via create_and_push_tag() (release-tag.sh) when every PR applied cleanly.
@@ -178,8 +184,8 @@ git checkout --detach "$PREV_COMMIT"
 
 echo "Looking up merged PRs labeled '$RC_BACKPORT_LABEL'..."
 PR_DATA="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L 200 \
-    --json number,title,mergedAt,mergeCommit,labels \
-    --jq 'sort_by(.mergedAt)[] | select(.mergeCommit != null) | [.number, .mergeCommit.oid, .title, ([.labels[].name] | join(","))] | @tsv')"
+    --json number,title,mergedAt,mergeCommit,labels,commits \
+    --jq 'sort_by(.mergedAt)[] | select(.mergeCommit != null) | [.number, .mergeCommit.oid, .title, ([.labels[].name] | join(",")), (.commits | length)] | @tsv')"
 
 # Every automated cherry-pick below uses `-x`, which appends "(cherry picked from
 # commit <sha>)" to the resulting commit message. That trailer is what makes
@@ -206,7 +212,7 @@ if [ -z "$PR_DATA" ]; then
 else
     mapfile -t PR_LINES <<< "$PR_DATA"
     for line in "${PR_LINES[@]}"; do
-        IFS=$'\t' read -r PR_NUM PR_SHA PR_TITLE PR_LABELS_CSV <<< "$line"
+        IFS=$'\t' read -r PR_NUM PR_SHA PR_TITLE PR_LABELS_CSV PR_COMMIT_COUNT <<< "$line"
 
         ALREADY_LABELED=false
         if [[ ",$PR_LABELS_CSV," == *",$RC_BACKPORT_APPLIED_LABEL,"* ]]; then
@@ -237,15 +243,44 @@ else
         echo "Cherry-picking PR #$PR_NUM ($PR_SHA): $PR_TITLE"
 
         # A merge-commit-strategy PR has multiple parents; replay only the diff
-        # against its first (mainline) parent. Squash/rebase merges are single-parent
-        # and cherry-pick normally.
+        # against its first (mainline) parent - that one commit's diff against
+        # mainline is always the PR's whole diff, regardless of how many commits
+        # the PR had, so a single cherry-pick is always correct here.
         PARENTS=($(git log -1 --pretty=%P "$PR_SHA"))
+        CHERRY_PICK_TARGET="$PR_SHA"
         CHERRY_PICK_ARGS=(-x)
         if [ "${#PARENTS[@]}" -gt 1 ]; then
             CHERRY_PICK_ARGS+=(-m 1)
+        elif [ "${PR_COMMIT_COUNT:-1}" -gt 1 ]; then
+            # Single-parent PRs with more than one original commit are ambiguous:
+            # squash-merge folds every commit into this one (single cherry-pick is
+            # the whole PR diff, correct), but rebase-merge replays each original
+            # commit individually onto the base as its own commit and mergeCommit
+            # is only the LAST of that chain - cherry-picking just the tip would
+            # silently drop every earlier commit in the PR. (Verified against a
+            # real rebase-merged PR: a 4-commit PR's mergeCommit alone touched only
+            # 1 of the 4 changed files.) Parent count can't tell these apart -
+            # squash also produces a single-parent commit - so compare the tip
+            # commit's patch-id against the full PR's patch-id: identical means
+            # squash (or a rebase of a PR whose commits happen to net the same
+            # diff as its last commit alone, vanishingly unlikely in practice);
+            # different means rebase-merge, and the range of the last
+            # PR_COMMIT_COUNT first-parent commits ending at mergeCommit is
+            # cherry-picked instead of just the tip.
+            FULL_PR_PATCH_ID="$(gh pr diff "$PR_NUM" | git patch-id --stable | awk '{print $1}')"
+            TIP_PATCH_ID="$(git diff "$PR_SHA"^ "$PR_SHA" | git patch-id --stable | awk '{print $1}')"
+            if [ -n "$FULL_PR_PATCH_ID" ] && [ "$FULL_PR_PATCH_ID" != "$TIP_PATCH_ID" ]; then
+                RANGE_BASE="$PR_SHA~$PR_COMMIT_COUNT"
+                if git rev-parse --verify "${RANGE_BASE}^{commit}" >/dev/null 2>&1; then
+                    echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits (mergeCommit alone doesn't match the full PR diff) - cherry-picking the whole range $RANGE_BASE..$PR_SHA instead of just the tip"
+                    CHERRY_PICK_TARGET="${RANGE_BASE}..${PR_SHA}"
+                else
+                    echo "  Warning: PR #$PR_NUM looks like a multi-commit rebase-merge, but $RANGE_BASE isn't reachable (shallow history?) - falling back to a single-commit cherry-pick of the tip only, which may be INCOMPLETE. Verify manually."
+                fi
+            fi
         fi
 
-        if git cherry-pick "${CHERRY_PICK_ARGS[@]}" "$PR_SHA"; then
+        if git cherry-pick "${CHERRY_PICK_ARGS[@]}" "$CHERRY_PICK_TARGET"; then
             REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"applied"$'\t'"$(git rev-parse --short HEAD)"$'\t'"$PR_TITLE")
             if [ "$DRY_RUN" = true ]; then
                 echo "[DRY-RUN] gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
