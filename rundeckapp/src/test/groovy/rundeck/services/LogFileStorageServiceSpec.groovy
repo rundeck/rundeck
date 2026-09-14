@@ -1789,4 +1789,54 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
     }
 
+    def "afterPropertiesSet starts one storage consumer, one retrieval consumer and the periodic scheduler when a plugin is configured"() {
+        given: "a configured log file storage plugin and the given resume strategy"
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> 'test1'
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> strategy
+            _ * getInteger(_, _) >> 5
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+
+        when:
+        service.afterPropertiesSet()
+
+        then: "exactly one consumer per queue is started"
+        1 * service.logFileStorageTaskExecutor.execute(_ as TaskRunner)
+        1 * service.logFileTaskExecutor.execute(_ as TaskRunner)
+
+        and: "the periodic dequeue scheduler is registered only for the periodic strategy"
+        schedCount * service.logFileStorageTaskScheduler.scheduleAtFixedRate(*_)
+        0 * service.logFileStorageTaskScheduler._
+
+        where:
+        strategy   | schedCount
+        'periodic' | 1
+        'delayed'  | 0
+    }
+
+    def "afterPropertiesSet starts nothing and does not fail when no plugin is configured"() {
+        given: "no log file storage plugin configured"
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> pluginName
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'periodic'
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+
+        when:
+        service.afterPropertiesSet()
+
+        then: "no consumer or scheduler is started and initialization completes"
+        0 * service.logFileStorageTaskExecutor._
+        0 * service.logFileTaskExecutor._
+        0 * service.logFileStorageTaskScheduler._
+        noExceptionThrown()
+
+        where:
+        pluginName << [null, '']
+    }
 }
