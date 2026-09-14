@@ -88,10 +88,9 @@ If `git push` for the new tag itself fails (network blip, permissions, etc.) aft
 
 GitHub's "Rebase and merge" replays each of a PR's original commits individually onto the base - `mergeCommit` is only the **last** of that chain, not a single commit representing the whole PR (unlike a squash merge, which really is one commit for the whole diff). Cherry-picking just `mergeCommit` for such a PR would silently drop every earlier commit.
 
-The script detects this by comparing `mergeCommit`'s patch-id against the full PR diff's patch-id:
-- **Match** -> squash-merge (or a naturally single-commit PR) - single cherry-pick, as normal.
-- **Mismatch** -> rebase-merge - cherry-picks the whole range (`mergeCommit~N..mergeCommit`, where N = the PR's original commit count) in one shot instead of just the tip.
-- If the range's base commit isn't reachable (e.g. shallow history), it's marked **CONFLICT** rather than silently falling back to an incomplete single-commit pick.
+The script detects this in two stages, since a tip mismatch alone isn't proof - GitHub's rendered PR diff and a local `git diff` of the same content can differ for reasons unrelated to merge strategy (rename detection, diff config), which could otherwise misclassify a squash PR and let the computed range sweep in unrelated commits from mainline history:
+1. Compare `mergeCommit`'s patch-id against the full PR diff's patch-id. **Match** -> squash-merge (or a naturally single-commit PR) - single cherry-pick, as normal, nothing further to check. **Mismatch** -> possibly rebase-merge, continue to step 2.
+2. Compute the range `mergeCommit~N..mergeCommit` (N = the PR's original commit count) and verify *its own* aggregate patch-id also matches the full PR diff. **Match** -> confirmed rebase-merge, cherry-pick the whole range instead of just the tip. **No match** (or the range's base commit isn't reachable, e.g. shallow history) -> marked **CONFLICT** for manual classification - this is an expected, documented outcome when the PR's history doesn't cleanly fit either model, not an undocumented failure - rather than guessing and risking an incomplete or incorrect backport.
 
 ## Scenario 6: Multiple RC generations, some PRs old, some new
 

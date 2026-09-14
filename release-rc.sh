@@ -84,7 +84,8 @@ for arg in "$@"; do
             ;;
         --dry-run)
             DRY_RUN=true
-            echo "[DRY-RUN MODE] No changes will be made"
+            echo "[DRY-RUN MODE] Rehearses for real: checks out the base commit and cherry-picks onto it (both local-only,"
+            echo "left as a detached HEAD with local commits when this exits). No tag, push, rescue branch, or GitHub label is made."
             ;;
         --debug|-v)
             DEBUG=true
@@ -263,14 +264,17 @@ else
 fi
 
 echo "Looking up merged PRs labeled '$RC_BACKPORT_LABEL'..."
-# A fixed page size could silently truncate the result, after which the checks
-# below would treat the truncated list as the complete labeled set and tag an
-# incomplete RC while reporting success. PR_LABEL_FETCH_LIMIT is set far above
-# any realistic number of PRs backported into a single RC line, but the count
-# is still checked against it below rather than trusted blindly.
+# Fetched exactly once as a single JSON snapshot - PR_RAW_COUNT, the null-
+# mergeCommit check, and PR_DATA below all derive from this same response.
+# Three separate `gh pr list` calls could each observe a different, mutually
+# inconsistent state of the label (a PR merged or (un)labeled between them),
+# which would then be silently reconciled into a wrong "complete" set instead
+# of ever being caught. A second, cheap fetch immediately before tagging
+# (see below) catches the set changing between this snapshot and then.
 PR_LABEL_FETCH_LIMIT=1000
-PR_RAW_COUNT="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
-    --json number --jq 'length')"
+PR_LIST_JSON="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
+    --json number,title,mergedAt,mergeCommit,labels)"
+PR_RAW_COUNT="$(jq 'length' <<< "$PR_LIST_JSON")"
 if [ "$PR_RAW_COUNT" -ge "$PR_LABEL_FETCH_LIMIT" ]; then
     echo "Error: gh pr list returned $PR_RAW_COUNT PRs labeled '$RC_BACKPORT_LABEL', at or above the fetch"
     echo "limit of $PR_LABEL_FETCH_LIMIT - there may be more matching merged PRs than were fetched, which would let"
@@ -284,8 +288,7 @@ fi
 # guards the fetch-limit cap, not this filtering, so a mixed set would proceed
 # to tag with that PR quietly missing, defeating the whole completeness
 # guarantee. Refuse instead of guessing.
-PR_NULL_MERGE_COMMIT_NUMS="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
-    --json number,mergeCommit --jq '.[] | select(.mergeCommit == null) | .number')"
+PR_NULL_MERGE_COMMIT_NUMS="$(jq -r '.[] | select(.mergeCommit == null) | .number' <<< "$PR_LIST_JSON")"
 if [ -n "$PR_NULL_MERGE_COMMIT_NUMS" ]; then
     echo "Error: PR(s) labeled '$RC_BACKPORT_LABEL' have no resolvable merge commit (mergeCommit is null), so they can't be included:"
     while IFS= read -r n; do echo "  #$n"; done <<< "$PR_NULL_MERGE_COMMIT_NUMS"
@@ -293,14 +296,15 @@ if [ -n "$PR_NULL_MERGE_COMMIT_NUMS" ]; then
     echo "Investigate why GitHub reports no merge commit for these (unusual for a merged PR) before re-running."
     exit 13
 fi
-# Commit count is NOT fetched here via `--json commits` - `gh`'s underlying
+# Commit count is NOT in this snapshot via `--json commits` - `gh`'s underlying
 # GraphQL query for that field is a paginated node list capped well under 200
 # nodes, so `.commits | length` silently undercounts a PR with more commits
 # than that cap. Fetched per-PR below instead, from the REST API's plain
 # scalar `commits` count field, which has no such cap.
-PR_DATA="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
-    --json number,title,mergedAt,mergeCommit,labels \
-    --jq 'sort_by(.mergedAt)[] | select(.mergeCommit != null) | [.number, .mergeCommit.oid, .title, ([.labels[].name] | join(","))] | @tsv')"
+PR_DATA="$(jq -r 'sort_by(.mergedAt)[] | select(.mergeCommit != null) | [.number, .mergeCommit.oid, .title, ([.labels[].name] | join(","))] | @tsv' <<< "$PR_LIST_JSON")"
+# The exact set of PR numbers in this snapshot, compared again immediately
+# before tagging (see below) to catch the labeled set changing mid-run.
+INITIAL_PR_NUM_SET="$(jq -r '[.[].number] | sort | @tsv' <<< "$PR_LIST_JSON")"
 
 # Every automated cherry-pick below uses `-x`, which appends "(cherry picked from
 # commit <sha>)" to the resulting commit message. That trailer is what makes
@@ -591,6 +595,21 @@ if [ "$CONFLICT_COUNT" -gt 0 ]; then
     echo "     it will find the branch and finish by tagging it, instead of starting over:"
     echo "       git push origin $RESCUE_BRANCH"
     exit 7
+fi
+
+# Re-checked right before tagging: the cherry-pick loop above can take a
+# while, and INITIAL_PR_NUM_SET could be stale by now - a PR merged and
+# labeled after this run started (or unlabeled/un-merged) would otherwise
+# never be reconsidered, and the tag would go out with the wrong set while
+# still reporting "complete". Cheap (just PR numbers, no full re-fetch of
+# titles/commits/labels) since only the CURRENT set is needed to detect drift.
+CURRENT_PR_NUM_SET="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
+    --json number --jq '[.[].number] | sort | @tsv')"
+if [ "$CURRENT_PR_NUM_SET" != "$INITIAL_PR_NUM_SET" ]; then
+    echo "Error: the set of PRs labeled '$RC_BACKPORT_LABEL' changed since this run started"
+    echo "(one was labeled, unlabeled, or newly merged in the meantime) - refusing to tag $NEW_TAG"
+    echo "against a stale snapshot. Re-run to pick up the current set."
+    exit 14
 fi
 
 echo "All labeled PRs verified present. Final commit for $NEW_TAG: $FINAL_COMMIT"
