@@ -70,7 +70,7 @@ release-rc.sh 6.2.0 rc3 --push
 
 This keeps the whole flow - and its Slack/audit trail - inside the Rundeck job, instead of requiring a bare `release-tag.sh` call that bypasses the completeness check entirely.
 
-**Label the PR immediately after any manual cherry-pick**, on the rescue branch or otherwise - the resume verification (and every future run) relies on the label or trailer, not on you remembering it got in.
+**Push before you label.** After resolving on the rescue branch, `git push origin rescue/v6.2.0-rc3` *first*, then label the PR(s) you just resolved - never the other way around. The label is trusted on its own (no ancestry check), so labeling a commit that only exists in your local checkout would let a run started elsewhere skip that PR while its commits don't durably exist anywhere yet.
 
 **The rescue branch is never force-created or force-pushed.** If one already exists locally or on origin with different content than what this run just produced - a race with a concurrent run, or in-progress manual work the auto-detection above somehow missed - creating/pushing refuses (exit 11) rather than overwriting it. Investigate what's there before proceeding.
 
@@ -134,3 +134,4 @@ Only the codes the script actually assigns via an explicit `exit N`. A few other
 | 10 | A `rescue/<tag>` branch exists but isn't a descendant of the previous RC tag - refused rather than trusted |
 | 11 | A `rescue/<tag>` branch (or its remote) already exists with different content than this run's candidate - refused rather than force-overwritten |
 | 13 | A labeled, merged PR has no resolvable `mergeCommit` - refused rather than silently dropped from the set |
+| 14 | The labeled PR set changed (a PR was labeled, unlabeled, or newly merged) since this run started - refused rather than tagging a stale snapshot |

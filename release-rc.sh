@@ -542,8 +542,10 @@ if [ "$CONFLICT_COUNT" -gt 0 ]; then
         echo "Error: $RESCUE_BRANCH ($RESUME_COMMIT) is still missing $CONFLICT_COUNT PR(s) marked CONFLICT above."
         echo "Refusing to tag $NEW_TAG - a release tag must include every PR labeled '$RC_BACKPORT_LABEL', never a partial set."
         echo ""
-        echo "To resolve: on $RESCUE_BRANCH, cherry-pick the still-missing PR(s), label each"
-        echo "$RC_BACKPORT_APPLIED_LABEL as you go, push, then re-run this same command."
+        echo "To resolve: on $RESCUE_BRANCH, cherry-pick the still-missing PR(s), push the branch FIRST,"
+        echo "then label each one $RC_BACKPORT_APPLIED_LABEL (not before pushing - a run started elsewhere"
+        echo "would otherwise trust the label for a commit that doesn't durably exist anywhere yet), then"
+        echo "re-run this same command."
         exit 7
     fi
 
@@ -581,19 +583,22 @@ if [ "$CONFLICT_COUNT" -gt 0 ]; then
     echo "  1. git checkout $RESCUE_BRANCH"
     echo "  2. For each CONFLICT PR above, run its specific command (single-commit vs. range differs"
     echo "     per PR - using the wrong one can drop commits), resolve the listed files, git add <files>,"
-    echo "     git cherry-pick --continue:"
+    echo "     git cherry-pick --continue - but do NOT label anything yet:"
     for entry in "${REPORT[@]}"; do
         IFS=$'\t' read -r R_NUM R_SHA R_STATUS R_DETAIL R_TITLE <<< "$entry"
         if [ "$R_STATUS" = "CONFLICT" ]; then
             echo "       PR #$R_NUM: ${RESUME_CMDS[$R_NUM]:-git cherry-pick -x $R_SHA}"
         fi
     done
-    echo "     Then label it, regardless of the commit message used to continue -"
-    echo "     future RC runs rely on this label, not the commit message, to know it's done:"
-    echo "       gh pr edit <PR#> --add-label $RC_BACKPORT_APPLIED_LABEL"
-    echo "  3. Once every PR is in, push $RESCUE_BRANCH (if not already) and re-run this same command -"
-    echo "     it will find the branch and finish by tagging it, instead of starting over:"
+    echo "  3. Once every PR is in, push $RESCUE_BRANCH FIRST:"
     echo "       git push origin $RESCUE_BRANCH"
+    echo "  4. Only THEN label each PR you just resolved by hand, regardless of the commit message used"
+    echo "     to continue - future RC runs rely on this label, not the commit message, to know it's done."
+    echo "     Labeling before the push would let a run started elsewhere trust the label for a commit"
+    echo "     that doesn't durably exist anywhere yet:"
+    echo "       gh pr edit <PR#> --add-label $RC_BACKPORT_APPLIED_LABEL"
+    echo "  5. Re-run this same command - it will find the (now-pushed) branch and finish by tagging it,"
+    echo "     instead of starting over."
     exit 7
 fi
 
@@ -639,7 +644,17 @@ if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NU
                     || echo "  Warning: failed to add '$RC_BACKPORT_APPLIED_LABEL' to PR #$PR_NUM - label it manually so future RC runs recognize it's applied"
             done
         else
-            echo "Not labeling any PR - $NEW_TAG only exists locally without --push. Re-run with --push once you're ready to make this durable."
+            # NOT "just re-run with --push": $NEW_TAG now exists locally, so a
+            # later re-run - even with --push added - would fail at the
+            # tag-already-exists check before ever reaching a push or a label.
+            # The only way to finish from here is to push this exact tag and
+            # label these PRs directly.
+            echo "Not labeling any PR - $NEW_TAG only exists locally without --push."
+            echo "Re-running will NOT work now (it will fail - $NEW_TAG already exists locally). To make this durable instead:"
+            echo "  git push origin $NEW_TAG"
+            for PR_NUM in "${PRS_TO_LABEL[@]}"; do
+                echo "  gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
+            done
         fi
     fi
 
