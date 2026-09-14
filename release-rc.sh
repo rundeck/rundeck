@@ -25,6 +25,9 @@
 #   3. Refuses to tag if even one PR failed to apply: a release tag must represent
 #      the complete labeled set, never a partial one. Only tags + optionally pushes
 #      via create_and_push_tag() (release-tag.sh) when every PR applied cleanly.
+#   4. Refuses to tag if NO PR is labeled at all: an rc2+ with nothing to backport
+#      almost always means the wrong version was labeled, not a genuine no-op -
+#      a deliberate no-op re-tag has to go through release-tag.sh directly instead.
 #
 # Usage:
 #   release-rc.sh <version> <rc#> [--push] [--dry-run] [--debug]
@@ -208,7 +211,12 @@ REPORT=()
 CONFLICT_COUNT=0
 
 if [ -z "$PR_DATA" ]; then
-    echo "No merged PRs found with label '$RC_BACKPORT_LABEL'. Nothing to cherry-pick."
+    echo "Error: No merged PRs found with label '$RC_BACKPORT_LABEL'. Refusing to cut $NEW_TAG with nothing to backport -"
+    echo "this almost always means the wrong version was labeled, or nothing was labeled yet, not that $NEW_TAG is"
+    echo "genuinely a no-op re-tag of $PREV_TAG."
+    echo "If a no-op re-tag is really what's intended, do it explicitly instead of through this script:"
+    echo "  $RELEASE_TAG_SH $NEW_TAG $PREV_COMMIT [--push]"
+    exit 8
 else
     mapfile -t PR_LINES <<< "$PR_DATA"
     for line in "${PR_LINES[@]}"; do
