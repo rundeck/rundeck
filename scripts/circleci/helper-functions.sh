@@ -50,8 +50,8 @@ rundeck_pull_image() {
     docker_login
     local jreVersion=${1:-}
     local JRE_SUFFIX=""
-    if [[ "${jreVersion}" == *"25"* ]]; then
-        JRE_SUFFIX="-j25"
+    if [[ "${jreVersion}" == *"21"* ]]; then
+        JRE_SUFFIX="-j21"
     fi
     local sourceTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}${JRE_SUFFIX}"
     docker pull $sourceTag
