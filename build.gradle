@@ -341,7 +341,10 @@ allprojects {
             force "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
             // CVE-2025-67030 - plexus-utils Directory Traversal (Expand.extractFile); pulled via grails-shell-cli
             force "org.codehaus.plexus:plexus-utils:${plexusUtilsVersion}"
-            
+            // CVE-2026-47857, CVE-2026-47863 - reactor-core windowTimeout/bufferTimeout
+            // fairBackpressure DoS hangs; pulled via Micronaut HTTP in rundeckapp
+            force "io.projectreactor:reactor-core:${reactorCoreVersion}"
+
             // Force centralized versions to prevent duplicates in WAR
             force "org.apache.ant:ant:${antVersion}"
             force "org.apache.ant:ant-launcher:${antVersion}"
@@ -381,6 +384,11 @@ allprojects {
                 dependency "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
                 dependency "org.apache.ant:ant:${antVersion}"
                 dependency "org.apache.ant:ant-launcher:${antVersion}"
+                // CVE-2026-47857, CVE-2026-47863: spring-boot-dependencies:3.5.16's reactor-bom
+                // (2024.0.18) pins reactor-core 3.7.19 as a strict constraint; plain
+                // resolutionStrategy.force above doesn't reach rundeckapp's own bootWar-bundled
+                // runtimeClasspath, same as asm/kotlin-stdlib/ant/log4j2 above.
+                dependency "io.projectreactor:reactor-core:${reactorCoreVersion}"
                 // Same story again: grails-bom 7.2.x newly manages log4j2 as a strict constraint
                 // (2.25.5), which plain resolutionStrategy.force can't override, causing duplicate
                 // log4j jars (2.25.5 alongside our forced log4j2.version) in the packaged WAR.
