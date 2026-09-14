@@ -677,8 +677,19 @@ fi
 # never be reconsidered, and the tag would go out with the wrong set while
 # still reporting "complete". Cheap (just PR numbers, no full re-fetch of
 # titles/commits/labels) since only the CURRENT set is needed to detect drift.
-CURRENT_PR_NUM_SET="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
-    --json number --jq '[.[].number] | sort | @tsv')"
+# Guarded like every other gh/git call in the per-PR loop above: a bare
+# assignment here would let a transient API failure crash the script via
+# set -e right after a clean backport, with a raw stack trace instead of a
+# clear message telling the operator to just re-run (everything already
+# cherry-picked is still sitting in this checkout's reflog either way, but
+# the friendly error and consistent exit code are worth guarding for, same
+# as everywhere else in this script).
+if ! CURRENT_PR_NUM_SET="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
+    --json number --jq '[.[].number] | sort | @tsv')"; then
+    echo "Error: could not re-fetch the labeled PR set from GitHub (transient API failure?) to verify it hasn't"
+    echo "changed since this run started. Refusing to tag $NEW_TAG without that check. Re-run once GitHub API access is working."
+    exit 14
+fi
 if [ "$CURRENT_PR_NUM_SET" != "$INITIAL_PR_NUM_SET" ]; then
     echo "Error: the set of PRs labeled '$RC_BACKPORT_LABEL' changed since this run started"
     echo "(one was labeled, unlabeled, or newly merged in the meantime) - refusing to tag $NEW_TAG"
