@@ -112,6 +112,12 @@ function create_and_push_tag {
         echo "Pushing tag to remote..."
         if ! git push origin "$TAG_NAME"; then
             echo "Error: Failed to push tag $TAG_NAME"
+            # The tag was never truly created until it's pushed (nothing else
+            # can see it yet) - deleting the local-only copy here means a retry
+            # hits this same code path cleanly instead of failing at `git tag`
+            # with "already exists" because of a half-finished previous attempt.
+            echo "Deleting local tag $TAG_NAME so a retry isn't blocked by it already existing locally."
+            git tag -d "$TAG_NAME" >/dev/null 2>&1 || echo "  Warning: failed to delete local tag $TAG_NAME - remove it manually before retrying."
             return 1
         fi
         echo "Tag pushed to remote."

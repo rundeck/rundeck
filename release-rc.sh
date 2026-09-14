@@ -549,6 +549,32 @@ if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NU
             fi
         done
     fi
+
+    # $RESCUE_BRANCH (whether this run resumed from it, or it's simply left over
+    # from an earlier, unrelated attempt at this same tag) is superseded now
+    # that $NEW_TAG genuinely exists - the tag is the durable record from here
+    # on, so leaving the branch around is just confusing, stale state for
+    # whoever looks at branches later. Local deletion always happens (purely
+    # local, harmless); the remote copy is only removed with --push, matching
+    # every other remote-affecting action in this script.
+    if git rev-parse --verify "refs/heads/$RESCUE_BRANCH" >/dev/null 2>&1; then
+        if [ "$DRY_RUN" = true ]; then
+            echo "[DRY-RUN] git branch -D $RESCUE_BRANCH"
+        else
+            command git branch -D "$RESCUE_BRANCH" >/dev/null 2>&1 \
+                && echo "Deleted local branch $RESCUE_BRANCH (superseded by $NEW_TAG)." \
+                || echo "  Warning: failed to delete local branch $RESCUE_BRANCH - remove it manually."
+        fi
+    fi
+    if git ls-remote --exit-code --heads origin "$RESCUE_BRANCH" >/dev/null 2>&1; then
+        if [ "$DRY_RUN" = true ]; then
+            echo "[DRY-RUN] git push origin --delete $RESCUE_BRANCH"
+        elif [ "$PUSH_TO_ORIGIN" = true ]; then
+            command git push origin --delete "$RESCUE_BRANCH" >/dev/null 2>&1 \
+                && echo "Deleted origin/$RESCUE_BRANCH (superseded by $NEW_TAG)." \
+                || echo "  Warning: failed to delete origin/$RESCUE_BRANCH - remove it manually."
+        fi
+    fi
 else
     exit $?
 fi

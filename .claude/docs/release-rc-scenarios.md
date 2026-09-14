@@ -73,6 +73,12 @@ This keeps the whole flow - and its Slack/audit trail - inside the Rundeck job, 
 
 **The rescue branch is never force-created or force-pushed.** If one already exists locally or on origin with different content than what this run just produced - a race with a concurrent run, or in-progress manual work the auto-detection above somehow missed - creating/pushing refuses (exit 11) rather than overwriting it. Investigate what's there before proceeding.
 
+**Once `v6.2.0-rc3` is genuinely created and pushed, `rescue/v6.2.0-rc3` is deleted** - both locally and on origin (with `--push`) - since the tag is now the durable record and the branch would just be confusing leftover state otherwise. This happens whether this run resumed from the branch or it turned out to be unrelated leftover from something else.
+
+## Cleanup after a failed tag push
+
+If `git push` for the new tag itself fails (network blip, permissions, etc.) after the tag was already created locally, the local-only tag is deleted immediately rather than left behind - otherwise a retry would fail at tag creation ("already exists") before ever reaching the push again. This applies to both `release-rc.sh` and `setversion.sh` (they share the same `create_and_push_tag` in `release-tag.sh`).
+
 ## Dry-run is a real rehearsal, not just a preview
 
 `--dry-run` actually checks out the base commit and attempts every cherry-pick for real (aborting cleanly on conflict) - both are fully local and reversible, so a dry run genuinely tells you whether the backport would succeed, including real `CONFLICT`s, instead of unconditionally reporting every PR as "applied." Only the release-affecting writes stay simulated: creating/pushing the tag, creating/pushing the rescue branch, and applying GitHub labels are all printed as `[DRY-RUN] ...` rather than executed.
