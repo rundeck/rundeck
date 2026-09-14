@@ -60,17 +60,8 @@ class NodesPage extends BasePage {
         return (els nodeListTrBy).size() > 0
     }
 
-    /**
-     * Loads the project nodes page with an explicit all-nodes filter.
-     *
-     * Without filterName the server applies the user's stored node filter preference by *redirecting*
-     * (see FrameworkController.nodes), and that redirect lands after this method returns -- the URL it
-     * redirects to still contains the project name, so waitForUrlToContain cannot detect it. Anything
-     * the test types or clicks in between is then discarded by the redirected page load. Passing
-     * filterName=.* short-circuits the preference branch, so the page load is deterministic.
-     */
     void goToProjectNodesPage(String projectName) {
-        driver.get("${context.client.baseUrl}${projectNodesPathResolver(projectName)}?filterName=.*")
+        driver.get("${context.client.baseUrl}${projectNodesPathResolver(projectName)}")
         waitForUrlToContain(projectName)
     }
 
