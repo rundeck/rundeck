@@ -87,8 +87,10 @@ class NodesSpec extends SeleniumBase {
         given:
         nodesPage.setNodeInputText(".*")
         nodesPage.clickSearchNodes()
+        nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, ALL_NODE_LIST.size() + 1)
         when:
         nodesPage.els(NodesPage.nodesTableNodeFilterLinkByResolver("executor-test")).first().click()
+        nodesPage.waitForNumberOfElementsToBe(nodesPage.nodeListTrBy, NODE_LIST.size())
         then:
         nodesPage.getDisplayedNodesCount() == NODE_LIST.size()
         nodesPage.el(nodesPage.searchNodeInputBy).getDomProperty("value") == "tags: \"executor-test\""
