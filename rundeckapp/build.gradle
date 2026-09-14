@@ -830,6 +830,7 @@ task vendorAssetDeps(type: NpmTask) { it ->
     it.inputs.file "${baseDir}/_package-manager/package.json"
     it.inputs.file "${baseDir}/_package-manager/package-lock.json"
     it.inputs.file "${baseDir}/_package-manager/build.js"
+    it.inputs.dir "${baseDir}/_package-manager/lib"
 
     it.outputs.dir "${baseDir}/vendor"
 
