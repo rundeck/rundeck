@@ -40,14 +40,14 @@
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
 import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
-import type { DynamicScrollerExposed } from "vue-virtual-scroller";
 import { ExecutionOutputEntry } from "../../stores/ExecutionOutput";
 import LogEntryFlex from "./logEntryFlex.vue";
 import { EventBus } from "../../utilities/vueEventBus";
 import { LogBuilder } from "./logBuilder";
 
-type DynamicScrollerRef = DynamicScrollerExposed<ExecutionOutputEntry> & {
+type DynamicScrollerRef = {
   $el: HTMLElement;
+  scrollToBottom: () => void;
 };
 
 export default defineComponent({
@@ -294,10 +294,13 @@ export default defineComponent({
     } {
       const scroller = this.$refs.scroller as DynamicScrollerRef | undefined;
       if (!scroller) return { el: null, offset: 0 };
-      return {
-        el: scroller.$el,
-        offset: scroller.getItemOffset ? scroller.getItemOffset(index) : 0,
-      };
+      // The item's own rendered position (via its data-index attribute) already
+      // reflects its offset within the scroller, so no separate item-offset
+      // lookup is needed - this works regardless of vue-virtual-scroller version.
+      const target = scroller.$el.querySelector(
+        `[data-index="${index}"]`,
+      ) as HTMLElement | null;
+      return { el: target, offset: 0 };
     },
   },
 });

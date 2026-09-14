@@ -256,15 +256,24 @@ describe("LogNodeChunk.vue", () => {
     expect(scrollToBottomMock).toHaveBeenCalledTimes(follow?1:0);
   });
 
-  it("computes the scroller offset for an item index via the scroller's getItemOffset", () => {
+  it("computes the scroller offset for an item index via its rendered data-index element", () => {
     const wrapper = createWrapper();
-    const getItemOffsetMock = jest.fn().mockReturnValue(123);
-    (wrapper.vm as any).$refs.scroller.getItemOffset = getItemOffsetMock;
+    const scrollerEl = (wrapper.vm as any).$refs.scroller.$el as HTMLElement;
+    const itemEl = document.createElement("div");
+    itemEl.setAttribute("data-index", "1");
+    scrollerEl.appendChild(itemEl);
 
     const result = (wrapper.vm as any).getScrollerOffset(1);
-    expect(getItemOffsetMock).toHaveBeenCalledWith(1);
-    expect(result.el).toBe((wrapper.vm as any).$refs.scroller.$el);
-    expect(result.offset).toBe(123);
+    expect(result.el).toBe(itemEl);
+    expect(result.offset).toBe(0);
+  });
+
+  it("returns a null element when the item index is not currently rendered", () => {
+    const wrapper = createWrapper();
+
+    const result = (wrapper.vm as any).getScrollerOffset(999);
+    expect(result.el).toBeNull();
+    expect(result.offset).toBe(0);
   });
 
   it("returns a zero offset when the scroller ref is not yet mounted", () => {
