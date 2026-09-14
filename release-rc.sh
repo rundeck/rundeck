@@ -355,6 +355,26 @@ PRS_TO_LABEL=()
 # command, so a single generic hint would be wrong for some CONFLICT PRs.
 declare -A RESUME_CMDS
 
+# Records a per-PR CONFLICT outcome: the report row, an optional resume
+# command, and the counter that gates tagging - the bookkeeping every "can't
+# safely classify/apply this PR" site below needs, whether that's an
+# unresolvable SHA, a failed GitHub API call, or an actual cherry-pick
+# conflict. Factored out because that bookkeeping used to be repeated inline
+# at each site, which buried the one line that actually differs (why this
+# particular PR failed) in five copies of the same three statements. Caller
+# still does its own `continue` right after - not folded in here, since
+# `continue`'s target loop is easier to see at the call site than inside a
+# helper several lines away.
+mark_pr_conflict() {
+    local log_msg="$1" detail="$2" resume_cmd="${3:-}"
+    echo "  $log_msg"
+    REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"$detail"$'\t'"$PR_TITLE")
+    if [ -n "$resume_cmd" ]; then
+        RESUME_CMDS["$PR_NUM"]="$resume_cmd"
+    fi
+    CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+}
+
 if [ -z "$PR_DATA" ]; then
     echo "Error: No merged PRs found with label '$RC_BACKPORT_LABEL'. Refusing to cut $NEW_TAG with nothing to backport -"
     echo "this almost always means the wrong version was labeled, or nothing was labeled yet, not that $NEW_TAG is"
@@ -396,9 +416,9 @@ else
             # since that would mean guessing at a base HEAD isn't even checked out
             # to. A PR that isn't already-applied here is a genuine gap in the
             # rescue branch, not something to fix by picking onto an unrelated tree.
-            echo "PR #$PR_NUM ($PR_SHA): NOT found at $RESUME_COMMIT (no '$RC_BACKPORT_APPLIED_LABEL' label, no matching cherry-pick trailer)"
-            REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"missing from $RESCUE_BRANCH"$'\t'"$PR_TITLE")
-            CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+            mark_pr_conflict \
+                "PR #$PR_NUM ($PR_SHA): NOT found at $RESUME_COMMIT (no '$RC_BACKPORT_APPLIED_LABEL' label, no matching cherry-pick trailer)" \
+                "missing from $RESCUE_BRANCH"
             continue
         fi
 
@@ -412,10 +432,10 @@ else
         # report and rescue branch for every PR already applied. Treated as a
         # CONFLICT for just this PR instead.
         if ! git rev-parse --verify "${PR_SHA}^{commit}" >/dev/null 2>&1; then
-            echo "  PR #$PR_NUM references commit $PR_SHA, which isn't resolvable in this checkout (shallow clone? pruned?). Marking as CONFLICT."
-            REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"commit not resolvable locally - fetch full history"$'\t'"$PR_TITLE")
-            RESUME_CMDS["$PR_NUM"]="git fetch --unshallow (or otherwise deepen history) then retry: git cherry-pick -x $PR_SHA"
-            CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+            mark_pr_conflict \
+                "PR #$PR_NUM references commit $PR_SHA, which isn't resolvable in this checkout (shallow clone? pruned?). Marking as CONFLICT." \
+                "commit not resolvable locally - fetch full history" \
+                "git fetch --unshallow (or otherwise deepen history) then retry: git cherry-pick -x $PR_SHA"
             continue
         fi
 
@@ -433,7 +453,18 @@ else
             # REST API's plain scalar `commits` count field - unlike `--json commits`,
             # this isn't a paginated node list, so it's never capped/undercounted
             # regardless of how many commits the PR actually has.
-            PR_COMMIT_COUNT="$(gh api "repos/{owner}/{repo}/pulls/$PR_NUM" --jq '.commits')"
+            # Guarded: a bare assignment here would let a transient API failure
+            # (rate limit, network blip) kill the whole run via `set -e`, losing
+            # the report/rescue branch for every PR that already succeeded -
+            # same reasoning as the PR_SHA resolvability check above. Treated as
+            # CONFLICT for just this PR rather than guessing a commit count.
+            if ! PR_COMMIT_COUNT="$(gh api "repos/{owner}/{repo}/pulls/$PR_NUM" --jq '.commits' 2>&1)"; then
+                mark_pr_conflict \
+                    "Could not fetch commit count for PR #$PR_NUM from GitHub (transient API failure?) - can't safely tell squash from rebase-merge. Marking as CONFLICT." \
+                    "commit-count lookup failed - retry" \
+                    "Retry once GitHub API access is working, or classify and cherry-pick #$PR_NUM manually: git cherry-pick -x $PR_SHA"
+                continue
+            fi
             if [ "${PR_COMMIT_COUNT:-1}" -gt 1 ]; then
                 # Single-parent PRs with more than one original commit are ambiguous:
                 # squash-merge folds every commit into this one (single cherry-pick is
@@ -450,8 +481,26 @@ else
                 # different means rebase-merge, and the range of the last
                 # PR_COMMIT_COUNT first-parent commits ending at mergeCommit is
                 # cherry-picked instead of just the tip.
-                FULL_PR_PATCH_ID="$(gh pr diff "$PR_NUM" | git patch-id --stable | awk '{print $1}')"
-                TIP_PATCH_ID="$(git diff "$PR_SHA"^ "$PR_SHA" | git patch-id --stable | awk '{print $1}')"
+                # Guarded the same way as the commit-count fetch above: under
+                # `pipefail`, a failure anywhere in either pipeline (gh pr diff,
+                # git diff, or patch-id itself) would otherwise kill the whole
+                # run via `set -e`. An empty-but-successful result (a PR with
+                # truly no diff) is different from this and still falls through
+                # to the `-n` check below as before.
+                if ! FULL_PR_PATCH_ID="$(gh pr diff "$PR_NUM" | git patch-id --stable | awk '{print $1}')"; then
+                    mark_pr_conflict \
+                        "Could not compute the full PR diff's patch-id for #$PR_NUM (gh pr diff failed?) - can't safely verify squash vs. rebase-merge. Marking as CONFLICT." \
+                        "patch-id computation failed - retry" \
+                        "Retry once GitHub API access is working, or classify and cherry-pick #$PR_NUM manually: git cherry-pick -x $PR_SHA"
+                    continue
+                fi
+                if ! TIP_PATCH_ID="$(git diff "$PR_SHA"^ "$PR_SHA" | git patch-id --stable | awk '{print $1}')"; then
+                    mark_pr_conflict \
+                        "Could not compute the tip commit's patch-id for #$PR_NUM. Marking as CONFLICT." \
+                        "patch-id computation failed - retry" \
+                        "Retry, or classify and cherry-pick #$PR_NUM manually: git cherry-pick -x $PR_SHA"
+                    continue
+                fi
                 if [ -n "$FULL_PR_PATCH_ID" ] && [ "$FULL_PR_PATCH_ID" != "$TIP_PATCH_ID" ]; then
                     # A tip mismatch alone doesn't PROVE rebase-merge - GitHub's
                     # rendered PR diff and a local `git diff` of the same content
@@ -470,21 +519,26 @@ else
                         # whole range-detection exists to prevent. Treated as a CONFLICT so
                         # it blocks the tag like any other unresolved PR, instead of a
                         # warning that's easy to miss in a long run's output.
-                        echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits, but $RANGE_BASE isn't reachable (shallow history?) - refusing to cherry-pick only the tip. Marking as CONFLICT."
-                        REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"range base $RANGE_BASE unreachable - fetch full history"$'\t'"$PR_TITLE")
-                        RESUME_CMDS["$PR_NUM"]="git fetch --unshallow (or otherwise deepen history) then: git cherry-pick -x ${RANGE_BASE}..${PR_SHA}"
-                        CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+                        mark_pr_conflict \
+                            "Detected rebase-merge of $PR_COMMIT_COUNT commits, but $RANGE_BASE isn't reachable (shallow history?) - refusing to cherry-pick only the tip. Marking as CONFLICT." \
+                            "range base $RANGE_BASE unreachable - fetch full history" \
+                            "git fetch --unshallow (or otherwise deepen history) then: git cherry-pick -x ${RANGE_BASE}..${PR_SHA}"
                         continue
                     fi
-                    RANGE_PATCH_ID="$(git diff "$RANGE_BASE" "$PR_SHA" | git patch-id --stable | awk '{print $1}')"
+                    # `|| true` guards the same way as above - RANGE_BASE and
+                    # $PR_SHA are already confirmed resolvable by this point, so
+                    # failure here is unlikely, but a failed/empty result already
+                    # falls through correctly to the CONFLICT branch below via
+                    # the `-n` check, so there's nothing further to do for it.
+                    RANGE_PATCH_ID="$(git diff "$RANGE_BASE" "$PR_SHA" | git patch-id --stable | awk '{print $1}' || true)"
                     if [ -n "$RANGE_PATCH_ID" ] && [ "$RANGE_PATCH_ID" = "$FULL_PR_PATCH_ID" ]; then
                         echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits (mergeCommit alone doesn't match the full PR diff, but the full range does) - cherry-picking $RANGE_BASE..$PR_SHA instead of just the tip"
                         CHERRY_PICK_TARGET="${RANGE_BASE}..${PR_SHA}"
                     else
-                        echo "  PR #$PR_NUM: mergeCommit alone doesn't match the full PR diff, and neither does the computed $PR_COMMIT_COUNT-commit range - can't safely tell rebase-merge from some other discrepancy. Refusing to guess. Marking as CONFLICT for manual classification."
-                        REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"neither tip nor computed range matches the full PR diff - manual classification needed"$'\t'"$PR_TITLE")
-                        RESUME_CMDS["$PR_NUM"]="Investigate manually - determine the correct commit(s) for #$PR_NUM yourself, then: git cherry-pick -x <correct-sha-or-range>"
-                        CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+                        mark_pr_conflict \
+                            "PR #$PR_NUM: mergeCommit alone doesn't match the full PR diff, and neither does the computed $PR_COMMIT_COUNT-commit range - can't safely tell rebase-merge from some other discrepancy. Refusing to guess. Marking as CONFLICT for manual classification." \
+                            "neither tip nor computed range matches the full PR diff - manual classification needed" \
+                            "Investigate manually - determine the correct commit(s) for #$PR_NUM yourself, then: git cherry-pick -x <correct-sha-or-range>"
                         continue
                     fi
                 fi
@@ -632,17 +686,22 @@ if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NU
     # still backfill the labels on a later run against the same local state.
     if [ "${#PRS_TO_LABEL[@]}" -gt 0 ]; then
         echo ""
-        if [ "$DRY_RUN" = true ]; then
+        # Checked in this order (--push first, not --dry-run first) so a dry
+        # run without --push reports the SAME outcome (nothing labeled) as the
+        # real invocation it's rehearsing would - not "would label", which a
+        # real run with the same flags never actually does.
+        if [ "$PUSH_TO_ORIGIN" = true ]; then
             echo "Labeling PRs '$RC_BACKPORT_APPLIED_LABEL' now that $NEW_TAG exists..."
-            for PR_NUM in "${PRS_TO_LABEL[@]}"; do
-                echo "[DRY-RUN] gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
-            done
-        elif [ "$PUSH_TO_ORIGIN" = true ]; then
-            echo "Labeling PRs '$RC_BACKPORT_APPLIED_LABEL' now that $NEW_TAG exists..."
-            for PR_NUM in "${PRS_TO_LABEL[@]}"; do
-                gh pr edit "$PR_NUM" --add-label "$RC_BACKPORT_APPLIED_LABEL" \
-                    || echo "  Warning: failed to add '$RC_BACKPORT_APPLIED_LABEL' to PR #$PR_NUM - label it manually so future RC runs recognize it's applied"
-            done
+            if [ "$DRY_RUN" = true ]; then
+                for PR_NUM in "${PRS_TO_LABEL[@]}"; do
+                    echo "[DRY-RUN] gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
+                done
+            else
+                for PR_NUM in "${PRS_TO_LABEL[@]}"; do
+                    gh pr edit "$PR_NUM" --add-label "$RC_BACKPORT_APPLIED_LABEL" \
+                        || echo "  Warning: failed to add '$RC_BACKPORT_APPLIED_LABEL' to PR #$PR_NUM - label it manually so future RC runs recognize it's applied"
+                done
+            fi
         else
             # NOT "just re-run with --push": $NEW_TAG now exists locally, so a
             # later re-run - even with --push added - would fail at the
