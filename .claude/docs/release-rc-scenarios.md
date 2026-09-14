@@ -74,7 +74,7 @@ This keeps the whole flow - and its Slack/audit trail - inside the Rundeck job, 
 
 **The rescue branch is never force-created or force-pushed.** If one already exists locally or on origin with different content than what this run just produced - a race with a concurrent run, or in-progress manual work the auto-detection above somehow missed - creating/pushing refuses (exit 11) rather than overwriting it. Investigate what's there before proceeding.
 
-**Once `v6.2.0-rc3` is genuinely created and pushed, `rescue/v6.2.0-rc3` is deleted** - both locally and on origin (with `--push`) - since the tag is now the durable record and the branch would just be confusing leftover state otherwise. This happens whether this run resumed from the branch or it turned out to be unrelated leftover from something else.
+**Once `v6.2.0-rc3` is genuinely created and pushed, `rescue/v6.2.0-rc3` is deleted** - both locally and on origin (with `--push`) - since the tag is now the durable record and the branch would just be confusing leftover state otherwise. This happens whether this run resumed from the branch or it turned out to be unrelated leftover from something else. In resume mode, each ref's tip is re-checked immediately before deleting it against the exact SHA this run verified and tagged - if something else moved it since (a manual push landing mid-run), it's left in place with a warning instead of being force-deleted.
 
 ## Cleanup after a failed tag push
 
@@ -135,3 +135,4 @@ Only the codes the script actually assigns via an explicit `exit N`. A few other
 | 11 | A `rescue/<tag>` branch (or its remote) already exists with different content than this run's candidate - refused rather than force-overwritten |
 | 13 | A labeled, merged PR has no resolvable `mergeCommit` - refused rather than silently dropped from the set |
 | 14 | The labeled PR set changed (a PR was labeled, unlabeled, or newly merged) since this run started - refused rather than tagging a stale snapshot |
+| 15 | Both a local and an `origin` `rescue/<tag>` branch exist with different tips - refused rather than guessing which is authoritative |

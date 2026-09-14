@@ -239,6 +239,21 @@ CANDIDATE_RESUME_COMMIT=""
 if git ls-remote --exit-code --heads origin "$RESCUE_BRANCH" >/dev/null 2>&1; then
     git fetch --quiet origin "$RESCUE_BRANCH"
     CANDIDATE_RESUME_COMMIT="$(git rev-parse FETCH_HEAD)"
+    # A local branch of the same name can also exist in this checkout (e.g.
+    # this is where the manual resolution actually happened) - blindly
+    # preferring origin's tip here would mean resuming from the wrong commit
+    # if the two have diverged, and the local branch would then be silently
+    # force-deleted once $NEW_TAG is created (see the cleanup below),
+    # discarding whatever was only on it. Refuse rather than guess which one
+    # is authoritative.
+    if git rev-parse --verify "refs/heads/$RESCUE_BRANCH" >/dev/null 2>&1; then
+        LOCAL_RESCUE_COMMIT="$(git rev-parse "refs/heads/$RESCUE_BRANCH")"
+        if [ "$LOCAL_RESCUE_COMMIT" != "$CANDIDATE_RESUME_COMMIT" ]; then
+            echo "Error: local branch '$RESCUE_BRANCH' ($LOCAL_RESCUE_COMMIT) and 'origin/$RESCUE_BRANCH' ($CANDIDATE_RESUME_COMMIT) have diverged."
+            echo "Refusing to guess which is authoritative - push the local one (if it's ahead) or reset it to origin's tip, then re-run."
+            exit 15
+        fi
+    fi
 elif git rev-parse --verify "refs/heads/$RESCUE_BRANCH" >/dev/null 2>&1; then
     CANDIDATE_RESUME_COMMIT="$(git rev-parse "refs/heads/$RESCUE_BRANCH")"
 fi
@@ -725,26 +740,40 @@ if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NU
     # local, harmless); the remote copy is only removed with --push, matching
     # every other remote-affecting action in this script.
     if git rev-parse --verify "refs/heads/$RESCUE_BRANCH" >/dev/null 2>&1; then
-        # The documented manual resume flow has the operator `git checkout
-        # $RESCUE_BRANCH` to resolve conflicts, then re-run this same command
-        # from there - so HEAD can genuinely still be on $RESCUE_BRANCH at this
-        # point. `git branch -D` refuses to delete the branch currently checked
-        # out, which would otherwise always fall into the warning path below
-        # and leave the stale branch behind in exactly the resume case this
-        # cleanup matters most for. Detach first when that's the case -
-        # $FINAL_COMMIT is that same branch's own tip, so this loses nothing.
-        # Real, not simulated, under --dry-run (checkout is in
-        # RELEASE_GIT_READONLY_CMDS - see the dry-run rehearsal note above).
-        CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
-        if [ "$CURRENT_BRANCH" = "$RESCUE_BRANCH" ]; then
-            git checkout --detach "$FINAL_COMMIT"
-        fi
-        if [ "$DRY_RUN" = true ]; then
-            echo "[DRY-RUN] git branch -D $RESCUE_BRANCH"
+        # In resume mode, $RESUME_COMMIT is the exact, already-verified SHA
+        # this run tagged - re-checked here against the branch's CURRENT tip
+        # (not just trusted from earlier) in case something else moved it in
+        # the meantime (a manual push landing mid-run, however narrow that
+        # window is). A branch that no longer matches is left alone rather
+        # than force-deleted, so whatever's newer on it isn't silently lost.
+        # Nothing to compare against outside resume mode - a rescue branch
+        # reaching this point without ever being resumed is unrelated leftover
+        # from something else (see the comment above), always safe to clear.
+        LOCAL_RESCUE_TIP="$(git rev-parse "refs/heads/$RESCUE_BRANCH")"
+        if [ -n "$RESUME_COMMIT" ] && [ "$LOCAL_RESCUE_TIP" != "$RESUME_COMMIT" ]; then
+            echo "  Warning: local branch $RESCUE_BRANCH now points to $LOCAL_RESCUE_TIP, not $RESUME_COMMIT (what this run actually tagged) - it changed since this run started. Leaving it in place; investigate before deleting it manually."
         else
-            command git branch -D "$RESCUE_BRANCH" >/dev/null 2>&1 \
-                && echo "Deleted local branch $RESCUE_BRANCH (superseded by $NEW_TAG)." \
-                || echo "  Warning: failed to delete local branch $RESCUE_BRANCH - remove it manually."
+            # The documented manual resume flow has the operator `git checkout
+            # $RESCUE_BRANCH` to resolve conflicts, then re-run this same command
+            # from there - so HEAD can genuinely still be on $RESCUE_BRANCH at this
+            # point. `git branch -D` refuses to delete the branch currently checked
+            # out, which would otherwise always fall into the warning path below
+            # and leave the stale branch behind in exactly the resume case this
+            # cleanup matters most for. Detach first when that's the case -
+            # $FINAL_COMMIT is that same branch's own tip, so this loses nothing.
+            # Real, not simulated, under --dry-run (checkout is in
+            # RELEASE_GIT_READONLY_CMDS - see the dry-run rehearsal note above).
+            CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
+            if [ "$CURRENT_BRANCH" = "$RESCUE_BRANCH" ]; then
+                git checkout --detach "$FINAL_COMMIT"
+            fi
+            if [ "$DRY_RUN" = true ]; then
+                echo "[DRY-RUN] git branch -D $RESCUE_BRANCH"
+            else
+                command git branch -D "$RESCUE_BRANCH" >/dev/null 2>&1 \
+                    && echo "Deleted local branch $RESCUE_BRANCH (superseded by $NEW_TAG)." \
+                    || echo "  Warning: failed to delete local branch $RESCUE_BRANCH - remove it manually."
+            fi
         fi
     fi
     # Gated on $PUSH_TO_ORIGIN first, not $DRY_RUN first: a real (non-dry) run
@@ -752,7 +781,15 @@ if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NU
     # must not claim it would either - the rehearsal has to match what the
     # same flags would actually do.
     if [ "$PUSH_TO_ORIGIN" = true ] && git ls-remote --exit-code --heads origin "$RESCUE_BRANCH" >/dev/null 2>&1; then
-        if [ "$DRY_RUN" = true ]; then
+        # Same re-check as the local deletion above, against origin's CURRENT
+        # tip - a manual push to this branch landing after this run's initial
+        # fetch but before this cleanup (e.g. someone pushing more commits to
+        # it independently) would otherwise be deleted right along with it,
+        # even though those commits were never part of $NEW_TAG.
+        REMOTE_RESCUE_TIP="$(git ls-remote origin "refs/heads/$RESCUE_BRANCH" | awk '{print $1}')"
+        if [ -n "$RESUME_COMMIT" ] && [ "$REMOTE_RESCUE_TIP" != "$RESUME_COMMIT" ]; then
+            echo "  Warning: origin/$RESCUE_BRANCH now points to $REMOTE_RESCUE_TIP, not $RESUME_COMMIT (what this run actually tagged) - it changed since this run started. Leaving it in place; investigate before deleting it manually."
+        elif [ "$DRY_RUN" = true ]; then
             echo "[DRY-RUN] git push origin --delete $RESCUE_BRANCH"
         else
             command git push origin --delete "$RESCUE_BRANCH" >/dev/null 2>&1 \
