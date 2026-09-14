@@ -725,6 +725,20 @@ if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NU
     # local, harmless); the remote copy is only removed with --push, matching
     # every other remote-affecting action in this script.
     if git rev-parse --verify "refs/heads/$RESCUE_BRANCH" >/dev/null 2>&1; then
+        # The documented manual resume flow has the operator `git checkout
+        # $RESCUE_BRANCH` to resolve conflicts, then re-run this same command
+        # from there - so HEAD can genuinely still be on $RESCUE_BRANCH at this
+        # point. `git branch -D` refuses to delete the branch currently checked
+        # out, which would otherwise always fall into the warning path below
+        # and leave the stale branch behind in exactly the resume case this
+        # cleanup matters most for. Detach first when that's the case -
+        # $FINAL_COMMIT is that same branch's own tip, so this loses nothing.
+        # Real, not simulated, under --dry-run (checkout is in
+        # RELEASE_GIT_READONLY_CMDS - see the dry-run rehearsal note above).
+        CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
+        if [ "$CURRENT_BRANCH" = "$RESCUE_BRANCH" ]; then
+            git checkout --detach "$FINAL_COMMIT"
+        fi
         if [ "$DRY_RUN" = true ]; then
             echo "[DRY-RUN] git branch -D $RESCUE_BRANCH"
         else
