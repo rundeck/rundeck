@@ -277,6 +277,22 @@ if [ "$PR_RAW_COUNT" -ge "$PR_LABEL_FETCH_LIMIT" ]; then
     echo "a partial set be tagged as complete. Raise PR_LABEL_FETCH_LIMIT in this script and re-run."
     exit 9
 fi
+# A merged PR can have a null mergeCommit (GitHub hasn't resolved/computed it
+# yet, or some other transient inconsistency) - the @tsv pipeline below has to
+# select on mergeCommit != null to build valid rows, but doing that silently
+# would let such a PR simply vanish from consideration: PR_RAW_COUNT above only
+# guards the fetch-limit cap, not this filtering, so a mixed set would proceed
+# to tag with that PR quietly missing, defeating the whole completeness
+# guarantee. Refuse instead of guessing.
+PR_NULL_MERGE_COMMIT_NUMS="$(gh pr list --label "$RC_BACKPORT_LABEL" --state merged -L "$PR_LABEL_FETCH_LIMIT" \
+    --json number,mergeCommit --jq '.[] | select(.mergeCommit == null) | .number')"
+if [ -n "$PR_NULL_MERGE_COMMIT_NUMS" ]; then
+    echo "Error: PR(s) labeled '$RC_BACKPORT_LABEL' have no resolvable merge commit (mergeCommit is null), so they can't be included:"
+    while IFS= read -r n; do echo "  #$n"; done <<< "$PR_NULL_MERGE_COMMIT_NUMS"
+    echo "Refusing to tag $NEW_TAG while silently dropping them from what must be a complete labeled set."
+    echo "Investigate why GitHub reports no merge commit for these (unusual for a merged PR) before re-running."
+    exit 13
+fi
 # Commit count is NOT fetched here via `--json commits` - `gh`'s underlying
 # GraphQL query for that field is a paginated node list capped well under 200
 # nodes, so `.commits | length` silently undercounts a PR with more commits
@@ -315,15 +331,21 @@ ALREADY_APPLIED="$(git log --format=%B "$TRAILER_SCAN_BASE" | grep -oE '\(cherry
 # status is one of: already-applied | applied | CONFLICT
 REPORT=()
 CONFLICT_COUNT=0
-# PR numbers cherry-picked fresh in this run - only labeled $RC_BACKPORT_APPLIED_LABEL
-# once $NEW_TAG is actually created (see below), never earlier: labeling them as
-# soon as each cherry-pick succeeds would be premature - if a LATER PR in this
-# same run conflicts, the run aborts without tagging (only a rescue branch is
-# saved), but those earlier PRs would already carry the label. A rerun then
-# starts fresh from $PREV_TAG, sees the label, and skips them even though their
-# commits only ever existed on the abandoned/rescue candidate - producing an RC
-# that's missing them while still reporting success.
-NEWLY_APPLIED_PR_NUMS=()
+# Every PR to label $RC_BACKPORT_APPLIED_LABEL - freshly cherry-picked in this
+# run, or already-applied but only caught via trailer, not label - collected
+# here and only actually labeled once $NEW_TAG is genuinely created (see
+# below), never earlier. Labeling as each one is found/applied would be
+# premature: if a LATER PR in this same run conflicts, the run aborts without
+# tagging (only a rescue branch is saved, or - in resume mode - nothing at
+# all, since resuming never cherry-picks), but earlier PRs would already carry
+# the label. A rerun (fresh from $PREV_TAG, or against a replaced/abandoned
+# rescue branch) then trusts the label and skips them even though their
+# commits never made it into whatever the eventual real lineage turns out to
+# be - producing an RC that's silently missing them while still reporting
+# success. This applies just as much to the trailer-only backfill case as to
+# fresh cherry-picks - a trailer found only in a not-yet-tagged rescue branch
+# proves just as little as a fresh pick in an about-to-fail run.
+PRS_TO_LABEL=()
 # PR number -> the exact command that would apply it, for the resolve
 # instructions below - single-commit vs range (rebase-merge) needs a different
 # command, so a single generic hint would be wrong for some CONFLICT PRs.
@@ -355,14 +377,12 @@ else
             REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"already-applied"$'\t'"-"$'\t'"$PR_TITLE")
             # Backfill the label if only the trailer caught it (e.g. a PR applied by an
             # earlier run of this script, before this label existed) - keeps every
-            # completed PR converging on the same signal going forward.
+            # completed PR converging on the same signal going forward. Deferred to
+            # PRS_TO_LABEL like every other label write - see its definition above
+            # for why: a trailer found only in a not-yet-tagged rescue branch
+            # (resume mode) proves nothing if this run doesn't end up tagging it.
             if [ "$ALREADY_LABELED" = false ]; then
-                if [ "$DRY_RUN" = true ]; then
-                    echo "[DRY-RUN] gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
-                else
-                    gh pr edit "$PR_NUM" --add-label "$RC_BACKPORT_APPLIED_LABEL" \
-                        || echo "  Warning: failed to backfill '$RC_BACKPORT_APPLIED_LABEL' on PR #$PR_NUM"
-                fi
+                PRS_TO_LABEL+=("$PR_NUM")
             fi
             continue
         fi
@@ -414,11 +434,18 @@ else
                 FULL_PR_PATCH_ID="$(gh pr diff "$PR_NUM" | git patch-id --stable | awk '{print $1}')"
                 TIP_PATCH_ID="$(git diff "$PR_SHA"^ "$PR_SHA" | git patch-id --stable | awk '{print $1}')"
                 if [ -n "$FULL_PR_PATCH_ID" ] && [ "$FULL_PR_PATCH_ID" != "$TIP_PATCH_ID" ]; then
+                    # A tip mismatch alone doesn't PROVE rebase-merge - GitHub's
+                    # rendered PR diff and a local `git diff` of the same content
+                    # can differ for reasons unrelated to merge strategy (rename
+                    # detection, diff config, whitespace handling), which would
+                    # misclassify a squash PR here. Before trusting the computed
+                    # range, verify its own aggregate diff actually matches the
+                    # full PR diff too - if even that doesn't line up, something
+                    # about this PR doesn't fit either model, and guessing would
+                    # risk sweeping in unrelated commits from mainline history via
+                    # RANGE_BASE. Refuse and require manual classification instead.
                     RANGE_BASE="$PR_SHA~$PR_COMMIT_COUNT"
-                    if git rev-parse --verify "${RANGE_BASE}^{commit}" >/dev/null 2>&1; then
-                        echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits (mergeCommit alone doesn't match the full PR diff) - cherry-picking the whole range $RANGE_BASE..$PR_SHA instead of just the tip"
-                        CHERRY_PICK_TARGET="${RANGE_BASE}..${PR_SHA}"
-                    else
+                    if ! git rev-parse --verify "${RANGE_BASE}^{commit}" >/dev/null 2>&1; then
                         # Refusing to fall back to a single-commit pick here - that would
                         # silently ship an INCOMPLETE backport, the exact failure mode this
                         # whole range-detection exists to prevent. Treated as a CONFLICT so
@@ -430,6 +457,17 @@ else
                         CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
                         continue
                     fi
+                    RANGE_PATCH_ID="$(git diff "$RANGE_BASE" "$PR_SHA" | git patch-id --stable | awk '{print $1}')"
+                    if [ -n "$RANGE_PATCH_ID" ] && [ "$RANGE_PATCH_ID" = "$FULL_PR_PATCH_ID" ]; then
+                        echo "  Detected rebase-merge of $PR_COMMIT_COUNT commits (mergeCommit alone doesn't match the full PR diff, but the full range does) - cherry-picking $RANGE_BASE..$PR_SHA instead of just the tip"
+                        CHERRY_PICK_TARGET="${RANGE_BASE}..${PR_SHA}"
+                    else
+                        echo "  PR #$PR_NUM: mergeCommit alone doesn't match the full PR diff, and neither does the computed $PR_COMMIT_COUNT-commit range - can't safely tell rebase-merge from some other discrepancy. Refusing to guess. Marking as CONFLICT for manual classification."
+                        REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"CONFLICT"$'\t'"neither tip nor computed range matches the full PR diff - manual classification needed"$'\t'"$PR_TITLE")
+                        RESUME_CMDS["$PR_NUM"]="Investigate manually - determine the correct commit(s) for #$PR_NUM yourself, then: git cherry-pick -x <correct-sha-or-range>"
+                        CONFLICT_COUNT=$((CONFLICT_COUNT + 1))
+                        continue
+                    fi
                 fi
             fi
         fi
@@ -438,7 +476,7 @@ else
 
         if git cherry-pick "${CHERRY_PICK_ARGS[@]}" "$CHERRY_PICK_TARGET"; then
             REPORT+=("$PR_NUM"$'\t'"$PR_SHA"$'\t'"applied"$'\t'"$(git rev-parse --short HEAD)"$'\t'"$PR_TITLE")
-            NEWLY_APPLIED_PR_NUMS+=("$PR_NUM")
+            PRS_TO_LABEL+=("$PR_NUM")
         else
             # Deliberately not auto-resolving (e.g. -X ours/theirs) - guessing wrong on a
             # release cherry-pick ships a silent regression, which is worse than stopping here.
@@ -535,19 +573,33 @@ fi
 
 echo "All labeled PRs verified present. Final commit for $NEW_TAG: $FINAL_COMMIT"
 if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NUM"; then
-    # Only now that $NEW_TAG genuinely exists are freshly-cherry-picked PRs
-    # labeled - see NEWLY_APPLIED_PR_NUMS above for why not sooner.
-    if [ "${#NEWLY_APPLIED_PR_NUMS[@]}" -gt 0 ]; then
+    # Only now that $NEW_TAG genuinely exists is anything in PRS_TO_LABEL
+    # (fresh cherry-picks and trailer-only backfills alike) actually labeled -
+    # see its definition above for why not sooner.
+    # Also gated on --push: $NEW_TAG existing here only means it exists
+    # LOCALLY. Without --push it's not durable - lost the moment this checkout
+    # is (the normal fate of an ephemeral CI checkout) - so labeling now would
+    # let a later run elsewhere see these labels, skip every one of these PRs,
+    # and tag the previous RC essentially unchanged while believing it's
+    # complete, even though none of these backports ever actually reached
+    # origin. The `-x` trailers remain in this checkout regardless and can
+    # still backfill the labels on a later run against the same local state.
+    if [ "${#PRS_TO_LABEL[@]}" -gt 0 ]; then
         echo ""
-        echo "Labeling newly-applied PRs '$RC_BACKPORT_APPLIED_LABEL' now that $NEW_TAG exists..."
-        for PR_NUM in "${NEWLY_APPLIED_PR_NUMS[@]}"; do
-            if [ "$DRY_RUN" = true ]; then
+        if [ "$DRY_RUN" = true ]; then
+            echo "Labeling PRs '$RC_BACKPORT_APPLIED_LABEL' now that $NEW_TAG exists..."
+            for PR_NUM in "${PRS_TO_LABEL[@]}"; do
                 echo "[DRY-RUN] gh pr edit $PR_NUM --add-label $RC_BACKPORT_APPLIED_LABEL"
-            else
+            done
+        elif [ "$PUSH_TO_ORIGIN" = true ]; then
+            echo "Labeling PRs '$RC_BACKPORT_APPLIED_LABEL' now that $NEW_TAG exists..."
+            for PR_NUM in "${PRS_TO_LABEL[@]}"; do
                 gh pr edit "$PR_NUM" --add-label "$RC_BACKPORT_APPLIED_LABEL" \
                     || echo "  Warning: failed to add '$RC_BACKPORT_APPLIED_LABEL' to PR #$PR_NUM - label it manually so future RC runs recognize it's applied"
-            fi
-        done
+            done
+        else
+            echo "Not labeling any PR - $NEW_TAG only exists locally without --push. Re-run with --push once you're ready to make this durable."
+        fi
     fi
 
     # $RESCUE_BRANCH (whether this run resumed from it, or it's simply left over
@@ -566,10 +618,14 @@ if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NU
                 || echo "  Warning: failed to delete local branch $RESCUE_BRANCH - remove it manually."
         fi
     fi
-    if git ls-remote --exit-code --heads origin "$RESCUE_BRANCH" >/dev/null 2>&1; then
+    # Gated on $PUSH_TO_ORIGIN first, not $DRY_RUN first: a real (non-dry) run
+    # without --push never touches the remote, so a dry run without --push
+    # must not claim it would either - the rehearsal has to match what the
+    # same flags would actually do.
+    if [ "$PUSH_TO_ORIGIN" = true ] && git ls-remote --exit-code --heads origin "$RESCUE_BRANCH" >/dev/null 2>&1; then
         if [ "$DRY_RUN" = true ]; then
             echo "[DRY-RUN] git push origin --delete $RESCUE_BRANCH"
-        elif [ "$PUSH_TO_ORIGIN" = true ]; then
+        else
             command git push origin --delete "$RESCUE_BRANCH" >/dev/null 2>&1 \
                 && echo "Deleted origin/$RESCUE_BRANCH (superseded by $NEW_TAG)." \
                 || echo "  Warning: failed to delete origin/$RESCUE_BRANCH - remove it manually."

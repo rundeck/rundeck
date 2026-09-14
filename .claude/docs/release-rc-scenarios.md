@@ -15,7 +15,7 @@ The Rundeck job fails fast on a mismatched `releaseType`/commit combination, bef
 ## The label system
 
 - **`rc-backport-<version>`** (e.g. `rc-backport-6.2.0`) - applied by a human to a merged PR to mark it for backport into that version's RC line. Scoped to the full version (not just major.minor, and not tied to a specific rc number) - one label covers every RC of that version, from rc2 through however many are cut.
-- **`rc-backport-<version>-applied`** - applied by the script once a PR is confirmed part of a tagged (or about-to-be-tagged) RC. Authoritative "already applied" signal, checked before the cherry-pick trailer. **If you ever manually cherry-pick a labeled PR into the RC lineage yourself, add this label immediately** - the next run doesn't know a PR is in unless the label or trailer says so, and will otherwise try to re-apply it.
+- **`rc-backport-<version>-applied`** - applied by the script once a PR is confirmed part of a tagged (or about-to-be-tagged) RC. Authoritative "already applied" signal, checked before the cherry-pick trailer. **If you ever manually cherry-pick a labeled PR into the RC lineage yourself, add this label immediately** - the next run doesn't know a PR is in unless the label or trailer says so, and will otherwise try to re-apply it. The script itself only ever adds this label **after `--push` and after the tag genuinely exists** - never speculatively - since a local-only tag can vanish with the checkout while the label would remain, durable and visible to everyone, on GitHub.
 - Not to be confused with the pre-existing, unrelated **`backport-completed`** label (paired with `auto-backport`/`backport-to-release/X.Y.x`), which belongs to a different system entirely: backporting merged PRs to maintenance branches post-GA.
 
 ## Scenario 1: Normal rc2+ cut, everything applies cleanly
@@ -133,3 +133,4 @@ Only the codes the script actually assigns via an explicit `exit N`. A few other
 | 9 | The labeled-PR fetch hit its safety cap - there may be more than were retrieved |
 | 10 | A `rescue/<tag>` branch exists but isn't a descendant of the previous RC tag - refused rather than trusted |
 | 11 | A `rescue/<tag>` branch (or its remote) already exists with different content than this run's candidate - refused rather than force-overwritten |
+| 13 | A labeled, merged PR has no resolvable `mergeCommit` - refused rather than silently dropped from the set |
