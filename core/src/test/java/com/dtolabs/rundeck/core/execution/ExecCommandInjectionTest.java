@@ -535,4 +535,42 @@ public class ExecCommandInjectionTest {
         Assert.assertEquals("echo", result.get(0));
         Assert.assertEquals("'Scanning port: 80 | whoami'", result.get(1));
     }
+
+    @Test
+    public void testInjectionThroughAuthorSuppliedQuotesBlocked() {
+        // Copilot review on rundeck#10608, PR for this issue: the #10027 shape wraps the reference
+        // in the job author's OWN single quotes. Quoting the substituted value as a standalone
+        // argument in that case (the prior behavior of this fix) produces e.g.
+        // -TenantPath ''x; whoami'' for value "x; whoami" -- two adjacent empty quote pairs with the
+        // ';' sitting UNQUOTED between them, an actual command injection. The fix must instead
+        // escape the value for insertion inside the author's existing quotes.
+        WFSharedContext sharedContext = sharedContextWithOption("anode", "TenantPath", "x; whoami");
+
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("-TenantPath '${option.TenantPath}'", true, false);
+        ExecArgList execArgList = builder.build();
+
+        ArrayList<String> result = execArgList.buildCommandForNode(sharedContext, "anode", "unix", null);
+
+        Assert.assertEquals(1, result.size());
+        // The whole thing must remain ONE single-quoted literal argument value to -TenantPath --
+        // the ';' must never end up outside of quotes.
+        Assert.assertEquals("-TenantPath 'x; whoami'", result.get(0));
+    }
+
+    @Test
+    public void testInjectionThroughAuthorSuppliedQuotesWithEmbeddedQuoteBlocked() {
+        // A value that itself contains a single quote, inside author-supplied quotes, must have
+        // that quote escaped (not left to terminate the author's quoting early).
+        WFSharedContext sharedContext = sharedContextWithOption("anode", "TenantPath", "a'; whoami; echo '");
+
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("-TenantPath '${option.TenantPath}'", true, false);
+        ExecArgList execArgList = builder.build();
+
+        ArrayList<String> result = execArgList.buildCommandForNode(sharedContext, "anode", "unix", null);
+
+        Assert.assertEquals(1, result.size());
+        Assert.assertEquals("-TenantPath 'a'\\''; whoami; echo '\\'''", result.get(0));
+    }
 }

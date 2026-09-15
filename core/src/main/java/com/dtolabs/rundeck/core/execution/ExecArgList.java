@@ -25,15 +25,24 @@ import com.dtolabs.rundeck.core.utils.Converter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A list of commandline arguments, with flags to indicate quoting.
  */
 public class ExecArgList {
+    // Matches SharedDataContextUtils's own (private) PROPERTY_VIEW_REF_PATTERN exactly -- compiled
+    // from its public regex string constant -- so that scanning a string for reference matches here
+    // (to detect their presence, and their flanking characters) stays in lockstep with the matches
+    // SharedDataContextUtils.replaceDataReferences() itself finds and substitutes.
+    private static final Pattern REFERENCE_PATTERN = Pattern.compile(SharedDataContextUtils.PROPERTY_VIEW_REF_REGEX);
+
     List<ExecArg> args = new ArrayList<>();
 
     private ExecArgList() {
@@ -217,6 +226,7 @@ public class ExecArgList {
     )
     {
         final Converter<String, String> quote = CLIUtils.argumentQuoteForOperatingSystem(osFamily, commandInterpreter);
+        final boolean unixQuoting = "unix".equalsIgnoreCase(osFamily);
         // When an argument is flagged for quoting, quote each substituted property/data reference's
         // *value* in place as it's expanded, rather than quoting the whole expanded argument string
         // afterward. This still protects against command injection via the reference's value -- the
@@ -231,6 +241,16 @@ public class ExecArgList {
         // treated as an already-materialized, opaque value and the *whole* string is quoted instead
         // -- exactly the prior (pre-this-fix) behavior -- so injection protection isn't silently
         // lost for callers that don't go through per-reference substitution here.
+        //
+        // One more wrinkle (Unix only -- see #10027, and the Copilot review on rundeck#10608): if the
+        // job author already wrapped the reference in their own matching quote characters, e.g.
+        // -TenantPath '${option.TenantPath}', wrapping the substituted value in a *second* pair of
+        // quotes doesn't nest -- it closes the author's quote early, so a value like "x; whoami"
+        // becomes ''x; whoami'' with the ';' sitting unquoted between two empty pairs, an actual
+        // injection. In that case the value must instead be escaped for insertion *inside* the
+        // author's existing quotes, not wrapped in a new pair. This is only implemented here for the
+        // Unix single-quote case (the one actually reported); the equivalent for Windows quoting is
+        // not covered by this fix and should be reviewed separately if it comes up in practice.
         final Converter<String, String> quotePerReference =
                 value -> quote.convert(DataContextUtils.replaceMissingOptionsWithBlank.convert(value));
 
@@ -239,11 +259,17 @@ public class ExecArgList {
                 commandList,
                 quote,
                 (str, quoted) -> {
-                    boolean hasReference = str.contains("${") && SharedDataContextUtils.PROPERTY_REF_PATTERN.matcher(str).find();
+                    boolean hasReference = str.contains("${") && REFERENCE_PATTERN.matcher(str).find();
                     if (quoted && quote != null && !hasReference) {
                         // Already substituted (or never had a reference) upstream: nothing to
                         // substitute here, so quote the whole value as received.
                         return quote.convert(str);
+                    }
+                    Converter<String, String> valueConverter;
+                    if (quoted && quote != null && unixQuoting) {
+                        valueConverter = unixQuotePerReferenceRespectingAuthorQuotes(str, quote);
+                    } else {
+                        valueConverter = quoted && quote != null ? quotePerReference : DataContextUtils.replaceMissingOptionsWithBlank;
                     }
                     return SharedDataContextUtils.replaceDataReferences(
                             str,
@@ -251,7 +277,7 @@ public class ExecArgList {
                             //add node name to qualifier to read node-data first
                             ContextView.node(nodeName),
                             ContextView::nodeStep,
-                            quoted && quote != null ? quotePerReference : DataContextUtils.replaceMissingOptionsWithBlank,
+                            valueConverter,
                             false,
                             false
                     );
@@ -261,6 +287,44 @@ public class ExecArgList {
         );
         command.visitWith(visiter);
         return commandList;
+    }
+
+    /**
+     * Builds a per-reference value converter for the Unix shell case that accounts for a reference
+     * already being directly flanked by a matching quote character the job author wrote themselves
+     * (e.g. {@code '${option.name}'}). For such a reference, the value is escaped for insertion
+     * *inside* that existing quote (only the quote character itself needs escaping, using the
+     * standard {@code '\''} technique -- everything else is already inert inside single quotes)
+     * rather than being wrapped in a second, conflicting pair of quotes. References not flanked this
+     * way fall back to the normal standalone-argument quoting.
+     * <br>
+     * Relies on {@code SharedDataContextUtils.replaceDataReferences(...)} invoking the returned
+     * converter once per reference match, in the same left-to-right order as the
+     * {@link Matcher#find()} scan performed here to precompute each match's flanking characters.
+     *
+     * @param str   the argument string as received, containing the reference(s) to be substituted
+     * @param quote the standalone-argument Unix quoting function, used as the fallback
+     * @return a converter to pass as the per-reference value converter to replaceDataReferences
+     */
+    private static Converter<String, String> unixQuotePerReferenceRespectingAuthorQuotes(String str, Converter<String, String> quote) {
+        List<Character> flankingQuotes = new ArrayList<>();
+        Matcher m = REFERENCE_PATTERN.matcher(str);
+        while (m.find()) {
+            char before = m.start() > 0 ? str.charAt(m.start() - 1) : '\0';
+            char after = m.end() < str.length() ? str.charAt(m.end()) : '\0';
+            flankingQuotes.add(before == after && before == '\'' ? Character.valueOf('\'') : null);
+        }
+        Iterator<Character> flanks = flankingQuotes.iterator();
+        return value -> {
+            String blanked = DataContextUtils.replaceMissingOptionsWithBlank.convert(value);
+            Character flank = flanks.hasNext() ? flanks.next() : null;
+            if (flank != null) {
+                // Already inside the author's own single quotes: escape only embedded single
+                // quotes (close, escaped literal quote, reopen); do not add another quote pair.
+                return blanked.replace("'", "'\\''");
+            }
+            return quote.convert(blanked);
+        };
     }
 
     /**
