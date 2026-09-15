@@ -1,12 +1,18 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeSecondsWorkflowListener.StepNodeSecondsEntry;
+
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * In-memory hand-off point for the finished "step_node_seconds" total computed by
- * {@link StepNodeSecondsWorkflowListener} for a top-level execution. Not persisted to any
- * database table and not exposed via any external API -- a caller elsewhere in the process
- * (e.g. a reporting listener) reads it once via {@link #takeFinishedTotal(Long)}.
+ * In-memory hand-off point for the finished "step_node_seconds" breakdown computed by
+ * {@link StepNodeSecondsWorkflowListener} for a top-level execution: one entry per step,
+ * keyed by its hierarchical step path (e.g. "3", or "3/1" for a step nested under step 3),
+ * each holding that step's duration (with any node-level dispatches already summed in) and
+ * the plugin/provider type that ran. Not persisted to any database table and not exposed via
+ * any external API -- a caller elsewhere in the process (e.g. a reporting listener) reads it
+ * once via {@link #takeFinishedBreakdown(Long)}.
  * <p>
  * A static singleton (rather than a value owned by the listener instance) is used
  * deliberately so a caller with only an execution id, and no handle on the listener that
@@ -17,13 +23,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * path which does reach completion) never gets an entry written for it, so there is nothing
  * to evict for that case specifically; however, nothing proactively caps or expires entries
  * that do get written, so an unbounded stream of callers that never call
- * {@link #takeFinishedTotal(Long)} could still accumulate entries indefinitely. This is
+ * {@link #takeFinishedBreakdown(Long)} could still accumulate entries indefinitely. This is
  * accepted for now, since this store exists purely to validate the metric's computation.
  */
 public final class StepNodeSecondsStore {
     private static final StepNodeSecondsStore INSTANCE = new StepNodeSecondsStore();
 
-    private final ConcurrentHashMap<Long, Long> finishedTotals = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, Map<String, StepNodeSecondsEntry>> finishedBreakdowns = new ConcurrentHashMap<>();
 
     private StepNodeSecondsStore() {
     }
@@ -33,22 +39,26 @@ public final class StepNodeSecondsStore {
     }
 
     /**
-     * Record the finished step_node_seconds total for an execution. Overwrites any
-     * previously recorded value for the same execution id.
+     * Record the finished per-step step_node_seconds breakdown for an execution. Overwrites
+     * any previously recorded value for the same execution id.
      */
-    void recordFinishedTotal(final Long executionId, final long stepNodeSeconds) {
+    void recordFinishedBreakdown(final Long executionId, final Map<String, StepNodeSecondsEntry> breakdown) {
         if (executionId != null) {
-            finishedTotals.put(executionId, stepNodeSeconds);
+            finishedBreakdowns.put(executionId, breakdown);
         }
     }
 
     /**
-     * Read and remove the finished step_node_seconds total for an execution.
+     * Read and remove the finished step_node_seconds breakdown for an execution: one entry
+     * per step, keyed by its hierarchical step path (e.g. "3", or "3/1" for a step nested
+     * under step 3), each holding that step's duration in whole seconds (node-level
+     * dispatches already summed in) and its plugin/provider type. Callers that only need the
+     * execution's total should sum the returned map's {@code getSeconds()} values.
      *
      * @param executionId the execution id
-     * @return the finished total, or null if none was recorded (or it was already taken)
+     * @return the finished breakdown, or null if none was recorded (or it was already taken)
      */
-    public Long takeFinishedTotal(final Long executionId) {
-        return executionId == null ? null : finishedTotals.remove(executionId);
+    public Map<String, StepNodeSecondsEntry> takeFinishedBreakdown(final Long executionId) {
+        return executionId == null ? null : finishedBreakdowns.remove(executionId);
     }
 }

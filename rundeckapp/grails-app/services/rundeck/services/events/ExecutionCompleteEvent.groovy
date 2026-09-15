@@ -16,6 +16,7 @@
 
 package rundeck.services.events
 
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeSecondsWorkflowListener.StepNodeSecondsEntry
 import rundeck.Execution
 import rundeck.ScheduledExecution
 
@@ -31,9 +32,24 @@ class ExecutionCompleteEvent {
     /**
      * Sum of step-node-second durations for this execution (Section 2 of the RBA
      * consumption-billing proposal), or null if none was recorded -- e.g. the
-     * StepNodeSecondsWorkflowListener never finalized a total for this execution.
+     * StepNodeSecondsWorkflowListener never finalized a breakdown for this execution.
+     * Derived from {@link #stepNodeSecondsBreakdown}'s values -- kept as its own field since
+     * most consumers (e.g. the Micrometer metric) only want the scalar.
      */
     Long stepNodeSeconds
+
+    /**
+     * Per-step breakdown backing {@link #stepNodeSeconds}: one entry per step, keyed by its
+     * hierarchical step path (e.g. "3", or "3/1" for a step nested under step 3 -- the same
+     * scheme state.json uses for its own step identifiers). Each entry holds that step's
+     * duration in whole seconds (node-level dispatches already summed in) and the
+     * plugin/provider type that ran, so a consumer can decide billability by plugin type
+     * without needing to re-read the job definition or execution state. Null under the same
+     * conditions {@link #stepNodeSeconds} is null. Lets a future consumer (e.g. a billing
+     * subscriber excluding "non-billable" steps -- RBA_BILLING proposal Section 6.2.1)
+     * exclude specific steps' contributions.
+     */
+    Map<String, StepNodeSecondsEntry> stepNodeSecondsBreakdown
 
 
     @Override
@@ -45,6 +61,7 @@ class ExecutionCompleteEvent {
                 ", nodeStatus=" + nodeStatus +
                 ", context=" + context +
                 ", stepNodeSeconds=" + stepNodeSeconds +
+                ", stepNodeSecondsBreakdown=" + stepNodeSecondsBreakdown +
                 '}';
     }
 }
