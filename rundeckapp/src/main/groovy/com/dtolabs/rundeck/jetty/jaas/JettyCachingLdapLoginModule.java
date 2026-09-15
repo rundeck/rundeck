@@ -1030,7 +1030,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             e.printStackTrace();
         }
 
-        UserInfo userInfo = new UserInfo(normalizedUsername, PasswordCredential.getCredential(password.toString()), roles);
+        UserInfo userInfo = new UserInfo(normalizedUsername, null, roles);
         if (_cacheDuration > 0) {
             USERINFOCACHE.put(cacheToken,
                 new CachedUserInfo(userInfo,
