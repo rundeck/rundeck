@@ -598,8 +598,8 @@ Since: v49''',
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
             authContext,
-            AuthConstants.RESOURCE_TYPE_SYSTEM,
-            [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_OPS_ADMIN]
+            AuthConstants.RESOURCE_TYPE_PLUGIN,
+            [AuthConstants.ACTION_INSTALL]
         )
         if (!authorized) {
             renderErrorCodeAsJson("request.error.unauthorized.title")
@@ -611,7 +611,13 @@ Since: v49''',
         }
         def file = request.getFile('pluginFile')
         ensureUploadLocation()
-        File tmpFile = new File(frameworkService.getRundeckFramework().baseDir,RELATIVE_PLUGIN_UPLOAD_DIR+"/"+file.originalFilename)
+        File tmpFile
+        try {
+            tmpFile = resolveSafePluginFile(new File(frameworkService.getRundeckFramework().baseDir, RELATIVE_PLUGIN_UPLOAD_DIR), file.originalFilename)
+        } catch (IllegalArgumentException e) {
+            renderErrorCodeAsJson("plugin.error.invalid.filename")
+            return
+        }
         if(tmpFile.exists()) tmpFile.delete()
         tmpFile << file.inputStream
         def errors = validateAndCopyPlugin(file.originalFilename, tmpFile)
@@ -640,8 +646,8 @@ Since: v49''',
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
             authContext,
-            AuthConstants.RESOURCE_TYPE_SYSTEM,
-            [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_OPS_ADMIN]
+            AuthConstants.RESOURCE_TYPE_PLUGIN,
+            [AuthConstants.ACTION_INSTALL]
         )
         if (!authorized) {
             renderErrorCodeAsJson("request.error.unauthorized.title")
@@ -655,14 +661,30 @@ Since: v49''',
             renderErrorCodeAsJson("plugin.error.invalid.url")
             return
         }
+        URI pluginUri
+        try {
+            pluginUri = URI.create(params.pluginUrl)
+        } catch (IllegalArgumentException e) {
+            renderErrorCodeAsJson("plugin.error.invalid.url")
+            return
+        }
+        if (!(pluginUri.scheme?.equalsIgnoreCase("http") || pluginUri.scheme?.equalsIgnoreCase("https"))) {
+            renderErrorCodeAsJson("plugin.error.invalid.url")
+            return
+        }
         def parts = params.pluginUrl.split("/")
-        String urlString = params.pluginUrl.startsWith("/") ? "file:"+params.pluginUrl : params.pluginUrl
 
         ensureUploadLocation()
-        File tmpFile = new File(frameworkService.getRundeckFramework().baseDir,RELATIVE_PLUGIN_UPLOAD_DIR+"/"+parts.last())
+        File tmpFile
+        try {
+            tmpFile = resolveSafePluginFile(new File(frameworkService.getRundeckFramework().baseDir, RELATIVE_PLUGIN_UPLOAD_DIR), parts.last())
+        } catch (IllegalArgumentException e) {
+            renderErrorCodeAsJson("plugin.error.invalid.filename")
+            return
+        }
         if(tmpFile.exists()) tmpFile.delete()
         try {
-            URI.create(urlString).toURL().withInputStream { inputStream ->
+            pluginUri.toURL().withInputStream { inputStream ->
                 tmpFile << inputStream
             }
         } catch(Exception ex) {
@@ -686,7 +708,13 @@ Since: v49''',
         if(!PluginValidator.validate(tmpPluginFile)) {
             errors.add("plugin.error.invalid.plugin")
         } else {
-            File newPlugin = new File(frameworkService.getRundeckFramework().libextDir,pluginName)
+            File newPlugin
+            try {
+                newPlugin = resolveSafePluginFile(frameworkService.getRundeckFramework().libextDir, pluginName)
+            } catch (IllegalArgumentException e) {
+                errors.add("plugin.error.invalid.filename")
+                return errors
+            }
             if(newPlugin.exists()) {
                 newPlugin.delete()
             }
@@ -696,6 +724,27 @@ Since: v49''',
             flash.installSuccess = true
         }
         return errors
+    }
+
+    /**
+     * Resolves a plugin file name against a base directory, rejecting names that contain
+     * path separators or {@code ..} segments, or that would otherwise resolve outside
+     * {@code baseDir} once normalized.
+     *
+     * @param baseDir the directory the resolved file must live in
+     * @param name the untrusted plugin file name
+     * @return the resolved {@link File} within {@code baseDir}
+     * @throws IllegalArgumentException if {@code name} is blank or would escape {@code baseDir}
+     */
+    private File resolveSafePluginFile(File baseDir, String name) {
+        if (!name || name.contains('/') || name.contains('\\') || name.contains('..')) {
+            throw new IllegalArgumentException("Invalid plugin file name: ${name}")
+        }
+        File resolved = new File(baseDir, name)
+        if (!resolved.toPath().normalize().startsWith(baseDir.toPath().normalize())) {
+            throw new IllegalArgumentException("Invalid plugin file name: ${name}")
+        }
+        return resolved
     }
 
     private String renderErrorCodeAsJson(String errCode) {

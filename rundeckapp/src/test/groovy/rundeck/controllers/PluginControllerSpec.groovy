@@ -21,6 +21,9 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.testing.web.controllers.ControllerUnitTest
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import okio.Buffer
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -419,7 +422,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.featureService.featurePresent(_) >> false
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
         response.text == '{"err":"A plugin file must be specified"}'
     }
 
@@ -456,7 +459,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
         response.text == '{"err":"The plugin URL is required"}'
     }
 
@@ -485,12 +488,52 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.featureService.featurePresent(_) >> false
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
         response.text == '{"msg":"done"}'
         uploaded.exists()
 
         cleanup:
         uploaded.delete()
+    }
+
+    @Unroll
+    void "upload plugin rejects path traversal filename - #maliciousName"() {
+        setup:
+        def fwksvc = Mock(FrameworkService)
+
+        controller.featureService = Mock(FeatureService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def fwk = Mock(Framework) {
+            getBaseDir() >> uploadTestBaseDir
+            getLibextDir() >> uploadTestTargetDir
+        }
+        fwksvc.getRundeckFramework() >> fwk
+        controller.frameworkService = fwksvc
+        controller.apiService=Mock(ApiService)
+        messageSource.addMessage("plugin.error.invalid.filename",Locale.ENGLISH,"Invalid plugin file name")
+
+        when:
+        request.method='POST'
+        setupFormTokens(params)
+        def pluginInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(PLUGIN_FILE)
+        request.addFile(new GrailsMockMultipartFile("pluginFile",maliciousName,"application/octet-stream",pluginInputStream))
+        controller.uploadPlugin()
+
+        then:
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.featureService.featurePresent(_) >> false
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+        response.text == '{"err":"Invalid plugin file name"}'
+        !new File(uploadTestTargetDir, "evil.zip").exists()
+        !new File(uploadTestBaseDir.parentFile, "evil.zip").exists()
+
+        where:
+        maliciousName << [
+            "../../../../tmp/evil.zip",
+            "../evil.zip",
+            "sub/dir/evil.zip",
+            "sub\\dir\\evil.zip",
+        ]
     }
     @Unroll
     void "upload plugin requires POST method"() {
@@ -567,23 +610,93 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.apiService=Mock(ApiService)
         controller.featureService = Mock(FeatureService)
 
+        MockWebServer httpServer = new MockWebServer()
+        httpServer.start()
+        byte[] pluginBytes = Thread.currentThread().getContextClassLoader().getResourceAsStream(PLUGIN_FILE).bytes
+        httpServer.enqueue(new MockResponse().setBody(new Buffer().write(pluginBytes)))
+
         when:
         request.method='POST'
         setupFormTokens(params)
         !installed.exists()
-        def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
-        params.pluginUrl = pluginUrl.toString()
+        params.pluginUrl = httpServer.url(PLUGIN_FILE).toString()
         controller.installPlugin()
 
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
         response.text == '{"msg":"done"}'
         installed.exists()
 
         cleanup:
         installed.delete()
+        httpServer.shutdown()
+    }
+
+    void "install plugin rejects non-http scheme"() {
+        setup:
+        File installed = new File(uploadTestTargetDir,PLUGIN_FILE)
+        def fwksvc = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def fwk = Mock(Framework) {
+            getBaseDir() >> uploadTestBaseDir
+            getLibextDir() >> uploadTestTargetDir
+        }
+        fwksvc.getRundeckFramework() >> fwk
+        controller.frameworkService = fwksvc
+        controller.apiService=Mock(ApiService)
+        controller.featureService = Mock(FeatureService)
+        messageSource.addMessage("plugin.error.invalid.url",Locale.ENGLISH,"Invalid plugin URL")
+
+        when:
+        request.method='POST'
+        setupFormTokens(params)
+        params.pluginUrl = maliciousUrl
+        controller.installPlugin()
+
+        then:
+        1 * controller.featureService.featurePresent(_) >> false
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+        response.text == '{"err":"Invalid plugin URL"}'
+        !installed.exists()
+
+        where:
+        maliciousUrl << [
+            "/etc/passwd",
+            "file:/etc/passwd",
+            "file:///etc/passwd",
+        ]
+    }
+
+    void "install plugin rejects path traversal filename"() {
+        setup:
+        def fwksvc = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def fwk = Mock(Framework) {
+            getBaseDir() >> uploadTestBaseDir
+            getLibextDir() >> uploadTestTargetDir
+        }
+        fwksvc.getRundeckFramework() >> fwk
+        controller.frameworkService = fwksvc
+        controller.apiService=Mock(ApiService)
+        controller.featureService = Mock(FeatureService)
+        messageSource.addMessage("plugin.error.invalid.filename",Locale.ENGLISH,"Invalid plugin file name")
+
+        when:
+        request.method='POST'
+        setupFormTokens(params)
+        params.pluginUrl = "http://localhost/plugins/.."
+        controller.installPlugin()
+
+        then:
+        1 * controller.featureService.featurePresent(_) >> false
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+        response.text == '{"err":"Invalid plugin file name"}'
     }
     @Unroll
     void "install plugin requires POST method"() {
@@ -677,7 +790,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> false
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> false
         response.text == '{"err":"Unauthorized"}'
     }
 

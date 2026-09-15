@@ -35,8 +35,6 @@ public class PluginValidator {
             } catch (Exception iex) {
                 log.error("Error loading plugin.", iex);
             }
-        } else if(pluginFile.getName().endsWith(".groovy")) {
-            return true;
         } else {
             log.error("File: ${pluginFile.getName()} is not a valid Rundeck plugin.");
         }
