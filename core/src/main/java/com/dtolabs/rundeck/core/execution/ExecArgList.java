@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 /**
@@ -169,7 +170,9 @@ public class ExecArgList {
         );
 
         final ArrayList<String> commandList = new ArrayList<>();
-        CommandVisitor visiter = new CommandVisitor(commandList, quote, expand);
+        // legacy behavior: expand ignores the per-arg quoted flag; quoting (if any) is applied by
+        // convertAndQuote() to the whole expanded argument afterward, as it always has been here.
+        CommandVisitor visiter = new CommandVisitor(commandList, quote, (str, quoted) -> expand.convert(str), false);
         command.visitWith(visiter);
         return commandList;
     }
@@ -213,21 +216,32 @@ public class ExecArgList {
             String commandInterpreter
     )
     {
+        final Converter<String, String> quote = CLIUtils.argumentQuoteForOperatingSystem(osFamily, commandInterpreter);
+        // When an argument is flagged for quoting, quote each substituted property/data reference's
+        // *value* in place as it's expanded, rather than quoting the whole expanded argument string
+        // afterward. This still protects against command injection via the reference's value -- the
+        // only untrusted part -- without corrupting job-authored quoting/text around the reference
+        // within a larger literal argument, e.g. sudo "sh script.sh ${option.name}" (see #10293,
+        // #10027, both regressions from whole-argument quoting introduced by RUN-4175 / PR #10003).
+        final Converter<String, String> quotePerReference =
+                value -> quote.convert(DataContextUtils.replaceMissingOptionsWithBlank.convert(value));
 
         final ArrayList<String> commandList = new ArrayList<>();
         CommandVisitor visiter = new CommandVisitor(
                 commandList,
-                CLIUtils.argumentQuoteForOperatingSystem(osFamily, commandInterpreter),
-                str -> SharedDataContextUtils.replaceDataReferences(
+                quote,
+                (str, quoted) -> SharedDataContextUtils.replaceDataReferences(
                         str,
                         sharedContext,
                         //add node name to qualifier to read node-data first
                         ContextView.node(nodeName),
                         ContextView::nodeStep,
-                        DataContextUtils.replaceMissingOptionsWithBlank,
+                        quoted && quote != null ? quotePerReference : DataContextUtils.replaceMissingOptionsWithBlank,
                         false,
                         false
-                )
+                ),
+                // quoting (when applicable) is already embedded above during expansion
+                true
         );
         command.visitWith(visiter);
         return commandList;
@@ -239,18 +253,29 @@ public class ExecArgList {
     private static class CommandVisitor implements ExecArg.Visitor {
         private final ArrayList<String> commandList;
         final Converter<String, String> quote;
-        final Converter<String, String> expand;
+        /** Expands an argument string; given the arg's "quoted" flag, since some callers embed
+         * per-reference quoting into expansion itself (see quoteAppliedDuringExpand). */
+        final BiFunction<String, Boolean, String> expand;
+        /** True if {@link #expand} already applies quoting internally when its "quoted" argument is
+         * true, so {@link #convertAndQuote} must not quote the (already fully expanded) result again. */
+        final boolean quoteAppliedDuringExpand;
 
-        private CommandVisitor(ArrayList<String> commandList, Converter<String, String> quote, Converter<String,
-                String> expand) {
+        private CommandVisitor(
+                ArrayList<String> commandList,
+                Converter<String, String> quote,
+                BiFunction<String, Boolean, String> expand,
+                boolean quoteAppliedDuringExpand
+        ) {
             this.commandList = commandList;
             this.quote = quote;
             this.expand = expand;
+            this.quoteAppliedDuringExpand = quoteAppliedDuringExpand;
         }
 
         public String convertAndQuote(String s, boolean quoted, boolean featureQuotingBackwardCompatible) {
-            String replaced = expand.convert(s);
-            if (quote != null && quoted || featureQuotingBackwardCompatible && !replaced.equals(s)) {
+            String replaced = expand.apply(s, quoted);
+            if (!quoteAppliedDuringExpand
+                && (quote != null && quoted || featureQuotingBackwardCompatible && !replaced.equals(s))) {
                 replaced = quote.convert(replaced);
             }
             return replaced;
@@ -259,7 +284,7 @@ public class ExecArgList {
         @Override
         public void visit(ExecArg arg) {
             if (arg.isList()) {
-                CommandVisitor commandVisitor = new CommandVisitor(new ArrayList<>(), quote, expand);
+                CommandVisitor commandVisitor = new CommandVisitor(new ArrayList<>(), quote, expand, quoteAppliedDuringExpand);
                 for (ExecArg execArg : arg.getList()) {
                     execArg.accept(commandVisitor);
                 }
