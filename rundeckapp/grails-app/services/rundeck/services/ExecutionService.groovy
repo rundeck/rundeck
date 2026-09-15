@@ -1179,8 +1179,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         grailsLinkGenerator.link(controller: 'execution', action: 'show', id: execution.id, absolute: true,
                 params: [project: execution.project])
     }
+    /**
+     * Absolute server base URL exposed as the {@code job.serverUrl} context variable.
+     * The link generator resolves the root URL mapping, which always yields a trailing slash;
+     * it is stripped so the value can be safely concatenated with an absolute path such as
+     * {@code ${job.serverUrl}/api/50/projects} without producing a double slash, which Jetty 12 rejects.
+     *
+     * @param grailsLinkGenerator link generator used to build the absolute URL
+     * @return server base URL without trailing slashes, or null if no link could be generated
+     */
+    @CompileStatic
     static String generateServerURL(LinkGenerator grailsLinkGenerator) {
-        grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)
+        grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)?.replaceAll('/+$', '')
     }
 
     @CompileStatic
