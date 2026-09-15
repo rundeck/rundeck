@@ -762,7 +762,7 @@ project.gradle.projectsEvaluated {
 }
 
 task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
-    println "copying plugin libs"
+    println "Note: Copying plugin libs"
     File libextDir = new File(buildDir, "WEB-INF/rundeck/plugins")
     File manifestFile = new File(buildDir, "WEB-INF/rundeck/plugins/manifest.properties")
 
