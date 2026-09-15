@@ -438,16 +438,22 @@ describe("PluginConfig", () => {
                 defaultValue: "<table><tr><td>1.</td></tr></table>",
                 options: { displayType: "STATIC_TEXT" },
               },
+              { name: "host", type: "String", options: {} },
             ],
           },
         },
       });
 
+      // trigger the exportInputs/update:modelValue path via an edit to a non-STATIC_TEXT field
+      await wrapper
+        .findAllComponents(PluginPropEdit)[1]
+        .vm.$emit("update:modelValue", "localhost");
+      await wrapper.vm.$nextTick();
+
       const emitted = wrapper.emitted("update:modelValue");
-      if (emitted) {
-        for (const call of emitted) {
-          expect((call[0] as any).config).not.toHaveProperty("info");
-        }
+      expect(emitted).toBeTruthy();
+      for (const call of emitted!) {
+        expect((call[0] as any).config).not.toHaveProperty("info");
       }
     });
 
