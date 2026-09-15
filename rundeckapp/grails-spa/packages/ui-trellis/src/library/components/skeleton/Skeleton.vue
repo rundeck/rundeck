@@ -57,7 +57,8 @@ export default defineComponent({
 .skeleton--list {
   height: 100%;
   background-repeat: repeat-y;
-  background-image: linear-gradient(
+  background-image:
+    linear-gradient(
       100deg,
       rgba(255, 255, 255, 0),
       rgba(255, 255, 255, 0.5) 50%,

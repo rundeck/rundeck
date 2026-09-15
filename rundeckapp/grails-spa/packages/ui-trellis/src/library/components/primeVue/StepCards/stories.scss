@@ -1,14 +1,14 @@
-ul[data-testid='draggable-container']{
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    list-style: none;
-    position: relative;
-    counter-reset: list;
+ul[data-testid="draggable-container"] {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  list-style: none;
+  position: relative;
+  counter-reset: list;
 
   li:before {
     counter-increment: list;
-    content: counter(list)'.';
+    content: counter(list) ".";
     display: block;
     font-size: 16px;
     font-family: Inter, var(--fonts-body2) !important;
@@ -33,19 +33,18 @@ i.pi-bars {
   cursor: grabbing !important;
 }
 
-
 .link-button,
 .link-title,
 .link-step-plugin {
   all: unset;
-  color: #0052CC;
+  color: #0052cc;
   cursor: pointer;
   font-weight: 400;
   font-size: 12px;
 
   + .pi,
   .pi {
-    color: #0052CC;
+    color: #0052cc;
     display: none;
     margin-left: 5px;
   }
@@ -76,7 +75,7 @@ i.pi-bars {
   }
 }
 
-div[data-test='options_undo_redo'] {
+div[data-test="options_undo_redo"] {
   align-self: flex-end;
 }
 

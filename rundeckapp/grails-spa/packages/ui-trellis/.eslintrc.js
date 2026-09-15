@@ -22,7 +22,6 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "off",
     // All rules as warnings for now
     "vue/enforce-style-attribute": ["warn", { allow: ["scoped"] }],
-    "prettier/prettier": "warn",
     "@typescript-eslint/no-unused-vars": "warn",
     "@typescript-eslint/ban-types": "warn",
     "@typescript-eslint/no-var-requires": "warn",
@@ -66,6 +65,6 @@ module.exports = {
     "plugin:vue/vue3-recommended",
     "plugin:storybook/recommended",
     "plugin:vuejs-accessibility/recommended",
-    "plugin:prettier/recommended",
+    "prettier",
   ],
 };

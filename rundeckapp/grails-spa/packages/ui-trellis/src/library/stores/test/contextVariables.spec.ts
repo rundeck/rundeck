@@ -1,14 +1,17 @@
-import {contextVariables, createOptionVariables, ContextVariable} from '../contextVariables'
+import {
+  contextVariables,
+  createOptionVariables,
+  ContextVariable,
+} from "../contextVariables";
 import { getRundeckContext } from "../../rundeckService";
 
-jest.mock("../../rundeckService")
+jest.mock("../../rundeckService");
 const mockedRundeckContext = getRundeckContext as jest.Mock<unknown>;
 
 describe("contextVariables", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedRundeckContext.mockImplementation(() => {
-    })
+    mockedRundeckContext.mockImplementation(() => {});
   });
 
   it("returns expected keys by default", () => {
@@ -26,30 +29,34 @@ describe("contextVariables", () => {
     };
     expect(globalVar.type).toBe("global");
   });
-
 });
-describe('createOptionVariables',()=>{
+describe("createOptionVariables", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedRundeckContext.mockImplementation(() => {
-    })
+    mockedRundeckContext.mockImplementation(() => {});
   });
   it("creates options variables when with input", () => {
-    expect(createOptionVariables([{
-      name: "a_custom_variable",
-      label: "a custom variable",
-      description: "a variable representing something not supplied by rundeck by default",
-      type: "String",
-    }])).toEqual([
+    expect(
+      createOptionVariables([
+        {
+          name: "a_custom_variable",
+          label: "a custom variable",
+          description:
+            "a variable representing something not supplied by rundeck by default",
+          type: "String",
+        },
+      ]),
+    ).toEqual([
       {
         name: "a_custom_variable",
         title: "a custom variable",
-        description: "a variable representing something not supplied by rundeck by default",
+        description:
+          "a variable representing something not supplied by rundeck by default",
         type: "option",
-      }
+      },
     ]);
-  })
+  });
   it("creates empty variables when empty input", () => {
     expect(createOptionVariables([])).toEqual([]);
-  })
+  });
 });
