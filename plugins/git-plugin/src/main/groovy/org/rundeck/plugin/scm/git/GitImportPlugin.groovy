@@ -553,6 +553,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 importTracker.untrackPath(path)
+                jobStateMap.remove(reference.id)
 
                 def status = [synch: ImportSynchState.IMPORT_NEEDED]
                 return createJobImportStatus(status,jobActionsForStatus(status))
@@ -767,8 +768,26 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         return trackedItems?.contains(path) || config.shouldUseFilePattern() && config.filePattern && path.matches(config.filePattern)
     }
 
+    /**
+     * Remove node-local state for jobs that no longer exist in Rundeck.
+     *
+     * @param jobs complete current project job list
+     */
+    private void reconcileDeletedJobs(List<JobScmReference> jobs) {
+        Set<String> currentJobIds = jobs.collect { it.id }.findAll { it } as Set<String>
+        Set<String> cachedJobIds = new HashSet<>(snapshotJobStateMap().keySet())
+        cachedJobIds.addAll(importTracker.trackedJobIdSet())
+        cachedJobIds.removeAll(currentJobIds)
+        cachedJobIds.each { String jobId ->
+            jobStateMap.remove(jobId)
+            importTracker.untrackJob(jobId)
+        }
+    }
+
 
     Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
+        reconcileDeletedJobs(jobs)
+
         //force fetch
         fetchFromRemote(context)
 
