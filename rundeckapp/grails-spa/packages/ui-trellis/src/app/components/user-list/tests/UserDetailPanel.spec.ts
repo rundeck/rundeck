@@ -62,4 +62,26 @@ describe("UserDetailPanel", () => {
     expect(wrapper.text()).toContain("Groups");
     expect(wrapper.text()).toContain("admin, user");
   });
+
+  it("shows a help tooltip icon next to the Groups header when showGroups is true", async () => {
+    const wrapper = await mountUserDetailPanel({
+      user: { login: "alice" },
+      showGroups: true,
+    });
+
+    expect(wrapper.find('[data-testid="groups-help-icon"]').exists()).toBe(
+      true,
+    );
+  });
+
+  it("does not render the groups help tooltip icon when showGroups is false", async () => {
+    const wrapper = await mountUserDetailPanel({
+      user: { login: "bob" },
+      showGroups: false,
+    });
+
+    expect(wrapper.find('[data-testid="groups-help-icon"]').exists()).toBe(
+      false,
+    );
+  });
 });

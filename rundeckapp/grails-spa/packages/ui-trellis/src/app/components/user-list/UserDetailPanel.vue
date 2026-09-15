@@ -8,6 +8,15 @@
           <th class="table-header">{{ $t("domain.User.lastName.label") }}</th>
           <th v-if="showGroups" class="table-header">
             {{ $t("security.groups.label") }}
+            <tooltip
+              :text="$t('security.groups.description')"
+              placement="bottom"
+            >
+              <i
+                class="glyphicon glyphicon-question-sign"
+                data-testid="groups-help-icon"
+              ></i>
+            </tooltip>
           </th>
         </tr>
         <tr>
