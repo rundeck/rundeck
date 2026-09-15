@@ -1,4 +1,6 @@
-FROM ubuntu:22.04
+# 24.04 rather than 22.04: the war is compiled to Java 25 bytecode (class file 69), which a
+# JRE 21 cannot load, and 22.04 has no openjdk-25 package.
+FROM ubuntu:24.04
 
 ARG CLI_VERS
 
@@ -26,7 +28,7 @@ RUN apt-get -y update && \
         zip \
         file \
         apt-transport-https \
-        openjdk-21-jdk \
+        openjdk-25-jdk \
         dos2unix
 
 RUN curl -s https://packagecloud.io/install/repositories/pagerduty/rundeck/script.deb.sh | os=any dist=any bash \
@@ -38,8 +40,7 @@ RUN useradd -p $(echo "pampwd123" | openssl passwd -1 -stdin) -m --shell /bin/ba
     # RUNDECK - create user
 RUN adduser --shell /bin/bash --home $HOME --gecos "" --disabled-password $USERNAME && \
         passwd -d $USERNAME && \
-        addgroup $USERNAME sudo && \
-        addgroup $USERNAME shadow
+        usermod -aG sudo,shadow $USERNAME
 
 WORKDIR $HOME
 
