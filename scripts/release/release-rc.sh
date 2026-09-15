@@ -669,14 +669,19 @@ function cleanup_rescue_branch {
 # exit status if tag creation itself fails.
 function finalize_tag {
     echo "All labeled PRs verified present. Final commit for $NEW_TAG: $FINAL_COMMIT"
-    if ! create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NUM"; then
+    # Not `if ! create_and_push_tag ...; then exit $?; fi`: `!` negates the exit
+    # status the `if` tests, so `$?` inside that then-block is 0 (the negated,
+    # "true" status), not create_and_push_tag's real failure code - `exit $?`
+    # there would always report success even when tagging/pushing failed.
+    if create_and_push_tag "$NEW_TAG" "$FINAL_COMMIT" "Release $VERSION rc$NEW_RC_NUM"; then
+        # Only now that $NEW_TAG genuinely exists is anything in PRS_TO_LABEL
+        # (fresh cherry-picks and trailer-only backfills alike) actually
+        # labeled, and the rescue branch cleaned up.
+        label_applied_prs
+        cleanup_rescue_branch
+    else
         exit $?
     fi
-    # Only now that $NEW_TAG genuinely exists is anything in PRS_TO_LABEL (fresh
-    # cherry-picks and trailer-only backfills alike) actually labeled, and the
-    # rescue branch cleaned up - see label_applied_prs/cleanup_rescue_branch.
-    label_applied_prs
-    cleanup_rescue_branch
 }
 
 # --- main ---
