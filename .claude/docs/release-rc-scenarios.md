@@ -66,7 +66,7 @@ release-rc.sh 6.2.0 rc3 --push
 # Found existing rescue/v6.2.0-rc3 (abc1234) - resuming from it instead of starting the backport over.
 ```
 
-- The script detects `rescue/v6.2.0-rc3` already exists (checked on origin first, then locally) and treats that alone as proof this run should finish it, not start the backport over. It's trusted at face value by name - the real safety net is the next step.
+- The script detects `rescue/v6.2.0-rc3` already exists (checked on origin first, then locally) and treats that alone as proof this run should finish it, not start the backport over. Its tip must be a verified descendant of `v6.2.0-rc2` (the previous RC tag), via `git merge-base --is-ancestor` - a same-named branch that isn't actually built on the right base (stale, unrelated, a name collision) is refused (exit 10), never silently tagged. Beyond that, it's trusted at face value - the real safety net for its actual content is the next step.
 - It does **not** cherry-pick anything in this mode. Instead it verifies every currently-labeled PR is present at the branch's tip, via the `-applied` label or the cherry-pick trailer.
 - If every PR checks out, it tags the branch's tip directly and backfills the `-applied` label on any PR that only had the trailer.
 - If anything is still missing, it refuses again (exit 7) and points back at the same branch.
@@ -141,6 +141,7 @@ Only the codes the script actually assigns via an explicit `exit N`. A few other
 | 7 | One or more PRs still CONFLICT/missing - see the rescue branch and per-PR resume commands |
 | 8 | No PR is labeled for this version at all |
 | 9 | The labeled-PR fetch hit its safety cap - there may be more than were retrieved |
+| 10 | A `rescue/<tag>` branch exists but isn't a descendant of the previous RC tag - refused rather than trusted |
 | 11 | A `rescue/<tag>` branch (or its remote) already exists with different content than this run's candidate - refused rather than force-overwritten |
 | 13 | A labeled, merged PR has no resolvable `mergeCommit` - refused rather than silently dropped from the set |
 | 14 | The labeled PR set changed (a PR was labeled, unlabeled, or newly merged) since this run started - refused rather than tagging a stale snapshot; also raised if the same re-check right before tagging can't reach GitHub at all |

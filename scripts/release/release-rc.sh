@@ -185,8 +185,9 @@ function resolve_base_and_resume {
 
     # A rescue/<tag> branch already existing means a previous run left off here
     # after a CONFLICT - resume from it instead of starting over. Checked on
-    # origin first (a previous --push run), then locally. Trusted at face value:
-    # the per-PR presence check in process_labeled_prs is the real safety net.
+    # origin first (a previous --push run), then locally. Beyond the ancestry
+    # check below, trusted at face value: the per-PR presence check in
+    # process_labeled_prs is the real safety net for its actual content.
     RESCUE_BRANCH="rescue/$NEW_TAG"
     RESUME_COMMIT=""
     if LS_REMOTE_OUTPUT="$(git ls-remote --heads origin "$RESCUE_BRANCH" 2>&1)" && [ -n "$LS_REMOTE_OUTPUT" ]; then
@@ -196,7 +197,17 @@ function resolve_base_and_resume {
         RESUME_COMMIT="$(git rev-parse "refs/heads/$RESCUE_BRANCH")"
     fi
     if [ -n "$RESUME_COMMIT" ]; then
-        echo "Found existing $RESCUE_BRANCH ($RESUME_COMMIT) - resuming from it instead of starting the backport over."
+        # A same-named branch that isn't actually built on $PREV_TAG - stale, from
+        # an unrelated attempt, or just a name collision - could otherwise pass
+        # every per-PR label/trailer check (those are version-wide, not tied to
+        # this branch's actual history) and get tagged, silently dropping
+        # everything $PREV_TAG carries.
+        if ! git merge-base --is-ancestor "$PREV_COMMIT" "$RESUME_COMMIT"; then
+            echo "Error: $RESCUE_BRANCH ($RESUME_COMMIT) is not a descendant of $PREV_TAG ($PREV_COMMIT) - refusing to trust it."
+            echo "Investigate manually; once you've confirmed it's safe to discard, delete/rename the branch and re-run."
+            exit 10
+        fi
+        echo "Found existing $RESCUE_BRANCH ($RESUME_COMMIT), descended from $PREV_TAG - resuming from it instead of starting the backport over."
     fi
 
     if [ -n "$RESUME_COMMIT" ]; then

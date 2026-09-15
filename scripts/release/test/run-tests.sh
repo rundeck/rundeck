@@ -202,6 +202,16 @@ if git rev-parse --verify refs/heads/rescue/v1.0.0-rc3 >/dev/null 2>&1; then fai
 if git -C "$ORIGIN" rev-parse --verify refs/heads/rescue/v1.0.0-rc3 >/dev/null 2>&1; then fail "origin rescue branch not cleaned up"; else ok "origin rescue branch cleaned up"; fi
 if [ "$(git show v1.0.0-rc3:file1.txt)" = "line1-changed-by-A-and-D" ]; then ok "resumed tag has the resolved content"; else fail "resumed tag missing resolved content"; fi
 
+echo "=== release-rc.sh: a same-named rescue branch not built on the previous RC tag is refused ==="
+git branch -f rescue/v1.0.0-rc4 main >/dev/null 2>&1
+git push -q -f origin rescue/v1.0.0-rc4
+write_pr_data "101:$PRA_SHA:2024-01-01T00:00:00Z:rc-backport-1.0.0"
+git checkout -q --detach v1.0.0-rc1
+OUT="$("$RUN_RC" "$RC_SCRIPT" 1.0.0 rc4 2>&1)"; EXIT=$?
+assert_exit "unrelated rescue branch is refused, not silently tagged" 10 "$EXIT"
+git branch -D rescue/v1.0.0-rc4 >/dev/null 2>&1
+git push -q origin --delete rescue/v1.0.0-rc4 >/dev/null 2>&1
+
 echo "=== release-rc.sh: --dry-run makes no durable changes ==="
 git checkout -q --detach v1.0.0-rc1
 write_pr_data "101:$PRA_SHA:2024-01-01T00:00:00Z:rc-backport-1.0.0"
