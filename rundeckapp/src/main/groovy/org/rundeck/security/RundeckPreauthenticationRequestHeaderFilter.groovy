@@ -50,8 +50,8 @@ class RundeckPreauthenticationRequestHeaderFilter extends AbstractPreAuthenticat
         String forwardedUser = request.remoteUser  //in AJP this will be set by apache
         if(userNameHeader != null) {
             forwardedUser = request.getHeader(userNameHeader)
-            LOG.info("User header " + userNameHeader);
-            LOG.info("User / UUID recieved " + forwardedUser);
+            LOG.debug("User header " + userNameHeader);
+            LOG.debug("User / UUID received " + forwardedUser);
         }
         return forwardedUser
     }
@@ -68,8 +68,8 @@ class RundeckPreauthenticationRequestHeaderFilter extends AbstractPreAuthenticat
             // PreauthenticatedAttributeRoleSource
             forwardedRoles = request.getHeader(rolesHeader);
             request.setAttribute(rolesAttribute, forwardedRoles);
-            LOG.info("Roles header " + rolesHeader);
-            LOG.info("Roles received " + forwardedRoles);
+            LOG.debug("Roles header " + rolesHeader);
+            LOG.debug("Roles received " + forwardedRoles);
         }
         return forwardedRoles
     }

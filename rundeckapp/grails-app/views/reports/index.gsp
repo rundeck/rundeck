@@ -50,7 +50,8 @@
             'startafterFilter',
             'endbeforeFilter',
             'endafterFilter',
-            'filterName'
+            'filterName',
+            'execnodeFilter'
     ]) + (defaultRecentFilter && !params.recentFilter ? [recentFilter: defaultRecentFilter] : [:])}"/>
     <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
     <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>

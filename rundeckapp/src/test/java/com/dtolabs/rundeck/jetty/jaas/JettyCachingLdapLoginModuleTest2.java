@@ -378,6 +378,11 @@ public class JettyCachingLdapLoginModuleTest2 {
 
         module._userBaseDn = "ou=users,dc=example,dc=com";
         module._roleBaseDn = "ou=groups,dc=example,dc=com";
+        // getPaginatedRoles() derives its paging LdapContext via dirContext.lookup(""), while
+        // buildRoleMemberOfMap's nested-groups search derives its own via dirContext.lookup(_providerUrl);
+        // the rootContext.lookup(anyString()) stub below matches either call, but _providerUrl must be
+        // non-null for its own call to match (Mockito's anyString() does not match a null argument).
+        module._providerUrl = "ldap://localhost";
 
         DirContext rootContext = mock(DirContext.class);
         LdapContext ldapContext = mock(LdapContext.class);
@@ -516,7 +521,6 @@ public class JettyCachingLdapLoginModuleTest2 {
         }
 
         module._rootContext = rootContext;
-        module.ldapContext = ldapContext;
         return module;
     }
 

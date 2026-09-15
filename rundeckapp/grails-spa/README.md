@@ -12,18 +12,12 @@ It is highly recommended that node.js be installed and managed by nvm.
 nvm use
 ```
 
-### Quick Start
+### Quick Start / Working with UI Trellis
 
 * Start rundeck in Development mode
 * Run `nvm use`
-* Run `npm run dev` to start building `packages/ui` in watch mode
-
-
-### Working with UI Trellis
-
-* Start rundeck in development mode
-* Run `nvm use`
-* Run `npm run dev:all` and wait for initial build
+* Enter the `./packages/ui-trellis` directory
+* Run `npm run dev` to start building in watch mode and wait for initial build
 
 
 ## UI Trellis Storybook Development

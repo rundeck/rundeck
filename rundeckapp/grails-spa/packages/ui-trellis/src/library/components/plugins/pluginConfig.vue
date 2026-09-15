@@ -545,7 +545,27 @@ export default defineComponent({
 
       this.props.forEach((prop: any) => {
         if (data.dynamicProps && data.dynamicProps[prop.name]) {
-          prop.allowed = data.dynamicProps[prop.name];
+          const dynamic = data.dynamicProps[prop.name];
+          const isValueLabelMap =
+            typeof dynamic === "object" && !Array.isArray(dynamic);
+
+          // Remember the labels the descriptor itself supplied. loadPluginData
+          // can run more than once over the same prop object, so labels
+          // derived from an earlier map must not survive into a later
+          // list-shaped load, and the descriptor's own labels must not be lost.
+          if (prop.descriptorSelectLabels === undefined) {
+            prop.descriptorSelectLabels = prop.selectLabels || null;
+          }
+
+          // A map arrives as { value: label }, e.g. ServiceNow urgency
+          // { "1": "1 - High" }. Iterating an object with v-for yields the
+          // labels, so the rendered option value would become "1 - High"
+          // instead of "1"; keep the map as the labels pluginPropVal renders
+          // and expose only the keys as the allowed values.
+          prop.selectLabels = isValueLabelMap
+            ? dynamic
+            : prop.descriptorSelectLabels || undefined;
+          prop.allowed = isValueLabelMap ? Object.keys(dynamic) : dynamic;
         }
         if (data.dynamicDefaults && data.dynamicDefaults[prop.name]) {
           prop.defaultValue = data.dynamicDefaults[prop.name];
