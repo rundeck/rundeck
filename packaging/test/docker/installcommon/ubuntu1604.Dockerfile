@@ -1,15 +1,14 @@
 FROM rundeck/ubuntu-base
 
-# Grails 7: Install Java 17 for Rundeck runtime
-# Note: ubuntu-base:latest on Docker Hub is currently Ubuntu 20.04.3
-# TODO: Rebuild and push Ubuntu 22.04 image to Docker Hub
+# The war is compiled to Java 25 bytecode (class file 69), so the runtime has to match.
+# rundeck/ubuntu-base is ubuntu:22.04, which carries openjdk-25 (25.0.4+7-1~22.04).
 USER root
 RUN apt-get update && \
-    apt-get install -y openjdk-21-jre-headless && \
+    apt-get install -y openjdk-25-jre-headless && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64
 ENV PATH=$JAVA_HOME/bin:$PATH
 
 USER rundeck
