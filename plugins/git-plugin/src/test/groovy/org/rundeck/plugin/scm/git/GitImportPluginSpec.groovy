@@ -321,6 +321,35 @@ class GitImportPluginSpec extends Specification {
         ret*.jobId == ['0001']
     }
 
+    /**
+     * Verifies that status calculation reuses one stable job-state value during loader updates.
+     */
+    def "get status safely reuses snapshot when live job state disappears"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'test')
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+        plugin.jobStateMap = new DisappearingEntryMap<String, Map>()
+        plugin.jobStateMap['123'] = ['synch': ImportSynchState.CLEAN, 'path': 'job1-123.xml']
+        plugin.importTracker.trackedJobIds['job1-123.xml'] = '123'
+
+        when:
+        def status = plugin.getStatusInternal(Mock(ScmOperationContext), false)
+
+        then:
+        status.importNeeded == 0
+    }
+
     def "perform pull on clean state withouth npe"() {
         given:
         def projectName = 'GitImportPluginSpec'
@@ -752,6 +781,23 @@ class GitImportPluginSpec extends Specification {
 
         then:
         status != null
+    }
+
+    /**
+     * Test map that simulates a loader removing an entry between two live-map reads.
+     */
+    private static class DisappearingEntryMap<K, V> extends LinkedHashMap<K, V> {
+        private int readCount
+
+        @Override
+        V get(Object key) {
+            readCount++
+            if (readCount > 1) {
+                remove(key)
+                return null
+            }
+            super.get(key)
+        }
     }
 
     /**
