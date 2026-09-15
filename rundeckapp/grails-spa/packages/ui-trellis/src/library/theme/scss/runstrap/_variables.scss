@@ -1115,6 +1115,13 @@ Theme colors
   --link-disabled-color: var(--grey-500);
 }
 
+// RUN-4965: input validation-state backgrounds have no dark variant, so `.has-error`/
+// `.has-success` inputs (see _inputs.scss) keep rendering their light pink/green.
+*[data-color-theme="dark"] {
+  --danger-input-bg: var(--red-900);
+  --success-input-bg: var(--green-900);
+}
+
 // General Colors
 
 $color-azure: $cyan-500;
