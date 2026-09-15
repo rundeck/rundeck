@@ -59,7 +59,23 @@ class SetUserInterceptor {
             request.invalidApiAuthentication=true
             return false
         }
-        def authtoken = params.authtoken? Webhook.cleanAuthToken(params.authtoken) : request.getHeader('X-RunDeck-Auth-Token')
+        // webhookType must be known before extracting authtoken: webhook URLs carry the token as a
+        // path segment by design and must never be warned about or gated by the query-param switch below.
+        boolean webhookType = controllerName == "webhook" && actionName == "post"
+
+        def authtoken
+        if (params.authtoken) {
+            if (webhookType || configurationService.getBoolean("security.apiTokenQueryParamAuth.enabled", true)) {
+                authtoken = Webhook.cleanAuthToken(params.authtoken)
+                if (!webhookType) {
+                    log.warn("API token authentication via URL query parameter (authtoken) is deprecated and may be removed in a future release; use the X-RunDeck-Auth-Token header instead. Token: ${AuthenticationTokenUtils.printable(authtoken)}")
+                }
+            } else {
+                authtoken = request.getHeader('X-RunDeck-Auth-Token')
+            }
+        } else {
+            authtoken = request.getHeader('X-RunDeck-Auth-Token')
+        }
         boolean isRunnerToken = false
 
         if (request.userPrincipal && session.user!=request.userPrincipal.name) {
@@ -80,8 +96,6 @@ class SetUserInterceptor {
             request.subject = session.subject
         } else if (request.api_version && authtoken) {
             //allow authentication token to be used
-            boolean webhookType = controllerName == "webhook" && actionName == "post"
-
             AuthenticationToken foundToken = lookupToken(authtoken, servletContext, webhookType)
             Set<String> roles = lookupTokenRoles(foundToken, servletContext) ?: ([] as Set<String>)
             String user = foundToken?.getOwnerName()

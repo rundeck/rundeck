@@ -622,6 +622,19 @@ search
                           </a>
                           <!-- /ko -->
 
+                          <div data-bind="visible: activeTab()==='nodes'" class="pull-right" style="margin-left: 10px;">
+                              <div class="checkbox-inline">
+                                  <input type="checkbox"
+                                         data-bind="checked: hideIncompleteNodes, enable: hideIncompleteNodesApplies"
+                                         id="hide-incomplete-nodes"
+                                         data-testid="hide-incomplete-nodes"
+                                         title="${g.message(code: 'execution.show.nodes.hideIncompleteNodes.description',
+                                                 default: 'Hide nodes whose only unfinished steps were skipped by a conditional. Successful executions only.')}"/>
+                                  <label for="hide-incomplete-nodes">
+                                      <g:message code="execution.show.nodes.hideIncompleteNodes.label" default="Hide incomplete nodes"/>
+                                  </label>
+                              </div>
+                          </div>
 
                           <span data-bind="visible: activeTab().startsWith('output')">
 

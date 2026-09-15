@@ -101,6 +101,12 @@
       "enabled": false
     },
     {
+      "description": "Label every npm dep bump in ui-trellis so a GitHub Action can check whether it's also vendored into rundeckpro-ui-components and mirror the update there once this PR merges. The actual 'is this shared' decision is made downstream against rundeckpro-ui-components/package.json (single source of truth), not maintained here as a name list — see rundeckpro's sync-renovate-dependency.yml workflow.",
+      "matchManagers": ["npm"],
+      "matchFileNames": ["rundeckapp/grails-spa/packages/ui-trellis/package.json"],
+      "addLabels": ["sync-rundeckpro"]
+    },
+    {
       "description": "Group ESLint ecosystem updates",
       "matchPackageNames": ["/eslint/"],
       "groupName": "eslint packages"
@@ -121,10 +127,11 @@
       "enabled": true
     },
     {
-      "description": "Group Node.js version (.nvmrc) with the npm engine pin so they update together",
+      "description": "Group Node.js version (.nvmrc) with the npm engine pin so they update together. Gated behind Dependency Dashboard approval: node/npm must move in lockstep across the rundeck and rundeckpro repos (Renovate cannot open a single cross-repo PR), so auto-created PRs can never merge unilaterally and only burn CI. Approve the checkbox on BOTH repos' dashboards in the same session, merge rundeck first, then rundeckpro.",
       "matchManagers": ["nvm", "npm"],
       "matchDepNames": ["node", "npm"],
-      "groupName": "node and npm engine versions"
+      "groupName": "node and npm engine versions",
+      "dependencyDashboardApproval": true
     },
     {
       "description": "Default registry for the vast majority of Gradle dependencies (Spring, Netty, Jackson, JUnit, etc.) instead of checking every globally-declared repo (m2proxy, PackageCloud, Sonatype, Grails, Gradle Plugin Portal, ...) for every dependency. Only ~9% of our gradle deps are actually Grails/Groovy-namespaced, so grails.org is scoped separately below rather than checked for everything.",

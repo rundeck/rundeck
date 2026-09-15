@@ -83,6 +83,8 @@
           description-css="ml-5"
           data-testid="plugin-info"
           :service-name="serviceName"
+          :use-runner-selector="true"
+          :event-bus="eventBus"
           :extra-autocomplete-vars="extraAutocompleteVars"
         />
       </div>
@@ -193,6 +195,7 @@ export default defineComponent({
       loading: false,
       pluginConfigMode: "edit",
       validationErrors: resetValidation(),
+      eventBus: rundeckContext.eventBus,
       jobRefDefaults: {
         description: "",
         jobref: createJobRefDefinition(rundeckContext.projectName),

@@ -63,15 +63,11 @@
     <template
       v-else-if="prop.options && prop.options['displayType'] === 'DYNAMIC_FORM'"
     >
-      <input :id="rkey" type="hidden" :name="prop.name" />
-
       <dynamic-form-plugin-prop
-        :id="rkey"
         v-model="currentValue"
         :fields="modelValue"
         :has-options="hasAllowedValues()"
         :options="parseAllowedValues()"
-        :element="rkey"
         :name="prop.name"
       ></dynamic-form-plugin-prop>
     </template>
@@ -221,11 +217,9 @@
                 prop.options['codeSyntaxSelectable'] === 'true' &&
                 !renderReadOnly
               "
-              height="200"
-              width="100%"
               :read-only="renderReadOnly"
               :context-variable-suggestions="scriptTypeContextVariables"
-              :min-lines="aceEditorMinLines"
+              :min-lines="aceEditorMinLines > 0 ? aceEditorMinLines : undefined"
               :max-lines="aceEditorMaxLines"
             />
           </ui-socket>
@@ -440,7 +434,7 @@ import {
   WorkflowStepType,
 } from "../utils/contextVariableUtils";
 
-const ACE_EDITOR_DEFAULT_MIN_LINES = 12;
+const ACE_EDITOR_DEFAULT_MIN_LINES = 0;
 const ACE_EDITOR_DEFAULT_MAX_LINES = 0;
 
 interface Prop {
@@ -450,6 +444,10 @@ interface Prop {
   required: boolean;
   options: any;
   allowed: string;
+  // Optional { value: label } map supplied when a plugin provides dynamic
+  // values as a map; pluginConfig keeps it here while `allowed` holds the
+  // keys. Rendered by pluginPropVal.
+  selectLabels?: Record<string, string>;
   name: string;
   desc: string;
   staticTextDefaultValue: string;
@@ -599,7 +597,8 @@ export default defineComponent({
       return this.appMeta.aceEditorMinLines ?? ACE_EDITOR_DEFAULT_MIN_LINES;
     },
     aceEditorMaxLines(): number {
-      const raw = this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
+      const raw =
+        this.appMeta.aceEditorMaxLines ?? ACE_EDITOR_DEFAULT_MAX_LINES;
       return raw === 0 ? Infinity : raw;
     },
   },
@@ -679,6 +678,12 @@ export default defineComponent({
       }
     },
     parseAllowedValues() {
+      // DYNAMIC_FORM consumers expect the original { value: label } map,
+      // which pluginConfig keeps in selectLabels when the plugin supplies
+      // dynamic values as a map rather than a plain list.
+      if (this.prop.selectLabels) {
+        return JSON.stringify(this.prop.selectLabels);
+      }
       return JSON.stringify(this.prop.allowed);
     },
     handleUpdate(val: any) {
