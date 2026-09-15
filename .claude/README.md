@@ -33,7 +33,6 @@ New rule file checklist:
 - Add `.github/instructions/<name>.instructions.md` symlink for Copilot.
 - Add `.cursor/rules/<name>.mdc` symlink for Cursor — extension must be `.mdc`, not `.md`.
 - Always-apply rules (`complexity.md`) skip the Copilot symlink — no `applyTo` means "not applied automatically" in Copilot, so there's no way to express "always apply" there.
-- Skills that GitHub Copilot must use in code review get a symlink too: `.github/skills/<name>/SKILL.md` -> `../../../.claude/skills/<name>/SKILL.md` (Copilot also scans `.claude/skills/`, so the symlink is the documented entry point, not the only one).
 
 ## For Contributors
 

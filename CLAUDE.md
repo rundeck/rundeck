@@ -82,7 +82,6 @@ Available skills for common workflows:
 - **`generate-entity-context`** — Generate standardized CONTEXT.md files for features
 
 **Workflows:**
-- **`code-review`** — Review a PR diff against project conventions, one line per finding; also picked up by GitHub Copilot code review via `.github/skills/`
 - **`cve-remediation`** — Verify and fix security vulnerabilities (CVEs)
 - **`backport-pr`** — Cherry-pick a merged PR onto a release/maintenance branch
 - **`onboard-contributor`** — Guide a new contributor through the repo setup and conventions
