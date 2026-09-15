@@ -882,7 +882,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def results = Execution.isScheduledAdHoc()
         if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
+            results = results.where { serverNodeUUID == serverUUID }
         }
         results.list().each { Execution e ->
             ScheduledExecution se = e.scheduledExecution
@@ -908,9 +908,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def results = Execution.isScheduledAdHoc()
         if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
+            results = results.where { serverNodeUUID == serverUUID }
         }
-        results = results.withProject(project)
+        results = results.where { delegate.project == project }
 
         results.list().each { Execution e ->
             ScheduledExecution se = e.scheduledExecution
@@ -953,9 +953,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     def rescheduleJobsAsync(String serverUUID=null) {
-        executorService.execute{
-            rescheduleJobs(serverUUID)
-        }
+        // NB: the argument must be a real Runnable, not a Closure. groovy.lang.Closure already
+        // implements Runnable, so `{...} as Runnable` returns the Closure unchanged; the executor
+        // wrapper dispatches inPersistence() on the *runtime* type and would pick its Closure
+        // overload, which returns a Callable that ThreadPoolExecutor.execute() cannot accept.
+        // The work stays in a Closure so it keeps this service as its owner/delegate (an anonymous
+        // Runnable body would re-resolve unqualified calls against itself and hit methodMissing).
+        Closure task = { rescheduleJobs(serverUUID) }
+        executorService.execute(new Runnable() {
+            @Override
+            void run() { task.call() }
+        })
     }
 
     /**
@@ -986,10 +994,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         // Reschedule any executions which were scheduled ad hoc
         def results = Execution.isScheduledAdHoc()
         if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
+            results = results.where { serverNodeUUID == serverUUID }
         }
         if(project) {
-            results = results.withProject(project)
+            results = results.where { delegate.project == project }
         }
         def executionList = results.list()
 
@@ -1219,8 +1227,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     private def scheduleAdHocExecutionsForJob(ScheduledExecution se, String targetServerUUID) {
         // Reschedule any executions which were scheduled ad hoc
         def executionList = Execution.isScheduledAdHoc()
-                .withScheduledExecution(se)
-                .withServerNodeUUID(targetServerUUID)
+                .where { scheduledExecution == se }
+                .where { serverNodeUUID == targetServerUUID }
                 .list()
 
         rescheduleOnetimeExecutions(executionList)

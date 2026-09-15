@@ -50,7 +50,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.ApplicationListener
 import org.springframework.context.event.ContextClosedEvent
-import org.springframework.core.task.AsyncListenableTaskExecutor
+import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
@@ -93,8 +93,8 @@ class LogFileStorageService
     ExecutionFileStoragePluginProviderService executionFileStoragePluginProviderService
     PluginService pluginService
     def frameworkService
-    AsyncListenableTaskExecutor logFileTaskExecutor
-    AsyncListenableTaskExecutor logFileStorageTaskExecutor
+    AsyncTaskExecutor logFileTaskExecutor
+    AsyncTaskExecutor logFileStorageTaskExecutor
     TaskScheduler logFileStorageTaskScheduler
     TaskExecutor logFileStorageDeleteRemoteTask
     def executorService
@@ -517,7 +517,8 @@ class LogFileStorageService
                 if (getConfiguredStorageFailureCancel()) {
                     log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
                     //if policy, remove the request from db
-                    executorService.execute {
+                    //NB: real Runnable wrapping a Closure -- see note in ScheduledExecutionService.rescheduleJobsAsync
+                    Closure cancelTask = {
                         //use executorService to run within hibernate session
                         LogFileStorageRequestData request = logFileStorageRequestProvider.retryLoad(requestId as Long, retryMax)
                         if (!request) {
@@ -527,6 +528,10 @@ class LogFileStorageService
                             log.debug("Storage request [ID#${task.id}] cancelled.")
                         }
                     }
+                    executorService.execute(new Runnable() {
+                        @Override
+                        void run() { cancelTask.call() }
+                    })
                     failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling"])
                     failedRequests.add(requestId)
                 } else {
@@ -539,7 +544,8 @@ class LogFileStorageService
                 failedRequests.remove(requestId)
                 failures.remove(requestId)
                 //use executorService to run within hibernate session
-                executorService.execute {
+                //NB: real Runnable wrapping a Closure -- see note in ScheduledExecutionService.rescheduleJobsAsync
+                Closure saveTask = {
                     log.debug("executorService saving storage request status...")
                     LogFileStorageRequestData request = logFileStorageRequestProvider.retryLoad(requestId as Long, retryMax)
                     if (!request) {
@@ -551,6 +557,10 @@ class LogFileStorageService
                     }
                     getStorageSuccessCounter()?.inc()
                 }
+                executorService.execute(new Runnable() {
+                    @Override
+                    void run() { saveTask.call() }
+                })
             }
         }
     }
@@ -862,9 +872,12 @@ class LogFileStorageService
      * @param serverUUID
      */
     void resumeIncompleteLogStorageAsync(String serverUUID,Long id=null){
-        executorService.execute {
-            resumeIncompleteLogStorage(serverUUID,id)
-        }
+        //NB: real Runnable wrapping a Closure -- see note in ScheduledExecutionService.rescheduleJobsAsync
+        Closure task = { resumeIncompleteLogStorage(serverUUID,id) }
+        executorService.execute(new Runnable() {
+            @Override
+            void run() { task.call() }
+        })
     }
     /**
      * resume task, triggered periodically, consumes a single request id from the queue if present

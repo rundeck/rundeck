@@ -153,7 +153,7 @@
                 <button type="button" class="btn btn-default" data-dismiss="modal">
                   <g:message code="cancel"/>
                 </button>
-                <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary "/>
+                <g:formActionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' params="[project: params.project, jobListType: params.jobListType]" class="btn btn-primary "/>
               </div>
             </div>
           </g:form>
@@ -320,8 +320,9 @@
                           data-bind="click: cancel"
                           data-dismiss="modal" ><g:message code="no"/>
                         </button>
-                        <g:actionSubmit controller="menu"
+                        <g:formActionSubmit controller="menu"
                           action="projectToggleSCM"
+                          params="[project: params.project ?: request.project]"
                           form="toggleScmForm"
                           value="${message(code:'job.toggle.scm.button.label.'+status)}"
                           class="btn btn-danger"
@@ -356,25 +357,29 @@
                         data-dismiss="modal" ><g:message code="no"/>
                       </button>
                       <span data-bind="if: isDisableSchedule">
-                        <g:actionSubmit action="flipScheduleDisabledBulk"
+                        <%-- controller and params are explicit on every button below. These live in a modal OUTSIDE
+                             jobsListForm and attach to it via form="jobsListForm", but g:formActionSubmit builds its
+                             formaction from the CURRENT controller -- menu here -- not from the form they submit. Without
+                             them the bulk actions posted to /menu/flip...Bulk, which does not exist. --%>
+                        <g:formActionSubmit action="flipScheduleDisabledBulk" controller="scheduledExecution" params="[project: params.project ?: request.project]"
                           form="jobsListForm"
                           value="${message(code:'job.bulk.disable.schedule.button')}"
                           class="btn btn-danger"/>
                       </span>
                       <span data-bind="if: isEnableSchedule">
-                        <g:actionSubmit action="flipScheduleEnabledBulk"
+                        <g:formActionSubmit action="flipScheduleEnabledBulk" controller="scheduledExecution" params="[project: params.project ?: request.project]"
                           form="jobsListForm"
                           value="${message(code:'job.bulk.enable.schedule.button')}"
                           class="btn btn-danger"/>
                         </span>
                         <span data-bind="if: isDisableExecution">
-                          <g:actionSubmit action="flipExecutionDisabledBulk"
+                          <g:formActionSubmit action="flipExecutionDisabledBulk" controller="scheduledExecution" params="[project: params.project ?: request.project]"
                             form="jobsListForm"
                             value="${message(code:'scheduledExecution.action.disable.execution.button.label')}"
                             class="btn btn-danger"/>
                         </span>
                         <span data-bind="if: isEnableExecution">
-                          <g:actionSubmit action="flipExecutionEnabledBulk"
+                          <g:formActionSubmit action="flipExecutionEnabledBulk" controller="scheduledExecution" params="[project: params.project ?: request.project]"
                             form="jobsListForm"
                             value="${message(code:'scheduledExecution.action.enable.execution.button.label')}"
                             class="btn btn-danger"/>
@@ -382,7 +387,7 @@
                         <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_DELETE  }"
                           project="${params.project ?: request.project}">
                           <span data-bind="if: isDelete">
-                            <g:actionSubmit action="deleteBulk"
+                            <g:formActionSubmit action="deleteBulk" controller="scheduledExecution" params="[project: params.project ?: request.project]"
                               form="jobsListForm"
                               value="${message(code:'job.bulk.delete.button')}" class="btn btn-danger"/>
                           </span>

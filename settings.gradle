@@ -15,7 +15,22 @@
  */
 
  plugins {
-    id "com.gradle.enterprise" version "3.19.2"
+    // The com.gradle.enterprise plugin is end-of-life (last release 3.19.2) and warns on every
+    // build under Gradle 9. Its successor is com.gradle.develocity, which also moves the build-scan
+    // configuration from the root build.gradle into this file (see the develocity block below).
+    id "com.gradle.develocity" version "4.5.0"
+}
+
+develocity {
+    buildScan {
+        // Renamed in Develocity: termsOfServiceUrl/Agree -> termsOfUseUrl/Agree
+        termsOfUseUrl = 'https://gradle.com/help/legal-terms-of-use'
+        termsOfUseAgree = 'yes'
+        // The old com.gradle.enterprise plugin only published a scan when --scan was passed.
+        // The Develocity plugin auto-publishes once terms are agreed, which would start sending
+        // build data to an external service on every build. Keep the previous behaviour.
+        publishing.onlyIf { false }
+    }
 }
 
 include	'rundeck-storage',
