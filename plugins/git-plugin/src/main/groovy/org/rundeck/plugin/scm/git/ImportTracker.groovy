@@ -75,9 +75,55 @@ class ImportTracker {
         trackedPathsMap[job.id] = path
     }
 
+    /**
+     * Stop tracking a repository path and its reverse job-to-path mapping.
+     *
+     * @param path repository path
+     * @return job ID previously associated with the path
+     */
     String untrackPath(String path) {
         trackedCommits.remove(path)
-        trackedJobIds.remove(path)
+        String jobId = trackedJobIds.remove(path)
+        if (jobId) {
+            trackedPathsMap.remove(jobId)
+        }
+        jobId
+    }
+
+    /**
+     * Stop tracking a job when only its ID is available.
+     *
+     * @param jobId Rundeck job ID
+     * @return repository path previously associated with the job
+     */
+    String untrackJob(String jobId) {
+        String path = trackedPath(jobId)
+        if (!path) {
+            synchronized (trackedJobIds) {
+                path = trackedJobIds.find { String ignored, String id -> id == jobId }?.key
+            }
+        }
+        if (path) {
+            untrackPath(path)
+        }
+        trackedPathsMap.remove(jobId)
+        path
+    }
+
+    /**
+     * Return a stable snapshot of all tracked job IDs.
+     *
+     * @return tracked job IDs
+     */
+    Set<String> trackedJobIdSet() {
+        Set<String> result
+        synchronized (trackedPathsMap) {
+            result = new HashSet<>(trackedPathsMap.keySet())
+        }
+        synchronized (trackedJobIds) {
+            result.addAll(trackedJobIds.values())
+        }
+        result
     }
 
     String trackedCommit(String path) {
