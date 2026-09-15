@@ -1,6 +1,4 @@
-# 24.04 rather than 22.04: the war is compiled to Java 25 bytecode (class file 69), which a
-# JRE 21 cannot load, and 22.04 has no openjdk-25 package.
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 ARG CLI_VERS
 
@@ -40,7 +38,8 @@ RUN useradd -p $(echo "pampwd123" | openssl passwd -1 -stdin) -m --shell /bin/ba
     # RUNDECK - create user
 RUN adduser --shell /bin/bash --home $HOME --gecos "" --disabled-password $USERNAME && \
         passwd -d $USERNAME && \
-        usermod -aG sudo,shadow $USERNAME
+        addgroup $USERNAME sudo && \
+        addgroup $USERNAME shadow
 
 WORKDIR $HOME
 
