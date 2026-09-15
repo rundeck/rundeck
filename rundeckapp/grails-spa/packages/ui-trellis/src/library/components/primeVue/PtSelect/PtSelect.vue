@@ -74,7 +74,11 @@
         <slot name="clearicon" v-bind="slotProps" />
       </template>
     </Select>
-    <p v-if="invalid && errorText" class="text-body--sm pt-select__error" data-testid="pt-select-error">
+    <p
+      v-if="invalid && errorText"
+      class="text-body--sm pt-select__error"
+      data-testid="pt-select-error"
+    >
       {{ errorText }}
     </p>
   </div>
@@ -133,9 +137,17 @@ export default defineComponent({
       type: String,
       default: "contains",
       validator: (val: string) =>
-        ["contains", "startsWith", "endsWith", "equals", "notEquals", "lt", "lte", "gt", "gte"].includes(
-          val,
-        ),
+        [
+          "contains",
+          "startsWith",
+          "endsWith",
+          "equals",
+          "notEquals",
+          "lt",
+          "lte",
+          "gt",
+          "gte",
+        ].includes(val),
     },
     filterFields: {
       type: Array as PropType<string[]>,
@@ -202,14 +214,7 @@ export default defineComponent({
       default: 0,
     },
   },
-  emits: [
-    "update:modelValue",
-    "focus",
-    "blur",
-    "show",
-    "hide",
-    "filter",
-  ],
+  emits: ["update:modelValue", "focus", "blur", "show", "hide", "filter"],
   data() {
     return {
       debounceTimer: null as ReturnType<typeof setTimeout> | null,
@@ -414,7 +419,9 @@ export default defineComponent({
     color: var(--colors-gray-800);
     font-size: 14px;
     padding: 10px 17px;
-    transition: background-color 0.2s, color 0.2s;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
 
     // Hover state
     &:hover:not(.p-disabled):not(.p-select-option-selected) {
@@ -467,5 +474,4 @@ export default defineComponent({
     padding: 10px 17px;
   }
 }
-
 </style>

@@ -96,11 +96,11 @@ export function commandToEditConfig(cmd: StepData): CommandEditData {
       } as CommandExecPluginConfig;
     }
   }
-  if(cmd.errorhandler) {
+  if (cmd.errorhandler) {
     editData.errorhandler = {
       ...commandToEditConfig(cmd.errorhandler),
-      keepgoingOnSuccess: cmd.errorhandler.keepgoingOnSuccess
-    }
+      keepgoingOnSuccess: cmd.errorhandler.keepgoingOnSuccess,
+    };
   }
   return editData;
 }
@@ -112,7 +112,7 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
   let data = {
     description: plugin.description,
     nodeStep: plugin.nodeStep,
-    jobref: plugin.jobref
+    jobref: plugin.jobref,
   } as StepData;
   if (plugin.filters && plugin.filters.length > 0) {
     data.plugins = {
@@ -150,10 +150,10 @@ export function editToCommandConfig(plugin: EditStepData): StepData {
   } else if (plugin.jobref) {
     data.jobref = plugin.jobref;
   }
-  if(plugin.errorhandler) {
+  if (plugin.errorhandler) {
     data.errorhandler = {
       ...editToCommandConfig(plugin.errorhandler),
-      keepgoingOnSuccess: plugin.errorhandler.keepgoingOnSuccess
+      keepgoingOnSuccess: plugin.errorhandler.keepgoingOnSuccess,
     } as ErrorHandlerDefinition;
   }
   return data;

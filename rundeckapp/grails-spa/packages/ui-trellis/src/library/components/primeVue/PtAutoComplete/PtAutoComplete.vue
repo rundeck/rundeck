@@ -30,7 +30,10 @@
             v-for="(tab, index) in tabs"
             :key="index"
             type="button"
-            :class="['autocomplete-tab', { 'autocomplete-tab-active': selectedTabIndex === index }]"
+            :class="[
+              'autocomplete-tab',
+              { 'autocomplete-tab-active': selectedTabIndex === index },
+            ]"
             :disabled="tab.getCount(allSuggestions) === 0"
             @click="selectTab(index)"
           >
@@ -45,14 +48,24 @@
       </template>
       <template #option="slotProps">
         <div class="autocomplete-option-content">
-          <span v-if="getSuggestionTitle(slotProps.option)" class="autocomplete-option-title">
+          <span
+            v-if="getSuggestionTitle(slotProps.option)"
+            class="autocomplete-option-title"
+          >
             {{ getSuggestionTitle(slotProps.option) }}
           </span>
-          <span class="autocomplete-option-name" v-html="highlightQueryMatch(slotProps.option)"></span>
+          <span
+            class="autocomplete-option-name"
+            v-html="highlightQueryMatch(slotProps.option)"
+          ></span>
         </div>
       </template>
     </AutoComplete>
-    <p v-if="invalid && errorText" class="text-body--sm pt-autocomplete__error" data-testid="pt-autocomplete-error">
+    <p
+      v-if="invalid && errorText"
+      class="text-body--sm pt-autocomplete__error"
+      data-testid="pt-autocomplete-error"
+    >
       {{ errorText }}
     </p>
   </div>
@@ -155,9 +168,11 @@ export default defineComponent({
   computed: {
     tabFilteredSuggestions(): string[] | undefined {
       let suggestions: string[];
-      
+
       if (!this.tabMode || !this.tabs || this.tabs.length === 0) {
-        suggestions = this.filteredSuggestions.map((suggestion: ContextVariable) => suggestion.name);
+        suggestions = this.filteredSuggestions.map(
+          (suggestion: ContextVariable) => suggestion.name,
+        );
       } else {
         const activeTab = this.tabs[this.selectedTabIndex];
         if (!activeTab) {
@@ -168,7 +183,7 @@ export default defineComponent({
           .filter(activeTab.filter)
           .map((suggestion: ContextVariable) => suggestion.name);
       }
-      
+
       // Return undefined instead of empty array to prevent dropdown from showing
       return suggestions.length > 0 ? suggestions : undefined;
     },
@@ -187,13 +202,13 @@ export default defineComponent({
       this.$emit("onComplete", event);
       this.debouncedFilterSuggestions(event);
     },
-    
+
     debouncedFilterSuggestions(event: AutoCompleteCompleteEvent): void {
       // Clear any existing timer
       if (this.filterDebounceTimer) {
         clearTimeout(this.filterDebounceTimer);
       }
-      
+
       // Set a new timer to filter after a short delay
       this.filterDebounceTimer = setTimeout(() => {
         this.filterSuggestions(event);
@@ -223,7 +238,8 @@ export default defineComponent({
 
     filterSuggestions(event: AutoCompleteCompleteEvent): void {
       const target = event?.originalEvent?.target as HTMLInputElement | null;
-      const cursorPos = target && "selectionStart" in target ? (target.selectionStart ?? 0) : 0;
+      const cursorPos =
+        target && "selectionStart" in target ? (target.selectionStart ?? 0) : 0;
       const currentWordRegex = /[^\s]*$/;
       const textToCursor = event.query?.slice(0, cursorPos) || "";
       const currentWord = textToCursor.match(currentWordRegex)?.[0] || "";
@@ -245,23 +261,28 @@ export default defineComponent({
         }
 
         // Filter suggestions based on the current word
-        const filtered = this.suggestions.filter((suggestion: ContextVariable) => {
-          const name = suggestion?.name;
-          if (!name) return false;
-          
-          // If currentWord starts with "${", match against the full suggestion name
-          if (currentWord.startsWith("${")) {
-            return this.isPartialWordMatch(currentWord, name);
-          }
-          
-          // Otherwise, match against the suggestion name without the ${} wrapper
-          // Extract the inner part (e.g., "job.id" from "${job.id}")
-          const innerName = name.replace(/^\$\{|\}$/g, "");
-          return this.isPartialWordMatch(currentWord, innerName) || this.isPartialWordMatch(currentWord, name);
-        });
+        const filtered = this.suggestions.filter(
+          (suggestion: ContextVariable) => {
+            const name = suggestion?.name;
+            if (!name) return false;
+
+            // If currentWord starts with "${", match against the full suggestion name
+            if (currentWord.startsWith("${")) {
+              return this.isPartialWordMatch(currentWord, name);
+            }
+
+            // Otherwise, match against the suggestion name without the ${} wrapper
+            // Extract the inner part (e.g., "job.id" from "${job.id}")
+            const innerName = name.replace(/^\$\{|\}$/g, "");
+            return (
+              this.isPartialWordMatch(currentWord, innerName) ||
+              this.isPartialWordMatch(currentWord, name)
+            );
+          },
+        );
         this.filteredSuggestions = filtered;
         this.allSuggestions = filtered;
-        
+
         // Auto-switch to tab with results if current tab has no results
         this.autoSwitchToTabWithResults();
       } catch (e) {
@@ -281,7 +302,8 @@ export default defineComponent({
       }
 
       // Check if current tab has any matching suggestions
-      const currentTabHasResults = this.filteredSuggestions.filter(activeTab.filter).length > 0;
+      const currentTabHasResults =
+        this.filteredSuggestions.filter(activeTab.filter).length > 0;
 
       // If current tab has results, don't switch
       if (currentTabHasResults) {
@@ -291,8 +313,9 @@ export default defineComponent({
       // Current tab has no results, find first tab with results
       for (let i = 0; i < this.tabs.length; i++) {
         const tab = this.tabs[i];
-        const tabHasResults = this.filteredSuggestions.filter(tab.filter).length > 0;
-        
+        const tabHasResults =
+          this.filteredSuggestions.filter(tab.filter).length > 0;
+
         if (tabHasResults) {
           this.selectedTabIndex = i;
           return;
@@ -301,7 +324,9 @@ export default defineComponent({
     },
 
     getSuggestionTitle(suggestionName: string): string | null {
-      const suggestion = this.filteredSuggestions.find((s: ContextVariable) => s.name === suggestionName);
+      const suggestion = this.filteredSuggestions.find(
+        (s: ContextVariable) => s.name === suggestionName,
+      );
       return suggestion?.title || null;
     },
 
@@ -309,20 +334,25 @@ export default defineComponent({
       if (!this.currentQuery) {
         return suggestionName;
       }
-      
+
       // Extract the actual query part (remove special characters like {, $, etc.)
       // This handles cases like "{job" or "${job" where we want to match "job"
-      const queryForMatch = this.currentQuery.replace(/^[^a-zA-Z0-9]*/, "").toLowerCase();
+      const queryForMatch = this.currentQuery
+        .replace(/^[^a-zA-Z0-9]*/, "")
+        .toLowerCase();
       if (!queryForMatch) {
         return suggestionName;
       }
-      
+
       // Use case-insensitive regex to find and highlight the match anywhere in the suggestion name
       // This handles both cases:
       // - User types "execid" → highlights "execid" in "${job.execid}"
       // - User types "${job.execid" → highlights "${job.execid" in "${job.execid}"
       const regex = new RegExp(`(${this.escapeRegex(queryForMatch)})`, "gi");
-      return suggestionName.replace(regex, '<span class="autocomplete-query-match">$1</span>');
+      return suggestionName.replace(
+        regex,
+        '<span class="autocomplete-query-match">$1</span>',
+      );
     },
 
     escapeRegex(str: string): string {
@@ -337,28 +367,32 @@ export default defineComponent({
       // Normalize both strings to lowercase for case-insensitive matching
       const normalizedInput = textInput.toLowerCase();
       const normalizedSuggestion = suggestion.toLowerCase();
-      
+
       // If input is empty, don't match
       if (!normalizedInput) return false;
-      
+
       // If input exactly matches the suggestion, return true
       if (normalizedInput === normalizedSuggestion) return true;
-      
+
       // Check if the suggestion starts with the input (for progressive typing like "${job" matching "${job.execid}")
       if (normalizedSuggestion.startsWith(normalizedInput)) return true;
-      
+
       // Check if the input is contained anywhere in the suggestion (for cases like "execid" matching "job.execid")
       if (normalizedSuggestion.includes(normalizedInput)) return true;
-      
-    // Check if input ends with any prefix of the suggestion (backwards matching)
-    // This handles cases like typing from the end of a variable name
-    // Require minimum prefix length of 2, except allow "$" as a single character match
-    const suggestionPrefixes = normalizedSuggestion
-      .split("")
-      .map((_element, index) => normalizedSuggestion.slice(0, normalizedSuggestion.length - index))
-      .filter((prefix) => prefix.length >= 2 || prefix === "$"); // Allow "$" or prefixes of 2+ characters
 
-    return suggestionPrefixes.some((prefix) => normalizedInput.endsWith(prefix));
+      // Check if input ends with any prefix of the suggestion (backwards matching)
+      // This handles cases like typing from the end of a variable name
+      // Require minimum prefix length of 2, except allow "$" as a single character match
+      const suggestionPrefixes = normalizedSuggestion
+        .split("")
+        .map((_element, index) =>
+          normalizedSuggestion.slice(0, normalizedSuggestion.length - index),
+        )
+        .filter((prefix) => prefix.length >= 2 || prefix === "$"); // Allow "$" or prefixes of 2+ characters
+
+      return suggestionPrefixes.some((prefix) =>
+        normalizedInput.endsWith(prefix),
+      );
     },
 
     handleOptionSelect(event: any): void {
@@ -370,7 +404,7 @@ export default defineComponent({
         this.updateValue();
         return;
       }
-      
+
       // Otherwise, use custom replacement logic (partial replacement)
       this.replaceSelection();
     },
@@ -378,7 +412,9 @@ export default defineComponent({
     replaceSelection(): void {
       const fullInputText = this.modelValue;
       const selectedSuggestion = this.value;
-      const autoCompleteInput = (this.$refs.autoInput as any)?.$el?.querySelector("input");
+      const autoCompleteInput = (
+        this.$refs.autoInput as any
+      )?.$el?.querySelector("input");
       if (!autoCompleteInput) return;
       const cursorPosition = autoCompleteInput.selectionStart;
       const cursorOffset = this.findSuggestionStart(
@@ -411,7 +447,9 @@ export default defineComponent({
       let offset = cursorPosition - 1;
       while (
         offset >= 0 &&
-        !selectedSuggestion.startsWith(fullInputText.slice(offset, cursorPosition))
+        !selectedSuggestion.startsWith(
+          fullInputText.slice(offset, cursorPosition),
+        )
       ) {
         offset--;
       }
@@ -487,10 +525,14 @@ export default defineComponent({
 .p-autocomplete-option {
   color: var(--colors-gray-800);
   padding: 10px 17px;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
-.p-autocomplete-option:hover:not(.p-disabled):not(.p-autocomplete-option-selected) {
+.p-autocomplete-option:hover:not(.p-disabled):not(
+    .p-autocomplete-option-selected
+  ) {
   background-color: var(--colors-cardNumber);
   color: var(--colors-gray-800);
 }
@@ -574,7 +616,10 @@ export default defineComponent({
   font-size: 14px;
   line-height: 20px;
   color: var(--colors-gray-600);
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
   margin-bottom: -2px;
   position: relative;
   outline: none;
@@ -612,7 +657,6 @@ export default defineComponent({
 .autocomplete-tab-active .autocomplete-tab-label {
   font-weight: var(--fontWeights-semibold);
 }
-
 
 .p-autocomplete {
   width: 100%;

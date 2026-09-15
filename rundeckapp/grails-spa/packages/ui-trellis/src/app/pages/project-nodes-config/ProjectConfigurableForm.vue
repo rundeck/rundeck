@@ -69,8 +69,7 @@ interface ConfigurableItem {
   name: string;
   properties: [Prop];
   propertiesMapping:
-    | NodeServiceConfigurableItemValues
-    | HealthCheckConfigurableItemValues;
+    NodeServiceConfigurableItemValues | HealthCheckConfigurableItemValues;
   values: NodeServiceConfigurableItemValues | HealthCheckConfigurableItemValues;
 }
 
