@@ -272,8 +272,11 @@ public class ExecArgList {
         /** Expands an argument string; given the arg's "quoted" flag, since some callers embed
          * per-reference quoting into expansion itself (see quoteAppliedDuringExpand). */
         final BiFunction<String, Boolean, String> expand;
-        /** True if {@link #expand} already applies quoting internally when its "quoted" argument is
-         * true, so {@link #convertAndQuote} must not quote the (already fully expanded) result again. */
+        /** True if {@link #expand}, when called with quoted=true, already applies whatever quoting
+         * is needed internally, so {@link #convertAndQuote} must not quote that (already fully
+         * expanded) result again. Only applies when the arg is actually flagged quoted: when
+         * quoted=false, {@link #expand} performs no quoting either way, so the legacy
+         * featureQuotingBackwardCompatible fallback below still applies exactly as before. */
         final boolean quoteAppliedDuringExpand;
 
         private CommandVisitor(
@@ -290,7 +293,8 @@ public class ExecArgList {
 
         public String convertAndQuote(String s, boolean quoted, boolean featureQuotingBackwardCompatible) {
             String replaced = expand.apply(s, quoted);
-            if (!quoteAppliedDuringExpand
+            boolean alreadyQuotedByExpand = quoted && quoteAppliedDuringExpand;
+            if (!alreadyQuotedByExpand
                 && (quote != null && quoted || featureQuotingBackwardCompatible && !replaced.equals(s))) {
                 replaced = quote.convert(replaced);
             }

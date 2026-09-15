@@ -514,4 +514,25 @@ public class ExecCommandInjectionTest {
         Assert.assertEquals("echo", result.get(0));
         Assert.assertEquals("'80 | whoami'", result.get(1));
     }
+
+    @Test
+    public void testFeatureQuotingBackwardCompatibleQuotesModifiedStringsOnSharedContextPath() {
+        // Same legacy semantics as testFeatureQuotingBackwardCompatibleQuotesModifiedStrings, but on
+        // the shared-context buildCommandForNode(sharedContext, ...) overload: an argument NOT
+        // flagged "quoted" must still be quoted as a whole if featureQuotingBackwardCompatible is
+        // enabled and substitution changed its value -- this must keep working even though quoting
+        // for quoted=true arguments is now applied per-reference during expansion, not afterward.
+        WFSharedContext sharedContext = sharedContextWithOption("anode", "port", "80 | whoami");
+
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, true);
+        builder.arg("Scanning port: ${option.port}", false, true);
+        ExecArgList execArgList = builder.build();
+
+        ArrayList<String> result = execArgList.buildCommandForNode(sharedContext, "anode", "unix", null);
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("'Scanning port: 80 | whoami'", result.get(1));
+    }
 }
