@@ -1,8 +1,10 @@
 # Release tagging: end-to-end scenarios
 
-Reference for `setversion.sh`, `release-rc.sh`, `release-tag.sh`, and `release-version.sh`, and for the "Release Core/Pro (Tag-based, Auto-Backport)" Rundeck jobs that wrap them. Covers every scenario the tooling is designed to handle, what happens, and why.
+Reference for `setversion.sh`, `release-rc.sh`, `release-tag.sh`, and `release-version.sh` (all under `scripts/release/`), and for the "Release Core/Pro (Tag-based, Auto-Backport)" Rundeck jobs that wrap them. Covers every scenario the tooling is designed to handle, what happens, and why.
 
-Invoked by a single Rundeck job, run by one operator at a time - not designed for concurrent/parallel invocation. Checks like the rescue-branch ancestry/divergence verification below guard against unexpected state *within* a single run (e.g. the operator's own manual activity), not against multiple simultaneous runs.
+**Shared between rundeck and rundeckpro.** `release-rc.sh`, `release-tag.sh`, and `release-version.sh` live here (rundeck) and are the single copy for both repos - the Release Pro job invokes `rundeck/scripts/release/release-rc.sh` directly against rundeckpro's own git/GitHub context (via its working directory) instead of keeping a duplicate. Only `setversion.sh` differs per repo (this repo writes `version.properties`; rundeckpro writes `gradle.properties` and handles its own additional release types) - each repo keeps its own `scripts/release/setversion.sh`.
+
+Invoked by a single Rundeck job, run by one operator at a time - not designed for concurrent/parallel invocation. On a conflict the script hands off to a human via a rescue branch and manual instructions rather than trying to guard against a second run or third-party activity touching the same branch.
 
 ## Routing: which script runs
 
@@ -64,19 +66,18 @@ release-rc.sh 6.2.0 rc3 --push
 # Found existing rescue/v6.2.0-rc3 (abc1234) - resuming from it instead of starting the backport over.
 ```
 
-- The script detects `rescue/v6.2.0-rc3` already exists (checked on origin first, then locally) and treats that alone as proof this run should finish it, not start the backport over.
-- **It doesn't trust the branch blindly**: its tip must be a verified descendant of `v6.2.0-rc2` (the previous RC tag), via `git merge-base --is-ancestor`. A branch that happens to share the name but isn't actually built on the right base - stale, from an unrelated attempt, force-pushed over - is refused (exit 10), never silently tagged.
+- The script detects `rescue/v6.2.0-rc3` already exists (checked on origin first, then locally) and treats that alone as proof this run should finish it, not start the backport over. It's trusted at face value by name - the real safety net is the next step.
 - It does **not** cherry-pick anything in this mode. Instead it verifies every currently-labeled PR is present at the branch's tip, via the `-applied` label or the cherry-pick trailer.
 - If every PR checks out, it tags the branch's tip directly and backfills the `-applied` label on any PR that only had the trailer.
 - If anything is still missing, it refuses again (exit 7) and points back at the same branch.
 
 This keeps the whole flow - and its Slack/audit trail - inside the Rundeck job, instead of requiring a bare `release-tag.sh` call that bypasses the completeness check entirely.
 
-**Push before you label.** After resolving on the rescue branch, `git push origin rescue/v6.2.0-rc3` *first*, then label the PR(s) you just resolved - never the other way around. The label is trusted on its own (no ancestry check), so labeling a commit that only exists in your local checkout would let a run started elsewhere skip that PR while its commits don't durably exist anywhere yet.
+**Push before you label.** After resolving on the rescue branch, `git push origin rescue/v6.2.0-rc3` *first*, then label the PR(s) you just resolved - never the other way around. The label is trusted on its own, so labeling a commit that only exists in your local checkout would let a run started elsewhere skip that PR while its commits don't durably exist anywhere yet.
 
-**The rescue branch is never force-created or force-pushed.** If one already exists locally or on origin with different content than what this run just produced - a race with a concurrent run, or in-progress manual work the auto-detection above somehow missed - creating/pushing refuses (exit 11) rather than overwriting it. Investigate what's there before proceeding.
+**The rescue branch is never force-created or force-pushed.** If one already exists locally or on origin with different content than what this run just produced - most likely separate manual activity the auto-detection above didn't pick up as the resume candidate - creating/pushing refuses (exit 11) rather than overwriting it. Investigate what's there before proceeding.
 
-**Once `v6.2.0-rc3` is genuinely created and pushed, `rescue/v6.2.0-rc3` is deleted** - both locally and on origin (with `--push`) - since the tag is now the durable record and the branch would just be confusing leftover state otherwise. This only ever happens when this run actually resumed from the branch (i.e. it existed at the start and became `$RESUME_COMMIT`) - each ref's tip is re-checked immediately before deleting it against the exact SHA this run verified and tagged, and left in place with a warning instead of force-deleted if something moved it since (a manual push landing mid-run). **A rescue branch that appears only during a non-resume run (this run's own initial check found nothing) is never deleted** - it can only be someone else's concurrent, unverified work, so it's left in place with a note instead, regardless of `--push`.
+**Once `v6.2.0-rc3` is genuinely created and pushed, `rescue/v6.2.0-rc3` is deleted** (best-effort) - both locally and, with `--push`, on origin - since the tag is now the durable record and the branch would just be confusing leftover state otherwise. This runs whether this invocation resumed from the branch or created it fresh moments earlier in the same run. Without `--push`, only the local branch is deleted - a remote copy (from an earlier `--push` run) is left alone, since this run never touched origin.
 
 ## Cleanup after a failed tag push
 
@@ -140,9 +141,6 @@ Only the codes the script actually assigns via an explicit `exit N`. A few other
 | 7 | One or more PRs still CONFLICT/missing - see the rescue branch and per-PR resume commands |
 | 8 | No PR is labeled for this version at all |
 | 9 | The labeled-PR fetch hit its safety cap - there may be more than were retrieved |
-| 10 | A `rescue/<tag>` branch exists but isn't a descendant of the previous RC tag - refused rather than trusted |
 | 11 | A `rescue/<tag>` branch (or its remote) already exists with different content than this run's candidate - refused rather than force-overwritten |
 | 13 | A labeled, merged PR has no resolvable `mergeCommit` - refused rather than silently dropped from the set |
 | 14 | The labeled PR set changed (a PR was labeled, unlabeled, or newly merged) since this run started - refused rather than tagging a stale snapshot; also raised if the same re-check right before tagging can't reach GitHub at all |
-| 15 | Both a local and an `origin` `rescue/<tag>` branch exist with different tips - refused rather than guessing which is authoritative |
-| 16 | Could not check `origin` for an existing `rescue/<tag>` branch at all (network/auth failure) - refused rather than treating that the same as "doesn't exist" |

@@ -2,10 +2,11 @@
 #
 # release-tag.sh - creates (and optionally pushes) an annotated git tag at a specific commit.
 #
-# This is the single mechanism used to cut release tags. It has no opinion about GA/rc/alpha -
-# the caller resolves the tag name and target commit and hands them here. Shared by:
+# This is the single mechanism used to cut release tags. It has no opinion about the
+# release type - the caller resolves the tag name and target commit and hands them
+# here. Shared by:
 #   - setversion.sh, for GA / rc1 / alpha# (it resolves tag name + commit itself)
-#   - external release tooling, for rc2+ (check rdcore)
+#   - release-rc.sh (same directory), for rc2+
 #
 # Can be sourced for its create_and_push_tag() function (callers set PUSH_TO_ORIGIN/DRY_RUN
 # before calling), or invoked directly as a CLI:

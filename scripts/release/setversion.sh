@@ -13,7 +13,7 @@ function usage {
     echo "  setversion.sh --tag <version> GA [--push] [--dry-run] [--debug]                     - Re-tag the highest existing v<version>-rcN tag as GA (no commit argument)"
     echo "  setversion.sh --tag <version> rc1 <commit> [--push] [--dry-run] [--debug]           - Tag rc1 at an explicit commit (no release branch exists yet)"
     echo "  setversion.sh --tag <version> alpha# <commit> [--push] [--dry-run] [--debug]         - Tag other pre-releases at an explicit commit"
-    echo "  (rc2+ is NOT handled by setversion.sh - it is owned by external release tooling, for rc2+ (check rdcore))"
+    echo "  (rc2+ is NOT handled by setversion.sh - use ./release-rc.sh <version> <rc#> instead)"
     echo "  setversion.sh --create-release-branch <version> [<commit>] [--push] [--dry-run] [--debug]     - Create release branch for patch releases (branches from GA tag or specified commit)"
     echo ""
     echo "Flags:"
@@ -74,12 +74,12 @@ if [ "$1" == "--tag" ]; then
     VTAG="${1:-GA}"
     [ $# -gt 0 ] && shift
 
-    # rc2+ is not handled here - checking out an existing release branch and tagging its HEAD
-    # is owned by external release tooling, for rc2+ (check rdcore), which calls release-tag.sh
-    # directly once it has resolved the branch and commit itself.
+    # rc2+ is not handled here - resolving the previous RC tag, cherry-picking
+    # backports, and tagging is owned by release-rc.sh (same directory), which
+    # calls release-tag.sh directly once it has resolved the commit itself.
     if RC_NUM="$(parse_rc_number "$VTAG")" && [ "$RC_NUM" -ge 2 ]; then
         echo "Error: rc2+ releases are not created by setversion.sh."
-        echo "That flow is owned by external release tooling, for rc2+ (check rdcore)."
+        echo "Use release-rc.sh <version> <rc#> instead."
         exit 13
     fi
 
