@@ -69,11 +69,44 @@ export function createJobRefDefinition(
 }
 
 /**
+ * Looks up plugin metadata by name for a given service. Plugins must
+ * already be loaded. Shared by `resolveStepTypeTitle` and
+ * `getPluginDetailsForStep` so both use one source of truth for the lookup.
+ */
+function findStepPlugin(
+  service: string,
+  pluginName: string,
+): Plugin | undefined {
+  const plugins =
+    getRundeckContext().rootStore.plugins.getServicePlugins(service);
+  return plugins.find((p: Plugin) => p.name === pluginName);
+}
+
+/**
+ * Resolves a human-readable type title for a step provider (e.g. "Command",
+ * "Job Reference"), based on loaded plugin metadata. Falls back to the raw
+ * provider name when no plugin metadata is available yet.
+ */
+export function resolveStepTypeTitle(
+  service: string,
+  provider: string,
+): string {
+  const plugin = findStepPlugin(service, provider);
+
+  if (plugin?.title) {
+    return plugin.title;
+  }
+
+  return provider === "job.reference" ? "Job reference" : provider;
+}
+
+/**
  * Creates a new step object from a provider selection.
  * Handles job references and regular plugins.
  *
- * The returned step includes a unique `id` and the correct `nodeStep` flag
- * based on the service type. Callers are responsible for adding the step
+ * The returned step includes a unique `id`, the correct `nodeStep` flag
+ * based on the service type, and a default "Step Name" (`description`)
+ * derived from the step's type. Callers are responsible for adding the step
  * to their commands array and managing editing state.
  */
 export function createStepFromProvider(
@@ -81,11 +114,12 @@ export function createStepFromProvider(
   provider: string,
 ): EditStepData {
   const nodeStep = service === ServiceType.WorkflowNodeStep;
+  const description = resolveStepTypeTitle(service, provider);
 
   if (provider === "job.reference") {
     return {
       type: provider,
-      description: "",
+      description,
       nodeStep,
       jobref: {
         ...createJobRefDefinition(),
@@ -98,6 +132,7 @@ export function createStepFromProvider(
   // Regular plugin step
   return {
     type: provider,
+    description,
     config: {},
     nodeStep,
     id: mkid(),
@@ -112,14 +147,9 @@ export function getPluginDetailsForStep(
   element: EditStepData,
   service: string,
 ): PluginDetails {
-  const context = getRundeckContext();
   const isJobRef = Boolean(element.jobref || element.type === "job.reference");
   const pluginName = isJobRef ? "job.reference" : element.type;
-
-  const plugins = context.rootStore.plugins.getServicePlugins(service);
-  const plugin = pluginName
-    ? plugins.find((p: Plugin) => p.name === pluginName)
-    : undefined;
+  const plugin = findStepPlugin(service, pluginName);
 
   if (plugin) {
     return {

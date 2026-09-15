@@ -265,6 +265,7 @@ import { Operation } from "../options/model/ChangeEvents";
 import {
   createStepFromProvider,
   resetValidation,
+  resolveStepTypeTitle,
   validateStepForSave,
 } from "./stepEditorUtils";
 import JobRefForm from "./JobRefForm.vue";
@@ -386,11 +387,12 @@ export default defineComponent({
       provider: string;
     }) {
       this.addStepModal = false;
-      this.editExtra = {};
       if (!this.isErrorHandler) {
         this.editIndex = -1;
       }
       this.editService = service;
+
+      const newStep = createStepFromProvider(service, provider);
 
       if (this.isErrorHandler) {
         this.editExtra = {
@@ -399,9 +401,13 @@ export default defineComponent({
             keepgoingOnSuccess: false,
           },
         };
+      } else {
+        // Mirrors editStepByIndex, which seeds editExtra from the full step
+        // being edited -- without this, a newly added step's editExtra stays
+        // empty and the Step Name input (bound to editExtra.description)
+        // never reflects the auto-generated default from createStepFromProvider.
+        this.editExtra = cloneDeep(newStep);
       }
-
-      const newStep = createStepFromProvider(service, provider);
 
       if (provider === "job.reference") {
         // Error handlers always use modal
@@ -513,6 +519,18 @@ export default defineComponent({
         ? ServiceType.WorkflowNodeStep
         : ServiceType.WorkflowStep;
       this.editModelValidation = resetValidation();
+
+      if (!this.editExtra.description) {
+        // Backfill: steps saved before auto-generated Step Names existed have
+        // no description. Seed one on open so editing an old step doesn't
+        // show a blank Step Name -- this only touches local edit state, so
+        // it's only persisted if the user actually saves.
+        const provider = command.jobref ? "job.reference" : command.type;
+        this.editExtra.description = resolveStepTypeTitle(
+          this.editService,
+          provider,
+        );
+      }
 
       if (command.jobref) {
         this.editJobRefModal = true;
