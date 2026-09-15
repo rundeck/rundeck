@@ -19,6 +19,7 @@ package org.rundeck.plugin.scm.git
 import com.dtolabs.rundeck.core.storage.StorageTreeImpl
 import com.dtolabs.rundeck.plugins.scm.ImportResult
 import com.dtolabs.rundeck.plugins.scm.ImportSynchState
+import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
@@ -348,6 +349,75 @@ class GitImportPluginSpec extends Specification {
 
         then:
         status.importNeeded == 0
+    }
+
+    def "job deletion removes cached state and tracking"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        Git git = GitExportPluginSpec.createGit(origindir)
+        git.close()
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'GitImportPluginSpec'
+        })
+        def job = Stub(JobScmReference) {
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getScmImportMetadata() >> [commitId: 'abc']
+        }
+        plugin.jobStateMap['123'] = [
+                synch: ImportSynchState.DELETE_NEEDED,
+                path: 'job1-123.xml'
+        ]
+        plugin.importTracker.trackJobAtPath(job, 'job1-123.xml')
+        JobChangeEvent event = Stub(JobChangeEvent) {
+            getEventType() >> JobChangeEvent.JobChangeEventType.DELETE
+            getOriginalJobReference() >> job
+        }
+
+        when:
+        plugin.jobChanged(event, job)
+
+        then:
+        !plugin.jobStateMap.containsKey('123')
+        plugin.importTracker.trackedPaths().empty
+        plugin.importTracker.trackedPath('123') == null
+    }
+
+    def "cluster reconciliation removes state for jobs deleted on another node"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        Git git = GitExportPluginSpec.createGit(origindir)
+        git.close()
+        def context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'GitImportPluginSpec'
+        }
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+        def deletedJob = Stub(JobScmReference) {
+            getId() >> 'deleted-job'
+            getJobName() >> 'deleted'
+            getGroupPath() >> ''
+            getScmImportMetadata() >> [commitId: 'abc']
+        }
+        plugin.jobStateMap['deleted-job'] = [
+                synch: ImportSynchState.DELETE_NEEDED,
+                path: 'deleted-deleted-job.xml'
+        ]
+        plugin.importTracker.trackJobAtPath(deletedJob, 'deleted-deleted-job.xml')
+
+        when:
+        plugin.clusterFixJobs(context, [], [:])
+
+        then:
+        plugin.jobStateMap.isEmpty()
+        plugin.importTracker.trackedPaths().empty
+        plugin.importTracker.trackedPath('deleted-job') == null
     }
 
     def "perform pull on clean state withouth npe"() {
