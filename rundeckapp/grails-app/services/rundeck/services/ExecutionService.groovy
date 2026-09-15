@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.component.SshExportQuotingConfig
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionValidator
@@ -164,6 +165,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def LoggingService loggingService
     def WorkflowService workflowService
     def StorageService storageService
+    MicrometerExecutionMetricsService micrometerExecutionMetricsService
 
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
@@ -1235,6 +1237,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
             loghandler.openStream()
 
+            // RUN-4693: reject options that are not declared on the job. Undeclared option values
+            // bypass all server-side validation (validateOptionValues only iterates the job's declared
+            // options) yet are still parsed into the option DataContext and exported as RD_OPTION_*
+            // env vars. Fail the (already created) execution here — before any workflow step runs —
+            // with a clear message in the log output. Opt-in, gated by
+            // rundeck.execution.rejectUndeclaredOptions (default false: undeclared options pass through,
+            // preserving the legacy behavior; set true to reject them).
+            if (scheduledExecution != null
+                    && configurationService.getBoolean(AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS, false)) {
+                Set<String> declaredOptionNames = (scheduledExecution.options?.collect { it.name } ?: []) as Set
+                Set<String> providedOptionNames = OptionsParserUtil.parseOptsFromString(execution.argString)?.keySet() ?: ([] as Set)
+                List<String> undeclaredOptionNames = providedOptionNames.findAll { !declaredOptionNames.contains(it) }.sort()
+                if (undeclaredOptionNames) {
+                    loghandler.logError(
+                            "Execution rejected: option(s) not defined on this job were provided: " +
+                            "${undeclaredOptionNames}. Update the job definition or remove these options, " +
+                            "or set rundeck.execution.rejectUndeclaredOptions=false to allow them."
+                    )
+                    throw new ExecutionServiceException(
+                            "Options not defined on this job were provided: ${undeclaredOptionNames}",
+                            "options-not-declared"
+                    )
+                }
+            }
+
             // Before execute the job, check if there is any pre execution check error. If there is some error throw a JobLifecycleComponentException
             // This will let the loghandler save the error message into the execution log file.
             String preExecutionCheckError = execution.getExtraMetadataMap().get(JobPreExecutionEvent.getName())
@@ -1388,6 +1415,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             StepExecutionContext executioncontext = ExecutionContextImpl.builder(createInitContext)
                     .executionListener(multiListener)
                     .workflowExecutionListener(multiListener)
+                    .addComponent(
+                            SshExportQuotingConfig.COMPONENT_NAME,
+                            new SshExportQuotingConfig(resolveSshExportQuoting()),
+                            SshExportQuotingConfig
+                    )
                     .build()
 
             fileUploadService.executionBeforeStart(
@@ -1444,6 +1476,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             thread.start()
             log.debug("started thread")
+            micrometerExecutionMetricsService?.recordExecutionStart(execution)
             return new AsyncStarted(
                     thread            : thread,
                     loghandler        : loghandler,
@@ -3145,11 +3178,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             sb << msg
             failedkeys[opt.name] += msg
         }
-        // RUN-4693: project/system-wide default allowlist applied to option values that have no
-        // per-option regex. Only resolved when at least one option would actually be validated by
-        // it, to avoid a config lookup on executions that cannot use it. Null when unset/empty/invalid.
+        // RUN-4693: project/system-wide default allowlist applied to option values that are not
+        // already constrained by the option's own definition. Only resolved when at least one
+        // option could need it, to avoid a config lookup on executions that cannot use it. Enforced
+        // options are included here because their remote/plugin value list may fail to resolve at
+        // execution time (checked per-option via hasOwnValueConstraint after the remote load).
+        // Null when unset/empty/invalid.
         boolean anyDefaultValidatable = scheduledExecution.options?.any { Option o ->
-            !o.regex && !o.enforced && optparams[o.name]
+            !o.regex && !o.typeFile && optparams[o.name]
         }
         Pattern defaultInputPattern = anyDefaultValidatable ?
                 resolveDefaultOptionInputPattern(scheduledExecution.project) : null
@@ -3216,7 +3252,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 if (opt.multivalued) {
                     boolean multivaluedOptionEvalFailed = false
-                    if (opt.regex && !opt.enforced && optparams[opt.name]) {
+                    if (opt.regex && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
                             val = [optparams[opt.name]].flatten();
@@ -3235,7 +3271,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (!opt.regex && defaultInputPattern && !opt.enforced && optparams[opt.name]) {
+                    if (!hasOwnValueConstraint(opt) && !opt.typeFile && defaultInputPattern && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
                             val = [optparams[opt.name]].flatten();
@@ -3270,7 +3306,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         }
                     }
                 } else {
-                    if (opt.regex && !opt.enforced && optparams[opt.name]) {
+                    if (opt.regex && optparams[opt.name]) {
                         if (!(optparams[opt.name] ==~ opt.regex)) {
                             invalidOpt opt, opt.secureInput ?
                                     lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
@@ -3279,7 +3315,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (!opt.regex && defaultInputPattern && !opt.enforced && optparams[opt.name]) {
+                    if (!hasOwnValueConstraint(opt) && !opt.typeFile && defaultInputPattern && optparams[opt.name]) {
                         if (!defaultInputPattern.matcher(optparams[opt.name].toString()).matches()) {
                             invalidOpt opt, opt.secureInput ?
                                     lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
@@ -3312,11 +3348,44 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * property {@link AppConstants#PROJECT_OPTION_INPUT_DEFAULT_PATTERN} takes precedence over the
      * system-wide {@link AppConstants#SYSTEM_OPTION_INPUT_DEFAULT_PATTERN}. The system value is read
      * through ConfigurationService so it is editable via the System Configuration UI. Returns null
-     * when no pattern is configured, the configured value is blank, or the value is not a valid regex
-     * (in which case a warning is logged and no default validation is applied).
+     * when no pattern is configured or the configured value is blank (validation is simply not
+     * applied). If a pattern IS configured but is not a valid regular expression, this fails closed:
+     * it logs an error and throws {@link ExecutionServiceValidationException} so executions are
+     * blocked, rather than silently disabling the control (RUN-4693).
      * @param project project name
-     * @return compiled {@link Pattern} or null
+     * @return compiled {@link Pattern}, or null when no pattern is configured
+     * @throws ExecutionServiceValidationException when a configured pattern is not a valid regex
      */
+    /**
+     * RUN-4693: whether an option value is already constrained by the option's own definition — it
+     * has a per-option regex, or it is enforced AND its allowed values actually resolved (static
+     * list, or remote/plugin values that loaded successfully). An enforced option whose remote
+     * value list errors or returns empty leaves {@code optionValues} null and is therefore NOT
+     * constrained; such values must fall through to the default input allowlist instead of skipping
+     * server-side validation entirely.
+     * @param opt option
+     * @return true when the option constrains its own value
+     */
+    private static boolean hasOwnValueConstraint(Option opt) {
+        opt.regex || (opt.enforced && opt.optionValues)
+    }
+
+    /**
+     * RUN-4579: resolve whether values exported to remote nodes via {@code ssh-variable-export-pattern}
+     * should be POSIX shell-quoted. System-level, opt-in: read from
+     * {@link AppConstants#SYSTEM_SSH_EXPORT_QUOTING} through ConfigurationService (editable via the
+     * System Configuration UI). Defaults to {@code false} (legacy unquoted behavior) when unset.
+     * @return true when exported variable values should be shell-quoted
+     */
+    private boolean resolveSshExportQuoting() {
+        try {
+            return configurationService.getBoolean(AppConstants.SYSTEM_SSH_EXPORT_QUOTING, false)
+        } catch (Exception e) {
+            log.warn("Could not resolve ssh export quoting setting; defaulting to legacy (unquoted)", e)
+            return false
+        }
+    }
+
     private Pattern resolveDefaultOptionInputPattern(String project) {
         String pattern = null
         try {
@@ -3335,8 +3404,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
             return Pattern.compile(pattern)
         } catch (PatternSyntaxException e) {
-            log.warn("Ignoring invalid default option input validation pattern '${pattern}'", e)
-            return null
+            // RUN-4693: fail closed. A configured-but-invalid pattern must NOT silently disable the
+            // control — an operator typo would otherwise leave option values unvalidated while the
+            // setting still appears to be "on". Refuse to run instead, and point at the
+            // misconfiguration in the log. The user-facing message deliberately omits the pattern
+            // string to avoid leaking configuration to job runners.
+            log.error("Invalid default option input validation pattern '${pattern}'; refusing to run (fail closed). Fix or unset the pattern.", e)
+            throw new ExecutionServiceValidationException(
+                    "Option input validation is misconfigured: the configured validation pattern is not a valid " +
+                    "regular expression. Executions are blocked until an administrator fixes or removes it.",
+                    [:], [:]
+            )
         }
     }
 
@@ -3496,6 +3574,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobUuid = scheduledExecution.uuid
         }
         if(execSaved) {
+            // execution now carries its final persisted state (status, dateCompleted, cancelled,
+            // timedOut, ...) via `execution.properties = props` above -- unlike execmap.execution,
+            // which is the pre-completion in-memory reference and never gets these fields set.
+            // This is the single convergence point for every completion path (normal finish via
+            // ExecutionJob.saveState, abort via abortExecutionDirect, stale cleanup via
+            // cleanupExecution), so recording here (rather than in
+            // ExecutionUtilService.finishExecutionMetrics) captures all of them exactly once.
+            micrometerExecutionMetricsService?.recordExecution(execution)
+
             //summarize node success
             String node=null
             int sucCount=-1;
@@ -4893,14 +4980,58 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Detects MySQL/MariaDB datasources, which require dedicated duration-sum SQL:
+     * a plain {@code date_completed - date_started} projected as TIME overflows
+     * MySQL's TIME range (max 838:59:59) once the aggregated duration across the
+     * queried executions exceeds it.
+     */
+    boolean isMySqlDatasource() {
+        try {
+            def dataSource = applicationContext.getBean('dataSource', DataSource)
+            return dataSource.getConnection().withCloseable { conn ->
+                conn.metaData.databaseProductName in ['MySQL', 'MariaDB']
+            }
+        } catch (Exception ex) {
+            log.debug("Unable to determine datasource type, assuming non-MySQL", ex)
+            return false
+        }
+    }
+
+    /**
+     * Detects Oracle datasources. Oracle's {@code date - date} arithmetic produces an
+     * INTERVAL DAY TO SECOND value; the Oracle JDBC driver's accessor for that type does
+     * not implement {@code getTime()}, so projecting it as SQL TIME fails with
+     * ORA-17004 ("Invalid column type"). Oracle needs both sides cast to DATE first,
+     * turning the subtraction into classic date arithmetic (a NUMBER of fractional
+     * days) that can be safely multiplied by 86400 for seconds.
+     */
+    boolean isOracleDatasource() {
+        try {
+            def dataSource = applicationContext.getBean('dataSource', DataSource)
+            return dataSource.getConnection().withCloseable { conn ->
+                conn.metaData.databaseProductName == 'Oracle'
+            }
+        } catch (Exception ex) {
+            log.debug("Unable to determine datasource type, assuming non-Oracle", ex)
+            return false
+        }
+    }
+
     private boolean isSqlCompatible() {
         boolean isCompatible = false
         try {
             boolean isH2 = isH2Datasource()
+            boolean isMySql = isMySqlDatasource()
+            boolean isOracle = isOracleDatasource()
             Execution.createCriteria().list(max:1) {
                 projections {
                     if (isH2) {
                         sqlProjection 'DATEDIFF(\'SECOND\', date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else if (isMySql) {
+                        sqlProjection 'TIMESTAMPDIFF(SECOND, date_started, date_completed) as durationSum', 'durationSum', StandardBasicTypes.LONG
+                    } else if (isOracle) {
+                        sqlProjection 'round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400) as durationSum', 'durationSum', StandardBasicTypes.LONG
                     } else {
                         sqlProjection '(date_completed - date_started) as durationSum', 'durationSum', StandardBasicTypes.TIME
                     }
@@ -4992,34 +5123,54 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return Arrays.asList(metricCriteriaH2)
         }
 
-        def metricCriteriaA = {
-            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
-            baseQueryCriteria()
-
-            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
-            projections {
-
-                rowCount("count")
-                sqlProjection 'sum(date_completed - date_started) as durationSum',
-                        'durationSum',
-                        StandardBasicTypes.TIME
-                sqlProjection 'min(date_completed - date_started) as durationMin',
-                        'durationMin',
-                        StandardBasicTypes.TIME
-                sqlProjection 'max(date_completed - date_started) as durationMax',
-                        'durationMax',
-                        StandardBasicTypes.TIME
-
-                // Zero-overhead status count projections
-                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
-                        'succeededCount',
-                        StandardBasicTypes.LONG
-                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
-                        'failedCount',
-                        StandardBasicTypes.LONG
-
+        if (isMySqlDatasource()) {
+            def metricCriteriaMySql = {
+                def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+                baseQueryCriteria()
+                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+                projections {
+                    rowCount("count")
+                    sqlProjection 'sum(TIMESTAMPDIFF(SECOND, date_started, date_completed)) as durationSum',
+                            'durationSum', StandardBasicTypes.LONG
+                    sqlProjection 'min(TIMESTAMPDIFF(SECOND, date_started, date_completed)) as durationMin',
+                            'durationMin', StandardBasicTypes.LONG
+                    sqlProjection 'max(TIMESTAMPDIFF(SECOND, date_started, date_completed)) as durationMax',
+                            'durationMax', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                            'succeededCount', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                            'failedCount', StandardBasicTypes.LONG
+                }
             }
+            return Arrays.asList(metricCriteriaMySql)
         }
+
+        if (isOracleDatasource()) {
+            // Oracle: date_completed/date_started are TIMESTAMP columns, so a plain subtraction
+            // yields an INTERVAL DAY TO SECOND (whose JDBC accessor doesn't support getLong()).
+            // Casting both sides to DATE forces classic Oracle date arithmetic, which returns a
+            // NUMBER of fractional days; multiply by 86400 for integer seconds.
+            def metricCriteriaOracle = {
+                def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
+                baseQueryCriteria()
+                resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+                projections {
+                    rowCount("count")
+                    sqlProjection 'sum(round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400)) as durationSum',
+                            'durationSum', StandardBasicTypes.LONG
+                    sqlProjection 'min(round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400)) as durationMin',
+                            'durationMin', StandardBasicTypes.LONG
+                    sqlProjection 'max(round((CAST(date_completed AS DATE) - CAST(date_started AS DATE)) * 86400)) as durationMax',
+                            'durationMax', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
+                            'succeededCount', StandardBasicTypes.LONG
+                    sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
+                            'failedCount', StandardBasicTypes.LONG
+                }
+            }
+            return Arrays.asList(metricCriteriaOracle)
+        }
+
         def metricCriteriaB = {
             // Run main query criteria
             def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
@@ -5048,35 +5199,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         StandardBasicTypes.LONG
             }
         }
-        // Oracle: DATE - DATE returns NUMBER (fractional days); multiply by 86400 for integer seconds
-        def metricCriteriaC = {
-            def baseQueryCriteria = query.createCriteria(delegate, jobQueryComponents)
-            baseQueryCriteria()
-
-            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
-            projections {
-
-                rowCount("count")
-                sqlProjection 'sum(round((date_completed - date_started) * 86400)) as durationSum',
-                        'durationSum',
-                        StandardBasicTypes.LONG
-                sqlProjection 'min(round((date_completed - date_started) * 86400)) as durationMin',
-                        'durationMin',
-                        StandardBasicTypes.LONG
-                sqlProjection 'max(round((date_completed - date_started) * 86400)) as durationMax',
-                        'durationMax',
-                        StandardBasicTypes.LONG
-
-                // Zero-overhead status count projections
-                sqlProjection 'sum(case when status = \'succeeded\' then 1 else 0 end) as succeededCount',
-                        'succeededCount',
-                        StandardBasicTypes.LONG
-                sqlProjection 'sum(case when status in (\'failed\', \'failed-with-retry\', \'timedout\') then 1 else 0 end) as failedCount',
-                        'failedCount',
-                        StandardBasicTypes.LONG
-            }
-        }
-        return Arrays.asList(metricCriteriaA, metricCriteriaB, metricCriteriaC)
+        return Arrays.asList(metricCriteriaB)
     }
 
     /**
@@ -5420,6 +5543,28 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     defaultValue ""
                     required false
                     datatype "String"
+                    visibility 'Advanced'
+                    category 'Execution'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key AppConstants.SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY
+                    description "Security control (opt-in; default off). When enabled, an execution that provides options not defined on the job is created and then failed at start. Left off by default so undeclared options pass through, preserving the current behavior."
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
+                    visibility 'Advanced'
+                    category 'Execution'
+                    authRequired("app_admin")
+                    build()
+                },
+                SystemConfig.builder().with {
+                    key AppConstants.SYSTEM_SSH_EXPORT_QUOTING_KEY
+                    description "Security control (opt-in; default off). When enabled, values exported to remote nodes via the node's ssh-variable-export-pattern are POSIX shell-quoted, preventing command injection through option values. Left off by default to preserve the current behavior. Note: when enabling, node export patterns should reference {value} without surrounding quotes."
+                    defaultValue "false"
+                    required false
+                    datatype "Boolean"
                     visibility 'Advanced'
                     category 'Execution'
                     authRequired("app_admin")

@@ -247,6 +247,71 @@ class ConditionalSetSpec extends Specification {
         }
     }
 
+    def "ConditionalSetImpl fromMap reads invertLogic true"() {
+        given:
+        def setMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod']
+                ]
+            ],
+            nodeStep: false,
+            invertLogic: true
+        ]
+
+        when:
+        ConditionalSet condSet = new ConditionalSetImpl().fromMap(setMap)
+
+        then:
+        condSet.invertLogic == true
+    }
+
+    def "ConditionalSetImpl fromMap defaults invertLogic to false when absent"() {
+        given:
+        def setMap = [
+            conditionGroups: [
+                [
+                    [key: 'option.env', operator: '==', value: 'prod']
+                ]
+            ],
+            nodeStep: false
+        ]
+
+        when:
+        ConditionalSet condSet = new ConditionalSetImpl().fromMap(setMap)
+
+        then:
+        condSet.invertLogic == false
+    }
+
+    def "ConditionalSetImpl toMap serializes invertLogic"() {
+        given:
+        def condDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        ConditionalSetImpl condSet = new ConditionalSetImpl()
+        condSet.conditionGroups = [[condDef]]
+        condSet.invertLogic = true
+
+        when:
+        def map = condSet.toMap()
+
+        then:
+        map.invertLogic == true
+    }
+
+    def "ConditionalSetImpl fromDataModel copies invertLogic"() {
+        given:
+        def condDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
+        def dataModelSet = new ConditionalSetImpl()
+        dataModelSet.conditionGroups = [[condDef]]
+        dataModelSet.invertLogic = true
+
+        when:
+        ConditionalSet result = ConditionalSetImpl.fromDataModel(dataModelSet)
+
+        then:
+        result.invertLogic == true
+    }
+
     def "ConditionalSetImpl fromMap handles ConditionalDefinition objects in groups"() {
         given:
         def condDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])

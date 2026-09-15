@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Ask the Community
+    url: https://community.pagerduty.com/
+    about: Configuration help, troubleshooting, and general questions — not for bug reports.
+  - name: 🎫 Enterprise / SaaS Support
+    url: https://support.rundeck.com
+    about: Paying Enterprise or SaaS customers — open a support ticket here instead of filing a GitHub issue.

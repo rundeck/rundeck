@@ -41,4 +41,31 @@ class AppConstants {
      * regex of their own. Takes precedence over {@link #SYSTEM_OPTION_INPUT_DEFAULT_PATTERN}.
      */
     static final String PROJECT_OPTION_INPUT_DEFAULT_PATTERN = "project.option.input.validation.default.pattern"
+
+    /**
+     * Opt-in (default false). When true, an execution that provides options not declared on the job is
+     * created and then failed at start. Left false by default so undeclared options pass through.
+     * Resolved through ConfigurationService; this constant holds the sub-key (without the
+     * {@code rundeck.} prefix) used with {@code ConfigurationService.getBoolean}.
+     */
+    static final String SYSTEM_REJECT_UNDECLARED_OPTIONS = "execution.rejectUndeclaredOptions"
+    /**
+     * Full config key (with {@code rundeck.} prefix) of {@link #SYSTEM_REJECT_UNDECLARED_OPTIONS},
+     * as exposed in the System Configuration UI via SysConfigProp.
+     */
+    static final String SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY = "rundeck." + SYSTEM_REJECT_UNDECLARED_OPTIONS
+
+    /**
+     * Opt-in (default false). When true, values exported to remote nodes via the node's
+     * {@code ssh-variable-export-pattern} are POSIX shell-quoted, preventing command injection through
+     * option values (RUN-4579). Left false by default to preserve the current behavior. Resolved
+     * through ConfigurationService; this constant holds the sub-key (without the {@code rundeck.}
+     * prefix) used with {@code ConfigurationService.getBoolean}.
+     */
+    static final String SYSTEM_SSH_EXPORT_QUOTING = "execution.sshExportQuoting"
+    /**
+     * Full config key (with {@code rundeck.} prefix) of {@link #SYSTEM_SSH_EXPORT_QUOTING}, as exposed
+     * in the System Configuration UI via SysConfigProp.
+     */
+    static final String SYSTEM_SSH_EXPORT_QUOTING_KEY = "rundeck." + SYSTEM_SSH_EXPORT_QUOTING
 }

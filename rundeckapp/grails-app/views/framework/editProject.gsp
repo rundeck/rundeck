@@ -104,6 +104,14 @@
     });
     function init(){
         jQuery('input[type=text]').on('keydown', noenter);
+        // Mirror the resource model source page: hide the main Save button
+        // while a Plugin Group config form is open for editing, so it can't
+        // be clicked mid-edit and silently discard the unsaved values.
+        // Selected by name (not #save id) because Selenium page objects rely
+        // on the id Grails auto-assigns from name="save".
+        window._rundeck.eventBus.on('project-plugin-group-editing', function(editing){
+            jQuery('input[name=save]').toggle(!editing);
+        });
     }
     var _storageBrowseSelected=confirm.setNeedsConfirm;
     jQuery(init);

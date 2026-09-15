@@ -256,5 +256,73 @@ describe("LogNodeChunk.vue", () => {
     expect(scrollToBottomMock).toHaveBeenCalledTimes(follow?1:0);
   });
 
+  describe("_isLastEntryMeasured", () => {
+    it("returns true when there are no entries", () => {
+      const wrapper = createWrapper({ entries: [] });
+      expect((wrapper.vm as any)._isLastEntryMeasured()).toBe(true);
+    });
 
+    it("returns false when the last entry has not been measured yet", () => {
+      const wrapper = createWrapper();
+      (wrapper.vm as any).$refs.scroller.getItemSize = jest
+        .fn()
+        .mockReturnValue(0);
+      expect((wrapper.vm as any)._isLastEntryMeasured()).toBe(false);
+    });
+
+    it("returns true once the last entry has been measured", () => {
+      const wrapper = createWrapper();
+      (wrapper.vm as any).$refs.scroller.getItemSize = jest
+        .fn()
+        .mockReturnValue(20);
+      expect((wrapper.vm as any)._isLastEntryMeasured()).toBe(true);
+    });
+  });
+
+  describe("onScrollerScroll", () => {
+    // RUN-4814: on a large, actively-streaming log, DynamicScroller's
+    // scrollHeight underestimates the real content height while trailing
+    // entries are still unmeasured, so the naive "am I at the bottom?"
+    // check can fire long before the user actually reaches the last line.
+    const scrollEvent = (
+      scrollTop: number,
+      clientHeight = 500,
+      scrollHeight = 1000,
+    ) =>
+      ({
+        target: { scrollTop, clientHeight, scrollHeight },
+      }) as unknown as Event;
+
+    it("disables follow when the user scrolls up", () => {
+      const wrapper = createWrapper({ follow: true });
+      const vm = wrapper.vm as any;
+
+      vm.onScrollerScroll(scrollEvent(500)); // primes _prevScrollTop
+      vm.onScrollerScroll(scrollEvent(400)); // scrolls up
+
+      expect(wrapper.emitted("follow-change")?.[0]).toEqual([false]);
+    });
+
+    it("does not re-enable follow at the bottom while the last entry is still unmeasured", () => {
+      const wrapper = createWrapper({ follow: false });
+      const vm = wrapper.vm as any;
+      vm.$refs.scroller.getItemSize = jest.fn().mockReturnValue(0);
+
+      vm.onScrollerScroll(scrollEvent(490)); // primes _prevScrollTop
+      vm.onScrollerScroll(scrollEvent(500)); // 500 + 500 >= 1000 - 10 -> at bottom
+
+      expect(wrapper.emitted("follow-change")).toBeFalsy();
+    });
+
+    it("re-enables follow at the bottom once the last entry has been measured", () => {
+      const wrapper = createWrapper({ follow: false });
+      const vm = wrapper.vm as any;
+      vm.$refs.scroller.getItemSize = jest.fn().mockReturnValue(20);
+
+      vm.onScrollerScroll(scrollEvent(490)); // primes _prevScrollTop
+      vm.onScrollerScroll(scrollEvent(500)); // 500 + 500 >= 1000 - 10 -> at bottom
+
+      expect(wrapper.emitted("follow-change")?.[0]).toEqual([true]);
+    });
+  });
 });

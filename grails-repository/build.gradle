@@ -26,6 +26,12 @@ group "repository"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
+// Pre-register sourcesJar before the grails-plugin applies: it synchronously checks for this
+// task inside its own apply() and logs "A sourcesJar task was not found, creating one." if missing.
+tasks.register('sourcesJar', Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
 apply plugin:"org.apache.grails.gradle.grails-plugin"
 apply plugin:"org.apache.grails.gradle.grails-gsp"
 apply plugin: "java-library"
@@ -89,7 +95,9 @@ dependencies {
         exclude(group:"org.rundeck", module:"rundeck-storage-filesys")
         exclude(group:"com.squareup.okhttp3", module:"okhttp")
         exclude(group:"javax.mail", module:"mailapi")
-        exclude(group:"org.codehaus.groovy", module:"groovy-all")
+        // Groovy 4 renamed the group, so this exclusion stopped matching and the whole
+        // groovy-all aggregate started leaking in again.
+        exclude(group:"org.apache.groovy", module:"groovy-all")
         exclude(group: 'ch.qos.logback', module: 'logback-classic')
     }
 

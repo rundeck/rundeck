@@ -271,6 +271,20 @@ export default defineComponent({
       pluginStorageAccess: [] as any[],
     };
   },
+  watch: {
+    // A plugin's fields are only committed (and written to the hidden form
+    // field the page submits) once its own Save is clicked. Hide the
+    // page-level Save button for as long as an entry is open for editing,
+    // the same way the resource model source page hides its main Save
+    // while a plugin config form is open, so it can't be clicked mid-edit
+    // and silently discard the in-progress values.
+    editFocus(newFocus: number) {
+      getRundeckContext().eventBus.emit(
+        "project-plugin-group-editing",
+        newFocus !== -1,
+      );
+    },
+  },
   computed: {
     exportedData(): any[] {
       const data = [] as any;
@@ -289,6 +303,11 @@ export default defineComponent({
     const pluginGroups = window._rundeck.data.pluginGroups as PluginConf;
     this.contextConfig = pluginGroups.config;
     await this.getPluginConfigs();
+  },
+  beforeUnmount() {
+    // Don't leave the page-level Save button hidden if this widget goes
+    // away mid-edit.
+    getRundeckContext().eventBus.emit("project-plugin-group-editing", false);
   },
   methods: {
     notifyError(msg: string, args: any[]) {
@@ -360,10 +379,6 @@ export default defineComponent({
         this.errors = [];
       }
 
-      if (Object.keys(plugin.entry.config).length === 0) {
-        this.removePlugin(plugin, index);
-        return;
-      }
       const type = plugin.entry.type;
       this.pluginProviders.forEach((item: any, index: any) => {
         if (item.name == type) {

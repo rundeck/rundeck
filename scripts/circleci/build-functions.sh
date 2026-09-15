@@ -93,5 +93,12 @@ rundeck_verify_build() {
 }
 
 rundeck_gradle_functional_tests() {
-    TEST_IMAGE=${TEST_IMAGE:-} ./gradlew :functional-test:${GRADLE_TASK} -Penvironment="${ENV}" -PtestFiles="${TEST_FILES}" ${GRADLE_BUILD_OPTS} --info
+    local test_files_args=()
+    if [[ -n "${TEST_FILES:-}" ]]; then
+        test_files_args=(-PtestFiles="${TEST_FILES}")
+    fi
+    TEST_IMAGE=${TEST_IMAGE:-} ./gradlew :functional-test:${GRADLE_TASK} \
+        -Penvironment="${ENV}" \
+        "${test_files_args[@]}" \
+        ${GRADLE_BUILD_OPTS} --info
 }

@@ -97,7 +97,7 @@ public class ResourceXMLParser {
      */
     public void parse() throws ResourceXMLParserException, IOException {
         final EntityResolver resolver = createEntityResolver();
-        final SAXReader reader = new SAXReader(false);
+        final SAXReader reader = SAXReader.createDefault();
         reader.setEntityResolver(resolver);
 
         try {
@@ -146,7 +146,7 @@ public class ResourceXMLParser {
     public static EntityResolver createEntityResolver() {
         return new EntityResolver() {
             public InputSource resolveEntity(final String publicId, final String systemId) {
-                if (publicId.equals(DTD_PROJECT_DOCUMENT_1_0_EN)) {
+                if (DTD_PROJECT_DOCUMENT_1_0_EN.equals(publicId)) {
                     final InputStream in = ResourceXMLParser.class.getClassLoader().getResourceAsStream(
                         PROJECT_DTD_RESOURCE_PATH);
                     if (null != in) {
@@ -166,7 +166,8 @@ public class ResourceXMLParser {
                     }
 
                 }
-                return null;
+                // Fail closed: never let the parser resolve an unknown/external entity itself.
+                return new InputSource(new StringReader(""));
             }
         };
     }

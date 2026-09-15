@@ -1,0 +1,126 @@
+name: Renovate notify npm update
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  notify:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.user.login == 'renovate[bot]' &&
+      contains(github.event.pull_request.labels.*.name, 'sync-rundeckpro')
+    runs-on: ubuntu-latest
+    steps:
+      # Same pattern as prepare-community-pr.yml's "Verify approval for current PR
+      # head": Renovate branches live in this repo, not a fork, so any collaborator
+      # with write access could push an extra commit onto an already-approved,
+      # still-open renovate PR before it merges. Require an APPROVED review recorded
+      # against the exact merged head commit, not just "a review exists somewhere".
+      - name: Verify approval for merged head
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          head_lc="${HEAD_SHA,,}"
+
+          reviews_json="$(gh pr view "${PR_NUMBER}" --repo "${{ github.repository }}" --json reviews,headRefOid)"
+
+          pr_head="$(jq -r '.headRefOid // ""' <<<"${reviews_json}")"
+          pr_head_lc="${pr_head,,}"
+          if [[ "${pr_head_lc}" != "${head_lc}" ]]; then
+            echo "PR head from view (${pr_head}) does not match event head.sha ${HEAD_SHA}." >&2
+            exit 1
+          fi
+
+          # author_association must be OWNER or MEMBER — anyone with a GitHub
+          # account can leave an "Approved" review on a public repo's PR, so an
+          # unfiltered state==APPROVED check could be satisfied by a reviewer
+          # outside the org, not just outside collaborators with repo access.
+          approved_for_head="$(
+            jq --arg head "${head_lc}" '
+              [.reviews[]? | select(
+                .state == "APPROVED" and
+                (((.commit.oid // "") | ascii_downcase) == $head) and
+                (.authorAssociation == "OWNER" or .authorAssociation == "MEMBER")
+              )]
+              | length
+            ' <<<"${reviews_json}"
+          )"
+
+          if [[ "${approved_for_head}" -lt 1 ]]; then
+            echo "PR #${PR_NUMBER} has no APPROVED review from an org member recorded for head ${HEAD_SHA}; refusing to sync." >&2
+            exit 1
+          fi
+
+      - name: Diff ui-trellis package.json for changed deps
+        id: diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          FILE="rundeckapp/grails-spa/packages/ui-trellis/package.json"
+
+          # Derive the change from this PR's own diff (pulls/{n}/files), not by
+          # diffing arbitrary before/after snapshots: base.sha and merge_commit_sha
+          # can both end up reflecting *other* PRs that touched the same file in
+          # between this PR's fork point and its merge — diffing against either
+          # would misattribute those unrelated changes to this PR. This PR's own
+          # file patch is the only thing guaranteed to reflect just its own change,
+          # regardless of merge strategy or what else landed on main meanwhile.
+          file_entry="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" --paginate --jq ".[] | select(.filename == \"${FILE}\")")"
+
+          if [ -z "$file_entry" ]; then
+            echo "::warning::No change to $FILE in this merge — nothing to sync."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          patch="$(jq -r '.patch // empty' <<<"$file_entry")"
+
+          if [ -z "$patch" ]; then
+            # The file entry above confirms this PR DID change $FILE, but GitHub
+            # omitted the patch text (undocumented cap on large diffs). We can't
+            # tell what changed from here, so don't skip — dispatch anyway and
+            # let rundeckpro re-derive the actual change itself.
+            echo "::notice::$FILE changed but its patch was omitted by GitHub (large diff?) — dispatching anyway."
+            exit 0
+          fi
+
+          CHANGED="$(grep -E '^\+[[:space:]]*"[^"]+":[[:space:]]*"[^"]+",?[[:space:]]*$' <<<"$patch" || true)"
+
+          if [ -z "$CHANGED" ]; then
+            echo "::warning::package.json touched but no dependency version actually changed — nothing to sync."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+      - name: Generate renovate-sync-notify App token
+        if: steps.diff.outputs.skip != 'true'
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.NOTIFY_APP_ID }}
+          private-key: ${{ secrets.NOTIFY_APP_PRIVATE_KEY }}
+          owner: rundeckpro
+          repositories: rundeckpro
+
+      - name: Dispatch to rundeckpro
+        if: steps.diff.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh workflow run sync-renovate-dependency.yml \
+            --repo rundeckpro/rundeckpro \
+            -f pr_number="$PR_NUMBER"

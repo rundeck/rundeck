@@ -66,6 +66,28 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
         }
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
         factory.useForwardHeaders=useForwardHeaders
+        applySecureSessionCookieDefault(factory)
+    }
+
+    /**
+     * Auto-enables the {@code Secure} flag on the session cookie when the configured
+     * {@code grails.serverURL} uses the {@code https} scheme, unless the operator has
+     * already set {@code server.servlet.session.cookie.secure} explicitly.
+     * @param factory the servlet web server factory being customized
+     */
+    void applySecureSessionCookieDefault(final JettyServletWebServerFactory factory) {
+        def cookie = factory.session?.cookie
+        if (cookie != null && cookie.secure == null && isHttpsUrl(serverUrl)) {
+            cookie.secure = true
+        }
+    }
+
+    /**
+     * @param url a URL string, may be null
+     * @return true if the URL scheme is {@code https} (case-insensitive)
+     */
+    static boolean isHttpsUrl(final String url) {
+        url != null && url.trim().toLowerCase().startsWith("https://")
     }
 }
 

@@ -187,6 +187,7 @@ import rundeck.services.workflow.DefaultStateExecutionFileProducer
 import rundeck.services.workflow.DefaultWorkflowStateDataLoader
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
+import rundeckapp.init.InfrastructureRoleBeanDefinitionRegistryPostProcessor
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
@@ -220,6 +221,11 @@ beans={
             advisor('pointcut-ref': "rdAuthProjectAclInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
         }
     }
+
+    // Marks the rdAuth* advisors above (and a couple of Grails plugin infrastructure beans) as
+    // ROLE_INFRASTRUCTURE so Spring's BeanPostProcessorChecker doesn't log spurious startup warnings
+    // for them. See the class Javadoc for details.
+    infrastructureRoleBeanDefinitionRegistryPostProcessor(InfrastructureRoleBeanDefinitionRegistryPostProcessor)
 
     rdAuthorizeInterceptor(RdAuthorizeInterceptor)
     rundeckWebDefaultParameterNamesMapper(RdWebDefaultParameterNamesMapper) {
@@ -923,6 +929,12 @@ beans={
         serverUrl = grailsApplication.config.getProperty('grails.serverURL', String.class)
     }
 
+    // HSTS is only ever added when the connector has a secure port configured (see
+    // JettyServletHstsCustomizer#checkSSL), so these properties only take effect for TLS deployments.
+    // A negative stsMaxAgeSeconds (the default) disables the Strict-Transport-Security header.
+    // For TLS-terminated-at-Rundeck deployments, operators should set:
+    //   rundeck.web.jetty.servlet.stsMaxAgeSeconds: 31536000 (1 year)
+    //   rundeck.web.jetty.servlet.stsIncludeSubdomains: true (only if all subdomains are also served over HTTPS)
     def stsMaxAgeSeconds = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsMaxAgeSeconds",Integer.class,-1)
     def stsIncludeSubdomains = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.stsIncludeSubdomains",Boolean.class,false)
     jettyServletHstsCustomizer(JettyServletHstsCustomizer,stsMaxAgeSeconds,stsIncludeSubdomains)
