@@ -10,14 +10,14 @@ restating what the diff does. A good diff gets shorter and stays correct.
 
 ## Format
 
-`<file>:L<line>: <tag> <what>. <fix>.`
+`<file>:L<line>: <tag>: <what>. <fix>.`
 
 Tags, in the order to look for them:
 
 - `bug:` wrong behavior, race, null path, leaked resource. Name the failing input.
 - `security:` command/SQL injection, XSS, path traversal, secret in code, unescaped user input.
 - `convention:` breaks a project rule. Name the rule file.
-- `test:` changed logic without a test, or a test that cannot fail.
+- `test:` changed code without a unit or API test, or a test that cannot fail.
 - `delete:` dead code, commented-out code, speculative flexibility. Replacement: nothing.
 - `yagni:` abstraction with one implementation, config nobody sets, layer with one caller.
 - `shrink:` same logic, fewer lines. Show the shorter form.
@@ -31,14 +31,14 @@ Open the rule file only when the diff touches its files. Do not repeat its conte
 
 | Diff touches | Check | Source |
 |---|---|---|
-| `*.groovy` | `@CompileStatic` (or `@GrailsCompileStatic`) on classes, `@CompileDynamic` only per method; Groovydoc on new/modified code; no hand-written getters/setters; Spock, never new JUnit | `.claude/docs/development-guidelines.md` |
+| `*.groovy`, `*.java` | Javadoc or Groovydoc on new/modified code; Groovy classes `@CompileStatic` (or `@GrailsCompileStatic`), `@CompileDynamic` only per method; no hand-written getters/setters; tests in Spock, never new JUnit | `.claude/docs/development-guidelines.md` |
 | `build.gradle` | versions from root `gradle.properties` via `${prop}`, never hardcoded | `CLAUDE.md` |
 | Liquibase changelogs | never edit an existing changeset; precondition, rollback, MySQL + PostgreSQL + H2 | `.claude/rules/database-migrations.md` |
 | API controllers | OpenAPI annotations, `Since: v<n>`, one capitalized tag, DTOs instead of inline schemas, version bump only for new behavior | `.claude/docs/api-guidelines.md` |
 | `*.vue` | Options API, `<style scoped>`, no inline styles, `$t()` for text, `*.spec.ts` exists | `.claude/rules/vue.md` |
-| `*.spec.ts` | Priority 1 and 2 rules | `.claude/rules/jest.md` |
+| `*.ts`, `*.js`, `*.spec.ts` | a Jest test covers the changed code; spec files follow the Priority 1 and 2 rules | `.claude/rules/jest.md` |
 | Selenium specs, page objects | Page Object Model, no `Thread.sleep`, explicit waits | `.claude/rules/selenium.md` |
-| Functional tests using OkHttp | every bare `Response` closed or consumed | `.claude/rules/okhttp-client-response.md` |
+| Functional and Selenium tests using OkHttp | `RdClient` `do*` responses closed or consumed (base-class `do*` helpers clean up on their own); prefer `get()`/`post()` when only the body matters | `.claude/rules/okhttp-client-response.md` |
 | `package.json` | exact versions, no `^` or `~` outside `peerDependencies` | `.claude/rules/npm-dependencies.md` |
 | New or modified methods | cyclomatic complexity ≤ 25 | `.claude/rules/complexity.md` |
 
@@ -48,12 +48,18 @@ sections filled in, scope matches what the title says. Product names in user-fac
 
 ## Verdict
 
-End with one line:
+Close with one verdict line, last:
 
 - `Ship.` when no `bug`, `security`, `convention` or `test` finding.
 - `Fix first: <n> finding(s).` otherwise.
 
-Add `net: -<N> lines possible.` when any `delete`, `yagni` or `shrink` finding exists.
+Right before it, add `net: -<N> lines possible.` when any `delete`, `yagni` or `shrink` finding exists.
+
+## Self-check
+
+Before posting: every finding line matches the format and starts with one of the
+seven tags, the verdict is the last line, and `Fix first` counts only `bug`,
+`security`, `convention` and `test` findings.
 
 ## Boundaries
 
