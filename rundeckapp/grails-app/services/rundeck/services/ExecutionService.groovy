@@ -3599,9 +3599,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // cleanupExecution), so recording here (rather than in
             // ExecutionUtilService.finishExecutionMetrics) captures all of them exactly once.
             micrometerExecutionMetricsService?.recordExecution(execution)
-            // Read once: StepNodeSecondsStore.takeFinishedTotal is read-and-remove, so a second
-            // call below (e.g. when building the completion event) would see null.
-            Long stepNodeSeconds = StepNodeSecondsStore.getInstance().takeFinishedTotal(execution.id)
+            // Read once: StepNodeSecondsStore.takeFinishedBreakdown is read-and-remove, so a
+            // second call below (e.g. when building the completion event) would see null.
+            Map<String, StepNodeSecondsWorkflowListener.StepNodeSecondsEntry> stepNodeSecondsBreakdown = StepNodeSecondsStore.getInstance().takeFinishedBreakdown(execution.id)
+            Long stepNodeSeconds = stepNodeSecondsBreakdown == null ? null : (stepNodeSecondsBreakdown.values()*.seconds.sum() ?: 0L) as Long
             micrometerExecutionMetricsService?.recordStepNodeSeconds(execution, stepNodeSeconds)
 
             //summarize node success
@@ -3651,7 +3652,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     job: scheduledExecution,
                     nodeStatus: [succeeded: sucCount, failed: failedCount, total: totalCount],
                     context: context?.dataContext,
-                    stepNodeSeconds: stepNodeSeconds
+                    stepNodeSeconds: stepNodeSeconds,
+                    stepNodeSecondsBreakdown: stepNodeSecondsBreakdown
             )
 
             notify('executionComplete', completedEvent)
