@@ -66,7 +66,7 @@ git push -q origin v1.0.0-rc1
 
 # PR A: squash merge, single commit, modifies file1.txt line 1
 git checkout -q --detach v1.0.0-rc1
-sed -i '' 's/base/line1-changed-by-A/' file1.txt
+echo "line1-changed-by-A" > file1.txt
 git commit -q -am "PR A (squash)"
 PRA_SHA="$(git rev-parse HEAD)"
 echo 1 > "$STUB_DATA/pr_101_commits"
@@ -99,7 +99,7 @@ echo "$PRC_HEAD_ORIGINAL" > "$STUB_DATA/pr_103_diffhead"
 
 # PR D: conflicts with PR A (same line, different edit)
 git checkout -q --detach v1.0.0-rc1
-sed -i '' 's/base/line1-changed-by-D/' file1.txt
+echo "line1-changed-by-D" > file1.txt
 git commit -q -am "PR D (conflicts with A)"
 PRD_SHA="$(git rev-parse HEAD)"
 echo 1 > "$STUB_DATA/pr_104_commits"
