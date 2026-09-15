@@ -379,6 +379,57 @@ describe("LogViewer", () => {
         expect(wrapper.emitted("line-deselect")?.[0]).toEqual([42]);
       });
     });
+
+    describe("scrollToLine", () => {
+      // DynamicScroller positions item views with a CSS `transform:
+      // translateY(...)` rather than layout offsetTop (RUN-0000), so this
+      // must read the target's real rendered position via
+      // getBoundingClientRect() - a plain offsetTop-based measurement would
+      // always read 0 and scroll to the wrong place.
+      const mockRect = (top: number) => ({ top }) as DOMRect;
+
+      it("scrolls the outer container using the target's rendered position, not layout offsetTop", () => {
+        const wrapper = createWrapper();
+        // Use the real, mounted `scroller` ref rather than swapping in a
+        // fake one - `$refs` is re-derived from the template and a manual
+        // reassignment doesn't stick.
+        const scrollerEl = (wrapper.vm as any).$refs.scroller as HTMLElement;
+        scrollerEl.scrollTop = 10;
+        jest
+          .spyOn(scrollerEl, "getBoundingClientRect")
+          .mockReturnValue(mockRect(100));
+
+        const targetEl = document.createElement("div");
+        jest
+          .spyOn(targetEl, "getBoundingClientRect")
+          .mockReturnValue(mockRect(340));
+
+        const chunk = (wrapper.vm as any).$refs.logEntryChunk;
+        chunk.scrollToLine = jest.fn();
+        chunk.getScrollerOffset = jest.fn().mockReturnValue({ el: targetEl });
+
+        (wrapper.vm as any).scrollToLine(10);
+
+        expect(chunk.scrollToLine).toHaveBeenCalledWith(10);
+        expect(chunk.getScrollerOffset).toHaveBeenCalledWith(9);
+        // offset = scroller.scrollTop(10) + (target.top(340) - scroller.top(100)) - 24 header
+        expect(scrollerEl.scrollTop).toBe(226);
+      });
+
+      it("does not move the scroll position when the target line is not currently rendered", () => {
+        const wrapper = createWrapper();
+        const scrollerEl = (wrapper.vm as any).$refs.scroller as HTMLElement;
+        scrollerEl.scrollTop = 50;
+
+        const chunk = (wrapper.vm as any).$refs.logEntryChunk;
+        chunk.scrollToLine = jest.fn();
+        chunk.getScrollerOffset = jest.fn().mockReturnValue({ el: null });
+
+        (wrapper.vm as any).scrollToLine(500);
+
+        expect(scrollerEl.scrollTop).toBe(50);
+      });
+    });
   });
 
   describe("Hide incomplete nodes", () => {

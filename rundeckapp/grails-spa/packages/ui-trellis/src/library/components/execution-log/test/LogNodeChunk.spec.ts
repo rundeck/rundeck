@@ -265,7 +265,6 @@ describe("LogNodeChunk.vue", () => {
 
     const result = (wrapper.vm as any).getScrollerOffset(1);
     expect(result.el).toBe(itemEl);
-    expect(result.offset).toBe(0);
   });
 
   it("returns a null element when the item index is not currently rendered", () => {
@@ -273,14 +272,13 @@ describe("LogNodeChunk.vue", () => {
 
     const result = (wrapper.vm as any).getScrollerOffset(999);
     expect(result.el).toBeNull();
-    expect(result.offset).toBe(0);
   });
 
-  it("returns a zero offset when the scroller ref is not yet mounted", () => {
+  it("returns a null element when the scroller ref is not yet mounted", () => {
     const wrapper = createWrapper({ entries: [] });
 
     const result = (wrapper.vm as any).getScrollerOffset(1);
-    expect(result).toEqual({ el: null, offset: 0 });
+    expect(result).toEqual({ el: null });
   });
 
   describe("_isLastEntryMeasured", () => {

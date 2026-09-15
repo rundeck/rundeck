@@ -304,17 +304,19 @@ export default defineComponent({
     },
     getScrollerOffset(index: number): {
       el: HTMLElement | null;
-      offset: number;
     } {
       const scroller = this.$refs.scroller as DynamicScrollerRef | undefined;
-      if (!scroller) return { el: null, offset: 0 };
-      // The item's own rendered position (via its data-index attribute) already
-      // reflects its offset within the scroller, so no separate item-offset
-      // lookup is needed - this works regardless of vue-virtual-scroller version.
+      if (!scroller) return { el: null };
+      // DynamicScroller item views are positioned absolutely with a CSS
+      // `transform: translateY(...)` (see vue-recycle-scroller__item-view in
+      // vue-virtual-scroller's stylesheet) rather than via layout `offsetTop`,
+      // which stays 0 on every item view regardless of its visual position.
+      // Callers must read the item's real rendered position via
+      // getBoundingClientRect() rather than offsetTop.
       const target = scroller.$el.querySelector(
         `[data-index="${index}"]`,
       ) as HTMLElement | null;
-      return { el: target, offset: 0 };
+      return { el: target };
     },
   },
 });

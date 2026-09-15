@@ -131,9 +131,7 @@ RecycleScroller.updated = function () {
 
 const unmount = RecycleScroller.beforeUnmount;
 RecycleScroller.beforeUnmount = function () {
-  if (typeof unmount === "function") {
-    unmount.bind(this)();
-  }
+  unmount.bind(this)();
   if (ps.value) {
     try {
       ps.value.destroy();
