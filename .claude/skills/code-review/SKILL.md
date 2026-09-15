@@ -35,7 +35,7 @@ Open the referenced file only when the diff touches its files. Do not repeat its
 | `*.groovy`, `*.java` | Javadoc or Groovydoc on new/modified code; Groovy classes `@CompileStatic` (or `@GrailsCompileStatic`), `@CompileDynamic` only per method; no hand-written getters/setters; tests in Spock, never new JUnit | `.claude/docs/development-guidelines.md` |
 | `build.gradle` | versions from root `gradle.properties` via `${prop}`, never hardcoded | `CLAUDE.md` |
 | Liquibase changelogs | never edit an existing changeset; precondition, rollback, MySQL + PostgreSQL + H2 | `.claude/rules/database-migrations.md` |
-| API controllers | OpenAPI annotations, `Since: v<n>`, one capitalized tag, DTOs instead of inline schemas, version bump only for new behavior | `.claude/docs/api-guidelines.md` |
+| API controllers | OpenAPI annotations, `Since: v<n>`, one capitalized tag, DTOs instead of inline schemas, version bump only for new behavior | `.claude/docs/api-guidelines.md`, `.claude/docs/development-guidelines.md` § API Versioning |
 | `*.vue` | Options API, `<style scoped>`, no inline styles, `$t()` for text, `*.spec.ts` exists | `.claude/rules/vue.md` |
 | `*.ts`, `*.js`, `*.spec.ts` under `ui-trellis` | a Jest test covers the changed code; spec files follow the Priority 1 and 2 rules | `.claude/rules/jest.md` |
 | Selenium specs, page objects | Page Object Model, no `Thread.sleep`, explicit waits | `.claude/rules/selenium.md` |
