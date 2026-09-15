@@ -81,12 +81,7 @@
           <label for="logview_lineWrap">Wrap Long Lines</label>
         </div>
         <div class="checkbox">
-          <input
-            id="logview_stats"
-            v-model="settings.stats"
-            type="checkbox"
-            data-testid="log-viewer-stats-checkbox"
-          />
+          <input id="logview_stats" v-model="settings.stats" type="checkbox" data-testid="log-viewer-stats-checkbox" />
           <label for="logview_stats">Display Stats</label>
         </div>
         <div class="checkbox">
@@ -117,9 +112,7 @@
         'execution-log--no-transition': logLines > 1000,
         'ansicolor-on': settings.ansiColor,
       }"
-      :style="
-        node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}
-      "
+      :style="node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}"
     >
       <div ref="log" class="execution-log__scroller-item-container">
         <div
@@ -141,10 +134,7 @@
               data-testid="log-viewer-follow-btn"
               @click="toggleFollow"
             >
-              <i
-                :class="[followIcon]"
-                data-testid="log-viewer-follow-icon"
-              />Follow
+              <i :class="[followIcon]" data-testid="log-viewer-follow-icon" />Follow
             </btn>
           </btn-group>
           <transition name="fade">
@@ -475,9 +465,7 @@ export default defineComponent({
     // Capture the raw ExecutionOutput reference before Vue wraps it in a
     // reactive proxy, so MobX can properly track ObservableGroupMap accesses
     // inside the autorun callback.
-    const rawViewer = rootStore.executionOutputStore.createOrGet(
-      this.executionId,
-    );
+    const rawViewer = rootStore.executionOutputStore.createOrGet(this.executionId);
     this.viewer = rawViewer;
     if (this.node) {
       const node = this.node;
@@ -625,26 +613,20 @@ export default defineComponent({
     },
     scrollToLine(n: number | string) {
       const _scroller = this.$refs["scroller"] as HTMLElement;
-      const chunk = this.$refs["logEntryChunk"] as
-        InstanceType<typeof LogNodeChunk> | undefined;
-      if (!chunk) return;
+      if (this.$refs["logEntryChunk"]) {
+        this.$refs["logEntryChunk"].scrollToLine(Number(n));
+      }
 
-      chunk.scrollToLine(Number(n));
+      const target = this.$refs["logEntryChunk"]._container;
+      let parent = target.parentNode;
 
-      const { el: target } = chunk.getScrollerOffset(
-        Math.max(0, Number(n) - 1),
-      );
-      if (!target) return;
+      let offset = target.offsetTop;
 
-      // getBoundingClientRect reflects the target's real rendered position
-      // even when vue-virtual-scroller positions it via a CSS
-      // `transform: translateY(...)` rather than layout offsetTop - walking
-      // ancestor offsetTop (as this used to) undercounts that transform and
-      // scrolls to the wrong place.
-      const offset =
-        _scroller.scrollTop +
-        (target.getBoundingClientRect().top -
-          _scroller.getBoundingClientRect().top);
+      // Traverse to root and accumulate offset
+      while (parent != _scroller) {
+        offset += parent.offsetTop;
+        parent = parent.parentNode;
+      }
 
       _scroller.scrollTop = offset - 24; // Insure under stick header
     },

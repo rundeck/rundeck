@@ -45,11 +45,6 @@ import LogEntryFlex from "./logEntryFlex.vue";
 import { EventBus } from "../../utilities/vueEventBus";
 import { LogBuilder } from "./logBuilder";
 
-type DynamicScrollerRef = {
-  $el: HTMLElement;
-  scrollToBottom: () => void;
-};
-
 export default defineComponent({
   name: "LogNodeChunk",
   components: {
@@ -121,6 +116,27 @@ export default defineComponent({
       emitResize: true as boolean,
     };
   },
+  watch: {
+    entries(newEntries: ExecutionOutputEntry[] | undefined) {
+      if (!this.follow || !newEntries || newEntries.length === 0) return;
+      this.$nextTick(() => {
+        if (this.follow) {
+          (this.$refs.scroller as any)?.scrollToBottom?.();
+        }
+      });
+    },
+    follow(newVal: boolean) {
+      // Scroll to bottom immediately when follow is re-enabled, even if no
+      // new entries have arrived since the last update.
+      if (newVal) {
+        this.$nextTick(() => {
+          if (this.follow) {
+            (this.$refs.scroller as any)?.scrollToBottom?.();
+          }
+        });
+      }
+    },
+  },
   computed: {
     opts() {
       return {
@@ -154,27 +170,6 @@ export default defineComponent({
       return `key-${this.nodeIcon}-${this.command}-${this.time}-${this.gutter}-${this.lineWrap}`;
     },
   },
-  watch: {
-    entries(newEntries: ExecutionOutputEntry[] | undefined) {
-      if (!this.follow || !newEntries || newEntries.length === 0) return;
-      this.$nextTick(() => {
-        if (this.follow) {
-          (this.$refs.scroller as any)?.scrollToBottom?.();
-        }
-      });
-    },
-    follow(newVal: boolean) {
-      // Scroll to bottom immediately when follow is re-enabled, even if no
-      // new entries have arrived since the last update.
-      if (newVal) {
-        this.$nextTick(() => {
-          if (this.follow) {
-            (this.$refs.scroller as any)?.scrollToBottom?.();
-          }
-        });
-      }
-    },
-  },
   mounted() {
     if (this.jumpToLine && !this.jumped) {
       this.$emit("line-select", this.jumpToLine);
@@ -188,8 +183,7 @@ export default defineComponent({
     this._tryAttachScrollListener();
   },
   beforeUnmount() {
-    const scrollerEl = (this.$refs.scroller as any)?.$el as
-      HTMLElement | undefined;
+    const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
     if (scrollerEl) {
       scrollerEl.removeEventListener("scroll", this.onScrollerScroll);
     }
@@ -249,8 +243,7 @@ export default defineComponent({
     },
     _tryAttachScrollListener() {
       if ((this as any)._scrollListenerAdded) return;
-      const scrollerEl = (this.$refs.scroller as any)?.$el as
-        HTMLElement | undefined;
+      const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
       if (scrollerEl) {
         scrollerEl.addEventListener("scroll", this.onScrollerScroll);
         (this as any)._scrollListenerAdded = true;
@@ -301,22 +294,6 @@ export default defineComponent({
       if (this.follow) {
         this.$refs.scroller.scrollToBottom();
       }
-    },
-    getScrollerOffset(index: number): {
-      el: HTMLElement | null;
-    } {
-      const scroller = this.$refs.scroller as DynamicScrollerRef | undefined;
-      if (!scroller) return { el: null };
-      // DynamicScroller item views are positioned absolutely with a CSS
-      // `transform: translateY(...)` (see vue-recycle-scroller__item-view in
-      // vue-virtual-scroller's stylesheet) rather than via layout `offsetTop`,
-      // which stays 0 on every item view regardless of its visual position.
-      // Callers must read the item's real rendered position via
-      // getBoundingClientRect() rather than offsetTop.
-      const target = scroller.$el.querySelector(
-        `[data-index="${index}"]`,
-      ) as HTMLElement | null;
-      return { el: target };
     },
   },
 });

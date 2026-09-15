@@ -256,31 +256,6 @@ describe("LogNodeChunk.vue", () => {
     expect(scrollToBottomMock).toHaveBeenCalledTimes(follow?1:0);
   });
 
-  it("computes the scroller offset for an item index via its rendered data-index element", () => {
-    const wrapper = createWrapper();
-    const scrollerEl = (wrapper.vm as any).$refs.scroller.$el as HTMLElement;
-    const itemEl = document.createElement("div");
-    itemEl.setAttribute("data-index", "1");
-    scrollerEl.appendChild(itemEl);
-
-    const result = (wrapper.vm as any).getScrollerOffset(1);
-    expect(result.el).toBe(itemEl);
-  });
-
-  it("returns a null element when the item index is not currently rendered", () => {
-    const wrapper = createWrapper();
-
-    const result = (wrapper.vm as any).getScrollerOffset(999);
-    expect(result.el).toBeNull();
-  });
-
-  it("returns a null element when the scroller ref is not yet mounted", () => {
-    const wrapper = createWrapper({ entries: [] });
-
-    const result = (wrapper.vm as any).getScrollerOffset(1);
-    expect(result).toEqual({ el: null });
-  });
-
   describe("_isLastEntryMeasured", () => {
     it("returns true when there are no entries", () => {
       const wrapper = createWrapper({ entries: [] });
