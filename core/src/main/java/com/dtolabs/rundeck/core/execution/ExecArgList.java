@@ -223,6 +223,14 @@ public class ExecArgList {
         // only untrusted part -- without corrupting job-authored quoting/text around the reference
         // within a larger literal argument, e.g. sudo "sh script.sh ${option.name}" (see #10293,
         // #10027, both regressions from whole-argument quoting introduced by RUN-4175 / PR #10003).
+        //
+        // Not every caller hands this method a raw, unsubstituted argument, though: some node step
+        // plugins (e.g. ScriptBasedRemoteScriptNodeStepPlugin, backing bundled script-type plugins)
+        // already resolve ${...} references themselves before building the ExecArgList. For those,
+        // there is no reference left here to quote in place, so an argument flagged "quoted" is
+        // treated as an already-materialized, opaque value and the *whole* string is quoted instead
+        // -- exactly the prior (pre-this-fix) behavior -- so injection protection isn't silently
+        // lost for callers that don't go through per-reference substitution here.
         final Converter<String, String> quotePerReference =
                 value -> quote.convert(DataContextUtils.replaceMissingOptionsWithBlank.convert(value));
 
@@ -230,16 +238,24 @@ public class ExecArgList {
         CommandVisitor visiter = new CommandVisitor(
                 commandList,
                 quote,
-                (str, quoted) -> SharedDataContextUtils.replaceDataReferences(
-                        str,
-                        sharedContext,
-                        //add node name to qualifier to read node-data first
-                        ContextView.node(nodeName),
-                        ContextView::nodeStep,
-                        quoted && quote != null ? quotePerReference : DataContextUtils.replaceMissingOptionsWithBlank,
-                        false,
-                        false
-                ),
+                (str, quoted) -> {
+                    boolean hasReference = str.contains("${") && SharedDataContextUtils.PROPERTY_REF_PATTERN.matcher(str).find();
+                    if (quoted && quote != null && !hasReference) {
+                        // Already substituted (or never had a reference) upstream: nothing to
+                        // substitute here, so quote the whole value as received.
+                        return quote.convert(str);
+                    }
+                    return SharedDataContextUtils.replaceDataReferences(
+                            str,
+                            sharedContext,
+                            //add node name to qualifier to read node-data first
+                            ContextView.node(nodeName),
+                            ContextView::nodeStep,
+                            quoted && quote != null ? quotePerReference : DataContextUtils.replaceMissingOptionsWithBlank,
+                            false,
+                            false
+                    );
+                },
                 // quoting (when applicable) is already embedded above during expansion
                 true
         );

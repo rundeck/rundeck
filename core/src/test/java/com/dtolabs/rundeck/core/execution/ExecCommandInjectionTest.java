@@ -491,4 +491,27 @@ public class ExecCommandInjectionTest {
         Assert.assertEquals("echo", result.get(0));
         Assert.assertEquals("", result.get(1));
     }
+
+    @Test
+    public void testAlreadySubstitutedArgumentIsStillQuotedAsWhole() {
+        // Some node step plugins (e.g. ScriptBasedRemoteScriptNodeStepPlugin, backing bundled
+        // script-type plugins) resolve ${...} references themselves before building the
+        // ExecArgList, so the string reaching buildCommandForNode() here never contains ${...} at
+        // all -- it's already the final, materialized value. There is nothing to quote "in place"
+        // in that case, so the whole (already-substituted) value must still be quoted as a unit,
+        // exactly as it always was, or injection protection would be silently lost for that caller.
+        WFSharedContext sharedContext = new WFSharedContext();
+
+        ExecArgList.Builder builder = ExecArgList.builder();
+        builder.arg("echo", false, false);
+        // No ${...} present -- this is what an already-substituted, dangerous value looks like.
+        builder.arg("80 | whoami", true, false);
+        ExecArgList execArgList = builder.build();
+
+        ArrayList<String> result = execArgList.buildCommandForNode(sharedContext, "anode", "unix", null);
+
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals("echo", result.get(0));
+        Assert.assertEquals("'80 | whoami'", result.get(1));
+    }
 }
