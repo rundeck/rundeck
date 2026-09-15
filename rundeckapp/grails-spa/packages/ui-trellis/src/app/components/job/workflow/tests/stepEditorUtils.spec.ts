@@ -1,7 +1,7 @@
 import type { EditStepData } from "../types/workflowTypes";
 
 const mockValidatePluginConfig = jest.fn();
-const mockGetServicePlugins = jest.fn();
+const mockGetServicePlugins = jest.fn().mockReturnValue([]);
 
 jest.mock("@/library/modules/pluginService", () => ({
   validatePluginConfig: (...args: any[]) => mockValidatePluginConfig(...args),
@@ -41,6 +41,7 @@ import {
   createStepFromProvider,
   getPluginDetailsForStep,
   resetValidation,
+  resolveStepTypeTitle,
   validateStepForSave,
   type FieldValidationErrors,
 } from "../stepEditorUtils";
@@ -84,6 +85,7 @@ describe("stepEditorUtils", () => {
       expect(step.nodeStep).toBe(true);
       expect(step.id).toBeDefined();
       expect(step.jobref).toBeUndefined();
+      expect(step.description).toBe("script-inline");
     });
 
     it("creates a regular plugin step for WorkflowStep service", () => {
@@ -98,6 +100,19 @@ describe("stepEditorUtils", () => {
       expect(step.id).toBeDefined();
     });
 
+    it("seeds description with the resolved plugin title when available", () => {
+      mockGetServicePlugins.mockReturnValue([
+        { name: "script-inline", title: "Inline Script" },
+      ]);
+
+      const step = createStepFromProvider(
+        ServiceType.WorkflowNodeStep,
+        "script-inline",
+      );
+
+      expect(step.description).toBe("Inline Script");
+    });
+
     it("creates a job reference step", () => {
       const step = createStepFromProvider(
         ServiceType.WorkflowNodeStep,
@@ -106,10 +121,24 @@ describe("stepEditorUtils", () => {
 
       expect(step.type).toBe("job.reference");
       expect(step.nodeStep).toBe(true);
-      expect(step.description).toBe("");
+      expect(step.description).toBe("Job reference");
       expect(step.jobref).toBeDefined();
       expect(step.jobref!.nodeStep).toBe(true);
       expect(step.id).toBeDefined();
+    });
+
+    it("seeds duplicate steps with the same default description (duplicates allowed)", () => {
+      const step1 = createStepFromProvider(
+        ServiceType.WorkflowNodeStep,
+        "script-inline",
+      );
+      const step2 = createStepFromProvider(
+        ServiceType.WorkflowNodeStep,
+        "script-inline",
+      );
+
+      expect(step1.description).toBe(step2.description);
+      expect(step1.id).not.toBe(step2.id);
     });
 
     it("creates a job reference step with nodeStep=false for WorkflowStep", () => {
@@ -412,6 +441,44 @@ describe("stepEditorUtils", () => {
 
       expect(result.title).toBe("exec-command");
       expect(result.description).toBe("");
+    });
+  });
+
+  describe("resolveStepTypeTitle", () => {
+    it("returns the plugin title when found", () => {
+      mockGetServicePlugins.mockReturnValue([
+        { name: "exec-command", title: "Command" },
+      ]);
+
+      expect(
+        resolveStepTypeTitle(ServiceType.WorkflowNodeStep, "exec-command"),
+      ).toBe("Command");
+    });
+
+    it("falls back to the raw provider name when no plugin is found", () => {
+      mockGetServicePlugins.mockReturnValue([]);
+
+      expect(
+        resolveStepTypeTitle(ServiceType.WorkflowNodeStep, "exec-command"),
+      ).toBe("exec-command");
+    });
+
+    it('falls back to "Job reference" for job.reference when no plugin metadata is loaded', () => {
+      mockGetServicePlugins.mockReturnValue([]);
+
+      expect(
+        resolveStepTypeTitle(ServiceType.WorkflowStep, "job.reference"),
+      ).toBe("Job reference");
+    });
+
+    it("uses the job.reference plugin title when loaded", () => {
+      mockGetServicePlugins.mockReturnValue([
+        { name: "job.reference", title: "Job reference" },
+      ]);
+
+      expect(
+        resolveStepTypeTitle(ServiceType.WorkflowStep, "job.reference"),
+      ).toBe("Job reference");
     });
   });
 
