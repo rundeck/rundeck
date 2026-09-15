@@ -244,7 +244,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             }
         }
 
-        Map jobsCache = snapshotJobStateMap().collectEntries {key, value -> [value.path, value]}
+        Map<String, Map> jobStateSnapshot = snapshotJobStateMap()
+        Map jobsCache = jobStateSnapshot.collectEntries {key, value -> [value.path, value]}
 
         walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
             def tracked = false
@@ -271,7 +272,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 notExpected.remove(walk.getPathString())
                 tracked = true
             }
-            if(!tracked && importTracker.getTrackedJobIds().get(walk.getPathString()) && jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))){
+            String trackedJobId = !tracked ? importTracker.getTrackedJobIds().get(walk.getPathString()) : null
+            Map jobState = trackedJobId ? jobStateSnapshot.get(trackedJobId) : null
+            if(!tracked && jobState){
 
                 def originalValue = importTracker.originalValue(walk.getPathString())
                 def renamedJob = null
@@ -285,7 +288,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     }
                 }
                 if(!renamedJob){
-                    def jobState = jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))
                     if(!ImportSynchState.CLEAN.equals(jobState.get("synch"))){
                         importNeeded++
                     }
