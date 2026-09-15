@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.events.EventPublisher
+import grails.events.annotation.Subscriber
+import org.rundeck.app.grails.events.AppEvents
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
 import org.hibernate.sql.JoinType
@@ -66,6 +68,7 @@ import jakarta.validation.constraints.NotNull
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import java.util.function.Supplier
 
@@ -285,18 +288,62 @@ class LogFileStorageService
 
 
     /**
-     * Starts the log storage and retrieval consumers and the periodic incomplete-request scheduler
-     * when a LogFileStorage plugin is configured; otherwise logs a WARN and starts nothing.
+     * Guards the one-time start of the storage/retrieval consumers and the periodic scheduler.
+     */
+    private final AtomicBoolean consumersStarted = new AtomicBoolean(false)
+
+    /**
+     * Logs a WARN when no LogFileStorage plugin is configured at initialization; otherwise starts the
+     * consumers. A plugin configured later through a configuration change starts them via
+     * {@link #onAppConfigChanged(Set)}.
      */
     @Override
     void afterPropertiesSet() throws Exception {
-        def pluginName = getConfiguredPluginName()
-        if(!pluginName){
+        if (!getConfiguredPluginName()) {
             log.warn(
                 "LogFileStorage plugin is not configured (${FILE_STORAGE_PLUGIN.key}); " +
                 "log storage consumers are disabled until it is set."
             )
             return
+        }
+        startConsumersIfConfigured()
+    }
+
+    /**
+     * Starts the consumers when a configuration change makes the LogFileStorage plugin resolvable
+     * after initialization (for example a value saved only in DB-backed System Configuration).
+     * Never throws: the event bus dispatches asynchronously and the publisher must not be affected.
+     * @param keys configuration keys reported as changed
+     */
+    @Subscriber(AppEvents.APP_CONFIG_CHANGED)
+    void onAppConfigChanged(Set<String> keys) {
+        if (consumersStarted.get()) {
+            return
+        }
+        try {
+            if (startConsumersIfConfigured()) {
+                log.info(
+                    "Log storage consumers started: ${FILE_STORAGE_PLUGIN.key} is now configured " +
+                    "(plugin: ${getConfiguredPluginName()})"
+                )
+            }
+        } catch (Throwable t) {
+            log.error("Failed to start log storage consumers after a configuration change", t)
+        }
+    }
+
+    /**
+     * Starts the log storage and retrieval consumers and, for the periodic resume strategy, the
+     * incomplete-request scheduler. Runs at most once per service lifetime and only when a
+     * LogFileStorage plugin name resolves.
+     * @return true only on the invocation that started the consumers
+     */
+    boolean startConsumersIfConfigured() {
+        if (!getConfiguredPluginName()) {
+            return false
+        }
+        if (!consumersStarted.compareAndSet(false, true)) {
+            return false
         }
 
         logFileStorageTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(STORAGE_CONCURRENCY_LIMIT, 5)
@@ -334,6 +381,7 @@ class LogFileStorageService
                     }
                 }, new Date(System.currentTimeMillis() + delay), delay)
         }
+        return true
     }
 
     static SystemConfig.SystemConfigBuilder configDefaults(SystemConfig.SystemConfigBuilder builder) {
