@@ -341,7 +341,10 @@ allprojects {
             force "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
             // CVE-2025-67030 - plexus-utils Directory Traversal (Expand.extractFile); pulled via grails-shell-cli
             force "org.codehaus.plexus:plexus-utils:${plexusUtilsVersion}"
-            
+            // CVE-2026-26032 - Apache Ivy PackagerResolver path traversal; pulled via
+            // grails-console -> groovy-console (interactive shell's Grape support)
+            force "org.apache.ivy:ivy:${ivyVersion}"
+
             // Force centralized versions to prevent duplicates in WAR
             force "org.apache.ant:ant:${antVersion}"
             force "org.apache.ant:ant-launcher:${antVersion}"
