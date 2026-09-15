@@ -382,6 +382,8 @@ rundeck:
             enabled: true
         vueKeyStorage:
             enabled: true
+        vueUserList:
+            enabled: true
     health:
         databaseValidationQuery: "SELECT 1"
 ---
