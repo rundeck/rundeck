@@ -2104,4 +2104,51 @@ class GitExportPluginSpec extends Specification {
         !base.exists()
         0 * FileUtils.delete(_, _)
     }
+
+    def "cleanJobStatusCache refreshes stale cached status after commit"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+
+        def userInfo = Mock(ScmUserInfo)
+        def ctxt = Mock(ScmOperationContext) {
+            getUserInfo() >> userInfo
+        }
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+        addCommitFile(gitdir, plugin.git, 'blah-xyz.xml', 'blah')
+        def localfile = new File(gitdir, 'blah-xyz.xml')
+        localfile << 'newtext'
+
+        def serializer = Mock(JobSerializer) {
+            _ * serialize('xml', _, _, _) >> { args -> args[1].write('newtext'.bytes) }
+        }
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'blah'
+            getGroupPath() >> ''
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+
+        //populate the cache with the pre-commit "modified" status, as a real status check would
+        def preCommitStatus = plugin.getJobStatus(jobref)
+
+        when:
+        def input = [message: "commit message", push: 'false']
+        def result = plugin.export(ctxt, GitExportPlugin.JOB_COMMIT_ACTION_ID, [jobref] as Set, [] as Set, input)
+
+        then:
+        preCommitStatus.synchState == SynchState.EXPORT_NEEDED
+        result.success
+        //the cached status must be refreshed to reflect the commit, not left stale as EXPORT_NEEDED
+        plugin.jobStateMap['xyz'].synch == SynchState.CLEAN
+    }
 }

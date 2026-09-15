@@ -42,7 +42,6 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
     public static final String DESC = "Import Jobs from a Git Repository"
     public static final String TITLE = "Git Import"
 
-
     @Override
     Description getDescription() {
         pluginDescription {
@@ -61,7 +60,6 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
         Common.addDirDefaultValue setupProperties, basedir, ServiceNameConstants.ScmImport
     }
 
-
     static List<Property> getSetupProperties() {
         Config.listProperties Import
     }
@@ -71,8 +69,7 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
             final ScmOperationContext context,
             final Map<String, String> input,
             final List<String> trackedItems
-    )
-    {
+    ) {
         return createPlugin(context, input, trackedItems, true)
     }
 
@@ -82,14 +79,12 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
             final Map<String, String> input,
             final List<String> trackedItems,
             final boolean initialize
-    )
-    {
+    ) {
         def config = Config.create Import, input
         def plugin = new GitImportPlugin(config, trackedItems)
-        if(initialize){
+        if (initialize) {
             plugin.initialize context
         }
         return plugin
     }
-
 }
