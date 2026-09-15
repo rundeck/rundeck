@@ -6512,12 +6512,16 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         capturedEvent instanceof ExecutionCompleteEvent
         capturedEvent.stepNodeSeconds != null
+        capturedEvent.stepNodeSecondsBreakdown != null
 
         and: "the metric is recorded with the same value as the event, read from the store exactly once"
         recordedStepNodeSeconds == capturedEvent.stepNodeSeconds
 
+        and: "the event's scalar total is the sum of its own breakdown"
+        capturedEvent.stepNodeSeconds == capturedEvent.stepNodeSecondsBreakdown.values().sum { it.seconds }
+
         and: "the store's read-and-remove semantics mean a second lookup for the same execution finds nothing left"
-        StepNodeSecondsStore.getInstance().takeFinishedTotal(e1.id) == null
+        StepNodeSecondsStore.getInstance().takeFinishedBreakdown(e1.id) == null
     }
 
     def "opt enforced allowed values from Remote Url with sending the username"() {
