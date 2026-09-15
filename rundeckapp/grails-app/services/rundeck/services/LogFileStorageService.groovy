@@ -284,11 +284,18 @@ class LogFileStorageService
     ])
 
 
+    /**
+     * Starts the log storage and retrieval consumers and the periodic incomplete-request scheduler
+     * when a LogFileStorage plugin is configured; otherwise logs a WARN and starts nothing.
+     */
     @Override
     void afterPropertiesSet() throws Exception {
         def pluginName = getConfiguredPluginName()
         if(!pluginName){
-            //System.err.println("LogFileStoragePlugin not configured, disabling...")
+            log.warn(
+                "LogFileStorage plugin is not configured (${FILE_STORAGE_PLUGIN.key}); " +
+                "log storage consumers are disabled until it is set."
+            )
             return
         }
 
