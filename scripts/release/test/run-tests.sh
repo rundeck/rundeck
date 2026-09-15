@@ -9,8 +9,9 @@
 # genuine cherry-pick conflict, and drives the real scripts against them - no
 # mocking of git itself, only of the GitHub API calls (`gh`).
 #
-# Requires bash 4+ (associative arrays) - on macOS, /bin/bash is 3.2; run with
-# an updated bash (e.g. Homebrew's), not the system default.
+# Requires bash 4.2+ (release-rc.sh uses `declare -g` for its associative array,
+# added in 4.2, not just bash 4.0/4.1's associative arrays) - on macOS, /bin/bash
+# is 3.2; run with an updated bash (e.g. Homebrew's), not the system default.
 #
 # Usage: scripts/release/test/run-tests.sh
 

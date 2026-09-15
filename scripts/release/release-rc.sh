@@ -155,8 +155,12 @@ function ensure_applied_label_exists {
     if [ "$DRY_RUN" = true ]; then
         echo "[DRY-RUN] gh label create $RC_BACKPORT_APPLIED_LABEL --force"
     else
+        # GitHub label descriptions are capped at 100 characters - this template
+        # must stay under that even with a longer-than-usual $VERSION, or
+        # `gh label create` fails and takes down every non-dry-run run with it
+        # (unguarded, under `set -e`).
         gh label create "$RC_BACKPORT_APPLIED_LABEL" \
-            --description "Applied (by release-rc.sh or manually) to the $VERSION RC lineage - unrelated to the generic 'backport-completed' label" \
+            --description "Applied to the $VERSION RC lineage by release-rc.sh (or manually) - not 'backport-completed'" \
             --color BFD4F2 --force >/dev/null
     fi
 }
