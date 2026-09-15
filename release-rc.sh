@@ -8,9 +8,15 @@
 # when the tag type is rc2+ (rc1/alpha#/GA/RBA stay on setversion.sh) - this script
 # still validates that itself rather than trusting the caller's routing.
 #
+# Invoked by a single Rundeck job, run by one operator at a time - not designed or
+# tested for concurrent/parallel invocation. The rescue-branch checks below guard
+# against unexpected state within a single run (e.g. the operator's own manual
+# activity), not against multiple simultaneous runs of this script.
+#
 # What it does:
 #   1. Resolves the previous RC tag (new rcN - 1) for the same version and checks it
-#      out detached - that commit is the base, not whatever is on the release branch now.
+#      out detached - that commit is the base (no release branch exists yet at rc2+;
+#      it's this git tag lineage plus cherry-picked backports, nothing else).
 #   2. Attempts to cherry-pick every merged PR labeled $RC_BACKPORT_LABEL, in merge
 #      order, regardless of whether it was merge-commit, squash, or rebase merged:
 #      merge-commit PRs replay mergeCommit's diff against its mainline parent;
@@ -464,14 +470,17 @@ else
             # A plain `git cherry-pick -x $PR_SHA` here would be a guess: the
             # commit is unavailable, so its parent count/merge strategy - which
             # decides whether `-m 1` (merge-commit) or a range (rebase-merge)
-            # is actually required - is unknown at this point. Tell the
-            # operator to just re-run the script after fetching instead, so
-            # the existing classification logic below picks the right form
-            # rather than a manual command that may be wrong for this PR.
+            # is actually required - is unknown at this point. Re-running the
+            # script isn't the fix either: this always creates $RESCUE_BRANCH,
+            # so the next run just enters resume mode, which only verifies
+            # PRs are present and never cherry-picks - this PR would report
+            # missing forever. No safe automatic answer here; same manual
+            # classification message as every other "can't tell what this PR
+            # needs" case below, reused rather than inventing a new one.
             mark_pr_conflict \
                 "PR #$PR_NUM references commit $PR_SHA, which isn't resolvable in this checkout (shallow clone? pruned?). Marking as CONFLICT." \
-                "commit not resolvable locally - fetch full history" \
-                "git fetch --unshallow (or otherwise deepen history), then re-run this same release-rc.sh command - which cherry-pick form (plain/-m 1/range) is correct isn't knowable until the commit and its parents are resolvable"
+                "commit not resolvable locally - resolve manually on $RESCUE_BRANCH" \
+                "Investigate manually - fetch full history if needed, determine the correct commit(s) for #$PR_NUM yourself, then on $RESCUE_BRANCH: git cherry-pick -x <correct-sha-or-range>"
             continue
         fi
 
@@ -495,10 +504,14 @@ else
             # same reasoning as the PR_SHA resolvability check above. Treated as
             # CONFLICT for just this PR rather than guessing a commit count.
             if ! PR_COMMIT_COUNT="$(gh api "repos/{owner}/{repo}/pulls/$PR_NUM" --jq '.commits' 2>&1)"; then
+                # Same manual-classification fallback as every other
+                # "can't safely tell what this PR needs" case - not a guessed
+                # tip-only command, which could silently drop commits if this
+                # turns out to be a rebase-merge once actually classified.
                 mark_pr_conflict \
                     "Could not fetch commit count for PR #$PR_NUM from GitHub (transient API failure?) - can't safely tell squash from rebase-merge. Marking as CONFLICT." \
-                    "commit-count lookup failed - retry" \
-                    "Retry once GitHub API access is working, or classify and cherry-pick #$PR_NUM manually: git cherry-pick -x $PR_SHA"
+                    "commit-count lookup failed - resolve manually on $RESCUE_BRANCH" \
+                    "Investigate manually - determine the correct commit(s) for #$PR_NUM yourself, then on $RESCUE_BRANCH: git cherry-pick -x <correct-sha-or-range>"
                 continue
             fi
             if [ "${PR_COMMIT_COUNT:-1}" -gt 1 ]; then
@@ -524,17 +537,19 @@ else
                 # truly no diff) is different from this and still falls through
                 # to the `-n` check below as before.
                 if ! FULL_PR_PATCH_ID="$(gh pr diff "$PR_NUM" | git patch-id --stable | awk '{print $1}')"; then
+                    # Same manual-classification fallback as above/below -
+                    # one reused message, not a per-failure-site guess.
                     mark_pr_conflict \
                         "Could not compute the full PR diff's patch-id for #$PR_NUM (gh pr diff failed?) - can't safely verify squash vs. rebase-merge. Marking as CONFLICT." \
-                        "patch-id computation failed - retry" \
-                        "Retry once GitHub API access is working, or classify and cherry-pick #$PR_NUM manually: git cherry-pick -x $PR_SHA"
+                        "patch-id computation failed - resolve manually on $RESCUE_BRANCH" \
+                        "Investigate manually - determine the correct commit(s) for #$PR_NUM yourself, then on $RESCUE_BRANCH: git cherry-pick -x <correct-sha-or-range>"
                     continue
                 fi
                 if ! TIP_PATCH_ID="$(git diff "$PR_SHA"^ "$PR_SHA" | git patch-id --stable | awk '{print $1}')"; then
                     mark_pr_conflict \
                         "Could not compute the tip commit's patch-id for #$PR_NUM. Marking as CONFLICT." \
-                        "patch-id computation failed - retry" \
-                        "Retry, or classify and cherry-pick #$PR_NUM manually: git cherry-pick -x $PR_SHA"
+                        "patch-id computation failed - resolve manually on $RESCUE_BRANCH" \
+                        "Investigate manually - determine the correct commit(s) for #$PR_NUM yourself, then on $RESCUE_BRANCH: git cherry-pick -x <correct-sha-or-range>"
                     continue
                 fi
                 if [ -z "$FULL_PR_PATCH_ID" ]; then
@@ -662,13 +677,16 @@ if [ "$CONFLICT_COUNT" -gt 0 ]; then
         # Deliberately not `-f`/`--force`: this path is only reached when no
         # rescue branch was found for $NEW_TAG at the start of this run (an
         # existing one routes to the resume flow above instead). If one exists
-        # here anyway - a race with a concurrent run, or created moments ago -
-        # force-creating/pushing over it could destroy in-progress manual
-        # resolution work. Fail loudly instead of silently clobbering it.
+        # here anyway - created during this run's own execution, e.g. by the
+        # operator's own separate manual activity - force-creating/pushing
+        # over it could destroy that work. Fail loudly instead of silently
+        # clobbering it.
         if ! command git branch "$RESCUE_BRANCH" "$FINAL_COMMIT"; then
             echo "Error: local branch '$RESCUE_BRANCH' already exists and doesn't match this run's candidate - not overwriting it."
-            echo "Investigate: it may hold in-progress manual resolution work from elsewhere. Resolve manually, then tag with:"
-            echo "  $RELEASE_TAG_SH $NEW_TAG <resolved-commit> [--push]"
+            echo "Investigate what's on it. If it's genuinely this tag's backport, just re-run this same release-rc.sh command -"
+            echo "it will pick the existing branch up through the normal resume flow (verified, then tagged) instead of"
+            echo "you needing a separate recovery path - do not tag it directly via $RELEASE_TAG_SH, which has no"
+            echo "knowledge of the labeled-PR completeness check this script exists to enforce."
             exit 11
         fi
         echo "Every PR marked 'applied' above is saved to local branch '$RESCUE_BRANCH' ($FINAL_COMMIT) - none of that work is lost."

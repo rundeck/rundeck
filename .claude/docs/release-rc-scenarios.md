@@ -2,6 +2,8 @@
 
 Reference for `setversion.sh`, `release-rc.sh`, `release-tag.sh`, and `release-version.sh`, and for the "Release Core/Pro (Tag-based, Auto-Backport)" Rundeck jobs that wrap them. Covers every scenario the tooling is designed to handle, what happens, and why.
 
+Invoked by a single Rundeck job, run by one operator at a time - not designed for concurrent/parallel invocation. Checks like the rescue-branch ancestry/divergence verification below guard against unexpected state *within* a single run (e.g. the operator's own manual activity), not against multiple simultaneous runs.
+
 ## Routing: which script runs
 
 | `releaseType` | Script | Commit input |
@@ -50,7 +52,7 @@ release-rc.sh 6.2.0 rc3 --push
 - Every *other* labeled PR still gets attempted - one conflict doesn't hide the status of the rest.
 - Everything that **did** apply cleanly is saved to a local `rescue/v6.2.0-rc3` branch (pushed too, with `--push`) - none of that work is lost.
 - **Nothing is labeled yet**, even for the PRs that successfully cherry-picked in this run. Labeling happens only after the tag actually exists - labeling early and then aborting without tagging would mean a later, fresh run sees the label, skips that PR, and produces an RC silently missing it while still reporting success.
-- The script refuses to tag (exit 7) and prints, **for each CONFLICT PR specifically**, the exact `git cherry-pick` command to resolve it by hand (a plain SHA for most PRs, or a `<range-base>..<tip>` range for a multi-commit rebase-merge - see Scenario 5, using the wrong form silently drops commits).
+- The script refuses to tag (exit 7) and prints a resolve command **for each CONFLICT PR**. When the PR was actually classified (an ordinary cherry-pick conflict, or a confirmed rebase-merge range), that's an exact `git cherry-pick` command (a plain SHA, or a `<range-base>..<tip>` range for a multi-commit rebase-merge - see Scenario 5, using the wrong form silently drops commits). When the script itself couldn't classify the PR (commit not resolvable, or a GitHub API/patch-id lookup failed) it doesn't guess - it says to investigate and cherry-pick manually on the rescue branch instead, since a guessed command could be the wrong form.
 - A PR whose commit isn't even resolvable in this checkout (shallow/partial clone, pruned object) is marked CONFLICT immediately, without ever attempting a cherry-pick - and a real conflict's cleanup (`git cherry-pick --abort`) itself failing (rare, but possible if the pick failed before starting a resumable sequencer state at all) is caught too. Neither can crash the whole run and lose the report/rescue branch for every PR that already succeeded.
 
 ## Scenario 4: Finishing a conflict - the rescue branch resume
@@ -78,7 +80,14 @@ This keeps the whole flow - and its Slack/audit trail - inside the Rundeck job, 
 
 ## Cleanup after a failed tag push
 
-If `git push` for the new tag itself fails (network blip, permissions, etc.) after the tag was already created locally, the local-only tag is deleted immediately rather than left behind - otherwise a retry would fail at tag creation ("already exists") before ever reaching the push again. This applies to both `release-rc.sh` and `setversion.sh` (they share the same `create_and_push_tag` in `release-tag.sh`).
+If `git push` for the new tag itself reports failure (network blip, permissions, etc.) after the tag was already created locally, `create_and_push_tag` doesn't just delete the local tag outright - a dropped connection can report failure client-side even though the server already applied the push. It checks `origin` directly first:
+
+- Origin already has this exact tag -> treated as success (the push actually landed); the local tag is kept.
+- Origin has a *different* tag by this name -> refuses and leaves the local tag for manual investigation, rather than guessing which is right.
+- Origin genuinely has no such tag -> confirmed real failure; the local-only tag is deleted so a retry doesn't fail at tag creation ("already exists") before ever reaching the push again.
+- Origin itself can't be reached to check -> leaves the local tag in place rather than deleting it without knowing the real remote state.
+
+This applies to both `release-rc.sh` and `setversion.sh` (they share the same `create_and_push_tag` in `release-tag.sh`).
 
 ## Dry-run is a real rehearsal, not just a preview
 
