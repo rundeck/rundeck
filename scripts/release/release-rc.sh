@@ -649,9 +649,17 @@ function label_applied_prs {
 }
 
 # cleanup_rescue_branch - deletes $RESCUE_BRANCH (best-effort, local and, with
-# --push, on origin) now that $NEW_TAG is the durable record. Runs whether this
-# invocation resumed from the branch or created it fresh moments earlier.
+# --push, on origin) now that $NEW_TAG is the durable record - but only when
+# this run actually resumed from it ($RESUME_COMMIT set). A fresh, conflict-free
+# run never touches $RESCUE_BRANCH itself (a conflict would have exited earlier,
+# before reaching here), so a same-named branch found at this point was never
+# inspected or used by this run - most likely something else's, created during
+# this run's own execution window. Deleting it would be pure guesswork about
+# whether that's safe; leave it alone instead.
 function cleanup_rescue_branch {
+    if [ -z "$RESUME_COMMIT" ]; then
+        return
+    fi
     if git rev-parse --verify "refs/heads/$RESCUE_BRANCH" >/dev/null 2>&1; then
         # HEAD can still be on $RESCUE_BRANCH (the documented manual-resolve flow
         # checks it out) - `branch -D` refuses to delete the current branch, so
