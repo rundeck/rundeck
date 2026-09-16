@@ -124,8 +124,4 @@ export default defineComponent({
 .useredit {
   margin-left: var(--sizes-4);
 }
-
-.alternateRow {
-  background-color: var(--colors-gray-100);
-}
 </style>
