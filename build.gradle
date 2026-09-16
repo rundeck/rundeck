@@ -344,6 +344,9 @@ allprojects {
             // CVE-2026-47857, CVE-2026-47863 - reactor-core windowTimeout/bufferTimeout
             // fairBackpressure DoS hangs; pulled via Micronaut HTTP in rundeckapp
             force "io.projectreactor:reactor-core:${reactorCoreVersion}"
+            // CVE-2026-26032 - Apache Ivy PackagerResolver path traversal; pulled via
+            // grails-console -> groovy-console (interactive shell's Grape support)
+            force "org.apache.ivy:ivy:${ivyVersion}"
 
             // Force centralized versions to prevent duplicates in WAR
             force "org.apache.ant:ant:${antVersion}"

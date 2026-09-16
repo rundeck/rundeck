@@ -71,6 +71,9 @@
         <span v-if="validation && !validation.valid" class="text-warning">
           <i class="fas fa-exclamation-circle"></i> {{ validationWarningText }}
         </span>
+        <div class="col-sm-12">
+          <slot name="extraProperties"></slot>
+        </div>
         <template v-for="prop in props" :key="prop.name">
           <span
             v-if="
@@ -79,6 +82,7 @@
               !isPropHidden(prop)
             "
             class="configprop"
+            :data-testid="`configprop-${prop.name}`"
           >
             <plugin-prop-view
               :prop="prop"
@@ -87,9 +91,6 @@
             />
           </span>
         </template>
-        <div class="col-sm-12">
-          <slot name="extraProperties"></slot>
-        </div>
       </div>
       <div
         v-else-if="isShowConfigForm && inputLoaded"
@@ -228,9 +229,7 @@ import { cleanConfigInput, convertArrayInput } from "../../modules/InputUtils";
 
 import { diff } from "deep-object-diff";
 
-import {
-  getPluginProvidersForService,
-} from "../../modules/pluginService";
+import { getPluginProvidersForService } from "../../modules/pluginService";
 
 interface PropGroup {
   name?: string;
@@ -295,8 +294,9 @@ export default defineComponent({
         this.showDescription !== null ? this.showDescription : true,
       inputValues: {} as any,
       inputSaved: {} as any,
-      inputSavedProps:
-        (typeof this.savedProps !== "undefined" ? this.savedProps : ["type"]) as string[] | null,
+      inputSavedProps: (typeof this.savedProps !== "undefined"
+        ? this.savedProps
+        : ["type"]) as string[] | null,
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },

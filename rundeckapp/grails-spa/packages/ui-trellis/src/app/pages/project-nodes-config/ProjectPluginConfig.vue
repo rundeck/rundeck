@@ -38,6 +38,8 @@
             v-for="(plugin, index) in pluginConfigs"
             :key="'pluginStorageAccessplugin_' + index"
             class="list-group-item"
+            :class="{ disabled: isPluginDisabled(plugin) }"
+            :data-testid="'node-source-item-' + index"
           >
             <plugin-config
               :key="plugin.entry.type + 'title/' + index"
@@ -433,6 +435,10 @@ export default defineComponent({
         entry: { type: entry.type, config: Object.assign({}, entry.config) },
         origIndex: origIndex,
       } as ProjectPluginConfigEntry;
+    },
+    isPluginDisabled(plugin: ProjectPluginConfigEntry): boolean {
+      const disabled = plugin?.entry?.config?.disabled;
+      return disabled === true || disabled === "true";
     },
 
     serializeConfigEntry(entry: ProjectPluginConfigEntry): any {

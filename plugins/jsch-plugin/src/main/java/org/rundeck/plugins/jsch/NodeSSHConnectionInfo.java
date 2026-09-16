@@ -218,6 +218,12 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         }
     }
 
+    /**
+     * @return the legacy combined timeout, retained as a fallback for the connection timeout when no
+     *     positive, specific connection timeout is configured.
+     */
+    @SuppressWarnings("deprecation") // SSH_TIMEOUT_PROP is deprecated but intentionally still
+    // read here for backward compatibility with configs that only set the combined property.
     public long getTimeout() {
         int timeout = 0;
         if (framework.getPropertyLookup().hasProperty(JschNodeExecutor.SSH_TIMEOUT_PROP)) {
