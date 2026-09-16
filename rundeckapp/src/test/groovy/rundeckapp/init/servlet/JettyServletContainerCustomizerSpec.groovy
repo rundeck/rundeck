@@ -73,7 +73,7 @@ class JettyServletContainerCustomizerSpec extends Specification {
         customizer.applySecureSessionCookieDefault(factory)
 
         then:
-        factory.session.cookie.secure == null
+        factory.settings.session.cookie.secure == null
     }
 
     @Unroll
