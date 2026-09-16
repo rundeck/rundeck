@@ -44,7 +44,7 @@ import org.rundeck.app.data.providers.logstorage.GormLogFileStorageRequestProvid
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.springframework.context.ApplicationContext
-import org.springframework.core.task.AsyncListenableTaskExecutor
+import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
@@ -1110,7 +1110,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
                         PropertyScope.Instance
                 ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
             }
-            service.logFileTaskExecutor = Mock(AsyncListenableTaskExecutor)
+            service.logFileTaskExecutor = Mock(AsyncTaskExecutor)
 
 
         when:
@@ -1178,7 +1178,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
                     PropertyScope.Instance
             ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
         }
-        service.logFileTaskExecutor = Mock(AsyncListenableTaskExecutor)
+        service.logFileTaskExecutor = Mock(AsyncTaskExecutor)
 
 
         when:

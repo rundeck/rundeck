@@ -81,7 +81,7 @@ class JobCreatePage extends BasePage {
         static By optionUndoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(1)")
         static By optionRedoBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(2)")
         static By optionRevertAllBy = By.cssSelector("[data-test=options_undo_redo] > button:nth-child(3)")
-        static By defaultValueInput=By.cssSelector("[data-test='option.value'] input[name=defaultValue]")
+        static By defaultValueInput=By.cssSelector("[data-test='option-value'] input[name=defaultValue]")
         static By optionItemBy(int index) {
             By.cssSelector("#optitem_$index")
         }
@@ -93,9 +93,9 @@ class JobCreatePage extends BasePage {
         static By deleteStepBy = By.cssSelector('button[data-test="remove-step"]')
         static By stepEditModalCancelBy = By.cssSelector('.modal.in [data-testid="cancel-button"]')
         static By stepEditModalSaveBy = By.cssSelector('.modal.in [data-testid="save-button"]')
-        static By jobOptionMultivaluedBy = By.cssSelector("[data-test='option.delimiter'] input[name='multivalued'][value='true']")
-        static By jobOptionMultivaluedDelimiterBy = By.cssSelector("[data-test='option.delimiter'] input[name='delimiter']")
-        static By jobOptionMultiValuedAllSelectedBy = By.cssSelector("[data-test='option.delimiter'] input[name='multivalueAllSelected']")
+        static By jobOptionMultivaluedBy = By.cssSelector("[data-test='option-delimiter'] input[name='multivalued'][value='true']")
+        static By jobOptionMultivaluedDelimiterBy = By.cssSelector("[data-test='option-delimiter'] input[name='delimiter']")
+        static By jobOptionMultiValuedAllSelectedBy = By.cssSelector("[data-test='option-delimiter'] input[name='multivalueAllSelected']")
     }
 
     By usageSectionBy = By.xpath("//*[@id[contains(.,'preview_')]]//span[contains(.,'The option values will be available to scripts in these forms')]")
@@ -159,7 +159,7 @@ class JobCreatePage extends BasePage {
     By jobOptionListDelimiterBy = By.name("valuesListDelimiter")
     By jobOptionEnforcedBy = By.id("enforcedType_enforced")
     By jobOptionAllowedValuesRemoteUrlBy = By.cssSelector("input[name='valuesType'][value='url']")
-    By jobOptionAllowedValuesRemoteUrlByNextUi = By.cssSelector("[data-test='option.valuesType'] input[value='url']")
+    By jobOptionAllowedValuesRemoteUrlByNextUi = By.cssSelector("[data-test='option-valuesType'] input[value='url']")
     By jobOptionAllowedValuesRemoteUrlValueBy = By.name("valuesUrl")
     By jobOptionRequiredBy = By.id("option-required-yes")
     By jobOptionMultivaluedBy = By.xpath("//div[15]/div/div/div[2]/input")
@@ -910,7 +910,7 @@ class JobCreatePage extends BasePage {
         executeScript("arguments[0].scrollIntoView({block: 'center'});", el(optionsSectionBy))
         if (!legacyUi) {
             By preferred = By.cssSelector("#optionsContent #optitem_new input[name='valuesType'][value='url']")
-            By fallback = By.cssSelector("#optionsContent [data-test='option.valuesType'] input[name='valuesType'][value='url']")
+            By fallback = By.cssSelector("#optionsContent [data-test='option-valuesType'] input[name='valuesType'][value='url']")
             // ExpectedConditions.or returns Boolean, not WebElement — wait for presence then find the element
             new WebDriverWait(driver, Duration.ofSeconds(60))
                     .ignoring(StaleElementReferenceException.class)
