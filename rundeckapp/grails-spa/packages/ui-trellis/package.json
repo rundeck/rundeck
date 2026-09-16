@@ -80,7 +80,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
-    "@happy-dom/jest-environment": "20.13.2",
+    "@happy-dom/jest-environment": "20.14.5",
     "@pinia/testing": "0.1.7",
     "@storybook/addon-a11y": "8.4.5",
     "@storybook/addon-essentials": "8.4.5",
@@ -178,7 +178,7 @@
     "@azure/ms-rest-js": "2.7.0",
     "uuid": "$uuid",
     "nanoid": "3.3.18",
-    "happy-dom": "20.13.2"
+    "happy-dom": "20.14.5"
   },
   "jest-junit": {
     "outputDirectory": "./build/test-results",
