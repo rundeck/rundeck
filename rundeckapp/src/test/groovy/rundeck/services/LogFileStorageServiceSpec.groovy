@@ -57,6 +57,7 @@ import spock.lang.Unroll
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE
@@ -1893,5 +1894,209 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         pluginName | expectedWarns
         null       | 1
         'test1'    | 0
+    }
+
+    private static final String FILE_STORAGE_PLUGIN_KEY = 'rundeck.execution.logs.fileStoragePlugin'
+
+    def "onAppConfigChanged starts consumers once when the plugin becomes configured after initialization"() {
+        given: "no plugin at initialization, then a plugin configured by a later change"
+        def plugin = null
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> { plugin }
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> strategy
+            _ * getInteger(_, _) >> 5
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+        service.afterPropertiesSet()
+
+        when:
+        plugin = 'test1'
+        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+
+        then: "exactly one consumer per queue is started by the change"
+        1 * service.logFileStorageTaskExecutor.execute(_ as TaskRunner)
+        1 * service.logFileTaskExecutor.execute(_ as TaskRunner)
+        schedCount * service.logFileStorageTaskScheduler.scheduleAtFixedRate(*_)
+        0 * service.logFileStorageTaskScheduler._
+
+        where:
+        strategy   | schedCount
+        'periodic' | 1
+        'delayed'  | 0
+    }
+
+    def "onAppConfigChanged does nothing while the plugin is still unresolved"() {
+        given:
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> null
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'periodic'
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+        service.afterPropertiesSet()
+
+        when:
+        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+
+        then:
+        0 * service.logFileStorageTaskExecutor._
+        0 * service.logFileTaskExecutor._
+        0 * service.logFileStorageTaskScheduler._
+        noExceptionThrown()
+    }
+
+    def "consumers start at most once across initialization and configuration changes"() {
+        given: "a plugin configured at initialization"
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> 'test1'
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'periodic'
+            _ * getInteger(_, _) >> 5
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+
+        when:
+        service.afterPropertiesSet()
+        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+        service.onAppConfigChanged(['rundeck.gui.instanceName'] as Set)
+
+        then: "the change handler does not start anything again"
+        1 * service.logFileStorageTaskExecutor.execute(_ as TaskRunner)
+        1 * service.logFileTaskExecutor.execute(_ as TaskRunner)
+        1 * service.logFileStorageTaskScheduler.scheduleAtFixedRate(*_)
+        0 * service.logFileStorageTaskScheduler._
+    }
+
+    def "concurrent configuration changes start consumers exactly once"() {
+        given: "a plugin that resolves only after initialization"
+        def plugin = null
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> { plugin }
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'delayed'
+            _ * getInteger(_, _) >> 5
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+        service.afterPropertiesSet()
+        plugin = 'test1'
+        def start = new CountDownLatch(1)
+        def done = new CountDownLatch(2)
+        def keys = [FILE_STORAGE_PLUGIN_KEY] as Set
+        def worker = { ->
+            start.await(5, TimeUnit.SECONDS)
+            try {
+                service.onAppConfigChanged(keys)
+            } finally {
+                done.countDown()
+            }
+        }
+
+        when:
+        2.times { Thread.start(worker) }
+        start.countDown()
+        def finished = done.await(10, TimeUnit.SECONDS)
+
+        then:
+        finished
+        1 * service.logFileStorageTaskExecutor.execute(_ as TaskRunner)
+        1 * service.logFileTaskExecutor.execute(_ as TaskRunner)
+    }
+
+    def "late consumer start logs one INFO naming the property and the plugin"() {
+        given: "a log4j2 appender capturing INFO output (root raised to INFO for this feature)"
+        def logOutput = new StringWriter()
+        def ctx = (LoggerContext) LogManager.getContext(false)
+        def config = ctx.getConfiguration()
+        def rootLevel = config.getRootLogger().getLevel()
+        def appender = WriterAppender.newBuilder()
+            .setConfiguration(config)
+            .setName("LogFileStorageServiceSpecInfoCapture")
+            .setTarget(logOutput)
+            .setLayout(PatternLayout.newBuilder().withPattern("[%level] %msg%n").withConfiguration(config).build())
+            .build()
+        appender.start()
+        config.getRootLogger().setLevel(Level.INFO)
+        config.getRootLogger().addAppender(appender, Level.INFO, null)
+        ctx.updateLoggers()
+
+        and: "the plugin resolves at initialization or only afterwards"
+        def plugin = pluginAtInit
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> { plugin }
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'delayed'
+            _ * getInteger(_, _) >> 5
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+        service.afterPropertiesSet()
+
+        when:
+        plugin = 'test1'
+        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+        def infoLines = logOutput.toString().readLines().findAll {
+            it.contains('Log storage consumers started')
+        }
+
+        then:
+        infoLines.size() == expectedInfo
+        infoLines.every { it.startsWith('[INFO]') }
+        infoLines.every { it.contains(LogFileStorageService.FILE_STORAGE_PLUGIN.key) && it.contains('test1') }
+
+        cleanup:
+        config.getRootLogger().removeAppender("LogFileStorageServiceSpecInfoCapture")
+        config.getRootLogger().setLevel(rootLevel)
+        appender.stop()
+        ctx.updateLoggers()
+
+        where:
+        pluginAtInit | expectedInfo
+        null         | 1
+        'test1'      | 0
+    }
+
+    def "a failure while starting consumers on a configuration change is logged and contained"() {
+        given: "a log4j2 appender capturing ERROR output"
+        def logOutput = new StringWriter()
+        def ctx = (LoggerContext) LogManager.getContext(false)
+        def config = ctx.getConfiguration()
+        def appender = WriterAppender.newBuilder()
+            .setConfiguration(config)
+            .setName("LogFileStorageServiceSpecErrorCapture")
+            .setTarget(logOutput)
+            .setLayout(PatternLayout.newBuilder().withPattern("[%level] %msg%n").withConfiguration(config).build())
+            .build()
+        appender.start()
+        config.getRootLogger().addAppender(appender, Level.ERROR, null)
+        ctx.updateLoggers()
+
+        and: "an executor that fails when the consumer is submitted"
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> 'test1'
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'delayed'
+            _ * getInteger(_, _) >> 5
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor) {
+            execute(_) >> { throw new IllegalStateException('boom') }
+        }
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+
+        when:
+        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+
+        then:
+        noExceptionThrown()
+        logOutput.toString().contains('[ERROR] Failed to start log storage consumers after a configuration change')
+
+        cleanup:
+        config.getRootLogger().removeAppender("LogFileStorageServiceSpecErrorCapture")
+        appender.stop()
+        ctx.updateLoggers()
     }
 }
