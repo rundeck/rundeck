@@ -335,7 +335,7 @@ class BaseAuthContextEvaluatorSpec extends Specification {
     }
 
     @Unroll
-    def "filterAuthorizedProjectExecutionsAny allows read or view_history"() {
+    def "filterAuthorizedProjectExecutionsAny allows read, view, or view_history"() {
         given:
             def test = new BaseAuthContextEvaluator()
             def auth = Mock(AuthContext)
@@ -349,6 +349,12 @@ class BaseAuthContextEvaluatorSpec extends Specification {
                     [AuthConstants.ACTION_READ].toSet(),
                     'testProject'
                 ) >> makeDecisions([readAuthorized])
+                _ * evaluate(
+                    auth,
+                    resources,
+                    [AuthConstants.ACTION_VIEW].toSet(),
+                    'testProject'
+                ) >> makeDecisions([viewAuthorized])
                 _ * evaluate(
                     auth,
                     resources,
@@ -368,17 +374,18 @@ class BaseAuthContextEvaluatorSpec extends Specification {
             def result = test.filterAuthorizedProjectExecutionsAny(
                 auth,
                 [exec],
-                [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY]
             )
         then:
             (result.size() == 1) == expectIncluded
 
         where:
-            readAuthorized | viewHistoryAuthorized | expectIncluded
-            true           | false                 | true
-            false          | true                  | true
-            true           | true                  | true
-            false          | false                 | false
+            readAuthorized | viewAuthorized | viewHistoryAuthorized | expectIncluded
+            true           | false          | false                 | true
+            false          | true           | false                 | true
+            false          | false          | true                  | true
+            true           | true           | true                  | true
+            false          | false          | false                 | false
     }
 
     public HashSet<Decision> makeDecisions(List<Boolean> decisions) {

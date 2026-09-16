@@ -4,6 +4,14 @@ buildscript {
         mavenCentral()
         maven { url "https://repo.grails.org/grails/core" }
     }
+    configurations.all {
+        resolutionStrategy {
+            // CVE-2026-64607: httpclient5 connection-pool exhaustion DoS, fixed in 5.6.3. Pulled onto
+            // this buildscript classpath via grails-gradle-plugins -> grails-shell-cli -> spring-boot-cli.
+            // Build-tooling only (never shipped), forced to stop the Snyk finding.
+            force "org.apache.httpcomponents.client5:httpclient5:${httpClient5Version}"
+        }
+    }
     dependencies {
         classpath platform("org.apache.grails:grails-bom:$grailsVersion")
         classpath "org.apache.grails:grails-gradle-plugins:$grailsVersion"
@@ -18,6 +26,12 @@ group "repository"
 
 apply plugin:"eclipse"
 apply plugin:"idea"
+// Pre-register sourcesJar before the grails-plugin applies: it synchronously checks for this
+// task inside its own apply() and logs "A sourcesJar task was not found, creating one." if missing.
+tasks.register('sourcesJar', Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
 apply plugin:"org.apache.grails.gradle.grails-plugin"
 apply plugin:"org.apache.grails.gradle.grails-gsp"
 apply plugin: "java-library"
@@ -81,7 +95,9 @@ dependencies {
         exclude(group:"org.rundeck", module:"rundeck-storage-filesys")
         exclude(group:"com.squareup.okhttp3", module:"okhttp")
         exclude(group:"javax.mail", module:"mailapi")
-        exclude(group:"org.codehaus.groovy", module:"groovy-all")
+        // Groovy 4 renamed the group, so this exclusion stopped matching and the whole
+        // groovy-all aggregate started leaking in again.
+        exclude(group:"org.apache.groovy", module:"groovy-all")
         exclude(group: 'ch.qos.logback', module: 'logback-classic')
     }
 

@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.data.UnexpandableBehavior;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
@@ -148,22 +149,19 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
                                   StepExecutionItem item){
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         Description description = getDescription();
-        Map<String,Boolean> blankIfUnexMap = new HashMap<>();
         CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(description);
-        if(description != null) {
-            description.getProperties().forEach(p -> {
-                blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
-            });
-        }
+        Map<String, UnexpandableBehavior> behaviorMap =
+                UnexpandableBehaviorSupport.buildBehaviorMap(
+                        description, true, instanceConfiguration);
         if (null != instanceConfiguration) {
-            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferencesWithBehavior(
                     instanceConfiguration,
                     ContextView.global(),
                     ContextView::nodeStep,
                     null,
                     executionContext.getSharedDataContext(),
                     false,
-                    blankIfUnexMap,
+                    behaviorMap,
                     customFieldsAdapter::convertInput,
                     customFieldsAdapter::convertOutput
             );

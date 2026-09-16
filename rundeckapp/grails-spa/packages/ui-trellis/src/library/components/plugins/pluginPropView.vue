@@ -212,6 +212,13 @@ export default defineComponent({
       innerValue: this.value as string,
     };
   },
+  watch: {
+    value(newValue: boolean | string) {
+      // Mirrors the cast in data(): the prop accepts a boolean, but every
+      // consumer of innerValue treats it as a string.
+      this.innerValue = newValue as string;
+    },
+  },
   methods: {
     getCustomValues(): any[] {
       if (this.innerValue !== "") {

@@ -19,4 +19,53 @@ package org.rundeck.app
 class AppConstants {
     static final String FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED = "framework.output.allowUnsanitized"
     static final String PROJECT_OUTPUT_ALLOW_UNSANITIZED = "project.output.allowUnsanitized"
+
+    /**
+     * System-wide default allowlist regex applied to job option values that have no per-option
+     * regex of their own. When set (non-empty) an option value must fully match the pattern or the
+     * execution is rejected during validation. When absent or empty, no default validation applies.
+     * Overridden per-project by {@link #PROJECT_OPTION_INPUT_DEFAULT_PATTERN}.
+     *
+     * Resolved through ConfigurationService (the {@code rundeck.*} namespace), so it is editable at
+     * runtime via the System Configuration UI as well as {@code rundeck-config}. This constant holds
+     * the sub-key (without the {@code rundeck.} prefix) used with {@code ConfigurationService.getString}.
+     */
+    static final String SYSTEM_OPTION_INPUT_DEFAULT_PATTERN = "option.input.validation.default.pattern"
+    /**
+     * Full config key (with {@code rundeck.} prefix) of {@link #SYSTEM_OPTION_INPUT_DEFAULT_PATTERN},
+     * as exposed in the System Configuration UI via SysConfigProp.
+     */
+    static final String SYSTEM_OPTION_INPUT_DEFAULT_PATTERN_KEY = "rundeck." + SYSTEM_OPTION_INPUT_DEFAULT_PATTERN
+    /**
+     * Per-project default allowlist regex applied to job option values that have no per-option
+     * regex of their own. Takes precedence over {@link #SYSTEM_OPTION_INPUT_DEFAULT_PATTERN}.
+     */
+    static final String PROJECT_OPTION_INPUT_DEFAULT_PATTERN = "project.option.input.validation.default.pattern"
+
+    /**
+     * Opt-in (default false). When true, an execution that provides options not declared on the job is
+     * created and then failed at start. Left false by default so undeclared options pass through.
+     * Resolved through ConfigurationService; this constant holds the sub-key (without the
+     * {@code rundeck.} prefix) used with {@code ConfigurationService.getBoolean}.
+     */
+    static final String SYSTEM_REJECT_UNDECLARED_OPTIONS = "execution.rejectUndeclaredOptions"
+    /**
+     * Full config key (with {@code rundeck.} prefix) of {@link #SYSTEM_REJECT_UNDECLARED_OPTIONS},
+     * as exposed in the System Configuration UI via SysConfigProp.
+     */
+    static final String SYSTEM_REJECT_UNDECLARED_OPTIONS_KEY = "rundeck." + SYSTEM_REJECT_UNDECLARED_OPTIONS
+
+    /**
+     * Opt-in (default false). When true, values exported to remote nodes via the node's
+     * {@code ssh-variable-export-pattern} are POSIX shell-quoted, preventing command injection through
+     * option values (RUN-4579). Left false by default to preserve the current behavior. Resolved
+     * through ConfigurationService; this constant holds the sub-key (without the {@code rundeck.}
+     * prefix) used with {@code ConfigurationService.getBoolean}.
+     */
+    static final String SYSTEM_SSH_EXPORT_QUOTING = "execution.sshExportQuoting"
+    /**
+     * Full config key (with {@code rundeck.} prefix) of {@link #SYSTEM_SSH_EXPORT_QUOTING}, as exposed
+     * in the System Configuration UI via SysConfigProp.
+     */
+    static final String SYSTEM_SSH_EXPORT_QUOTING_KEY = "rundeck." + SYSTEM_SSH_EXPORT_QUOTING
 }

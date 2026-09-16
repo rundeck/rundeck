@@ -31,6 +31,7 @@ public class RundeckConfigBase {
     Map<String,Object> storage;  //config for the storage tree
     Map<String,Object> clusterMode;  //config for clustering
     Map<String,Object> pagination; //subproperty contains 'default' which would be an invalid java property name;
+    Map<String,Object> option; //option input validation config; subproperty contains 'default' which would be an invalid java property name;
 
     Config config;
 
@@ -158,6 +159,23 @@ public class RundeckConfigBase {
         RetryConfig finalize;
         RetryConfig status;
         ExecutionLogs logs;
+        /**
+         * RUN-4693: opt-in (default false). When true, an execution that provides options not declared
+         * on the job is created and then failed at start. Left false by default so undeclared options
+         * pass through, preserving the current behavior. Bound from
+         * {@code rundeck.execution.rejectUndeclaredOptions} so it is resolvable via ConfigurationService
+         * and editable in the System Configuration UI.
+         */
+        Boolean rejectUndeclaredOptions;
+
+        /**
+         * RUN-4579: opt-in (default false). When true, values exported to remote nodes via the node's
+         * {@code ssh-variable-export-pattern} are POSIX shell-quoted, preventing command injection
+         * through option values. Left false by default to preserve the current behavior. Bound from
+         * {@code rundeck.execution.sshExportQuoting} so it is resolvable via ConfigurationService and
+         * editable in the System Configuration UI.
+         */
+        Boolean sshExportQuoting;
 
         @Data
         public static class RetryConfig {
@@ -245,6 +263,30 @@ public class RundeckConfigBase {
         String servletUrlPattern;
         Datasource datasource;
         Api api;
+        Execution execution;
+
+        // Backs rundeck.metrics.execution.job.dimension.enabled (MicrometerExecutionMetricsService).
+        // Without a declared field here, the Spring Binder that populates
+        // ConfigurationService.appCfg (see rundeckpro-config's ConfigServiceRefresher.resetAppCfg)
+        // has nothing to bind this property into, so it never appears in appCfg regardless of what's
+        // set in rundeck-config.properties. There is deliberately no sibling "dimensional.enabled"
+        // field: that flag was removed from MicrometerExecutionMetricsService entirely (dimensional
+        // counter/timer/running-gauge recording is unconditional), so no config field should exist
+        // to bind it either -- a field with no corresponding check would silently do nothing.
+        @Data
+        public static class Execution {
+            Job job;
+
+            @Data
+            public static class Job {
+                Dimension dimension;
+
+                @Data
+                public static class Dimension {
+                    Boolean enabled;
+                }
+            }
+        }
 
         @Data
         public static class Api {
@@ -476,9 +518,13 @@ public class RundeckConfigBase {
         Enabled defaultExecutionCleanup = new Enabled();
         Enabled earlyAccessJobConditional = new Enabled();
         Enabled activityDefaultTimeFilter = new Enabled();
+        Enabled nextUiMode = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
-        int guiAceEditorMinLines = 12;
+        // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0
+        // (the default) makes the editor manually resizable via drag handle instead of
+        // auto-sizing to a fixed number of lines.
+        int guiAceEditorMinLines = 0;
         int guiAceEditorMaxLines = 0;
 
         @Data

@@ -7,6 +7,7 @@
   "commitMessagePrefix": "[RUN-0000]",
   "dependencyDashboard": true,
   "fetchChangeLogs": "off",
+  "rebaseWhen": "conflicted",
   "hostRules": [
     {
       "description": "Concentrating almost all Gradle lookups onto Maven Central (see registryUrls scoping below) increased request density enough to trip its rate limiter (429s). Throttle our own concurrency here instead of bursting and eating retry/backoff costs.",
@@ -30,14 +31,19 @@
       "groupName": "google cloud clients"
     },
     {
+      "description": "google-cloud-container versions above 2.82.0 require protobuf-java 4.x, but protobufVersion is globally forced to 3.25.9 in build.gradle for CVE-2024-7254. Bumping past 2.82.0 causes NoClassDefFoundError (missing RuntimeVersion$RuntimeDomain) in GcpGkeResourceModelSpec - already reverted once in 2c6b381cbf and re-broke this branch when Renovate re-proposed it. Block until protobufVersion itself is bumped as its own validated change.",
+      "matchPackageNames": ["com.google.cloud:google-cloud-container"],
+      "enabled": false
+    },
+    {
       "description": "Group routine Gradle minor/patch dependency bumps",
       "matchManagers": ["gradle"],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "gradle minor/patch dependencies"
     },
     {
-      "description": "Grails minors have a history of real behavioral changes despite semver, and grails-plugin-spring-security-core must move in lockstep with it — pull both out of the auto-grouped minor/patch bucket for manual review",
-      "matchPackageNames": ["/^org\\.apache\\.grails:/"],
+      "description": "Grails minors have a history of real behavioral changes despite semver, and grails-plugin-spring-security-core must move in lockstep with it — pull both out of the auto-grouped minor/patch bucket for manual review. Groovy is included here too: Grails dictates which Groovy line it's built against, and bumping groovyVersion independently caused classpath skew that broke the forked :rundeckapp:assetCompile JVM (rundeck#10448, ExceptionInInitializerError in GroovySystem.<clinit>). log4j2, asm, kotlin-stdlib, and ant joined the group in RUN-4809: Grails' base BOM manages all four as *strict* dependency-management constraints that plain resolutionStrategy.force can't override, so build.gradle force-overrides them via explicit dependencyManagement entries instead (documented inline there). Guava is BOM-managed the same way but has no dependencyManagement override, so it can't move independently at all: :enterprise exportedLibs follows guavaVersion while :rundeckapp's bootWar stays on the grails-base-bom version, and the WAR ends up with two guava (and two transitive jspecify) jars, failing verifyBuild's stem-uniqueness check. Whoever reviews a Grails bump here should also confirm those overrides still clear whatever floor the new grails-base-bom asserts, and that guavaVersion still matches it.",
+      "matchPackageNames": ["/^org\\.apache\\.grails:/", "/^org\\.apache\\.groovy:/", "/^org\\.apache\\.logging\\.log4j:/", "/^org\\.ow2\\.asm:/", "org.jetbrains.kotlin:kotlin-stdlib", "/^org\\.apache\\.ant:/", "com.google.guava:guava"],
       "groupName": "grails framework (manual review required)",
       "dependencyDashboardApproval": true
     },
@@ -51,6 +57,12 @@
       "description": "jetty.version only forces jetty-util in core/build.gradle; every other Jetty artifact stays pinned wherever Spring Boot's BOM manages it. A 'minor' bump here (e.g. 12.0.x -> 12.1.x) can cross Jetty's own release-line boundary and produce a mixed-version classpath — must be reviewed and moved in lockstep with springBootVersion",
       "matchPackageNames": ["/^org\\.eclipse\\.jetty/"],
       "groupName": "jetty (manual review - Spring Boot BOM coupling)",
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "bcprov-jdk18on shares the bouncyCastleVersion property with bcpkix/bcutil/bcmail/bctls-jdk18on (git-plugin, license-cli, rundeckpro-license, etc.), and those siblings don't always cut a patch release together — 1.85.2 was published for bcprov-jdk18on alone, which broke git-plugin's bcpkix-jdk18on resolution when Renovate bumped the shared property (PR #4922). Needs its own groupName, not just dependencyDashboardApproval: without one it stayed lumped into the 'gradle minor/patch dependencies' group below and rode along anyway (re-broke #4922 a second time). Gate on Dependency Dashboard approval rather than disabling outright, so this keeps surfacing instead of being silently forgotten; before approving, confirm bcpkix/bcutil/bcmail/bctls-jdk18on have all published the same version on Maven Central.",
+      "matchPackageNames": ["org.bouncycastle:bcprov-jdk18on"],
+      "groupName": "bouncy castle bcprov (manual review - patch cadence mismatch with siblings)",
       "dependencyDashboardApproval": true
     },
     {
@@ -89,6 +101,12 @@
       "enabled": false
     },
     {
+      "description": "Label every npm dep bump in ui-trellis so a GitHub Action can check whether it's also vendored into rundeckpro-ui-components and mirror the update there once this PR merges. The actual 'is this shared' decision is made downstream against rundeckpro-ui-components/package.json (single source of truth), not maintained here as a name list — see rundeckpro's sync-renovate-dependency.yml workflow.",
+      "matchManagers": ["npm"],
+      "matchFileNames": ["rundeckapp/grails-spa/packages/ui-trellis/package.json"],
+      "addLabels": ["sync-rundeckpro"]
+    },
+    {
       "description": "Group ESLint ecosystem updates",
       "matchPackageNames": ["/eslint/"],
       "groupName": "eslint packages"
@@ -109,10 +127,11 @@
       "enabled": true
     },
     {
-      "description": "Group Node.js version (.nvmrc) with the npm engine pin so they update together",
+      "description": "Group Node.js version (.nvmrc) with the npm engine pin so they update together. Gated behind Dependency Dashboard approval: node/npm must move in lockstep across the rundeck and rundeckpro repos (Renovate cannot open a single cross-repo PR), so auto-created PRs can never merge unilaterally and only burn CI. Approve the checkbox on BOTH repos' dashboards in the same session, merge rundeck first, then rundeckpro.",
       "matchManagers": ["nvm", "npm"],
       "matchDepNames": ["node", "npm"],
-      "groupName": "node and npm engine versions"
+      "groupName": "node and npm engine versions",
+      "dependencyDashboardApproval": true
     },
     {
       "description": "Default registry for the vast majority of Gradle dependencies (Spring, Netty, Jackson, JUnit, etc.) instead of checking every globally-declared repo (m2proxy, PackageCloud, Sonatype, Grails, Gradle Plugin Portal, ...) for every dependency. Only ~9% of our gradle deps are actually Grails/Groovy-namespaced, so grails.org is scoped separately below rather than checked for everything.",

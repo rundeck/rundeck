@@ -868,6 +868,11 @@ class JobExecutionSpec extends BaseContainer {
                     "    <uuid>165ef9b9-61dc-470c-91aa-3f6dc248249d</uuid>\n" +
                     "  </job>\n" +
                     "  <job>\n" +
+                    "    <context>\n" +
+                    "      <options>\n" +
+                    "        <option name='opt2' />\n" +
+                    "      </options>\n" +
+                    "    </context>\n" +
                     "    <defaultTab>summary</defaultTab>\n" +
                     "    <description></description>\n" +
                     "    <executionEnabled>true</executionEnabled>\n" +

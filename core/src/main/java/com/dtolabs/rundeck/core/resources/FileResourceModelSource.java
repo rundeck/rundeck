@@ -35,6 +35,7 @@ import com.dtolabs.utils.Streams;
 
 import java.io.*;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import static com.dtolabs.rundeck.plugins.util.DescriptionBuilder.buildDescriptionWith;
@@ -124,6 +125,16 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
     }
 
     public long writeFileData(final InputStream dataStream) throws IOException {
+        // Create missing parent directories, mirroring generateResourcesFile()'s behavior for
+        // reads. Without this, writing to a writeable file source whose parent directory does
+        // not yet exist (e.g. a project's etc/ dir before anything else creates it) fails with
+        // a raw FileNotFoundException.
+        File parentDir = configuration.nodesFile.getParentFile();
+        if (parentDir != null && !parentDir.exists() && !parentDir.mkdirs()) {
+            throw new IOException(
+                "Parent dir for resource file does not exist, and could not be created: " + parentDir
+            );
+        }
         try (FileOutputStream fos = new FileOutputStream(configuration.nodesFile)) {
             return Streams.copyStream(dataStream, fos);
         }
@@ -291,6 +302,88 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
             throw new ResourceModelSourceException(e);
         }
 
+    }
+
+    /**
+     * Validates that the file path configured in this source is within allowed directories.
+     * By default, only paths within the project directory are allowed. Additional base paths
+     * can be configured via the "resourceModelSource.file.allowedBasePaths" configuration property.
+     *
+     * @param configProperties Configuration properties from rundeck-config.properties
+     * @param framework Framework instance for accessing project information
+     * @param project Project name
+     * @throws ConfigurationException if the file path is not within allowed directories
+     */
+    @Override
+    public void validateWriteableSource(
+        Map<String, Object> configProperties,
+        Framework framework,
+        String project
+    ) throws ConfigurationException {
+        // Get the file path from this source's configuration
+        if (configuration == null || configuration.nodesFile == null) {
+            return;  // No file configured yet
+        }
+
+        try {
+            // 1. Canonicalize file path to prevent traversal attacks (../, symlinks)
+            File canonicalFile = configuration.nodesFile.getCanonicalFile();
+
+            // 2. Get project base directory
+            File projectsBaseDir = framework.getFrameworkProjectsBaseDir();
+            File projectBaseDir = new File(projectsBaseDir, project);
+            File canonicalProjectDir = projectBaseDir.getCanonicalFile();
+
+            // 3. Check if file is under project directory (allowed by default)
+            if (isPathUnder(canonicalFile, canonicalProjectDir)) {
+                return;  // Path is within project, allowed
+            }
+
+            // 4. File is outside project - check configuration for allowed paths
+            String allowedPaths = (String) configProperties.get("resourceModelSource.file.allowedBasePaths");
+
+            // 5. If no allowed paths configured, reject
+            if (allowedPaths == null || allowedPaths.trim().isEmpty()) {
+                throw new ConfigurationException(
+                    "File path must be within the project directory"
+                );
+            }
+
+            // 6. Parse allowed paths (comma-separated) and check if file is under any
+            String[] paths = allowedPaths.split(",");
+            for (String path : paths) {
+                String trimmedPath = path.trim();
+                // Skip empty segments to avoid treating empty string as working directory
+                if (trimmedPath.isEmpty()) {
+                    continue;
+                }
+                File allowedBase = new File(trimmedPath).getCanonicalFile();
+                if (isPathUnder(canonicalFile, allowedBase)) {
+                    return;  // Path is within an allowed base path
+                }
+            }
+
+            // 7. Path not allowed
+            throw new ConfigurationException(
+                "File path is not within project directory or allowed base paths"
+            );
+
+        } catch (IOException e) {
+            // Don't include exception message to avoid leaking path information
+            throw new ConfigurationException("Invalid file path", e);
+        }
+    }
+
+    /**
+     * Checks if a file is located under a base directory using Path comparison.
+     * This is more reliable than string prefix matching.
+     *
+     * @param file file to check
+     * @param baseDir base directory
+     * @return true if file is under baseDir
+     */
+    private boolean isPathUnder(File file, File baseDir) {
+        return file.toPath().startsWith(baseDir.toPath());
     }
 
 

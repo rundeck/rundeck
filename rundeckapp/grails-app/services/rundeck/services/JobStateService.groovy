@@ -177,7 +177,7 @@ class JobStateService implements AuthorizingJobService {
         executions = rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAny(
             auth,
             executions,
-            [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY]
         )
 
         IFramework framework = frameworkService.getRundeckFramework()
@@ -423,11 +423,11 @@ class JobStateService implements AuthorizingJobService {
         def results = frameworkService.queryExecutions(query, offset, max)
         def result=results.result
         def total=results.total
-        //filter query results to executions the user can view via READ or VIEW_HISTORY
+        //filter query results to executions the user can view via READ, VIEW, or VIEW_HISTORY
         def filtered = rundeckAuthContextEvaluator.filterAuthorizedProjectExecutionsAny(
             auth,
             result,
-            [AuthConstants.ACTION_READ, AuthConstants.VIEW_HISTORY]
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.VIEW_HISTORY]
         )
         def reflist = filtered.collect { it.asReference() }
         return [result:reflist, total:reflist.size()]

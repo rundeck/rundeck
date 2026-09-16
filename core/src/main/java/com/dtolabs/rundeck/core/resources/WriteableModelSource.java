@@ -16,10 +16,14 @@
 
 package com.dtolabs.rundeck.core.resources;
 
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 
 /**
  * A ResourceModelSource that can write formatted model data
@@ -64,4 +68,26 @@ public interface WriteableModelSource {
      * @throws ResourceModelSourceException if the data is not valid
      */
     long writeData(InputStream data) throws IOException, ResourceModelSourceException;
+
+    /**
+     * Validate that the source configuration is allowed based on security constraints.
+     * Default implementation does nothing (for backward compatibility).
+     * <p>
+     * This method should be called before reading or writing data to validate that the source
+     * is allowed by the current security policy. For example, file-based sources can validate
+     * that the file path is within allowed directories.
+     * </p>
+     *
+     * @param configProperties Configuration properties from rundeck-config.properties
+     * @param framework Framework instance for accessing project information
+     * @param project Project name
+     * @throws ConfigurationException if the source configuration is not allowed
+     */
+    default void validateWriteableSource(
+        Map<String, Object> configProperties,
+        Framework framework,
+        String project
+    ) throws ConfigurationException {
+        // Default: no validation (backward compatible)
+    }
 }

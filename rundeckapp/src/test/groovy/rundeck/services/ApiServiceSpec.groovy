@@ -112,6 +112,36 @@ class ApiServiceSpec extends Specification implements ServiceUnitTest<ApiService
         'application/xml'            | 'all'     | 'xml'
         'text/plain'                 | 'all'     | 'text'
         'yaml'                       | 'yaml'    | 'yaml'
+        'application/json'           | 'yaml'    | 'json'
+        'application/json'           | 'xml'     | 'json'
+        // RUN-4790 non-regression: when Accept doesn't resolve to an allowed format,
+        // request.format (the body's own content type) must still decide the response format.
+        '*/*'                        | 'yaml'    | 'yaml'
+        null                         | 'yaml'    | 'yaml'
+        'text/html'                  | 'yaml'    | 'yaml'
+    }
+
+    @Unroll
+    def "extractResponseFormat with a fixed defformat distinct from request.format ('#reqFormat' vs defformat '#defformat')"(){
+        // PR #10537 review follow-up: some callers (e.g. ProjectController#apiProjectConfigGet) pass a
+        // fixed literal defformat rather than request.format itself. This pins down that the
+        // requestFormat-vs-allowed check still matters for that caller shape: when Accept doesn't
+        // resolve, request.format 'xml' (in allowed) must win over the fixed defformat 'json', while a
+        // request.format outside allowed correctly falls through to the fixed defformat.
+        given:
+        def request = GroovyMock(HttpServletRequest)
+        request.format >> reqFormat
+        request.getHeader('Accept') >> null
+        def response = Mock(HttpServletResponse)
+        def allowed = ['json', 'text', 'xml']
+
+        expect:
+        service.extractResponseFormat(request, response, allowed, defformat) == expected
+
+        where:
+        reqFormat | defformat | expected
+        'xml'     | 'json'    | 'xml'
+        'bogus'   | 'json'    | 'json'
     }
 
     def "jsonRenderDirlist"(){

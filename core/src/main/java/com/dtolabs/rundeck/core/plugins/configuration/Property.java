@@ -131,4 +131,15 @@ public interface Property {
      * otherwise unexpanded variables will be left as is
      */
     public default boolean isBlankIfUnexpandable() { return true; }
+
+    /**
+     * Resolve this property's expansion behavior from another instance config key
+     * (typically a Select the job author sets in the plugin UI). The referenced config
+     * value should be {@code blank}, {@code preserve}, or {@code preserveBash}.
+     *
+     * @return other property name, or null to fall back to {@link #isBlankIfUnexpandable()}
+     */
+    public default String getUnexpandableBehaviorFrom() {
+        return null;
+    }
 }

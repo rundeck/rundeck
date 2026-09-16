@@ -16,6 +16,10 @@ buildscript {
     configurations.all {
         resolutionStrategy {
             force "org.liquibase:liquibase-core:${liquibaseVersion}"
+            // CVE-2026-64607: httpclient5 connection-pool exhaustion DoS, fixed in 5.6.3. Pulled onto
+            // this buildscript classpath via grails-data-hibernate5-dbmigration -> grails-shell-cli ->
+            // spring-boot-cli. Build-tooling only (never shipped), forced to stop the Snyk finding.
+            force "org.apache.httpcomponents.client5:httpclient5:${httpClient5Version}"
         }
     }
     dependencies {
@@ -124,8 +128,12 @@ configurations {
         exclude group: 'org.junit.platform'
         exclude group: 'org.apache.groovy', module: 'groovy-test-junit5'
         exclude group: 'org.apache.ant', module: 'ant-junit'
-        exclude group: 'org.codehaus.groovy', module: 'groovy-ant'
-        exclude group: 'org.grails', module: 'grails-shell'
+        // Grails 7 / Groovy 4 renamed both of these coordinates
+        // (org.grails:grails-shell -> org.apache.grails:grails-shell-cli,
+        // org.codehaus.groovy -> org.apache.groovy), so the exclusions stopped matching
+        // and the `grails` CLI toolchain reappeared on the runtime classpath.
+        exclude group: 'org.apache.groovy', module: 'groovy-ant'
+        exclude group: 'org.apache.grails', module: 'grails-shell-cli'
     }
 
     implementation.exclude module: "spring-boot-starter-tomcat"
@@ -209,7 +217,7 @@ dependencies {
     // Force CVE-patched mchange libraries (transitively brought by quartz:2.5.x)
     implementation "com.mchange:mchange-commons-java:${mchangeCommonsJavaVersion}"
     implementation "com.mchange:c3p0:${c3p0Version}"
-    implementation "org.grails.plugins:grails-mail:${grailsMailPluginVersion}"
+    implementation "org.apache.grails:grails-mail:${grailsMailVersion}"
 
     // Liquibase for compile-time exception classes (runtime provided by Spring Boot)
     compileOnly "org.liquibase:liquibase-core:${liquibaseVersion}"
@@ -493,6 +501,9 @@ bootRun {
     //    addResources = true
     // Full resources/main so classpath:/assets/ resolves; duplicateFileMode=WARN avoids Liquibase failure on duplicate migrations
     classpath += files("$buildDir/resources/main", "$buildDir/resources/main/META-INF")
+    // Compiled assets under classpath:/assets/. Only bootRun needs these; the packaged
+    // WAR serves the same files from its root instead (see copyCompiledAssets).
+    classpath += files("$buildDir/bootrun-assets")
     // Strip liquibase-commercial: it ships LicenseValidationChange (extends AbstractChange)
     // compiled against the 4.26 API, whose bytecode references liquibase.ChecksumVersion.
     // We pin liquibase-core to 4.19.0 for DB compatibility, so 4.26's commercial jar causes
@@ -751,7 +762,7 @@ project.gradle.projectsEvaluated {
 }
 
 task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
-    println "copying plugin libs"
+    println "Note: Copying plugin libs"
     File libextDir = new File(buildDir, "WEB-INF/rundeck/plugins")
     File manifestFile = new File(buildDir, "WEB-INF/rundeck/plugins/manifest.properties")
 
@@ -818,7 +829,8 @@ task vendorAssetDeps(type: NpmTask) { it ->
 
     it.inputs.file "${baseDir}/_package-manager/package.json"
     it.inputs.file "${baseDir}/_package-manager/package-lock.json"
-    it.inputs.file "${baseDir}/_package-manager/webpack.mix.js"
+    it.inputs.file "${baseDir}/_package-manager/build.js"
+    it.inputs.dir "${baseDir}/_package-manager/lib"
 
     it.outputs.dir "${baseDir}/vendor"
 
@@ -841,6 +853,35 @@ task vendorAssetDeps(type: NpmTask) { it ->
 }
 
 assetPluginPackage.dependsOn vendorAssetDeps
+
+task verifyVendorAssets(type: NpmTask) { it ->
+    group = 'verification'
+    description = 'Runs the _package-manager vendor asset build/verification tests (npm test).'
+    dependsOn vendorAssetDeps
+    def baseDir = "${projectDir}/grails-app/assets/javascripts"
+
+    it.inputs.file "${baseDir}/_package-manager/package.json"
+    it.inputs.file "${baseDir}/_package-manager/package-lock.json"
+    it.inputs.file "${baseDir}/_package-manager/build.js"
+    it.inputs.file "${baseDir}/_package-manager/verify-build.js"
+    it.inputs.file "${baseDir}/_package-manager/test-fileops.js"
+    it.inputs.dir "${baseDir}/_package-manager/lib"
+    it.inputs.dir "${baseDir}/vendor"
+
+    it.args = ['run', 'test']
+
+    execOverrides {
+        it.workingDir = "${baseDir}/_package-manager"
+        if (pinnedNodeBin != null) {
+            it.environment('PATH', "${pinnedNodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
+        def token = project.findProperty('CLOUDSMITH_NPM_TOKEN') ?: System.getenv('CLOUDSMITH_NPM_TOKEN')
+        if (token) {
+            it.environment('CLOUDSMITH_NPM_TOKEN', token)
+        }
+    }
+}
+check.dependsOn verifyVendorAssets
 assetCompile.dependsOn vendorAssetDeps
 
 // Copy manifest to META-INF for runtime asset resolution
@@ -850,16 +891,29 @@ task copyAssetManifest(type: Copy) {
     into "$buildDir/resources/main/META-INF/assets"
 }
 
-// Copy compiled assets to classpath:/assets/ (resources/main/assets/) for bootRun and WAR
+// Copy compiled assets to classpath:/assets/ for bootRun only.
+//
+// This deliberately does NOT go into resources/main: the packaged WAR already
+// carries the compiled assets at its root (assets/**), added by the
+// asset-pipeline Gradle plugin, and asset-pipeline resolves that copy first.
+// Both AssetPipelineFilter and AssetPipelineGrailsPlugin do:
+//
+//     resource = applicationContext.getResource("assets/${uri}")
+//     if (!resource.exists()) resource = applicationContext.getResource("classpath:assets/${uri}")
+//
+// In a WebApplicationContext the first lookup is a ServletContextResource, i.e.
+// the WAR root, which always hits. Staging the same files under
+// resources/main/assets therefore only duplicated ~32 MiB of the WAR without
+// ever being read. bootRun has no WAR root, so it needs the classpath copy.
 task copyCompiledAssets(type: Copy) {
     dependsOn assetCompile
     from "$buildDir/assets"
-    into "$buildDir/resources/main/assets"
+    into "$buildDir/bootrun-assets/assets"
     exclude 'manifest.properties'
 }
 
-processResources.dependsOn copyAssetManifest, copyCompiledAssets
-bootRun.dependsOn processResources
+processResources.dependsOn copyAssetManifest
+bootRun.dependsOn processResources, copyCompiledAssets
 
 archivesBaseName = 'rundeck'
 

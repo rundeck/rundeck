@@ -26,6 +26,7 @@ class ConditionalStep implements WorkflowStepData, Validateable {
     Boolean keepgoingOnSuccess
     String description
     Boolean nodeStep
+    Boolean invertLogic = false
 
     static constraints = {
         importFrom SharedWorkflowStepConstraints
@@ -117,6 +118,7 @@ class ConditionalStep implements WorkflowStepData, Validateable {
 
         def step = new ConditionalStep()
         step.nodeStep = stepMap.nodeStep ?: false
+        step.invertLogic = stepMap.invertLogic ?: false
         step.description = stepMap.description
         step.keepgoingOnSuccess = stepMap.keepgoingOnSuccess
 
@@ -231,7 +233,7 @@ class ConditionalStep implements WorkflowStepData, Validateable {
      * @return Map representation
      */
     Map toMap() {
-        def map = [type: pluginType, nodeStep: nodeStep]
+        def map = [type: pluginType, nodeStep: nodeStep, invertLogic: invertLogic]
 
         if (configuration) {
             map.configuration = configuration

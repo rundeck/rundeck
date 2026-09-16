@@ -77,6 +77,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             isFrameworkProjectDisabled(1..1) { project ->
                 false
             }
+            getProjectProperties(0..99) { project ->
+                [:]
+            }
             getServerUUID(1..1){
                 null
             }
@@ -2139,8 +2142,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
+            getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
-            getProjectProperties(1..1) { project -> [:] }
+            getProjectProperties(0..1) { project -> [:] }
             parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
@@ -2212,8 +2216,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
+            getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
-            getProjectProperties(1..1) { project -> [:] }
+            getProjectProperties(0..1) { project -> [:] }
             parseOptsFromArray(1..1) { String[] args ->
                 ['test1':'value']
             }
@@ -2299,8 +2304,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                 parseOptsCount++
                 ['test1':'wakeful']
             }
+            getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
-            getProjectProperties(1..1) { project -> [:] }
+            getProjectProperties(0..1) { project -> [:] }
             parseOptsFromArray(1..1) { String[] args ->
                 def argsl = args as List
                 assertTrue(argsl.indexOf('-test1') >= 0 && argsl.indexOf('-test1') <= argsl.size() - 2)
@@ -2398,8 +2404,9 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                 }
                 opts
             }
+            getProjectProperties(0..1) { project -> [:] }
             getFrameworkPropertiesMap(1..1) { -> [:] }
-            getProjectProperties(1..1) { project -> [:] }
+            getProjectProperties(0..1) { project -> [:] }
             parseOptsFromArray(1..1) { String[] args ->
                 def argsl = args as List
                 assertTrue(argsl.indexOf('-test1') >= 0 && argsl.indexOf('-test1') <= argsl.size() - 2)
@@ -2638,10 +2645,12 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                 filter: filterFixture
         )
 
-        def lg = new MockFor(LinkGenerator)
-        lg.demand.link(2..2) { return '' }
+        // Spock stub instead of MockFor: generateServerURL is statically compiled and bypasses the metaClass proxy
+        def lg = Stub(LinkGenerator) {
+            link(_) >> ''
+        }
 
-        def jobcontext = ExecutionService.exportContextForExecution(ex, lg.proxyInstance())
+        def jobcontext = ExecutionService.exportContextForExecution(ex, lg)
 
         assertEquals(filterFixture, jobcontext.filter)
 
@@ -2650,6 +2659,47 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         expect:
         // asserts validate above
         1 == 1
+    }
+
+    def "generateServerURL strips trailing slashes so job.serverUrl can be concatenated with an absolute path"() {
+        given:
+        def linkGenerator = Stub(LinkGenerator) {
+            link(_) >> generated
+        }
+
+        when:
+        def result = ExecutionService.generateServerURL(linkGenerator)
+
+        then:
+        result == expected
+
+        where:
+        generated                | expected
+        'http://h:4440/'         | 'http://h:4440'
+        'http://h:4440//'        | 'http://h:4440'
+        'http://h:4440/rundeck/' | 'http://h:4440/rundeck'
+        'http://h:4440'          | 'http://h:4440'
+        null                     | null
+    }
+
+    def "exportContextForExecution sets job.serverUrl without trailing slash and leaves job.url unchanged"() {
+        given:
+        def executionUrl = 'http://h:4440/project/test/execution/show/1'
+        def linkGenerator = Stub(LinkGenerator) {
+            link(_) >> { Map attrs -> attrs.controller == 'menu' ? 'http://h:4440/' : executionUrl }
+        }
+        def ex = new Execution(
+                project: "test",
+                user: "test",
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "exec")]),
+        )
+
+        when:
+        def jobcontext = ExecutionService.exportContextForExecution(ex, linkGenerator)
+
+        then:
+        jobcontext.serverUrl == 'http://h:4440'
+        jobcontext.url == executionUrl
     }
 
     def "ensureExecutionOutputFilePath"() {

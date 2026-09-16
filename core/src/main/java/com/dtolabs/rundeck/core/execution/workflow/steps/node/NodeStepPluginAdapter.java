@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.data.UnexpandableBehavior;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
@@ -33,6 +34,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.CustomFieldsAdapter;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.execution.workflow.steps.UnexpandableBehaviorSupport;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
@@ -210,25 +212,21 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
                                             INodeEntry node){
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         Description description = getDescription();
-        Map<String,Boolean> blankIfUnexMap = new HashMap<>();
-        if(description != null) {
-            description.getProperties().forEach(p -> {
-                if (!p.isBlankIfUnexpandable()) blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
-                else blankIfUnexMap.put(p.getName(), blankIfUnexpanded);
-            });
-        }
+        Map<String, UnexpandableBehavior> behaviorMap =
+                UnexpandableBehaviorSupport.buildBehaviorMap(
+                        description, blankIfUnexpanded, instanceConfiguration);
         if (null != instanceConfiguration) {
             CustomFieldsAdapter customFieldsAdapter = CustomFieldsAdapter.create(description);
             if(!Arrays.asList(ScriptFileCommand.SCRIPT_FILE_COMMAND_TYPE, ScriptCommand.SCRIPT_COMMAND_TYPE, ExecCommand.EXEC_COMMAND_TYPE).contains((item.getNodeStepType()))) //Those types are handled by its plugins
             {
-                instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                instanceConfiguration = SharedDataContextUtils.replaceDataReferencesWithBehavior(
                         instanceConfiguration,
                         ContextView.node(node.getNodename()),
                         ContextView::nodeStep,
                         null,
                         context.getSharedDataContext(),
                         false,
-                        blankIfUnexMap,
+                        behaviorMap,
                         customFieldsAdapter::convertInput,
                         customFieldsAdapter::convertOutput
                 );

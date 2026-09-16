@@ -39,6 +39,16 @@ buildscript {
             mavenCentral()
         }
     }
+    // CVE-2026-64607: org.owasp:dependency-check-gradle -> dependency-check-core ->
+    // open-vulnerability-clients pulls httpclient5 5.3.1 (<=5.6.2, vulnerable) onto this buildscript
+    // classpath. Build-tooling only (used by the dependencyCheckAnalyze task; never shipped), but
+    // forced here so a standalone-build Snyk scan of this manifest doesn't keep flagging it.
+    configurations.all {
+        resolutionStrategy {
+            force "org.apache.httpcomponents.client5:httpclient5:${httpClient5Version}"
+        }
+    }
+
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.8'
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.7.3'
@@ -59,6 +69,39 @@ apply plugin: 'java'
 apply plugin: 'eclipse';
 apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
+apply plugin: 'codenarc'
+
+/**
+ * Deterministic cyclomatic complexity check (informative only).
+ * Run: ./gradlew codenarcComplexity — report in build/reports/codenarc/complexity.html
+ * Applied to the root project only; production Groovy sources, tests excluded.
+ */
+codenarc {
+    configFile = file("${rootDir}/config/codenarc/rules.groovy")
+    ignoreFailures = true
+}
+
+dependencies {
+    codenarc "org.codenarc:CodeNarc:${codenarcVersion}"
+    // CyclomaticComplexity rule requires GMetrics on the codenarc classpath
+    codenarc "org.gmetrics:GMetrics:${gmetricsVersion}"
+}
+
+tasks.register('codenarcComplexity', CodeNarc) {
+    description = 'Reports methods above the cyclomatic complexity threshold (production Groovy only)'
+    group = 'verification'
+    source = fileTree(rootDir) {
+        include '**/*.groovy'
+        exclude '**/build/**', '**/node_modules/**', '**/.gradle/**', '**/src/test/**',
+                'functional-test/**', 'test/**', '**/*Spec.groovy', '**/*Test.groovy'
+    }
+    reports {
+        html.required = true
+        html.outputLocation = layout.buildDirectory.file('reports/codenarc/complexity.html')
+        text.required = true
+        text.outputLocation = layout.buildDirectory.file('reports/codenarc/complexity.txt')
+    }
+}
 apply plugin: 'org.owasp.dependencycheck'
 
 dependencyCheck {
@@ -161,6 +204,7 @@ allprojects {
     ext["micrometer.version"] = micrometerVersion          // CVE-2026-40983, CVE-2026-40984
     ext["spring-retry.version"] = springRetryVersion       // CVE-2026-41710
     ext["httpcore5.version"] = httpCore5Version             // CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)
+    ext["httpclient5.version"] = httpClient5Version         // CVE-2026-64607 (connection pool exhaustion DoS)
     // CVE-2026-54512, CVE-2026-54513 (jackson-databind PolymorphicTypeValidator bypass). Grails/Spring
     // Boot dependency management pins jackson to 2.21.2 and downgrades transitive 2.21.4; a plain
     // platform import or resolutionStrategy.force does NOT override it. Overriding the Boot BOM property
@@ -252,6 +296,19 @@ allprojects {
                     details.useVersion httpCore5Version
                     details.because 'httpcore5 5.4.2 fixes CVE-2026-54399 (httpcore5-h2 HTTP/2 DoS)'
                 }
+                // CVE-2026-64607: httpclient5's classic transport leaks the pooled connection on an
+                // invalid/unsupported Content-Encoding header (pool exhaustion DoS), fixed in 5.6.3.
+                // Every project applying org.apache.grails.gradle.grails-plugin gets an auto-created
+                // "profile" configuration (used by the Grails Shell to find profile artifacts) that
+                // independently resolves org.apache.grails.profiles:web-plugin -> ... -> grails-shell-cli
+                // -> spring-boot-cli -> httpclient5 via the grails-bom constraint (5.5.2). Like httpcore5
+                // above, the Spring Boot BOM manages httpclient5.version and overrides this useVersion
+                // call; the ext["httpclient5.version"] override above is what actually moves it, this
+                // rule is kept for defense-in-depth on any resolution path that doesn't go through the BOM.
+                if (details.requested.group == 'org.apache.httpcomponents.client5' && details.requested.name == 'httpclient5') {
+                    details.useVersion httpClient5Version
+                    details.because 'httpclient5 5.6.4 fixes CVE-2026-64607 (connection pool exhaustion DoS)'
+                }
             }
 
             // org.ehcache:ehcache:3.12.0 publishes plain (runtimeElements) and Jakarta
@@ -284,7 +341,13 @@ allprojects {
             force "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDataformatCBORVersion}"
             // CVE-2025-67030 - plexus-utils Directory Traversal (Expand.extractFile); pulled via grails-shell-cli
             force "org.codehaus.plexus:plexus-utils:${plexusUtilsVersion}"
-            
+            // CVE-2026-47857, CVE-2026-47863 - reactor-core windowTimeout/bufferTimeout
+            // fairBackpressure DoS hangs; pulled via Micronaut HTTP in rundeckapp
+            force "io.projectreactor:reactor-core:${reactorCoreVersion}"
+            // CVE-2026-26032 - Apache Ivy PackagerResolver path traversal; pulled via
+            // grails-console -> groovy-console (interactive shell's Grape support)
+            force "org.apache.ivy:ivy:${ivyVersion}"
+
             // Force centralized versions to prevent duplicates in WAR
             force "org.apache.ant:ant:${antVersion}"
             force "org.apache.ant:ant-launcher:${antVersion}"
@@ -324,6 +387,19 @@ allprojects {
                 dependency "org.jetbrains.kotlin:kotlin-stdlib:${kotlinVersion}"
                 dependency "org.apache.ant:ant:${antVersion}"
                 dependency "org.apache.ant:ant-launcher:${antVersion}"
+                // CVE-2026-47857, CVE-2026-47863: spring-boot-dependencies:3.5.16's reactor-bom
+                // (2024.0.18) pins reactor-core 3.7.19 as a strict constraint; plain
+                // resolutionStrategy.force above doesn't reach rundeckapp's own bootWar-bundled
+                // runtimeClasspath, same as asm/kotlin-stdlib/ant/log4j2 above.
+                dependency "io.projectreactor:reactor-core:${reactorCoreVersion}"
+                // Same story again: grails-bom 7.2.x newly manages log4j2 as a strict constraint
+                // (2.25.5), which plain resolutionStrategy.force can't override, causing duplicate
+                // log4j jars (2.25.5 alongside our forced log4j2.version) in the packaged WAR.
+                dependency "org.apache.logging.log4j:log4j-api:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-core:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-jul:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-slf4j2-impl:${project.'log4j2.version'}"
+                dependency "org.apache.logging.log4j:log4j-to-slf4j:${project.'log4j2.version'}"
             }
         }
     }

@@ -20,6 +20,9 @@ import org.rundeck.jaas.PasswordCredential
 import org.rundeck.jaas.jetty.BcryptCredentialProvider
 import org.springframework.security.crypto.password.PasswordEncoder
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+
 /**
  * Password encoder compatible with Jetty password formats.
  * Updated for JAAS refactoring - uses org.rundeck.jaas.PasswordCredential
@@ -29,36 +32,53 @@ class JettyCompatibleSpringSecurityPasswordEncoder implements PasswordEncoder {
     String getUsername() {
         WebUtils.retrieveGrailsWebRequest().getCurrentRequest().getParameter("j_username")
     }
-    
+
+    /**
+     * Encodes a raw password using BCrypt, prefixed with {@code BCRYPT:} to match the
+     * format expected by the {@code BCRYPT:} branch of {@link #matches}.
+     * @param rawPassword the raw password to encode
+     * @return a {@code BCRYPT:}-prefixed hash, never the plaintext input
+     */
     @Override
     String encode(final CharSequence rawPassword) {
-        //does not encode password
-        return rawPassword
+        return BcryptCredentialProvider.BcryptCredential.encodePassword(rawPassword.toString())
     }
-    
+
+    /**
+     * Checks a raw password against an encoded password, dispatching on the encoded
+     * password's prefix ({@code MD5:}, {@code CRYPT:}, {@code OBF:}, {@code BCRYPT:}).
+     * Encoded passwords with no recognized prefix are compared as plaintext using a
+     * constant-time comparison.
+     * @param rawPass the raw password to check
+     * @param encPass the stored encoded (or plaintext) password
+     * @return true if the raw password matches
+     */
     @Override
     boolean matches(final CharSequence rawPass, final String encPass) {
         if(!encPass || !rawPass) return false
-        
+
         // Use PasswordCredential for MD5 and CRYPT
         if(encPass.startsWith("MD5:") || encPass.startsWith("CRYPT:")) {
             PasswordCredential credential = PasswordCredential.getCredential(encPass)
             return credential.check(rawPass.toString())
         }
-        
+
         // OBF format check - fall back to false (Jetty-specific, deprecated)
         if(encPass.startsWith("OBF:")) {
             // OBF format was Jetty-specific and is no longer supported
             // Passwords should be migrated to MD5, CRYPT, or BCRYPT
             return false
         }
-        
+
         // BCRYPT uses special provider
         if(encPass.startsWith("BCRYPT:")) {
             return new BcryptCredentialProvider().getCredential(encPass).check(rawPass)
         }
-        
-        // Plain text comparison
-        return encPass == rawPass
+
+        // Plain text comparison - constant-time to avoid leaking length/content via timing
+        return MessageDigest.isEqual(
+            encPass.getBytes(StandardCharsets.UTF_8),
+            rawPass.toString().getBytes(StandardCharsets.UTF_8)
+        )
     }
 }

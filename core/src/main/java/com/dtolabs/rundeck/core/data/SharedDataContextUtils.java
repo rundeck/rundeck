@@ -135,9 +135,37 @@ public class SharedDataContextUtils {
             boolean blankIfUnexpanded
     )
     {
+        return replaceDataReferences(
+                input,
+                data,
+                currentContext,
+                viewMap,
+                converter,
+                failOnUnexpanded,
+                UnexpandableBehavior.fromBlankIfUnexpandable(blankIfUnexpanded)
+        );
+    }
+
+    /**
+     * Replace embedded {@code ${...}} references using the given unexpandable behavior.
+     *
+     * @param unexpandableBehavior how to treat unresolved references; null defaults to {@link UnexpandableBehavior#BLANK}
+     */
+    public static <T extends ViewTraverse<T>> String replaceDataReferences(
+            final String input,
+            final MultiDataContext<T, DataContext> data,
+            final T currentContext,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            boolean failOnUnexpanded,
+            UnexpandableBehavior unexpandableBehavior
+    )
+    {
         if (null == data || null == input) {
             return input;
         }
+        UnexpandableBehavior behavior =
+                unexpandableBehavior != null ? unexpandableBehavior : UnexpandableBehavior.BLANK;
         final Matcher m = PROPERTY_VIEW_REF_PATTERN.matcher(input);
         final StringBuffer sb = new StringBuffer();
         ArgumentVarExpander argExpander = new ArgumentVarExpander();
@@ -159,7 +187,7 @@ public class SharedDataContextUtils {
                 m.appendReplacement(sb, Matcher.quoteReplacement(value));
             } else if (failOnUnexpanded) {
                 throw new DataContextUtils.UnresolvedDataReferenceException(input, m.group());
-            } else if (blankIfUnexpanded) {
+            } else if (shouldBlankUnresolved(behavior, variableRef)) {
                 m.appendReplacement(sb, "");
             } else {
                 value = m.group(0);
@@ -171,6 +199,20 @@ public class SharedDataContextUtils {
         }
         m.appendTail(sb);
         return sb.toString();
+    }
+
+    /**
+     * @return true if an unresolved reference should be blanked for the given behavior
+     */
+    static boolean shouldBlankUnresolved(UnexpandableBehavior behavior, String variableRef) {
+        if (behavior == null || behavior == UnexpandableBehavior.BLANK) {
+            return true;
+        }
+        if (behavior == UnexpandableBehavior.PRESERVE) {
+            return false;
+        }
+        // PRESERVE_BASH: blank Rundeck-style dotted refs, keep bash-like tokens
+        return variableRef != null && variableRef.contains(".");
     }
 
 
@@ -518,22 +560,62 @@ public class SharedDataContextUtils {
             final BiFunction<String,Object,Object> outputConverter
     )
     {
+        Map<String, UnexpandableBehavior> behaviorMap = new HashMap<>();
+        if (blankIfUnexpandedFieldMap != null) {
+            for (Map.Entry<String, Boolean> e : blankIfUnexpandedFieldMap.entrySet()) {
+                behaviorMap.put(
+                        e.getKey(),
+                        UnexpandableBehavior.fromBlankIfUnexpandable(Boolean.TRUE.equals(e.getValue()))
+                );
+            }
+        }
+        return replaceDataReferencesWithBehavior(
+                input,
+                currentContext,
+                viewMap,
+                converter,
+                data,
+                failOnUnexpanded,
+                behaviorMap,
+                inputConverter,
+                outputConverter
+        );
+    }
+
+    /**
+     * Recursively replace data references using per-field {@link UnexpandableBehavior}.
+     */
+    public static <T extends ViewTraverse<T>> Map<String, Object> replaceDataReferencesWithBehavior(
+            final Map<String, Object> input,
+            final T currentContext,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            final MultiDataContext<T, DataContext> data,
+            boolean failOnUnexpanded,
+            final Map<String, UnexpandableBehavior> unexpandableBehaviorFieldMap,
+            final BiFunction<String, Object, Object> inputConverter,
+            final BiFunction<String, Object, Object> outputConverter
+    )
+    {
         final HashMap<String, Object> output = new HashMap<>();
         for (final String s : input.keySet()) {
-            Boolean blankIfUnexpanded = blankIfUnexpandedFieldMap.getOrDefault(s,true);
+            UnexpandableBehavior behavior = unexpandableBehaviorFieldMap != null
+                    ? unexpandableBehaviorFieldMap.getOrDefault(s, UnexpandableBehavior.BLANK)
+                    : UnexpandableBehavior.BLANK;
             Object o = input.get(s);
-            if(null!=inputConverter){
-                o = inputConverter.apply(s,o);
+            if (null != inputConverter) {
+                o = inputConverter.apply(s, o);
             }
-            Object value = replaceDataReferencesInObject(o,
+            Object value = replaceDataReferencesInObject(
+                    o,
                     currentContext,
                     viewMap,
                     converter,
                     data,
                     failOnUnexpanded,
-                    blankIfUnexpanded
+                    behavior
             );
-            output.put(s, outputConverter!=null?outputConverter.apply(s,value):value);
+            output.put(s, outputConverter != null ? outputConverter.apply(s, value) : value);
         }
         return output;
     }
@@ -559,6 +641,27 @@ public class SharedDataContextUtils {
             boolean blankIfUnexpanded
     )
     {
+        return replaceDataReferencesInObject(
+                o,
+                currentContext,
+                viewMap,
+                converter,
+                data,
+                failOnUnexpanded,
+                UnexpandableBehavior.fromBlankIfUnexpandable(blankIfUnexpanded)
+        );
+    }
+
+    public static <T extends ViewTraverse<T>> Object replaceDataReferencesInObject(
+            Object o,
+            final T currentContext,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            final MultiDataContext<T, DataContext> data,
+            boolean failOnUnexpanded,
+            UnexpandableBehavior unexpandableBehavior
+    )
+    {
         if (o instanceof String) {
             return replaceDataReferences(
                     (String) o,
@@ -567,18 +670,25 @@ public class SharedDataContextUtils {
                     viewMap,
                     converter,
                     failOnUnexpanded,
-                    blankIfUnexpanded
+                    unexpandableBehavior
             );
         } else if (o instanceof Map) {
             Map<String, Object> sub = (Map<String, Object>) o;
-            return replaceDataReferences(
+            // nested maps inherit a single behavior for all keys
+            Map<String, UnexpandableBehavior> nested = new HashMap<>();
+            for (String key : sub.keySet()) {
+                nested.put(key, unexpandableBehavior != null ? unexpandableBehavior : UnexpandableBehavior.BLANK);
+            }
+            return replaceDataReferencesWithBehavior(
                     sub,
                     currentContext,
                     viewMap,
                     converter,
                     data,
                     failOnUnexpanded,
-                    blankIfUnexpanded
+                    nested,
+                    null,
+                    null
             );
         } else if (o instanceof Collection) {
             ArrayList result = new ArrayList();
@@ -590,7 +700,7 @@ public class SharedDataContextUtils {
                         converter,
                         data,
                         failOnUnexpanded,
-                        blankIfUnexpanded
+                        unexpandableBehavior
                 ));
             }
             return result;

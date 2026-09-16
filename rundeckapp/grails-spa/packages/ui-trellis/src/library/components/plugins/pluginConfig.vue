@@ -71,6 +71,9 @@
         <span v-if="validation && !validation.valid" class="text-warning">
           <i class="fas fa-exclamation-circle"></i> {{ validationWarningText }}
         </span>
+        <div class="col-sm-12">
+          <slot name="extraProperties"></slot>
+        </div>
         <template v-for="prop in props" :key="prop.name">
           <span
             v-if="
@@ -79,6 +82,7 @@
               !isPropHidden(prop)
             "
             class="configprop"
+            :data-testid="`configprop-${prop.name}`"
           >
             <plugin-prop-view
               :prop="prop"
@@ -87,9 +91,6 @@
             />
           </span>
         </template>
-        <div class="col-sm-12">
-          <slot name="extraProperties"></slot>
-        </div>
       </div>
       <div
         v-else-if="isShowConfigForm && inputLoaded"
@@ -228,9 +229,7 @@ import { cleanConfigInput, convertArrayInput } from "../../modules/InputUtils";
 
 import { diff } from "deep-object-diff";
 
-import {
-  getPluginProvidersForService,
-} from "../../modules/pluginService";
+import { getPluginProvidersForService } from "../../modules/pluginService";
 
 interface PropGroup {
   name?: string;
@@ -295,8 +294,9 @@ export default defineComponent({
         this.showDescription !== null ? this.showDescription : true,
       inputValues: {} as any,
       inputSaved: {} as any,
-      inputSavedProps:
-        (typeof this.savedProps !== "undefined" ? this.savedProps : ["type"]) as string[] | null,
+      inputSavedProps: (typeof this.savedProps !== "undefined"
+        ? this.savedProps
+        : ["type"]) as string[] | null,
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },
@@ -545,7 +545,27 @@ export default defineComponent({
 
       this.props.forEach((prop: any) => {
         if (data.dynamicProps && data.dynamicProps[prop.name]) {
-          prop.allowed = data.dynamicProps[prop.name];
+          const dynamic = data.dynamicProps[prop.name];
+          const isValueLabelMap =
+            typeof dynamic === "object" && !Array.isArray(dynamic);
+
+          // Remember the labels the descriptor itself supplied. loadPluginData
+          // can run more than once over the same prop object, so labels
+          // derived from an earlier map must not survive into a later
+          // list-shaped load, and the descriptor's own labels must not be lost.
+          if (prop.descriptorSelectLabels === undefined) {
+            prop.descriptorSelectLabels = prop.selectLabels || null;
+          }
+
+          // A map arrives as { value: label }, e.g. ServiceNow urgency
+          // { "1": "1 - High" }. Iterating an object with v-for yields the
+          // labels, so the rendered option value would become "1 - High"
+          // instead of "1"; keep the map as the labels pluginPropVal renders
+          // and expose only the keys as the allowed values.
+          prop.selectLabels = isValueLabelMap
+            ? dynamic
+            : prop.descriptorSelectLabels || undefined;
+          prop.allowed = isValueLabelMap ? Object.keys(dynamic) : dynamic;
         }
         if (data.dynamicDefaults && data.dynamicDefaults[prop.name]) {
           prop.defaultValue = data.dynamicDefaults[prop.name];
