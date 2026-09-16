@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  administration: read
 
 jobs:
   notify:
@@ -23,6 +24,14 @@ jobs:
       # with write access could push an extra commit onto an already-approved,
       # still-open renovate PR before it merges. Require an APPROVED review recorded
       # against the exact merged head commit, not just "a review exists somewhere".
+      #
+      # Authorization is checked via each reviewer's actual repo permission
+      # (collaborators/{user}/permission), not `authorAssociation`. The
+      # built-in GITHUB_TOKEN has no org-membership visibility, so for any
+      # reviewer whose org membership is private, GitHub reports
+      # authorAssociation as NONE to this token even though a personally
+      # authenticated `gh` session correctly sees MEMBER/OWNER — that mismatch
+      # made this check fail deterministically for legitimate maintainers.
       - name: Verify approval for merged head
         shell: bash
         env:
@@ -42,23 +51,31 @@ jobs:
             exit 1
           fi
 
-          # author_association must be OWNER or MEMBER — anyone with a GitHub
-          # account can leave an "Approved" review on a public repo's PR, so an
-          # unfiltered state==APPROVED check could be satisfied by a reviewer
-          # outside the org, not just outside collaborators with repo access.
-          approved_for_head="$(
-            jq --arg head "${head_lc}" '
+          reviewers="$(
+            jq -r --arg head "${head_lc}" '
               [.reviews[]? | select(
                 .state == "APPROVED" and
-                (((.commit.oid // "") | ascii_downcase) == $head) and
-                (.authorAssociation == "OWNER" or .authorAssociation == "MEMBER")
-              )]
-              | length
+                (((.commit.oid // "") | ascii_downcase) == $head)
+              ) | .author.login] | unique[]
             ' <<<"${reviews_json}"
           )"
 
-          if [[ "${approved_for_head}" -lt 1 ]]; then
-            echo "PR #${PR_NUMBER} has no APPROVED review from an org member recorded for head ${HEAD_SHA}; refusing to sync." >&2
+          approved=false
+          while IFS= read -r login; do
+            [[ -z "${login}" ]] && continue
+            permission="$(
+              gh api "repos/${{ github.repository }}/collaborators/${login}/permission" \
+                --jq '.permission' 2>/dev/null || echo "none"
+            )"
+            echo "Reviewer ${login} has repo permission: ${permission}" >&2
+            if [[ "${permission}" == "admin" || "${permission}" == "maintain" || "${permission}" == "write" ]]; then
+              approved=true
+              break
+            fi
+          done <<<"${reviewers}"
+
+          if [[ "${approved}" != "true" ]]; then
+            echo "PR #${PR_NUMBER} has no APPROVED review from a collaborator with write access recorded for head ${HEAD_SHA}; refusing to sync." >&2
             exit 1
           fi
 
