@@ -142,4 +142,13 @@ public interface Property {
     public default String getUnexpandableBehaviorFrom() {
         return null;
     }
+
+    /**
+     * @return metadata describing this property as an exposed "output" value for conditional-logic
+     * reference (see {@code com.dtolabs.rundeck.plugins.descriptions.PluginOutput}), or null if this
+     * property is not exposed as an output value.
+     */
+    public default List<PluginOutputMetadata> getOutputMetadata() {
+        return null;
+    }
 }
