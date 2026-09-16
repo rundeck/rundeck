@@ -24,14 +24,12 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.data.BaseDataContext;
-import com.dtolabs.rundeck.core.data.DataContext;
-import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.data.UnexpandableBehavior;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.Converter;
@@ -44,7 +42,6 @@ import org.rundeck.app.spi.Services;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -154,8 +151,11 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
 
     /**
      * Write the resolved value of any property carrying {@code @PluginOutput} metadata into the
-     * step's shared data context, so it can be referenced by conditional-logic steps later in the
+     * step's output context, so it can be referenced by conditional-logic steps later in the
      * workflow (as {@code "<Step Label> - <Property Name>"}, resolved to {@code ${N:group.name}}).
+     * Uses {@link StepExecutionContext#getOutputContext()} (the same channel used by log-filter
+     * and node-executor output capture) rather than {@code getSharedDataContext()} directly, since
+     * that's what the workflow engine merges forward into subsequent steps' conditional evaluation.
      *
      * @param executionContext current step execution context
      * @param description      the plugin's description, providing property output metadata
@@ -170,11 +170,10 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
         if (description == null || description.getProperties() == null) {
             return;
         }
-        final MultiDataContext<ContextView, DataContext> sharedContext = executionContext.getSharedDataContext();
-        if (sharedContext == null) {
+        final SharedOutputContext outputContext = executionContext.getOutputContext();
+        if (outputContext == null) {
             return;
         }
-        final ContextView stepView = ContextView.step(executionContext.getStepNumber());
         for (final Property property : description.getProperties()) {
             final List<PluginOutputMetadata> outputMetadata = property.getOutputMetadata();
             if (outputMetadata == null || outputMetadata.isEmpty()) {
@@ -185,9 +184,7 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
                 continue;
             }
             for (final PluginOutputMetadata metadata : outputMetadata) {
-                final Map<String, String> data = new HashMap<>();
-                data.put(metadata.getName(), value.toString());
-                sharedContext.merge(stepView, new BaseDataContext(metadata.getGroup(), data));
+                outputContext.addOutput(metadata.getGroup(), metadata.getName(), value.toString());
             }
         }
     }

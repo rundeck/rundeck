@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
@@ -183,16 +184,18 @@ class StepPluginAdapterSpec extends Specification {
 
     }
 
-    def "captures resolved @PluginOutput property value into shared data context"() {
+    def "captures resolved @PluginOutput property value into the step output context"() {
         given:
         framework.frameworkServices = Mock(IFrameworkServices)
         def optionContext = new BaseDataContext([option: [:]])
         def shared = SharedDataContextUtils.sharedContext()
         shared.merge(ContextView.global(), optionContext)
+        def outputContext = new DataOutput(ContextView.step(3))
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
             getDataContext() >> optionContext
             getSharedDataContext() >> shared
+            getOutputContext() >> outputContext
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 3
         }
@@ -212,19 +215,21 @@ class StepPluginAdapterSpec extends Specification {
         1 * plugin.executeStep(!null as PluginStepContext, [:])
         result.isSuccess()
         wrap.environmentName == 'production'
-        shared.getData(ContextView.step(3)).getData() == [data: [environmentName: 'production']]
+        outputContext.getSharedContext().getData(ContextView.step(3)).getData() == [data: [environmentName: 'production']]
     }
 
-    def "does not write to shared data context when property has no @PluginOutput"() {
+    def "does not write to output context when property has no @PluginOutput"() {
         given:
         framework.frameworkServices = Mock(IFrameworkServices)
         def optionContext = new BaseDataContext([option: [:]])
         def shared = SharedDataContextUtils.sharedContext()
         shared.merge(ContextView.global(), optionContext)
+        def outputContext = new DataOutput(ContextView.step(3))
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
             getDataContext() >> optionContext
             getSharedDataContext() >> shared
+            getOutputContext() >> outputContext
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 3
         }
@@ -242,7 +247,7 @@ class StepPluginAdapterSpec extends Specification {
 
         then:
         result.isSuccess()
-        shared.getData(ContextView.step(3)) == null
+        outputContext.getSharedContext().getData(ContextView.step(3)) == null
     }
 
     @Plugin(name = "test4", service = ServiceNameConstants.WorkflowNodeStep)
