@@ -3250,11 +3250,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public void jobDefinitionNotifications(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         Collection<Notification> notificationSet=[]
         boolean replaceAll=false
+        boolean hasNotificationInput=false
         if(input){
+            hasNotificationInput=true
             if(input.notifications) {
                 notificationSet.addAll(input.notifications.collect{Notification.fromMap(it.eventTrigger,it.toMap())})
             }
         }else if(params.jobNotificationsJson){
+            hasNotificationInput=true
             def notificationsData = JSON.parse(params.jobNotificationsJson.toString())
             if(notificationsData instanceof JSONArray){
                 replaceAll=true
@@ -3266,19 +3269,40 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
+        // Only replace the notification set when the caller actually supplied notification
+        // input (an imported job definition, or jobNotificationsJson) -- otherwise leave the
+        // job's existing notifications untouched.
+        if (hasNotificationInput) {
+            List<Notification> candidates = []
+            notificationSet.each { Notification notif ->
+                notif.scheduledExecution = scheduledExecution
+                candidates << notif
+            }
+            replaceNotifications(scheduledExecution, candidates, params)
+        }
+    }
+
+    /**
+     * Replace scheduledExecution.notifications with the given candidates using GORM's own
+     * removeFromNotifications()/addToNotifications() bookkeeping -- see replaceOptions() for
+     * the full rationale. The old, removed Notification instances are stashed in params under
+     * '_removedNotifications' for two different, mutually-exclusive consumers depending on
+     * how the save turns out: on failure, _dosaveupdated()/_dosave() discard() each of them to
+     * undo any pending state from this reassignment; on success, they call
+     * deleteRemovedNotifications() to explicitly delete them, since (unlike 'options') the
+     * removeFromNotifications() bookkeeping alone does not reliably delete/orphan the row on
+     * its own (see deleteRemovedNotifications() for why).
+     */
+    private static void replaceNotifications(ScheduledExecution scheduledExecution, List<Notification> candidates, Map params) {
+        List<Notification> removed = []
         if (scheduledExecution.notifications) {
-            List<Notification> toDelete = []
-            scheduledExecution.notifications.each { Notification notif -> toDelete << notif }
-            toDelete.each {
-                it.delete()
+            new ArrayList<Notification>(scheduledExecution.notifications).each {
+                removed << it
                 scheduledExecution.removeFromNotifications(it)
             }
         }
-
-        notificationSet.each{Notification notif->
-            notif.scheduledExecution = scheduledExecution
-            scheduledExecution.addToNotifications(notif)
-        }
+        candidates?.each { scheduledExecution.addToNotifications(it) }
+        params?.put('_removedNotifications', removed)
     }
 
 
@@ -3304,9 +3328,76 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Execution.countByOrchestrator(orchestrator) > 0
     }
 
+    /**
+     * Replace scheduledExecution.options with the given candidates using GORM's own
+     * removeFromOptions()/addToOptions() bookkeeping methods, needed so that a plain
+     * collection reassignment or clear()+addAll() doesn't silently leave the old rows behind
+     * (neither reliably engages GORM's cascade/orphan-removal for this hasMany). The
+     * tradeoff: because 'options' belongsTo scheduledExecution, removeFromOptions() queues an
+     * immediate cascade-delete action against each removed Option -- same as calling
+     * option.delete() directly -- which a later discard() of the parent alone does NOT
+     * undo. The old, removed Option instances are therefore stashed in params under
+     * '_removedOptions' so that, if validation subsequently fails, the failure path can
+     * discard() each of them individually to cancel their pending delete before anything
+     * flushes (see _dosaveupdated()/_dosave()). Without that extra per-child discard(), this
+     * would reintroduce the exact bug this whole redesign exists to fix.
+     */
+    private static void replaceOptions(ScheduledExecution scheduledExecution, List<Option> candidates, Map params) {
+        List<Option> removed = []
+        if (scheduledExecution.options) {
+            new ArrayList<Option>(scheduledExecution.options).each {
+                removed << it
+                scheduledExecution.removeFromOptions(it)
+            }
+        }
+        if (candidates) {
+            candidates.each { scheduledExecution.addToOptions(it) }
+        } else {
+            // Match the pre-existing convention (previously in deleteExistingOptions()): no
+            // candidates leaves the field null rather than an empty Set.
+            scheduledExecution.options = null
+        }
+        params?.put('_removedOptions', removed)
+    }
+
+    /**
+     * Cancel the pending cascade-delete queued by replaceOptions()/replaceNotifications()
+     * against the old, removed Option/Notification rows. Must be called on every failure
+     * path in _dosaveupdated()/_dosave() (validation failure, authorization failure, or
+     * physical save failure) before returning -- removeFromOptions()/removeFromNotifications()
+     * register their delete immediately, and the parent scheduledExecution's own discard()
+     * does not undo it. Without this, a failed update/create still silently deletes the
+     * previously-saved options/notifications.
+     */
+    private static void discardRemovedOptionsAndNotifications(Map params) {
+        (params?.get('_removedOptions') as List<Option>)?.each { it.discard() }
+        (params?.get('_removedNotifications') as List<Notification>)?.each { it.discard() }
+    }
+
+    /**
+     * Explicitly delete the old, removed Notification rows stashed by replaceNotifications()
+     * in params['_removedNotifications']. Only safe to call once the enclosing save is known
+     * to have succeeded (never followed by a discard() of these same instances -- calling
+     * delete() and later discard() on the same entity corrupts the Hibernate session with
+     * "possible nonthreadsafe access to session").
+     *
+     * This is needed because, unlike 'options', the 'notifications' association is mapped
+     * with a 'sort' order (see ScheduledExecution's mapping block), and GORM's
+     * removeFromNotifications() bookkeeping alone does not reliably flush an actual DB change
+     * for the removed side of that association -- verified directly against the DB: the old
+     * row survives with its original, unchanged foreign key rather than being deleted or
+     * orphaned. An explicit delete(flush: true) here, run only after success, closes that gap
+     * without reopening the original bug (there is no later discard() to conflict with it) --
+     * the immediate flush is required: a plain delete() alone was not reliably applied before
+     * the enclosing method returned.
+     */
+    private static void deleteRemovedNotifications(Map params) {
+        (params?.get('_removedNotifications') as List<Notification>)?.each { it.delete(flush: true) }
+    }
+
     public void jobDefinitionOptions(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         if(input){
-            deleteExistingOptions(scheduledExecution)
+            List<Option> candidates = []
             input.options?.each {Option theopt ->
                 theopt.convertValuesList()
                 Option newopt = theopt.createClone()
@@ -3314,33 +3405,36 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if(theopt.errors.hasErrors()){
                     newopt.errors.addAllErrors(theopt.errors)
                 }
-                scheduledExecution.addToOptions(newopt)
                 newopt.scheduledExecution = scheduledExecution
+                candidates << newopt
             }
+            replaceOptions(scheduledExecution, candidates, params)
         } else if(params.jobOptionsJson){
-            deleteExistingOptions(scheduledExecution)
+            List<Option> candidates = []
             def optsData = JSON.parse(params.jobOptionsJson.toString())
             if(optsData instanceof JSONArray){
                 for(Object item: optsData){
                     if(item instanceof JSONObject){
                         def theopt=Option.fromMap(item.name, item)
                         theopt.convertValuesList()
-                        scheduledExecution.addToOptions(theopt)
                         theopt.scheduledExecution = scheduledExecution
+                        candidates << theopt
                     }
                 }
             }
+            replaceOptions(scheduledExecution, candidates, params)
         }else if (params['_sessionopts'] && null != params['_sessionEditOPTSObject']) {
-            deleteExistingOptions(scheduledExecution)
+            List<Option> candidates = []
             def optsmap = params['_sessionEditOPTSObject']
             optsmap.values().each { Option opt ->
                 opt.convertValuesList()
                 Option newopt = opt.createClone()
-                scheduledExecution.addToOptions(newopt)
                 newopt.scheduledExecution = scheduledExecution
+                candidates << newopt
             }
+            replaceOptions(scheduledExecution, candidates, params)
         } else if (params.options) {
-            deleteExistingOptions(scheduledExecution)
+            List<Option> candidates = []
             //set user options:
             def i = 0;
             if (params.options instanceof Collection) {
@@ -3353,8 +3447,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     if(origopt.errors.hasErrors()){
                         theopt.errors.addAllErrors(origopt.errors)
                     }
-                    scheduledExecution.addToOptions(theopt)
                     theopt.scheduledExecution = scheduledExecution
+                    candidates << theopt
 
                     i++
                 }
@@ -3362,46 +3456,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 while (params.options["options[${i}]"]) {
                     Map optdefparams = params.options["options[${i}]"]
                     Option theopt = new Option(optdefparams)
-                    scheduledExecution.addToOptions(theopt)
                     theopt.scheduledExecution = scheduledExecution
+                    candidates << theopt
                     i++
                 }
             }
-        }
-    }
-
-    /**
-     *Remove and delete all existing options from a scheduledExecution, setting options param to null
-     * @param scheduledExecution
-     */
-    public void deleteExistingOptions(ScheduledExecution scheduledExecution) {
-        if (scheduledExecution.options) {
-            def todelete = []
-            scheduledExecution.options.each {
-                todelete << it
-            }
-            todelete.each {
-                scheduledExecution.removeFromOptions(it)
-                it.delete()
-            }
-            scheduledExecution.options = null
-        }
-    }
-
-    /**
-     *Remove and delete all existing notifications from a scheduledExecution
-     * @param scheduledExecution
-     */
-    public void deleteExistingNotification(ScheduledExecution scheduledExecution) {
-        if (scheduledExecution.notifications) {
-            def todelete = []
-            scheduledExecution.notifications.each {
-                todelete << it
-            }
-            todelete.each {
-                scheduledExecution.removeFromNotifications(it)
-                it.delete()
-            }
+            replaceOptions(scheduledExecution, candidates, params)
         }
     }
 
@@ -3633,8 +3693,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 !it.key.startsWith( 'nodeExclude')
             }
         }else{
-            deleteExistingOptions(scheduledExecution)
-            deleteExistingNotification(scheduledExecution)
+            // Existing options/notifications are intentionally NOT cleared here -- that's
+            // handled by jobDefinitionOptions()/jobDefinitionNotifications() via
+            // replaceOptions()/replaceNotifications() (GORM's removeFromX()/addToX()
+            // bookkeeping, not an explicit early delete), so a failed update never loses the
+            // previously-saved values.
             // Exclude audit/system fields to prevent imported jobs from overwriting creator/dates.
             // NOTE: || !input.properties[it] must be INSIDE the parens — lower precedence than &&
             // would otherwise bypass the EXCLUDED_AUDIT_FIELDS check for null-valued properties.
@@ -3744,6 +3807,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Map validation=[:]
         def failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
         if (failed) {
+            discardRemovedOptionsAndNotifications(params)
             if( scheduledExecution.hasSecureOptions() && validation.containsKey("job-queue") ){
                 def message = 'Job Queueing is not supported in jobs with secure options.'
                 throw new Exception(message)
@@ -3768,6 +3832,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             actions += [AuthConstants.ACTION_SCM_UPDATE]
         }
         if (!rundeckAuthContextProcessor.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution.project)) {
+            discardRemovedOptionsAndNotifications(params)
             scheduledExecution.discard()
             return [success: false, error: "Unauthorized: Update Job ${scheduledExecution.generateFullName()}",
                     unauthorized: true, scheduledExecution: scheduledExecution]
@@ -3830,9 +3895,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         // createdBy is intentionally not updated here — it is set once at creation and must not change
 
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
+            discardRemovedOptionsAndNotifications(params)
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
         }
+        deleteRemovedNotifications(params)
 
         rundeckJobDefinitionManager.waspersisted(importedJob, authContext)
 
@@ -3891,6 +3958,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
         //try to save workflow
         if(failed){
+            discardRemovedOptionsAndNotifications(params)
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution, error: "Validation failed", validation: validation]
         }
@@ -3900,6 +3968,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if (!rundeckAuthContextProcessor.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution
                 .project)) {
+            discardRemovedOptionsAndNotifications(params)
             scheduledExecution.discard()
             return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}",
                     unauthorized: true, scheduledExecution: scheduledExecution]
@@ -3942,9 +4011,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (!(resultFromPlugin.success && !failed && scheduledExecution.save(flush: true))) {
+            discardRemovedOptionsAndNotifications(params)
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
         }
+        deleteRemovedNotifications(params)
 
         rundeckJobDefinitionManager.waspersisted(importedJob, authContext)
 
