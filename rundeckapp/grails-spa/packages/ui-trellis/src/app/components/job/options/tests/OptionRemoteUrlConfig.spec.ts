@@ -55,7 +55,7 @@ describe("OptionRemoteUrlConfig", () => {
         ),
       );
 
-      let section = wrapper.get(`[data-test=option.${fieldName}]`);
+      let section = wrapper.get(`[data-test="option-${fieldName}"]`);
       expect(section.classes()).toContain("has-error");
       let errorslist = section.get("div.help-block errorslist");
       expect(errorslist.attributes()["errors"]).toContain("error1");
