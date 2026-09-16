@@ -32,6 +32,7 @@
                 appAdmin: appAdmin,
                 currentUser: session.user
         ]"/>
+        <asset:stylesheet src="static/css/pages/user-list.css"/>
         <asset:javascript src="static/pages/user-list.js" defer="defer"/>
         <g:javascript>
             window._rundeck.data = Object.assign(window._rundeck.data || {}, {
