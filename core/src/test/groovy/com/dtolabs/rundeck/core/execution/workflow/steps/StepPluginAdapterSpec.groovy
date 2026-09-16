@@ -15,6 +15,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.descriptions.PluginOutput
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
@@ -180,6 +181,84 @@ class StepPluginAdapterSpec extends Specification {
         [b:'Bval',c:'Cval',d:'Dval\"with quotes\"'] | [akey: 'plain', bkey: 'some Bval value', ckey: 'Cval',dkey:'Dval\"with quotes\"']
 
 
+    }
+
+    def "captures resolved @PluginOutput property value into shared data context"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+            getStepNumber() >> 3
+        }
+        def plugin = Mock(StepPlugin)
+        def wrap = new Test4Plugin(impl: plugin)
+        def adapter = new StepPluginAdapter(wrap)
+        def config = [environmentName: 'production']
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: config,
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeWorkflowStep(context, item)
+
+        then:
+        1 * plugin.executeStep(!null as PluginStepContext, [:])
+        result.isSuccess()
+        wrap.environmentName == 'production'
+        shared.getData(ContextView.step(3)).getData() == [data: [environmentName: 'production']]
+    }
+
+    def "does not write to shared data context when property has no @PluginOutput"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+            getStepNumber() >> 3
+        }
+        def plugin = Mock(StepPlugin)
+        def wrap = new Test2Plugin(impl: plugin)
+        def adapter = new StepPluginAdapter(wrap)
+        def config = [test: 'somevalue']
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: config,
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeWorkflowStep(context, item)
+
+        then:
+        result.isSuccess()
+        shared.getData(ContextView.step(3)) == null
+    }
+
+    @Plugin(name = "test4", service = ServiceNameConstants.WorkflowNodeStep)
+    static class Test4Plugin implements StepPlugin {
+        StepPlugin impl
+
+        @PluginProperty(title = "Environment Name",
+                description = "test",
+                defaultValue = "test")
+        @PluginOutput(name = "environmentName", description = "Exposed for conditional logic")
+        private String environmentName
+
+        @Override
+        void executeStep(PluginStepContext context, Map<String, Object> configuration) throws StepException {
+            impl.executeStep(context, configuration)
+        }
     }
 
     static class TestPlugin implements StepPlugin, Describable {

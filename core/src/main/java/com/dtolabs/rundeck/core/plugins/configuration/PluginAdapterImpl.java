@@ -306,6 +306,17 @@ public class PluginAdapterImpl
             pbuild.renderingOption(renderingOption.key(), renderingOption.value());
         }
 
+        PluginOutput[] pluginOutputs = field.getAnnotationsByType(PluginOutput.class);
+        if (pluginOutputs.length > 0) {
+            List<PluginOutputMetadata> outputMetadata = new ArrayList<>();
+            for (PluginOutput pluginOutput : pluginOutputs) {
+                outputMetadata.add(
+                        new PluginOutputMetadata(pluginOutput.group(), pluginOutput.name(), pluginOutput.description())
+                );
+            }
+            pbuild.outputMetadata(outputMetadata);
+        }
+
         String name = annotation.name();
         if (null == name || "".equals(name)) {
             name = field.getName();
