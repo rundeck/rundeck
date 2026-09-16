@@ -420,6 +420,32 @@ class GitImportPluginSpec extends Specification {
         plugin.importTracker.trackedPath('deleted-job') == null
     }
 
+    def "local reconciliation removes stale jobs and preserves current jobs"() {
+        given:
+        def plugin = new GitImportPlugin(Mock(Import), [])
+        def currentJob = Stub(JobScmReference) {
+            getId() >> 'current-job'
+            getScmImportMetadata() >> [commitId: 'current-commit']
+        }
+        def deletedJob = Stub(JobScmReference) {
+            getId() >> 'deleted-job'
+            getScmImportMetadata() >> [commitId: 'deleted-commit']
+        }
+        plugin.jobStateMap['current-job'] = [synch: ImportSynchState.CLEAN, path: 'current.xml']
+        plugin.jobStateMap['deleted-job'] = [synch: ImportSynchState.DELETE_NEEDED, path: 'deleted.xml']
+        plugin.importTracker.trackJobAtPath(currentJob, 'current.xml')
+        plugin.importTracker.trackJobAtPath(deletedJob, 'deleted.xml')
+
+        when:
+        plugin.reconcileJobState(['current-job'] as Set<String>)
+
+        then:
+        plugin.jobStateMap.keySet() == ['current-job'] as Set
+        plugin.importTracker.trackedPaths() == ['current.xml'] as Set
+        plugin.importTracker.trackedPath('current-job') == 'current.xml'
+        plugin.importTracker.trackedPath('deleted-job') == null
+    }
+
     def "perform pull on clean state withouth npe"() {
         given:
         def projectName = 'GitImportPluginSpec'

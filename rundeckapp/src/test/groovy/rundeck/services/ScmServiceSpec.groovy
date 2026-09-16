@@ -43,6 +43,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
+import org.hibernate.ObjectNotFoundException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -892,6 +893,41 @@ class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService
 
         1 * plugin.clusterFixJobs(_,_,_)>> [:]
         1 * plugin.getJobStatus(_,_)>> Mock(JobState)
+    }
+
+    def "fix import status reconciles an empty project without remote cluster fix"() {
+        given:
+        def project = "test"
+        def plugin = Mock(ScmImportPlugin)
+        service.frameworkService = Stub(FrameworkService) {
+            isClusterModeEnabled() >> false
+        }
+        service.pluginConfigService = Stub(PluginConfigService) {
+            loadScmConfig(_, _, _) >> Stub(ScmPluginConfigData) {
+                getEnabled() >> true
+            }
+        }
+        service.initedProjects << "import/" + project
+        service.loadedImportPlugins[project] = Closeables.closeableProvider(plugin)
+
+        when:
+        service.fixImportStatus(Mock(UserAndRolesAuthContext), project, [])
+
+        then:
+        1 * plugin.reconcileJobState([] as Set)
+        0 * plugin.clusterFixJobs(_, _, _)
+    }
+
+    def "get jobs plugin metadata returns empty map for stale cached entity"() {
+        given:
+        service.jobMetadataService = Mock(JobMetadataService) {
+            getJobsPluginMeta("test", "scm-import") >> {
+                throw new ObjectNotFoundException(123L, "PluginMeta")
+            }
+        }
+
+        expect:
+        service.getJobsPluginMeta("test", "scm-import") == [:]
     }
 
     def "get job plugin meta"(){

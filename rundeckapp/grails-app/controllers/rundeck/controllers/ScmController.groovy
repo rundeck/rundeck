@@ -989,6 +989,11 @@ Since: v15''',
                 def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, isExport)
                 //relaod all jobs to get project status
                 scmService.exportStatusForJobs(params.project, authContext, jobs.schedlist, true, jobsPluginMeta)
+            } else {
+                scmService.reconcileImportJobState(
+                    params.project,
+                    scheduledExecutionService.listJobsForProjectUncached(params.project)
+                )
             }
         }
 
@@ -1231,7 +1236,7 @@ Since: v15''',
                 item.status = ImportSynchState.IMPORT_NEEDED
                 if(item.job){
                     if(item.job.jobId){
-                        def se = ScheduledExecution.findByUuid(item.job.jobId)
+                        def se = ScheduledExecution.getByIdOrUUID(item.job.jobId)
                         if(se){
                             def status = scmService.importStatusForJob(se)
                             item.status = status?.get(item.job.jobId).synchState

@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Plugin for importing job definitions from a Source control repository
@@ -212,6 +213,15 @@ public interface ScmImportPlugin {
      */
     default Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
         return null;
+    }
+
+    /**
+     * Reconcile node-local plugin state against the authoritative set of current
+     * Rundeck job IDs. Implementations should not perform remote SCM operations.
+     *
+     * @param currentJobIds current Rundeck job IDs for the project
+     */
+    default void reconcileJobState(Set<String> currentJobIds) {
     }
 
     /**

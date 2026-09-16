@@ -1366,7 +1366,7 @@ class ScmService {
     Map<String, JobImportState> importStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs,  boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
         def status = [:]
         def clusterMode = frameworkService.isClusterModeEnabled()
-        if(jobs && jobs.size()>0 && clusterMode && runClusterFix ){
+        if(clusterMode && runClusterFix ){
             fixImportStatus(auth,project,jobs)
         }
         def plugin = getLoadedImportPluginFor project
@@ -1605,10 +1605,31 @@ class ScmService {
         }
     }
 
-    public fixImportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs){
-        if(jobs && jobs.size()>0){
-            def plugin = getLoadedImportPluginFor project
-            if(plugin) {
+    /**
+     * Reconcile node-local import state without performing remote SCM operations.
+     *
+     * @param project project name
+     * @param jobs authoritative current project jobs
+     */
+    void reconcileImportJobState(String project, List<ScheduledExecution> jobs) {
+        def plugin = getLoadedImportPluginFor project
+        if (plugin) {
+            plugin.reconcileJobState((jobs ?: [])*.extid.findAll { it } as Set<String>)
+        }
+    }
+
+    /**
+     * Reconcile import state and perform the full cluster fix when jobs exist.
+     *
+     * @param auth authorization context
+     * @param project project name
+     * @param jobs authoritative current project jobs
+     */
+    void fixImportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs){
+        def plugin = getLoadedImportPluginFor project
+        if(plugin) {
+            plugin.reconcileJobState((jobs ?: [])*.extid.findAll { it } as Set<String>)
+            if (jobs) {
                 def context = scmOperationContext(auth, project)
                 def joblist = scmJobRefsForJobs(jobs)
                 def originalPaths = joblist.collectEntries{[it.id,getRenamedPathForJobId(it.project, it.id)]}
@@ -1646,9 +1667,10 @@ class ScmService {
     Map<String, Map> getJobsPluginMeta(String project, String type){
         try{
             List jobsPluginMeta = jobMetadataService.getJobsPluginMeta(project, type)
-            jobsPluginMeta.collectEntries{[it.key.replace("/" + type,""),it.pluginData]}
+            (jobsPluginMeta ?: []).collectEntries{[it.key.replace("/" + type,""),it.pluginData]}
         }catch(ObjectNotFoundException ignored){
             log.debug("No jobs plugin metadata found")
+            [:]
         }
     }
 
