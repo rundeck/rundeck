@@ -971,8 +971,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             NamingException {
         // Normalize username to lowercase if feature is enabled
         final String normalizedUsername = normalizeUsername(username);
-        
-        final String cacheToken = PasswordCredential.md5Digest(normalizedUsername + ":" + password.toString());
+
+        // password arrives as a char[] via the standard JAAS PasswordCallback path (e.g. Spring
+        // Security's JAAS bridge); Object.toString() on an array is identity-based and differs per
+        // instance even for equal content, which made the cache key never match across requests.
+        final String passwordString = password instanceof char[] ? new String((char[]) password) : password.toString();
+        final String cacheToken = PasswordCredential.md5Digest(normalizedUsername + ":" + passwordString);
         if (_cacheDuration > 0) { // only worry about caching if there is a cacheDuration set.
             CachedUserInfo cached = USERINFOCACHE.get(cacheToken);
             if (cached != null) {
