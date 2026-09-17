@@ -31,7 +31,9 @@ describe("WorkflowEditWarning", () => {
     it("does not render the warning when mounted", async () => {
       const wrapper = await createWrapper();
 
-      expect(wrapper.find('[data-testid="workflow-edit-warning"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="workflow-edit-warning"]').exists(),
+      ).toBe(false);
     });
   });
 
@@ -60,28 +62,40 @@ describe("WorkflowEditWarning", () => {
     it("shows the warning when workflow-editing-state-changed fires with isEditing true", async () => {
       const wrapper = await createWrapper();
 
-      getRundeckContext().eventBus.emit("workflow-editing-state-changed", { isEditing: true });
+      getRundeckContext().eventBus.emit("workflow-editing-state-changed", {
+        isEditing: true,
+      });
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.find('[data-testid="workflow-edit-warning"]').exists()).toBe(true);
+      expect(
+        wrapper.find('[data-testid="workflow-edit-warning"]').exists(),
+      ).toBe(true);
     });
 
     it("hides the warning after isEditing transitions back to false", async () => {
       const wrapper = await createWrapper();
 
-      getRundeckContext().eventBus.emit("workflow-editing-state-changed", { isEditing: true });
+      getRundeckContext().eventBus.emit("workflow-editing-state-changed", {
+        isEditing: true,
+      });
       await wrapper.vm.$nextTick();
 
-      getRundeckContext().eventBus.emit("workflow-editing-state-changed", { isEditing: false });
+      getRundeckContext().eventBus.emit("workflow-editing-state-changed", {
+        isEditing: false,
+      });
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.find('[data-testid="workflow-edit-warning"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="workflow-edit-warning"]').exists(),
+      ).toBe(false);
     });
 
     it("renders the i18n warning message key when visible", async () => {
       const wrapper = await createWrapper();
 
-      getRundeckContext().eventBus.emit("workflow-editing-state-changed", { isEditing: true });
+      getRundeckContext().eventBus.emit("workflow-editing-state-changed", {
+        isEditing: true,
+      });
       await wrapper.vm.$nextTick();
 
       expect(wrapper.find('[data-testid="workflow-edit-warning"]').text()).toBe(

@@ -154,12 +154,14 @@ export default defineComponent({
     this.intOptions = cloneDeep(this.optionsData.options);
     this.updateIndexes();
     this.fileUploadPluginType = this.optionsData.fileUploadPluginType;
-    pluginService.getPluginProvidersForService("OptionValues").then((data: { service?: string; descriptions?: any; labels?: any }) => {
-      if (data.service) {
-        this.providers = data.descriptions;
-        this.providerLabels = data.labels;
-      }
-    });
+    pluginService
+      .getPluginProvidersForService("OptionValues")
+      .then((data: { service?: string; descriptions?: any; labels?: any }) => {
+        if (data.service) {
+          this.providers = data.descriptions;
+          this.providerLabels = data.labels;
+        }
+      });
     this.localEB.on("undo", this.doUndo);
     this.localEB.on("redo", this.doRedo);
     this.localEB.on("revertAll", this.doRevertAll);
@@ -296,7 +298,10 @@ export default defineComponent({
     },
     doUndo(change: ChangeEvent) {
       this.operation(change.undo, {
-        index: (change.dest !== undefined && change.dest >= 0) ? change.dest : change.index,
+        index:
+          change.dest !== undefined && change.dest >= 0
+            ? change.dest
+            : change.index,
         dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
         value: change.orig || change.value,
       });

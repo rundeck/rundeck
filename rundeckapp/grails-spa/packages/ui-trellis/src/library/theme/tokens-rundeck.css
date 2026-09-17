@@ -1,40 +1,40 @@
 :root {
-    --colors-blue-50: #F5F9FF;
-    --colors-blue-100:  #DCE6FB;
-    --colors-blue-100-original: #BEE3F8;
-    --colors-blue-500: #285ED2;
-    --colors-blue-600:  #1248BD;
-    --colors-blue-600-original: #003F9C;
-    --colors-gray-100: #FAFAFA;
-    --colors-gray-300: #E4E4E7;
-    --colors-gray-300-original: #CBD5E0;
-    --colors-gray-400: #D4D4D8;
-    --colors-gray-500: #A1A1AA;
-    --colors-gray-600: #71717A;
-    --colors-gray-800-original: #1A202C;
-    --colors-gray-800: #27272A;
-    --colors-gray-900:  #18181B;
-    --colors-green-100: #D6E4DB;
-    --colors-green-600: #149343;
-    --colors-orange-100: #FEE8D8;
-    --colors-orange-600: #E36914;
-    --colors-red-100: #FADCDC;
-    --colors-red-500: #DE3434;
-    --colors-red-600: #C12121;
+  --colors-blue-50: #f5f9ff;
+  --colors-blue-100: #dce6fb;
+  --colors-blue-100-original: #bee3f8;
+  --colors-blue-500: #285ed2;
+  --colors-blue-600: #1248bd;
+  --colors-blue-600-original: #003f9c;
+  --colors-gray-100: #fafafa;
+  --colors-gray-300: #e4e4e7;
+  --colors-gray-300-original: #cbd5e0;
+  --colors-gray-400: #d4d4d8;
+  --colors-gray-500: #a1a1aa;
+  --colors-gray-600: #71717a;
+  --colors-gray-800-original: #1a202c;
+  --colors-gray-800: #27272a;
+  --colors-gray-900: #18181b;
+  --colors-green-100: #d6e4db;
+  --colors-green-600: #149343;
+  --colors-orange-100: #fee8d8;
+  --colors-orange-600: #e36914;
+  --colors-red-100: #fadcdc;
+  --colors-red-500: #de3434;
+  --colors-red-600: #c12121;
 
-    /* Background colors */
-    --colors-secondaryBackgroundOnLight: #f7fafc;
-    --colors-cardNumber: #EDF2F7;
-    --colors-surface-200: #EEEEEE;
+  /* Background colors */
+  --colors-secondaryBackgroundOnLight: #f7fafc;
+  --colors-cardNumber: #edf2f7;
+  --colors-surface-200: #eeeeee;
 
-    /* Menu colors */
-    --colors-menuitem-color: #495057;
+  /* Menu colors */
+  --colors-menuitem-color: #495057;
 
-    /* Typography line-heights */
-    --lineHeights-heading-lg: 1.3125rem;  /* 21px */
-    --lineHeights-body-compact: 0.875rem; /* 14px */
-    --lineHeights-button: 1.0625rem;      /* 17px */
+  /* Typography line-heights */
+  --lineHeights-heading-lg: 1.3125rem; /* 21px */
+  --lineHeights-body-compact: 0.875rem; /* 14px */
+  --lineHeights-button: 1.0625rem; /* 17px */
 
-    /* Query match highlighting */
-    --colors-yellow-200: #FFF3B2;
+  /* Query match highlighting */
+  --colors-yellow-200: #fff3b2;
 }

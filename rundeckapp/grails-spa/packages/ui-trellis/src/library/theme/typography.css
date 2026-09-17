@@ -10,7 +10,7 @@
 .text-display {
   font-family: Inter, var(--fonts-body2);
   font-size: 24px;
-  font-weight: var(--fontWeights-medium);  /* 500 */
+  font-weight: var(--fontWeights-medium); /* 500 */
   line-height: normal;
   color: var(--colors-black);
 }
@@ -22,7 +22,7 @@
 .text-heading--lg {
   font-family: Inter, var(--fonts-body2);
   font-size: 20px;
-  font-weight: var(--fontWeights-medium);  /* 500 */
+  font-weight: var(--fontWeights-medium); /* 500 */
   line-height: 21px;
   color: var(--colors-black);
 }
@@ -30,7 +30,7 @@
 .text-heading--md {
   font-family: Inter, var(--fonts-body2);
   font-size: 16px;
-  font-weight: var(--fontWeights-medium);  /* 500 */
+  font-weight: var(--fontWeights-medium); /* 500 */
   line-height: normal;
   color: var(--colors-black);
 }
@@ -40,7 +40,7 @@
   font-size: 14px;
   font-weight: var(--fontWeights-semibold); /* 600 */
   line-height: 21px;
-  color: var(--colors-gray-800);  /* #1A202C */
+  color: var(--colors-gray-800); /* #1A202C */
 }
 
 /* ============================================
@@ -52,7 +52,7 @@
   font-size: 16px;
   font-weight: var(--fontWeights-regular); /* 400 */
   line-height: 14px;
-  color: var(--colors-gray-600);  /* #4A5568 */
+  color: var(--colors-gray-600); /* #4A5568 */
 }
 
 .text-body {
@@ -60,7 +60,7 @@
   font-size: 14px;
   font-weight: var(--fontWeights-regular); /* 400 */
   line-height: 14px;
-  color: var(--colors-gray-800);  /* #1A202C or #27272A */
+  color: var(--colors-gray-800); /* #1A202C or #27272A */
 }
 
 .text-body--sm {
@@ -68,7 +68,7 @@
   font-size: 12px;
   font-weight: var(--fontWeights-regular); /* 400 */
   line-height: 21px;
-  color: var(--colors-gray-800);  /* #1A202C */
+  color: var(--colors-gray-800); /* #1A202C */
 }
 
 /* ============================================
@@ -78,7 +78,7 @@
 .text-button {
   font-family: Inter, var(--fonts-body2);
   font-size: 14px;
-  font-weight: var(--fontWeights-bold);    /* 700 */
+  font-weight: var(--fontWeights-bold); /* 700 */
   line-height: 17px;
 }
 
@@ -89,7 +89,7 @@
 
 .text-heading--bold,
 .text-body--bold {
-  font-weight: var(--fontWeights-bold);    /* 700 */
+  font-weight: var(--fontWeights-bold); /* 700 */
 }
 
 .text-heading--semibold,
@@ -99,7 +99,7 @@
 
 .text-heading--medium,
 .text-body--medium {
-  font-weight: var(--fontWeights-medium);  /* 500 */
+  font-weight: var(--fontWeights-medium); /* 500 */
 }
 
 /* ============================================
@@ -107,15 +107,17 @@
    ============================================ */
 
 .text-body--secondary {
-  color: var(--colors-gray-600);  /* #71717A from tokens-rundeck - for descriptions */
+  color: var(
+    --colors-gray-600
+  ); /* #71717A from tokens-rundeck - for descriptions */
 }
 
 .text-body--muted {
-  color: var(--colors-gray-500);  /* #647487 - for placeholders */
+  color: var(--colors-gray-500); /* #647487 - for placeholders */
 }
 
 .text-body--primary {
-  color: var(--colors-blue-500);  /* #0052CC from tokens - for links */
+  color: var(--colors-blue-500); /* #0052CC from tokens - for links */
 }
 
 /* ============================================
