@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.data.UnexpandableBehavior;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.Converter;
@@ -40,7 +41,8 @@ import org.rundeck.app.spi.Services;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
+import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
 
 
@@ -115,7 +117,10 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
                 ServiceNameConstants.WorkflowStep,
                 providerName
         );
-        Map<String, Object>  config = PluginAdapterUtility.configureProperties(resolver, getDescription(),plugin, PropertyScope.InstanceOnly);
+        final Description description = getDescription();
+        Map<String, Object>  config = PluginAdapterUtility.configureProperties(resolver, description,plugin, PropertyScope.InstanceOnly);
+
+        captureOutputMetadataValues(executionContext, description, config);
 
         try {
             plugin.executeStep(stepContext, config);
@@ -142,6 +147,68 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
             return new StepExecutionResultImpl(e, StepFailureReason.PluginFailed, e.getMessage());
         }
         return new StepExecutionResultImpl();
+    }
+
+    /**
+     * Write the resolved value of any property carrying {@code @PluginOutput} metadata into the
+     * step's output context, so it can be referenced by conditional-logic steps later in the
+     * workflow (as {@code "<Step Label> - <Property Name>"}, resolved to {@code ${N:group.name}}).
+     * Uses {@link StepExecutionContext#getOutputContext()} (the same channel used by log-filter
+     * and node-executor output capture) rather than {@code getSharedDataContext()} directly, since
+     * that's what the workflow engine merges forward into subsequent steps' conditional evaluation.
+     *
+     * @param executionContext current step execution context
+     * @param description      the plugin's description, providing property output metadata
+     * @param config           the resolved/expanded instance configuration for this step
+     */
+    private void captureOutputMetadataValues(
+            final StepExecutionContext executionContext,
+            final Description description,
+            final Map<String, Object> config
+    )
+    {
+        if (description == null || description.getProperties() == null) {
+            return;
+        }
+        final SharedOutputContext outputContext = executionContext.getOutputContext();
+        if (outputContext == null) {
+            return;
+        }
+        for (final Property property : description.getProperties()) {
+            final List<PluginOutputMetadata> outputMetadata = property.getOutputMetadata();
+            if (outputMetadata == null || outputMetadata.isEmpty()) {
+                continue;
+            }
+            final Object value = resolvePropertyValue(property, config);
+            if (value == null) {
+                continue;
+            }
+            for (final PluginOutputMetadata metadata : outputMetadata) {
+                outputContext.addOutput(metadata.getGroup(), metadata.getName(), value.toString());
+            }
+        }
+    }
+
+    /**
+     * Resolve a property's configured value. Properties that map to an actual field on the plugin
+     * instance are set directly on that field (and removed from the returned instance configuration
+     * map) by {@link PluginAdapterUtility#configureProperties}, so the value is read back off the
+     * plugin instance's field in that (common) case; otherwise it's read from the leftover config map.
+     */
+    private Object resolvePropertyValue(final Property property, final Map<String, Object> config) {
+        if (config != null && config.containsKey(property.getName())) {
+            return config.get(property.getName());
+        }
+        final Field field = new PluginAdapterImpl().fieldForPropertyName(property.getName(), plugin);
+        if (field == null) {
+            return null;
+        }
+        try {
+            field.setAccessible(true);
+            return field.get(plugin);
+        } catch (IllegalAccessException e) {
+            return null;
+        }
     }
 
 
