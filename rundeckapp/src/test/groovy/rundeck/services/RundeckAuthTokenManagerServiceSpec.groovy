@@ -103,6 +103,38 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
 
     }
 
+    def "importWebhookToken existing SECURED token"() {
+        given:
+            service.apiService = Mock(ApiService)
+            def provider = new GormTokenDataProvider()
+            mockDataService(AuthTokenDataService)
+            provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
+            service.tokenDataProvider = provider
+
+            User user1 = new User(login: 'auser')
+            user1.save()
+            String clearToken = '456'
+            AuthToken existing = new AuthToken(
+                token: clearToken,
+                authRoles: 'a,b',
+                user: user1,
+                type: AuthTokenType.WEBHOOK,
+                tokenMode: AuthTokenMode.SECURED
+            )
+            existing.save(flush: true)
+            def auth = Mock(UserAndRolesAuthContext)
+            def user = 'auser'
+            def roles = new HashSet(['a', 'b', 'c'])
+        when:
+            service.importWebhookToken(auth, clearToken, user, roles)
+        then:
+            AuthToken updated = AuthToken.get(existing.id)
+            updated.authRoles == 'a,b,c'
+            1 * service.apiService.checkTokenAuthorization(auth, 'auser', roles) >>
+            new ApiService.TokenRolesAuthCheck(authorized: true, roles: roles, user: user)
+            0 * service.apiService.createUserToken(auth, 0, clearToken, user, roles, false, AuthTokenType.WEBHOOK)
+    }
+
     def "importWebhookToken existing user token"() {
         given:
             service.apiService = Mock(ApiService)
