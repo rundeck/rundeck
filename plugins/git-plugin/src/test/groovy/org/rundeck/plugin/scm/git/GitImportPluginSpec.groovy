@@ -387,39 +387,6 @@ class GitImportPluginSpec extends Specification {
         plugin.importTracker.trackedPath('123') == null
     }
 
-    def "cluster reconciliation removes state for jobs deleted on another node"() {
-        given:
-        def gitdir = new File(tempdir, 'scm')
-        def origindir = new File(tempdir, 'origin')
-        Import config = createTestConfig(gitdir, origindir)
-        Git git = GitExportPluginSpec.createGit(origindir)
-        git.close()
-        def context = Mock(ScmOperationContext) {
-            getFrameworkProject() >> 'GitImportPluginSpec'
-        }
-        def plugin = new GitImportPlugin(config, [])
-        plugin.initialize(context)
-        def deletedJob = Stub(JobScmReference) {
-            getId() >> 'deleted-job'
-            getJobName() >> 'deleted'
-            getGroupPath() >> ''
-            getScmImportMetadata() >> [commitId: 'abc']
-        }
-        plugin.jobStateMap['deleted-job'] = [
-                synch: ImportSynchState.DELETE_NEEDED,
-                path: 'deleted-deleted-job.xml'
-        ]
-        plugin.importTracker.trackJobAtPath(deletedJob, 'deleted-deleted-job.xml')
-
-        when:
-        plugin.clusterFixJobs(context, [], [:])
-
-        then:
-        plugin.jobStateMap.isEmpty()
-        plugin.importTracker.trackedPaths().empty
-        plugin.importTracker.trackedPath('deleted-job') == null
-    }
-
     def "local reconciliation removes stale jobs and preserves current jobs"() {
         given:
         def plugin = new GitImportPlugin(Mock(Import), [])

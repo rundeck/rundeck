@@ -787,8 +787,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 
     Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
-        reconcileJobState(jobs.collect { it.id }.findAll { it } as Set<String>)
-
         //force fetch
         fetchFromRemote(context)
 
