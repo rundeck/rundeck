@@ -534,6 +534,11 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
     }
 
     void "remove project does not exist"(){
+        given:
+        // The then: block asserts 0 * service.rundeckNodeService._(*_), but this feature never
+        // assigned the collaborator, so the target was null and the assertion verified nothing.
+        // Spock's MockitoMockMaker now NPEs on a null target instead of passing vacuously.
+        service.rundeckNodeService = Mock(NodeService)
 
         when:
 

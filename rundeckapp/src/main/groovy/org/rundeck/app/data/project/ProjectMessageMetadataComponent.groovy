@@ -41,7 +41,7 @@ class ProjectMessageMetadataComponent implements ProjectMetadataComponent {
 
         if(result){
             return Optional.of(
-                    [ComponentMeta.with(NAME, result)]
+                    [ComponentMeta.with(NAME, result)] as List<ComponentMeta>
             )
         }
 
