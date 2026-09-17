@@ -63,6 +63,20 @@
     <template
       v-else-if="prop.options && prop.options['displayType'] === 'DYNAMIC_FORM'"
     >
+      <div v-if="prop.desc" class="col-sm-10 col-sm-offset-2 help-block">
+        <plugin-details
+          :description="translatedDesc(prop)"
+          :extended-css="extendedCss"
+          description-css="more-info"
+          markdown-container-css="m-0 p-0"
+          inline-description
+          allow-html
+        >
+          <template #extraDescriptionText>
+            <div class="help-block">{{ translatedDesc(prop) }}</div>
+          </template>
+        </plugin-details>
+      </div>
       <dynamic-form-plugin-prop
         v-model="currentValue"
         :fields="modelValue"
@@ -390,7 +404,13 @@
       ></slot>
     </template>
 
-    <div v-if="prop.desc" class="col-sm-10 col-sm-offset-2 help-block">
+    <div
+      v-if="
+        prop.desc &&
+        !(prop.options && prop.options['displayType'] === 'DYNAMIC_FORM')
+      "
+      class="col-sm-10 col-sm-offset-2 help-block"
+    >
       <plugin-details
         :description="translatedDesc(prop)"
         :extended-css="extendedCss"

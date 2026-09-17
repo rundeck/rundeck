@@ -1,7 +1,6 @@
 <template>
   <div id="fieldcustomeditor" class="col-sm-12">
     <input ref="hiddenFieldInput" type="hidden" :name="name" />
-    <hr />
 
     <div v-if="customFields != null">
       <div
@@ -15,12 +14,12 @@
         }}</label>
         <div class="col-sm-9">
           <input
-            v-model="field.value"
+            :value="field.value"
             type="text"
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
-            @change="changeField(field)"
             :data-testid="'field-input-' + index"
+            @input="onValueInput(field, $event)"
           />
         </div>
         <div class="col-sm-1">
@@ -69,6 +68,13 @@
           ref="duplicateWarningRef"
           ><b>Warning!</b> {{ $t("message_duplicated") }}.</alert
         >
+        <alert
+          v-if="invalidKey"
+          type="warning"
+          data-testid="invalid-key-warning"
+          ref="invalidKeyWarningRef"
+          ><b>Warning!</b> {{ $t("message_fieldKeyRequired") }}.</alert
+        >
 
         <div class="col-md-10">
           <div v-if="useOptions" class="form">
@@ -109,17 +115,6 @@
 
           <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_fieldLabel") }}</label>
-              <div class="col-md-8">
-                <input
-                  v-model="newLabelField"
-                  type="text"
-                  :class="['form-control']"
-                  data-testid="field-label-input"
-                />
-              </div>
-            </div>
-            <div :class="['form-group']">
               <label class="col-md-4">{{ $t("message_fieldKey") }}</label>
               <div class="col-md-8">
                 <input
@@ -128,6 +123,19 @@
                   :class="['form-control']"
                   data-testid="field-key-input"
                 />
+                <div class="help-block">{{ $t("message_fieldKeyHelp") }}</div>
+              </div>
+            </div>
+            <div :class="['form-group']">
+              <label class="col-md-4">{{ $t("message_fieldLabel") }}</label>
+              <div class="col-md-8">
+                <input
+                  v-model="newLabelField"
+                  type="text"
+                  :class="['form-control']"
+                  data-testid="field-label-input"
+                />
+                <div class="help-block">{{ $t("message_fieldLabelHelp") }}</div>
               </div>
             </div>
 
@@ -218,6 +226,7 @@ export default defineComponent({
       useOptions: false,
       modalAddField: false,
       duplicate: false,
+      invalidKey: false,
       newField: "",
       newLabelField: "",
       newFieldDescription: "",
@@ -285,6 +294,13 @@ export default defineComponent({
     addField() {
       let field = {} as CustomField;
       this.duplicate = false;
+      this.invalidKey = false;
+
+      const key = this.useOptions ? this.selectedField?.value : this.newField;
+      if (!key || key.trim() === "") {
+        this.invalidKey = true;
+        return;
+      }
 
       if (this.useOptions) {
         if (this.selectedField !== null) {
@@ -356,7 +372,8 @@ export default defineComponent({
       this.customFields = fields;
       this.refreshPlugin();
     },
-    changeField(field: CustomField) {
+    onValueInput(field: CustomField, event: Event) {
+      field.value = (event.target as HTMLInputElement).value;
       this.refreshPlugin();
     },
     refreshPlugin() {
