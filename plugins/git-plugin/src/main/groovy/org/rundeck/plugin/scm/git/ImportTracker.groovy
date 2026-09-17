@@ -56,13 +56,13 @@ class ImportTracker {
     }
 
     void jobRenamed(JobScmReference job, String oldpath, String newpath) {
-        if(oldpath == newpath){
-            def originalPath=originalValue(newpath)
-            if(originalPath){
+        if (oldpath == newpath) {
+            def originalPath = originalValue(newpath)
+            if (originalPath) {
                 renamedTrackedItems.trackItem(originalPath, originalPath)
                 untrackPath(originalPath)
             }
-        }else{
+        } else {
             untrackPath(oldpath)
             trackJobAtPath(job, newpath)
             renamedTrackedItems.trackItem(oldpath, newpath)
@@ -70,6 +70,12 @@ class ImportTracker {
     }
 
     void trackJobAtPath(JobScmReference job, String path) {
+        def previousJobId = trackedJobIds[path]
+        if (previousJobId != null && previousJobId != job.id) {
+            //path is being claimed by a different job than the one previously tracked there:
+            //remove the stale reverse mapping so it doesn't keep resolving to the old job
+            trackedPathsMap.remove(previousJobId)
+        }
         trackedCommits[path] = job.scmImportMetadata?.commitId
         trackedJobIds[path] = job.id
         trackedPathsMap[job.id] = path
@@ -77,7 +83,10 @@ class ImportTracker {
 
     String untrackPath(String path) {
         trackedCommits.remove(path)
-        trackedJobIds.remove(path)
+        def jobId = trackedJobIds.remove(path)
+        if (jobId != null) {
+            trackedPathsMap.remove(jobId)
+        }
     }
 
     String trackedCommit(String path) {
@@ -103,6 +112,6 @@ class ImportTracker {
                 ", trackedCommits=" + trackedCommits +
                 ", trackedJobIds=" + trackedJobIds +
                 ", trackedPathsMap=" + trackedPathsMap +
-                '}';
+                '}'
     }
 }

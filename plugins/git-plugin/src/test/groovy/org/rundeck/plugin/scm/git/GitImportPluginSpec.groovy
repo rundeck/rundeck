@@ -727,4 +727,47 @@ class GitImportPluginSpec extends Specification {
         status != null
     }
 
+    def "scmImport untracks the path of a successfully deleted job so DELETE_NEEDED clears"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+
+        def job = Stub(JobScmReference) {
+            getId() >> '123'
+            getScmImportMetadata() >> ["commitId": commit.name]
+        }
+        //simulate the job having been previously imported/tracked at this path
+        plugin.importTracker.trackJobAtPath(job, 'job1-123.xml')
+
+        JobImporter importer = Mock(JobImporter)
+
+        when:
+        plugin.scmImport(context, GitImportPlugin.ACTION_IMPORT_JOBS, importer, [], ['123'], [:])
+
+        then:
+        1 * importer.deleteJob(projectName, '123') >> Mock(ImportResult) {
+            isSuccessful() >> true
+        }
+
+        then:
+        //the path must no longer be tracked, or getStatusInternal will keep
+        //reporting it as DELETE_NEEDED even though the job is already gone
+        plugin.importTracker.trackedPath('123') == null
+        !plugin.importTracker.trackedPaths().contains('job1-123.xml')
+    }
+
 }
