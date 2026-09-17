@@ -154,8 +154,10 @@
     .control-label {
       color: var(--warning-color);
     }
-    .form-control {
+    .form-control,
+    .form-control:focus {
       border-color: var(--warning-color);
+      @include box-shadow(none);
     }
   }
   .has-error .help-block {
