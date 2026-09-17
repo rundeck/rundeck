@@ -666,19 +666,20 @@ describe("PluginConfig", () => {
     // AutogenInstanceId props (e.g. the Node Wizard "wizard-id") are rendered as
     // STATIC_TEXT but carry a generated id that is real config: it must be seeded
     // in create mode (which also marks the parent form as modified) and exported.
-    const autogenProp = {
+    // Built per test: loadPluginData() mutates prop objects in place.
+    const autogenProp = () => ({
       name: "wizard-id",
       type: "AutogenInstanceId",
       defaultValue: "",
       options: { displayType: "STATIC_TEXT" },
-    };
+    });
 
     it("seeds a generated id in create mode and emits it in the config payload", async () => {
       const wrapper = await createWrapper({
         props: {
           mode: "create",
           modelValue: { type: "node-wizard", config: {} },
-          pluginConfig: { props: [autogenProp] },
+          pluginConfig: { props: [autogenProp()] },
         },
       });
 
@@ -698,7 +699,10 @@ describe("PluginConfig", () => {
             config: { "wizard-id": "abc123" },
           },
           pluginConfig: {
-            props: [autogenProp, { name: "host", type: "String", options: {} }],
+            props: [
+              autogenProp(),
+              { name: "host", type: "String", options: {} },
+            ],
           },
         },
       });
