@@ -971,8 +971,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             NamingException {
         // Normalize username to lowercase if feature is enabled
         final String normalizedUsername = normalizeUsername(username);
-        
-        final String cacheToken = PasswordCredential.md5Digest(normalizedUsername + ":" + password.toString());
+
+        // password arrives as a char[] via the standard JAAS PasswordCallback path (e.g. Spring
+        // Security's JAAS bridge); Object.toString() on an array is identity-based and differs per
+        // instance even for equal content, which made the cache key never match across requests.
+        final String passwordString = password instanceof char[] ? new String((char[]) password) : password.toString();
+        final String cacheToken = PasswordCredential.md5Digest(normalizedUsername + ":" + passwordString);
         if (_cacheDuration > 0) { // only worry about caching if there is a cacheDuration set.
             CachedUserInfo cached = USERINFOCACHE.get(cacheToken);
             if (cached != null) {
@@ -1030,7 +1034,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             e.printStackTrace();
         }
 
-        UserInfo userInfo = new UserInfo(normalizedUsername, PasswordCredential.getCredential(password.toString()), roles);
+        UserInfo userInfo = new UserInfo(normalizedUsername, null, roles);
         if (_cacheDuration > 0) {
             USERINFOCACHE.put(cacheToken,
                 new CachedUserInfo(userInfo,
@@ -1072,6 +1076,18 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setCountLimit(1);
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        // Explicitly request the attributes this class reads off of the search result
+        // (setDemographicAttributes() and the userPassword lookup in getUserCredentials()).
+        // Some directories (e.g. Active Directory over JNDI) return null for every attribute
+        // when no returning-attribute list is set, even though the same attributes are readable
+        // via ldapsearch, so they must be requested by name.
+        ctls.setReturningAttributes(new String[]{
+            _userIdAttribute,
+            _userPasswordAttribute,
+            _userFirstNameAttribute,
+            _userLastNameAttribute,
+            _userEmailAttribute
+        });
 
         String filter = OBJECT_CLASS_FILTER;
 

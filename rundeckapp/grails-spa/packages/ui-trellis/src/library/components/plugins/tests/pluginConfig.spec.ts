@@ -32,6 +32,7 @@ jest.mock("@/library/modules/InputUtils", () => ({
 
 interface MountOptions {
   props?: Record<string, any>;
+  slots?: Record<string, string>;
 }
 
 const createWrapper = async (options: MountOptions = {}) => {
@@ -42,6 +43,7 @@ const createWrapper = async (options: MountOptions = {}) => {
       pluginConfig: { props: [] },
       ...options.props,
     },
+    slots: { ...options.slots },
     global: {
       stubs: {
         PluginInfo: true,
@@ -110,6 +112,60 @@ describe("PluginConfig", () => {
       expect(wrapper.find('[data-testid="prop-field-host"]').exists()).toBe(
         false,
       );
+    });
+  });
+
+  describe("extraProperties slot ordering", () => {
+    it("renders the extraProperties slot before the props in show mode, matching edit mode's order", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "show",
+          config: { host: "localhost" },
+          pluginConfig: {
+            props: [{ name: "host", type: "String", options: {} }],
+          },
+        },
+        slots: {
+          extraProperties: '<div data-testid="extra-properties-slot"></div>',
+        },
+      });
+
+      const extra = wrapper.find(
+        '[data-testid="extra-properties-slot"]',
+      ).element;
+      const prop = wrapper.find('[data-testid="configprop-host"]').element;
+
+      expect(
+        !!(
+          extra.compareDocumentPosition(prop) & Node.DOCUMENT_POSITION_FOLLOWING
+        ),
+      ).toBe(true);
+    });
+
+    it("renders the extraProperties slot before the props form fields in edit mode", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "edit",
+          modelValue: { type: "test", config: {} },
+          pluginConfig: {
+            props: [{ name: "host", type: "String", options: {} }],
+          },
+        },
+        slots: {
+          extraProperties: '<div data-testid="extra-properties-slot"></div>',
+        },
+      });
+
+      const extra = wrapper.find(
+        '[data-testid="extra-properties-slot"]',
+      ).element;
+      const prop = wrapper.find('[data-testid="prop-field-host"]').element;
+
+      expect(
+        !!(
+          extra.compareDocumentPosition(prop) & Node.DOCUMENT_POSITION_FOLLOWING
+        ),
+      ).toBe(true);
     });
   });
 
@@ -507,6 +563,102 @@ describe("PluginConfig", () => {
       expect(
         wrapper.findComponent(PluginPropEdit).props("modelValue"),
       ).not.toBe("30");
+    });
+  });
+
+  describe("STATIC_TEXT props", () => {
+    // Regression tests for https://github.com/rundeck/rundeck/issues/10420:
+    // WorkflowStrategy's "info" property is a STATIC_TEXT/display-only help table
+    // (rendered from prop.staticTextDefaultValue, never user-editable). It was
+    // being seeded from prop.defaultValue in create mode and then persisted into
+    // the saved job config as literal HTML, polluting exported YAML and causing
+    // spurious SCM diffs.
+    it("does not seed a STATIC_TEXT prop with its default value in create mode", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "create",
+          modelValue: { type: "test", config: {} },
+          pluginConfig: {
+            props: [
+              {
+                name: "info",
+                type: "String",
+                defaultValue: "<table><tr><td>1.</td></tr></table>",
+                options: { displayType: "STATIC_TEXT" },
+              },
+            ],
+          },
+        },
+      });
+
+      expect(
+        wrapper.findComponent(PluginPropEdit).props("modelValue"),
+      ).toBeFalsy();
+    });
+
+    it("never includes a STATIC_TEXT prop in the exported config payload", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "create",
+          modelValue: { type: "test", config: {} },
+          pluginConfig: {
+            props: [
+              {
+                name: "info",
+                type: "String",
+                defaultValue: "<table><tr><td>1.</td></tr></table>",
+                options: { displayType: "STATIC_TEXT" },
+              },
+              { name: "host", type: "String", options: {} },
+            ],
+          },
+        },
+      });
+
+      // trigger the exportInputs/update:modelValue path via an edit to a non-STATIC_TEXT field
+      await wrapper
+        .findAllComponents(PluginPropEdit)[1]
+        .vm.$emit("update:modelValue", "localhost");
+      await wrapper.vm.$nextTick();
+
+      const emitted = wrapper.emitted("update:modelValue");
+      expect(emitted).toBeTruthy();
+      for (const call of emitted!) {
+        expect((call[0] as any).config).not.toHaveProperty("info");
+      }
+    });
+
+    it("strips an already-persisted STATIC_TEXT value out of the exported config (self-heals legacy data)", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "edit",
+          modelValue: {
+            type: "test",
+            config: { info: "<table><tr><td>1.</td></tr></table>" },
+          },
+          pluginConfig: {
+            props: [
+              {
+                name: "info",
+                type: "String",
+                options: { displayType: "STATIC_TEXT" },
+              },
+              { name: "host", type: "String", options: {} },
+            ],
+          },
+        },
+      });
+
+      // trigger the exportInputs/update:modelValue path via an edit to an unrelated field
+      await wrapper
+        .findAllComponents(PluginPropEdit)[1]
+        .vm.$emit("update:modelValue", "localhost");
+      await wrapper.vm.$nextTick();
+
+      const emitted = wrapper.emitted("update:modelValue")!;
+      expect((emitted[emitted.length - 1][0] as any).config).not.toHaveProperty(
+        "info",
+      );
     });
   });
 
