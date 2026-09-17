@@ -662,6 +662,59 @@ describe("PluginConfig", () => {
     });
   });
 
+  describe("AutogenInstanceId props", () => {
+    // AutogenInstanceId props (e.g. the Node Wizard "wizard-id") are rendered as
+    // STATIC_TEXT but carry a generated id that is real config: it must be seeded
+    // in create mode (which also marks the parent form as modified) and exported.
+    const autogenProp = {
+      name: "wizard-id",
+      type: "AutogenInstanceId",
+      defaultValue: "",
+      options: { displayType: "STATIC_TEXT" },
+    };
+
+    it("seeds a generated id in create mode and emits it in the config payload", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "create",
+          modelValue: { type: "node-wizard", config: {} },
+          pluginConfig: { props: [autogenProp] },
+        },
+      });
+
+      const emitted = wrapper.emitted("update:modelValue");
+      expect(emitted).toBeTruthy();
+      const config = (emitted![emitted!.length - 1][0] as any).config;
+      expect(typeof config["wizard-id"]).toBe("string");
+      expect(config["wizard-id"].length).toBeGreaterThan(0);
+    });
+
+    it("keeps an existing id in the exported config in edit mode", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          mode: "edit",
+          modelValue: {
+            type: "node-wizard",
+            config: { "wizard-id": "abc123" },
+          },
+          pluginConfig: {
+            props: [autogenProp, { name: "host", type: "String", options: {} }],
+          },
+        },
+      });
+
+      await wrapper
+        .findAllComponents(PluginPropEdit)[1]
+        .vm.$emit("update:modelValue", "localhost");
+      await wrapper.vm.$nextTick();
+
+      const emitted = wrapper.emitted("update:modelValue")!;
+      expect((emitted[emitted.length - 1][0] as any).config["wizard-id"]).toBe(
+        "abc123",
+      );
+    });
+  });
+
   describe("boolean export", () => {
     it("emits the string 'true' in the config payload when a Boolean field is set to true", async () => {
       const wrapper = await createWrapper({
