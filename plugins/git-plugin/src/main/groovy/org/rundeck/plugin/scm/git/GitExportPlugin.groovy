@@ -285,7 +285,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         //perform fetch
         def msgs=[]
 
-        def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
+        def loadingStatus = snapshotJobStateMap().find {key, meta -> meta["synch"] == SynchState.LOADING }
 
         if(loadingStatus){
             def synchState = new GitExportSynchState()
