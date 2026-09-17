@@ -54,7 +54,8 @@ export default defineComponent({
     size: {
       type: String,
       default: undefined,
-      validator: (val: string) => val === undefined || ["small", "large"].includes(val),
+      validator: (val: string) =>
+        val === undefined || ["small", "large"].includes(val),
     },
     fluid: {
       type: Boolean,
@@ -123,11 +124,9 @@ export default defineComponent({
       border-color: var(--colors-blue-600);
     }
 
-
     &:active {
       background: var(--colors-blue-700);
       border-color: var(--colors-blue-700);
-
     }
   }
 

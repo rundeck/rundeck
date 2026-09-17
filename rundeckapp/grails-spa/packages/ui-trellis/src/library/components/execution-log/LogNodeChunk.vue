@@ -183,7 +183,8 @@ export default defineComponent({
     this._tryAttachScrollListener();
   },
   beforeUnmount() {
-    const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+    const scrollerEl = (this.$refs.scroller as any)?.$el as
+      HTMLElement | undefined;
     if (scrollerEl) {
       scrollerEl.removeEventListener("scroll", this.onScrollerScroll);
     }
@@ -243,7 +244,8 @@ export default defineComponent({
     },
     _tryAttachScrollListener() {
       if ((this as any)._scrollListenerAdded) return;
-      const scrollerEl = (this.$refs.scroller as any)?.$el as HTMLElement | undefined;
+      const scrollerEl = (this.$refs.scroller as any)?.$el as
+        HTMLElement | undefined;
       if (scrollerEl) {
         scrollerEl.addEventListener("scroll", this.onScrollerScroll);
         (this as any)._scrollListenerAdded = true;

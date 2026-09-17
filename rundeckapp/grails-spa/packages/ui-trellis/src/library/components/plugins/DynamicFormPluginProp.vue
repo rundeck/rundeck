@@ -243,7 +243,12 @@ export default defineComponent({
     }
     this.syncFieldsFromProp(this.fields);
 
-    if (this.useOptions && this.options !== null && this.options !== undefined && this.options !== "") {
+    if (
+      this.useOptions &&
+      this.options !== null &&
+      this.options !== undefined &&
+      this.options !== ""
+    ) {
       const optionsObject = JSON.parse(this.options!);
       const options = Object.keys(optionsObject).map((key: any) => {
         const data = optionsObject[key];
