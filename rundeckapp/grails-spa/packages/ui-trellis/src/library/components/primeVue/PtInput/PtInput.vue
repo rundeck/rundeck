@@ -9,11 +9,19 @@
       {{ label }}
     </label>
 
-    <p v-if="helpText" class="text-body--sm pt-input__help" data-testid="pt-input-help">
+    <p
+      v-if="helpText"
+      class="text-body--sm pt-input__help"
+      data-testid="pt-input-help"
+    >
       {{ helpText }}
     </p>
 
-    <IconField v-if="leftIcon || rightIcon" class="pt-input__field" data-testid="pt-input-icon-container">
+    <IconField
+      v-if="leftIcon || rightIcon"
+      class="pt-input__field"
+      data-testid="pt-input-icon-container"
+    >
       <InputIcon v-if="leftIcon" :class="leftIcon" />
       <InputText
         :id="inputId"
@@ -56,7 +64,11 @@
       @input="onInput"
     />
 
-    <p v-if="invalid && errorText" class="text-body--sm pt-input__error" data-testid="pt-input-error">
+    <p
+      v-if="invalid && errorText"
+      class="text-body--sm pt-input__error"
+      data-testid="pt-input-error"
+    >
       {{ errorText }}
     </p>
   </div>

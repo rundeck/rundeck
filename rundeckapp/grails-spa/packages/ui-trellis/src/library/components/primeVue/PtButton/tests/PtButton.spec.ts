@@ -32,7 +32,9 @@ describe("PtButton", () => {
   describe("loading state", () => {
     it("still shows the label text while the button is in a loading state", async () => {
       const wrapper = await createWrapper({ label: "Saving…", loading: true });
-      expect(wrapper.find('[data-testid="pt-button"]').text()).toContain("Saving…");
+      expect(wrapper.find('[data-testid="pt-button"]').text()).toContain(
+        "Saving…",
+      );
     });
   });
 });

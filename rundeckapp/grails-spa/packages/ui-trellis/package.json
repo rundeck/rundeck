@@ -26,6 +26,8 @@
     "storybook": "storybook dev -p 6006 -- --debug-webpack",
     "clean": "cp -a ./lib/src/library/. ./lib && rm -rf ./lib/src && exit 0",
     "lint": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,vue,scss,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,vue,scss,css}\"",
     "build-storybook": "npm run build:app && storybook build",
     "create-wrapper": "npx hygen primevue-generator wrapper --componentName",
     "create-css": "npx hygen primevue-generator css --componentName",

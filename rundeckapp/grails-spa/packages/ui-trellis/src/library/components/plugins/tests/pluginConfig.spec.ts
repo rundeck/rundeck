@@ -591,7 +591,9 @@ describe("PluginConfig", () => {
         },
       });
 
-      expect(wrapper.findComponent(PluginPropEdit).props("modelValue")).toBeFalsy();
+      expect(
+        wrapper.findComponent(PluginPropEdit).props("modelValue"),
+      ).toBeFalsy();
     });
 
     it("never includes a STATIC_TEXT prop in the exported config payload", async () => {
@@ -636,7 +638,11 @@ describe("PluginConfig", () => {
           },
           pluginConfig: {
             props: [
-              { name: "info", type: "String", options: { displayType: "STATIC_TEXT" } },
+              {
+                name: "info",
+                type: "String",
+                options: { displayType: "STATIC_TEXT" },
+              },
               { name: "host", type: "String", options: {} },
             ],
           },
@@ -644,11 +650,15 @@ describe("PluginConfig", () => {
       });
 
       // trigger the exportInputs/update:modelValue path via an edit to an unrelated field
-      await wrapper.findAllComponents(PluginPropEdit)[1].vm.$emit("update:modelValue", "localhost");
+      await wrapper
+        .findAllComponents(PluginPropEdit)[1]
+        .vm.$emit("update:modelValue", "localhost");
       await wrapper.vm.$nextTick();
 
       const emitted = wrapper.emitted("update:modelValue")!;
-      expect((emitted[emitted.length - 1][0] as any).config).not.toHaveProperty("info");
+      expect((emitted[emitted.length - 1][0] as any).config).not.toHaveProperty(
+        "info",
+      );
     });
   });
 

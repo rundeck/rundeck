@@ -31,7 +31,8 @@ const messages = {
   "no.modifiable.sources.found": "Geen wijzigbare bronnen gevonden",
   "use.the.node.sources.tab.1": "Gebruik het ",
   "use.the.node.sources.tab.2": "tabblad om uw nodebronnen bij te werken.",
-  "empty.message.default": "Niets geconfigureerd. Klik op {0} om een nieuwe plugin toe te voegen.",
+  "empty.message.default":
+    "Niets geconfigureerd. Klik op {0} om een nieuwe plugin toe te voegen.",
   "None configured. Click ResourceModelSource to add a new plugin.":
     "Niets geconfigureerd. Klik op ResourceModelSource om een nieuwe plugin toe te voegen.",
   "None configured. Click NodeEnhancer to add a new plugin.":
@@ -60,7 +61,8 @@ const messages = {
   "Disable Schedule": "Planning uitschakelen",
   "Enable/Disable Execution Later": "Uitvoering later in-/uitschakelen",
   "Disable Execution after time": "Uitvoering uitschakelen na tijd",
-  "Time to disable execution : {0}": "Tijd tot uitschakelen van uitvoering: {0}",
+  "Time to disable execution : {0}":
+    "Tijd tot uitschakelen van uitvoering: {0}",
   "Enable/Disable Schedule Later": "Planning later in-/uitschakelen",
   "Disable Scheduled after Time": "Planning uitschakelen na tijd",
   "Time to disable schedule : {0}": "Tijd tot uitschakelen van planning: {0}",
@@ -102,7 +104,8 @@ const messages = {
   "scheduledExecution.property.scheduleEnabled.label": "Planning inschakelen?",
   "scheduledExecution.property.scheduleEnabled.description":
     "Deze job plannen toestaan?",
-  "scheduledExecution.property.executionEnabled.label": "Uitvoering inschakelen?",
+  "scheduledExecution.property.executionEnabled.label":
+    "Uitvoering inschakelen?",
   "scheduledExecution.property.executionEnabled.description":
     "Deze job uitvoeren toestaan?",
   "notification.event.onstart": "Bij start",
@@ -119,8 +122,7 @@ const messages = {
   filters: "Filters",
   "resource.metadata.entity.tags": "Tags",
   "enter.a.node.filter": "Voer een nodefilter in, of .* voor alle nodes",
-  "run.a.command.on.count.nodes.ellipsis":
-    "Een opdracht uitvoeren op {0} {1}",
+  "run.a.command.on.count.nodes.ellipsis": "Een opdracht uitvoeren op {0} {1}",
   "create.a.job.for.count.nodes.ellipsis": "Een job maken voor {0} {1}",
   "all.nodes": "Alle nodes",
   "all.nodes.menu.item": "-Alle nodes-",
@@ -169,7 +171,8 @@ const messages = {
   "Workflow.strategy.description.node-first":
     "Voer alle stappen op een node uit voordat je naar de volgende node gaat.",
   "Workflow.step.label.add": "Stap toevoegen",
-  "Workflow.step.label.choose.the.type": "Klik op een staptype om toe te voegen.",
+  "Workflow.step.label.choose.the.type":
+    "Klik op een staptype om toe te voegen.",
   "step.type.jobreference.title": "Job Reference",
   "step.type.jobreference.nodestep.description":
     "Voer nog een job uit voor elke node",
@@ -204,7 +207,8 @@ const messages = {
     noSteps: "Geen workflow-stappen",
     addErrorHandler: "Fouthandler toevoegen",
     errorHandler: "Fouthandler",
-    errorHandlerDescription: "De fouthandler wordt uitgevoerd als de stap mislukt.",
+    errorHandlerDescription:
+      "De fouthandler wordt uitgevoerd als de stap mislukt.",
     editErrorHandler: "Fouthandler bewerken",
   },
   notifications: {
