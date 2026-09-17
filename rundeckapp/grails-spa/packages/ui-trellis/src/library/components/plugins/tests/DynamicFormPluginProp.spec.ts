@@ -178,6 +178,48 @@ describe("DynamicFormPluginProp.vue", () => {
     ).toContain("message_fieldKeyHelp");
   });
 
+  it("blocks adding a field with a blank Key on the free-text path and shows a validation warning", async () => {
+    // Copilot review on RUN-4980: the help text says the Field Key is
+    // required, but confirming with a blank key previously still added an
+    // unusable, empty-key entry. It must now be rejected instead.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    // createWrapper's data() override pre-seeds newField as "field1" for
+    // other tests' benefit - clear it explicitly so this test's key is
+    // actually blank.
+    await wrapper.find('[data-testid="field-key-input"]').setValue("");
+    await wrapper
+      .find('[data-testid="field-label-input"]')
+      .setValue("Some Label");
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    expect(wrapper.findAll('[data-testid="field-item"]').length).toBe(1);
+    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
+      true,
+    );
+  });
+
+  it("blocks adding a field via the options path when nothing is selected", async () => {
+    const wrapper = createWrapper();
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    expect(wrapper.findAll('[data-testid="field-item"]').length).toBe(1);
+    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
+      true,
+    );
+  });
+
   describe("regression for RUN-4764", () => {
     it("adds a field via the free-text Field Label/Field Key path without throwing", async () => {
       // hasOptions "false" is the free-text path, used whenever the plugin

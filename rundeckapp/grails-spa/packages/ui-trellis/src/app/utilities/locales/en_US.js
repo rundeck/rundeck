@@ -65,7 +65,8 @@ const messages = {
     "Optional. Shown as this field's display name. Defaults to the Field Key if left blank.",
   message_fieldKey: "Field Key",
   message_fieldKeyHelp:
-    'Required. The key sent to PagerDuty for this field (e.g. "environment"). Must be unique within this list.',
+    'Required. The key used to identify this field (e.g. "environment"). Must be unique within this list.',
+  message_fieldKeyRequired: "A Field Key is required",
   // Descriptions generated for a custom field. The wording differs between
   // these three on purpose: it reproduces the text these fields have always
   // shown, so existing configurations read the same as before.

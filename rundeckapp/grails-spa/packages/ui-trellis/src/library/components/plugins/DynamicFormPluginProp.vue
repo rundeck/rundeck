@@ -68,6 +68,13 @@
           ref="duplicateWarningRef"
           ><b>Warning!</b> {{ $t("message_duplicated") }}.</alert
         >
+        <alert
+          v-if="invalidKey"
+          type="warning"
+          data-testid="invalid-key-warning"
+          ref="invalidKeyWarningRef"
+          ><b>Warning!</b> {{ $t("message_fieldKeyRequired") }}.</alert
+        >
 
         <div class="col-md-10">
           <div v-if="useOptions" class="form">
@@ -219,6 +226,7 @@ export default defineComponent({
       useOptions: false,
       modalAddField: false,
       duplicate: false,
+      invalidKey: false,
       newField: "",
       newLabelField: "",
       newFieldDescription: "",
@@ -281,6 +289,13 @@ export default defineComponent({
     addField() {
       let field = {} as CustomField;
       this.duplicate = false;
+      this.invalidKey = false;
+
+      const key = this.useOptions ? this.selectedField?.value : this.newField;
+      if (!key || key.trim() === "") {
+        this.invalidKey = true;
+        return;
+      }
 
       if (this.useOptions) {
         if (this.selectedField !== null) {
