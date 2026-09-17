@@ -29,7 +29,9 @@ rundeck_gradle_tests() {
 
 rundeck_gui_tests() {
     cd rundeckapp/grails-spa/packages/ui-trellis
-    npm run ci:test:unit
+    npm ci
+    npm run format:check
+    npm run test:unit
 }
 
 rundeck_docker_build() {
