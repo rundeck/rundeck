@@ -140,6 +140,44 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(updatedFieldValue).toBe("Updated Value");
   });
 
+  it("emits the updated value on every keystroke, without waiting for blur", async () => {
+    // Regression test: the field value used to be synced to the parent
+    // (and therefore to the saved job/step config) only on the input's
+    // 'change' event, which fires on blur. Typing a value and saving
+    // without first clicking/tabbing away silently dropped it. The value
+    // must now be emitted on 'input' directly.
+    const wrapper = createWrapper();
+    await flushPromises();
+    const inputField = wrapper.find('[data-testid="field-input-0"]');
+    await inputField.setValue("Updated Value");
+    await flushPromises();
+    const emitted = wrapper.emitted("update:modelValue");
+    expect(emitted).toBeTruthy();
+    const lastEmittedFields = JSON.parse(
+      emitted![emitted!.length - 1][0] as string,
+    );
+    expect(lastEmittedFields[0].value).toBe("Updated Value");
+  });
+
+  it("shows help text for the Field Label and Field Key inputs on the free-text path", async () => {
+    // The "Add Field" modal previously gave no guidance on what these two
+    // inputs mean or whether they're required, which made it easy to add a
+    // field with a blank key (silently dropped/meaningless downstream) or
+    // to not realize the label is optional and falls back to the key.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    expect(
+      wrapper.find('[data-testid="field-label-input"]').element.parentElement
+        ?.textContent,
+    ).toContain("message_fieldLabelHelp");
+    expect(
+      wrapper.find('[data-testid="field-key-input"]').element.parentElement
+        ?.textContent,
+    ).toContain("message_fieldKeyHelp");
+  });
+
   describe("regression for RUN-4764", () => {
     it("adds a field via the free-text Field Label/Field Key path without throwing", async () => {
       // hasOptions "false" is the free-text path, used whenever the plugin

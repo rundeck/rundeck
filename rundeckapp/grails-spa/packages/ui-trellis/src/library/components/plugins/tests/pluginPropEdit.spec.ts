@@ -163,4 +163,39 @@ describe("pluginPropEdit", () => {
       expect(wrapper.vm.inputColSize(prop)).toBe("col-sm-" + size);
     },
   );
+
+  it("renders the description above the DYNAMIC_FORM widget, once, not below it", async () => {
+    // DYNAMIC_FORM properties (e.g. PagerDuty's "Custom Fields") render no
+    // label of their own, so the property's description was the only
+    // context explaining the field - but it used to render after the whole
+    // widget (list of fields + "Add Field" button), read last instead of
+    // first. It must now render before the widget, and only once.
+    const wrapper = await createWrapper({
+      modelValue: "",
+      prop: {
+        type: "String",
+        title: "Custom Fields",
+        name: "custom",
+        desc: "Any custom fields to be included in the change event",
+        options: { displayType: "DYNAMIC_FORM" },
+      },
+      rkey: "test_",
+      validation: null,
+      readOnly: false,
+      selectorData: {},
+    });
+
+    const html = wrapper.html();
+    const descriptionIndex = html.indexOf(
+      "Any custom fields to be included in the change event",
+    );
+    const widgetIndex = html.indexOf("dynamic-form-plugin-prop");
+    expect(descriptionIndex).toBeGreaterThan(-1);
+    expect(widgetIndex).toBeGreaterThan(-1);
+    expect(descriptionIndex).toBeLessThan(widgetIndex);
+    expect(
+      html.split("Any custom fields to be included in the change event")
+        .length - 1,
+    ).toBe(1);
+  });
 });
