@@ -71,6 +71,9 @@
         <span v-if="validation && !validation.valid" class="text-warning">
           <i class="fas fa-exclamation-circle"></i> {{ validationWarningText }}
         </span>
+        <div class="col-sm-12">
+          <slot name="extraProperties"></slot>
+        </div>
         <template v-for="prop in props" :key="prop.name">
           <span
             v-if="
@@ -79,6 +82,7 @@
               !isPropHidden(prop)
             "
             class="configprop"
+            :data-testid="`configprop-${prop.name}`"
           >
             <plugin-prop-view
               :prop="prop"
@@ -87,9 +91,6 @@
             />
           </span>
         </template>
-        <div class="col-sm-12">
-          <slot name="extraProperties"></slot>
-        </div>
       </div>
       <div
         v-else-if="isShowConfigForm && inputLoaded"
@@ -228,9 +229,7 @@ import { cleanConfigInput, convertArrayInput } from "../../modules/InputUtils";
 
 import { diff } from "deep-object-diff";
 
-import {
-  getPluginProvidersForService,
-} from "../../modules/pluginService";
+import { getPluginProvidersForService } from "../../modules/pluginService";
 
 interface PropGroup {
   name?: string;
@@ -295,8 +294,9 @@ export default defineComponent({
         this.showDescription !== null ? this.showDescription : true,
       inputValues: {} as any,
       inputSaved: {} as any,
-      inputSavedProps:
-        (typeof this.savedProps !== "undefined" ? this.savedProps : ["type"]) as string[] | null,
+      inputSavedProps: (typeof this.savedProps !== "undefined"
+        ? this.savedProps
+        : ["type"]) as string[] | null,
       rkey:
         "r_" + Math.floor(Math.random() * Math.floor(1024)).toString(16) + "_",
       groupExpand: {} as { [name: string]: boolean },
@@ -457,7 +457,12 @@ export default defineComponent({
         if (config[prop.name]) {
           this.inputValues[prop.name] = config[prop.name];
         }
-        if (modeCreate && !this.inputValues[prop.name] && prop.defaultValue) {
+        if (
+          modeCreate &&
+          !this.isStaticTextProp(prop) &&
+          !this.inputValues[prop.name] &&
+          prop.defaultValue
+        ) {
           this.inputValues[prop.name] = prop.defaultValue;
         }
         if (
@@ -506,6 +511,12 @@ export default defineComponent({
       const values: { [index: string]: any } = {};
       //convert true boolean to 'true'
       this.props.forEach((prop: any) => {
+        if (this.isStaticTextProp(prop)) {
+          // STATIC_TEXT properties are display-only help text (e.g. workflow strategy
+          // "info" panels) and must never be persisted as real config data.
+          // See https://github.com/rundeck/rundeck/issues/10420
+          return;
+        }
         if (prop.type === "Boolean") {
           if (
             this.inputValues[prop.name] === true ||
@@ -624,6 +635,20 @@ export default defineComponent({
     },
     isPropHidden(testProp: any): boolean {
       return testProp.options && testProp.options["displayType"] === "HIDDEN";
+    },
+    isStaticTextProp(testProp: any): boolean {
+      // STATIC_TEXT properties (e.g. the WorkflowStrategy "info" help table) are
+      // rendered from prop.staticTextDefaultValue and are never user-editable, so
+      // they must not be seeded with a default value or exported as config data.
+      // AutogenInstanceId properties are also displayed as STATIC_TEXT (see
+      // PropertyBuilder.autogenInstanceId) but their generated id is real config
+      // that must be seeded in create mode and persisted (e.g. the Node Wizard
+      // "wizard-id"), so they are excluded here.
+      return (
+        testProp.type !== "AutogenInstanceId" &&
+        testProp.options &&
+        testProp.options["displayType"] === "STATIC_TEXT"
+      );
     },
     isPropInScope(testProp: any): boolean {
       // determine if property is visible in scope

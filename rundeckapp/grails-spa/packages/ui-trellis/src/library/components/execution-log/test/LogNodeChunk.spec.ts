@@ -136,7 +136,9 @@ describe("LogNodeChunk.vue", () => {
       gutter: true,
       lineWrap: true,
     });
-    expect((wrapper.vm as any).nodeChunkKey).toBe("key-true-true-true-true-true");
+    expect((wrapper.vm as any).nodeChunkKey).toBe(
+      "key-true-true-true-true-true",
+    );
 
     const wrapper2 = createWrapper({
       nodeIcon: false,
@@ -145,7 +147,9 @@ describe("LogNodeChunk.vue", () => {
       gutter: false,
       lineWrap: false,
     });
-    expect((wrapper2.vm as any).nodeChunkKey).toBe("key-false-false-false-false-false");
+    expect((wrapper2.vm as any).nodeChunkKey).toBe(
+      "key-false-false-false-false-false",
+    );
   });
 
   it("computes entryOutputs correctly", () => {
@@ -170,15 +174,17 @@ describe("LogNodeChunk.vue", () => {
     });
 
     const opts = (wrapper.vm as any).opts;
-    expect(opts).toEqual(expect.objectContaining({
-      node: "testNode",
-      stepCtx: "testStep",
-      nodeIcon: true,
-      command: { visible: true },
-      time: { visible: true },
-      gutter: { visible: true },
-      content: { lineWrap: true },
-    }));
+    expect(opts).toEqual(
+      expect.objectContaining({
+        node: "testNode",
+        stepCtx: "testStep",
+        nodeIcon: true,
+        command: { visible: true },
+        time: { visible: true },
+        gutter: { visible: true },
+        content: { lineWrap: true },
+      }),
+    );
   });
 
   it("emits line-select and jumped events when jumpToLine is provided", async () => {
@@ -219,24 +225,24 @@ describe("LogNodeChunk.vue", () => {
       time: "10:30:00",
       absoluteTime: "2023-05-10T10:30:00Z",
       level: "INFO",
-      renderedStep: [
-        { stepNumber: 1, label: "Step One", type: "command" },
-      ],
+      renderedStep: [{ stepNumber: 1, label: "Step One", type: "command" }],
       node: "node1",
     };
 
     const builtEntry = (wrapper.vm as any).buildEntry(entry, 0);
-    expect(builtEntry).toEqual(expect.objectContaining({
-      log: "Test log",
-      time: "10:30:00",
-      absoluteTime: "2023-05-10T10:30:00Z",
-      level: "INFO",
-      stepLabel: "1Step One",
-      stepType: "command",
-      lineNumber: 1,
-      node: "node1",
-      selected: false,
-    }));
+    expect(builtEntry).toEqual(
+      expect.objectContaining({
+        log: "Test log",
+        time: "10:30:00",
+        absoluteTime: "2023-05-10T10:30:00Z",
+        level: "INFO",
+        stepLabel: "1Step One",
+        stepType: "command",
+        lineNumber: 1,
+        node: "node1",
+        selected: false,
+      }),
+    );
   });
 
   it("handles onSelectLine correctly", () => {
@@ -245,16 +251,19 @@ describe("LogNodeChunk.vue", () => {
     expect(wrapper.emitted("line-select")?.[0]).toEqual([3]);
   });
 
-  it.each([true,false])("scrolls to bottom when follow is %p", (follow:boolean) => {
-    const scrollToBottomMock = jest.fn();
-    const wrapper = createWrapper({ follow });
+  it.each([true, false])(
+    "scrolls to bottom when follow is %p",
+    (follow: boolean) => {
+      const scrollToBottomMock = jest.fn();
+      const wrapper = createWrapper({ follow });
 
-    // Mock the $refs.scroller
-    (wrapper.vm as any).$refs.scroller.scrollToBottom = scrollToBottomMock;
+      // Mock the $refs.scroller
+      (wrapper.vm as any).$refs.scroller.scrollToBottom = scrollToBottomMock;
 
-    (wrapper.vm as any).scrollToLine();
-    expect(scrollToBottomMock).toHaveBeenCalledTimes(follow?1:0);
-  });
+      (wrapper.vm as any).scrollToLine();
+      expect(scrollToBottomMock).toHaveBeenCalledTimes(follow ? 1 : 0);
+    },
+  );
 
   describe("_isLastEntryMeasured", () => {
     it("returns true when there are no entries", () => {

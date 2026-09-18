@@ -41,13 +41,13 @@ export const useNodesStore = defineStore("nodes", {
       return this.currentNodes.length;
     },
     isResultsTruncated(state): boolean {
-      return state.lastCountFetched > state.maxSize
-    }
+      return state.lastCountFetched > state.maxSize;
+    },
   },
 
   actions: {
     upsertNodes(nodes: Node[]) {
-      if(nodes.length > 0) {
+      if (nodes.length > 0) {
         nodes.forEach((node) => {
           this.entities[node.nodename] = {
             ...this.entities[node.nodename],
@@ -57,7 +57,7 @@ export const useNodesStore = defineStore("nodes", {
 
         this.nodenamesToDisplay = nodes.map((node) => node.nodename);
       } else {
-        this.nodenamesToDisplay = []
+        this.nodenamesToDisplay = [];
       }
     },
 

@@ -1,6 +1,10 @@
 <template>
   <div class="step-card-content">
-    <div v-if="config.jobref" class="plugin-config-section" data-testid="step-card-content-jobref-section">
+    <div
+      v-if="config.jobref"
+      class="plugin-config-section"
+      data-testid="step-card-content-jobref-section"
+    >
       <span v-for="prop in jobRefProps" :key="prop.name" class="configprop">
         <plugin-prop-view
           :prop="prop"
@@ -170,7 +174,7 @@ export default defineComponent({
       if (handler.jobref) {
         return {
           ...handler,
-          title: this.$t('Job reference')
+          title: this.$t("Job reference"),
         };
       }
 

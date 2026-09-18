@@ -86,7 +86,7 @@ describe("ActivityList", () => {
   });
   beforeEach(() => {
     reports = cloneDeep(mockReports);
-    
+
     mockQueryRunning.mockResolvedValue({
       results: mockRunningExecutions,
       paging: { max: 20, offset: 0, total: 2, count: 2 },
@@ -103,14 +103,13 @@ describe("ActivityList", () => {
       const wrapper = await shallowMountActivityList();
       await flushPromises();
       await wrapper.vm.$nextTick();
-      
+
       const pageInfoSpan = wrapper.find('[data-testid="page-info"]');
       const summaryCount = wrapper.find('[data-testid="summary-count"]');
       expect(pageInfoSpan.text()).toBe("1 - 2 of");
       expect(summaryCount.text()).toBe("20 executions");
     });
 
-    
     it("information about the current executions and finished jobs", async () => {
       const wrapper = await shallowMountActivityList();
       await wrapper.vm.$nextTick();
@@ -148,9 +147,8 @@ describe("ActivityList", () => {
       const noInfoMessage = wrapper.find('[data-testid="no-data-message"]');
       expect(noInfoMessage.text()).toBe("No results for the query");
     });
-    
   });
-  
+
   describe("trigger bulk actions", () => {
     it("trigger bulk actions - delete", async () => {
       const wrapper = await shallowMountActivityList();
@@ -181,17 +179,24 @@ describe("ActivityList", () => {
       const modalConfirmDeleteButton = modal.find(
         '[data-testid="confirm-delete"]',
       );
-      
+
       // Update mock for after deletion
       mockQueryExecutions.mockResolvedValueOnce({
         results: reports.slice(2),
-        paging: { max: 10, offset: 0, total: reports.length - 2, count: reports.length - 2 },
+        paging: {
+          max: 10,
+          offset: 0,
+          total: reports.length - 2,
+          count: reports.length - 2,
+        },
       });
-      
+
       await modalConfirmDeleteButton.trigger("click");
 
       await wrapper.vm.$nextTick();
-      expect(api.post).toHaveBeenCalledWith("executions/delete", { ids: [42, 43] });
+      expect(api.post).toHaveBeenCalledWith("executions/delete", {
+        ids: [42, 43],
+      });
       const reportRows = wrapper.findAll('[data-testid="report-row-item"]');
       expect(reportRows.length).toBe(reports.length - 2); // Update expected length based on deletion
     });
@@ -206,13 +211,13 @@ describe("ActivityList", () => {
       await filterButton.trigger("click");
       await wrapper.vm.$nextTick();
       const activityFilter = wrapper.findComponent(ActivityFilter);
-      
+
       // Mock filtered results
       mockQueryExecutions.mockResolvedValueOnce({
         results: [{ ...reports[0], node: "1/0/1" }],
         paging: { max: 10, offset: 0, total: 1, count: 1 },
       });
-      
+
       await activityFilter.vm.$emit("update:modelValue", {
         recentFilter: "testJobId",
       });
@@ -442,11 +447,11 @@ describe("ActivityList", () => {
 
   it("automatically fetches data and displays a message when there are new executions since the last timestamp", async () => {
     jest.useFakeTimers();
-    
+
     // Mock axios for the since.json endpoint
-    const axios = require('axios');
-    const axiosGetSpy = jest.spyOn(axios, 'get');
-    
+    const axios = require("axios");
+    const axiosGetSpy = jest.spyOn(axios, "get");
+
     mockQueryExecutions.mockResolvedValue({
       results: [],
       paging: { max: 10, offset: 0, total: 1, count: 0 },
@@ -455,11 +460,11 @@ describe("ActivityList", () => {
       results: [],
       paging: { max: 20, offset: 0, total: 0, count: 0 },
     });
-    
+
     const wrapper = await shallowMountActivityList();
     await flushPromises();
     await wrapper.vm.$nextTick();
-    
+
     // Enable auto-refresh
     const autoRefreshCheckbox = wrapper.find(
       '[data-testid="auto-refresh-checkbox"]',
@@ -471,22 +476,21 @@ describe("ActivityList", () => {
     axiosGetSpy.mockResolvedValue({
       data: {
         since: {
-          count: 5
-        }
-      }
+          count: 5,
+        },
+      },
     });
 
     jest.advanceTimersByTime(5000);
     await flushPromises();
     await wrapper.vm.$nextTick();
-    
+
     const sinceCountData = wrapper.find('[data-testid="since-count-data"]');
     expect(sinceCountData.exists()).toBe(true);
     expect(sinceCountData.text()).toContain("5");
-    
+
     axiosGetSpy.mockRestore();
     jest.clearAllTimers();
     jest.useRealTimers();
   });
-  
 });

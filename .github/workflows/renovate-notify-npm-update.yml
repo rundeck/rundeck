@@ -18,11 +18,16 @@ jobs:
       contains(github.event.pull_request.labels.*.name, 'sync-rundeckpro')
     runs-on: ubuntu-latest
     steps:
-      # Same pattern as prepare-community-pr.yml's "Verify approval for current PR
-      # head": Renovate branches live in this repo, not a fork, so any collaborator
-      # with write access could push an extra commit onto an already-approved,
-      # still-open renovate PR before it merges. Require an APPROVED review recorded
-      # against the exact merged head commit, not just "a review exists somewhere".
+      # Same check as prepare-community-pr.yml's "Verify approval for current PR
+      # head": require an APPROVED review recorded against the exact merged head
+      # commit, not just "a review exists somewhere". No authorAssociation or
+      # collaborator-permission filter on top of that — both were tried here and
+      # dropped: `authorAssociation` is unreliable for reviewers with private org
+      # membership (GITHUB_TOKEN has no org-membership visibility, so it reports
+      # NONE even for real maintainers), and `administration` isn't a valid
+      # GITHUB_TOKEN permission at all, so a collaborators/{user}/permission call
+      # gated on it would 403 for everyone and fail closed. Matching
+      # prepare-community-pr.yml's laxer, already-working check avoids both.
       - name: Verify approval for merged head
         shell: bash
         env:
@@ -42,23 +47,18 @@ jobs:
             exit 1
           fi
 
-          # author_association must be OWNER or MEMBER — anyone with a GitHub
-          # account can leave an "Approved" review on a public repo's PR, so an
-          # unfiltered state==APPROVED check could be satisfied by a reviewer
-          # outside the org, not just outside collaborators with repo access.
           approved_for_head="$(
             jq --arg head "${head_lc}" '
               [.reviews[]? | select(
                 .state == "APPROVED" and
-                (((.commit.oid // "") | ascii_downcase) == $head) and
-                (.authorAssociation == "OWNER" or .authorAssociation == "MEMBER")
+                (((.commit.oid // "") | ascii_downcase) == $head)
               )]
               | length
             ' <<<"${reviews_json}"
           )"
 
           if [[ "${approved_for_head}" -lt 1 ]]; then
-            echo "PR #${PR_NUMBER} has no APPROVED review from an org member recorded for head ${HEAD_SHA}; refusing to sync." >&2
+            echo "PR #${PR_NUMBER} has no APPROVED review recorded for head ${HEAD_SHA}; refusing to sync." >&2
             exit 1
           fi
 

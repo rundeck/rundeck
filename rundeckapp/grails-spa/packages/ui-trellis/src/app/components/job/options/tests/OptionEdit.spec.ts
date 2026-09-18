@@ -153,14 +153,17 @@ describe("OptionEdit", () => {
     expect(wrapper.vm.option.type).toBe("multiline");
   });
   it.each([
-    ["default value input field", "[data-test=option.value] input[type=text]"],
-    ["inputType", "[data-test=option.inputType]"],
-    ["allowed values", "[data-test=option.valuesType]"],
-    ["sort values", "[data-test=option.sortValues]"],
-    ["multivalue delimiter", "[data-test=option.delimiter]"],
+    [
+      "default value input field",
+      '[data-test="option-value"] input[type=text]',
+    ],
+    ["inputType", '[data-test="option-inputType"]'],
+    ["allowed values", '[data-test="option-valuesType"]'],
+    ["sort values", '[data-test="option-sortValues"]'],
+    ["multivalue delimiter", '[data-test="option-delimiter"]'],
     [
       "restricted radio button",
-      "[data-test=option.regex] input[type=radio][value=restricted]",
+      '[data-test="option-regex"] input[type=radio][value=restricted]',
     ],
   ])(
     "multiline option type hides %p section",
@@ -176,14 +179,14 @@ describe("OptionEdit", () => {
     },
   );
   it.each([
-    ["default value textarea", "[data-test=option.value] textarea"],
+    ["default value textarea", '[data-test="option-value"] textarea'],
     [
       "regex restriction radio button",
-      "[data-test=option.regex] input[type=radio][value=regex]",
+      '[data-test="option-regex"] input[type=radio][value=regex]',
     ],
     [
       "none restriction radio button",
-      "[data-test=option.regex] input[type=radio][value=none]",
+      '[data-test="option-regex"] input[type=radio][value=none]',
     ],
   ])(
     "multiline option type shows %p section via selector %p",
@@ -451,7 +454,7 @@ describe("OptionEdit", () => {
       await optname.setValue(value);
       await optname.trigger("blur");
       await wrapper.vm.$nextTick();
-      const section = wrapper.get("[data-test=option.name]");
+      const section = wrapper.get('[data-test="option-name"]');
       expect(section.classes()).toContain(cls);
       const errorslist = section.get("div.help-block errorslist");
       expect(errorslist.attributes()["errors"]).toContain(msg);
@@ -468,8 +471,8 @@ describe("OptionEdit", () => {
     expect(wrapper.find("option-usage-preview").exists()).toBeFalsy();
   });
   it.each([
-    ["option.label", "#opt_label", 255],
-    ["option.name", "#optname_", 255],
+    ["option-label", "#opt_label", 255],
+    ["option-name", "#optname_", 255],
   ])(
     "shows error messages for field %p %p longer than %p",
     async (sectionName: string, id: string, len: number) => {
@@ -482,7 +485,7 @@ describe("OptionEdit", () => {
       await field.setValue("a".repeat(len));
       await field.trigger("blur");
       await wrapper.vm.$nextTick();
-      const section = wrapper.get(`[data-test=${sectionName}]`);
+      const section = wrapper.get(`[data-test="${sectionName}"]`);
       expect(section.classes()).not.toContain("has-error");
       expect(section.find("div.help-block errorslist").exists()).toBeFalsy();
 
@@ -512,14 +515,18 @@ describe("OptionEdit", () => {
     ["delimiter", { multivalued: true }],
   ])(
     "shows validation errors for field %p",
-    async (fieldName: string, optData: any, errorName: string | null = null) => {
+    async (
+      fieldName: string,
+      optData: any,
+      errorName: string | null = null,
+    ) => {
       const wrapper = await mountOptionEdit({
         modelValue: Object.assign({ name: "aname", type: "text" }, optData),
         editable: true,
       });
       wrapper.vm.addError(errorName || fieldName, "error1");
       await wrapper.vm.$nextTick();
-      const section = wrapper.get(`[data-test=option.${fieldName}]`);
+      const section = wrapper.get(`[data-test="option-${fieldName}"]`);
       expect(section.classes()).toContain("has-error");
       const errorslist = section.get("div.help-block errorslist");
       expect(errorslist.attributes()["errors"]).toContain("error1");

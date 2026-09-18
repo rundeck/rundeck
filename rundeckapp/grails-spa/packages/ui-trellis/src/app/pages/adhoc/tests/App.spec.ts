@@ -112,7 +112,7 @@ describe("AdhocApp", () => {
     // Wait for mounted() to complete and stores to be initialized
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick(); // Extra tick for child components to render
-    
+
     expect(wrapper.find("#adhoc-app").exists()).toBe(true);
   });
 
@@ -126,9 +126,8 @@ describe("AdhocApp", () => {
     // Wait for mounted() to complete and stores to be initialized
     await wrapper.vm.$nextTick();
     await wrapper.vm.$nextTick(); // Extra tick for initialization
-    
+
     expect(wrapper.vm.nodeFilterStore).toBeInstanceOf(NodeFilterStore);
     // AdhocCommandStore removed - state is now local to AdhocCommandForm
   });
 });
-
