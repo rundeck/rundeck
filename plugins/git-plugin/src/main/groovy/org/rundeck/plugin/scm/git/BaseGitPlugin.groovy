@@ -589,6 +589,12 @@ class BaseGitPlugin {
                 if (needsClone) {
                     //need to reconfigured: release the old repository's file handles before deleting it on disk
                     agit.getRepository().close()
+                    //also release the plugin's currently assigned repository, if any: it may be an
+                    //earlier open of this same workdir (e.g. the base-branch clone in the createBranch
+                    //setup path), and would otherwise be leaked once the workdir is removed below
+                    if (repo != null) {
+                        repo.close()
+                    }
                     handedOff = true
                     removeWorkdir(base)
                     performClone(base, url, context, integration)

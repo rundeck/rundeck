@@ -70,6 +70,29 @@ class ImportTrackerSpec extends Specification {
         tracker.originalValue(path) == null
         tracker.trackedItemIsUnknown(path)
     }
+    def "trackJobAtPath moving a job directly to a new path drops the old forward mapping"() {
+        given: "a job whose path changes (e.g. a path-template edit) without going through jobRenamed"
+        def oldpath = "a/b"
+        def newpath = "c/d"
+        def job = Mock(JobScmReference) {
+            getId() >> '123'
+            getScmImportMetadata() >> [
+                    commitId: 'abc'
+            ]
+        }
+        def tracker = new ImportTracker()
+
+        when:
+        tracker.trackJobAtPath(job, oldpath)
+        tracker.trackJobAtPath(job, newpath)
+
+        then: "only the new path remains tracked, so the old path can't surface as a false DELETE_NEEDED"
+        tracker.trackedPaths() == [newpath] as Set
+        tracker.trackedJob(newpath) == '123'
+        tracker.trackedPath('123') == newpath
+        tracker.trackedJob(oldpath) == null
+        tracker.trackedCommit(oldpath) == null
+    }
     def "track/rename job"(){
         given:
         def path = "a/b"

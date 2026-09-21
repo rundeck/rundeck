@@ -667,7 +667,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
             def status = getCachedStatusIfValid(job, null)
 
-            if (!status) {
+            //a LOADING entry is treated as a cache hit by getCachedStatusIfValid so status polling
+            //doesn't kick off a duplicate refresh, but here it may belong to a refresh that started
+            //before this commit; that refresh would overwrite the cache with the pre-commit status,
+            //so the cache still needs to be refreshed rather than left for the in-flight one to settle
+            if (!status || status.synch == SynchState.LOADING) {
                 refreshJobStatus(job, null, false)
             }
         }
