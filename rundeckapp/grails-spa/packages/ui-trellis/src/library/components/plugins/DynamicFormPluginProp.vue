@@ -265,6 +265,17 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    // An instance-unique prefix for the modal's control/help ids, e.g.
+    // pluginPropEdit.vue's `${rkey}prop_${pindex}_`. `name` alone isn't
+    // guaranteed unique per rendered widget - two plugin configurations
+    // can share a property name, or names like "foo.bar" and "foo-bar"
+    // collide once sanitized - so callers that can render more than one
+    // instance on a page should pass this explicitly.
+    idPrefix: {
+      type: String,
+      required: false,
+      default: "",
+    },
   },
   emits: ["update:modelValue"],
   data() {
@@ -286,11 +297,13 @@ export default defineComponent({
     // plugin property), so the modal's control/help ids must be unique
     // per instance rather than hard-coded - otherwise every instance's
     // label/aria-describedby resolves to whichever instance rendered
-    // first. `name` is the plugin property's own name and already
-    // required to be unique per instance; sanitize it since it can
-    // contain characters (e.g. ".") that aren't safe in an HTML id.
+    // first. Prefer the caller-supplied idPrefix (already unique per
+    // rendered widget); fall back to a sanitized name for standalone
+    // usage (e.g. the dynamic-form demo page) where only one instance
+    // is ever on the page at once.
     fieldIdPrefix(): string {
-      return `dynamic-form-${this.name.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+      const prefix = this.idPrefix || this.name.replace(/[^a-zA-Z0-9_-]/g, "-");
+      return `dynamic-form-${prefix}`;
     },
   },
   watch: {

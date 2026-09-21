@@ -195,6 +195,11 @@ describe("pluginPropEdit", () => {
       "Any custom fields to be included in the change event",
     );
     expect(widget.exists()).toBe(true);
+    // Copilot review on RUN-4980: DynamicFormPluginProp derives its modal's
+    // control/help ids from this idPrefix so that two rendered instances
+    // (even ones sharing a property name) don't collide - it must be
+    // derived from rkey/pindex, not just pass prop.name through again.
+    expect(widget.props("idPrefix")).toBe("test_prop_0_");
     expect(
       descriptions[0].element.compareDocumentPosition(widget.element) &
         Node.DOCUMENT_POSITION_FOLLOWING,

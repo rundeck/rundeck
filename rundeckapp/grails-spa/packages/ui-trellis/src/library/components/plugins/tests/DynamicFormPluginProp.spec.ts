@@ -226,13 +226,45 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(descriptionLabelEl).toBeTruthy();
   });
 
-  it("scopes the modal's control/help ids to the plugin property's own name, so multiple instances on a page don't collide", async () => {
-    // Copilot review on RUN-4980: the ids were hard-coded, so a page with
-    // more than one DynamicFormPluginProp instance (one per plugin
-    // property) would have every instance's label/aria-describedby
-    // resolve to whichever instance rendered first.
+  it("falls back to a sanitized name for the modal's control/help ids when no idPrefix is given", async () => {
+    // Standalone usage (e.g. the dynamic-form demo page) never passes
+    // idPrefix and only ever renders one instance, so falling back to
+    // name is fine there.
     const wrapperA = createWrapper({ hasOptions: "false", name: "fieldA" });
     const wrapperB = createWrapper({ hasOptions: "false", name: "fieldB" });
+    await wrapperA.find('[data-testid="add-field-button"]').trigger("click");
+    await wrapperB.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    const idA = wrapperA
+      .find('[data-testid="field-key-input"]')
+      .attributes("id");
+    const idB = wrapperB
+      .find('[data-testid="field-key-input"]')
+      .attributes("id");
+
+    expect(idA).toBeTruthy();
+    expect(idB).toBeTruthy();
+    expect(idA).not.toBe(idB);
+  });
+
+  it("uses idPrefix (not name) to scope control/help ids, so two instances sharing a property name don't collide", async () => {
+    // Copilot review on RUN-4980: `name` alone isn't guaranteed unique per
+    // rendered widget - pluginConfig.vue can render the same property name
+    // more than once (e.g. within different groups), and the modal is
+    // appended to <body>, so a collision lets one instance's label/
+    // aria-describedby resolve to another instance's control. The caller
+    // (pluginPropEdit.vue) must pass its own rkey/pindex-derived idPrefix.
+    const wrapperA = createWrapper({
+      hasOptions: "false",
+      name: "sameName",
+      idPrefix: "g_0_r_abc_prop_0_",
+    });
+    const wrapperB = createWrapper({
+      hasOptions: "false",
+      name: "sameName",
+      idPrefix: "g_1_r_abc_prop_0_",
+    });
     await wrapperA.find('[data-testid="add-field-button"]').trigger("click");
     await wrapperB.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();

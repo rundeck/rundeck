@@ -83,6 +83,7 @@
         :has-options="hasAllowedValues()"
         :options="parseAllowedValues()"
         :name="prop.name"
+        :id-prefix="`${rkey}prop_${pindex}_`"
       ></dynamic-form-plugin-prop>
     </template>
     <template v-else>
