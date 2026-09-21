@@ -363,14 +363,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 if (origfile.exists() && !origfile.delete()) {
                     logger.error("Failed to delete job file: ${origfile.absolutePath}")
                 }
-                //this job no longer exists: forget its cached status and counters regardless of
-                //whether refreshJobStatus below succeeds or throws, so a failure doesn't leak them
+                //this job no longer exists: forget its cached status regardless of whether
+                //refreshJobStatus below succeeds or throws, so a failure doesn't leak it
                 try {
                     def status = refreshJobStatus(exportReference, origPath, false)
                     return createJobStatus(status, jobActionsForStatus(status))
                 } finally {
                     jobStateMap.remove(exportReference.id)
-                    forgetJobStatusRefreshGeneration(exportReference.id)
                     resetFileCounterFor(outfile)
                 }
 
@@ -432,19 +431,16 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
         //mark as loading (rather than removing) so a concurrent initJobsStatus() call doesn't
         //re-insert a stale placeholder into the gap after this refresh completes
-        jobStateMap[job.id] = initJobStatus(job)
-        long generation = beginJobStatusRefresh(job.id)
+        Map loadingMarker = initJobStatus(job)
+        beginJobStatusRefresh(job.id, loadingMarker)
 
         try {
-            return doRefreshJobStatus(job, originalPath, doSerialize, path, generation)
+            return doRefreshJobStatus(job, originalPath, doSerialize, path, loadingMarker)
         } catch (Throwable t) {
             //don't leave the LOADING marker in place forever: a later status request should
-            //retry the refresh instead of getting stuck on a stale placeholder. Only clear it
-            //if no newer refresh has since started for this job - otherwise this would stomp
-            //on that refresh's own placeholder or result.
-            if (isCurrentRefreshGeneration(job.id, generation)) {
-                jobStateMap.remove(job.id)
-            }
+            //retry the refresh instead of getting stuck on it. Only clear our own placeholder -
+            //if a newer refresh (or a deletion) has already replaced or removed it, leave it alone
+            abandonJobStatusRefresh(job.id, loadingMarker)
             throw t
         }
     }
@@ -454,7 +450,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             final String originalPath,
             boolean doSerialize,
             String path,
-            long generation
+            Map loadingMarker
     ) {
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
@@ -505,11 +501,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             jobstat['commitMeta'] = GitUtil.metaForCommit(commit)
         }
 
-        //only publish if no newer refresh has since started for this job - otherwise this
-        //(slower, older) refresh would overwrite the cache with a stale result
-        if (isCurrentRefreshGeneration(job.id, generation)) {
-            jobStateMap[job.id] = jobstat
-        }
+        //only publish if our own LOADING placeholder is still current - otherwise a newer refresh
+        //(or a deletion) has already replaced or removed it, and this (older) result must not
+        //overwrite it
+        publishJobStatusIfCurrent(job.id, loadingMarker, jobstat)
 
         jobstat
     }
@@ -703,7 +698,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     private Map initJobStatus(final JobRevReference job) {
-        def jobstat = Collections.synchronizedMap([:])
+        def jobstat = new RefreshPlaceholder()
         jobstat['synch'] = SynchState.LOADING
         jobstat['id'] = job.id
         jobstat['version'] = job.version

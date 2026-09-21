@@ -161,68 +161,62 @@ class BaseGitPlugin {
     }
 
     /**
-     * source of unique, monotonically increasing refresh tickets, shared across all jobs so a
-     * ticket value is never reused - even after a job's entry in jobStatusRefreshGeneration below
-     * is removed and later recreated from scratch (e.g. across a delete then re-track of the same
-     * job ID), an old in-flight refresh's ticket can never collide with a new one's
+     * A job-status refresh's in-progress placeholder. Deliberately does NOT use LinkedHashMap's
+     * content-based equals/hashCode: two concurrent refreshes of the same (unchanged) job produce
+     * content-identical LOADING placeholders, so a content-equality match couldn't tell "my own
+     * placeholder" apart from a different, newer refresh's - whichever happened to finish first
+     * could then publish over the other's placeholder regardless of which one actually started
+     * more recently. Identity-based equals/hashCode make jobStateMap.replace/remove(id, thisExact
+     * Instance) match only this exact instance, so only the refresh that is still the one and only
+     * currently-installed placeholder for a job can ever publish - a check that stays valid even
+     * after the placeholder is superseded or the job is deleted, with nothing extra to track,
+     * leak, or coordinate removal of.
+     * <p>
+     * Note for tests: call {@code .equals()} reflectively (or exercise it indirectly via
+     * {@code jobStateMap.replace/remove}, as production code does) rather than Groovy's {@code ==}
+     * or a directly-compiled {@code .equals()} call - Groovy's dynamic dispatch for {@code def}-typed
+     * operands routes {@code equals} through its own structural comparison for Map operands,
+     * bypassing this override. The real call sites in this class go through the plain-Java
+     * {@code java.util.Map} default methods, which dispatch normally and are unaffected.
      */
-    private final AtomicLong refreshTicketSequence = new AtomicLong(0)
-
-    /**
-     * maps job ID to the highest refresh ticket seen so far for that job, so a slower/older
-     * concurrent refresh can tell a newer one has since started (or the job was forgotten) and
-     * avoid overwriting jobStateMap with a stale result
-     */
-    private final ConcurrentMap<String, AtomicLong> jobStatusRefreshGeneration = new ConcurrentHashMap<>()
-
-    private AtomicLong refreshGenerationCounterFor(String jobId) {
-        AtomicLong counter = jobStatusRefreshGeneration.get(jobId)
-        if (counter == null) {
-            counter = new AtomicLong(0)
-            AtomicLong previous = jobStatusRefreshGeneration.putIfAbsent(jobId, counter)
-            if (previous != null) {
-                counter = previous
-            }
+    static final class RefreshPlaceholder extends LinkedHashMap {
+        @Override
+        boolean equals(Object o) {
+            this.is(o)
         }
-        counter
-    }
 
-    /**
-     * Claim a generation ticket for a new status refresh of the given job.
-     * @return the ticket: pass it to {@link #isCurrentRefreshGeneration} before publishing this
-     *         refresh's result, to detect whether a newer refresh has since started for the same job
-     */
-    protected long beginJobStatusRefresh(String jobId) {
-        long ticket = refreshTicketSequence.incrementAndGet()
-        //only advance the job's recorded ticket, never move it backwards: tickets are globally
-        //unique and strictly increasing, so this is safe even if two concurrent calls for the
-        //same job apply out of order relative to which one claimed the higher ticket
-        greaterAndSet(refreshGenerationCounterFor(jobId), ticket)
-        ticket
-    }
-
-    /**
-     * @return true if no newer refresh has started for this job since {@code generation} was issued
-     *         by {@link #beginJobStatusRefresh}
-     */
-    protected boolean isCurrentRefreshGeneration(String jobId, long generation) {
-        refreshGenerationCounterFor(jobId).get() == generation
-    }
-
-    /**
-     * Forget the refresh-generation ticket counter for a job once it no longer exists (e.g. deleted
-     * or imported-then-deleted), so {@link #jobStatusRefreshGeneration} doesn't grow unbounded over
-     * the lifetime of a long-lived instance. Only removes the counter object currently mapped for
-     * this job, so it can't race with a concurrent refresh that has already swapped in a different
-     * (newer) counter instance: a ticket issued against the removed counter simply becomes
-     * permanently stale afterward, rather than the map entry being incorrectly dropped out from
-     * under it.
-     */
-    protected void forgetJobStatusRefreshGeneration(String jobId) {
-        AtomicLong counter = jobStatusRefreshGeneration.get(jobId)
-        if (counter != null) {
-            jobStatusRefreshGeneration.remove(jobId, counter)
+        @Override
+        int hashCode() {
+            System.identityHashCode(this)
         }
+    }
+
+    /**
+     * Install a job's LOADING placeholder (an instance of {@link RefreshPlaceholder}, built by the
+     * caller's own initJobStatus) into jobStateMap. Pass the same instance to
+     * {@link #publishJobStatusIfCurrent} or {@link #abandonJobStatusRefresh} when the refresh
+     * finishes, to detect whether a newer refresh (or a deletion) has since replaced or removed it.
+     */
+    protected void beginJobStatusRefresh(String jobId, Map loadingMarker) {
+        jobStateMap[jobId] = loadingMarker
+    }
+
+    /**
+     * Publish a completed refresh's result, but only if its LOADING placeholder (as installed by
+     * {@link #beginJobStatusRefresh}) is still current: if a newer refresh, or a deletion, has
+     * since replaced or removed it, this (older) result is silently dropped instead.
+     */
+    protected void publishJobStatusIfCurrent(String jobId, Map loadingMarker, Map result) {
+        jobStateMap.replace(jobId, loadingMarker, result)
+    }
+
+    /**
+     * Clear a failed refresh's LOADING placeholder, but only if it's still current (see
+     * {@link #publishJobStatusIfCurrent}) - so a later status request retries rather than getting
+     * stuck on it, without clobbering a newer refresh's own placeholder or published result.
+     */
+    protected void abandonJobStatusRefresh(String jobId, Map loadingMarker) {
+        jobStateMap.remove(jobId, loadingMarker)
     }
 
     def serialize(

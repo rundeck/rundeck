@@ -585,41 +585,104 @@ class BaseGitPluginSpec extends Specification {
 
     }
 
-    def "isCurrentRefreshGeneration detects a newer refresh has since started for the same job"() {
-        given: "a slower/older status refresh holds an earlier generation ticket"
-        def plugin = new BaseGitPlugin(new Common())
-
-        when:
-        long staleGeneration = plugin.beginJobStatusRefresh('job1')
-        long currentGeneration = plugin.beginJobStatusRefresh('job1')
-
-        then: "only the most recently started refresh is current"
-        currentGeneration > staleGeneration
-        plugin.isCurrentRefreshGeneration('job1', currentGeneration)
-        !plugin.isCurrentRefreshGeneration('job1', staleGeneration)
-
-        and: "generations are tracked independently per job"
-        plugin.isCurrentRefreshGeneration('job2', plugin.beginJobStatusRefresh('job2'))
+    private static Map placeholder(Map content) {
+        def marker = new BaseGitPlugin.RefreshPlaceholder()
+        marker.putAll(content)
+        marker
     }
 
-    def "forgetJobStatusRefreshGeneration prunes the counter for a deleted job"() {
-        given: "a stale ticket from before the job was deleted"
+    def "RefreshPlaceholder uses identity, not content, for equals/hashCode"() {
+        given: "two placeholders with identical content, as two concurrent refreshes of the same unchanged job would produce"
+        def a = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        def b = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+
+        // invoked reflectively, since Groovy's dynamic dispatch for a directly-compiled a.equals(b)
+        // (or a == b) routes through its own structural comparison for Map operands regardless of
+        // an overridden equals() - see the javadoc on RefreshPlaceholder. The real call sites in
+        // production code go through java.util.Map's plain-Java default replace/remove methods,
+        // which dispatch equals() normally and are unaffected; this reflective call exercises the
+        // same normal JVM dispatch to verify the override itself is correct.
+        def equalsMethod = a.getClass().getMethod("equals", Object)
+
+        expect: "they are never equal to each other, only to themselves"
+        !(equalsMethod.invoke(a, b) as boolean)
+        equalsMethod.invoke(a, a) as boolean
+    }
+
+    def "publishJobStatusIfCurrent drops a stale result regardless of which refresh finishes first"() {
+        given: "two overlapping refreshes for the same (unchanged) job - content-identical placeholders"
         def plugin = new BaseGitPlugin(new Common())
-        long staleTicket = plugin.beginJobStatusRefresh('job1')
+        def olderPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        def newerPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        plugin.beginJobStatusRefresh('job1', olderPlaceholder)
+        plugin.beginJobStatusRefresh('job1', newerPlaceholder)
 
-        when: "the job is deleted"
-        plugin.forgetJobStatusRefreshGeneration('job1')
+        when: "the older, slower refresh finishes last and tries to publish"
+        def staleResult = [synch: 'CLEAN', id: 'job1', version: 1, ident: 'stale']
+        plugin.publishJobStatusIfCurrent('job1', olderPlaceholder, staleResult)
 
-        then: "the stale ticket is no longer current: it was actually removed, not just superseded"
-        !plugin.isCurrentRefreshGeneration('job1', staleTicket)
+        then: "its result is dropped: the newer refresh's placeholder is still in place, untouched"
+        plugin.jobStateMap['job1'].is(newerPlaceholder)
 
-        when: "the job ID is later reused by a brand new refresh"
-        long newTicket = plugin.beginJobStatusRefresh('job1')
+        when: "the newer refresh then finishes and publishes"
+        def freshResult = [synch: 'CLEAN', id: 'job1', version: 1, ident: 'fresh']
+        plugin.publishJobStatusIfCurrent('job1', newerPlaceholder, freshResult)
 
-        then: "ticket values are never reused, even across the removal boundary"
-        newTicket != staleTicket
-        plugin.isCurrentRefreshGeneration('job1', newTicket)
-        !plugin.isCurrentRefreshGeneration('job1', staleTicket)
+        then: "its result is accepted"
+        plugin.jobStateMap['job1'].is(freshResult)
+    }
+
+    def "publishJobStatusIfCurrent rejects an older refresh even if it happens to finish first"() {
+        given: "the same overlapping scenario, but the older refresh finishes (and publishes) before the newer one"
+        def plugin = new BaseGitPlugin(new Common())
+        def olderPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        def newerPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        plugin.beginJobStatusRefresh('job1', olderPlaceholder)
+        plugin.beginJobStatusRefresh('job1', newerPlaceholder)
+
+        when: "the older refresh finishes first and publishes"
+        plugin.publishJobStatusIfCurrent('job1', olderPlaceholder, [synch: 'CLEAN', id: 'job1', ident: 'stale'])
+
+        then: "its result is dropped: it is no longer the currently-installed placeholder"
+        plugin.jobStateMap['job1'].is(newerPlaceholder)
+
+        when: "the newer refresh then finishes and publishes"
+        def freshResult = [synch: 'CLEAN', id: 'job1', ident: 'fresh']
+        plugin.publishJobStatusIfCurrent('job1', newerPlaceholder, freshResult)
+
+        then: "its (truly current) result is accepted, not blocked by the earlier publish attempt"
+        plugin.jobStateMap['job1'].is(freshResult)
+    }
+
+    def "abandonJobStatusRefresh only clears its own placeholder, never a newer refresh's"() {
+        given: "two overlapping refreshes for the same job"
+        def plugin = new BaseGitPlugin(new Common())
+        def olderPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        def newerPlaceholder = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        plugin.beginJobStatusRefresh('job1', olderPlaceholder)
+        plugin.beginJobStatusRefresh('job1', newerPlaceholder)
+
+        when: "the older refresh fails and abandons its own placeholder"
+        plugin.abandonJobStatusRefresh('job1', olderPlaceholder)
+
+        then: "the newer refresh's placeholder is untouched, not left stuck or wiped"
+        plugin.jobStateMap['job1'].is(newerPlaceholder)
+    }
+
+    def "a deletion's unconditional removal can't be resurrected by an in-flight refresh"() {
+        given: "a refresh in progress for a job that then gets deleted out from under it"
+        def plugin = new BaseGitPlugin(new Common())
+        def loadingMarker = placeholder([synch: 'LOADING', id: 'job1', version: 1])
+        plugin.beginJobStatusRefresh('job1', loadingMarker)
+
+        when: "the job is deleted (an unconditional removal, as done on a real DELETE event)"
+        plugin.jobStateMap.remove('job1')
+
+        and: "the in-flight refresh finishes afterward and tries to publish"
+        plugin.publishJobStatusIfCurrent('job1', loadingMarker, [synch: 'CLEAN', id: 'job1'])
+
+        then: "the job stays forgotten - its stale result isn't resurrected"
+        !plugin.jobStateMap.containsKey('job1')
     }
 
     //Signed Jar classes cannot be directly mocked. Hence.....
