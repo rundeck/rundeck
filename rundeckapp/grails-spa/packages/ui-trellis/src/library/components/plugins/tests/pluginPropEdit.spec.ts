@@ -1,5 +1,7 @@
 import pluginPropEdit from "@/library/components/plugins/pluginPropEdit.vue";
 import AceEditorVue from "@/library/components/utils/AceEditorVue.vue";
+import DynamicFormPluginProp from "@/library/components/plugins/DynamicFormPluginProp.vue";
+import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 jest.mock("../../../modules/rundeckClient", () => ({}));
@@ -185,17 +187,17 @@ describe("pluginPropEdit", () => {
       selectorData: {},
     });
 
-    const html = wrapper.html();
-    const descriptionIndex = html.indexOf(
+    const descriptions = wrapper.findAllComponents(PluginDetails);
+    const widget = wrapper.findComponent(DynamicFormPluginProp);
+
+    expect(descriptions.length).toBe(1);
+    expect(descriptions[0].props("description")).toContain(
       "Any custom fields to be included in the change event",
     );
-    const widgetIndex = html.indexOf("dynamic-form-plugin-prop");
-    expect(descriptionIndex).toBeGreaterThan(-1);
-    expect(widgetIndex).toBeGreaterThan(-1);
-    expect(descriptionIndex).toBeLessThan(widgetIndex);
+    expect(widget.exists()).toBe(true);
     expect(
-      html.split("Any custom fields to be included in the change event")
-        .length - 1,
-    ).toBe(1);
+      descriptions[0].element.compareDocumentPosition(widget.element) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });

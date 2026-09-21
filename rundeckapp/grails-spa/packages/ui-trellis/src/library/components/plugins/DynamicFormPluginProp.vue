@@ -123,7 +123,9 @@
                   :class="['form-control']"
                   data-testid="field-key-input"
                 />
-                <div class="help-block">{{ $t("message_fieldKeyHelp") }}</div>
+                <div class="help-block" data-testid="field-key-help">
+                  {{ $t("message_fieldKeyHelp") }}
+                </div>
               </div>
             </div>
             <div :class="['form-group']">
@@ -135,7 +137,9 @@
                   :class="['form-control']"
                   data-testid="field-label-input"
                 />
-                <div class="help-block">{{ $t("message_fieldLabelHelp") }}</div>
+                <div class="help-block" data-testid="field-label-help">
+                  {{ $t("message_fieldLabelHelp") }}
+                </div>
               </div>
             </div>
 

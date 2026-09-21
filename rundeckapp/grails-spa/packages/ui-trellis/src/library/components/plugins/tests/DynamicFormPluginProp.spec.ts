@@ -168,14 +168,12 @@ describe("DynamicFormPluginProp.vue", () => {
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
 
-    expect(
-      wrapper.find('[data-testid="field-label-input"]').element.parentElement
-        ?.textContent,
-    ).toContain("message_fieldLabelHelp");
-    expect(
-      wrapper.find('[data-testid="field-key-input"]').element.parentElement
-        ?.textContent,
-    ).toContain("message_fieldKeyHelp");
+    expect(wrapper.find('[data-testid="field-label-help"]').text()).toContain(
+      "message_fieldLabelHelp",
+    );
+    expect(wrapper.find('[data-testid="field-key-help"]').text()).toContain(
+      "message_fieldKeyHelp",
+    );
   });
 
   it("blocks adding a field with a blank Key on the free-text path and shows a validation warning", async () => {
