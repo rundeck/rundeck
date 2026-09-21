@@ -451,6 +451,30 @@ describe("PluginPropView", () => {
       expect(pairs[1].text()).toContain("8080");
     });
 
+    it("falls back to the key when a stored custom field has no label — Copilot review on RUN-4980", async () => {
+      // DynamicFormPluginProp.vue only normalizes a blank label to the key
+      // when its own editor mounts. Fields saved before that normalization
+      // existed (or written by something other than the editor) can still
+      // reach this read-only renderer with an absent/blank label, which
+      // bypasses the editor entirely.
+      const wrapper = await createWrapper({
+        props: {
+          prop: {
+            type: "String",
+            title: "Config",
+            desc: "Dynamic form",
+            options: { displayType: "DYNAMIC_FORM" },
+          },
+          value: JSON.stringify([
+            { key: "legacy_field", label: "", value: "some value" },
+          ]),
+        },
+      });
+
+      const pairs = wrapper.findAll('[data-testid="configpair"]');
+      expect(pairs[0].text()).toContain("legacy_field:");
+    });
+
     it("renders no pairs when value is empty", async () => {
       const wrapper = await createWrapper({
         props: {

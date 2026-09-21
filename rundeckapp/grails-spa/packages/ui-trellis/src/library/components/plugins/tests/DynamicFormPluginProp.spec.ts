@@ -176,6 +176,41 @@ describe("DynamicFormPluginProp.vue", () => {
     );
   });
 
+  it("associates the Field Key and Field Label inputs with their labels and help text, and marks Key required", async () => {
+    // Copilot review on RUN-4980: the labels had no `for`, the inputs no
+    // `id`/`aria-describedby`, and the required Key exposed no required
+    // state - so screen readers announced neither the field name nor the
+    // guidance on focus.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    const keyInput = wrapper.find('[data-testid="field-key-input"]');
+    const keyHelp = wrapper.find('[data-testid="field-key-help"]');
+    expect(keyInput.attributes("id")).toBeTruthy();
+    expect(keyInput.attributes("aria-describedby")).toBe(
+      keyHelp.attributes("id"),
+    );
+    expect(keyInput.attributes("required")).toBeDefined();
+    expect(keyInput.attributes("aria-required")).toBe("true");
+
+    const labelInput = wrapper.find('[data-testid="field-label-input"]');
+    const labelHelp = wrapper.find('[data-testid="field-label-help"]');
+    expect(labelInput.attributes("id")).toBeTruthy();
+    expect(labelInput.attributes("aria-describedby")).toBe(
+      labelHelp.attributes("id"),
+    );
+
+    const keyLabelEl = wrapper
+      .findAll("label")
+      .find((l) => l.attributes("for") === keyInput.attributes("id"));
+    const fieldLabelEl = wrapper
+      .findAll("label")
+      .find((l) => l.attributes("for") === labelInput.attributes("id"));
+    expect(keyLabelEl).toBeTruthy();
+    expect(fieldLabelEl).toBeTruthy();
+  });
+
   it("blocks adding a field with a blank Key on the free-text path and shows a validation warning", async () => {
     // Copilot review on RUN-4980: the help text says the Field Key is
     // required, but confirming with a blank key previously still added an

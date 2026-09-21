@@ -120,29 +120,47 @@
 
           <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_fieldKey") }}</label>
+              <label class="col-md-4" for="new-field-key-input">{{
+                $t("message_fieldKey")
+              }}</label>
               <div class="col-md-8">
                 <input
+                  id="new-field-key-input"
                   v-model="newField"
                   type="text"
                   :class="['form-control']"
+                  required
+                  aria-required="true"
+                  aria-describedby="new-field-key-help"
                   data-testid="field-key-input"
                 />
-                <div class="help-block" data-testid="field-key-help">
+                <div
+                  id="new-field-key-help"
+                  class="help-block"
+                  data-testid="field-key-help"
+                >
                   {{ $t("message_fieldKeyHelp") }}
                 </div>
               </div>
             </div>
             <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_fieldLabel") }}</label>
+              <label class="col-md-4" for="new-field-label-input">{{
+                $t("message_fieldLabel")
+              }}</label>
               <div class="col-md-8">
                 <input
+                  id="new-field-label-input"
                   v-model="newLabelField"
                   type="text"
                   :class="['form-control']"
+                  aria-describedby="new-field-label-help"
                   data-testid="field-label-input"
                 />
-                <div class="help-block" data-testid="field-label-help">
+                <div
+                  id="new-field-label-help"
+                  class="help-block"
+                  data-testid="field-label-help"
+                >
                   {{ $t("message_fieldLabelHelp") }}
                 </div>
               </div>

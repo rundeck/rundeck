@@ -201,7 +201,7 @@ class PluginTagLib {
                 out << '<div class="customattributes"></div>'
                 fields.each{field->
                     out << '<span class="configpair">'
-                    out << '<span title="">'+field.label.encodeAsSanitizedHTML()+': </span>'
+                    out << '<span title="">'+(field.label ?: field.key).encodeAsSanitizedHTML()+': </span>'
                     out << '<span class="text-success">'+field.value.encodeAsSanitizedHTML()+'</span>'
                     out << '</span>'
                 }
