@@ -603,16 +603,23 @@ class BaseGitPluginSpec extends Specification {
     }
 
     def "forgetJobStatusRefreshGeneration prunes the counter for a deleted job"() {
-        given: "a job whose ticket counter has already advanced past 1"
+        given: "a stale ticket from before the job was deleted"
         def plugin = new BaseGitPlugin(new Common())
-        plugin.beginJobStatusRefresh('job1')
-        plugin.beginJobStatusRefresh('job1')
+        long staleTicket = plugin.beginJobStatusRefresh('job1')
 
         when: "the job is deleted"
         plugin.forgetJobStatusRefreshGeneration('job1')
 
-        then: "its counter is gone, not just left in place: the next refresh starts a fresh ticket sequence"
-        plugin.beginJobStatusRefresh('job1') == 1L
+        then: "the stale ticket is no longer current: it was actually removed, not just superseded"
+        !plugin.isCurrentRefreshGeneration('job1', staleTicket)
+
+        when: "the job ID is later reused by a brand new refresh"
+        long newTicket = plugin.beginJobStatusRefresh('job1')
+
+        then: "ticket values are never reused, even across the removal boundary"
+        newTicket != staleTicket
+        plugin.isCurrentRefreshGeneration('job1', newTicket)
+        !plugin.isCurrentRefreshGeneration('job1', staleTicket)
     }
 
     //Signed Jar classes cannot be directly mocked. Hence.....

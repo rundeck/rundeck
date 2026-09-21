@@ -161,9 +161,17 @@ class BaseGitPlugin {
     }
 
     /**
-     * maps job ID to an AtomicLong ticket counter, incremented each time a status refresh starts
-     * for that job, so a slower/older concurrent refresh can tell a newer one has since started
-     * and avoid overwriting jobStateMap with a stale result
+     * source of unique, monotonically increasing refresh tickets, shared across all jobs so a
+     * ticket value is never reused - even after a job's entry in jobStatusRefreshGeneration below
+     * is removed and later recreated from scratch (e.g. across a delete then re-track of the same
+     * job ID), an old in-flight refresh's ticket can never collide with a new one's
+     */
+    private final AtomicLong refreshTicketSequence = new AtomicLong(0)
+
+    /**
+     * maps job ID to the highest refresh ticket seen so far for that job, so a slower/older
+     * concurrent refresh can tell a newer one has since started (or the job was forgotten) and
+     * avoid overwriting jobStateMap with a stale result
      */
     private final ConcurrentMap<String, AtomicLong> jobStatusRefreshGeneration = new ConcurrentHashMap<>()
 
@@ -185,7 +193,12 @@ class BaseGitPlugin {
      *         refresh's result, to detect whether a newer refresh has since started for the same job
      */
     protected long beginJobStatusRefresh(String jobId) {
-        refreshGenerationCounterFor(jobId).incrementAndGet()
+        long ticket = refreshTicketSequence.incrementAndGet()
+        //only advance the job's recorded ticket, never move it backwards: tickets are globally
+        //unique and strictly increasing, so this is safe even if two concurrent calls for the
+        //same job apply out of order relative to which one claimed the higher ticket
+        greaterAndSet(refreshGenerationCounterFor(jobId), ticket)
+        ticket
     }
 
     /**

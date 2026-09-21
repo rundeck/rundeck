@@ -363,12 +363,16 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 if (origfile.exists() && !origfile.delete()) {
                     logger.error("Failed to delete job file: ${origfile.absolutePath}")
                 }
-                def status = refreshJobStatus(exportReference, origPath, false)
-                jobStateMap.remove(exportReference.id)
-                forgetJobStatusRefreshGeneration(exportReference.id)
-                resetFileCounterFor(outfile)
-                return createJobStatus(status, jobActionsForStatus(status))
-                break
+                //this job no longer exists: forget its cached status and counters regardless of
+                //whether refreshJobStatus below succeeds or throws, so a failure doesn't leak them
+                try {
+                    def status = refreshJobStatus(exportReference, origPath, false)
+                    return createJobStatus(status, jobActionsForStatus(status))
+                } finally {
+                    jobStateMap.remove(exportReference.id)
+                    forgetJobStatusRefreshGeneration(exportReference.id)
+                    resetFileCounterFor(outfile)
+                }
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
                 origPath = relativePath(event.originalJobReference)
