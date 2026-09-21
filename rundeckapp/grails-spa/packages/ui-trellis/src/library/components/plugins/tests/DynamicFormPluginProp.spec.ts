@@ -218,6 +218,45 @@ describe("DynamicFormPluginProp.vue", () => {
     );
   });
 
+  it("clears a stale invalid-key warning when the modal is reopened", async () => {
+    // Copilot review on RUN-4980: openNewField() didn't reset invalidKey,
+    // so after a blank-key submission was cancelled, reopening the modal
+    // for a new attempt immediately showed the previous warning again.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    await wrapper.find('[data-testid="field-key-input"]').setValue("");
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
+      true,
+    );
+
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="invalid-key-warning"]').exists()).toBe(
+      false,
+    );
+  });
+
+  it("shows help text for the Description input using its own key, not the reused message_empty", async () => {
+    // Copilot review on RUN-4980: this help text used to reuse message_empty,
+    // but other locale catalogues already translate that key as just "Can be
+    // empty" and take priority over the en_US fallback, hiding the new
+    // guidance from non-English users. It now has a dedicated key instead.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    expect(
+      wrapper.find('[data-testid="new-field-description-help"]').text(),
+    ).toBe("message_fieldDescriptionHelp");
+  });
+
   it("falls back the stored label to the Key when the Field Label is left blank on the free-text path", async () => {
     // Copilot review on RUN-4980: message_fieldLabelHelp promises the Field
     // Key as the label fallback, but the field used to be serialized with a

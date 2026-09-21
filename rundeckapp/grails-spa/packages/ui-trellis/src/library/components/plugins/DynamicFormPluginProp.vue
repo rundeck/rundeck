@@ -108,7 +108,12 @@
                   :class="['form-control']"
                   data-testid="field-description-input"
                 />
-                <div class="help-block">{{ $t("message_empty") }}</div>
+                <div
+                  class="help-block"
+                  data-testid="new-field-description-help"
+                >
+                  {{ $t("message_fieldDescriptionHelp") }}
+                </div>
               </div>
             </div>
           </div>
@@ -152,7 +157,12 @@
                   :class="['form-control']"
                   data-testid="field-description-input"
                 />
-                <div class="help-block">{{ $t("message_empty") }}</div>
+                <div
+                  class="help-block"
+                  data-testid="new-field-description-help"
+                >
+                  {{ $t("message_fieldDescriptionHelp") }}
+                </div>
               </div>
             </div>
           </div>
@@ -305,6 +315,11 @@ export default defineComponent({
       }
     },
     openNewField() {
+      // Clear any validation warning left over from a previous, cancelled
+      // attempt - otherwise reopening the modal immediately shows it again
+      // even though this is a fresh attempt.
+      this.duplicate = false;
+      this.invalidKey = false;
       this.modalAddField = true;
     },
     addField() {
