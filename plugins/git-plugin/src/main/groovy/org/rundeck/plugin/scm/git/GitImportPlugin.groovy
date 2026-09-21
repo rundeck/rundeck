@@ -363,6 +363,22 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         // re-insert a stale placeholder into the gap after this refresh completes
         jobStateMap[job.id] = initJobStatus(job)
 
+        try {
+            return doRefreshJobStatus(job, originalPath, path, previousImportCommit)
+        } catch (Throwable t) {
+            // don't leave the LOADING marker in place forever: a later status request
+            // should retry the refresh instead of getting stuck on a stale placeholder
+            jobStateMap.remove(job.id)
+            throw t
+        }
+    }
+
+    private Map doRefreshJobStatus(
+            final JobScmReference job,
+            final String originalPath,
+            String path,
+            RevCommit previousImportCommit
+    ) {
         def jobstat = Collections.synchronizedMap([:])
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
 

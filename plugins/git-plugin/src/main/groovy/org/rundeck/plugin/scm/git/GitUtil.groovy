@@ -183,7 +183,12 @@ class GitUtil {
 
         diffList.addAll(differ.diff(COMP, leftSide, rightSide))
         if (diffList.size() > 0 && out != null) {
-            new DiffFormatter(out).format(diffList, leftSide, rightSide)
+            DiffFormatter formatter = new DiffFormatter(out)
+            try {
+                formatter.format(diffList, leftSide, rightSide)
+            } finally {
+                formatter.close()
+            }
         }
         diffList.size()
     }

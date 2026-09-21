@@ -235,13 +235,18 @@ class BaseGitPlugin {
 
     def serializeTemp(final JobExportReference job, String format, boolean preserveId, boolean useSourceId) {
         File outfile = File.createTempFile("${this.class.name}-serializeTemp", ".${format}")
-        outfile.withOutputStream { out ->
-            job.jobSerializer.serialize(
-                    format,
-                    out,
-                    preserveId,
-                    (useSourceId && job instanceof JobScmReference) ? job.sourceId : null
-            )
+        try {
+            outfile.withOutputStream { out ->
+                job.jobSerializer.serialize(
+                        format,
+                        out,
+                        preserveId,
+                        (useSourceId && job instanceof JobScmReference) ? job.sourceId : null
+                )
+            }
+        } catch (Throwable t) {
+            outfile.delete()
+            throw t
         }
         return outfile
     }

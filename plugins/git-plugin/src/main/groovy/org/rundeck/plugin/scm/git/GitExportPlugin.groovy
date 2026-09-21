@@ -429,6 +429,22 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         //re-insert a stale placeholder into the gap after this refresh completes
         jobStateMap[job.id] = initJobStatus(job)
 
+        try {
+            return doRefreshJobStatus(job, originalPath, doSerialize, path)
+        } catch (Throwable t) {
+            //don't leave the LOADING marker in place forever: a later status request
+            //should retry the refresh instead of getting stuck on a stale placeholder
+            jobStateMap.remove(job.id)
+            throw t
+        }
+    }
+
+    private Map doRefreshJobStatus(
+            final JobRevReference job,
+            final String originalPath,
+            boolean doSerialize,
+            String path
+    ) {
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
 
