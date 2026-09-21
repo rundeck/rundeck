@@ -17,7 +17,7 @@ class UserListPage extends BasePage {
 
     String loadPath = "/user/list"
 
-    By newProfileLinkBy = By.linkText("+ New Profile …")
+    By newProfileLinkBy = By.xpath("//a[contains(@href,'/user/create')]")
     By rowExpanderBy(String login) {
         By.xpath("//tr[.//*[normalize-space(text())='${login}']]//button[contains(@class,'expander') or @aria-expanded]")
     }
