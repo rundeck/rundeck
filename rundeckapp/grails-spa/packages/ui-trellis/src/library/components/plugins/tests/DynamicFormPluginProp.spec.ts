@@ -241,6 +241,36 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(lastEmittedFields[1].label).toBe("env_name");
   });
 
+  it("normalizes a blank label on an existing (legacy) field to its Key on load, and re-emits it", async () => {
+    // Copilot review on RUN-4980: the fallback above only covered newly
+    // created free-text fields. Fields already saved with `label: ""` by
+    // the previous editor were left untouched by syncFieldsFromProp(), so
+    // downstream renderers (pluginPropView.vue, PluginTagLib.groovy) would
+    // still show them with no label.
+    const wrapper = createWrapper({
+      fields: JSON.stringify({
+        legacy_field: {
+          key: "legacy_field",
+          label: "",
+          value: "",
+          desc: "Legacy description",
+        },
+      }),
+    });
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="field-item"] label').text()).toBe(
+      "legacy_field",
+    );
+
+    const emitted = wrapper.emitted("update:modelValue");
+    expect(emitted).toBeTruthy();
+    const lastEmittedFields = JSON.parse(
+      emitted![emitted!.length - 1][0] as string,
+    );
+    expect(lastEmittedFields[0].label).toBe("legacy_field");
+  });
+
   describe("regression for RUN-4764", () => {
     it("adds a field via the free-text Field Label/Field Key path without throwing", async () => {
       // hasOptions "false" is the free-text path, used whenever the plugin

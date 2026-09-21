@@ -282,14 +282,26 @@ export default defineComponent({
       }
       const customFieldsObject = JSON.parse(fields);
       if (customFieldsObject != null) {
+        let normalizedLabel = false;
         const parsedFields = Object.keys(customFieldsObject).map((key: any) => {
           const value = customFieldsObject[key];
           if (value.desc == null) {
             value.desc = this.$t("message_fieldKeyDescription", [value.key]);
           }
+          // Fields saved by the previous editor (or synced in from a parent
+          // that hasn't picked up the fallback yet) can carry a blank label.
+          // pluginPropView.vue and PluginTagLib.groovy render the stored
+          // label as-is, so normalize it here too, not just on creation.
+          if (!value.label || value.label.trim() === "") {
+            value.label = value.key;
+            normalizedLabel = true;
+          }
           return value;
         });
         this.customFields = parsedFields;
+        if (normalizedLabel) {
+          this.refreshPlugin();
+        }
       }
     },
     openNewField() {
