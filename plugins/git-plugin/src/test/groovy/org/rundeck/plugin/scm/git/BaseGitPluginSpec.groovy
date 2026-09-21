@@ -602,6 +602,19 @@ class BaseGitPluginSpec extends Specification {
         plugin.isCurrentRefreshGeneration('job2', plugin.beginJobStatusRefresh('job2'))
     }
 
+    def "forgetJobStatusRefreshGeneration prunes the counter for a deleted job"() {
+        given: "a job whose ticket counter has already advanced past 1"
+        def plugin = new BaseGitPlugin(new Common())
+        plugin.beginJobStatusRefresh('job1')
+        plugin.beginJobStatusRefresh('job1')
+
+        when: "the job is deleted"
+        plugin.forgetJobStatusRefreshGeneration('job1')
+
+        then: "its counter is gone, not just left in place: the next refresh starts a fresh ticket sequence"
+        plugin.beginJobStatusRefresh('job1') == 1L
+    }
+
     //Signed Jar classes cannot be directly mocked. Hence.....
     static abstract class RepositoryMock extends Repository {
         protected RepositoryMock(final BaseRepositoryBuilder options) {

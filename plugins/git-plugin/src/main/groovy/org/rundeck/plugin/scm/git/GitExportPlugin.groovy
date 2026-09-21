@@ -365,6 +365,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 }
                 def status = refreshJobStatus(exportReference, origPath, false)
                 jobStateMap.remove(exportReference.id)
+                forgetJobStatusRefreshGeneration(exportReference.id)
                 resetFileCounterFor(outfile)
                 return createJobStatus(status, jobActionsForStatus(status))
                 break

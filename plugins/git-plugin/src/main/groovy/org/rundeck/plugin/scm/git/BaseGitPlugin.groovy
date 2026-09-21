@@ -196,6 +196,22 @@ class BaseGitPlugin {
         refreshGenerationCounterFor(jobId).get() == generation
     }
 
+    /**
+     * Forget the refresh-generation ticket counter for a job once it no longer exists (e.g. deleted
+     * or imported-then-deleted), so {@link #jobStatusRefreshGeneration} doesn't grow unbounded over
+     * the lifetime of a long-lived instance. Only removes the counter object currently mapped for
+     * this job, so it can't race with a concurrent refresh that has already swapped in a different
+     * (newer) counter instance: a ticket issued against the removed counter simply becomes
+     * permanently stale afterward, rather than the map entry being incorrectly dropped out from
+     * under it.
+     */
+    protected void forgetJobStatusRefreshGeneration(String jobId) {
+        AtomicLong counter = jobStatusRefreshGeneration.get(jobId)
+        if (counter != null) {
+            jobStatusRefreshGeneration.remove(jobId, counter)
+        }
+    }
+
     def serialize(
             final JobExportReference job,
             String format,

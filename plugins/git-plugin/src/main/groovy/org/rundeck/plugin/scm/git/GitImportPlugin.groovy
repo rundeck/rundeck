@@ -93,6 +93,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
             deletedJobs.each { jobid ->
                 jobStateMap.remove(jobid)
+                forgetJobStatusRefreshGeneration(jobid)
             }
             return ((ImportJobs) actions[ACTION_IMPORT_JOBS]).performAction(
                 context,
