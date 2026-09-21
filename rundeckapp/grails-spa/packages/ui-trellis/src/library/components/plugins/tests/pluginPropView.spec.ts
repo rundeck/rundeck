@@ -475,6 +475,27 @@ describe("PluginPropView", () => {
       expect(pairs[0].text()).toContain("legacy_field:");
     });
 
+    it("falls back to the key when a stored custom field's label is whitespace-only — Copilot review on RUN-4980", async () => {
+      // A plain truthy/`||` check treats "  " as a real label, so it never
+      // falls back to the key even though the label is effectively blank.
+      const wrapper = await createWrapper({
+        props: {
+          prop: {
+            type: "String",
+            title: "Config",
+            desc: "Dynamic form",
+            options: { displayType: "DYNAMIC_FORM" },
+          },
+          value: JSON.stringify([
+            { key: "legacy_field", label: "   ", value: "some value" },
+          ]),
+        },
+      });
+
+      const pairs = wrapper.findAll('[data-testid="configpair"]');
+      expect(pairs[0].text()).toContain("legacy_field:");
+    });
+
     it("renders no pairs when value is empty", async () => {
       const wrapper = await createWrapper({
         props: {

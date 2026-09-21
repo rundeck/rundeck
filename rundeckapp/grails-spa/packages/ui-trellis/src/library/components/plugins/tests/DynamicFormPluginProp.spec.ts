@@ -201,14 +201,52 @@ describe("DynamicFormPluginProp.vue", () => {
       labelHelp.attributes("id"),
     );
 
+    const descriptionInput = wrapper.find(
+      '[data-testid="field-description-input"]',
+    );
+    const descriptionHelp = wrapper.find(
+      '[data-testid="new-field-description-help"]',
+    );
+    expect(descriptionInput.attributes("id")).toBeTruthy();
+    expect(descriptionInput.attributes("aria-describedby")).toBe(
+      descriptionHelp.attributes("id"),
+    );
+
     const keyLabelEl = wrapper
       .findAll("label")
       .find((l) => l.attributes("for") === keyInput.attributes("id"));
     const fieldLabelEl = wrapper
       .findAll("label")
       .find((l) => l.attributes("for") === labelInput.attributes("id"));
+    const descriptionLabelEl = wrapper
+      .findAll("label")
+      .find((l) => l.attributes("for") === descriptionInput.attributes("id"));
     expect(keyLabelEl).toBeTruthy();
     expect(fieldLabelEl).toBeTruthy();
+    expect(descriptionLabelEl).toBeTruthy();
+  });
+
+  it("scopes the modal's control/help ids to the plugin property's own name, so multiple instances on a page don't collide", async () => {
+    // Copilot review on RUN-4980: the ids were hard-coded, so a page with
+    // more than one DynamicFormPluginProp instance (one per plugin
+    // property) would have every instance's label/aria-describedby
+    // resolve to whichever instance rendered first.
+    const wrapperA = createWrapper({ hasOptions: "false", name: "fieldA" });
+    const wrapperB = createWrapper({ hasOptions: "false", name: "fieldB" });
+    await wrapperA.find('[data-testid="add-field-button"]').trigger("click");
+    await wrapperB.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    const idA = wrapperA
+      .find('[data-testid="field-key-input"]')
+      .attributes("id");
+    const idB = wrapperB
+      .find('[data-testid="field-key-input"]')
+      .attributes("id");
+
+    expect(idA).toBeTruthy();
+    expect(idB).toBeTruthy();
+    expect(idA).not.toBe(idB);
   });
 
   it("blocks adding a field with a blank Key on the free-text path and shows a validation warning", async () => {

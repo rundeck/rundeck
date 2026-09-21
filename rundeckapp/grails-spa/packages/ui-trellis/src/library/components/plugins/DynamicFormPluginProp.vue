@@ -100,15 +100,23 @@
             </div>
 
             <div :class="['form-data']">
-              <label class="col-md-4">{{ $t("message_description") }}</label>
+              <label
+                class="col-md-4"
+                :for="`${fieldIdPrefix}-description-input`"
+              >
+                {{ $t("message_description") }}
+              </label>
               <div class="col-md-8">
                 <input
+                  :id="`${fieldIdPrefix}-description-input`"
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
+                  :aria-describedby="`${fieldIdPrefix}-description-help`"
                   data-testid="field-description-input"
                 />
                 <div
+                  :id="`${fieldIdPrefix}-description-help`"
                   class="help-block"
                   data-testid="new-field-description-help"
                 >
@@ -120,22 +128,22 @@
 
           <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
-              <label class="col-md-4" for="new-field-key-input">{{
+              <label class="col-md-4" :for="`${fieldIdPrefix}-key-input`">{{
                 $t("message_fieldKey")
               }}</label>
               <div class="col-md-8">
                 <input
-                  id="new-field-key-input"
+                  :id="`${fieldIdPrefix}-key-input`"
                   v-model="newField"
                   type="text"
                   :class="['form-control']"
                   required
                   aria-required="true"
-                  aria-describedby="new-field-key-help"
+                  :aria-describedby="`${fieldIdPrefix}-key-help`"
                   data-testid="field-key-input"
                 />
                 <div
-                  id="new-field-key-help"
+                  :id="`${fieldIdPrefix}-key-help`"
                   class="help-block"
                   data-testid="field-key-help"
                 >
@@ -144,20 +152,20 @@
               </div>
             </div>
             <div :class="['form-group']">
-              <label class="col-md-4" for="new-field-label-input">{{
+              <label class="col-md-4" :for="`${fieldIdPrefix}-label-input`">{{
                 $t("message_fieldLabel")
               }}</label>
               <div class="col-md-8">
                 <input
-                  id="new-field-label-input"
+                  :id="`${fieldIdPrefix}-label-input`"
                   v-model="newLabelField"
                   type="text"
                   :class="['form-control']"
-                  aria-describedby="new-field-label-help"
+                  :aria-describedby="`${fieldIdPrefix}-label-help`"
                   data-testid="field-label-input"
                 />
                 <div
-                  id="new-field-label-help"
+                  :id="`${fieldIdPrefix}-label-help`"
                   class="help-block"
                   data-testid="field-label-help"
                 >
@@ -167,15 +175,23 @@
             </div>
 
             <div :class="['form-group']">
-              <label class="col-md-4">{{ $t("message_description") }}</label>
+              <label
+                class="col-md-4"
+                :for="`${fieldIdPrefix}-description-input`"
+              >
+                {{ $t("message_description") }}
+              </label>
               <div class="col-md-8">
                 <input
+                  :id="`${fieldIdPrefix}-description-input`"
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
+                  :aria-describedby="`${fieldIdPrefix}-description-help`"
                   data-testid="field-description-input"
                 />
                 <div
+                  :id="`${fieldIdPrefix}-description-help`"
                   class="help-block"
                   data-testid="new-field-description-help"
                 >
@@ -264,6 +280,18 @@ export default defineComponent({
       newFieldDescription: "",
       selectedField: { value: "", label: "" },
     };
+  },
+  computed: {
+    // A page can render more than one DynamicFormPluginProp (one per
+    // plugin property), so the modal's control/help ids must be unique
+    // per instance rather than hard-coded - otherwise every instance's
+    // label/aria-describedby resolves to whichever instance rendered
+    // first. `name` is the plugin property's own name and already
+    // required to be unique per instance; sanitize it since it can
+    // contain characters (e.g. ".") that aren't safe in an HTML id.
+    fieldIdPrefix(): string {
+      return `dynamic-form-${this.name.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+    },
   },
   watch: {
     fields(newFields: string) {
