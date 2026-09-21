@@ -218,6 +218,29 @@ describe("DynamicFormPluginProp.vue", () => {
     );
   });
 
+  it("falls back the stored label to the Key when the Field Label is left blank on the free-text path", async () => {
+    // Copilot review on RUN-4980: message_fieldLabelHelp promises the Field
+    // Key as the label fallback, but the field used to be serialized with a
+    // literal blank label. pluginPropView.vue and PluginTagLib.groovy render
+    // the stored label as-is (no fallback of their own), so the emitted
+    // JSON must carry the fallback, not just this editor's own display.
+    const wrapper = createWrapper({ hasOptions: "false" });
+    await wrapper.find('[data-testid="add-field-button"]').trigger("click");
+    await flushPromises();
+
+    await wrapper.find('[data-testid="field-key-input"]').setValue("env_name");
+    await wrapper
+      .find('[data-testid="confirm-add-field-button"]')
+      .trigger("click");
+    await flushPromises();
+
+    const emitted = wrapper.emitted("update:modelValue");
+    const lastEmittedFields = JSON.parse(
+      emitted![emitted!.length - 1][0] as string,
+    );
+    expect(lastEmittedFields[1].label).toBe("env_name");
+  });
+
   describe("regression for RUN-4764", () => {
     it("adds a field via the free-text Field Label/Field Key path without throwing", async () => {
       // hasOptions "false" is the free-text path, used whenever the plugin

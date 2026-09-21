@@ -343,7 +343,14 @@ export default defineComponent({
 
         field = {
           key: this.newField,
-          label: this.newLabelField,
+          // message_fieldLabelHelp promises the key as the fallback label,
+          // so normalize it here rather than only at display time -
+          // pluginPropView.vue and PluginTagLib.groovy render the stored
+          // label directly and have no fallback of their own.
+          label:
+            this.newLabelField.trim() !== ""
+              ? this.newLabelField
+              : this.newField,
           value: "",
           desc: description,
         };
