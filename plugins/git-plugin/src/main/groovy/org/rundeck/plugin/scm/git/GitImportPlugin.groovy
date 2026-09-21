@@ -362,13 +362,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         // mark as loading (rather than removing) so a concurrent initJobsStatus() call doesn't
         // re-insert a stale placeholder into the gap after this refresh completes
         jobStateMap[job.id] = initJobStatus(job)
+        long generation = beginJobStatusRefresh(job.id)
 
         try {
-            return doRefreshJobStatus(job, originalPath, path, previousImportCommit)
+            return doRefreshJobStatus(job, originalPath, path, previousImportCommit, generation)
         } catch (Throwable t) {
-            // don't leave the LOADING marker in place forever: a later status request
-            // should retry the refresh instead of getting stuck on a stale placeholder
-            jobStateMap.remove(job.id)
+            // don't leave the LOADING marker in place forever: a later status request should
+            // retry the refresh instead of getting stuck on a stale placeholder. Only clear it
+            // if no newer refresh has since started for this job - otherwise this would stomp
+            // on that refresh's own placeholder or result.
+            if (isCurrentRefreshGeneration(job.id, generation)) {
+                jobStateMap.remove(job.id)
+            }
             throw t
         }
     }
@@ -377,7 +382,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             final JobScmReference job,
             final String originalPath,
             String path,
-            RevCommit previousImportCommit
+            RevCommit previousImportCommit,
+            long generation
     ) {
         def jobstat = Collections.synchronizedMap([:])
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
@@ -388,8 +394,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (originalPath && synchState == ImportSynchState.UNKNOWN) {
             // job was renamed but not file
             synchState = ImportSynchState.IMPORT_NEEDED
-        } else if (job.scmImportMetadata?.commitId) {
-            // update tracked commit info
+        } else if (job.scmImportMetadata?.commitId && isCurrentRefreshGeneration(job.id, generation)) {
+            // update tracked commit info - skip if a newer refresh has since started for this
+            // job, so this (slower, older) refresh doesn't clobber its tracker mapping
             importTracker.trackJobAtPath(job, path)
         }
         log.debug(
@@ -412,7 +419,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
         log.debug("refreshJobStatus(${job.id}): ${jobstat}")
 
-        jobStateMap[job.id] = jobstat
+        //only publish if no newer refresh has since started for this job - otherwise this
+        //(slower, older) refresh would overwrite the cache with a stale result
+        if (isCurrentRefreshGeneration(job.id, generation)) {
+            jobStateMap[job.id] = jobstat
+        }
 
         jobstat
     }

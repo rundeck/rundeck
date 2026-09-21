@@ -428,13 +428,18 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         //mark as loading (rather than removing) so a concurrent initJobsStatus() call doesn't
         //re-insert a stale placeholder into the gap after this refresh completes
         jobStateMap[job.id] = initJobStatus(job)
+        long generation = beginJobStatusRefresh(job.id)
 
         try {
-            return doRefreshJobStatus(job, originalPath, doSerialize, path)
+            return doRefreshJobStatus(job, originalPath, doSerialize, path, generation)
         } catch (Throwable t) {
-            //don't leave the LOADING marker in place forever: a later status request
-            //should retry the refresh instead of getting stuck on a stale placeholder
-            jobStateMap.remove(job.id)
+            //don't leave the LOADING marker in place forever: a later status request should
+            //retry the refresh instead of getting stuck on a stale placeholder. Only clear it
+            //if no newer refresh has since started for this job - otherwise this would stomp
+            //on that refresh's own placeholder or result.
+            if (isCurrentRefreshGeneration(job.id, generation)) {
+                jobStateMap.remove(job.id)
+            }
             throw t
         }
     }
@@ -443,7 +448,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             final JobRevReference job,
             final String originalPath,
             boolean doSerialize,
-            String path
+            String path,
+            long generation
     ) {
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
@@ -494,7 +500,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             jobstat['commitMeta'] = GitUtil.metaForCommit(commit)
         }
 
-        jobStateMap[job.id] = jobstat
+        //only publish if no newer refresh has since started for this job - otherwise this
+        //(slower, older) refresh would overwrite the cache with a stale result
+        if (isCurrentRefreshGeneration(job.id, generation)) {
+            jobStateMap[job.id] = jobstat
+        }
 
         jobstat
     }

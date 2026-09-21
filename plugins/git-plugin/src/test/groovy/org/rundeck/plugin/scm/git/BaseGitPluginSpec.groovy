@@ -585,6 +585,23 @@ class BaseGitPluginSpec extends Specification {
 
     }
 
+    def "isCurrentRefreshGeneration detects a newer refresh has since started for the same job"() {
+        given: "a slower/older status refresh holds an earlier generation ticket"
+        def plugin = new BaseGitPlugin(new Common())
+
+        when:
+        long staleGeneration = plugin.beginJobStatusRefresh('job1')
+        long currentGeneration = plugin.beginJobStatusRefresh('job1')
+
+        then: "only the most recently started refresh is current"
+        currentGeneration > staleGeneration
+        plugin.isCurrentRefreshGeneration('job1', currentGeneration)
+        !plugin.isCurrentRefreshGeneration('job1', staleGeneration)
+
+        and: "generations are tracked independently per job"
+        plugin.isCurrentRefreshGeneration('job2', plugin.beginJobStatusRefresh('job2'))
+    }
+
     //Signed Jar classes cannot be directly mocked. Hence.....
     static abstract class RepositoryMock extends Repository {
         protected RepositoryMock(final BaseRepositoryBuilder options) {

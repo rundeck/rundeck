@@ -160,6 +160,42 @@ class BaseGitPlugin {
         }
     }
 
+    /**
+     * maps job ID to an AtomicLong ticket counter, incremented each time a status refresh starts
+     * for that job, so a slower/older concurrent refresh can tell a newer one has since started
+     * and avoid overwriting jobStateMap with a stale result
+     */
+    private final ConcurrentMap<String, AtomicLong> jobStatusRefreshGeneration = new ConcurrentHashMap<>()
+
+    private AtomicLong refreshGenerationCounterFor(String jobId) {
+        AtomicLong counter = jobStatusRefreshGeneration.get(jobId)
+        if (counter == null) {
+            counter = new AtomicLong(0)
+            AtomicLong previous = jobStatusRefreshGeneration.putIfAbsent(jobId, counter)
+            if (previous != null) {
+                counter = previous
+            }
+        }
+        counter
+    }
+
+    /**
+     * Claim a generation ticket for a new status refresh of the given job.
+     * @return the ticket: pass it to {@link #isCurrentRefreshGeneration} before publishing this
+     *         refresh's result, to detect whether a newer refresh has since started for the same job
+     */
+    protected long beginJobStatusRefresh(String jobId) {
+        refreshGenerationCounterFor(jobId).incrementAndGet()
+    }
+
+    /**
+     * @return true if no newer refresh has started for this job since {@code generation} was issued
+     *         by {@link #beginJobStatusRefresh}
+     */
+    protected boolean isCurrentRefreshGeneration(String jobId, long generation) {
+        refreshGenerationCounterFor(jobId).get() == generation
+    }
+
     def serialize(
             final JobExportReference job,
             String format,
