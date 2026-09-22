@@ -78,7 +78,7 @@
 
     @include form-input-placeholder;
 
-    &:hover:not(:focus):not(:disabled):not(.p-invalid) {
+    &:hover:not(:focus):not(:disabled):not([readonly]):not(.p-invalid) {
       @include form-input-hover;
     }
 
@@ -88,6 +88,14 @@
 
     &.p-invalid {
       @include form-input-invalid;
+    }
+
+    // Matches the greyed-out look Bootstrap gives `.form-control[readonly]`,
+    // so a read-only autocomplete sits consistently next to plain form inputs.
+    // Unlike `:disabled` the value stays focusable and selectable.
+    &[readonly] {
+      background: var(--colors-gray-50);
+      color: var(--colors-gray-500);
     }
 
     &:disabled {

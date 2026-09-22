@@ -207,11 +207,13 @@ export default defineComponent({
     /** Load suggestions for the typed query, ignoring out-of-order results. */
     async onComplete(event: AutoCompleteCompleteEvent): Promise<void> {
       const query = event?.query ?? "";
+      // Bump the sequence even for queries that are not sent, so a request
+      // already in flight cannot repopulate the list after it was cleared.
+      const seq = ++this.requestSeq;
       if (this.readOnly || !this.search || query.length < this.minChars) {
         this.items = [];
         return;
       }
-      const seq = ++this.requestSeq;
       try {
         const results = await this.search(query);
         if (seq === this.requestSeq) {
