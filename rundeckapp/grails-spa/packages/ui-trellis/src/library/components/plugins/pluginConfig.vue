@@ -640,8 +640,14 @@ export default defineComponent({
       // STATIC_TEXT properties (e.g. the WorkflowStrategy "info" help table) are
       // rendered from prop.staticTextDefaultValue and are never user-editable, so
       // they must not be seeded with a default value or exported as config data.
+      // AutogenInstanceId properties are also displayed as STATIC_TEXT (see
+      // PropertyBuilder.autogenInstanceId) but their generated id is real config
+      // that must be seeded in create mode and persisted (e.g. the Node Wizard
+      // "wizard-id"), so they are excluded here.
       return (
-        testProp.options && testProp.options["displayType"] === "STATIC_TEXT"
+        testProp.type !== "AutogenInstanceId" &&
+        testProp.options &&
+        testProp.options["displayType"] === "STATIC_TEXT"
       );
     },
     isPropInScope(testProp: any): boolean {

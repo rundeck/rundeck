@@ -289,10 +289,14 @@ class ExecutionModeSpec extends SeleniumBase{
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickScheduleMode()
         projectEditPage.save()
-        // Wait for all executions to finish before checking schedule status
-        // This ensures the schedule change has propagated and any pending executions are cancelled
-        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
+        // The save button click returns before the backend has necessarily committed the new
+        // project.disable.schedule value. Wait for the config to actually be persisted before
+        // navigating, instead of waiting on an unrelated condition (in-flight executions) that
+        // does not guarantee the save completed.
+        waitFor(
+            { client.get("/project/${projectName}/config", Map) },
+            { Map config -> config?.get("project.disable.schedule") == "true" }
+        )
         // Navigate directly to jobs page to get a fresh DOM reflecting current server state
         jobListPage.go("/project/${projectName}/jobs")
         then:
@@ -401,10 +405,14 @@ class ExecutionModeSpec extends SeleniumBase{
         projectEditPage.clickNavLink(NavProjectSettings.EXEC_MODE)
         projectEditPage.clickScheduleMode()
         projectEditPage.save()
-        // Allow the post-save redirect to complete and any in-flight executions to finish
-        // before navigating — mirrors the pattern used in "disable schedules at project level UI"
-        waitFor(ExecutionUtils.Retrievers.executionsForProject(client, projectName),
-                verifyForAll(ExecutionUtils.Verifiers.executionFinished()))
+        // The save button click returns before the backend has necessarily committed the new
+        // project.disable.schedule value. Wait for the config to actually be persisted before
+        // navigating, instead of waiting on an unrelated condition (in-flight executions) that
+        // does not guarantee the save completed.
+        waitFor(
+            { client.get("/project/${projectName}/config", Map) },
+            { Map config -> config?.get("project.disable.schedule") == "true" }
+        )
 
         and: "load the Jobs page via direct URL so Vue store cache is cleared"
         jobListPage.go("/project/${projectName}/jobs")
