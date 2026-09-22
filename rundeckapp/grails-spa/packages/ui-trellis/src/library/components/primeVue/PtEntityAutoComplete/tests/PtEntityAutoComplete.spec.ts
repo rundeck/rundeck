@@ -164,6 +164,29 @@ describe("PtEntityAutoComplete", () => {
       ]);
     });
 
+    it("stays empty when the user deletes back below minChars while a search is in flight", async () => {
+      let resolvePending: (v: unknown) => void = () => {};
+      const pending = new Promise((resolve) => {
+        resolvePending = resolve;
+      });
+      const search = jest.fn().mockReturnValueOnce(pending);
+      const wrapper = await createWrapper({ search, minChars: 3 });
+
+      // Query long enough to search, then shortened back below the minimum.
+      wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("complete", { query: "Dep" });
+      await typeQuery(wrapper, "De");
+
+      // The response for the abandoned query must not repopulate the list.
+      resolvePending(JOBS);
+      await flushPromises();
+
+      expect(wrapper.findComponent(AutoComplete).props("suggestions")).toEqual(
+        [],
+      );
+    });
+
     it("shows no suggestions when the search fails", async () => {
       jest.spyOn(console, "error").mockImplementation(() => {});
       const search = jest.fn().mockRejectedValue(new Error("boom"));
