@@ -43,3 +43,36 @@ task verifyNodeVersion {
     }
 }
 tasks.withType(NpmTask).configureEach { dependsOn verifyNodeVersion }
+
+// Run npm by absolute path when the pinned Node is known.
+//
+// ProcessBuilder resolves a bare command name against the PATH of the *parent* process -- the
+// Gradle daemon -- not against the environment configured for the child. Setting PATH on the exec
+// spec therefore cannot make `npm` findable; it only affects what npm sees once running, which
+// still matters because npm's shebang is `#!/usr/bin/env node`.
+//
+// A shell inherits nvm's PATH from the login profile, so terminal builds work. A daemon started by
+// a GUI app does not: on macOS it gets launchd's default PATH, which contains neither ~/.nvm nor
+// /usr/local/bin, and every npm task fails with
+//   Cannot run program "npm": error=2, No such file or directory
+// which made it impossible to run the app from IntelliJ.
+//
+// Registered in afterEvaluate on purpose. execOverrides is a single-valued Property<Action>, and a
+// configureEach action added while this file is applied would run BEFORE each task's own
+// registration action and be overwritten by it -- several tasks set execOverrides themselves for
+// workingDir. Adding it after the build script is evaluated puts it last, and it composes with the
+// task's own action rather than replacing it, so those workingDirs still apply.
+project.afterEvaluate {
+    if (project.ext.pinnedNodeBin == null) {
+        return
+    }
+    def nodeBin = project.ext.pinnedNodeBin
+    tasks.withType(NpmTask).configureEach { t ->
+        def previous = t.execOverrides.getOrNull()
+        t.execOverrides { spec ->
+            previous?.execute(spec)
+            spec.executable = new File(nodeBin, 'npm').absolutePath
+            spec.environment('PATH', "${nodeBin}${File.pathSeparator}${System.getenv('PATH')}")
+        }
+    }
+}
