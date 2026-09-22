@@ -198,6 +198,29 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     @Override
     void setEnvironment(final Environment environment) {
+        loadRundeckPropertySources(environment)
+        removeGORMdbCreateProperty(environment)
+    }
+
+    /**
+     * Registers Rundeck's own config-file-derived property sources (rundeck-config.properties or
+     * rundeck-config.groovy, plus a couple of hardcoded/derived properties) into the given
+     * Environment.
+     * <br>
+     * Extracted to a static method, rather than living only in the instance-level
+     * {@link #setEnvironment(Environment)} EnvironmentAware callback, so it can also be invoked much
+     * earlier by {@link rundeckapp.init.RundeckConfigEnvironmentPostProcessor} -- see that class's
+     * Javadoc for why the earlier timing matters (RUN-4975 / #10352: some framework/plugin beans,
+     * e.g. the default grailsLinkGenerator, read config values like grails.serverURL eagerly at bean
+     * *definition* build time, which happens before this instance method's EnvironmentAware callback
+     * ever fires). Calling this twice (once early, once again from setEnvironment()) is safe and
+     * intentionally redundant: MutablePropertySources#addFirst replaces any existing entry with the
+     * same name, so the second call is a harmless no-op re-registration, kept for backward
+     * compatibility with anything relying on setEnvironment() itself running.
+     *
+     * @param environment the Environment to register property sources into
+     */
+    static void loadRundeckPropertySources(final Environment environment) {
         Properties hardCodedRundeckConfigs = new Properties()
         if(rundeckConfig == null) Application.runPrebootstrap()
 
@@ -219,7 +242,6 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }
         loadGroovyRundeckConfigIfExists(environment)
-        removeGORMdbCreateProperty(environment)
     }
 
     /**
@@ -283,7 +305,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     }
 
 
-    void loadGroovyRundeckConfigIfExists(final Environment environment) {
+    static void loadGroovyRundeckConfigIfExists(final Environment environment) {
         String rundeckGroovyConfigFile = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR) +
                 "/rundeck-config.groovy"
 
