@@ -133,6 +133,7 @@ import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.constants.WorkflowStepConstants
 import rundeck.data.job.RdJobBrowseItem
 import rundeck.data.quartz.QuartzJobSpecifier
 import rundeck.data.validation.validators.AnyDomainEmailValidator
@@ -2450,8 +2451,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def pluginConfig = step.getPluginConfigListForType(ServiceNameConstants.LogFilter)
+        boolean logFilterValid = true
         if (pluginConfig && pluginConfig instanceof List) {
-            def allvalid = true
             pluginConfig.eachWithIndex { Map plugindef, int index ->
                 def validation = WorkflowController._validateLogFilter(
                         frameworkService, pluginService, plugindef.config, plugindef.type
@@ -2462,13 +2463,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                                        'log filter {0} type {1} not valid: {2}'
                     )
 
-                    allvalid = false
+                    logFilterValid = false
                 }
             }
-            return allvalid
         }
 
-        true
+        if (!step.description?.trim()) {
+            step.errors.rejectValue('description', WorkflowStepConstants.ERR_CODE_STEP_NAME_BLANK)
+            return false
+        }
+
+        logFilterValid
     }
 
     private boolean validateDefinitionPluginNotification(ScheduledExecution scheduledExecution, String trigger,notif,params,validationMap, Map projectProperties){

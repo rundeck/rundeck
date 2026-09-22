@@ -67,6 +67,7 @@ import rundeck.User
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.constants.WorkflowStepConstants
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.reference.JobReferenceImpl
 import spock.lang.Specification
@@ -553,6 +554,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
     def "validate workflow step log filter"() {
         given:
         def step = new CommandExec([
+                description      : 'Command',
                 adhocRemoteString: 'test buddy',
                 pluginConfig     : [
                         LogFilter: [
@@ -629,6 +631,86 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 valid: false, report: 'bogus'
         ]
 
+    }
+
+    @Unroll
+    def "validate workflow step blank step name fails: #description"() {
+        given:
+        def step = new CommandExec([
+                description      : description,
+                adhocRemoteString: 'test buddy',
+        ])
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        !valid
+        step.errors.hasFieldErrors('description')
+        step.errors.getFieldError('description').code == WorkflowStepConstants.ERR_CODE_STEP_NAME_BLANK
+
+        where:
+        description << [null, '', '   ']
+    }
+
+    def "validate workflow step non-blank step name passes"() {
+        given:
+        def step = new CommandExec([
+                description      : 'Command',
+                adhocRemoteString: 'test buddy',
+        ])
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        valid
+        !step.hasErrors()
+    }
+
+    def "validateDefinitionWorkflow allows duplicate step names"() {
+        given:
+        def job = new ScheduledExecution(
+                workflow: new Workflow(
+                        threadcount: 1,
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(description: 'Command', adhocRemoteString: 'test 1'),
+                                new CommandExec(description: 'Command', adhocRemoteString: 'test 2'),
+                        ]
+                )
+        )
+        def auth = Mock(UserAndRolesAuthContext)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def failed = service.validateDefinitionWorkflow(job, auth, false)
+
+        then:
+        !failed
+        !job.errors.hasFieldErrors('workflow')
+    }
+
+    def "validateDefinitionWorkflow flags blank step name on errorHandler"() {
+        given:
+        def job = new ScheduledExecution(
+                workflow: new Workflow(
+                        threadcount: 1,
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(
+                                        description: 'Command',
+                                        adhocRemoteString: 'test 1',
+                                        errorHandler: new CommandExec(adhocRemoteString: 'err command')
+                                ),
+                        ]
+                )
+        )
+        def auth = Mock(UserAndRolesAuthContext)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def failed = service.validateDefinitionWorkflow(job, auth, false)
+
+        then:
+        failed
+        job.errors.hasFieldErrors('workflow')
     }
 
     def "do validate step log filter"() {
