@@ -222,10 +222,10 @@ class GitUtil {
      */
     static Map<String, RevCommit> lastCommitsForPaths(Repository repo, RevCommit head, Collection<String> paths) {
         Map<String, RevCommit> found = [:]
-        Set<String> want = new HashSet<>(paths)
-        if (!want || !head) {
+        if (!paths || !head) {
             return found
         }
+        Set<String> want = new HashSet<>(paths)
         RevWalk walk = null
         TreeWalk tree = null
         try {

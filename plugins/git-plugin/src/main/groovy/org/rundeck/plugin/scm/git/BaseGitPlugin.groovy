@@ -471,9 +471,8 @@ class BaseGitPlugin {
     /**
      * Path to last-commit index for the current HEAD. Rebuilt with one history walk whenever HEAD changes.
      */
-    // ponytail: volatile holder + CHM; two readers seeing a stale HEAD may both rebuild once. Add a synchronized
-    // double-check if duplicate walks show up.
     volatile Map lastCommitMemo = [head: null, commits: new ConcurrentHashMap<String, Optional<RevCommit>>()]
+    private final Object lastCommitMemoLock = new Object()
 
     /**
      * Last commit that touched the path, memoized per HEAD: the first lookup after HEAD changes builds a
@@ -490,16 +489,34 @@ class BaseGitPlugin {
         }
         Map memo = lastCommitMemo
         if (memo.head != headId) {
-            RevCommit head = GitUtil.getHead(repo)
-            Map<String, RevCommit> bulk = GitUtil.lastCommitsForPaths(repo, head, GitUtil.listPaths(git, 'HEAD^{tree}'))
-            // a merge side branch can be attributed a commit whose blob differs from HEAD's; those use the exact log
-            bulk = bulk.findAll { String p, RevCommit c -> GitUtil.lookupId(repo, c, p) == GitUtil.lookupId(repo, head, p) }
-            memo = [head: headId, commits: new ConcurrentHashMap<>(bulk.collectEntries { p, c -> [p, Optional.of(c)] })]
-            lastCommitMemo = memo
+            memo = rebuildLastCommitMemo()
         }
         memo.commits.computeIfAbsent(path) { String p ->
             Optional.ofNullable(GitUtil.lastCommitForPath(repo, git, p))
         }.orElse(null)
+    }
+
+    /**
+     * Rebuild the path to commit index for the current HEAD under a lock, so concurrent readers that observe a
+     * new HEAD share one history walk instead of each running their own, and a slower reader cannot publish an
+     * index for an older HEAD over a newer one.
+     *
+     * @return the index for the HEAD resolved while holding the lock
+     */
+    private Map rebuildLastCommitMemo() {
+        synchronized (lastCommitMemoLock) {
+            RevCommit head = GitUtil.getHead(repo)
+            Map memo = lastCommitMemo
+            if (memo.head == head?.id) {
+                return memo
+            }
+            Map<String, RevCommit> bulk = GitUtil.lastCommitsForPaths(repo, head, GitUtil.listPaths(git, 'HEAD^{tree}'))
+            // a merge side branch can be attributed a commit whose blob differs from HEAD's; those use the exact log
+            bulk = bulk.findAll { String p, RevCommit c -> GitUtil.lookupId(repo, c, p) == GitUtil.lookupId(repo, head, p) }
+            memo = [head: head?.id, commits: new ConcurrentHashMap<>(bulk.collectEntries { p, c -> [p, Optional.of(c)] })]
+            lastCommitMemo = memo
+            return memo
+        }
     }
 
     static String expand(final String source, final ScmUserInfo scmUserInfo) {
