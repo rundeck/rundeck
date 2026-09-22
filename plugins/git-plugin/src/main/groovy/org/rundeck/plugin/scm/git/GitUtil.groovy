@@ -37,7 +37,9 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.treewalk.filter.AndTreeFilter
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup
+import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.eclipse.jgit.util.io.DisabledOutputStream
 
 /**
@@ -203,6 +205,56 @@ class GitUtil {
             }
         }
         null
+    }
+
+    /**
+     * Resolve the last commit touching each of the given paths using a single history walk from head,
+     * instead of one {@code git log -- path} walk per path.
+     *
+     * <p>A path is attributed to the first commit, in walk order, whose tree differs from every parent for
+     * that path (root commits count for every path they contain). Paths not resolved before the history is
+     * exhausted are absent from the result.
+     *
+     * @param repo repository
+     * @param head commit to start walking from
+     * @param paths paths to resolve
+     * @return map of path to the last commit that touched it
+     */
+    static Map<String, RevCommit> lastCommitsForPaths(Repository repo, RevCommit head, Collection<String> paths) {
+        Map<String, RevCommit> found = [:]
+        Set<String> want = new HashSet<>(paths ?: [])
+        if (!want || !head) {
+            return found
+        }
+        RevWalk walk = new RevWalk(repo)
+        TreeWalk tree = new TreeWalk(repo)
+        tree.recursive = true
+        tree.filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(want), TreeFilter.ANY_DIFF)
+        try {
+            walk.markStart(walk.parseCommit(head))
+            for (RevCommit commit = walk.next(); commit && want; commit = walk.next()) {
+                int parentCount = commit.parentCount
+                commit.parents.each { walk.parseHeaders(it) }
+                tree.reset((commit.parents*.tree + [commit.tree]) as ObjectId[])
+                while (tree.next()) {
+                    String path = tree.pathString
+                    if (!(path in want)) {
+                        continue
+                    }
+                    boolean changedFromAllParents = (0..<parentCount).every { int i ->
+                        tree.getRawMode(i) != tree.getRawMode(parentCount) || !tree.idEqual(i, parentCount)
+                    }
+                    if (changedFromAllParents) {
+                        found[path] = commit
+                        want.remove(path)
+                    }
+                }
+            }
+        } finally {
+            tree.close()
+            walk.close()
+        }
+        found
     }
 
     static List<DiffEntry> listChanges(Git git, String oldRef, String newRef) {

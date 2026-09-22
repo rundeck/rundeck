@@ -877,4 +877,90 @@ class GitImportPluginSpec extends Specification {
         }
     }
 
+    def "lastCommitForPath reuses the path index while HEAD is unchanged and rebuilds after a commit"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job2-456.xml', 'blah2')
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> [commitId: commit.name, url: origindir.absolutePath]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+            getImportVersion() >> 12L
+            getVersion() >> 12L
+        }
+
+        when:
+        def status1 = plugin.getJobStatus(job, null)
+        def memo1 = plugin.lastCommitMemo
+        def status2 = plugin.getJobStatus(job, null)
+        def memo2 = plugin.lastCommitMemo
+
+        then:
+        status1.synchState == ImportSynchState.CLEAN
+        status2.synchState == ImportSynchState.CLEAN
+        memo1.is(memo2)
+        memo1.commits.keySet() == ['job1-123.xml', 'job2-456.xml'] as Set
+
+        when: "the job file changes upstream and the local clone pulls it"
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'changed')
+        plugin.git.pull().call()
+        def status3 = plugin.getJobStatus(job, null)
+
+        then:
+        !memo1.is(plugin.lastCommitMemo)
+        status3.synchState == ImportSynchState.IMPORT_NEEDED
+
+        cleanup:
+        git.close()
+    }
+
+    def "lastCommitForPath falls back to the exact log when a merge attributes a path to a side branch"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def repo = git.repository
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'v1')
+        git.branchCreate().setName('dev').call()
+        // master changes first, dev later; the merge keeps master's version
+        def masterCommit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'v3')
+        git.checkout().setName('dev').call()
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'v2')
+        git.checkout().setName('master').call()
+        git.merge().include(repo.resolve('dev')).setStrategy(org.eclipse.jgit.merge.MergeStrategy.OURS).call()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+
+        when:
+        def result = plugin.lastCommitForPath('job1-123.xml')
+        def head = GitUtil.getHead(plugin.repo)
+
+        then:
+        result == GitUtil.lastCommitForPath(plugin.repo, plugin.git, 'job1-123.xml')
+        GitUtil.lookupId(plugin.repo, result, 'job1-123.xml') == GitUtil.lookupId(plugin.repo, head, 'job1-123.xml')
+        result.name == masterCommit.name
+
+        cleanup:
+        git.close()
+    }
 }

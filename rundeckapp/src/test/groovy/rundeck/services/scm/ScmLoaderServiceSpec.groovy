@@ -20,6 +20,10 @@ import rundeck.services.ScmService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+
 class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<ScmLoaderService>, DataTest {
 
     def "loaded export plugin not configured"(){
@@ -935,5 +939,21 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
         then:
         result
         1 * service.scmService.clearRetryState(project, integration)
+    }
+    def "startScmLoader schedules the loader with a fixed delay so slow cycles do not queue up"() {
+        given:
+        def executor = Mock(ScheduledExecutorService)
+        service.scheduledExecutor = executor
+        service.configurationService = Mock(ConfigService) {
+            getLong('scmLoader.interval', _) >> 20L
+            getLong('scmLoader.delay', _) >> 0L
+        }
+
+        when:
+        service.startScmLoader('test', 'import')
+
+        then:
+        1 * executor.scheduleWithFixedDelay(_, 0L, 20L, TimeUnit.SECONDS) >> Mock(ScheduledFuture)
+        0 * executor.scheduleAtFixedRate(*_)
     }
 }

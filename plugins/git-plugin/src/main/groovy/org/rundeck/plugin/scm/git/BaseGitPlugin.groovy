@@ -468,8 +468,43 @@ class BaseGitPlugin {
         GitUtil.lastCommit repo, git
     }
 
+    /**
+     * Path to last-commit index for the current HEAD. Rebuilt with one history walk whenever HEAD changes.
+     */
+    // ponytail: volatile holder + CHM; two readers seeing a stale HEAD may both rebuild once. Add a synchronized
+    // double-check if duplicate walks show up.
+    volatile Map lastCommitMemo = [head: null, commits: new ConcurrentHashMap<String, Optional<RevCommit>>()]
+
+    /**
+     * Last commit that touched the path, memoized per HEAD: the first lookup after HEAD changes builds a
+     * path to commit index for the whole HEAD tree with a single history walk; paths outside that tree
+     * (deleted or renamed files) fall back to an exact per-path log, cached until HEAD changes again.
+     *
+     * @param path repository path
+     * @return last commit touching the path, or null if none
+     */
     RevCommit lastCommitForPath(String path) {
-        GitUtil.lastCommitForPath repo, git, path
+        ObjectId headId = repo.resolve(Constants.HEAD)
+        if (!headId || !path) {
+            return GitUtil.lastCommitForPath(repo, git, path)
+        }
+        Map memo = lastCommitMemo
+        if (memo.head != headId) {
+            RevCommit head = GitUtil.getHead(repo)
+            Map<String, RevCommit> bulk = GitUtil.lastCommitsForPaths(repo, head, GitUtil.listPaths(git, 'HEAD^{tree}'))
+            // a merge side branch can be attributed a commit whose blob differs from HEAD's; those use the exact log
+            bulk = bulk.findAll { String p, RevCommit c -> GitUtil.lookupId(repo, c, p) == GitUtil.lookupId(repo, head, p) }
+            memo = [
+                    head   : headId,
+                    commits: new ConcurrentHashMap<String, Optional<RevCommit>>(
+                            bulk.collectEntries { String p, RevCommit c -> [p, Optional.of(c)] }
+                    )
+            ]
+            lastCommitMemo = memo
+        }
+        memo.commits.computeIfAbsent(path) { String p ->
+            Optional.ofNullable(GitUtil.lastCommitForPath(repo, git, p))
+        }.orElse(null)
     }
 
     static String expand(final String source, final ScmUserInfo scmUserInfo) {
