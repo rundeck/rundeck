@@ -117,6 +117,17 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         service.fileUploadService = Mock(FileUploadService)
     }
+    def "list jobs for project bypassing the query cache"() {
+        given:
+        new ScheduledExecution(project: 'one', uuid: 'job-one', jobName: 'one').
+            save(validate: false, flush: true)
+        new ScheduledExecution(project: 'other', uuid: 'job-other', jobName: 'other').
+            save(validate: false, flush: true)
+
+        expect:
+        service.listJobsForProjectUncached('one')*.uuid == ['job-one']
+    }
+
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
         rundeckJobSchedulesManager.frameworkService = Mock(FrameworkService){

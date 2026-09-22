@@ -96,6 +96,17 @@ class BaseGitPlugin {
         this.commonConfig = commonConfig
     }
 
+    /**
+     * Creates a stable copy of the job state map for safe iteration.
+     *
+     * @return a snapshot preserving the map's iteration order
+     */
+    protected Map<String, Map> snapshotJobStateMap() {
+        synchronized (jobStateMap) {
+            return new LinkedHashMap<String, Map>(jobStateMap)
+        }
+    }
+
     Map<String, String> getSshConfig() {
         def config = [:]
 
