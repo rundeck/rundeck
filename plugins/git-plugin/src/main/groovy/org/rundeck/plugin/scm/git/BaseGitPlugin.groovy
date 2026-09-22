@@ -477,7 +477,9 @@ class BaseGitPlugin {
     /**
      * Last commit that touched the path, memoized per HEAD: the first lookup after HEAD changes builds a
      * path to commit index for the whole HEAD tree with a single history walk; paths outside that tree
-     * (deleted or renamed files) fall back to an exact per-path log, cached until HEAD changes again.
+     * (deleted or renamed files) fall back to a per-path log from the same indexed HEAD, cached until HEAD
+     * changes again. Every value in an index is therefore relative to that index's HEAD, whatever HEAD the
+     * repository moves to while a lookup is in flight.
      *
      * @param path repository path
      * @return last commit touching the path, or null if none
@@ -491,8 +493,9 @@ class BaseGitPlugin {
         if (memo.head != headId) {
             memo = rebuildLastCommitMemo()
         }
+        RevCommit indexedHead = memo.head
         memo.commits.computeIfAbsent(path) { String p ->
-            Optional.ofNullable(GitUtil.lastCommitForPath(repo, git, p))
+            Optional.ofNullable(GitUtil.lastCommitForPath(repo, git, indexedHead, p))
         }.orElse(null)
     }
 
@@ -507,13 +510,11 @@ class BaseGitPlugin {
         synchronized (lastCommitMemoLock) {
             RevCommit head = GitUtil.getHead(repo)
             Map memo = lastCommitMemo
-            if (memo.head == head?.id) {
+            if (!head || memo.head == head) {
                 return memo
             }
-            Map<String, RevCommit> bulk = GitUtil.lastCommitsForPaths(repo, head, GitUtil.listPaths(git, 'HEAD^{tree}'))
-            // a merge side branch can be attributed a commit whose blob differs from HEAD's; those use the exact log
-            bulk = bulk.findAll { String p, RevCommit c -> GitUtil.lookupId(repo, c, p) == GitUtil.lookupId(repo, head, p) }
-            memo = [head: head?.id, commits: new ConcurrentHashMap<>(bulk.collectEntries { p, c -> [p, Optional.of(c)] })]
+            Map<String, RevCommit> bulk = GitUtil.lastCommitsForPaths(repo, head, GitUtil.listPaths(git, head.tree.name))
+            memo = [head: head, commits: new ConcurrentHashMap<>(bulk.collectEntries { p, c -> [p, Optional.of(c)] })]
             lastCommitMemo = memo
             return memo
         }

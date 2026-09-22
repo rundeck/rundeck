@@ -929,7 +929,7 @@ class GitImportPluginSpec extends Specification {
         git.close()
     }
 
-    def "lastCommitForPath falls back to the exact log when a merge attributes a path to a side branch"() {
+    def "lastCommitForPath resolves a merge that keeps one side to the same commit as the exact log"() {
         given:
         def projectName = 'GitImportPluginSpec'
         def gitdir = new File(tempdir, 'scm')
@@ -958,8 +958,8 @@ class GitImportPluginSpec extends Specification {
 
         then:
         result == GitUtil.lastCommitForPath(plugin.repo, plugin.git, 'job1-123.xml')
-        GitUtil.lookupId(plugin.repo, result, 'job1-123.xml') == GitUtil.lookupId(plugin.repo, head, 'job1-123.xml')
         result.name == masterCommit.name
+        plugin.lastCommitMemo.head == head
 
         cleanup:
         git.close()
