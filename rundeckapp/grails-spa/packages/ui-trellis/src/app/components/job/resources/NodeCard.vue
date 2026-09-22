@@ -316,7 +316,7 @@ export default defineComponent({
       let filterToEmit = this.nodeSummary.defaultFilter;
       if (filterToEmit !== ".*") {
         filterToEmit = this.nodeSummary.filters.filter(
-          (f) => f.filterName === this.nodeSummary.defaultFilter
+          (f) => f.filterName === this.nodeSummary.defaultFilter,
         )[0];
       }
       this.saveFilter(filterToEmit);
@@ -381,7 +381,7 @@ export default defineComponent({
         this.loading = true;
         const data = await getNodes(
           params,
-          getAppLinks().frameworkNodesQueryAjax
+          getAppLinks().frameworkNodesQueryAjax,
         );
 
         this.nodeSet = {

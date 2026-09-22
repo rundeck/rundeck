@@ -81,7 +81,12 @@
           <label for="logview_lineWrap">Wrap Long Lines</label>
         </div>
         <div class="checkbox">
-          <input id="logview_stats" v-model="settings.stats" type="checkbox" data-testid="log-viewer-stats-checkbox" />
+          <input
+            id="logview_stats"
+            v-model="settings.stats"
+            type="checkbox"
+            data-testid="log-viewer-stats-checkbox"
+          />
           <label for="logview_stats">Display Stats</label>
         </div>
         <div class="checkbox">
@@ -112,7 +117,9 @@
         'execution-log--no-transition': logLines > 1000,
         'ansicolor-on': settings.ansiColor,
       }"
-      :style="node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}"
+      :style="
+        node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}
+      "
     >
       <div ref="log" class="execution-log__scroller-item-container">
         <div
@@ -134,7 +141,10 @@
               data-testid="log-viewer-follow-btn"
               @click="toggleFollow"
             >
-              <i :class="[followIcon]" data-testid="log-viewer-follow-icon" />Follow
+              <i
+                :class="[followIcon]"
+                data-testid="log-viewer-follow-icon"
+              />Follow
             </btn>
           </btn-group>
           <transition name="fade">
@@ -465,7 +475,9 @@ export default defineComponent({
     // Capture the raw ExecutionOutput reference before Vue wraps it in a
     // reactive proxy, so MobX can properly track ObservableGroupMap accesses
     // inside the autorun callback.
-    const rawViewer = rootStore.executionOutputStore.createOrGet(this.executionId);
+    const rawViewer = rootStore.executionOutputStore.createOrGet(
+      this.executionId,
+    );
     this.viewer = rawViewer;
     if (this.node) {
       const node = this.node;

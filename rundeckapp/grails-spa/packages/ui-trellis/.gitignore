@@ -64,3 +64,5 @@ tsconfig.tsbuildinfo
 scratch.js
 
 *storybook.log
+# root .gitignore ignores all dotfiles; keep the Prettier config tracked
+!.prettierrc

@@ -17,7 +17,9 @@ describe("PtInput", () => {
   describe("label", () => {
     it("does not show a label when no label prop is given", async () => {
       const wrapper = await createWrapper();
-      expect(wrapper.find('[data-testid="pt-input-label"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="pt-input-label"]').exists()).toBe(
+        false,
+      );
     });
 
     it("shows the label text so users know what the field is for", async () => {
@@ -28,7 +30,10 @@ describe("PtInput", () => {
     });
 
     it("links the label to the input via for attribute so clicking the label focuses the field", async () => {
-      const wrapper = await createWrapper({ label: "Username", inputId: "username-field" });
+      const wrapper = await createWrapper({
+        label: "Username",
+        inputId: "username-field",
+      });
       expect(
         wrapper.find('[data-testid="pt-input-label"]').attributes("for"),
       ).toBe("username-field");
@@ -38,11 +43,15 @@ describe("PtInput", () => {
   describe("help text", () => {
     it("does not show help text when none is provided", async () => {
       const wrapper = await createWrapper();
-      expect(wrapper.find('[data-testid="pt-input-help"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="pt-input-help"]').exists()).toBe(
+        false,
+      );
     });
 
     it("shows the help text below the field so users understand how to fill it", async () => {
-      const wrapper = await createWrapper({ helpText: "Enter your full username" });
+      const wrapper = await createWrapper({
+        helpText: "Enter your full username",
+      });
       const help = wrapper.find('[data-testid="pt-input-help"]');
       expect(help.exists()).toBe(true);
       expect(help.text()).toBe("Enter your full username");
@@ -51,12 +60,20 @@ describe("PtInput", () => {
 
   describe("error message", () => {
     it("does not show an error when the field is valid", async () => {
-      const wrapper = await createWrapper({ invalid: false, errorText: "Required" });
-      expect(wrapper.find('[data-testid="pt-input-error"]').exists()).toBe(false);
+      const wrapper = await createWrapper({
+        invalid: false,
+        errorText: "Required",
+      });
+      expect(wrapper.find('[data-testid="pt-input-error"]').exists()).toBe(
+        false,
+      );
     });
 
     it("shows the error message text when the field is invalid so users know what to fix", async () => {
-      const wrapper = await createWrapper({ invalid: true, errorText: "This field is required" });
+      const wrapper = await createWrapper({
+        invalid: true,
+        errorText: "This field is required",
+      });
       const error = wrapper.find('[data-testid="pt-input-error"]');
       expect(error.exists()).toBe(true);
       expect(error.text()).toBe("This field is required");
@@ -64,7 +81,9 @@ describe("PtInput", () => {
 
     it("does not show an error even when invalid if no errorText is provided", async () => {
       const wrapper = await createWrapper({ invalid: true });
-      expect(wrapper.find('[data-testid="pt-input-error"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="pt-input-error"]').exists()).toBe(
+        false,
+      );
     });
   });
 
@@ -111,25 +130,35 @@ describe("PtInput", () => {
   describe("icon variants", () => {
     it("does not render an icon container when no icons are configured", async () => {
       const wrapper = await createWrapper();
-      expect(wrapper.find('[data-testid="pt-input-icon-container"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="pt-input-icon-container"]').exists(),
+      ).toBe(false);
     });
 
     it("renders an icon container when a left icon is provided so users see a visual indicator", async () => {
       const wrapper = await createWrapper({ leftIcon: "pi pi-search" });
-      expect(wrapper.find('[data-testid="pt-input-icon-container"]').exists()).toBe(true);
+      expect(
+        wrapper.find('[data-testid="pt-input-icon-container"]').exists(),
+      ).toBe(true);
     });
 
     it("renders an icon container when a right icon is provided so users see a visual indicator", async () => {
       const wrapper = await createWrapper({ rightIcon: "pi pi-times" });
-      expect(wrapper.find('[data-testid="pt-input-icon-container"]').exists()).toBe(true);
+      expect(
+        wrapper.find('[data-testid="pt-input-icon-container"]').exists(),
+      ).toBe(true);
     });
   });
 
   describe("placeholder text", () => {
     it("shows placeholder text inside the empty field", async () => {
-      const wrapper = await createWrapper({ placeholder: "Enter your username" });
+      const wrapper = await createWrapper({
+        placeholder: "Enter your username",
+      });
       expect(
-        wrapper.find('[data-testid="pt-input-field"]').attributes("placeholder"),
+        wrapper
+          .find('[data-testid="pt-input-field"]')
+          .attributes("placeholder"),
       ).toBe("Enter your username");
     });
   });

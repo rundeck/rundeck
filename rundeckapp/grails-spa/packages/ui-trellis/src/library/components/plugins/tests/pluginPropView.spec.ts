@@ -59,7 +59,11 @@ describe("PluginPropView", () => {
     it("shows title when value is true", async () => {
       const wrapper = await createWrapper({
         props: {
-          prop: { type: "Boolean", title: "Enable Feature", desc: "Toggle feature" },
+          prop: {
+            type: "Boolean",
+            title: "Enable Feature",
+            desc: "Toggle feature",
+          },
           value: "true",
         },
       });
@@ -96,9 +100,9 @@ describe("PluginPropView", () => {
         },
       });
 
-      expect(
-        findByTestId(wrapper, "boolean-true-value").classes(),
-      ).toContain("text-primary");
+      expect(findByTestId(wrapper, "boolean-true-value").classes()).toContain(
+        "text-primary",
+      );
     });
 
     it("uses text-success as default class for true value", async () => {
@@ -109,9 +113,9 @@ describe("PluginPropView", () => {
         },
       });
 
-      expect(
-        findByTestId(wrapper, "boolean-true-value").classes(),
-      ).toContain("text-success");
+      expect(findByTestId(wrapper, "boolean-true-value").classes()).toContain(
+        "text-success",
+      );
     });
 
     it("shows false value when value is false and defaultValue is true", async () => {
@@ -158,9 +162,9 @@ describe("PluginPropView", () => {
         },
       });
 
-      expect(
-        findByTestId(wrapper, "boolean-false-value").classes(),
-      ).toContain("text-danger");
+      expect(findByTestId(wrapper, "boolean-false-value").classes()).toContain(
+        "text-danger",
+      );
     });
   });
 
@@ -509,9 +513,9 @@ describe("PluginPropView", () => {
         },
       });
 
-      expect(findByTestId(wrapper, "string-prop-title").attributes("title")).toBe(
-        "",
-      );
+      expect(
+        findByTestId(wrapper, "string-prop-title").attributes("title"),
+      ).toBe("");
     });
 
     it("mounts without throwing when desc is undefined for Boolean type", async () => {

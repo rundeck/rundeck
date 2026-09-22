@@ -4,7 +4,10 @@
       <div v-if="loading">
         <slot name="loading">
           <div class="loader">
-            <i class="fas fa-spinner fa-spin loading-spinner text-muted" data-testid="loading-spinner" />
+            <i
+              class="fas fa-spinner fa-spin loading-spinner text-muted"
+              data-testid="loading-spinner"
+            />
             {{ $t("loading.text") }}
           </div>
         </slot>
@@ -69,10 +72,7 @@ import UndoRedo from "../util/UndoRedo.vue";
 import draggable from "vuedraggable";
 import { getRundeckContext } from "../../../library";
 import mitt, { Emitter, EventType } from "mitt";
-import {
-  ChangeEvent,
-  Operation,
-} from "../job/options/model/ChangeEvents";
+import { ChangeEvent, Operation } from "../job/options/model/ChangeEvents";
 import { cloneDeep } from "lodash";
 
 const emitter = mitt();
@@ -208,7 +208,10 @@ export default defineComponent({
     },
     doUndo(change: ChangeEvent) {
       this.operation(change.undo, {
-        index: (change.dest !== undefined && change.dest >= 0) ? change.dest : change.index,
+        index:
+          change.dest !== undefined && change.dest >= 0
+            ? change.dest
+            : change.index,
         dest: change.index >= 0 ? change.index : (change.dest ?? change.index),
         value: change.orig || change.value,
       });
