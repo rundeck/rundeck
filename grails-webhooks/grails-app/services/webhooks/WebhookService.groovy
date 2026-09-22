@@ -257,7 +257,7 @@ class WebhookService {
             try {
                 def at=apiService.generateUserToken(authContext, 0L, checkUser, roles, false,
                                                             AuthTokenType.WEBHOOK)
-                saveWebhookRequest.setAuthToken(at.token)
+                saveWebhookRequest.setAuthToken(at.clearToken)
             } catch (Exception e) {
                 return [err: "Failed to create associated Auth Token: "+e.message]
             }
