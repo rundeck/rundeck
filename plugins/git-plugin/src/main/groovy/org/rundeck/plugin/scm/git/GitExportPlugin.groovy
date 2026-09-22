@@ -148,11 +148,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
      * Opens or clones the export workdir.
      * <p>
      * When Create Branch is enabled, a <em>fresh</em> workdir is cloned from
-     * {@code baseBranch} first so a missing export branch can be created (RUN-4018).
+     * {@code baseBranch} first so a missing export branch can be created.
      * If the workdir is already checked out on the export branch, that base-first
      * clone is skipped: {@code cloneOrCreate} treats a branch mismatch as a reason
      * to delete and re-clone, which would wipe serialized-but-uncommitted job files
-     * on every ScmLoader initialize (RUN-4852).
+     * on every ScmLoader initialize.
      */
     private void cloneOrCreateForExport(ScmOperationContext context, File base, Export config)
             throws ScmPluginException

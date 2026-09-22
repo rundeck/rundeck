@@ -721,10 +721,13 @@ class BaseGitPlugin {
     }
 
     /**
-     * Creates {@code newBranch} from the remote base, checks it out locally, and
-     * pushes it. Checkout keeps HEAD on the export branch so a follow-up
-     * {@link #cloneOrCreate} does not treat the workdir as a branch mismatch
-     * and delete it.
+     * Creates {@code newBranch} from the remote base, pushes it, and only then checks
+     * it out locally. The checkout keeps HEAD on the new branch so a follow-up
+     * {@link #cloneOrCreate} does not treat the workdir as a branch mismatch and
+     * delete it. It deliberately runs after the push is validated: leaving HEAD on
+     * the base branch when the push is rejected lets the next initialize detect the
+     * mismatch and fail again, instead of succeeding with a branch that exists only
+     * locally.
      */
     protected void createBranch(ScmOperationContext context, String newBranch, String baseBranch){
         def createCommand = git.branchCreate()
@@ -734,7 +737,6 @@ class BaseGitPlugin {
 
         try {
             createCommand.call()
-            git.checkout().setName(newBranch).call()
         } catch (Exception e) {
             logger.debug("Failed creating branch ${newBranch}: ${e.message}", e)
             throw new ScmPluginException("Failed creating branch ${newBranch}: ${e.message}", e)
@@ -755,6 +757,13 @@ class BaseGitPlugin {
         def failedUpdates = updates.findAll { it.status != RemoteRefUpdate.Status.OK }
         if (failedUpdates) {
             throw new ScmPluginException("Failed push to remote: " + failedUpdates)
+        }
+
+        try {
+            git.checkout().setName(newBranch).call()
+        } catch (Exception e) {
+            logger.debug("Failed checking out branch ${newBranch}: ${e.message}", e)
+            throw new ScmPluginException("Failed checking out branch ${newBranch}: ${e.message}", e)
         }
     }
 

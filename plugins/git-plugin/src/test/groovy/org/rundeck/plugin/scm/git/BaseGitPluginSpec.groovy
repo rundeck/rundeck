@@ -104,6 +104,39 @@ class BaseGitPluginSpec extends Specification {
         !plugin.workdirCheckedOutOn(new File(tempdir, 'missing'), 'master')
     }
 
+    def "createBranch leaves HEAD on the base branch when the push fails"() {
+        given: "a workdir cloned from a remote that is then made unreachable"
+        def origindir = new File(tempdir, 'origin')
+        def gitdir = new File(tempdir, 'scm')
+        def origin = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, origin, 'testcommit.txt', 'blah')
+        origin.close()
+
+        def git = Git.cloneRepository()
+                .setURI(origindir.absolutePath)
+                .setDirectory(gitdir)
+                .setBranch('master')
+                .call()
+        def repoConfig = git.repository.config
+        repoConfig.setString('remote', 'origin', 'url', new File(tempdir, 'gone').absolutePath)
+        repoConfig.save()
+
+        def plugin = new BaseGitPlugin(new Common())
+        plugin.git = git
+        plugin.branch = 'dev2'
+        def context = Mock(ScmOperationContext)
+
+        when: "the export branch is created but cannot be pushed"
+        plugin.createBranch(context, 'dev2', 'master')
+
+        then: "the failure surfaces and HEAD stays on the base branch, so the next initialize retries instead of passing silently"
+        thrown(ScmPluginException)
+        git.repository.getFullBranch() == 'refs/heads/master'
+
+        cleanup:
+        git.close()
+    }
+
     @Unroll
     def "serialize job to valid file path"() {
         given:
