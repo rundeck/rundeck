@@ -15,6 +15,7 @@
  */
 package rundeckapp.init
 
+import groovy.transform.CompileStatic
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.env.EnvironmentPostProcessor
 import org.springframework.core.Ordered
@@ -55,6 +56,7 @@ import rundeckapp.Application
  * name) -- so this class is purely additive: it does not change what gets registered, only ensures it
  * also happens early enough for early-reading beans to see it.
  */
+@CompileStatic
 class RundeckConfigEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
     @Override

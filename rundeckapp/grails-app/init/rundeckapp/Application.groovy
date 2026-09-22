@@ -199,13 +199,13 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     @Override
     void setEnvironment(final Environment environment) {
         loadRundeckPropertySources(environment)
-        removeGORMdbCreateProperty(environment)
     }
 
     /**
      * Registers Rundeck's own config-file-derived property sources (rundeck-config.properties or
      * rundeck-config.groovy, plus a couple of hardcoded/derived properties) into the given
-     * Environment.
+     * Environment, then immediately sanitizes {@code dataSource.dbCreate} via
+     * {@link #removeGORMdbCreateProperty(Environment)}.
      * <br>
      * Extracted to a static method, rather than living only in the instance-level
      * {@link #setEnvironment(Environment)} EnvironmentAware callback, so it can also be invoked much
@@ -217,6 +217,12 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
      * intentionally redundant: MutablePropertySources#addFirst replaces any existing entry with the
      * same name, so the second call is a harmless no-op re-registration, kept for backward
      * compatibility with anything relying on setEnvironment() itself running.
+     * <br>
+     * The dbCreate sanitization must happen here, in the same method/call as the property-source
+     * registration, rather than being left to a separate later call -- otherwise a custom
+     * dataSource.dbCreate value (e.g. "create" or "update") would be visible to GORM/datasource bean
+     * definitions during the early post-processor phase, before the later setEnvironment() callback
+     * ever got a chance to force it back to "none".
      *
      * @param environment the Environment to register property sources into
      */
@@ -242,6 +248,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
             environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
         }
         loadGroovyRundeckConfigIfExists(environment)
+        removeGORMdbCreateProperty(environment)
     }
 
     /**
@@ -249,7 +256,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
      * @param environment
      * @return void
      */
-    void removeGORMdbCreateProperty(final Environment environment){
+    static void removeGORMdbCreateProperty(final Environment environment){
         if(environment && environment.propertySources){
             environment.propertySources.each{
                 if(it.containsProperty("dataSource.dbCreate")){
