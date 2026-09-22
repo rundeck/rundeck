@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.util.FileUtils
 import org.eclipse.jgit.util.SystemReader
 import org.rundeck.plugin.scm.git.config.Common
@@ -944,7 +945,7 @@ class GitImportPluginSpec extends Specification {
         git.checkout().setName('dev').call()
         GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'v2')
         git.checkout().setName('master').call()
-        git.merge().include(repo.resolve('dev')).setStrategy(org.eclipse.jgit.merge.MergeStrategy.OURS).call()
+        git.merge().include(repo.resolve('dev')).setStrategy(MergeStrategy.OURS).call()
 
         def plugin = new GitImportPlugin(config, [])
         plugin.initialize(Mock(ScmOperationContext) {

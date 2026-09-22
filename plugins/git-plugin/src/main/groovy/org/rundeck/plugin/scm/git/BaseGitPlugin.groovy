@@ -494,12 +494,7 @@ class BaseGitPlugin {
             Map<String, RevCommit> bulk = GitUtil.lastCommitsForPaths(repo, head, GitUtil.listPaths(git, 'HEAD^{tree}'))
             // a merge side branch can be attributed a commit whose blob differs from HEAD's; those use the exact log
             bulk = bulk.findAll { String p, RevCommit c -> GitUtil.lookupId(repo, c, p) == GitUtil.lookupId(repo, head, p) }
-            memo = [
-                    head   : headId,
-                    commits: new ConcurrentHashMap<String, Optional<RevCommit>>(
-                            bulk.collectEntries { String p, RevCommit c -> [p, Optional.of(c)] }
-                    )
-            ]
+            memo = [head: headId, commits: new ConcurrentHashMap<>(bulk.collectEntries { p, c -> [p, Optional.of(c)] })]
             lastCommitMemo = memo
         }
         memo.commits.computeIfAbsent(path) { String p ->

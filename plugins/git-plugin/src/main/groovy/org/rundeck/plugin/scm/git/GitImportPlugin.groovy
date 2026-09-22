@@ -709,11 +709,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
             //job id by path, resolved once instead of scanning the snapshot per repo file
             Map<String, String> jobIdByPath = [:]
-            jobStateSnapshot.each { String key, Map values ->
-                if (values?.path) {
-                    jobIdByPath.putIfAbsent(values.path.toString(), key)
-                }
-            }
+            jobStateSnapshot.each { k, v -> if (v?.path) jobIdByPath.putIfAbsent(v.path.toString(), k) }
 
             //walk the repo files and look for possible candidates
             walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->

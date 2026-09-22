@@ -222,15 +222,17 @@ class GitUtil {
      */
     static Map<String, RevCommit> lastCommitsForPaths(Repository repo, RevCommit head, Collection<String> paths) {
         Map<String, RevCommit> found = [:]
-        Set<String> want = new HashSet<>(paths ?: [])
+        Set<String> want = new HashSet<>(paths)
         if (!want || !head) {
             return found
         }
-        RevWalk walk = new RevWalk(repo)
-        TreeWalk tree = new TreeWalk(repo)
-        tree.recursive = true
-        tree.filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(want), TreeFilter.ANY_DIFF)
+        RevWalk walk = null
+        TreeWalk tree = null
         try {
+            walk = new RevWalk(repo)
+            tree = new TreeWalk(repo)
+            tree.recursive = true
+            tree.filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(want), TreeFilter.ANY_DIFF)
             walk.markStart(walk.parseCommit(head))
             for (RevCommit commit = walk.next(); commit && want; commit = walk.next()) {
                 int parentCount = commit.parentCount
@@ -251,8 +253,8 @@ class GitUtil {
                 }
             }
         } finally {
-            tree.close()
-            walk.close()
+            tree?.close()
+            walk?.close()
         }
         found
     }

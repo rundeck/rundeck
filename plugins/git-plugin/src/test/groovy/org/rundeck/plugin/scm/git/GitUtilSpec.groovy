@@ -77,7 +77,7 @@ class GitUtilSpec extends Specification {
         def origindir = new File(tempdir, 'origin')
         Git git = BaseGitPluginSpec.createGit(origindir)
         def repo = git.repository
-        ['a.xml', 'b.xml', 'c.xml'].each { GitExportPluginSpec.addCommitFile(origindir, git, it, it) }
+        ['root-only.xml', 'a.xml', 'b.xml', 'c.xml'].each { GitExportPluginSpec.addCommitFile(origindir, git, it, it) }
         GitExportPluginSpec.addCommitFile(origindir, git, 'b.xml', 'b2')
         git.rm().addFilepattern('c.xml').call()
         git.commit().setMessage('rm c').setAuthor('a', 'b@test.com').call()
@@ -93,8 +93,9 @@ class GitUtilSpec extends Specification {
         def result = GitUtil.lastCommitsForPaths(repo, GitUtil.getHead(repo), paths + ['c.xml', 'never.xml'])
 
         then:
-        paths.sort() == ['a.xml', 'b.xml', 'd.xml']
-        result.size() == 4
+        paths.sort() == ['a.xml', 'b.xml', 'd.xml', 'root-only.xml']
+        result.size() == 5
+        result['root-only.xml'].parentCount == 0
         paths.every { result[it] == GitUtil.lastCommitForPath(repo, git, it) }
         result['c.xml'] == GitUtil.lastCommitForPath(repo, git, 'c.xml')
         !result.containsKey('never.xml')
