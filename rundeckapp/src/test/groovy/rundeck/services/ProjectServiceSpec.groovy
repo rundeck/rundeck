@@ -94,6 +94,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         mockDomain ExecReport
         mockDomain ScheduledExecution
         mockDomain Execution
+        mockDomain Workflow
         mockDomain LogFileStorageRequest
         mockDomain CommandExec
         mockDomain JobExec
@@ -1236,6 +1237,73 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         cleanup:
             tempfile2.delete()
+    }
+
+    /**
+     * Regression test for RUN-4790 / HackerOne #3960872: a forged archive can reference an
+     * outputfilepath outside the importing project's own log storage (e.g. another project's
+     * log file). If that path is not backed by a file actually present in the archive, the
+     * raw archive-supplied value must never be persisted on the imported Execution.
+     */
+    def "importExecutionsToProject drops archive-supplied outputfilepath when referenced log file is absent from archive"() {
+        setup:
+            service.logFileStorageService = Mock(LogFileStorageService)
+
+            //forged path: points at another project's log file, which is never included in the archive
+            def forgedPath = '/var/lib/rundeck/logs/rundeck/othersecretproject/run/logs/999.rdlog'
+            def execXml = """<executions>
+  <execution id='1'>
+    <dateStarted>2019-11-07T19:03:41Z</dateStarted>
+    <dateCompleted>2019-11-07T19:03:42Z</dateCompleted>
+    <status>succeeded</status>
+    <outputfilepath>${forgedPath}</outputfilepath>
+    <failedNodeList />
+    <succeededNodeList>Stephens-MBP</succeededNodeList>
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString />
+    <loglevel>INFO</loglevel>
+    <doNodedispatch>false</doNodedispatch>
+    <executionType>user</executionType>
+    <project>test</project>
+    <user>admin</user>
+    <workflow keepgoing='false' strategy='node-first'>
+    </workflow>
+  </execution>
+</executions>"""
+            def tempXmlFile = File.createTempFile("execution-1", ".xml")
+            tempXmlFile.text = execXml
+            tempXmlFile.deleteOnExit()
+
+            def method = ProjectService.class.getDeclaredMethod(
+                    'importExecutionsToProject',
+                    ArrayList, Map, Object, IFramework, Object, Object, Map, Object
+            )
+            method.setAccessible(true)
+            def execerrors = []
+
+        when:
+            //execout is empty: no file in the archive matches the forged outputfilepath
+            method.invoke(
+                    service,
+                    [tempXmlFile],
+                    [:],
+                    'sandbox',
+                    Mock(IFramework),
+                    [:],
+                    [],
+                    [(tempXmlFile): 'executions/execution-1.xml'],
+                    execerrors
+            )
+
+        then:
+            Execution.count() == 1
+            def imported = Execution.list().first()
+            imported.outputfilepath != forgedPath
+            execerrors.find { it.contains('NO matching outfile') }
+
+        cleanup:
+            tempXmlFile.delete()
     }
 
     @Unroll
