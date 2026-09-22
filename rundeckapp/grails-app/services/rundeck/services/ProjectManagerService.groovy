@@ -459,9 +459,23 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             return new LoadedConfig()
         }
         def properties = new Properties()
-        def bytestream = new ByteArrayOutputStream()
-        Streams.copy(resource.contents.inputStream,bytestream,true)
-        def bytes=bytestream.toByteArray()
+        byte[] bytes
+        try {
+            def bytestream = new ByteArrayOutputStream()
+            Streams.copy(resource.contents.inputStream,bytestream,true)
+            bytes=bytestream.toByteArray()
+        } catch (Exception e) {
+            //RUN-4976: a pre-existing/stale encryption flag on project.properties can make
+            //reading the resource throw (e.g. legacy Jasypt decrypt failure) even after the
+            //storage-layer plaintext fallback. Degrade to an empty config instead of breaking
+            //the whole project load.
+            log.warn("Failed loading project properties from storage: ${resource.path}: could not read/decrypt contents, continuing with empty config: " + e.message, e)
+            return new LoadedConfig(
+                    config      : properties,
+                    lastModified: resource.contents.modificationTime,
+                    creationTime: resource.contents.creationTime
+            )
+        }
         //validate header
         if(isValidConfigFile(bytes)){
             //load as properties file

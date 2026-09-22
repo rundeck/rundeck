@@ -359,6 +359,49 @@ class BackwardCompatibilityIntegrationSpec extends Specification {
     }
 
     // ========================================================================
+    // SCENARIO 7: RUN-4976 — stale jasypt-encryption:encrypted flag on plaintext content
+    //
+    // Reproduces MeteoSwiss's project.properties: content is genuine plaintext (a normal
+    // Java properties file starting with '#'), but the metadata still carries a stale
+    // jasypt-encryption:encrypted=true flag from the old 5.x plugin. readResource() must
+    // recover the plaintext instead of throwing, since decrypting already-plaintext bytes
+    // can never succeed.
+    // ========================================================================
+
+    def "RUN-4976 recovery: plaintext content with a stale jasypt-encryption:encrypted flag is returned as-is"() {
+        given: "content that is genuine plaintext, matching MeteoSwiss's project.properties"
+        def plugin = createModernPlugin()
+        def path = Mock(Path)
+        def plaintextProperties = "#Project configuration\nproject.name=test\nproject.description=blah\n".bytes
+
+        and: "metadata carries a stale legacy-encrypted flag despite the plaintext content"
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when:
+        def result = plugin.readResource(path, meta, mockStream(plaintextProperties))
+
+        then: "the plaintext is recovered unchanged instead of throwing"
+        readAllBytes(result) == plaintextProperties
+    }
+
+    def "RUN-4976: genuinely corrupt, non-plaintext-shaped content still throws (SCM config stays loud)"() {
+        given: "corrupt/undecryptable binary content, simulating a real scm-export.properties failure"
+        def plugin = createModernPlugin()
+        def path = Mock(Path)
+        def corrupt = new byte[40]
+        Arrays.fill(corrupt, (byte) 0xFF)
+
+        and:
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "the decrypt-triggering read is actually consumed"
+        readAllBytes(plugin.readResource(path, meta, mockStream(corrupt)))
+
+        then: "the plaintext fallback does not apply, and the failure still propagates unchanged"
+        thrown(RuntimeException)
+    }
+
+    // ========================================================================
     // Helpers
     // ========================================================================
 

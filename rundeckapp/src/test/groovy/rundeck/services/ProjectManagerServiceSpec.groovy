@@ -166,6 +166,43 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         null==result.info.readme
         null==result.info.motd
     }
+
+    void "get project degrades to empty config when project.properties decrypt fails (RUN-4976)"(){
+        setup:
+        def p = new Project(name:'test1', description: 'blah')
+        p.save(flush: true)
+        def modDate = new Date(123)
+
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/etc/project.properties") >> true
+            getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    //simulates a legacy Jasypt decrypt failure surfacing while reading the
+                    //resource content, e.g. a stale jasypt-encryption:encrypted flag that the
+                    //storage-layer plaintext fallback did not recover
+                    getInputStream() >> { throw new RuntimeException("Legacy Jasypt decryption failed") }
+                    getModificationTime() >> modDate
+                    getCreationTime() >> modDate
+                }
+            }
+        }
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(new Properties())
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+
+        when:
+        def result=service.getFrameworkProject('test1')
+
+        then: "no exception propagates, and the project loads with an empty/default config"
+        result!=null
+        'test1'==result.name
+        null==result.getProperty('projkey')
+    }
+
     void "get project exists with readme/motd"(){
         setup:
         def description = 'blah'

@@ -48,6 +48,9 @@ dependencies {
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}"
+    // Real Jasypt library, test-only: proves LegacyJasyptDecryptor is compatible with
+    // actual library output, not just Rundeck's own LegacyJasyptEncryptor reimplementation.
+    testImplementation "org.jasypt:jasypt:${jasyptVersion}"
 }
 
 test {

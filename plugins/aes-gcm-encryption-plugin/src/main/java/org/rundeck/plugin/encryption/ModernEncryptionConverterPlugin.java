@@ -207,13 +207,49 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
             return new TransformStream(input) {
                 @Override
                 protected byte[] transform(byte[] data) {
-                    return getLegacyDecryptor().decrypt(getResolvedPassword(), data);
+                    try {
+                        return getLegacyDecryptor().decrypt(getResolvedPassword(), data);
+                    } catch (EncryptionException e) {
+                        if (looksLikePlaintext(data)) {
+                            // Pre-existing 5.x condition (RUN-4976): the jasypt-encryption:encrypted
+                            // flag was set on this record, but the content was never actually
+                            // encrypted. Decrypting already-plaintext bytes can never succeed, so
+                            // recover the original content instead of failing every read.
+                            logger.warn("readResource: content flagged jasypt-encryption:encrypted=true "
+                                    + "failed to decrypt but looks like plaintext; returning raw content "
+                                    + "unchanged (see RUN-4976).");
+                            return data;
+                        }
+                        throw e;
+                    }
                 }
             };
         } catch (Exception e) {
             logger.error("Legacy Jasypt decryption failed. Wrong password or incompatible algorithm.", e);
             throw new RuntimeException("Legacy Jasypt decryption failed", e);
         }
+    }
+
+    /**
+     * Conservative heuristic for detecting that {@code data} is already plaintext (e.g. a Java
+     * properties file starting with {@code '#'}) rather than genuine ciphertext: ciphertext bytes
+     * are effectively random and essentially never fall entirely within the printable-ASCII range.
+     */
+    private static boolean looksLikePlaintext(byte[] data) {
+        if (data == null || data.length == 0) {
+            return false;
+        }
+        int sampleSize = Math.min(data.length, 512);
+        for (int i = 0; i < sampleSize; i++) {
+            int b = data[i] & 0xFF;
+            if (b == '\n' || b == '\r' || b == '\t') {
+                continue;
+            }
+            if (b < 0x20 || b > 0x7E) {
+                return false;
+            }
+        }
+        return true;
     }
 
     char[] getResolvedPassword() {
