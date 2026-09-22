@@ -17,6 +17,7 @@ class NextUiInterceptor {
         match(controller: 'scheduledExecution', action: '(update|save|edit|create|copy|createFromExecution)')
         match(controller: 'menu', action: '(jobs|home)')
         match(controller: 'framework', action: 'adhoc')
+        match(controller: 'user', action: 'list')
     }
 
     boolean before() {
