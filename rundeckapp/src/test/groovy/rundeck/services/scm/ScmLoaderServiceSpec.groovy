@@ -951,4 +951,18 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
         1 * executor.scheduleWithFixedDelay(_, 0L, 20L, TimeUnit.SECONDS)
         0 * executor.scheduleAtFixedRate(*_)
     }
+
+    def "beginScmLoader schedules the bootstrap poller with a fixed delay"() {
+        given:
+        def executor = Mock(ScheduledExecutorService)
+        service.scheduledExecutor = executor
+        service.frameworkService = Mock(FrameworkService)
+
+        when:
+        service.beginScmLoader()
+
+        then:
+        1 * executor.scheduleWithFixedDelay(_, 0L, 20L, TimeUnit.SECONDS)
+        0 * executor.scheduleAtFixedRate(*_)
+    }
 }

@@ -76,22 +76,27 @@ class GitUtil {
         }
     }
 
+    /**
+     * Blob id of a regular file at the given path in the commit tree.
+     *
+     * @return the object id, or null if the commit is null, the path is absent, or it is not a regular file
+     */
     static ObjectId lookupId(Repository repo, RevCommit commit, String path) {
         if (!commit) {
             return null
         }
-        final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree());
-
+        final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree())
         if (walk2 == null) {
             return null
-        };
-        if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
-            return null
-        };
-
-        def id = walk2.getObjectId(0)
-        walk2.close()
-        return id;
+        }
+        try {
+            if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
+                return null
+            }
+            return walk2.getObjectId(0)
+        } finally {
+            walk2.close()
+        }
     }
 
     static byte[] getBytes(Repository repo, ObjectId id) {
