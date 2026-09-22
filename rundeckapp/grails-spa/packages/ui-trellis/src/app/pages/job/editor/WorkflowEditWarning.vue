@@ -1,6 +1,10 @@
 <template>
-  <span v-if="isEditing" data-testid="workflow-edit-warning" class="text-warning">
-    {{ $t('job.editor.workflow.unsavedchanges.warning') }}
+  <span
+    v-if="isEditing"
+    data-testid="workflow-edit-warning"
+    class="text-warning"
+  >
+    {{ $t("job.editor.workflow.unsavedchanges.warning") }}
   </span>
 </template>
 

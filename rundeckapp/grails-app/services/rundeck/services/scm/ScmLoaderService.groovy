@@ -1,6 +1,5 @@
 package rundeck.services.scm
 
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
@@ -311,11 +310,7 @@ class ScmLoaderService implements EventBusAware {
 
     @CompileDynamic
     List<ScheduledExecution> getJobs(String project){
-        def query=new ScheduledExecutionQuery()
-        query.projFilter = project
-        def listWorkflows = scheduledExecutionService.listWorkflows(query)
-        List<ScheduledExecution> jobs = listWorkflows["schedlist"]
-        return jobs
+        scheduledExecutionService.listJobsForProjectUncached(project)
     }
 
     /**
@@ -507,6 +502,8 @@ class ScmLoaderService implements EventBusAware {
 
             List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
+
+            plugin.reconcileJobState(jobs*.extid.findAll { it } as Set<String>)
 
             Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project, false)
             List<JobScmReference> joblist = scmService.scmJobRefsForJobs(jobs, jobPluginMeta)

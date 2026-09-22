@@ -22,7 +22,6 @@
           v-if="pagination.total >= 0"
           class="summary-count"
           :class="{
-
             'text-strong': pagination.total < 1,
             'text-info': pagination.total > 0,
           }"
@@ -505,7 +504,11 @@
                   )
                 "
               >
-                {{ rpt.job.group ? rpt.job.group + '/' + rpt.job.name : rpt.job.name }}
+                {{
+                  rpt.job.group
+                    ? rpt.job.group + "/" + rpt.job.name
+                    : rpt.job.name
+                }}
               </span>
               <span v-else>
                 {{ rpt.description }}
@@ -580,19 +583,27 @@
 </template>
 
 <script lang="ts">
-import {getExecutions, PagedResult, queryRunning,} from "../../../library/services/executions";
+import {
+  getExecutions,
+  PagedResult,
+  queryRunning,
+} from "../../../library/services/executions";
 import axios from "axios";
-import {defineComponent, PropType} from "vue";
-import moment, {MomentInput} from "moment";
+import { defineComponent, PropType } from "vue";
+import moment, { MomentInput } from "moment";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
 
-import {EventBus, getRundeckContext} from "../../../library";
-import {ExecutionBulkDeleteResponse} from "@rundeck/client/dist/lib/models";
-import {Execution, ExecutionDate, Status} from "../../../library/types/executions/Execution";
+import { EventBus, getRundeckContext } from "../../../library";
+import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
+import {
+  Execution,
+  ExecutionDate,
+  Status,
+} from "../../../library/types/executions/Execution";
 import DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
-import {api} from "../../../library/services/api";
+import { api } from "../../../library/services/api";
 
 /**
  * Generate a URL

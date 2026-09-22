@@ -2,10 +2,7 @@ import * as Util from "util";
 
 import * as Joint from "jointjs";
 
-import {
-  WorkflowGraph,
-  layoutGraph,
-} from "../Graph";
+import { WorkflowGraph, layoutGraph } from "../Graph";
 import {
   RuleBuilder,
   RuleSet,

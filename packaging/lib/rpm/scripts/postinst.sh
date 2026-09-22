@@ -50,7 +50,7 @@ if  ! grep -E '^\s*rundeck.server.uuid\s*=\s*.{8}-.{4}-.{4}-.{4}-.{12}\s*$' "$FW
 fi
 
 #setting a random password for encryption
-STORAGE_PASS=$(openssl rand -hex 8)
+STORAGE_PASS=$(openssl rand -hex 16)
 sed -i -E 's/^rundeck\.storage\.converter\.([0-9]+)\.config\.password=default\.encryption\.password$/rundeck.storage.converter.\1.config.password='"$STORAGE_PASS"'/' "$RDECK_CONFIG"
 sed -i -E 's/^rundeck\.config\.storage\.converter\.([0-9]+)\.config\.password=default\.encryption\.password$/rundeck.config.storage.converter.\1.config.password='"$STORAGE_PASS"'/' "$RDECK_CONFIG"
 
