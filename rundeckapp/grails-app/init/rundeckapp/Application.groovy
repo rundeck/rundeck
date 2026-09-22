@@ -210,7 +210,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
      * Extracted to a static method, rather than living only in the instance-level
      * {@link #setEnvironment(Environment)} EnvironmentAware callback, so it can also be invoked much
      * earlier by {@link rundeckapp.init.RundeckConfigEnvironmentPostProcessor} -- see that class's
-     * Javadoc for why the earlier timing matters (RUN-4975 / #10352: some framework/plugin beans,
+     * Javadoc for why the earlier timing matters (RUN-4996 / #10352: some framework/plugin beans,
      * e.g. the default grailsLinkGenerator, read config values like grails.serverURL eagerly at bean
      * *definition* build time, which happens before this instance method's EnvironmentAware callback
      * ever fires). Calling this twice (once early, once again from setEnvironment()) is safe and

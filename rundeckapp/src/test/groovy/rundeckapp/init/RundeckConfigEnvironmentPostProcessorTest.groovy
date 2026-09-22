@@ -25,7 +25,7 @@ import rundeckapp.Application
 import spock.lang.Specification
 
 /**
- * Regression tests for RUN-4975 / https://github.com/rundeck/rundeck/issues/10352: a
+ * Regression tests for RUN-4996 / https://github.com/rundeck/rundeck/issues/10352: a
  * grails.serverURL set only in a custom rundeck-config.properties/.groovy file (via
  * -Drundeck.config.location) was invisible to any bean that reads config eagerly at bean-definition
  * build time (e.g. the default grailsLinkGenerator bean), because that registration previously only
@@ -36,7 +36,13 @@ import spock.lang.Specification
 class RundeckConfigEnvironmentPostProcessorTest extends Specification {
 
     def "postProcessEnvironment registers the same property sources as Application#setEnvironment()"() {
-        given:
+        given: "a controlled rundeckConfig, so this test doesn't trigger a real, uncontrolled runPrebootstrap() pass (which mutates JVM-wide state) depending on which specs happened to run before it"
+        def previousRundeckConfig = Application.rundeckConfig
+        Application.rundeckConfig = new RundeckInitConfig()
+        Properties runtimeProps = new Properties()
+        runtimeProps.setProperty(RundeckInitializer.PROP_REALM_LOCATION, "fake")
+        runtimeProps.setProperty(RundeckInitializer.PROP_LOGINMODULE_NAME, "fake")
+        Application.rundeckConfig.runtimeConfiguration = runtimeProps
         StandardEnvironment environment = new StandardEnvironment()
         def postProcessor = new RundeckConfigEnvironmentPostProcessor()
 
@@ -47,6 +53,9 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
         List<String> propertiesLoaded = environment.propertySources.iterator().collect { it.name }
         propertiesLoaded.contains("hardcoded-rundeck-props")
         propertiesLoaded.contains("rundeck.config.location")
+
+        cleanup:
+        Application.rundeckConfig = previousRundeckConfig
     }
 
     /**
@@ -71,8 +80,21 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, tmpProp.absolutePath)
         // ReloadableRundeckPropertySource is a static, JVM-wide singleton that loads its file once
         // at class-init time; force it to pick up this test's file rather than whatever it may have
-        // already cached from an earlier test run in the same JVM.
+        // already cached from an earlier test run in the same JVM. refreshRundeckPropertyFile() only
+        // clears/repopulates its backing Properties when the config location is set and isn't a
+        // .groovy file, so a plain reload() in cleanup can't be trusted to undo this -- snapshot the
+        // live contents now and restore them verbatim in cleanup instead.
+        Properties previousRundeckProps = new Properties()
+        previousRundeckProps.putAll(ReloadableRundeckPropertySource.getRundeckPropertySourceInstance().source as Properties)
         ReloadableRundeckPropertySource.reload()
+
+        and: "a controlled rundeckConfig, so this doesn't trigger a real, uncontrolled runPrebootstrap() pass depending on which specs happened to run before it"
+        def previousRundeckConfig = Application.rundeckConfig
+        Application.rundeckConfig = new RundeckInitConfig()
+        Properties runtimeProps = new Properties()
+        runtimeProps.setProperty(RundeckInitializer.PROP_REALM_LOCATION, "fake")
+        runtimeProps.setProperty(RundeckInitializer.PROP_LOGINMODULE_NAME, "fake")
+        Application.rundeckConfig.runtimeConfiguration = runtimeProps
 
         and: "a listener that captures the environment the instant it's prepared, then aborts before any bean-definition work happens"
         // A plain closure coerced with `as ApplicationListener<...>` does NOT preserve the generic
@@ -108,6 +130,12 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
             System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
         }
         ReloadableRundeckPropertySource.reload()
+        // Belt-and-braces: reload() above may leave this test's values cached (see the comment
+        // where previousRundeckProps was captured), so restore the exact snapshot regardless.
+        Properties liveRundeckProps = ReloadableRundeckPropertySource.getRundeckPropertySourceInstance().source as Properties
+        liveRundeckProps.clear()
+        liveRundeckProps.putAll(previousRundeckProps)
+        Application.rundeckConfig = previousRundeckConfig
     }
 
     /**

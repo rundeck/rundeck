@@ -31,7 +31,7 @@ import rundeckapp.Application
  * step), which completes entirely before any {@code ApplicationContext} is created and therefore
  * before any bean definitions -- Grails plugin or otherwise -- exist.
  * <br>
- * <b>Why this matters</b> (RUN-4975 / https://github.com/rundeck/rundeck/issues/10352): Grails
+ * <b>Why this matters</b> (RUN-4996 / https://github.com/rundeck/rundeck/issues/10352): Grails
  * plugin Spring DSL code (e.g. {@code grails-app/conf/spring/resources.groovy}, and Grails' own
  * framework plugins such as the one that constructs the default {@code grailsLinkGenerator} bean)
  * reads config values like {@code grails.serverURL} <i>eagerly</i>, as plain Groovy/Java code
