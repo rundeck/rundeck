@@ -7,25 +7,41 @@ import org.rundeck.util.container.SeleniumContext
 import org.rundeck.util.gui.pages.BasePage
 
 /**
- * User List page (/user/list) — behind the vueUserList feature flag.
- * This flag has no per-request override (confirmed via FeatureTagLib.groovy — it reads
- * app-wide config only), so this page object always drives whichever rendering path is
- * currently the server's active default; there is no nextUi/legacyUi param to toggle here.
+ * User List page (/user/list) — Vue rendering gated behind the {@code nextUi} URL param
+ * (NEXT_UI stage; legacy KO/GSP rendering remains the server default).
  */
 @CompileStatic
 class UserListPage extends BasePage {
 
-    String loadPath = "/user/list"
+    private String loadPath = "/user/list"
+
+    @Override
+    String getLoadPath() {
+        nextUi ? "${loadPath}?nextUi=true" : loadPath
+    }
+
+    boolean getNextUi() { isFlagEnabled('nextUi') }
+    void setNextUi(boolean value) { withFlag('nextUi', value) }
 
     By newProfileLinkBy = By.xpath("//a[contains(@href,'/user/create')]")
+
+    /** Expander markup differs per DOM: Vue button has a data-testid, legacy is a span with a fixed id. */
     By rowExpanderBy(String login) {
-        By.xpath("//tr[.//*[normalize-space(text())='${login}']]//button[contains(@class,'expander') or @aria-expanded]")
+        nextUi
+            ? By.cssSelector("[data-testid='user-expander-${login}']")
+            : By.id("_exp_udetail_${login}")
     }
     By editLinkBy(String login) {
         By.xpath("//a[contains(@href,'/user/edit?login=${login}')]")
     }
     By groupsHeaderBy = By.xpath("//th[contains(.,'Groups')]")
-    By groupsHelpIconBy = By.cssSelector("[data-testid='groups-help-icon']")
+
+    /** Help-tooltip icon differs per DOM: Vue has a data-testid, legacy's <g:helpTooltip> renders a bare .has_tooltip span. */
+    By getGroupsHelpIconBy() {
+        nextUi
+            ? By.cssSelector("[data-testid='groups-help-icon']")
+            : By.cssSelector("th.table-header .has_tooltip")
+    }
     By notSetBadgeBy = By.xpath("//*[contains(text(),'NOT SET') or contains(text(),'Not set')]")
 
     UserListPage(final SeleniumContext context) {
@@ -41,7 +57,8 @@ class UserListPage extends BasePage {
     }
 
     void clickRowExpander(String login) {
-        def expander = el rowExpanderBy(login)
-        expander.click()
+        By locator = rowExpanderBy(login)
+        waitForElementToBeClickable(locator)
+        el(locator).click()
     }
 }

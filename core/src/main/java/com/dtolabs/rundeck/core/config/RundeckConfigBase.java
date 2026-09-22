@@ -519,7 +519,6 @@ public class RundeckConfigBase {
         Enabled earlyAccessJobConditional = new Enabled();
         Enabled activityDefaultTimeFilter = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
-        Enabled vueUserList = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
         // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0
         // (the default) makes the editor manually resizable via drag handle instead of

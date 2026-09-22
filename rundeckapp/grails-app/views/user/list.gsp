@@ -20,13 +20,14 @@
         action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
         any: true,
         context: AuthConstants.CTX_APPLICATION)}"/>
+<g:set var="uiType" value="${params.nextUi ? 'next' : 'current'}"/>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <title><g:appTitle/> - User List</title>
 
-    <feature:enabled name="vueUserList">
+    <g:if test="${uiType=='next'}">
         <g:embedJSON id="userListData" data="[
                 users: users.collect { [login: it.login, firstName: it.firstName, lastName: it.lastName, email: it.email] },
                 appAdmin: appAdmin,
@@ -39,14 +40,14 @@
                 "userListData": loadJsonData('userListData')
             });
         </g:javascript>
-    </feature:enabled>
+    </g:if>
 </head>
 
 <body>
 <div class="content">
 <div id="layoutBody">
 
-<feature:disabled name="vueUserList">
+<g:if test="${uiType!='next'}">
 <div class="row " id="userListPageLegacy">
 
         <div class="col-sm-10 col-sm-offset-1">
@@ -69,14 +70,14 @@
     </div>
 
 </div>
-</feature:disabled>
+</g:if>
 
-<feature:enabled name="vueUserList">
+<g:if test="${uiType=='next'}">
     <div class="col-sm-10 col-sm-offset-1">
         <g:render template="/common/messages"/>
     </div>
     <div id="userListPage"></div>
-</feature:enabled>
+</g:if>
 
 </div>
 </div>
