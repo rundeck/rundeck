@@ -62,7 +62,15 @@ class RundeckConfigEnvironmentPostProcessor implements EnvironmentPostProcessor,
     @Override
     void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
         if (Application.rundeckConfig == null) {
-            Application.runPrebootstrap()
+            // Application.main() treats a true (failure) result as fatal and exits rather than
+            // continuing -- do the same here. Silently continuing would call
+            // loadRundeckPropertySources() against a rundeckConfig left incomplete by a failed
+            // PreBootstrap step (e.g. missing runtimeConfiguration), risking an NPE or a broken
+            // startup that never reports the actual initialization failure.
+            boolean prebootstrapFailed = Application.runPrebootstrap()
+            if (prebootstrapFailed) {
+                throw new IllegalStateException("Rundeck pre-bootstrap initialization failed; aborting startup.")
+            }
         }
         Application.loadRundeckPropertySources(environment)
     }
