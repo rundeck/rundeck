@@ -19,6 +19,9 @@
       :auto-option-focus="true"
       :disabled="readOnly"
       :show-empty-message="false"
+      :force-selection="selectOnly"
+      :option-label="isObjectMode ? optionLabel : undefined"
+      :dropdown="showOptionsOnFocus"
       @complete="onComplete"
       @option-select="handleOptionSelect"
       @keydown.enter.prevent
@@ -46,7 +49,10 @@
           </button>
         </div>
       </template>
-      <template #option="slotProps">
+      <template v-if="$slots.option" #option="slotProps">
+        <slot name="option" v-bind="slotProps" />
+      </template>
+      <template v-else #option="slotProps">
         <div class="autocomplete-option-content">
           <span
             v-if="getSuggestionTitle(slotProps.option)"
@@ -76,11 +82,20 @@ import { defineComponent, type PropType } from "vue";
 import AutoComplete, {
   AutoCompleteCompleteEvent,
   AutoCompleteChangeEvent,
+  AutoCompleteOptionSelectEvent,
 } from "primevue/autocomplete";
 import Badge from "primevue/badge";
 import "../Badge/badge.scss";
 import { ContextVariable } from "../../../stores/contextVariables";
 import type { TabConfig } from "./PtAutoCompleteTypes";
+
+// Resolves either the display label or the underlying committed value for a
+// suggestion, via one of ContextVariable's own fields (e.g. "name"/"title")
+// or a custom function. No new suggestion shape is introduced — every
+// suggestion is still a ContextVariable, just with configurable label/value
+// fields instead of the hard-coded name/title pair used by the legacy flow.
+type OptionResolver =
+  keyof ContextVariable | ((option: ContextVariable) => string);
 
 export default defineComponent({
   name: "PtAutoComplete",
@@ -102,9 +117,35 @@ export default defineComponent({
       type: String,
       default: "",
     },
+    // Which ContextVariable field (or custom function) supplies the display
+    // text. Only consulted when `optionValue` is set (see below); otherwise
+    // display always comes from `.title` via the built-in rendering, exactly
+    // as before.
     optionLabel: {
-      type: String,
-      default: "label",
+      type: [String, Function] as PropType<OptionResolver>,
+      default: "title",
+    },
+    // Which ContextVariable field (or custom function) supplies the
+    // underlying committed value. When unset, behavior is unchanged
+    // (selecting a suggestion commits its `.name`). When set, selecting a
+    // suggestion resolves the committed value through this instead — e.g. so
+    // a "Prior Steps" option can display "Exit code" (via optionLabel) while
+    // committing a different token (via optionValue).
+    optionValue: {
+      type: [String, Function] as PropType<OptionResolver | undefined>,
+      default: undefined,
+    },
+    // Closed-list enforcement: revert to the last valid value if the user's
+    // typed text doesn't match a current suggestion on blur/hide.
+    selectOnly: {
+      type: Boolean,
+      default: false,
+    },
+    // Shows a dropdown affordance that reveals the full suggestion list
+    // without requiring the user to type first.
+    showOptionsOnFocus: {
+      type: Boolean,
+      default: false,
     },
     invalid: {
       type: Boolean,
@@ -160,32 +201,42 @@ export default defineComponent({
       debounceTimer: null as ReturnType<typeof setTimeout> | null,
     };
   },
-  watch: {
-    modelValue(newVal: string) {
-      this.value = newVal;
-    },
-  },
   computed: {
-    tabFilteredSuggestions(): string[] | undefined {
-      let suggestions: string[];
+    // True when callers want closed-list, object-shaped suggestions
+    // (display via optionLabel, commit via optionValue) rather than the
+    // legacy flat-string ContextVariable behavior.
+    isObjectMode(): boolean {
+      return this.optionValue !== undefined;
+    },
+    tabFilteredSuggestions(): (string | ContextVariable)[] | undefined {
+      const tabFiltered =
+        this.tabMode && this.tabs && this.tabs.length > 0
+          ? this.tabs[this.selectedTabIndex]
+          : undefined;
 
-      if (!this.tabMode || !this.tabs || this.tabs.length === 0) {
-        suggestions = this.filteredSuggestions.map(
-          (suggestion: ContextVariable) => suggestion.name,
-        );
-      } else {
-        const activeTab = this.tabs[this.selectedTabIndex];
-        if (!activeTab) {
-          return undefined;
-        }
-
-        suggestions = this.filteredSuggestions
-          .filter(activeTab.filter)
-          .map((suggestion: ContextVariable) => suggestion.name);
+      if (this.tabMode && this.tabs && this.tabs.length > 0 && !tabFiltered) {
+        return undefined;
       }
+
+      const base = tabFiltered
+        ? this.filteredSuggestions.filter(tabFiltered.filter)
+        : this.filteredSuggestions;
+
+      // Object mode: pass the ContextVariable objects through as-is;
+      // PrimeVue displays them via `optionLabel` and the `#option` slot
+      // handles custom rendering. Legacy mode: flatten to `.name`, unchanged
+      // from prior behavior.
+      const suggestions: (string | ContextVariable)[] = this.isObjectMode
+        ? base
+        : base.map((suggestion) => suggestion.name);
 
       // Return undefined instead of empty array to prevent dropdown from showing
       return suggestions.length > 0 ? suggestions : undefined;
+    },
+  },
+  watch: {
+    modelValue(newVal: string) {
+      this.value = newVal;
     },
   },
   beforeUnmount() {
@@ -245,8 +296,12 @@ export default defineComponent({
       const currentWord = textToCursor.match(currentWordRegex)?.[0] || "";
       this.currentQuery = currentWord;
       try {
-        // If user types just "$", show all suggestions
-        if (currentWord === "$") {
+        // If user types just "$" (legacy mode), or opens the full-list
+        // dropdown affordance with an empty query, show everything.
+        if (
+          currentWord === "$" ||
+          (this.showOptionsOnFocus && currentWord === "")
+        ) {
           this.filteredSuggestions = this.suggestions;
           this.allSuggestions = this.suggestions;
           this.autoSwitchToTabWithResults();
@@ -257,6 +312,19 @@ export default defineComponent({
         if (currentWord === "") {
           this.filteredSuggestions = [];
           this.allSuggestions = [];
+          return;
+        }
+
+        // Object mode: match against the resolved display label instead of
+        // the ContextVariable-specific `.name`/`${}` token conventions.
+        if (this.isObjectMode) {
+          const filtered = this.suggestions.filter((suggestion) => {
+            const label = this.resolveOptionLabel(suggestion);
+            return !!label && this.isPartialWordMatch(currentWord, label);
+          });
+          this.filteredSuggestions = filtered;
+          this.allSuggestions = filtered;
+          this.autoSwitchToTabWithResults();
           return;
         }
 
@@ -395,7 +463,41 @@ export default defineComponent({
       );
     },
 
-    handleOptionSelect(event: any): void {
+    // Resolves the display text for a ContextVariable, via a function, one
+    // of its own field names, or (legacy fallback) `.title`.
+    resolveOptionLabel(option: ContextVariable): string {
+      if (typeof this.optionLabel === "function") {
+        return this.optionLabel(option);
+      }
+      const resolved = option[this.optionLabel];
+      return (typeof resolved === "string" ? resolved : option.title) ?? "";
+    },
+
+    // Resolves the underlying committed value for a ContextVariable, via a
+    // function or one of its own field names. Only meaningful in object mode.
+    resolveOptionValue(option: ContextVariable): string {
+      if (typeof this.optionValue === "function") {
+        return this.optionValue(option);
+      }
+      if (this.optionValue) {
+        const resolved = option[this.optionValue];
+        if (typeof resolved === "string") {
+          return resolved;
+        }
+      }
+      return option.name;
+    },
+
+    handleOptionSelect(event: AutoCompleteOptionSelectEvent): void {
+      // Object mode always commits the resolved underlying value as a
+      // whole-value replacement — partial in-string splicing only makes
+      // sense for the legacy free-text ContextVariable flow.
+      if (this.isObjectMode) {
+        this.value = this.resolveOptionValue(event.value as ContextVariable);
+        this.updateValue();
+        return;
+      }
+
       // If replaceOnSelect is true, use default PrimeVue behavior (replace entire value)
       // PrimeVue will automatically update the v-model value
       if (this.replaceOnSelect) {

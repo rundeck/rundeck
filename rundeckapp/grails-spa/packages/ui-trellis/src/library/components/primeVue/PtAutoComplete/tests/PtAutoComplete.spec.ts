@@ -2,6 +2,7 @@ import { mount } from "@vue/test-utils";
 import AutoComplete from "primevue/autocomplete";
 import { PtAutoComplete } from "../../index";
 import type { TabConfig } from "../PtAutoCompleteTypes";
+import type { ContextVariable } from "../../../../stores/contextVariables";
 
 const SUGGESTIONS = [
   { name: "${job.execid}", title: "Execution ID", type: "job" },
@@ -211,6 +212,142 @@ describe("PtAutoComplete", () => {
         .props("suggestions");
       expect(suggestions).toContain("${job.execid}");
       expect(suggestions).not.toContain("${option.myopt}");
+    });
+  });
+
+  describe("object mode (optionValue provided)", () => {
+    // Still plain ContextVariable objects — `description` stands in as the
+    // field carrying the underlying committed value (distinct from the
+    // display label in `title`), to prove label/value resolution works
+    // against arbitrary fields, not just the legacy name/title pair.
+    const OBJECT_SUGGESTIONS: ContextVariable[] = [
+      {
+        name: "exitcode",
+        title: "Exit code",
+        type: "job",
+        description: "[steps.['Create JIRA Ticket'].exitcode]",
+      },
+      {
+        name: "output",
+        title: "Output",
+        type: "job",
+        description: "[steps.['Create JIRA Ticket'].output]",
+      },
+    ];
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("forwards force-selection to the underlying AutoComplete when selectOnly is set", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        selectOnly: true,
+      });
+      expect(wrapper.findComponent(AutoComplete).props("forceSelection")).toBe(
+        true,
+      );
+    });
+
+    it("does not force selection by default, preserving existing free-text consumers", async () => {
+      const wrapper = await createWrapper();
+      expect(wrapper.findComponent(AutoComplete).props("forceSelection")).toBe(
+        false,
+      );
+    });
+
+    it("passes ContextVariable objects through (not flattened to a name) when optionValue is set", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+      });
+
+      await wrapper.findComponent(AutoComplete).vm.$emit("complete", {
+        query: "Exit",
+        originalEvent: { target: { selectionStart: 4 } },
+      });
+      jest.advanceTimersByTime(200);
+      await wrapper.vm.$nextTick();
+
+      const suggestions = wrapper
+        .findComponent(AutoComplete)
+        .props("suggestions");
+      expect(suggestions).toEqual([OBJECT_SUGGESTIONS[0]]);
+    });
+
+    it("commits the resolved optionValue (not the display label) on selection", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+      });
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: OBJECT_SUGGESTIONS[1] });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")).toBeTruthy();
+      expect(
+        wrapper.emitted("update:modelValue")![
+          wrapper.emitted("update:modelValue")!.length - 1
+        ],
+      ).toEqual(["[steps.['Create JIRA Ticket'].output]"]);
+    });
+
+    it("resolves optionValue/optionLabel via functions when provided", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: (option: ContextVariable) => option.description ?? "",
+        optionLabel: (option: ContextVariable) => option.title,
+      });
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: OBJECT_SUGGESTIONS[0] });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.emitted("update:modelValue")![0]).toEqual([
+        "[steps.['Create JIRA Ticket'].exitcode]",
+      ]);
+    });
+
+    it("renders a caller-provided #option slot instead of the built-in title/name rendering", async () => {
+      const wrapper = mount(PtAutoComplete, {
+        props: {
+          modelValue: "",
+          suggestions: OBJECT_SUGGESTIONS,
+          optionValue: "description",
+        },
+        slots: {
+          option: `<div class="custom-option">{{ params.option.title }}</div>`,
+        },
+        global: { components: { AutoComplete } },
+      });
+      await wrapper.vm.$nextTick();
+
+      const optionSlot = wrapper.findComponent(AutoComplete).vm.$slots.option;
+      const vnodes = optionSlot!({ option: OBJECT_SUGGESTIONS[0], index: 0 });
+      const rendered = mount({ render: () => vnodes[0] });
+
+      expect(rendered.html()).toContain("custom-option");
+      expect(rendered.text()).toBe("Exit code");
+    });
+
+    it("falls back to the built-in title/name rendering when no #option slot is provided", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+      });
+
+      const optionSlot = wrapper.findComponent(AutoComplete).vm.$slots.option;
+      const vnodes = optionSlot!({ option: OBJECT_SUGGESTIONS[0], index: 0 });
+      const rendered = mount({ render: () => vnodes[0] });
+
+      expect(rendered.html()).toContain("autocomplete-option-content");
     });
   });
 });
