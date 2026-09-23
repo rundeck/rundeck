@@ -236,14 +236,13 @@ describe("DynamicFormPluginProp.vue", () => {
     const wrapper = mount(TwoInstances, {
       global: {
         mocks: { $t: translate },
-        components: { Btn, Modal, Alert, PtSelect },
+        components: { Btn, Modal },
         stubs: {
           Modal: {
             template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
           },
         },
       },
-      attachTo: document.body,
     });
     const [instanceA, instanceB] = wrapper.findAllComponents(
       DynamicFormPluginProp,
