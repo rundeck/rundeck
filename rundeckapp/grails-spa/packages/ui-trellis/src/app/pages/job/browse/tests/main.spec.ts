@@ -363,7 +363,9 @@ describe("job browse main", () => {
         global: {
           plugins: [pinia],
           stubs: {
-            "node-filter-input": { template: "<div class='node-filter-stub' />" },
+            "node-filter-input": {
+              template: "<div class='node-filter-stub' />",
+            },
           },
           mocks: {
             $t: (key: string) => key,

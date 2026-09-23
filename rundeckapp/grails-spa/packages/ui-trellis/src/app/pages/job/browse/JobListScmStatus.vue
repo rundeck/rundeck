@@ -51,7 +51,7 @@ import {
   JobPageStoreInjectionKey,
 } from "@/library/stores/JobPageStore";
 import { defineComponent, inject } from "vue";
-import {ScmTextUtilities} from "../../../../library/utilities/scm/scmTextUtilities";
+import { ScmTextUtilities } from "../../../../library/utilities/scm/scmTextUtilities";
 
 export default defineComponent({
   name: "JobListScmStatus",
@@ -64,10 +64,10 @@ export default defineComponent({
       jobPageStore,
     };
   },
-  data(){
+  data() {
     return {
-      scmTextProcessor: new ScmTextUtilities(this.$t)
-    }
+      scmTextProcessor: new ScmTextUtilities(this.$t),
+    };
   },
   computed: {
     scmImport: function () {

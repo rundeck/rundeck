@@ -22,7 +22,7 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "off",
     // All rules as warnings for now
     "vue/enforce-style-attribute": ["warn", { allow: ["scoped"] }],
-    "prettier/prettier": "warn",
+    "prettier/prettier": "error",
     "@typescript-eslint/no-unused-vars": "warn",
     "@typescript-eslint/ban-types": "warn",
     "@typescript-eslint/no-var-requires": "warn",
