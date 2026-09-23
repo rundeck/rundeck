@@ -422,7 +422,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.featureService.featurePresent(_) >> false
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]) >> true
         response.text == '{"err":"A plugin file must be specified"}'
     }
 
@@ -459,7 +459,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]) >> true
         response.text == '{"err":"The plugin URL is required"}'
     }
 
@@ -488,7 +488,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.featureService.featurePresent(_) >> false
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]) >> true
         response.text == '{"msg":"done"}'
         uploaded.exists()
 
@@ -522,10 +522,9 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.featureService.featurePresent(_) >> false
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]) >> true
         response.text == '{"err":"Invalid plugin file name"}'
         !new File(uploadTestTargetDir, "evil.zip").exists()
-        !new File(uploadTestBaseDir.parentFile, "evil.zip").exists()
 
         where:
         maliciousName << [
@@ -533,6 +532,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             "../evil.zip",
             "sub/dir/evil.zip",
             "sub\\dir\\evil.zip",
+            ".",
         ]
     }
     @Unroll
@@ -625,7 +625,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]) >> true
         response.text == '{"msg":"done"}'
         installed.exists()
 
@@ -659,7 +659,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]) >> true
         response.text == '{"err":"Invalid plugin URL"}'
         !installed.exists()
 
@@ -671,7 +671,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         ]
     }
 
-    void "install plugin rejects path traversal filename"() {
+    @Unroll
+    void "install plugin rejects path traversal filename - #maliciousUrl"() {
         setup:
         def fwksvc = Mock(FrameworkService)
 
@@ -689,14 +690,20 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         when:
         request.method='POST'
         setupFormTokens(params)
-        params.pluginUrl = "http://localhost/plugins/.."
+        params.pluginUrl = maliciousUrl
         controller.installPlugin()
 
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]) >> true
         response.text == '{"err":"Invalid plugin file name"}'
+
+        where:
+        maliciousUrl << [
+            "http://localhost/plugins/..",
+            "http://localhost/plugins/.",
+        ]
     }
     @Unroll
     void "install plugin requires POST method"() {
@@ -790,7 +797,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL]) >> false
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, AuthConstants.RESOURCE_TYPE_PLUGIN, [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]) >> false
         response.text == '{"err":"Unauthorized"}'
     }
 

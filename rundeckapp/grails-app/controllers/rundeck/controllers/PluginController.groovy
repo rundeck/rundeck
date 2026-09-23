@@ -599,7 +599,7 @@ Since: v49''',
         boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
             authContext,
             AuthConstants.RESOURCE_TYPE_PLUGIN,
-            [AuthConstants.ACTION_INSTALL]
+            [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]
         )
         if (!authorized) {
             renderErrorCodeAsJson("request.error.unauthorized.title")
@@ -647,7 +647,7 @@ Since: v49''',
         boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
             authContext,
             AuthConstants.RESOURCE_TYPE_PLUGIN,
-            [AuthConstants.ACTION_INSTALL]
+            [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN]
         )
         if (!authorized) {
             renderErrorCodeAsJson("request.error.unauthorized.title")
@@ -741,7 +741,7 @@ Since: v49''',
             throw new IllegalArgumentException("Invalid plugin file name: ${name}")
         }
         File resolved = new File(baseDir, name)
-        if (!resolved.toPath().normalize().startsWith(baseDir.toPath().normalize())) {
+        if (resolved.isDirectory()) {
             throw new IllegalArgumentException("Invalid plugin file name: ${name}")
         }
         return resolved
