@@ -1836,9 +1836,11 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         when:
         service.afterPropertiesSet()
 
-        then: "no consumer or scheduler is started and initialization completes"
-        0 * service.logFileStorageTaskExecutor._
-        0 * service.logFileTaskExecutor._
+        then: "executor limits are applied but no consumer or scheduler is started"
+        1 * service.logFileStorageTaskExecutor.setConcurrencyLimit(_)
+        1 * service.logFileTaskExecutor.setConcurrencyLimit(_)
+        0 * service.logFileStorageTaskExecutor.execute(_)
+        0 * service.logFileTaskExecutor.execute(_)
         0 * service.logFileStorageTaskScheduler._
         noExceptionThrown()
 
@@ -1896,8 +1898,6 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         'test1'    | 0
     }
 
-    private static final String FILE_STORAGE_PLUGIN_KEY = 'rundeck.execution.logs.fileStoragePlugin'
-
     def "onAppConfigChanged starts consumers once when the plugin becomes configured after initialization"() {
         given: "no plugin at initialization, then a plugin configured by a later change"
         def plugin = null
@@ -1913,7 +1913,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
         when:
         plugin = 'test1'
-        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+        service.onAppConfigChanged([LogFileStorageService.FILE_STORAGE_PLUGIN.key] as Set)
 
         then: "exactly one consumer per queue is started by the change"
         1 * service.logFileStorageTaskExecutor.execute(_ as TaskRunner)
@@ -1939,7 +1939,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         service.afterPropertiesSet()
 
         when:
-        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+        service.onAppConfigChanged([LogFileStorageService.FILE_STORAGE_PLUGIN.key] as Set)
 
         then:
         0 * service.logFileStorageTaskExecutor._
@@ -1961,7 +1961,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
         when:
         service.afterPropertiesSet()
-        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+        service.onAppConfigChanged([LogFileStorageService.FILE_STORAGE_PLUGIN.key] as Set)
         service.onAppConfigChanged(['rundeck.gui.instanceName'] as Set)
 
         then: "the change handler does not start anything again"
@@ -1986,7 +1986,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         plugin = 'test1'
         def start = new CountDownLatch(1)
         def done = new CountDownLatch(2)
-        def keys = [FILE_STORAGE_PLUGIN_KEY] as Set
+        def keys = [LogFileStorageService.FILE_STORAGE_PLUGIN.key] as Set
         def worker = { ->
             start.await(5, TimeUnit.SECONDS)
             try {
@@ -2038,7 +2038,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
         when:
         plugin = 'test1'
-        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+        service.onAppConfigChanged([LogFileStorageService.FILE_STORAGE_PLUGIN.key] as Set)
         def infoLines = logOutput.toString().readLines().findAll {
             it.contains('Log storage consumers started')
         }
@@ -2088,7 +2088,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         service.logFileStorageTaskScheduler = Mock(TaskScheduler)
 
         when:
-        service.onAppConfigChanged([FILE_STORAGE_PLUGIN_KEY] as Set)
+        service.onAppConfigChanged([LogFileStorageService.FILE_STORAGE_PLUGIN.key] as Set)
 
         then:
         noExceptionThrown()
@@ -2098,5 +2098,31 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         config.getRootLogger().removeAppender("LogFileStorageServiceSpecErrorCapture")
         appender.stop()
         ctx.updateLoggers()
+    }
+
+    def "a partial start failure is retried on the next configuration change without duplicating the started consumer"() {
+        given: "a plugin that resolves only after initialization"
+        def plugin = null
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> { plugin }
+            _ * getString(LogFileStorageService.RESUME_INCOMPLETE_STRATEGY, _) >> 'periodic'
+            _ * getInteger(_, _) >> 5
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+        service.afterPropertiesSet()
+        plugin = 'test1'
+
+        when: "the first change fails while submitting the retrieval consumer and a second change arrives"
+        service.onAppConfigChanged([LogFileStorageService.FILE_STORAGE_PLUGIN.key] as Set)
+        service.onAppConfigChanged([LogFileStorageService.FILE_STORAGE_PLUGIN.key] as Set)
+
+        then: "the storage consumer is submitted once, the retrieval consumer is retried, the scheduler is registered once"
+        1 * service.logFileStorageTaskExecutor.execute(_ as TaskRunner)
+        2 * service.logFileTaskExecutor.execute(_ as TaskRunner) >> { throw new IllegalStateException('boom') } >> null
+        1 * service.logFileStorageTaskScheduler.scheduleAtFixedRate(*_)
+        0 * service.logFileStorageTaskScheduler._
+        noExceptionThrown()
     }
 }
