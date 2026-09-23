@@ -43,6 +43,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory
 import org.eclipse.jgit.transport.SshTransport
+import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.eclipse.jgit.transport.TrackingRefUpdate
 import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.transport.URIish
@@ -94,6 +95,17 @@ class BaseGitPlugin {
     BaseGitPlugin(Common commonConfig) {
         this.input = commonConfig.rawInput
         this.commonConfig = commonConfig
+    }
+
+    /**
+     * Creates a stable copy of the job state map for safe iteration.
+     *
+     * @return a snapshot preserving the map's iteration order
+     */
+    protected Map<String, Map> snapshotJobStateMap() {
+        synchronized (jobStateMap) {
+            return new LinkedHashMap<String, Map>(jobStateMap)
+        }
     }
 
     Map<String, String> getSshConfig() {
@@ -540,6 +552,26 @@ class BaseGitPlugin {
         return byteArrayOutputStream.toByteArray();
     }
 
+    /**
+     * Returns {@code true} when {@code base} is an existing git workdir whose HEAD
+     * is already checked out on {@code branchName}.
+     */
+    protected boolean workdirCheckedOutOn(File base, String branchName) {
+        if (!base?.isDirectory() || !new File(base, ".git").isDirectory() || !branchName) {
+            return false
+        }
+        def existing = null
+        try {
+            existing = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
+            return existing.getFullBranch() == "refs/heads/${branchName}"
+        } catch (Exception e) {
+            logger.debug("Could not read existing workdir branch at ${base}: ${e.message}", e)
+            return false
+        } finally {
+            existing?.close()
+        }
+    }
+
     private void removeWorkdir(File base) {
         //remove the dir
         try {
@@ -688,6 +720,15 @@ class BaseGitPlugin {
         return false
     }
 
+    /**
+     * Creates {@code newBranch} from the remote base, pushes it, and only then checks
+     * it out locally. The checkout keeps HEAD on the new branch so a follow-up
+     * {@link #cloneOrCreate} does not treat the workdir as a branch mismatch and
+     * delete it. It deliberately runs after the push is validated: leaving HEAD on
+     * the base branch when the push is rejected lets the next initialize detect the
+     * mismatch and fail again, instead of succeeding with a branch that exists only
+     * locally.
+     */
     protected void createBranch(ScmOperationContext context, String newBranch, String baseBranch){
         def createCommand = git.branchCreate()
                 .setName(newBranch)
@@ -702,7 +743,7 @@ class BaseGitPlugin {
         }
         def pushb = git.push()
         pushb.setRemote(REMOTE_NAME)
-        pushb.add(branch)
+        pushb.add(newBranch)
         setupTransportAuthentication(sshConfig, context, pushb)
 
         def push
@@ -712,7 +753,18 @@ class BaseGitPlugin {
             logger.debug("Failed push to remote: ${e.message}", e)
             throw new ScmPluginException("Failed push to remote: ${e.message}", e)
         }
+        def updates = (push*.remoteUpdates).flatten()
+        def failedUpdates = updates.findAll { it.status != RemoteRefUpdate.Status.OK }
+        if (failedUpdates) {
+            throw new ScmPluginException("Failed push to remote: " + failedUpdates)
+        }
 
+        try {
+            git.checkout().setName(newBranch).call()
+        } catch (Exception e) {
+            logger.debug("Failed checking out branch ${newBranch}: ${e.message}", e)
+            throw new ScmPluginException("Failed checking out branch ${newBranch}: ${e.message}", e)
+        }
     }
 
 

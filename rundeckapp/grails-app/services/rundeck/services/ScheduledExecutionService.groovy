@@ -562,6 +562,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
+     * Return the current jobs of a project, bypassing the Hibernate query cache.
+     *
+     * GORM caches queries by default (see {@code hibernate.cache.queries}), and the cache is
+     * local to each JVM, so a node that did not perform a job write can keep serving rows
+     * deleted by another cluster member. Callers that need a database-authoritative view,
+     * such as SCM cluster reconciliation, must not read through that cache.
+     *
+     * @param project project name
+     * @return current jobs of the project
+     */
+    List<ScheduledExecution> listJobsForProjectUncached(String project) {
+        ScheduledExecution.findAllByProject(project, [cache: false])
+    }
+
+    /**
      * Resolves metadata key set for jobs/browse (and job meta) when {@code metaExclude} is used.
      * @see JobBrowseMetaKeysResolver
      */

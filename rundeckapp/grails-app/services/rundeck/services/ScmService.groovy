@@ -1605,14 +1605,40 @@ class ScmService {
         }
     }
 
-    public fixImportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs){
-        if(jobs && jobs.size()>0){
+    /**
+     * Reconcile node-local import state without performing remote SCM operations.
+     *
+     * @param project project name
+     * @param jobs authoritative current project jobs
+     */
+    void reconcileImportJobState(String project, List<ScheduledExecution> jobs) {
+        def plugin = getLoadedImportPluginFor project
+        if (plugin) {
+            plugin.reconcileJobState((jobs ?: [])*.extid.findAll { it } as Set<String>)
+        }
+    }
+
+    /**
+     * Perform the remote cluster fix for the given jobs.
+     *
+     * <p>This must not reconcile node-local import state. Callers such as the job show page,
+     * the diff page and job browse pass a subset of the project jobs, and reconciling against
+     * a subset would evict the import state of every other job in the project. Reconciliation
+     * belongs to the call sites that hold the complete, uncached job list: {@code ScmLoaderService}
+     * and {@code ScmController.apiProjectStatus}, both via {@link #reconcileImportJobState}.
+     *
+     * @param auth authorization context
+     * @param project project name
+     * @param jobs jobs to fix, may be a subset of the project jobs
+     */
+    void fixImportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs){
+        if (jobs) {
             def plugin = getLoadedImportPluginFor project
-            if(plugin) {
+            if (plugin) {
                 def context = scmOperationContext(auth, project)
                 def joblist = scmJobRefsForJobs(jobs)
                 def originalPaths = joblist.collectEntries{[it.id,getRenamedPathForJobId(it.project, it.id)]}
-                plugin?.clusterFixJobs(context, joblist, originalPaths)
+                plugin.clusterFixJobs(context, joblist, originalPaths)
             }
         }
     }
@@ -1646,9 +1672,10 @@ class ScmService {
     Map<String, Map> getJobsPluginMeta(String project, String type){
         try{
             List jobsPluginMeta = jobMetadataService.getJobsPluginMeta(project, type)
-            jobsPluginMeta.collectEntries{[it.key.replace("/" + type,""),it.pluginData]}
+            (jobsPluginMeta ?: []).collectEntries{[it.key.replace("/" + type,""),it.pluginData]}
         }catch(ObjectNotFoundException ignored){
             log.debug("No jobs plugin metadata found")
+            [:]
         }
     }
 

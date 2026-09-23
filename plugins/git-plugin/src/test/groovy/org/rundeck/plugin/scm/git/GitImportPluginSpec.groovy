@@ -19,6 +19,7 @@ package org.rundeck.plugin.scm.git
 import com.dtolabs.rundeck.core.storage.StorageTreeImpl
 import com.dtolabs.rundeck.plugins.scm.ImportResult
 import com.dtolabs.rundeck.plugins.scm.ImportSynchState
+import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
@@ -292,6 +293,124 @@ class GitImportPluginSpec extends Specification {
         ret
         ret.size()==1
         ret[0].jobId=='0001'
+    }
+
+    /**
+     * Verifies that callers hold the synchronized-map monitor while creating an iterable view.
+     */
+    def "get tracked items safely snapshots job state before iteration"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+        plugin.jobStateMap = new MonitorCheckedMap<String, Map>()
+        plugin.jobStateMap['0001'] = ['synch': 'DELETE_NEEDED', 'path': 'job/xy-0001.xml']
+
+        when:
+        def ret = plugin.getTrackedItemsForAction('import-jobs')
+
+        then:
+        ret*.jobId == ['0001']
+    }
+
+    /**
+     * Verifies that status calculation reuses one stable job-state value during loader updates.
+     */
+    def "get status safely reuses snapshot when live job state disappears"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'test')
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        })
+        plugin.jobStateMap = new DisappearingEntryMap<String, Map>()
+        plugin.jobStateMap['123'] = ['synch': ImportSynchState.CLEAN, 'path': 'job1-123.xml']
+        plugin.importTracker.trackedJobIds['job1-123.xml'] = '123'
+
+        when:
+        def status = plugin.getStatusInternal(Mock(ScmOperationContext), false)
+
+        then:
+        status.importNeeded == 0
+    }
+
+    def "job deletion removes cached state and tracking"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        Git git = GitExportPluginSpec.createGit(origindir)
+        git.close()
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'GitImportPluginSpec'
+        })
+        def job = Stub(JobScmReference) {
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getScmImportMetadata() >> [commitId: 'abc']
+        }
+        plugin.jobStateMap['123'] = [
+                synch: ImportSynchState.DELETE_NEEDED,
+                path: 'job1-123.xml'
+        ]
+        plugin.importTracker.trackJobAtPath(job, 'job1-123.xml')
+        JobChangeEvent event = Stub(JobChangeEvent) {
+            getEventType() >> JobChangeEvent.JobChangeEventType.DELETE
+            getOriginalJobReference() >> job
+        }
+
+        when:
+        plugin.jobChanged(event, job)
+
+        then:
+        !plugin.jobStateMap.containsKey('123')
+        plugin.importTracker.trackedPaths().empty
+        plugin.importTracker.trackedPath('123') == null
+    }
+
+    def "local reconciliation removes stale jobs and preserves current jobs"() {
+        given:
+        def plugin = new GitImportPlugin(Mock(Import), [])
+        def currentJob = Stub(JobScmReference) {
+            getId() >> 'current-job'
+            getScmImportMetadata() >> [commitId: 'current-commit']
+        }
+        def deletedJob = Stub(JobScmReference) {
+            getId() >> 'deleted-job'
+            getScmImportMetadata() >> [commitId: 'deleted-commit']
+        }
+        plugin.jobStateMap['current-job'] = [synch: ImportSynchState.CLEAN, path: 'current.xml']
+        plugin.jobStateMap['deleted-job'] = [synch: ImportSynchState.DELETE_NEEDED, path: 'deleted.xml']
+        plugin.importTracker.trackJobAtPath(currentJob, 'current.xml')
+        plugin.importTracker.trackJobAtPath(deletedJob, 'deleted.xml')
+
+        when:
+        plugin.reconcileJobState(['current-job'] as Set<String>)
+
+        then:
+        plugin.jobStateMap.keySet() == ['current-job'] as Set
+        plugin.importTracker.trackedPaths() == ['current.xml'] as Set
+        plugin.importTracker.trackedPath('current-job') == 'current.xml'
+        plugin.importTracker.trackedPath('deleted-job') == null
     }
 
     def "perform pull on clean state withouth npe"() {
@@ -725,6 +844,37 @@ class GitImportPluginSpec extends Specification {
 
         then:
         status != null
+    }
+
+    /**
+     * Test map that simulates a loader removing an entry between two live-map reads.
+     */
+    private static class DisappearingEntryMap<K, V> extends LinkedHashMap<K, V> {
+        private int readCount
+
+        @Override
+        V get(Object key) {
+            readCount++
+            if (readCount > 1) {
+                remove(key)
+                return null
+            }
+            super.get(key)
+        }
+    }
+
+    /**
+     * Test map that rejects iteration unless its monitor is held, matching the contract of
+     * {@link Collections#synchronizedMap(Map)}.
+     */
+    private static class MonitorCheckedMap<K, V> extends LinkedHashMap<K, V> {
+        @Override
+        Set<Map.Entry<K, V>> entrySet() {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('Iteration requires the map monitor')
+            }
+            super.entrySet()
+        }
     }
 
 }
