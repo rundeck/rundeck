@@ -288,17 +288,22 @@ class LogFileStorageService
 
 
     /**
-     * Guards the one-time start of the storage/retrieval consumers and the periodic scheduler.
+     * Fast-path flag: true once every consumer and scheduler has been started. The per-step flags below
+     * let a retry after a partial failure submit only what is still missing.
      */
     private final AtomicBoolean consumersStarted = new AtomicBoolean(false)
+    private boolean storageConsumerStarted = false
+    private boolean retrievalConsumerStarted = false
+    private boolean periodicDequeueScheduled = false
 
     /**
-     * Logs a WARN when no LogFileStorage plugin is configured at initialization; otherwise starts the
-     * consumers. A plugin configured later through a configuration change starts them via
-     * {@link #onAppConfigChanged(Set)}.
+     * Applies the executor concurrency limits and, when a LogFileStorage plugin is configured, starts the
+     * consumers; otherwise logs a WARN. A plugin configured later through a configuration change starts
+     * them via {@link #onAppConfigChanged(Set)}.
      */
     @Override
     void afterPropertiesSet() throws Exception {
+        applyExecutorConcurrencyLimits()
         if (!getConfiguredPluginName()) {
             log.warn(
                 "LogFileStorage plugin is not configured (${FILE_STORAGE_PLUGIN.key}); " +
@@ -306,13 +311,14 @@ class LogFileStorageService
             )
             return
         }
-        startConsumersIfConfigured()
+        startConsumers()
     }
 
     /**
-     * Starts the consumers when a configuration change makes the LogFileStorage plugin resolvable
-     * after initialization (for example a value saved only in DB-backed System Configuration).
-     * Never throws: the event bus dispatches asynchronously and the publisher must not be affected.
+     * Starts the consumers when a configuration change makes the LogFileStorage plugin resolvable after
+     * initialization (for example a value saved only in DB-backed System Configuration). Never throws:
+     * the event bus dispatches asynchronously and the publisher must not be affected. A failed or partial
+     * start is retried on the next configuration change.
      * @param keys configuration keys reported as changed
      */
     @Subscriber(AppEvents.APP_CONFIG_CHANGED)
@@ -320,38 +326,54 @@ class LogFileStorageService
         if (consumersStarted.get()) {
             return
         }
+        def pluginName = getConfiguredPluginName()
+        if (!pluginName) {
+            return
+        }
         try {
-            if (startConsumersIfConfigured()) {
+            if (startConsumers()) {
                 log.info(
                     "Log storage consumers started: ${FILE_STORAGE_PLUGIN.key} is now configured " +
-                    "(plugin: ${getConfiguredPluginName()})"
+                    "(plugin: ${pluginName})"
                 )
             }
-        } catch (Throwable t) {
-            log.error("Failed to start log storage consumers after a configuration change", t)
+        } catch (Exception e) {
+            log.error(
+                "Failed to start log storage consumers after a configuration change; " +
+                "the missing consumers will be retried on the next configuration change",
+                e
+            )
         }
     }
 
     /**
-     * Starts the log storage and retrieval consumers and, for the periodic resume strategy, the
-     * incomplete-request scheduler. Runs at most once per service lifetime and only when a
-     * LogFileStorage plugin name resolves.
-     * @return true only on the invocation that started the consumers
+     * Sets the executor concurrency limits from configuration, independently of the plugin: the retrieval
+     * executor also serves direct retrieval requests, so its limit must be fixed before first use.
      */
-    boolean startConsumersIfConfigured() {
-        if (!getConfiguredPluginName()) {
-            return false
+    private void applyExecutorConcurrencyLimits() {
+        if (configurationService == null) {
+            return
         }
-        if (!consumersStarted.compareAndSet(false, true)) {
-            return false
+        if (logFileStorageTaskExecutor != null) {
+            logFileStorageTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(STORAGE_CONCURRENCY_LIMIT, 5)
+            log.debug("logFileStorageTaskExecutor concurrency: ${logFileStorageTaskExecutor.concurrencyLimit}")
         }
+        if (logFileTaskExecutor != null) {
+            logFileTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(RETRIEVAL_CONCURRENCY_LIMIT, 5)
+            log.debug("logFileTaskExecutor concurrency: ${logFileTaskExecutor.concurrencyLimit}")
+        }
+    }
 
-        logFileStorageTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(STORAGE_CONCURRENCY_LIMIT, 5)
-        logFileTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(RETRIEVAL_CONCURRENCY_LIMIT, 5)
-
-        log.debug("logFileStorageTaskExecutor concurrency: ${logFileStorageTaskExecutor.concurrencyLimit}")
-        log.debug("logFileTaskExecutor concurrency: ${logFileTaskExecutor.concurrencyLimit}")
-        logFileStorageTaskExecutor?.execute(new TaskRunner<Map>(storageRequests, { Map task ->
+    /**
+     * Starts whatever is still missing: the storage consumer, the retrieval consumer and, for the periodic
+     * resume strategy, the incomplete-request scheduler. Each step is submitted at most once per service
+     * lifetime, so a retry after a partial failure never duplicates a running consumer.
+     * @return true when this invocation started at least one step
+     */
+    private synchronized boolean startConsumers() {
+        boolean startedSomething = false
+        if (!storageConsumerStarted) {
+            logFileStorageTaskExecutor?.execute(new TaskRunner<Map>(storageRequests, { Map task ->
 
             if (!task.partial) {
                 storageQueueCounter?.dec()
@@ -369,8 +391,15 @@ class LogFileStorageService
                 }
             }
         }))
-        logFileTaskExecutor?.execute(new TaskRunner<Map>(retrievalRequests, this.&runRetrievalRequestTask))
-        if (getConfiguredResumeStrategy() == 'periodic') {
+            storageConsumerStarted = true
+            startedSomething = true
+        }
+        if (!retrievalConsumerStarted) {
+            logFileTaskExecutor?.execute(new TaskRunner<Map>(retrievalRequests, this.&runRetrievalRequestTask))
+            retrievalConsumerStarted = true
+            startedSomething = true
+        }
+        if (!periodicDequeueScheduled && getConfiguredResumeStrategy() == 'periodic') {
             long delay = getConfiguredStorageRetryDelay() * 1000
             logFileStorageTaskScheduler.scheduleAtFixedRate(
                 {
@@ -380,8 +409,11 @@ class LogFileStorageService
                         log.error("Error dequeueing incomplete log storage requests", t)
                     }
                 }, new Date(System.currentTimeMillis() + delay), delay)
+            periodicDequeueScheduled = true
+            startedSomething = true
         }
-        return true
+        consumersStarted.set(true)
+        return startedSomething
     }
 
     static SystemConfig.SystemConfigBuilder configDefaults(SystemConfig.SystemConfigBuilder builder) {
