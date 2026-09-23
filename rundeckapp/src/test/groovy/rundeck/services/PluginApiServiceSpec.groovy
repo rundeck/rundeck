@@ -236,6 +236,34 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             result.outputMetadata == null
     }
 
+    def "pluginPropertiesAsMap excludes output-only properties from GUI rendering"() {
+        given:
+            service.uiPluginService = Mock(UiPluginService)
+            service.metaClass.getLocale = { -> Locale.ENGLISH }
+            def configurable = PropertyBuilder.builder()
+                                               .name("environmentName")
+                                               .title("Environment Name")
+                                               .type(Property.Type.String)
+                                               .build()
+            def outputOnly = PropertyBuilder.builder()
+                                             .name("outputResult")
+                                             .title("outputResult")
+                                             .type(Property.Type.String)
+                                             .outputMetadata([
+                                                 new PluginOutputMetadata("data", "outputResult", "Computed result")
+                                             ])
+                                             .outputOnly(true)
+                                             .build()
+
+        when:
+            def result = service.pluginPropertiesAsMap('svc', 'provider', [configurable, outputOnly])
+
+        then:
+            service.uiPluginService.getPluginMessage(*_) >> { args -> args[3] }
+            result.size() == 1
+            result[0].name == 'environmentName'
+    }
+
     def "plugin Property Map sanitizes static html or markdown content"() {
         given:
             mockCodec(SanitizedHTMLCodec)

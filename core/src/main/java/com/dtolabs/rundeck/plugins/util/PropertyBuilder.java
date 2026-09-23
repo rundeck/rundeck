@@ -43,6 +43,7 @@ public class PropertyBuilder {
     private boolean blankIfUnexpandabled = true;
     private String unexpandableBehaviorFrom;
     private List<PluginOutputMetadata> outputMetadata;
+    private boolean outputOnly;
 
     private PropertyBuilder() {
 
@@ -74,6 +75,7 @@ public class PropertyBuilder {
             .blankIfUnexpandable(orig.isBlankIfUnexpandable())
             .unexpandableBehaviorFrom(orig.getUnexpandableBehaviorFrom())
             .outputMetadata(orig.getOutputMetadata())
+            .outputOnly(orig.isOutputOnly())
             ;
     }
 
@@ -265,6 +267,18 @@ public class PropertyBuilder {
     }
 
     /**
+     * Mark this property as output-only: built from a field carrying only {@code @PluginOutput} (no
+     * {@code @PluginProperty}), so it must not be rendered as a job/step configuration input.
+     *
+     * @param outputOnly true if the property is output-only
+     * @return this builder
+     */
+    public PropertyBuilder outputOnly(final boolean outputOnly) {
+        this.outputOnly = outputOnly;
+        return this;
+    }
+
+    /**
      * Set the default value
      * @param value value
      *
@@ -413,23 +427,30 @@ public class PropertyBuilder {
                 blankIfUnexpandabled,
                 unexpandableBehaviorFrom
         );
-        if (outputMetadata != null && !outputMetadata.isEmpty()) {
-            return new OutputMetadataProperty(built, outputMetadata);
+        if ((outputMetadata != null && !outputMetadata.isEmpty()) || outputOnly) {
+            return new OutputMetadataProperty(built, outputMetadata, outputOnly);
         }
         return built;
     }
 
     /**
-     * Decorates a built {@link Property} with output metadata, without requiring changes to every
-     * concrete {@link Property} implementation returned by {@link PropertyUtil#forType}.
+     * Decorates a built {@link Property} with output metadata and/or the output-only flag, without
+     * requiring changes to every concrete {@link Property} implementation returned by
+     * {@link PropertyUtil#forType}.
      */
     private static final class OutputMetadataProperty implements Property {
         private final Property delegate;
         private final List<PluginOutputMetadata> outputMetadata;
+        private final boolean outputOnly;
 
-        OutputMetadataProperty(final Property delegate, final List<PluginOutputMetadata> outputMetadata) {
+        OutputMetadataProperty(
+                final Property delegate,
+                final List<PluginOutputMetadata> outputMetadata,
+                final boolean outputOnly
+        ) {
             this.delegate = delegate;
             this.outputMetadata = outputMetadata;
+            this.outputOnly = outputOnly;
         }
 
         @Override
@@ -500,6 +521,11 @@ public class PropertyBuilder {
         @Override
         public List<PluginOutputMetadata> getOutputMetadata() {
             return outputMetadata;
+        }
+
+        @Override
+        public boolean isOutputOnly() {
+            return outputOnly;
         }
 
         @Override

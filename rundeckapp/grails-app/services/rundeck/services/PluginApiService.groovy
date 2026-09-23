@@ -433,9 +433,17 @@ class PluginApiService {
         return true
     }
 
+    /**
+     * @param properties the plugin's full property list, as used internally for output capture and
+     * condition-key resolution
+     * @return only the properties that should be rendered as job/step configuration inputs: those
+     * with required features present, excluding any {@link Property#isOutputOnly()} property (a
+     * computed, backend-only value built from a field carrying only {@code @PluginOutput}, never
+     * job-configurable)
+     */
     List<Map> pluginPropertiesAsMap(String service, String pluginName, List<Property> properties) {
         properties.findAll {
-            hasRequiredFeatures(it)
+            hasRequiredFeatures(it) && !it.outputOnly
         }.collect { Property prop ->
             pluginPropertyMap(service, pluginName, prop)
         }
