@@ -193,15 +193,73 @@ public class PluginAdapterImpl
     public void buildFieldProperties(final Class<?> aClass, final DescriptionBuilder builder) {
         for (final Field field : collectClassFields(aClass)) {
             final PluginProperty annotation = field.getAnnotation(PluginProperty.class);
-            if (null == annotation) {
+            final Property pbuild;
+            if (null != annotation) {
+                pbuild = propertyFromField(field, annotation);
+            } else if (field.getAnnotationsByType(PluginOutput.class).length > 0) {
+                //field has no @PluginProperty, but is marked @PluginOutput: a computed,
+                //non-configurable value (e.g. an ID created during step execution) rather than a
+                //job-configurable input. Still described, so it can be resolved by conditional-logic
+                //label references and captured by StepPluginAdapter.
+                pbuild = propertyFromOutputOnlyField(field);
+            } else {
                 continue;
             }
-            final Property pbuild = propertyFromField(field, annotation);
             if (null == pbuild) {
                 continue;
             }
             builder.property(pbuild);
         }
+    }
+
+    /**
+     * Build a Property for a field carrying only {@code @PluginOutput} (no {@code @PluginProperty}):
+     * a value computed during step execution and exposed for conditional-logic reference, rather
+     * than a job-configurable input. The field's own name is used as the property's name and title,
+     * since there is no {@code @PluginProperty} to supply an override.
+     *
+     * @param field the annotated field
+     * @return the built Property, or null if the field's type isn't a supported property type
+     */
+    private Property propertyFromOutputOnlyField(final Field field) {
+        final Property.Type type = propertyTypeFromFieldType(field.getType());
+        if (null == type) {
+            return null;
+        }
+        final PropertyBuilder pbuild = PropertyBuilder.builder();
+        pbuild.type(type);
+
+        final String name = field.getName();
+        pbuild.name(name);
+        pbuild.title(name);
+
+        final List<PluginOutputMetadata> outputMetadata = outputMetadataForField(field);
+        pbuild.outputMetadata(outputMetadata);
+        if (notBlank(outputMetadata.get(0).getDescription())) {
+            pbuild.description(outputMetadata.get(0).getDescription());
+        }
+
+        return pbuild.build();
+    }
+
+    /**
+     * Read the {@code @PluginOutput} metadata declared on a field, if any.
+     *
+     * @param field the field to inspect
+     * @return the field's output metadata entries, or null if the field carries no {@code @PluginOutput}
+     */
+    private List<PluginOutputMetadata> outputMetadataForField(final Field field) {
+        PluginOutput[] pluginOutputs = field.getAnnotationsByType(PluginOutput.class);
+        if (pluginOutputs.length == 0) {
+            return null;
+        }
+        List<PluginOutputMetadata> outputMetadata = new ArrayList<>();
+        for (PluginOutput pluginOutput : pluginOutputs) {
+            outputMetadata.add(
+                    new PluginOutputMetadata(pluginOutput.group(), pluginOutput.name(), pluginOutput.description())
+            );
+        }
+        return outputMetadata;
     }
 
     @Override
@@ -306,14 +364,8 @@ public class PluginAdapterImpl
             pbuild.renderingOption(renderingOption.key(), renderingOption.value());
         }
 
-        PluginOutput[] pluginOutputs = field.getAnnotationsByType(PluginOutput.class);
-        if (pluginOutputs.length > 0) {
-            List<PluginOutputMetadata> outputMetadata = new ArrayList<>();
-            for (PluginOutput pluginOutput : pluginOutputs) {
-                outputMetadata.add(
-                        new PluginOutputMetadata(pluginOutput.group(), pluginOutput.name(), pluginOutput.description())
-                );
-            }
+        List<PluginOutputMetadata> outputMetadata = outputMetadataForField(field);
+        if (outputMetadata != null) {
             pbuild.outputMetadata(outputMetadata);
         }
 
