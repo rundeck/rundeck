@@ -201,9 +201,7 @@ class PluginTagLib {
                 out << '<div class="customattributes"></div>'
                 fields.each{field->
                     out << '<span class="configpair">'
-                    // A truthy/elvis check alone lets a whitespace-only label ("  ") through
-                    // instead of falling back to the key.
-                    def fieldLabel = field.label?.trim() ? field.label : field.key
+                    def fieldLabel = field.label?.trim() ?: field.key
                     out << '<span title="">'+fieldLabel.encodeAsSanitizedHTML()+': </span>'
                     out << '<span class="text-success">'+field.value.encodeAsSanitizedHTML()+'</span>'
                     out << '</span>'

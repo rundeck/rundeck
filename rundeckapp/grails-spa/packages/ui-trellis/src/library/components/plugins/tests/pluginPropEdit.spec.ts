@@ -167,11 +167,6 @@ describe("pluginPropEdit", () => {
   );
 
   it("renders the description above the DYNAMIC_FORM widget, once, not below it", async () => {
-    // DYNAMIC_FORM properties (e.g. PagerDuty's "Custom Fields") render no
-    // label of their own, so the property's description was the only
-    // context explaining the field - but it used to render after the whole
-    // widget (list of fields + "Add Field" button), read last instead of
-    // first. It must now render before the widget, and only once.
     const wrapper = await createWrapper({
       modelValue: "",
       prop: {
@@ -195,11 +190,6 @@ describe("pluginPropEdit", () => {
       "Any custom fields to be included in the change event",
     );
     expect(widget.exists()).toBe(true);
-    // Copilot review on RUN-4980: DynamicFormPluginProp derives its modal's
-    // control/help ids from this idPrefix so that two rendered instances
-    // (even ones sharing a property name) don't collide - it must be
-    // derived from rkey/pindex, not just pass prop.name through again.
-    expect(widget.props("idPrefix")).toBe("test_prop_0_");
     expect(
       descriptions[0].element.compareDocumentPosition(widget.element) &
         Node.DOCUMENT_POSITION_FOLLOWING,

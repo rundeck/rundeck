@@ -451,12 +451,7 @@ describe("PluginPropView", () => {
       expect(pairs[1].text()).toContain("8080");
     });
 
-    it("falls back to the key when a stored custom field has no label — Copilot review on RUN-4980", async () => {
-      // DynamicFormPluginProp.vue only normalizes a blank label to the key
-      // when its own editor mounts. Fields saved before that normalization
-      // existed (or written by something other than the editor) can still
-      // reach this read-only renderer with an absent/blank label, which
-      // bypasses the editor entirely.
+    it("falls back to the key when a stored custom field has no label", async () => {
       const wrapper = await createWrapper({
         props: {
           prop: {
@@ -475,9 +470,7 @@ describe("PluginPropView", () => {
       expect(pairs[0].text()).toContain("legacy_field:");
     });
 
-    it("falls back to the key when a stored custom field's label is whitespace-only — Copilot review on RUN-4980", async () => {
-      // A plain truthy/`||` check treats "  " as a real label, so it never
-      // falls back to the key even though the label is effectively blank.
+    it("falls back to the key when a stored custom field's label is whitespace-only", async () => {
       const wrapper = await createWrapper({
         props: {
           prop: {

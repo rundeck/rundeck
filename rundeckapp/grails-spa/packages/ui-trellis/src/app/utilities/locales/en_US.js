@@ -75,11 +75,6 @@ const messages = {
   message_fieldKeyAppendedDescription: "{0} (Field key: {1})",
   message_fieldFilter: "Type to filter a field",
   message_empty: "Can be empty",
-  // A dedicated key rather than reusing message_empty: other locale
-  // catalogues (fr_FR, es_419, ja_JP, zh_CN, pt_BR) already translate
-  // message_empty as "Can be empty" and take priority over the en_US
-  // fallback, so repurposing it here would hide this guidance from
-  // non-English users.
   message_fieldDescriptionHelp:
     "Optional. Describes this field for your own reference; if left blank, one is generated automatically from the Field Key.",
   message_cancel: "Cancel",

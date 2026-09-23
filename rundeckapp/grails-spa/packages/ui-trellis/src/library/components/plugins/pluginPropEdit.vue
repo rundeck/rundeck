@@ -60,9 +60,7 @@
         </label>
       </div>
     </template>
-    <template
-      v-else-if="prop.options && prop.options['displayType'] === 'DYNAMIC_FORM'"
-    >
+    <template v-else-if="isDynamicForm">
       <div v-if="prop.desc" class="col-sm-10 col-sm-offset-2 help-block">
         <plugin-details
           :description="translatedDesc(prop)"
@@ -83,7 +81,6 @@
         :has-options="hasAllowedValues()"
         :options="parseAllowedValues()"
         :name="prop.name"
-        :id-prefix="`${rkey}prop_${pindex}_`"
       ></dynamic-form-plugin-prop>
     </template>
     <template v-else>
@@ -406,10 +403,7 @@
     </template>
 
     <div
-      v-if="
-        prop.desc &&
-        !(prop.options && prop.options['displayType'] === 'DYNAMIC_FORM')
-      "
+      v-if="prop.desc && !isDynamicForm"
       class="col-sm-10 col-sm-offset-2 help-block"
     >
       <plugin-details
@@ -591,6 +585,9 @@ export default defineComponent({
     },
     isAutoCompleteField(): boolean {
       return isAutoCompleteField(this.stepType);
+    },
+    isDynamicForm(): boolean {
+      return this.prop.options?.["displayType"] === "DYNAMIC_FORM";
     },
     inputTypeContextVariables(): any {
       if (!this.isAutoCompleteField) return [];

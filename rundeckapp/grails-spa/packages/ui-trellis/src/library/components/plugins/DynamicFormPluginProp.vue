@@ -10,7 +10,7 @@
         data-testid="field-item"
       >
         <label class="col-sm-2 control-label input-sm">{{
-          field.label || field.key
+          field.label?.trim() || field.key
         }}</label>
         <div class="col-sm-9">
           <input
@@ -26,8 +26,8 @@
           <span
             class="btn btn-xs btn-default"
             :title="$t('message_delete')"
-            @click="removeField(field)"
             data-testid="remove-field-button"
+            @click="removeField(field)"
           >
             <i class="glyphicon glyphicon-remove"></i
           ></span>
@@ -42,8 +42,8 @@
 
     <btn
       type="primary"
-      @click="openNewField()"
       data-testid="add-field-button"
+      @click="openNewField()"
       >{{ $t("message_addField") }}</btn
     >
 
@@ -63,16 +63,16 @@
       <div class="row" style="padding-left: 30px !important">
         <alert
           v-if="duplicate"
+          ref="duplicateWarningRef"
           type="warning"
           data-testid="duplicate-warning"
-          ref="duplicateWarningRef"
           ><b>Warning!</b> {{ $t("message_duplicated") }}.</alert
         >
         <alert
           v-if="invalidKey"
+          ref="invalidKeyWarningRef"
           type="warning"
           data-testid="invalid-key-warning"
-          ref="invalidKeyWarningRef"
           ><b>Warning!</b> {{ $t("message_fieldKeyRequired") }}.</alert
         >
 
@@ -100,23 +100,20 @@
             </div>
 
             <div :class="['form-data']">
-              <label
-                class="col-md-4"
-                :for="`${fieldIdPrefix}-description-input`"
-              >
+              <label class="col-md-4" :for="`${uid}-description-input`">
                 {{ $t("message_description") }}
               </label>
               <div class="col-md-8">
                 <input
-                  :id="`${fieldIdPrefix}-description-input`"
+                  :id="`${uid}-description-input`"
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
-                  :aria-describedby="`${fieldIdPrefix}-description-help`"
+                  :aria-describedby="`${uid}-description-help`"
                   data-testid="field-description-input"
                 />
                 <div
-                  :id="`${fieldIdPrefix}-description-help`"
+                  :id="`${uid}-description-help`"
                   class="help-block"
                   data-testid="new-field-description-help"
                 >
@@ -128,22 +125,21 @@
 
           <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
-              <label class="col-md-4" :for="`${fieldIdPrefix}-key-input`">{{
+              <label class="col-md-4" :for="`${uid}-key-input`">{{
                 $t("message_fieldKey")
               }}</label>
               <div class="col-md-8">
                 <input
-                  :id="`${fieldIdPrefix}-key-input`"
+                  :id="`${uid}-key-input`"
                   v-model="newField"
                   type="text"
                   :class="['form-control']"
                   required
-                  aria-required="true"
-                  :aria-describedby="`${fieldIdPrefix}-key-help`"
+                  :aria-describedby="`${uid}-key-help`"
                   data-testid="field-key-input"
                 />
                 <div
-                  :id="`${fieldIdPrefix}-key-help`"
+                  :id="`${uid}-key-help`"
                   class="help-block"
                   data-testid="field-key-help"
                 >
@@ -152,20 +148,20 @@
               </div>
             </div>
             <div :class="['form-group']">
-              <label class="col-md-4" :for="`${fieldIdPrefix}-label-input`">{{
+              <label class="col-md-4" :for="`${uid}-label-input`">{{
                 $t("message_fieldLabel")
               }}</label>
               <div class="col-md-8">
                 <input
-                  :id="`${fieldIdPrefix}-label-input`"
+                  :id="`${uid}-label-input`"
                   v-model="newLabelField"
                   type="text"
                   :class="['form-control']"
-                  :aria-describedby="`${fieldIdPrefix}-label-help`"
+                  :aria-describedby="`${uid}-label-help`"
                   data-testid="field-label-input"
                 />
                 <div
-                  :id="`${fieldIdPrefix}-label-help`"
+                  :id="`${uid}-label-help`"
                   class="help-block"
                   data-testid="field-label-help"
                 >
@@ -175,23 +171,20 @@
             </div>
 
             <div :class="['form-group']">
-              <label
-                class="col-md-4"
-                :for="`${fieldIdPrefix}-description-input`"
-              >
+              <label class="col-md-4" :for="`${uid}-description-input`">
                 {{ $t("message_description") }}
               </label>
               <div class="col-md-8">
                 <input
-                  :id="`${fieldIdPrefix}-description-input`"
+                  :id="`${uid}-description-input`"
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
-                  :aria-describedby="`${fieldIdPrefix}-description-help`"
+                  :aria-describedby="`${uid}-description-help`"
                   data-testid="field-description-input"
                 />
                 <div
-                  :id="`${fieldIdPrefix}-description-help`"
+                  :id="`${uid}-description-help`"
                   class="help-block"
                   data-testid="new-field-description-help"
                 >
@@ -208,8 +201,8 @@
           <button
             type="button"
             class="btn btn-default reset_page_confirm"
-            @click="modalAddField = false"
             data-testid="cancel-button"
+            @click="modalAddField = false"
           >
             {{ $t("message_cancel") }}
           </button>
@@ -217,8 +210,8 @@
           <button
             type="button"
             class="btn btn-cta reset_page_confirm"
-            @click="addField()"
             data-testid="confirm-add-field-button"
+            @click="addField()"
           >
             {{ $t("message_add") }}
           </button>
@@ -229,7 +222,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, useId } from "vue";
 import { Btn, Alert, Modal } from "uiv";
 import PtSelect from "../primeVue/PtSelect/PtSelect.vue";
 
@@ -265,19 +258,11 @@ export default defineComponent({
       type: String,
       required: true,
     },
-    // An instance-unique prefix for the modal's control/help ids, e.g.
-    // pluginPropEdit.vue's `${rkey}prop_${pindex}_`. `name` alone isn't
-    // guaranteed unique per rendered widget - two plugin configurations
-    // can share a property name, or names like "foo.bar" and "foo-bar"
-    // collide once sanitized - so callers that can render more than one
-    // instance on a page should pass this explicitly.
-    idPrefix: {
-      type: String,
-      required: false,
-      default: "",
-    },
   },
   emits: ["update:modelValue"],
+  setup() {
+    return { uid: useId() };
+  },
   data() {
     return {
       customFields: [] as CustomField[],
@@ -292,26 +277,9 @@ export default defineComponent({
       selectedField: { value: "", label: "" },
     };
   },
-  computed: {
-    // A page can render more than one DynamicFormPluginProp (one per
-    // plugin property), so the modal's control/help ids must be unique
-    // per instance rather than hard-coded - otherwise every instance's
-    // label/aria-describedby resolves to whichever instance rendered
-    // first. Prefer the caller-supplied idPrefix (already unique per
-    // rendered widget); fall back to a sanitized name for standalone
-    // usage (e.g. the dynamic-form demo page) where only one instance
-    // is ever on the page at once.
-    fieldIdPrefix(): string {
-      const prefix = this.idPrefix || this.name.replace(/[^a-zA-Z0-9_-]/g, "-");
-      return `dynamic-form-${prefix}`;
-    },
-  },
   watch: {
     fields(newFields: string) {
-      // Keep local state in sync if the prop changes after mount (e.g. the
-      // parent round-trips the value through its own v-model chain). Skip
-      // when the incoming value already matches what we just emitted
-      // ourselves, to avoid fighting with in-flight edits.
+      // Skip syncing a value we just emitted ourselves, to avoid fighting in-flight edits.
       if (newFields === JSON.stringify(this.customFields)) {
         return;
       }
@@ -344,39 +312,21 @@ export default defineComponent({
   methods: {
     syncFieldsFromProp(fields: string) {
       if (fields == null || fields === "") {
-        // Clearing the prop must clear the list too, otherwise the previous
-        // fields stay on screen after the parent resets the value.
         this.customFields = [];
         return;
       }
       const customFieldsObject = JSON.parse(fields);
       if (customFieldsObject != null) {
-        let normalizedLabel = false;
-        const parsedFields = Object.keys(customFieldsObject).map((key: any) => {
+        this.customFields = Object.keys(customFieldsObject).map((key: any) => {
           const value = customFieldsObject[key];
           if (value.desc == null) {
             value.desc = this.$t("message_fieldKeyDescription", [value.key]);
           }
-          // Fields saved by the previous editor (or synced in from a parent
-          // that hasn't picked up the fallback yet) can carry a blank label.
-          // pluginPropView.vue and PluginTagLib.groovy render the stored
-          // label as-is, so normalize it here too, not just on creation.
-          if (!value.label || value.label.trim() === "") {
-            value.label = value.key;
-            normalizedLabel = true;
-          }
           return value;
         });
-        this.customFields = parsedFields;
-        if (normalizedLabel) {
-          this.refreshPlugin();
-        }
       }
     },
     openNewField() {
-      // Clear any validation warning left over from a previous, cancelled
-      // attempt - otherwise reopening the modal immediately shows it again
-      // even though this is a fresh attempt.
       this.duplicate = false;
       this.invalidKey = false;
       this.modalAddField = true;
@@ -386,34 +336,34 @@ export default defineComponent({
       this.duplicate = false;
       this.invalidKey = false;
 
-      const key = this.useOptions ? this.selectedField?.value : this.newField;
-      if (!key || key.trim() === "") {
+      const key = (
+        this.useOptions ? this.selectedField?.value : this.newField
+      )?.trim();
+      if (!key) {
         this.invalidKey = true;
         return;
       }
 
       if (this.useOptions) {
-        if (this.selectedField !== null) {
-          const newField = this.selectedField;
+        const newField = this.selectedField;
 
-          let description = this.newFieldDescription;
-          if (description == "") {
-            description = this.$t("message_fieldKeyOnlyDescription", [
-              newField.value,
-            ]);
-          } else {
-            description = this.$t("message_fieldKeyAppendedDescription", [
-              description,
-              newField.value,
-            ]);
-          }
-
-          field = {
-            key: newField.value,
-            label: newField.label,
-            desc: description,
-          };
+        let description = this.newFieldDescription;
+        if (description == "") {
+          description = this.$t("message_fieldKeyOnlyDescription", [
+            newField.value,
+          ]);
+        } else {
+          description = this.$t("message_fieldKeyAppendedDescription", [
+            description,
+            newField.value,
+          ]);
         }
+
+        field = {
+          key: newField.value,
+          label: newField.label,
+          desc: description,
+        };
       } else {
         let description = this.newFieldDescription;
         if (description == "") {
@@ -428,15 +378,9 @@ export default defineComponent({
         }
 
         field = {
-          key: this.newField,
-          // message_fieldLabelHelp promises the key as the fallback label,
-          // so normalize it here rather than only at display time -
-          // pluginPropView.vue and PluginTagLib.groovy render the stored
-          // label directly and have no fallback of their own.
-          label:
-            this.newLabelField.trim() !== ""
-              ? this.newLabelField
-              : this.newField,
+          key,
+          // Falls back to the key, per message_fieldLabelHelp.
+          label: this.newLabelField.trim() !== "" ? this.newLabelField : key,
           value: "",
           desc: description,
         };

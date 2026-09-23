@@ -1,4 +1,5 @@
 import { mount, flushPromises, VueWrapper } from "@vue/test-utils";
+import { defineComponent } from "vue";
 import DynamicFormPluginProp from "../DynamicFormPluginProp.vue";
 import { Btn, Modal, Alert } from "uiv";
 import PtSelect from "../../primeVue/PtSelect/PtSelect.vue";
@@ -140,16 +141,12 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(updatedFieldValue).toBe("Updated Value");
   });
 
-  it("emits the updated value on every keystroke, without waiting for blur", async () => {
-    // Regression test: the field value used to be synced to the parent
-    // (and therefore to the saved job/step config) only on the input's
-    // 'change' event, which fires on blur. Typing a value and saving
-    // without first clicking/tabbing away silently dropped it. The value
-    // must now be emitted on 'input' directly.
+  it("emits the updated value on 'input', without waiting for 'change'/blur", async () => {
     const wrapper = createWrapper();
     await flushPromises();
     const inputField = wrapper.find('[data-testid="field-input-0"]');
-    await inputField.setValue("Updated Value");
+    (inputField.element as HTMLInputElement).value = "Updated Value";
+    await inputField.trigger("input");
     await flushPromises();
     const emitted = wrapper.emitted("update:modelValue");
     expect(emitted).toBeTruthy();
@@ -177,10 +174,6 @@ describe("DynamicFormPluginProp.vue", () => {
   });
 
   it("associates the Field Key and Field Label inputs with their labels and help text, and marks Key required", async () => {
-    // Copilot review on RUN-4980: the labels had no `for`, the inputs no
-    // `id`/`aria-describedby`, and the required Key exposed no required
-    // state - so screen readers announced neither the field name nor the
-    // guidance on focus.
     const wrapper = createWrapper({ hasOptions: "false" });
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
@@ -192,7 +185,6 @@ describe("DynamicFormPluginProp.vue", () => {
       keyHelp.attributes("id"),
     );
     expect(keyInput.attributes("required")).toBeDefined();
-    expect(keyInput.attributes("aria-required")).toBe("true");
 
     const labelInput = wrapper.find('[data-testid="field-label-input"]');
     const labelHelp = wrapper.find('[data-testid="field-label-help"]');
@@ -226,53 +218,44 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(descriptionLabelEl).toBeTruthy();
   });
 
-  it("falls back to a sanitized name for the modal's control/help ids when no idPrefix is given", async () => {
-    // Standalone usage (e.g. the dynamic-form demo page) never passes
-    // idPrefix and only ever renders one instance, so falling back to
-    // name is fine there.
-    const wrapperA = createWrapper({ hasOptions: "false", name: "fieldA" });
-    const wrapperB = createWrapper({ hasOptions: "false", name: "fieldB" });
-    await wrapperA.find('[data-testid="add-field-button"]').trigger("click");
-    await wrapperB.find('[data-testid="add-field-button"]').trigger("click");
+  it("gives each rendered instance its own unique control/help ids", async () => {
+    // useId() scopes uniqueness to the enclosing app instance, so both
+    // instances must be mounted in the same app to exercise that.
+    const TwoInstances = defineComponent({
+      components: { DynamicFormPluginProp },
+      template: `
+        <DynamicFormPluginProp
+          v-for="n in [0, 1]"
+          :key="n"
+          fields="{}"
+          has-options="false"
+          name="sameName"
+        />
+      `,
+    });
+    const wrapper = mount(TwoInstances, {
+      global: {
+        mocks: { $t: translate },
+        components: { Btn, Modal, Alert, PtSelect },
+        stubs: {
+          Modal: {
+            template: `<div data-testid="modal-title"><slot></slot><slot name="footer"></slot>Add Field</div>`,
+          },
+        },
+      },
+      attachTo: document.body,
+    });
+    const [instanceA, instanceB] = wrapper.findAllComponents(
+      DynamicFormPluginProp,
+    );
+    await instanceA.find('[data-testid="add-field-button"]').trigger("click");
+    await instanceB.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
 
-    const idA = wrapperA
+    const idA = instanceA
       .find('[data-testid="field-key-input"]')
       .attributes("id");
-    const idB = wrapperB
-      .find('[data-testid="field-key-input"]')
-      .attributes("id");
-
-    expect(idA).toBeTruthy();
-    expect(idB).toBeTruthy();
-    expect(idA).not.toBe(idB);
-  });
-
-  it("uses idPrefix (not name) to scope control/help ids, so two instances sharing a property name don't collide", async () => {
-    // Copilot review on RUN-4980: `name` alone isn't guaranteed unique per
-    // rendered widget - pluginConfig.vue can render the same property name
-    // more than once (e.g. within different groups), and the modal is
-    // appended to <body>, so a collision lets one instance's label/
-    // aria-describedby resolve to another instance's control. The caller
-    // (pluginPropEdit.vue) must pass its own rkey/pindex-derived idPrefix.
-    const wrapperA = createWrapper({
-      hasOptions: "false",
-      name: "sameName",
-      idPrefix: "g_0_r_abc_prop_0_",
-    });
-    const wrapperB = createWrapper({
-      hasOptions: "false",
-      name: "sameName",
-      idPrefix: "g_1_r_abc_prop_0_",
-    });
-    await wrapperA.find('[data-testid="add-field-button"]').trigger("click");
-    await wrapperB.find('[data-testid="add-field-button"]').trigger("click");
-    await flushPromises();
-
-    const idA = wrapperA
-      .find('[data-testid="field-key-input"]')
-      .attributes("id");
-    const idB = wrapperB
+    const idB = instanceB
       .find('[data-testid="field-key-input"]')
       .attributes("id");
 
@@ -282,9 +265,6 @@ describe("DynamicFormPluginProp.vue", () => {
   });
 
   it("blocks adding a field with a blank Key on the free-text path and shows a validation warning", async () => {
-    // Copilot review on RUN-4980: the help text says the Field Key is
-    // required, but confirming with a blank key previously still added an
-    // unusable, empty-key entry. It must now be rejected instead.
     const wrapper = createWrapper({ hasOptions: "false" });
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
@@ -324,9 +304,6 @@ describe("DynamicFormPluginProp.vue", () => {
   });
 
   it("clears a stale invalid-key warning when the modal is reopened", async () => {
-    // Copilot review on RUN-4980: openNewField() didn't reset invalidKey,
-    // so after a blank-key submission was cancelled, reopening the modal
-    // for a new attempt immediately showed the previous warning again.
     const wrapper = createWrapper({ hasOptions: "false" });
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
@@ -349,10 +326,6 @@ describe("DynamicFormPluginProp.vue", () => {
   });
 
   it("shows help text for the Description input using its own key, not the reused message_empty", async () => {
-    // Copilot review on RUN-4980: this help text used to reuse message_empty,
-    // but other locale catalogues already translate that key as just "Can be
-    // empty" and take priority over the en_US fallback, hiding the new
-    // guidance from non-English users. It now has a dedicated key instead.
     const wrapper = createWrapper({ hasOptions: "false" });
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
@@ -363,11 +336,6 @@ describe("DynamicFormPluginProp.vue", () => {
   });
 
   it("falls back the stored label to the Key when the Field Label is left blank on the free-text path", async () => {
-    // Copilot review on RUN-4980: message_fieldLabelHelp promises the Field
-    // Key as the label fallback, but the field used to be serialized with a
-    // literal blank label. pluginPropView.vue and PluginTagLib.groovy render
-    // the stored label as-is (no fallback of their own), so the emitted
-    // JSON must carry the fallback, not just this editor's own display.
     const wrapper = createWrapper({ hasOptions: "false" });
     await wrapper.find('[data-testid="add-field-button"]').trigger("click");
     await flushPromises();
@@ -385,12 +353,7 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(lastEmittedFields[1].label).toBe("env_name");
   });
 
-  it("normalizes a blank label on an existing (legacy) field to its Key on load, and re-emits it", async () => {
-    // Copilot review on RUN-4980: the fallback above only covered newly
-    // created free-text fields. Fields already saved with `label: ""` by
-    // the previous editor were left untouched by syncFieldsFromProp(), so
-    // downstream renderers (pluginPropView.vue, PluginTagLib.groovy) would
-    // still show them with no label.
+  it("renders a stored field with a blank label as just its Key, without mutating it", async () => {
     const wrapper = createWrapper({
       fields: JSON.stringify({
         legacy_field: {
@@ -406,13 +369,7 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(wrapper.find('[data-testid="field-item"] label').text()).toBe(
       "legacy_field",
     );
-
-    const emitted = wrapper.emitted("update:modelValue");
-    expect(emitted).toBeTruthy();
-    const lastEmittedFields = JSON.parse(
-      emitted![emitted!.length - 1][0] as string,
-    );
-    expect(lastEmittedFields[0].label).toBe("legacy_field");
+    expect(wrapper.emitted("update:modelValue")).toBeFalsy();
   });
 
   describe("regression for RUN-4764", () => {
