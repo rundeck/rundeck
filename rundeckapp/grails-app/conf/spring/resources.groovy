@@ -189,6 +189,7 @@ import rundeck.services.workflow.DefaultWorkflowStateDataLoader
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.InfrastructureRoleBeanDefinitionRegistryPostProcessor
+import rundeckapp.init.QuartzPropertiesBeanFactoryPostProcessor
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
@@ -227,6 +228,7 @@ beans={
     // ROLE_INFRASTRUCTURE so Spring's BeanPostProcessorChecker doesn't log spurious startup warnings
     // for them. See the class Javadoc for details.
     infrastructureRoleBeanDefinitionRegistryPostProcessor(InfrastructureRoleBeanDefinitionRegistryPostProcessor)
+    quartzPropertiesBeanFactoryPostProcessor(QuartzPropertiesBeanFactoryPostProcessor)
 
     rdAuthorizeInterceptor(RdAuthorizeInterceptor)
     rundeckWebDefaultParameterNamesMapper(RdWebDefaultParameterNamesMapper) {
