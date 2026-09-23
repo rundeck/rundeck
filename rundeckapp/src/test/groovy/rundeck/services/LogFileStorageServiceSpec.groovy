@@ -2125,4 +2125,42 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         0 * service.logFileStorageTaskScheduler._
         noExceptionThrown()
     }
+
+    def "a configuration lookup failure inside the change handler is logged and contained"() {
+        given: "a log4j2 appender capturing ERROR output"
+        def logOutput = new StringWriter()
+        def ctx = (LoggerContext) LogManager.getContext(false)
+        def config = ctx.getConfiguration()
+        def appender = WriterAppender.newBuilder()
+            .setConfiguration(config)
+            .setName("LogFileStorageServiceSpecConfigErrorCapture")
+            .setTarget(logOutput)
+            .setLayout(PatternLayout.newBuilder().withPattern("[%level] %msg%n").withConfiguration(config).build())
+            .build()
+        appender.start()
+        config.getRootLogger().addAppender(appender, Level.ERROR, null)
+        ctx.updateLoggers()
+
+        and: "a configuration service that fails while the plugin name is resolved"
+        service.configurationService = Mock(ConfigService) {
+            _ * getString(LogFileStorageService.FILE_STORAGE_PLUGIN, _) >> { throw new IllegalStateException('config unavailable') }
+        }
+        service.logFileStorageTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileTaskExecutor = Mock(SimpleAsyncTaskExecutor)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+
+        when:
+        service.onAppConfigChanged([LogFileStorageService.FILE_STORAGE_PLUGIN.key] as Set)
+
+        then:
+        noExceptionThrown()
+        0 * service.logFileStorageTaskExecutor.execute(_)
+        0 * service.logFileTaskExecutor.execute(_)
+        logOutput.toString().contains('[ERROR] Failed to start log storage consumers after a configuration change')
+
+        cleanup:
+        config.getRootLogger().removeAppender("LogFileStorageServiceSpecConfigErrorCapture")
+        appender.stop()
+        ctx.updateLoggers()
+    }
 }

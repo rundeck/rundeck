@@ -326,11 +326,11 @@ class LogFileStorageService
         if (consumersStarted.get()) {
             return
         }
-        def pluginName = getConfiguredPluginName()
-        if (!pluginName) {
-            return
-        }
         try {
+            def pluginName = getConfiguredPluginName()
+            if (!pluginName) {
+                return
+            }
             if (startConsumers()) {
                 log.info(
                     "Log storage consumers started: ${FILE_STORAGE_PLUGIN.key} is now configured " +
