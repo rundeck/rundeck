@@ -202,36 +202,21 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     }
 
     /**
-     * Registers Rundeck's own config-file-derived property sources (rundeck-config.properties or
-     * rundeck-config.groovy, plus a couple of hardcoded/derived properties) into the given
-     * Environment, then immediately sanitizes {@code dataSource.dbCreate} via
-     * {@link #removeGORMdbCreateProperty(Environment)}.
+     * Registers Rundeck's own config-file-derived property sources into the given Environment, then
+     * sanitizes {@code dataSource.dbCreate} back to {@code "none"}. Extracted to a static method so it
+     * can also be called early, by {@link rundeckapp.init.RundeckConfigEnvironmentPostProcessor} --
+     * see that class's Javadoc for why the timing matters and why calling this twice is safe.
      * <br>
-     * Extracted to a static method, rather than living only in the instance-level
-     * {@link #setEnvironment(Environment)} EnvironmentAware callback, so it can also be invoked much
-     * earlier by {@link rundeckapp.init.RundeckConfigEnvironmentPostProcessor} -- see that class's
-     * Javadoc for why the earlier timing matters (RUN-4996 / #10352: some framework/plugin beans,
-     * e.g. the default grailsLinkGenerator, read config values like grails.serverURL eagerly at bean
-     * *definition* build time, which happens before this instance method's EnvironmentAware callback
-     * ever fires). Calling this twice (once early, once again from setEnvironment()) is safe and
-     * intentionally redundant: MutablePropertySources#addFirst replaces any existing entry with the
-     * same name, so the second call is a harmless no-op re-registration, kept for backward
-     * compatibility with anything relying on setEnvironment() itself running.
+     * The dbCreate sanitization must happen in this same method, immediately after registration --
+     * otherwise a custom {@code dataSource.dbCreate} value would be visible to GORM/datasource bean
+     * definitions during the early post-processor phase, before a separate later call could force it
+     * back to {@code "none"}.
      * <br>
-     * The dbCreate sanitization must happen here, in the same method/call as the property-source
-     * registration, rather than being left to a separate later call -- otherwise a custom
-     * dataSource.dbCreate value (e.g. "create" or "update") would be visible to GORM/datasource bean
-     * definitions during the early post-processor phase, before the later setEnvironment() callback
-     * ever got a chance to force it back to "none".
-     * <br>
-     * The {@code rundeckConfig == null} check below is only a "has anyone attempted pre-bootstrap
-     * yet" guard, not a "did it succeed" guard: {@link rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap}
-     * assigns {@link #rundeckConfig} to a new, still-incomplete instance <i>before</i> running the
-     * rest of its initialization, so a failed attempt can leave it non-null but missing fields like
-     * {@code runtimeConfiguration}. {@link #runPrebootstrap()}'s boolean result (true means failure)
-     * must therefore be checked here, at the point of actually using {@link #rundeckConfig}'s fields
-     * below -- silently continuing would risk an NPE or booting on a broken config without ever
-     * reporting the real initialization failure.
+     * The {@code rundeckConfig == null} check below only guards against re-attempting pre-bootstrap,
+     * not against a previously *failed* attempt: {@link rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap}
+     * assigns {@link #rundeckConfig} before finishing initialization, so a failed attempt can leave it
+     * non-null but incomplete. {@link #runPrebootstrap()}'s result must therefore be checked here, at
+     * the point of actually using {@link #rundeckConfig}'s fields, rather than assumed from non-null.
      *
      * @param environment the Environment to register property sources into
      */

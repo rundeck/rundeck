@@ -19,6 +19,7 @@ import grails.boot.GrailsApp
 import org.springframework.boot.WebApplicationType
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent
 import org.springframework.context.ApplicationListener
+import org.springframework.core.Ordered
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.StandardEnvironment
 import rundeckapp.Application
@@ -52,7 +53,7 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
         then:
         List<String> propertiesLoaded = environment.propertySources.iterator().collect { it.name }
         propertiesLoaded.contains("hardcoded-rundeck-props")
-        propertiesLoaded.contains("rundeck.config.location")
+        propertiesLoaded.contains(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
 
         cleanup:
         Application.rundeckConfig = previousRundeckConfig
@@ -72,10 +73,8 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
     def "grails.serverURL from a custom rundeck.config.location properties file is visible before any ApplicationContext is created"() {
         given: "a rundeck-config.properties file with a custom grails.serverURL"
         File tmpCfgDir = File.createTempDir()
-        tmpCfgDir.deleteOnExit()
         File tmpProp = new File(tmpCfgDir, "rundeck-config.properties")
         tmpProp << "grails.serverURL=https://myhost.example.com:8443\n"
-        tmpProp.deleteOnExit()
         String previousLocation = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, tmpProp.absolutePath)
         // ReloadableRundeckPropertySource is a static, JVM-wide singleton that loads its file once
@@ -111,16 +110,28 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
         app.addListeners(captor)
 
         when: "the real Spring Boot startup sequence runs, up through environment preparation"
+        Throwable caughtDuringRun = null
         try {
             app.run()
-        } catch (Throwable ignoredAbort) {
-            // expected: we deliberately abort right after environment preparation, before any
-            // ApplicationContext/bean-definition work -- which is both unnecessary for this specific
-            // ordering claim and far slower to actually run to completion.
+        } catch (Throwable abortOrRealFailure) {
+            // Expected case: we deliberately abort right after environment preparation, via
+            // EnvironmentCaptor's own RuntimeException, before any ApplicationContext/bean-definition
+            // work -- which is both unnecessary for this specific ordering claim and far slower to
+            // actually run to completion. But this also catches a genuine failure elsewhere in
+            // startup (e.g. RundeckConfigEnvironmentPostProcessor's own IllegalStateException) --
+            // capture it so the `then:` block below can tell the two apart and report the real cause
+            // instead of just failing on a null capturedEnvironment.
+            caughtDuringRun = abortOrRealFailure
         }
 
         then: "grails.serverURL from the custom config-location file was already visible -- proving RundeckConfigEnvironmentPostProcessor ran, and ran before any bean definitions could have been built"
-        captor.capturedEnvironment != null
+        if (captor.capturedEnvironment == null) {
+            throw new AssertionError(
+                    "Expected EnvironmentCaptor to have captured the environment before app.run() " +
+                            "aborted, but it never ran -- see the cause for what app.run() actually threw",
+                    caughtDuringRun
+            )
+        }
         captor.capturedEnvironment.getProperty("grails.serverURL") == "https://myhost.example.com:8443"
 
         cleanup:
@@ -136,20 +147,33 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
         liveRundeckProps.clear()
         liveRundeckProps.putAll(previousRundeckProps)
         Application.rundeckConfig = previousRundeckConfig
+        // File#deleteOnExit() won't remove a non-empty directory, so tmpCfgDir (containing tmpProp)
+        // would otherwise leak on every test run -- delete it recursively now instead.
+        tmpCfgDir.deleteDir()
     }
 
     /**
      * Explicit typed class (not a closure coerced to the interface) so Spring's event multicaster
      * can correctly reflect its generic ApplicationListener<ApplicationEnvironmentPreparedEvent>
-     * type parameter to filter events -- see the comment where this is instantiated.
+     * type parameter to filter events -- see the comment where this is instantiated. Also implements
+     * Ordered (returning LOWEST_PRECEDENCE, the same as an unordered listener would default to) to
+     * make explicit -- rather than incidental -- that it must run after
+     * EnvironmentPostProcessorApplicationListener (HIGHEST_PRECEDENCE + 10) on the same
+     * ApplicationEnvironmentPreparedEvent, so RundeckConfigEnvironmentPostProcessor has already run by
+     * the time this captures the environment.
      */
-    static class EnvironmentCaptor implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
+    static class EnvironmentCaptor implements ApplicationListener<ApplicationEnvironmentPreparedEvent>, Ordered {
         ConfigurableEnvironment capturedEnvironment
 
         @Override
         void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
             capturedEnvironment = event.environment
             throw new RuntimeException("test: abort intentionally right after environment preparation")
+        }
+
+        @Override
+        int getOrder() {
+            return Ordered.LOWEST_PRECEDENCE
         }
     }
 }
