@@ -52,6 +52,7 @@ class PluginAdapterImplSpec
 
         then:
             property.name == "environmentName"
+            !property.outputOnly
             property.outputMetadata != null
             property.outputMetadata.size() == 1
             property.outputMetadata[0].group == "data"
@@ -112,13 +113,16 @@ class PluginAdapterImplSpec
             List<Property> properties = adapter.buildFieldProperties(WithOutputOnlyField)
 
         then:
-            properties.find { it.name == "environmentName" } != null
+            def configuredProp = properties.find { it.name == "environmentName" }
+            configuredProp != null
+            !configuredProp.outputOnly
 
             def outputProp = properties.find { it.name == "outputResult" }
             outputProp != null
             outputProp.title == "outputResult"
             outputProp.type == Property.Type.String
             !outputProp.required
+            outputProp.outputOnly
             outputProp.outputMetadata?.size() == 1
             outputProp.outputMetadata[0].group == "data"
             outputProp.outputMetadata[0].name == "outputResult"

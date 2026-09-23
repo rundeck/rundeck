@@ -235,6 +235,7 @@ public class PluginAdapterImpl
 
         final List<PluginOutputMetadata> outputMetadata = outputMetadataForField(field);
         pbuild.outputMetadata(outputMetadata);
+        pbuild.outputOnly(true);
         if (notBlank(outputMetadata.get(0).getDescription())) {
             pbuild.description(outputMetadata.get(0).getDescription());
         }
