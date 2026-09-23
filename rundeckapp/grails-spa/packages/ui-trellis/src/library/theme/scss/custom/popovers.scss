@@ -94,3 +94,10 @@
 .tooltip.in {
   opacity: 1;
 }
+
+// RUN-4967: the default bottom-popover arrow compiles from the static
+// $bg-subheader (#fafafa) and renders as a light bar in dark mode; match
+// the popover body background (--background-color-lvl2) in dark only.
+*[data-color-theme="dark"] .popover.bottom .arrow:after {
+  border-bottom-color: var(--background-color-lvl2);
+}
