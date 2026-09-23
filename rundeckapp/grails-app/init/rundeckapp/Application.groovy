@@ -223,12 +223,26 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
      * dataSource.dbCreate value (e.g. "create" or "update") would be visible to GORM/datasource bean
      * definitions during the early post-processor phase, before the later setEnvironment() callback
      * ever got a chance to force it back to "none".
+     * <br>
+     * The {@code rundeckConfig == null} check below is only a "has anyone attempted pre-bootstrap
+     * yet" guard, not a "did it succeed" guard: {@link rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap}
+     * assigns {@link #rundeckConfig} to a new, still-incomplete instance <i>before</i> running the
+     * rest of its initialization, so a failed attempt can leave it non-null but missing fields like
+     * {@code runtimeConfiguration}. {@link #runPrebootstrap()}'s boolean result (true means failure)
+     * must therefore be checked here, at the point of actually using {@link #rundeckConfig}'s fields
+     * below -- silently continuing would risk an NPE or booting on a broken config without ever
+     * reporting the real initialization failure.
      *
      * @param environment the Environment to register property sources into
      */
     static void loadRundeckPropertySources(final Environment environment) {
         Properties hardCodedRundeckConfigs = new Properties()
-        if(rundeckConfig == null) Application.runPrebootstrap()
+        if (rundeckConfig == null) {
+            boolean prebootstrapFailed = Application.runPrebootstrap()
+            if (prebootstrapFailed) {
+                throw new IllegalStateException("Rundeck pre-bootstrap initialization failed; aborting startup.")
+            }
+        }
 
         hardCodedRundeckConfigs.setProperty("rundeck.useJaas", rundeckConfig.useJaas.toString())
         hardCodedRundeckConfigs.setProperty(
