@@ -132,6 +132,10 @@ import java.nio.file.Paths
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static final String SYS_PROP_RUNDECK_CONFIG_INITTED = "rundeck.config.initted"
     static RundeckInitConfig rundeckConfig = null
+    // null = not yet attempted, true = succeeded, false = failed. Tracked separately from
+    // rundeckConfig because InitializeRundeckPreboostrap assigns rundeckConfig before it finishes
+    // initializing it, so rundeckConfig != null doesn't mean prebootstrap succeeded.
+    static Boolean prebootstrapSucceeded = null
     static ConfigurableApplicationContext ctx;
     static String[] startArgs = []
     static Closure exitWithCodeOverride
@@ -212,21 +216,20 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
      * definitions during the early post-processor phase, before a separate later call could force it
      * back to {@code "none"}.
      * <br>
-     * The {@code rundeckConfig == null} check below only guards against re-attempting pre-bootstrap,
-     * not against a previously *failed* attempt: {@link rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap}
-     * assigns {@link #rundeckConfig} before finishing initialization, so a failed attempt can leave it
-     * non-null but incomplete. {@link #runPrebootstrap()}'s result must therefore be checked here, at
-     * the point of actually using {@link #rundeckConfig}'s fields, rather than assumed from non-null.
+     * Checks {@link #prebootstrapSucceeded}, not {@code rundeckConfig == null}: other callers (e.g.
+     * {@link rundeckapp.init.RundeckWebAppInitializer}, {@link #main(String[])}) can trigger
+     * pre-bootstrap before this method ever runs, so rundeckConfig may already be non-null (but
+     * broken) from an earlier failed attempt.
      *
      * @param environment the Environment to register property sources into
      */
     static void loadRundeckPropertySources(final Environment environment) {
         Properties hardCodedRundeckConfigs = new Properties()
-        if (rundeckConfig == null) {
-            boolean prebootstrapFailed = Application.runPrebootstrap()
-            if (prebootstrapFailed) {
-                throw new IllegalStateException("Rundeck pre-bootstrap initialization failed; aborting startup.")
-            }
+        if (prebootstrapSucceeded == null) {
+            Application.runPrebootstrap()
+        }
+        if (!prebootstrapSucceeded) {
+            throw new IllegalStateException("Rundeck pre-bootstrap initialization failed; aborting startup.")
         }
 
         hardCodedRundeckConfigs.setProperty("rundeck.useJaas", rundeckConfig.useJaas.toString())
@@ -300,6 +303,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
                 error = true
             }
         }
+        prebootstrapSucceeded = !error
         return error
     }
 

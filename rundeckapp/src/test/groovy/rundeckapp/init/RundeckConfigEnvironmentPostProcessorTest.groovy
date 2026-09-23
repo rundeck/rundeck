@@ -39,11 +39,13 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
     def "postProcessEnvironment registers the same property sources as Application#setEnvironment()"() {
         given: "a controlled rundeckConfig, so this test doesn't trigger a real, uncontrolled runPrebootstrap() pass (which mutates JVM-wide state) depending on which specs happened to run before it"
         def previousRundeckConfig = Application.rundeckConfig
+        def previousPrebootstrapSucceeded = Application.prebootstrapSucceeded
         Application.rundeckConfig = new RundeckInitConfig()
         Properties runtimeProps = new Properties()
         runtimeProps.setProperty(RundeckInitializer.PROP_REALM_LOCATION, "fake")
         runtimeProps.setProperty(RundeckInitializer.PROP_LOGINMODULE_NAME, "fake")
         Application.rundeckConfig.runtimeConfiguration = runtimeProps
+        Application.prebootstrapSucceeded = true
         StandardEnvironment environment = new StandardEnvironment()
         def postProcessor = new RundeckConfigEnvironmentPostProcessor()
 
@@ -57,6 +59,7 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
 
         cleanup:
         Application.rundeckConfig = previousRundeckConfig
+        Application.prebootstrapSucceeded = previousPrebootstrapSucceeded
     }
 
     /**
@@ -89,11 +92,13 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
 
         and: "a controlled rundeckConfig, so this doesn't trigger a real, uncontrolled runPrebootstrap() pass depending on which specs happened to run before it"
         def previousRundeckConfig = Application.rundeckConfig
+        def previousPrebootstrapSucceeded = Application.prebootstrapSucceeded
         Application.rundeckConfig = new RundeckInitConfig()
         Properties runtimeProps = new Properties()
         runtimeProps.setProperty(RundeckInitializer.PROP_REALM_LOCATION, "fake")
         runtimeProps.setProperty(RundeckInitializer.PROP_LOGINMODULE_NAME, "fake")
         Application.rundeckConfig.runtimeConfiguration = runtimeProps
+        Application.prebootstrapSucceeded = true
 
         and: "a listener that captures the environment the instant it's prepared, then aborts before any bean-definition work happens"
         // A plain closure coerced with `as ApplicationListener<...>` does NOT preserve the generic
@@ -147,6 +152,7 @@ class RundeckConfigEnvironmentPostProcessorTest extends Specification {
         liveRundeckProps.clear()
         liveRundeckProps.putAll(previousRundeckProps)
         Application.rundeckConfig = previousRundeckConfig
+        Application.prebootstrapSucceeded = previousPrebootstrapSucceeded
         // File#deleteOnExit() won't remove a non-empty directory, so tmpCfgDir (containing tmpProp)
         // would otherwise leak on every test run -- delete it recursively now instead.
         tmpCfgDir.deleteDir()
