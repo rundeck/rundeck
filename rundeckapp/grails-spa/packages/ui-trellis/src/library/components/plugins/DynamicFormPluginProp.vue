@@ -66,14 +66,16 @@
           ref="duplicateWarningRef"
           type="warning"
           data-testid="duplicate-warning"
-          ><b>Warning!</b> {{ $t("message_duplicated") }}.</alert
+          ><b>{{ $t("message_warning") }}</b>
+          {{ $t("message_duplicated") }}.</alert
         >
         <alert
           v-if="invalidKey"
           ref="invalidKeyWarningRef"
           type="warning"
           data-testid="invalid-key-warning"
-          ><b>Warning!</b> {{ $t("message_fieldKeyRequired") }}.</alert
+          ><b>{{ $t("message_warning") }}</b>
+          {{ $t("message_fieldKeyRequired") }}.</alert
         >
 
         <div class="col-md-10">
@@ -367,13 +369,11 @@ export default defineComponent({
       } else {
         let description = this.newFieldDescription;
         if (description == "") {
-          description = this.$t("message_fieldKeyOnlyDescription", [
-            this.newField,
-          ]);
+          description = this.$t("message_fieldKeyOnlyDescription", [key]);
         } else {
           description = this.$t("message_fieldKeyAppendedDescription", [
             description,
-            this.newField,
+            key,
           ]);
         }
 

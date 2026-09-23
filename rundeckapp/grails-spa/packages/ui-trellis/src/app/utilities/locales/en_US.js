@@ -57,6 +57,7 @@ const messages = {
   message_readMore: "Read More",
   message_refresh: "Please refresh the page or visit us at",
   message_delete: "Delete this field",
+  message_warning: "Warning!",
   message_duplicated: "Field already exists",
   message_select: "Select a Field",
   message_description: "Description",
