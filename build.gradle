@@ -189,8 +189,29 @@ if (isTagBuild || ext.environment == 'release') {
     project.ext.resolvedVersion = "${vNum}-SNAPSHOT".toString()
 }
 
-project.ext.branch = grgit.branch.current().name
-project.ext.commit = grgit.head().id
+/**
+ * grgit (JGit-backed) does not support linked git worktrees
+ * (https://bugs.eclipse.org/bugs/show_bug.cgi?id=477475), so building from a
+ * `git worktree add` checkout throws NoWorkTreeException. Fall back to native git.
+ */
+def gitRevParse = { String... args ->
+    def out = new ByteArrayOutputStream()
+    project.exec {
+        commandLine(['git', 'rev-parse', *args])
+        workingDir = project.rootDir
+        standardOutput = out
+    }
+    return out.toString().trim()
+}
+
+try {
+    project.ext.branch = grgit.branch.current().name
+    project.ext.commit = grgit.head().id
+} catch (Exception e) {
+    logger.warn("grgit failed ({}); falling back to native git (likely running from a git worktree)", e.message)
+    project.ext.branch = gitRevParse('--abbrev-ref', 'HEAD')
+    project.ext.commit = gitRevParse('HEAD')
+}
 
 logger.lifecycle("Building version {}", project.resolvedVersion)
 
