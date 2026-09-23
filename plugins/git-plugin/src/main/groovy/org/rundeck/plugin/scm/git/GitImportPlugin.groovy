@@ -394,7 +394,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (originalPath && synchState == ImportSynchState.UNKNOWN) {
             // job was renamed but not file
             synchState = ImportSynchState.IMPORT_NEEDED
-        } else if (job.scmImportMetadata?.commitId && jobStateMap[job.id] == loadingMarker) {
+} else if (job.scmImportMetadata?.commitId && jobStateMap.get(job.id)?.is(loadingMarker)) {
             // update tracked commit info - skip if a newer refresh (or a deletion) has since
             // replaced or removed our placeholder, so this (slower, older) refresh doesn't
             // clobber the tracker mapping
