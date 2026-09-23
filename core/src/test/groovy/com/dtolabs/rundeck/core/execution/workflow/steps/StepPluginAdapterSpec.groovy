@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
+import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
@@ -248,6 +249,107 @@ class StepPluginAdapterSpec extends Specification {
         then:
         result.isSuccess()
         outputContext.getSharedContext().getData(ContextView.step(3)) == null
+    }
+
+    def "captures a computed output-only @PluginOutput value after executeStep runs"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        def outputContext = new DataOutput(ContextView.step(4))
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getOutputContext() >> outputContext
+            getFrameworkProject() >> PROJECT_NAME
+            getStepNumber() >> 4
+        }
+        def plugin = Mock(StepPlugin)
+        def wrap = new Test5Plugin(impl: plugin)
+        def adapter = new StepPluginAdapter(wrap)
+        def config = [environmentName: 'production']
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: config,
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeWorkflowStep(context, item)
+
+        then:
+        1 * plugin.executeStep(!null as PluginStepContext, [:])
+        result.isSuccess()
+        wrap.environmentName == 'production'
+        wrap.outputResult == 'PROD_READY'
+        // only outputResult (the @PluginOutput-only field) is captured; environmentName has no
+        // @PluginOutput and is therefore not exposed
+        outputContext.getSharedContext().getData(ContextView.step(4)).getData() == [data: [outputResult: 'PROD_READY']]
+    }
+
+    def "does not capture output when the step execution throws"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: [:]])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        def outputContext = new DataOutput(ContextView.step(4))
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getOutputContext() >> outputContext
+            getFrameworkProject() >> PROJECT_NAME
+            getStepNumber() >> 4
+            getExecutionListener() >> Mock(ExecutionListener)
+        }
+        def wrap = new Test6Plugin()
+        def adapter = new StepPluginAdapter(wrap)
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: [:],
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeWorkflowStep(context, item)
+
+        then:
+        !result.isSuccess()
+        // the field was set to a value before the plugin threw, but since the step failed,
+        // nothing should have been captured into the output context
+        wrap.outputResult == 'SET_BEFORE_FAILURE'
+        outputContext.getSharedContext().getData(ContextView.step(4)) == null
+    }
+
+    @Plugin(name = "test5", service = ServiceNameConstants.WorkflowNodeStep)
+    static class Test5Plugin implements StepPlugin {
+        StepPlugin impl
+
+        @PluginProperty(title = "Environment Name")
+        private String environmentName
+
+        // Output-only: computed inside executeStep(), not settable via job configuration.
+        @PluginOutput(name = "outputResult", description = "Computed result exposed for conditional logic")
+        private String outputResult
+
+        @Override
+        void executeStep(PluginStepContext context, Map<String, Object> configuration) throws StepException {
+            outputResult = "production".equals(environmentName) ? "PROD_READY" : "NOT_READY"
+            impl.executeStep(context, configuration)
+        }
+    }
+
+    @Plugin(name = "test6", service = ServiceNameConstants.WorkflowNodeStep)
+    static class Test6Plugin implements StepPlugin {
+        @PluginOutput(name = "outputResult", description = "desc")
+        private String outputResult
+
+        @Override
+        void executeStep(PluginStepContext context, Map<String, Object> configuration) throws StepException {
+            outputResult = "SET_BEFORE_FAILURE"
+            throw new StepException("boom", StepFailureReason.Unknown)
+        }
     }
 
     @Plugin(name = "test4", service = ServiceNameConstants.WorkflowNodeStep)

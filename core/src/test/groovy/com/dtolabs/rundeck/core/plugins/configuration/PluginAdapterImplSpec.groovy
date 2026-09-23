@@ -26,6 +26,21 @@ class PluginAdapterImplSpec
         String plain
     }
 
+    static class WithOutputOnlyField {
+        @PluginProperty(title = "Environment Name")
+        String environmentName
+
+        // No @PluginProperty: a computed value, not a job-configurable input.
+        @PluginOutput(name = "outputResult", description = "Computed result exposed for conditional logic")
+        String outputResult
+    }
+
+    static class WithOutputOnlyNonPropertyType {
+        // Unsupported property type (not String/Integer/Long/Boolean/Options): should be skipped.
+        @PluginOutput(name = "notAProperty")
+        Object notAProperty
+    }
+
     def "propertyFromField reads @PluginOutput metadata"() {
         given:
             def adapter = new PluginAdapterImpl()
@@ -87,6 +102,38 @@ class PluginAdapterImplSpec
             prop != null
             prop.outputMetadata?.size() == 1
             prop.outputMetadata[0].name == "environmentName"
+    }
+
+    def "buildFieldProperties includes an output-only property for a field with only @PluginOutput"() {
+        given:
+            def adapter = new PluginAdapterImpl()
+
+        when:
+            List<Property> properties = adapter.buildFieldProperties(WithOutputOnlyField)
+
+        then:
+            properties.find { it.name == "environmentName" } != null
+
+            def outputProp = properties.find { it.name == "outputResult" }
+            outputProp != null
+            outputProp.title == "outputResult"
+            outputProp.type == Property.Type.String
+            !outputProp.required
+            outputProp.outputMetadata?.size() == 1
+            outputProp.outputMetadata[0].group == "data"
+            outputProp.outputMetadata[0].name == "outputResult"
+            outputProp.outputMetadata[0].description == "Computed result exposed for conditional logic"
+    }
+
+    def "buildFieldProperties skips a @PluginOutput-only field of an unsupported type"() {
+        given:
+            def adapter = new PluginAdapterImpl()
+
+        when:
+            List<Property> properties = adapter.buildFieldProperties(WithOutputOnlyNonPropertyType)
+
+        then:
+            properties.isEmpty()
     }
 
     def "map properties with feature flag scope"() {
