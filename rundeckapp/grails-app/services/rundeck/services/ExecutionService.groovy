@@ -1416,7 +1416,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logOutFlusher, //flushes stdout output after node steps
                     logErrFlusher, //flush stderr output after node steps
                     wfStepMetricsListener, //collects step metrics
-                    stepNodeSecondsListener, //accumulates step_node_seconds for RBA consumption metering
+                    stepNodeSecondsListener, //accumulates step_node_seconds for Runbook Automation consumption metering
                     /*new EchoExecListener() */
             ]
             def multiListener = MultiWorkflowExecutionListener.create(
