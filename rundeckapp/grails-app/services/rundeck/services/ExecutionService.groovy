@@ -5351,7 +5351,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @throws StepException
      */
     @Override
-    @NotTransactional
+    // Suspends the class-level transaction for as long as the referenced job runs.
+    //
+    // @NotTransactional does not do this on Grails 8: the compiled class still carries
+    // $tt__executionService_executeNodeStep(..., TransactionStatus) and a thread dump during a job
+    // reference shows this method inside GrailsTransactionTemplate for the whole child execution.
+    // A job reference to a 12-minute job therefore held one transaction, idle, for 12 minutes; the
+    // connection does not survive that where the database or a proxy reaps idle sessions, and the
+    // execution failed at the end with "Could not commit Hibernate transaction" -- after the
+    // referenced job had already succeeded.
+    //
+    // NOT_SUPPORTED is what executeWorkflowStep already uses for the same reason, and it suspends
+    // correctly, which is why job references as a plain step were unaffected.
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     NodeStepResult executeNodeStep(StepExecutionContext executionContext, NodeStepExecutionItem executionItem,
                                    INodeEntry node) throws NodeStepException {
         if (!(executionItem instanceof JobExecutionItem)) {
