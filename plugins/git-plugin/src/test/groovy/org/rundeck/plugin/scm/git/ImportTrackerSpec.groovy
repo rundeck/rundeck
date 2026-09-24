@@ -153,4 +153,29 @@ class ImportTrackerSpec extends Specification {
         !tracker.trackedItemIsUnknown(path)
         tracker.trackedItemIsUnknown(newpath)
     }
+
+    def "untrackJob removes every tracked path for the deleted job"() {
+        given:
+        def originalPath = "a/b"
+        def renamedPath = "c/d"
+        def job = Mock(JobScmReference) {
+            getId() >> '123'
+            getScmImportMetadata() >> [
+                    commitId: 'abc'
+            ]
+        }
+        def tracker = new ImportTracker()
+
+        when:
+        tracker.trackJobAtPath(job, originalPath)
+        tracker.jobRenamed(job, originalPath, renamedPath)
+        tracker.trackJobAtPath(job, originalPath)
+        tracker.untrackJob('123')
+
+        then:
+        tracker.trackedPaths().isEmpty()
+        tracker.trackedPath('123') == null
+        tracker.trackedJob(originalPath) == null
+        tracker.trackedJob(renamedPath) == null
+    }
 }

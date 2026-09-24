@@ -222,7 +222,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         Set<String> renamed = new HashSet()
         Set<String> notExpected = new HashSet()
         importTracker.trackedPaths().each {
-            def commitId = importTracker.trackedCommits?.get(it)
+            def commitId = importTracker.trackedCommit(it)
             if (commitId) {
                 def gitCommit = GitUtil.getCommit(repo, commitId)
                 if (!gitCommit) {
@@ -827,10 +827,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     void initJobsStatus(List<JobScmReference> jobs) {
         jobs.each { job ->
-            if (!jobStateMap[job.id]) {
-                def jobstat = initJobStatus(job)
-                jobStateMap[job.id] = jobstat
-            }
+            initializeJobStatusIfAbsent(job.id, initJobStatus(job))
         }
     }
 

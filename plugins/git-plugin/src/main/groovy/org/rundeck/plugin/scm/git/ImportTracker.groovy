@@ -41,14 +41,16 @@ class ImportTracker {
      * @return tracked repository paths
      */
     public Set<String> trackedPaths() {
-        Set<String> result
-        synchronized (trackedCommits) {
-            result = new LinkedHashSet<>(trackedCommits.keySet())
+        synchronized (this) {
+            Set<String> result
+            synchronized (trackedCommits) {
+                result = new LinkedHashSet<>(trackedCommits.keySet())
+            }
+            synchronized (trackedJobIds) {
+                result.addAll(trackedJobIds.keySet())
+            }
+            return result
         }
-        synchronized (trackedJobIds) {
-            result.addAll(trackedJobIds.keySet())
-        }
-        return result
     }
     /**
      * Return true if the path has not been imported
@@ -72,42 +74,46 @@ class ImportTracker {
     }
 
     void jobRenamed(JobScmReference job, String oldpath, String newpath) {
-        if (oldpath == newpath) {
-            def originalPath = originalValue(newpath)
-            if (originalPath) {
-                renamedTrackedItems.trackItem(originalPath, originalPath)
-                untrackPath(originalPath)
+        synchronized (this) {
+            if (oldpath == newpath) {
+                def originalPath = originalValue(newpath)
+                if (originalPath) {
+                    renamedTrackedItems.trackItem(originalPath, originalPath)
+                    untrackPath(originalPath)
+                }
+            } else {
+                untrackPath(oldpath)
+                trackJobAtPath(job, newpath)
+                renamedTrackedItems.trackItem(oldpath, newpath)
             }
-        } else {
-            untrackPath(oldpath)
-            trackJobAtPath(job, newpath)
-            renamedTrackedItems.trackItem(oldpath, newpath)
         }
     }
 
     void trackJobAtPath(JobScmReference job, String path) {
-        def previousJobId = trackedJobIds[path]
-        if (previousJobId != null && previousJobId != job.id) {
-            //path is being claimed by a different job than the one previously tracked there:
-            //remove the stale reverse mapping so it doesn't keep resolving to the old job.
-            //conditional on trackedPathsMap[previousJobId] still equaling this path - the rename
-            //re-assertion branch above can leave previousJobId with two forward mappings, so its
-            //reverse mapping may already point elsewhere and must not be erased here
-            trackedPathsMap.remove(previousJobId, path)
+        synchronized (this) {
+            def previousJobId = trackedJobIds[path]
+            if (previousJobId != null && previousJobId != job.id) {
+                //path is being claimed by a different job than the one previously tracked there:
+                //remove the stale reverse mapping so it doesn't keep resolving to the old job.
+                //conditional on trackedPathsMap[previousJobId] still equaling this path - the rename
+                //re-assertion branch above can leave previousJobId with two forward mappings, so its
+                //reverse mapping may already point elsewhere and must not be erased here
+                trackedPathsMap.remove(previousJobId, path)
+            }
+            def previousPath = trackedPathsMap[job.id]
+            if (previousPath != null && previousPath != path && renamedTrackedItems.originalValue(previousPath) != path) {
+                //job is moving to a new path (e.g. a path-template change) without going through
+                //jobRenamed: remove its old forward mapping so it doesn't linger as a phantom tracked
+                //path, which would otherwise surface as a false DELETE_NEEDED.
+                //(skipped when `path` is the canonical path being re-asserted right after jobRenamed
+                //recorded a rename to previousPath - that resync intentionally keeps both tracked)
+                trackedCommits.remove(previousPath)
+                trackedJobIds.remove(previousPath)
+            }
+            trackedCommits[path] = job.scmImportMetadata?.commitId
+            trackedJobIds[path] = job.id
+            trackedPathsMap[job.id] = path
         }
-        def previousPath = trackedPathsMap[job.id]
-        if (previousPath != null && previousPath != path && renamedTrackedItems.originalValue(previousPath) != path) {
-            //job is moving to a new path (e.g. a path-template change) without going through
-            //jobRenamed: remove its old forward mapping so it doesn't linger as a phantom tracked
-            //path, which would otherwise surface as a false DELETE_NEEDED.
-            //(skipped when `path` is the canonical path being re-asserted right after jobRenamed
-            //recorded a rename to previousPath - that resync intentionally keeps both tracked)
-            trackedCommits.remove(previousPath)
-            trackedJobIds.remove(previousPath)
-        }
-        trackedCommits[path] = job.scmImportMetadata?.commitId
-        trackedJobIds[path] = job.id
-        trackedPathsMap[job.id] = path
     }
 
     /**
@@ -117,12 +123,14 @@ class ImportTracker {
      * @return job ID previously associated with the path
      */
     String untrackPath(String path) {
-        trackedCommits.remove(path)
-        String jobId = trackedJobIds.remove(path)
-        if (jobId) {
-            trackedPathsMap.remove(jobId)
+        synchronized (this) {
+            trackedCommits.remove(path)
+            String jobId = trackedJobIds.remove(path)
+            if (jobId) {
+                trackedPathsMap.remove(jobId)
+            }
+            jobId
         }
-        jobId
     }
 
     /**
@@ -132,17 +140,23 @@ class ImportTracker {
      * @return repository path previously associated with the job
      */
     String untrackJob(String jobId) {
-        String path = trackedPath(jobId)
-        if (!path) {
-            synchronized (trackedJobIds) {
-                path = trackedJobIds.find { String ignored, String id -> id == jobId }?.key
+        synchronized (this) {
+            String canonicalPath = trackedPathsMap.remove(jobId)
+            Set<String> pathsToRemove = new LinkedHashSet<>()
+            if (canonicalPath) {
+                pathsToRemove.add(canonicalPath)
             }
+            synchronized (trackedJobIds) {
+                pathsToRemove.addAll(
+                        trackedJobIds.findAll { String ignored, String id -> id == jobId }.keySet()
+                )
+            }
+            pathsToRemove.each { String path ->
+                trackedCommits.remove(path)
+                trackedJobIds.remove(path)
+            }
+            canonicalPath ?: (pathsToRemove ? pathsToRemove.iterator().next() : null)
         }
-        if (path) {
-            untrackPath(path)
-        }
-        trackedPathsMap.remove(jobId)
-        path
     }
 
     /**
@@ -151,30 +165,40 @@ class ImportTracker {
      * @return tracked job IDs
      */
     Set<String> trackedJobIdSet() {
-        Set<String> result
-        synchronized (trackedPathsMap) {
-            result = new HashSet<>(trackedPathsMap.keySet())
+        synchronized (this) {
+            Set<String> result
+            synchronized (trackedPathsMap) {
+                result = new HashSet<>(trackedPathsMap.keySet())
+            }
+            synchronized (trackedJobIds) {
+                result.addAll(trackedJobIds.values())
+            }
+            result
         }
-        synchronized (trackedJobIds) {
-            result.addAll(trackedJobIds.values())
-        }
-        result
     }
 
     String trackedCommit(String path) {
-        trackedCommits[path]
+        synchronized (this) {
+            trackedCommits[path]
+        }
     }
 
     String trackedJob(String path) {
-        trackedJobIds[path]
+        synchronized (this) {
+            trackedJobIds[path]
+        }
     }
 
     String trackedPath(String jobId) {
-        trackedPathsMap[jobId]
+        synchronized (this) {
+            trackedPathsMap[jobId]
+        }
     }
 
     Map<String, String> trackedDetail(String path) {
-        [id: trackedJobIds[path], commitId: trackedCommits[path]]
+        synchronized (this) {
+            [id: trackedJobIds[path], commitId: trackedCommits[path]]
+        }
     }
 
     @Override

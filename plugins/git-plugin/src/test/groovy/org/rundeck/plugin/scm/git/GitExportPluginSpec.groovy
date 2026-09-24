@@ -65,6 +65,27 @@ class GitExportPluginSpec extends Specification {
         }
     }
 
+    /**
+     * Test map that requires callers to hold the map monitor for compound access.
+     */
+    private static class MonitorCheckedMap<K, V> extends LinkedHashMap<K, V> {
+        @Override
+        boolean containsKey(Object key) {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('containsKey requires the map monitor')
+            }
+            super.containsKey(key)
+        }
+
+        @Override
+        V put(K key, V value) {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('put requires the map monitor')
+            }
+            super.put(key, value)
+        }
+    }
+
     @Unroll
     def "create plugin, required input"() {
         given:
@@ -1041,6 +1062,30 @@ class GitExportPluginSpec extends Specification {
         where:
         tagName     | _
         'asdf asdf' | _
+    }
+
+    def "push action treats up-to-date remote updates as success"() {
+        given:
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        def originGit = createGit(origindir)
+        def initialCommit = addCommitFile(origindir, originGit, 'blah-xyz.xml', 'blah')
+        originGit.close()
+
+        def ctxt = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(ctxt)
+
+        when:
+        def result = plugin.export(ctxt, GitExportPlugin.PROJECT_PUSH_ACTION_ID, [] as Set, [] as Set, [:])
+
+        then:
+        result.success
+        result.id == initialCommit.name
+        result.commit.commitId == initialCommit.name
+        result.message == "Remote push result: OK. (Commit: ${initialCommit.name})"
     }
     def "commit missing user info"() {
         given:
@@ -2096,6 +2141,24 @@ class GitExportPluginSpec extends Specification {
             plugin.jobStateMap['xyz'].version==1
 
 
+    }
+
+    def "init job status synchronizes the check and insert on the job-state map"() {
+        given:
+        def plugin = new GitExportPlugin(Mock(Export))
+        plugin.jobStateMap = new MonitorCheckedMap<String, Map>()
+        def jobrefs = [
+                Stub(JobExportReference) {
+                    getId() >> 'xyz'
+                    getVersion() >> 1
+                }
+        ]
+
+        when:
+        plugin.initJobsStatus(jobrefs)
+
+        then:
+        plugin.jobStateMap['xyz'].synch == SynchState.LOADING
     }
 
     def "Should delete directory if this exists no matter the OS"(){

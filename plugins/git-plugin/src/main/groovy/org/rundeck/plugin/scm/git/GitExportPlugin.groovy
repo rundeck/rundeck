@@ -706,10 +706,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     @Override
     void initJobsStatus(List<JobExportReference> jobs) {
         jobs.each { job ->
-            if (!jobStateMap[job.id]) {
-                def jobstat = initJobStatus(job)
-                jobStateMap[job.id] = jobstat
-            }
+            initializeJobStatusIfAbsent(job.id, initJobStatus(job))
         }
     }
 
