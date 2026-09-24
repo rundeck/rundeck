@@ -14,7 +14,11 @@ export type ContextVariable = {
     | "option"
     | "global"
     | "note"
-    | "step";
+    | "step"
+    | "step-header";
+  // Step name a "step"/"step-header" option belongs to, for grouping a flat
+  // suggestion list into an accordion (see ConditionRow.vue).
+  group?: string;
 };
 
 export type ContextVariablesByType = {
