@@ -831,6 +831,9 @@ class ApiService implements WebUtilService{
                 if(execdata.retryExecution){
                     execMap.retriedExecution=execdata.retryExecution
                 }
+                if(e.note){
+                    execMap.note=e.note
+                }
                 execMap.jobDeleted = e.isJobDeleted()
                 execMap
             }

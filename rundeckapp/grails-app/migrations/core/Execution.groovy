@@ -224,5 +224,18 @@ databaseChangeLog = {
         }
     }
 
+    changeSet(author: "rundeckdev", id: "add-note-to-execution") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "execution", columnName: "note")
+            }
+        }
+
+        addColumn(tableName: "execution") {
+            column(name: "note", type: '${varchar1024.type}') {
+                constraints(nullable: "true")
+            }
+        }
+    }
 
 }
