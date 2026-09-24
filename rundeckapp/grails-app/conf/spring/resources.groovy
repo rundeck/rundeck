@@ -154,7 +154,7 @@ import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
-import org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator
+import org.springframework.boot.jdbc.health.DataSourceHealthIndicator
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -188,6 +188,7 @@ import rundeck.services.workflow.DefaultWorkflowStateDataLoader
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.InfrastructureRoleBeanDefinitionRegistryPostProcessor
+import rundeckapp.init.QuartzPropertiesBeanFactoryPostProcessor
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
@@ -226,6 +227,7 @@ beans={
     // ROLE_INFRASTRUCTURE so Spring's BeanPostProcessorChecker doesn't log spurious startup warnings
     // for them. See the class Javadoc for details.
     infrastructureRoleBeanDefinitionRegistryPostProcessor(InfrastructureRoleBeanDefinitionRegistryPostProcessor)
+    quartzPropertiesBeanFactoryPostProcessor(QuartzPropertiesBeanFactoryPostProcessor)
 
     rdAuthorizeInterceptor(RdAuthorizeInterceptor)
     rundeckWebDefaultParameterNamesMapper(RdWebDefaultParameterNamesMapper) {
@@ -911,9 +913,10 @@ beans={
             realmProperties.load(realmFile.newInputStream())
         }
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
-        realmAuthProvider(DaoAuthenticationProvider) {
+        // Spring Security 7: DaoAuthenticationProvider takes the UserDetailsService as a
+        // constructor argument; the setUserDetailsService setter no longer exists.
+        realmAuthProvider(DaoAuthenticationProvider, ref('realmPropertyFileDataSource')) {
             passwordEncoder = ref("jettyCompatiblePasswordEncoder")
-            userDetailsService = ref('realmPropertyFileDataSource')
         }
     }
 

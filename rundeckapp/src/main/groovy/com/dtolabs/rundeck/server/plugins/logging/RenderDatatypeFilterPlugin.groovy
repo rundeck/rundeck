@@ -188,7 +188,12 @@ class RenderDatatypeFilterPlugin implements LogFilterPlugin {
             }
 
             def meta = [
-                    'content-data-type': SYNONYMS[datatype.toLowerCase()] ?: datatype
+                    // Groovy 5 intercepts the key 'properties' on subscript access: SYNONYMS['properties']
+                    // returns the map's bean properties ([:]) instead of the stored value, which is
+                    // falsy, so the elvis fell through and emitted the raw 'properties' datatype
+                    // instead of application/x-java-properties. Map.get() is unaffected in both
+                    // Groovy 4 and 5.
+                    'content-data-type': SYNONYMS.get(datatype.toLowerCase()) ?: datatype
             ]
 
             if(striped){

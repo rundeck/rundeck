@@ -60,7 +60,11 @@ class RepositoryPluginService implements InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
-        if(!localFilesystemPluginDir) throw new Exception("Local plugin dir must be set")
+        // Groovy 5 gave File an asBoolean() based on existence, so `!localFilesystemPluginDir`
+        // became "the directory does not exist" rather than "no directory was configured".
+        // The configured libext dir need not exist yet at context startup -- it does not in the
+        // integration-test environment -- so this threw and took the whole Spring context down.
+        if(localFilesystemPluginDir == null) throw new Exception("Local plugin dir must be set")
         if(!installedPluginTree) throw new Exception("Storage Tree for installed plugins must be set")
     }
 }

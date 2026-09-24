@@ -895,11 +895,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.info("Unscheduled job: ${se.id}")
         }
 
-        def results = Execution.isScheduledAdHoc()
-        if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
-        }
-        results.list().each { Execution e ->
+        // Restrictions go in the list{} closure, not chained .where{}: on a DetachedCriteria
+        // already returned by isScheduledAdHoc(), a further .where{} is silently discarded and
+        // the query degrades to `where status=?`, reading every cluster member's executions.
+        Execution.isScheduledAdHoc().list {
+            if (serverUUID) { eq 'serverNodeUUID', serverUUID }
+        }.each { Execution e ->
             ScheduledExecution se = e.scheduledExecution
             def identity = getJobIdent(se, e)
             quartzScheduler.deleteJob(new JobKey(identity.jobname, identity.groupname))
@@ -921,13 +922,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.info("Unscheduled job: ${se.id}")
         }
 
-        def results = Execution.isScheduledAdHoc()
-        if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
-        }
-        results = results.withProject(project)
-
-        results.list().each { Execution e ->
+        Execution.isScheduledAdHoc().list {
+            if (serverUUID) { eq 'serverNodeUUID', serverUUID }
+            eq 'project', project
+        }.each { Execution e ->
             ScheduledExecution se = e.scheduledExecution
             def identity = getJobIdent(se, e)
             quartzScheduler.deleteJob(new JobKey(identity.jobname, identity.groupname))
@@ -968,9 +966,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     def rescheduleJobsAsync(String serverUUID=null) {
-        executorService.execute{
-            rescheduleJobs(serverUUID)
-        }
+        // NB: the argument must be a real Runnable, not a Closure. groovy.lang.Closure already
+        // implements Runnable, so `{...} as Runnable` returns the Closure unchanged; the executor
+        // wrapper dispatches inPersistence() on the *runtime* type and would pick its Closure
+        // overload, which returns a Callable that ThreadPoolExecutor.execute() cannot accept.
+        // The work stays in a Closure so it keeps this service as its owner/delegate (an anonymous
+        // Runnable body would re-resolve unqualified calls against itself and hit methodMissing).
+        Closure task = { rescheduleJobs(serverUUID) }
+        executorService.execute(new Runnable() {
+            @Override
+            void run() { task.call() }
+        })
     }
 
     /**
@@ -999,14 +1005,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         // Reschedule any executions which were scheduled ad hoc
-        def results = Execution.isScheduledAdHoc()
-        if (serverUUID) {
-            results = results.withServerNodeUUID(serverUUID)
+        def executionList = Execution.isScheduledAdHoc().list {
+            if (serverUUID) { eq 'serverNodeUUID', serverUUID }
+            if (project) { eq 'project', project }
         }
-        if(project) {
-            results = results.withProject(project)
-        }
-        def executionList = results.list()
 
         def adhocRescheduleResult = rescheduleOnetimeExecutions(executionList)
 
@@ -1233,10 +1235,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     private def scheduleAdHocExecutionsForJob(ScheduledExecution se, String targetServerUUID) {
         // Reschedule any executions which were scheduled ad hoc
-        def executionList = Execution.isScheduledAdHoc()
-                .withScheduledExecution(se)
-                .withServerNodeUUID(targetServerUUID)
-                .list()
+        def executionList = Execution.isScheduledAdHoc().list {
+            eq 'scheduledExecution', se
+            eq 'serverNodeUUID', targetServerUUID
+        }
 
         rescheduleOnetimeExecutions(executionList)
     }
