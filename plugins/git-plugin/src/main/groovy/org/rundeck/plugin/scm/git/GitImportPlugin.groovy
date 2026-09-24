@@ -566,11 +566,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         log.debug("Job event (${event.eventType}), path: ${path}")
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
-                //untrackJob (not untrackPath) so a job with two forward mappings left by a
-                //rename re-assertion (see ImportTracker.trackJobAtPath) has both cleared,
-                //not just this one path - otherwise the other one keeps reporting DELETE_NEEDED
-                importTracker.untrackJob(reference.id)
-                jobStateMap.remove(reference.id)
+synchronized (jobStateMap) {
+                    jobStateMap.remove(reference.id)
+                    importTracker.untrackJob(reference.id)
+                }
 
                 def status = [synch: ImportSynchState.IMPORT_NEEDED]
                 return createJobImportStatus(status, jobActionsForStatus(status))
