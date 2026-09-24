@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -2950,6 +2951,9 @@ Since: v56''',
         params.request = request
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
+        //`params` here is the bound request params map, and createExecutionAndPrep now honors
+        //an executionType found in it. Pin it so a request parameter can't type the execution.
+        params.executionType = ExecutionTypes.SCHEDULED
 
         if (runAdhocRequest.asUser) {
             //authorize RunAs User
