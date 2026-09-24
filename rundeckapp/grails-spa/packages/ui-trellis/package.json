@@ -61,7 +61,7 @@
     "mitt": "3.0.1",
     "mobx": "5.15.7",
     "mobx-utils": "5.6.2",
-    "moment": "2.30.1",
+    "moment": "2.31.0",
     "perfect-scrollbar": "1.5.6",
     "pinia": "2.3.1",
     "primeicons": "7.0.0",
