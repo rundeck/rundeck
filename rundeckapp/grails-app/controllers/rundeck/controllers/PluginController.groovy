@@ -736,6 +736,7 @@ Since: v49''',
      * @return the resolved {@link File} within {@code baseDir}
      * @throws IllegalArgumentException if {@code name} is blank or would escape {@code baseDir}
      */
+    @CompileStatic
     private File resolveSafePluginFile(File baseDir, String name) {
         if (!name || name.contains('/') || name.contains('\\') || name.contains('..')) {
             throw new IllegalArgumentException("Invalid plugin file name: ${name}")
