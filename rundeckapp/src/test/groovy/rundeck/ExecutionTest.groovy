@@ -770,4 +770,53 @@ class ExecutionTest extends Specification implements DataTest  {
         assertFalse Workflow.findAll().any {Workflow w -> w.id == e1.workflowId}
         assertTrue workflow.commands.isEmpty()
     }
+
+    void testNoteIsOptionalAndCappedAt1024(){
+        when:
+        Execution exec = createBasicExecution()
+        exec.note = note
+        exec.validate()
+
+        then:
+        (exec.errors.getFieldError('note') != null) == expectError
+
+        where:
+        note       | expectError
+        null       | false
+        'a note'   | false
+        'x' * 1024 | false
+        'x' * 1025 | true
+    }
+
+    void testNoteRoundTripsThroughMap(){
+        when:
+        def exec = Execution.fromMap([
+                status        : 'true',
+                dateStarted   : new Date(),
+                dateCompleted : new Date(),
+                project       : 'test1',
+                user          : 'user1',
+                note          : 'why this ran',
+                workflow      : [
+                        keepgoing: true,
+                        commands : [
+                                [
+                                        exec: "blah"
+                                ]
+                        ]
+                ]
+        ], null)
+
+        then:
+        exec.note == 'why this ran'
+        exec.toMap().note == 'why this ran'
+    }
+
+    void testToMapOmitsAbsentNote(){
+        when:
+        Execution exec = createBasicExecution()
+
+        then:
+        !exec.toMap().containsKey('note')
+    }
 }

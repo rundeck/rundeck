@@ -68,6 +68,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
     Long retryOriginalId
     Long retryPrevId
     String extraMetadata
+    String note
     private static final String REMOTE_LOG_FILEPATH_PREFIX = 'ext:'
 
     boolean serverNodeUUIDChanged = false
@@ -93,6 +94,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         extraMetadata(nullable: true)
         uuid(nullable: true)
         jobUuid(nullable: true)
+        note(nullable: true)
     }
 
     static mapping = {
@@ -437,6 +439,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         if (this.extraMetadata) {
             map.extra = this.extraMetadataMap
         }
+        if (this.note) {
+            map.note = this.note
+        }
         map
     }
     static Execution fromMap(Map data, ScheduledExecution job=null){
@@ -531,6 +536,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         }
         if (data.extra instanceof Map) {
             exec.extraMetadataMap = data.extra
+        }
+        if (data.note) {
+            exec.note = data.note
         }
         exec
     }
