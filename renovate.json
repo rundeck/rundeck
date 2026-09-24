@@ -17,9 +17,17 @@
     }
   ],
   "vulnerabilityAlerts": {
-    "dependencyDashboardApproval": false
+    "dependencyDashboardApproval": false,
+    "enabled": true
   },
   "packageRules": [
+    {
+      "description": "ui-trellis npm packages: security updates only. rundeckpro consumes ui-trellis as a published tarball, so routine (non-vulnerability) bumps here are disabled to avoid drift that rundeckpro's own renovate config isn't watching for; vulnerabilityAlerts stays enabled above so CVE fixes still get raised.",
+      "matchManagers": ["npm"],
+      "matchFileNames": ["rundeckapp/grails-spa/packages/ui-trellis/package.json"],
+      "matchPackageNames": ["*"],
+      "enabled": false
+    },
     {
       "description": "Defer major updates to manual selection from the Dependency Dashboard",
       "matchUpdateTypes": ["major"],
