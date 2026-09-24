@@ -389,7 +389,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         def latestCommit = lastCommitForPath(path)
 
         // log.debug(debugStatus(status))
-        ImportSynchState synchState = importSynchStateForStatus(job, latestCommit, path)
+        ImportSynchState synchState = importSynchStateForStatus(job, latestCommit, path, loadingMarker)
 
         if (originalPath && synchState == ImportSynchState.UNKNOWN) {
             // job was renamed but not file
@@ -437,7 +437,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     private ImportSynchState importSynchStateForStatus(
             JobScmReference job,
             RevCommit commit,
-            String path
+            String path,
+            Map loadingMarker
     ) {
         if (!isTrackedPath(path) || !commit) {
             // not tracked
@@ -479,7 +480,15 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         def oldPath = findOldPath.oldPath
                         def newPath = findNewPath.newPath
                         log.error("Rename detected from ${oldPath} to ${newPath}")
-                        this.importTracker.jobRenamed(job, oldPath, newPath)
+                        //only mutate the tracker while this refresh's placeholder is still current:
+                        //a concurrent delete may have already cleared this job's tracker state, and
+                        //resurrecting a rename mapping here would make DELETE_NEEDED reappear for a
+                        //job that no longer exists
+                        synchronized (jobStateMap) {
+                            if (jobStateMap.get(job.id)?.is(loadingMarker)) {
+                                this.importTracker.jobRenamed(job, oldPath, newPath)
+                            }
+                        }
                         return ImportSynchState.IMPORT_NEEDED
                     }
 
