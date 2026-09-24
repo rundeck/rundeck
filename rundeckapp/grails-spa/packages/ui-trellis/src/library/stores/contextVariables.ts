@@ -6,7 +6,15 @@ export type ContextVariable = {
   name: string;
   title: string;
   description?: string;
-  type: "job" | "node" | "result" | "execution" | "option" | "global";
+  type:
+    | "job"
+    | "node"
+    | "result"
+    | "execution"
+    | "option"
+    | "global"
+    | "note"
+    | "step";
 };
 
 export type ContextVariablesByType = {

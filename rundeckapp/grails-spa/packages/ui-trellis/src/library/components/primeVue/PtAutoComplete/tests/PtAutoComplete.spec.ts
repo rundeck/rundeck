@@ -239,6 +239,25 @@ describe("PtAutoComplete", () => {
       jest.useRealTimers();
     });
 
+    it("forwards optionDisabled to the underlying AutoComplete only in object mode", async () => {
+      const optionDisabled = (option: ContextVariable) =>
+        option.type === "note";
+
+      const objectModeWrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionDisabled,
+      });
+      expect(
+        objectModeWrapper.findComponent(AutoComplete).props("optionDisabled"),
+      ).toBe(optionDisabled);
+
+      const legacyWrapper = await createWrapper({ optionDisabled });
+      expect(
+        legacyWrapper.findComponent(AutoComplete).props("optionDisabled"),
+      ).toBeUndefined();
+    });
+
     it("forwards force-selection to the underlying AutoComplete when selectOnly is set", async () => {
       const wrapper = await createWrapper({
         suggestions: OBJECT_SUGGESTIONS,

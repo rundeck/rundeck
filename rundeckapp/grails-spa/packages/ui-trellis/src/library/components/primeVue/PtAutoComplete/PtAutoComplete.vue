@@ -21,7 +21,8 @@
       :show-empty-message="false"
       :force-selection="selectOnly"
       :option-label="isObjectMode ? optionLabel : undefined"
-      :dropdown="showOptionsOnFocus"
+      :option-disabled="isObjectMode ? optionDisabled : undefined"
+      :complete-on-focus="showOptionsOnFocus"
       @complete="onComplete"
       @option-select="handleOptionSelect"
       @keydown.enter.prevent
@@ -135,14 +136,21 @@ export default defineComponent({
       type: [String, Function] as PropType<OptionResolver | undefined>,
       default: undefined,
     },
+    optionDisabled: {
+      type: Function as PropType<
+        ((option: ContextVariable) => boolean) | undefined
+      >,
+      default: undefined,
+    },
     // Closed-list enforcement: revert to the last valid value if the user's
     // typed text doesn't match a current suggestion on blur/hide.
     selectOnly: {
       type: Boolean,
       default: false,
     },
-    // Shows a dropdown affordance that reveals the full suggestion list
-    // without requiring the user to type first.
+    // Reveals the full suggestion list on focus, without requiring the user
+    // to type first and without adding a visible dropdown button — keeps
+    // the field looking identical to a plain, type-to-search PtAutoComplete.
     showOptionsOnFocus: {
       type: Boolean,
       default: false,
