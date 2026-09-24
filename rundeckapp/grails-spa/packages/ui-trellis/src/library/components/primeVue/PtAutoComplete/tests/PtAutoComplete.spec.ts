@@ -215,6 +215,41 @@ describe("PtAutoComplete", () => {
     });
   });
 
+  describe("tab badges", () => {
+    const tabs: TabConfig[] = [
+      {
+        label: "Job",
+        filter: (s) => s.type === "job",
+        getCount: (s) => s.length,
+      },
+    ];
+
+    const renderHeader = (wrapper: any) => {
+      const headerSlot = wrapper.findComponent(AutoComplete).vm.$slots.header;
+      const vnodes = headerSlot!({});
+      return mount({ render: () => vnodes[0] });
+    };
+
+    it("shows the per-tab result-count badge by default", async () => {
+      const wrapper = await createWrapper({ tabMode: true, tabs });
+      const rendered = renderHeader(wrapper);
+
+      expect(rendered.findComponent({ name: "Badge" }).exists()).toBe(true);
+    });
+
+    it("hides the per-tab result-count badge when showTabBadges is false, keeping the tabs themselves", async () => {
+      const wrapper = await createWrapper({
+        tabMode: true,
+        tabs,
+        showTabBadges: false,
+      });
+      const rendered = renderHeader(wrapper);
+
+      expect(rendered.findComponent({ name: "Badge" }).exists()).toBe(false);
+      expect(rendered.text()).toContain("Job");
+    });
+  });
+
   describe("object mode (optionValue provided)", () => {
     // Still plain ContextVariable objects — `description` stands in as the
     // field carrying the underlying committed value (distinct from the

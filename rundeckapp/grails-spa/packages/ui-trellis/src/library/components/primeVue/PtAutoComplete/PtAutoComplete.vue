@@ -43,6 +43,7 @@
           >
             <span class="autocomplete-tab-label">{{ tab.label }}</span>
             <Badge
+              v-if="showTabBadges"
               :value="tab.getCount(allSuggestions).toString()"
               :severity="selectedTabIndex === index ? undefined : 'secondary'"
               size="small"
@@ -186,6 +187,12 @@ export default defineComponent({
     tabs: {
       type: Array as PropType<TabConfig[]>,
       default: undefined,
+    },
+    // Shows/hides the per-tab result-count Badge, independent of tabMode
+    // itself, for consumers that want the tab bar without the counts.
+    showTabBadges: {
+      type: Boolean,
+      default: true,
     },
     replaceOnSelect: {
       type: Boolean,
