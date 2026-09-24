@@ -24,7 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * to evict for that case specifically; however, nothing proactively caps or expires entries
  * that do get written, so an unbounded stream of callers that never call
  * {@link #takeFinishedBreakdown(Long)} could still accumulate entries indefinitely. This is
- * accepted for now, since this store exists purely to validate the metric's computation.
+ * accepted for now -- in practice a caller always does take the entry shortly after
+ * {@code finishWorkflowExecution} fires, since this store now backs a real runtime path (the
+ * Micrometer metric, and Runbook Automation's consumption-billing subscriber both read
+ * through it via {@code ExecutionCompleteEvent}), not just metric validation.
  */
 public final class StepNodeSecondsStore {
     private static final StepNodeSecondsStore INSTANCE = new StepNodeSecondsStore();

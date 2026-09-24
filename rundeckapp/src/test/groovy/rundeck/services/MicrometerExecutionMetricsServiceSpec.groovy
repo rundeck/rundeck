@@ -164,7 +164,7 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
             service.recordStepNodeSeconds(exec, 42L)
 
         then:
-            meterRegistry.get('rundeck.execution.step_node_seconds')
+            meterRegistry.get('rundeck.execution.step_node_duration')
                 .tag('project', 'p1').tag('status', 'succeeded')
                 .timer().count() == 1L
     }
@@ -202,7 +202,7 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
             service.recordStepNodeSeconds(exec, 42L)
 
         then:
-            meterRegistry.get('rundeck.execution.step_node_seconds')
+            meterRegistry.get('rundeck.execution.step_node_duration')
                 .tag('project', 'p1').tag('status', 'succeeded').tag('job_id', 'job-uuid-1').tag('job_name', 'my-job')
                 .timer().count() == 1L
     }
@@ -272,7 +272,7 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
         then:
             meterRegistry.find('rundeck.executions').tag('job_id', 'job-uuid-1').counter() == null
             meterRegistry.find('rundeck.execution.duration').tag('job_id', 'job-uuid-1').timer() == null
-            meterRegistry.find('rundeck.execution.step_node_seconds').tag('job_id', 'job-uuid-1').timer() == null
+            meterRegistry.find('rundeck.execution.step_node_duration').tag('job_id', 'job-uuid-1').timer() == null
             meterRegistry.find('rundeck.executions.running').tag('job_id', 'job-uuid-1').gauge() == null
             meterRegistry.get('rundeck.executions').tag('job_id', 'job-uuid-2').counter().count() == 1.0d
     }

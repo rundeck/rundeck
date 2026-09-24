@@ -30,8 +30,8 @@ class ExecutionCompleteEvent {
     Map nodeStatus
     Map context
     /**
-     * Sum of step-node-second durations for this execution (Section 2 of the RBA
-     * consumption-billing proposal), or null if none was recorded -- e.g. the
+     * Sum of step-node-second durations for this execution (Section 2 of the Runbook
+     * Automation consumption-billing proposal), or null if none was recorded -- e.g. the
      * StepNodeSecondsWorkflowListener never finalized a breakdown for this execution.
      * Derived from {@link #stepNodeSecondsBreakdown}'s values -- kept as its own field since
      * most consumers (e.g. the Micrometer metric) only want the scalar.
@@ -46,7 +46,7 @@ class ExecutionCompleteEvent {
      * plugin/provider type that ran, so a consumer can decide billability by plugin type
      * without needing to re-read the job definition or execution state. Null under the same
      * conditions {@link #stepNodeSeconds} is null. Lets a future consumer (e.g. a billing
-     * subscriber excluding "non-billable" steps -- RBA_BILLING proposal Section 6.2.1)
+     * subscriber excluding "non-billable" steps -- Runbook Automation billing proposal Section 6.2.1)
      * exclude specific steps' contributions.
      */
     Map<String, StepNodeSecondsEntry> stepNodeSecondsBreakdown

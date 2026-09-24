@@ -166,7 +166,7 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
     }
 
     private Timer stepNodeSecondsTimer(List<Tag> tags) {
-        Timer.builder('rundeck.execution.step_node_seconds')
+        Timer.builder('rundeck.execution.step_node_duration')
              .tags(tags)
              .register(meterRegistry)
     }
@@ -188,7 +188,7 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
                 key "rundeck.metrics.execution.job.dimension.enabled"
                 label "Execution Metrics: job_id/job_name dimension"
                 description "Tag rundeck_executions_total/rundeck_execution_duration_seconds/" +
-                    "rundeck_execution_step_node_seconds/rundeck_executions_running with " +
+                    "rundeck_execution_step_node_duration/rundeck_executions_running with " +
                     "job_id and job_name (scheduled jobs only, ad-hoc executions excluded). Off by " +
                     "default: cardinality is bounded by the job catalog size, not execution volume, " +
                     "but large job catalogs should size this before enabling."
@@ -218,7 +218,7 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
         if (!jobId) {
             return
         }
-        [ 'rundeck.executions', 'rundeck.execution.duration', 'rundeck.execution.step_node_seconds', 'rundeck.executions.running' ].each { String name ->
+        [ 'rundeck.executions', 'rundeck.execution.duration', 'rundeck.execution.step_node_duration', 'rundeck.executions.running' ].each { String name ->
             List<Meter> matched = new ArrayList<Meter>(meterRegistry.find(name).tag('job_id', jobId).meters())
             matched.each { Meter meter -> meterRegistry.remove(meter.getId()) }
         }
