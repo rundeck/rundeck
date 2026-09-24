@@ -231,6 +231,24 @@ class BaseGitPlugin {
         jobStateMap.remove(jobId, loadingMarker)
     }
 
+    /**
+     * Initialize a job-status cache entry only when one is not already present.
+     *
+     * <p>The synchronized wrapper used for {@link #jobStateMap} only serializes individual map
+     * operations, so callers that need an atomic check-and-insert must synchronize on the shared
+     * map monitor around the whole sequence.
+     *
+     * @param jobId job identifier
+     * @param initialStatus initial cache entry, typically a LOADING placeholder
+     */
+    protected void initializeJobStatusIfAbsent(String jobId, Map initialStatus) {
+        synchronized (jobStateMap) {
+            if (!jobStateMap.containsKey(jobId)) {
+                jobStateMap[jobId] = initialStatus
+            }
+        }
+    }
+
     def serialize(
             final JobExportReference job,
             String format,

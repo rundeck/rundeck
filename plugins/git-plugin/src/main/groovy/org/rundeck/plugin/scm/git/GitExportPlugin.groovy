@@ -706,10 +706,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     @Override
     void initJobsStatus(List<JobExportReference> jobs) {
         jobs.each { job ->
-            //check-then-insert must be atomic: a concurrent refresh publishing its completed
-            //status between the check and the assignment would otherwise be overwritten by this
-            //LOADING placeholder, which no refresh then owns and which never gets cleared
-            jobStateMap.putIfAbsent(job.id, initJobStatus(job))
+            initializeJobStatusIfAbsent(job.id, initJobStatus(job))
         }
     }
 
