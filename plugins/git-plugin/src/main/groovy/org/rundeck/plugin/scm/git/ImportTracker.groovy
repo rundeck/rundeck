@@ -154,6 +154,9 @@ class ImportTracker {
             pathsToRemove.each { String path ->
                 trackedCommits.remove(path)
                 trackedJobIds.remove(path)
+                //the job is gone: any rename mapping still naming this path (as old or new name)
+                //would otherwise leave wasRenamed() reporting true for a path whose job no longer exists
+                renamedTrackedItems.untrack(path)
             }
             canonicalPath ?: (pathsToRemove ? pathsToRemove.iterator().next() : null)
         }

@@ -96,13 +96,26 @@ class SshjSession implements RemoteSession {
 
             return ssh
         } catch (IOException e) {
-            ssh.close()
+            closeQuietly(ssh, e)
             throw new TransportException(uri, e.getMessage(), e)
         } catch (Throwable t) {
             //ensure the client is never leaked, even if a non-IOException escapes
             //host-key setup, connect, or key-provider/auth handling above
-            ssh.close()
+            closeQuietly(ssh, t)
             throw t
+        }
+    }
+
+    /**
+     * Close the client, attaching any close failure to the primary failure as suppressed
+     * rather than letting it replace it (which would lose the original cause and, for an
+     * {@link IOException}, the required {@link TransportException} wrapping).
+     */
+    private static void closeQuietly(SSHClient ssh, Throwable primary) {
+        try {
+            ssh.close()
+        } catch (Throwable closeFailure) {
+            primary.addSuppressed(closeFailure)
         }
     }
 
