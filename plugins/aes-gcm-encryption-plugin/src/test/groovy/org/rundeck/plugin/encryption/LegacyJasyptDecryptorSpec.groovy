@@ -2,6 +2,7 @@ package org.rundeck.plugin.encryption
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.jasypt.encryption.pbe.StandardPBEByteEncryptor
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -27,10 +28,24 @@ class LegacyJasyptDecryptorSpec extends Specification {
     /**
      * Encrypt data using the actual org.jasypt library's StandardPBEByteEncryptor, to prove
      * LegacyJasyptDecryptor is compatible with real Jasypt output, not just our own
-     * reimplementation (RUN-4976 test-coverage gap).
+     * reimplementation.
      */
     private byte[] realJasyptEncrypt(byte[] plaintext, String password, String algorithm, String provider, int iterations) {
         def encryptor = new StandardPBEByteEncryptor()
+        encryptor.setAlgorithm(algorithm)
+        encryptor.setProviderName(provider)
+        encryptor.setPassword(password)
+        encryptor.setKeyObtentionIterations(iterations)
+        return encryptor.encrypt(plaintext)
+    }
+
+    /**
+     * Encrypt a String using the actual org.jasypt library's StandardPBEStringEncryptor, which
+     * Base64-encodes its binary output as a String. Used to reproduce, with the real library
+     * (not an assumption about it), the exact byte shape that broke the raw-binary-only decryptor.
+     */
+    private String realJasyptStringEncrypt(String plaintext, String password, String algorithm, String provider, int iterations) {
+        def encryptor = new StandardPBEStringEncryptor()
         encryptor.setAlgorithm(algorithm)
         encryptor.setProviderName(provider)
         encryptor.setPassword(password)
@@ -213,28 +228,30 @@ class LegacyJasyptDecryptorSpec extends Specification {
     }
 
     /**
-     * RUN-4976: MeteoSwiss's scm-export.properties bytes are not block-aligned as raw
-     * Jasypt binary output, but decrypt correctly once Base64-decoded first. Reproduces
-     * the "last block incomplete in decryption" crash-loop with a Base64-wrapped payload.
+     * Reproduces a real crash-loop signature ("last block incomplete in decryption") seen when
+     * stored bytes turn out not to be block-aligned raw Jasypt binary output. Uses the actual
+     * org.jasypt library's StandardPBEStringEncryptor -- which Base64-encodes its binary output
+     * as a String -- rather than manually Base64-wrapping our own reimplementation's output, so
+     * this proves compatibility with real library behavior, not just an assumption about it.
      */
     def "decrypt recovers Base64-encoded legacy Jasypt payload via fallback"() {
         given:
-        def password = "meteoswiss-scm-password"
-        def plaintext = "scm.export.enabled=true\nscm.export.branch=main".bytes
-        def rawEncrypted = jasyptEncrypt(plaintext, password, "PBEWITHSHA256AND128BITAES-CBC-BC", "BC", 1000)
-        def base64Wrapped = Base64.encoder.encode(rawEncrypted)
+        def password = "scm-config-password"
+        def plaintext = "scm.export.enabled=true\nscm.export.branch=main"
+        def base64String = realJasyptStringEncrypt(plaintext, password, "PBEWITHSHA256AND128BITAES-CBC-BC", "BC", 1000)
+        def storedBytes = base64String.getBytes("UTF-8")
         def decryptor = LegacyJasyptDecryptor.defaultStorage()
 
         when:
-        def result = decryptor.decrypt(password, base64Wrapped)
+        def result = decryptor.decrypt(password, storedBytes)
 
         then:
-        result == plaintext
+        new String(result, "UTF-8") == plaintext
     }
 
     /**
-     * RUN-4976: after the Base64 fallback is exhausted, genuinely corrupt/undecryptable content
-     * (not block-aligned, not Base64, not plaintext-shaped) must still throw -- this is the
+     * After the Base64 fallback is exhausted, genuinely corrupt/undecryptable content (not
+     * block-aligned, not Base64, not plaintext-shaped) must still throw -- this is the
      * decryptor-level half of the "SCM config stays loud" guarantee.
      */
     def "decrypt still throws for genuinely corrupt content after Base64 fallback is exhausted"() {

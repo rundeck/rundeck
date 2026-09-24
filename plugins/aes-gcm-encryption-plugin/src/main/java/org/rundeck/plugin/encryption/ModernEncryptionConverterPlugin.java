@@ -32,6 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * AES-GCM storage encryption plugin using AES-256-GCM with PBKDF2 key derivation.
@@ -146,7 +148,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
             } else {
                 logger.debug("readResource (jasypt-encrypted, legacy) {}", path);
             }
-            return decryptLegacy(hasInputStream);
+            return decryptLegacy(path, hasInputStream);
         }
         if (aesEncrypted) {
             logger.debug("readResource (aes-gcm-encrypted) {}", path);
@@ -202,7 +204,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
         }
     }
 
-    private HasInputStream decryptLegacy(HasInputStream input) {
+    private HasInputStream decryptLegacy(Path path, HasInputStream input) {
         try {
             return new TransformStream(input) {
                 @Override
@@ -211,13 +213,18 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
                         return getLegacyDecryptor().decrypt(getResolvedPassword(), data);
                     } catch (EncryptionException e) {
                         if (looksLikePlaintext(data)) {
-                            // Pre-existing 5.x condition (RUN-4976): the jasypt-encryption:encrypted
-                            // flag was set on this record, but the content was never actually
-                            // encrypted. Decrypting already-plaintext bytes can never succeed, so
-                            // recover the original content instead of failing every read.
-                            logger.warn("readResource: content flagged jasypt-encryption:encrypted=true "
-                                    + "failed to decrypt but looks like plaintext; returning raw content "
-                                    + "unchanged (see RUN-4976).");
+                            // A pre-existing 5.x condition: the jasypt-encryption:encrypted flag was
+                            // set on this record, but the content was never actually encrypted.
+                            // Decrypting already-plaintext bytes can never succeed, so recover the
+                            // original content instead of failing every read.
+                            if (plaintextFallbackWarnedPaths.add(String.valueOf(path))) {
+                                logger.warn("readResource: content flagged jasypt-encryption:encrypted=true "
+                                        + "at '{}' failed to decrypt but looks like plaintext; returning raw "
+                                        + "content unchanged.", path);
+                            } else {
+                                logger.debug("readResource: returning raw plaintext content for '{}' "
+                                        + "(already warned).", path);
+                            }
                             return data;
                         }
                         throw e;
@@ -231,25 +238,22 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
     }
 
     /**
-     * Conservative heuristic for detecting that {@code data} is already plaintext (e.g. a Java
-     * properties file starting with {@code '#'}) rather than genuine ciphertext: ciphertext bytes
-     * are effectively random and essentially never fall entirely within the printable-ASCII range.
+     * Records paths for which the plaintext-fallback warning has already been logged, so a resource
+     * re-read on every project-cache refresh (e.g. every minute) doesn't log a fresh WARNING each time.
+     */
+    private final Set<String> plaintextFallbackWarnedPaths = ConcurrentHashMap.newKeySet();
+
+    /**
+     * Conservative heuristic for detecting that {@code data} is already plaintext rather than genuine
+     * ciphertext: a Java properties file (including {@code project.properties}) always starts with a
+     * {@code '#'} header comment written by {@code Properties.store()}, and {@code '#'} cannot appear
+     * as the first byte of valid Base64 or of ciphertext produced by this decryptor (its salt is random
+     * binary). Checking only the first byte, rather than scanning for printable ASCII, deliberately
+     * excludes Base64-shaped ciphertext so a still-undecryptable Base64 payload (e.g. wrong password)
+     * keeps failing loudly instead of being returned as "plaintext".
      */
     private static boolean looksLikePlaintext(byte[] data) {
-        if (data == null || data.length == 0) {
-            return false;
-        }
-        int sampleSize = Math.min(data.length, 512);
-        for (int i = 0; i < sampleSize; i++) {
-            int b = data[i] & 0xFF;
-            if (b == '\n' || b == '\r' || b == '\t') {
-                continue;
-            }
-            if (b < 0x20 || b > 0x7E) {
-                return false;
-            }
-        }
-        return true;
+        return data != null && data.length > 0 && data[0] == '#';
     }
 
     char[] getResolvedPassword() {

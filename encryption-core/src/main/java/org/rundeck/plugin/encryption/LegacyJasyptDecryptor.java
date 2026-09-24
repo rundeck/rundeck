@@ -17,8 +17,6 @@
 package org.rundeck.plugin.encryption;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -51,8 +49,6 @@ import java.util.Base64;
  * </ul>
  */
 public class LegacyJasyptDecryptor {
-
-    private static final Logger logger = LoggerFactory.getLogger(LegacyJasyptDecryptor.class);
 
     static {
         if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
@@ -117,10 +113,7 @@ public class LegacyJasyptDecryptor {
             byte[] base64Decoded = tryBase64Decode(encryptedMessage);
             if (base64Decoded != null && base64Decoded.length > saltSizeBytes) {
                 try {
-                    byte[] result = decryptRaw(password, base64Decoded);
-                    logger.warn("Legacy Jasypt content was Base64-encoded rather than raw binary; "
-                            + "recovered via fallback decode.");
-                    return result;
+                    return decryptRaw(password, base64Decoded);
                 } catch (EncryptionException base64Failure) {
                     // Base64 decoding "succeeded" structurally but didn't yield valid ciphertext either;
                     // surface the original raw-binary failure, which is the more informative one.

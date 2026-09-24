@@ -32,7 +32,6 @@ repositories {
 
 dependencies {
     implementation("org.bouncycastle:bcprov-jdk18on:${bouncyCastleVersion}")
-    implementation("org.slf4j:slf4j-api:${slf4jVersion}")
 
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "org.apache.groovy:groovy-all:${groovyVersion}"

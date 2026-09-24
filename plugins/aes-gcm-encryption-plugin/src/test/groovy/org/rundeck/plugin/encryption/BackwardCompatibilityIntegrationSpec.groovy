@@ -359,17 +359,17 @@ class BackwardCompatibilityIntegrationSpec extends Specification {
     }
 
     // ========================================================================
-    // SCENARIO 7: RUN-4976 — stale jasypt-encryption:encrypted flag on plaintext content
+    // SCENARIO 7: stale jasypt-encryption:encrypted flag on plaintext content
     //
-    // Reproduces MeteoSwiss's project.properties: content is genuine plaintext (a normal
-    // Java properties file starting with '#'), but the metadata still carries a stale
-    // jasypt-encryption:encrypted=true flag from the old 5.x plugin. readResource() must
-    // recover the plaintext instead of throwing, since decrypting already-plaintext bytes
-    // can never succeed.
+    // Reproduces a real-world condition seen after a 5.x -> 6.x upgrade: project.properties
+    // content is genuine plaintext (a normal Java properties file starting with '#'), but
+    // the metadata still carries a stale jasypt-encryption:encrypted=true flag from the old
+    // 5.x plugin. readResource() must recover the plaintext instead of throwing, since
+    // decrypting already-plaintext bytes can never succeed.
     // ========================================================================
 
-    def "RUN-4976 recovery: plaintext content with a stale jasypt-encryption:encrypted flag is returned as-is"() {
-        given: "content that is genuine plaintext, matching MeteoSwiss's project.properties"
+    def "plaintext content with a stale jasypt-encryption:encrypted flag is returned as-is"() {
+        given: "content that is genuine plaintext, matching a real project.properties file"
         def plugin = createModernPlugin()
         def path = Mock(Path)
         def plaintextProperties = "#Project configuration\nproject.name=test\nproject.description=blah\n".bytes
@@ -384,7 +384,7 @@ class BackwardCompatibilityIntegrationSpec extends Specification {
         readAllBytes(result) == plaintextProperties
     }
 
-    def "RUN-4976: genuinely corrupt, non-plaintext-shaped content still throws (SCM config stays loud)"() {
+    def "genuinely corrupt, non-plaintext-shaped content still throws (SCM config stays loud)"() {
         given: "corrupt/undecryptable binary content, simulating a real scm-export.properties failure"
         def plugin = createModernPlugin()
         def path = Mock(Path)
@@ -398,6 +398,24 @@ class BackwardCompatibilityIntegrationSpec extends Specification {
         readAllBytes(plugin.readResource(path, meta, mockStream(corrupt)))
 
         then: "the plaintext fallback does not apply, and the failure still propagates unchanged"
+        thrown(RuntimeException)
+    }
+
+    def "Base64-wrapped legacy payload that fails to decrypt (wrong password) still throws, not returned as plaintext"() {
+        given: "a Base64-encoded legacy Jasypt payload -- the shape the Base64 fallback targets -- encrypted with a DIFFERENT password than the plugin is configured with"
+        def plugin = createModernPlugin() // configured with PRODUCTION_PASSWORD
+        def path = Mock(Path)
+        def wrongPasswordEncryptor = LegacyJasyptEncryptor.defaultStorage()
+        def rawEncrypted = wrongPasswordEncryptor.encrypt("a-completely-different-password", "some secret value".bytes)
+        def base64Wrapped = Base64.encoder.encode(rawEncrypted)
+
+        and:
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "reading it with the wrong (configured) password"
+        readAllBytes(plugin.readResource(path, meta, mockStream(base64Wrapped)))
+
+        then: "the Base64 text is entirely printable ASCII, but it must NOT be mistaken for plaintext content -- the read still fails loudly"
         thrown(RuntimeException)
     }
 
