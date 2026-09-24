@@ -34,6 +34,7 @@ import org.eclipse.jgit.lib.ObjectReader
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevSort
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.TreeWalk
@@ -72,12 +73,16 @@ class GitUtil {
         }
     }
 
+    /**
+     * Blob id of a regular file at the given path in the commit tree.
+     *
+     * @return the object id, or null if the commit is null, the path is absent, or it is not a regular file
+     */
     static ObjectId lookupId(Repository repo, RevCommit commit, String path) {
         if (!commit) {
             return null
         }
         final TreeWalk walk2 = TreeWalk.forPath(repo, path, commit.getTree())
-
         if (walk2 == null) {
             return null
         }
@@ -85,7 +90,6 @@ class GitUtil {
             if ((walk2.getRawMode(0) & FileMode.TYPE_MASK) != FileMode.TYPE_FILE) {
                 return null
             }
-
             return walk2.getObjectId(0)
         } finally {
             walk2.close()
@@ -198,11 +202,21 @@ class GitUtil {
     }
 
     static RevCommit lastCommitForPath(Repository repo, Git git, String path) {
-        def head = getHead(repo)
-        if (!head) {
+        lastCommitForPath(repo, git, getHead(repo), path)
+    }
+
+    /**
+     * Last commit touching the path, walking history from the given start commit instead of the current HEAD.
+     *
+     * @param start commit to start from; null yields null
+     * @param path repository path, or null for the start commit's history
+     * @return the most recent commit touching the path, or null if none
+     */
+    static RevCommit lastCommitForPath(Repository repo, Git git, RevCommit start, String path) {
+        if (!start) {
             return null
         }
-        def logb = git.log()
+        def logb = git.log().add(start)
         if (path) {
             logb.addPath(path)
         }
@@ -219,6 +233,75 @@ class GitUtil {
         } finally {
             log.close()
         }
+    }
+
+    /**
+     * Resolve the last commit touching each of the given paths with a single history walk from head, giving
+     * exactly the commit that {@code git log -- path} reports for every path.
+     *
+     * <p>Mirrors JGit's path-filtered rev walk per path: a commit is attributed to a path when the path
+     * differs from every parent (or exists in a root commit); when a merge leaves the path identical to some
+     * parent, only the first such parent is followed for that path. Paths are carried down the commit graph
+     * in topological order as pending sets, so the chains for all paths share one traversal. Paths never
+     * found before the history is exhausted are absent from the result.
+     *
+     * @param repo repository
+     * @param head commit to start walking from
+     * @param paths paths to resolve
+     * @return map of path to the last commit that touched it
+     */
+    static Map<String, RevCommit> lastCommitsForPaths(Repository repo, RevCommit head, Collection<String> paths) {
+        Map<String, RevCommit> found = [:]
+        if (!paths || !head) {
+            return found
+        }
+        RevWalk walk = null
+        TreeWalk tree = null
+        try {
+            walk = new RevWalk(repo)
+            walk.retainBody = false
+            walk.sort(RevSort.TOPO)
+            RevCommit start = walk.parseCommit(head)
+            walk.markStart(start)
+            tree = new TreeWalk(repo)
+            tree.recursive = true
+            tree.filter = PathFilterGroup.createFromStrings(paths)
+            Map<RevCommit, Set<String>> pending = [(start): new HashSet<String>(paths)]
+            for (RevCommit commit = walk.next(); commit && pending; commit = walk.next()) {
+                Set<String> want = pending.remove(commit)
+                if (!want) {
+                    continue
+                }
+                int parentCount = commit.parentCount
+                commit.parents.each { walk.parseHeaders(it) }
+                tree.reset((commit.parents*.tree + [commit.tree]) as ObjectId[])
+                Set<String> seen = []
+                while (tree.next()) {
+                    String path = tree.pathString
+                    if (!(path in want)) {
+                        continue
+                    }
+                    seen << path
+                    Integer sameParent = (0..<parentCount).find { int i ->
+                        tree.getRawMode(i) == tree.getRawMode(parentCount) && tree.idEqual(i, parentCount)
+                    }
+                    if (sameParent == null) {
+                        found[path] = commit
+                    } else {
+                        pending.computeIfAbsent(commit.parents[sameParent]) { new HashSet<String>() } << path
+                    }
+                }
+                if (parentCount > 0 && seen.size() < want.size()) {
+                    // paths absent from this commit and all its parents are unchanged here: follow the first parent
+                    pending.computeIfAbsent(commit.parents[0]) { new HashSet<String>() }.addAll(want - seen)
+                }
+            }
+            found.values().each { walk.parseBody(it) }
+        } finally {
+            tree?.close()
+            walk?.close()
+        }
+        found
     }
 
     static List<DiffEntry> listChanges(Git git, String oldRef, String newRef) {

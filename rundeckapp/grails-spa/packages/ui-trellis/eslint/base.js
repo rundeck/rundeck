@@ -1,0 +1,83 @@
+/**
+ * Shared ESLint rule set for Rundeck front-end packages.
+ *
+ * Consumed by ui-trellis (`.eslintrc.js` in this package) and by rundeckpro,
+ * which loads it from the published `@rundeck/ui-trellis` package via
+ * `require.resolve("@rundeck/ui-trellis/eslint/base.js")`. Change rules here
+ * once instead of in each consumer.
+ *
+ * Only reference plugins and configs that every consumer pins at the same
+ * version. Package-specific settings (`ignorePatterns`, extra overrides or
+ * severity changes) belong in the consuming `.eslintrc.js`.
+ */
+module.exports = {
+  env: {
+    node: true,
+  },
+  parser: "vue-eslint-parser",
+  parserOptions: {
+    parser: "@typescript-eslint/parser",
+    sourceType: "module",
+    ecmaVersion: "latest",
+    extraFileExtensions: [".vue"],
+    ecmaFeatures: {
+      jsx: false,
+    },
+  },
+  globals: {
+    defineProps: "readonly",
+    defineEmits: "readonly",
+    withDefaults: "readonly",
+  },
+  rules: {
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    // All rules as warnings for now
+    "vue/enforce-style-attribute": ["warn", { allow: ["scoped"] }],
+    "prettier/prettier": "error",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/ban-types": "warn",
+    "@typescript-eslint/no-var-requires": "warn",
+    "vuejs-accessibility/label-has-for": "warn",
+    "vuejs-accessibility/click-events-have-key-events": "warn",
+    "vuejs-accessibility/no-static-element-interactions": "warn",
+    "vuejs-accessibility/form-control-has-label": "warn",
+    "vuejs-accessibility/interactive-supports-focus": "warn",
+    "vuejs-accessibility/anchor-has-content": "warn",
+    "vuejs-accessibility/no-autofocus": "warn",
+    "vuejs-accessibility/alt-text": "warn",
+    "vuejs-accessibility/iframe-has-title": "warn",
+    "vue/no-mutating-props": "warn",
+    "vue/require-v-for-key": "warn",
+    "vue/no-unused-components": "warn",
+    "vue/multi-word-component-names": "warn",
+    "vue/return-in-computed-property": "warn",
+    "vue/require-slots-as-functions": "warn",
+    "vue/valid-v-bind": "warn",
+    "vue/require-toggle-inside-transition": "warn",
+    "vue/no-reserved-component-names": "warn",
+    "vue/require-valid-default-prop": "warn",
+    "vue/no-use-v-if-with-v-for": "warn",
+    "vue/no-unused-vars": "warn",
+    "prefer-const": "warn",
+    "storybook/story-exports": "warn",
+    "storybook/context-in-play-function": "warn",
+    complexity: ["warn", 25],
+  },
+  overrides: [
+    {
+      files: ["**/*.spec.ts", "**/*.spec.js", "**/__tests__/**"],
+      rules: {
+        complexity: "off",
+      },
+    },
+  ],
+  extends: [
+    "@vue/typescript/recommended",
+    "plugin:vue/vue3-recommended",
+    "plugin:storybook/recommended",
+    "plugin:vuejs-accessibility/recommended",
+    // Must stay last so it can turn off rules that conflict with Prettier
+    "plugin:prettier/recommended",
+  ],
+};

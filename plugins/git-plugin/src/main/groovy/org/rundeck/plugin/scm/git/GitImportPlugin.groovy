@@ -386,7 +386,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             Map loadingMarker
     ) {
         def jobstat = Collections.synchronizedMap([:])
-        def latestCommit = GitUtil.lastCommitForPath repo, git, path
+        def latestCommit = lastCommitForPath(path)
 
         // log.debug(debugStatus(status))
         ImportSynchState synchState = importSynchStateForStatus(job, latestCommit, path)
@@ -651,7 +651,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         path = originalPath ?: getRelativePathForJob(job)
         def temp = serializeTemp(job, config.format, config.importPreserve, config.importArchive)
         try {
-            def latestCommit = GitUtil.lastCommitForPath repo, git, path
+            def latestCommit = lastCommitForPath(path)
 
             def id = latestCommit ? lookupId(latestCommit, path) : null
 
@@ -713,13 +713,17 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 }
             }
 
+            //job id by path, resolved once instead of scanning the snapshot per repo file
+            Map<String, String> jobIdByPath = [:]
+            jobStateSnapshot.each { k, v -> if (v?.path) jobIdByPath.putIfAbsent(v.path.toString(), k) }
+
             // walk the repo files and look for possible candidates
             walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
                 found << trackPath(
                         walk.getPathString(),
                         trackedItemNeedsImport(walk.getPathString()),
                         importTracker.trackedJob(walk.getPathString()) ?:
-                                jobStateSnapshot.find {String key, Map values -> values.path?.equals(walk.getPathString())}?.key?.toString() //get job id from jobStateMap if importTracker is empty
+                                jobIdByPath[walk.getPathString()] //get job id from jobStateMap if importTracker is empty
                 )
             }
             return found

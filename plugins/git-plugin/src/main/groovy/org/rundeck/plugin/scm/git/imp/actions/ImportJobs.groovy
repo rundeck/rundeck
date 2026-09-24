@@ -111,7 +111,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
             }
             def bytes = loader.getBytes(GitUtil.MAX_BLOB_SIZE as int)
 
-            def commit = GitUtil.lastCommitForPath plugin.repo, plugin.git, path
+            def commit = plugin.lastCommitForPath(path)
             def meta = GitUtil.metaForCommit(commit)
             meta.url = plugin.config.url
 
