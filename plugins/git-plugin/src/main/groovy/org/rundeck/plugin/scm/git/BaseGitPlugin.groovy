@@ -43,6 +43,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory
 import org.eclipse.jgit.transport.SshTransport
+import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.eclipse.jgit.transport.TrackingRefUpdate
 import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.transport.URIish
@@ -467,8 +468,56 @@ class BaseGitPlugin {
         GitUtil.lastCommit repo, git
     }
 
+    /**
+     * Path to last-commit index for the current HEAD. Rebuilt with one history walk whenever HEAD changes.
+     */
+    volatile Map lastCommitMemo = [head: null, commits: new ConcurrentHashMap<String, Optional<RevCommit>>()]
+    private final Object lastCommitMemoLock = new Object()
+
+    /**
+     * Last commit that touched the path, memoized per HEAD: the first lookup after HEAD changes builds a
+     * path to commit index for the whole HEAD tree with a single history walk; paths outside that tree
+     * (deleted or renamed files) fall back to a per-path log from the same indexed HEAD, cached until HEAD
+     * changes again. Every value in an index is therefore relative to that index's HEAD, whatever HEAD the
+     * repository moves to while a lookup is in flight.
+     *
+     * @param path repository path
+     * @return last commit touching the path, or null if none
+     */
     RevCommit lastCommitForPath(String path) {
-        GitUtil.lastCommitForPath repo, git, path
+        ObjectId headId = repo.resolve(Constants.HEAD)
+        if (!headId || !path) {
+            return GitUtil.lastCommitForPath(repo, git, path)
+        }
+        Map memo = lastCommitMemo
+        if (memo.head != headId) {
+            memo = rebuildLastCommitMemo()
+        }
+        RevCommit indexedHead = memo.head
+        memo.commits.computeIfAbsent(path) { String p ->
+            Optional.ofNullable(GitUtil.lastCommitForPath(repo, git, indexedHead, p))
+        }.orElse(null)
+    }
+
+    /**
+     * Rebuild the path to commit index for the current HEAD under a lock, so concurrent readers that observe a
+     * new HEAD share one history walk instead of each running their own, and a slower reader cannot publish an
+     * index for an older HEAD over a newer one.
+     *
+     * @return the index for the HEAD resolved while holding the lock
+     */
+    private Map rebuildLastCommitMemo() {
+        synchronized (lastCommitMemoLock) {
+            RevCommit head = GitUtil.getHead(repo)
+            Map memo = lastCommitMemo
+            if (!head || memo.head == head) {
+                return memo
+            }
+            Map<String, RevCommit> bulk = GitUtil.lastCommitsForPaths(repo, head, GitUtil.listPaths(git, head.tree.name))
+            memo = [head: head, commits: new ConcurrentHashMap<>(bulk.collectEntries { p, c -> [p, Optional.of(c)] })]
+            lastCommitMemo = memo
+            return memo
+        }
     }
 
     static String expand(final String source, final ScmUserInfo scmUserInfo) {
@@ -549,6 +598,26 @@ class BaseGitPlugin {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         contents.writeContent(byteArrayOutputStream);
         return byteArrayOutputStream.toByteArray();
+    }
+
+    /**
+     * Returns {@code true} when {@code base} is an existing git workdir whose HEAD
+     * is already checked out on {@code branchName}.
+     */
+    protected boolean workdirCheckedOutOn(File base, String branchName) {
+        if (!base?.isDirectory() || !new File(base, ".git").isDirectory() || !branchName) {
+            return false
+        }
+        def existing = null
+        try {
+            existing = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
+            return existing.getFullBranch() == "refs/heads/${branchName}"
+        } catch (Exception e) {
+            logger.debug("Could not read existing workdir branch at ${base}: ${e.message}", e)
+            return false
+        } finally {
+            existing?.close()
+        }
     }
 
     private void removeWorkdir(File base) {
@@ -699,6 +768,15 @@ class BaseGitPlugin {
         return false
     }
 
+    /**
+     * Creates {@code newBranch} from the remote base, pushes it, and only then checks
+     * it out locally. The checkout keeps HEAD on the new branch so a follow-up
+     * {@link #cloneOrCreate} does not treat the workdir as a branch mismatch and
+     * delete it. It deliberately runs after the push is validated: leaving HEAD on
+     * the base branch when the push is rejected lets the next initialize detect the
+     * mismatch and fail again, instead of succeeding with a branch that exists only
+     * locally.
+     */
     protected void createBranch(ScmOperationContext context, String newBranch, String baseBranch){
         def createCommand = git.branchCreate()
                 .setName(newBranch)
@@ -713,7 +791,7 @@ class BaseGitPlugin {
         }
         def pushb = git.push()
         pushb.setRemote(REMOTE_NAME)
-        pushb.add(branch)
+        pushb.add(newBranch)
         setupTransportAuthentication(sshConfig, context, pushb)
 
         def push
@@ -723,7 +801,18 @@ class BaseGitPlugin {
             logger.debug("Failed push to remote: ${e.message}", e)
             throw new ScmPluginException("Failed push to remote: ${e.message}", e)
         }
+        def updates = (push*.remoteUpdates).flatten()
+        def failedUpdates = updates.findAll { it.status != RemoteRefUpdate.Status.OK }
+        if (failedUpdates) {
+            throw new ScmPluginException("Failed push to remote: " + failedUpdates)
+        }
 
+        try {
+            git.checkout().setName(newBranch).call()
+        } catch (Exception e) {
+            logger.debug("Failed checking out branch ${newBranch}: ${e.message}", e)
+            throw new ScmPluginException("Failed checking out branch ${newBranch}: ${e.message}", e)
+        }
     }
 
 
