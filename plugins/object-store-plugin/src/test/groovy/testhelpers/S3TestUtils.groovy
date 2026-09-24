@@ -22,8 +22,10 @@ import io.minio.errors.ErrorResponseException
 import org.rundeck.plugin.objectstore.tree.ObjectStoreTree
 import java.util.concurrent.TimeUnit
 
-
-class MinioTestUtils {
+/**
+ * Helpers for tests that run against an S3-compatible test server.
+ */
+class S3TestUtils {
     static void ifNotExistAdd(MinioClient mClient, String bucket, String key, String content, Map<String,String> meta) {
         Map<String, String> fixedheaders = [:]
         meta.each { k, v ->
@@ -51,7 +53,10 @@ class MinioTestUtils {
         }
     }
 
-    static void ensureMinioServerInitialized(MinioClient minioClient) throws Exception {
+    /**
+     * Waits until the S3 server answers a listBuckets call, retrying a few times.
+     */
+    static void ensureS3ServerInitialized(MinioClient minioClient) throws Exception {
         final int MAX_RETRIES = 3
         final int RETRY_DELAY_SECONDS = 1
         int retries = 0;
@@ -64,6 +69,6 @@ class MinioTestUtils {
                 retries++;
             }
         }
-        throw new Exception("MinIO server is not initialized after " + MAX_RETRIES + " retries.");
+        throw new Exception("S3 server is not initialized after " + MAX_RETRIES + " retries.");
     }
 }

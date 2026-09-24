@@ -19,8 +19,8 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioClient
 import spock.lang.Shared
 import spock.lang.Specification
-import testhelpers.MinioContainer
-import testhelpers.MinioTestUtils
+import testhelpers.S3Container
+import testhelpers.S3TestUtils
 
 class ObjectStoreMemoryDirectorySourceTest extends Specification {
 
@@ -28,7 +28,7 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
     ObjectStoreMemoryDirectorySource directory
 
     @Shared
-    public MinioContainer minio = new MinioContainer()
+    public S3Container minio = new S3Container()
 
     def setupSpec() {
         minio.start()
@@ -66,10 +66,10 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
                 .bucket(bucket)
                 .build();
         mClient.makeBucket(args)
-        MinioTestUtils.ifNotExistAdd(mClient, bucket, "arootfile.file", "root", [:])
-        MinioTestUtils.ifNotExistAdd(mClient, bucket, "dir/dir.file", "file", [:])
-        MinioTestUtils.ifNotExistAdd(mClient, bucket, "dir/subdir/file1.file", "file", [name:"file1"])
-        MinioTestUtils.ifNotExistAdd(mClient, bucket, "dir/subdir/file2.file", "file", [name:"file2"])
+        S3TestUtils.ifNotExistAdd(mClient, bucket, "arootfile.file", "root", [:])
+        S3TestUtils.ifNotExistAdd(mClient, bucket, "dir/dir.file", "file", [:])
+        S3TestUtils.ifNotExistAdd(mClient, bucket, "dir/subdir/file1.file", "file", [name:"file1"])
+        S3TestUtils.ifNotExistAdd(mClient, bucket, "dir/subdir/file2.file", "file", [name:"file2"])
         ObjectStoreMemoryDirectorySource sync = new ObjectStoreMemoryDirectorySource(mClient, bucket)
 
         then:
