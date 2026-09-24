@@ -394,11 +394,17 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (originalPath && synchState == ImportSynchState.UNKNOWN) {
             // job was renamed but not file
             synchState = ImportSynchState.IMPORT_NEEDED
-        } else if (job.scmImportMetadata?.commitId && jobStateMap.get(job.id)?.is(loadingMarker)) {
-            // update tracked commit info - skip if a newer refresh (or a deletion) has since
-            // replaced or removed our placeholder, so this (slower, older) refresh doesn't
-            // clobber the tracker mapping
-            importTracker.trackJobAtPath(job, path)
+        } else if (job.scmImportMetadata?.commitId) {
+            // check-and-update must be atomic with respect to a newer refresh's marker
+            // installation, which locks the same monitor (the synchronizedMap wrapper uses
+            // itself) - otherwise a newer refresh could install its marker and track its own
+            // path between our check and our trackJobAtPath call, and this (slower, older)
+            // refresh would then clobber that tracker mapping
+            synchronized (jobStateMap) {
+                if (jobStateMap.get(job.id)?.is(loadingMarker)) {
+                    importTracker.trackJobAtPath(job, path)
+                }
+            }
         }
         log.debug(
                 "import job status: ${synchState} with meta ${job.scmImportMetadata}, " +

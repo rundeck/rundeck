@@ -747,6 +747,12 @@ class BaseGitPlugin {
                     String msg = collectCauseMessages(e)
                     throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
                 }
+                //release the plugin's currently assigned repository before replacing it: it may be an
+                //earlier open of a different workdir (e.g. the base-branch clone in the createBranch
+                //setup path), and would otherwise be leaked once repo/git are reassigned below
+                if (repo != null && repo != arepo) {
+                    repo.close()
+                }
                 git = agit
                 repo = arepo
                 handedOff = true
