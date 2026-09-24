@@ -199,6 +199,14 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
                                           e.getMessage(),
                                           node);
         }
+        // Captured after executeNodeStep() returns successfully, not before, mirroring
+        // StepPluginAdapter. context.getOutputContext() is already scoped to this node by the
+        // dispatcher (SequentialNodeDispatcher/ParallelNodeDispatcher build a per-node
+        // ExecutionContext whose output context defaults to ContextView.nodeStep(stepNum,
+        // node.getNodename())), so no explicit node-scoping is needed here: each node's captured
+        // value lands in its own slot, and a later node-step conditional evaluated on this same
+        // node will resolve back to this value without any node-name syntax.
+        PluginOutputCapture.captureOutputMetadataValues(context.getOutputContext(), description, plugin, config);
         return new NodeStepResultImpl(node);
     }
 
