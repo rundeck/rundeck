@@ -827,10 +827,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     void initJobsStatus(List<JobScmReference> jobs) {
         jobs.each { job ->
-            if (!jobStateMap[job.id]) {
-                def jobstat = initJobStatus(job)
-                jobStateMap[job.id] = jobstat
-            }
+            //check-then-insert must be atomic: a concurrent refresh publishing its completed
+            //status between the check and the assignment would otherwise be overwritten by this
+            //LOADING placeholder, which no refresh then owns and which never gets cleared
+            jobStateMap.putIfAbsent(job.id, initJobStatus(job))
         }
     }
 
