@@ -29,7 +29,7 @@ class ScmActionInput {
     @Schema(description = 'ID for the action')
     String actionId
 
-    @Schema(allowableValues = ['import','export'])
+    @Schema(type = 'string', allowableValues = ['import','export'])
     String integration
     @Schema(description = 'Display title for the action')
     String title

@@ -130,7 +130,7 @@ public class StubDataStep implements StepPlugin {
         } else if ("json".equals(format)) {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
-                Map<String, String> result = objectMapper.readValue(data, Map.class);
+                Map<?, ?> result = objectMapper.readValue(data, Map.class);
                 props.putAll(result);
             } catch (IOException e) {
                 throw new StepException(
@@ -144,7 +144,7 @@ public class StubDataStep implements StepPlugin {
             final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
             Object ydata = yaml.load(data);
             if (ydata instanceof Map) {
-                Map<String, String> result = (Map) ydata;
+                Map<?, ?> result = (Map<?, ?>) ydata;
                 props.putAll(result);
             } else {
                 throw new StepException(
