@@ -1877,11 +1877,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             log.error("Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
                         }
                         e.outputfilepath = newfile.absolutePath
+                    } else {
+                        //Log file referenced by the archive is not actually present in the archive: never trust
+                        //an archive-supplied filesystem path (it may point outside this project's log storage,
+                        //e.g. at another project's log file), so drop it instead of persisting it verbatim.
+                        e.outputfilepath = null
                     }
                 }
                 if (!oldOutputFilePath || !(execout[oldOutputFilePath] || e.isRemoteOutputfilepath())){
-                    execerrors << "New execution ${e.id}, NO matching outfile: ${e.outputfilepath}. It might be present in configured remote log storage plugin."
-                    log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}. It might be present in configured remote log storage plugin.")
+                    execerrors << "New execution ${e.id}, NO matching outfile: ${oldOutputFilePath}. It might be present in configured remote log storage plugin."
+                    log.error("New execution ${e.id}, NO matching outfile: ${oldOutputFilePath}. It might be present in configured remote log storage plugin.")
                 }
 
                 //copy state.json file

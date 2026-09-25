@@ -1188,9 +1188,41 @@ class LogFileStorageService
         if (useStoredPath && execution.outputfilepath && !execution.isRemoteOutputfilepath()) {
             //use previously stored outputfilepath if present, substitute correct filetype
             String path = execution.outputfilepath.replaceAll(/\.([^\.]+)$/,'')
-            return new File(path + '.' + filetype + (partial ? '.part' : ''))
-        } else{
-            return getFileForLocalPath(generateLocalPathForExecutionFile(execution, filetype, partial))
+            File storedFile = new File(path + '.' + filetype + (partial ? '.part' : ''))
+            if (isStoredPathSafeForProject(storedFile, execution.project)) {
+                return storedFile
+            }
+            log.warn(
+                    "Execution ${execution.id} stored outputfilepath \"${execution.outputfilepath}\" resolves " +
+                    "into another project's log directory; ignoring stored path and using generated path instead"
+            )
+        }
+        return getFileForLocalPath(generateLocalPathForExecutionFile(execution, filetype, partial))
+    }
+
+    /**
+     * Verify a stored log file path does not resolve into a different project's log directory
+     * under the shared local logs root. A path outside the local logs root entirely (e.g. a
+     * legacy custom-configured storage location from a pre-1.6 upgrade) is considered safe,
+     * since project-scoped containment cannot be meaningfully enforced outside that root.
+     * @param storedFile resolved File for the stored path
+     * @param project the execution's own project name
+     * @return true if the path is not a cross-project path within the local logs root
+     */
+    private boolean isStoredPathSafeForProject(File storedFile, String project) {
+        try {
+            File logsRoot = getLocalLogsDir().canonicalFile
+            File canonicalStored = storedFile.canonicalFile
+            String rootPrefix = logsRoot.path + File.separator
+            if (!canonicalStored.path.startsWith(rootPrefix)) {
+                //outside the shared logs root entirely: not a cross-project path
+                return true
+            }
+            File projectDir = new File(logsRoot, project).canonicalFile
+            String projectPrefix = projectDir.path + File.separator
+            return canonicalStored.path.startsWith(projectPrefix)
+        } catch (IOException ignored) {
+            return false
         }
     }
     /**
