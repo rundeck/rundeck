@@ -68,9 +68,10 @@
       <div class="panel-body">
         <btn
           id="bulk_select_all_button"
+          data-testid="job-bulk-edit-select-all-button"
           size="xs"
-          type="simple"
-          class="btn-hover"
+          type="default"
+          class="btn-simple btn-hover"
           @click="selectAll"
         >
           <b class="glyphicon glyphicon-check"></b>
@@ -78,9 +79,10 @@
         </btn>
         <btn
           id="bulk_select_none_button"
+          data-testid="job-bulk-edit-select-none-button"
           size="xs"
-          type="simple"
-          class="btn-hover"
+          type="default"
+          class="btn-simple btn-hover"
           @click="selectNone"
         >
           <b class="glyphicon glyphicon-unchecked"></b>
