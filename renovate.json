@@ -17,8 +17,7 @@
     }
   ],
   "vulnerabilityAlerts": {
-    "dependencyDashboardApproval": false,
-    "enabled": true
+    "dependencyDashboardApproval": false
   },
   "packageRules": [
     {
@@ -126,13 +125,6 @@
       "description": "Enable npm engine version updates (disabled by default in Renovate)",
       "matchDepTypes": ["engines"],
       "enabled": true
-    },
-    {
-      "description": "ui-trellis npm packages: security updates only. rundeckpro consumes ui-trellis as a published tarball, so routine (non-vulnerability) bumps here are disabled to avoid drift that rundeckpro's own renovate config isn't watching for; vulnerabilityAlerts stays enabled above so CVE fixes still get raised. Placed after the generic 'Enable npm engine version updates' rule above (not before it) because Renovate merges matching packageRules in declaration order, so this rule needs to come later to actually win and keep ui-trellis's npm engine bumps disabled too.",
-      "matchManagers": ["npm"],
-      "matchFileNames": ["rundeckapp/grails-spa/packages/ui-trellis/package.json"],
-      "matchPackageNames": ["*"],
-      "enabled": false
     },
     {
       "description": "Group Node.js version (.nvmrc) with the npm engine pin so they update together. Gated behind Dependency Dashboard approval: node/npm must move in lockstep across the rundeck and rundeckpro repos (Renovate cannot open a single cross-repo PR), so auto-created PRs can never merge unilaterally and only burn CI. Approve the checkbox on BOTH repos' dashboards in the same session, merge rundeck first, then rundeckpro.",
