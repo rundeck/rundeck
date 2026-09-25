@@ -480,7 +480,15 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         if (job instanceof JobExportReference && doSerialize) {
-            serialize(job, format, config.exportPreserve, config.exportOriginal)
+            //only write the job file if our own LOADING placeholder is still current: a
+            //concurrent deletion may have already deleted this job's file and cleared its cache
+            //entry, and a superseded refresh serializing after that would resurrect the file on
+            //disk even though its own cache publish below is correctly rejected
+            synchronized (jobStateMap) {
+                if (jobStateMap.get(job.id)?.is(loadingMarker)) {
+                    serialize(job, format, config.exportPreserve, config.exportOriginal)
+                }
+            }
         }
 
         def statusb = git.status().addPath(path)
