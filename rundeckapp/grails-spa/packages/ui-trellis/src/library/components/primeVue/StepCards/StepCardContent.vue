@@ -82,7 +82,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import ConfigSection from "./ConfigSection.vue";
 import PluginConfig from "../../plugins/pluginConfig.vue";
 import PluginInfo from "../../plugins/PluginInfo.vue";
@@ -115,7 +115,7 @@ export default defineComponent({
       default: () => [],
     },
     errorHandler: {
-      type: Array,
+      type: Array as PropType<Record<string, any>[]>,
       default: () => [],
     },
     errorHandlerConfig: {
