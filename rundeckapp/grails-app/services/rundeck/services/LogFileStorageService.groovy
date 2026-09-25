@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import grails.events.EventPublisher
+import grails.events.annotation.Subscriber
+import org.rundeck.app.grails.events.AppEvents
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
 import org.hibernate.sql.JoinType
@@ -66,6 +68,7 @@ import jakarta.validation.constraints.NotNull
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import java.util.function.Supplier
 
@@ -284,20 +287,93 @@ class LogFileStorageService
     ])
 
 
+    /**
+     * Fast-path flag: true once every consumer and scheduler has been started. The per-step flags below
+     * let a retry after a partial failure submit only what is still missing.
+     */
+    private final AtomicBoolean consumersStarted = new AtomicBoolean(false)
+    private boolean storageConsumerStarted = false
+    private boolean retrievalConsumerStarted = false
+    private boolean periodicDequeueScheduled = false
+
+    /**
+     * Applies the executor concurrency limits and, when a LogFileStorage plugin is configured, starts the
+     * consumers; otherwise logs a WARN. A plugin configured later through a configuration change starts
+     * them via {@link #onAppConfigChanged(Set)}.
+     */
     @Override
     void afterPropertiesSet() throws Exception {
-        def pluginName = getConfiguredPluginName()
-        if(!pluginName){
-            //System.err.println("LogFileStoragePlugin not configured, disabling...")
+        applyExecutorConcurrencyLimits()
+        if (!getConfiguredPluginName()) {
+            log.warn(
+                "LogFileStorage plugin is not configured (${FILE_STORAGE_PLUGIN.key}); " +
+                "log storage consumers are disabled until it is set."
+            )
             return
         }
+        startConsumers()
+    }
 
-        logFileStorageTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(STORAGE_CONCURRENCY_LIMIT, 5)
-        logFileTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(RETRIEVAL_CONCURRENCY_LIMIT, 5)
+    /**
+     * Starts the consumers when a configuration change makes the LogFileStorage plugin resolvable after
+     * initialization (for example a value saved only in DB-backed System Configuration). Never throws:
+     * the event bus dispatches asynchronously and the publisher must not be affected. A failed or partial
+     * start is retried on the next configuration change.
+     * @param keys configuration keys reported as changed
+     */
+    @Subscriber(AppEvents.APP_CONFIG_CHANGED)
+    void onAppConfigChanged(Set<String> keys) {
+        if (consumersStarted.get()) {
+            return
+        }
+        try {
+            def pluginName = getConfiguredPluginName()
+            if (!pluginName) {
+                return
+            }
+            if (startConsumers()) {
+                log.info(
+                    "Log storage consumers started: ${FILE_STORAGE_PLUGIN.key} is now configured " +
+                    "(plugin: ${pluginName})"
+                )
+            }
+        } catch (Exception e) {
+            log.error(
+                "Failed to start log storage consumers after a configuration change; " +
+                "the missing consumers will be retried on the next configuration change",
+                e
+            )
+        }
+    }
 
-        log.debug("logFileStorageTaskExecutor concurrency: ${logFileStorageTaskExecutor.concurrencyLimit}")
-        log.debug("logFileTaskExecutor concurrency: ${logFileTaskExecutor.concurrencyLimit}")
-        logFileStorageTaskExecutor?.execute(new TaskRunner<Map>(storageRequests, { Map task ->
+    /**
+     * Sets the executor concurrency limits from configuration, independently of the plugin: the retrieval
+     * executor also serves direct retrieval requests, so its limit must be fixed before first use.
+     */
+    private void applyExecutorConcurrencyLimits() {
+        if (configurationService == null) {
+            return
+        }
+        if (logFileStorageTaskExecutor != null) {
+            logFileStorageTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(STORAGE_CONCURRENCY_LIMIT, 5)
+            log.debug("logFileStorageTaskExecutor concurrency: ${logFileStorageTaskExecutor.concurrencyLimit}")
+        }
+        if (logFileTaskExecutor != null) {
+            logFileTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger(RETRIEVAL_CONCURRENCY_LIMIT, 5)
+            log.debug("logFileTaskExecutor concurrency: ${logFileTaskExecutor.concurrencyLimit}")
+        }
+    }
+
+    /**
+     * Starts whatever is still missing: the storage consumer, the retrieval consumer and, for the periodic
+     * resume strategy, the incomplete-request scheduler. Each step is submitted at most once per service
+     * lifetime, so a retry after a partial failure never duplicates a running consumer.
+     * @return true when this invocation started at least one step
+     */
+    private synchronized boolean startConsumers() {
+        boolean startedSomething = false
+        if (!storageConsumerStarted) {
+            logFileStorageTaskExecutor?.execute(new TaskRunner<Map>(storageRequests, { Map task ->
 
             if (!task.partial) {
                 storageQueueCounter?.dec()
@@ -315,8 +391,15 @@ class LogFileStorageService
                 }
             }
         }))
-        logFileTaskExecutor?.execute(new TaskRunner<Map>(retrievalRequests, this.&runRetrievalRequestTask))
-        if (getConfiguredResumeStrategy() == 'periodic') {
+            storageConsumerStarted = true
+            startedSomething = true
+        }
+        if (!retrievalConsumerStarted) {
+            logFileTaskExecutor?.execute(new TaskRunner<Map>(retrievalRequests, this.&runRetrievalRequestTask))
+            retrievalConsumerStarted = true
+            startedSomething = true
+        }
+        if (!periodicDequeueScheduled && getConfiguredResumeStrategy() == 'periodic') {
             long delay = getConfiguredStorageRetryDelay() * 1000
             logFileStorageTaskScheduler.scheduleAtFixedRate(
                 {
@@ -326,7 +409,11 @@ class LogFileStorageService
                         log.error("Error dequeueing incomplete log storage requests", t)
                     }
                 }, new Date(System.currentTimeMillis() + delay), delay)
+            periodicDequeueScheduled = true
+            startedSomething = true
         }
+        consumersStarted.set(true)
+        return startedSomething
     }
 
     static SystemConfig.SystemConfigBuilder configDefaults(SystemConfig.SystemConfigBuilder builder) {
