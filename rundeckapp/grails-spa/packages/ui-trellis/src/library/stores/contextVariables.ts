@@ -16,8 +16,8 @@ export type ContextVariable = {
     | "note"
     | "step"
     | "step-header";
-  // Step name a "step"/"step-header" option belongs to, for grouping a flat
-  // suggestion list into an accordion (see ConditionRow.vue).
+  // Step name a "step"/"step-header" option belongs to, for consumers that
+  // group a flat suggestion list into an accordion.
   group?: string;
 };
 

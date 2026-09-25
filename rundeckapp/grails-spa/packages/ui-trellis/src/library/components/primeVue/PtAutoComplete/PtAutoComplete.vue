@@ -131,8 +131,8 @@ export default defineComponent({
     // underlying committed value. When unset, behavior is unchanged
     // (selecting a suggestion commits its `.name`). When set, selecting a
     // suggestion resolves the committed value through this instead — e.g. so
-    // a "Prior Steps" option can display "Exit code" (via optionLabel) while
-    // committing a different token (via optionValue).
+    // an option can display a friendly label (via optionLabel) while
+    // committing a different underlying token (via optionValue).
     optionValue: {
       type: [String, Function] as PropType<OptionResolver | undefined>,
       default: undefined,
@@ -253,6 +253,15 @@ export default defineComponent({
     modelValue(newVal: string) {
       this.value = newVal;
     },
+    // filterSuggestions() only runs off PrimeVue's own @complete event
+    // (typing/focus), so once the panel is already open, replacing the
+    // `suggestions` prop (e.g. a consumer toggling an accordion group inside
+    // the list) never reached the rendered list on its own. Re-apply the
+    // same filter against the already-known query whenever the source data
+    // changes underneath it.
+    suggestions() {
+      this.applySuggestionFilter(this.currentQuery);
+    },
   },
   beforeUnmount() {
     // Clear any pending debounce timers
@@ -309,6 +318,13 @@ export default defineComponent({
       const currentWordRegex = /[^\s]*$/;
       const textToCursor = event.query?.slice(0, cursorPos) || "";
       const currentWord = textToCursor.match(currentWordRegex)?.[0] || "";
+      this.applySuggestionFilter(currentWord);
+    },
+
+    // The actual filtering logic, factored out of filterSuggestions() so it
+    // can also be re-run reactively (see the `suggestions` watcher above)
+    // without needing a live AutoCompleteCompleteEvent.
+    applySuggestionFilter(currentWord: string): void {
       this.currentQuery = currentWord;
       try {
         // If user types just "$" (legacy mode), or opens the full-list
