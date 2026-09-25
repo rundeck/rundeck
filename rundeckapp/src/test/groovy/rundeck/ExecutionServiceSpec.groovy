@@ -1336,6 +1336,34 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         'ISO-8859-1' | _
     }
 
+    def "validateExecution returns true when authorized"() {
+        given:
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project) >> true
+        result
+    }
+
+    def "validateExecution returns false when unauthorized"() {
+        given:
+        service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def authContext = Mock(UserAndRolesAuthContext)
+        def se = new ScheduledExecution(project: 'AProject')
+
+        when:
+        def result = service.validateExecution(se, authContext)
+
+        then:
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], se.project) >> false
+        !result
+    }
+
     def "delete execution unauthorized"() {
         given:
 
