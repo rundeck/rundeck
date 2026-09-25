@@ -27,11 +27,11 @@ import java.util.SortedSet;
 public class JobLifecycleStatusImpl
     implements JobLifecycleStatus {
     
-    private boolean successful = false;
+    private boolean successful;
     private String errorMessage;
-    private boolean useNewValues = false;
+    private boolean useNewValues;
     private Map optionsValues;
     private SortedSet<JobOption> options;
-    private boolean useNewMetadata = false;
+    private boolean useNewMetadata;
     private Map newExecutionMetadata;
 }

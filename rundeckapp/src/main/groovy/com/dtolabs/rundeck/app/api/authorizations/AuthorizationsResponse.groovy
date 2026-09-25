@@ -34,13 +34,13 @@ class TypeResource {
 
 @Schema(description = "Authorizations in the context of an application")
 class ApplicationAuthorizationContext {
-    @Schema(description = "Context type", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = ['application'])
+    @Schema(description = "Context type", requiredMode = Schema.RequiredMode.REQUIRED, type = 'string', allowableValues = ['application'])
     final String type = "application"
 }
 
 @Schema(description = "Authorizations in the context of a project")
 class ProjectAuthorizationContext {
-    @Schema(description = "Context type", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = ['project'])
+    @Schema(description = "Context type", requiredMode = Schema.RequiredMode.REQUIRED, type = 'string', allowableValues = ['project'])
     final String type = "project"
 
     @Schema(description = "Context name", requiredMode = Schema.RequiredMode.REQUIRED)

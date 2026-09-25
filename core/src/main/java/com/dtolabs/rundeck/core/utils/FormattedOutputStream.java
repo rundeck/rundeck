@@ -37,6 +37,7 @@ import java.util.Map;
  * @version $Revision$
  * @deprecated
  */
+@Deprecated
 public class FormattedOutputStream extends FilterOutputStream {
     Reformatter reformatter;
     StringBuffer buffer;

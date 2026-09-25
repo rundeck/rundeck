@@ -27,6 +27,7 @@ import java.util.List;
  * Copy files to a specific destination on a remote node.
  * @deprecated use {@link FileCopier}
  */
+@Deprecated
 public interface DestinationFileCopier extends FileCopier {
 
 }
