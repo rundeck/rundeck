@@ -42,6 +42,8 @@ public class PropertyBuilder {
     private boolean dynamicValues;
     private boolean blankIfUnexpandabled = true;
     private String unexpandableBehaviorFrom;
+    private List<PluginOutputMetadata> outputMetadata;
+    private boolean outputOnly;
 
     private PropertyBuilder() {
 
@@ -72,6 +74,8 @@ public class PropertyBuilder {
             .renderingOptions(orig.getRenderingOptions())
             .blankIfUnexpandable(orig.isBlankIfUnexpandable())
             .unexpandableBehaviorFrom(orig.getUnexpandableBehaviorFrom())
+            .outputMetadata(orig.getOutputMetadata())
+            .outputOnly(orig.isOutputOnly())
             ;
     }
 
@@ -251,6 +255,30 @@ public class PropertyBuilder {
     }
 
     /**
+     * Set the output metadata marking this property as an exposed output value for conditional-logic
+     * reference (see {@code com.dtolabs.rundeck.plugins.descriptions.PluginOutput}).
+     *
+     * @param outputMetadata output metadata entries, or null/empty if not exposed
+     * @return this builder
+     */
+    public PropertyBuilder outputMetadata(final List<PluginOutputMetadata> outputMetadata) {
+        this.outputMetadata = outputMetadata;
+        return this;
+    }
+
+    /**
+     * Mark this property as output-only: built from a field carrying only {@code @PluginOutput} (no
+     * {@code @PluginProperty}), so it must not be rendered as a job/step configuration input.
+     *
+     * @param outputOnly true if the property is output-only
+     * @return this builder
+     */
+    public PropertyBuilder outputOnly(final boolean outputOnly) {
+        this.outputOnly = outputOnly;
+        return this;
+    }
+
+    /**
      * Set the default value
      * @param value value
      *
@@ -383,7 +411,7 @@ public class PropertyBuilder {
         if (null == name) {
             throw new IllegalStateException("name is required");
         }
-        return PropertyUtil.forType(
+        Property built = PropertyUtil.forType(
                 type,
                 name,
                 title,
@@ -399,6 +427,111 @@ public class PropertyBuilder {
                 blankIfUnexpandabled,
                 unexpandableBehaviorFrom
         );
+        if ((outputMetadata != null && !outputMetadata.isEmpty()) || outputOnly) {
+            return new OutputMetadataProperty(built, outputMetadata, outputOnly);
+        }
+        return built;
+    }
+
+    /**
+     * Decorates a built {@link Property} with output metadata and/or the output-only flag, without
+     * requiring changes to every concrete {@link Property} implementation returned by
+     * {@link PropertyUtil#forType}.
+     */
+    private static final class OutputMetadataProperty implements Property {
+        private final Property delegate;
+        private final List<PluginOutputMetadata> outputMetadata;
+        private final boolean outputOnly;
+
+        OutputMetadataProperty(
+                final Property delegate,
+                final List<PluginOutputMetadata> outputMetadata,
+                final boolean outputOnly
+        ) {
+            this.delegate = delegate;
+            this.outputMetadata = outputMetadata;
+            this.outputOnly = outputOnly;
+        }
+
+        @Override
+        public String getTitle() {
+            return delegate.getTitle();
+        }
+
+        @Override
+        public String getName() {
+            return delegate.getName();
+        }
+
+        @Override
+        public String getDescription() {
+            return delegate.getDescription();
+        }
+
+        @Override
+        public Type getType() {
+            return delegate.getType();
+        }
+
+        @Override
+        public PropertyValidator getValidator() {
+            return delegate.getValidator();
+        }
+
+        @Override
+        public boolean isRequired() {
+            return delegate.isRequired();
+        }
+
+        @Override
+        public String getDefaultValue() {
+            return delegate.getDefaultValue();
+        }
+
+        @Override
+        public List<String> getSelectValues() {
+            return delegate.getSelectValues();
+        }
+
+        @Override
+        public Map<String, String> getSelectLabels() {
+            return delegate.getSelectLabels();
+        }
+
+        @Override
+        public PropertyScope getScope() {
+            return delegate.getScope();
+        }
+
+        @Override
+        public Map<String, Object> getRenderingOptions() {
+            return delegate.getRenderingOptions();
+        }
+
+        @Override
+        public boolean isBlankIfUnexpandable() {
+            return delegate.isBlankIfUnexpandable();
+        }
+
+        @Override
+        public String getUnexpandableBehaviorFrom() {
+            return delegate.getUnexpandableBehaviorFrom();
+        }
+
+        @Override
+        public List<PluginOutputMetadata> getOutputMetadata() {
+            return outputMetadata;
+        }
+
+        @Override
+        public boolean isOutputOnly() {
+            return outputOnly;
+        }
+
+        @Override
+        public String toString() {
+            return delegate.toString();
+        }
     }
 
     /**

@@ -16,6 +16,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PluginOutputMetadata
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
@@ -432,9 +433,17 @@ class PluginApiService {
         return true
     }
 
+    /**
+     * @param properties the plugin's full property list, as used internally for output capture and
+     * condition-key resolution
+     * @return only the properties that should be rendered as job/step configuration inputs: those
+     * with required features present, excluding any {@link Property#isOutputOnly()} property (a
+     * computed, backend-only value built from a field carrying only {@code @PluginOutput}, never
+     * job-configurable)
+     */
     List<Map> pluginPropertiesAsMap(String service, String pluginName, List<Property> properties) {
         properties.findAll {
-            hasRequiredFeatures(it)
+            hasRequiredFeatures(it) && !it.outputOnly
         }.collect { Property prop ->
             pluginPropertyMap(service, pluginName, prop)
         }
@@ -489,8 +498,26 @@ class PluginApiService {
             allowed               : prop.selectValues,
             selectLabels          : prop.selectLabels,
             scope                 : prop.scope?.toString(),
-            options               : optsMap
+            options               : optsMap,
+            outputMetadata        : outputMetadataList(prop)
         ]
+    }
+
+    /**
+     * @param prop property
+     * @return list representation of the property's exposed output metadata, or null if not exposed
+     */
+    List<Map<String, String>> outputMetadataList(Property prop) {
+        if (!prop.outputMetadata) {
+            return null
+        }
+        prop.outputMetadata.collect { PluginOutputMetadata metadata ->
+            [
+                group      : metadata.group,
+                name       : metadata.name,
+                description: metadata.description
+            ]
+        }
     }
 
     public Map<String, String> asStringMap(Property prop) {
