@@ -90,7 +90,7 @@ export default defineComponent({
       this.uploadSetting = uploadSetting;
       this.modalEdit = true;
     },
-    updateSelectedKey(key: {}) {
+    updateSelectedKey(key: Record<string, unknown>) {
       this.selectedKey = key;
     },
   },

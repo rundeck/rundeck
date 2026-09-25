@@ -2,7 +2,7 @@
  * effectively serializing the coroutines.
  */
 export function Serial(
-  target: Object,
+  target: object,
   key: string | symbol,
   prop: PropertyDescriptor,
 ) {
