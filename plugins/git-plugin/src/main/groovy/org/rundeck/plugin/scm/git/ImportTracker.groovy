@@ -94,11 +94,9 @@ class ImportTracker {
             def previousJobId = trackedJobIds[path]
             if (previousJobId != null && previousJobId != job.id) {
                 //path is being claimed by a different job than the one previously tracked there:
-                //remove the stale reverse mapping so it doesn't keep resolving to the old job.
-                //conditional on trackedPathsMap[previousJobId] still equaling this path - the rename
-                //re-assertion branch above can leave previousJobId with two forward mappings, so its
-                //reverse mapping may already point elsewhere and must not be erased here
+                //remove the stale reverse and rename mappings before assigning the new owner
                 trackedPathsMap.remove(previousJobId, path)
+                renamedTrackedItems.untrack(path)
             }
             def previousPath = trackedPathsMap[job.id]
             if (previousPath != null && previousPath != path && renamedTrackedItems.originalValue(previousPath) != path) {
