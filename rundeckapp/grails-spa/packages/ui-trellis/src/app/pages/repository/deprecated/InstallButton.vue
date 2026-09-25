@@ -80,7 +80,7 @@ export default {
         url: `${rdBase}/repository/${this.repo}/install/${this.plugin.object_id}`,
         withCredentials: true,
       })
-        .then((response) => {
+        .then(() => {
           this.installed = true;
         })
         .catch((error) => {
@@ -97,7 +97,7 @@ export default {
         url: `${rdBase}/api/${apiVer}/plugins/uninstall/${this.plugin.object_id}`,
         withCredentials: true,
       })
-        .then((response) => {
+        .then(() => {
           this.installed = false;
         })
         .catch((error) => {

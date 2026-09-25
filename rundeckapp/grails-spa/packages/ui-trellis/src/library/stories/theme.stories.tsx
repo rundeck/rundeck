@@ -3,7 +3,7 @@ export default {
 };
 
 export const typography = () => ({
-  render(h) {
+  render() {
     return (
       <div>
         <h1 class="text-info">Headings</h1>
@@ -62,7 +62,7 @@ export const typography = () => ({
   },
 });
 export const labels = () => ({
-  render(h) {
+  render() {
     return (
       <div>
         <h3>
@@ -94,7 +94,7 @@ export const labels = () => ({
   },
 });
 export const buttons = () => ({
-  render(h) {
+  render() {
     return (
       <div style="max-width: 800px; margin-top: 10px;background-color: pink;">
         <div style="display:flex;justify-content: space-evenly;">
@@ -323,7 +323,7 @@ export const table = () => ({
 });
 
 export const pagination = () => ({
-  render(h) {
+  render() {
     return (
       <ul data-v-06f48450="" class="pagination pagination-sm">
         <li data-v-06f48450="" class="disabled">
@@ -387,7 +387,7 @@ export const pagination = () => ({
 });
 
 export const cards = () => ({
-  render(h) {
+  render() {
     return (
       <div style="padding: 20px; max-width: 500px" class="content">
         <div class="card">
@@ -415,7 +415,7 @@ export const cards = () => ({
 });
 
 export const tabs = () => ({
-  render(h) {
+  render() {
     return (
       <div class="vue-tabs">
         <div class="nav-tabs-navigation">
@@ -439,7 +439,7 @@ export const tabs = () => ({
 });
 
 export const inputs = () => ({
-  render(h) {
+  render() {
     return (
       <div>
         <div class="card" style="padding: 20px;">
@@ -573,7 +573,7 @@ export const inputs = () => ({
 });
 
 export const panels = () => ({
-  render(h) {
+  render() {
     return (
       <div class="content">
         <div class="panel panel-default" style="width: 500px; height: 100px;">
@@ -606,7 +606,7 @@ export const panels = () => ({
 });
 
 export const layouts = () => ({
-  render(h) {
+  render() {
     return (
       <section class="layout-base">
         <div class="layout-base--header">

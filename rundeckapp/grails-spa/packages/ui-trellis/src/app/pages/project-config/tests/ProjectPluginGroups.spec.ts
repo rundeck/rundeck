@@ -116,7 +116,7 @@ describe("ProjectPluginGroups editing-state event", () => {
 
     wrapper.vm.addPlugin("test-plugin");
     wrapper.vm.workingData[0].entry.config = { host: "example.com" };
-    await wrapper.vm.savePlugin(wrapper.vm.workingData[0], 0);
+    await wrapper.vm.savePlugin(wrapper.vm.workingData[0]);
     await wrapper.vm.$nextTick();
 
     expect(pluginService.validatePluginConfig).toHaveBeenCalled();

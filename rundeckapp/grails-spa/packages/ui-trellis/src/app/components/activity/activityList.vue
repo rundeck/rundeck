@@ -585,7 +585,6 @@
 <script lang="ts">
 import {
   getExecutions,
-  PagedResult,
   queryRunning,
 } from "../../../library/services/executions";
 import axios from "axios";
@@ -755,14 +754,14 @@ export default defineComponent({
   },
   watch: {
     query: {
-      handler(newValue, oldValue) {
+      handler() {
         this.reload();
         this.syncQueryToUrl();
       },
       deep: true,
     },
     autorefresh: {
-      handler(newValue, oldValue) {
+      handler(newValue) {
         if (newValue) {
           //turn on
           this.startAutorefresh();

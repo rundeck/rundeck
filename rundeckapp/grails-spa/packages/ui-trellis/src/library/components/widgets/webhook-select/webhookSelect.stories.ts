@@ -1,10 +1,6 @@
 import type { Meta, StoryFn } from "@storybook/vue3";
 
-import {
-  Rundeck,
-  RundeckClient,
-  TokenCredentialProvider,
-} from "@rundeck/client";
+import { RundeckClient, TokenCredentialProvider } from "@rundeck/client";
 import { BrowserFetchHttpClient } from "@azure/ms-rest-js/es/lib/browserFetchHttpClient";
 
 import "../../../stories/setup";
