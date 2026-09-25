@@ -82,7 +82,7 @@ class ImportTracker {
                     untrackPath(originalPath)
                 }
             } else {
-                untrackPath(oldpath)
+                untrackJob(job.id)
                 trackJobAtPath(job, newpath)
                 renamedTrackedItems.trackItem(oldpath, newpath)
             }
