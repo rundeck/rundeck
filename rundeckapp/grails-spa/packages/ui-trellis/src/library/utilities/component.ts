@@ -1,7 +1,7 @@
 import { VNode } from "vue";
 
 /* Extracts default slot for rendering in a way that avoids a wrapper div if possible */
-export function bareSlot(comp: Object) {
+export function bareSlot(comp: any) {
   let component: VNode;
   //@ts-ignore
   if (!comp.$slots.default?.length)
