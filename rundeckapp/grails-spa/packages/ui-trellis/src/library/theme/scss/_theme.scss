@@ -362,6 +362,10 @@ $black: $grey-900;
 }
 
 *[data-color-theme="dark"] {
+  // RUN-4967: let the browser render native chrome (scrollbars, form
+  // widgets) dark; the attribute lives on <html>, so this reaches the root.
+  color-scheme: dark;
+
   --grey-900: #23242f;
   --grey-800: #333645;
   --grey-700: #3e4153;
