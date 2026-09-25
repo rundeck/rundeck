@@ -132,7 +132,7 @@
                       <a
                         :key="'save'"
                         class="btn btn-cta btn-xs"
-                        @click="savePlugin(plugin, index)"
+                        @click="savePlugin(plugin)"
                         >{{ $t("Save") }}</a
                       >
                       <a
@@ -152,7 +152,7 @@
                       <btn
                         class="btn-xs btn-danger"
                         :disabled="editFocus !== -1 && editFocus !== index"
-                        @click="removePlugin(plugin, index)"
+                        @click="removePlugin(plugin)"
                       >
                         {{ $t("Delete") }}
                         <i class="fas fa-minus"></i>
