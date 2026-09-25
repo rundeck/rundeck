@@ -16,7 +16,7 @@
 
 package rundeck.services.events
 
-import com.dtolabs.rundeck.core.execution.workflow.StepNodeSecondsWorkflowListener.StepNodeSecondsEntry
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageWorkflowListener.StepNodeUsageEntry
 import rundeck.Execution
 import rundeck.ScheduledExecution
 
@@ -29,27 +29,23 @@ class ExecutionCompleteEvent {
     ScheduledExecution job
     Map nodeStatus
     Map context
-    /**
-     * Sum of step-node-second durations for this execution (Section 2 of the Runbook
-     * Automation consumption-billing proposal), or null if none was recorded -- e.g. the
-     * StepNodeSecondsWorkflowListener never finalized a breakdown for this execution.
-     * Derived from {@link #stepNodeSecondsBreakdown}'s values -- kept as its own field since
-     * most consumers (e.g. the Micrometer metric) only want the scalar.
-     */
-    Long stepNodeSeconds
 
     /**
-     * Per-step breakdown backing {@link #stepNodeSeconds}: one entry per step, keyed by its
+     * Per-step breakdown of step-node-second durations for this execution (Section 2 of the
+     * Runbook Automation consumption-billing proposal): one entry per step, keyed by its
      * hierarchical step path (e.g. "3", or "3/1" for a step nested under step 3 -- the same
      * scheme state.json uses for its own step identifiers). Each entry holds that step's
-     * duration in whole seconds (node-level dispatches already summed in) and the
-     * plugin/provider type that ran, so a consumer can decide billability by plugin type
-     * without needing to re-read the job definition or execution state. Null under the same
-     * conditions {@link #stepNodeSeconds} is null. Lets a future consumer (e.g. a billing
-     * subscriber excluding "non-billable" steps -- Runbook Automation billing proposal Section 6.2.1)
-     * exclude specific steps' contributions.
+     * duration in whole seconds (node-level dispatches already summed in), a discrete
+     * node-dispatch count, and the plugin/provider type that ran, so a consumer can decide
+     * billability by plugin type or derive its own scalar total without needing to re-read the
+     * job definition or execution state. Null if the StepNodeUsageWorkflowListener never
+     * finalized a breakdown for this execution (e.g. a crash mid-execution). No separate
+     * scalar total field is kept here -- every actual consumer (Micrometer, the billing
+     * subscriber) either already has its own pre-computed total in hand or needs a filtered
+     * sum this map can't provide on its own anyway, so storing a redundant copy on the event
+     * would only be one more thing that could drift from this map.
      */
-    Map<String, StepNodeSecondsEntry> stepNodeSecondsBreakdown
+    Map<String, StepNodeUsageEntry> stepNodeUsageBreakdown
 
 
     @Override
@@ -60,8 +56,7 @@ class ExecutionCompleteEvent {
                 ", job=" + job +
                 ", nodeStatus=" + nodeStatus +
                 ", context=" + context +
-                ", stepNodeSeconds=" + stepNodeSeconds +
-                ", stepNodeSecondsBreakdown=" + stepNodeSecondsBreakdown +
+                ", stepNodeUsageBreakdown=" + stepNodeUsageBreakdown +
                 '}';
     }
 }

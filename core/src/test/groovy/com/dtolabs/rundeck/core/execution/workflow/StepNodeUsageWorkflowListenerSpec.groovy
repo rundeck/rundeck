@@ -10,7 +10,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import spock.lang.Specification
 
 /**
- * Note on timing: {@link StepNodeSecondsStore} only exposes whole-seconds durations, so these
+ * Note on timing: {@link StepNodeUsageStore} only exposes whole-seconds durations, so these
  * tests use sleeps long enough (~1.2s) that "counted once" (rounds to 1s), "not counted"
  * (rounds to 0s), and "double-counted" (rounds to 2s+) are unambiguous outcomes, rather than
  * asserting exact millisecond durations.
@@ -21,7 +21,7 @@ import spock.lang.Specification
  * entries). The per-step breakdown itself -- distinct steps producing distinct, correctly
  * keyed entries, each with its own plugin type -- is exercised separately, below.
  */
-class StepNodeSecondsWorkflowListenerSpec extends Specification {
+class StepNodeUsageWorkflowListenerSpec extends Specification {
 
     def executor = Mock(StepExecutor)
     def stepContext = Mock(StepExecutionContext)
@@ -37,13 +37,13 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
     }
 
     def totalOf(Long executionId) {
-        StepNodeSecondsStore.getInstance().takeFinishedBreakdown(executionId)?.values()?.sum { it.seconds }
+        StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)?.values()?.sum { it.seconds }
     }
 
     def "zero-node step contributes exactly one step-level unit"() {
         given:
         def executionId = 111L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def item = Mock(StepExecutionItem) {
             getType() >> "some-workflow-step"
         }
@@ -61,7 +61,7 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
     def "single-node step contributes exactly one node-level unit, not double-counted at the step level"() {
         given:
         def executionId = 112L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def item = Mock(NodeStepExecutionItem) {
             getNodeStepType() >> "exec-command"
         }
@@ -84,7 +84,7 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
     def "multi-node dispatch of one step sums per-node durations, no step-level addition"() {
         given:
         def executionId = 113L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def item = Mock(NodeStepExecutionItem) {
             getNodeStepType() >> "exec-command"
         }
@@ -106,13 +106,13 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
         // not counted, or ~3s+ if the step level also added its own span on top. Both nodes
         // dispatch from the same step, so they land in the same breakdown entry.
         totalOf(executionId) == 2L
-        StepNodeSecondsStore.getInstance().takeFinishedBreakdown(executionId) == null // already taken by totalOf() above
+        StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId) == null // already taken by totalOf() above
     }
 
     def "concurrent dispatch across nodes of the same step is thread-safe and sums correctly"() {
         given:
         def executionId = 114L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def item = Mock(NodeStepExecutionItem) {
             getNodeStepType() >> "exec-command"
         }
@@ -143,7 +143,7 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
     def "nested job-reference execution accumulates into the same top-level total, with last-write-wins on finishWorkflowExecution"() {
         given:
         def executionId = 115L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def outerItem = Mock(NodeStepExecutionItem) {
             getNodeStepType() >> "job-ref"
         }
@@ -179,7 +179,7 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
     def "finishWorkflowExecution writes under the closure-captured execution id, and the store is read-and-remove"() {
         given:
         def executionId = 116L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def item = Mock(StepExecutionItem) {
             getType() >> "some-workflow-step"
         }
@@ -191,14 +191,14 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
         listener.finishWorkflowExecution(workflowResult, stepContext, null)
 
         then:
-        StepNodeSecondsStore.getInstance().takeFinishedBreakdown(executionId) != null
-        StepNodeSecondsStore.getInstance().takeFinishedBreakdown(executionId) == null
+        StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId) != null
+        StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId) == null
     }
 
     def "unmatched finish calls do not throw and do not corrupt the breakdown"() {
         given:
         def executionId = 117L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def item = Mock(StepExecutionItem)
         def nodeItem = Mock(NodeStepExecutionItem)
         def n = node("orphan-node")
@@ -210,13 +210,13 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
 
         then:
         noExceptionThrown()
-        StepNodeSecondsStore.getInstance().takeFinishedBreakdown(executionId) == [:]
+        StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId) == [:]
     }
 
     def "two distinct steps produce two distinct breakdown entries, each with its own duration and plugin type"() {
         given:
         def executionId = 118L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def step1Context = Mock(StepExecutionContext) {
             getStepNumber() >> 1
             getStepContext() >> []
@@ -244,20 +244,49 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
         listener.finishWorkflowExecution(workflowResult, step1Context, null)
 
         then:
-        def breakdown = StepNodeSecondsStore.getInstance().takeFinishedBreakdown(executionId)
+        def breakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)
         breakdown.keySet() == (["1", "2"] as Set)
         breakdown["1"].seconds == 1L
         breakdown["1"].pluginType == "notification-plugin"
         breakdown["1"].isNodeStep == false
+        breakdown["1"].nodeCount == 1L
         breakdown["2"].seconds == 2L
         breakdown["2"].pluginType == "exec-command"
         breakdown["2"].isNodeStep == true
+        breakdown["2"].nodeCount == 1L
+    }
+
+    def "a step dispatched to multiple nodes counts one node-step unit per node, not per step"() {
+        given:
+        def executionId = 121L
+        def listener = new StepNodeUsageWorkflowListener(executionId)
+        def item = Mock(NodeStepExecutionItem) {
+            getNodeStepType() >> "exec-command"
+        }
+        def nodeA = node("nodeA")
+        def nodeB = node("nodeB")
+        def nodeC = node("nodeC")
+
+        when:
+        listener.beginStepExecution(executor, stepContext, item)
+        listener.beginExecuteNodeStep(execContext, item, nodeA)
+        listener.finishExecuteNodeStep(nodeStepResult, execContext, item, nodeA)
+        listener.beginExecuteNodeStep(execContext, item, nodeB)
+        listener.finishExecuteNodeStep(nodeStepResult, execContext, item, nodeB)
+        listener.beginExecuteNodeStep(execContext, item, nodeC)
+        listener.finishExecuteNodeStep(nodeStepResult, execContext, item, nodeC)
+        listener.finishStepExecution(executor, statusResult, stepContext, item)
+        listener.finishWorkflowExecution(workflowResult, stepContext, null)
+
+        then:
+        def breakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)
+        breakdown.values().first().nodeCount == 3L
     }
 
     def "a step nested under another step produces a breakdown key reflecting the parent path"() {
         given:
         def executionId = 119L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def nestedContext = Mock(StepExecutionContext) {
             getStepNumber() >> 1
             getStepContext() >> [3]
@@ -273,7 +302,7 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
         listener.finishWorkflowExecution(workflowResult, nestedContext, null)
 
         then:
-        def breakdown = StepNodeSecondsStore.getInstance().takeFinishedBreakdown(executionId)
+        def breakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)
         breakdown.keySet() == (["3/1"] as Set)
         breakdown["3/1"].seconds == 1L
     }
@@ -281,7 +310,7 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
     def "a node-dispatching step's breakdown entry uses the node-step type, not the generic step type"() {
         given:
         def executionId = 120L
-        def listener = new StepNodeSecondsWorkflowListener(executionId)
+        def listener = new StepNodeUsageWorkflowListener(executionId)
         def item = Mock(NodeStepExecutionItem) {
             getType() >> "generic-node-step-wrapper"
             getNodeStepType() >> "exec-command"
@@ -297,7 +326,7 @@ class StepNodeSecondsWorkflowListenerSpec extends Specification {
         listener.finishWorkflowExecution(workflowResult, stepContext, null)
 
         then:
-        def breakdown = StepNodeSecondsStore.getInstance().takeFinishedBreakdown(executionId)
+        def breakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)
         breakdown.values().first().pluginType == "exec-command"
         breakdown.values().first().isNodeStep == true
     }
