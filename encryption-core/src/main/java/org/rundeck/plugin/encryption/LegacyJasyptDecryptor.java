@@ -26,6 +26,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import java.security.Security;
 import java.util.Arrays;
+import java.util.Base64;
 
 /**
  * Decrypts data produced by Jasypt's {@code StandardPBEByteEncryptor} without
@@ -107,6 +108,28 @@ public class LegacyJasyptDecryptor {
         }
 
         try {
+            return decryptRaw(password, encryptedMessage);
+        } catch (EncryptionException rawFailure) {
+            byte[] base64Decoded = tryBase64Decode(encryptedMessage);
+            if (base64Decoded != null && base64Decoded.length > saltSizeBytes) {
+                try {
+                    return decryptRaw(password, base64Decoded);
+                } catch (EncryptionException base64Failure) {
+                    // Base64 decoding "succeeded" structurally but didn't yield valid ciphertext either;
+                    // surface the original raw-binary failure, which is the more informative one.
+                }
+            }
+            throw rawFailure;
+        }
+    }
+
+    /**
+     * Interpret {@code encryptedMessage} as raw Jasypt binary output ({@code [salt][ciphertext]})
+     * and decrypt it. Throws {@link EncryptionException} if the bytes are not a valid ciphertext
+     * for this algorithm/password (wrong shape, wrong password, or not ciphertext at all).
+     */
+    private byte[] decryptRaw(char[] password, byte[] encryptedMessage) {
+        try {
             byte[] salt = Arrays.copyOfRange(encryptedMessage, 0, saltSizeBytes);
             byte[] ciphertext = Arrays.copyOfRange(encryptedMessage, saltSizeBytes, encryptedMessage.length);
 
@@ -125,6 +148,19 @@ public class LegacyJasyptDecryptor {
             return cipher.doFinal(ciphertext);
         } catch (Exception e) {
             throw new EncryptionException("Legacy Jasypt decryption failed", e);
+        }
+    }
+
+    /**
+     * Attempt to Base64-decode {@code data}, for recovering content that was stored as a
+     * Base64-encoded string on top of the raw Jasypt binary format. Returns {@code null}
+     * (rather than throwing) if {@code data} is not valid Base64.
+     */
+    private static byte[] tryBase64Decode(byte[] data) {
+        try {
+            return Base64.getDecoder().decode(data);
+        } catch (IllegalArgumentException notBase64) {
+            return null;
         }
     }
 
