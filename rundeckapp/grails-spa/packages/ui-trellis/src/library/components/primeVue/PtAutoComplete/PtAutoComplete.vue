@@ -484,7 +484,7 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
-@import "../_form-inputs.scss";
+@import "../_autocomplete-overlay.scss";
 
 .pt-autocomplete-wrapper {
   display: flex;
@@ -496,60 +496,6 @@ export default defineComponent({
   margin-top: var(--space-1);
   margin-bottom: 0;
   color: var(--colors-red-500);
-}
-
-.p-autocomplete-overlay {
-  z-index: 1200 !important;
-  color: var(--colors-gray-800);
-  margin-top: 0;
-}
-
-// Remove any spacing from PrimeVue's header container
-.p-autocomplete-overlay .p-autocomplete-header {
-  padding: 0;
-  margin: 0;
-}
-
-.p-autocomplete-list {
-  padding: 0;
-  margin: 0;
-  min-height: 40px;
-
-  li {
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-  }
-}
-
-.p-autocomplete-option {
-  color: var(--colors-gray-800);
-  padding: 10px 17px;
-  transition:
-    background-color 0.2s,
-    color 0.2s;
-}
-
-.p-autocomplete-option:hover:not(.p-disabled):not(
-    .p-autocomplete-option-selected
-  ) {
-  background-color: var(--colors-cardNumber);
-  color: var(--colors-gray-800);
-}
-
-.p-autocomplete-option.p-focus:not(.p-disabled) {
-  background-color: var(--colors-cardNumber);
-  color: var(--colors-gray-800);
-}
-
-.p-autocomplete-option-selected {
-  background-color: var(--colors-blue-50);
-  color: var(--colors-blue-500);
-}
-
-.p-autocomplete-option-selected.p-focus {
-  background-color: var(--colors-blue-50);
-  color: var(--colors-blue-500);
 }
 
 .p-autocomplete-option .autocomplete-option-content {
@@ -580,12 +526,6 @@ export default defineComponent({
   background-color: var(--colors-yellow-200) !important;
   color: var(--colors-blue-600) !important;
   font-weight: var(--fontWeights-semibold);
-}
-
-.p-autocomplete-list-container {
-  background-color: var(--colors-white);
-  border: 1px solid var(--colors-gray-300-original);
-  border-radius: var(--radii-base);
 }
 
 .autocomplete-tabs {
@@ -656,40 +596,5 @@ export default defineComponent({
 
 .autocomplete-tab-active .autocomplete-tab-label {
   font-weight: var(--fontWeights-semibold);
-}
-
-.p-autocomplete {
-  width: 100%;
-
-  .p-inputtext {
-    @include form-input-base;
-    padding: 10px;
-    font-size: 14px;
-    font-weight: var(--fontWeights-regular);
-    line-height: normal;
-    color: var(--colors-gray-800);
-    background: var(--colors-white);
-
-    @include form-input-placeholder;
-
-    &:hover:not(:focus):not(:disabled):not(.p-invalid) {
-      @include form-input-hover;
-    }
-
-    &:focus {
-      @include form-input-focus;
-    }
-
-    &.p-invalid {
-      @include form-input-invalid;
-    }
-
-    &:disabled {
-      @include form-input-disabled;
-      background: var(--colors-gray-50);
-      color: var(--colors-gray-500);
-      cursor: not-allowed;
-    }
-  }
 }
 </style>

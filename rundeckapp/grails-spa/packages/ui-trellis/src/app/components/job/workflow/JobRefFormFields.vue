@@ -88,19 +88,21 @@
       <div
         class="form-group"
         :class="{ 'has-error': showValidation && isUseName }"
+        data-testid="jobNameFieldGroup"
       >
         <label class="col-sm-2 control-label"></label>
         <div class="col-sm-5">
-          <input
-            :id="`jobNameField${rkey}`"
+          <PtEntityAutoComplete
             v-model="modelValue.name"
-            type="text"
+            :input-id="`jobNameField${rkey}`"
             name="jobName"
-            data-testid="jobNameField"
+            input-testid="jobNameField"
+            option-label="name"
+            option-secondary="group"
+            :search="fetchJobSuggestions"
+            :read-only="!isUseName"
             :placeholder="$t('scheduledExecution.jobName.label')"
-            class="form-control"
-            size="100"
-            :readonly="!isUseName"
+            @select="onJobSuggestionSelected"
           />
         </div>
         <div class="col-sm-5">
@@ -596,6 +598,11 @@ import { getRundeckContext } from "../../../../library";
 import NodeFilterInput from "../resources/NodeFilterInput.vue";
 import NodeListEmbed from "../resources/NodeListEmbed.vue";
 import PtAutoComplete from "../../../../library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
+import PtEntityAutoComplete from "../../../../library/components/primeVue/PtEntityAutoComplete/PtEntityAutoComplete.vue";
+import {
+  searchJobsByName,
+  type JobSearchResult,
+} from "../../../../library/services/jobBrowse";
 import UiSocket from "../../../../library/components/utils/UiSocket.vue";
 import { ContextVariable } from "../../../../library/stores/contextVariables";
 import { merge } from "lodash";
@@ -649,6 +656,7 @@ export default defineComponent({
     NodeFilterInput,
     NodeListEmbed,
     PtAutoComplete,
+    PtEntityAutoComplete,
     UiSocket,
   },
   provide() {
@@ -796,6 +804,35 @@ export default defineComponent({
 
     handleFavoritesButton() {
       this.showFavoritesButton = false;
+    },
+
+    /**
+     * Load job name suggestions for the job reference name field.
+     *
+     * Filtering runs server side against the project currently selected in the
+     * form, so projects with a large number of jobs stay responsive and jobs
+     * the user cannot run are left out.
+     *
+     * @param query partial job name typed by the user
+     * @returns matching jobs, flattened across group paths
+     */
+    async fetchJobSuggestions(query: string): Promise<JobSearchResult[]> {
+      const project = this.modelValue.project || this.selectedProject;
+      if (!project) {
+        return [];
+      }
+      return await searchJobsByName(project, query);
+    },
+
+    /**
+     * Populate name, group and uuid from a job picked in the name autocomplete.
+     *
+     * @param job the selected job
+     */
+    onJobSuggestionSelected(job: JobSearchResult) {
+      this.modelValue.name = job.name;
+      this.modelValue.group = job.group || "";
+      this.modelValue.uuid = job.id;
     },
 
     updatedValue(val: string) {
