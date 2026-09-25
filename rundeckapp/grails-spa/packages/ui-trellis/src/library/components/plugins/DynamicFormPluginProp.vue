@@ -1,6 +1,7 @@
 <template>
   <div id="fieldcustomeditor" class="col-sm-12">
     <input ref="hiddenFieldInput" type="hidden" :name="name" />
+    <hr />
 
     <div v-if="customFields != null">
       <div
@@ -10,24 +11,24 @@
         data-testid="field-item"
       >
         <label class="col-sm-2 control-label input-sm">{{
-          field.label?.trim() || field.key
+          field.label || field.key
         }}</label>
         <div class="col-sm-9">
           <input
-            :value="field.value"
+            v-model="field.value"
             type="text"
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
+            @change="changeField(field)"
             :data-testid="'field-input-' + index"
-            @input="onValueInput(field, $event)"
           />
         </div>
         <div class="col-sm-1">
           <span
             class="btn btn-xs btn-default"
             :title="$t('message_delete')"
-            data-testid="remove-field-button"
             @click="removeField(field)"
+            data-testid="remove-field-button"
           >
             <i class="glyphicon glyphicon-remove"></i
           ></span>
@@ -42,8 +43,8 @@
 
     <btn
       type="primary"
-      data-testid="add-field-button"
       @click="openNewField()"
+      data-testid="add-field-button"
       >{{ $t("message_addField") }}</btn
     >
 
@@ -63,19 +64,10 @@
       <div class="row" style="padding-left: 30px !important">
         <alert
           v-if="duplicate"
-          ref="duplicateWarningRef"
           type="warning"
           data-testid="duplicate-warning"
-          ><b>{{ $t("message_warning") }}</b>
-          {{ $t("message_duplicated") }}.</alert
-        >
-        <alert
-          v-if="invalidKey"
-          ref="invalidKeyWarningRef"
-          type="warning"
-          data-testid="invalid-key-warning"
-          ><b>{{ $t("message_warning") }}</b>
-          {{ $t("message_fieldKeyRequired") }}.</alert
+          ref="duplicateWarningRef"
+          ><b>Warning!</b> {{ $t("message_duplicated") }}.</alert
         >
 
         <div class="col-md-10">
@@ -102,96 +94,53 @@
             </div>
 
             <div :class="['form-data']">
-              <label class="col-md-4" :for="`${uid}-description-input`">
-                {{ $t("message_description") }}
-              </label>
+              <label class="col-md-4">{{ $t("message_description") }}</label>
               <div class="col-md-8">
                 <input
-                  :id="`${uid}-description-input`"
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
-                  :aria-describedby="`${uid}-description-help`"
                   data-testid="field-description-input"
                 />
-                <div
-                  :id="`${uid}-description-help`"
-                  class="help-block"
-                  data-testid="new-field-description-help"
-                >
-                  {{ $t("message_fieldDescriptionHelp") }}
-                </div>
+                <div class="help-block">{{ $t("message_empty") }}</div>
               </div>
             </div>
           </div>
 
           <div v-if="!useOptions" class="form">
             <div :class="['form-group']">
-              <label class="col-md-4" :for="`${uid}-key-input`">{{
-                $t("message_fieldKey")
-              }}</label>
+              <label class="col-md-4">{{ $t("message_fieldLabel") }}</label>
               <div class="col-md-8">
                 <input
-                  :id="`${uid}-key-input`"
-                  v-model="newField"
-                  type="text"
-                  :class="['form-control']"
-                  required
-                  :aria-describedby="`${uid}-key-help`"
-                  data-testid="field-key-input"
-                />
-                <div
-                  :id="`${uid}-key-help`"
-                  class="help-block"
-                  data-testid="field-key-help"
-                >
-                  {{ $t("message_fieldKeyHelp") }}
-                </div>
-              </div>
-            </div>
-            <div :class="['form-group']">
-              <label class="col-md-4" :for="`${uid}-label-input`">{{
-                $t("message_fieldLabel")
-              }}</label>
-              <div class="col-md-8">
-                <input
-                  :id="`${uid}-label-input`"
                   v-model="newLabelField"
                   type="text"
                   :class="['form-control']"
-                  :aria-describedby="`${uid}-label-help`"
                   data-testid="field-label-input"
                 />
-                <div
-                  :id="`${uid}-label-help`"
-                  class="help-block"
-                  data-testid="field-label-help"
-                >
-                  {{ $t("message_fieldLabelHelp") }}
-                </div>
+              </div>
+            </div>
+            <div :class="['form-group']">
+              <label class="col-md-4">{{ $t("message_fieldKey") }}</label>
+              <div class="col-md-8">
+                <input
+                  v-model="newField"
+                  type="text"
+                  :class="['form-control']"
+                  data-testid="field-key-input"
+                />
               </div>
             </div>
 
             <div :class="['form-group']">
-              <label class="col-md-4" :for="`${uid}-description-input`">
-                {{ $t("message_description") }}
-              </label>
+              <label class="col-md-4">{{ $t("message_description") }}</label>
               <div class="col-md-8">
                 <input
-                  :id="`${uid}-description-input`"
                   v-model="newFieldDescription"
                   type="text"
                   :class="['form-control']"
-                  :aria-describedby="`${uid}-description-help`"
                   data-testid="field-description-input"
                 />
-                <div
-                  :id="`${uid}-description-help`"
-                  class="help-block"
-                  data-testid="new-field-description-help"
-                >
-                  {{ $t("message_fieldDescriptionHelp") }}
-                </div>
+                <div class="help-block">{{ $t("message_empty") }}</div>
               </div>
             </div>
           </div>
@@ -203,8 +152,8 @@
           <button
             type="button"
             class="btn btn-default reset_page_confirm"
-            data-testid="cancel-button"
             @click="modalAddField = false"
+            data-testid="cancel-button"
           >
             {{ $t("message_cancel") }}
           </button>
@@ -212,8 +161,8 @@
           <button
             type="button"
             class="btn btn-cta reset_page_confirm"
-            data-testid="confirm-add-field-button"
             @click="addField()"
+            data-testid="confirm-add-field-button"
           >
             {{ $t("message_add") }}
           </button>
@@ -224,7 +173,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, useId } from "vue";
+import { defineComponent } from "vue";
 import { Btn, Alert, Modal } from "uiv";
 import PtSelect from "../primeVue/PtSelect/PtSelect.vue";
 
@@ -262,9 +211,6 @@ export default defineComponent({
     },
   },
   emits: ["update:modelValue"],
-  setup() {
-    return { uid: useId() };
-  },
   data() {
     return {
       customFields: [] as CustomField[],
@@ -272,7 +218,6 @@ export default defineComponent({
       useOptions: false,
       modalAddField: false,
       duplicate: false,
-      invalidKey: false,
       newField: "",
       newLabelField: "",
       newFieldDescription: "",
@@ -281,7 +226,10 @@ export default defineComponent({
   },
   watch: {
     fields(newFields: string) {
-      // Skip syncing a value we just emitted ourselves, to avoid fighting in-flight edits.
+      // Keep local state in sync if the prop changes after mount (e.g. the
+      // parent round-trips the value through its own v-model chain). Skip
+      // when the incoming value already matches what we just emitted
+      // ourselves, to avoid fighting with in-flight edits.
       if (newFields === JSON.stringify(this.customFields)) {
         return;
       }
@@ -314,73 +262,68 @@ export default defineComponent({
   methods: {
     syncFieldsFromProp(fields: string) {
       if (fields == null || fields === "") {
+        // Clearing the prop must clear the list too, otherwise the previous
+        // fields stay on screen after the parent resets the value.
         this.customFields = [];
         return;
       }
       const customFieldsObject = JSON.parse(fields);
       if (customFieldsObject != null) {
-        this.customFields = Object.keys(customFieldsObject).map((key: any) => {
+        const parsedFields = Object.keys(customFieldsObject).map((key: any) => {
           const value = customFieldsObject[key];
           if (value.desc == null) {
             value.desc = this.$t("message_fieldKeyDescription", [value.key]);
           }
           return value;
         });
+        this.customFields = parsedFields;
       }
     },
     openNewField() {
-      this.duplicate = false;
-      this.invalidKey = false;
       this.modalAddField = true;
     },
     addField() {
       let field = {} as CustomField;
       this.duplicate = false;
-      this.invalidKey = false;
-
-      const key = (
-        this.useOptions ? this.selectedField?.value : this.newField
-      )?.trim();
-      if (!key) {
-        this.invalidKey = true;
-        return;
-      }
 
       if (this.useOptions) {
-        const newField = this.selectedField;
+        if (this.selectedField !== null) {
+          const newField = this.selectedField;
 
-        let description = this.newFieldDescription;
-        if (description == "") {
-          description = this.$t("message_fieldKeyOnlyDescription", [
-            newField.value,
-          ]);
-        } else {
-          description = this.$t("message_fieldKeyAppendedDescription", [
-            description,
-            newField.value,
-          ]);
+          let description = this.newFieldDescription;
+          if (description == "") {
+            description = this.$t("message_fieldKeyOnlyDescription", [
+              newField.value,
+            ]);
+          } else {
+            description = this.$t("message_fieldKeyAppendedDescription", [
+              description,
+              newField.value,
+            ]);
+          }
+
+          field = {
+            key: newField.value,
+            label: newField.label,
+            desc: description,
+          };
         }
-
-        field = {
-          key: newField.value,
-          label: newField.label,
-          desc: description,
-        };
       } else {
         let description = this.newFieldDescription;
         if (description == "") {
-          description = this.$t("message_fieldKeyOnlyDescription", [key]);
+          description = this.$t("message_fieldKeyOnlyDescription", [
+            this.newField,
+          ]);
         } else {
           description = this.$t("message_fieldKeyAppendedDescription", [
             description,
-            key,
+            this.newField,
           ]);
         }
 
         field = {
-          key,
-          // Falls back to the key, per message_fieldLabelHelp.
-          label: this.newLabelField.trim() !== "" ? this.newLabelField : key,
+          key: this.newField,
+          label: this.newLabelField,
           value: "",
           desc: description,
         };
@@ -413,8 +356,7 @@ export default defineComponent({
       this.customFields = fields;
       this.refreshPlugin();
     },
-    onValueInput(field: CustomField, event: Event) {
-      field.value = (event.target as HTMLInputElement).value;
+    changeField(field: CustomField) {
       this.refreshPlugin();
     },
     refreshPlugin() {

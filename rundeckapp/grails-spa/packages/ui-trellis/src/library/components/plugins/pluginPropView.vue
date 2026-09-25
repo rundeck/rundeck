@@ -187,7 +187,7 @@
           class="configpair"
           data-testid="configpair"
         >
-          <span title="">{{ getCustomLabel(custom) }}:</span>
+          <span title="">{{ custom.label }}:</span>
           <span
             class="text-success copiable-text"
             @click="copyText(custom.value)"
@@ -283,13 +283,6 @@ export default defineComponent({
         return JSON.parse(`${this.innerValue}`);
       }
       return [];
-    },
-    getCustomLabel(custom: { label?: string; key?: string }): string {
-      // A truthy check alone lets a whitespace-only label ("  ") through
-      // instead of falling back to the key.
-      return custom.label && custom.label.trim() !== ""
-        ? custom.label
-        : (custom.key ?? "");
     },
     async copyText(text: string) {
       try {
