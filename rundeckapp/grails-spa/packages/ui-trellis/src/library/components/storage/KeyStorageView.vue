@@ -369,7 +369,7 @@ export default defineComponent({
       type: Function as PropType<
         (
           path: string,
-          options?: { queryParameters?: Record<string, string> },
+          options?: { queryParameters?: { refresh?: string } },
         ) => Promise<StorageKeyListResponse>
       >,
       default: storageKeyGetMetadata,
