@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from "vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   props: {
@@ -21,7 +21,7 @@ export default defineComponent({
       return `${this.logocss} app-logo`;
     },
     text(): string {
-      const { title, number, tag } = this;
+      const { title, number } = this;
       let text = "";
       text += `${title ? title + " " : ""}`;
       text += `${number}`;

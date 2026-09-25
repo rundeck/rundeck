@@ -143,7 +143,7 @@ export const Playground: Story = {
   }),
 };
 
-const generateTemplate = (args: Record<string, any>) => {
+const generateTemplate = () => {
   return `<div>
     <PtSelectButton v-bind="args" />
   </div>`;
@@ -156,7 +156,7 @@ export const Default: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {},
 };
@@ -168,7 +168,7 @@ export const WithObjects: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     modelValue: 1,
@@ -188,7 +188,7 @@ export const Multiple: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     modelValue: ["option1"],
@@ -204,7 +204,7 @@ export const Fluid: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     fluid: true,
@@ -218,7 +218,7 @@ export const PreventEmpty: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     modelValue: "Option 1",

@@ -75,8 +75,7 @@ export default defineComponent({
     };
   },
   mounted() {
-    // @ts-ignore
-    this.rootStore.utilityBar.addItems([
+    (this.rootStore as RootStore).utilityBar.addItems([
       {
         type: "action",
         id: "utility-tours",

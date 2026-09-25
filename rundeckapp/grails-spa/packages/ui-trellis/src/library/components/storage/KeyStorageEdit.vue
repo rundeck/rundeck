@@ -246,7 +246,6 @@ import {
 } from "../../services/storage";
 import type { PropType } from "vue";
 import { defineComponent } from "vue";
-import { getRundeckContext } from "../../index";
 import InputType from "../../types/InputType";
 import KeyType from "../../types/KeyType";
 
@@ -363,8 +362,6 @@ export default defineComponent({
       return this.$t("storage.keyPath.error.invalidFormat");
     },
     async handleUploadKey() {
-      const rundeckContext = getRundeckContext();
-
       const fullPath = this.calcBrowsePath(this.getKeyPath());
 
       // Validate path for new items only (skip for legacy items being edited)
@@ -376,18 +373,13 @@ export default defineComponent({
         }
       }
 
-      let contentType = "application/pgp-keys";
-
       let value = null as any;
 
       switch (this.uploadSetting.keyType) {
         case KeyType.Password:
-          contentType = "application/x-rundeck-data-password";
           value = this.uploadSetting.password;
           break;
         case KeyType.Private:
-          contentType = "application/octet-stream";
-
           if (this.uploadSetting.inputType === InputType.Text) {
             value = this.uploadSetting.textArea;
           } else {
@@ -437,7 +429,7 @@ export default defineComponent({
           let response = await storageKeyCreate(fullPath, value, {
             type: this.uploadSetting.keyType,
           });
-          this.getCreatedKey(fullPath).then((r: any) => {
+          this.getCreatedKey(fullPath).then(() => {
             this.$emit("keyCreated", this.createdKey);
             this.$emit("finishEditing", response);
           });
@@ -480,7 +472,7 @@ export default defineComponent({
           this.uploadSetting.errorMsg = null;
         }
       };
-      reader.onerror = (event: any) => {
+      reader.onerror = () => {
         this.uploadSetting.errorMsg = "file cannot be read";
         this.uploadSetting.file = null;
       };

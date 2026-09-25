@@ -1,10 +1,6 @@
 import type { Meta, StoryFn } from "@storybook/vue3";
 
-import {
-  Rundeck,
-  RundeckClient,
-  TokenCredentialProvider,
-} from "@rundeck/client";
+import { RundeckClient, TokenCredentialProvider } from "@rundeck/client";
 import { BrowserFetchHttpClient } from "@azure/ms-rest-js/es/lib/browserFetchHttpClient";
 
 import "../../../stories/setup";
@@ -13,8 +9,7 @@ import { RootStore } from "../../../stores/RootStore";
 
 import WebhookSelect from "./WebhookSelect.vue";
 
-// @ts-ignore
-window._rundeck.rundeckClient = new RundeckClient(
+(window as any)._rundeck.rundeckClient = new RundeckClient(
   new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN),
   {
     baseUri: process.env.STORYBOOK_RUNDECK_URL,

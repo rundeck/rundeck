@@ -15,7 +15,6 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import type { PropType } from "vue";
 import UtilItem from "./UtilityBarItem.vue";
 
 export default defineComponent({

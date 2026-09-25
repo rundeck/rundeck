@@ -367,7 +367,10 @@ export default defineComponent({
     runnerId: String,
     getKeyMetadata: {
       type: Function as PropType<
-        (path: string) => Promise<StorageKeyListResponse>
+        (
+          path: string,
+          options?: { queryParameters?: { refresh?: string } },
+        ) => Promise<StorageKeyListResponse>
       >,
       default: storageKeyGetMetadata,
       required: true,
@@ -446,7 +449,7 @@ export default defineComponent({
         this.selectKey(newValue);
       }
     },
-    rootPath: function (newValue: string) {
+    rootPath: function () {
       // Reset current path when rootPath changed.
 
       this.path = "";
@@ -529,12 +532,10 @@ export default defineComponent({
     countDown(selectedKey?: any) {
       if (this.countDownLimit > 0) return;
       this.countDownLimit = 5;
-      // @ts-ignore
-      this.countDownInterval = setInterval(() => {
+      this.countDownInterval = window.setInterval(() => {
         this.countDownLimit--;
 
         if (this.countDownLimit <= 0) {
-          // @ts-ignore
           clearInterval(this.countDownInterval);
           this.countDownInterval = 0;
 
@@ -556,7 +557,6 @@ export default defineComponent({
       const requestOptions = {
         queryParameters: forceRefresh ? { refresh: "true" } : {},
       };
-      // @ts-ignore
       this.getKeyMetadata(getPath, requestOptions)
         .then((result: any) => {
           this.directories = [];

@@ -1,4 +1,3 @@
-// @ts-ignore
 import { Plugin, ServiceType } from "../../Plugins";
 
 export const mockPluginDetail: any = {

@@ -128,7 +128,7 @@ export default defineComponent({
     };
   },
   watch: {
-    showWhichPlugins: function (newVal, oldVal) {
+    showWhichPlugins: function (newVal) {
       this.setInstallStatusOfPluginsVisibility(newVal);
     },
   },
@@ -198,7 +198,7 @@ export default defineComponent({
       () => {
         // don't do anything. everything is good!
       },
-      (error) => {
+      () => {
         this.$alert({
           title: "Error Accessing Plugins",
           content:

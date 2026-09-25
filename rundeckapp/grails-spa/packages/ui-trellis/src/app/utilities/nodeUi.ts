@@ -9,7 +9,7 @@ export function cssForIcon(attrs: any) {
   if (fgColor) {
     classnames.push(fgColor);
   }
-  const bgColor = iconBgCss(attrs, "ui:icon:bgcolor");
+  const bgColor = iconBgCss(attrs);
   if (bgColor) {
     classnames.push(bgColor);
   }
@@ -49,7 +49,7 @@ export function statusIconStyle(attrs: any) {
       styles["color"] = uiColor;
     }
   }
-  if (!iconBgCss(attrs, "ui:status:bgcolor")) {
+  if (!iconBgCss(attrs)) {
     const uiIconBgcolor = attrs["ui:status:bgcolor"];
     const uiBgcolor = attrs["ui:bgcolor"];
     if (isStyleBg(uiIconBgcolor)) {
@@ -67,7 +67,7 @@ export function statusIconCss(attrs: any) {
   if (fgColor) {
     classnames.push(fgColor);
   }
-  const bgColor = iconBgCss(attrs, "ui:status:bgcolor");
+  const bgColor = iconBgCss(attrs);
   if (bgColor) {
     classnames.push(bgColor);
   }
@@ -133,7 +133,7 @@ export function iconFgCss(attrs: any, attrName: string) {
   return null;
 }
 
-export function iconBgCss(attrs: any, attrName: string) {
+export function iconBgCss(attrs: any) {
   const uiIconBgcolor = attrs["ui:icon:bgcolor"];
   const uiBgcolor = attrs["ui:bgcolor"];
   if (isAnsiBg(uiIconBgcolor)) {
@@ -155,7 +155,7 @@ export function styleForIcon(attrs: any) {
       styles["color"] = uiColor;
     }
   }
-  if (!iconBgCss(attrs, "ui:icon:bgcolor")) {
+  if (!iconBgCss(attrs)) {
     const uiIconBgcolor = attrs["ui:icon:bgcolor"];
     const uiBgcolor = attrs["ui:bgcolor"];
     if (isStyleBg(uiIconBgcolor)) {

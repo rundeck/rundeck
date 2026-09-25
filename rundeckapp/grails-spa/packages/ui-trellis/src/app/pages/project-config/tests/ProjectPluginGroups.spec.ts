@@ -1,7 +1,6 @@
-// @ts-nocheck
-import { mount } from "@vue/test-utils";
+import { mount, VueWrapper } from "@vue/test-utils";
 import ProjectPluginGroups from "../ProjectPluginGroups.vue";
-import { getRundeckContext } from "@/library/rundeckService";
+import { getRundeckContext } from "../../../../library/rundeckService";
 
 // eventBus is created once inside the factory closure (not referencing an
 // outer variable, which jest.mock hoisting would otherwise break) so every
@@ -49,9 +48,11 @@ jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
 
 import pluginService from "../../../../library/modules/pluginService";
 
-const mockEmit = getRundeckContext().eventBus.emit;
+const mockEmit = getRundeckContext().eventBus.emit as jest.Mock;
 
-const mountWidget = async (props: Record<string, any> = {}) => {
+const mountWidget = async (
+  props: Record<string, any> = {},
+): Promise<VueWrapper<any>> => {
   const wrapper = mount(ProjectPluginGroups, {
     props: {
       serviceName: "PluginGroup",
@@ -116,7 +117,7 @@ describe("ProjectPluginGroups editing-state event", () => {
 
     wrapper.vm.addPlugin("test-plugin");
     wrapper.vm.workingData[0].entry.config = { host: "example.com" };
-    await wrapper.vm.savePlugin(wrapper.vm.workingData[0], 0);
+    await wrapper.vm.savePlugin(wrapper.vm.workingData[0]);
     await wrapper.vm.$nextTick();
 
     expect(pluginService.validatePluginConfig).toHaveBeenCalled();
