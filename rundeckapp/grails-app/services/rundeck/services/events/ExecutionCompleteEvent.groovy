@@ -16,6 +16,7 @@
 
 package rundeck.services.events
 
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageWorkflowListener.StepNodeUsageEntry
 import rundeck.Execution
 import rundeck.ScheduledExecution
 
@@ -29,6 +30,23 @@ class ExecutionCompleteEvent {
     Map nodeStatus
     Map context
 
+    /**
+     * Per-step breakdown of step-node-second durations for this execution (Section 2 of the
+     * Runbook Automation consumption-billing proposal): one entry per step, keyed by its
+     * hierarchical step path (e.g. "3", or "3/1" for a step nested under step 3 -- the same
+     * scheme state.json uses for its own step identifiers). Each entry holds that step's
+     * duration in whole seconds (node-level dispatches already summed in), a discrete
+     * node-dispatch count, and the plugin/provider type that ran, so a consumer can decide
+     * billability by plugin type or derive its own scalar total without needing to re-read the
+     * job definition or execution state. Null if the StepNodeUsageWorkflowListener never
+     * finalized a breakdown for this execution (e.g. a crash mid-execution). No separate
+     * scalar total field is kept here -- every actual consumer (Micrometer, the billing
+     * subscriber) either already has its own pre-computed total in hand or needs a filtered
+     * sum this map can't provide on its own anyway, so storing a redundant copy on the event
+     * would only be one more thing that could drift from this map.
+     */
+    Map<String, StepNodeUsageEntry> stepNodeUsageBreakdown
+
 
     @Override
     public String toString() {
@@ -38,6 +56,7 @@ class ExecutionCompleteEvent {
                 ", job=" + job +
                 ", nodeStatus=" + nodeStatus +
                 ", context=" + context +
+                ", stepNodeUsageBreakdown=" + stepNodeUsageBreakdown +
                 '}';
     }
 }

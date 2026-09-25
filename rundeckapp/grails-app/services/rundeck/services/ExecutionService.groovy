@@ -1407,6 +1407,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def logOutFlusher = new LogFlusher()
             def logErrFlusher = new LogFlusher()
             def wfStepMetricsListener = new WorkflowExecutionListenerStepMetrics(new WorkflowMetricsWriterImpl(metricService))
+            def stepNodeUsageListener = new StepNodeUsageWorkflowListener(execution.id)
             def listenersList = [
                     contextmanager,
                     executionListener, //manages context for logging
@@ -1415,6 +1416,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logOutFlusher, //flushes stdout output after node steps
                     logErrFlusher, //flush stderr output after node steps
                     wfStepMetricsListener, //collects step metrics
+                    stepNodeUsageListener, //accumulates step_node_seconds for Runbook Automation consumption metering
                     /*new EchoExecListener() */
             ]
             def multiListener = MultiWorkflowExecutionListener.create(
@@ -3597,6 +3599,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // cleanupExecution), so recording here (rather than in
             // ExecutionUtilService.finishExecutionMetrics) captures all of them exactly once.
             micrometerExecutionMetricsService?.recordExecution(execution)
+            // Read once: StepNodeUsageStore.takeFinishedBreakdown is read-and-remove, so a
+            // second call below (e.g. when building the completion event) would see null.
+            Map<String, StepNodeUsageWorkflowListener.StepNodeUsageEntry> stepNodeUsageBreakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(execution.id)
+            Long stepNodeSeconds = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.seconds.sum() ?: 0L) as Long
+            Long stepNodeCount = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.nodeCount.sum() ?: 0L) as Long
+            micrometerExecutionMetricsService?.recordStepNodeSeconds(execution, stepNodeSeconds)
+            micrometerExecutionMetricsService?.recordStepNodeCount(execution, stepNodeCount)
 
             //summarize node success
             String node=null
@@ -3644,7 +3653,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execution: execution,
                     job: scheduledExecution,
                     nodeStatus: [succeeded: sucCount, failed: failedCount, total: totalCount],
-                    context: context?.dataContext
+                    context: context?.dataContext,
+                    stepNodeUsageBreakdown: stepNodeUsageBreakdown
             )
 
             notify('executionComplete', completedEvent)

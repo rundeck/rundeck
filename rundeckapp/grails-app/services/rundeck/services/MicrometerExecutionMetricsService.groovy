@@ -5,6 +5,7 @@ import grails.core.GrailsApplication
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import io.micrometer.core.instrument.DistributionSummary
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.Meter
 import io.micrometer.core.instrument.MeterRegistry
@@ -105,6 +106,42 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
         runningCounter?.updateAndGet({ int v -> Math.max(0, v - 1) } as IntUnaryOperator)
     }
 
+    /**
+     * Records the step_node_seconds total (sum of per-step, per-node durations across the
+     * execution tree, including nested job-reference calls) as its own timer, tagged the same
+     * way as {@link #recordExecution}'s duration timer. A separate meter, not folded into
+     * rundeck.execution.duration, since it's a materially different figure -- summed across
+     * nodes, not wall-clock -- and mixing the two would corrupt that meter's _sum/_avg/_max.
+     * No-op when the registry/execution is unavailable, or when no total was recorded for this
+     * execution (e.g. it crashed before finishing).
+     */
+    void recordStepNodeSeconds(Execution execution, Long stepNodeSeconds) {
+        if (!meterRegistry || !execution || stepNodeSeconds == null) {
+            return
+        }
+        List<Tag> tags = [Tag.of('project', execution.project), Tag.of('status', execution.getExecutionState())]
+        tags.addAll(jobTags(execution))
+        stepNodeSecondsTimer(tags).record(stepNodeSeconds, TimeUnit.SECONDS)
+    }
+
+    /**
+     * Records the step_node_count total (sum of per-step, per-node dispatch counts across the
+     * execution tree, including nested job-reference calls -- {@code StepNodeUsageEntry.nodeCount},
+     * RBA_BILLING proposal Section 6.5) as its own distribution summary, tagged the same way as
+     * {@link #recordStepNodeSeconds}. A {@link DistributionSummary}, not a {@link Timer}, since
+     * this is a discrete count, not a duration -- using a Timer would report it in a time unit it
+     * isn't. No-op when the registry/execution is unavailable, or when no total was recorded for
+     * this execution (e.g. it crashed before finishing).
+     */
+    void recordStepNodeCount(Execution execution, Long stepNodeCount) {
+        if (!meterRegistry || !execution || stepNodeCount == null) {
+            return
+        }
+        List<Tag> tags = [Tag.of('project', execution.project), Tag.of('status', execution.getExecutionState())]
+        tags.addAll(jobTags(execution))
+        stepNodeCountSummary(tags).record(stepNodeCount)
+    }
+
     private List<Tag> jobTags(Execution execution) {
         ScheduledExecution job = execution.scheduledExecution
         if (!jobDimensionEnabled() || !job?.uuid) {
@@ -147,6 +184,18 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
              .register(meterRegistry)
     }
 
+    private Timer stepNodeSecondsTimer(List<Tag> tags) {
+        Timer.builder('rundeck.execution.step_node_duration')
+             .tags(tags)
+             .register(meterRegistry)
+    }
+
+    private DistributionSummary stepNodeCountSummary(List<Tag> tags) {
+        DistributionSummary.builder('rundeck.execution.step_node_count')
+                            .tags(tags)
+                            .register(meterRegistry)
+    }
+
     private boolean jobDimensionEnabled() {
         configurationService != null && configurationService.getBoolean(JOB_DIMENSION_ENABLED_PROPERTY, false)
     }
@@ -164,10 +213,11 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
                 key "rundeck.metrics.execution.job.dimension.enabled"
                 label "Execution Metrics: job_id/job_name dimension"
                 description "Tag rundeck_executions_total/rundeck_execution_duration_seconds/" +
-                    "rundeck_executions_running with job_id and job_name (scheduled jobs only, " +
-                    "ad-hoc executions excluded). Off by default: cardinality is bounded by the " +
-                    "job catalog size, not execution volume, but large job catalogs should size " +
-                    "this before enabling."
+                    "rundeck_execution_step_node_duration/rundeck_execution_step_node_count/" +
+                    "rundeck_executions_running with " +
+                    "job_id and job_name (scheduled jobs only, ad-hoc executions excluded). Off by " +
+                    "default: cardinality is bounded by the job catalog size, not execution volume, " +
+                    "but large job catalogs should size this before enabling."
                 defaultValue "false"
                 required false
                 restart false
@@ -194,7 +244,7 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
         if (!jobId) {
             return
         }
-        [ 'rundeck.executions', 'rundeck.execution.duration', 'rundeck.executions.running' ].each { String name ->
+        [ 'rundeck.executions', 'rundeck.execution.duration', 'rundeck.execution.step_node_duration', 'rundeck.execution.step_node_count', 'rundeck.executions.running' ].each { String name ->
             List<Meter> matched = new ArrayList<Meter>(meterRegistry.find(name).tag('job_id', jobId).meters())
             matched.each { Meter meter -> meterRegistry.remove(meter.getId()) }
         }
