@@ -82,7 +82,10 @@ class ImportTracker {
                     untrackPath(originalPath)
                 }
             } else {
-                untrackJob(job.id)
+                //forward mappings only: renamedTrackedItems.trackItem() below needs the existing
+                //rename chain intact to detect a revert (see untrackJob's own rename cleanup,
+                //which would otherwise erase that chain entry before trackItem can see it)
+                untrackJobPaths(job.id)
                 trackJobAtPath(job, newpath)
                 renamedTrackedItems.trackItem(oldpath, newpath)
             }
@@ -139,6 +142,28 @@ class ImportTracker {
      */
     String untrackJob(String jobId) {
         synchronized (this) {
+            Set<String> pathsToRemove = untrackJobPaths(jobId)
+            pathsToRemove.each { String path ->
+                //the job is gone: any rename mapping still naming this path (as old or new name)
+                //would otherwise leave wasRenamed() reporting true for a path whose job no longer exists
+                renamedTrackedItems.untrack(path)
+            }
+            pathsToRemove ? pathsToRemove.iterator().next() : null
+        }
+    }
+
+    /**
+     * Remove every forward mapping (trackedCommits/trackedJobIds/trackedPathsMap) for a job,
+     * without touching rename tracking.
+     *
+     * <p>Callers that are themselves managing a rename's before/after state (jobRenamed) need
+     * the existing rename chain left intact, so they call this instead of {@link #untrackJob}.
+     *
+     * @param jobId Rundeck job ID
+     * @return the set of paths that were forward-mapped to this job, in canonical-path-first order
+     */
+    private Set<String> untrackJobPaths(String jobId) {
+        synchronized (this) {
             String canonicalPath = trackedPathsMap.remove(jobId)
             Set<String> pathsToRemove = new LinkedHashSet<>()
             if (canonicalPath) {
@@ -152,11 +177,8 @@ class ImportTracker {
             pathsToRemove.each { String path ->
                 trackedCommits.remove(path)
                 trackedJobIds.remove(path)
-                //the job is gone: any rename mapping still naming this path (as old or new name)
-                //would otherwise leave wasRenamed() reporting true for a path whose job no longer exists
-                renamedTrackedItems.untrack(path)
             }
-            canonicalPath ?: (pathsToRemove ? pathsToRemove.iterator().next() : null)
+            pathsToRemove
         }
     }
 
