@@ -104,16 +104,17 @@ class ImportTracker {
             def previousPath = trackedPathsMap[job.id]
             if (previousPath != null && previousPath != path && renamedTrackedItems.originalValue(previousPath) != path) {
                 //job is moving to a new path (e.g. a path-template change) without going through
-                //jobRenamed: remove its old forward mapping so it doesn't linger as a phantom tracked
-                //path, which would otherwise surface as a false DELETE_NEEDED.
+                //jobRenamed: remove every forward mapping it currently holds - a prior rename
+                //re-assertion can have left two (the canonical previousPath and the rename target),
+                //and clearing only previousPath would leave the other one lingering as a phantom
+                //tracked path, which would otherwise surface as a false DELETE_NEEDED - along with
+                //any rename mapping naming one of those paths, which would otherwise keep reporting
+                //a stale rename for a path nothing is tracked at anymore.
                 //(skipped when `path` is the canonical path being re-asserted right after jobRenamed
                 //recorded a rename to previousPath - that resync intentionally keeps both tracked)
-                trackedCommits.remove(previousPath)
-                trackedJobIds.remove(previousPath)
-                //also drop any rename mapping naming previousPath: if an earlier jobRenamed left
-                //one (e.g. original -> previousPath), it would otherwise survive this direct move
-                //and keep reporting a stale rename for a path nothing is tracked at anymore
-                renamedTrackedItems.untrack(previousPath)
+                untrackJobPaths(job.id).each { String stalePath ->
+                    renamedTrackedItems.untrack(stalePath)
+                }
             }
             trackedCommits[path] = job.scmImportMetadata?.commitId
             trackedJobIds[path] = job.id
