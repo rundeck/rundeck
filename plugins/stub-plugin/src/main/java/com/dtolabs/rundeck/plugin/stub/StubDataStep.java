@@ -143,8 +143,7 @@ public class StubDataStep implements StepPlugin {
         } else if ("yaml".equals(format)) {
             final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
             Object ydata = yaml.load(data);
-            if (ydata instanceof Map) {
-                Map<?, ?> result = (Map<?, ?>) ydata;
+            if (ydata instanceof Map<?, ?> result) {
                 props.putAll(result);
             } else {
                 throw new StepException(

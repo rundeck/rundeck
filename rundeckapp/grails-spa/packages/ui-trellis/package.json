@@ -185,14 +185,5 @@
   "jest-junit": {
     "outputDirectory": "./build/test-results",
     "outputName": "rundeck-jest-junit.xml"
-  },
-  "allowScripts": {
-    "@swc/core@1.5.7": true,
-    "@swc/core@1.16.1": true,
-    "core-js@3.50.0": true,
-    "esbuild@0.24.0": true,
-    "fsevents@2.3.3": true,
-    "unrs-resolver@1.12.2": true,
-    "vue-demi@0.14.10": true
   }
 }
