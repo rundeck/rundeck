@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
  * Created by greg on 8/28/15.
  */
 class GitScmCommit implements ScmCommitInfo {
-
     Map mapData
 
     GitScmCommit(final Map mapData) {

@@ -36,15 +36,39 @@ class RenameTracker<A> {
      * @param newval
      * @return original value for renamed item, or null
      */
-    A originalValue(A newval){
-        if(renamedTrackedItems.values().contains(newval)){
-            return renamedTrackedItems.keySet().find{renamedTrackedItems[it] == newval}
+    A originalValue(A newval) {
+        //synchronizedMap only guards individual calls, not iteration over its views: a concurrent
+        //trackItem() during a two-call values()/keySet() scan can throw ConcurrentModificationException,
+        //so hold the map monitor for one single entrySet scan instead
+        synchronized (renamedTrackedItems) {
+            for (Map.Entry<A, A> entry : renamedTrackedItems.entrySet()) {
+                if (entry.value == newval) {
+                    return entry.key
+                }
+            }
         }
         null
     }
 
     boolean wasRenamed(A oldval) {
         renamedValue(oldval) != null
+    }
+
+    /**
+     * Stop tracking any rename mapping where the given path is either the old or new name.
+     *
+     * @param path path no longer tracked (e.g. because it was deleted)
+     */
+    void untrack(A path) {
+        synchronized (renamedTrackedItems) {
+            renamedTrackedItems.remove(path)
+            Iterator<Map.Entry<A, A>> iter = renamedTrackedItems.entrySet().iterator()
+            while (iter.hasNext()) {
+                if (iter.next().value == path) {
+                    iter.remove()
+                }
+            }
+        }
     }
 
     /**
@@ -61,17 +85,23 @@ class RenameTracker<A> {
         if (renamedTrackedItems[newval] == oldval) {
             //reverted name change
             renamedTrackedItems.remove(newval)
+            return
+        }
+        //if oldval is itself the result of a previous rename, collapse the chain to origin -> newval
+        //so intermediate links don't accumulate forever
+        def origin = originalValue(oldval)
+        if (origin != null) {
+            renamedTrackedItems.remove(oldval)
+            renamedTrackedItems[origin] = newval
         } else {
             renamedTrackedItems[oldval] = newval
         }
     }
 
-
-
     @Override
     public String toString() {
         return "RenameTracker{" +
                 "renamedTrackedItems=" + renamedTrackedItems +
-                '}';
+                '}'
     }
 }

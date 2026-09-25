@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
+import com.dtolabs.rundeck.plugins.scm.SynchState
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.util.FileUtils
@@ -314,7 +315,9 @@ class GitImportPluginSpec extends Specification {
             getFrameworkProject() >> projectName
         })
         plugin.jobStateMap = new MonitorCheckedMap<String, Map>()
-        plugin.jobStateMap['0001'] = ['synch': 'DELETE_NEEDED', 'path': 'job/xy-0001.xml']
+        synchronized (plugin.jobStateMap) {
+            plugin.jobStateMap['0001'] = ['synch': 'DELETE_NEEDED', 'path': 'job/xy-0001.xml']
+        }
 
         when:
         def ret = plugin.getTrackedItemsForAction('import-jobs')
@@ -467,8 +470,8 @@ class GitImportPluginSpec extends Specification {
         plugin.initialize(context)
         plugin.importTracker = Mock(ImportTracker){
             trackedPaths() >> ['job1-1234.xml']
-            getTrackedCommits() >> ['job1-1234.xml' : '123123']
             getTrackedJobIds() >> ['job1-12345.xml':'1234']
+            trackedCommit('job1-1234.xml') >> '123123'
         }
 
         when:
@@ -847,6 +850,53 @@ class GitImportPluginSpec extends Specification {
         status != null
     }
 
+    def "scmImport untracks the path of a successfully deleted job so DELETE_NEEDED clears"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+
+        def job = Stub(JobScmReference) {
+            getId() >> '123'
+            getScmImportMetadata() >> ["commitId": commit.name]
+        }
+        //simulate the job having been previously imported/tracked at this path, plus a second
+        //forward mapping left behind by a rename re-assertion
+        plugin.importTracker.trackJobAtPath(job, 'job1-123.xml')
+        plugin.importTracker.jobRenamed(job, 'job1-123.xml', 'renamed/job1-123.xml')
+        plugin.importTracker.trackJobAtPath(job, 'job1-123.xml')
+
+        JobImporter importer = Mock(JobImporter)
+
+        when:
+        plugin.scmImport(context, GitImportPlugin.ACTION_IMPORT_JOBS, importer, [], ['123'], [:])
+
+        then:
+        1 * importer.deleteJob(projectName, '123') >> Mock(ImportResult) {
+            isSuccessful() >> true
+        }
+
+        then:
+        //no tracked path for this deleted job can remain, or getStatusInternal will keep reporting
+        //DELETE_NEEDED even though the job is already gone
+        plugin.importTracker.trackedPath('123') == null
+        !plugin.importTracker.trackedPaths().contains('job1-123.xml')
+        !plugin.importTracker.trackedPaths().contains('renamed/job1-123.xml')
+    }
+
     /**
      * Test map that simulates a loader removing an entry between two live-map reads.
      */
@@ -870,12 +920,46 @@ class GitImportPluginSpec extends Specification {
      */
     private static class MonitorCheckedMap<K, V> extends LinkedHashMap<K, V> {
         @Override
+        boolean containsKey(Object key) {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('containsKey requires the map monitor')
+            }
+            super.containsKey(key)
+        }
+
+        @Override
+        V put(K key, V value) {
+            if (!Thread.holdsLock(this)) {
+                throw new ConcurrentModificationException('put requires the map monitor')
+            }
+            super.put(key, value)
+        }
+
+        @Override
         Set<Map.Entry<K, V>> entrySet() {
             if (!Thread.holdsLock(this)) {
                 throw new ConcurrentModificationException('Iteration requires the map monitor')
             }
             super.entrySet()
         }
+    }
+
+    def "init job status synchronizes the check and insert on the job-state map"() {
+        given:
+        def plugin = new GitImportPlugin(Mock(Import), [])
+        plugin.jobStateMap = new MonitorCheckedMap<String, Map>()
+        def jobs = [
+                Stub(JobScmReference) {
+                    getId() >> '123'
+                    getVersion() >> 1
+                }
+        ]
+
+        when:
+        plugin.initJobsStatus(jobs)
+
+        then:
+        plugin.jobStateMap['123'].synch == SynchState.LOADING
     }
 
     def "lastCommitForPath reuses the path index while HEAD is unchanged and rebuilds after a commit"() {

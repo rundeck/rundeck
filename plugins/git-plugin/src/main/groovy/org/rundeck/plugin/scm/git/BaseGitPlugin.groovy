@@ -83,12 +83,12 @@ class BaseGitPlugin {
         CHECKING("Checking if user has access to the configured SCM key/password."),
         NO_ACCESS("User don't have access to the configured SCM key/password yet."),
         HAS_ACCESS("User has access to the configured SCM key/password, sending job status.");
-        private String message;
-        ScmAuthMessages( String message ){
-            this.message = message;
+        private String message
+        ScmAuthMessages(String message) {
+            this.message = message
         }
-        String getMessage(){
-            return message;
+        String getMessage() {
+            return message
         }
     }
 
@@ -160,15 +160,92 @@ class BaseGitPlugin {
      */
     static boolean greaterAndSet(AtomicLong atomic, long update) {
         while (true) {
-            long cur = atomic.get();
+            long cur = atomic.get()
             if (update <= cur) {
                 return false
             }
             //should set if it hasn't changed
             if (atomic.compareAndSet(cur, update)) {
-                return true;
+                return true
             }
             //otherwise try again
+        }
+    }
+
+    /**
+     * A job-status refresh's in-progress placeholder. Deliberately does NOT use LinkedHashMap's
+     * content-based equals/hashCode: two concurrent refreshes of the same (unchanged) job produce
+     * content-identical LOADING placeholders, so a content-equality match couldn't tell "my own
+     * placeholder" apart from a different, newer refresh's - whichever happened to finish first
+     * could then publish over the other's placeholder regardless of which one actually started
+     * more recently. Identity-based equals/hashCode make jobStateMap.replace/remove(id, thisExact
+     * Instance) match only this exact instance, so only the refresh that is still the one and only
+     * currently-installed placeholder for a job can ever publish - a check that stays valid even
+     * after the placeholder is superseded or the job is deleted, with nothing extra to track,
+     * leak, or coordinate removal of.
+     * <p>
+     * Note for tests: call {@code .equals()} reflectively (or exercise it indirectly via
+     * {@code jobStateMap.replace/remove}, as production code does) rather than Groovy's {@code ==}
+     * or a directly-compiled {@code .equals()} call - Groovy's dynamic dispatch for {@code def}-typed
+     * operands routes {@code equals} through its own structural comparison for Map operands,
+     * bypassing this override. The real call sites in this class go through the plain-Java
+     * {@code java.util.Map} default methods, which dispatch normally and are unaffected.
+     */
+    static final class RefreshPlaceholder extends LinkedHashMap {
+        @Override
+        boolean equals(Object o) {
+            this.is(o)
+        }
+
+        @Override
+        int hashCode() {
+            System.identityHashCode(this)
+        }
+    }
+
+    /**
+     * Install a job's LOADING placeholder (an instance of {@link RefreshPlaceholder}, built by the
+     * caller's own initJobStatus) into jobStateMap. Pass the same instance to
+     * {@link #publishJobStatusIfCurrent} or {@link #abandonJobStatusRefresh} when the refresh
+     * finishes, to detect whether a newer refresh (or a deletion) has since replaced or removed it.
+     */
+    protected void beginJobStatusRefresh(String jobId, Map loadingMarker) {
+        jobStateMap[jobId] = loadingMarker
+    }
+
+    /**
+     * Publish a completed refresh's result, but only if its LOADING placeholder (as installed by
+     * {@link #beginJobStatusRefresh}) is still current: if a newer refresh, or a deletion, has
+     * since replaced or removed it, this (older) result is silently dropped instead.
+     */
+    protected void publishJobStatusIfCurrent(String jobId, Map loadingMarker, Map result) {
+        jobStateMap.replace(jobId, loadingMarker, result)
+    }
+
+    /**
+     * Clear a failed refresh's LOADING placeholder, but only if it's still current (see
+     * {@link #publishJobStatusIfCurrent}) - so a later status request retries rather than getting
+     * stuck on it, without clobbering a newer refresh's own placeholder or published result.
+     */
+    protected void abandonJobStatusRefresh(String jobId, Map loadingMarker) {
+        jobStateMap.remove(jobId, loadingMarker)
+    }
+
+    /**
+     * Initialize a job-status cache entry only when one is not already present.
+     *
+     * <p>The synchronized wrapper used for {@link #jobStateMap} only serializes individual map
+     * operations, so callers that need an atomic check-and-insert must synchronize on the shared
+     * map monitor around the whole sequence.
+     *
+     * @param jobId job identifier
+     * @param initialStatus initial cache entry, typically a LOADING placeholder
+     */
+    protected void initializeJobStatusIfAbsent(String jobId, Map initialStatus) {
+        synchronized (jobStateMap) {
+            if (!jobStateMap.containsKey(jobId)) {
+                jobStateMap[jobId] = initialStatus
+            }
         }
     }
 
@@ -178,8 +255,7 @@ class BaseGitPlugin {
             boolean preserveId,
             boolean useSourceId,
             File outfile = null
-    )
-    {
+    ) {
         if (!outfile) {
             outfile = mapper.fileForJob(job)
         }
@@ -205,13 +281,12 @@ class BaseGitPlugin {
                 }
 
                 File temp = new File(outfile.parentFile, outfile.name + ".tmp${job.version}")
-                temp.deleteOnExit()
                 Throwable thrown = null
                 try {
                     try {
                         temp.withOutputStream { out ->
                             try {
-                                def sourceId = (job instanceof JobScmReference) ? job.sourceId  : null
+                                def sourceId = (job instanceof JobScmReference) ? job.sourceId : null
                                 job.jobSerializer.serialize(
                                         format,
                                         out,
@@ -219,7 +294,7 @@ class BaseGitPlugin {
                                         useSourceId ? (sourceId ?: job.id) : null
                                 )
                             } catch (Throwable e) {
-                                thrown = e;
+                                thrown = e
                             }
                         }
                     } catch (IOException e) {
@@ -235,8 +310,8 @@ class BaseGitPlugin {
                     }
 
                     Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-                }finally{
-                    if(temp.exists()){
+                } finally {
+                    if (temp.exists()) {
                         temp.delete()
                     }
                 }
@@ -249,14 +324,18 @@ class BaseGitPlugin {
 
     def serializeTemp(final JobExportReference job, String format, boolean preserveId, boolean useSourceId) {
         File outfile = File.createTempFile("${this.class.name}-serializeTemp", ".${format}")
-        outfile.deleteOnExit()
-        outfile.withOutputStream { out ->
-            job.jobSerializer.serialize(
-                    format,
-                    out,
-                    preserveId,
-                    (useSourceId && job instanceof JobScmReference) ? job.sourceId : null
-            )
+        try {
+            outfile.withOutputStream { out ->
+                job.jobSerializer.serialize(
+                        format,
+                        out,
+                        preserveId,
+                        (useSourceId && job instanceof JobScmReference) ? job.sourceId : null
+                )
+            }
+        } catch (Throwable t) {
+            outfile.delete()
+            throw t
         }
         return outfile
     }
@@ -266,8 +345,7 @@ class BaseGitPlugin {
             String format,
             boolean preserveId,
             boolean useOriginal
-    )
-    {
+    ) {
         jobExportReferences.each { serialize(it, format, preserveId, useOriginal) }
     }
 
@@ -290,7 +368,7 @@ class BaseGitPlugin {
                     branch,
                     ConfigConstants.CONFIG_KEY_REMOTE,
                     REMOTE_NAME
-            );
+            )
             //if remote branch name exists, track it for merging
             def remoteRef = fetchResult.getAdvertisedRef(branch) ?:
                     fetchResult.getAdvertisedRef(Constants.R_HEADS + branch)
@@ -300,7 +378,7 @@ class BaseGitPlugin {
                         branch,
                         ConfigConstants.CONFIG_KEY_MERGE,
                         remoteRef.name
-                );
+                )
             }
 
             agit.repository.config.save()
@@ -330,8 +408,7 @@ class BaseGitPlugin {
             final ScmOperationContext context,
             boolean rebase,
             String mergeResolutionStrategy
-    )
-    {
+    ) {
         if (rebase) {
             def pullCommand = git.pull().setRemote(REMOTE_NAME).setRemoteBranchName(branch)
             pullCommand.setRebase(true)
@@ -400,7 +477,6 @@ class BaseGitPlugin {
             result.message = result.success ? "Merge was successful" : "Merge failed"
             result.extendedMessage = mergeresult.toString()
             return result
-
         }
     }
 
@@ -561,7 +637,7 @@ class BaseGitPlugin {
 
     private InputStream getStoragePathStream(final ScmOperationContext context, String path) throws IOException {
         if (null == path) {
-            return null;
+            return null
         }
         def tree = context.getStorageTree()
         if (!tree.hasResource(path)) {
@@ -578,10 +654,9 @@ class BaseGitPlugin {
     }
 
     private byte[] loadStoragePathData(final ScmOperationContext context, String path)
-            throws IOException, ScmPluginException
-    {
+            throws IOException, ScmPluginException {
         if (null == path) {
-            return null;
+            return null
         }
 
         def tree = context.getStorageTree()
@@ -595,9 +670,9 @@ class BaseGitPlugin {
             logger.debug("loadStoragePathData", e)
             throw new ScmPluginException(e)
         }
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        contents.writeContent(byteArrayOutputStream);
-        return byteArrayOutputStream.toByteArray();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()
+        contents.writeContent(byteArrayOutputStream)
+        return byteArrayOutputStream.toByteArray()
     }
 
     /**
@@ -624,7 +699,7 @@ class BaseGitPlugin {
         //remove the dir
         try {
             FileUtils.delete(base, FileUtils.RECURSIVE)
-        } catch(IOException e){
+        } catch (IOException e) {
             logger.error("Failed to delete repo folder")
         }
     }
@@ -633,70 +708,97 @@ class BaseGitPlugin {
         if (base.isDirectory() && new File(base, ".git").isDirectory()) {
             def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
             def agit = new Git(arepo)
-
-            //test url matches origin
-            def config = agit.getRepository().getConfig()
-            def found = config.getString("remote", REMOTE_NAME, "url")
-            def projectName = config.getString("rundeck", "scm-plugin", "project-name")
-            def gitIntegration = config.getString("rundeck", "scm-plugin", "integration")
-            if (projectName && !projectName.equals(context.frameworkProject) || gitIntegration && !gitIntegration.equals(integration)) {
-                throw new ScmPluginInvalidInput(
-                        "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}",
-                        Validator.errorReport(
-                                'dir',
-                                "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}"
-                        )
-                )
-            } else if (!projectName) {
-                config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
-                config.setString("rundeck", "scm-plugin", "integration", integration)
-                config.save()
-            }
-            def needsClone=false;
-
-            if (found != url) {
-                logger.debug("url differs, re-cloning ${found}!=${url}")
-                needsClone = true
-            }else if (agit.repository.getFullBranch() != "refs/heads/$branch") {
-                //check same branch
-                logger.debug("branch differs, re-cloning")
-                needsClone = true
-            }
-
-            if(needsClone){
-                //need to reconfigured
-                removeWorkdir(base)
-                performClone(base, url, context, integration)
-                return
-            }
-
+            //set once ownership of agit/arepo has been handed off (to git/repo, or closed
+            //and replaced via a reclone), so the finally block below doesn't leak arepo on
+            //any exception thrown while inspecting/configuring it, but also doesn't
+            //double-close it once handed off or already closed
+            boolean handedOff = false
             try {
-                fetchFromRemote(context, agit)
-            } catch (Exception e) {
-                logger.debug("Failed fetch from the repository: ${e.message}", e)
-                String msg = collectCauseMessages(e)
-                throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
+                //test url matches origin
+                def config = agit.getRepository().getConfig()
+                def found = config.getString("remote", REMOTE_NAME, "url")
+                def projectName = config.getString("rundeck", "scm-plugin", "project-name")
+                def gitIntegration = config.getString("rundeck", "scm-plugin", "integration")
+                if (projectName && !projectName.equals(context.frameworkProject) || gitIntegration && !gitIntegration.equals(integration)) {
+                    throw new ScmPluginInvalidInput(
+                            "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}",
+                            Validator.errorReport(
+                                    'dir',
+                                    "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}"
+                            )
+                    )
+                } else if (!projectName) {
+                    config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
+                    config.setString("rundeck", "scm-plugin", "integration", integration)
+                    config.save()
+                }
+                def needsClone = false
+
+                if (found != url) {
+                    logger.debug("url differs, re-cloning ${found}!=${url}")
+                    needsClone = true
+                } else if (agit.repository.getFullBranch() != "refs/heads/$branch") {
+                    //check same branch
+                    logger.debug("branch differs, re-cloning")
+                    needsClone = true
+                }
+
+                if (needsClone) {
+                    //need to reconfigured: release the old repository's file handles before deleting it on disk
+                    agit.getRepository().close()
+                    //also release the plugin's currently assigned repository, if any: it may be an
+                    //earlier open of this same workdir (e.g. the base-branch clone in the createBranch
+                    //setup path), and would otherwise be leaked once the workdir is removed below
+                    if (repo != null) {
+                        repo.close()
+                    }
+                    handedOff = true
+                    removeWorkdir(base)
+                    performClone(base, url, context, integration)
+                    return
+                }
+
+                try {
+                    fetchFromRemote(context, agit)
+                } catch (Exception e) {
+                    logger.debug("Failed fetch from the repository: ${e.message}", e)
+                    String msg = collectCauseMessages(e)
+                    throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
+                }
+                //release the plugin's currently assigned repository before replacing it: it may be an
+                //earlier open of a different workdir (e.g. the base-branch clone in the createBranch
+                //setup path), and would otherwise be leaked once repo/git are reassigned below
+                if (repo != null && repo != arepo) {
+                    repo.close()
+                }
+                git = agit
+                repo = arepo
+                handedOff = true
+            } finally {
+                if (!handedOff) {
+                    agit.getRepository().close()
+                }
             }
-            git = agit
-            repo = arepo
         } else {
             performClone(base, url, context, integration)
         }
     }
 
     private static String collectCauseMessages(Exception e) {
-        List<String> msgs = [e.message]
+        List<String> msgs = [e.message ?: e.class.simpleName]
         def cause = e.cause
         while (cause) {
-            if (cause.message != msgs.last() && !msgs.last().endsWith(cause.message)) {
-                msgs << cause.message
+            def causeMsg = cause.message ?: cause.class.simpleName
+            def lastMsg = msgs.last()
+            if (causeMsg != lastMsg && !(lastMsg && lastMsg.endsWith(causeMsg))) {
+                msgs << causeMsg
             }
             cause = cause.cause
         }
         return msgs.join("; ")
     }
 
-    private void performClone(File base, String url, ScmOperationContext context, String branch=this.branch, String integration) {
+    private void performClone(File base, String url, ScmOperationContext context, String branch = this.branch, String integration) {
         logger.debug("cloning...")
         def cloneCommand = Git.cloneRepository().
                 setBranch(branch).
@@ -710,13 +812,19 @@ class BaseGitPlugin {
             logger.debug("Failed cloning the repository from ${url}: ${e.message}", e)
             throw new ScmPluginException("Failed cloning the repository from ${url}: ${e.message}", e)
         }
-        git.getRepository().config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
-        git.getRepository().config.setString("rundeck", "scm-plugin", "integration", integration)
-        git.getRepository().config.save()
-        repo = git.getRepository()
+        try {
+            git.getRepository().config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
+            git.getRepository().config.setString("rundeck", "scm-plugin", "integration", integration)
+            git.getRepository().config.save()
+            repo = git.getRepository()
+        } catch (Exception e) {
+            logger.debug("Failed configuring cloned repository from ${url}: ${e.message}", e)
+            git.getRepository().close()
+            throw new ScmPluginException("Failed configuring cloned repository from ${url}: ${e.message}", e)
+        }
     }
 
-    protected boolean existBranch(String remoteName){
+    protected boolean existBranch(String remoteName) {
         List<Ref> call = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call()
         for (Ref ref : call) {
             if (remoteName == ref.getName()) {
@@ -732,8 +840,7 @@ class BaseGitPlugin {
      * for other branches).
      */
     protected boolean remoteBranchExists(ScmOperationContext context, String url, String branchName)
-            throws ScmPluginException
-    {
+            throws ScmPluginException {
         def command = Git.lsRemoteRepository().setRemote(url).setHeads(true)
         setupTransportAuthentication(sshConfig, context, command, url)
         try {
@@ -777,7 +884,7 @@ class BaseGitPlugin {
      * mismatch and fail again, instead of succeeding with a branch that exists only
      * locally.
      */
-    protected void createBranch(ScmOperationContext context, String newBranch, String baseBranch){
+    protected void createBranch(ScmOperationContext context, String newBranch, String baseBranch) {
         def createCommand = git.branchCreate()
                 .setName(newBranch)
                 .setStartPoint("${REMOTE_NAME}/${baseBranch}")
@@ -815,7 +922,6 @@ class BaseGitPlugin {
         }
     }
 
-
     /**
      * Configure authentication for the git command depending on the configured ssh private Key storage path, or password
      *
@@ -829,8 +935,7 @@ class BaseGitPlugin {
             TransportCommand command,
             String url = null
     )
-            throws ScmPluginException
-    {
+            throws ScmPluginException {
         if (!url) {
             url = command.repository.config.getString('remote', REMOTE_NAME, 'url')
         }
@@ -838,7 +943,7 @@ class BaseGitPlugin {
             throw new NullPointerException("url for remote was not set")
         }
 
-        URIish u = new URIish(url);
+        URIish u = new URIish(url)
         logger.debug("transport url ${u}, scheme ${u.scheme}, user ${u.user}")
         if ((u.scheme == null || u.scheme == 'ssh') && u.user && commonConfig.sshPrivateKeyPath) {
             logger.debug("using ssh private key path ${commonConfig.sshPrivateKeyPath}")
@@ -870,7 +975,7 @@ class BaseGitPlugin {
                             @Override
                             protected void configure(final OpenSshConfig.Host hc, final Session session) {
                                 sshConfig.each { k, v ->
-                                    session.setConfig(k,v)
+                                    session.setConfig(k, v)
                                 }
                             }
                         })
@@ -879,7 +984,6 @@ class BaseGitPlugin {
             })
 
             if (null != data && data.length > 0) {
-
                 def pass = new String(data)
                 command.setCredentialsProvider(new UsernamePasswordCredentialsProvider(u.user, pass))
             }
@@ -892,7 +996,7 @@ class BaseGitPlugin {
      * @return
      */
     public static String expandContextVarsInPath(ScmOperationContext context, String path) {
-        if( null === path  || !path ){
+        if (null === path || !path) {
             return null
         }
         expand(expand(path, context.userInfo), [project: context.frameworkProject])
@@ -903,23 +1007,23 @@ class BaseGitPlugin {
      * @param ctx: ScmConfigurationContext
      * @return true / false
      */
-    protected Boolean userHasAccessToCommonConfigKeyOrPassword(ScmOperationContext ctx){
-        if( !ctx || !ctx.getUserInfo().userName ){
+    protected Boolean userHasAccessToCommonConfigKeyOrPassword(ScmOperationContext ctx) {
+        if (!ctx || !ctx.getUserInfo().userName) {
             return false
         }
         logger.debug(ScmAuthMessages.CHECKING.getMessage())
         def userStorageTree = ctx.getStorageTree()
         def scmAuthPath = commonConfig?.sshPrivateKeyPath ? commonConfig?.sshPrivateKeyPath : commonConfig?.gitPasswordPath
-        if(!scmAuthPath){
+        if (!scmAuthPath) {
             return true
         }
         def expandedAuthPath = expandContextVarsInPath(ctx, scmAuthPath)
-        if( expandedAuthPath !== null && userStorageTree.hasPath(expandedAuthPath) ){
+        if (expandedAuthPath !== null && userStorageTree.hasPath(expandedAuthPath)) {
             logger.debug(ScmAuthMessages.HAS_ACCESS.getMessage())
-            return true;
-        }else{
+            return true
+        } else {
             logger.debug(ScmAuthMessages.NO_ACCESS.getMessage())
-            return false;
+            return false
         }
     }
 }
