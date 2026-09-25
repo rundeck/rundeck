@@ -11,6 +11,7 @@ import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
+import axios from "axios";
 import { cloneDeep } from "lodash";
 import { Btn, Modal } from "uiv";
 jest.mock("../../../../library/services/executions", () => {
@@ -449,7 +450,6 @@ describe("ActivityList", () => {
     jest.useFakeTimers();
 
     // Mock axios for the since.json endpoint
-    const axios = require("axios");
     const axiosGetSpy = jest.spyOn(axios, "get");
 
     mockQueryExecutions.mockResolvedValue({

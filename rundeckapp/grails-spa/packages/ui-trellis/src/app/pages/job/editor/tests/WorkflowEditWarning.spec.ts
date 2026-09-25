@@ -3,7 +3,7 @@ import WorkflowEditWarning from "../WorkflowEditWarning.vue";
 import { getRundeckContext } from "../../../../../library";
 
 jest.mock("@/library", () => {
-  const mittLib = require("mitt");
+  const mittLib = jest.requireActual("mitt");
   const mittFn = mittLib.default || mittLib;
   const bus = mittFn();
   const eventBus = {
