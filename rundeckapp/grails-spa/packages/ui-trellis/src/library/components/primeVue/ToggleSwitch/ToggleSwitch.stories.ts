@@ -45,7 +45,7 @@ export const Playground: Story = {
   }),
 };
 
-const generateTemplate = () => {
+const generateTemplate = (args: Record<string, any>) => {
   return '<div><ToggleSwitch :disabled="args.disabled" v-model="args.modelValue" /></div>';
 };
 
@@ -53,7 +53,7 @@ export const Active: Story = {
   render: (args) => ({
     components: { ToggleSwitch },
     setup: () => ({ args }),
-    template: generateTemplate(),
+    template: generateTemplate(args),
   }),
 };
 

@@ -395,7 +395,7 @@ export default defineComponent({
       );
     },
 
-    handleOptionSelect(): void {
+    handleOptionSelect(event: any): void {
       // If replaceOnSelect is true, use default PrimeVue behavior (replace entire value)
       // PrimeVue will automatically update the v-model value
       if (this.replaceOnSelect) {

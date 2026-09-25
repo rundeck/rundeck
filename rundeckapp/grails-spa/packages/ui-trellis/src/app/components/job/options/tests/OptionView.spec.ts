@@ -1,6 +1,6 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import { JobOption } from "../../../../../library/types/jobs/JobEdit";
-import { Btn } from "uiv";
+import { Btn, Popover } from "uiv";
 
 import OptionView from "../OptionView.vue";
 

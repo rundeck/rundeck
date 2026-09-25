@@ -1,5 +1,10 @@
 import { RuleSetLex, Token, TokenType } from "./RuleSetLex";
 
+enum RuleType {
+  condition,
+  directive,
+}
+
 export enum DirectiveType {
   runAtStart = "run-at-start",
   runAfter = "run-after",

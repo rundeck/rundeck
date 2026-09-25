@@ -241,7 +241,7 @@ import {
   NodeFilterStore,
   ProjectFilters,
 } from "../../../../library/stores/NodeFilterLocalstore";
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, PropType } from "vue";
 import NodeFilterLink from "./NodeFilterLink.vue";
 
 export default defineComponent({

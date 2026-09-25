@@ -418,12 +418,11 @@ export default defineComponent({
         this.selectedNode = this.graph.getNode(elementView.model.id as string);
       },
 
-      // Regular function: jointjs invokes it with the paper as `this`, not the component.
       "element:pointerdown": function (
-        this: { interactive?: boolean },
         elementView: Joint.dia.ElementView,
         evt,
       ) {
+        // @ts-ignore
         if (!this.interactive) return;
 
         if (["START", "END"].includes(elementView.model.id as string)) return;
@@ -502,6 +501,7 @@ export default defineComponent({
         if (!evt.data || elementAbove.position().equals(evt.data)) {
           return;
         }
+        // @ts-ignore
         let elementBelow = paper.model
           .findModelsFromPoint(coordinates)
           .find(function (el) {
@@ -565,6 +565,7 @@ export default defineComponent({
           // var tools = new Joint.dia.ToolsView({
           //     tools: [new Joint.linkTools.Remove()]
           // });
+          // @ts-ignore
           // link.findView(this).addTools(tools).hideTools();
         } else {
           // Move the element to the position before dragging.
@@ -936,6 +937,8 @@ export default defineComponent({
           const target = g.getCell(edge.w);
 
           if (target && target.isElement() && src && src.isElement()) {
+            // @ts-ignore
+
             if (g.getNeighbors(target).indexOf(src) > -1) {
               return;
             }

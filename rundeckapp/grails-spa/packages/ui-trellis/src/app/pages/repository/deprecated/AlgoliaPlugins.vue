@@ -144,6 +144,7 @@ import axios from "axios";
 import _ from "lodash";
 import algoliasearch from "algoliasearch/lite";
 import config from "./config";
+import ResultType from "./AlgoliaPluginsResults";
 import InstallButton from "./InstallButton";
 
 export default {
@@ -202,7 +203,7 @@ export default {
         url: `${rdBase}/repository/${this.repoName}/install/${pluginId}`,
         withCredentials: true,
       })
-        .then(() => {
+        .then((response) => {
           const repo = this.repositories.find(
             (r) => r.repositoryName === repoName,
           );
@@ -222,7 +223,7 @@ export default {
         url: `${rdBase}/repository/${this.repoName}/uninstall/${pluginId}`,
         withCredentials: true,
       })
-        .then(() => {
+        .then((response) => {
           const repo = this.repositories.find(
             (r) => r.repositoryName === repoName,
           );

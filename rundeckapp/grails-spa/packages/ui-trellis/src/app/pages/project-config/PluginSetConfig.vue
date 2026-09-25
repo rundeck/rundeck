@@ -22,9 +22,13 @@
 </template>
 <script lang="ts">
 import { PropType, defineComponent } from "vue";
-import { EventBus } from "../../../library";
+import { EventBus, getRundeckContext } from "../../../library";
+import { RundeckBrowser } from "../../../library";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
 import ProjectPluginGroups from "./ProjectPluginGroups.vue";
+
+const client: RundeckBrowser = getRundeckContext().rundeckClient;
+const rdBase = getRundeckContext().rdBase;
 
 interface PluginConf {
   readonly type: string;

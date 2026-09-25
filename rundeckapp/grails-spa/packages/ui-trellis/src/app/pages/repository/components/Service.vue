@@ -26,6 +26,7 @@
 
 <script>
 import ProviderCard from "../components/Provider";
+import { mapState } from "vuex";
 
 export default {
   name: "ServiceRow",

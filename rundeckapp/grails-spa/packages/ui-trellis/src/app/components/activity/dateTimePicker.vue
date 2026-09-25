@@ -43,17 +43,17 @@ export default defineComponent({
   },
   watch: {
     dateString: {
-      handler() {
+      handler(newVal, oldVal) {
         this.recalcDate();
       },
     },
     time: {
-      handler() {
+      handler(newVal, oldVal) {
         this.$emit("update:modelValue", this.datetime);
       },
     },
     modelValue: {
-      handler() {
+      handler(newVal, oldVal) {
         this.setFromValue();
       },
     },

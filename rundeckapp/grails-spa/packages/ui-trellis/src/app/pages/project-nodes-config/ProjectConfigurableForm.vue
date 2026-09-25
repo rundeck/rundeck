@@ -33,13 +33,14 @@
 
 <script lang="ts">
 import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
-import { RundeckContext } from "../../../library";
+import { getRundeckContext, RundeckContext } from "../../../library";
 import {
   getProjectConfigurable,
   setProjectConfigurable,
 } from "./nodeSourcesUtil";
 import { Notification } from "uiv";
-import { defineComponent } from "vue";
+import { defineComponent, onMounted, ref } from "vue";
+import { PropType } from "vue/dist/vue";
 
 interface Prop {
   type: string;

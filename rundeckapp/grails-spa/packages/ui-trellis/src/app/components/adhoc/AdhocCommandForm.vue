@@ -230,6 +230,7 @@
 import { defineComponent } from "vue";
 import { NodeFilterStore } from "../../../library/stores/NodeFilterLocalstore";
 import { runAdhocCommand } from "./services/adhocService";
+import { getAppLinks } from "../../../library";
 import { loadAdhocHistory } from "./services/adhocService";
 import UiSocket from "../../../library/components/utils/UiSocket.vue";
 import type { PropType } from "vue";

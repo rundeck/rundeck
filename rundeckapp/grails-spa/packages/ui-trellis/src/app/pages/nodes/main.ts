@@ -76,7 +76,8 @@ export const FilterInputComp = defineComponent({
         });
       }
     },
-    nodeFilterKo(): any {
+    nodeFilterKo() {
+      //@ts-ignore
       if (
         this.koFieldName &&
         this.koParam &&
@@ -87,11 +88,13 @@ export const FilterInputComp = defineComponent({
       } else if (this.koFieldName && window[this.koFieldName]) {
         return window[this.koFieldName];
       } else if (!this.koFieldName) {
-        return (window as any).nodeFilter;
+        //@ts-ignore
+        return window.nodeFilter;
       }
     },
     attachKnockout(retry: number) {
       //set up reactive connection to existing Knockout
+      //@ts-ignore
       if (this.nodeFilterKo()) {
         this.subs.push(
           this.nodeFilterKo().filter.subscribe(
@@ -287,7 +290,7 @@ function init() {
 }
 window.addEventListener("DOMContentLoaded", init);
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", (event) => {
   const elem = document.querySelector("#execDiv");
   if (elem) {
     observer.observe(elem, { subtree: true, childList: true });

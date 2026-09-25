@@ -3,7 +3,8 @@ import { getRundeckContext } from "../../../library";
 import HomeView from "../../components/home/HomeView.vue";
 import HomeHeader from "../../components/home/HomeHeader.vue";
 
-(window as any).SVGInject = require("@iconfu/svg-inject");
+// @ts-ignore
+window.SVGInject = require("@iconfu/svg-inject");
 
 const rundeckContext = getRundeckContext();
 function init() {

@@ -51,7 +51,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from "vue";
-import { EventBus, getRundeckContext } from "../../../library";
+import { EventBus, getRundeckContext, RundeckContext } from "../../../library";
 
 export default defineComponent({
   name: "ProjectNodeSourcesHelp",
@@ -78,7 +78,7 @@ export default defineComponent({
     },
   },
   watch: {
-    unauthorized: function () {
+    unauthorized: function (val, oldVal) {
       this.$forceUpdate();
     },
   },

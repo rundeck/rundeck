@@ -49,7 +49,7 @@ export const Playground: Story = {
   }),
 };
 
-const generateTemplate = () => {
+const generateTemplate = (args: Record<string, any>) => {
   return `<div>
     <PtAutoComplete v-bind="args" />
   </div>`;
@@ -62,7 +62,7 @@ export const Default: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(),
+    template: generateTemplate(args),
   }),
   args: {},
 };

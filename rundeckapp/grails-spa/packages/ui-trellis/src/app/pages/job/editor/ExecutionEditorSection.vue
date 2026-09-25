@@ -37,7 +37,8 @@ export default defineComponent({
             this.retrievedData.ExecutionLifecycle,
           )
         ) {
-          (window as Window & { jobWasEdited: () => void }).jobWasEdited();
+          // @ts-ignore
+          window.jobWasEdited();
         }
       },
     },

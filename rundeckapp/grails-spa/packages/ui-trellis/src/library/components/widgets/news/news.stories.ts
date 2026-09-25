@@ -8,7 +8,8 @@ import { RootStore } from "../../../stores/RootStore";
 
 import News from "./News.vue";
 
-(window as any)._rundeck.rundeckClient = new Rundeck(
+// @ts-ignore
+window._rundeck.rundeckClient = new Rundeck(
   new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN),
   {
     baseUri: process.env.STORYBOOK_RUNDECK_URL,
