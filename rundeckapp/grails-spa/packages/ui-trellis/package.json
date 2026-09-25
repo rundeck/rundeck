@@ -3,7 +3,7 @@
   "version": "3.3.8",
   "description": "A collection of utilities used across various javascript applications and components.",
   "engines": {
-    "npm": "11.19.0"
+    "npm": "11.19.1"
   },
   "main": "./lib/index.js",
   "scripts": {
@@ -61,7 +61,7 @@
     "mitt": "3.0.1",
     "mobx": "5.15.7",
     "mobx-utils": "5.6.2",
-    "moment": "2.30.1",
+    "moment": "2.31.0",
     "perfect-scrollbar": "1.5.6",
     "pinia": "2.3.1",
     "primeicons": "7.0.0",
@@ -82,7 +82,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
-    "@happy-dom/jest-environment": "20.13.2",
+    "@happy-dom/jest-environment": "20.14.5",
     "@pinia/testing": "1.0.3",
     "@storybook/addon-a11y": "8.4.5",
     "@storybook/addon-essentials": "8.4.5",
@@ -93,7 +93,7 @@
     "@storybook/test": "8.4.5",
     "@storybook/vue3": "8.4.5",
     "@storybook/vue3-webpack5": "8.4.5",
-    "@swc/core": "1.16.1",
+    "@swc/core": "1.16.2",
     "@testing-library/dom": "9.3.4",
     "@types/dagre": "0.7.54",
     "@types/graphlib": "2.1.12",
@@ -135,7 +135,7 @@
     "mobx-utils": "5.6.2",
     "node-forge": "1.4.0",
     "postcss": "8.5.28",
-    "prettier": "3.9.6",
+    "prettier": "3.9.7",
     "prex": "0.4.9",
     "remark-gfm": "4.0.1",
     "resolve-url-loader": "5.0.0",
@@ -154,7 +154,7 @@
     "vue-eslint-parser": "9.4.3",
     "vue-loader": "17.4.2",
     "walk": "2.3.15",
-    "webpack": "5.110.3",
+    "webpack": "5.111.0",
     "webpack-cli": "5.1.4"
   },
   "peerDependencies": {
@@ -180,8 +180,8 @@
     "tough-cookie": "4.1.4",
     "@azure/ms-rest-js": "2.7.0",
     "uuid": "$uuid",
-    "nanoid": "3.3.18",
-    "happy-dom": "20.13.2"
+    "nanoid": "3.3.19",
+    "happy-dom": "20.14.5"
   },
   "jest-junit": {
     "outputDirectory": "./build/test-results",
