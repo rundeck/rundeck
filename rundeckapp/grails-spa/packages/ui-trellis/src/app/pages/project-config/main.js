@@ -8,6 +8,7 @@ import { getRundeckContext } from "../../../library";
 import PluginSetConfig from "./PluginSetConfig.vue";
 import ProjectPluginGroups from "./ProjectPluginGroups.vue";
 import { initI18n } from "../../utilities/i18n";
+import { configurePrimeVue } from "../../../library/utilities/primeVueConfig";
 
 const context = getRundeckContext();
 // Create VueI18n instance with options
@@ -32,5 +33,7 @@ for (let i = 0; i < els.length; i++) {
   app.use(VueCookies);
   app.use(uiv);
   app.use(i18n);
+  // Plugin config forms rendered here use PrimeVue inputs for numeric properties
+  configurePrimeVue(app);
   app.mount(e);
 }
