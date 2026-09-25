@@ -408,8 +408,10 @@ describe("ActivityList", () => {
       // the real History.prototype.replaceState, which is still a function
       // -- so the component's `typeof history.replaceState !== "function"`
       // guard would never actually be exercised.
-      // @ts-ignore - simulate an environment without history.replaceState
-      window.history.replaceState = undefined;
+      // simulate an environment without history.replaceState
+      (
+        window.history as { replaceState?: History["replaceState"] }
+      ).replaceState = undefined;
       replaceStateSpy.mockClear();
 
       wrapper.vm.query.statFilter = "failed";

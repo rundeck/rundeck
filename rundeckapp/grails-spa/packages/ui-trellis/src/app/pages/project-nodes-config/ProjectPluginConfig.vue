@@ -525,8 +525,7 @@ export default defineComponent({
           this.$emit("saved", result);
         }
       } catch (error) {
-        // @ts-ignore
-        this.notifyError(error.message);
+        this.notifyError((error as Error).message);
       }
     },
     async loadProjectPluginConfig(

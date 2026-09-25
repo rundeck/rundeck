@@ -82,7 +82,6 @@
 </template>
 
 <script lang="ts">
-//@ts-nocheck
 import { defineComponent } from "vue";
 import ConfigSection from "./ConfigSection.vue";
 import PluginConfig from "../../plugins/pluginConfig.vue";
