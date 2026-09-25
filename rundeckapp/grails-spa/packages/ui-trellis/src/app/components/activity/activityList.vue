@@ -1079,8 +1079,7 @@ export default defineComponent({
         this.loadActivity(this.pagination.offset);
       } catch (error) {
         this.bulkEditProgress = false;
-        //@ts-ignore
-        this.bulkEditError = error.message || error;
+        this.bulkEditError = (error as Error).message || (error as string);
       }
     },
     performBulkDelete() {
@@ -1110,9 +1109,8 @@ export default defineComponent({
           this.sincecount = response.data.since.count;
         }
       } catch (error) {
-        //@ts-ignore
         this.disableRefresh = !this.disableRefresh;
-        this.loadError = error.message;
+        this.loadError = (error as Error).message;
       }
     },
     async loadRunning() {
@@ -1140,8 +1138,7 @@ export default defineComponent({
       } catch (error) {
         this.disableRefresh = !this.disableRefresh;
         this.loadingRunning = false;
-        //@ts-ignore
-        this.loadError = error.message;
+        this.loadError = (error as Error).message;
       }
     },
     async loadActivity(offset: number) {
@@ -1169,8 +1166,7 @@ export default defineComponent({
         }
       } catch (error) {
         this.loading = false;
-        //@ts-ignore
-        this.loadError = error.message;
+        this.loadError = (error as Error).message;
       }
     },
     parseToExecutionQuery() {

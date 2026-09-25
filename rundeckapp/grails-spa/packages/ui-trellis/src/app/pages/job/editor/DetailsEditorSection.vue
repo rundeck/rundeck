@@ -37,8 +37,7 @@ export default defineComponent({
       deep: true,
       handler() {
         if (!isEqual(this.updatedData, this.outputData)) {
-          // @ts-ignore
-          window.jobWasEdited();
+          (window as Window & { jobWasEdited: () => void }).jobWasEdited();
           this.eventBus.emit("job-edit-details-changed", this.updatedData);
         }
       },

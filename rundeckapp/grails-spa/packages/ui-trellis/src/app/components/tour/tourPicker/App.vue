@@ -48,6 +48,7 @@
 import { defineComponent } from "vue";
 import Trellis, { getRundeckContext } from "../../../../library";
 import TourServices from "../services";
+import { RootStore } from "../../../../library/stores/RootStore";
 
 const context = getRundeckContext();
 
@@ -74,8 +75,7 @@ export default defineComponent({
     };
   },
   mounted() {
-    // @ts-ignore
-    this.rootStore.utilityBar.addItems([
+    (this.rootStore as RootStore).utilityBar.addItems([
       {
         type: "action",
         id: "utility-tours",

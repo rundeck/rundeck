@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as Dagre from "dagre";
 import * as GLib from "graphlib";
 

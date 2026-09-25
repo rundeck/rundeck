@@ -76,8 +76,7 @@ export const FilterInputComp = defineComponent({
         });
       }
     },
-    nodeFilterKo() {
-      //@ts-ignore
+    nodeFilterKo(): any {
       if (
         this.koFieldName &&
         this.koParam &&
@@ -88,13 +87,11 @@ export const FilterInputComp = defineComponent({
       } else if (this.koFieldName && window[this.koFieldName]) {
         return window[this.koFieldName];
       } else if (!this.koFieldName) {
-        //@ts-ignore
-        return window.nodeFilter;
+        return (window as any).nodeFilter;
       }
     },
     attachKnockout(retry: number) {
       //set up reactive connection to existing Knockout
-      //@ts-ignore
       if (this.nodeFilterKo()) {
         this.subs.push(
           this.nodeFilterKo().filter.subscribe(
