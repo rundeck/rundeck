@@ -3,7 +3,7 @@
     <template v-if="!loading && breakpointHit">
       <p class="breakpoint-info">
         {{ $t("job.tree.breakpoint.hit.info") }}
-        <btn size="xs" @click="loadMeta(browsePath)">
+        <btn size="xs" @click="loadMeta()">
           {{ $t("job.tree.breakpoint.load.button.title") }}
         </btn>
       </p>
@@ -216,7 +216,7 @@ export default defineComponent({
         eventBus.emit(`browser-jobs-empty`);
       }
     },
-    async loadMeta(path: string) {
+    async loadMeta() {
       const item = this.jobBrowserStore.findPath(this.browsePath);
       item.breakpoint = 0;
       item.loaded = false;

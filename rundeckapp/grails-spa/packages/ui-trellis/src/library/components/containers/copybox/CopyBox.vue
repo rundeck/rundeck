@@ -30,7 +30,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, VNode } from "vue";
+import { defineComponent } from "vue";
 
 import { CopyToClipboard } from "../../../utilities/Clipboard";
 

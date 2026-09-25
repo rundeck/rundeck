@@ -30,14 +30,22 @@ module.exports = {
     withDefaults: "readonly",
   },
   rules: {
-    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/ban-ts-comment": [
+      "error",
+      {
+        "ts-expect-error": "allow-with-description",
+        "ts-ignore": true,
+        "ts-nocheck": true,
+        minimumDescriptionLength: 10,
+      },
+    ],
     "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/ban-types": "error",
+    "@typescript-eslint/no-var-requires": "error",
     // All rules as warnings for now
     "vue/enforce-style-attribute": ["warn", { allow: ["scoped"] }],
     "prettier/prettier": "error",
-    "@typescript-eslint/no-unused-vars": "warn",
-    "@typescript-eslint/ban-types": "warn",
-    "@typescript-eslint/no-var-requires": "warn",
     "vuejs-accessibility/label-has-for": "warn",
     "vuejs-accessibility/click-events-have-key-events": "warn",
     "vuejs-accessibility/no-static-element-interactions": "warn",

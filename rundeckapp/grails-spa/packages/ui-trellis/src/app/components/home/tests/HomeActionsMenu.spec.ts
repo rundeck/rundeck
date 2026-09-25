@@ -1,6 +1,5 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import HomeActionsMenu from "../HomeActionsMenu.vue";
-import { Dropdown, Btn } from "uiv";
 import { AuthzMeta } from "../types/projectTypes";
 
 const createDefaultMeta = (): AuthzMeta => ({

@@ -11,7 +11,6 @@ import type { UiMessage } from "../../../library/stores/UIStore";
 
 const rundeckContext = getRundeckContext();
 const rootStore = rundeckContext.rootStore;
-const eventBus = rundeckContext.eventBus;
 
 const locale = rundeckContext.locale || "en_US";
 moment.locale(locale);

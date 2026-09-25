@@ -178,7 +178,7 @@ export const Playground: Story = {
   }),
 };
 
-const generateTemplate = (args: Record<string, any>) => {
+const generateTemplate = () => {
   return `<div>
     <PtInput v-bind="args" />
   </div>`;
@@ -191,7 +191,7 @@ export const Default: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {},
 };
@@ -203,7 +203,7 @@ export const WithLabel: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -218,7 +218,7 @@ export const WithHelperText: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -234,7 +234,7 @@ export const WithLeftIcon: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -251,7 +251,7 @@ export const WithRightIcon: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -268,7 +268,7 @@ export const WithBothIcons: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -286,7 +286,7 @@ export const InvalidState: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
@@ -304,7 +304,7 @@ export const DisabledState: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     label: "Title Text",
