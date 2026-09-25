@@ -1468,6 +1468,16 @@ const messages = {
   hideIncompleteNodes: "Hide incomplete nodes",
   hideIncompleteNodesDescription:
     "Hide nodes whose only unfinished steps were skipped by a conditional. Successful executions only.",
+  "user.list.title": "Users",
+  "user.list.newProfile": "New Profile …",
+  "user.list.edit": "edit",
+  "domain.User.email.label": "Email",
+  "domain.User.firstName.label": "First Name",
+  "domain.User.lastName.label": "Last Name",
+  "security.groups.label": "Groups",
+  "security.groups.description":
+    "The list of groups/roles names provided by the login system. (Cannot be modified via User Profile.)",
+  "not.set": "Not set",
 };
 
 export default messages;
