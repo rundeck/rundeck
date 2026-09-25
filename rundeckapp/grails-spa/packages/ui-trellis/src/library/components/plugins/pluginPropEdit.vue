@@ -172,6 +172,7 @@
         <pt-auto-complete
           v-if="['Integer', 'Long'].indexOf(prop.type) >= 0 && !renderReadOnly"
           v-model="currentValue"
+          data-testid="plugin-prop-number-input"
           :suggestions="inputTypeContextVariables"
         />
         <template

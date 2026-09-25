@@ -10,6 +10,7 @@ import {
   type LocalizedMessages,
 } from "../../utilities/i18n";
 import { UiMessage } from "../../../library/stores/UIStore";
+import { configurePrimeVue } from "../../../library/utilities/primeVueConfig";
 
 const i18n = initI18n();
 
@@ -21,6 +22,8 @@ const vue = createApp({
 });
 vue.use(uiv);
 vue.use(i18n);
+// Plugin config forms rendered here (e.g. storage plugins) use PrimeVue inputs for numeric properties
+configurePrimeVue(vue);
 vue.provide(
   "addUiMessages",
   async (messages: UiMessage[] | LocalizedMessages) =>
