@@ -12,7 +12,7 @@
 <script>
 import activityList from "../../components/activity/activityList";
 
-import { getRundeckContext } from "../../../library";
+import { getRundeckContext, RundeckContext } from "../../../library";
 
 export default {
   name: "App",

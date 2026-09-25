@@ -41,7 +41,7 @@ export default defineComponent({
     drawer.remove();
   },
   methods: {
-    handleBodyClick() {
+    handleBodyClick(evt: MouseEvent) {
       if (!this.opening) {
         this.display = false;
         this.setDrawerVisibility();
@@ -49,7 +49,7 @@ export default defineComponent({
         this.opening = false;
       }
     },
-    handleTargetClick() {
+    handleTargetClick(evt: MouseEvent) {
       this.display = !this.display;
       this.setDrawerVisibility();
 

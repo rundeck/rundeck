@@ -429,7 +429,7 @@ describe("OptionsEditor", () => {
   );
   it("mount calls updateIndexes", async () => {
     const indexMock = jest.spyOn(OptionsEditor.methods, "updateIndexes");
-    await mountBasicOptionsEditor();
+    const wrapper = await mountBasicOptionsEditor();
     expect(indexMock).toHaveBeenCalled();
     indexMock.mockRestore();
   });

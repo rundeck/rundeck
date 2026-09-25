@@ -43,7 +43,7 @@ import {
 } from "../../../../library/modules/pluginService";
 import { ServiceType, Plugin } from "../../../../library/stores/Plugins";
 import { cloneDeep } from "lodash";
-import { defineComponent } from "vue";
+import { defineComponent, nextTick } from "vue";
 import { resetValidation } from "./stepEditorUtils";
 export default defineComponent({
   name: "LogFilterControls",
@@ -128,7 +128,13 @@ export default defineComponent({
       this.clearEdit();
       this.addFilterModal = true;
     },
-    chooseProviderAdd({ provider }: { service: string; provider: string }) {
+    chooseProviderAdd({
+      service,
+      provider,
+    }: {
+      service: string;
+      provider: string;
+    }) {
       this.addFilterModal = false;
       this.model = { type: provider, config: {} };
       this.editFilterModal = true;

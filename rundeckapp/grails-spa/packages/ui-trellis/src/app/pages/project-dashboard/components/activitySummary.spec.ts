@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { mount } from "@vue/test-utils";
 import ActivitySummary from "./activitySummary.vue";
 
@@ -10,7 +11,7 @@ const mountActivitySummary = async (props = {}) => {
     },
     global: {
       mocks: {
-        $t: (msg: string, count: number) => {
+        $t: (msg, count) => {
           return `${msg}/${count}`;
         },
       },
@@ -87,9 +88,9 @@ describe("ActivitySummary", () => {
       `i18n-t: project.activitySummary.userCount ${userCount} users.plural/${userCount}`,
     );
   });
-  it.each([[["a"]], [["a", "b"]], [["a", "b", "c"]]])(
+  it.each([["a"], ["a", "b"], ["a", "b", "c"]])(
     "renders user list",
-    async (userSummary: string[]) => {
+    async (userSummary) => {
       const wrapper = await mountActivitySummary({
         project: { userSummary, userCount: userSummary.length, name: "test" },
         rdBase: "http://localhost:9999",

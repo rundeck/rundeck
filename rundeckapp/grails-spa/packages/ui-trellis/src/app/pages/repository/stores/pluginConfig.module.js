@@ -53,7 +53,7 @@ const mutations = {
   },
 };
 const actions = {
-  closeOverlay() {
+  closeOverlay({ commit, dispatch }) {
     // dispatch('SET_OVERLAY', false)
   },
   setServiceFacet({ commit }, serviceName) {
@@ -230,7 +230,7 @@ const actions = {
         url: `${window._rundeck.rdBase}/repository/uninstall/${properties.id}/${properties.service}/${properties.name}`,
         withCredentials: true,
       })
-      .then(() => {
+      .then((response) => {
         const pluginCollectionWithoutTheRemovedPlugin = _.reject(
           this.state.plugins.plugins,
           {

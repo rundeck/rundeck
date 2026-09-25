@@ -32,7 +32,7 @@ export const inputSwitch: StoryFn<typeof InputSwitch> = (args) => {
       setupStory(this);
     },
     methods: {
-      handleChecked() {
+      handleChecked(val: boolean) {
         // chan.emit("checked", val);
       },
     },
@@ -85,7 +85,7 @@ export const inputSwitchContrast: StoryFn<typeof InputSwitch> = (args) => {
       setupStory(this);
     },
     methods: {
-      handleChecked() {
+      handleChecked(val: boolean) {
         // chan.emit("checked", val);
       },
     },

@@ -624,8 +624,10 @@ function getCaretPos() {
     ii = -1;
   if (typeof el.selectionStart == "number") {
     return el.selectionStart;
-  } else if ((document as any).selection && (el as any).createTextRange) {
-    rng = (document as any).selection.createRange();
+    //@ts-ignore
+  } else if (document.selection && el.createTextRange) {
+    //@ts-ignore
+    rng = document.selection.createRange();
     rng.collapse(true);
     rng.moveStart("character", -el.value.length);
     return rng.text.length;

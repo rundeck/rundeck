@@ -3,10 +3,10 @@ export default interface IWorkflowJson {
 }
 
 interface IWorkflowStep {
-  jobref?: Record<string, unknown>;
-  exec?: Record<string, unknown>;
-  script?: Record<string, unknown>;
-  scriptfile?: Record<string, unknown>;
-  scripturl?: Record<string, unknown>;
+  jobref?: {};
+  exec?: {};
+  script?: {};
+  scriptfile?: {};
+  scripturl?: {};
   workflow?: Array<IWorkflowStep>;
 }

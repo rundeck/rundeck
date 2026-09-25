@@ -1,8 +1,9 @@
 import { createApp } from "vue";
 
-import { getRundeckContext } from "../../../library";
+import { getRundeckContext, url } from "../../../library";
 
 import ProjectPicker from "../../../library/components/widgets/project-select/ProjectSelectButton.vue";
+import { Project } from "../../../library/stores/Projects";
 
 const rootStore = getRundeckContext().rootStore;
 

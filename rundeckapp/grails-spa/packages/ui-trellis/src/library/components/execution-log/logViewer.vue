@@ -236,8 +236,9 @@ import RdDrawer from "../containers/drawer/Drawer.vue";
 import UiSocket from "../utils/UiSocket.vue";
 import { EventBus } from "../../utilities/vueEventBus";
 import { Btn, BtnGroup, ProgressBar } from "uiv";
-import { PropType } from "vue";
+import { App, PropType } from "vue";
 import LogNodeChunk from "./LogNodeChunk.vue";
+import { JobWorkflow } from "@/library/utilities/JobWorkflow";
 import { getRundeckContext } from "../../rundeckService";
 
 const CONFIG_STORAGE_KEY = "execution-viewer";
@@ -614,7 +615,7 @@ export default defineComponent({
         };
         setTimeout(update, delay);
         while (!cancel.signaled) {
-          await new Promise((res) => {
+          await new Promise((res, rej) => {
             setTimeout(res, 1000);
           });
           if (this.progress == 100) this.cancelProgress?.cancel();
@@ -678,7 +679,7 @@ export default defineComponent({
     toggleProgressBar() {
       this.consumeLogs = !this.consumeLogs;
     },
-    handleJump() {
+    handleJump(e: string) {
       this.scrollToLine(this.jumpToLine || 0);
     },
     handleJumpToEnd() {
@@ -690,12 +691,12 @@ export default defineComponent({
     async populateLogs() {
       while (this.consumeLogs) {
         if (!this.resp) this.resp = this.viewer.getOutput(this.batchSize);
-        await this.resp;
+        const res = await this.resp;
         this.resp = undefined;
 
         if (!this.viewer.completed) {
           this.resp = this.viewer.getOutput(this.batchSize);
-          await new Promise<void>((res) =>
+          await new Promise<void>((res, rej) =>
             setTimeout(() => {
               res();
             }, 0),

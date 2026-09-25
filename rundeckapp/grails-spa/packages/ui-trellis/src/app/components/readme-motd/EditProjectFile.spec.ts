@@ -1,4 +1,5 @@
-import { mount, VueWrapper } from "@vue/test-utils";
+//@ts-nocheck
+import { mount } from "@vue/test-utils";
 import EditProjectFile from "./EditProjectFile.vue";
 import * as editProjectFileService from "./editProjectFileService";
 
@@ -6,7 +7,7 @@ jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: () => ({
     rundeckClient: {},
   }),
-  url: jest.fn().mockImplementation((path: string) => {
+  url: jest.fn().mockImplementation((path) => {
     return {
       href: `http://localhost:4440/${path}`,
     };
@@ -28,7 +29,7 @@ jest.mock("../../../library/components/utils/AceEditor.vue", () => ({
   props: ["modelValue"],
   template: '<span class="ace_text ace_xml">{{modelValue }}</span>',
 }));
-const mountEditProjectFile = async (props = {}): Promise<VueWrapper<any>> => {
+const mountEditProjectFile = async (props = {}) => {
   return mount(EditProjectFile, {
     props: {
       filename: "readme.md",

@@ -10,7 +10,8 @@ export default {
   component: ProjectSelectButton,
 } as Meta<typeof ProjectSelectButton>;
 
-(window as any)._rundeck.rundeckClient = new Rundeck(
+// @ts-ignore
+window._rundeck.rundeckClient = new Rundeck(
   new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN),
   {
     baseUri: process.env.STORYBOOK_RUNDECK_URL,

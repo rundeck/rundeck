@@ -376,18 +376,18 @@ export default defineComponent({
   },
   watch: {
     query: {
-      handler() {
+      handler(newValue, oldValue) {
         this.updateSelectedPeriod();
       },
     },
     modelValue: {
-      handler() {
+      handler(newValue, oldValue) {
         this.reset();
       },
       deep: true,
     },
     DateFilters: {
-      handler(newValue) {
+      handler(newValue, oldValue) {
         newValue.forEach((element) => {
           if (element.filter.enabled) {
             this.query["do" + element.name] = "true";

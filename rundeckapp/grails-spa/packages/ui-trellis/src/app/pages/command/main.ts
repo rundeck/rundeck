@@ -2,6 +2,7 @@ import { createApp, markRaw } from "vue";
 
 import LogViewer from "../../../library/components/execution-log/logViewer.vue";
 import NextUiToggle from "../../../library/components/widgets/settings-bar/NextUIIndicator.vue";
+import { RootStore } from "../../../library/stores/RootStore";
 import {
   initI18n,
   commonAddUiMessages,

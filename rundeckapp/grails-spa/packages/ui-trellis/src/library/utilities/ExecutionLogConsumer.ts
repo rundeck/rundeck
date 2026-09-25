@@ -1,6 +1,7 @@
 import {
   ExecutionOutputGetResponse,
   ExecutionStatusGetResponse,
+  JobWorkflowGetResponse,
   ExecutionOutput,
   ExecutionOutputEntry,
 } from "@rundeck/client/dist/lib/models";
@@ -117,7 +118,7 @@ export class ExecutionLog {
     if (this.backoff == 0) {
       return void 0;
     } else {
-      return new Promise<void>((res) => {
+      return new Promise<void>((res, rej) => {
         setTimeout(res, this.backoff);
       });
     }

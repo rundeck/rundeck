@@ -36,7 +36,7 @@ export async function storageKeyGetMetadata(
   }
 }
 
-export async function storageKeyExists(path: string): Promise<boolean> {
+export async function storageKeyExists(path: string): Promise<Boolean> {
   let resp = await api.get(`storage/keys/${path}`);
   if (resp.status === 404) {
     return false;
@@ -87,7 +87,7 @@ export async function storageKeyCreate(
   throw { message: resp.data.message, response: resp };
 }
 
-export async function storageKeyDelete(path: string): Promise<boolean> {
+export async function storageKeyDelete(path: string): Promise<Boolean> {
   let resp = await api.delete(`storage/keys/${path}`);
   if (resp.status === 404) {
     return false;

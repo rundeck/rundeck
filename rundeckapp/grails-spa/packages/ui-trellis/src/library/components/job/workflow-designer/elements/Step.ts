@@ -1,9 +1,9 @@
+// @ts-nocheck
 import { dia } from "jointjs";
 
 export class WorkflowStep extends dia.Element {
   defaults() {
     return {
-      // @ts-expect-error jointjs typings omit the prototype-level `defaults` object that exists at runtime
       ...super.defaults,
       type: "rundeck.WorkflowStep",
       attrs: {

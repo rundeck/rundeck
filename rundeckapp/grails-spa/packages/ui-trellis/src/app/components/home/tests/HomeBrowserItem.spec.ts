@@ -1,7 +1,7 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import HomeBrowserItem from "../HomeBrowserItem.vue";
 import UiSocket from "@/library/components/utils/UiSocket.vue";
-import { Tooltip } from "uiv";
+import { Dropdown, Tooltip } from "uiv";
 
 const dropdownStub = {
   name: "dropdown",

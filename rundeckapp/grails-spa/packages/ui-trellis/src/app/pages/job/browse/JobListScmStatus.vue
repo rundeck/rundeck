@@ -56,7 +56,7 @@ import { ScmTextUtilities } from "../../../../library/utilities/scm/scmTextUtili
 export default defineComponent({
   name: "JobListScmStatus",
 
-  setup() {
+  setup(props) {
     const jobPageStore: JobPageStore = inject(
       JobPageStoreInjectionKey,
     ) as JobPageStore;

@@ -88,6 +88,6 @@ export interface UtilityActionItem extends UtilityItem {
 
 export interface UtilityWidgetItem extends UtilityItem {
   type: "widget";
-  widget: object;
+  widget: Object;
   inline?: boolean; // If true, render widget directly without icon/popover
 }

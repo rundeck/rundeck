@@ -18,6 +18,12 @@
 
 <script>
 import { defineComponent } from "vue";
+import axios from "axios";
+import Trellis, {
+  getRundeckContext,
+  getSynchronizerToken,
+  RundeckBrowser,
+} from "../../../library";
 import CommunityNewsFeed from "./CommunityNewsFeed.vue";
 
 export default defineComponent({

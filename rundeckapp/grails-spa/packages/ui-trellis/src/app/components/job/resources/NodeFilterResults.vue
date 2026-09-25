@@ -73,6 +73,9 @@ import { defineComponent, ref, computed } from "vue";
 
 import { getRundeckContext, getAppLinks } from "../../../../library";
 
+const rdBase = getRundeckContext().rdBase;
+const project = getRundeckContext().projectName;
+
 export default defineComponent({
   name: "NodeFilterResults",
   components: {
@@ -199,6 +202,7 @@ export default defineComponent({
       const filterExcludedata = this.nodeExcludeFilter
         ? { filterExclude: this.nodeExcludeFilter }
         : {};
+      const excludeFilterUncheck = this.excludeFilterUncheck;
       const page = this.page;
       const view = this.view ? this.view : "table";
       const basedata: any = {

@@ -11,6 +11,7 @@ import type {
   StepsData,
   EditStepData,
   StepsEditData,
+  ErrorHandlerDefinition,
 } from "../workflowTypes";
 
 describe("workflowFuncs", () => {
