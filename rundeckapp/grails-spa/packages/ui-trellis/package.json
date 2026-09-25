@@ -83,7 +83,7 @@
   "devDependencies": {
     "@babel/core": "7.29.7",
     "@happy-dom/jest-environment": "20.14.5",
-    "@pinia/testing": "1.0.3",
+    "@pinia/testing": "0.1.7",
     "@storybook/addon-a11y": "8.4.5",
     "@storybook/addon-essentials": "8.4.5",
     "@storybook/addon-interactions": "8.4.5",

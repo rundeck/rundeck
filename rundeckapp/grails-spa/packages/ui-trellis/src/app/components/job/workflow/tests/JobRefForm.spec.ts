@@ -100,7 +100,7 @@ const createWrapper = async (
     global: {
       plugins: [
         createTestingPinia({
-          createSpy: jest.fn,
+          createSpy: jest.fn(),
           ...piniaOptions,
         }),
       ],
