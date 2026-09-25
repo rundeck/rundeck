@@ -3,7 +3,7 @@
     <template v-if="!loading && breakpointHit">
       <p class="breakpoint-info">
         {{ $t("job.tree.breakpoint.hit.info") }}
-        <btn size="xs" @click="loadMeta(browsePath)">
+        <btn size="xs" @click="loadMeta()">
           {{ $t("job.tree.breakpoint.load.button.title") }}
         </btn>
       </p>
