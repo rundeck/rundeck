@@ -207,6 +207,57 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
                 .timer().count() == 1L
     }
 
+    void "recordStepNodeCount records a distribution summary with project/status tags"() {
+        given:
+            def exec = execution([:])
+
+        when:
+            service.recordStepNodeCount(exec, 7L)
+
+        then:
+            meterRegistry.get('rundeck.execution.step_node_count')
+                .tag('project', 'p1').tag('status', 'succeeded')
+                .summary().totalAmount() == 7.0d
+    }
+
+    void "recordStepNodeCount is a no-op when stepNodeCount is null"() {
+        given:
+            def exec = execution([:])
+            def registrySize = meterRegistry.meters.size()
+
+        when:
+            service.recordStepNodeCount(exec, null)
+
+        then:
+            meterRegistry.meters.size() == registrySize
+    }
+
+    void "recordStepNodeCount is a no-op when execution is null"() {
+        given:
+            def registrySize = meterRegistry.meters.size()
+
+        when:
+            service.recordStepNodeCount(null, 7L)
+
+        then:
+            meterRegistry.meters.size() == registrySize
+    }
+
+    void "recordStepNodeCount adds job_id and job_name tags when the job dimension flag is enabled and the execution is scheduled"() {
+        given:
+            configurationService.getBoolean(MicrometerExecutionMetricsService.JOB_DIMENSION_ENABLED_PROPERTY, false) >> true
+            def job = new ScheduledExecution(uuid: 'job-uuid-1', jobName: 'my-job', groupPath: null)
+            def exec = execution(scheduledExecution: job)
+
+        when:
+            service.recordStepNodeCount(exec, 7L)
+
+        then:
+            meterRegistry.get('rundeck.execution.step_node_count')
+                .tag('project', 'p1').tag('status', 'succeeded').tag('job_id', 'job-uuid-1').tag('job_name', 'my-job')
+                .summary().totalAmount() == 7.0d
+    }
+
     void "recordExecutionStart increments the running gauge, recordExecution decrements it back to zero"() {
         given:
             def exec = execution([:])
@@ -258,6 +309,7 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
             service.recordExecutionStart(execution(scheduledExecution: deletedJob))
             service.recordExecution(execution(scheduledExecution: deletedJob))
             service.recordStepNodeSeconds(execution(scheduledExecution: deletedJob), 42L)
+            service.recordStepNodeCount(execution(scheduledExecution: deletedJob), 7L)
             service.recordExecution(execution(scheduledExecution: keptJob))
             def event = Stub(JobChangeEvent) {
                 getEventType() >> JobChangeEvent.JobChangeEventType.DELETE
@@ -273,6 +325,7 @@ class MicrometerExecutionMetricsServiceSpec extends Specification {
             meterRegistry.find('rundeck.executions').tag('job_id', 'job-uuid-1').counter() == null
             meterRegistry.find('rundeck.execution.duration').tag('job_id', 'job-uuid-1').timer() == null
             meterRegistry.find('rundeck.execution.step_node_duration').tag('job_id', 'job-uuid-1').timer() == null
+            meterRegistry.find('rundeck.execution.step_node_count').tag('job_id', 'job-uuid-1').summary() == null
             meterRegistry.find('rundeck.executions.running').tag('job_id', 'job-uuid-1').gauge() == null
             meterRegistry.get('rundeck.executions').tag('job_id', 'job-uuid-2').counter().count() == 1.0d
     }

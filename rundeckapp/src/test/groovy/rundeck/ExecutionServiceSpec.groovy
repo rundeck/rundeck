@@ -64,7 +64,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
-import com.dtolabs.rundeck.core.execution.workflow.StepNodeSecondsStore
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageStore
 import com.dtolabs.rundeck.core.execution.StatusResult
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
@@ -80,7 +80,7 @@ import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
 import com.dtolabs.rundeck.core.jobs.SubWorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
-import com.dtolabs.rundeck.core.execution.workflow.StepNodeSecondsWorkflowListener
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageWorkflowListener
 import com.dtolabs.rundeck.core.execution.workflow.IWorkflow
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
@@ -6467,10 +6467,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e1.scheduledExecution = job
         e1.save() != null
 
-        // simulate what StepNodeSecondsWorkflowListener would have already done during the
+        // simulate what StepNodeUsageWorkflowListener would have already done during the
         // real execution: accumulate a total and finalize it into the store under this
         // execution's id, before saveExecutionState ever runs.
-        def listener = new StepNodeSecondsWorkflowListener(e1.id)
+        def listener = new StepNodeUsageWorkflowListener(e1.id)
         def item = Mock(StepExecutionItem)
         listener.beginStepExecution(Mock(StepExecutor), Mock(StepExecutionContext), item)
         listener.finishStepExecution(Mock(StepExecutor), Mock(StatusResult), Mock(StepExecutionContext), item)
@@ -6511,17 +6511,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         capturedEvent instanceof ExecutionCompleteEvent
-        capturedEvent.stepNodeSeconds != null
-        capturedEvent.stepNodeSecondsBreakdown != null
+        capturedEvent.stepNodeUsageBreakdown != null
 
-        and: "the metric is recorded with the same value as the event, read from the store exactly once"
-        recordedStepNodeSeconds == capturedEvent.stepNodeSeconds
-
-        and: "the event's scalar total is the sum of its own breakdown"
-        capturedEvent.stepNodeSeconds == capturedEvent.stepNodeSecondsBreakdown.values().sum { it.seconds }
+        and: "the metric is recorded with the value derived from the event's own breakdown"
+        recordedStepNodeSeconds == capturedEvent.stepNodeUsageBreakdown.values().sum { it.seconds }
 
         and: "the store's read-and-remove semantics mean a second lookup for the same execution finds nothing left"
-        StepNodeSecondsStore.getInstance().takeFinishedBreakdown(e1.id) == null
+        StepNodeUsageStore.getInstance().takeFinishedBreakdown(e1.id) == null
     }
 
     def "opt enforced allowed values from Remote Url with sending the username"() {
@@ -7334,7 +7330,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         result?.thread?.interrupt()
     }
 
-    def "executeAsyncBegin registers a StepNodeSecondsWorkflowListener for step_node_seconds tracking"() {
+    def "executeAsyncBegin registers a StepNodeUsageWorkflowListener for step_node_seconds tracking"() {
         given: "an execution with scheduled job"
         def project = 'TestProject'
         def execution = new Execution(
@@ -7413,10 +7409,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when: "executeAsyncBegin is called"
         def result = service.executeAsyncBegin(framework, authContext, execution, scheduledExecution)
 
-        then: "the constructed workflow execution listener set includes a StepNodeSecondsWorkflowListener"
+        then: "the constructed workflow execution listener set includes a StepNodeUsageWorkflowListener"
         result != null
         def multiListener = result.thread.context.workflowExecutionListener
-        multiListener.listenerList.any { it instanceof StepNodeSecondsWorkflowListener }
+        multiListener.listenerList.any { it instanceof StepNodeUsageWorkflowListener }
 
         cleanup:
         result?.thread?.interrupt()

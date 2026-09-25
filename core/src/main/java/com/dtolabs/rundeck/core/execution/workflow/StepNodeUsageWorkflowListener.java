@@ -23,7 +23,9 @@ import java.util.concurrent.atomic.LongAdder;
  * combination that ran -- broken down per step, not collapsed into one grand total, so a
  * caller (e.g. a future billing subscriber excluding "non-billable" steps) can tell which
  * step contributed how much, and which plugin it ran (so exclusion can be driven by a
- * plugin-type deny-list rather than needing a per-step flag in every job definition).
+ * plugin-type deny-list rather than needing a per-step flag in every job definition). Also
+ * tracks a discrete step-node dispatch count alongside the duration, for a duration-independent
+ * metric candidate (RBA_BILLING proposal Section 6.5) -- see {@link StepNodeUsageEntry#getNodeCount()}.
  * <p>
  * A step that dispatches to one or more nodes contributes at the node level only (one
  * contribution per node it ran on, summed into that step's own entry); a step that never
@@ -37,7 +39,7 @@ import java.util.concurrent.atomic.LongAdder;
  * exact same listener instance as its parent, so its step/node durations accumulate into
  * this same running breakdown automatically. {@link #finishWorkflowExecution} fires once for
  * such a nested execution's own completion, and again for the parent's -- both write the
- * breakdown (whatever it is at that moment) into {@link StepNodeSecondsStore} under the one
+ * breakdown (whatever it is at that moment) into {@link StepNodeUsageStore} under the one
  * closure-captured top-level execution id; since the nested execution's finish always
  * happens strictly before the parent's own, the parent's later write is always the one that
  * persists, with no nesting-depth tracking required.
@@ -52,7 +54,7 @@ import java.util.concurrent.atomic.LongAdder;
  * in flight) still uses Java reference identity of the {@link StepExecutionItem} instance,
  * exactly as before -- only the key under which a *finished* duration is stored changed.
  */
-public class StepNodeSecondsWorkflowListener implements WorkflowExecutionListener {
+public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener {
 
     private static final class StepKey {
         private final Object item;
@@ -126,21 +128,39 @@ public class StepNodeSecondsWorkflowListener implements WorkflowExecutionListene
     }
 
     /**
-     * One step's contribution to step_node_seconds: its duration, and the plugin/provider
-     * type that ran (e.g. what {@link StepExecutionItem#getType()} -- or
-     * {@link NodeStepExecutionItem#getNodeStepType()} for a node step -- returns), so a
+     * One step's contribution to step_node_seconds: its duration, the plugin/provider type
+     * that ran (e.g. what {@link StepExecutionItem#getType()} -- or
+     * {@link NodeStepExecutionItem#getNodeStepType()} for a node step -- returns) so a
      * consumer can decide billability by plugin type without needing to cross-reference the
-     * job definition at all.
+     * job definition at all, and how many step-node units contributed to {@link #seconds}
+     * (RBA_BILLING proposal Section 6.5 -- raised by Greg Schueler, 2026-09-25): a discrete
+     * count of (step, node) dispatches, the same breadth×depth shape as step_node_seconds but
+     * without the time dimension, since on-prem billing likely shouldn't charge for the
+     * customer's own hardware speed. One node-dispatching step run against 5 nodes
+     * contributes 5 here, not 1 -- the same "1 step x 1 node" convention as
+     * {@link #seconds} applies to a step that never dispatches to any node.
      */
-    public static final class StepNodeSecondsEntry {
+    public static final class StepNodeUsageEntry {
         private final long seconds;
         private final String pluginType;
         private final Boolean isNodeStep;
+        private final long nodeCount;
 
-        public StepNodeSecondsEntry(final long seconds, final String pluginType, final Boolean isNodeStep) {
+        /**
+         * @deprecated use {@link #StepNodeUsageEntry(long, String, Boolean, long)}. This
+         * overload defaults {@code nodeCount} to 1, for callers (mostly tests) that don't
+         * care about the node-count breakdown.
+         */
+        @Deprecated
+        public StepNodeUsageEntry(final long seconds, final String pluginType, final Boolean isNodeStep) {
+            this(seconds, pluginType, isNodeStep, 1L);
+        }
+
+        public StepNodeUsageEntry(final long seconds, final String pluginType, final Boolean isNodeStep, final long nodeCount) {
             this.seconds = seconds;
             this.pluginType = pluginType;
             this.isNodeStep = isNodeStep;
+            this.nodeCount = nodeCount;
         }
 
         public long getSeconds() {
@@ -167,20 +187,30 @@ public class StepNodeSecondsWorkflowListener implements WorkflowExecutionListene
             return isNodeStep;
         }
 
+        /**
+         * How many (step, node) dispatches contributed to {@link #seconds} -- see the class
+         * javadoc. Not currently read by any billing consumer; captured for a future
+         * duration-independent metric candidate (e.g. on-prem consumption billing).
+         */
+        public long getNodeCount() {
+            return nodeCount;
+        }
+
         @Override
         public String toString() {
-            return "StepNodeSecondsEntry{seconds=" + seconds + ", pluginType='" + pluginType + "', isNodeStep=" + isNodeStep + "}";
+            return "StepNodeUsageEntry{seconds=" + seconds + ", pluginType='" + pluginType + "', isNodeStep=" + isNodeStep + ", nodeCount=" + nodeCount + "}";
         }
     }
 
     private final Long executionId;
     private final ConcurrentHashMap<String, LongAdder> perStepElapsedNanos = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, LongAdder> perStepNodeCount = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> perStepPluginType = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Boolean> perStepIsNodeStep = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<StepKey, StepFrame> openStepFrames = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<NodeKey, NodeFrame> openNodeFrames = new ConcurrentHashMap<>();
 
-    public StepNodeSecondsWorkflowListener(final Long executionId) {
+    public StepNodeUsageWorkflowListener(final Long executionId) {
         this.executionId = executionId;
     }
 
@@ -227,6 +257,10 @@ public class StepNodeSecondsWorkflowListener implements WorkflowExecutionListene
         perStepElapsedNanos.computeIfAbsent(path, k -> new LongAdder()).add(nanos);
     }
 
+    private void addNodeCount(final String path) {
+        perStepNodeCount.computeIfAbsent(path, k -> new LongAdder()).increment();
+    }
+
     @Override
     public void beginWorkflowExecution(final StepExecutionContext executionContext, final WorkflowExecutionItem item) {
     }
@@ -237,13 +271,15 @@ public class StepNodeSecondsWorkflowListener implements WorkflowExecutionListene
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item
     ) {
-        final Map<String, StepNodeSecondsEntry> breakdown = new LinkedHashMap<>();
+        final Map<String, StepNodeUsageEntry> breakdown = new LinkedHashMap<>();
         for (final Map.Entry<String, LongAdder> entry : perStepElapsedNanos.entrySet()) {
             final long seconds = Math.round(entry.getValue().sum() / 1_000_000_000.0);
             final String path = entry.getKey();
-            breakdown.put(path, new StepNodeSecondsEntry(seconds, perStepPluginType.get(path), perStepIsNodeStep.get(path)));
+            final LongAdder nodeCountAdder = perStepNodeCount.get(path);
+            final long nodeCount = nodeCountAdder != null ? nodeCountAdder.sum() : 0L;
+            breakdown.put(path, new StepNodeUsageEntry(seconds, perStepPluginType.get(path), perStepIsNodeStep.get(path), nodeCount));
         }
-        StepNodeSecondsStore.getInstance().recordFinishedBreakdown(executionId, breakdown);
+        StepNodeUsageStore.getInstance().recordFinishedBreakdown(executionId, breakdown);
     }
 
     @Override
@@ -281,6 +317,7 @@ public class StepNodeSecondsWorkflowListener implements WorkflowExecutionListene
         final StepFrame frame = openStepFrames.remove(new StepKey(item));
         if (frame != null && !frame.sawNodeDispatch.get()) {
             addElapsed(frame.path, System.nanoTime() - frame.startNanos);
+            addNodeCount(frame.path);
         }
     }
 
@@ -305,6 +342,7 @@ public class StepNodeSecondsWorkflowListener implements WorkflowExecutionListene
         if (frame != null) {
             final String path = frame.path != null ? frame.path : ("unknown:" + System.identityHashCode(item));
             addElapsed(path, System.nanoTime() - frame.startNanos);
+            addNodeCount(path);
             if (frame.pluginType != null) {
                 perStepPluginType.putIfAbsent(path, frame.pluginType);
                 perStepIsNodeStep.putIfAbsent(path, frame.isNodeStep);

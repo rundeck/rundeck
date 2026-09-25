@@ -1,16 +1,16 @@
 package com.dtolabs.rundeck.core.execution.workflow
 
-import com.dtolabs.rundeck.core.execution.workflow.StepNodeSecondsWorkflowListener.StepNodeSecondsEntry
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageWorkflowListener.StepNodeUsageEntry
 import spock.lang.Specification
 
-class StepNodeSecondsStoreSpec extends Specification {
+class StepNodeUsageStoreSpec extends Specification {
 
-    def store = StepNodeSecondsStore.getInstance()
+    def store = StepNodeUsageStore.getInstance()
 
     def "record then take round-trips the breakdown map"() {
         given:
         def executionId = 201L
-        def breakdown = ["1": new StepNodeSecondsEntry(42L, "exec-command", true)]
+        def breakdown = ["1": new StepNodeUsageEntry(42L, "exec-command", true)]
 
         when:
         store.recordFinishedBreakdown(executionId, breakdown)
@@ -29,7 +29,7 @@ class StepNodeSecondsStoreSpec extends Specification {
     def "takeFinishedBreakdown removes the entry, so a second call returns null"() {
         given:
         def executionId = 203L
-        store.recordFinishedBreakdown(executionId, ["1": new StepNodeSecondsEntry(7L, "exec-command", true)])
+        store.recordFinishedBreakdown(executionId, ["1": new StepNodeUsageEntry(7L, "exec-command", true)])
 
         when:
         def first = store.takeFinishedBreakdown(executionId)
@@ -42,7 +42,7 @@ class StepNodeSecondsStoreSpec extends Specification {
 
     def "recordFinishedBreakdown with a null executionId is a no-op"() {
         when:
-        store.recordFinishedBreakdown(null, ["1": new StepNodeSecondsEntry(99L, "exec-command", true)])
+        store.recordFinishedBreakdown(null, ["1": new StepNodeUsageEntry(99L, "exec-command", true)])
 
         then:
         noExceptionThrown()

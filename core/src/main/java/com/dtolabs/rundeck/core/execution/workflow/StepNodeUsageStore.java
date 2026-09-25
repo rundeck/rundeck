@@ -1,13 +1,13 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.execution.workflow.StepNodeSecondsWorkflowListener.StepNodeSecondsEntry;
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageWorkflowListener.StepNodeUsageEntry;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * In-memory hand-off point for the finished "step_node_seconds" breakdown computed by
- * {@link StepNodeSecondsWorkflowListener} for a top-level execution: one entry per step,
+ * {@link StepNodeUsageWorkflowListener} for a top-level execution: one entry per step,
  * keyed by its hierarchical step path (e.g. "3", or "3/1" for a step nested under step 3),
  * each holding that step's duration (with any node-level dispatches already summed in) and
  * the plugin/provider type that ran. Not persisted to any database table and not exposed via
@@ -29,15 +29,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * Micrometer metric, and Runbook Automation's consumption-billing subscriber both read
  * through it via {@code ExecutionCompleteEvent}), not just metric validation.
  */
-public final class StepNodeSecondsStore {
-    private static final StepNodeSecondsStore INSTANCE = new StepNodeSecondsStore();
+public final class StepNodeUsageStore {
+    private static final StepNodeUsageStore INSTANCE = new StepNodeUsageStore();
 
-    private final ConcurrentHashMap<Long, Map<String, StepNodeSecondsEntry>> finishedBreakdowns = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, Map<String, StepNodeUsageEntry>> finishedBreakdowns = new ConcurrentHashMap<>();
 
-    private StepNodeSecondsStore() {
+    private StepNodeUsageStore() {
     }
 
-    public static StepNodeSecondsStore getInstance() {
+    public static StepNodeUsageStore getInstance() {
         return INSTANCE;
     }
 
@@ -45,7 +45,7 @@ public final class StepNodeSecondsStore {
      * Record the finished per-step step_node_seconds breakdown for an execution. Overwrites
      * any previously recorded value for the same execution id.
      */
-    void recordFinishedBreakdown(final Long executionId, final Map<String, StepNodeSecondsEntry> breakdown) {
+    void recordFinishedBreakdown(final Long executionId, final Map<String, StepNodeUsageEntry> breakdown) {
         if (executionId != null) {
             finishedBreakdowns.put(executionId, breakdown);
         }
@@ -61,7 +61,7 @@ public final class StepNodeSecondsStore {
      * @param executionId the execution id
      * @return the finished breakdown, or null if none was recorded (or it was already taken)
      */
-    public Map<String, StepNodeSecondsEntry> takeFinishedBreakdown(final Long executionId) {
+    public Map<String, StepNodeUsageEntry> takeFinishedBreakdown(final Long executionId) {
         return executionId == null ? null : finishedBreakdowns.remove(executionId);
     }
 }
