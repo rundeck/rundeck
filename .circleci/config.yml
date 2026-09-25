@@ -177,12 +177,13 @@ commands:
 
   #Save gradle cache
   save-build-cache:
-    description: Save Build cache
+    description: Save Build cache (dependencies only)
     steps:
       - save_cache:
           paths:
             - ~/.gradle/wrapper
-            - ~/.gradle/caches
+            - ~/.gradle/caches/modules-2  # Dependency metadata only
+            - ~/.gradle/caches/jars-9     # Downloaded JARs only
             - ~/.npm/_cacache
           key: cache-{{ .Environment.BUILD_CACHE_VERSION }}-build-cache-{{ .Branch }}-<<pipeline.number>>
 
@@ -258,6 +259,11 @@ commands:
 job-defaults: &job-defaults
   # Using an absolute path here prevents issues with bash interpolations.
   working_directory: /home/circleci/workspace
+  # Caches are rewritten on every pipeline (the key includes the pipeline number),
+  # so entries older than a few days are never reused. Expire them early instead of
+  # letting them sit for the organization default.
+  retention:
+    caches: 7d
   environment:
     CIRCLE_PIPELINE_NUM: << pipeline.number >>
     GRADLE_OPTS: -XX:MaxRAMPercentage=85.0
