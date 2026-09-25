@@ -96,6 +96,7 @@
 import { defineComponent } from "vue";
 import AceEditorVue from "@/library/components/utils/AceEditorVue.vue";
 import AceEditor from "@/library/components/utils/AceEditor.vue";
+import { getRundeckContext } from "@/library";
 import { url } from "@/library/rundeckService";
 import { Notification } from "uiv";
 import {
@@ -103,6 +104,7 @@ import {
   getFileText,
 } from "@/app/components/readme-motd/editProjectFileService";
 
+const rundeckClient = getRundeckContext().rundeckClient;
 export default defineComponent({
   name: "EditProjectFile",
   components: { AceEditor, AceEditorVue },

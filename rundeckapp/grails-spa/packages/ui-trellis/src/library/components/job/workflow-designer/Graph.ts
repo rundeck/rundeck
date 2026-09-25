@@ -1,9 +1,12 @@
+// @ts-nocheck
 import * as Dagre from "dagre";
 import * as GLib from "graphlib";
+import { g } from "jointjs";
 
 import {
   DirectiveType,
   isDirective,
+  Rule,
   RuleBuilder,
   RuleSet,
 } from "./RuleSetParser";
@@ -122,7 +125,7 @@ export class WorkflowGraph {
   setNodes(nodes: Map<string, NodeDescription>) {
     this.graphlib = new GLib.Graph().setGraph({});
 
-    for (const [, node] of nodes) {
+    for (const [id, node] of nodes) {
       this.add(new GNode(node));
     }
 
@@ -364,6 +367,10 @@ export class WorkflowGraph {
   }
 }
 
+function isPNode(node: GraphNode): node is PNode {
+  return node.hasOwnProperty("nodes");
+}
+
 export function layoutGraph(graph: WorkflowGraph) {
   const g = new Dagre.graphlib.Graph();
   g.setGraph({});
@@ -371,7 +378,7 @@ export function layoutGraph(graph: WorkflowGraph) {
     return {};
   });
 
-  for (const [, node] of graph.nodes) {
+  for (const [k, node] of graph.nodes) {
     g.setNode(node.identifier, {
       label: node.identifier,
       width: 70,
@@ -379,7 +386,7 @@ export function layoutGraph(graph: WorkflowGraph) {
     });
   }
 
-  for (const [, node] of graph.nodes) {
+  for (const [k, node] of graph.nodes) {
     for (const next of node.next) g.setEdge(node.identifier, next.identifier);
   }
   Dagre.layout(g);

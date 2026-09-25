@@ -75,7 +75,7 @@ export const Playground: Story = {
   }),
 };
 
-const generateTemplate = () => {
+const generateTemplate = (args: Record<string, any>) => {
   return `<div>
     <OptionItem v-bind="args" />
   </div>`;
@@ -88,7 +88,7 @@ export const Default: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(),
+    template: generateTemplate(args || {}),
   }),
   args: {},
   parameters: {},
@@ -101,7 +101,7 @@ export const TypeMultiLine: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {
@@ -121,7 +121,7 @@ export const TypeFile: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(),
+    template: generateTemplate(args || {}),
   }),
   args: {
     option: {

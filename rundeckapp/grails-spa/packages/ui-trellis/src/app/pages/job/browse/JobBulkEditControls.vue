@@ -218,7 +218,7 @@ export default defineComponent({
     },
   },
   emits: ["bulk-action-complete"],
-  setup() {
+  setup(props) {
     const jobBrowserStore: JobBrowserStore = inject(
       JobBrowserStoreInjectionKey,
     ) as JobBrowserStore;

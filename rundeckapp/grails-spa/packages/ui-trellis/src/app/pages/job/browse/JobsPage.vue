@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts">
-import { getRundeckContext } from "@/library";
+import { EventBus, getRundeckContext } from "@/library";
 import { defineComponent } from "vue";
 import JobListPage from "./JobListPage";
 import ActivityList from "../../../components/activity/activityList.vue";

@@ -30,7 +30,7 @@ jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
 }));
 jest.mock("@/library/rundeckService", () => {
-  const mittLib = jest.requireActual("mitt");
+  const mittLib = require("mitt");
   const mittFn = mittLib.default || mittLib;
   const _bus = mittFn();
   const eventBus = {

@@ -96,7 +96,7 @@ describe("job browse main", () => {
 
     (window as any)._rundeck.rootStore = rootStore;
 
-    const { __testContext } = jest.requireMock("@/library");
+    const { __testContext } = require("@/library");
     __testContext.rootStore = rootStore;
   });
 

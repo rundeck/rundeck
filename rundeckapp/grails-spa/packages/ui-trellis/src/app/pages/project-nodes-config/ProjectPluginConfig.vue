@@ -132,7 +132,7 @@
                       <a
                         :key="'save'"
                         class="btn btn-cta btn-xs"
-                        @click="savePlugin(plugin)"
+                        @click="savePlugin(plugin, index)"
                         >{{ $t("Save") }}</a
                       >
                       <a
@@ -152,7 +152,7 @@
                       <btn
                         class="btn-xs btn-danger"
                         :disabled="editFocus !== -1 && editFocus !== index"
-                        @click="removePlugin(plugin)"
+                        @click="removePlugin(plugin, index)"
                       >
                         {{ $t("Delete") }}
                         <i class="fas fa-minus"></i>
@@ -412,7 +412,7 @@ export default defineComponent({
     this.eventBus?.on("resource-model-extra-config", this.setExtraConfig);
   },
   methods: {
-    notifyError(msg: string) {
+    notifyError(msg: string, args: any[]) {
       Notification.notify({
         type: "danger",
         title: "An Error Occurred",
@@ -463,7 +463,7 @@ export default defineComponent({
     setFocus(focus: number) {
       this.editFocus = focus;
     },
-    async savePlugin(plugin: ProjectPluginConfigEntry) {
+    async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
       //validate
       const validation: PluginValidation =
         await pluginService.validatePluginConfig(
@@ -481,7 +481,7 @@ export default defineComponent({
       this.setPluginConfigsModified();
       this.setFocus(-1);
     },
-    removePlugin(plugin: ProjectPluginConfigEntry) {
+    removePlugin(plugin: ProjectPluginConfigEntry, index: number) {
       const found = this.pluginConfigs.indexOf(plugin);
       this.pluginConfigs.splice(found, 1);
       if (!plugin.create) {
@@ -501,7 +501,7 @@ export default defineComponent({
       this.setPluginConfigsModified();
       this.editFocus = -1;
     },
-    didSave() {
+    didSave(success: boolean) {
       if (this.modeToggle) {
         this.mode = "show";
       }
@@ -516,7 +516,7 @@ export default defineComponent({
           this.removedPluginConfigs,
         );
         if (result.success) {
-          this.didSave();
+          this.didSave(true);
           this.notifySuccess("Success", "Configuration Saved");
           this.configOrig = result.data.plugins;
           //copy
@@ -525,7 +525,8 @@ export default defineComponent({
           this.$emit("saved", result);
         }
       } catch (error) {
-        this.notifyError((error as Error).message);
+        // @ts-ignore
+        this.notifyError(error.message, []);
       }
     },
     async loadProjectPluginConfig(
@@ -604,7 +605,7 @@ export default defineComponent({
     cancelAction() {
       this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
       this.pluginConfigsModifiedReset();
-      this.didSave();
+      this.didSave(false);
     },
     setPluginConfigsModified() {
       this.modified = true;

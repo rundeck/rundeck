@@ -83,7 +83,7 @@ export default defineComponent({
     },
   },
   watch: {
-    visible(newVal) {
+    visible(newVal, oldVal) {
       this.display = newVal;
     },
   },

@@ -82,12 +82,12 @@
                       <a
                         :key="'save'"
                         class="btn btn-cta btn-xs"
-                        @click="savePlugin(plugin)"
+                        @click="savePlugin(plugin, index)"
                         >{{ $t("Save") }}</a
                       >
                       <a
                         class="btn btn-default btn-xs"
-                        @click="didCancel(plugin)"
+                        @click="didCancel(plugin, index)"
                         >{{ $t("Cancel") }}</a
                       >
                     </span>
@@ -102,7 +102,7 @@
                       <btn
                         class="btn-xs btn-danger"
                         :disabled="editFocus !== -1 && editFocus !== index"
-                        @click="removePlugin(plugin)"
+                        @click="removePlugin(plugin, index)"
                       >
                         {{ $t("Delete") }}
                         <i class="fas fa-minus"></i>
@@ -178,6 +178,7 @@
 </template>
 
 <script lang="ts">
+import axios from "axios";
 import { defineComponent } from "vue";
 import { Notification } from "uiv";
 import { getRundeckContext, RundeckContext } from "../../../library";
@@ -186,6 +187,14 @@ import PluginInfo from "../../../library/components/plugins/PluginInfo.vue";
 import PluginConfig from "../../../library/components/plugins/pluginConfig.vue";
 import pluginService from "../../../library/modules/pluginService";
 import PluginValidation from "../../../library/interfaces/PluginValidation";
+import { RundeckBrowser } from "@rundeck/client";
+import { cloneDeep } from "lodash";
+import _ from "lodash";
+import { useI18n } from "vue-i18n";
+
+const client: RundeckBrowser = getRundeckContext().rundeckClient;
+const rdBase = getRundeckContext().rdBase;
+const context = getRundeckContext();
 
 interface PluginConf {
   type: string;
@@ -280,7 +289,7 @@ export default defineComponent({
     exportedData(): any[] {
       const data = [] as any;
       const inputData = this.pluginConfigs;
-      inputData.forEach((plugin) => {
+      inputData.forEach((plugin, index) => {
         data.push({ type: plugin.entry.type, config: plugin.entry.config });
       });
       return data;
@@ -301,7 +310,7 @@ export default defineComponent({
     getRundeckContext().eventBus.emit("project-plugin-group-editing", false);
   },
   methods: {
-    notifyError(msg: string) {
+    notifyError(msg: string, args: any[]) {
       Notification.notify({
         type: "danger",
         title: "An Error Occurred",
@@ -318,7 +327,7 @@ export default defineComponent({
         duration: 5000,
       });
     },
-    createConfigEntry(entry: any): ProjectPluginConfigEntry {
+    createConfigEntry(entry: any, origIndex: number): ProjectPluginConfigEntry {
       return {
         entry: { type: entry.type, config: Object.assign({}, entry.config) },
       } as ProjectPluginConfigEntry;
@@ -348,10 +357,10 @@ export default defineComponent({
       this.editFocus = index;
       this.editedPlugins[plugin.entry.type] = { entry: plugin.entry };
     },
-    didCancel(plugin: ProjectPluginConfigEntry) {
+    didCancel(plugin: ProjectPluginConfigEntry, index: any) {
       if (this.errors.length > 0 && !this.editedPlugins[plugin.entry.type]) {
         this.errors = [];
-        this.removePlugin(plugin);
+        this.removePlugin(plugin, index);
       } else {
         this.editFocus = -1;
         this.errors = [];
@@ -361,17 +370,17 @@ export default defineComponent({
             this.editedPlugins[plugin.entry.type].entry;
           this.pluginConfigs = array_clone(this.workingData);
         } else {
-          this.removePlugin(plugin);
+          this.removePlugin(plugin, index);
         }
       }
     },
-    async savePlugin(plugin: ProjectPluginConfigEntry) {
+    async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
       if (this.errors.length > 0) {
         this.errors = [];
       }
 
       const type = plugin.entry.type;
-      this.pluginProviders.forEach((item: any) => {
+      this.pluginProviders.forEach((item: any, index: any) => {
         if (item.name == type) {
           item.configSet = true;
         }
@@ -394,9 +403,9 @@ export default defineComponent({
       this.setFocus(-1);
       this.$emit("input", this.exportedData);
     },
-    removePlugin(plugin: ProjectPluginConfigEntry) {
+    removePlugin(plugin: ProjectPluginConfigEntry, index: number) {
       const type = plugin.entry.type;
-      this.pluginProviders.forEach((item: any) => {
+      this.pluginProviders.forEach((item: any, index: any) => {
         if (item.name == type) {
           item.configSet = false;
         }
@@ -417,7 +426,7 @@ export default defineComponent({
       this.pluginConfigs = array_clone(this.workingData);
       this.editFocus = -1;
     },
-    didSave() {
+    didSave(success: boolean) {
       if (this.modeToggle) {
         this.mode = "show";
       }
@@ -452,13 +461,13 @@ export default defineComponent({
         this.pluginProviders = data.descriptions;
         this.pluginLabels = data.labels;
 
-        this.contextConfig.forEach((provider2: any) => {
+        this.contextConfig.forEach((provider2: any, index: any) => {
           const projectPluginConfig = {
             entry: provider2,
             create: true,
           } as ProjectPluginConfigEntry;
           projectPluginConfigList.push(projectPluginConfig);
-          this.pluginProviders.forEach((provider: any) => {
+          this.pluginProviders.forEach((provider: any, index: any) => {
             if (provider.name === provider2.type) {
               provider["configSet"] = true;
             }
