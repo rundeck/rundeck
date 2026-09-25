@@ -110,6 +110,10 @@ class ImportTracker {
                 //recorded a rename to previousPath - that resync intentionally keeps both tracked)
                 trackedCommits.remove(previousPath)
                 trackedJobIds.remove(previousPath)
+                //also drop any rename mapping naming previousPath: if an earlier jobRenamed left
+                //one (e.g. original -> previousPath), it would otherwise survive this direct move
+                //and keep reporting a stale rename for a path nothing is tracked at anymore
+                renamedTrackedItems.untrack(previousPath)
             }
             trackedCommits[path] = job.scmImportMetadata?.commitId
             trackedJobIds[path] = job.id
