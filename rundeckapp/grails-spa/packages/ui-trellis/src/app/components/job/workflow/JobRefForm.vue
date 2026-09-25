@@ -32,7 +32,6 @@
 import { defineComponent, type PropType } from "vue";
 import { PluginConfig } from "../../../../library/interfaces/PluginConfig";
 import { getRundeckContext } from "../../../../library";
-import { JobRefData } from "./types/workflowTypes";
 import { merge } from "lodash";
 import ErrorsList from "../options/ErrorsList.vue";
 import { ContextVariable } from "../../../../library/stores/contextVariables";

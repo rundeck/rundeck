@@ -228,7 +228,7 @@ describe("OptionEdit", () => {
       fileUploadPluginType: "pluginType",
     });
 
-    const element = wrapper.get(
+    wrapper.get(
       ".form-group plugin-config[service-name=FileUpload][provider=pluginType]",
     );
   });

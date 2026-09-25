@@ -48,7 +48,6 @@
 import { defineComponent } from "vue";
 import Trellis, { getRundeckContext } from "../../../../library";
 import TourServices from "../services";
-import { RootStore } from "../../../../library/stores/RootStore";
 
 const context = getRundeckContext();
 

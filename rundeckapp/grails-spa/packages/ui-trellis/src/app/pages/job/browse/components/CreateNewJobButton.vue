@@ -23,7 +23,7 @@ export default {
       default: "primary",
     },
   },
-  setup(props) {
+  setup() {
     const jobPageStore: JobPageStore = inject(
       JobPageStoreInjectionKey,
     ) as JobPageStore;

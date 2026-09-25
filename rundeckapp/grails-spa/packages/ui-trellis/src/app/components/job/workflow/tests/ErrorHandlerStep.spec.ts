@@ -1,9 +1,4 @@
-import {
-  flushPromises,
-  mount,
-  shallowMount,
-  VueWrapper,
-} from "@vue/test-utils";
+import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ErrorHandlerStep from "../ErrorHandlerStep.vue";
 import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
 import JobRefStep from "@/app/components/job/workflow/JobRefStep.vue";

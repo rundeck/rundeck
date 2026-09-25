@@ -55,7 +55,6 @@
 </template>
 <script>
 import { defineComponent } from "vue";
-import axios from "axios";
 import { mapActions, mapState } from "vuex";
 import {
   limitString200ClickForMore,

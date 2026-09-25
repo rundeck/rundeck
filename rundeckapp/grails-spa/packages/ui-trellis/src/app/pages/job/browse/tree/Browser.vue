@@ -216,7 +216,7 @@ export default defineComponent({
         eventBus.emit(`browser-jobs-empty`);
       }
     },
-    async loadMeta(path: string) {
+    async loadMeta() {
       const item = this.jobBrowserStore.findPath(this.browsePath);
       item.breakpoint = 0;
       item.loaded = false;
