@@ -23,7 +23,7 @@ nothing blocks builds or PRs.
 ## How to check
 
 - Backend: `./gradlew codenarcComplexity` — report in `build/reports/codenarc/complexity.html`
-- Frontend: `npm run lint` in ui-trellis (rule active in `.eslintrc.js`)
+- Frontend: `npm run lint` in ui-trellis (rule active in the shared `eslint/base.js`)
 
 ## Before Completing
 

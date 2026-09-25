@@ -1,5 +1,7 @@
 import pluginPropEdit from "@/library/components/plugins/pluginPropEdit.vue";
 import AceEditorVue from "@/library/components/utils/AceEditorVue.vue";
+import DynamicFormPluginProp from "@/library/components/plugins/DynamicFormPluginProp.vue";
+import PluginDetails from "@/library/components/plugins/PluginDetails.vue";
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import {
   config,
@@ -195,6 +197,36 @@ describe("pluginPropEdit", () => {
       expect(wrapper.vm.inputColSize(prop)).toBe("col-sm-" + size);
     },
   );
+
+  it("renders the description above the DYNAMIC_FORM widget, once, not below it", async () => {
+    const wrapper = await createWrapper({
+      modelValue: "",
+      prop: {
+        type: "String",
+        title: "Custom Fields",
+        name: "custom",
+        desc: "Any custom fields to be included in the change event",
+        options: { displayType: "DYNAMIC_FORM" },
+      },
+      rkey: "test_",
+      validation: null,
+      readOnly: false,
+      selectorData: {},
+    });
+
+    const descriptions = wrapper.findAllComponents(PluginDetails);
+    const widget = wrapper.findComponent(DynamicFormPluginProp);
+
+    expect(descriptions.length).toBe(1);
+    expect(descriptions[0].props("description")).toContain(
+      "Any custom fields to be included in the change event",
+    );
+    expect(widget.exists()).toBe(true);
+    expect(
+      descriptions[0].element.compareDocumentPosition(widget.element) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });
 
 describe("pluginPropEdit numeric property", () => {

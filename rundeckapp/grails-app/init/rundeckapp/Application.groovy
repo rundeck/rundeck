@@ -132,6 +132,10 @@ import java.nio.file.Paths
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static final String SYS_PROP_RUNDECK_CONFIG_INITTED = "rundeck.config.initted"
     static RundeckInitConfig rundeckConfig = null
+    // null = not yet attempted, true = succeeded, false = failed. Tracked separately from
+    // rundeckConfig because InitializeRundeckPreboostrap assigns rundeckConfig before it finishes
+    // initializing it, so rundeckConfig != null doesn't mean prebootstrap succeeded.
+    static Boolean prebootstrapSucceeded = null
     static ConfigurableApplicationContext ctx;
     static String[] startArgs = []
     static Closure exitWithCodeOverride
@@ -198,8 +202,35 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     @Override
     void setEnvironment(final Environment environment) {
+        loadRundeckPropertySources(environment)
+    }
+
+    /**
+     * Registers Rundeck's own config-file-derived property sources into the given Environment, then
+     * sanitizes {@code dataSource.dbCreate} back to {@code "none"}. Extracted to a static method so it
+     * can also be called early, by {@link rundeckapp.init.RundeckConfigEnvironmentPostProcessor} --
+     * see that class's Javadoc for why the timing matters and why calling this twice is safe.
+     * <br>
+     * The dbCreate sanitization must happen in this same method, immediately after registration --
+     * otherwise a custom {@code dataSource.dbCreate} value would be visible to GORM/datasource bean
+     * definitions during the early post-processor phase, before a separate later call could force it
+     * back to {@code "none"}.
+     * <br>
+     * Checks {@link #prebootstrapSucceeded}, not {@code rundeckConfig == null}: other callers (e.g.
+     * {@link rundeckapp.init.RundeckWebAppInitializer}, {@link #main(String[])}) can trigger
+     * pre-bootstrap before this method ever runs, so rundeckConfig may already be non-null (but
+     * broken) from an earlier failed attempt.
+     *
+     * @param environment the Environment to register property sources into
+     */
+    static void loadRundeckPropertySources(final Environment environment) {
         Properties hardCodedRundeckConfigs = new Properties()
-        if(rundeckConfig == null) Application.runPrebootstrap()
+        if (prebootstrapSucceeded == null) {
+            Application.runPrebootstrap()
+        }
+        if (!prebootstrapSucceeded) {
+            throw new IllegalStateException("Rundeck pre-bootstrap initialization failed; aborting startup.")
+        }
 
         hardCodedRundeckConfigs.setProperty("rundeck.useJaas", rundeckConfig.useJaas.toString())
         hardCodedRundeckConfigs.setProperty(
@@ -227,7 +258,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
      * @param environment
      * @return void
      */
-    void removeGORMdbCreateProperty(final Environment environment){
+    static void removeGORMdbCreateProperty(final Environment environment){
         if(environment && environment.propertySources){
             environment.propertySources.each{
                 if(it.containsProperty("dataSource.dbCreate")){
@@ -272,6 +303,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
                 error = true
             }
         }
+        prebootstrapSucceeded = !error
         return error
     }
 
@@ -283,7 +315,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     }
 
 
-    void loadGroovyRundeckConfigIfExists(final Environment environment) {
+    static void loadGroovyRundeckConfigIfExists(final Environment environment) {
         String rundeckGroovyConfigFile = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR) +
                 "/rundeck-config.groovy"
 
