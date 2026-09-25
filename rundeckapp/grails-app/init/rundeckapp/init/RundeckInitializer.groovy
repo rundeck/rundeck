@@ -19,6 +19,7 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
 import org.apache.logging.log4j.core.LoggerContext
+import org.rundeck.jaas.jetty.BcryptCredentialProvider
 import org.rundeck.security.CliAuthTester
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
@@ -550,6 +551,17 @@ class RundeckInitializer {
                 properties.put(configProperty, forwardSlashPath(System.getProperty(configProperty)));
             }
         }
+        // RUN-4555: never write default.admin.password/default.user.password into
+        // realm.properties as plaintext - the encoder no longer accepts a plaintext
+        // fallback, so the generated default account must already be BCrypt-hashed.
+        properties.put(
+            "default.admin.password",
+            BcryptCredentialProvider.BcryptCredential.encodePassword(properties.getProperty("default.admin.password"))
+        )
+        properties.put(
+            "default.user.password",
+            BcryptCredentialProvider.BcryptCredential.encodePassword(properties.getProperty("default.user.password"))
+        )
         DEBUG(properties.toString())
         return properties;
     }
