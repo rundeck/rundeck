@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "engines": {
-    "npm": "11.19.0"
+    "npm": "11.19.1"
   },
   "main": "",
   "scripts": {
@@ -29,6 +29,6 @@
     "vuex": "4.1.0"
   },
   "overrides": {
-    "nanoid": "3.3.18"
+    "nanoid": "3.3.19"
   }
 }
