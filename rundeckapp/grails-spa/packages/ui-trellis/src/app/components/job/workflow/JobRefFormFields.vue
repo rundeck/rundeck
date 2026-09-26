@@ -598,7 +598,7 @@ import NodeListEmbed from "../resources/NodeListEmbed.vue";
 import PtAutoComplete from "../../../../library/components/primeVue/PtAutoComplete/PtAutoComplete.vue";
 import UiSocket from "../../../../library/components/utils/UiSocket.vue";
 import { ContextVariable } from "../../../../library/stores/contextVariables";
-import { merge } from "lodash";
+import { cloneDeep, merge } from "lodash";
 import { mapState, mapActions } from "pinia";
 import { useNodesStore } from "../../../../library/stores/NodesStorePinia";
 import {

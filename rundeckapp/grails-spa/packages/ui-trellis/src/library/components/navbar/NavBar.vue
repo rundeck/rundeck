@@ -13,7 +13,7 @@
             <NavBarContainer
               v-if="item.type === 'container'"
               :key="item.id"
-              :item="item"
+              :item="item as NavContainer"
             />
           </template>
         </ul>
@@ -37,7 +37,7 @@
             <NavBarContainer
               v-if="item.type === 'container'"
               :key="item.id"
-              :item="item"
+              :item="item as NavContainer"
             />
           </template>
         </ul>
@@ -47,9 +47,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 
-import { NavItem } from "../../stores/NavBar";
+import { NavBar, NavContainer, NavItem } from "../../stores/NavBar";
 
 import NavBarItem from "./NavBarItem.vue";
 import NavBarContainer from "./NavBarContainer.vue";

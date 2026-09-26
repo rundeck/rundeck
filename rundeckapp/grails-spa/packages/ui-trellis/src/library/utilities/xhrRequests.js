@@ -22,7 +22,7 @@ export const getUIAjaxTokens = () => {
 };
 
 export const setNewUIToken = (responseHeaders) => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     window._rundeck.token = {
       TOKEN: responseHeaders["x-rundeck-token-key"],
       URI: responseHeaders["x-rundeck-token-uri"],

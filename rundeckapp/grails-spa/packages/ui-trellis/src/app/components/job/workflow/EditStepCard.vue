@@ -237,8 +237,7 @@ export default defineComponent({
     if (this.modelValue.jobref) {
       this.editModel = merge(cloneDeep(this.jobRefDefaults), this.modelValue);
     } else {
-      const rest = { ...this.modelValue };
-      delete rest.description;
+      const { description, ...rest } = this.modelValue;
       this.editModel = cloneDeep(rest);
     }
 
@@ -341,8 +340,7 @@ export default defineComponent({
       if (newVal.jobref) {
         this.editModel = merge(cloneDeep(this.jobRefDefaults), newVal);
       } else {
-        const rest = { ...newVal };
-        delete rest.description;
+        const { description, ...rest } = newVal;
         this.editModel = cloneDeep(rest);
       }
 

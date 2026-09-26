@@ -43,6 +43,8 @@ export interface RunAdhocResponse {
 export async function runAdhocCommand(
   request: RunAdhocRequest,
 ): Promise<RunAdhocResponse> {
+  const rundeckContext = getRundeckContext();
+
   // Build API endpoint URL: /api/{api_version}/project/{project}/run/command/inline/api
   // Use the new API authentication endpoint for v56+
   // The api client already has baseURL set to rdBase + "api/" + apiVersion + "/"
@@ -81,6 +83,7 @@ export async function runAdhocCommand(
   ];
 
   // Track if we have any runner meta fields
+  let hasRunnerFilter = false;
   let hasRunnerFilterType = false;
   let hasRunnerFilterMode = false;
 
@@ -89,6 +92,7 @@ export async function runAdhocCommand(
       const value = request.meta![key];
       const metaKey = `meta.${key}`;
       if (runnerMetaFields.includes(metaKey)) {
+        if (metaKey === "meta.jobRunnerFilter") hasRunnerFilter = true;
         if (metaKey === "meta.jobRunnerFilterType") hasRunnerFilterType = true;
         if (metaKey === "meta.jobRunnerFilterMode") hasRunnerFilterMode = true;
         // Include runner fields if they have a non-empty value
@@ -109,6 +113,7 @@ export async function runAdhocCommand(
     if (key.startsWith("meta.") && !params[key]) {
       const value = request[key];
       if (runnerMetaFields.includes(key)) {
+        if (key === "meta.jobRunnerFilter") hasRunnerFilter = true;
         if (key === "meta.jobRunnerFilterType") hasRunnerFilterType = true;
         if (key === "meta.jobRunnerFilterMode") hasRunnerFilterMode = true;
         // Include runner fields if they have a non-empty value

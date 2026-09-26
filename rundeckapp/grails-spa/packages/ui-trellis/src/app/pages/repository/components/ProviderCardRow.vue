@@ -50,6 +50,7 @@
   </tr>
 </template>
 <script>
+import axios from "axios";
 import { mapActions, mapState } from "vuex";
 import * as StringFormatters from "../../../utilities/StringFormatters";
 

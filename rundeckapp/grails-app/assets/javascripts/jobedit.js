@@ -555,13 +555,6 @@ function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareat
           return `${jQuery.Autocomplete.formatResult(suggestion, currentValue)}-${suggestion.data.title}`
         }
         return jQuery.Autocomplete.formatResult(suggestion, currentValue)
-      },
-      onSelect: function () {
-        "use strict";
-        // devbridge-autocomplete sets the field via .val() without firing a
-        // native input event, so listeners bound with @input (e.g. Vue's
-        // DynamicFormPluginProp) never see the selected value.
-        elem.dispatchEvent(new Event('input', { bubbles: true }));
       }
     })
   });

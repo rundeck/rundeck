@@ -77,7 +77,7 @@ export default defineComponent({
       default: "",
     },
   },
-  setup() {
+  setup(props) {
     const jobBrowserStore: JobBrowserStore = inject(
       JobBrowserStoreInjectionKey,
     ) as JobBrowserStore;

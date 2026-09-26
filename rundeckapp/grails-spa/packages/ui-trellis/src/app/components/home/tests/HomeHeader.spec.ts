@@ -1,4 +1,4 @@
-import { mount } from "@vue/test-utils";
+import { mount, VueWrapper } from "@vue/test-utils";
 import HomeHeader from "../HomeHeader.vue";
 
 // Mock getSummary method

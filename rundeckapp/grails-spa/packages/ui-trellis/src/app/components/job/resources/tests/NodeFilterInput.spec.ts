@@ -40,7 +40,10 @@ const mockNodeSummary: NodeSummary = {
   totalCount: 2,
   defaultFilter: null,
 };
-const mountNodeFilterInput = async (props = {}) => {
+const mountNodeFilterInput = async (
+  props = {},
+  options: Record<string, any> = {},
+) => {
   const wrapper = mount(NodeFilterInput, {
     props: {
       nodeSummary: mockNodeSummary,

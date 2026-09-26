@@ -11,7 +11,6 @@ import { flushPromises, shallowMount, VueWrapper } from "@vue/test-utils";
 import ActivityList from "../activityList.vue";
 import ActivityFilter from "../activityFilter.vue";
 import OffsetPagination from "../../../../library/components/utils/OffsetPagination.vue";
-import axios from "axios";
 import { cloneDeep } from "lodash";
 import { Btn, Modal } from "uiv";
 jest.mock("../../../../library/services/executions", () => {
@@ -408,10 +407,8 @@ describe("ActivityList", () => {
       // the real History.prototype.replaceState, which is still a function
       // -- so the component's `typeof history.replaceState !== "function"`
       // guard would never actually be exercised.
-      // simulate an environment without history.replaceState
-      (
-        window.history as { replaceState?: History["replaceState"] }
-      ).replaceState = undefined;
+      // @ts-ignore - simulate an environment without history.replaceState
+      window.history.replaceState = undefined;
       replaceStateSpy.mockClear();
 
       wrapper.vm.query.statFilter = "failed";
@@ -452,6 +449,7 @@ describe("ActivityList", () => {
     jest.useFakeTimers();
 
     // Mock axios for the since.json endpoint
+    const axios = require("axios");
     const axiosGetSpy = jest.spyOn(axios, "get");
 
     mockQueryExecutions.mockResolvedValue({

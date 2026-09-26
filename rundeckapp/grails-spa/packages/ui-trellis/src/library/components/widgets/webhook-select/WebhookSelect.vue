@@ -14,11 +14,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, onBeforeMount, ref } from "vue";
+
+import { PluginStore } from "../../../stores/Plugins";
+import { WebhookStore } from "../../../stores/Webhooks";
 
 import FilterList from "../../filter-list/FilterList.vue";
 
 import WebhookSelectItem from "./WebhookSelectItem.vue";
+import { RundeckContext } from "../../../interfaces/rundeckWindow";
+import { getRundeckContext } from "../../../rundeckService";
 
 export default defineComponent({
   name: "WebhookSelect",

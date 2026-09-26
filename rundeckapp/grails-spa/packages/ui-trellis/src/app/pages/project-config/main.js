@@ -29,7 +29,6 @@ for (let i = 0; i < els.length; i++) {
       };
     },
   });
-  app.config.idPrefix = `project-config-plugins-${i}`;
   app.use(VueCookies);
   app.use(uiv);
   app.use(i18n);

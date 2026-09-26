@@ -40,7 +40,7 @@ export default defineComponent({
   },
   emits: ["browseTo"],
 
-  setup() {
+  setup(props) {
     const jobPageStore: JobPageStore = inject(
       JobPageStoreInjectionKey,
     ) as JobPageStore;

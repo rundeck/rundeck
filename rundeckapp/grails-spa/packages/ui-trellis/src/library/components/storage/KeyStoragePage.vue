@@ -79,9 +79,8 @@ export default defineComponent({
   },
   methods: {
     handleFinishEditing(selectedKey: any) {
-      (
-        this.$refs.keyStorageViewRef as { loadKeys(key: unknown): void }
-      ).loadKeys(selectedKey);
+      // @ts-ignore
+      this.$refs.keyStorageViewRef.loadKeys(selectedKey);
       this.modalEdit = false;
     },
     handleCancelEditing() {
@@ -91,7 +90,7 @@ export default defineComponent({
       this.uploadSetting = uploadSetting;
       this.modalEdit = true;
     },
-    updateSelectedKey(key: Record<string, unknown>) {
+    updateSelectedKey(key: {}) {
       this.selectedKey = key;
     },
   },

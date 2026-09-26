@@ -585,6 +585,7 @@
 <script lang="ts">
 import {
   getExecutions,
+  PagedResult,
   queryRunning,
 } from "../../../library/services/executions";
 import axios from "axios";
@@ -754,14 +755,14 @@ export default defineComponent({
   },
   watch: {
     query: {
-      handler() {
+      handler(newValue, oldValue) {
         this.reload();
         this.syncQueryToUrl();
       },
       deep: true,
     },
     autorefresh: {
-      handler(newValue) {
+      handler(newValue, oldValue) {
         if (newValue) {
           //turn on
           this.startAutorefresh();
@@ -1079,7 +1080,8 @@ export default defineComponent({
         this.loadActivity(this.pagination.offset);
       } catch (error) {
         this.bulkEditProgress = false;
-        this.bulkEditError = (error as Error).message || (error as string);
+        //@ts-ignore
+        this.bulkEditError = error.message || error;
       }
     },
     performBulkDelete() {
@@ -1109,8 +1111,9 @@ export default defineComponent({
           this.sincecount = response.data.since.count;
         }
       } catch (error) {
+        //@ts-ignore
         this.disableRefresh = !this.disableRefresh;
-        this.loadError = (error as Error).message;
+        this.loadError = error.message;
       }
     },
     async loadRunning() {
@@ -1138,7 +1141,8 @@ export default defineComponent({
       } catch (error) {
         this.disableRefresh = !this.disableRefresh;
         this.loadingRunning = false;
-        this.loadError = (error as Error).message;
+        //@ts-ignore
+        this.loadError = error.message;
       }
     },
     async loadActivity(offset: number) {
@@ -1166,7 +1170,8 @@ export default defineComponent({
         }
       } catch (error) {
         this.loading = false;
-        this.loadError = (error as Error).message;
+        //@ts-ignore
+        this.loadError = error.message;
       }
     },
     parseToExecutionQuery() {
