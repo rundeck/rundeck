@@ -17,6 +17,8 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -30,6 +32,8 @@ import java.util.Map;
  * capture logic doesn't need to be duplicated between the two.
  */
 public final class PluginOutputCapture {
+
+    private static final Logger log = LoggerFactory.getLogger(PluginOutputCapture.class.getName());
 
     private PluginOutputCapture() {
     }
@@ -62,12 +66,20 @@ public final class PluginOutputCapture {
             if (outputMetadata == null || outputMetadata.isEmpty()) {
                 continue;
             }
-            final Object value = resolvePropertyValue(property, pluginInstance, config);
-            if (value == null) {
-                continue;
-            }
-            for (final PluginOutputMetadata metadata : outputMetadata) {
-                outputContext.addOutput(metadata.getGroup(), metadata.getName(), value.toString());
+            try {
+                final Object value = resolvePropertyValue(property, pluginInstance, config);
+                if (value == null) {
+                    continue;
+                }
+                for (final PluginOutputMetadata metadata : outputMetadata) {
+                    outputContext.addOutput(metadata.getGroup(), metadata.getName(), value.toString());
+                }
+            } catch (Throwable e) {
+                // Capture is best-effort metadata derived via reflection over a plugin-controlled
+                // field (setAccessible can throw unchecked InaccessibleObjectException/
+                // SecurityException, and value.toString() runs arbitrary plugin code) -- none of
+                // that should be able to turn an already-successful step execution into a failure.
+                log.debug("Failed to capture @PluginOutput value for property '" + property.getName() + "': " + e, e);
             }
         }
     }
@@ -82,14 +94,19 @@ public final class PluginOutputCapture {
      * only matches {@code @PluginProperty} fields), so as a final fallback its value is read directly
      * off the plugin's own field of the same name, which is where {@code PluginAdapterImpl} sourced
      * the property's name/title from when it built the Description for such a field.
+     * <p>
+     * An {@link Property#isOutputOnly()} property is never read from {@code config}, even if a job
+     * defined via API/YAML happens to set a {@code configuration} entry matching its name: since the
+     * property has no {@code @PluginProperty}, that entry can never be a legitimate configured value,
+     * and reading it would silently shadow the value the plugin actually computed during execution.
      */
     private static Object resolvePropertyValue(
             final Property property,
             final Object pluginInstance,
             final Map<String, Object> config
-    )
+    ) throws IllegalAccessException
     {
-        if (config != null && config.containsKey(property.getName())) {
+        if (!property.isOutputOnly() && config != null && config.containsKey(property.getName())) {
             return config.get(property.getName());
         }
         if (pluginInstance == null) {
@@ -102,12 +119,8 @@ public final class PluginOutputCapture {
         if (field == null) {
             return null;
         }
-        try {
-            field.setAccessible(true);
-            return field.get(pluginInstance);
-        } catch (IllegalAccessException e) {
-            return null;
-        }
+        field.setAccessible(true);
+        return field.get(pluginInstance);
     }
 
     /**
