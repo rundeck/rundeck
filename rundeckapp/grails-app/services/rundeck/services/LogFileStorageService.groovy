@@ -1192,9 +1192,10 @@ class LogFileStorageService
             if (isStoredPathSafeForProject(storedFile, execution.project)) {
                 return storedFile
             }
+            //isStoredPathSafeForProject already logged the specific reason for rejecting the path
             log.warn(
-                    "Execution ${execution.id} stored outputfilepath \"${execution.outputfilepath}\" resolves " +
-                    "into another project's log directory; ignoring stored path and using generated path instead"
+                    "Execution ${execution.id} stored outputfilepath \"${execution.outputfilepath}\" was rejected; " +
+                    "using generated path instead"
             )
         }
         return getFileForLocalPath(generateLocalPathForExecutionFile(execution, filetype, partial))
@@ -1210,8 +1211,17 @@ class LogFileStorageService
      * @return true if the path is not a cross-project path within the local logs root
      */
     private boolean isStoredPathSafeForProject(File storedFile, String project) {
+        File logsRoot
         try {
-            File logsRoot = getLocalLogsDir().canonicalFile
+            logsRoot = getLocalLogsDir().canonicalFile
+        } catch (Exception e) {
+            //the local logs root can't be resolved here (e.g. frameworkService/framework.logs.dir
+            //not available in this context): cross-project containment can't be evaluated, so fall
+            //back to the pre-existing behavior of trusting the stored path rather than failing the read
+            log.debug("Unable to resolve local logs directory to validate stored outputfilepath \"${storedFile}\": ${e.message}")
+            return true
+        }
+        try {
             File canonicalStored = storedFile.canonicalFile
             String rootPrefix = logsRoot.path + File.separator
             if (!canonicalStored.path.startsWith(rootPrefix)) {
@@ -1220,7 +1230,14 @@ class LogFileStorageService
             }
             File projectDir = new File(logsRoot, project).canonicalFile
             String projectPrefix = projectDir.path + File.separator
-            return canonicalStored.path.startsWith(projectPrefix)
+            boolean safe = canonicalStored.path.startsWith(projectPrefix)
+            if (!safe) {
+                log.warn(
+                        "Stored outputfilepath \"${storedFile}\" resolves into another project's log directory " +
+                        "(expected under \"${projectDir}\")"
+                )
+            }
+            return safe
         } catch (IOException ignored) {
             return false
         }

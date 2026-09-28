@@ -637,7 +637,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
     }
 
     /**
-     * Regression test for RUN-4790 / HackerOne #3960872: a stored outputfilepath that resolves
+     * Regression test for RUN-4950 / HackerOne #3960872: a stored outputfilepath that resolves
      * into a *different* project's directory under the shared local logs root must never be
      * served, regardless of the requester's own-project ACL outcome. Falls back to the normal
      * generated path for the execution's own project instead.
