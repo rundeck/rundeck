@@ -216,6 +216,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         final String status
         final String user
         final String execType
+        /** Normalized to a String to keep the all-Strings/Boolean invariant above. */
+        final String execTypeExclude
         final Boolean adhoc
         final String recentFilter
         final String olderFilter
@@ -226,6 +228,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             this.status = args.status
             this.user = args.user
             this.execType = args.execType
+            this.execTypeExclude = args.execTypeExclude
             this.adhoc = args.adhoc
             this.recentFilter = args.recentFilter
             this.olderFilter = args.olderFilter
@@ -249,6 +252,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 status: query.statusFilter,
                 user: query.userFilter,
                 execType: query.executionTypeFilter,
+                execTypeExclude: query.excludeExecutionTypeFilter?.sort()?.join(','),
                 adhoc: query.adhoc,
                 recentFilter: query.recentFilter,
                 olderFilter: query.olderFilter,
@@ -625,6 +629,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                 }
                             }
                         }
+                    }
+                }
+
+                //Execution types to leave out, NULL-safe for rows predating the column
+                if (query.excludeExecutionTypeFilter) {
+                    or {
+                        isNull('executionType')
+                        not { inList('executionType', query.excludeExecutionTypeFilter) }
                     }
                 }
 

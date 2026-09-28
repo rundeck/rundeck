@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
@@ -1072,4 +1073,86 @@ class ExecutionControllerSpec extends Specification implements ControllerUnitTes
             false  | 'apiExecutionModePassive'
     }
 
+
+
+    /**
+     * Ad hoc steps have their own page, so the generic execution list leaves them out by default.
+     * It is an exclusion the caller can always override, never a filter that hides data outright.
+     */
+    private void wireQueryCollaborators() {
+        controller.apiService = Mock(ApiService) {
+            _ * requireApi(_, _) >> true
+            _ * requireExists(_, _, _) >> true
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            _ * existsFrameworkProject('test') >> true
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * filterAuthorizedProjectExecutionsAny(_, _, _) >> []
+        }
+        controller.executionService = Mock(ExecutionService) {
+            _ * queryExecutions(_, _, _) >> [result: [], total: 0]
+            _ * respondExecutionsJson(_, _, _, _, _) >> null
+        }
+        controller.configurationService = Mock(ConfigurationService) {
+            _ * getInteger(_, _) >> { it[1] }
+        }
+    }
+
+    def "api execution query excludes adhoc-step by default"() {
+        given:
+        def query = new ExecutionQuery()
+        wireQueryCollaborators()
+
+        when:
+        params.project = 'test'
+        request.api_version = 60
+        controller.apiExecutionsQueryv14(query)
+
+        then:
+        query.excludeExecutionTypeFilter == [ExecutionTypes.ADHOC_STEP]
+    }
+
+    def "api execution query leaves the default off below the version that introduced it"() {
+        given:
+        def query = new ExecutionQuery()
+        wireQueryCollaborators()
+
+        when:
+        params.project = 'test'
+        request.api_version = 59
+        controller.apiExecutionsQueryv14(query)
+
+        then: 'older clients keep the behavior they were written against'
+        query.excludeExecutionTypeFilter == null
+    }
+
+    def "a caller asking for a type by name is not overridden by the default"() {
+        given:
+        def query = new ExecutionQuery(executionTypeFilter: ExecutionTypes.ADHOC_STEP)
+        wireQueryCollaborators()
+
+        when:
+        params.project = 'test'
+        request.api_version = 60
+        controller.apiExecutionsQueryv14(query)
+
+        then: 'otherwise asking for adhoc-step would return nothing'
+        query.excludeExecutionTypeFilter == null
+        query.executionTypeFilter == ExecutionTypes.ADHOC_STEP
+    }
+
+    def "a caller supplying its own exclusion is not overridden by the default"() {
+        given:
+        def query = new ExecutionQuery(excludeExecutionTypeFilter: [ExecutionTypes.USER])
+        wireQueryCollaborators()
+
+        when:
+        params.project = 'test'
+        request.api_version = 60
+        controller.apiExecutionsQueryv14(query)
+
+        then:
+        query.excludeExecutionTypeFilter == [ExecutionTypes.USER]
+    }
 }
