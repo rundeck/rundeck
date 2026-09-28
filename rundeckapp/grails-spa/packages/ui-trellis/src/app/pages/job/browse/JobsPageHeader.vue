@@ -27,7 +27,7 @@
                 <i class="glyphicon glyphicon-filter" />
                 {{ jobPageStore.selectedFilter }}
               </template>
-              <template v-for="qparam in wasFiltered" v-else>
+              <template v-for="qparam in wasFiltered" v-else :key="qparam">
                 <template v-if="jobPageStore.query[qparam]">
                   <span class="text-secondary query-item"
                     >{{ $t(`jobquery.title.${qparam}`) }}:

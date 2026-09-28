@@ -83,6 +83,7 @@ export default {
   line-height: 1em;
 }
 </style>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- root/body-level selectors -->
 <style lang="scss">
 .sidebar-mini {
   #community-news-notification {

@@ -58,7 +58,7 @@
 import { defineComponent, computed } from "vue";
 
 export default defineComponent({
-  name: "Tabs",
+  name: "RdTabs",
   provide() {
     return {
       selectedIndex: computed(() => this.activeTab),
@@ -102,6 +102,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- imports global stylesheet -->
 <style lang="scss">
 @import "tabs.scss";
 @import "tabs-standard.scss";

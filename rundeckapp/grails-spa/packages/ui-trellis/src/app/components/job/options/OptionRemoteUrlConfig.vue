@@ -279,13 +279,12 @@
 <script lang="ts">
 import ErrorsList from "./ErrorsList.vue";
 import KeyStorageSelector from "../../../../library/components/plugins/KeyStorageSelector.vue";
-import PluginInfo from "../../../../library/components/plugins/PluginInfo.vue";
 import { cloneDeep } from "lodash";
 import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "OptionRemoteUrlConfig",
-  components: { ErrorsList, PluginInfo, KeyStorageSelector },
+  components: { ErrorsList, KeyStorageSelector },
   emits: [
     "update:configRemoteUrl",
     "update:remoteUrlAuthenticationType",

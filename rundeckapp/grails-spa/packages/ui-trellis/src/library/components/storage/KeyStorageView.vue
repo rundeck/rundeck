@@ -268,7 +268,11 @@
               <div>
                 Storage path:
                 <code class="text-success">{{ selectedKey.path }}</code>
-                <a href="#" data-bind="attr: { href: selectedPathUrl() }">
+                <a
+                  href="#"
+                  data-bind="attr: { href: selectedPathUrl() }"
+                  :aria-label="$t('storage.path.link.label')"
+                >
                   <i class="glyphicon glyphicon-link"></i>
                 </a>
               </div>
@@ -932,6 +936,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- defines page-wide input-group-addon color -->
 <style>
 .keySelector span {
   content: " ";

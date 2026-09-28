@@ -103,6 +103,7 @@ export default defineComponent({
   margin-left: var(--spacing-2);
 }
 </style>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- depends on ancestor classes outside the component -->
 <style lang="scss">
 .edit-lock-disabled .btn.btn-xs.btn-default,
 .edit-lock-disabled .btn.btn-simple.btn-xs.btn-muted {

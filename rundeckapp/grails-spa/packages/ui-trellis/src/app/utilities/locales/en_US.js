@@ -1460,6 +1460,12 @@ const messages = {
   hideIncompleteNodes: "Hide incomplete nodes",
   hideIncompleteNodesDescription:
     "Hide nodes whose only unfinished steps were skipped by a conditional. Successful executions only.",
+  "markdown.help.link.label": "Markdown syntax help",
+  "job.tree.browse.group.label": "Browse job group: {0}",
+  "repository.plugin.sourceLink.label": "Plugin source code",
+  "repository.plugin.pageLink.label": "Plugin page",
+  "repository.plugin.docsLink.label": "Plugin documentation",
+  "storage.path.link.label": "Link to storage path",
 };
 
 export default messages;

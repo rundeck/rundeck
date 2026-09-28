@@ -355,6 +355,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup -->
 <style lang="scss">
 .edit-step-card {
   margin-bottom: var(--sizes-4);

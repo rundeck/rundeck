@@ -2,7 +2,11 @@
   <div class="rundeck-info-widget">
     <div class="rundeck-info-widget__group">
       <div class="rundeck-info-widget__more-link">
-        <a :href="welcomeUrl()" data-test-id="welcome-link">
+        <a
+          :href="welcomeUrl()"
+          :aria-label="appInfo.title"
+          data-test-id="welcome-link"
+        >
           <RundeckLogo v-if="appInfo.title === 'Rundeck'" />
           <PagerdutyLogo v-else />
         </a>

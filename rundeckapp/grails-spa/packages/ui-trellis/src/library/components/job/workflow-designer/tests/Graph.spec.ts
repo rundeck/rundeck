@@ -82,7 +82,8 @@ describe("Graph", () => {
       ]),
     );
     const rules = "[a] run-at-start\n[b] run-after:a\n[c] run-after:a\n";
-    const unlabeledrules = "[0] run-at-start\n[1] run-after:0\n[2] run-after:0\n";
+    const unlabeledrules =
+      "[0] run-at-start\n[1] run-after:0\n[2] run-after:0\n";
     const ruleSet = RuleSetParser.ParseRules(rules);
     graph.applyRules(ruleSet);
 

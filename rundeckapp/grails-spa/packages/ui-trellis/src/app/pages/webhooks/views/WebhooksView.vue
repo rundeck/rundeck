@@ -211,7 +211,11 @@
                       </button>
                       <ul class="dropdown-menu">
                         <li v-for="plugin in webhookPlugins" :key="plugin.id">
-                          <a href="#" @click="setSelectedPlugin(false, plugin)">
+                          <a
+                            href="#"
+                            :aria-label="plugin.title"
+                            @click="setSelectedPlugin(false, plugin)"
+                          >
                             <plugin-info :detail="plugin" />
                           </a>
                         </li>

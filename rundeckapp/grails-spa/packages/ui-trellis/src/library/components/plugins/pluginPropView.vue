@@ -294,6 +294,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- classes shared with the global theme stylesheet -->
 <style>
 .customattributes {
   border-bottom: 1px solid #eeeeee;

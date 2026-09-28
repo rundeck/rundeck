@@ -150,6 +150,7 @@
             href="http://en.wikipedia.org/wiki/Markdown"
             target="_blank"
             class="text-info"
+            :aria-label="$t('markdown.help.link.label')"
           >
             <i class="glyphicon glyphicon-question-sign"></i>
           </a>
@@ -379,7 +380,10 @@
               </label>
             </div>
             <template v-if="features['optionValuesPlugin']">
-              <template v-for="optionValPlugin in optionValuesPlugins">
+              <template
+                v-for="optionValPlugin in optionValuesPlugins"
+                :key="optionValPlugin.name"
+              >
                 <div class="radio">
                   <input
                     :id="'optvalplugin_' + optionValPlugin.name"
@@ -396,6 +400,7 @@
                     <img
                       v-if="optionValPlugin.iconUrl"
                       :src="optionValPlugin.iconUrl"
+                      alt=""
                       style="width: 16px; height: 16px; margin-right: 5px"
                     />
                     {{ optionValPlugin.title || optionValPlugin.name }}

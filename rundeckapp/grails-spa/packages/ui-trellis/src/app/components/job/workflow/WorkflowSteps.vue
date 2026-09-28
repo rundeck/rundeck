@@ -676,6 +676,7 @@ export default defineComponent({
   },
 });
 </script>
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles child component markup -->
 <style lang="scss">
 @media (min-width: 1280px) {
   .modal-dialog {

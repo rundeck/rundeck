@@ -75,6 +75,7 @@
                     v-if="result.sourceLink"
                     :href="result.sourceLink"
                     target="_blank"
+                    :aria-label="$t('repository.plugin.sourceLink.label')"
                   >
                     <i class="fas fa-code-branch"></i>
                   </a>
@@ -82,6 +83,7 @@
                     v-if="result.record && result.record.post_slug"
                     :href="`https://online.rundeck.com/plugins/${result.record.post_slug}/`"
                     target="_blank"
+                    :aria-label="$t('repository.plugin.pageLink.label')"
                   >
                     <i class="fas fa-file-alt"></i>
                   </a>
@@ -89,6 +91,7 @@
                     v-if="result.docsLink"
                     :href="result.docsLink"
                     target="_blank"
+                    :aria-label="$t('repository.plugin.docsLink.label')"
                   >
                     <i class="fas fa-file-alt"></i>
                   </a>

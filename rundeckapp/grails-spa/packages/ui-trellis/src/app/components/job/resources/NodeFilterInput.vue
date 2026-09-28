@@ -72,7 +72,7 @@
         >
           <li class="divider"></li>
           <li class="dropdown-header">{{ $t("saved.filters") }}</li>
-          <li v-for="filter in nodeSummary.filters">
+          <li v-for="filter in nodeSummary.filters" :key="filter.filterName">
             <node-filter-link
               :node-filter-name="filter.filterName"
               :node-filter="filter.filter"
@@ -89,6 +89,7 @@
       </ul>
     </div>
 
+    <!-- eslint-disable vuejs-accessibility/no-autofocus -- autofocus is opt-in via the autofocus prop -->
     <input
       :id="filterFieldId"
       v-model="outputValue"
@@ -102,6 +103,7 @@
       @keydown.enter.prevent="doSearch"
       @blur="doSearch"
     />
+    <!-- eslint-enable vuejs-accessibility/no-autofocus -->
 
     <div v-if="helpButton" class="input-group-btn input-btn-toggle">
       <btn id="filterSearchHelpBtn" tabindex="0" class="dropdown-toggle">
