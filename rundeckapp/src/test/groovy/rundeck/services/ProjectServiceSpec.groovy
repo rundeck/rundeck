@@ -1240,7 +1240,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
     }
 
     /**
-     * Regression test for RUN-4790 / HackerOne #3960872: a forged archive can reference an
+     * Regression test for RUN-4950 / HackerOne #3960872: a forged archive can reference an
      * outputfilepath outside the importing project's own log storage (e.g. another project's
      * log file). If that path is not backed by a file actually present in the archive, the
      * raw archive-supplied value must never be persisted on the imported Execution.
@@ -1275,21 +1275,15 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             tempXmlFile.text = execXml
             tempXmlFile.deleteOnExit()
 
-            def method = ProjectService.class.getDeclaredMethod(
-                    'importExecutionsToProject',
-                    ArrayList, Map, Object, IFramework, Object, Object, Map, Object
-            )
-            method.setAccessible(true)
             def execerrors = []
 
         when:
             //execout is empty: no file in the archive matches the forged outputfilepath
-            method.invoke(
-                    service,
+            service.importExecutionsToProject(
                     [tempXmlFile],
                     [:],
                     'sandbox',
-                    Mock(IFramework),
+                    null,
                     [:],
                     [],
                     [(tempXmlFile): 'executions/execution-1.xml'],
@@ -1299,7 +1293,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
             Execution.count() == 1
             def imported = Execution.list().first()
-            imported.outputfilepath != forgedPath
+            imported.project == 'sandbox'
+            imported.outputfilepath == null
             execerrors.find { it.contains('NO matching outfile') }
 
         cleanup:
