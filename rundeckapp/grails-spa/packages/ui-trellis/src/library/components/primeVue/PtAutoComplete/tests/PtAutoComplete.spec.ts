@@ -170,6 +170,38 @@ describe("PtAutoComplete", () => {
       expect(suggestions).toContain("${job.id}");
     });
 
+    it("refreshes the rendered options when the suggestions prop changes while the panel is already open (e.g. a consumer toggling an accordion group inside the list)", async () => {
+      jest.useFakeTimers();
+      const wrapper = await createWrapper({ showOptionsOnFocus: true });
+
+      // Focus with an empty query shows everything (showOptionsOnFocus branch)
+      await wrapper.findComponent(AutoComplete).vm.$emit("complete", {
+        query: "",
+        originalEvent: { target: { selectionStart: 0 } },
+      });
+      jest.advanceTimersByTime(200);
+      await wrapper.vm.$nextTick();
+
+      expect(
+        wrapper.findComponent(AutoComplete).props("suggestions"),
+      ).toContain("${job.execid}");
+
+      // Parent reactively narrows the suggestions list (no new @complete
+      // event fires — this is exactly what happens when a caller collapses
+      // an accordion group inside the list) — the already-open panel must
+      // reflect the change without the user retyping/refocusing.
+      await wrapper.setProps({
+        suggestions: [{ name: "${job.id}", title: "Job ID", type: "job" }],
+      });
+      await wrapper.vm.$nextTick();
+
+      const suggestions = wrapper
+        .findComponent(AutoComplete)
+        .props("suggestions");
+      expect(suggestions).not.toContain("${job.execid}");
+      expect(suggestions).toContain("${job.id}");
+    });
+
     it("restricts suggestions to the active tab's category when tabMode is enabled", async () => {
       jest.useFakeTimers();
 
