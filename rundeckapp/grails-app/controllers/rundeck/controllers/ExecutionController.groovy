@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.execution.ExecutionTypes
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequest
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkRequestLong
 import com.dtolabs.rundeck.app.api.execution.DeleteBulkResponse
@@ -151,11 +152,20 @@ class ExecutionController extends ControllerBase{
 
         while(execs.size()<max){
 
-            def res = Execution.findAllByProjectAndUserAndScheduledExecutionIsNull(
-                    project,
-                    session.user,
-                    [sort: 'dateStarted', order: 'desc', max: max,offset:offset]
-            )
+            //Criteria rather than a dynamic finder so ad hoc steps can be left out: they are not
+            //adhoc commands, they have their own page, and their workflow_json would otherwise be
+            //offered back here as a rerunnable command. NULL-safe for rows predating the column.
+            def res = Execution.createCriteria().list(
+                    [sort: 'dateStarted', order: 'desc', max: max, offset: offset]
+            ) {
+                eq('project', project)
+                eq('user', session.user)
+                isNull('scheduledExecution')
+                or {
+                    isNull('executionType')
+                    ne('executionType', ExecutionTypes.ADHOC_STEP)
+                }
+            }
 
             offset+=res.size()
             res.each{exec->
@@ -3202,6 +3212,14 @@ if executed in cluster mode.""",
         if (request.api_version < ApiVersions.V20 && query.executionTypeFilter) {
             //ignore
             query.executionTypeFilter = null
+        }
+        //Ad hoc steps have their own page and are left out of the generic execution list, unless
+        //the caller said something about execution types itself. Exclusion only, and NULL-safe,
+        //so nothing that predates the type is affected.
+        if (request.api_version >= ApiVersions.V60 &&
+            !query.executionTypeFilter &&
+            !query.excludeExecutionTypeFilter) {
+            query.excludeExecutionTypeFilter = [ExecutionTypes.ADHOC_STEP]
         }
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)

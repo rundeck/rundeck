@@ -64,6 +64,12 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
     String olderFilter
     String userFilter
     String executionTypeFilter
+    /**
+     * Execution types to leave out. Kept separate from {@link #executionTypeFilter} so a caller
+     * can hide a type without having to enumerate every other one. Always applied NULL-safely:
+     * rows written before execution_type existed hold null and must not be filtered out.
+     */
+    List<String> excludeExecutionTypeFilter
     String adhocStringFilter
     String nodeFilter
     String optionFilter
@@ -105,6 +111,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         abortedbyFilter(nullable:true)
         adhoc(nullable:true)
         executionTypeFilter( nullable: true)
+        excludeExecutionTypeFilter( nullable: true)
         execProjects(nullable:true)
         adhocStringFilter(nullable:true)
         nodeFilter(nullable:true)
@@ -466,6 +473,12 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         if (query.executionTypeFilter) {
           eq('executionType', query.executionTypeFilter)
         }
+        if (query.excludeExecutionTypeFilter) {
+          or {
+            isNull('executionType')
+            not { inList('executionType', query.excludeExecutionTypeFilter) }
+          }
+        }
         if (query.abortedbyFilter) {
           eq('abortedby', query.abortedbyFilter)
         }
@@ -601,6 +614,12 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
         if (this.executionTypeFilter) {
             filterConditions << "e.executionType = :executionTypeFilter"
             filterParams.executionTypeFilter = this.executionTypeFilter
+        }
+
+        // Execution types to leave out, NULL-safe for rows predating the column
+        if (this.excludeExecutionTypeFilter) {
+            filterConditions << "(e.executionType IS NULL OR e.executionType NOT IN (:excludeExecutionTypeFilter))"
+            filterParams.excludeExecutionTypeFilter = this.excludeExecutionTypeFilter
         }
 
         // Aborted by filter

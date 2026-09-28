@@ -771,21 +771,25 @@ class ExecutionTest extends Specification implements DataTest  {
         assertTrue workflow.commands.isEmpty()
     }
 
-    void testNoteIsOptionalAndCappedAt1024(){
+    /**
+     * Length is left to the varchar(1024) column rather than duplicated as a domain constraint.
+     * Callers that need a clean rejection validate it themselves - the Ad Hoc Step API does, in
+     * AdhocStepRunRequest.
+     */
+    void testNoteIsOptional(){
         when:
         Execution exec = createBasicExecution()
         exec.note = note
         exec.validate()
 
         then:
-        (exec.errors.getFieldError('note') != null) == expectError
+        exec.errors.getFieldError('note') == null
 
         where:
-        note       | expectError
-        null       | false
-        'a note'   | false
-        'x' * 1024 | false
-        'x' * 1025 | true
+        note       | _
+        null       | _
+        'a note'   | _
+        'x' * 1024 | _
     }
 
     void testNoteRoundTripsThroughMap(){
