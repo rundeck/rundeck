@@ -98,6 +98,14 @@
 // RUN-4967: the default bottom-popover arrow compiles from the static
 // $bg-subheader (#fafafa) and renders as a light bar in dark mode; match
 // the popover body background (--background-color-lvl2) in dark only.
-*[data-color-theme="dark"] .popover.bottom .arrow:after {
+// Restricted to the unstyled/default popover so the themed variants above
+// (.popover-primary etc.) keep their own arrow colors.
+*[data-color-theme="dark"]
+  .popover.bottom:not(.popover-default-inverse):not(.popover-main):not(
+    .popover-sub
+  ):not(.popover-primary):not(.popover-success):not(.popover-info):not(
+    .popover-warning
+  ):not(.popover-danger)
+  .arrow:after {
   border-bottom-color: var(--background-color-lvl2);
 }
