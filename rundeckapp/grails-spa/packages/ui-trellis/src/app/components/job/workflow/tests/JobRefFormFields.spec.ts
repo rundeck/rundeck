@@ -1,4 +1,5 @@
 import { shallowMount, flushPromises, VueWrapper } from "@vue/test-utils";
+import { cloneDeep } from "lodash";
 
 // --- Mock setup (before imports) ---
 
@@ -140,6 +141,11 @@ const baseModelValue = {
       nodeIntersect: null,
     },
   },
+};
+
+const lastEmittedModel = (w: VueWrapper<any>) => {
+  const emitted = w.emitted("update:modelValue") ?? [];
+  return emitted[emitted.length - 1]?.[0] as any;
 };
 
 describe("JobRefFormFields", () => {
@@ -335,105 +341,68 @@ describe("JobRefFormFields", () => {
     });
   });
 
-  describe("Direct modelValue mutation", () => {
-    it("mutates modelValue.name directly", async () => {
-      const modelValue = {
-        nodeStep: false,
-        name: "Original",
-        uuid: "",
-        project: "testProject",
-        group: "",
-        args: "",
-        failOnDisable: false,
-        childNodes: false,
-        importOptions: false,
-        ignoreNotifications: false,
-        nodefilters: {
-          filter: "",
-          dispatch: {
-            threadcount: null,
-            keepgoing: null,
-            rankAttribute: null,
-            rankOrder: null,
-            nodeIntersect: null,
-          },
-        },
-      };
-
+  describe("modelValue updates", () => {
+    it("emits update:modelValue with the edited name without mutating the prop", async () => {
+      const modelValue = { ...baseModelValue, name: "Original" };
       wrapper = createWrapper({ modelValue });
       await flushPromises();
+
+      await wrapper
+        .find('[data-testid="jobNameField"]')
+        .setValue("Updated Job");
+      await flushPromises();
+
+      expect(lastEmittedModel(wrapper)).toEqual({
+        ...baseModelValue,
+        name: "Updated Job",
+      });
+      expect(modelValue.name).toBe("Original");
+    });
+
+    it("emits update:modelValue with the selected project", async () => {
+      wrapper = createWrapper();
+      await flushPromises();
+
+      await wrapper
+        .find('[data-testid="jobProjectField"]')
+        .setValue("otherProject");
+      await flushPromises();
+
+      expect(lastEmittedModel(wrapper)).toEqual({
+        ...baseModelValue,
+        project: "otherProject",
+      });
+    });
+
+    it("emits update:modelValue with nested node dispatch changes without mutating the prop", async () => {
+      const modelValue = cloneDeep(baseModelValue);
+      modelValue.nodefilters.filter = "name: node.*";
+      wrapper = createWrapper({ modelValue });
+      await flushPromises();
+
+      await wrapper.find('[data-testid="nodeKeepgoingTrue"]').setValue(true);
+      await flushPromises();
+
+      expect(lastEmittedModel(wrapper).nodefilters.dispatch.keepgoing).toBe(
+        true,
+      );
+      expect(modelValue.nodefilters.dispatch.keepgoing).toBeNull();
+    });
+
+    it("shows the new values when the parent replaces modelValue, without emitting", async () => {
+      wrapper = createWrapper();
+      await flushPromises();
+
+      await wrapper.setProps({
+        modelValue: { ...baseModelValue, name: "From Parent", group: "p/g" },
+      });
+      await wrapper.vm.$nextTick();
 
       const nameField = wrapper.find('[data-testid="jobNameField"]');
-      await nameField.setValue("Updated Job");
-
-      // Direct mutation - modelValue is mutated in place
-      expect(modelValue.name).toBe("Updated Job");
-    });
-
-    it("mutates modelValue.project directly", async () => {
-      const modelValue = {
-        nodeStep: false,
-        name: "",
-        uuid: "",
-        project: "testProject",
-        group: "",
-        args: "",
-        failOnDisable: false,
-        childNodes: false,
-        importOptions: false,
-        ignoreNotifications: false,
-        nodefilters: {
-          filter: "",
-          dispatch: {
-            threadcount: null,
-            keepgoing: null,
-            rankAttribute: null,
-            rankOrder: null,
-            nodeIntersect: null,
-          },
-        },
-      };
-
-      wrapper = createWrapper({ modelValue });
-      await flushPromises();
-
-      const projectSelect = wrapper.find("#jobProjectField");
-      await projectSelect.setValue("otherProject");
-
-      expect(modelValue.project).toBe("otherProject");
-    });
-
-    it("mutates modelValue.nodeStep directly", async () => {
-      const modelValue = {
-        nodeStep: false,
-        name: "",
-        uuid: "",
-        project: "testProject",
-        group: "",
-        args: "",
-        failOnDisable: false,
-        childNodes: false,
-        importOptions: false,
-        ignoreNotifications: false,
-        nodefilters: {
-          filter: "",
-          dispatch: {
-            threadcount: null,
-            keepgoing: null,
-            rankAttribute: null,
-            rankOrder: null,
-            nodeIntersect: null,
-          },
-        },
-      };
-
-      wrapper = createWrapper({ modelValue });
-      await flushPromises();
-
-      const nodeStepTrue = wrapper.find("#jobNodeStepFieldTrue");
-      await nodeStepTrue.setValue(true);
-
-      expect(modelValue.nodeStep).toBe(true);
+      const groupField = wrapper.find('[data-testid="jobGroupField"]');
+      expect((nameField.element as HTMLInputElement).value).toBe("From Parent");
+      expect((groupField.element as HTMLInputElement).value).toBe("p/g");
+      expect(wrapper.emitted("update:modelValue")).toBeUndefined();
     });
   });
 
@@ -513,11 +482,20 @@ describe("JobRefFormFields", () => {
         groupPath: "my/group",
       };
 
-      (wrapper.vm as any).updateJobSelection(job);
+      const selectionHandler = mockEventBusOn.mock.calls.find(
+        ([event]) => event === "browser-job-item-selection",
+      )?.[1];
+      selectionHandler(job);
+      await flushPromises();
 
-      expect(modelValue.uuid).toBe("job-uuid-123");
-      expect(modelValue.name).toBe("Selected Job");
-      expect(modelValue.group).toBe("my/group");
+      expect(lastEmittedModel(wrapper)).toEqual(
+        expect.objectContaining({
+          uuid: "job-uuid-123",
+          name: "Selected Job",
+          group: "my/group",
+        }),
+      );
+      expect(modelValue.uuid).toBe("");
       expect((wrapper.vm as any).openJobSelectionModal).toBe(false);
     });
   });
