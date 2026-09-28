@@ -128,11 +128,23 @@
       "enabled": true
     },
     {
-      "description": "ui-trellis npm packages: security updates only. rundeckpro consumes ui-trellis as a published tarball, so routine (non-vulnerability) bumps here are disabled to avoid drift that rundeckpro's own renovate config isn't watching for; vulnerabilityAlerts stays enabled above so CVE fixes still get raised. Placed after the generic 'Enable npm engine version updates' rule above (not before it) because Renovate merges matching packageRules in declaration order, so this rule needs to come later to actually win and keep ui-trellis's npm engine bumps disabled too.",
+      "description": "ui-trellis and _package-manager npm packages: security updates only.",
       "matchManagers": ["npm"],
-      "matchFileNames": ["rundeckapp/grails-spa/packages/ui-trellis/package.json"],
+      "matchFileNames": [
+        "rundeckapp/grails-spa/packages/ui-trellis/package.json",
+        "rundeckapp/grails-app/assets/javascripts/_package-manager/package.json"
+      ],
       "matchPackageNames": ["*"],
       "enabled": false
+    },
+    {
+      "description": "ui-trellis and _package-manager each vendor these packages independently (separate package.json/lockfile, not a workspace). Nothing else in this config ties their branch/PR identity together — Renovate's default branchName keys only on dep name + version, so two files needing the same version land on one PR only by coincidence (rundeck PR #10526 got bundled that way; #10646 did not touch ui-trellis at all because it wasn't eligible at the time). Group explicitly so a security fix for a shared dependency always updates both files in the same PR instead of relying on that coincidence.",
+      "matchFileNames": [
+        "rundeckapp/grails-spa/packages/ui-trellis/package.json",
+        "rundeckapp/grails-app/assets/javascripts/_package-manager/package.json"
+      ],
+      "matchPackageNames": ["vue", "vuex", "perfect-scrollbar", "nanoid"],
+      "groupName": "shared ui-trellis/_package-manager deps"
     },
     {
       "description": "Group Node.js version (.nvmrc) with the npm engine pin so they update together. Gated behind Dependency Dashboard approval: node/npm must move in lockstep across the rundeck and rundeckpro repos (Renovate cannot open a single cross-repo PR), so auto-created PRs can never merge unilaterally and only burn CI. Approve the checkbox on BOTH repos' dashboards in the same session, merge rundeck first, then rundeckpro.",
