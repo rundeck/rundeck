@@ -50,7 +50,7 @@ export default meta;
 type Story = StoryObj<typeof MainbarMenu>;
 
 // Helper function to generate a template
-const generateTemplate = (args: Record<string, any>) => {
+const generateTemplate = () => {
   return `<div style="height: 300px; padding-top: 200px; display: flex; justify-content: center;">
     <MainbarMenu v-bind="args" />
   </div>`;
@@ -84,7 +84,7 @@ export const SystemConfigMenu: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     header: "System",
@@ -102,7 +102,7 @@ export const UserMenu: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     iconCss: "fas fa-user fa-lg",
@@ -127,7 +127,7 @@ export const NestedLinks: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     links: [
@@ -174,7 +174,7 @@ export const LinksWithSeparators: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     links: [
@@ -194,7 +194,7 @@ export const LinksWithIcons: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     links: [
@@ -228,7 +228,7 @@ export const MixedEnabledLinks: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     links: [
@@ -247,7 +247,7 @@ export const ComplexStructure: Story = {
     setup() {
       return { args };
     },
-    template: generateTemplate(args),
+    template: generateTemplate(),
   }),
   args: {
     links: [

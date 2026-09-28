@@ -1,5 +1,4 @@
 import { mount, VueWrapper } from "@vue/test-utils";
-import { action } from "mobx";
 import { Btn } from "uiv";
 import OptionItem from "../OptionItem.vue";
 

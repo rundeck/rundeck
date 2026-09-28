@@ -7,6 +7,7 @@
 import { defineComponent, PropType } from "vue";
 
 import ace, { Ace } from "ace-builds";
+import "ace-builds/src-noconflict/ext-emmet";
 import { ContextVariable } from "../../stores/contextVariables";
 
 export default defineComponent({
@@ -129,8 +130,6 @@ export default defineComponent({
   mounted: function () {
     const lang = this.lang || "text";
     const theme = this.getTheme();
-
-    require("ace-builds/src-noconflict/ext-emmet");
 
     const editor = (this.editor = ace.edit(this.$refs.root as HTMLElement));
 
