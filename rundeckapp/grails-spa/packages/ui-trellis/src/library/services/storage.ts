@@ -26,7 +26,7 @@ export interface KeyUploadContent {
 export async function storageKeyGetMetadata(
   path: string,
 ): Promise<StorageKeyListResponse> {
-  let resp = await api.get(`storage/keys/${path}`);
+  const resp = await api.get(`storage/keys/${path}`);
   if (resp.status === 404) {
     return {};
   } else if (resp.status !== 200) {
@@ -37,7 +37,7 @@ export async function storageKeyGetMetadata(
 }
 
 export async function storageKeyExists(path: string): Promise<boolean> {
-  let resp = await api.get(`storage/keys/${path}`);
+  const resp = await api.get(`storage/keys/${path}`);
   if (resp.status === 404) {
     return false;
   }
@@ -58,7 +58,7 @@ export async function storageKeyUpdate(
   value: string,
   content: KeyUploadContent,
 ): Promise<StorageKeyMetadata> {
-  let resp = await api.put(`storage/keys/${path}`, value, {
+  const resp = await api.put(`storage/keys/${path}`, value, {
     headers: {
       "Content-Type": KeyStorageContentTypes[content.type],
       Accept: "application/json",
@@ -75,7 +75,7 @@ export async function storageKeyCreate(
   value: string,
   content: KeyUploadContent,
 ): Promise<StorageKeyMetadata> {
-  let resp = await api.post(`storage/keys/${path}`, value, {
+  const resp = await api.post(`storage/keys/${path}`, value, {
     headers: {
       "Content-Type": KeyStorageContentTypes[content.type],
       Accept: "application/json",
@@ -88,7 +88,7 @@ export async function storageKeyCreate(
 }
 
 export async function storageKeyDelete(path: string): Promise<boolean> {
-  let resp = await api.delete(`storage/keys/${path}`);
+  const resp = await api.delete(`storage/keys/${path}`);
   if (resp.status === 404) {
     return false;
   }

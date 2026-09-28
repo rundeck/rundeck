@@ -71,8 +71,8 @@ export default defineComponent({
       if (this.index >= this.stack.length) {
         return;
       }
-      let newindex = this.index + 1;
-      let change = this.stack[this.index];
+      const newindex = this.index + 1;
+      const change = this.stack[this.index];
       this.index = newindex;
       this.eventBus?.emit("undo", change);
     },
@@ -80,8 +80,8 @@ export default defineComponent({
       if (this.index < 1) {
         return;
       }
-      let newindex = this.index - 1;
-      let change = this.stack[newindex];
+      const newindex = this.index - 1;
+      const change = this.stack[newindex];
       this.index = newindex;
       this.eventBus?.emit("redo", change);
     },

@@ -413,7 +413,7 @@ export default defineComponent({
           return;
         }
         try {
-          let response = await storageKeyUpdate(fullPath, value, {
+          const response = await storageKeyUpdate(fullPath, value, {
             type: this.uploadSetting.keyType,
           });
           this.$emit("finishEditing", response);
@@ -426,7 +426,7 @@ export default defineComponent({
         }
       } else {
         try {
-          let response = await storageKeyCreate(fullPath, value, {
+          const response = await storageKeyCreate(fullPath, value, {
             type: this.uploadSetting.keyType,
           });
           this.getCreatedKey(fullPath).then(() => {
