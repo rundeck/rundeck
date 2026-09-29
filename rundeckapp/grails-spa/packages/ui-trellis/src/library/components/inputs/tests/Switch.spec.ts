@@ -38,6 +38,14 @@ describe("RdSwitch", () => {
     expect(wrapper.emitted("update:modelValue")?.[0][0]).toBe(true);
   });
 
+  it("emits a boolean when the native checkbox changes", async () => {
+    const wrapper = await createWrapper();
+
+    await wrapper.find('[data-testid="switch-input"]').setValue(true);
+
+    expect(wrapper.emitted("update:modelValue")?.[0][0]).toBe(true);
+  });
+
   it("reflects the modelValue prop in the checkbox and aria state", async () => {
     const wrapper = await createWrapper();
     const toggle = wrapper.find('[data-testid="switch-toggle"]');

@@ -22,7 +22,7 @@
       type="checkbox"
       style="height: 0; width: 0; appearance: none"
       @input="
-        $emit('update:modelValue', ($event.target as HTMLInputElement).value)
+        $emit('update:modelValue', ($event.target as HTMLInputElement).checked)
       "
     />
     <span
