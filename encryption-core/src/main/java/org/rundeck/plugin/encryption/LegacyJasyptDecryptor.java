@@ -107,20 +107,50 @@ public class LegacyJasyptDecryptor {
             throw new EncryptionException("Encrypted message is null or too short for salt extraction");
         }
 
+        byte[] base64Decoded = tryBase64Decode(encryptedMessage);
+        boolean base64Shaped = isPlausibleCiphertextShape(base64Decoded);
+
+        // When the raw bytes are valid Base64 text that decodes to a plausible [salt][ciphertext]
+        // shape, try that interpretation FIRST. AES-CBC (and DES-CBC) are unauthenticated: the only
+        // thing that makes decryption fail is PKCS#5 padding validation, which random bytes pass by
+        // chance about 1 in `blockSize` times. The raw ASCII bytes of a Base64 string can themselves
+        // coincidentally be block-aligned once the salt-sized prefix is stripped (e.g. a 48-byte
+        // payload Base64-encodes to 64 bytes; 64-16=48 is itself a multiple of 16), so trying the raw
+        // interpretation first risks a false "success" with garbage on the wrong (ASCII) bytes,
+        // using the wrong "salt", before ever reaching the actually-correct decoded ciphertext.
+        if (base64Shaped) {
+            try {
+                return decryptRaw(password, base64Decoded);
+            } catch (EncryptionException ignored) {
+                // fall through and try the raw-bytes interpretation below
+            }
+        }
+
         try {
             return decryptRaw(password, encryptedMessage);
         } catch (EncryptionException rawFailure) {
-            byte[] base64Decoded = tryBase64Decode(encryptedMessage);
-            if (base64Decoded != null && base64Decoded.length > saltSizeBytes) {
+            if (!base64Shaped && base64Decoded != null && base64Decoded.length > saltSizeBytes) {
+                // Base64-decodable but not cleanly block-aligned -- still worth a fallback attempt.
                 try {
                     return decryptRaw(password, base64Decoded);
-                } catch (EncryptionException base64Failure) {
-                    // Base64 decoding "succeeded" structurally but didn't yield valid ciphertext either;
-                    // surface the original raw-binary failure, which is the more informative one.
+                } catch (EncryptionException ignored) {
+                    // fall through; surface the raw-binary failure below, which is more informative
                 }
             }
             throw rawFailure;
         }
+    }
+
+    /**
+     * @return {@code true} if {@code data} is long enough to contain a salt plus at least one
+     * cipher block, and the ciphertext portion (after the salt) is a whole number of cipher
+     * blocks -- i.e. a plausible {@code [salt][ciphertext]} shape for this algorithm, not proof
+     * that the content actually decrypts correctly.
+     */
+    private boolean isPlausibleCiphertextShape(byte[] data) {
+        return data != null
+                && data.length > saltSizeBytes
+                && (data.length - saltSizeBytes) % saltSizeBytes == 0;
     }
 
     /**

@@ -250,6 +250,37 @@ class LegacyJasyptDecryptorSpec extends Specification {
     }
 
     /**
+     * Regression for a subtle correctness bug in the fallback ordering: a Base64-encoded payload
+     * can be coincidentally block-aligned when its raw ASCII bytes are misread as [salt][ciphertext]
+     * too (e.g. a 48-byte payload Base64-encodes to exactly 64 bytes, and 64-16=48 is itself a
+     * multiple of 16 -- the same shape a genuine raw ciphertext would have). Before decrypt()
+     * preferred the Base64-decoded interpretation whenever it is plausibly shaped, the coincidentally
+     * block-aligned raw (wrong) interpretation was tried first and had a small but real chance
+     * (~1/256) of "succeeding" with garbage instead of ever reaching the correct decode. The 17-byte
+     * plaintext below is chosen specifically to produce this ambiguous shape deterministically
+     * (independent of the random salt), so this test is not flaky: decrypt() must now always return
+     * the correct plaintext.
+     */
+    def "decrypt returns correct plaintext when the Base64-decoded shape is ambiguous with a coincidentally block-aligned raw interpretation"() {
+        given: "a 17-byte plaintext: [16-byte salt][32-byte padded ciphertext] = 48 raw bytes, which Base64-encodes to exactly 64 ASCII bytes"
+        def password = "ambiguous-shape-password"
+        def plaintext = "17-byte-value!!!!"
+        assert plaintext.bytes.length == 17
+        def base64String = realJasyptStringEncrypt(plaintext, password, "PBEWITHSHA256AND128BITAES-CBC-BC", "BC", 1000)
+        def storedBytes = base64String.getBytes("UTF-8")
+        assert storedBytes.length == 64
+
+        and:
+        def decryptor = LegacyJasyptDecryptor.defaultStorage()
+
+        when:
+        def result = decryptor.decrypt(password, storedBytes)
+
+        then: "the correctly-decoded plaintext is returned, not a coincidental garbage 'success' from misreading the raw ASCII bytes as ciphertext"
+        new String(result, "UTF-8") == plaintext
+    }
+
+    /**
      * After the Base64 fallback is exhausted, genuinely corrupt/undecryptable content (not
      * block-aligned, not Base64, not plaintext-shaped) must still throw -- this is the
      * decryptor-level half of the "SCM config stays loud" guarantee.

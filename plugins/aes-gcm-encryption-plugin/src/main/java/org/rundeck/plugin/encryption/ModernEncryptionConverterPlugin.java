@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -212,7 +213,7 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
                     try {
                         return getLegacyDecryptor().decrypt(getResolvedPassword(), data);
                     } catch (EncryptionException e) {
-                        if (looksLikePlaintext(data)) {
+                        if (looksLikeProjectPropertiesPlaintext(path, data)) {
                             // A pre-existing 5.x condition: the jasypt-encryption:encrypted flag was
                             // set on this record, but the content was never actually encrypted.
                             // Decrypting already-plaintext bytes can never succeed, so recover the
@@ -244,16 +245,49 @@ public class ModernEncryptionConverterPlugin implements StorageConverterPlugin {
     private final Set<String> plaintextFallbackWarnedPaths = ConcurrentHashMap.newKeySet();
 
     /**
-     * Conservative heuristic for detecting that {@code data} is already plaintext rather than genuine
-     * ciphertext: a Java properties file (including {@code project.properties}) always starts with a
-     * {@code '#'} header comment written by {@code Properties.store()}, and {@code '#'} cannot appear
-     * as the first byte of valid Base64 or of ciphertext produced by this decryptor (its salt is random
-     * binary). Checking only the first byte, rather than scanning for printable ASCII, deliberately
-     * excludes Base64-shaped ciphertext so a still-undecryptable Base64 payload (e.g. wrong password)
-     * keeps failing loudly instead of being returned as "plaintext".
+     * Storage path suffix for a project's config file, matching
+     * {@code ProjectManagerService.ETC_PROJECT_PROPERTIES_PATH} ({@code projects/<name>/etc/project.properties}).
+     * The plaintext-recovery fallback below is deliberately restricted to this one path: it must
+     * never apply to SCM config or any other legacy-flagged resource.
      */
-    private static boolean looksLikePlaintext(byte[] data) {
-        return data != null && data.length > 0 && data[0] == '#';
+    private static final String PROJECT_PROPERTIES_PATH_SUFFIX = "etc/project.properties";
+
+    /**
+     * The exact header {@code java.util.Properties.store()} writes as its first comment line,
+     * matching {@code ProjectManagerService.isValidConfigFile()}'s own check
+     * ({@code '#' + MIME_TYPE_PROJECT_PROPERTIES}). Requiring this full header -- not just a leading
+     * {@code '#'} -- makes a false-positive match astronomically unlikely for genuine ciphertext
+     * (whose leading bytes are random), on top of the path restriction above.
+     */
+    private static final byte[] PROJECT_PROPERTIES_HEADER =
+            "#text/x-java-properties".getBytes(StandardCharsets.ISO_8859_1);
+
+    /**
+     * Detects a pre-existing 5.x condition: {@code project.properties} stored as genuine plaintext
+     * (a real {@code Properties.store()} header) while still carrying a stale
+     * {@code jasypt-encryption:encrypted=true} flag. This check runs ONLY after legacy decryption has
+     * already failed -- never before it -- because a byte {@code 0x23} ('#') is a perfectly valid
+     * (if unlikely, ~1/256) first byte of this decryptor's random salt for genuine ciphertext; a
+     * pre-decrypt check on the byte alone would risk mistaking real (if statistically unlucky)
+     * ciphertext for plaintext. Restricting the path and requiring the full header -- rather than
+     * just a leading {@code '#'} -- keeps this from ever applying to SCM config or other resources,
+     * where a still-undecryptable payload must keep failing loudly instead of being returned as
+     * "plaintext" and potentially persisted as such on the next write.
+     */
+    private static boolean looksLikeProjectPropertiesPlaintext(Path path, byte[] data) {
+        if (data == null || data.length < PROJECT_PROPERTIES_HEADER.length) {
+            return false;
+        }
+        String pathString = path != null ? path.getPath() : null;
+        if (pathString == null || !pathString.endsWith(PROJECT_PROPERTIES_PATH_SUFFIX)) {
+            return false;
+        }
+        for (int i = 0; i < PROJECT_PROPERTIES_HEADER.length; i++) {
+            if (data[i] != PROJECT_PROPERTIES_HEADER[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     char[] getResolvedPassword() {

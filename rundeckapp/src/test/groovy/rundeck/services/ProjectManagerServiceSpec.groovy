@@ -166,7 +166,6 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         null==result.info.readme
         null==result.info.motd
     }
-
     void "get project exists with readme/motd"(){
         setup:
         def description = 'blah'
