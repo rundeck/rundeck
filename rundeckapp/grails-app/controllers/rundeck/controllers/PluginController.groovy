@@ -605,11 +605,11 @@ Since: v49''',
             renderErrorCodeAsJson("request.error.unauthorized.title")
             return
         }
-        if(!(request instanceof MultipartHttpServletRequest && request.getFile('pluginFile'))){
+        if(!(params.pluginFile instanceof MultipartFile)){
             renderErrorCodeAsJson("plugin.error.missing.upload.file")
             return
         }
-        def file = request.getFile('pluginFile')
+        MultipartFile file = (MultipartFile) params.pluginFile
         ensureUploadLocation()
         File tmpFile
         try {

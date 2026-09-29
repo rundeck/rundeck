@@ -78,6 +78,7 @@ import javax.security.auth.Subject
 import jakarta.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
+import org.springframework.web.multipart.MultipartFile
 
 @Controller
 @Transactional
@@ -1208,8 +1209,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             )
         }
         if (input.upload) {
-            if(request instanceof MultipartHttpServletRequest){
-                def file = request.getFile('uploadFile')
+            if(params.uploadFile instanceof MultipartFile){
+                MultipartFile file = (MultipartFile) params.uploadFile
                 input.fileText = new String(file.bytes)
             }
             else {
@@ -1493,8 +1494,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         if (input.upload) {
-            if(request instanceof MultipartHttpServletRequest){
-                def file = request.getFile('uploadFile')
+            if(params.uploadFile instanceof MultipartFile){
+                MultipartFile file = (MultipartFile) params.uploadFile
                 input.fileText = new String(file.bytes)
             }
             else {
