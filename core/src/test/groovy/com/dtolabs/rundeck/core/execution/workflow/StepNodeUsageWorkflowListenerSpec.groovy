@@ -337,6 +337,27 @@ class StepNodeUsageWorkflowListenerSpec extends Specification {
         totalOf(executionId) >= 1L
     }
 
+    def "a second begin for the same item instance with no finish in between does not lose the first frame's elapsed time"() {
+        given:
+        def executionId = 123L
+        def listener = new StepNodeUsageWorkflowListener(executionId)
+        def item = Mock(StepExecutionItem) {
+            getType() >> "some-workflow-step"
+        }
+
+        when: "begin fires twice for the same item, e.g. a duplicate/re-dispatch, with no finish in between"
+        listener.beginStepExecution(executor, stepContext, item)
+        Thread.sleep(1200)
+        listener.beginStepExecution(executor, stepContext, item)
+        listener.finishStepExecution(executor, statusResult, stepContext, item)
+        listener.finishWorkflowExecution(workflowResult, stepContext, null)
+
+        then:
+        // the ~1.2s between the two begin calls must still be counted, not silently dropped
+        // by the second begin overwriting the first still-open frame.
+        totalOf(executionId) >= 1L
+    }
+
     def "a node-dispatching step's breakdown entry uses the node-step type, not the generic step type"() {
         given:
         def executionId = 120L

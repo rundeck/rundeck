@@ -279,7 +279,15 @@ public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener 
             perStepPluginType.putIfAbsent(path, type);
             perStepIsNodeStep.putIfAbsent(path, nodeStep);
         }
-        openStepFrames.put(new StepKey(item), new StepFrame(System.nanoTime(), path, type, nodeStep));
+        final long now = System.nanoTime();
+        final StepFrame previous = openStepFrames.put(new StepKey(item), new StepFrame(now, path, type, nodeStep));
+        if (previous != null && !previous.sawNodeDispatch.get()) {
+            // A second begin for the same item instance, with no finish in between, would
+            // otherwise silently discard the still-open frame and lose its elapsed time --
+            // finalize it instead.
+            addElapsed(previous.path, now - previous.startNanos);
+            addNodeCount(previous.path);
+        }
     }
 
     @Override
