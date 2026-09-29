@@ -3739,6 +3739,25 @@ Since: v56''',
     }
 
 
+    /**
+     * The files uploaded with this request, keyed by the multipart part name.
+     *
+     * Deliberately does not test `request instanceof MultipartHttpServletRequest`. On Grails 8 the
+     * request a controller sees is Spring Security's Servlet3SecurityContextHolderAwareRequestWrapper:
+     * the filter chain wraps the request and binds it to the GrailsWebRequest, and only afterwards
+     * does DispatcherServlet.checkMultipart() wrap *that* in the MultipartHttpServletRequest. The
+     * multipart wrapper therefore sits outside the request the controller holds, so the instanceof
+     * is always false and unwrapping inward cannot reach it either. params is populated from the
+     * multipart request regardless, so it is the reliable source.
+     *
+     * See .claude/rules/grails-multipart.md.
+     *
+     * @return part name to uploaded file, empty when nothing was uploaded
+     */
+    private Map<String, MultipartFile> uploadedFileMap() {
+        (Map<String, MultipartFile>) params.findAll { it.value instanceof MultipartFile }
+    }
+
     private def handleUploadFiles(
             ScheduledExecution scheduledExecution,
             UserAndRolesAuthContext authContext,
@@ -3748,7 +3767,8 @@ Since: v56''',
     {
         def optionParameterPrefix = "extra.option."
         def fileresults = [:]
-        if (request instanceof MultipartRequest) {
+        Map<String, MultipartFile> uploads = uploadedFileMap()
+        if (uploads) {
             def fileOptions = scheduledExecution.listFileOptions()
             def fileOptionConfig = [:]
             fileOptions.each { Option option ->
@@ -3758,7 +3778,7 @@ Since: v56''',
             def invalid = []
             long maxsize = fileUploadService.optionUploadMaxSize
             if (maxsize > 0) {
-                def find = ((MultipartRequest) request).fileMap.find { String name, file -> file.size > maxsize }
+                def find = uploads.find { String name, file -> file.size > maxsize }
                 if (find) {
                     def msg = g.message(
                             code: 'api.error.job-upload.filesize',
@@ -3767,7 +3787,7 @@ Since: v56''',
                     return [success: false, failed: true, error: 'filesize', message: msg]
                 }
             }
-            ((MultipartRequest) request).fileMap.each { String name, file ->
+            uploads.each { String name, file ->
                 if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
                     String optname = name.substring(optionParameterPrefix.length())
@@ -3783,7 +3803,7 @@ Since: v56''',
                 return [success: false, failed: true, error: 'input', message: msg]
             }
 
-            for (def entry : ((MultipartRequest) request).fileMap) {
+            for (def entry : uploads) {
                 String name = entry.key
                 MultipartFile file = entry.value
                 if (name.startsWith(optionParameterPrefix)) {
@@ -4137,12 +4157,12 @@ Each job entry contains:
                     args  : [fileformat]
                 ]
             )
-        }else if (request.format=='multipartForm' && request instanceof MultipartHttpServletRequest) {
-            if (!request.fileNames.toList().contains('xmlBatch')) {
+        }else if (params.xmlBatch instanceof MultipartFile) {
+            MultipartFile file = (MultipartFile) params.xmlBatch
+            if (file.empty) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.jobs.import.missing-file', args: null])
             }
-            def file = request.getFile("xmlBatch")
             parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
         }else if (params.xmlBatch) {
             String fileContent = params.xmlBatch
@@ -4526,9 +4546,10 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             jobRunAtTime = params.runAtTime
             jobOptions = params.option
         }
-        if (request instanceof MultipartRequest) {
+        Map<String, MultipartFile> runUploads = uploadedFileMap()
+        if (runUploads) {
             //process file uploads
-            ((MultipartRequest) request).fileMap.each { String name, file ->
+            runUploads.each { String name, file ->
                 if (name.startsWith('option.')) {
                     //process file option upload
                     //XXX
@@ -5011,11 +5032,11 @@ Since: v19''',
         }
         def uploadedFileRefs = [:]
         def uploadError
-        if (request instanceof MultipartRequest && request.fileMap) {
+        Map<String, MultipartFile> apiUploads = uploadedFileMap()
+        if (apiUploads) {
             def invalid = []
             Map<String,MultipartFile> optionRequestFiles = [:]
-            ((MultipartRequest) request).fileNames.each { String name ->
-                MultipartFile file = ((MultipartRequest) request).getFile(name)
+            apiUploads.each { String name, MultipartFile file ->
                 if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
                     String optname = name.substring(optionParameterPrefix.length())
@@ -5040,7 +5061,7 @@ Since: v19''',
 
             long maxsize = fileUploadService.optionUploadMaxSize
             if (maxsize > 0) {
-                def find = ((MultipartRequest) request).fileMap.find { String name, file -> file.size > maxsize }
+                def find = apiUploads.find { String name, file -> file.size > maxsize }
                 if (find) {
                     return apiService.renderErrorFormat(response, [
                             status: HttpServletResponse.SC_BAD_REQUEST,
@@ -5733,19 +5754,15 @@ For Content-Type: `multipart/form-data`
         //read attached script content
         if(runAdhocRequest.script){
 
-        }else if (request instanceof MultipartHttpServletRequest) {
-            def file = request.getFile("scriptFile")
-            if(!file) {
-                return apiService.renderErrorFormat(response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code: 'api.error.run-script.upload.missing',args:['scriptFile']])
-            }else if(file.empty) {
+        }else if (params.scriptFile instanceof MultipartFile) {
+            MultipartFile file = (MultipartFile) params.scriptFile
+            if(file.empty) {
                 return apiService.renderErrorFormat(response, [
                         status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.run-script.upload.is-empty'])
             }
             runAdhocRequest.script = new String(file.bytes)
-        }else if(params.scriptFile){
+        }else if(params.scriptFile instanceof String){
             runAdhocRequest.script=params.scriptFile
         }
 
