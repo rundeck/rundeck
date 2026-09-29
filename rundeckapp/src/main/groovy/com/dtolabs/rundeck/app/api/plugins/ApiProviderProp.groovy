@@ -15,6 +15,7 @@ class ApiProviderProp {
     Map<String, String> selectLabels
     String scope
     Map<String, String> options
+    List<Map<String, String>> outputMetadata
 
     static ApiProviderProp from(Map<String, Object> values) {
         def prop = new ApiProviderProp()
@@ -34,6 +35,9 @@ class ApiProviderProp {
         prop.scope = values.get("scope")?.toString()
         if (values.get('options') instanceof Map) {
             prop.options = (Map<String, String>) values.get('options')
+        }
+        if (values.get('outputMetadata') instanceof List) {
+            prop.outputMetadata = (List<Map<String, String>>) values.get('outputMetadata')
         }
         return prop
 
