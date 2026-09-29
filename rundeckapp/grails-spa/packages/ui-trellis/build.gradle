@@ -97,7 +97,22 @@ def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
         }
     }
     else {
-        args.add("${project.vNum}-snapshot.${new Date().getTime()}".toString())
+        // Content-derived (not wall-clock) snapshot suffix: under `--continuous`, this task
+        // is reconfigured on every rebuild, so a timestamp baked into `args` (an @Input)
+        // made runNpmVersion -- and everything downstream keyed off its version string
+        // (package-lock.json, etc.) -- re-execute forever even with zero real source
+        // changes, which starved real edits of ever being the thing that triggered a build.
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        (sourceDirs + sourceFiles).sort().each { path ->
+            def f = file(path)
+            if (f.isDirectory()) {
+                fileTree(f).files.sort { it.path }.each { digest.update(it.bytes) }
+            } else if (f.exists()) {
+                digest.update(f.bytes)
+            }
+        }
+        def contentHash = digest.digest().encodeHex().toString().take(12)
+        args.add("${project.vNum}-snapshot.${contentHash}".toString())
     }
 
     /** Copy to staging location where we will modify it */
