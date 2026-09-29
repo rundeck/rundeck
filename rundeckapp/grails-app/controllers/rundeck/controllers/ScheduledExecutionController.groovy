@@ -3755,7 +3755,28 @@ Since: v56''',
      * @return part name to uploaded file, empty when nothing was uploaded
      */
     private Map<String, MultipartFile> uploadedFileMap() {
-        (Map<String, MultipartFile>) params.findAll { it.value instanceof MultipartFile }
+        Map<String, MultipartFile> fromParams =
+                (Map<String, MultipartFile>) params.findAll { it.value instanceof MultipartFile }
+        if (fromParams) {
+            return fromParams
+        }
+        // Fallback for the unit tests, which drive a GrailsMockHttpServletRequest: there the
+        // request really is a MultipartRequest and addFile() does not populate params.
+        request instanceof MultipartRequest ? ((MultipartRequest) request).fileMap : [:]
+    }
+
+    /**
+     * The file uploaded under the given part name, or null when there is none.
+     *
+     * Reads params first for the reason in uploadedFileMap, and falls back to the request so that
+     * controller unit tests, whose mock request is a genuine MultipartHttpServletRequest, still work.
+     */
+    private MultipartFile uploadedFile(String name) {
+        if (params[name] instanceof MultipartFile) {
+            return (MultipartFile) params[name]
+        }
+        request instanceof MultipartHttpServletRequest ?
+                ((MultipartHttpServletRequest) request).getFile(name) : null
     }
 
     private def handleUploadFiles(
@@ -4157,8 +4178,8 @@ Each job entry contains:
                     args  : [fileformat]
                 ]
             )
-        }else if (params.xmlBatch instanceof MultipartFile) {
-            MultipartFile file = (MultipartFile) params.xmlBatch
+        }else if (uploadedFile('xmlBatch')) {
+            MultipartFile file = uploadedFile('xmlBatch')
             if (file.empty) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.jobs.import.missing-file', args: null])
@@ -5754,8 +5775,8 @@ For Content-Type: `multipart/form-data`
         //read attached script content
         if(runAdhocRequest.script){
 
-        }else if (params.scriptFile instanceof MultipartFile) {
-            MultipartFile file = (MultipartFile) params.scriptFile
+        }else if (uploadedFile('scriptFile')) {
+            MultipartFile file = uploadedFile('scriptFile')
             if(file.empty) {
                 return apiService.renderErrorFormat(response, [
                         status: HttpServletResponse.SC_BAD_REQUEST,
