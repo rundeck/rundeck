@@ -2120,7 +2120,13 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
 
         then: "the storage consumer is submitted once, the retrieval consumer is retried, the scheduler is registered once"
         1 * service.logFileStorageTaskExecutor.execute(_ as TaskRunner)
-        2 * service.logFileTaskExecutor.execute(_ as TaskRunner) >> { throw new IllegalStateException('boom') } >> null
+        // Two interactions rather than one with a chained `>> null`: execute() returns void, and
+        // Groovy 5 refuses to cast null to void, so Spock's coercion of an explicit null result
+        // throws GroovyCastException *inside the mock* on the second call. onAppConfigChanged then
+        // swallows that as a start failure and never reaches the scheduler. The second interaction
+        // carries no result generator, so nothing is coerced.
+        1 * service.logFileTaskExecutor.execute(_ as TaskRunner) >> { throw new IllegalStateException('boom') }
+        1 * service.logFileTaskExecutor.execute(_ as TaskRunner)
         1 * service.logFileStorageTaskScheduler.scheduleAtFixedRate(*_)
         0 * service.logFileStorageTaskScheduler._
         noExceptionThrown()
