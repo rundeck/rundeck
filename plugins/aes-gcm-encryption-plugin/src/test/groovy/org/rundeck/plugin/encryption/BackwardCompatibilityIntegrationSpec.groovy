@@ -396,6 +396,51 @@ class BackwardCompatibilityIntegrationSpec extends Specification {
         readAllBytes(result) == plaintextProperties
     }
 
+    def "plaintext content whose length is coincidentally CBC-block-aligned is still returned as-is, never decrypted"() {
+        given: "the real header, padded to a length that happens to be block-aligned for AES-CBC -- if this were ever run through decrypt() (instead of being recognized as plaintext beforehand), legacy CBC being unauthenticated means it could coincidentally accept the padding and return garbage rather than throwing"
+        def plugin = createModernPlugin()
+        def path = Mock(Path) {
+            getPath() >> PROJECT_PROPERTIES_STORAGE_PATH
+        }
+        def content = "#text/x-java-properties;name=test\nproject.name=test\n"
+        def paddingNeeded = (16 - (content.length() % 16)) % 16
+        def plaintextProperties = (content + (" " * paddingNeeded)).getBytes("ISO-8859-1")
+        assert plaintextProperties.length % 16 == 0
+
+        and:
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when:
+        def result = plugin.readResource(path, meta, mockStream(plaintextProperties))
+
+        then: "the exact original bytes come back unchanged -- the path+header match is checked BEFORE decrypt() is ever called, so this coincidental alignment can never trigger a false decrypt 'success'"
+        readAllBytes(result) == plaintextProperties
+    }
+
+    def "plaintext content on an unrelated non-project path (e.g. Key Storage) is NOT returned as-is, even with the real header"() {
+        given: "the real project.properties header, but under a Key Storage path rather than a real projects/<name>/... path -- this plugin class is also configured for Key Storage (rundeck.storage.converter), so a stored key file could coincidentally be named/pathed this way"
+        def plugin = createModernPlugin()
+        def path = Mock(Path) {
+            getPath() >> "keys/foo/etc/project.properties"
+        }
+        def raw = "#text/x-java-properties;name=test\nproject.name=test\n".getBytes("ISO-8859-1")
+        // Guard against the (currently false, but not load-bearing) coincidence of this literal's
+        // length being a multiple of the cipher block size: keep it off that boundary so the decrypt
+        // attempt below deterministically throws IllegalBlockSizeException rather than reaching
+        // padding validation, whose accept/reject on non-ciphertext bytes is otherwise probabilistic.
+        def plaintextLookingContent = (raw.length % 16 == 0) ? (new String(raw, "ISO-8859-1") + " ").getBytes("ISO-8859-1") : raw
+        assert plaintextLookingContent.length % 16 != 0
+
+        and:
+        def meta = metaWith(["jasypt-encryption:encrypted": "true"])
+
+        when: "the decrypt-triggering read is actually consumed"
+        readAllBytes(plugin.readResource(path, meta, mockStream(plaintextLookingContent)))
+
+        then: "the path is not an exact projects/<name>/etc/project.properties match, so the fallback never applies and the failure still propagates"
+        thrown(RuntimeException)
+    }
+
     def "genuinely corrupt, non-plaintext-shaped content still throws (SCM config stays loud)"() {
         given: "corrupt/undecryptable binary content, simulating a real scm-export.properties failure"
         def plugin = createModernPlugin()
