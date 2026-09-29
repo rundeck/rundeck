@@ -78,6 +78,7 @@ import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import org.springframework.web.multipart.MultipartFile
 
 @Controller
 class ProjectController extends ControllerBase{
@@ -431,9 +432,9 @@ class ProjectController extends ControllerBase{
             def project1 = frameworkService.getFrameworkProject(project)
 
             //uploaded file
-            if (request instanceof MultipartHttpServletRequest) {
-                def file = request.getFile("zipFile")
-                if (!file || file.empty) {
+            if (params.zipFile instanceof MultipartFile) {
+                MultipartFile file = (MultipartFile) params.zipFile
+                if (file.empty) {
                     flash.error = message(code:"no.file.was.uploaded")
                     return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
                 }
