@@ -126,8 +126,8 @@ class MicrometerExecutionMetricsService implements SystemConfigurable {
 
     /**
      * Records the step_node_count total (sum of per-step, per-node dispatch counts across the
-     * execution tree, including nested job-reference calls -- {@code StepNodeUsageEntry.nodeCount},
-     * RBA_BILLING proposal Section 6.5) as its own distribution summary, tagged the same way as
+     * execution tree, including nested job-reference calls -- {@code StepNodeUsageEntry.nodeCount})
+     * as its own distribution summary, tagged the same way as
      * {@link #recordStepNodeSeconds}. A {@link DistributionSummary}, not a {@link Timer}, since
      * this is a discrete count, not a duration -- using a Timer would report it in a time unit it
      * isn't. No-op when the registry/execution is unavailable, or when no total was recorded for

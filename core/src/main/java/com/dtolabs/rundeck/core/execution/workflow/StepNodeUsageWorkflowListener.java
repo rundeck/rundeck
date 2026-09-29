@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -18,41 +34,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Computes "step_node_seconds" for a single top-level execution: the sum, across every
- * step and every node it dispatched to, of the elapsed duration of each step-node
- * combination that ran -- broken down per step, not collapsed into one grand total, so a
- * caller (e.g. a future billing subscriber excluding "non-billable" steps) can tell which
- * step contributed how much, and which plugin it ran (so exclusion can be driven by a
- * plugin-type deny-list rather than needing a per-step flag in every job definition). Also
- * tracks a discrete step-node dispatch count alongside the duration, for a duration-independent
- * metric candidate (RBA_BILLING proposal Section 6.5) -- see {@link StepNodeUsageEntry#getNodeCount()}.
+ * Computes, for a single top-level execution, the elapsed time and dispatch count of every
+ * step-node combination that ran, broken down per step and keyed by each step's hierarchical
+ * path (the same scheme {@code state.json} uses for its own step identifiers). A step that
+ * dispatches to one or more nodes contributes at the node level only, once per node; a step
+ * that never dispatches to any node contributes its own duration once.
  * <p>
- * A step that dispatches to one or more nodes contributes at the node level only (one
- * contribution per node it ran on, summed into that step's own entry); a step that never
- * dispatches to any node (a plain control-flow/notification step, or a node-dispatching step
- * whose filter matched zero nodes) contributes its own duration once, as a single
- * step-times-one-node unit.
- * <p>
- * Instances are constructed per top-level execution with that execution's id
- * closure-captured (mirroring how other per-execution listeners are built in
- * {@code ExecutionService.executeAsyncBegin}). A nested job-reference execution shares the
- * exact same listener instance as its parent, so its step/node durations accumulate into
- * this same running breakdown automatically. {@link #finishWorkflowExecution} fires once for
- * such a nested execution's own completion, and again for the parent's -- both write the
- * breakdown (whatever it is at that moment) into {@link StepNodeUsageStore} under the one
- * closure-captured top-level execution id; since the nested execution's finish always
- * happens strictly before the parent's own, the parent's later write is always the one that
- * persists, with no nesting-depth tracking required.
- * <p>
- * Each step's contribution is keyed by its hierarchical step path -- the same mechanism the
- * execution engine already uses internally to build {@code state.json}'s own step
- * identifiers ({@link StepExecutionContext#getStepContext()} plus
- * {@link StepExecutionContext#getStepNumber()}), not a new one invented for this class. This
- * correctly disambiguates a nested job-reference's own step numbering (which restarts at 1)
- * from an outer step of the same number, unlike a flat {@code stepNumber} alone would.
- * (step, node) *open-frame* bookkeeping (matching a begin to its finish while a dispatch is
- * in flight) still uses Java reference identity of the {@link StepExecutionItem} instance,
- * exactly as before -- only the key under which a *finished* duration is stored changed.
+ * Instances are constructed per top-level execution, with that execution's id
+ * closure-captured. A nested job-reference execution shares the same listener instance as its
+ * parent, so its step/node durations accumulate into the same running breakdown; the parent's
+ * {@link #finishWorkflowExecution} always fires after any nested one, so its write to
+ * {@link StepNodeUsageStore} is always the one that persists.
  */
 public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener {
 
@@ -128,69 +120,51 @@ public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener 
     }
 
     /**
-     * One step's contribution to step_node_seconds: its duration, the plugin/provider type
-     * that ran (e.g. what {@link StepExecutionItem#getType()} -- or
-     * {@link NodeStepExecutionItem#getNodeStepType()} for a node step -- returns) so a
-     * consumer can decide billability by plugin type without needing to cross-reference the
-     * job definition at all, and how many step-node units contributed to {@link #seconds}
-     * (RBA_BILLING proposal Section 6.5 -- raised by Greg Schueler, 2026-09-25): a discrete
-     * count of (step, node) dispatches, the same breadth×depth shape as step_node_seconds but
-     * without the time dimension, since on-prem billing likely shouldn't charge for the
-     * customer's own hardware speed. One node-dispatching step run against 5 nodes
-     * contributes 5 here, not 1 -- the same "1 step x 1 node" convention as
-     * {@link #seconds} applies to a step that never dispatches to any node.
+     * One step's contribution: its elapsed time in nanoseconds, the plugin/provider type that
+     * ran, whether it is a node-dispatching step, and how many (step, node) dispatches
+     * contributed to the duration.
      */
     public static final class StepNodeUsageEntry {
-        private final long seconds;
+        private final long nanos;
         private final String pluginType;
         private final Boolean isNodeStep;
         private final long nodeCount;
 
-        /**
-         * @deprecated use {@link #StepNodeUsageEntry(long, String, Boolean, long)}. This
-         * overload defaults {@code nodeCount} to 1, for callers (mostly tests) that don't
-         * care about the node-count breakdown.
-         */
-        @Deprecated
-        public StepNodeUsageEntry(final long seconds, final String pluginType, final Boolean isNodeStep) {
-            this(seconds, pluginType, isNodeStep, 1L);
-        }
-
-        public StepNodeUsageEntry(final long seconds, final String pluginType, final Boolean isNodeStep, final long nodeCount) {
-            this.seconds = seconds;
+        public StepNodeUsageEntry(final long nanos, final String pluginType, final Boolean isNodeStep, final long nodeCount) {
+            this.nanos = nanos;
             this.pluginType = pluginType;
             this.isNodeStep = isNodeStep;
             this.nodeCount = nodeCount;
         }
 
-        public long getSeconds() {
-            return seconds;
+        /**
+         * This step's total elapsed time, in nanoseconds. Kept at full precision here
+         * deliberately -- a caller that needs a whole-seconds total across multiple steps
+         * should sum this field first and round once, rather than rounding each step
+         * individually (which undercounts many small steps summing to a real total).
+         */
+        public long getNanos() {
+            return nanos;
         }
 
         /**
          * The plugin/provider type that ran for this step, or null if it couldn't be
-         * determined (e.g. an unmatched finish call in a test, with no corresponding begin).
+         * determined.
          */
         public String getPluginType() {
             return pluginType;
         }
 
         /**
-         * Whether this step is a node-dispatching step ({@link NodeStepExecutionItem}) --
-         * i.e. whether {@link #getPluginType()} came from {@code getNodeStepType()} (true) or
-         * {@code getType()} (false) -- so a consumer knows which of
-         * {@code NonBillableStepTypesProvider}'s two categories to check {@link #pluginType}
-         * against. Null under the same "couldn't be determined" condition as
-         * {@link #getPluginType()}.
+         * Whether this step is a node-dispatching step. Null under the same
+         * "couldn't be determined" condition as {@link #getPluginType()}.
          */
         public Boolean getIsNodeStep() {
             return isNodeStep;
         }
 
         /**
-         * How many (step, node) dispatches contributed to {@link #seconds} -- see the class
-         * javadoc. Not currently read by any billing consumer; captured for a future
-         * duration-independent metric candidate (e.g. on-prem consumption billing).
+         * How many (step, node) dispatches contributed to {@link #getNanos()}.
          */
         public long getNodeCount() {
             return nodeCount;
@@ -198,7 +172,7 @@ public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener 
 
         @Override
         public String toString() {
-            return "StepNodeUsageEntry{seconds=" + seconds + ", pluginType='" + pluginType + "', isNodeStep=" + isNodeStep + ", nodeCount=" + nodeCount + "}";
+            return "StepNodeUsageEntry{nanos=" + nanos + ", pluginType='" + pluginType + "', isNodeStep=" + isNodeStep + ", nodeCount=" + nodeCount + "}";
         }
     }
 
@@ -216,10 +190,8 @@ public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener 
 
     /**
      * The step's hierarchical path, e.g. "3" for a top-level step 3, or "3/1" for step 1 of a
-     * nested job-reference's own workflow invoked from step 3 -- the same identifier scheme
-     * {@code state.json} already uses for its own step entries. Tolerant of a null
-     * {@code getStepContext()} (treated as no parent path) so a partially-stubbed test
-     * context still produces a stable, if less specific, key rather than throwing.
+     * nested job-reference's own workflow invoked from step 3. Tolerant of a null
+     * {@code getStepContext()} (treated as no parent path).
      */
     private static String stepPath(final StepExecutionContext context) {
         final StringBuilder sb = new StringBuilder();
@@ -235,8 +207,7 @@ public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener 
 
     /**
      * The step's plugin/provider type: {@link NodeStepExecutionItem#getNodeStepType()} when
-     * the item is a node step (the more specific of the two for that case), otherwise
-     * {@link StepExecutionItem#getType()}.
+     * the item is a node step, otherwise {@link StepExecutionItem#getType()}.
      */
     private static String pluginType(final StepExecutionItem item) {
         if (item instanceof NodeStepExecutionItem) {
@@ -273,11 +244,10 @@ public class StepNodeUsageWorkflowListener implements WorkflowExecutionListener 
     ) {
         final Map<String, StepNodeUsageEntry> breakdown = new LinkedHashMap<>();
         for (final Map.Entry<String, LongAdder> entry : perStepElapsedNanos.entrySet()) {
-            final long seconds = Math.round(entry.getValue().sum() / 1_000_000_000.0);
             final String path = entry.getKey();
             final LongAdder nodeCountAdder = perStepNodeCount.get(path);
             final long nodeCount = nodeCountAdder != null ? nodeCountAdder.sum() : 0L;
-            breakdown.put(path, new StepNodeUsageEntry(seconds, perStepPluginType.get(path), perStepIsNodeStep.get(path), nodeCount));
+            breakdown.put(path, new StepNodeUsageEntry(entry.getValue().sum(), perStepPluginType.get(path), perStepIsNodeStep.get(path), nodeCount));
         }
         StepNodeUsageStore.getInstance().recordFinishedBreakdown(executionId, breakdown);
     }

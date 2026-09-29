@@ -6514,7 +6514,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         capturedEvent.stepNodeUsageBreakdown != null
 
         and: "the metric is recorded with the value derived from the event's own breakdown"
-        recordedStepNodeSeconds == capturedEvent.stepNodeUsageBreakdown.values().sum { it.seconds }
+        recordedStepNodeSeconds == Math.round(capturedEvent.stepNodeUsageBreakdown.values().sum { it.nanos } / 1_000_000_000.0)
 
         and: "the store's read-and-remove semantics mean a second lookup for the same execution finds nothing left"
         StepNodeUsageStore.getInstance().takeFinishedBreakdown(e1.id) == null

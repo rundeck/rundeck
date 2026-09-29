@@ -10,14 +10,14 @@ class StepNodeUsageStoreSpec extends Specification {
     def "record then take round-trips the breakdown map"() {
         given:
         def executionId = 201L
-        def breakdown = ["1": new StepNodeUsageEntry(42L, "exec-command", true)]
+        def breakdown = ["1": new StepNodeUsageEntry(42L, "exec-command", true, 1L)]
 
         when:
         store.recordFinishedBreakdown(executionId, breakdown)
 
         then:
         def result = store.takeFinishedBreakdown(executionId)
-        result["1"].seconds == 42L
+        result["1"].nanos == 42L
         result["1"].pluginType == "exec-command"
     }
 
@@ -29,20 +29,20 @@ class StepNodeUsageStoreSpec extends Specification {
     def "takeFinishedBreakdown removes the entry, so a second call returns null"() {
         given:
         def executionId = 203L
-        store.recordFinishedBreakdown(executionId, ["1": new StepNodeUsageEntry(7L, "exec-command", true)])
+        store.recordFinishedBreakdown(executionId, ["1": new StepNodeUsageEntry(7L, "exec-command", true, 1L)])
 
         when:
         def first = store.takeFinishedBreakdown(executionId)
         def second = store.takeFinishedBreakdown(executionId)
 
         then:
-        first["1"].seconds == 7L
+        first["1"].nanos == 7L
         second == null
     }
 
     def "recordFinishedBreakdown with a null executionId is a no-op"() {
         when:
-        store.recordFinishedBreakdown(null, ["1": new StepNodeUsageEntry(99L, "exec-command", true)])
+        store.recordFinishedBreakdown(null, ["1": new StepNodeUsageEntry(99L, "exec-command", true, 1L)])
 
         then:
         noExceptionThrown()

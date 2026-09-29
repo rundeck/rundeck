@@ -10,10 +10,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import spock.lang.Specification
 
 /**
- * Note on timing: {@link StepNodeUsageStore} only exposes whole-seconds durations, so these
+ * Note on timing: {@code StepNodeUsageEntry} exposes nanosecond-precision durations, so these
  * tests use sleeps long enough (~1.2s) that "counted once" (rounds to 1s), "not counted"
- * (rounds to 0s), and "double-counted" (rounds to 2s+) are unambiguous outcomes, rather than
- * asserting exact millisecond durations.
+ * (rounds to 0s), and "double-counted" (rounds to 2s+) are unambiguous outcomes once summed and
+ * rounded once by {@link #totalOf}, rather than asserting exact nanosecond durations.
  * <p>
  * Most tests below share one unstubbed {@code stepContext} mock across every step, so every
  * step resolves to the same path and their durations collapse into a single breakdown entry
@@ -36,8 +36,10 @@ class StepNodeUsageWorkflowListenerSpec extends Specification {
         }
     }
 
+    /** Sums nanos across every breakdown entry and rounds once, mirroring how a real caller (ExecutionService) computes a whole-seconds total. */
     def totalOf(Long executionId) {
-        StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)?.values()?.sum { it.seconds }
+        def breakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)
+        breakdown == null ? null : Math.round(breakdown.values().sum { it.nanos } / 1_000_000_000.0)
     }
 
     def "zero-node step contributes exactly one step-level unit"() {
@@ -246,11 +248,11 @@ class StepNodeUsageWorkflowListenerSpec extends Specification {
         then:
         def breakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)
         breakdown.keySet() == (["1", "2"] as Set)
-        breakdown["1"].seconds == 1L
+        Math.round(breakdown["1"].nanos / 1_000_000_000.0) == 1L
         breakdown["1"].pluginType == "notification-plugin"
         breakdown["1"].isNodeStep == false
         breakdown["1"].nodeCount == 1L
-        breakdown["2"].seconds == 2L
+        Math.round(breakdown["2"].nanos / 1_000_000_000.0) == 2L
         breakdown["2"].pluginType == "exec-command"
         breakdown["2"].isNodeStep == true
         breakdown["2"].nodeCount == 1L
@@ -304,7 +306,35 @@ class StepNodeUsageWorkflowListenerSpec extends Specification {
         then:
         def breakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(executionId)
         breakdown.keySet() == (["3/1"] as Set)
-        breakdown["3/1"].seconds == 1L
+        Math.round(breakdown["3/1"].nanos / 1_000_000_000.0) == 1L
+    }
+
+    def "many sub-second steps sum to a real total instead of each rounding to zero"() {
+        given: "a rounding-per-step bug would make every one of these round to 0s and sum to 0s"
+        def executionId = 122L
+        def listener = new StepNodeUsageWorkflowListener(executionId)
+        def stepCount = 10
+        def sleepMillisPerStep = 120
+
+        when:
+        (1..stepCount).each { i ->
+            def context = Mock(StepExecutionContext) {
+                getStepNumber() >> i
+                getStepContext() >> []
+            }
+            def item = Mock(StepExecutionItem) {
+                getType() >> "some-workflow-step"
+            }
+            listener.beginStepExecution(executor, context, item)
+            Thread.sleep(sleepMillisPerStep)
+            listener.finishStepExecution(executor, statusResult, context, item)
+        }
+        listener.finishWorkflowExecution(workflowResult, stepContext, null)
+
+        then:
+        // 10 steps x ~0.12s each is ~1.2s of real elapsed time -- rounds to 1s when summed in
+        // nanoseconds first, but would round to 0s if each step were rounded individually first.
+        totalOf(executionId) >= 1L
     }
 
     def "a node-dispatching step's breakdown entry uses the node-step type, not the generic step type"() {

@@ -1416,7 +1416,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logOutFlusher, //flushes stdout output after node steps
                     logErrFlusher, //flush stderr output after node steps
                     wfStepMetricsListener, //collects step metrics
-                    stepNodeUsageListener, //accumulates step_node_seconds for Runbook Automation consumption metering
+                    stepNodeUsageListener, //accumulates per-step-node elapsed time and dispatch count
                     /*new EchoExecListener() */
             ]
             def multiListener = MultiWorkflowExecutionListener.create(
@@ -3602,7 +3602,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // Read once: StepNodeUsageStore.takeFinishedBreakdown is read-and-remove, so a
             // second call below (e.g. when building the completion event) would see null.
             Map<String, StepNodeUsageWorkflowListener.StepNodeUsageEntry> stepNodeUsageBreakdown = StepNodeUsageStore.getInstance().takeFinishedBreakdown(execution.id)
-            Long stepNodeSeconds = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.seconds.sum() ?: 0L) as Long
+            // Sum nanoseconds across every step, then round once here -- rounding each step's
+            // own duration individually first would undercount many small steps that each
+            // round to zero but sum to a real total.
+            Long totalNanos = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.nanos.sum() ?: 0L) as Long
+            Long stepNodeSeconds = totalNanos == null ? null : Math.round(totalNanos / 1_000_000_000.0) as Long
             Long stepNodeCount = stepNodeUsageBreakdown == null ? null : (stepNodeUsageBreakdown.values()*.nodeCount.sum() ?: 0L) as Long
             micrometerExecutionMetricsService?.recordStepNodeSeconds(execution, stepNodeSeconds)
             micrometerExecutionMetricsService?.recordStepNodeCount(execution, stepNodeCount)
