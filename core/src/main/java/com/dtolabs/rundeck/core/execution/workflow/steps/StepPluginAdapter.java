@@ -40,7 +40,6 @@ import org.rundeck.app.spi.Services;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -115,7 +114,8 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
                 ServiceNameConstants.WorkflowStep,
                 providerName
         );
-        Map<String, Object>  config = PluginAdapterUtility.configureProperties(resolver, getDescription(),plugin, PropertyScope.InstanceOnly);
+        final Description description = getDescription();
+        Map<String, Object>  config = PluginAdapterUtility.configureProperties(resolver, description,plugin, PropertyScope.InstanceOnly);
 
         try {
             plugin.executeStep(stepContext, config);
@@ -141,6 +141,15 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
                             + stringWriter.toString());
             return new StepExecutionResultImpl(e, StepFailureReason.PluginFailed, e.getMessage());
         }
+
+        // Captured after executeStep() returns successfully, not before: a property that carries
+        // only @PluginOutput (no @PluginProperty) is a computed value that the plugin sets on its
+        // own field *during* execution (e.g. an ID created by the step), so it doesn't exist yet
+        // beforehand. Capturing here also means a step that fails/throws exposes no output.
+        // Uses executionContext.getOutputContext() (the same channel used by log-filter and
+        // node-executor output capture) rather than getSharedDataContext() directly, since that's
+        // what the workflow engine merges forward into subsequent steps' conditional evaluation.
+        PluginOutputCapture.captureOutputMetadataValues(executionContext.getOutputContext(), description, plugin, config);
         return new StepExecutionResultImpl();
     }
 
