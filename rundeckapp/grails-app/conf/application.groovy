@@ -33,8 +33,12 @@ dataSource {
             ''
 }
 
-grails.controllers.upload.maxFileSize=26214400
-grails.controllers.upload.maxRequestSize=26214400
+// Grails 8 rejects grails.controllers.upload.* outright -- GrailsControllersEnvironmentPostProcessor
+// throws during environment preparation, before any context exists, so the app cannot start at all.
+// Spring Boot's own multipart properties replace them. '25MB' is the same 26214400 bytes these
+// carried before, written in the units the DataSize binder expects.
+spring.servlet.multipart.maxFileSize='25MB'
+spring.servlet.multipart.maxRequestSize='25MB'
 
 grails.plugin.databasemigration.changelog = "changelog.groovy"
 
