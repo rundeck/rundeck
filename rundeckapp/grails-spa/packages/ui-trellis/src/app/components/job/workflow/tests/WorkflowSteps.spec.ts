@@ -30,7 +30,7 @@ jest.mock("@/library/modules/rundeckClient", () => ({
   client: jest.fn(),
 }));
 jest.mock("@/library/rundeckService", () => {
-  const mittLib = require("mitt");
+  const mittLib = jest.requireActual("mitt");
   const mittFn = mittLib.default || mittLib;
   const _bus = mittFn();
   const eventBus = {
@@ -263,7 +263,10 @@ describe("WorkflowSteps", () => {
       const duplicateBtn = wrapper.find("[title='Workflow.duplicateStep']");
       await duplicateBtn.trigger("click");
 
-      const emitted = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
+      const emitted = wrapper.emitted("update:modelValue")![1][0] as Record<
+        string,
+        unknown
+      >;
       expect(emitted["commands"]).toHaveLength(2);
       expect(emitted["commands"]).toEqual([
         { ...baseCommand, nodeStep: true },
@@ -286,7 +289,9 @@ describe("WorkflowSteps", () => {
           LogFilter: [logFilterEntry],
         },
       };
-      const localWrapper = await createWrapper({ commands: [commandWithFilters] });
+      const localWrapper = await createWrapper({
+        commands: [commandWithFilters],
+      });
 
       const editStep = localWrapper.find('[data-testid="edit-step-item"]');
       await editStep.trigger("click");
@@ -379,10 +384,10 @@ describe("WorkflowSteps", () => {
         editModal.vm.$emit("save");
         await flushPromises();
 
-        const emittedValue = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
-        expect(
-          (emittedValue["commands"] as unknown[])[0],
-        ).toMatchObject({
+        const emittedValue = wrapper.emitted(
+          "update:modelValue",
+        )![1][0] as Record<string, unknown>;
+        expect((emittedValue["commands"] as unknown[])[0]).toMatchObject({
           ...baseCommand,
           errorhandler: {
             exec: "new-error",
@@ -411,7 +416,9 @@ describe("WorkflowSteps", () => {
       editModal.vm.$emit("save");
       await flushPromises();
 
-      const emittedValue = wrapper.emitted("update:modelValue")![1][0] as Record<string, unknown>;
+      const emittedValue = wrapper.emitted(
+        "update:modelValue",
+      )![1][0] as Record<string, unknown>;
       expect(emittedValue["commands"]).toEqual([
         { ...baseCommand, nodeStep: true },
         {
@@ -455,7 +462,9 @@ describe("WorkflowSteps", () => {
       };
       const localWrapper = await createWrapper({ commands: [jobRefCommand] });
 
-      await localWrapper.find('[data-testid="edit-step-item"]').trigger("click");
+      await localWrapper
+        .find('[data-testid="edit-step-item"]')
+        .trigger("click");
       await localWrapper.vm.$nextTick();
 
       const jobRefForm = localWrapper.findComponent({ name: "JobRefForm" });
@@ -470,17 +479,24 @@ describe("WorkflowSteps", () => {
       jobRefForm.vm.$emit("save");
       await flushPromises();
 
-      expect(localWrapper.find('[data-testid="wfstep-description-0"]').exists()).toBe(true);
-      expect(localWrapper.find('[data-testid="wfstep-description-0"]').text().trim()).toBe("existing label");
+      expect(
+        localWrapper.find('[data-testid="wfstep-description-0"]').exists(),
+      ).toBe(true);
+      expect(
+        localWrapper.find('[data-testid="wfstep-description-0"]').text().trim(),
+      ).toBe("existing label");
     });
 
     it("renders the typed label after adding a new job reference step", async () => {
-      const localWrapper = await createWrapper({ commands: [] }, {
-        JobRefForm: {
-          name: "JobRefForm",
-          template: '<div><slot name="extra"/></div>',
+      const localWrapper = await createWrapper(
+        { commands: [] },
+        {
+          JobRefForm: {
+            name: "JobRefForm",
+            template: '<div><slot name="extra"/></div>',
+          },
         },
-      });
+      );
 
       await localWrapper.find('[data-testid="add-button"]').trigger("click");
       const chooseModal = localWrapper.findComponent(ChoosePluginModal);
@@ -490,7 +506,9 @@ describe("WorkflowSteps", () => {
       });
       await localWrapper.vm.$nextTick();
 
-      await localWrapper.find('[data-testid="step-description"]').setValue("new label");
+      await localWrapper
+        .find('[data-testid="step-description"]')
+        .setValue("new label");
 
       const jobRefForm = localWrapper.findComponent({ name: "JobRefForm" });
       // Simulate JobRefForm emitting update:modelValue without description,
@@ -504,8 +522,12 @@ describe("WorkflowSteps", () => {
       jobRefForm.vm.$emit("save");
       await flushPromises();
 
-      expect(localWrapper.find('[data-testid="wfstep-description-0"]').exists()).toBe(true);
-      expect(localWrapper.find('[data-testid="wfstep-description-0"]').text().trim()).toBe("new label");
+      expect(
+        localWrapper.find('[data-testid="wfstep-description-0"]').exists(),
+      ).toBe(true);
+      expect(
+        localWrapper.find('[data-testid="wfstep-description-0"]').text().trim(),
+      ).toBe("new label");
     });
   });
 

@@ -10,50 +10,50 @@
       <ui-socket section="rundeck-info-widget" location="version-info">
         <div v-if="version && appInfo" class="rundeck-info-widget__header">
           <RundeckVersion
-              :logo="false"
-              :title="appInfo.title"
-              :logocss="appInfo.logocss"
-              :number="version.number"
-              :tag="version.tag"
+            :logo="false"
+            :title="appInfo.title"
+            :logocss="appInfo.logocss"
+            :number="version.number"
+            :tag="version.tag"
           />
         </div>
         <div v-if="version && version.icon && version.color">
           <VersionDisplay
-              :text="`${version.name} ${version.color} ${version.icon}`"
-              :icon="version.icon"
-              :color="version.color"
+            :text="`${version.name} ${version.color} ${version.icon}`"
+            :icon="version.icon"
+            :color="version.color"
           />
         </div>
       </ui-socket>
       <div v-if="server">
         <span class="server-display">
           <ServerDisplay
-              :name="server.name"
-              :glyphicon="server.icon"
-              :uuid="server.uuid"
+            :name="server.name"
+            :glyphicon="server.icon"
+            :uuid="server.uuid"
           />
         </span>
       </div>
     </div>
     <ui-socket section="rundeck-info-widget" location="latest-info">
       <div
-          v-if="latest"
-          class="rundeck-info-widget__group"
-          style="border-top: solid 1px grey"
+        v-if="latest"
+        class="rundeck-info-widget__group"
+        style="border-top: solid 1px grey"
       >
         <div class="rundeck-info-widget__heading">Latest Release</div>
         <div class="rundeck-info-widget__latest">
           <RundeckVersion
-              :logo="false"
-              :number="latest.full"
-              :tag="latest.tag"
+            :logo="false"
+            :number="latest.full"
+            :tag="latest.tag"
           />
         </div>
       </div>
     </ui-socket>
     <div
-        class="rundeck-info-widget__group"
-        style="display: flex; flex-direction: column-reverse; flex-grow: 1"
+      class="rundeck-info-widget__group"
+      style="display: flex; flex-direction: column-reverse; flex-grow: 1"
     >
       <Copyright />
     </div>

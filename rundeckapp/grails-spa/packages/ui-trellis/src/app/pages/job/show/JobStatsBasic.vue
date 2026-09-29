@@ -1,7 +1,7 @@
 <script lang="ts">
 import { formatDurationHumanize } from "@/app/utilities/DateTimeFormatters";
 import { getRundeckContext } from "@/library";
-import UiSocket from '@/library/components/utils/UiSocket.vue'
+import UiSocket from "@/library/components/utils/UiSocket.vue";
 import { getJobMeta } from "@/library/services/jobBrowse";
 import { defineComponent } from "vue";
 
@@ -9,7 +9,7 @@ const rundeckContext = getRundeckContext();
 
 export default defineComponent({
   name: "JobStatsBasic",
-  components:{
+  components: {
     UiSocket,
   },
   props: {

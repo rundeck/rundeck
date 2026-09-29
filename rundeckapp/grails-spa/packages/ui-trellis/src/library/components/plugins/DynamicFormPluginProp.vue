@@ -19,7 +19,7 @@
             type="text"
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
-            @change="changeField(field)"
+            @change="changeField()"
             :data-testid="'field-input-' + index"
           />
         </div>
@@ -242,7 +242,12 @@ export default defineComponent({
     }
     this.syncFieldsFromProp(this.fields);
 
-    if (this.useOptions && this.options !== null && this.options !== undefined && this.options !== "") {
+    if (
+      this.useOptions &&
+      this.options !== null &&
+      this.options !== undefined &&
+      this.options !== ""
+    ) {
       const optionsObject = JSON.parse(this.options!);
       const options = Object.keys(optionsObject).map((key: any) => {
         const data = optionsObject[key];
@@ -351,7 +356,7 @@ export default defineComponent({
       this.customFields = fields;
       this.refreshPlugin();
     },
-    changeField(field: CustomField) {
+    changeField() {
       this.refreshPlugin();
     },
     refreshPlugin() {

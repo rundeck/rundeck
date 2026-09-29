@@ -1,6 +1,6 @@
 # Build remco from org fork with CVE fixes applied
 ###################################################
-FROM golang:1.27.0 AS remco
+FROM golang:1.27.1 AS remco
 
 # Pinned to a rundeck/remco commit synced with upstream HeavyHorst/remco.
 # Fixes golang.org/x/crypto 0.52.0, golang.org/x/net 0.55.0, and

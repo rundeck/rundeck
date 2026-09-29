@@ -1,6 +1,10 @@
 <template>
   <div class="step-card-content">
-    <div v-if="config.jobref" class="plugin-config-section" data-testid="step-card-content-jobref-section">
+    <div
+      v-if="config.jobref"
+      class="plugin-config-section"
+      data-testid="step-card-content-jobref-section"
+    >
       <span v-for="prop in jobRefProps" :key="prop.name" class="configprop">
         <plugin-prop-view
           :prop="prop"
@@ -78,8 +82,7 @@
 </template>
 
 <script lang="ts">
-//@ts-nocheck
-import { defineComponent } from "vue";
+import { defineComponent, type PropType } from "vue";
 import ConfigSection from "./ConfigSection.vue";
 import PluginConfig from "../../plugins/pluginConfig.vue";
 import PluginInfo from "../../plugins/PluginInfo.vue";
@@ -112,7 +115,7 @@ export default defineComponent({
       default: () => [],
     },
     errorHandler: {
-      type: Array,
+      type: Array as PropType<Record<string, any>[]>,
       default: () => [],
     },
     errorHandlerConfig: {
@@ -170,7 +173,7 @@ export default defineComponent({
       if (handler.jobref) {
         return {
           ...handler,
-          title: this.$t('Job reference')
+          title: this.$t("Job reference"),
         };
       }
 

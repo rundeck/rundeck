@@ -62,9 +62,9 @@ const createWrapper = async (props: Record<string, any> = {}) => {
 describe("LogFilters", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (resetValidation as jest.MockedFunction<typeof resetValidation>).mockReturnValue(
-      { errors: {}, valid: true },
-    );
+    (
+      resetValidation as jest.MockedFunction<typeof resetValidation>
+    ).mockReturnValue({ errors: {}, valid: true });
   });
 
   describe("title rendering", () => {
@@ -142,10 +142,12 @@ describe("LogFilters", () => {
         modelValue: [{ type: "filterType" }],
       });
 
-      await wrapper.findComponent(LogFilterControls).vm.$emit(
-        "update:modelValue",
-        { type: "filterType", config: { randomValue: true } },
-      );
+      await wrapper
+        .findComponent(LogFilterControls)
+        .vm.$emit("update:modelValue", {
+          type: "filterType",
+          config: { randomValue: true },
+        });
       await wrapper.vm.$nextTick();
 
       const emitted = wrapper.emitted("update:modelValue");

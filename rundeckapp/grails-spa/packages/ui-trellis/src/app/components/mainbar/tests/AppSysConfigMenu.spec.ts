@@ -83,9 +83,9 @@ describe("AppSysConfigMenu", () => {
 
       const wrapper = await createWrapper();
 
-      expect(
-        wrapper.find('[data-testid="mainbar-menu-header"]').text(),
-      ).toBe("sysConfigMenuHeader");
+      expect(wrapper.find('[data-testid="mainbar-menu-header"]').text()).toBe(
+        "sysConfigMenuHeader",
+      );
     });
   });
 });

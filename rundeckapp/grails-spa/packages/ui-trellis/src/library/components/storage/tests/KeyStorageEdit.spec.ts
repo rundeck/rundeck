@@ -1,28 +1,31 @@
-import {flushPromises, mount} from '@vue/test-utils'
-import {storageKeyCreate, storageKeyExists, storageKeyGetMetadata} from '../../../services/storage'
-import KeyStorageEdit from '../KeyStorageEdit.vue'
+import { flushPromises, mount } from "@vue/test-utils";
+import {
+  storageKeyCreate,
+  storageKeyExists,
+  storageKeyGetMetadata,
+} from "../../../services/storage";
+import KeyStorageEdit from "../KeyStorageEdit.vue";
 
-jest.mock('@/library/rundeckService', () => ({
+jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
-    eventBus: {on: jest.fn(), emit: jest.fn()},
-    rdBase: 'http://localhost:4440/',
-    projectName: 'testProject',
-    apiVersion: '44',
+    eventBus: { on: jest.fn(), emit: jest.fn() },
+    rdBase: "http://localhost:4440/",
+    projectName: "testProject",
+    apiVersion: "44",
   })),
 }));
-jest.mock('../../../services/storage')
+jest.mock("../../../services/storage");
 
-const mockedStorageKeyGetMetadata = storageKeyGetMetadata as jest.MockedFunction<
-  typeof storageKeyGetMetadata
->
-mockedStorageKeyGetMetadata.mockResolvedValue({resources: []})
+const mockedStorageKeyGetMetadata =
+  storageKeyGetMetadata as jest.MockedFunction<typeof storageKeyGetMetadata>;
+mockedStorageKeyGetMetadata.mockResolvedValue({ resources: [] });
 const mockedStorageKeyExists = storageKeyExists as jest.MockedFunction<
   typeof storageKeyExists
->
-mockedStorageKeyExists.mockResolvedValue(false)
+>;
+mockedStorageKeyExists.mockResolvedValue(false);
 const mockedStorageKeyCreate = storageKeyCreate as jest.MockedFunction<
   typeof storageKeyCreate
->
+>;
 
 type DefaultProps = {
   storageFilter: string;
@@ -75,13 +78,11 @@ const mountKeyStorageEdit = async (props = {}) => {
 };
 
 describe("KeyStorageEdit", () => {
-
   beforeEach(() => {
-
     mockedStorageKeyCreate.mockResolvedValue({
-        name: "exampleKey",
-        path: "/keys/test",
-      type: 'privateKey',
+      name: "exampleKey",
+      path: "/keys/test",
+      type: "privateKey",
     });
     jest.clearAllMocks();
   });
@@ -104,9 +105,7 @@ describe("KeyStorageEdit", () => {
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await saveButton.trigger("click");
     await flushPromises();
-    expect(
-      mockedStorageKeyCreate,
-    ).toHaveBeenCalledTimes(1);
+    expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
     expect(wrapper.emitted().finishEditing).toHaveLength(1);
   });
 
@@ -137,9 +136,7 @@ describe("KeyStorageEdit", () => {
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await saveButton.trigger("click");
     await flushPromises();
-    expect(
-      mockedStorageKeyCreate,
-    ).toHaveBeenCalledWith(
+    expect(mockedStorageKeyCreate).toHaveBeenCalledWith(
       expect.any(String),
       "my-password",
       expect.any(Object),
@@ -160,13 +157,11 @@ describe("KeyStorageEdit", () => {
     const saveButton = wrapper.find('[data-testid="save-btn"]');
     await saveButton.trigger("click");
     await flushPromises();
-    expect(
-      mockedStorageKeyCreate,
-    ).toHaveBeenCalledTimes(1);
+    expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
   });
 
   it("emits an error when key exists and overwrite is disabled", async () => {
-    mockedStorageKeyExists.mockResolvedValueOnce(true/* key exists */)
+    mockedStorageKeyExists.mockResolvedValueOnce(true /* key exists */);
     const wrapper = await mountKeyStorageEdit({
       uploadSetting: {
         dontOverwrite: true,
@@ -179,9 +174,7 @@ describe("KeyStorageEdit", () => {
     await flushPromises();
     const errorMsg = wrapper.find('[data-testid="error-msg"]');
     expect(errorMsg.text()).toBe("key already exists");
-    expect(
-      mockedStorageKeyCreate,
-    ).not.toHaveBeenCalled();
+    expect(mockedStorageKeyCreate).not.toHaveBeenCalled();
   });
 
   it("creates a new private key when it does not exist", async () => {
@@ -196,9 +189,9 @@ describe("KeyStorageEdit", () => {
 
     // Mock the storageKeyCreate method to return success
     mockedStorageKeyCreate.mockResolvedValueOnce({
-        name: "newKey",
-        path: "/keys/newKey",
-        type: 'privateKey',
+      name: "newKey",
+      path: "/keys/newKey",
+      type: "privateKey",
     });
 
     const saveButton = wrapper.find('[data-testid="save-btn"]');
@@ -207,16 +200,14 @@ describe("KeyStorageEdit", () => {
 
     const expectedEmittedEvent = [
       {
-          name: "newKey",
-          path: "/keys/newKey",
-        type: 'privateKey',
+        name: "newKey",
+        path: "/keys/newKey",
+        type: "privateKey",
       },
     ];
 
     // Verify that the storageKeyCreate method is called
-    expect(
-      mockedStorageKeyCreate
-    ).toHaveBeenCalledTimes(1);
+    expect(mockedStorageKeyCreate).toHaveBeenCalledTimes(1);
 
     // Verify that the finishEditing event is emitted with the correct data
     expect(wrapper.emitted().finishEditing[0]).toEqual(expectedEmittedEvent);
@@ -253,7 +244,7 @@ describe("KeyStorageEdit", () => {
         uploadSetting: {
           keyType: "password",
           inputType: "text",
-          password: "mypassword"
+          password: "mypassword",
         },
       });
 

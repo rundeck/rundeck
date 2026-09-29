@@ -693,6 +693,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         result.remove('query')
         result.remove('params')
         def nodes=result.remove('allnodes')
+        if (result.nodeserror) {
+            // Reduce to plain message strings: some ResourceModelSource plugins wrap third-party SDK
+            // exceptions whose internal object graph can't be safely reflected over by the JSON/XML
+            // converters (e.g. AWS SDK's non-public DefaultSdkHttpFullResponse), which would otherwise
+            // throw IllegalAccessException and turn a node-source error into an HTTP 500 for this request.
+            result.nodeserror = result.nodeserror.collect { Throwable t -> t.message ?: t.toString() }
+        }
         def controller = this
         withFormat {
             '*' {

@@ -147,8 +147,12 @@ public class JschNodeExecutor implements NodeExecutor, Describable, ProxyRunnerP
     public static final String PROJECT_SSH_USER = PROJ_PROP_PREFIX + "ssh.user";
 
     /**
-     * deprecated Global command & connection timeout framework property
+     * @deprecated Global command &amp; connection timeout framework property. Use {@link
+     *     #FRAMEWORK_SSH_COMMAND_TIMEOUT_PROP} and {@link #FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP}
+     *     instead, which allow the two timeouts to be configured separately. This combined
+     *     property is still read as a fallback when neither of the newer properties is set.
      */
+    @Deprecated
     public static final String SSH_TIMEOUT_PROP = "framework.ssh.timeout";
 
     public static final String NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP = "ssh-command-timeout";

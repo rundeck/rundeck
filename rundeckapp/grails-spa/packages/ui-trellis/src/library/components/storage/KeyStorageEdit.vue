@@ -238,12 +238,16 @@
 </template>
 
 <script lang="ts">
-import {storageKeyCreate, storageKeyExists, storageKeyGetMetadata, storageKeyUpdate,} from '../../services/storage'
-import type {PropType} from 'vue'
-import {defineComponent} from 'vue'
-import {getRundeckContext} from '../../index'
-import InputType from '../../types/InputType'
-import KeyType from '../../types/KeyType'
+import {
+  storageKeyCreate,
+  storageKeyExists,
+  storageKeyGetMetadata,
+  storageKeyUpdate,
+} from "../../services/storage";
+import type { PropType } from "vue";
+import { defineComponent } from "vue";
+import InputType from "../../types/InputType";
+import KeyType from "../../types/KeyType";
 
 export interface UploadSetting {
   modifyMode: boolean;
@@ -330,35 +334,34 @@ export default defineComponent({
       //   - cannot be exactly ".." (directory traversal)
       //   - first char: [a-zA-Z0-9,.+_-] (no leading space)
       //   - subsequent chars: [\sa-zA-Z0-9,.+_-] (space allowed)
-      const backendPattern = /^\/?((?!\.\.(\/|$))[a-zA-Z0-9,.+_-][\sa-zA-Z0-9,.+_-]*?\/?)+$/;
+      const backendPattern =
+        /^\/?((?!\.\.(\/|$))[a-zA-Z0-9,.+_-][\sa-zA-Z0-9,.+_-]*?\/?)+$/;
 
       if (backendPattern.test(path)) {
         return null;
       }
 
-      const components = path.split('/').filter(c => c.length > 0);
+      const components = path.split("/").filter((c) => c.length > 0);
 
       // Only flag ".." when it is a full path component (matches backend behavior).
       // Strings like "foo..bar" are valid and must not be reported as traversal.
-      if (components.some(component => component === '..')) {
-        return this.$t('storage.keyPath.error.traversal');
+      if (components.some((component) => component === "..")) {
+        return this.$t("storage.keyPath.error.traversal");
       }
 
-      if (components.some(component => component.startsWith(' '))) {
-        return this.$t('storage.keyPath.error.leadingSpace');
+      if (components.some((component) => component.startsWith(" "))) {
+        return this.$t("storage.keyPath.error.leadingSpace");
       }
 
       const validChars = /^[a-zA-Z0-9,.+_\s/-]$/;
-      const invalidChar = path.split('').find(char => !validChars.test(char));
+      const invalidChar = path.split("").find((char) => !validChars.test(char));
       if (invalidChar) {
-        return this.$t('storage.keyPath.error.invalidChar', [invalidChar]);
+        return this.$t("storage.keyPath.error.invalidChar", [invalidChar]);
       }
 
-      return this.$t('storage.keyPath.error.invalidFormat');
+      return this.$t("storage.keyPath.error.invalidFormat");
     },
     async handleUploadKey() {
-      const rundeckContext = getRundeckContext();
-
       const fullPath = this.calcBrowsePath(this.getKeyPath());
 
       // Validate path for new items only (skip for legacy items being edited)
@@ -370,18 +373,13 @@ export default defineComponent({
         }
       }
 
-      let contentType = "application/pgp-keys";
-
       let value = null as any;
 
       switch (this.uploadSetting.keyType) {
         case KeyType.Password:
-          contentType = "application/x-rundeck-data-password";
           value = this.uploadSetting.password;
           break;
         case KeyType.Private:
-          contentType = "application/octet-stream";
-
           if (this.uploadSetting.inputType === InputType.Text) {
             value = this.uploadSetting.textArea;
           } else {
@@ -415,29 +413,33 @@ export default defineComponent({
           return;
         }
         try {
-          let response=await storageKeyUpdate(fullPath, value, {type: this.uploadSetting.keyType})
+          let response = await storageKeyUpdate(fullPath, value, {
+            type: this.uploadSetting.keyType,
+          });
           this.$emit("finishEditing", response);
         } catch (err: unknown) {
           let errorMessage = "";
-          if (err && typeof err === 'object' && 'message' in err) {
+          if (err && typeof err === "object" && "message" in err) {
             errorMessage = (err as Error).message;
           }
           this.uploadSetting.errorMsg = errorMessage;
         }
       } else {
-        try{
-          let response=await storageKeyCreate(fullPath, value, {type: this.uploadSetting.keyType})
-          this.getCreatedKey(fullPath).then((r: any) => {
+        try {
+          let response = await storageKeyCreate(fullPath, value, {
+            type: this.uploadSetting.keyType,
+          });
+          this.getCreatedKey(fullPath).then(() => {
             this.$emit("keyCreated", this.createdKey);
             this.$emit("finishEditing", response);
           });
-        }catch(err: unknown){
-            let errorMessage = "";
-            if (err && typeof err === 'object' && 'message' in err) {
-              errorMessage = (err as Error).message;
-            }
-            this.uploadSetting.errorMsg = errorMessage;
+        } catch (err: unknown) {
+          let errorMessage = "";
+          if (err && typeof err === "object" && "message" in err) {
+            errorMessage = (err as Error).message;
           }
+          this.uploadSetting.errorMsg = errorMessage;
+        }
       }
     },
     async getCreatedKey(path: string) {
@@ -470,7 +472,7 @@ export default defineComponent({
           this.uploadSetting.errorMsg = null;
         }
       };
-      reader.onerror = (event: any) => {
+      reader.onerror = () => {
         this.uploadSetting.errorMsg = "file cannot be read";
         this.uploadSetting.file = null;
       };

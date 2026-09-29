@@ -22,7 +22,6 @@
           v-if="pagination.total >= 0"
           class="summary-count"
           :class="{
-
             'text-strong': pagination.total < 1,
             'text-info': pagination.total > 0,
           }"
@@ -505,7 +504,11 @@
                   )
                 "
               >
-                {{ rpt.job.group ? rpt.job.group + '/' + rpt.job.name : rpt.job.name }}
+                {{
+                  rpt.job.group
+                    ? rpt.job.group + "/" + rpt.job.name
+                    : rpt.job.name
+                }}
               </span>
               <span v-else>
                 {{ rpt.description }}
@@ -580,19 +583,26 @@
 </template>
 
 <script lang="ts">
-import {getExecutions, PagedResult, queryRunning,} from "../../../library/services/executions";
+import {
+  getExecutions,
+  queryRunning,
+} from "../../../library/services/executions";
 import axios from "axios";
-import {defineComponent, PropType} from "vue";
-import moment, {MomentInput} from "moment";
+import { defineComponent, PropType } from "vue";
+import moment, { MomentInput } from "moment";
 import OffsetPagination from "../../../library/components/utils/OffsetPagination.vue";
 import ActivityFilter from "./activityFilter.vue";
 
-import {EventBus, getRundeckContext} from "../../../library";
-import {ExecutionBulkDeleteResponse} from "@rundeck/client/dist/lib/models";
-import {Execution, ExecutionDate, Status} from "../../../library/types/executions/Execution";
+import { EventBus, getRundeckContext } from "../../../library";
+import { ExecutionBulkDeleteResponse } from "@rundeck/client/dist/lib/models";
+import {
+  Execution,
+  ExecutionDate,
+  Status,
+} from "../../../library/types/executions/Execution";
 import DOMPurify from "dompurify";
 import * as DateTimeFormatters from "../../utilities/DateTimeFormatters";
-import {api} from "../../../library/services/api";
+import { api } from "../../../library/services/api";
 
 /**
  * Generate a URL
@@ -744,14 +754,14 @@ export default defineComponent({
   },
   watch: {
     query: {
-      handler(newValue, oldValue) {
+      handler() {
         this.reload();
         this.syncQueryToUrl();
       },
       deep: true,
     },
     autorefresh: {
-      handler(newValue, oldValue) {
+      handler(newValue) {
         if (newValue) {
           //turn on
           this.startAutorefresh();
@@ -1069,8 +1079,7 @@ export default defineComponent({
         this.loadActivity(this.pagination.offset);
       } catch (error) {
         this.bulkEditProgress = false;
-        //@ts-ignore
-        this.bulkEditError = error.message || error;
+        this.bulkEditError = (error as Error).message || (error as string);
       }
     },
     performBulkDelete() {
@@ -1100,9 +1109,8 @@ export default defineComponent({
           this.sincecount = response.data.since.count;
         }
       } catch (error) {
-        //@ts-ignore
         this.disableRefresh = !this.disableRefresh;
-        this.loadError = error.message;
+        this.loadError = (error as Error).message;
       }
     },
     async loadRunning() {
@@ -1130,8 +1138,7 @@ export default defineComponent({
       } catch (error) {
         this.disableRefresh = !this.disableRefresh;
         this.loadingRunning = false;
-        //@ts-ignore
-        this.loadError = error.message;
+        this.loadError = (error as Error).message;
       }
     },
     async loadActivity(offset: number) {
@@ -1159,8 +1166,7 @@ export default defineComponent({
         }
       } catch (error) {
         this.loading = false;
-        //@ts-ignore
-        this.loadError = error.message;
+        this.loadError = (error as Error).message;
       }
     },
     parseToExecutionQuery() {

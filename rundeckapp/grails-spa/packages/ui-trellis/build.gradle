@@ -31,6 +31,7 @@ def pinnedNodeBin = project.ext.pinnedNodeBin
 
 def sourceDirs = [
         '.storybook',
+        'eslint',
         'lib',
         'src'
 ]

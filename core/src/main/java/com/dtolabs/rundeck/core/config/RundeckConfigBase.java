@@ -518,6 +518,7 @@ public class RundeckConfigBase {
         Enabled defaultExecutionCleanup = new Enabled();
         Enabled earlyAccessJobConditional = new Enabled();
         Enabled activityDefaultTimeFilter = new Enabled();
+        Enabled nextUiMode = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);
         Enabled pluginGroups = new Enabled(true);
         // RUN-4862: minimum number of visible lines in the ACE code editor. A value of 0

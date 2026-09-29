@@ -7,21 +7,21 @@
 // used by unrelated views like node tables).
 #fsPolicies,
 #storedPolicies {
-    max-width: 97vw;
+  max-width: 97vw;
 }
 
 .acl-policy-row {
-    max-width: 100%;
+  max-width: 100%;
 }
 
 .acl-policy-summary-list {
-    max-width: 100%;
+  max-width: 100%;
 }
 
 .acl-policy-summary-text {
-    display: inline-block;
-    max-width: 100%;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    vertical-align: bottom;
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: bottom;
 }

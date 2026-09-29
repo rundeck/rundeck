@@ -10,7 +10,7 @@ import {
   commonAddUiMessages,
   type LocalizedMessages,
 } from "../../utilities/i18n";
-import {configurePrimeVue} from "../../../library/utilities/primeVueConfig";
+import { configurePrimeVue } from "../../../library/utilities/primeVueConfig";
 
 const rootStore = getRundeckContext().rootStore;
 const EventBus = getRundeckContext().eventBus;

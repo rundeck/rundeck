@@ -333,10 +333,7 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(
-        element,
-        ServiceType.WorkflowStep,
-      );
+      const result = getPluginDetailsForStep(element, ServiceType.WorkflowStep);
 
       expect(mockGetServicePlugins).toHaveBeenCalledWith(
         ServiceType.WorkflowStep,
@@ -395,10 +392,7 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(
-        element,
-        ServiceType.WorkflowStep,
-      );
+      const result = getPluginDetailsForStep(element, ServiceType.WorkflowStep);
 
       expect(result.providerMetadata).toEqual({ glyphicon: "book" });
     });
@@ -411,10 +405,7 @@ describe("stepEditorUtils", () => {
         id: "test-id",
       } as EditStepData;
 
-      const result = getPluginDetailsForStep(
-        element,
-        ServiceType.WorkflowStep,
-      );
+      const result = getPluginDetailsForStep(element, ServiceType.WorkflowStep);
 
       expect(result).toEqual({
         title: "Job reference",

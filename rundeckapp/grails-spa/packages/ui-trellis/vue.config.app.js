@@ -1,5 +1,4 @@
 const Path = require("path");
-const webpack = require("webpack");
 const ESLintPlugin = require("eslint-webpack-plugin");
 
 const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`;
@@ -179,11 +178,6 @@ module.exports = {
     },
     externals: { vue: "Vue" },
     plugins: [
-      /** Generate source maps for CSS as it does not support eval-source-map */
-      new webpack.SourceMapDevToolPlugin({
-        filename: "[file].map",
-        include: [/\.css$/],
-      }),
       /** ESLint validation during build watch */
       new ESLintPlugin({
         extensions: ["js", "ts", "vue"],

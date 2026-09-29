@@ -34,10 +34,7 @@ const findByTestId = (wrapper: VueWrapper<any>, testId: string) => {
   return wrapper.find(`[data-testid="${testId}"]`);
 };
 
-const findEventHandler = (
-  eventBus: { on: jest.Mock },
-  eventName: string,
-) => {
+const findEventHandler = (eventBus: { on: jest.Mock }, eventName: string) => {
   const call = eventBus.on.mock.calls.find((args) => args[0] === eventName);
   return call ? call[1] : undefined;
 };
@@ -163,16 +160,16 @@ describe("LogViewer", () => {
 
     it("displays error message when viewer has an error", async () => {
       mockViewer.error = "Failed to load execution log";
-      mockViewer.completed = true; 
+      mockViewer.completed = true;
       const wrapper = createWrapper();
       await flushPromises();
 
       expect(findByTestId(wrapper, "log-viewer-error-message").exists()).toBe(
         true,
       );
-      expect(findByTestId(wrapper, "log-viewer-error-message").text()).toContain(
-        "Failed to load execution log",
-      );
+      expect(
+        findByTestId(wrapper, "log-viewer-error-message").text(),
+      ).toContain("Failed to load execution log");
     });
 
     it("displays whale emoji warning when log exceeds maxLogSize", async () => {
@@ -219,7 +216,10 @@ describe("LogViewer", () => {
 
       it("toggles stats visibility when user clicks Display Stats checkbox", async () => {
         const wrapper = createWrapper({ showSettings: true });
-        const statsCheckbox = findByTestId(wrapper, "log-viewer-stats-checkbox");
+        const statsCheckbox = findByTestId(
+          wrapper,
+          "log-viewer-stats-checkbox",
+        );
 
         await statsCheckbox.setValue(true);
         await nextTick();

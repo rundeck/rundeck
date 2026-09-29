@@ -2,7 +2,12 @@
   <div class="stepCardHeader">
     <div>
       <div>
-        <div class="plugin-info-wrapper" :class="{ 'disabled': disabled }" data-testid="step-card-header-plugin-info" @click="handleEdit">
+        <div
+          class="plugin-info-wrapper"
+          :class="{ disabled: disabled }"
+          data-testid="step-card-header-plugin-info"
+          @click="handleEdit"
+        >
           <plugin-info
             :detail="{
               ...config,
@@ -14,18 +19,24 @@
             titleCss="link-title"
           >
             <template #descriptionprefix>
-              <i class="pi pi-pencil"/>
+              <i class="pi pi-pencil" />
             </template>
           </plugin-info>
         </div>
       </div>
       <div class="stepCardHeader-description">
-        <p v-if="editing" data-testid="step-card-header-plugin-desc">{{ pluginDetails.description }}</p>
+        <p v-if="editing" data-testid="step-card-header-plugin-desc">
+          {{ pluginDetails.description }}
+        </p>
         <template v-else>
           <Tag
             :class="[effectiveNodeStep ? 'tag-node' : 'tag-workflow']"
             :icon="effectiveNodeStep ? 'pi pi-server' : undefined"
-            :value="effectiveNodeStep ? $t('Workflow.nodeStep') : $t('Workflow.workflowStep')"
+            :value="
+              effectiveNodeStep
+                ? $t('Workflow.nodeStep')
+                : $t('Workflow.workflowStep')
+            "
             data-testid="step-card-header-step-type-tag"
           />
           <template v-if="config.description">
@@ -37,7 +48,9 @@
               }"
             ></i>
           </template>
-          <p v-else data-testid="step-card-header-plugin-desc-fallback">{{ pluginDetails.description }}</p>
+          <p v-else data-testid="step-card-header-plugin-desc-fallback">
+            {{ pluginDetails.description }}
+          </p>
         </template>
       </div>
     </div>
@@ -63,7 +76,9 @@
         <PtButton
           text
           :icon="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-up'"
-          :aria-label="expanded ? $t('Workflow.collapse') : $t('Workflow.expand')"
+          :aria-label="
+            expanded ? $t('Workflow.collapse') : $t('Workflow.expand')
+          "
           :aria-expanded="expanded"
           :disabled="disabled"
           data-testid="step-card-header-toggle-btn"
@@ -81,12 +96,7 @@
           data-testid="step-card-header-more-btn"
           @click="handleMoreActions"
         />
-        <Menu
-          ref="menu"
-          id="overlay_menu"
-          :model="menuItems"
-          popup
-        />
+        <Menu ref="menu" id="overlay_menu" :model="menuItems" popup />
       </template>
     </div>
   </div>
@@ -140,9 +150,9 @@ export default defineComponent({
   emits: ["delete", "duplicate", "edit", "toggle"],
   inject: {
     editModelValidation: {
-      from: 'editModelValidation',
-      default: undefined
-    }
+      from: "editModelValidation",
+      default: undefined,
+    },
   },
   computed: {
     effectiveNodeStep(): boolean {
@@ -154,7 +164,7 @@ export default defineComponent({
     menuItems() {
       return [
         {
-          label: this.$t('Workflow.duplicateStep'),
+          label: this.$t("Workflow.duplicateStep"),
           command: () => {
             this.handleDuplicate();
           },
@@ -164,9 +174,12 @@ export default defineComponent({
     errorCount(): number {
       // Only use injected editModelValidation when in editing mode
       // This prevents non-editing StepCards from subscribing to global validation state
-      const validation: PluginValidation | null = this.validationErrors?.valid !== undefined
-        ? this.validationErrors as PluginValidation
-        : (this.editing ? this.editModelValidation as PluginValidation : null);
+      const validation: PluginValidation | null =
+        this.validationErrors?.valid !== undefined
+          ? (this.validationErrors as PluginValidation)
+          : this.editing
+            ? (this.editModelValidation as PluginValidation)
+            : null;
 
       if (!validation || validation.valid) {
         return 0;
@@ -176,9 +189,11 @@ export default defineComponent({
     },
     errorMessage(): string {
       if (this.errorCount === 1) {
-        return this.$t('Workflow.validation.oneError');
+        return this.$t("Workflow.validation.oneError");
       }
-      return this.$t('Workflow.validation.multipleErrors', { count: this.errorCount });
+      return this.$t("Workflow.validation.multipleErrors", {
+        count: this.errorCount,
+      });
     },
     showErrorTag(): boolean {
       return this.errorCount > 0;

@@ -34,9 +34,9 @@ rundeckContext.rootStore.ui.addItems([
           };
         },
         created() {
-          (this.addUiMessages as (messages: LocalizedMessages) => Promise<void>)(
-            messages as LocalizedMessages,
-          );
+          (
+            this.addUiMessages as (messages: LocalizedMessages) => Promise<void>
+          )(messages as LocalizedMessages);
 
           this.filename = this.itemData.filename;
           // code to handle displayConfig

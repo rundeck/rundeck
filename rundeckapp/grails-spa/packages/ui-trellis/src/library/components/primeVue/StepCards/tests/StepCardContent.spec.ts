@@ -11,7 +11,13 @@ jest.mock("@/library", () => ({
 }));
 
 jest.mock("@/library/modules/rundeckClient", () => ({ client: {} }));
-jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({ default: { name: "PluginConfig", inheritAttrs: false, template: '<div v-bind="$attrs" />' } }));
+jest.mock("@/library/components/plugins/pluginConfig.vue", () => ({
+  default: {
+    name: "PluginConfig",
+    inheritAttrs: false,
+    template: '<div v-bind="$attrs" />',
+  },
+}));
 
 const createWrapper = async (props = {}): Promise<any> => {
   const wrapper = mount(StepCardContent, {
@@ -38,36 +44,60 @@ describe("StepCardContent", () => {
       const wrapper = await createWrapper({
         config: { jobref: { name: "my-job", uuid: "abc-123" } },
       });
-      expect(wrapper.find('[data-testid="step-card-content-jobref-section"]').exists()).toBe(true);
+      expect(
+        wrapper
+          .find('[data-testid="step-card-content-jobref-section"]')
+          .exists(),
+      ).toBe(true);
     });
 
     it("does not show the job reference section when config has no jobref", async () => {
-      const wrapper = await createWrapper({ config: { type: "exec", config: {} } });
-      expect(wrapper.find('[data-testid="step-card-content-jobref-section"]').exists()).toBe(false);
+      const wrapper = await createWrapper({
+        config: { type: "exec", config: {} },
+      });
+      expect(
+        wrapper
+          .find('[data-testid="step-card-content-jobref-section"]')
+          .exists(),
+      ).toBe(false);
     });
 
     it("shows the plugin config section when there is no jobref", async () => {
-      const wrapper = await createWrapper({ config: { type: "exec", config: {} } });
-      expect(wrapper.find('[data-testid="step-card-content-plugin-config"]').exists()).toBe(true);
+      const wrapper = await createWrapper({
+        config: { type: "exec", config: {} },
+      });
+      expect(
+        wrapper
+          .find('[data-testid="step-card-content-plugin-config"]')
+          .exists(),
+      ).toBe(true);
     });
 
     it("does not show the plugin config section when config has a jobref", async () => {
       const wrapper = await createWrapper({
         config: { jobref: { name: "my-job" } },
       });
-      expect(wrapper.find('[data-testid="step-card-content-plugin-config"]').exists()).toBe(false);
+      expect(
+        wrapper
+          .find('[data-testid="step-card-content-plugin-config"]')
+          .exists(),
+      ).toBe(false);
     });
   });
 
   describe("log filters config section", () => {
     it("shows the log filters section when hideConfigSection is false and there is no jobref", async () => {
       const wrapper = await createWrapper({ hideConfigSection: false });
-      expect(wrapper.find('[data-testid="step-card-content-log-filters"]').exists()).toBe(true);
+      expect(
+        wrapper.find('[data-testid="step-card-content-log-filters"]').exists(),
+      ).toBe(true);
     });
 
     it("hides the log filters section when hideConfigSection is true", async () => {
       const wrapper = await createWrapper({ hideConfigSection: true });
-      expect(wrapper.find('[data-testid="step-card-content-log-filters"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="step-card-content-log-filters"]').exists(),
+      ).toBe(false);
     });
 
     it("hides the log filters section when config has a jobref even if hideConfigSection is false", async () => {
@@ -75,19 +105,29 @@ describe("StepCardContent", () => {
         config: { jobref: { name: "my-job" } },
         hideConfigSection: false,
       });
-      expect(wrapper.find('[data-testid="step-card-content-log-filters"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="step-card-content-log-filters"]').exists(),
+      ).toBe(false);
     });
   });
 
   describe("error handler config section", () => {
     it("shows the error handler section when hideConfigSection is false", async () => {
       const wrapper = await createWrapper({ hideConfigSection: false });
-      expect(wrapper.find('[data-testid="step-card-content-error-handler"]').exists()).toBe(true);
+      expect(
+        wrapper
+          .find('[data-testid="step-card-content-error-handler"]')
+          .exists(),
+      ).toBe(true);
     });
 
     it("hides the error handler section when hideConfigSection is true", async () => {
       const wrapper = await createWrapper({ hideConfigSection: true });
-      expect(wrapper.find('[data-testid="step-card-content-error-handler"]').exists()).toBe(false);
+      expect(
+        wrapper
+          .find('[data-testid="step-card-content-error-handler"]')
+          .exists(),
+      ).toBe(false);
     });
   });
 
@@ -99,7 +139,9 @@ describe("StepCardContent", () => {
         errorHandler: [{ type: "exec", title: "Handler" }],
         elementId: "my-step",
       });
-      await wrapper.find('[data-testid="config-section-add-btn"]').trigger("click");
+      await wrapper
+        .find('[data-testid="config-section-add-btn"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("add-log-filter")).toHaveLength(1);
@@ -113,7 +155,9 @@ describe("StepCardContent", () => {
         errorHandler: [],
         elementId: "my-step",
       });
-      await wrapper.find('[data-testid="config-section-add-btn"]').trigger("click");
+      await wrapper
+        .find('[data-testid="config-section-add-btn"]')
+        .trigger("click");
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("add-error-handler")).toHaveLength(1);
@@ -123,7 +167,10 @@ describe("StepCardContent", () => {
 
   describe("editing items", () => {
     it("emits edit-log-filter with the filter and its index when a log filter chip is clicked", async () => {
-      const filter = { type: "logging/mask-passwords", title: "Mask Passwords" };
+      const filter = {
+        type: "logging/mask-passwords",
+        title: "Mask Passwords",
+      };
       const wrapper = await createWrapper({
         logFilters: [filter],
         errorHandler: [],
@@ -133,14 +180,18 @@ describe("StepCardContent", () => {
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("edit-log-filter")).toHaveLength(1);
-      expect(wrapper.emitted("edit-log-filter")![0]).toEqual([{ filter, index: 0 }]);
+      expect(wrapper.emitted("edit-log-filter")![0]).toEqual([
+        { filter, index: 0 },
+      ]);
     });
 
     it("does not emit edit-error-handler when there is no error handler configured", async () => {
       const wrapper = await createWrapper({ errorHandler: [] });
       // handleEditErrorHandler has a guard: returns early if errorHandlerData is null
       // Simulate the ConfigSection emitting editElement with no data
-      await wrapper.findComponent({ name: "ConfigSection" }).vm.$emit("editElement", null, 0);
+      await wrapper
+        .findComponent({ name: "ConfigSection" })
+        .vm.$emit("editElement", null, 0);
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("edit-error-handler")).toBeFalsy();
@@ -167,21 +218,27 @@ describe("StepCardContent", () => {
       const wrapper = await createWrapper({
         config: { jobref: { group: "ops", name: "deploy", uuid: "abc" } },
       });
-      expect(wrapper.find('[data-testid="step-card-content-jobref-section"]').text()).toContain("ops/deploy");
+      expect(
+        wrapper.find('[data-testid="step-card-content-jobref-section"]').text(),
+      ).toContain("ops/deploy");
     });
 
     it("uses just the name when there is no group", async () => {
       const wrapper = await createWrapper({
         config: { jobref: { name: "deploy", uuid: "abc" } },
       });
-      expect(wrapper.find('[data-testid="step-card-content-jobref-section"]').text()).toContain("deploy");
+      expect(
+        wrapper.find('[data-testid="step-card-content-jobref-section"]').text(),
+      ).toContain("deploy");
     });
 
     it("falls back to uuid when there is no name", async () => {
       const wrapper = await createWrapper({
         config: { jobref: { uuid: "abc-123" } },
       });
-      expect(wrapper.find('[data-testid="step-card-content-jobref-section"]').text()).toContain("abc-123");
+      expect(
+        wrapper.find('[data-testid="step-card-content-jobref-section"]').text(),
+      ).toContain("abc-123");
     });
   });
 });

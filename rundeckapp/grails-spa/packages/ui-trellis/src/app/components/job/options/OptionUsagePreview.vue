@@ -9,7 +9,8 @@
       <label class="col-sm-2 control-label">{{ $t("usage") }}</label>
       <div
         v-if="
-          (!option.secure || option.valueExposed) && !(option.type === 'multiline' && features.multilineJobOptions)
+          (!option.secure || option.valueExposed) &&
+          !(option.type === 'multiline' && features.multilineJobOptions)
         "
         class="col-sm-10 form-control-static"
       >

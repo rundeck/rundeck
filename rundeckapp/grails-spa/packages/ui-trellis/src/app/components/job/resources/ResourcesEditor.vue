@@ -69,7 +69,7 @@
             <node-filter-input
               id="job_edit__node_filter_include"
               :value="modelData.filter"
-              @update:value="newValue => modelData.filter = newValue"
+              @update:value="(newValue) => (modelData.filter = newValue)"
               :project="modelData.project"
               :filter-name="modelData.filterName"
               :node-summary="nodeSummary"
@@ -102,7 +102,7 @@
             <node-filter-input
               id="job_edit__node_filter_exclude"
               :value="modelData.filterExclude"
-              @update:value="newvalue => modelData.filterExclude = newvalue"
+              @update:value="(newvalue) => (modelData.filterExclude = newvalue)"
               :project="modelData.project"
               :filter-name="modelData.filterNameExclude"
               :node-summary="nodeSummary"
@@ -521,7 +521,7 @@ export default defineComponent({
     },
     handleFilterClick(val: any) {
       if (val.filter) {
-        if(val.filter ===".*" || this.modelData.filter === ".*") {
+        if (val.filter === ".*" || this.modelData.filter === ".*") {
           this.modelData.filter = val.filter;
         } else {
           this.modelData.filter = [this.modelData.filter, val.filter].join(" ");
@@ -532,10 +532,13 @@ export default defineComponent({
       }
       if (val.filterExclude) {
         if (val.filter) {
-          if(val.filter ===".*" || this.modelData.filter === ".*") {
+          if (val.filter === ".*" || this.modelData.filter === ".*") {
             this.modelData.filterExclude = val.filter;
           } else {
-            this.modelData.filterExclude = [this.modelData.filterExclude, val.filter].join(" ");
+            this.modelData.filterExclude = [
+              this.modelData.filterExclude,
+              val.filter,
+            ].join(" ");
           }
         }
       }

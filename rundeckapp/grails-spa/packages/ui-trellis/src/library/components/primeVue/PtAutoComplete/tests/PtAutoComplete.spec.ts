@@ -26,7 +26,9 @@ describe("PtAutoComplete", () => {
   describe("label", () => {
     it("does not show a label when the label prop is not provided", async () => {
       const wrapper = await createWrapper();
-      expect(wrapper.find('[data-testid="pt-autocomplete-label"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="pt-autocomplete-label"]').exists(),
+      ).toBe(false);
     });
 
     it("shows the label text above the field so users know what to fill", async () => {
@@ -37,7 +39,10 @@ describe("PtAutoComplete", () => {
     });
 
     it("links the label to the input via the inputId so screen readers work", async () => {
-      const wrapper = await createWrapper({ label: "Variable", inputId: "var-field" });
+      const wrapper = await createWrapper({
+        label: "Variable",
+        inputId: "var-field",
+      });
       expect(
         wrapper.find('[data-testid="pt-autocomplete-label"]').attributes("for"),
       ).toBe("var-field");
@@ -46,12 +51,20 @@ describe("PtAutoComplete", () => {
 
   describe("error message", () => {
     it("does not show an error when the field is valid", async () => {
-      const wrapper = await createWrapper({ invalid: false, errorText: "Bad value" });
-      expect(wrapper.find('[data-testid="pt-autocomplete-error"]').exists()).toBe(false);
+      const wrapper = await createWrapper({
+        invalid: false,
+        errorText: "Bad value",
+      });
+      expect(
+        wrapper.find('[data-testid="pt-autocomplete-error"]').exists(),
+      ).toBe(false);
     });
 
     it("shows the error message text when the field is invalid so users know what went wrong", async () => {
-      const wrapper = await createWrapper({ invalid: true, errorText: "Variable not found" });
+      const wrapper = await createWrapper({
+        invalid: true,
+        errorText: "Variable not found",
+      });
       const error = wrapper.find('[data-testid="pt-autocomplete-error"]');
       expect(error.exists()).toBe(true);
       expect(error.text()).toBe("Variable not found");
@@ -59,7 +72,9 @@ describe("PtAutoComplete", () => {
 
     it("does not show an error even when invalid if no errorText is provided", async () => {
       const wrapper = await createWrapper({ invalid: true });
-      expect(wrapper.find('[data-testid="pt-autocomplete-error"]').exists()).toBe(false);
+      expect(
+        wrapper.find('[data-testid="pt-autocomplete-error"]').exists(),
+      ).toBe(false);
     });
   });
 
@@ -67,7 +82,9 @@ describe("PtAutoComplete", () => {
     it("notifies the parent of the change event and also syncs v-model when the user commits a value", async () => {
       const wrapper = await createWrapper({ modelValue: "my-value" });
       const changePayload = { value: "my-value" };
-      await wrapper.findComponent(AutoComplete).vm.$emit("change", changePayload);
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("change", changePayload);
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("onChange")).toHaveLength(1);
@@ -79,7 +96,9 @@ describe("PtAutoComplete", () => {
     it("forwards the complete event with its payload so the parent can track suggestions", async () => {
       const wrapper = await createWrapper();
       const completePayload = { query: "job" };
-      await wrapper.findComponent(AutoComplete).vm.$emit("complete", completePayload);
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("complete", completePayload);
       await wrapper.vm.$nextTick();
 
       expect(wrapper.emitted("onComplete")).toHaveLength(1);
@@ -106,7 +125,9 @@ describe("PtAutoComplete", () => {
       await wrapper.vm.$nextTick();
 
       // tabFilteredSuggestions (the massaged prop) should contain only the matching entry
-      const suggestions = wrapper.findComponent(AutoComplete).props("suggestions");
+      const suggestions = wrapper
+        .findComponent(AutoComplete)
+        .props("suggestions");
       expect(suggestions).toContain("${job.execid}");
       expect(suggestions).not.toContain("${job.id}");
     });
@@ -124,7 +145,9 @@ describe("PtAutoComplete", () => {
       await wrapper.vm.$nextTick();
 
       // tabFilteredSuggestions returns undefined for empty results; PrimeVue normalises this to null
-      expect(wrapper.findComponent(AutoComplete).props("suggestions")).toBeFalsy();
+      expect(
+        wrapper.findComponent(AutoComplete).props("suggestions"),
+      ).toBeFalsy();
     });
 
     it("shows all suggestions when the user types just a dollar sign", async () => {
@@ -139,7 +162,9 @@ describe("PtAutoComplete", () => {
       jest.advanceTimersByTime(200);
       await wrapper.vm.$nextTick();
 
-      const suggestions = wrapper.findComponent(AutoComplete).props("suggestions");
+      const suggestions = wrapper
+        .findComponent(AutoComplete)
+        .props("suggestions");
       expect(suggestions).toContain("${job.execid}");
       expect(suggestions).toContain("${job.id}");
     });
@@ -165,7 +190,11 @@ describe("PtAutoComplete", () => {
         },
       ];
 
-      const wrapper = await createWrapper({ suggestions: tabSuggestions, tabMode: true, tabs });
+      const wrapper = await createWrapper({
+        suggestions: tabSuggestions,
+        tabMode: true,
+        tabs,
+      });
 
       // Type "$" to trigger all suggestions – with tabMode the active tab filters the result
       await wrapper.findComponent(AutoComplete).vm.$emit("complete", {
@@ -177,7 +206,9 @@ describe("PtAutoComplete", () => {
       await wrapper.vm.$nextTick();
 
       // Default active tab is index 0 ("Job") – only job suggestions should be passed to AutoComplete
-      const suggestions = wrapper.findComponent(AutoComplete).props("suggestions");
+      const suggestions = wrapper
+        .findComponent(AutoComplete)
+        .props("suggestions");
       expect(suggestions).toContain("${job.execid}");
       expect(suggestions).not.toContain("${option.myopt}");
     });

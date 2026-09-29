@@ -3,7 +3,7 @@ import { api, apiClient } from "../../services/api";
 import {
   ExecutionOutput,
   ExecutionOutputEntry,
-  ExecutionOutputStore
+  ExecutionOutputStore,
 } from "../ExecutionOutput";
 import { RootStore } from "../RootStore";
 import { RundeckBrowser } from "@rundeck/client";
@@ -64,7 +64,9 @@ describe("ExecutionOutput", () => {
 
     it("should get output with a specified max lines", async () => {
       const store = new ExecutionOutputStore(rootStore, mockClient);
-      const getOutputSpy = jest.spyOn(ExecutionOutput.prototype, 'getOutput').mockResolvedValue([]);
+      const getOutputSpy = jest
+        .spyOn(ExecutionOutput.prototype, "getOutput")
+        .mockResolvedValue([]);
 
       await store.getOutput("123", 100);
 
@@ -122,15 +124,19 @@ describe("ExecutionOutput", () => {
       executionOutput.entries.push(entry1, entry2, entry3);
 
       // Setup entries by node:step
-      executionOutput.entriesbyNodeCtx.get = jest.fn().mockImplementation((key) => {
-        if (key === "node1:1") return [entry1, entry3];
-        if (key === "node1:2") return [entry2];
-        return [];
-      });
+      executionOutput.entriesbyNodeCtx.get = jest
+        .fn()
+        .mockImplementation((key) => {
+          if (key === "node1:1") return [entry1, entry3];
+          if (key === "node1:2") return [entry2];
+          return [];
+        });
 
       // Filter by node and step
       const nodeStepEntries = executionOutput.getEntriesFiltered("node1", "1");
-      expect(executionOutput.entriesbyNodeCtx.get).toHaveBeenCalledWith("node1:1");
+      expect(executionOutput.entriesbyNodeCtx.get).toHaveBeenCalledWith(
+        "node1:1",
+      );
       expect(nodeStepEntries).toEqual([entry1, entry3]);
     });
 
@@ -166,15 +172,13 @@ describe("ExecutionOutput", () => {
             data: {
               id: "123",
               job: { id: "job-123" },
-            }
+            },
           });
         } else if (url === "job/job-123/workflow") {
           return Promise.resolve({
             data: {
-              workflow: [
-                { exec: "echo test", type: "exec", nodeStep: "true" }
-              ]
-            }
+              workflow: [{ exec: "echo test", type: "exec", nodeStep: "true" }],
+            },
           });
         }
         return Promise.reject(new Error(`Unexpected URL: ${url}`));
@@ -184,7 +188,7 @@ describe("ExecutionOutput", () => {
 
       expect(workflow).toBeInstanceOf(JobWorkflow);
       expect(workflow.workflow).toEqual([
-        { exec: "echo test", type: "exec", nodeStep: "true" }
+        { exec: "echo test", type: "exec", nodeStep: "true" },
       ]);
 
       // Should cache the workflow
@@ -200,14 +204,14 @@ describe("ExecutionOutput", () => {
           id: "123",
           description: "Ad-hoc command",
           // No job property means it's an ad-hoc execution
-        }
+        },
       });
 
       const workflow = await executionOutput.getJobWorkflow();
 
       expect(workflow).toBeInstanceOf(JobWorkflow);
       expect(workflow.workflow).toEqual([
-        { exec: "Ad-hoc command", type: "exec", nodeStep: "true" }
+        { exec: "Ad-hoc command", type: "exec", nodeStep: "true" },
       ]);
     });
 
@@ -220,7 +224,7 @@ describe("ExecutionOutput", () => {
       };
 
       (api.get as jest.Mock).mockResolvedValueOnce({
-        data: mockStatus
+        data: mockStatus,
       });
 
       const status = await executionOutput.getExecutionStatus();
@@ -239,7 +243,12 @@ describe("ExecutionOutput", () => {
         completed: false,
         execCompleted: false,
         entries: [
-          { time: "12:00:00", log: "Test log entry", level: "INFO", node: "node1" }
+          {
+            time: "12:00:00",
+            log: "Test log entry",
+            level: "INFO",
+            node: "node1",
+          },
         ],
         totalSize: 200,
       };
@@ -260,9 +269,9 @@ describe("ExecutionOutput", () => {
         status: 404,
       });
 
-      await expect(executionOutput.getExecutionOutput("123", 0, 100))
-        .rejects
-        .toThrow("Error calling execution log api:");
+      await expect(
+        executionOutput.getExecutionOutput("123", 0, 100),
+      ).rejects.toThrow("Error calling execution log api:");
     });
 
     it("should observe entries with callback", () => {
@@ -282,7 +291,7 @@ describe("ExecutionOutput", () => {
     it("should create an entry from API response", () => {
       const executionOutput = new ExecutionOutput("123", mockClient);
       const mockWorkflow = new JobWorkflow([
-        { exec: "echo test", type: "exec", nodeStep: "true" }
+        { exec: "echo test", type: "exec", nodeStep: "true" },
       ]);
 
       const apiResponse = {
@@ -293,14 +302,14 @@ describe("ExecutionOutput", () => {
         level: "INFO",
         stepctx: "1",
         node: "node1",
-        metadata: { key: "value" }
+        metadata: { key: "value" },
       };
 
       const entry = ExecutionOutputEntry.FromApiResponse(
         executionOutput,
         apiResponse,
         5,
-        mockWorkflow
+        mockWorkflow,
       );
 
       expect(entry.executionOutput).toBe(executionOutput);

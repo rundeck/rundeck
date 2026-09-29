@@ -1,5 +1,9 @@
 <template>
-  <modal v-model="modalShown" :title="title || $t('plugin.choose.title')" size="lg">
+  <modal
+    v-model="modalShown"
+    :title="title || $t('plugin.choose.title')"
+    size="lg"
+  >
     <slot></slot>
     <plugin-search
       v-if="showSearch"
@@ -133,9 +137,10 @@ export default defineComponent({
     filteredServices() {
       return this.loadedServices.map((service) => {
         const filteredProviders =
-          service.providers?.filter((provider) =>
-            this.matchesSearchQuery(provider) &&
-            !this.excludeProviders.includes(provider.name),
+          service.providers?.filter(
+            (provider) =>
+              this.matchesSearchQuery(provider) &&
+              !this.excludeProviders.includes(provider.name),
           ) || [];
         return {
           ...service,
@@ -205,7 +210,13 @@ export default defineComponent({
             this.checkMatch(provider, "description", value);
     },
     checkMatch(obj: Plugin, field: string, val: string) {
-      return obj[field as keyof Plugin] && val && String(obj[field as keyof Plugin]).toLowerCase().indexOf(val) >= 0;
+      return (
+        obj[field as keyof Plugin] &&
+        val &&
+        String(obj[field as keyof Plugin])
+          .toLowerCase()
+          .indexOf(val) >= 0
+      );
     },
     calculateDividerIndex(providers: Plugin[]) {
       return providers.findIndex(

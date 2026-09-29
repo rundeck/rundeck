@@ -166,7 +166,7 @@ export default defineComponent({
         groupPath: "",
       },
       errors: [],
-      preview: null,
+      preview: null as string | null,
       loaded: false,
       eventBus: getRundeckContext().eventBus,
     };
@@ -225,10 +225,13 @@ export default defineComponent({
         "",
       );
       // then add markdown
-      // @ts-ignore
-      window.markdeep.format(massagedData + "\n", true, (t) => {
-        this.preview = t;
-      });
+      (window as any).markdeep.format(
+        massagedData + "\n",
+        true,
+        (t: string) => {
+          this.preview = t;
+        },
+      );
     },
   },
 });
