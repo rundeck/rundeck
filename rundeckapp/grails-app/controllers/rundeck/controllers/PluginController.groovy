@@ -46,6 +46,23 @@ import static org.springframework.http.HttpStatus.NOT_FOUND
 
 @Controller
 class PluginController extends ControllerBase {
+    /**
+     * The file uploaded under the given part name, or null when there is none.
+     *
+     * params first: on Grails 8 the request a controller holds is Spring Security's wrapper and
+     * DispatcherServlet adds the multipart request around it afterwards, so an instanceof check on
+     * the request is false for a real upload. The request is still consulted as a fallback, because
+     * controller unit tests drive a mock request that genuinely is one and does not fill params.
+     *
+     * See .claude/rules/grails-multipart.md.
+     */
+    private MultipartFile uploadedFile(String name) {
+        if (params[name] instanceof MultipartFile) {
+            return (MultipartFile) params[name]
+        }
+        request instanceof MultipartHttpServletRequest ? ((MultipartHttpServletRequest) request).getFile(name) : null
+    }
+
     private static final String RELATIVE_PLUGIN_UPLOAD_DIR = "var/tmp/pluginUpload"
     private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")
     static def allowedMethods = [
@@ -605,11 +622,11 @@ Since: v49''',
             renderErrorCodeAsJson("request.error.unauthorized.title")
             return
         }
-        if(!(params.pluginFile instanceof MultipartFile)){
+        if(!uploadedFile('pluginFile')){
             renderErrorCodeAsJson("plugin.error.missing.upload.file")
             return
         }
-        MultipartFile file = (MultipartFile) params.pluginFile
+        MultipartFile file = uploadedFile('pluginFile')
         ensureUploadLocation()
         File tmpFile
         try {

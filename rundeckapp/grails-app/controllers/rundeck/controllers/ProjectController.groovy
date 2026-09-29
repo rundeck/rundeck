@@ -82,6 +82,23 @@ import org.springframework.web.multipart.MultipartFile
 
 @Controller
 class ProjectController extends ControllerBase{
+    /**
+     * The file uploaded under the given part name, or null when there is none.
+     *
+     * params first: on Grails 8 the request a controller holds is Spring Security's wrapper and
+     * DispatcherServlet adds the multipart request around it afterwards, so an instanceof check on
+     * the request is false for a real upload. The request is still consulted as a fallback, because
+     * controller unit tests drive a mock request that genuinely is one and does not fill params.
+     *
+     * See .claude/rules/grails-multipart.md.
+     */
+    private MultipartFile uploadedFile(String name) {
+        if (params[name] instanceof MultipartFile) {
+            return (MultipartFile) params[name]
+        }
+        request instanceof MultipartHttpServletRequest ? ((MultipartHttpServletRequest) request).getFile(name) : null
+    }
+
     FrameworkService frameworkService
     ProjectService projectService
     PluginService pluginService
@@ -432,8 +449,8 @@ class ProjectController extends ControllerBase{
             def project1 = frameworkService.getFrameworkProject(project)
 
             //uploaded file
-            if (params.zipFile instanceof MultipartFile) {
-                MultipartFile file = (MultipartFile) params.zipFile
+            if (uploadedFile('zipFile')) {
+                MultipartFile file = uploadedFile('zipFile')
                 if (file.empty) {
                     flash.error = message(code:"no.file.was.uploaded")
                     return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
