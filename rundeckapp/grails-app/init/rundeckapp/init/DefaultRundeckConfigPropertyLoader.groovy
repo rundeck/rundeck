@@ -83,26 +83,52 @@ class DefaultRundeckConfigPropertyLoader implements CoreConfigurationPropertiesL
      * @return the configured url, with permitMysqlScheme appended where required, or null
      */
     static String configuredDataSourceUrl() {
-        String url = configuredDataSourceSetting("url")
+        return permitMysqlScheme(
+                configuredDataSourceSetting("url"),
+                configuredDataSourceSetting("driverClassName")
+        )
+    }
+
+    /** Emitted at most once; every call site below would otherwise repeat the same line. */
+    private static boolean permitMysqlSchemeWarned = false
+
+    /**
+     * Appends <code>permitMysqlScheme</code> to a url the MariaDB driver would otherwise refuse.
+     *
+     * Kept separate from {@link #configuredDataSourceUrl} because the nested dataSource map in
+     * application.groovy is not the only place the url reaches the datasource, and in fact loses:
+     * Application.loadRundeckPropertySources publishes rundeck-config.properties with
+     * <code>addFirst</code>, so its flat <code>dataSource.url</code> key outranks whatever
+     * application.groovy computed. The rewrite has to be applied to that property source too --
+     * see ReloadableRundeckPropertySource -- or the pool is handed the raw url and fails with
+     * "returned null for URL" while the log shows this fix being applied.
+     *
+     * @param url the configured url, may be null
+     * @param driverClassName the configured driver, may be null
+     * @return the url unchanged, or with the parameter appended where the driver requires it
+     */
+    static String permitMysqlScheme(String url, String driverClassName) {
         if (!url || !url.startsWith("jdbc:mysql:")) {
             return url
         }
-        if (configuredDataSourceSetting("driverClassName") != MARIADB_DRIVER) {
+        if (driverClassName != MARIADB_DRIVER) {
             return url
         }
         if (url.contains(PERMIT_MYSQL_SCHEME)) {
             return url
         }
         String separator = url.contains("?") ? "&" : "?"
-        String permitted = "${url}${separator}${PERMIT_MYSQL_SCHEME}"
-        // Not LOG: this runs while the application config is being parsed, before logging is
-        // initialised, so a logger call here is silently dropped (verified). stderr is what the
-        // prebootstrap phase already uses, and it reaches service.log where operators look.
-        System.err.println(
-                "Added ${PERMIT_MYSQL_SCHEME} to dataSource.url: ${MARIADB_DRIVER} 3.x rejects the " +
-                "jdbc:mysql: scheme without it. Configure a jdbc:mariadb: url to avoid this."
-        )
-        return permitted
+        if (!permitMysqlSchemeWarned) {
+            permitMysqlSchemeWarned = true
+            // Not LOG: this runs while the application config is being parsed, before logging is
+            // initialised, so a logger call here is silently dropped (verified). stderr is what the
+            // prebootstrap phase already uses, and it reaches service.log where operators look.
+            System.err.println(
+                    "Added ${PERMIT_MYSQL_SCHEME} to dataSource.url: ${MARIADB_DRIVER} 3.x rejects the " +
+                    "jdbc:mysql: scheme without it. Configure a jdbc:mariadb: url to avoid this."
+            )
+        }
+        return "${url}${separator}${PERMIT_MYSQL_SCHEME}"
     }
 
     /**
