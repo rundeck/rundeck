@@ -57,6 +57,10 @@ import org.springframework.web.context.request.RequestContextHolder
 @CompileStatic
 class RecycleSafeGrailsWebRequestTaskDecorator implements TaskDecorator {
 
+    /** Attribute name used only to ask the originating request whether it is still alive. */
+    private static final String RECYCLE_PROBE_ATTRIBUTE =
+            'rundeck.taskDecorator.recycleProbe'
+
     @Override
     Runnable decorate(Runnable task) {
         GrailsWebRequest captured = GrailsWebRequest.lookup()
@@ -69,6 +73,14 @@ class RecycleSafeGrailsWebRequestTaskDecorator implements TaskDecorator {
                 RequestAttributes previous = RequestContextHolder.getRequestAttributes()
                 GrailsWebRequest taskRequest = null
                 try {
+                    // Probe the originating request before binding it. The constructor below does
+                    // not touch the parts Jetty recycles, so on a dead request it still succeeds
+                    // and the failure surfaces much later and much deeper -- DefaultLinkGenerator
+                    // reading an attribute from inside a project deletion, where it aborts the
+                    // delete of an execution, the foreign key then blocks the job, and the project
+                    // is left stuck in "disabled or being deleted" for the rest of the run. This is
+                    // the same call that fails there, made where it can still be handled.
+                    captured.currentRequest.getAttribute(RECYCLE_PROBE_ATTRIBUTE)
                     taskRequest = new GrailsWebRequest(
                             captured.currentRequest,
                             captured.currentResponse,
