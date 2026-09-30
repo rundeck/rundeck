@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.support.ExtraCommand
+import groovy.json.JsonDelegate
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
@@ -605,8 +606,11 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
             1 * requireApi(_,_) >> true
             1* renderSuccessJson(_,_)>> {
                 def clos=it[1]
-                clos.delegate=data
+                def jsonDelegate = new JsonDelegate()
+                clos.delegate=jsonDelegate
+                clos.resolveStrategy=Closure.DELEGATE_FIRST
                 clos.call()
+                data = jsonDelegate.content
                 null
             }
         }
@@ -4254,6 +4258,31 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
             'yaml' |null | null       | null       | 'true'
             'yaml' |null | null       | 'remove'   | null
             'yaml' |null | 'update'   | null       | null
+    }
+    def "api jobs import multipart with no file part is a missing file, not content"() {
+        given:
+            controller.apiService = Mock(ApiService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            request.method = 'POST'
+            params.project = 'aproj'
+            // A multipart POST carrying xmlBatch as a plain form-data part rather than a file, as
+            // JobsImportSpec sends it. The content type is what still identifies the request as an
+            // upload -- the instanceof does not, see .claude/rules/grails-multipart.md -- so this
+            // must report a missing file and never fall through to the form-encoded branch, which
+            // would hand 'z' to the parser and fail as invalid content instead.
+            request.contentType = 'multipart/form-data; boundary=abc'
+            params.xmlBatch = 'z'
+        when:
+            controller.apiJobsImportv14()
+        then:
+            1 * controller.apiService.requireApi(_,_) >> true
+            1 * controller.apiService.requireParameters(_, _, ['project']) >> true
+            1 * controller.apiService.requireParameters(_, _, ['xmlBatch']) >> true
+            0 * controller.scheduledExecutionService.parseUploadedFile(*_)
+            1 * controller.apiService.renderErrorFormat(_, {
+                it.code == 'api.error.jobs.import.missing-file'
+            })
     }
     def "api job export"(){
         given:

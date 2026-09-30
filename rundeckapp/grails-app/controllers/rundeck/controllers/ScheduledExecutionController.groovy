@@ -1899,22 +1899,14 @@ Failed results will contain:
         withFormat {
             '*' {
                 return apiService.renderSuccessJson(response) {
-                    requestCount= ids.size()
-                    enabled=params.status
-                    allsuccessful=(successful.size()==ids.size())
+                    requestCount(ids.size())
+                    enabled(params.status)
+                    allsuccessful(successful.size()==ids.size())
                     if(successful){
-                        delegate.'succeeded'=array {
-                            successful.each{del->
-                                delegate.'element'(id:del.id,message:del.message)
-                            }
-                        }
+                        delegate.succeeded(successful.collect{del-> [id:del.id,message:del.message]})
                     }
                     if(errors){
-                        delegate.'failed'=array {
-                            errors.each{del->
-                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
-                            }
-                        }
+                        delegate.failed(errors.collect{del-> [id:del.id,errorCode:del.errorCode,message:del.message]})
                     }
                 }
             }
@@ -2130,22 +2122,14 @@ Failed results will contain:
         withFormat {
             '*' {
                 return apiService.renderSuccessJson(response) {
-                    requestCount= ids.size()
-                    enabled=params.status
-                    allsuccessful=(successful.size()==ids.size())
+                    requestCount(ids.size())
+                    enabled(params.status)
+                    allsuccessful(successful.size()==ids.size())
                     if(successful){
-                        delegate.'succeeded'=array {
-                            successful.each{del->
-                                delegate.'element'(id:del.id,message:del.message)
-                            }
-                        }
+                        delegate.succeeded(successful.collect{del-> [id:del.id,message:del.message]})
                     }
                     if(errors){
-                        delegate.'failed'=array {
-                            errors.each{del->
-                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
-                            }
-                        }
+                        delegate.failed(errors.collect{del-> [id:del.id,errorCode:del.errorCode,message:del.message]})
                     }
                 }
             }
@@ -2328,21 +2312,13 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         withFormat {
             '*' {
                 return apiService.renderSuccessJson(response) {
-                    requestCount= ids.size()
-                    allsuccessful=(successful.size()==ids.size())
+                    requestCount(ids.size())
+                    allsuccessful(successful.size()==ids.size())
                     if(successful){
-                        delegate.'succeeded'=array {
-                            successful.each{del->
-                                delegate.'element'(id:del.job.extid,message:del.message)
-                            }
-                        }
+                        delegate.succeeded(successful.collect{del-> [id:del.job.extid,message:del.message]})
                     }
                     if(deleteerrs){
-                        delegate.'failed'=array {
-                            deleteerrs.each{del->
-                                delegate.'element'(id:del.id,errorCode:del.errorCode,message:del.message)
-                            }
-                        }
+                        delegate.failed(deleteerrs.collect{del-> [id:del.id,errorCode:del.errorCode,message:del.message]})
                     }
                 }
             }
@@ -2947,7 +2923,11 @@ Since: v56''',
     protected def runAdhoc(ApiRunAdhocRequest runAdhocRequest){
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,runAdhocRequest.project)
         params["user"] = authContext.username
-        params.request = request
+        // Groovy 5: GrailsParameterMap has a read-only `request` property, and dot-assignment now
+        // resolves to the property rather than falling through to the map -- it throws
+        // ReadOnlyPropertyException instead of storing a "request" key as it did on Groovy 4.
+        // Use put() explicitly, which behaves the same on both versions.
+        params.put('request', request)
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
 
@@ -3759,6 +3739,68 @@ Since: v56''',
     }
 
 
+    /**
+     * The files uploaded with this request, keyed by the multipart part name.
+     *
+     * Deliberately does not test `request instanceof MultipartHttpServletRequest`. On Grails 8 the
+     * request a controller sees is Spring Security's Servlet3SecurityContextHolderAwareRequestWrapper:
+     * the filter chain wraps the request and binds it to the GrailsWebRequest, and only afterwards
+     * does DispatcherServlet.checkMultipart() wrap *that* in the MultipartHttpServletRequest. The
+     * multipart wrapper therefore sits outside the request the controller holds, so the instanceof
+     * is always false and unwrapping inward cannot reach it either. params is populated from the
+     * multipart request regardless, so it is the reliable source.
+     *
+     * See .claude/rules/grails-multipart.md.
+     *
+     * @return part name to uploaded file, empty when nothing was uploaded
+     */
+    private Map<String, MultipartFile> uploadedFileMap() {
+        Map<String, MultipartFile> fromParams =
+                (Map<String, MultipartFile>) params.findAll { it.value instanceof MultipartFile }
+        if (fromParams) {
+            return fromParams
+        }
+        // Fallback for the unit tests, which drive a GrailsMockHttpServletRequest: there the
+        // request really is a MultipartRequest and addFile() does not populate params.
+        request instanceof MultipartRequest ? ((MultipartRequest) request).fileMap : [:]
+    }
+
+    /**
+     * The file uploaded under the given part name, or null when there is none.
+     *
+     * Reads params first for the reason in uploadedFileMap, and falls back to the request so that
+     * controller unit tests, whose mock request is a genuine MultipartHttpServletRequest, still work.
+     */
+    private MultipartFile uploadedFile(String name) {
+        if (params[name] instanceof MultipartFile) {
+            return (MultipartFile) params[name]
+        }
+        request instanceof MultipartHttpServletRequest ?
+                ((MultipartHttpServletRequest) request).getFile(name) : null
+    }
+
+    /**
+     * Whether this request is a file upload at all, regardless of which parts it carries.
+     *
+     * Separates "multipart, but the expected part is absent" -- which callers report as a missing
+     * upload -- from "not an upload at all", which falls through to the form-encoded handling. The
+     * instanceof that used to draw that line is always false on Grails 8, so the content type draws
+     * it instead.
+     *
+     * The mock request in a controller unit test is always a MultipartHttpServletRequest and sets
+     * no content type, so a bare instanceof would report every simulated form post as an upload;
+     * it only counts when a part was actually added.
+     *
+     * See .claude/rules/grails-multipart.md.
+     */
+    private boolean isMultipartRequest() {
+        if (request.contentType?.toLowerCase()?.startsWith('multipart/')) {
+            return true
+        }
+        request instanceof MultipartHttpServletRequest &&
+                ((MultipartHttpServletRequest) request).fileNames.hasNext()
+    }
+
     private def handleUploadFiles(
             ScheduledExecution scheduledExecution,
             UserAndRolesAuthContext authContext,
@@ -3768,7 +3810,8 @@ Since: v56''',
     {
         def optionParameterPrefix = "extra.option."
         def fileresults = [:]
-        if (request instanceof MultipartRequest) {
+        Map<String, MultipartFile> uploads = uploadedFileMap()
+        if (uploads) {
             def fileOptions = scheduledExecution.listFileOptions()
             def fileOptionConfig = [:]
             fileOptions.each { Option option ->
@@ -3778,7 +3821,7 @@ Since: v56''',
             def invalid = []
             long maxsize = fileUploadService.optionUploadMaxSize
             if (maxsize > 0) {
-                def find = ((MultipartRequest) request).fileMap.find { String name, file -> file.size > maxsize }
+                def find = uploads.find { String name, file -> file.size > maxsize }
                 if (find) {
                     def msg = g.message(
                             code: 'api.error.job-upload.filesize',
@@ -3787,7 +3830,7 @@ Since: v56''',
                     return [success: false, failed: true, error: 'filesize', message: msg]
                 }
             }
-            ((MultipartRequest) request).fileMap.each { String name, file ->
+            uploads.each { String name, file ->
                 if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
                     String optname = name.substring(optionParameterPrefix.length())
@@ -3803,7 +3846,7 @@ Since: v56''',
                 return [success: false, failed: true, error: 'input', message: msg]
             }
 
-            for (def entry : ((MultipartRequest) request).fileMap) {
+            for (def entry : uploads) {
                 String name = entry.key
                 MultipartFile file = entry.value
                 if (name.startsWith(optionParameterPrefix)) {
@@ -3924,69 +3967,62 @@ Since: v56''',
      * Utility, render content for jobs/import response
      */
     private def renderJobsImportApiJson(jobs,jobsi,errjobs,skipjobs, delegate){
-        delegate.'succeeded'=delegate.array{
-            jobsi.each { Map job ->
-                delegate.element(
-                        index: job.entrynum,
-                        href: apiService.apiHrefForJob(job.scheduledExecution),
-                        id:job.scheduledExecution.extid,
-                        name:job.scheduledExecution.jobName,
-                        group:job.scheduledExecution.groupPath ?: '',
-                        project:job.scheduledExecution.project,
-                        permalink:apiService.guiHrefForJob(job.scheduledExecution)
-                )
+        delegate.succeeded(jobsi.collect { Map job ->
+            [
+                    index: job.entrynum,
+                    href: apiService.apiHrefForJob(job.scheduledExecution),
+                    id:job.scheduledExecution.extid,
+                    name:job.scheduledExecution.jobName,
+                    group:job.scheduledExecution.groupPath ?: '',
+                    project:job.scheduledExecution.project,
+                    permalink:apiService.guiHrefForJob(job.scheduledExecution)
+            ]
+        })
+        delegate.failed(errjobs.collect{ Map job ->
+            def jmap=[index:job.entrynum]
+            if(job.scheduledExecution.id){
+                jmap.href=apiService.apiHrefForJob(job.scheduledExecution)
+                jmap.id=job.scheduledExecution.extid
+                jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
             }
-        }
-        delegate.failed=delegate.array{
-            errjobs.each{ Map job ->
-                def jmap=[index:job.entrynum]
-                if(job.scheduledExecution.id){
-                    jmap.href=apiService.apiHrefForJob(job.scheduledExecution)
-                    jmap.id=job.scheduledExecution.extid
-                    jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
+            StringBuffer sb = new StringBuffer()
+            job.scheduledExecution?.errors?.allErrors?.each{err->
+                if(sb.size()>0){
+                    sb<<"\n"
                 }
-                StringBuffer sb = new StringBuffer()
-                job.scheduledExecution?.errors?.allErrors?.each{err->
-                    if(sb.size()>0){
-                        sb<<"\n"
-                    }
-                    sb << g.message(error:err)
-                }
-                if(job.errmsg){
-                    if(sb.size()>0){
-                        sb<<"\n"
-                    }
-                    sb<<job.errmsg
-                }
-                jmap.'error'=(sb.toString())
-                delegate.element(jmap + [name:(job.scheduledExecution.jobName),
-                                           group:(job.scheduledExecution.groupPath?:''),
-                                           project:(job.scheduledExecution.project)])
+                sb << g.message(error:err)
             }
-        }
-        delegate.skipped=delegate.array{
-
-            skipjobs.each{ Map job ->
-                def jmap = [index: job.entrynum]
-                if (job.scheduledExecution.id) {
-                    jmap.href = apiService.apiHrefForJob(job.scheduledExecution)
-                    jmap.id=(job.scheduledExecution.extid)
-                    jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
+            if(job.errmsg){
+                if(sb.size()>0){
+                    sb<<"\n"
                 }
-                StringBuffer sb = new StringBuffer()
-                if(job.errmsg){
-                    if(sb.size()>0){
-                        sb<<"\n"
-                    }
-                    sb<<job.errmsg
-                }
-                jmap.'error'=(sb.toString())
-                jmap.name=(job.scheduledExecution.jobName)
-                jmap.group=(job.scheduledExecution.groupPath?:'')
-                jmap.project=(job.scheduledExecution.project)
-                delegate.element(jmap)
+                sb<<job.errmsg
             }
-        }
+            jmap.'error'=(sb.toString())
+            jmap + [name:(job.scheduledExecution.jobName),
+                    group:(job.scheduledExecution.groupPath?:''),
+                    project:(job.scheduledExecution.project)]
+        })
+        delegate.skipped(skipjobs.collect{ Map job ->
+            def jmap = [index: job.entrynum]
+            if (job.scheduledExecution.id) {
+                jmap.href = apiService.apiHrefForJob(job.scheduledExecution)
+                jmap.id=(job.scheduledExecution.extid)
+                jmap.permalink=apiService.guiHrefForJob(job.scheduledExecution)
+            }
+            StringBuffer sb = new StringBuffer()
+            if(job.errmsg){
+                if(sb.size()>0){
+                    sb<<"\n"
+                }
+                sb<<job.errmsg
+            }
+            jmap.'error'=(sb.toString())
+            jmap.name=(job.scheduledExecution.jobName)
+            jmap.group=(job.scheduledExecution.groupPath?:'')
+            jmap.project=(job.scheduledExecution.project)
+            jmap
+        })
     }
 
     @Post(uri = "/project/{project}/jobs/import", produces = [MediaType.APPLICATION_JSON])
@@ -4164,12 +4200,12 @@ Each job entry contains:
                     args  : [fileformat]
                 ]
             )
-        }else if (request.format=='multipartForm' && request instanceof MultipartHttpServletRequest) {
-            if (!request.fileNames.toList().contains('xmlBatch')) {
+        }else if (isMultipartRequest()) {
+            MultipartFile file = uploadedFile('xmlBatch')
+            if (!file || file.empty) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.jobs.import.missing-file', args: null])
             }
-            def file = request.getFile("xmlBatch")
             parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
         }else if (params.xmlBatch) {
             String fileContent = params.xmlBatch
@@ -4213,7 +4249,7 @@ Each job entry contains:
         withFormat {
             '*' {
                 apiService.renderSuccessJson(response){
-                    renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
+                    this.renderJobsImportApiJson(jobs, jobsi, errjobs, skipjobs, delegate)
                 }
             }
             if(controller.isAllowXml()) {
@@ -4553,9 +4589,10 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
             jobRunAtTime = params.runAtTime
             jobOptions = params.option
         }
-        if (request instanceof MultipartRequest) {
+        Map<String, MultipartFile> runUploads = uploadedFileMap()
+        if (runUploads) {
             //process file uploads
-            ((MultipartRequest) request).fileMap.each { String name, file ->
+            runUploads.each { String name, file ->
                 if (name.startsWith('option.')) {
                     //process file option upload
                     //XXX
@@ -5038,11 +5075,11 @@ Since: v19''',
         }
         def uploadedFileRefs = [:]
         def uploadError
-        if (request instanceof MultipartRequest && request.fileMap) {
+        Map<String, MultipartFile> apiUploads = uploadedFileMap()
+        if (apiUploads) {
             def invalid = []
             Map<String,MultipartFile> optionRequestFiles = [:]
-            ((MultipartRequest) request).fileNames.each { String name ->
-                MultipartFile file = ((MultipartRequest) request).getFile(name)
+            apiUploads.each { String name, MultipartFile file ->
                 if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
                     String optname = name.substring(optionParameterPrefix.length())
@@ -5067,7 +5104,7 @@ Since: v19''',
 
             long maxsize = fileUploadService.optionUploadMaxSize
             if (maxsize > 0) {
-                def find = ((MultipartRequest) request).fileMap.find { String name, file -> file.size > maxsize }
+                def find = apiUploads.find { String name, file -> file.size > maxsize }
                 if (find) {
                     return apiService.renderErrorFormat(response, [
                             status: HttpServletResponse.SC_BAD_REQUEST,
@@ -5760,19 +5797,15 @@ For Content-Type: `multipart/form-data`
         //read attached script content
         if(runAdhocRequest.script){
 
-        }else if (request instanceof MultipartHttpServletRequest) {
-            def file = request.getFile("scriptFile")
-            if(!file) {
-                return apiService.renderErrorFormat(response, [
-                        status: HttpServletResponse.SC_BAD_REQUEST,
-                        code: 'api.error.run-script.upload.missing',args:['scriptFile']])
-            }else if(file.empty) {
+        }else if (uploadedFile('scriptFile')) {
+            MultipartFile file = uploadedFile('scriptFile')
+            if(file.empty) {
                 return apiService.renderErrorFormat(response, [
                         status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.run-script.upload.is-empty'])
             }
             runAdhocRequest.script = new String(file.bytes)
-        }else if(params.scriptFile){
+        }else if(params.scriptFile instanceof String){
             runAdhocRequest.script=params.scriptFile
         }
 
@@ -5839,12 +5872,12 @@ For Content-Type: `multipart/form-data`
             withFormat {
                 '*' {
                     return apiService.renderSuccessJson(response) {
-                        delegate.'message'=("Immediate execution scheduled (${results.id})")
-                        delegate.'execution' = [
+                        delegate.message("Immediate execution scheduled (${results.id})")
+                        delegate.execution([
                                 id       : results.id,
                                 href     : apiService.apiHrefForExecution(results.execution),
                                 permalink: apiService.guiHrefForExecution(results.execution)
-                        ]
+                        ])
                     }
                 }
                 if(controller.isAllowXml()) {
@@ -6402,10 +6435,10 @@ Since: v14''',
                 '*'  {
 
                     return apiService.renderSuccessJson(response) {
-                        delegate.'message'=("No action performed, cluster mode is not enabled.")
-                        success=true
-                        apiversion=ApiVersions.API_CURRENT_VERSION
-                        self=[server:[uuid:frameworkService.getServerUUID()]]
+                        delegate.message("No action performed, cluster mode is not enabled.")
+                        success(true)
+                        apiversion(ApiVersions.API_CURRENT_VERSION)
+                        self([server:[uuid:frameworkService.getServerUUID()]])
                     }
                 }
                 if(controller.isAllowXml()) {

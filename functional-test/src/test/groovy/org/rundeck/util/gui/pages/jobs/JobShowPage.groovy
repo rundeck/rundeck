@@ -79,7 +79,10 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobSearchBy = By.xpath("//span[@title='Click to modify filter']")
     By jobSearchNameBy = By.cssSelector('#jobs_filters form input[name="jobFilter"]')
     By jobSearchGroupBy = By.cssSelector('#jobs_filters form input[name="groupPath"]')
-    By jobSearchSubmitBy = By.cssSelector('#jobs_filters form #jobs_filters_footer input[type="submit"][name="_action_jobs"]')
+    // g:formActionSubmit emits <input type="submit" formaction="..."> with no name attribute, so
+    // the old [name="_action_jobs"] no longer matches anything. The footer's only other control is a
+    // type="button" Cancel, which this selector already excludes.
+    By jobSearchSubmitBy = By.cssSelector('#jobs_filters form #jobs_filters_footer input[type="submit"]')
     By runJobBtnBy = By.id("execFormRunButton")
     By logOutputBtn = By.id('btn_view_output')
     By jobActionsListButtonBy = By.linkText("Action")

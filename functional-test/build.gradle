@@ -15,7 +15,51 @@ testlogger {
     slowThreshold 10000
 }
 
+// Every suite in this module runs through a named Test task (apiTest, seleniumCoreTest, ...)
+// which sets useJUnitPlatform() plus its own spock.configuration include-filter. The default
+// `test` task sets neither, so it cannot discover Spock 2 specs and has always executed zero
+// tests -- Gradle 8 passed that silently. Gradle 9 added failOnNoDiscoveredTests (default true),
+// which turns that long-standing no-op into a build failure whenever `check`/`build` runs.
+// Opting out here preserves the previous behaviour; it deliberately does NOT enable the task,
+// because these suites need Docker Compose and a built image and must only run via their
+// dedicated tasks.
+test {
+    failOnNoDiscoveredTests = false
+}
+
+// 🔴 Without this every suite in this module silently runs zero tests.
+//
+// A Test task created by hand does not get testClassesDirs or classpath from the test source set;
+// only the `test` task the java plugin creates is wired. Gradle 8 papered over that with convention
+// mapping applied to all Test tasks. Gradle 9 removed it, so the seven named tasks here were left
+// with no test classes at all: Gradle reports "NO-SOURCE ... has no source files", skips the task,
+// and the build passes.
+//
+// It is silent in the worst way. failOnNoDiscoveredTests cannot catch it, because the task is
+// skipped before any discovery happens, and CI shows a green job that finished in ~20s. Compare
+// `gradlew :functional-test:apiTest --dry-run` (no dependencies at all) with the same for `test`.
+tasks.withType(Test).configureEach {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+}
+
 project.evaluationDependsOn(":rundeckapp")
+
+// Consumable view of this project's test dependencies.
+//
+// pro-functional-test used to build its classpath with
+//   classpath += project(':functional-test').sourceSets.test.runtimeClasspath
+// which reaches into another project and resolves its configuration. Gradle 9 rejects that outright:
+// "Resolution of the configuration ':functional-test:testRuntimeClasspath' was attempted without an
+// exclusive lock. This is unsafe and not allowed." Exposing the dependencies here lets the consumer
+// declare them as an ordinary project dependency instead of resolving them across the boundary.
+configurations {
+    testRuntimeExport {
+        canBeConsumed = true
+        canBeResolved = false
+        extendsFrom configurations.testImplementation, configurations.testRuntimeOnly
+    }
+}
 
 configurations.all {
     resolutionStrategy {
@@ -27,6 +71,11 @@ configurations.all {
 
 
 dependencies {
+    // Gradle 9 no longer puts junit-platform-launcher on the test runtime classpath implicitly
+    // (G11). Declared here so it also reaches consumers through testRuntimeExport: pro-functional-test
+    // used to inherit it by resolving this project's testRuntimeClasspath, and without it its Test
+    // tasks die with "Failed to load JUnit Platform" after executing zero tests.
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.spockframework:spock-core:${spockVersion}"
     testImplementation "org.testcontainers:testcontainers:${testContainersVersion}"
     testImplementation "org.testcontainers:spock:${testContainersVersion}"
@@ -177,6 +226,19 @@ task alphaUiSeleniumCoreTest(type: Test){
     systemProperty("COMPOSE_PATH", "docker/compose/oss/docker-compose.yml")
     systemProperty('spock.configuration', 'spock-configs/IncludeAlphaUiSeleniumCoreTestsConfig.groovy')
     description = "Run Rundeck OSS Selenium Tests with Alpha UI feature flag enabled"
+
+    // This suite is legitimately empty today: its Spock config includes only specs annotated
+    // @AlphaUiSeleniumCoreTest, and nothing carries that annotation yet -- the only file naming it
+    // is the annotation's own declaration, on this branch and on main alike. Nothing was lost in
+    // the migration.
+    //
+    // Gradle cannot see that filter. It reports "there are test sources present and no filters are
+    // applied" and fails the task, because the include-filter lives inside Spock. Gradle 8 tolerated
+    // the empty run; Gradle 9 does not.
+    //
+    // Scoped to this task on purpose. The other suites here should still fail if they discover
+    // nothing, because for them an empty run would mean something is broken.
+    failOnNoDiscoveredTests = false
 
     if (project.hasProperty("testFiles")) {
         include(explicitTestIncluder(project.properties["testFiles"]))

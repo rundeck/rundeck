@@ -22,9 +22,19 @@ tasks.withType(GroovyCompile).configureEach {
     if(isRunning){
         //disable openapi spec generation during bootRun
         opts.add('-Dmicronaut.openapi.enabled=false')
-    }else{
+    }else if(name == 'compileGroovy'){
+        // Only the main source set produces the spec. This used to apply to every GroovyCompile
+        // task, so compileTestGroovy and compileIntegrationTestGroovy also declared main's swagger
+        // yml as their own output and pointed the processor at that same fixed path. Gradle 8 only
+        // warned; Gradle 9 fails the build, because jar and compileGroovyPages consume
+        // classes/groovy/main and therefore "use this output" of a test compile task.
         outputs.file(file("${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml"))
         opts.add "-Dmicronaut.openapi.target.file=${buildDir}/classes/groovy/main/META-INF/swagger/api-${project.name}.yml".toString()
+    }else{
+        // Test / integrationTest compiles must not emit into the main output. The spec is generated
+        // from annotations on main sources, so there is nothing for them to contribute anyway --
+        // and because every task wrote the same file, whichever ran last silently won.
+        opts.add('-Dmicronaut.openapi.enabled=false')
     }
     // Allow OpenAPI annotation warnings without failing the build
     options.compilerArgs.add('-Xlint:-processing')

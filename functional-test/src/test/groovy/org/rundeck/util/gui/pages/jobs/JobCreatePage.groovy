@@ -145,7 +145,8 @@ class JobCreatePage extends BasePage {
     By addSimpleCommandStepBy = By.xpath("//span[contains(@onclick, 'wfnewbutton')]")
     By notificationListBy = By.cssSelector(".flex-item.flex-grow-1")
     By nofiticationChildsBy = By.className("text-success")
-    By updateBtn        = By.name("_action_Update")
+    // g:formActionSubmit emits no name attribute; the button carries an explicit id.
+    By updateBtn        = By.id("jobUpdateSaveButton")
     By defaultTabNodes  = By.id("tabSummary")
     By defaultTabOutput = By.id("tabOutput")
     By defaultTabHtml   = By.id("tabHTML")

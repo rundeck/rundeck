@@ -78,9 +78,49 @@ import jakarta.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import org.springframework.web.multipart.MultipartFile
 
 @Controller
 class ProjectController extends ControllerBase{
+    /**
+     * The file uploaded under the given part name, or null when there is none.
+     *
+     * params first: on Grails 8 the request a controller holds is Spring Security's wrapper and
+     * DispatcherServlet adds the multipart request around it afterwards, so an instanceof check on
+     * the request is false for a real upload. The request is still consulted as a fallback, because
+     * controller unit tests drive a mock request that genuinely is one and does not fill params.
+     *
+     * See .claude/rules/grails-multipart.md.
+     */
+    private MultipartFile uploadedFile(String name) {
+        if (params[name] instanceof MultipartFile) {
+            return (MultipartFile) params[name]
+        }
+        request instanceof MultipartHttpServletRequest ? ((MultipartHttpServletRequest) request).getFile(name) : null
+    }
+
+    /**
+     * Whether this request is a file upload at all, regardless of which parts it carries.
+     *
+     * Separates "multipart, but the expected part is absent" -- which callers report as a missing
+     * upload -- from "not an upload at all", which falls through to the form-encoded handling. The
+     * instanceof that used to draw that line is always false on Grails 8, so the content type draws
+     * it instead.
+     *
+     * The mock request in a controller unit test is always a MultipartHttpServletRequest and sets
+     * no content type, so a bare instanceof would report every simulated form post as an upload;
+     * it only counts when a part was actually added.
+     *
+     * See .claude/rules/grails-multipart.md.
+     */
+    private boolean isMultipartRequest() {
+        if (request.contentType?.toLowerCase()?.startsWith('multipart/')) {
+            return true
+        }
+        request instanceof MultipartHttpServletRequest &&
+                ((MultipartHttpServletRequest) request).fileNames.hasNext()
+    }
+
     FrameworkService frameworkService
     ProjectService projectService
     PluginService pluginService
@@ -431,8 +471,8 @@ class ProjectController extends ControllerBase{
             def project1 = frameworkService.getFrameworkProject(project)
 
             //uploaded file
-            if (request instanceof MultipartHttpServletRequest) {
-                def file = request.getFile("zipFile")
+            if (isMultipartRequest()) {
+                MultipartFile file = uploadedFile('zipFile')
                 if (!file || file.empty) {
                     flash.error = message(code:"no.file.was.uploaded")
                     return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
