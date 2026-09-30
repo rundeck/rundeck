@@ -317,6 +317,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
      *
      * @deprecated should invoke engine workflow executor
      */
+    @Deprecated
     protected WorkflowStatusResult executeWorkflowItemsForNodeSet(
             final StepExecutionContext executionContext,
             final Map<Integer, StepExecutionResult> failedMap,
