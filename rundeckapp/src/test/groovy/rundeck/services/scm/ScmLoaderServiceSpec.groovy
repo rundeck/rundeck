@@ -20,6 +20,9 @@ import rundeck.services.ScmService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
 class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<ScmLoaderService>, DataTest {
 
     def "loaded export plugin not configured"(){
@@ -78,7 +81,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
         def username = "admin"
         def roles = ["admin"]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
-            listWorkflows(_)>>listWorkflow
+            listJobsForProjectUncached(project) >> jobs
         }
         service.scmService = Mock(ScmService){
             projectHasConfiguredExportPlugin(project)>>true
@@ -120,7 +123,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
         def username = "admin"
         def roles = ["admin"]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
-            listWorkflows(_)>>listWorkflow
+            listJobsForProjectUncached(project) >> jobs
         }
         service.scmService = Mock(ScmService){
             projectHasConfiguredImportPlugin(project)>>true
@@ -169,7 +172,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
                 "schedlist": jobs
         ]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
-            listWorkflows(_)>>listWorkflow
+            listJobsForProjectUncached(project) >> jobs
         }
         def username = "admin"
         def roles = ["admin"]
@@ -226,7 +229,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
                 "schedlist": jobs
         ]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
-            listWorkflows(_)>>listWorkflow
+            listJobsForProjectUncached(project) >> jobs
         }
         def username = "admin"
         def roles = ["admin"]
@@ -301,7 +304,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
                 "schedlist": jobs
         ]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
-            listWorkflows(_)>>listWorkflow
+            listJobsForProjectUncached(project) >> jobs
         }
         def username = "admin"
         def roles = ["admin"]
@@ -336,6 +339,34 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
 
     }
 
+    def "import loader reconciles local state before metadata lookup failure"() {
+        given:
+        def project = "test"
+        def plugin = Mock(ScmImportPlugin)
+        def config = Mock(ScmPluginConfigData) {
+            getSetting("username") >> "admin"
+            getSettingList("roles") >> ["admin"]
+        }
+        service.frameworkService = Mock(FrameworkService)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            listJobsForProjectUncached(project) >> []
+        }
+        service.scmService = Mock(ScmService) {
+            projectHasConfiguredImportPlugin(project) >> true
+            getJobsPluginMeta(project, false) >> { throw new RuntimeException("metadata failure") }
+        }
+
+        when:
+        service.processScmImportLoader(project, config, new ScmLoaderService.ScmLoaderStateImpl())
+
+        then:
+        thrown(RuntimeException)
+        1 * service.scmService.scmOperationContext("admin", ["admin"], project) >> Mock(ScmOperationContext)
+        1 * service.scmService.loadPluginWithConfig(_, _, _, _) >> Mock(CloseableProvider)
+        1 * service.scmService.getLoadedImportPluginFor(project) >> plugin
+        1 * plugin.reconcileJobState([] as Set)
+    }
+
     def "processScmImportLoader externally deleted jobs"() {
         given:
             def project = "test"
@@ -357,7 +388,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
                 "schedlist": jobs
             ]
             service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-                listWorkflows(_) >> listWorkflow
+                listJobsForProjectUncached(project) >> jobs
             }
             def username = "admin"
             def roles = ["admin"]
@@ -448,7 +479,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
                 "schedlist": jobs
         ]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
-            listWorkflows(_)>>listWorkflow
+            listJobsForProjectUncached(project) >> jobs
         }
         def username = "admin"
         def roles = ["admin"]
@@ -503,7 +534,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
                 "schedlist": jobs
         ]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
-            listWorkflows(_)>>listWorkflow
+            listJobsForProjectUncached(project) >> jobs
         }
         def username = "admin"
         def roles = ["admin"]
@@ -598,7 +629,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
             "schedlist": jobs
         ]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
-            listWorkflows(_)>>listWorkflow
+            listJobsForProjectUncached(project) >> jobs
         }
         def username = "admin"
         def roles = ["admin"]
@@ -663,7 +694,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
             "schedlist": jobs
         ]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
-            listWorkflows(_)>>listWorkflow
+            listJobsForProjectUncached(project) >> jobs
         }
         def username = "admin"
         def roles = ["admin"]
@@ -754,7 +785,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
             isClusterModeEnabled() >> false
         }
         service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-            listWorkflows(_) >> ["schedlist": []]
+            listJobsForProjectUncached(project) >> []
         }
         def scmPluginConfigData = Mock(ScmPluginConfigData) {
             getSetting("username") >> username
@@ -850,7 +881,7 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
             isClusterModeEnabled() >> false
         }
         service.scheduledExecutionService = Mock(ScheduledExecutionService) {
-            listWorkflows(_) >> ["schedlist": []]
+            listJobsForProjectUncached(project) >> []
         }
         def scmPluginConfigData = Mock(ScmPluginConfigData) {
             getSetting("username") >> username
@@ -907,5 +938,31 @@ class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<Scm
         then:
         result
         1 * service.scmService.clearRetryState(project, integration)
+    }
+    def "startScmLoader schedules the loader with a fixed delay so slow cycles do not queue up"() {
+        given:
+        def executor = Mock(ScheduledExecutorService)
+        service.scheduledExecutor = executor
+
+        when:
+        service.startScmLoader('test', 'import')
+
+        then:
+        1 * executor.scheduleWithFixedDelay(_, 0L, 20L, TimeUnit.SECONDS)
+        0 * executor.scheduleAtFixedRate(*_)
+    }
+
+    def "beginScmLoader schedules the bootstrap poller with a fixed delay"() {
+        given:
+        def executor = Mock(ScheduledExecutorService)
+        service.scheduledExecutor = executor
+        service.frameworkService = Mock(FrameworkService)
+
+        when:
+        service.beginScmLoader()
+
+        then:
+        1 * executor.scheduleWithFixedDelay(_, 0L, 20L, TimeUnit.SECONDS)
+        0 * executor.scheduleAtFixedRate(*_)
     }
 }

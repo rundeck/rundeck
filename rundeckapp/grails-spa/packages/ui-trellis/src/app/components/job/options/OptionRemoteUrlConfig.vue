@@ -1,6 +1,6 @@
 <template>
   <div
-    data-test="option.valuesUrl"
+    data-test="option-valuesUrl"
     id="vurl_section"
     :class="{ 'has-error': hasError('valuesUrl') }"
   >
@@ -28,7 +28,7 @@
 
     <div
       class="row"
-      data-test="option.configRemoteUrl"
+      data-test="option-configRemoteUrl"
       :class="{ 'has-error': hasError('configRemoteUrl') }"
     >
       <div class="col-md-12">

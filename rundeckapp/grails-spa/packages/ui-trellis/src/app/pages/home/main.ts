@@ -2,9 +2,9 @@ import { defineComponent, markRaw } from "vue";
 import { getRundeckContext } from "../../../library";
 import HomeView from "../../components/home/HomeView.vue";
 import HomeHeader from "../../components/home/HomeHeader.vue";
+import SVGInject from "@iconfu/svg-inject";
 
-// @ts-ignore
-window.SVGInject = require("@iconfu/svg-inject");
+(window as any).SVGInject = SVGInject;
 
 const rundeckContext = getRundeckContext();
 function init() {

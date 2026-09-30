@@ -96,7 +96,7 @@ describe("job browse main", () => {
 
     (window as any)._rundeck.rootStore = rootStore;
 
-    const { __testContext } = require("@/library");
+    const { __testContext } = jest.requireMock("@/library");
     __testContext.rootStore = rootStore;
   });
 
@@ -363,7 +363,9 @@ describe("job browse main", () => {
         global: {
           plugins: [pinia],
           stubs: {
-            "node-filter-input": { template: "<div class='node-filter-stub' />" },
+            "node-filter-input": {
+              template: "<div class='node-filter-stub' />",
+            },
           },
           mocks: {
             $t: (key: string) => key,

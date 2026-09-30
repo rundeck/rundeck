@@ -131,8 +131,8 @@ describe("ChoosePluginModal", () => {
     expect(buttons.length).toBe(2);
 
     // Verify provider1 is not in the list
-    const buttonTexts = buttons.map(btn => btn.text());
-    expect(buttonTexts.some(text => text.includes("plugin1"))).toBe(false);
-    expect(buttonTexts.some(text => text.includes("plugin2"))).toBe(true);
+    const buttonTexts = buttons.map((btn) => btn.text());
+    expect(buttonTexts.some((text) => text.includes("plugin1"))).toBe(false);
+    expect(buttonTexts.some((text) => text.includes("plugin2"))).toBe(true);
   });
 });

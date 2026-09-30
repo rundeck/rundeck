@@ -150,9 +150,7 @@
         </ul>
 
         <strong>{{ $t("use.regular.expressions") }}</strong>
-        <p>
-          <code>hostname: dev(\d+).test.com</code>.
-        </p>
+        <p><code>hostname: dev(\d+).test.com</code>.</p>
 
         <strong>{{ $t("regex.syntax.checking") }}:</strong>
         <p>
@@ -243,7 +241,7 @@ import {
   NodeFilterStore,
   ProjectFilters,
 } from "../../../../library/stores/NodeFilterLocalstore";
-import { defineComponent, ref, PropType } from "vue";
+import { defineComponent, ref } from "vue";
 import NodeFilterLink from "./NodeFilterLink.vue";
 
 export default defineComponent({

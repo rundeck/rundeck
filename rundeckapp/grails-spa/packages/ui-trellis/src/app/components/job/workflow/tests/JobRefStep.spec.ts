@@ -22,9 +22,9 @@ const createWrapper = async (props = {}): Promise<VueWrapper<any>> => {
   return wrapper;
 };
 const assertName = (wrapper: VueWrapper, name: string) => {
-  const jobName = wrapper.find("[data-testid=job-ref-name]")
+  const jobName = wrapper.find("[data-testid=job-ref-name]");
   expect(jobName.text()).toContain(name);
-}
+};
 
 describe("JobRefStep", () => {
   describe("Job Name Display", () => {
@@ -34,7 +34,7 @@ describe("JobRefStep", () => {
         group: "TestGroup",
       });
 
-      assertName(wrapper, "TestGroup/TestJob")
+      assertName(wrapper, "TestGroup/TestJob");
     });
 
     it("displays only job name when no group is provided", async () => {
@@ -42,15 +42,15 @@ describe("JobRefStep", () => {
         name: "TestJob",
       });
 
-      assertName(wrapper, "TestJob")
+      assertName(wrapper, "TestJob");
     });
 
     it("displays UUID when no name is provided", async () => {
       const wrapper = await createWrapper({
-          uuid: "123-456-789",
+        uuid: "123-456-789",
       });
 
-      assertName(wrapper, "123-456-789")
+      assertName(wrapper, "123-456-789");
     });
 
     it("shows project name in parentheses when provided", async () => {
@@ -59,7 +59,7 @@ describe("JobRefStep", () => {
         uuid: "123-456-789",
       });
 
-      const projectName = wrapper.find("[data-testid=project]")
+      const projectName = wrapper.find("[data-testid=project]");
       expect(projectName.text()).toContain("(TestProject)");
     });
   });
@@ -70,7 +70,9 @@ describe("JobRefStep", () => {
         args: "simple argument string",
       });
 
-      expect(wrapper.find("[data-testid=non-parsed-args]").text()).toBe("simple argument string");
+      expect(wrapper.find("[data-testid=non-parsed-args]").text()).toBe(
+        "simple argument string",
+      );
       expect(wrapper.find("[data-test=parsed-args]").exists()).toBe(false);
     });
 
@@ -90,7 +92,7 @@ describe("JobRefStep", () => {
 
     it("handles quoted values in args correctly", async () => {
       const wrapper = await createWrapper({
-          args: "-key1 \"value with spaces\" -key2 'another value'",
+        args: "-key1 \"value with spaces\" -key2 'another value'",
       });
 
       const keys = wrapper.findAll(".optkey");

@@ -1,6 +1,5 @@
 import { mount, VueWrapper } from "@vue/test-utils";
 import HomeActionsMenu from "../HomeActionsMenu.vue";
-import { Dropdown, Btn } from "uiv";
 import { AuthzMeta } from "../types/projectTypes";
 
 const createDefaultMeta = (): AuthzMeta => ({
@@ -14,7 +13,9 @@ jest.mock("@/library", () => ({
     .mockReturnValue({ rdBase: "http://localhost:4440" }),
 }));
 
-const mountHomeActionsMenu = async (meta?: AuthzMeta): Promise<VueWrapper<any>> => {
+const mountHomeActionsMenu = async (
+  meta?: AuthzMeta,
+): Promise<VueWrapper<any>> => {
   const wrapper = mount(HomeActionsMenu, {
     props: {
       project: {

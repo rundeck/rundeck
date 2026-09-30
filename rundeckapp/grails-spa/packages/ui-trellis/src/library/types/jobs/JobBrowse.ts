@@ -5,7 +5,7 @@ type JobBrowseItem = {
   id?: string;
   description?: string;
   meta?: JobBrowseMeta[];
-}
+};
 
 interface JobBrowseMeta {
   name: string;
@@ -16,8 +16,4 @@ interface JobBrowseList {
   items: JobBrowseItem[];
 }
 
-export {
-  JobBrowseItem,
-  JobBrowseMeta,
-  JobBrowseList
-}
+export { JobBrowseItem, JobBrowseMeta, JobBrowseList };

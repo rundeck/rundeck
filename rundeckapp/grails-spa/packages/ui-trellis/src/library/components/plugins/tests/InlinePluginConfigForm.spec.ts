@@ -21,9 +21,9 @@ jest.mock("@/library/modules/pluginService", () => ({
   }),
 }));
 
-const {
-  getServiceProviderDescription,
-} = require("@/library/modules/pluginService");
+const { getServiceProviderDescription } = jest.requireMock(
+  "@/library/modules/pluginService",
+);
 
 const mockErrorHandler = {
   type: "exec",
@@ -173,8 +173,8 @@ describe("InlinePluginConfigForm", () => {
     expect(wrapper.find("[data-testid='custom-header-actions']").exists()).toBe(
       false,
     );
-    expect(wrapper.find(".inline-plugin-config-form-header-actions").exists()).toBe(
-      false,
-    );
+    expect(
+      wrapper.find(".inline-plugin-config-form-header-actions").exists(),
+    ).toBe(false);
   });
 });

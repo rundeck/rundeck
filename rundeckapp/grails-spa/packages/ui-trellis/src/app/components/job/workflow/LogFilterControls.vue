@@ -1,5 +1,10 @@
 <template>
-  <btn v-if="showButton" size="sm" data-testid="add-filter-button" @click="addFilter">
+  <btn
+    v-if="showButton"
+    size="sm"
+    data-testid="add-filter-button"
+    @click="addFilter"
+  >
     <i class="glyphicon glyphicon-plus"></i>
     {{ $t("message_add") }}
   </btn>
@@ -38,7 +43,7 @@ import {
 } from "../../../../library/modules/pluginService";
 import { ServiceType, Plugin } from "../../../../library/stores/Plugins";
 import { cloneDeep } from "lodash";
-import { defineComponent, nextTick } from "vue";
+import { defineComponent } from "vue";
 import { resetValidation } from "./stepEditorUtils";
 export default defineComponent({
   name: "LogFilterControls",
@@ -103,7 +108,7 @@ export default defineComponent({
   },
   async mounted() {
     await this.getLogFilterPlugins();
-    this.model = cloneDeep(this.modelValue) as { type: string; config: any; };
+    this.model = cloneDeep(this.modelValue) as { type: string; config: any };
     this.eventBus.on("edit", () => {
       if (!this.addFilterModal) {
         this.editFilterModal = true;
@@ -123,13 +128,7 @@ export default defineComponent({
       this.clearEdit();
       this.addFilterModal = true;
     },
-    chooseProviderAdd({
-      service,
-      provider,
-    }: {
-      service: string;
-      provider: string;
-    }) {
+    chooseProviderAdd({ provider }: { service: string; provider: string }) {
       this.addFilterModal = false;
       this.model = { type: provider, config: {} };
       this.editFilterModal = true;

@@ -52,7 +52,7 @@ export class Project {
   fromApi(project: ProjectListOKResponseItem) {
     this.name = project.name!;
     this.description = project.description;
-    // @ts-ignore
-    this.label = project.label;
+    // label is returned by the API but missing from the generated client type
+    this.label = (project as { label?: string }).label;
   }
 }

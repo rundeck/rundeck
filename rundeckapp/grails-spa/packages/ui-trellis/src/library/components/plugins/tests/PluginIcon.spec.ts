@@ -39,7 +39,11 @@ describe("PluginIcon", () => {
         props: {
           detail: {
             iconUrl: "https://example.com/icon.png",
-            providerMetadata: { glyphicon: "cog", faicon: "star", fabicon: "github" },
+            providerMetadata: {
+              glyphicon: "cog",
+              faicon: "star",
+              fabicon: "github",
+            },
           },
         },
       });
@@ -76,9 +80,7 @@ describe("PluginIcon", () => {
       });
 
       expect(
-        wrapper
-          .find('[data-testid="plugin-icon-glyphicon"]')
-          .classes(),
+        wrapper.find('[data-testid="plugin-icon-glyphicon"]').classes(),
       ).toContain("glyphicon-cog");
     });
 
@@ -134,9 +136,9 @@ describe("PluginIcon", () => {
         props: { detail: { providerMetadata: { fabicon: "github" } } },
       });
 
-      expect(
-        wrapper.find('[data-testid="plugin-icon-fabicon"]').exists(),
-      ).toBe(true);
+      expect(wrapper.find('[data-testid="plugin-icon-fabicon"]').exists()).toBe(
+        true,
+      );
     });
 
     it("applies the correct fabicon class", async () => {

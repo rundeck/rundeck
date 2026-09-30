@@ -81,7 +81,12 @@
           <label for="logview_lineWrap">Wrap Long Lines</label>
         </div>
         <div class="checkbox">
-          <input id="logview_stats" v-model="settings.stats" type="checkbox" data-testid="log-viewer-stats-checkbox" />
+          <input
+            id="logview_stats"
+            v-model="settings.stats"
+            type="checkbox"
+            data-testid="log-viewer-stats-checkbox"
+          />
           <label for="logview_stats">Display Stats</label>
         </div>
         <div class="checkbox">
@@ -112,7 +117,9 @@
         'execution-log--no-transition': logLines > 1000,
         'ansicolor-on': settings.ansiColor,
       }"
-      :style="node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}"
+      :style="
+        node ? { height: '600px', flex: 'none', overflowY: 'hidden' } : {}
+      "
     >
       <div ref="log" class="execution-log__scroller-item-container">
         <div
@@ -134,7 +141,10 @@
               data-testid="log-viewer-follow-btn"
               @click="toggleFollow"
             >
-              <i :class="[followIcon]" data-testid="log-viewer-follow-icon" />Follow
+              <i
+                :class="[followIcon]"
+                data-testid="log-viewer-follow-icon"
+              />Follow
             </btn>
           </btn-group>
           <transition name="fade">
@@ -226,9 +236,8 @@ import RdDrawer from "../containers/drawer/Drawer.vue";
 import UiSocket from "../utils/UiSocket.vue";
 import { EventBus } from "../../utilities/vueEventBus";
 import { Btn, BtnGroup, ProgressBar } from "uiv";
-import { App, PropType } from "vue";
+import { PropType } from "vue";
 import LogNodeChunk from "./LogNodeChunk.vue";
-import { JobWorkflow } from "@/library/utilities/JobWorkflow";
 import { getRundeckContext } from "../../rundeckService";
 
 const CONFIG_STORAGE_KEY = "execution-viewer";
@@ -465,7 +474,9 @@ export default defineComponent({
     // Capture the raw ExecutionOutput reference before Vue wraps it in a
     // reactive proxy, so MobX can properly track ObservableGroupMap accesses
     // inside the autorun callback.
-    const rawViewer = rootStore.executionOutputStore.createOrGet(this.executionId);
+    const rawViewer = rootStore.executionOutputStore.createOrGet(
+      this.executionId,
+    );
     this.viewer = rawViewer;
     if (this.node) {
       const node = this.node;
@@ -603,7 +614,7 @@ export default defineComponent({
         };
         setTimeout(update, delay);
         while (!cancel.signaled) {
-          await new Promise((res, rej) => {
+          await new Promise((res) => {
             setTimeout(res, 1000);
           });
           if (this.progress == 100) this.cancelProgress?.cancel();
@@ -667,7 +678,7 @@ export default defineComponent({
     toggleProgressBar() {
       this.consumeLogs = !this.consumeLogs;
     },
-    handleJump(e: string) {
+    handleJump() {
       this.scrollToLine(this.jumpToLine || 0);
     },
     handleJumpToEnd() {
@@ -679,12 +690,12 @@ export default defineComponent({
     async populateLogs() {
       while (this.consumeLogs) {
         if (!this.resp) this.resp = this.viewer.getOutput(this.batchSize);
-        const res = await this.resp;
+        await this.resp;
         this.resp = undefined;
 
         if (!this.viewer.completed) {
           this.resp = this.viewer.getOutput(this.batchSize);
-          await new Promise<void>((res, rej) =>
+          await new Promise<void>((res) =>
             setTimeout(() => {
               res();
             }, 0),

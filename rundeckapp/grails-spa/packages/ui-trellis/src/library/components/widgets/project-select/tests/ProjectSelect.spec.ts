@@ -2,6 +2,13 @@ import { mount, VueWrapper, flushPromises } from "@vue/test-utils";
 import ProjectSelect from "../ProjectSelect.vue";
 import { EventBus } from "../../../../utilities/vueEventBus";
 
+jest.mock("perfect-scrollbar", () => {
+  return jest.fn().mockImplementation(() => ({
+    update: jest.fn(),
+    destroy: jest.fn(),
+  }));
+});
+
 jest.mock("../../../../rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({}),
 
@@ -9,7 +16,6 @@ jest.mock("../../../../rundeckService", () => ({
     menuHome: "http://localhost",
   })),
   url: jest.fn((path: string) => ({ href: `http://localhost${path}` })),
-
 }));
 jest.mock("../../../../stores/RootStore", () => ({
   RootStore: jest.fn().mockImplementation(() => ({
@@ -70,12 +76,34 @@ describe("ProjectSelect.vue", () => {
     };
   });
   afterAll(() => {
-    Reflect.deleteProperty(window, '_rundeck');
+    Reflect.deleteProperty(window, "_rundeck");
   });
   afterEach(() => {
     jest.clearAllMocks();
   });
 
+  it("creates a PerfectScrollbar on RecycleScroller update and destroys it on unmount", async () => {
+    // This must run before any other test in this file mounts ProjectSelect:
+    // the `ps` scrollbar ref that RecycleScroller.updated/beforeUnmount close
+    // over is module-level state, shared across every mount in this file.
+    const wrapper = await createWrapper();
+    const searchInput = wrapper.find('[data-testid="search-projects"]');
+    await searchInput.setValue("Project A");
+    await flushPromises();
+
+    const PerfectScrollbarMock = jest.requireMock(
+      "perfect-scrollbar",
+    ) as jest.Mock;
+    expect(PerfectScrollbarMock).toHaveBeenCalled();
+    const instance =
+      PerfectScrollbarMock.mock.results[
+        PerfectScrollbarMock.mock.results.length - 1
+      ].value;
+
+    wrapper.unmount();
+
+    expect(instance.destroy).toHaveBeenCalled();
+  });
   it("typing in the search input filters the projects", async () => {
     const wrapper = await createWrapper();
     const searchInput = wrapper.find('[data-testid="search-projects"]');
@@ -119,6 +147,5 @@ describe("ProjectSelect.vue", () => {
     expect(createProjectButton.attributes("href")).toBe(
       "http://localhostresources/createProject",
     );
-
   });
 });

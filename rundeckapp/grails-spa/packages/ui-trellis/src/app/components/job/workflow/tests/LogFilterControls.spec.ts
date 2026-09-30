@@ -2,15 +2,24 @@ import { shallowMount, flushPromises } from "@vue/test-utils";
 import LogFilterControls from "../LogFilterControls.vue";
 
 jest.mock("@/library/modules/pluginService", () => ({
-  validatePluginConfig: jest.fn().mockResolvedValue({ valid: true, errors: {} }),
-  getPluginProvidersForService: jest.fn().mockResolvedValue({ service: "LogFilter", descriptions: [], labels: {} }),
+  validatePluginConfig: jest
+    .fn()
+    .mockResolvedValue({ valid: true, errors: {} }),
+  getPluginProvidersForService: jest
+    .fn()
+    .mockResolvedValue({ service: "LogFilter", descriptions: [], labels: {} }),
 }));
 
 jest.mock("@/library/modules/rundeckClient", () => ({ client: jest.fn() }));
 
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockReturnValue({
-    rootStore: { plugins: { getServicePlugins: jest.fn().mockReturnValue([]), load: jest.fn() } },
+    rootStore: {
+      plugins: {
+        getServicePlugins: jest.fn().mockReturnValue([]),
+        load: jest.fn(),
+      },
+    },
     projectName: "testProject",
     eventBus: { on: jest.fn(), off: jest.fn(), emit: jest.fn() },
     rdBase: "http://localhost:4440",
@@ -61,20 +70,26 @@ describe("LogFilterControls", () => {
     it("renders the add filter button when showButton is true", async () => {
       const wrapper = await createWrapper({ showButton: true });
 
-      expect(wrapper.find('[data-testid="add-filter-button"]').exists()).toBe(true);
+      expect(wrapper.find('[data-testid="add-filter-button"]').exists()).toBe(
+        true,
+      );
     });
 
     it("hides the add filter button when showButton is false", async () => {
       const wrapper = await createWrapper({ showButton: false });
 
-      expect(wrapper.find('[data-testid="add-filter-button"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="add-filter-button"]').exists()).toBe(
+        false,
+      );
     });
 
     it("does not render the add filter modal until the button is clicked", async () => {
       const wrapper = await createWrapper();
 
       // ChoosePluginModal has v-if="addFilterModal" — not shown on initial render
-      expect(wrapper.find('[data-testid="add-filter-modal"]').exists()).toBe(false);
+      expect(wrapper.find('[data-testid="add-filter-modal"]').exists()).toBe(
+        false,
+      );
     });
   });
 

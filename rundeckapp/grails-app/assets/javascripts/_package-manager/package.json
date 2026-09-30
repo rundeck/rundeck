@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "engines": {
-    "npm": "11.19.0"
+    "npm": "11.19.1"
   },
   "main": "",
   "scripts": {
@@ -25,10 +25,10 @@
     "knockout": "3.5.3",
     "knockout-mapping": "2.6.0",
     "perfect-scrollbar": "1.5.6",
-    "vue": "3.5.41",
+    "vue": "3.5.42",
     "vuex": "4.1.0"
   },
   "overrides": {
-    "nanoid": "3.3.18"
+    "nanoid": "3.3.19"
   }
 }

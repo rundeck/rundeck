@@ -3,7 +3,6 @@ import ExecutionEditor from "../ExecutionEditor.vue";
 import { executionLifecycle, pluginsInitialData } from "./mocks";
 import PluginConfig from "../../../../../library/components/plugins/pluginConfig.vue";
 
-
 jest.mock("@/library/rundeckService", () => ({
   getRundeckContext: jest.fn().mockImplementation(() => ({
     eventBus: { on: jest.fn(), emit: jest.fn() },
@@ -93,7 +92,8 @@ describe("ExecutionEditor", () => {
     // emitting data from pluginConfig that differs from the original data, to simulate editing behaviour
     const pluginConfigs = wrapper.findAllComponents(PluginConfig);
     pluginConfigs.forEach((pluginComponent) => {
-      const provider = pluginComponent.vm.provider as keyof typeof executionLifecycle;
+      const provider = pluginComponent.vm
+        .provider as keyof typeof executionLifecycle;
       const configToEmit = executionLifecycle[provider];
       pluginComponent.vm.$emit("update:modelValue", {
         config: configToEmit,

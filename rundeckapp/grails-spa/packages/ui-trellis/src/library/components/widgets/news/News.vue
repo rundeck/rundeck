@@ -108,7 +108,8 @@ export default defineComponent({
 }
 
 .skeleton--community-news {
-  background-image: linear-gradient(
+  background-image:
+    linear-gradient(
       100deg,
       rgba(255, 255, 255, 0),
       rgba(255, 255, 255, 0.5) 50%,
