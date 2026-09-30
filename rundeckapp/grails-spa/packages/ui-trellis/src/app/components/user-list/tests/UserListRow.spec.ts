@@ -2,7 +2,11 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import UserListRow from "../UserListRow.vue";
 import messages from "../../../utilities/locales/en_US.js";
 
-const $t = (key: string) => (messages as Record<string, string>)[key] || key;
+const $t = (key: string, params: string[] = []) =>
+  ((messages as Record<string, string>)[key] || key).replace(
+    /\{(\d+)\}/g,
+    (_, i) => params[Number(i)],
+  );
 
 jest.mock("@/library", () => ({
   getRundeckContext: jest
@@ -60,6 +64,21 @@ describe("UserListRow", () => {
     expect(editLink.attributes("href")).toBe(
       "http://localhost:4440/user/edit?login=alice",
     );
+  });
+
+  it("gives the expander an accessible name and links it to the detail row when expanded", async () => {
+    const wrapper = await mountUserListRow({ user, index: 3 });
+    const toggle = wrapper.find('[data-testid="user-expander-alice"]');
+
+    expect(toggle.attributes("aria-label")).toBe(
+      "Toggle details for user alice",
+    );
+    expect(toggle.attributes("aria-controls")).toBeUndefined();
+
+    await toggle.trigger("click");
+
+    expect(toggle.attributes("aria-controls")).toBe("user-detail-3");
+    expect(wrapper.find("#user-detail-3").exists()).toBe(true);
   });
 
   it("toggles the detail panel open and closed when the expander is clicked", async () => {

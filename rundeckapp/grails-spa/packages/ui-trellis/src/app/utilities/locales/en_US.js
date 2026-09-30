@@ -1463,6 +1463,7 @@ const messages = {
   "user.list.title": "Users",
   "user.list.newProfile": "New Profile …",
   "user.list.edit": "edit",
+  "user.list.toggleDetails": "Toggle details for user {0}",
   "domain.User.email.label": "Email",
   "domain.User.firstName.label": "First Name",
   "domain.User.lastName.label": "Last Name",

@@ -5,7 +5,9 @@
         <button
           type="button"
           class="expander-toggle"
+          :aria-label="$t('user.list.toggleDetails', [user.login])"
           :aria-expanded="expanded"
+          :aria-controls="expanded ? detailRowId : undefined"
           :data-testid="'user-expander-' + user.login"
           @click="toggleExpanded"
         >
@@ -15,7 +17,9 @@
       <td>
         <span class="userlogin">{{ user.login }}</span>
         <span class="username">{{ user.firstName }} {{ user.lastName }}</span>
-        <span v-if="user.email" class="useremail">&lt;{{ user.email }}&gt;</span>
+        <span v-if="user.email" class="useremail">
+          &lt;{{ user.email }}&gt;
+        </span>
         <span v-if="appAdmin" class="useredit">
           <a
             class="textbtn textbtn-info textbtn-on-hover"
@@ -28,7 +32,7 @@
         </span>
       </td>
     </tr>
-    <tr v-if="expanded" :class="rowClass">
+    <tr v-if="expanded" :id="detailRowId" :class="rowClass">
       <td></td>
       <td>
         <user-detail-panel
@@ -81,6 +85,9 @@ export default defineComponent({
       return this.expanded
         ? "glyphicon glyphicon-triangle-bottom"
         : "glyphicon glyphicon-triangle-right";
+    },
+    detailRowId(): string {
+      return `user-detail-${this.index}`;
     },
     isSelfProfile(): boolean {
       return (
