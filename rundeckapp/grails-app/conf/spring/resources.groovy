@@ -189,6 +189,7 @@ import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.InfrastructureRoleBeanDefinitionRegistryPostProcessor
 import rundeckapp.init.QuartzPropertiesBeanFactoryPostProcessor
+import rundeckapp.init.RecycleSafeGrailsWebRequestTaskDecorator
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
@@ -228,6 +229,11 @@ beans={
     // for them. See the class Javadoc for details.
     infrastructureRoleBeanDefinitionRegistryPostProcessor(InfrastructureRoleBeanDefinitionRegistryPostProcessor)
     quartzPropertiesBeanFactoryPostProcessor(QuartzPropertiesBeanFactoryPostProcessor)
+
+    // Overrides the bean of the same name from ControllersAsyncGrailsPlugin. Its decorator rebuilds
+    // the GrailsWebRequest on the worker thread and throws when Jetty has already recycled the
+    // originating request, which kills the pool thread and drops the task. See the class javadoc.
+    grailsWebRequestTaskDecorator(RecycleSafeGrailsWebRequestTaskDecorator)
 
     rdAuthorizeInterceptor(RdAuthorizeInterceptor)
     rundeckWebDefaultParameterNamesMapper(RdWebDefaultParameterNamesMapper) {
