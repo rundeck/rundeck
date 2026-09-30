@@ -181,7 +181,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
                     "name": name,
                     "config": config + ["project.name": name]
                 ]
-                def result = client.post("/projects", projectConfig)
+                createProjectWhenFree(projectConfig)
             } else if (!getProject.successful) {
                 throw new RuntimeException("Failed to access project: ${getProject.body().string()}")
             }
@@ -618,7 +618,6 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         
         // Successful delete returns 204 (No Content)
         if (statusCode == 204) {
-            waitForProjectToBeGone(projectName)
             return
         }
         
@@ -636,33 +635,48 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
             }
         }
         
+        // Already on its way out. Deletion is asynchronous, so a project deleted moments ago -- by
+        // this spec's previous iteration, which shares the name -- answers the delete with 409
+        // until it is gone. There is nothing left for a cleanup to do.
+        if (statusCode == 409 && responseBodyString?.contains('api.error.project.disabled')) {
+            return
+        }
+
         // For any other error (or 404 with different error code), throw exception
         String errorMessage = responseBodyString ?: "HTTP ${statusCode}: ${response.message()}"
         throw new RuntimeException("Failed to delete project: ${errorMessage}")
     }
 
     /**
-     * Blocks until a deleted project is really gone.
+     * Creates a project, waiting out a previous incarnation that is still being deleted.
      *
-     * The API answers the delete before the project has been removed: it is marked disabled and
-     * torn down in the background. Every caller here is a cleanup that assumes the name is free
-     * once it returns, so a spec that creates and deletes the same project on each iteration
-     * races its own teardown. The next setupProject then either finds the dying project still
-     * answering and skips creation, leaving the test on a disabled project, or gets
-     * 409 api.error.project.disabled -- "Project X is disabled or being deleted".
+     * Deletion is asynchronous, and while it runs the two observable signals disagree: the project
+     * GETs as 404 almost at once, but a create is still rejected with 409
+     * api.error.project.disabled -- "Project X is disabled or being deleted". Specs that create and
+     * delete the same project on every iteration land in exactly that window, so the create being
+     * accepted is the only signal worth waiting on. Waiting on the GET does nothing, because it is
+     * already 404 by then.
      *
-     * Waits for the condition rather than a fixed delay, per .claude/rules/selenium.md.
+     * Waits on the condition rather than a fixed delay, per .claude/rules/selenium.md.
      *
-     * @param projectName the project whose deletion to wait out
+     * @param projectConfig the create payload, whose name may still belong to a dying project
      */
-    private void waitForProjectToBeGone(String projectName) {
+    private void createProjectWhenFree(Map projectConfig) {
         WaitUtils.waitFor(
                 {
-                    try (def response = client.doGet("/project/${projectName}")) {
-                        return response.code()
+                    try (def response = client.doPost("/projects", projectConfig)) {
+                        if (response.successful) {
+                            return true
+                        }
+                        String body = response.body()?.string()
+                        if (response.code() == 409 && body?.contains('api.error.project.disabled')) {
+                            return false
+                        }
+                        throw new RuntimeException(
+                                "Failed to create project: ${body ?: "HTTP ${response.code()}"}")
                     }
                 },
-                { int code -> code == 404 },
+                { it },
                 WaitingTime.EXCESSIVE,
                 WaitingTime.LOW
         )
