@@ -618,6 +618,7 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         
         // Successful delete returns 204 (No Content)
         if (statusCode == 204) {
+            waitForProjectToBeGone(projectName)
             return
         }
         
@@ -638,6 +639,33 @@ abstract class BaseContainer extends Specification implements ClientProvider, Wa
         // For any other error (or 404 with different error code), throw exception
         String errorMessage = responseBodyString ?: "HTTP ${statusCode}: ${response.message()}"
         throw new RuntimeException("Failed to delete project: ${errorMessage}")
+    }
+
+    /**
+     * Blocks until a deleted project is really gone.
+     *
+     * The API answers the delete before the project has been removed: it is marked disabled and
+     * torn down in the background. Every caller here is a cleanup that assumes the name is free
+     * once it returns, so a spec that creates and deletes the same project on each iteration
+     * races its own teardown. The next setupProject then either finds the dying project still
+     * answering and skips creation, leaving the test on a disabled project, or gets
+     * 409 api.error.project.disabled -- "Project X is disabled or being deleted".
+     *
+     * Waits for the condition rather than a fixed delay, per .claude/rules/selenium.md.
+     *
+     * @param projectName the project whose deletion to wait out
+     */
+    private void waitForProjectToBeGone(String projectName) {
+        WaitUtils.waitFor(
+                {
+                    try (def response = client.doGet("/project/${projectName}")) {
+                        return response.code()
+                    }
+                },
+                { int code -> code == 404 },
+                WaitingTime.EXCESSIVE,
+                WaitingTime.LOW
+        )
     }
 
     /**
