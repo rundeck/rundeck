@@ -41,3 +41,10 @@ a.label:focus,
 a.label:hover {
   color: inherit;
 }
+
+// RUN-4966: --font-color flips to white in dark mode; as a background it
+// renders a white pill. Swap to the .btn-default pairing in dark only.
+*[data-color-theme="dark"] .label.label-default {
+  color: var(--font-color);
+  background-color: var(--default-color);
+}
