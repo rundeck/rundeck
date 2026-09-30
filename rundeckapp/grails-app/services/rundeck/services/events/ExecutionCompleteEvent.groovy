@@ -16,6 +16,7 @@
 
 package rundeck.services.events
 
+import com.dtolabs.rundeck.core.execution.workflow.StepNodeUsageWorkflowListener.StepNodeUsageEntry
 import rundeck.Execution
 import rundeck.ScheduledExecution
 
@@ -29,6 +30,16 @@ class ExecutionCompleteEvent {
     Map nodeStatus
     Map context
 
+    /**
+     * Per-step breakdown of step-node usage for this execution: one entry per step, keyed by
+     * its hierarchical step path (e.g. "3", or "3/1" for a step nested under step 3). Each
+     * entry holds that step's elapsed time in nanoseconds (node-level dispatches already
+     * summed in), a discrete node-dispatch count, and the plugin/provider type that ran. Null
+     * if {@code StepNodeUsageWorkflowListener} never finalized a breakdown for this execution
+     * (e.g. a crash mid-execution).
+     */
+    Map<String, StepNodeUsageEntry> stepNodeUsageBreakdown
+
 
     @Override
     public String toString() {
@@ -38,6 +49,7 @@ class ExecutionCompleteEvent {
                 ", job=" + job +
                 ", nodeStatus=" + nodeStatus +
                 ", context=" + context +
+                ", stepNodeUsageBreakdown=" + stepNodeUsageBreakdown +
                 '}';
     }
 }
