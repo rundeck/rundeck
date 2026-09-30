@@ -51,7 +51,11 @@ class ExecutionSpec extends SeleniumBase {
         def sideBarPage = page SideBarPage
         def activityPage = page ActivityPage
         def projectEditPage = page ProjectEditPage
-        def jobUuid = "2de51941-605c-435b-b128-4dfa8142f142"
+        // Unique per iteration: each iteration gets its own project, named after it, and job uuids are
+        // unique across the whole instance, so a shared literal lets whichever iteration runs first
+        // keep the job. Later imports then cannot place it -- loadJobs looks the job up with
+        // findByUuidAndProject -- and the job show page redirects to the project that owns it.
+        def jobUuid = UUID.randomUUID().toString()
         JobShowPage jobShowPage = page(JobShowPage, SELENIUM_EXEC_PROJECT).forJob(jobUuid)
         def yaml = """
             - 
@@ -169,7 +173,11 @@ class ExecutionSpec extends SeleniumBase {
     def "viewer execution check log view"() {
         setup:
         def executionShowPage = page ExecutionShowPage
-        def jobUuid = "2de51941-605c-435b-b128-4dfa8142f142"
+        // Unique per iteration: each iteration gets its own project, named after it, and job uuids are
+        // unique across the whole instance, so a shared literal lets whichever iteration runs first
+        // keep the job. Later imports then cannot place it -- loadJobs looks the job up with
+        // findByUuidAndProject -- and the job show page redirects to the project that owns it.
+        def jobUuid = UUID.randomUUID().toString()
         JobShowPage jobShowPage = page(JobShowPage, SELENIUM_EXEC_PROJECT).forJob(jobUuid)
         def yaml = """
             - 
@@ -444,7 +452,11 @@ class ExecutionSpec extends SeleniumBase {
     def "check after refresh"() {
         setup:
         def executionShowPage = page ExecutionShowPage
-        def jobUuid = "2de51941-605c-435b-b128-4dfa8142f142"
+        // Unique per iteration: each iteration gets its own project, named after it, and job uuids are
+        // unique across the whole instance, so a shared literal lets whichever iteration runs first
+        // keep the job. Later imports then cannot place it -- loadJobs looks the job up with
+        // findByUuidAndProject -- and the job show page redirects to the project that owns it.
+        def jobUuid = UUID.randomUUID().toString()
         JobShowPage jobShowPage = page(JobShowPage, SELENIUM_EXEC_PROJECT).forJob(jobUuid)
         def yaml = """
             - 
@@ -505,7 +517,11 @@ class ExecutionSpec extends SeleniumBase {
     def "check every option"() {
         setup:
         def executionShowPage = page ExecutionShowPage
-        def jobUuid = "2de51941-605c-435b-b128-4dfa8142f142"
+        // Unique per iteration: each iteration gets its own project, named after it, and job uuids are
+        // unique across the whole instance, so a shared literal lets whichever iteration runs first
+        // keep the job. Later imports then cannot place it -- loadJobs looks the job up with
+        // findByUuidAndProject -- and the job show page redirects to the project that owns it.
+        def jobUuid = UUID.randomUUID().toString()
         JobShowPage jobShowPage = page(JobShowPage, SELENIUM_EXEC_PROJECT).forJob(jobUuid)
         def yaml = """
             - 
@@ -579,7 +595,11 @@ class ExecutionSpec extends SeleniumBase {
         def sideBarPage = page SideBarPage
         def activityPage = page ActivityPage
         def executionShowPage = page ExecutionShowPage
-        def jobUuid = "2de51941-605c-435b-b128-4dfa8142f145"
+        // Unique per iteration: each iteration gets its own project, named after it, and job uuids are
+        // unique across the whole instance, so a shared literal lets whichever iteration runs first
+        // keep the job. Later imports then cannot place it -- loadJobs looks the job up with
+        // findByUuidAndProject -- and the job show page redirects to the project that owns it.
+        def jobUuid = UUID.randomUUID().toString()
         JobShowPage jobShowPage = page(JobShowPage, SELENIUM_EXEC_PROJECT).forJob(jobUuid)
         def yaml = """
             - 
