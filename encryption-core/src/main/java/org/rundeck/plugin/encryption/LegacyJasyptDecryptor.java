@@ -122,23 +122,10 @@ public class LegacyJasyptDecryptor {
             try {
                 return decryptRaw(password, base64Decoded);
             } catch (EncryptionException ignored) {
-                // fall through and try the raw-bytes interpretation below
+                // fall through to the raw-bytes interpretation
             }
         }
-
-        try {
-            return decryptRaw(password, encryptedMessage);
-        } catch (EncryptionException rawFailure) {
-            if (!base64Shaped && base64Decoded != null && base64Decoded.length > saltSizeBytes) {
-                // Base64-decodable but not cleanly block-aligned -- still worth a fallback attempt.
-                try {
-                    return decryptRaw(password, base64Decoded);
-                } catch (EncryptionException ignored) {
-                    // fall through; surface the raw-binary failure below, which is more informative
-                }
-            }
-            throw rawFailure;
-        }
+        return decryptRaw(password, encryptedMessage);
     }
 
     /**
