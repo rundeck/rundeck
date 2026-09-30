@@ -99,6 +99,28 @@ class ProjectController extends ControllerBase{
         request instanceof MultipartHttpServletRequest ? ((MultipartHttpServletRequest) request).getFile(name) : null
     }
 
+    /**
+     * Whether this request is a file upload at all, regardless of which parts it carries.
+     *
+     * Separates "multipart, but the expected part is absent" -- which callers report as a missing
+     * upload -- from "not an upload at all", which falls through to the form-encoded handling. The
+     * instanceof that used to draw that line is always false on Grails 8, so the content type draws
+     * it instead.
+     *
+     * The mock request in a controller unit test is always a MultipartHttpServletRequest and sets
+     * no content type, so a bare instanceof would report every simulated form post as an upload;
+     * it only counts when a part was actually added.
+     *
+     * See .claude/rules/grails-multipart.md.
+     */
+    private boolean isMultipartRequest() {
+        if (request.contentType?.toLowerCase()?.startsWith('multipart/')) {
+            return true
+        }
+        request instanceof MultipartHttpServletRequest &&
+                ((MultipartHttpServletRequest) request).fileNames.hasNext()
+    }
+
     FrameworkService frameworkService
     ProjectService projectService
     PluginService pluginService
@@ -449,9 +471,9 @@ class ProjectController extends ControllerBase{
             def project1 = frameworkService.getFrameworkProject(project)
 
             //uploaded file
-            if (uploadedFile('zipFile')) {
+            if (isMultipartRequest()) {
                 MultipartFile file = uploadedFile('zipFile')
-                if (file.empty) {
+                if (!file || file.empty) {
                     flash.error = message(code:"no.file.was.uploaded")
                     return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
                 }
