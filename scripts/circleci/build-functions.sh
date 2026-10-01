@@ -81,6 +81,44 @@ rundeck_docker_push() {
     fi
 }
 
+# Builds the test images once per pipeline and pushes them with per-pipeline tags, so the test
+# jobs pull them instead of running "docker build" (and apt) on every job. Images are built with
+# --no-cache so no layer from another pipeline can influence test results.
+#   <repo>:ci-build-N-rdtest            (jre independent, built only when jreVersion is not 25)
+#   <repo>:ci-build-N-rundeckansible    (jre independent, built only when jreVersion is not 25)
+#   <repo>:ci-build-N[-j25]-oss         (functional-test image on top of the rundeck CI image)
+rundeck_test_images_build_push() {
+    local jreVersion=${1:-}
+    local TAG_SUFFIX=""
+    if [[ "${jreVersion}" == *"25"* ]]; then
+        TAG_SUFFIX="-j25"
+    fi
+    local baseTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
+
+    docker_login
+
+    if [[ -z "${TAG_SUFFIX}" ]]; then
+        copy_rundeck_war test/docker/rundeck-launcher.war
+        (
+            set -e
+            cd test/docker/
+            source common.sh
+            RDTEST_DOCKER_BUILD_OPTS="--no-cache" build_rdtest_docker
+            RDTEST_DOCKER_BUILD_OPTS="--no-cache" build_rundeckansible_docker
+        )
+        docker tag rdtest:latest "${baseTag}-rdtest"
+        docker tag rundeckansible:latest "${baseTag}-rundeckansible"
+        docker push "${baseTag}-rdtest"
+        docker push "${baseTag}-rundeckansible"
+    fi
+
+    docker build --no-cache \
+        --build-arg IMAGE="${baseTag}${TAG_SUFFIX}" \
+        -t "${baseTag}${TAG_SUFFIX}-oss" \
+        functional-test/src/test/resources/docker/compose/oss
+    docker push "${baseTag}${TAG_SUFFIX}-oss"
+}
+
 rundeck_docker_publish() {
     docker_login
     ./gradlew ${GRADLE_BASE_OPTS} -Penvironment="${ENV}" -PdockerRepository=${DOCKER_REPO} docker:officialPush

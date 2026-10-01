@@ -7,15 +7,17 @@ rundeck_docker_push() {
     echo "!!! [rundeck_docker_push] ran but is DISABLED !!!"
 }
 
-testdeck_push_rdtest() {
-    echo "!!! [testdeck_push_rdtest] ran but is DISABLED !!!"
+rundeck_test_images_build_push() {
+    echo "!!! [rundeck_test_images_build_push] ran but is DISABLED !!!"
 }
 
-testdeck_pull_rdtest() {
-    echo "!!! [testdeck_pull_rdtest] ran but OVERRIDEN locally !!!"
-    mkdir -p "${RUNDECK_WAR_DIR}"
-    cp -pv /home/circleci/rlibs/* "${RUNDECK_WAR_DIR}"
+# No registry locally: the test images are built on demand (testdeck_build_rdtest / compose build:).
+rundeck_pull_rdtest_images() {
+    echo "!!! [rundeck_pull_rdtest_images] ran but is DISABLED, images are built locally !!!"
+}
 
+rundeck_pull_oss_image() {
+    echo "!!! [rundeck_pull_oss_image] ran but is DISABLED, image is built locally !!!"
 }
 
 

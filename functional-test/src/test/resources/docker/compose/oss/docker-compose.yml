@@ -1,5 +1,8 @@
 services:
   rundeck:
+    # In CI this image is pulled from the Build job (rundeck_pull_oss_image); when it is not
+    # present locally compose builds it from the Dockerfile below.
+    image: rundeck-functional-oss:latest
     build:
       context: "."
       args:

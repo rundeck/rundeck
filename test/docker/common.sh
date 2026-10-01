@@ -26,6 +26,21 @@ build_rdtest_docker(){
 	docker build \
 		-t rdtest:latest \
 		--cache-from rdtest:latest \
+		${RDTEST_DOCKER_BUILD_OPTS:-} \
 		--build-arg CLI_VERS=$CLI_VERS \
 		$rdeck_dock_img_dir
+}
+
+# Builds the rundeckansible:latest image (on top of rdtest:latest) used by docker-compose-ansible-test.yaml.
+# In CI the image is pulled from the Build job; this is a no-op when the image exists.
+build_rundeckansible_docker(){
+  if docker image inspect rundeckansible:latest >/dev/null 2>&1; then
+    echo "rundeckansible:latest already exists — skipping rebuild"
+    return 0
+  fi
+
+  docker build \
+		-t rundeckansible:latest \
+		${RDTEST_DOCKER_BUILD_OPTS:-} \
+		dockers/rundeckansible/
 }
