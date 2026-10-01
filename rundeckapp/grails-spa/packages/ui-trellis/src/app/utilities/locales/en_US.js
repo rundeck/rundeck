@@ -767,6 +767,8 @@ const messages = {
   "project.schedule.disabled": "Project schedule is disabled",
   "project.execution.disabled": "Project execution is disabled",
   "job.schedule.will.never.fire": "Job schedule will never fire",
+  "job.execution.acl.invalid.warning.title":
+    "Scheduled runs use the saved Rundeck user '{user}', who is not authorized to run this job. Grant that user run access, or re-save the job as a user who has it.",
   "scm.import.status.UNKNOWN.display.text": "Import Status: Not Tracked",
   "scm.import.status.LOADING.description": "Import: Job status is loading",
   "scm.export.status.DELETED.display.text": "Deleted",
