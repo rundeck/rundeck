@@ -77,6 +77,7 @@ import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.components.jobs.JobDefinitionComponent
+import org.rundeck.app.data.job.metadata.JobExecutionAclMetadataComponent
 import org.rundeck.app.data.model.v1.job.JobBrowseItem
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
@@ -130,6 +131,7 @@ class ScheduledExecutionController  extends ControllerBase{
     ConfigurationService configurationService
     JobDataProvider jobDataProvider
     ReferencedExecutionDataProvider referencedExecutionDataProvider
+    JobExecutionAclMetadataComponent jobExecutionAclMetadataComponent
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -563,6 +565,7 @@ Since: v53''',
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
+                executionAclValid: jobExecutionAclMetadataComponent.validateExecutionAcl(scheduledExecution),
                 isReferenced: isReferenced,
                 parentList: parentList,
                 crontab: crontab,

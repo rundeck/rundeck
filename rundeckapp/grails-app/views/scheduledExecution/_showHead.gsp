@@ -72,6 +72,13 @@
               <span class="detail"><g:message code="disabled" /></span>
           </span>
       </g:if>
+      <g:if test="${executionAclValid == false}">
+          <span class="label label-warning has_tooltip" data-toggle="tooltip"
+                data-placement="auto bottom" title="${message(code:'job.execution.acl.invalid.warning.title', args:[scheduledExecution.user])}">
+              <i class="glyphicon glyphicon-warning-sign"></i>
+              <span class="detail"><g:message code="job.execution.acl.invalid.warning.label"/></span>
+          </span>
+      </g:if>
       <g:if test="${isScheduled && nextExecution}">
           <span class="scheduletime">
               <g:if test="${serverNodeUUID && !remoteClusterNodeUUID}">
