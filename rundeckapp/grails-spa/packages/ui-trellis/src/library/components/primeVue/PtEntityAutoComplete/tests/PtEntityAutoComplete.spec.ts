@@ -125,9 +125,9 @@ describe("PtEntityAutoComplete", () => {
       await typeQuery(wrapper, "De");
 
       expect(search).not.toHaveBeenCalled();
-      expect(wrapper.findComponent(AutoComplete).props("suggestions")).toEqual(
-        [],
-      );
+      expect(
+        wrapper.findComponent(AutoComplete).props("suggestions"),
+      ).toBeFalsy();
     });
 
     it("shows no suggestions when no search callback is configured", async () => {
@@ -135,9 +135,9 @@ describe("PtEntityAutoComplete", () => {
 
       await typeQuery(wrapper, "Depl");
 
-      expect(wrapper.findComponent(AutoComplete).props("suggestions")).toEqual(
-        [],
-      );
+      expect(
+        wrapper.findComponent(AutoComplete).props("suggestions"),
+      ).toBeFalsy();
     });
 
     it("shows the newest query's results even when an earlier search resolves later", async () => {
@@ -182,9 +182,9 @@ describe("PtEntityAutoComplete", () => {
       resolvePending(JOBS);
       await flushPromises();
 
-      expect(wrapper.findComponent(AutoComplete).props("suggestions")).toEqual(
-        [],
-      );
+      expect(
+        wrapper.findComponent(AutoComplete).props("suggestions"),
+      ).toBeFalsy();
     });
 
     it("shows no suggestions when the search fails", async () => {
@@ -194,9 +194,9 @@ describe("PtEntityAutoComplete", () => {
 
       await typeQuery(wrapper, "Depl");
 
-      expect(wrapper.findComponent(AutoComplete).props("suggestions")).toEqual(
-        [],
-      );
+      expect(
+        wrapper.findComponent(AutoComplete).props("suggestions"),
+      ).toBeFalsy();
       (console.error as jest.Mock).mockRestore();
     });
   });

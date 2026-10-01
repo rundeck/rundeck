@@ -1,6 +1,7 @@
 package org.rundeck.util.gui.pages.jobs
 
 import org.openqa.selenium.By
+import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
@@ -81,13 +82,14 @@ class JobReferenceStep implements JobStep {
         jobNameField.sendKeys(childJobName.substring(0, Math.min(3, childJobName.length())))
 
         By suggestionBy = nextUi ? nameSuggestionBy : legacyNameSuggestionBy
-        By exactSuggestion = By.xpath(
-                nextUi
-                        ? "//*[contains(concat(' ', @class, ' '), ' p-autocomplete-option ')][contains(., '${childJobName}')]"
-                        : "//*[contains(concat(' ', @class, ' '), ' autocomplete-suggestion ')][contains(., '${childJobName}')]"
-        )
         jobCreatePage.waitForElementVisible(suggestionBy)
-        jobCreatePage.waitForElementToBeClickable(exactSuggestion)
-        jobCreatePage.driver.findElement(exactSuggestion).click()
+        // Match the row text in Groovy rather than interpolating the name into
+        // an XPath literal, so names containing quotes or apostrophes still work.
+        WebElement match = new WebDriverWait(jobCreatePage.driver, Duration.ofSeconds(15)).until { WebDriver d ->
+            d.findElements(suggestionBy).find { WebElement row ->
+                row.displayed && row.enabled && row.text.contains(childJobName)
+            }
+        }
+        match.click()
     }
 }

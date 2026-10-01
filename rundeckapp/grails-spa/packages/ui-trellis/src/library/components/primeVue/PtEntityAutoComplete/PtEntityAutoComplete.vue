@@ -11,7 +11,7 @@
     <AutoComplete
       ref="autoInput"
       :model-value="value"
-      :suggestions="items"
+      :suggestions="visibleSuggestions"
       :option-label="optionLabel"
       :name="name"
       :input-id="inputId"
@@ -153,6 +153,16 @@ export default defineComponent({
   },
   computed: {
     /**
+     * Suggestions handed to PrimeVue, or `undefined` when there are none.
+     *
+     * PrimeVue treats an empty array as a completed search and keeps
+     * re-opening the overlay, which makes it flicker while editing a value with
+     * no matches; `undefined` keeps it closed. Same approach as `PtAutoComplete`.
+     */
+    visibleSuggestions(): EntitySuggestion[] | undefined {
+      return this.items.length > 0 ? this.items : undefined;
+    },
+    /**
      * Attributes forwarded to the inner input element.
      *
      * PrimeVue exposes no `inputProps`, so `readonly` and the test id are
@@ -235,6 +245,7 @@ export default defineComponent({
 });
 </script>
 
+<!-- eslint-disable-next-line vue/enforce-style-attribute -- styles PrimeVue internals globally -->
 <style lang="scss">
 // Not scoped: PrimeVue teleports the overlay out of this component's subtree,
 // so the option rows below cannot be reached by a scoped selector.
