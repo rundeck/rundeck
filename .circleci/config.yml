@@ -565,10 +565,11 @@ jobs:
 
     steps:
       - checkout
-      - install-packaging-dependencies
       - restore-build-cache
+      # attach first: the persisted JDK (.ci-jdk) must exist when Install Java JDK runs
       - attach_workspace:
           at: ~/workspace
+      - install-packaging-dependencies
       - run-build-step:
           step-name: Install & Setup
           command: packaging_setup
@@ -601,10 +602,11 @@ jobs:
 
     steps:
       - checkout
-      - install-packaging-dependencies
       - restore-build-cache
+      # attach first: the persisted JDK (.ci-jdk) must exist when Install Java JDK runs
       - attach_workspace:
           at: ~/workspace
+      - install-packaging-dependencies
       - run-build-step:
           step-name: Install PackageCloud CLI
           command: install_package_cloud
