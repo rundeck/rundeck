@@ -39,14 +39,41 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
      * enabled job whose stored owner is not authorized (the "at risk" case).
      */
     boolean validateExecutionAcl(ScheduledExecution se) {
+        return evaluateExecutionAcl(se, new HashMap<List<String>, UserAndRolesAuthContext>())
+    }
+
+    /**
+     * Bulk variant for job listings. Jobs in a list commonly share an owner, so the auth
+     * context is built once per user/roles/project combination rather than once per job.
+     *
+     * @return job uuid to whether its saved owner is still authorized
+     */
+    Map<String, Boolean> validateExecutionAcl(Collection<ScheduledExecution> jobs) {
+        Map<List<String>, UserAndRolesAuthContext> authContexts = new HashMap<>()
+        Map<String, Boolean> results = new HashMap<>()
+        for (ScheduledExecution se : jobs) {
+            results.put(se.uuid, evaluateExecutionAcl(se, authContexts))
+        }
+        return results
+    }
+
+    private boolean evaluateExecutionAcl(
+        ScheduledExecution se,
+        Map<List<String>, UserAndRolesAuthContext> authContexts
+    ) {
         if (!se || !se.shouldScheduleExecution()) {
             return true
         }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
-            se.user,
-            se.userRoles,
-            se.project
-        )
+        List<String> key = [se.project, se.user] + se.userRoles
+        UserAndRolesAuthContext authContext = authContexts.get(key)
+        if (authContext == null) {
+            authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
+                se.user,
+                se.userRoles,
+                se.project
+            )
+            authContexts.put(key, authContext)
+        }
         return rundeckAuthContextProcessor.authorizeProjectJobAll(
             authContext,
             se,

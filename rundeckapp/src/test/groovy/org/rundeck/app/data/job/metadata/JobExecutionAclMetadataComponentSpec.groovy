@@ -89,6 +89,33 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             !result
     }
 
+    def "bulk validateExecutionAcl builds one auth context per owner, not per job"() {
+        given:
+            def sut = new JobExecutionAclMetadataComponent()
+            def authContext = Mock(UserAndRolesAuthContext)
+            def sharedOwnerA = new ScheduledExecution(
+                uuid: 'job-a', project: 'AProject', user: 'someuser',
+                scheduled: true, executionEnabled: true, scheduleEnabled: true,
+            )
+            def sharedOwnerB = new ScheduledExecution(
+                uuid: 'job-b', project: 'AProject', user: 'someuser',
+                scheduled: true, executionEnabled: true, scheduleEnabled: true,
+            )
+            def notScheduled = new ScheduledExecution(
+                uuid: 'job-c', project: 'AProject', user: 'someuser', scheduled: false,
+            )
+            sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                // two jobs, same owner and project: the context is built once
+                1 * getAuthContextForUserAndRolesAndProject('someuser', _, 'AProject') >> authContext
+                1 * authorizeProjectJobAll(authContext, sharedOwnerA, [AuthConstants.ACTION_RUN], 'AProject') >> false
+                1 * authorizeProjectJobAll(authContext, sharedOwnerB, [AuthConstants.ACTION_RUN], 'AProject') >> true
+            }
+        when:
+            def result = sut.validateExecutionAcl([sharedOwnerA, sharedOwnerB, notScheduled])
+        then:
+            result == ['job-a': false, 'job-b': true, 'job-c': true]
+    }
+
     def "getMetadataForJobIds returns executionAclValid meta for a requested at-risk job"() {
         given:
             def sut = new JobExecutionAclMetadataComponent()
