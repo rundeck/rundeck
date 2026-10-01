@@ -73,7 +73,8 @@
           </span>
       </g:if>
       <g:if test="${executionAclValid == false}">
-          <span class="label label-warning has_tooltip" data-toggle="tooltip"
+          <%-- label-style() leaves the global white label text commented out, so opt in here (the icon inherits it) --%>
+          <span class="label label-warning has_tooltip" style="color: var(--white-color)" data-toggle="tooltip"
                 data-placement="auto bottom" title="${message(code:'job.execution.acl.invalid.warning.title', args:[scheduledExecution.user])}">
               <i class="glyphicon glyphicon-warning-sign"></i>
               <span class="detail"><g:message code="job.execution.acl.invalid.warning.label"/></span>
