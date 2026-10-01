@@ -16,6 +16,7 @@
 
 package org.rundeck.plugin.jobstate
 
+import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.FlowControl
 import com.dtolabs.rundeck.core.jobs.JobReference
@@ -27,6 +28,7 @@ import com.dtolabs.rundeck.plugins.PluginLogger
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Covers the {@code @PluginOutput} exposure of the state the referenced job was actually found in,
@@ -67,7 +69,8 @@ class JobStateWorkflowStepOutputSpec extends Specification {
         description.getProperties().findAll { it.getOutputMetadata() }*.name == ["observedExecutionState"]
     }
 
-    def "captures the state the job was actually found in, even when the assertion does not hold"() {
+    @Unroll
+    def "captures #expected when the job was last #scenario"() {
         given:
         def step = new JobStateWorkflowStep()
         step.halt = false
@@ -86,8 +89,8 @@ class JobStateWorkflowStepOutputSpec extends Specification {
             getJobService() >> Mock(JobService) {
                 1 * jobForID('auuid', _) >> Mock(JobReference)
                 1 * getJobState(_) >> Mock(JobState) {
-                    getPreviousExecutionState() >> 'failed'
-                    getPreviousExecutionStatusString() >> 'failed'
+                    getPreviousExecutionState() >> previousState
+                    getPreviousExecutionStatusString() >> customStatus
                 }
             }
         }
@@ -95,6 +98,14 @@ class JobStateWorkflowStepOutputSpec extends Specification {
         context.getFlowControl() >> Mock(FlowControl)
 
         and: 'the observed state is exposed, not the asserted one'
-        step.observedExecutionState == 'failed'
+        step.observedExecutionState == expected
+
+        where:
+        scenario                      | previousState          | customStatus | expected
+        'failed'                      | ExecutionState.failed  | null         | 'failed'
+        'succeeded'                   | ExecutionState.succeeded | null       | 'succeeded'
+        'aborted'                     | ExecutionState.aborted | null         | 'aborted'
+        'halted with a custom status' | ExecutionState.other   | 'needs-review' | 'needs-review'
+        'never run'                   | null                   | null         | null
     }
 }
