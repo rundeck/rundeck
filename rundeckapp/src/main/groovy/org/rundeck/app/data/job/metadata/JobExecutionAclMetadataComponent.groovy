@@ -8,6 +8,8 @@ import org.rundeck.app.components.jobs.JobMetadataComponent
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.beans.factory.annotation.Autowired
+import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.Yaml
 import rundeck.ScheduledExecution
 import rundeck.services.data.IScheduledExecutionDataService
 
@@ -66,15 +68,20 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
      * Project-level policy files carry no `context:` block.
      */
     String buildRunGrantPolicy(ScheduledExecution se) {
-        return """description: Allow ${se.user} to run job ${se.jobName}
-for:
-  job:
-    - equals:
-        uuid: ${se.uuid}
-      allow: [run]
-by:
-  username: ${se.user}
-"""
+        // serialized rather than interpolated: a job name may contain ':' or '#', and the
+        // username has no format constraint, so either could otherwise produce a policy
+        // that fails to parse or that parses into something else
+        Map<String, Object> policy = [
+            description: "Allow ${se.user} to run job ${se.jobName}".toString(),
+            // project-level policy files carry no `context:` block
+            for          : [job: [[equals: [uuid: se.uuid], allow: ['run']]]],
+            by           : [username: se.user],
+        ] as Map<String, Object>
+
+        DumperOptions dumperOptions = new DumperOptions()
+        dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
+        dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
+        return new Yaml(dumperOptions).dump(policy)
     }
 
     private boolean evaluateExecutionAcl(

@@ -205,12 +205,17 @@
                             </span>
                             </g:if>
                                 <g:if test="${executionAclValid && executionAclValid[scheduledExecution.uuid] == false}">
+                                    <g:set var="executionAclWarning"
+                                           value="${g.message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])}"/>
+                                    <%-- icon-only, so the warning must be reachable without a mouse --%>
                                     <span class="has_tooltip text-warning"
-                                          title="${g.message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])}"
+                                          tabindex="0"
+                                          aria-label="${executionAclWarning}"
+                                          title="${executionAclWarning}"
                                           data-toggle="tooltip"
                                           data-container="#section-content"
                                           data-placement="auto bottom">
-                                        <i class="glyphicon glyphicon-warning-sign"></i>
+                                        <i class="glyphicon glyphicon-warning-sign" aria-hidden="true"></i>
                                     </span>
                                 </g:if>
                                 <span class="vue-ui-socket">
