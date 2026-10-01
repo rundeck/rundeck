@@ -104,6 +104,7 @@ class JobCreatePage extends BasePage {
     By nodeFilterLinkBy = By.cssSelector("#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown")
     By nodeFilterSelectAllLinkBy = By.cssSelector("#job_edit__node_filter_include .job_edit__node_filter__filter_select_all")
     By nodeMatchedCountBy = By.xpath("//span[@class='text-info node_filter_results__matched_nodes_count']")
+    By nodePopoverBy = By.cssSelector(".popover.node-embed-popover")
     By excludeFilterTrueBy = By.xpath("//*[@id='excludeFilterTrue']")
     By editableFalseBy = By.xpath("//*[@id='editableFalse']")
     By schedJobNodeThreadCountBy = By.xpath("//*[@id='schedJobnodeThreadcount']")
@@ -411,10 +412,40 @@ class JobCreatePage extends BasePage {
         el selectNode
     }
 
+    /**
+     * Returns the "add to filter" (+) link of a tag inside the open node popover.
+     * Scoped to the node popover so a tag of a node rendered elsewhere is never matched,
+     * and waits until the link is clickable.
+     * @param tabName tag name as rendered in the popover
+     */
     WebElement selectTabAddFilterByName(String tabName){
-        def selector = By.xpath("//span[normalize-space(.)=\"${tabName}\"]//*[@class='glyphicon glyphicon-plus text-success']")
+        def selector = By.xpath("//*[contains(@class,'node-embed-popover')]//span[normalize-space(.)=\"${tabName}\"]//*[@class='glyphicon glyphicon-plus text-success']")
         waitForElementToBeClickable(selector)
         el selector
+    }
+
+    /**
+     * Opens the details popover of a node in the matched nodes list.
+     * Waits for any previously open node popover to close first, because clicking a node
+     * while another popover is still hiding (or while the list is re-rendering) is ignored.
+     * @param nodeName name of the node to open
+     */
+    void openNodePopover(String nodeName) {
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.invisibilityOfElementLocated(nodePopoverBy))
+        getNodeByName(nodeName).click()
+        waitForElementVisible(By.xpath("//*[contains(@class,'node-embed-popover')]//*[contains(@class,'node-header')]/span[normalize-space(.)=\"${nodeName}\"]"))
+    }
+
+    /**
+     * Waits until the node filter input contains {@code text} and the matched nodes
+     * query triggered by that filter change has finished loading.
+     * @param text expected fragment of the node filter
+     */
+    void waitForNodeFilterApplied(String text) {
+        new WebDriverWait(driver, Duration.ofSeconds(30))
+                .until(ExpectedConditions.attributeContains(nodeFilterInputBy, "value", text))
+        waitForElementVisible(nodeMatchedCountBy)
     }
 
     WebElement getNodeFilterInput(){

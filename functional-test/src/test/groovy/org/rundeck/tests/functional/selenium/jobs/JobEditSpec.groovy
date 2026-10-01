@@ -147,12 +147,12 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.nodeDispatchTrueCheck.click()
         jobCreatePage.refreshNodesButton.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.nodeMatchedCountBy)
-        jobCreatePage.getNodeByName("test-node2").click()
+        jobCreatePage.openNodePopover("test-node2")
         jobCreatePage.selectTabAddFilterByName("testBoth").click()
-        jobCreatePage.getNodeByName("test-node").click()
+        jobCreatePage.waitForNodeFilterApplied("testBoth")
+        jobCreatePage.openNodePopover("test-node")
         jobCreatePage.selectTabAddFilterByName("test").click()
-
-
+        jobCreatePage.waitForNodeFilterApplied("tags: \"test\"")
 
         then:
         jobCreatePage.nodeFilterInput.getAttribute("value") == " tags: \"testBoth\" tags: \"test\""
