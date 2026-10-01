@@ -426,7 +426,7 @@ class JobCreatePage extends BasePage {
      * so it never finds the element rather than finding it late.
      */
     void addNodeFilterAndWaitForReload(String tabName) {
-        def matchedCountEl = el(nodeMatchedCountBy)
+        def matchedCountEl = waitForElementVisible(nodeMatchedCountBy)
         selectTabAddFilterByName(tabName).click()
         waitForStaleness(matchedCountEl)
         waitForElementVisible(nodeMatchedCountBy)
