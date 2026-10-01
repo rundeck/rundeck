@@ -13,6 +13,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
+<%@ page import="org.rundeck.util.HtmlTableToMarkdownConverter" %>
 
 <g:set var="allowHTML"
        value="${!(cfg.getString(config: "gui.job.description.disableHTML") in [true,'true'])}"/>
@@ -22,6 +23,9 @@
     <g:if test="${cutoffMarker}">
         <g:set var="remainingLine" value="${g.textBeforeLine(text: remainingLine, marker:cutoffMarker)}"/>
     </g:if>
+    %{-- Convert hand-written HTML <table> blocks to Markdown before they
+         reach <g:markdown> -- see HtmlTableToMarkdownConverter javadoc. --}%
+    <g:set var="remainingLine" value="${HtmlTableToMarkdownConverter.convert(remainingLine?.toString())}"/>
 
     <g:if test="${remainingLine?.trim()}">
         <g:set var="replTokens" value="${[:]}"/>
