@@ -565,7 +565,9 @@ Since: v53''',
         def executionAclValid = jobExecutionAclMetadataComponent.validateExecutionAcl(scheduledExecution)
         // Offer the pre-filled ACL editor only to someone who could actually save it
         def executionAclFixPolicy = null
-        if (!executionAclValid && rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+        // with no saved user there is nobody to grant access to: re-saving the job is the
+        // only way out, so offering an ACL policy would be a dead end
+        if (!executionAclValid && scheduledExecution.user && rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
                 rundeckAuthContextProcessor.authResourceForProjectAcl(scheduledExecution.project),
                 [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]

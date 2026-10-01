@@ -162,24 +162,31 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             result['job-b'][0].data == [valid: true, user: 'someuser']
     }
 
-    def "buildRunGrantPolicy grants only this job to the saved user, with no project context block"() {
+    @Unroll
+    def "buildRunGrantPolicy emits parseable YAML granting only this job to the saved user (#scenario)"() {
         given:
             def sut = new JobExecutionAclMetadataComponent()
             def se = new ScheduledExecution(
-                uuid: 'job-1', jobName: 'nightly', project: 'AProject', user: 'devread',
+                uuid: 'job-1', jobName: jobName, project: 'AProject', user: user,
                 scheduled: true, executionEnabled: true, scheduleEnabled: true,
             )
         when:
-            def policy = sut.buildRunGrantPolicy(se)
+            def parsed = new org.yaml.snakeyaml.Yaml().load(sut.buildRunGrantPolicy(se))
         then:
             // project-level policy files must not carry a context block
-            !policy.contains('context:')
-            policy.contains('uuid: job-1')
-            policy.contains('allow: [run]')
-            policy.contains('username: devread')
-            // least privilege: not granted via the roles, and not to every job
-            !policy.contains('group:')
-            !policy.contains("allow: '*'")
+            !parsed.containsKey('context')
+            parsed['for']['job'][0]['equals']['uuid'] == 'job-1'
+            parsed['for']['job'][0]['allow'] == ['run']
+            // least privilege: granted to the user, not to their roles
+            parsed['by'] == [username: user]
+            parsed['description'].contains(jobName)
+        where:
+            scenario                     | jobName              | user
+            'plain values'               | 'nightly'            | 'devread'
+            'job name with a colon'      | 'backup: nightly'    | 'devread'
+            'job name with a hash'       | 'nightly #2'         | 'devread'
+            'username with a hash'       | 'nightly'            | 'dev#read'
+            'username with a dollar'     | 'nightly'            | 'HOST$'
     }
 
     def "getMetadataForJobIds returns executionAclValid meta for a requested at-risk job"() {
