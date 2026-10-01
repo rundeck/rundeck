@@ -54,6 +54,7 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
         withLocalCompose(USE_LOCAL_DOCKER_COMPOSE)
         withExposedService(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(600)))
         withEnv("TEST_IMAGE", RUNDECK_IMAGE)
+        withEnv("TEST_OSS_TOOLS_IMAGE", System.getenv("TEST_OSS_TOOLS_IMAGE") ?: "tools")
         withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
         withEnv("TEST_RUNDECK_GRAILS_URL", rundeckUrl)
         withEnv("TEST_TARGET_PLATFORM", TEST_TARGET_PLATFORM)

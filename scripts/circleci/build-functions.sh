@@ -112,7 +112,8 @@ rundeck_test_images_build_push() {
         docker push "${baseTag}-rundeckansible"
     fi
 
-    docker build --no-cache \
+    # Only the "tools" stage (apt/pip installs): the ssh keys layer is added by the tests on every run.
+    docker build --no-cache --target tools \
         --build-arg IMAGE="${baseTag}${TAG_SUFFIX}" \
         -t "${baseTag}${TAG_SUFFIX}-oss" \
         functional-test/src/test/resources/docker/compose/oss
@@ -135,7 +136,12 @@ rundeck_gradle_functional_tests() {
     if [[ -n "${TEST_FILES:-}" ]]; then
         test_files_args=(-PtestFiles="${TEST_FILES}")
     fi
-    TEST_IMAGE=${TEST_IMAGE:-} ./gradlew :functional-test:${GRADLE_TASK} \
+    # Use the tools image prebuilt by the Build job when it was pulled (rundeck_pull_oss_image)
+    local oss_tools_image="tools"
+    if docker image inspect rundeck-functional-oss-tools:latest >/dev/null 2>&1; then
+        oss_tools_image="rundeck-functional-oss-tools:latest"
+    fi
+    TEST_OSS_TOOLS_IMAGE=${oss_tools_image} TEST_IMAGE=${TEST_IMAGE:-} ./gradlew :functional-test:${GRADLE_TASK} \
         -Penvironment="${ENV}" \
         "${test_files_args[@]}" \
         ${GRADLE_BUILD_OPTS} --info

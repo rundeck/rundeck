@@ -74,8 +74,9 @@ rundeck_pull_rdtest_images() {
     docker tag "${baseTag}-rundeckansible" rundeckansible:latest
 }
 
-# Pulls the functional-test "oss" image built by the Build job (jre 25 variant when requested) and
-# tags it with the name used by functional-test/.../compose/oss (TEST_OSS_IMAGE default).
+# Pulls the functional-test "oss" tools image built by the Build job (jre 25 variant when requested)
+# and tags it as rundeck-functional-oss-tools:latest, picked up by rundeck_gradle_functional_tests
+# (TEST_OSS_TOOLS_IMAGE) as the base of functional-test/.../compose/oss.
 rundeck_pull_oss_image() {
     docker_login
     local jreVersion=${1:-}
@@ -85,7 +86,7 @@ rundeck_pull_oss_image() {
     fi
     local sourceTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}${JRE_SUFFIX}-oss"
     docker pull "${sourceTag}"
-    docker tag "${sourceTag}" "rundeck-functional-oss:latest"
+    docker tag "${sourceTag}" "rundeck-functional-oss-tools:latest"
 }
 
 fetch_ci_shared_resources() {
