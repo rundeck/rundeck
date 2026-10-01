@@ -1466,6 +1466,17 @@ const messages = {
   "repository.plugin.pageLink.label": "Plugin page",
   "repository.plugin.docsLink.label": "Plugin documentation",
   "storage.path.link.label": "Link to storage path",
+  "user.list.title": "Users",
+  "user.list.newProfile": "New Profile …",
+  "user.list.edit": "edit",
+  "user.list.toggleDetails": "Toggle details for user {0}",
+  "domain.User.email.label": "Email",
+  "domain.User.firstName.label": "First Name",
+  "domain.User.lastName.label": "Last Name",
+  "security.groups.label": "Groups",
+  "security.groups.description":
+    "The list of groups/roles names provided by the login system. (Cannot be modified via User Profile.)",
+  "not.set": "Not set",
 };
 
 export default messages;
