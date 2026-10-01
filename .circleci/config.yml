@@ -285,6 +285,10 @@ jobs:
         description: Also build and push a Docker image with JRE 25
         type: boolean
         default: false
+      testImages:
+        description: Build and push the test images (rdtest, rundeckansible, oss) for the test jobs
+        type: boolean
+        default: true
     steps:
       - setup_docker:
           docker_layer_caching: true
@@ -308,16 +312,23 @@ jobs:
                   rundeck_docker_build openjdk-25-jre-headless
                   rundeck_docker_push openjdk-25-jre-headless
       # Test images (rdtest, rundeckansible, functional-test oss) are built once per pipeline here
-      # and pulled by the test jobs instead of running apt on every job.
-      - run-build-step:
-          step-name: Build And Push Test Images
-          command: rundeck_test_images_build_push << parameters.jreVersion >>
+      # and pulled by the test jobs instead of running apt on every job. Skipped in the tag-only
+      # release build, which has no downstream test jobs.
       - when:
-          condition: << parameters.jre25Publish >>
+          condition: << parameters.testImages >>
           steps:
             - run-build-step:
-                step-name: Build And Push Test Images (JRE 25)
-                command: rundeck_test_images_build_push openjdk-25-jre-headless
+                step-name: Build And Push Test Images
+                command: rundeck_test_images_build_push << parameters.jreVersion >>
+            - when:
+                condition: << parameters.jre25Publish >>
+                steps:
+                  - run-build-step:
+                      step-name: Build And Push Test Images (JRE 25)
+                      command: rundeck_test_images_build_push openjdk-25-jre-headless
+      - run-build-step:
+          step-name: Test CI Scripts
+          command: bash scripts/circleci/test/apt-get-retry-test.sh
       - run-build-step:
           step-name: Verify Build
           command: rundeck_verify_build
@@ -844,6 +855,7 @@ workflows:
     jobs:
       - build-rundeck:
           name: Build Release
+          testImages: false
           <<: *cloudsmith-slack-defaults
           <<: *filter-tags
       - packaging-publish:
