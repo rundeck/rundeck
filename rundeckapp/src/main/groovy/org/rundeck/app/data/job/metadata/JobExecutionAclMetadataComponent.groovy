@@ -57,6 +57,26 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
         return results
     }
 
+    /**
+     * Builds a project-scoped ACL policy granting the job's saved user run access to this
+     * job, for pre-filling the ACL editor. Scoped to the single job and to the username
+     * rather than its roles, so accepting it as-is grants the least that resolves the
+     * warning; the admin can widen it in the editor.
+     *
+     * Project-level policy files carry no `context:` block.
+     */
+    String buildRunGrantPolicy(ScheduledExecution se) {
+        return """description: Allow ${se.user} to run job ${se.jobName}
+for:
+  job:
+    - equals:
+        uuid: ${se.uuid}
+      allow: [run]
+by:
+  username: ${se.user}
+"""
+    }
+
     private boolean evaluateExecutionAcl(
         ScheduledExecution se,
         Map<List<String>, UserAndRolesAuthContext> authContexts
