@@ -148,9 +148,9 @@ class JobEditSpec extends SeleniumBase{
         jobCreatePage.refreshNodesButton.click()
         jobCreatePage.waitForElementVisible(jobCreatePage.nodeMatchedCountBy)
         jobCreatePage.getNodeByName("test-node2").click()
-        jobCreatePage.selectTabAddFilterByName("testBoth").click()
+        jobCreatePage.addNodeFilterAndWaitForReload("testBoth")
         jobCreatePage.getNodeByName("test-node").click()
-        jobCreatePage.selectTabAddFilterByName("test").click()
+        jobCreatePage.addNodeFilterAndWaitForReload("test")
 
 
 
