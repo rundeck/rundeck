@@ -32,6 +32,7 @@ module.exports = {
     "components/readme-motd": {
       entry: "./src/app/components/readme-motd/main.ts",
     },
+    "pages/user-list": { entry: "./src/app/pages/user-list/main.ts" },
     "pages/storage": { entry: "./src/app/pages/storage/main.ts" },
     "pages/login": { entry: "./src/app/pages/login/main.ts" },
     "pages/project-dashboard": {

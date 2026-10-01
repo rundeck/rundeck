@@ -1,7 +1,6 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { Modal } from "uiv";
 import { ComponentPublicInstance } from "vue";
-import { getRundeckContext } from "../../../rundeckService";
 import { listProjects } from "../../../services/projects";
 import {
   storageKeyDelete,
@@ -60,7 +59,6 @@ interface KeyStorageViewComponent extends ComponentPublicInstance {
   loadKeys: () => Promise<void>;
 }
 
-let rundeckClientMock: any;
 let keys: any[];
 const mountKeyStorageView = async (props = {}) => {
   return mount<KeyStorageViewComponent>(KeyStorageView, {
@@ -101,7 +99,6 @@ describe("KeyStorageView", () => {
         meta: { "Rundeck-key-type": "private" },
       },
     ];
-    rundeckClientMock = getRundeckContext().rundeckClient;
     jest.clearAllMocks();
   });
 

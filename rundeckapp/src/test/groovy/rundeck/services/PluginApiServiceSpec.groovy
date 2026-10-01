@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.PluginOutputMetadata
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
@@ -195,6 +196,74 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             result.options == ['displayType':'CODE']
 
     }
+
+    def "plugin Property Map includes output metadata for exposed properties"() {
+        given:
+            service.uiPluginService = Mock(UiPluginService)
+            def prop = PropertyBuilder.builder()
+                                      .name("environmentName")
+                                      .title("Environment Name")
+                                      .type(Property.Type.String)
+                                      .outputMetadata([
+                                          new PluginOutputMetadata("data", "environmentName", "Exposed for conditional logic")
+                                      ])
+                                      .build()
+
+            service.metaClass.getLocale = { -> Locale.ENGLISH }
+        when:
+            def result = service.pluginPropertyMap('svc', 'provider', prop)
+        then:
+            service.uiPluginService.getPluginMessage(*_) >> { args -> args[3] }
+            result.outputMetadata == [
+                [group: "data", name: "environmentName", description: "Exposed for conditional logic"]
+            ]
+    }
+
+    def "plugin Property Map has null output metadata when property is not exposed"() {
+        given:
+            service.uiPluginService = Mock(UiPluginService)
+            def prop = PropertyBuilder.builder()
+                                      .name("plain")
+                                      .title("Plain")
+                                      .type(Property.Type.String)
+                                      .build()
+
+            service.metaClass.getLocale = { -> Locale.ENGLISH }
+        when:
+            def result = service.pluginPropertyMap('svc', 'provider', prop)
+        then:
+            service.uiPluginService.getPluginMessage(*_) >> { args -> args[3] }
+            result.outputMetadata == null
+    }
+
+    def "pluginPropertiesAsMap excludes output-only properties from GUI rendering"() {
+        given:
+            service.uiPluginService = Mock(UiPluginService)
+            service.metaClass.getLocale = { -> Locale.ENGLISH }
+            def configurable = PropertyBuilder.builder()
+                                               .name("environmentName")
+                                               .title("Environment Name")
+                                               .type(Property.Type.String)
+                                               .build()
+            def outputOnly = PropertyBuilder.builder()
+                                             .name("outputResult")
+                                             .title("outputResult")
+                                             .type(Property.Type.String)
+                                             .outputMetadata([
+                                                 new PluginOutputMetadata("data", "outputResult", "Computed result")
+                                             ])
+                                             .outputOnly(true)
+                                             .build()
+
+        when:
+            def result = service.pluginPropertiesAsMap('svc', 'provider', [configurable, outputOnly])
+
+        then:
+            service.uiPluginService.getPluginMessage(*_) >> { args -> args[3] }
+            result.size() == 1
+            result[0].name == 'environmentName'
+    }
+
     def "plugin Property Map sanitizes static html or markdown content"() {
         given:
             mockCodec(SanitizedHTMLCodec)

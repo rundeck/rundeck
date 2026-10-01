@@ -57,17 +57,11 @@ const messages = {
   message_readMore: "Read More",
   message_refresh: "Please refresh the page or visit us at",
   message_delete: "Delete this field",
-  message_warning: "Warning!",
   message_duplicated: "Field already exists",
   message_select: "Select a Field",
   message_description: "Description",
   message_fieldLabel: "Field Label",
-  message_fieldLabelHelp:
-    "Optional. Shown as this field's display name. Defaults to the Field Key if left blank.",
   message_fieldKey: "Field Key",
-  message_fieldKeyHelp:
-    'Required. The key used to identify this field (e.g. "environment"). Must be unique within this list.',
-  message_fieldKeyRequired: "A Field Key is required",
   // Descriptions generated for a custom field. The wording differs between
   // these three on purpose: it reproduces the text these fields have always
   // shown, so existing configurations read the same as before.
@@ -76,8 +70,6 @@ const messages = {
   message_fieldKeyAppendedDescription: "{0} (Field key: {1})",
   message_fieldFilter: "Type to filter a field",
   message_empty: "Can be empty",
-  message_fieldDescriptionHelp:
-    "Optional. Describes this field for your own reference; if left blank, one is generated automatically from the Field Key.",
   message_cancel: "Cancel",
   message_add: "Add",
   message_addField: "Add Custom Field",
@@ -1468,6 +1460,17 @@ const messages = {
   hideIncompleteNodes: "Hide incomplete nodes",
   hideIncompleteNodesDescription:
     "Hide nodes whose only unfinished steps were skipped by a conditional. Successful executions only.",
+  "user.list.title": "Users",
+  "user.list.newProfile": "New Profile …",
+  "user.list.edit": "edit",
+  "user.list.toggleDetails": "Toggle details for user {0}",
+  "domain.User.email.label": "Email",
+  "domain.User.firstName.label": "First Name",
+  "domain.User.lastName.label": "Last Name",
+  "security.groups.label": "Groups",
+  "security.groups.description":
+    "The list of groups/roles names provided by the login system. (Cannot be modified via User Profile.)",
+  "not.set": "Not set",
 };
 
 export default messages;

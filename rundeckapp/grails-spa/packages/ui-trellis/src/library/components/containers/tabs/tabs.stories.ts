@@ -1,25 +1,13 @@
-import type { Meta, StoryFn } from "@storybook/vue3";
-import { addons } from "@storybook/addons";
+import type { Meta } from "@storybook/vue3";
 
 import "../../../stories/setup";
 
-import Tabs from "./Tabs.vue";
 import Tab from "./Tab.vue";
-import TabContent from "./TabContent.vue";
 
 export default {
   title: "Containers/Tabs",
   component: Tab,
 } as Meta<typeof Tab>;
-
-function setupStory(vue) {
-  const el = vue.$el as any;
-  el.parentNode.style.height = "100vh";
-  el.parentNode.style.overflow = "hidden";
-  el.parentNode.style.position = "relative";
-  el.parentNode.style.padding = "20px";
-  document.body.style.overflow = "hidden";
-}
 
 // export const tabs: StoryFn<typeof Tab> = (args) => {
 //     const chan = addons.getChannel()
