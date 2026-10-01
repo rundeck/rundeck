@@ -79,6 +79,14 @@
               <i class="glyphicon glyphicon-warning-sign"></i>
               <span class="detail"><g:message code="job.execution.acl.invalid.warning.label"/></span>
           </span>
+          <g:if test="${executionAclFixPolicy}">
+              <g:link controller="menu" action="createProjectAclFile"
+                      params="${[project: scheduledExecution.project, fileText: executionAclFixPolicy]}"
+                      class="has_tooltip" data-toggle="tooltip" data-placement="auto bottom"
+                      title="${message(code: 'job.execution.acl.invalid.fix.title')}">
+                  <g:message code="job.execution.acl.invalid.fix.label"/>
+              </g:link>
+          </g:if>
       </g:if>
       <g:if test="${isScheduled && nextExecution}">
           <span class="scheduletime">

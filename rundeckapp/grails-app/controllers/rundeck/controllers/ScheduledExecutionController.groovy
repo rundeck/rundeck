@@ -562,10 +562,22 @@ Since: v53''',
             defaultRecentFilter = (configured in ['1h', '1d', '1w', '1m']) ? configured : '1m'
         }
 
+        def executionAclValid = jobExecutionAclMetadataComponent.validateExecutionAcl(scheduledExecution)
+        // Offer the pre-filled ACL editor only to someone who could actually save it
+        def executionAclFixPolicy = null
+        if (!executionAclValid && rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                rundeckAuthContextProcessor.authResourceForProjectAcl(scheduledExecution.project),
+                [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        )) {
+            executionAclFixPolicy = jobExecutionAclMetadataComponent.buildRunGrantPolicy(scheduledExecution)
+        }
+
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
-                executionAclValid: jobExecutionAclMetadataComponent.validateExecutionAcl(scheduledExecution),
+                executionAclValid: executionAclValid,
+                executionAclFixPolicy: executionAclFixPolicy,
                 isReferenced: isReferenced,
                 parentList: parentList,
                 crontab: crontab,

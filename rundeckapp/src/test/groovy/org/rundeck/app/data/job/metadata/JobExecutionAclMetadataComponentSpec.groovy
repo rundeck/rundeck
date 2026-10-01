@@ -116,6 +116,26 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             result == ['job-a': false, 'job-b': true, 'job-c': true]
     }
 
+    def "buildRunGrantPolicy grants only this job to the saved user, with no project context block"() {
+        given:
+            def sut = new JobExecutionAclMetadataComponent()
+            def se = new ScheduledExecution(
+                uuid: 'job-1', jobName: 'nightly', project: 'AProject', user: 'devread',
+                scheduled: true, executionEnabled: true, scheduleEnabled: true,
+            )
+        when:
+            def policy = sut.buildRunGrantPolicy(se)
+        then:
+            // project-level policy files must not carry a context block
+            !policy.contains('context:')
+            policy.contains('uuid: job-1')
+            policy.contains('allow: [run]')
+            policy.contains('username: devread')
+            // least privilege: not granted via the roles, and not to every job
+            !policy.contains('group:')
+            !policy.contains("allow: '*'")
+    }
+
     def "getMetadataForJobIds returns executionAclValid meta for a requested at-risk job"() {
         given:
             def sut = new JobExecutionAclMetadataComponent()
