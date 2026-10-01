@@ -362,17 +362,15 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
         def path = getRelativePathForJob(job)
 
-        // mark as loading (rather than removing) so a concurrent initJobsStatus() call doesn't
-        // re-insert a stale placeholder into the gap after this refresh completes
+        // mark as loading rather than removing, so a concurrent initJobsStatus() can't re-insert a
+        // stale placeholder after this refresh completes
         Map loadingMarker = initJobStatus(job)
         beginJobStatusRefresh(job.id, loadingMarker)
 
         try {
             return doRefreshJobStatus(job, originalPath, path, previousImportCommit, loadingMarker)
         } catch (Throwable t) {
-            // don't leave the LOADING marker in place forever: a later status request should
-            // retry the refresh instead of getting stuck on it. Only clear our own placeholder -
-            // if a newer refresh (or a deletion) has already replaced or removed it, leave it alone
+            // clear our own placeholder only, so a later request retries instead of getting stuck
             abandonJobStatusRefresh(job.id, loadingMarker)
             throw t
         }
@@ -395,11 +393,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             // job was renamed but not file
             synchState = ImportSynchState.IMPORT_NEEDED
         } else if (job.scmImportMetadata?.commitId) {
-            // check-and-update must be atomic with respect to a newer refresh's marker
-            // installation, which locks the same monitor (the synchronizedMap wrapper uses
-            // itself) - otherwise a newer refresh could install its marker and track its own
-            // path between our check and our trackJobAtPath call, and this (slower, older)
-            // refresh would then clobber that tracker mapping
+            // check and track atomically, so a newer refresh can't install its own marker and
+            // path in between and get clobbered by this slower, older one
             synchronized (jobStateMap) {
                 if (jobStateMap.get(job.id)?.is(loadingMarker)) {
                     importTracker.trackJobAtPath(job, path)
@@ -426,9 +421,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
         log.debug("refreshJobStatus(${job.id}): ${jobstat}")
 
-        //only publish if our own LOADING placeholder is still current - otherwise a newer refresh
-        //(or a deletion) has already replaced or removed it, and this (older) result must not
-        //overwrite it
+        //only publish if our LOADING placeholder is still current
         publishJobStatusIfCurrent(job.id, loadingMarker, jobstat)
 
         jobstat
@@ -480,10 +473,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         def oldPath = findOldPath.oldPath
                         def newPath = findNewPath.newPath
                         log.error("Rename detected from ${oldPath} to ${newPath}")
-                        //only mutate the tracker while this refresh's placeholder is still current:
-                        //a concurrent delete may have already cleared this job's tracker state, and
-                        //resurrecting a rename mapping here would make DELETE_NEEDED reappear for a
-                        //job that no longer exists
+                        //only track if still current, so a concurrent delete's cleanup can't be
+                        //undone by resurrecting a rename mapping here
                         synchronized (jobStateMap) {
                             if (jobStateMap.get(job.id)?.is(loadingMarker)) {
                                 this.importTracker.jobRenamed(job, oldPath, newPath)
@@ -575,9 +566,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         log.debug("Job event (${event.eventType}), path: ${path}")
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
-                //untrackJob (not untrackPath) so a job with two forward mappings left by a
-                //rename re-assertion (see ImportTracker.trackJobAtPath) has both cleared,
-                //not just this one path - otherwise the other one keeps reporting DELETE_NEEDED
+                //untrackJob, not untrackPath, to clear every forward mapping the job may hold
                 jobStateMap.remove(reference.id)
                 importTracker.untrackJob(reference.id)
 

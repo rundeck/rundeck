@@ -377,14 +377,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 if (origfile.exists() && !origfile.delete()) {
-                    //don't mark the job clean when its file could not actually be removed
-                    //(e.g. permissions, a lingering Windows file lock): failing the change
-                    //event means the deletion can be retried, instead of silently leaving a
-                    //stale file in Git with no later job reference to catch it
+                    //fail so the deletion can be retried, instead of marking the job clean
                     throw new ScmPluginException("Failed to delete job file: ${origfile.absolutePath}")
                 }
-                //this job no longer exists: forget its cached status regardless of whether
-                //refreshJobStatus below succeeds or throws, so a failure doesn't leak it
+                //forget the cached status even if refreshJobStatus below throws
                 try {
                     def status = refreshJobStatus(exportReference, origPath, false)
                     return createJobStatus(status, jobActionsForStatus(status))
@@ -449,17 +445,15 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     private refreshJobStatus(final JobRevReference job, final String originalPath, boolean doSerialize = true) {
         def path = relativePath(job)
 
-        //mark as loading (rather than removing) so a concurrent initJobsStatus() call doesn't
-        //re-insert a stale placeholder into the gap after this refresh completes
+        //mark as loading rather than removing, so a concurrent initJobsStatus() can't re-insert a
+        //stale placeholder after this refresh completes
         Map loadingMarker = initJobStatus(job)
         beginJobStatusRefresh(job.id, loadingMarker)
 
         try {
             return doRefreshJobStatus(job, originalPath, doSerialize, path, loadingMarker)
         } catch (Throwable t) {
-            //don't leave the LOADING marker in place forever: a later status request should
-            //retry the refresh instead of getting stuck on it. Only clear our own placeholder -
-            //if a newer refresh (or a deletion) has already replaced or removed it, leave it alone
+            //clear our own placeholder only, so a later request retries instead of getting stuck
             abandonJobStatusRefresh(job.id, loadingMarker)
             throw t
         }
@@ -484,17 +478,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         if (job instanceof JobExportReference && doSerialize) {
-            //only write the job file if our own LOADING placeholder is still current: a
-            //concurrent deletion may have already deleted this job's file and cleared its cache
-            //entry, and a superseded refresh serializing after that would resurrect the file on
-            //disk even though its own cache publish below is correctly rejected.
-            //check briefly and release before calling serialize() - jobStateMap is one global
-            //map shared by every job in the project, and holding its monitor across serialize()'s
-            //filesystem I/O would block cache reads/refreshes/deletions for every other job
-            //meanwhile. this narrows, rather than eliminates, the race: a deletion that completes
-            //in the instant between this check and the serialize() call below can still resurrect
-            //the file, but the realistic threat is a refresh that outlives an already-completed
-            //deletion, not a microsecond-scale interleaving with an in-flight one
+            //only write if our LOADING placeholder is still current, so a superseded refresh
+            //can't resurrect a deleted job's file. check briefly and release before serialize()
+            //rather than holding jobStateMap's lock across the I/O
             boolean stillOwned
             synchronized (jobStateMap) {
                 stillOwned = jobStateMap.get(job.id)?.is(loadingMarker)
@@ -538,9 +524,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             jobstat['commitMeta'] = GitUtil.metaForCommit(commit)
         }
 
-        //only publish if our own LOADING placeholder is still current - otherwise a newer refresh
-        //(or a deletion) has already replaced or removed it, and this (older) result must not
-        //overwrite it
+        //only publish if our LOADING placeholder is still current
         publishJobStatusIfCurrent(job.id, loadingMarker, jobstat)
 
         jobstat
@@ -714,10 +698,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
             def status = getCachedStatusIfValid(job, null)
 
-            //a LOADING entry is treated as a cache hit by getCachedStatusIfValid so status polling
-            //doesn't kick off a duplicate refresh, but here it may belong to a refresh that started
-            //before this commit; that refresh would overwrite the cache with the pre-commit status,
-            //so the cache still needs to be refreshed rather than left for the in-flight one to settle
+            //a LOADING entry may belong to a pre-commit refresh that would overwrite the cache
+            //with stale status, so force a refresh instead of waiting for it to settle
             if (!status || status.synch == SynchState.LOADING) {
                 refreshJobStatus(job, null, false)
             }

@@ -37,9 +37,7 @@ class RenameTracker<A> {
      * @return original value for renamed item, or null
      */
     A originalValue(A newval) {
-        //synchronizedMap only guards individual calls, not iteration over its views: a concurrent
-        //trackItem() during a two-call values()/keySet() scan can throw ConcurrentModificationException,
-        //so hold the map monitor for one single entrySet scan instead
+        //one locked entrySet scan - synchronizedMap doesn't guard iteration over its views
         synchronized (renamedTrackedItems) {
             for (Map.Entry<A, A> entry : renamedTrackedItems.entrySet()) {
                 if (entry.value == newval) {
@@ -87,8 +85,7 @@ class RenameTracker<A> {
             renamedTrackedItems.remove(newval)
             return
         }
-        //if oldval is itself the result of a previous rename, collapse the chain to origin -> newval
-        //so intermediate links don't accumulate forever
+        //collapse a rename chain to origin -> newval, so links don't accumulate
         def origin = originalValue(oldval)
         if (origin != null) {
             renamedTrackedItems.remove(oldval)

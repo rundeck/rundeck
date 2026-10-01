@@ -34,9 +34,7 @@ class ImportTracker {
     /**
      * Return a stable snapshot of all tracked repository paths.
      *
-     * <p>The backing maps are synchronized wrappers whose key set views are not safe to iterate
-     * without holding the map monitor: the SCM loader mutates them while request handling reads
-     * them, which would surface as a ConcurrentModificationException on the request path.
+     * <p>Iterates under the map locks - synchronizedMap's key-set views aren't iteration-safe.
      *
      * @return tracked repository paths
      */
@@ -82,9 +80,7 @@ class ImportTracker {
                     untrackPath(originalPath)
                 }
             } else {
-                //forward mappings only: renamedTrackedItems.trackItem() below needs the existing
-                //rename chain intact to detect a revert (see untrackJob's own rename cleanup,
-                //which would otherwise erase that chain entry before trackItem can see it)
+                //forward mappings only - trackItem() below needs the rename chain intact to detect a revert
                 untrackJobPaths(job.id)
                 trackJobAtPath(job, newpath)
                 renamedTrackedItems.trackItem(oldpath, newpath)
@@ -96,22 +92,15 @@ class ImportTracker {
         synchronized (this) {
             def previousJobId = trackedJobIds[path]
             if (previousJobId != null && previousJobId != job.id) {
-                //path is being claimed by a different job than the one previously tracked there:
-                //remove the stale reverse and rename mappings before assigning the new owner
+                //path claimed by a different job: clear its stale reverse and rename mappings
                 trackedPathsMap.remove(previousJobId, path)
                 renamedTrackedItems.untrack(path)
             }
             def previousPath = trackedPathsMap[job.id]
             if (previousPath != null && previousPath != path && renamedTrackedItems.originalValue(previousPath) != path) {
-                //job is moving to a new path (e.g. a path-template change) without going through
-                //jobRenamed: remove every forward mapping it currently holds - a prior rename
-                //re-assertion can have left two (the canonical previousPath and the rename target),
-                //and clearing only previousPath would leave the other one lingering as a phantom
-                //tracked path, which would otherwise surface as a false DELETE_NEEDED - along with
-                //any rename mapping naming one of those paths, which would otherwise keep reporting
-                //a stale rename for a path nothing is tracked at anymore.
-                //(skipped when `path` is the canonical path being re-asserted right after jobRenamed
-                //recorded a rename to previousPath - that resync intentionally keeps both tracked)
+                //direct move (e.g. path-template change) bypassing jobRenamed: clear every forward
+                //mapping the job holds, not just previousPath, since a prior rename re-assertion can
+                //leave two. skipped when `path` re-asserts the canonical path right after a rename.
                 untrackJobPaths(job.id).each { String stalePath ->
                     renamedTrackedItems.untrack(stalePath)
                 }
@@ -149,8 +138,7 @@ class ImportTracker {
         synchronized (this) {
             Set<String> pathsToRemove = untrackJobPaths(jobId)
             pathsToRemove.each { String path ->
-                //the job is gone: any rename mapping still naming this path (as old or new name)
-                //would otherwise leave wasRenamed() reporting true for a path whose job no longer exists
+                //clear any rename mapping too, or wasRenamed() keeps reporting true for a dead job
                 renamedTrackedItems.untrack(path)
             }
             pathsToRemove ? pathsToRemove.iterator().next() : null
@@ -158,14 +146,11 @@ class ImportTracker {
     }
 
     /**
-     * Remove every forward mapping (trackedCommits/trackedJobIds/trackedPathsMap) for a job,
-     * without touching rename tracking.
-     *
-     * <p>Callers that are themselves managing a rename's before/after state (jobRenamed) need
-     * the existing rename chain left intact, so they call this instead of {@link #untrackJob}.
+     * Remove every forward mapping for a job, without touching rename tracking (used by
+     * {@link #jobRenamed}, which needs the rename chain left intact).
      *
      * @param jobId Rundeck job ID
-     * @return the set of paths that were forward-mapped to this job, in canonical-path-first order
+     * @return paths that were forward-mapped to this job, canonical path first
      */
     private Set<String> untrackJobPaths(String jobId) {
         synchronized (this) {

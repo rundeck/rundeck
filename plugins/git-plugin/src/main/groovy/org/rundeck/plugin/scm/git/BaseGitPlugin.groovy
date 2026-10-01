@@ -79,19 +79,6 @@ class BaseGitPlugin {
     RawTextComparator COMP = RawTextComparator.DEFAULT
     Map<String, Map> jobStateMap = Collections.synchronizedMap([:])
 
-    protected enum ScmAuthMessages {
-        CHECKING("Checking if user has access to the configured SCM key/password."),
-        NO_ACCESS("User don't have access to the configured SCM key/password yet."),
-        HAS_ACCESS("User has access to the configured SCM key/password, sending job status.");
-        private String message
-        ScmAuthMessages(String message) {
-            this.message = message
-        }
-        String getMessage() {
-            return message
-        }
-    }
-
     BaseGitPlugin(Common commonConfig) {
         this.input = commonConfig.rawInput
         this.commonConfig = commonConfig
@@ -173,23 +160,14 @@ class BaseGitPlugin {
     }
 
     /**
-     * A job-status refresh's in-progress placeholder. Deliberately does NOT use LinkedHashMap's
-     * content-based equals/hashCode: two concurrent refreshes of the same (unchanged) job produce
-     * content-identical LOADING placeholders, so a content-equality match couldn't tell "my own
-     * placeholder" apart from a different, newer refresh's - whichever happened to finish first
-     * could then publish over the other's placeholder regardless of which one actually started
-     * more recently. Identity-based equals/hashCode make jobStateMap.replace/remove(id, thisExact
-     * Instance) match only this exact instance, so only the refresh that is still the one and only
-     * currently-installed placeholder for a job can ever publish - a check that stays valid even
-     * after the placeholder is superseded or the job is deleted, with nothing extra to track,
-     * leak, or coordinate removal of.
+     * A job-status refresh's in-progress placeholder. Uses identity equals/hashCode, not
+     * LinkedHashMap's content-based one, so two concurrent refreshes with identical content
+     * don't match each other - only jobStateMap.replace/remove(id, thisExactInstance) can tell
+     * "my own placeholder" apart from a newer refresh's.
      * <p>
-     * Note for tests: call {@code .equals()} reflectively (or exercise it indirectly via
-     * {@code jobStateMap.replace/remove}, as production code does) rather than Groovy's {@code ==}
-     * or a directly-compiled {@code .equals()} call - Groovy's dynamic dispatch for {@code def}-typed
-     * operands routes {@code equals} through its own structural comparison for Map operands,
-     * bypassing this override. The real call sites in this class go through the plain-Java
-     * {@code java.util.Map} default methods, which dispatch normally and are unaffected.
+     * Note for tests: Groovy's {@code ==} on {@code def}-typed operands uses structural Map
+     * comparison and bypasses this override; use {@code jobStateMap.replace/remove} instead, as
+     * production code does.
      */
     static final class RefreshPlaceholder extends LinkedHashMap {
         @Override
@@ -204,28 +182,22 @@ class BaseGitPlugin {
     }
 
     /**
-     * Install a job's LOADING placeholder (an instance of {@link RefreshPlaceholder}, built by the
-     * caller's own initJobStatus) into jobStateMap. Pass the same instance to
-     * {@link #publishJobStatusIfCurrent} or {@link #abandonJobStatusRefresh} when the refresh
-     * finishes, to detect whether a newer refresh (or a deletion) has since replaced or removed it.
+     * Install a job's LOADING placeholder, used by {@link #publishJobStatusIfCurrent} and
+     * {@link #abandonJobStatusRefresh} to detect a newer refresh or deletion.
      */
     protected void beginJobStatusRefresh(String jobId, Map loadingMarker) {
         jobStateMap[jobId] = loadingMarker
     }
 
     /**
-     * Publish a completed refresh's result, but only if its LOADING placeholder (as installed by
-     * {@link #beginJobStatusRefresh}) is still current: if a newer refresh, or a deletion, has
-     * since replaced or removed it, this (older) result is silently dropped instead.
+     * Publish a refresh's result only if its LOADING placeholder is still current.
      */
     protected void publishJobStatusIfCurrent(String jobId, Map loadingMarker, Map result) {
         jobStateMap.replace(jobId, loadingMarker, result)
     }
 
     /**
-     * Clear a failed refresh's LOADING placeholder, but only if it's still current (see
-     * {@link #publishJobStatusIfCurrent}) - so a later status request retries rather than getting
-     * stuck on it, without clobbering a newer refresh's own placeholder or published result.
+     * Clear a failed refresh's LOADING placeholder, only if it's still current.
      */
     protected void abandonJobStatusRefresh(String jobId, Map loadingMarker) {
         jobStateMap.remove(jobId, loadingMarker)
@@ -708,10 +680,7 @@ class BaseGitPlugin {
         if (base.isDirectory() && new File(base, ".git").isDirectory()) {
             def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
             def agit = new Git(arepo)
-            //set once ownership of agit/arepo has been handed off (to git/repo, or closed
-            //and replaced via a reclone), so the finally block below doesn't leak arepo on
-            //any exception thrown while inspecting/configuring it, but also doesn't
-            //double-close it once handed off or already closed
+            //true once arepo is handed off or closed, so finally doesn't leak or double-close it
             boolean handedOff = false
             try {
                 //test url matches origin
@@ -744,11 +713,9 @@ class BaseGitPlugin {
                 }
 
                 if (needsClone) {
-                    //need to reconfigured: release the old repository's file handles before deleting it on disk
+                    //release file handles before deleting the workdir on disk
                     agit.getRepository().close()
-                    //also release the plugin's currently assigned repository, if any: it may be an
-                    //earlier open of this same workdir (e.g. the base-branch clone in the createBranch
-                    //setup path), and would otherwise be leaked once the workdir is removed below
+                    //also release the plugin's current repo, if any, to avoid leaking it
                     if (repo != null) {
                         repo.close()
                     }
@@ -765,9 +732,7 @@ class BaseGitPlugin {
                     String msg = collectCauseMessages(e)
                     throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
                 }
-                //release the plugin's currently assigned repository before replacing it: it may be an
-                //earlier open of a different workdir (e.g. the base-branch clone in the createBranch
-                //setup path), and would otherwise be leaked once repo/git are reassigned below
+                //release the plugin's current repo before replacing it, to avoid leaking it
                 if (repo != null && repo != arepo) {
                     repo.close()
                 }
@@ -835,9 +800,7 @@ class BaseGitPlugin {
     }
 
     /**
-     * Query the remote for branch heads. Unlike {@link #existBranch(String)}, this does not rely on
-     * refs already present in the local clone (a single-branch clone may not have remote-tracking refs
-     * for other branches).
+     * Query the remote for branch heads, unlike {@link #existBranch(String)} which only checks local refs.
      */
     protected boolean remoteBranchExists(ScmOperationContext context, String url, String branchName)
             throws ScmPluginException {
@@ -1011,7 +974,7 @@ class BaseGitPlugin {
         if (!ctx || !ctx.getUserInfo().userName) {
             return false
         }
-        logger.debug(ScmAuthMessages.CHECKING.getMessage())
+        logger.debug("Checking if user has access to the configured SCM key/password.")
         def userStorageTree = ctx.getStorageTree()
         def scmAuthPath = commonConfig?.sshPrivateKeyPath ? commonConfig?.sshPrivateKeyPath : commonConfig?.gitPasswordPath
         if (!scmAuthPath) {
@@ -1019,10 +982,10 @@ class BaseGitPlugin {
         }
         def expandedAuthPath = expandContextVarsInPath(ctx, scmAuthPath)
         if (expandedAuthPath !== null && userStorageTree.hasPath(expandedAuthPath)) {
-            logger.debug(ScmAuthMessages.HAS_ACCESS.getMessage())
+            logger.debug("User has access to the configured SCM key/password, sending job status.")
             return true
         } else {
-            logger.debug(ScmAuthMessages.NO_ACCESS.getMessage())
+            logger.debug("User don't have access to the configured SCM key/password yet.")
             return false
         }
     }
