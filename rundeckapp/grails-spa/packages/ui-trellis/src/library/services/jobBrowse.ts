@@ -1,4 +1,5 @@
-import { getRundeckContext } from "../rundeckService";
+import axios from "axios";
+import { getAppLinks, getRundeckContext } from "../rundeckService";
 import { api } from "./api";
 import { JobBrowseList, JobBrowseMeta } from "../types/jobs/JobBrowse";
 
@@ -151,4 +152,47 @@ export async function bulkExecutionEnableDisable(
   } else {
     return resp.data;
   }
+}
+
+/**
+ * A single job returned by the job name search endpoint.
+ */
+export interface JobSearchResult {
+  /** Job name, without the group path. */
+  name: string;
+  /** Group path the job belongs to, empty for jobs at the root. */
+  group: string;
+  /** Project the job belongs to. */
+  project: string;
+  /** Job UUID. */
+  id: string;
+}
+
+/**
+ * Search the jobs of a project by (partial) job name.
+ *
+ * Unlike {@link browsePath} and {@link queryPath}, which are bound to a single
+ * group path and collapse anything below it into group entries, this returns a
+ * flat list of jobs across every group, filtered server side. That makes it
+ * suitable for name autocomplete on projects with a large number of jobs.
+ *
+ * @param project project name to search within
+ * @param jobFilter partial job name to match, empty to match all jobs
+ * @param runAuthRequired when true, only jobs the user is authorized to run
+ * @returns the matching jobs, flattened across group paths
+ */
+export async function searchJobsByName(
+  project: string,
+  jobFilter: string,
+  runAuthRequired: boolean = true,
+): Promise<JobSearchResult[]> {
+  const appLinks = getAppLinks();
+  const resp = await axios.get(appLinks.menuJobSearchJson, {
+    headers: { "x-rundeck-ajax": "true" },
+    params: { project, jobFilter, runAuthRequired },
+  });
+  if (resp.status !== 200) {
+    throw { message: resp.data?.message, response: resp };
+  }
+  return Array.isArray(resp.data) ? resp.data : [];
 }
