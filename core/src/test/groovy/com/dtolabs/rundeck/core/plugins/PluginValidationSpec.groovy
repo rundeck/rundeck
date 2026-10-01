@@ -39,4 +39,28 @@ class PluginValidationSpec extends Specification {
             INCOMPATIBLE | INCOMPATIBLE | INCOMPATIBLE
             INCOMPATIBLE | INVALID      | INVALID
     }
+
+    def "groovy plugin files are not accepted"() {
+        given:
+            File groovyFile = File.createTempFile("plugin", ".groovy")
+            groovyFile.text = "println 'not a real plugin'"
+
+        expect:
+            !PluginValidator.validate(groovyFile)
+
+        cleanup:
+            groovyFile.delete()
+    }
+
+    def "unknown file extensions are not accepted"() {
+        given:
+            File unknownFile = File.createTempFile("plugin", ".txt")
+            unknownFile.text = "not a plugin"
+
+        expect:
+            !PluginValidator.validate(unknownFile)
+
+        cleanup:
+            unknownFile.delete()
+    }
 }

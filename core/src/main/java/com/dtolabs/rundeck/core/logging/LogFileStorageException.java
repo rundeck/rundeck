@@ -20,6 +20,7 @@ package com.dtolabs.rundeck.core.logging;
  * Indicates an error with a log storage request
  * @deprecated no longer used, see {@link ExecutionFileStorageException}
  */
+@Deprecated
 public class LogFileStorageException extends Exception {
     public LogFileStorageException() {
     }

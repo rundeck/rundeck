@@ -72,11 +72,11 @@ public class PluginMetadataValidator {
             errors.add(String.format(INCOMPATIBLE_PLUGIN_VER_MSG, rundeckVersion, rundeckCompatibilityVersion));
             return PluginValidation.State.INCOMPATIBLE;
         }
-        Integer cmaj = new Integer(compatVer.majString.replaceAll("\\+",""));
+        Integer cmaj = Integer.valueOf(compatVer.majString.replaceAll("\\+",""));
         if(rundeckVer.maj > cmaj) return PluginValidation.State.VALID;
 
         if(compatVer.minString.equals("x")) return PluginValidation.State.VALID;
-        Integer cmin = new Integer(compatVer.minString.replaceAll("\\+",""));
+        Integer cmin = Integer.valueOf(compatVer.minString.replaceAll("\\+",""));
         if(rundeckVer.min > cmin) return PluginValidation.State.VALID;
         if(!checkVer(rundeckVer.min,compatVer.minString)) {
             errors.add(String.format(INCOMPATIBLE_PLUGIN_VER_MSG, rundeckVersion, rundeckCompatibilityVersion));
@@ -95,7 +95,7 @@ public class PluginMetadataValidator {
         if(compVer == null) return false;
         if(compVer.contains("x")) return true;
         boolean greater = compVer.contains("+");
-        Integer icver = new Integer(compVer.replaceAll("\\+",""));
+        Integer icver = Integer.valueOf(compVer.replaceAll("\\+",""));
         return compare(rdVer,icver,greater);
     }
 
