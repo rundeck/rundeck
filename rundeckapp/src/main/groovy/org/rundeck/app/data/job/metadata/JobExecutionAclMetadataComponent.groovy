@@ -84,6 +84,11 @@ by:
         if (!se || !se.shouldScheduleExecution()) {
             return true
         }
+        if (!se.user) {
+            // the saved user is nullable: a trigger with no identity to authorize is
+            // itself the misconfiguration, and building an auth context for it throws
+            return false
+        }
         List<String> key = [se.project, se.user] + se.userRoles
         UserAndRolesAuthContext authContext = authContexts.get(key)
         if (authContext == null) {
@@ -150,6 +155,9 @@ by:
         if (!names.contains(NAME) && !names.contains('*')) {
             return metaItems
         }
+        // one cache for the whole batch: the browse page asks for many jobs at once and
+        // they commonly share an owner
+        Map<List<String>, UserAndRolesAuthContext> authContexts = new HashMap<>()
         for (String id : ids) {
             ScheduledExecution se = scheduledExecutionDataService.findByUuid(id)
             if (!se) {
@@ -160,7 +168,7 @@ by:
                 [
                     ComponentMeta.with(
                         NAME,
-                        [valid: validateExecutionAcl(se), user: se.user] as Map<String, Object>
+                        [valid: evaluateExecutionAcl(se, authContexts), user: se.user] as Map<String, Object>
                     )
                 ]
             )

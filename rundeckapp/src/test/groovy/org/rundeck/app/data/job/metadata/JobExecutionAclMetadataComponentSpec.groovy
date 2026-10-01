@@ -116,6 +116,52 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             result == ['job-a': false, 'job-b': true, 'job-c': true]
     }
 
+    def "validateExecutionAcl reports a scheduled job with no saved user as invalid, without building an auth context"() {
+        given:
+            def sut = new JobExecutionAclMetadataComponent()
+            // ScheduledExecution.user is nullable, and building an auth context for a null
+            // user throws, so this must be answered before reaching the auth processor
+            def se = new ScheduledExecution(
+                project: 'AProject', user: null,
+                scheduled: true, executionEnabled: true, scheduleEnabled: true,
+            )
+            sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        when:
+            def result = sut.validateExecutionAcl(se)
+        then:
+            !result
+            0 * sut.rundeckAuthContextProcessor._
+    }
+
+    def "getMetadataForJobIds reuses one auth context across jobs sharing an owner"() {
+        given:
+            def sut = new JobExecutionAclMetadataComponent()
+            def authContext = Mock(UserAndRolesAuthContext)
+            def jobA = new ScheduledExecution(
+                uuid: 'job-a', project: 'AProject', user: 'someuser',
+                scheduled: true, executionEnabled: true, scheduleEnabled: true,
+            )
+            def jobB = new ScheduledExecution(
+                uuid: 'job-b', project: 'AProject', user: 'someuser',
+                scheduled: true, executionEnabled: true, scheduleEnabled: true,
+            )
+            sut.scheduledExecutionDataService = Mock(IScheduledExecutionDataService) {
+                1 * findByUuid('job-a') >> jobA
+                1 * findByUuid('job-b') >> jobB
+            }
+            sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                // built once for the batch, not once per job
+                1 * getAuthContextForUserAndRolesAndProject('someuser', _, 'AProject') >> authContext
+                1 * authorizeProjectJobAll(authContext, jobA, [AuthConstants.ACTION_RUN], 'AProject') >> false
+                1 * authorizeProjectJobAll(authContext, jobB, [AuthConstants.ACTION_RUN], 'AProject') >> true
+            }
+        when:
+            def result = sut.getMetadataForJobIds(['job-a', 'job-b'], 'AProject', ['*'].toSet(), authContext)
+        then:
+            result['job-a'][0].data == [valid: false, user: 'someuser']
+            result['job-b'][0].data == [valid: true, user: 'someuser']
+    }
+
     def "buildRunGrantPolicy grants only this job to the saved user, with no project context block"() {
         given:
             def sut = new JobExecutionAclMetadataComponent()
