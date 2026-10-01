@@ -641,6 +641,10 @@ jobs:
         type: enum
         enum: ["17", "25"]
         default: "17"
+      pull_ansible_image:
+        description: Also pull the rundeckansible test image (only the ansible tests use it)
+        type: boolean
+        default: false
     steps:
       - setup_docker
       - checkout
@@ -661,6 +665,12 @@ jobs:
           command: |
             rundeck_pull_rdtest_images
             testdeck_build_rdtest
+      - when:
+          condition: << parameters.pull_ansible_image >>
+          steps:
+            - run-build-step:
+                step-name: Pull ansible test image
+                command: rundeck_pull_ansible_image
       - run-build-step:
           step-name: Run Test
           command: << parameters.command >>
@@ -913,6 +923,7 @@ workflows:
       - test-docker:
           name: T Integration Ansible
           command: bash test/run-docker-ansible-tests.sh
+          pull_ansible_image: true
           <<: *require-build-and-units
           <<: *slack-defaults
       - test-machine:
@@ -1075,6 +1086,7 @@ workflows:
       - test-docker:
           name: T Integration Ansible (host JDK 25, image JRE 17)
           command: bash test/run-docker-ansible-tests.sh
+          pull_ansible_image: true
           host_jdk_for_tests: "25"
           <<: *require-build-jre-17
       - test-machine:

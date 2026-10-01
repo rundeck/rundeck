@@ -63,13 +63,20 @@ rundeck_pull_image() {
     fi
 }
 
-# Pulls the rdtest and rundeckansible images built by the Build job and tags them with the names
-# the test/docker scripts expect (build_rdtest_docker skips the build when rdtest:latest exists).
+# Pulls the rdtest image built by the Build job and tags it with the name the test/docker scripts
+# expect (build_rdtest_docker skips the build when rdtest:latest exists).
 rundeck_pull_rdtest_images() {
     docker_login
     local baseTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
     docker pull "${baseTag}-rdtest"
     docker tag "${baseTag}-rdtest" rdtest:latest
+}
+
+# Pulls the rundeckansible image built by the Build job (only the ansible tests use it) and tags it
+# with the name docker-compose-ansible-test.yaml expects.
+rundeck_pull_ansible_image() {
+    docker_login
+    local baseTag="${DOCKER_CI_REPO}:${DOCKER_IMAGE_BUILD_TAG}"
     docker pull "${baseTag}-rundeckansible"
     docker tag "${baseTag}-rundeckansible" rundeckansible:latest
 }

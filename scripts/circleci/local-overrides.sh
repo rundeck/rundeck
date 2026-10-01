@@ -16,6 +16,10 @@ rundeck_pull_rdtest_images() {
     echo "!!! [rundeck_pull_rdtest_images] ran but is DISABLED, images are built locally !!!"
 }
 
+rundeck_pull_ansible_image() {
+    echo "!!! [rundeck_pull_ansible_image] ran but is DISABLED, image is built locally !!!"
+}
+
 rundeck_pull_oss_image() {
     echo "!!! [rundeck_pull_oss_image] ran but is DISABLED, image is built locally !!!"
 }
