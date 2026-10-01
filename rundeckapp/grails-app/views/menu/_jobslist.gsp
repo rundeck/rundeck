@@ -204,6 +204,15 @@
                                 </g:elseif>
                             </span>
                             </g:if>
+                                <g:if test="${executionAclValid && executionAclValid[scheduledExecution.uuid] == false}">
+                                    <span class="has_tooltip text-warning"
+                                          title="${g.message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])}"
+                                          data-toggle="tooltip"
+                                          data-container="#section-content"
+                                          data-placement="auto bottom">
+                                        <i class="glyphicon glyphicon-warning-sign"></i>
+                                    </span>
+                                </g:if>
                                 <span class="vue-ui-socket">
                                     <ui-socket section="job-list-job-name"
                                                location="badges"

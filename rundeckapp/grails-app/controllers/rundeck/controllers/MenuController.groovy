@@ -57,6 +57,7 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.data.job.metadata.JobExecutionAclMetadataComponent
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -95,6 +96,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ProjectService projectService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
+    JobExecutionAclMetadataComponent jobExecutionAclMetadataComponent
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     StorageService storageService
 
@@ -534,6 +536,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         def allScheduled = schedlist.findAll { jobSchedulesService.isScheduled(it.uuid) }
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
+        def executionAclValid = jobExecutionAclMetadataComponent.validateExecutionAcl(allScheduled)
         def nextOneTimeScheduledExecutions = query.runJobLaterFilter ? scheduledExecutionService.nextOneTimeScheduledExecutions(schedlist) : null
 
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
@@ -628,6 +631,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return [
         nextScheduled:schedlist,
         nextExecutions: nextExecutions,
+        executionAclValid: executionAclValid,
         scheduledJobs: allScheduled,
         nextOneTimeScheduledExecutions: nextOneTimeScheduledExecutions,
                 clusterMap: clusterMap,
