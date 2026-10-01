@@ -377,7 +377,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 if (origfile.exists() && !origfile.delete()) {
-                    logger.error("Failed to delete job file: ${origfile.absolutePath}")
+                    //don't mark the job clean when its file could not actually be removed
+                    //(e.g. permissions, a lingering Windows file lock): failing the change
+                    //event means the deletion can be retried, instead of silently leaving a
+                    //stale file in Git with no later job reference to catch it
+                    throw new ScmPluginException("Failed to delete job file: ${origfile.absolutePath}")
                 }
                 //this job no longer exists: forget its cached status regardless of whether
                 //refreshJobStatus below succeeds or throws, so a failure doesn't leak it
@@ -483,11 +487,20 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             //only write the job file if our own LOADING placeholder is still current: a
             //concurrent deletion may have already deleted this job's file and cleared its cache
             //entry, and a superseded refresh serializing after that would resurrect the file on
-            //disk even though its own cache publish below is correctly rejected
+            //disk even though its own cache publish below is correctly rejected.
+            //check briefly and release before calling serialize() - jobStateMap is one global
+            //map shared by every job in the project, and holding its monitor across serialize()'s
+            //filesystem I/O would block cache reads/refreshes/deletions for every other job
+            //meanwhile. this narrows, rather than eliminates, the race: a deletion that completes
+            //in the instant between this check and the serialize() call below can still resurrect
+            //the file, but the realistic threat is a refresh that outlives an already-completed
+            //deletion, not a microsecond-scale interleaving with an in-flight one
+            boolean stillOwned
             synchronized (jobStateMap) {
-                if (jobStateMap.get(job.id)?.is(loadingMarker)) {
-                    serialize(job, format, config.exportPreserve, config.exportOriginal)
-                }
+                stillOwned = jobStateMap.get(job.id)?.is(loadingMarker)
+            }
+            if (stillOwned) {
+                serialize(job, format, config.exportPreserve, config.exportOriginal)
             }
         }
 
