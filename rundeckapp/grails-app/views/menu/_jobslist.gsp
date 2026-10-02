@@ -213,6 +213,7 @@
                                     %{-- a bare span is role=generic, which does not take an
                                          author-provided name, so aria-label alone is ignored --}%
                                     <span class="has_tooltip text-warning"
+                                          data-testid="execution-acl-warning-badge"
                                           tabindex="0"
                                           role="img"
                                           aria-label="${executionAclWarning}"
