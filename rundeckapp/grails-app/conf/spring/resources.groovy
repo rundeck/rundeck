@@ -399,7 +399,7 @@ beans={
     }
 
     authContextEvaluatorCacheManager(AuthContextEvaluatorCacheManager){
-        enabled = grailsApplication.config.getProperty("rundeck.auth.evaluation.cache.enabled", Boolean.class, false)
+        enabled = grailsApplication.config.getProperty("rundeck.auth.evaluation.cache.enabled", Boolean.class, true)
         expirationTime = grailsApplication.config.getProperty("rundeck.auth.evaluation.cache.expire", Long.class, 120)
         metricService = ref('metricService')
     }
