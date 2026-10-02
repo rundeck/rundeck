@@ -74,7 +74,8 @@
       </g:if>
       <g:if test="${executionAclValid == false}">
           <%-- label-style() leaves the global white label text commented out, so opt in here (the icon inherits it) --%>
-          <span class="label label-warning has_tooltip" style="color: var(--white-color)" data-toggle="tooltip"
+          <span class="label label-warning has_tooltip" style="color: var(--white-color)"
+                data-testid="execution-acl-warning-badge" data-toggle="tooltip"
                 data-placement="auto bottom" title="${scheduledExecution.user
                         ? message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])
                         : message(code: 'job.execution.acl.missing.owner.warning.title')}">
