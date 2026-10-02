@@ -73,8 +73,10 @@
           </span>
       </g:if>
       <g:if test="${executionAclValid == false}">
-          <%-- label-style() leaves the global white label text commented out, so opt in here (the icon inherits it) --%>
-          <span class="label label-warning has_tooltip" style="color: var(--white-color)"
+          <%-- label-style() leaves label text to the ambient font colour, which is white in
+               the dark theme and would sit on the orange badge at 2.6:1. This token is dark
+               in both themes, as .label-muted already relies on. The icon inherits it. --%>
+          <span class="label label-warning has_tooltip" style="color: var(--grey-900)"
                 data-testid="execution-acl-warning-badge" data-toggle="tooltip"
                 data-placement="auto bottom" title="${scheduledExecution.user
                         ? message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])
