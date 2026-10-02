@@ -146,7 +146,11 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
         }
         boolean enabled = false
         if (!frameworkService.isFrameworkProjectDisabled(project)) {
-            Map<String, String> props = frameworkService.getFrameworkProject(project).getProjectProperties()
+            // reloaded rather than the cached project, matching ExecutionJob and
+            // ScheduledExecutionService.shouldScheduleInThisProject: a warning drawn from
+            // stale flags could disagree with whether the trigger actually runs. The
+            // per-project cache keeps this to one load per call.
+            Map<String, String> props = frameworkService.getProjectConfigReloaded(project).getProjectProperties()
             enabled = !'true'.equalsIgnoreCase(props.get(CONF_PROJECT_DISABLE_EXECUTION)) &&
                 !'true'.equalsIgnoreCase(props.get(CONF_PROJECT_DISABLE_SCHEDULE))
         }

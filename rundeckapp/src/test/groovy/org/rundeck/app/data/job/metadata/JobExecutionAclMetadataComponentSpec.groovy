@@ -1,7 +1,7 @@
 package org.rundeck.app.data.job.metadata
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import grails.testing.gorm.DataTest
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.model.v1.job.JobDataSummary
@@ -29,7 +29,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
         def sut = new JobExecutionAclMetadataComponent()
         sut.frameworkService = Mock(FrameworkService) {
             _ * isFrameworkProjectDisabled(_) >> projectDisabled
-            _ * getFrameworkProject(_) >> Mock(IRundeckProject) {
+            _ * getProjectConfigReloaded(_) >> Mock(IRundeckProjectConfig) {
                 _ * getProjectProperties() >> projectProps
             }
         }
