@@ -142,7 +142,7 @@
     "run-script-os": "1.1.6",
     "sass": "1.94.2",
     "sass-loader": "10.5.2",
-    "storybook": "8.4.5",
+    "storybook": "8.6.17",
     "storybook-addon-cookie": "4.0.1",
     "storybook-addon-mock": "5.0.0",
     "storybook-dark-mode": "4.0.2",
