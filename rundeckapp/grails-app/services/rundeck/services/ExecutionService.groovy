@@ -1356,14 +1356,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             WorkflowData eWorkflowData = execution.getWorkflowData()
 
-            if (eWorkflowData.hasConditionalSteps()) {
-                boolean featureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
-                if(!featureEnabled) {
-                    def msg = "Job [${scheduledExecution.jobName}] has conditional steps and the conditional logic feature is not enabled"
-                    throw new ExecutionServiceException(msg, "Conditional Steps not supported")
-                }
-            }
-
             WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(eWorkflowData, execution.project)
 
             StepExecutionContext createInitContext = createContext(
@@ -4400,15 +4392,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     executionContext.getExecutionListener().log(0, msg);
                     result = createFailure(JobReferenceFailureReason.NotFound, msg)
                     return
-                }
-                if (seWorkflowData.hasConditionalSteps()) {
-                    boolean featureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
-                    if(!featureEnabled) {
-                        def msg = "Job [${jitem.jobIdentifier}] has conditional steps and the feature is not enabled: ${se.extid}"
-                        executionContext.getExecutionListener().log(0, msg);
-                        result = createFailure(JobReferenceFailureReason.JobFailed, msg)
-                        return
-                    }
                 }
                 newExecItem = executionUtilService.createExecutionItemForWorkflow(seWorkflowData, se.project)
 

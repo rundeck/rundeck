@@ -516,7 +516,6 @@ public class RundeckConfigBase {
         Enabled multilineJobOptions = new Enabled();
         Enabled guiHideRoiInstructions = new Enabled();
         Enabled defaultExecutionCleanup = new Enabled();
-        Enabled earlyAccessJobConditional = new Enabled();
         Enabled activityDefaultTimeFilter = new Enabled();
         Enabled nextUiMode = new Enabled();
         Enabled vueKeyStorage = new Enabled(true);

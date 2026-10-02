@@ -971,9 +971,7 @@ beans={
         userService = ref("userService")
     }
     remoteJsonOptionRetriever(DefaultRemoteJsonOptionRetriever)
-    workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory){
-        featureService = ref('featureService')
-    }
+    workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory)
     workflowStateDataLoader(DefaultWorkflowStateDataLoader) {
         logFileStorageService = ref('logFileStorageService')
     }

@@ -1,6 +1,5 @@
 package org.rundeck.app.data.workflow
 
-import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.BaseExecutionItem
 import com.dtolabs.rundeck.core.execution.PluginStepExecutionItemImpl
 import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet
@@ -15,10 +14,8 @@ import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import rundeck.data.constants.WorkflowStepConstants
-import rundeck.services.feature.FeatureService
 
 class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemFactory {
-    FeatureService featureService
     /**
      * Create an WorkflowExecutionItem instance for the given WorkflowData,
      * suitable for the ExecutionService layer
@@ -59,7 +56,7 @@ class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemF
 
         steps.each { WorkflowStepData step ->
             // Check if this is a ConditionalStep
-            if (step instanceof ConditionalStep && featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)) {
+            if (step instanceof ConditionalStep) {
                 ConditionalStep conditionalStep = (ConditionalStep) step
 
                 // Enforce maximum nesting depth of 1
