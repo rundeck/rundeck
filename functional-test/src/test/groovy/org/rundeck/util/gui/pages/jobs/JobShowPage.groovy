@@ -227,8 +227,8 @@ class JobShowPage extends BasePage implements ActivityListTrait {
      * @return WebElement containing the remediation link
      */
     WebElement getExecutionAclFixLink() {
-        waitForElementVisible executionAclFixLinkBy
-        el executionAclFixLinkBy
+        // clickable rather than merely visible: this link is meant to be followed
+        byAndWaitClickable executionAclFixLinkBy
     }
 
     /**
