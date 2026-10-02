@@ -48,6 +48,9 @@ import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.workflow.ConditionalDefinitionImpl
+import org.rundeck.app.data.workflow.ConditionalSetImpl
+import org.rundeck.app.data.workflow.ConditionalStep
 import org.rundeck.app.data.workflow.WorkflowDataImpl
 import org.rundeck.app.quartz.ExecutionJobQuartzJobSpecifier
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -588,6 +591,49 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 valid: true
         ]
 
+    }
+
+    def "validateWorkflow checks conditional step support for strategy #strategy"() {
+        given: "a workflow with a conditional step"
+        def conditionSet = new ConditionalSetImpl()
+        conditionSet.conditionGroups = [[ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])]]
+        def conditionalStep = new ConditionalStep(
+                conditionSet: conditionSet,
+                subSteps: [new CommandExec(adhocRemoteString: 'echo sub')]
+        )
+        def workflow = new WorkflowDataImpl(strategy: strategy, steps: [conditionalStep])
+        def scheduledExecution = new ScheduledExecution(jobName: 'conditional', project: 'AProject')
+
+        and: "a workflow strategy that reports whether it supports conditional steps"
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            createExecutionItemForWorkflow(workflow) >> Mock(WorkflowExecutionItem)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                getProperties() >> [:]
+            }
+            getFrameworkPropertyResolverWithProps(_, _) >> Mock(PropertyResolver)
+            getRundeckFramework() >> Mock(Framework) {
+                getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    getStrategyForWorkflow(_, _ as PropertyResolver) >> Mock(WorkflowStrategy) {
+                        supportsConditionalSteps() >> supported
+                    }
+                }
+            }
+        }
+
+        when:
+        def valid = service.validateWorkflow(workflow, scheduledExecution)
+
+        then:
+        valid == supported
+        workflow.errors.hasFieldErrors('strategy') == !supported
+        scheduledExecution.errors.hasFieldErrors('workflow') == !supported
+
+        where:
+        strategy     | supported
+        'sequential' | true
+        'parallel'   | false
     }
 
     def "validate workflow step missing plugin type"() {
