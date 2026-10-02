@@ -1,6 +1,7 @@
 package org.rundeck.app.data.job.metadata
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.google.common.collect.Lists
 import groovy.transform.CompileStatic
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.jobs.ComponentMeta
@@ -165,9 +166,13 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
         // one cache for the whole batch: the browse page asks for many jobs at once and
         // they commonly share an owner
         Map<List<String>, UserAndRolesAuthContext> authContexts = new HashMap<>()
-        // one query for the batch: the browse endpoint can ask for every job in the
-        // project, and a lookup per job would make that an N+1
-        for (ScheduledExecution se : scheduledExecutionDataService.findAllByUuidInList(ids.toList())) {
+        // batched rather than one lookup per job: the browse endpoint can ask for every
+        // job in a project, which is both an N+1 and, as a single IN, past the parameter
+        // limit some databases impose. Same partition size as bulkNextExecutionTime.
+        List<ScheduledExecution> jobs = Lists.partition(ids.toList(), 1000).collectMany {
+            List<String> batch -> scheduledExecutionDataService.findAllByUuidInList(batch)
+        }
+        for (ScheduledExecution se : jobs) {
             metaItems.put(
                 se.uuid,
                 [
