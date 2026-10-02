@@ -19,7 +19,7 @@
             type="text"
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
-            @change="changeField(field)"
+            @change="changeField()"
             :data-testid="'field-input-' + index"
           />
         </div>
@@ -356,7 +356,7 @@ export default defineComponent({
       this.customFields = fields;
       this.refreshPlugin();
     },
-    changeField(field: CustomField) {
+    changeField() {
       this.refreshPlugin();
     },
     refreshPlugin() {

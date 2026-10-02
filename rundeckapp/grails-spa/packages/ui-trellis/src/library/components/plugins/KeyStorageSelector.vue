@@ -109,8 +109,9 @@ export default defineComponent({
       this.errorMsg = "";
     },
     handleFinishEditing(selectedKey: any) {
-      // @ts-ignore
-      this.$refs.keyStorageViewRef.loadKeys(selectedKey);
+      (
+        this.$refs.keyStorageViewRef as { loadKeys(key: unknown): void }
+      ).loadKeys(selectedKey);
       this.modalEdit = false;
     },
     handleCancelEditing() {

@@ -29,8 +29,8 @@ import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.PathUtil
 import spock.lang.Shared
 import spock.lang.Specification
-import testhelpers.MinioContainer
-import testhelpers.MinioTestUtils
+import testhelpers.S3Container
+import testhelpers.S3TestUtils
 
 class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     String configBucket = "test-config-bucket"
@@ -39,7 +39,7 @@ class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     static MinioClient mClient
 
     @Shared
-    public MinioContainer minio = new MinioContainer()
+    public S3Container minio = new S3Container()
 
     void setupSpec() {
         minio.start()

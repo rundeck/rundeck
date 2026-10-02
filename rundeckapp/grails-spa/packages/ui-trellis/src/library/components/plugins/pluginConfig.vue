@@ -385,7 +385,7 @@ export default defineComponent({
   },
   watch: {
     inputValues: {
-      handler(newValue, oldValue) {
+      handler() {
         if (this.isShowConfigForm) {
           this.$emit(
             "update:modelValue",
@@ -403,7 +403,7 @@ export default defineComponent({
       deep: true,
     },
     mode: {
-      handler(newValue, oldValue) {
+      handler() {
         this.loadForMode();
       },
     },
@@ -685,7 +685,7 @@ export default defineComponent({
     },
     hasKeyStorageAccess(): boolean {
       let storageAccess = false;
-      this.props.forEach((prop: any, index) => {
+      this.props.forEach((prop: any) => {
         if (prop.options != null && prop.options["selectionAccessor"]) {
           storageAccess = true;
         }

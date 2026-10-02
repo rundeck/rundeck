@@ -132,7 +132,7 @@ public class StubResourceModelSource implements ResourceModelSource {
             nodeEntry.setAttribute("node-executor", "stub");
             nodeEntry.setAttribute("file-copier", "stub");
             if (null != tags) {
-                nodeEntry.setTags(new HashSet(Arrays.asList(tags.split("\\s*,\\s*"))));
+                nodeEntry.setTags(new HashSet<>(Arrays.asList(tags.split("\\s*,\\s*"))));
             }
             if(null!=attrs && attrs.size()>0){
                 nodeEntry.getAttributes().putAll(attrs);

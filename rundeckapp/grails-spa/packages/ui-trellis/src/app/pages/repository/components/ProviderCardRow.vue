@@ -37,8 +37,9 @@
     <td>
       <button
         v-if="!provider.builtin"
+        data-testid="provider-card-row-uninstall-button"
         style="margin-bottom: 1em"
-        class="btn btn-sm btn-block square-button"
+        class="btn btn-default btn-sm btn-block square-button"
         @click="handleUninstall(provider)"
       >
         Uninstall
@@ -50,7 +51,6 @@
   </tr>
 </template>
 <script>
-import axios from "axios";
 import { mapActions, mapState } from "vuex";
 import * as StringFormatters from "../../../utilities/StringFormatters";
 

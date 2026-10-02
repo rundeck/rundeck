@@ -39,7 +39,7 @@
 import { defineComponent } from "vue";
 import type { PropType } from "vue";
 
-import { NavBar, NavContainer, NavItem } from "../../stores/NavBar";
+import { NavContainer } from "../../stores/NavBar";
 
 import NavBarItem from "./NavBarItem.vue";
 
