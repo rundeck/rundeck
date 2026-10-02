@@ -12,6 +12,8 @@ import rundeck.services.data.IScheduledExecutionDataService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.regex.Pattern
+
 class JobExecutionAclMetadataComponentSpec extends Specification implements DataTest {
 
     def setupSpec() {
@@ -196,16 +198,23 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             !parsed.containsKey('context')
             parsed['for']['job'][0]['equals']['uuid'] == 'job-1'
             parsed['for']['job'][0]['allow'] == ['run']
-            // least privilege: granted to the user, not to their roles
-            parsed['by'] == [username: user]
             parsed['description'].contains(jobName)
+        and: "least privilege: granted to the user, not to their roles"
+            parsed['by'].keySet() == ['username'].toSet()
+        and: "by.username is matched as a regex, so it must grant this user and no other"
+            Pattern.compile(parsed['by']['username'] as String).matcher(user).matches()
+            !Pattern.compile(parsed['by']['username'] as String).matcher(impostor).matches()
         where:
-            scenario                     | jobName              | user
-            'plain values'               | 'nightly'            | 'devread'
-            'job name with a colon'      | 'backup: nightly'    | 'devread'
-            'job name with a hash'       | 'nightly #2'         | 'devread'
-            'username with a hash'       | 'nightly'            | 'dev#read'
-            'username with a dollar'     | 'nightly'            | 'HOST$'
+            scenario                     | jobName              | user          | impostor
+            'plain values'               | 'nightly'            | 'devread'     | 'devreadX'
+            'job name with a colon'      | 'backup: nightly'    | 'devread'     | 'devreadX'
+            'job name with a hash'       | 'nightly #2'         | 'devread'     | 'devreadX'
+            'username with a hash'       | 'nightly'            | 'dev#read'    | 'devXread'
+            // unquoted, '$' anchors and would also match the name without it
+            'username with a dollar'     | 'nightly'            | 'HOST$'       | 'HOST'
+            // unquoted, '.' is any character and '*' a repeat
+            'username with a dot'        | 'nightly'            | 'dev.admin'   | 'devXadmin'
+            'username with a wildcard'   | 'nightly'            | 'dev.*'       | 'devops'
     }
 
     def "getMetadataForJobIds returns executionAclValid meta for a requested at-risk job"() {

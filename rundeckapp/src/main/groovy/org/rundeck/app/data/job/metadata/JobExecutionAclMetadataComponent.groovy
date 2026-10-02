@@ -15,6 +15,8 @@ import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
 import rundeck.services.data.IScheduledExecutionDataService
 
+import java.util.regex.Pattern
+
 /**
  * Provides a non-blocking "executionAclValid" job metadata flag: whether a scheduled job's
  * stored owner (user/userRoles) is still authorized (ACTION_RUN) to execute it.
@@ -91,13 +93,25 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
             description: "Allow ${se.user} to run job ${se.jobName}".toString(),
             // project-level policy files carry no `context:` block
             for          : [job: [[equals: [uuid: se.uuid], allow: ['run']]]],
-            by           : [username: se.user],
+            by           : [username: policyUsername(se.user)],
         ] as Map<String, Object>
 
         DumperOptions dumperOptions = new DumperOptions()
         dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
         return new Yaml(dumperOptions).dump(policy)
+    }
+
+    /**
+     * `by.username` is matched as a regular expression (see RuleEvaluator), so a saved
+     * name carrying metacharacters would grant this job to more than the one user it
+     * names: `dev.admin` would also match `devXadmin`, and `HOST$` would match `HOST`.
+     *
+     * Quoted only when the name is not already a plain literal, so the ordinary case
+     * stays readable for the admin who has to review the policy before saving it.
+     */
+    private static String policyUsername(String user) {
+        return user ==~ /[A-Za-z0-9_@\-]+/ ? user : Pattern.quote(user)
     }
 
     private boolean evaluateExecutionAcl(ScheduledExecution se, EvaluationCache cache) {
