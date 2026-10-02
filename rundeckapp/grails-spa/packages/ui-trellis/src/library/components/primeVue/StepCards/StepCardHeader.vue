@@ -56,10 +56,14 @@
     </div>
     <div class="stepCardHeader-buttons">
       <Tag
-        v-if="showErrorTag && editing"
+        v-if="showErrorTag && (editing || showInvalidCondition)"
         icon="pi pi-exclamation-triangle"
         severity="danger"
-        :value="errorMessage"
+        :value="
+          showInvalidCondition
+            ? $t('Workflow.validation.invalidConditionCriteria')
+            : errorMessage
+        "
         data-testid="step-card-header-error-tag"
       />
       <PtButton
@@ -139,6 +143,10 @@ export default defineComponent({
       default: true,
     },
     disabled: {
+      type: Boolean,
+      default: false,
+    },
+    showInvalidCondition: {
       type: Boolean,
       default: false,
     },

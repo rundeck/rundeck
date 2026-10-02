@@ -145,6 +145,15 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    // With displaySelectedLabel: label to show for a committed value that has
+    // no matching option (e.g. a stale reference). Return undefined to fall
+    // back to the raw value.
+    fallbackLabel: {
+      type: Function as PropType<
+        ((committed: string) => string | undefined) | undefined
+      >,
+      default: undefined,
+    },
     optionDisabled: {
       type: Function as PropType<
         ((option: ContextVariable) => boolean) | undefined
@@ -335,9 +344,17 @@ export default defineComponent({
     // Input text for a committed value: its option label when known,
     // otherwise the value itself (also the behavior when the mode is off).
     displayFor(committed: string): string {
-      return this.showsLabel
-        ? (this.labelByValue[committed] ?? committed)
-        : committed;
+      if (!this.showsLabel) {
+        return committed;
+      }
+      if (this.labelByValue[committed] === undefined && this.fallbackLabel) {
+        const fallback = this.fallbackLabel(committed);
+        if (fallback) {
+          // Remembered so the shown label maps back to this value in committedFor.
+          this.labelByValue[committed] = fallback;
+        }
+      }
+      return this.labelByValue[committed] ?? committed;
     },
 
     // Value to emit for the current input text: the committed value of the

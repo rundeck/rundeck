@@ -445,6 +445,25 @@ describe("PtAutoComplete", () => {
       );
     });
 
+    it("uses fallbackLabel for a committed value with no matching option, and maps it back on change", async () => {
+      const wrapper = await createWrapper({
+        modelValue: "stale-value",
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+        displaySelectedLabel: true,
+        fallbackLabel: (v: string) => `Stale [${v}]`,
+      });
+      const inner = wrapper.findComponent(AutoComplete);
+      expect(inner.props("modelValue")).toBe("Stale [stale-value]");
+
+      await inner.vm.$emit("change", {});
+      await wrapper.vm.$nextTick();
+      expect(wrapper.emitted("update:modelValue")!.slice(-1)[0]).toEqual([
+        "stale-value",
+      ]);
+    });
+
     it("resolves optionValue/optionLabel via functions when provided", async () => {
       const wrapper = await createWrapper({
         suggestions: OBJECT_SUGGESTIONS,
