@@ -119,6 +119,31 @@
             <g:message code="unauthorized.job.run"/>
         </section>
     </g:if>
+    %{-- the header badge is only an indicator; the explanation and the remedy belong
+         where they can be read without hovering, since acting on them is the point --}%
+    <g:if test="${executionAclValid == false}">
+        <section class=" alert alert-warning" data-testid="execution-acl-warning">
+            %{-- floated first so it shares the line with the message --}%
+            <g:if test="${executionAclFixPolicy}">
+                <g:link controller="menu" action="createProjectAclFile"
+                        params="${[project: scheduledExecution.project, fileText: executionAclFixPolicy]}"
+                        class="btn btn-warning btn-xs pull-right has_tooltip"
+                        data-testid="execution-acl-fix-link"
+                        data-toggle="tooltip" data-placement="auto bottom"
+                        title="${message(code: 'job.execution.acl.invalid.fix.title')}">
+                    <g:message code="job.execution.acl.invalid.fix.label"/>
+                </g:link>
+            </g:if>
+            <b class="glyphicon glyphicon-warning-sign"></b>
+            %{-- no saved user means there is nobody to grant access to; re-saving is the only way out --}%
+            <g:if test="${scheduledExecution.user}">
+                <g:message code="job.execution.acl.invalid.warning.title" args="${[scheduledExecution.user]}"/>
+            </g:if>
+            <g:else>
+                <g:message code="job.execution.acl.missing.owner.warning.title"/>
+            </g:else>
+        </section>
+    </g:if>
     <g:if test="${canRunJob}">
         <div class="row">
             <div class="col-xs-12">

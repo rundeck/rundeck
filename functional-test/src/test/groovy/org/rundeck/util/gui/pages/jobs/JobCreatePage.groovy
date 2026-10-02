@@ -543,6 +543,27 @@ class JobCreatePage extends BasePage {
         el scheduleDaysCheckboxDivBy
     }
 
+    /**
+     * Open the Schedule tab and turn on a simple every-day schedule.
+     *
+     * The tab's controls are rendered by a Vue component mounted after the tab is
+     * shown, so each one is waited for rather than read straight after the click.
+     */
+    void enableDailySchedule() {
+        WebElement scheduleTab = tab(JobTab.SCHEDULE)
+        waitForElementToBeClickable scheduleTab
+        scheduleTab.click()
+        byAndWaitClickable scheduleRunYesBy
+        scheduleRunYesField.click()
+        byAndWaitClickable scheduleEveryDayCheckboxBy
+        if (!scheduleEveryDayCheckboxField.isSelected()) {
+            scheduleEveryDayCheckboxField.click()
+        }
+        // the day-of-week panel appearing is the reactive model having caught up, so the
+        // caller does not submit the form mid-update
+        waitForElementVisible scheduleDaysCheckboxDivBy
+    }
+
     List<WebElement> getExecutionPluginsRows() {
         driver.findElements(executionPluginsRows)
     }
