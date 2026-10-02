@@ -1,7 +1,5 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.config.FeatureService
-import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.HasParentStepContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
@@ -30,14 +28,11 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
     }
 
     def setup() {
-        service.featureService = Mock(FeatureService)
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
     }
 
-    def "consolidateWorkflowSteps returns regular steps when feature flag disabled"() {
+    def "consolidateWorkflowSteps returns regular steps when workflow has no conditional steps"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> false
-
         def workflow = new WorkflowDataImpl()
         def step1 = new CommandExec(adhocRemoteString: 'echo step1')
         def step2 = new CommandExec(adhocRemoteString: 'echo step2')
@@ -51,10 +46,8 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
         result.workflow.commands.size() == 2
     }
 
-    def "consolidateWorkflowSteps flattens conditional step when feature flag enabled"() {
+    def "consolidateWorkflowSteps flattens conditional step"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -82,37 +75,8 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
         result.workflow.commands[2].conditions != null
     }
 
-    def "consolidateWorkflowSteps ignore conditional steps when feature flag disabled and workflow has conditional steps"() {
-        given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> false
-
-        def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
-        def condSet = new ConditionalSetImpl()
-        condSet.conditionGroups = [[condDef]]
-
-        def conditionalStep = new ConditionalStep()
-        conditionalStep.conditionSet = condSet
-        conditionalStep.subSteps = [
-            new CommandExec(adhocRemoteString: 'echo sub1')
-        ]
-
-        def workflow = new WorkflowDataImpl()
-        def step1 = new CommandExec(adhocRemoteString: 'echo step1')
-        workflow.steps = [step1, conditionalStep]
-
-        when:
-        WorkflowExecutionItem witem = service.createExecutionItemForWorkflow(workflow, 'testProject')
-
-        then:
-        !witem.getWorkflow().commands.any {it.conditions}
-    }
-
     def "consolidateWorkflowSteps handles mixed regular and conditional steps"() {
         given:
-        service.featureService = Mock(FeatureService){
-            featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-        }
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -141,8 +105,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps handles conditional step with error handler"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -169,8 +131,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps handles conditional step with multiple subSteps"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -198,8 +158,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps handles conditional step without subSteps"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -221,8 +179,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps handles conditional step with null subSteps"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -275,8 +231,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "conditional sub-steps are marked with parent and sub-step indices for hierarchical stepctx"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -314,8 +268,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "two consecutive conditional steps each get their own parent index"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -352,8 +304,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "regular step after a conditional carries the correct logicalStepNumber"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -392,8 +342,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps preserves step order"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: '${option.env}', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -425,8 +373,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps flattens 2-level nested conditionals"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         // Outer condition: env == prod
         def outerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
         def outerCondSet = new ConditionalSetImpl()
@@ -467,8 +413,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps handles mixed nested and non-nested steps"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         // Outer conditional with nested conditional and regular step
         def outerCondDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
         def outerCondSet = new ConditionalSetImpl()
@@ -508,8 +452,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps preserves execution order with nested conditionals"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def condDef = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
         def condSet = new ConditionalSetImpl()
         condSet.conditionGroups = [[condDef]]
@@ -555,8 +497,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps handles Cartesian product for OR groups"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         // Parent with 2 OR groups: (env==prod) OR (env==staging)
         def parentCond1 = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
         def parentCond2 = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'staging'])
@@ -596,7 +536,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps normalizes to DNF when inverted parent combines with plain child"() {
         given: "outer (invertLogic=true): (env==prod OR env==staging) AND (region==us-east OR region==us-west); inner (plain): status==ok"
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
 
         def envProd = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
         def envStaging = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'staging'])
@@ -636,7 +575,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps normalizes to DNF when both parent and child are inverted"() {
         given: "outer (invertLogic=true): env==prod OR env==staging (single group); inner (invertLogic=true): status==ok OR status==warn (single group)"
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
 
         def envProd = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
         def envStaging = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'staging'])
@@ -674,8 +612,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps combine path unaffected when neither side is inverted (regression)"() {
         given:
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
-
         def envProd = ConditionalDefinitionImpl.fromMap([key: 'option.env', operator: '==', value: 'prod'])
         def outerCondSet = new ConditionalSetImpl()
         outerCondSet.conditionGroups = [[envProd]]
@@ -708,7 +644,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps rejects invertLogic condition set that would expand beyond the DNF combination limit"() {
         given: "invertLogic=true with two groups of 17 conditions each (17*17=289 > 256 combination limit)"
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
 
         def group1 = (1..17).collect { ConditionalDefinitionImpl.fromMap([key: 'option.a', operator: '==', value: "v${it}"]) }
         def group2 = (1..17).collect { ConditionalDefinitionImpl.fromMap([key: 'option.b', operator: '==', value: "v${it}"]) }
@@ -733,7 +668,6 @@ class ExecutionUtilServiceConditionalSpec extends Specification implements Servi
 
     def "consolidateWorkflowSteps throws exception for nesting depth >= 2"() {
         given: "A workflow with 2-level nested conditionals"
-        service.featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL) >> true
 
         // Create level 3 conditional (innermost)
         def level3CondDef = ConditionalDefinitionImpl.fromMap([key: 'option.datacenter', operator: '==', value: 'dc1'])
