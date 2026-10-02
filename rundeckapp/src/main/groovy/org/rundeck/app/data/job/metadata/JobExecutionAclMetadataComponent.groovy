@@ -165,13 +165,11 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
         // one cache for the whole batch: the browse page asks for many jobs at once and
         // they commonly share an owner
         Map<List<String>, UserAndRolesAuthContext> authContexts = new HashMap<>()
-        for (String id : ids) {
-            ScheduledExecution se = scheduledExecutionDataService.findByUuid(id)
-            if (!se) {
-                continue
-            }
+        // one query for the batch: the browse endpoint can ask for every job in the
+        // project, and a lookup per job would make that an N+1
+        for (ScheduledExecution se : scheduledExecutionDataService.findAllByUuidInList(ids.toList())) {
             metaItems.put(
-                id,
+                se.uuid,
                 [
                     ComponentMeta.with(
                         NAME,

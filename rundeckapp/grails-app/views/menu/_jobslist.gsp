@@ -210,8 +210,11 @@
                                                    ? g.message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])
                                                    : g.message(code: 'job.execution.acl.missing.owner.warning.title')}"/>
                                     <%-- icon-only, so the warning must be reachable without a mouse --%>
+                                    %{-- a bare span is role=generic, which does not take an
+                                         author-provided name, so aria-label alone is ignored --}%
                                     <span class="has_tooltip text-warning"
                                           tabindex="0"
+                                          role="img"
                                           aria-label="${executionAclWarning}"
                                           title="${executionAclWarning}"
                                           data-toggle="tooltip"

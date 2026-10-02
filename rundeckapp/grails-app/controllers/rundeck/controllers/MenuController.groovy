@@ -417,7 +417,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         } else {
             authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
-        def results=listWorkflows(query,authContext,session.user)
+        def results=listWorkflows(query,authContext,session.user, true)
 
         if (scmFlags == JobsScmInfo.MINIMAL) {
             if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(
@@ -519,7 +519,17 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
 
-    private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
+    /**
+     * @param includeExecutionAclValid resolve the execution ACL flag for the listed jobs.
+     * Opt-in: it costs an authorization evaluation per scheduled job, and only the job
+     * list renders the warning -- the picker and the export do not.
+     */
+    private def listWorkflows(
+        ScheduledExecutionQuery query,
+        AuthContext authContext,
+        String user,
+        boolean includeExecutionAclValid = false
+    ) {
         long start=System.currentTimeMillis()
         if(null!=query){
             query.configureFilter()
@@ -536,7 +546,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         def allScheduled = schedlist.findAll { jobSchedulesService.isScheduled(it.uuid) }
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
-        def executionAclValid = jobExecutionAclMetadataComponent.validateExecutionAcl(allScheduled)
+        def executionAclValid = includeExecutionAclValid ? jobExecutionAclMetadataComponent.validateExecutionAcl(allScheduled) : [:]
         def nextOneTimeScheduledExecutions = query.runJobLaterFilter ? scheduledExecutionService.nextOneTimeScheduledExecutions(schedlist) : null
 
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
