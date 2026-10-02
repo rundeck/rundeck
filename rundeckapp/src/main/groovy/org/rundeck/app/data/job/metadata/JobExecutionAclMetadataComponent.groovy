@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import rundeck.ScheduledExecution
+import rundeck.services.FrameworkService
 import rundeck.services.data.IScheduledExecutionDataService
 
 /**
@@ -24,12 +25,26 @@ import rundeck.services.data.IScheduledExecutionDataService
 @CompileStatic
 class JobExecutionAclMetadataComponent implements JobMetadataComponent {
     static final String NAME = 'executionAclValid'
+    static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
+    static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
     @Autowired
     AppAuthContextProcessor rundeckAuthContextProcessor
 
     @Autowired
     IScheduledExecutionDataService scheduledExecutionDataService
+
+    @Autowired
+    FrameworkService frameworkService
+
+    /**
+     * Per-call caches. Jobs in a listing commonly share both a saved owner and a
+     * project, so neither the auth context nor the project config is rebuilt per job.
+     */
+    private static class EvaluationCache {
+        Map<List<String>, UserAndRolesAuthContext> authContexts = new HashMap<>()
+        Map<String, Boolean> projectSchedulingEnabled = new HashMap<>()
+    }
 
     @Override
     Set<String> getAvailableMetadataNames() {
@@ -42,7 +57,7 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
      * enabled job whose stored owner is not authorized (the "at risk" case).
      */
     boolean validateExecutionAcl(ScheduledExecution se) {
-        return evaluateExecutionAcl(se, new HashMap<List<String>, UserAndRolesAuthContext>())
+        return evaluateExecutionAcl(se, new EvaluationCache())
     }
 
     /**
@@ -52,10 +67,10 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
      * @return job uuid to whether its saved owner is still authorized
      */
     Map<String, Boolean> validateExecutionAcl(Collection<ScheduledExecution> jobs) {
-        Map<List<String>, UserAndRolesAuthContext> authContexts = new HashMap<>()
+        EvaluationCache cache = new EvaluationCache()
         Map<String, Boolean> results = new HashMap<>()
         for (ScheduledExecution se : jobs) {
-            results.put(se.uuid, evaluateExecutionAcl(se, authContexts))
+            results.put(se.uuid, evaluateExecutionAcl(se, cache))
         }
         return results
     }
@@ -85,11 +100,15 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
         return new Yaml(dumperOptions).dump(policy)
     }
 
-    private boolean evaluateExecutionAcl(
-        ScheduledExecution se,
-        Map<List<String>, UserAndRolesAuthContext> authContexts
-    ) {
+    private boolean evaluateExecutionAcl(ScheduledExecution se, EvaluationCache cache) {
         if (!se || !se.shouldScheduleExecution()) {
+            return true
+        }
+        if (!isProjectSchedulingEnabled(se.project, cache)) {
+            // shouldScheduleExecution() covers only the job's own flags, but Quartz
+            // deletes the trigger outright when the project disables executions or
+            // scheduling: nothing will run as this owner, so there is nothing to warn
+            // about. Mirrors the project-level gate in ExecutionJob.
             return true
         }
         if (!se.user) {
@@ -98,14 +117,14 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
             return false
         }
         List<String> key = [se.project, se.user] + se.userRoles
-        UserAndRolesAuthContext authContext = authContexts.get(key)
+        UserAndRolesAuthContext authContext = cache.authContexts.get(key)
         if (authContext == null) {
             authContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(
                 se.user,
                 se.userRoles,
                 se.project
             )
-            authContexts.put(key, authContext)
+            cache.authContexts.put(key, authContext)
         }
         return rundeckAuthContextProcessor.authorizeProjectJobAll(
             authContext,
@@ -113,6 +132,26 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
             [AuthConstants.ACTION_RUN],
             se.project
         )
+    }
+
+    /**
+     * @return true if the project permits scheduled executions to fire at all, i.e. the
+     * project is enabled and disables neither executions nor scheduling. Cached per
+     * project for the duration of one call, since a listing is usually single-project.
+     */
+    private boolean isProjectSchedulingEnabled(String project, EvaluationCache cache) {
+        Boolean cached = cache.projectSchedulingEnabled.get(project)
+        if (cached != null) {
+            return cached
+        }
+        boolean enabled = false
+        if (!frameworkService.isFrameworkProjectDisabled(project)) {
+            Map<String, String> props = frameworkService.getFrameworkProject(project).getProjectProperties()
+            enabled = !'true'.equalsIgnoreCase(props.get(CONF_PROJECT_DISABLE_EXECUTION)) &&
+                !'true'.equalsIgnoreCase(props.get(CONF_PROJECT_DISABLE_SCHEDULE))
+        }
+        cache.projectSchedulingEnabled.put(project, enabled)
+        return enabled
     }
 
     @Override
@@ -165,7 +204,7 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
         }
         // one cache for the whole batch: the browse page asks for many jobs at once and
         // they commonly share an owner
-        Map<List<String>, UserAndRolesAuthContext> authContexts = new HashMap<>()
+        EvaluationCache cache = new EvaluationCache()
         // batched rather than one lookup per job: the browse endpoint can ask for every
         // job in a project, which is both an N+1 and, as a single IN, past the parameter
         // limit some databases impose. Same partition size as bulkNextExecutionTime.
@@ -178,7 +217,7 @@ class JobExecutionAclMetadataComponent implements JobMetadataComponent {
                 [
                     ComponentMeta.with(
                         NAME,
-                        [valid: evaluateExecutionAcl(se, authContexts), user: se.user] as Map<String, Object>
+                        [valid: evaluateExecutionAcl(se, cache), user: se.user] as Map<String, Object>
                     )
                 ]
             )

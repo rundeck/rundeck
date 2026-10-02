@@ -232,6 +232,34 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     }
 
     /**
+     * Whether the warning banner is present. Callers asserting absence must first
+     * wait for the page to render, since absence is indistinguishable from not
+     * having loaded yet.
+     * @return true if the warning banner is rendered
+     */
+    boolean hasExecutionAclWarning() {
+        !els(executionAclWarningBy).isEmpty()
+    }
+
+    /**
+     * Whether the header warning badge is present. The same caveat about asserting
+     * absence applies as for {@link #hasExecutionAclWarning}.
+     * @return true if the warning badge is rendered
+     */
+    boolean hasExecutionAclWarningBadge() {
+        !els(executionAclWarningBadgeBy).isEmpty()
+    }
+
+    /**
+     * Whether the remediation link is present. It is rendered only for viewers
+     * authorized to create project ACLs, so its absence is a meaningful assertion.
+     * @return true if the remediation link is rendered
+     */
+    boolean hasExecutionAclFixLink() {
+        !els(executionAclFixLinkBy).isEmpty()
+    }
+
+    /**
      * Get the calendar button for an option input field
      * Finds the parent of the option input and then locates the calendar button
      * @param optionInputField The option input WebElement
