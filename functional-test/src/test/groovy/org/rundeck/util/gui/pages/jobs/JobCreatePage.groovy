@@ -550,7 +550,9 @@ class JobCreatePage extends BasePage {
      * shown, so each one is waited for rather than read straight after the click.
      */
     void enableDailySchedule() {
-        tab(JobTab.SCHEDULE).click()
+        WebElement scheduleTab = tab(JobTab.SCHEDULE)
+        waitForElementToBeClickable scheduleTab
+        scheduleTab.click()
         byAndWaitClickable scheduleRunYesBy
         scheduleRunYesField.click()
         byAndWaitClickable scheduleEveryDayCheckboxBy
