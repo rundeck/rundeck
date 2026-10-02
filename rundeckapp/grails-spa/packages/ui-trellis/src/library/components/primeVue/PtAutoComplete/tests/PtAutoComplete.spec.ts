@@ -384,6 +384,67 @@ describe("PtAutoComplete", () => {
       ).toEqual(["[steps.['Create JIRA Ticket'].output]"]);
     });
 
+    it("keeps showing the committed value (not the label) when displaySelectedLabel is off", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+      });
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: OBJECT_SUGGESTIONS[1] });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.findComponent(AutoComplete).props("modelValue")).toBe(
+        "[steps.['Create JIRA Ticket'].output]",
+      );
+    });
+
+    it("shows the option label in the input while committing the underlying value when displaySelectedLabel is on", async () => {
+      const wrapper = await createWrapper({
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+        displaySelectedLabel: true,
+      });
+
+      await wrapper
+        .findComponent(AutoComplete)
+        .vm.$emit("option-select", { value: OBJECT_SUGGESTIONS[1] });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.findComponent(AutoComplete).props("modelValue")).toBe(
+        "Output",
+      );
+      expect(wrapper.emitted("update:modelValue")!.slice(-1)[0]).toEqual([
+        "[steps.['Create JIRA Ticket'].output]",
+      ]);
+    });
+
+    it("displays the label for an incoming committed modelValue, even after its option leaves suggestions", async () => {
+      const committed = "[steps.['Create JIRA Ticket'].exitcode]";
+      const wrapper = await createWrapper({
+        modelValue: committed,
+        suggestions: OBJECT_SUGGESTIONS,
+        optionValue: "description",
+        optionLabel: "title",
+        displaySelectedLabel: true,
+      });
+      expect(wrapper.findComponent(AutoComplete).props("modelValue")).toBe(
+        "Exit code",
+      );
+
+      await wrapper.setProps({
+        suggestions: [OBJECT_SUGGESTIONS[1]],
+        modelValue: "",
+      });
+      await wrapper.setProps({ modelValue: committed });
+      expect(wrapper.findComponent(AutoComplete).props("modelValue")).toBe(
+        "Exit code",
+      );
+    });
+
     it("resolves optionValue/optionLabel via functions when provided", async () => {
       const wrapper = await createWrapper({
         suggestions: OBJECT_SUGGESTIONS,

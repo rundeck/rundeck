@@ -137,6 +137,14 @@ export default defineComponent({
       type: [String, Function] as PropType<OptionResolver | undefined>,
       default: undefined,
     },
+    // Object mode only, opt-in: keep showing the selected option's display
+    // label in the input after selection, while `update:modelValue` still
+    // emits the resolved optionValue. When false (default), the input shows
+    // the committed value, as before.
+    displaySelectedLabel: {
+      type: Boolean,
+      default: false,
+    },
     optionDisabled: {
       type: Function as PropType<
         ((option: ContextVariable) => boolean) | undefined
@@ -207,6 +215,10 @@ export default defineComponent({
   data() {
     return {
       value: (this.modelValue || this.defaultValue) as string,
+      // value -> label for every option seen so far (displaySelectedLabel
+      // only). Kept across `suggestions` changes so a committed value still
+      // resolves to its label while its option is absent from the list.
+      labelByValue: {} as Record<string, string>,
       filteredSuggestions: [] as ContextVariable[],
       allSuggestions: [] as ContextVariable[],
       suggestion: null as string | null,
@@ -222,6 +234,10 @@ export default defineComponent({
     // legacy flat-string ContextVariable behavior.
     isObjectMode(): boolean {
       return this.optionValue !== undefined;
+    },
+    // True when the input text is the option label rather than the committed value.
+    showsLabel(): boolean {
+      return this.isObjectMode && this.displaySelectedLabel;
     },
     tabFilteredSuggestions(): (string | ContextVariable)[] | undefined {
       const tabFiltered =
@@ -249,9 +265,15 @@ export default defineComponent({
       return suggestions.length > 0 ? suggestions : undefined;
     },
   },
+  created() {
+    if (this.showsLabel) {
+      this.rememberLabels();
+      this.value = this.displayFor(this.value);
+    }
+  },
   watch: {
     modelValue(newVal: string) {
-      this.value = newVal;
+      this.value = this.displayFor(newVal);
     },
     // filterSuggestions() only runs off PrimeVue's own @complete event
     // (typing/focus), so once the panel is already open, replacing the
@@ -260,6 +282,7 @@ export default defineComponent({
     // same filter against the already-known query whenever the source data
     // changes underneath it.
     suggestions() {
+      this.rememberLabels();
       this.applySuggestionFilter(this.currentQuery);
     },
   },
@@ -295,19 +318,54 @@ export default defineComponent({
       this.updateValue();
     },
 
+    // Records each suggestion's value -> display label (displaySelectedLabel only).
+    rememberLabels(): void {
+      if (!this.showsLabel) {
+        return;
+      }
+      for (const option of this.suggestions) {
+        const optionValue = this.resolveOptionValue(option);
+        const label = this.resolveOptionLabel(option);
+        if (optionValue && label) {
+          this.labelByValue[optionValue] = label;
+        }
+      }
+    },
+
+    // Input text for a committed value: its option label when known,
+    // otherwise the value itself (also the behavior when the mode is off).
+    displayFor(committed: string): string {
+      return this.showsLabel
+        ? (this.labelByValue[committed] ?? committed)
+        : committed;
+    },
+
+    // Value to emit for the current input text: the committed value of the
+    // option whose label is shown, or the raw text if none matches.
+    committedFor(display: string): string {
+      if (!this.showsLabel) {
+        return display;
+      }
+      const match = Object.keys(this.labelByValue).find(
+        (key) => this.labelByValue[key] === display,
+      );
+      return match ?? display;
+    },
+
     updateValue(): void {
+      const committed = this.committedFor(this.value);
       if (this.debounceMs > 0) {
         // Debounce the update
         if (this.debounceTimer) {
           clearTimeout(this.debounceTimer);
         }
         this.debounceTimer = setTimeout(() => {
-          this.$emit("update:modelValue", this.value);
+          this.$emit("update:modelValue", committed);
           this.debounceTimer = null;
         }, this.debounceMs);
       } else {
         // Emit immediately if no debounce
-        this.$emit("update:modelValue", this.value);
+        this.$emit("update:modelValue", committed);
       }
     },
 
@@ -524,7 +582,13 @@ export default defineComponent({
       // whole-value replacement — partial in-string splicing only makes
       // sense for the legacy free-text ContextVariable flow.
       if (this.isObjectMode) {
-        this.value = this.resolveOptionValue(event.value as ContextVariable);
+        const selected = event.value as ContextVariable;
+        if (this.showsLabel) {
+          this.rememberLabels();
+          this.value = this.resolveOptionLabel(selected);
+        } else {
+          this.value = this.resolveOptionValue(selected);
+        }
         this.updateValue();
         return;
       }
