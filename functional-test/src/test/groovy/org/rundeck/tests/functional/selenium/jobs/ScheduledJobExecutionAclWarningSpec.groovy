@@ -5,6 +5,7 @@ import org.rundeck.util.common.jobs.JobUtils
 import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.TopMenuPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
+import org.rundeck.util.gui.pages.jobs.JobListPage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
 import org.rundeck.util.gui.pages.login.LoginPage
 
@@ -64,7 +65,7 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
         and: "but is offered no remediation link, having no access to edit project ACLs"
             !ownerView.hasExecutionAclFixLink()
 
-        when: "an admin, who can edit project ACLs, opens the same job"
+        when: "an admin, who can edit project ACLs, opens the project's job list"
             def ownerTopMenu = page TopMenuPage
             ownerTopMenu.logOut()
             waitForPageLoadComplete()
@@ -72,6 +73,14 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
             adminLogin.go()
             adminLogin.login(TEST_USER, TEST_PASS)
             waitForPageLoadComplete()
+            def jobListPage = page JobListPage
+            jobListPage.loadJobListForProject(PROJECT_NAME)
+            jobListPage.go()
+
+        then: "the job is marked in the list too, not only on its own page"
+            jobListPage.executionAclWarningBadges.size() == 1
+
+        when: "the admin opens the job itself"
             def adminView = page(JobShowPage, PROJECT_NAME).forJob(jobUuid)
             adminView.go()
 
