@@ -1,0 +1,32 @@
+description: Project read, so the restricted user can reach the project and its jobs
+context:
+  application: 'rundeck'
+for:
+  project:
+    - equals:
+        name: ScheduledJobExecutionAclWarningSpec
+      allow: [read]
+by:
+  group:
+  - AuthTest1
+---
+# The permission combination this spec exists to exercise: the user may author and
+# schedule a job, but may not run one. A Quartz trigger fires as this saved owner,
+# so the job is scheduled to execute under an identity that lacks ACTION_RUN.
+# `run` is deliberately absent below -- do not add it.
+description: Create and edit jobs, but no run access
+context:
+  project: ScheduledJobExecutionAclWarningSpec
+for:
+  resource:
+    - equals:
+        kind: job
+      allow: [create]
+  job:
+    - allow: [read, update, delete]
+  node:
+    - allow: [read]
+by:
+  group:
+  - AuthTest1
+---

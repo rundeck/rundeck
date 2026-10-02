@@ -122,12 +122,13 @@
     %{-- the header badge is only an indicator; the explanation and the remedy belong
          where they can be read without hovering, since acting on them is the point --}%
     <g:if test="${executionAclValid == false}">
-        <section class=" alert alert-warning">
+        <section class=" alert alert-warning" data-testid="execution-acl-warning">
             %{-- floated first so it shares the line with the message --}%
             <g:if test="${executionAclFixPolicy}">
                 <g:link controller="menu" action="createProjectAclFile"
                         params="${[project: scheduledExecution.project, fileText: executionAclFixPolicy]}"
                         class="btn btn-warning btn-xs pull-right has_tooltip"
+                        data-testid="execution-acl-fix-link"
                         data-toggle="tooltip" data-placement="auto bottom"
                         title="${message(code: 'job.execution.acl.invalid.fix.title')}">
                     <g:message code="job.execution.acl.invalid.fix.label"/>

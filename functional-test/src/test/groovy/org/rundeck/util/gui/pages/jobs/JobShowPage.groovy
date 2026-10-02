@@ -28,6 +28,9 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     By jobDefinitionModalContentBy = By.id("job-definition-modal")
     By createdByBy = By.cssSelector("[data-testid='created-by']")
     By lastModifiedByBy = By.cssSelector("[data-testid='last-modified-by']")
+    By executionAclWarningBadgeBy = By.cssSelector("[data-testid='execution-acl-warning-badge']")
+    By executionAclWarningBy = By.cssSelector("[data-testid='execution-acl-warning']")
+    By executionAclFixLinkBy = By.cssSelector("[data-testid='execution-acl-fix-link']")
     By detailTableBy = By.id("detailtable")
     By notificationDefinitionBy = By.cssSelector('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
     By closeJobDefinitionModalBy = By.xpath("//*[contains(@id,'job-definition-modal_footer')]//*[@type='submit']")
@@ -195,6 +198,37 @@ class JobShowPage extends BasePage implements ActivityListTrait {
     WebElement getLastModifiedByElement() {
         def modalContent = getJobDefinitionModalContent()
         modalContent.findElement(lastModifiedByBy)
+    }
+
+    /**
+     * Get the warning banner shown when a scheduled job's saved owner is not
+     * authorized to run it.
+     * @return WebElement containing the warning banner
+     */
+    WebElement getExecutionAclWarning() {
+        waitForElementVisible executionAclWarningBy
+        el executionAclWarningBy
+    }
+
+    /**
+     * Get the header badge shown alongside the job name when a scheduled job's
+     * saved owner is not authorized to run it.
+     * @return WebElement containing the warning badge
+     */
+    WebElement getExecutionAclWarningBadge() {
+        waitForElementVisible executionAclWarningBadgeBy
+        el executionAclWarningBadgeBy
+    }
+
+    /**
+     * Get the remediation link that opens the project ACL editor pre-filled with a
+     * policy granting the saved owner run access. Only rendered for viewers who are
+     * themselves authorized to create project ACLs.
+     * @return WebElement containing the remediation link
+     */
+    WebElement getExecutionAclFixLink() {
+        waitForElementVisible executionAclFixLinkBy
+        el executionAclFixLinkBy
     }
 
     /**
