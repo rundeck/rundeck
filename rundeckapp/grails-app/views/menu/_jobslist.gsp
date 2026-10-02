@@ -206,7 +206,9 @@
                             </g:if>
                                 <g:if test="${executionAclValid && executionAclValid[scheduledExecution.uuid] == false}">
                                     <g:set var="executionAclWarning"
-                                           value="${g.message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])}"/>
+                                           value="${scheduledExecution.user
+                                                   ? g.message(code: 'job.execution.acl.invalid.warning.title', args: [scheduledExecution.user])
+                                                   : g.message(code: 'job.execution.acl.missing.owner.warning.title')}"/>
                                     <%-- icon-only, so the warning must be reachable without a mouse --%>
                                     <span class="has_tooltip text-warning"
                                           tabindex="0"

@@ -31,6 +31,18 @@ describe("JobExecutionAclWarningDisplay", () => {
     );
   });
 
+  it("uses the missing-owner message when the job has no saved user", () => {
+    // there is nobody to grant access to, so the grant-or-re-save wording
+    // would be telling the viewer to do something impossible
+    const wrapper = mountWidget({ job: { id: "job-1" }, meta: { valid: false } });
+
+    const warning = wrapper.find(WARNING);
+    expect(warning.exists()).toBe(true);
+    expect(warning.attributes("title")).toBe(
+      "job.execution.acl.missing.owner.warning.title",
+    );
+  });
+
   it("renders nothing when the stored owner is still authorized", () => {
     const wrapper = mountWidget({
       job: { id: "job-1" },

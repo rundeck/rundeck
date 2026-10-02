@@ -31,8 +31,16 @@ export default defineComponent({
       return this.itemData?.meta?.valid === false;
     },
     warningTitle(): string {
+      // no saved user means there is nobody to grant access to, so the
+      // grant-or-re-save wording would point at an impossible action
+      const user = this.itemData?.meta?.user;
+      if (!user) {
+        return this.$t(
+          "job.execution.acl.missing.owner.warning.title",
+        ) as string;
+      }
       return this.$t("job.execution.acl.invalid.warning.title", {
-        user: this.itemData?.meta?.user,
+        user,
       }) as string;
     },
   },
