@@ -559,6 +559,9 @@ class JobCreatePage extends BasePage {
         if (!scheduleEveryDayCheckboxField.isSelected()) {
             scheduleEveryDayCheckboxField.click()
         }
+        // the day-of-week panel appearing is the reactive model having caught up, so the
+        // caller does not submit the form mid-update
+        waitForElementVisible scheduleDaysCheckboxDivBy
     }
 
     List<WebElement> getExecutionPluginsRows() {
