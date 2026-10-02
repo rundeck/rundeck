@@ -146,8 +146,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
                 scheduled: true, executionEnabled: true, scheduleEnabled: true,
             )
             sut.scheduledExecutionDataService = Mock(IScheduledExecutionDataService) {
-                1 * findByUuid('job-a') >> jobA
-                1 * findByUuid('job-b') >> jobB
+                1 * findAllByUuidInList(['job-a', 'job-b']) >> [jobA, jobB]
             }
             sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 // built once for the batch, not once per job
@@ -194,6 +193,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             def sut = new JobExecutionAclMetadataComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def se = new ScheduledExecution(
+                uuid: 'job-1',
                 project: 'AProject',
                 user: 'someuser',
                 scheduled: true,
@@ -201,7 +201,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
                 scheduleEnabled: true,
             )
             sut.scheduledExecutionDataService = Mock(IScheduledExecutionDataService) {
-                1 * findByUuid('job-1') >> se
+                1 * findAllByUuidInList(['job-1']) >> [se]
             }
             sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForUserAndRolesAndProject('someuser', se.userRoles, 'AProject') >> authContext
@@ -239,7 +239,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
                 _ * getProject() >> 'AProject'
             }
             sut.scheduledExecutionDataService = Mock(IScheduledExecutionDataService) {
-                1 * findByUuid('job-1') >> se
+                1 * findAllByUuidInList(['job-1']) >> [se]
             }
             sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForUserAndRolesAndProject('someuser', se.userRoles, 'AProject') >> authContext
@@ -263,7 +263,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
                 _ * getProject() >> 'AProject'
             }
             sut.scheduledExecutionDataService = Mock(IScheduledExecutionDataService) {
-                1 * findByUuid('job-1') >> se
+                1 * findAllByUuidInList(['job-1']) >> [se]
             }
             sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForUserAndRolesAndProject('someuser', se.userRoles, 'AProject') >> authContext
@@ -287,6 +287,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     private static ScheduledExecution atRiskJob() {
         new ScheduledExecution(
+            uuid: 'job-1',
             project: 'AProject',
             user: 'someuser',
             scheduled: true,
@@ -300,6 +301,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             def sut = new JobExecutionAclMetadataComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def se = new ScheduledExecution(
+                uuid: 'job-1',
                 project: 'AProject',
                 user: 'someuser',
                 scheduled: true,
@@ -307,7 +309,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
                 scheduleEnabled: true,
             )
             sut.scheduledExecutionDataService = Mock(IScheduledExecutionDataService) {
-                1 * findByUuid('job-1') >> se
+                1 * findAllByUuidInList(['job-1']) >> [se]
             }
             sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForUserAndRolesAndProject('someuser', se.userRoles, 'AProject') >> authContext

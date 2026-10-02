@@ -5,6 +5,7 @@
     class="has_tooltip text-warning execution-acl-warning"
     data-testid="execution-acl-warning"
     tabindex="0"
+    role="img"
     :aria-label="warningTitle"
     :title="warningTitle"
     data-toggle="tooltip"
