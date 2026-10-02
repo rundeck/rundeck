@@ -6,7 +6,6 @@ import org.rundeck.util.container.SeleniumBase
 import org.rundeck.util.gui.pages.TopMenuPage
 import org.rundeck.util.gui.pages.jobs.JobCreatePage
 import org.rundeck.util.gui.pages.jobs.JobShowPage
-import org.rundeck.util.gui.pages.jobs.JobTab
 import org.rundeck.util.gui.pages.login.LoginPage
 
 /**
@@ -50,11 +49,7 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
 
             def jobCreatePage = go JobCreatePage, PROJECT_NAME
             jobCreatePage.fillBasicJob 'job scheduled by a user who cannot run it'
-            jobCreatePage.tab JobTab.SCHEDULE click()
-            jobCreatePage.scheduleRunYesField.click()
-            if (!jobCreatePage.scheduleEveryDayCheckboxField.isSelected()) {
-                jobCreatePage.scheduleEveryDayCheckboxField.click()
-            }
+            jobCreatePage.enableDailySchedule()
             jobCreatePage.createJobButton.click()
             jobCreatePage.waitForUrlToContain('/job/show')
 
