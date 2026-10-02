@@ -15,13 +15,6 @@ class FeatureFlagConfigurable implements SystemConfigurable {
             "(Beta Feature) Enable support for multiline job options in job definitions and the GUI.",
             'app_admin'
         ),
-        featureConfig(
-            Features.EARLY_ACCESS_JOB_CONDITIONAL,
-            "Enable Job Conditional Step (Beta)",
-            "(Beta Feature) Enable support for conditional steps in job definitions and the GUI.",
-            'app_admin',
-            'Early Access'
-        ),
         guiConfig(
             'rundeck.feature.guiAceEditorMinLines',
             'Code Editor - Minimum Lines',

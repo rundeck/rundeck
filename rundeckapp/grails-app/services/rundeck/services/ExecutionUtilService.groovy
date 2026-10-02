@@ -18,8 +18,6 @@ package rundeck.services
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.NodesetEmptyException
-import com.dtolabs.rundeck.core.config.FeatureService
-import com.dtolabs.rundeck.core.config.Features
 import org.rundeck.app.data.model.v1.job.workflow.ConditionalSet
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
@@ -68,7 +66,6 @@ import static org.apache.tools.ant.util.StringUtils.getStackTrace
 class ExecutionUtilService {
     static transactional = false
     MetricService metricService
-    FeatureService featureService
     ConfigurationService configurationService
     LogFileStorageService logFileStorageService
     def ThreadBoundOutputStream sysThreadBoundOut
@@ -215,8 +212,6 @@ class ExecutionUtilService {
             List<Integer> parentStepPath = null,
             int[] subStepCounter = null
     ) {
-        boolean conditionalFeatureEnabled = featureService.featurePresent(Features.EARLY_ACCESS_JOB_CONDITIONAL)
-
         List<StepExecutionItem> stepExecutionItems = []
 
         // Iterate through commands in order to preserve the original sequence.
@@ -227,7 +222,7 @@ class ExecutionUtilService {
         int logicalStepNumber = 0
         steps.each { command ->
             logicalStepNumber++
-            if (command instanceof ConditionalStep && conditionalFeatureEnabled && command.conditionSet) {
+            if (command instanceof ConditionalStep && command.conditionSet) {
                 ConditionalSet combinedConditionSet = combineConditionSets(parentConditionSet, command.conditionSet)
                 if (command.subSteps) {
                     // Build the parent path for nested conditionals
