@@ -67,7 +67,7 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
             ownerView.executionAclWarning.text.contains(RESTRICTED_USER)
 
         and: "but is offered no remediation link, having no access to edit project ACLs"
-            ownerView.els(ownerView.executionAclFixLinkBy).size() == 0
+            !ownerView.hasExecutionAclFixLink()
 
         when: "an admin, who can edit project ACLs, opens the same job"
             def ownerTopMenu = page TopMenuPage
@@ -120,8 +120,8 @@ class ScheduledJobExecutionAclWarningSpec extends SeleniumBase {
             jobShowPage.waitForElementVisible(jobShowPage.jobUuid)
 
         then: "neither the banner nor the header badge is rendered"
-            jobShowPage.els(jobShowPage.executionAclWarningBy).size() == 0
-            jobShowPage.els(jobShowPage.executionAclWarningBadgeBy).size() == 0
+            !jobShowPage.hasExecutionAclWarning()
+            !jobShowPage.hasExecutionAclWarningBadge()
 
         cleanup:
             def topMenuPage = page TopMenuPage

@@ -1,11 +1,13 @@
 package org.rundeck.app.data.job.metadata
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.testing.gorm.DataTest
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.core.auth.AuthConstants
 import rundeck.ScheduledExecution
+import rundeck.services.FrameworkService
 import rundeck.services.data.IScheduledExecutionDataService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -16,9 +18,27 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
         mockDomains ScheduledExecution
     }
 
+    /**
+     * A component whose project permits scheduled executions to fire, which is the
+     * case every test assumes unless it is specifically about the project-level gate.
+     */
+    private JobExecutionAclMetadataComponent newComponent(
+        Map<String, String> projectProps = [:],
+        boolean projectDisabled = false
+    ) {
+        def sut = new JobExecutionAclMetadataComponent()
+        sut.frameworkService = Mock(FrameworkService) {
+            _ * isFrameworkProjectDisabled(_) >> projectDisabled
+            _ * getFrameworkProject(_) >> Mock(IRundeckProject) {
+                _ * getProjectProperties() >> projectProps
+            }
+        }
+        return sut
+    }
+
     def "getAvailableMetadataNames includes executionAclValid"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
         expect:
             sut.getAvailableMetadataNames() == ['executionAclValid'].toSet()
     }
@@ -26,7 +46,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
     @Unroll
     def "validateExecutionAcl returns true without evaluating authorization when #reason"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
             def se = new ScheduledExecution(
                 project: 'AProject',
@@ -49,7 +69,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "validateExecutionAcl returns true when the stored owner is authorized to run the job"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def se = new ScheduledExecution(
                 project: 'AProject',
@@ -70,7 +90,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "validateExecutionAcl returns false when the stored owner is not authorized to run the job"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def se = new ScheduledExecution(
                 project: 'AProject',
@@ -91,7 +111,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "bulk validateExecutionAcl builds one auth context per owner, not per job"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def sharedOwnerA = new ScheduledExecution(
                 uuid: 'job-a', project: 'AProject', user: 'someuser',
@@ -118,7 +138,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "validateExecutionAcl reports a scheduled job with no saved user as invalid, without building an auth context"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             // ScheduledExecution.user is nullable, and building an auth context for a null
             // user throws, so this must be answered before reaching the auth processor
             def se = new ScheduledExecution(
@@ -135,7 +155,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "getMetadataForJobIds reuses one auth context across jobs sharing an owner"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def jobA = new ScheduledExecution(
                 uuid: 'job-a', project: 'AProject', user: 'someuser',
@@ -164,7 +184,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
     @Unroll
     def "buildRunGrantPolicy emits parseable YAML granting only this job to the saved user (#scenario)"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             def se = new ScheduledExecution(
                 uuid: 'job-1', jobName: jobName, project: 'AProject', user: user,
                 scheduled: true, executionEnabled: true, scheduleEnabled: true,
@@ -190,7 +210,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "getMetadataForJobIds returns executionAclValid meta for a requested at-risk job"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def se = new ScheduledExecution(
                 uuid: 'job-1',
@@ -218,7 +238,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "getMetadataForJobIds returns empty when executionAclValid was not requested"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             sut.scheduledExecutionDataService = Mock(IScheduledExecutionDataService)
             sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         when:
@@ -231,7 +251,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "getMetadataForJob for a JobDataSummary returns the meta (path used by the job meta endpoint)"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def se = atRiskJob()
             def summary = Mock(JobDataSummary) {
@@ -255,7 +275,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "getMetadataForJobs returns meta keyed by job id (path used by the jobs browse endpoint)"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def se = atRiskJob()
             def summary = Mock(JobDataSummary) {
@@ -278,7 +298,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "getMetadataForJobs returns empty for an empty job collection"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
         when:
             def result = sut.getMetadataForJobs([], ['*'].toSet(), Mock(UserAndRolesAuthContext))
         then:
@@ -298,7 +318,7 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
 
     def "getMetadataForJob delegates to getMetadataForJobIds for a single id"() {
         given:
-            def sut = new JobExecutionAclMetadataComponent()
+            def sut = newComponent()
             def authContext = Mock(UserAndRolesAuthContext)
             def se = new ScheduledExecution(
                 uuid: 'job-1',
@@ -321,5 +341,51 @@ class JobExecutionAclMetadataComponentSpec extends Specification implements Data
             result.isPresent()
             result.get()[0].name == 'executionAclValid'
             result.get()[0].data == [valid: true, user: 'someuser']
+    }
+
+    @Unroll
+    def "validateExecutionAcl skips authorization when #reason"() {
+        given: "a scheduled job whose owner would not be authorized to run it"
+            def sut = newComponent(projectProps, projectDisabled)
+            sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            def se = new ScheduledExecution(
+                project: 'AProject',
+                user: 'someuser',
+                scheduled: true,
+                executionEnabled: true,
+                scheduleEnabled: true,
+            )
+        when:
+            def result = sut.validateExecutionAcl(se)
+        then: "the project stops the trigger firing at all, so there is nothing to warn about"
+            result
+            0 * sut.rundeckAuthContextProcessor._
+        where:
+            projectProps                             | projectDisabled | reason
+            ['project.disable.executions': 'true']   | false           | 'the project disables executions'
+            ['project.disable.schedule': 'true']     | false           | 'the project disables scheduling'
+            ['project.disable.executions': 'TRUE']   | false           | 'the disable flag is not lower case'
+            [:]                                      | true            | 'the project itself is disabled'
+    }
+
+    def "validateExecutionAcl still evaluates authorization when the project allows scheduling"() {
+        given:
+            def sut = newComponent(['project.disable.executions': 'false', 'project.disable.schedule': 'false'])
+            def authContext = Mock(UserAndRolesAuthContext)
+            def se = new ScheduledExecution(
+                project: 'AProject',
+                user: 'someuser',
+                scheduled: true,
+                executionEnabled: true,
+                scheduleEnabled: true,
+            )
+            sut.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForUserAndRolesAndProject('someuser', se.userRoles, 'AProject') >> authContext
+                1 * authorizeProjectJobAll(authContext, se, [AuthConstants.ACTION_RUN], 'AProject') >> false
+            }
+        when:
+            def result = sut.validateExecutionAcl(se)
+        then:
+            !result
     }
 }

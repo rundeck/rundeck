@@ -546,7 +546,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         def allScheduled = schedlist.findAll { jobSchedulesService.isScheduled(it.uuid) }
         def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
-        def executionAclValid = includeExecutionAclValid ? jobExecutionAclMetadataComponent.validateExecutionAcl(allScheduled) : [:]
         def nextOneTimeScheduledExecutions = query.runJobLaterFilter ? scheduledExecutionService.nextOneTimeScheduledExecutions(schedlist) : null
 
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
@@ -637,6 +636,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         log.debug("listWorkflows(last): "+(System.currentTimeMillis()-last));
         log.debug("listWorkflows(total): "+(System.currentTimeMillis()-start));
+
+        // evaluated only here, once schedlist holds the jobs the viewer may actually
+        // see: a narrowly authorized viewer would otherwise pay a saved-owner context
+        // build and an ACL check for every scheduled job on the page, hidden ones too
+        def executionAclValid = includeExecutionAclValid ?
+                jobExecutionAclMetadataComponent.validateExecutionAcl(
+                        allScheduled.findAll { authorizemap[it.id.toString()] }
+                ) : [:]
 
         return [
         nextScheduled:schedlist,

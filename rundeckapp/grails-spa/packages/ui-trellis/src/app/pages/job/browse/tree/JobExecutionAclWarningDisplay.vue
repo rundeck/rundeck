@@ -17,13 +17,27 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
+
+/** The `executionAclValid` meta entry, as the job metadata component emits it. */
+interface ExecutionAclMeta {
+  /** whether the job's saved owner is still authorized to run it */
+  valid?: boolean;
+  /** the saved owner; absent when the job has none */
+  user?: string;
+}
+
+/** The socket-data the job browse row passes to widgets at this location. */
+interface JobBrowseItemData {
+  job?: Record<string, unknown>;
+  meta?: ExecutionAclMeta;
+}
 
 export default defineComponent({
   name: "JobExecutionAclWarningDisplay",
   props: {
     itemData: {
-      type: Object,
+      type: Object as PropType<JobBrowseItemData>,
       default: () => ({}),
     },
   },
