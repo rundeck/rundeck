@@ -54,7 +54,13 @@ class RdComposeContainer extends ComposeContainer implements ClientProvider {
         withLocalCompose(USE_LOCAL_DOCKER_COMPOSE)
         withExposedService(DEFAULT_SERVICE_TO_EXPOSE, DEFAULT_PORT, Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(600)))
         withEnv("TEST_IMAGE", RUNDECK_IMAGE)
-        withEnv("TEST_OSS_TOOLS_IMAGE", System.getenv("TEST_OSS_TOOLS_IMAGE") ?: "tools")
+        // Forward the prebuilt test images set by CI (TEST_<name>_IMAGE, e.g. TEST_OSS_TOOLS_IMAGE) so they
+        // also reach containerized compose; when unset, the compose files fall back to building them.
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+            if (entry.key ==~ /TEST_\w+_IMAGE/) {
+                withEnv(entry.key, entry.value)
+            }
+        }
         withEnv("LICENSE_LOCATION", LICENSE_LOCATION)
         withEnv("TEST_RUNDECK_GRAILS_URL", rundeckUrl)
         withEnv("TEST_TARGET_PLATFORM", TEST_TARGET_PLATFORM)
