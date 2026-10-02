@@ -555,6 +555,19 @@ function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareat
           return `${jQuery.Autocomplete.formatResult(suggestion, currentValue)}-${suggestion.data.title}`
         }
         return jQuery.Autocomplete.formatResult(suggestion, currentValue)
+      },
+      onSelect: function () {
+        "use strict";
+        // devbridge-autocomplete sets the field via .val() without firing a
+        // native input event, so listeners bound with @input (e.g. Vue's
+        // DynamicFormPluginProp) never see the selected value. Scoped to
+        // context_var_autocomplete only: context_env_autocomplete fields
+        // (e.g. adhocRemoteStringField) have their own input-driven lookup
+        // logic, and a synthetic input event re-triggers it right after
+        // selection, reopening the suggestion dropdown.
+        if (elem.classList.contains('context_var_autocomplete')) {
+          elem.dispatchEvent(new Event('input', { bubbles: true }));
+        }
       }
     })
   });

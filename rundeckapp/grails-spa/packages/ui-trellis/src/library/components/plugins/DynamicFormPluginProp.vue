@@ -15,12 +15,12 @@
         }}</label>
         <div class="col-sm-9">
           <input
-            v-model="field.value"
+            :value="field.value"
             type="text"
             :class="['form-control', 'input-sm', 'context_var_autocomplete']"
             size="100"
-            @change="changeField()"
             :data-testid="'field-input-' + index"
+            @input="onValueInput(field, $event)"
           />
         </div>
         <div class="col-sm-1">
@@ -356,7 +356,8 @@ export default defineComponent({
       this.customFields = fields;
       this.refreshPlugin();
     },
-    changeField() {
+    onValueInput(field: CustomField, event: Event) {
+      field.value = (event.target as HTMLInputElement).value;
       this.refreshPlugin();
     },
     refreshPlugin() {

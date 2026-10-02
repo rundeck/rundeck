@@ -140,6 +140,21 @@ describe("DynamicFormPluginProp.vue", () => {
     expect(updatedFieldValue).toBe("Updated Value");
   });
 
+  it("emits the updated value on 'input', without waiting for 'change'/blur", async () => {
+    const wrapper = createWrapper();
+    await flushPromises();
+    const inputField = wrapper.find('[data-testid="field-input-0"]');
+    (inputField.element as HTMLInputElement).value = "Updated Value";
+    await inputField.trigger("input");
+    await flushPromises();
+    const emitted = wrapper.emitted("update:modelValue");
+    expect(emitted).toBeTruthy();
+    const lastEmittedFields = JSON.parse(
+      emitted![emitted!.length - 1][0] as string,
+    );
+    expect(lastEmittedFields[0].value).toBe("Updated Value");
+  });
+
   describe("regression for RUN-4764", () => {
     it("adds a field via the free-text Field Label/Field Key path without throwing", async () => {
       // hasOptions "false" is the free-text path, used whenever the plugin
