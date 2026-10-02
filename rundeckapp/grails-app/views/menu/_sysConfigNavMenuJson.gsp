@@ -27,7 +27,7 @@
 <g:set var="pluginInstall" value="${auth.resourceAllowedTest(
         type: AuthConstants.TYPE_RESOURCE,
         kind: AuthConstants.TYPE_PLUGIN,
-        action: [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+        action: [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN],
         any: true,
         context: AuthConstants.CTX_APPLICATION
 )}"/>
