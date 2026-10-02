@@ -5613,6 +5613,94 @@ class ScheduledExecutionControllerSpec extends Specification implements Controll
         // so a job scheduled on a different cluster member always gets its UUID surfaced.
     }
 
+    @Unroll
+    def "show job builds the ACL fix policy only for an authorized viewer of a job with a saved user (#scenario)"() {
+        given:
+        ScheduledExecution.metaClass.static.withNewSession = { Closure c -> c.call() }
+
+        def se = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                user: savedUser,
+                doNodedispatch: false,
+                scheduled: true,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'echo hi'])]
+                )
+        ).save(failOnError: true)
+
+        controller.jobExecutionAclMetadataComponent = Mock(JobExecutionAclMetadataComponent) {
+            1 * validateExecutionAcl(se) >> false
+            _ * buildRunGrantPolicy(se) >> 'the-policy'
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            filterNodeSet(_, _) >> null
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+            isClusterModeEnabled() >> false
+        }
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            _ * getAuthContextForSubjectAndProject(*_) >> Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'admin'
+            }
+            _ * authorizeProjectJobAny(_, _, _, _) >> true
+            _ * filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+            _ * authResourceForProjectAcl('project1') >> [:]
+            // the viewer must pass the same check that saving a project ACL requires
+            _ * authorizeApplicationResourceAny(_, _, _) >> aclAuthorized
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            isScheduled(se) >> true
+            _ * calculateJobStats(_) >> Mock(JobStatsProvider.JobStats)
+        }
+        controller.notificationService = Mock(NotificationService) {
+            listNotificationPlugins() >> [:]
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
+            getOrchestratorPlugins() >> null
+        }
+        controller.pluginService = Mock(PluginService) {
+            listPlugins() >> []
+        }
+        controller.featureService = Mock(FeatureService)
+        controller.storageService = Mock(StorageService) {
+            storageTreeWithContext(_) >> Mock(KeyStorageTree)
+        }
+        controller.apiService = Mock(ApiService)
+        controller.optionValuesService = Mock(OptionValuesService)
+        controller.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager) {
+            validateJobForExport(_, _) >> Mock(Validator.Report) {
+                isValid() >> true
+            }
+        }
+        controller.referencedExecutionDataProvider = new GormReferencedExecutionDataProvider()
+        controller.configurationService = Mock(ConfigurationService) {
+            getString(_) >> null
+        }
+
+        params.id = se.id.toString()
+        params.project = 'project1'
+
+        when:
+        def model = controller.show()
+
+        then:
+        model.executionAclValid == false
+        model.executionAclFixPolicy == expectedPolicy
+
+        where:
+        scenario                                  | savedUser | aclAuthorized | expectedPolicy
+        'authorized viewer, job has a saved user' | 'devread' | true          | 'the-policy'
+        'viewer cannot create project ACLs'       | 'devread' | false         | null
+        'job has no saved user to grant'          | null      | true          | null
+    }
+
     // ===================================================================================
 
     def "regression test - workflow fromMap toMap pattern from commit 640926f97c"() {
