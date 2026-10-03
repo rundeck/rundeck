@@ -4,6 +4,8 @@ services:
       context: "."
       args:
         IMAGE: ${TEST_IMAGE:-rundeck/rundeck:SNAPSHOT}
+        # In CI the tools layer (apt installs) is prebuilt by the Build job, see rundeck_pull_oss_image
+        TOOLS_IMAGE: ${TEST_OSS_TOOLS_IMAGE:-tools}
     platform: ${TEST_TARGET_PLATFORM:-linux/amd64}
     hostname: rundeck-oss-server-node
     environment:
