@@ -451,6 +451,44 @@ describe("PluginPropView", () => {
       expect(pairs[1].text()).toContain("8080");
     });
 
+    it("falls back to the key when a stored custom field has no label", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          prop: {
+            type: "String",
+            title: "Config",
+            desc: "Dynamic form",
+            options: { displayType: "DYNAMIC_FORM" },
+          },
+          value: JSON.stringify([
+            { key: "legacy_field", label: "", value: "some value" },
+          ]),
+        },
+      });
+
+      const pairs = wrapper.findAll('[data-testid="configpair"]');
+      expect(pairs[0].text()).toContain("legacy_field:");
+    });
+
+    it("falls back to the key when a stored custom field's label is whitespace-only", async () => {
+      const wrapper = await createWrapper({
+        props: {
+          prop: {
+            type: "String",
+            title: "Config",
+            desc: "Dynamic form",
+            options: { displayType: "DYNAMIC_FORM" },
+          },
+          value: JSON.stringify([
+            { key: "legacy_field", label: "   ", value: "some value" },
+          ]),
+        },
+      });
+
+      const pairs = wrapper.findAll('[data-testid="configpair"]');
+      expect(pairs[0].text()).toContain("legacy_field:");
+    });
+
     it("renders no pairs when value is empty", async () => {
       const wrapper = await createWrapper({
         props: {
