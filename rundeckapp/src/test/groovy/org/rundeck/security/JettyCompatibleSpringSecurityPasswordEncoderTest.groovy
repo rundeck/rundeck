@@ -27,9 +27,9 @@ class JettyCompatibleSpringSecurityPasswordEncoderTest extends Specification {
         encoder.metaClass.getUsername = { -> return "jsmith" }
     }
 
-    def "Is Password Valid Plaintext"() {
-        expect:
-        encoder.matches("plaintext","plaintext")
+    def "Is Password Valid Plaintext - rejected, no plaintext fallback"() {
+        expect: "unrecognized/no-prefix formats are rejected, even when raw and encoded are byte-identical"
+        !encoder.matches("plaintext","plaintext")
         !encoder.matches("plaintext","plaintxt")
     }
 
